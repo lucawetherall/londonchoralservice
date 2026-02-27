@@ -1,0 +1,79 @@
+/* ═══════════════════════════════════
+   Print Styles
+   ═══════════════════════════════════ */
+@media print {
+  :root {
+    --color-bg: #fff;
+    --color-text: #000;
+    --color-text-mid: #333;
+    --color-accent: #000;
+    --color-rule: #ccc;
+  }
+
+  body {
+    font-size: 11pt;
+    line-height: 1.5;
+    background: #fff;
+    color: #000;
+  }
+
+  .site-header,
+  .nav-toggle,
+  .skip-link,
+  .audio-placeholder,
+  .contact-form,
+  .btn {
+    display: none !important;
+  }
+
+  .section {
+    padding-block: 1.5em;
+    break-inside: avoid;
+  }
+
+  .prose,
+  .wide,
+  .page-wrap {
+    max-width: none;
+    padding: 0;
+  }
+
+  a {
+    color: #000;
+    text-decoration: underline;
+  }
+
+  a[href^="http"]::after {
+    content: " (" attr(href) ")";
+    font-size: 0.85em;
+    color: #555;
+  }
+
+  a[href^="mailto"]::after,
+  a[href^="tel"]::after {
+    content: none;
+  }
+
+  .pull-quote {
+    border-left: 3px solid #000;
+    padding-left: 1em;
+    margin-left: 0;
+  }
+
+  .pull-quote::before {
+    display: none;
+  }
+
+  .site-footer {
+    border-top: 1px solid #ccc;
+    padding-top: 1em;
+  }
+
+  h1, h2, h3 {
+    break-after: avoid;
+  }
+
+  img {
+    max-width: 100% !important;
+  }
+}

@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Contact &mdash; The London Choral Service</title>
+  <meta name="description" content="Get in touch with The London Choral Service to discuss music for your funeral, wedding, memorial, or ceremony. Call 020 1234 5678 or send us a message.">
+  <meta name="theme-color" content="#F7F3EE">
+  <link rel="canonical" href="/contact.html">
+
+  <meta property="og:title" content="Contact &mdash; The London Choral Service">
+  <meta property="og:description" content="Get in touch with The London Choral Service to discuss music for your funeral, wedding, memorial, or ceremony.">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="en_GB">
+  <meta property="og:image" content="/assets/og-image.png">
+
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Contact &mdash; The London Choral Service">
+  <meta name="twitter:description" content="Get in touch with The London Choral Service to discuss music for your funeral, wedding, memorial, or ceremony.">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,400&family=Source+Serif+4:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="/css/tokens.css">
+  <link rel="stylesheet" href="/css/base.css">
+  <link rel="stylesheet" href="/css/layout.css">
+  <link rel="stylesheet" href="/css/components.css">
+  <link rel="stylesheet" href="/css/pages.css">
+
+  <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+</head>
+<body>
+
+  <a href="#main" class="skip-link">Skip to main content</a>
+
+  <header class="site-header">
+    <nav class="site-nav page-wrap" aria-label="Main navigation">
+      <a href="/" class="site-name">The London Choral Service</a>
+      <button class="nav-toggle" aria-expanded="false" aria-controls="nav-menu" aria-label="Menu">
+        <span class="nav-toggle-bar"></span>
+      </button>
+      <ul id="nav-menu" class="nav-links" role="list">
+        <li><a href="/">Home</a></li>
+        <li><a href="/about.html">About</a></li>
+        <li><a href="/services.html">Services</a></li>
+        <li><a href="/listen.html">Listen</a></li>
+        <li><a href="/pricing.html">Pricing</a></li>
+        <li><a href="/contact.html" aria-current="page">Contact</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main id="main">
+
+    <section class="section">
+      <div class="prose">
+        <h1>Contact</h1>
+        <p class="lede">We would be glad to hear from you. Whether you have a specific occasion in mind or simply want to discuss your options, please get in touch.</p>
+        <hr class="rule">
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="prose">
+        <h2>By email</h2>
+        <p><a href="mailto:hello@londonchoral.co.uk">hello@londonchoral.co.uk</a></p>
+
+        <h2>By telephone</h2>
+        <p><a href="tel:+442012345678">020 1234 5678</a></p>
+        <p class="text-sm text-mid">Monday to Friday, 9am&ndash;6pm. We aim to respond to all enquiries within 24 hours.</p>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="prose">
+        <h2>Send us a message</h2>
+        <div class="form-status form-status--success" data-visible="false" role="status" aria-live="polite">
+          <p>Thank you for your enquiry. We will be in touch within 24 hours.</p>
+        </div>
+        <div class="form-status form-status--error" data-visible="false" role="alert">
+          <p>There was a problem sending your message. Please try again or contact us by email or telephone.</p>
+        </div>
+        <form class="contact-form" action="#" method="post" novalidate>
+          <fieldset>
+            <legend class="sr-only">Enquiry details</legend>
+            <div class="form-field">
+              <label for="name">Your name</label>
+              <input type="text" id="name" name="name" required autocomplete="name" aria-describedby="name-error">
+              <p class="form-error" id="name-error">Please enter your name.</p>
+            </div>
+            <div class="form-field">
+              <label for="email">Email address</label>
+              <input type="email" id="email" name="email" required autocomplete="email" aria-describedby="email-error">
+              <p class="form-error" id="email-error">Please enter a valid email address.</p>
+            </div>
+            <div class="form-field">
+              <label for="phone">Telephone <span class="optional">(optional)</span></label>
+              <input type="tel" id="phone" name="phone" autocomplete="tel">
+            </div>
+            <div class="form-field">
+              <label for="occasion">Type of occasion</label>
+              <select id="occasion" name="occasion">
+                <option value="" disabled selected>Please select</option>
+                <option value="funeral">Funeral</option>
+                <option value="wedding">Wedding</option>
+                <option value="memorial">Memorial service</option>
+                <option value="celebration">Celebration of life</option>
+                <option value="corporate">Corporate event</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+            <div class="form-field">
+              <label for="date">Approximate date <span class="optional">(optional)</span></label>
+              <input type="date" id="date" name="date">
+            </div>
+            <div class="form-field">
+              <label for="message">Your message</label>
+              <textarea id="message" name="message" rows="6" required aria-describedby="message-error"></textarea>
+              <p class="form-error" id="message-error">Please enter a message.</p>
+            </div>
+            <button type="submit" class="btn">Send enquiry</button>
+          </fieldset>
+        </form>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="site-footer">
+    <div class="prose">
+      <hr>
+      <p class="footer-name">The London Choral Service</p>
+      <p class="text-sm text-mid">Professional singers and musicians for funerals, weddings, memorials, and ceremonies throughout the United Kingdom.</p>
+      <p class="text-sm text-mid">
+        <a href="mailto:hello@londonchoral.co.uk">hello@londonchoral.co.uk</a>
+        &ensp;|&ensp;
+        <a href="tel:+442012345678">020 1234 5678</a>
+      </p>
+      <p class="text-xs text-mid">
+        <a href="/privacy.html">Privacy policy</a>
+      </p>
+      <p class="text-xs text-mid">The London Choral Service is the operating name of Alma Consort Ltd, a professional choral agency based in London.</p>
+      <p class="text-xs text-mid">&copy; <span data-year>2026</span> The London Choral Service. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <script src="/js/nav.js"></script>
+</body>
+</html>

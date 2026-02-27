@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:www.londonfuneralsingers.co.uk)",
+      "WebFetch(domain:fonts.google.com)",
+      "WebFetch(domain:fonts.googleapis.com)",
+      "mcp__Claude_Preview__preview_start"
+    ]
+  }
+}

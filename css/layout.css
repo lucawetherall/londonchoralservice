@@ -1,0 +1,233 @@
+/* ── Content Containers ── */
+.prose {
+  max-width: var(--width-prose);
+  margin-inline: auto;
+  padding-inline: var(--space-lg);
+}
+
+.wide {
+  max-width: var(--width-wide);
+  margin-inline: auto;
+  padding-inline: var(--space-lg);
+}
+
+.page-wrap {
+  max-width: var(--width-max);
+  margin-inline: auto;
+  padding-inline: var(--space-lg);
+}
+
+/* ── Sections ── */
+.section {
+  padding-block: var(--space-4xl);
+}
+
+.section + .section {
+  border-top: 1px solid var(--color-rule);
+}
+
+/* ── Lede Paragraph ── */
+.lede {
+  font-size: var(--text-md);
+  line-height: var(--leading-loose);
+  color: var(--color-text-mid);
+  max-width: 36rem;
+}
+
+/* ── Accent Rule ── */
+.rule {
+  border: none;
+  border-top: 2px solid var(--color-accent);
+  width: 3rem;
+  margin-block: var(--space-2xl);
+  margin-inline: 0;
+}
+
+/* ═══════════════════════════════════
+   Site Header / Navigation
+   ═══════════════════════════════════ */
+.site-header {
+  border-bottom: 1px solid var(--color-rule);
+}
+
+.site-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-block: var(--space-lg);
+  gap: var(--space-lg);
+}
+
+.site-name {
+  font-family: var(--font-heading);
+  font-size: var(--text-lg);
+  font-weight: 300;
+  color: var(--color-text);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.site-name:hover {
+  color: var(--color-accent);
+}
+
+.nav-links {
+  display: flex;
+  gap: var(--space-xl);
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.nav-links a {
+  font-family: var(--font-heading);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--color-text);
+  text-decoration: none;
+  padding-bottom: 2px;
+  transition: color var(--transition-fast);
+}
+
+.nav-links a:hover {
+  color: var(--color-accent);
+}
+
+.nav-links a[aria-current="page"] {
+  border-bottom: 2px solid var(--color-accent);
+}
+
+/* ── Hamburger Toggle ── */
+.nav-toggle {
+  display: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: var(--space-sm);
+  width: 2.5rem;
+  height: 2.5rem;
+  position: relative;
+}
+
+.nav-toggle:hover,
+.nav-toggle:focus-visible {
+  background-color: var(--color-bg-alt);
+  border-radius: 4px;
+}
+
+.nav-toggle-bar,
+.nav-toggle-bar::before,
+.nav-toggle-bar::after {
+  display: block;
+  width: 1.5rem;
+  height: 2px;
+  background-color: var(--color-text);
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  transition: all var(--transition-base);
+}
+
+.nav-toggle-bar {
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.nav-toggle-bar::before {
+  content: '';
+  top: -7px;
+  left: 50%;
+}
+
+.nav-toggle-bar::after {
+  content: '';
+  top: 7px;
+  left: 50%;
+}
+
+/* Open state */
+.nav-toggle[aria-expanded="true"] .nav-toggle-bar {
+  background-color: transparent;
+}
+
+.nav-toggle[aria-expanded="true"] .nav-toggle-bar::before {
+  top: 0;
+  transform: translateX(-50%) rotate(45deg);
+}
+
+.nav-toggle[aria-expanded="true"] .nav-toggle-bar::after {
+  top: 0;
+  transform: translateX(-50%) rotate(-45deg);
+}
+
+/* ── Mobile Navigation ── */
+@media (max-width: 767px) {
+  .nav-toggle {
+    display: block;
+  }
+
+  .nav-links {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    flex-direction: column;
+    background-color: var(--color-bg);
+    border-bottom: 1px solid var(--color-rule);
+    padding: var(--space-lg);
+    gap: 0;
+    z-index: 100;
+  }
+
+  .nav-links.is-open {
+    display: flex;
+  }
+
+  .nav-links li {
+    margin-bottom: 0;
+  }
+
+  .nav-links a {
+    display: block;
+    padding: var(--space-md) 0;
+    font-size: var(--text-base);
+    border-bottom: 1px solid var(--color-rule);
+  }
+
+  .nav-links li:last-child a {
+    border-bottom: none;
+  }
+
+  .site-nav {
+    position: relative;
+  }
+}
+
+/* ═══════════════════════════════════
+   Footer
+   ═══════════════════════════════════ */
+.site-footer {
+  padding-block: var(--space-3xl) var(--space-4xl);
+}
+
+.footer-name {
+  font-family: var(--font-heading);
+  font-size: var(--text-xl);
+  font-weight: 300;
+  margin-bottom: var(--space-md);
+}
+
+.site-footer p {
+  margin-bottom: var(--space-sm);
+}
+
+.site-footer a {
+  color: var(--color-text-mid);
+}
+
+.site-footer a:hover {
+  color: var(--color-accent);
+}

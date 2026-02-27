@@ -1,0 +1,65 @@
+:root {
+  /* ── Colour Palette ── */
+  --color-bg:         #F7F3EE;
+  --color-bg-alt:     #EDE8E1;
+  --color-text:       #2C2420;
+  --color-text-mid:   #6B5E56;
+  --color-accent:     #8B3A3A;
+  --color-accent-hover: #A85454;
+  --color-rule:       #D6CEC6;
+
+  /* ── Type Scale (Major Third · 1.25) ── */
+  --text-xs:      0.8rem;
+  --text-sm:      0.875rem;
+  --text-base:    1.125rem;
+  --text-md:      1.25rem;
+  --text-lg:      1.563rem;
+  --text-xl:      1.953rem;
+  --text-2xl:     2.441rem;
+  --text-3xl:     3.052rem;
+  --text-display: 3.815rem;
+
+  /* ── Spacing (8px grid) ── */
+  --space-xs:  0.25rem;
+  --space-sm:  0.5rem;
+  --space-md:  1rem;
+  --space-lg:  1.5rem;
+  --space-xl:  2rem;
+  --space-2xl: 3rem;
+  --space-3xl: 4rem;
+  --space-4xl: 6rem;
+  --space-5xl: 8rem;
+
+  /* ── Content Widths ── */
+  --width-prose: 42rem;
+  --width-wide:  60rem;
+  --width-max:   72rem;
+
+  /* ── Fonts ── */
+  --font-heading: 'Cormorant Garamond', 'Georgia', 'Times New Roman', serif;
+  --font-body:    'Source Serif 4', 'Georgia', 'Times New Roman', serif;
+
+  /* ── Line Heights ── */
+  --leading-tight:  1.2;
+  --leading-normal: 1.6;
+  --leading-loose:  1.8;
+
+  /* ── Transitions ── */
+  --transition-fast: 150ms ease;
+  --transition-base: 250ms ease;
+}
+
+@media (max-width: 599px) {
+  :root {
+    --text-3xl:     2.2rem;
+    --text-display: 2.6rem;
+    --space-4xl:    4rem;
+  }
+}
+
+@media (min-width: 600px) and (max-width: 899px) {
+  :root {
+    --text-3xl:     2.6rem;
+    --text-display: 3.2rem;
+  }
+}
