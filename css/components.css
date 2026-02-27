@@ -94,14 +94,6 @@
   white-space: nowrap;
 }
 
-.pricing-price .vat {
-  font-family: var(--font-body);
-  font-size: var(--text-sm);
-  font-weight: 400;
-  color: var(--color-text-mid);
-  margin-left: var(--space-xs);
-}
-
 @media (max-width: 599px) {
   .pricing-table td {
     display: block;
