@@ -126,6 +126,8 @@
               <textarea id="message" name="message" rows="6" required aria-describedby="message-error"></textarea>
               <p class="form-error" id="message-error">Please enter a message.</p>
             </div>
+            <div class="h-captcha" data-captcha="true"></div>
+            <p class="form-error" id="captcha-error">Please complete the captcha before sending.</p>
             <button type="submit" class="btn">Send enquiry</button>
           </fieldset>
         </form>
@@ -152,6 +154,7 @@
     </div>
   </footer>
 
+  <script src="https://web3forms.com/client/script.js" async defer></script>
   <script src="js/nav.js"></script>
   <script src="js/contact.js"></script>
 </body>
