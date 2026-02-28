@@ -331,3 +331,37 @@
   outline: 2px solid var(--color-text);
   outline-offset: 2px;
 }
+
+/* ═══════════════════════════════════
+   Music Guides
+   ═══════════════════════════════════ */
+.guide-meta {
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  color: var(--color-text-mid);
+  letter-spacing: 0.02em;
+}
+
+.guide-list {
+  list-style: none;
+  padding-left: 0;
+}
+
+.guide-list li {
+  padding-block: var(--space-xl);
+  border-bottom: 1px solid var(--color-rule);
+}
+
+.guide-list li:first-child {
+  padding-top: 0;
+}
+
+.guide-list h2 {
+  font-size: var(--text-xl);
+  margin-bottom: var(--space-sm);
+}
+
+.guide-list p {
+  color: var(--color-text-mid);
+  margin-bottom: 0;
+}
