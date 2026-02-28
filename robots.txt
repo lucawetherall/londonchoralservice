@@ -1,3 +1,25 @@
 User-agent: *
 Allow: /
 Sitemap: https://londonchoralservice.com/sitemap.xml
+
+# AI and LLM crawlers
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Cohere-AI
+Allow: /
+
+User-agent: Applebot-Extended
+Allow: /
