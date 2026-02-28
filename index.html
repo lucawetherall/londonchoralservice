@@ -35,23 +35,56 @@
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
-    "@type": "LocalBusiness",
-    "name": "The London Choral Service",
-    "url": "https://londonchoralservice.com",
-    "description": "Exceptional singers, choirs, and instrumentalists for funerals, weddings, memorials, and ceremonies across the United Kingdom.",
-    "telephone": "+447356042468",
-    "email": "office@londonchoralservice.com",
-    "image": "https://londonchoralservice.com/assets/og-image.png",
-    "address": {
-      "@type": "PostalAddress",
-      "addressLocality": "London",
-      "addressCountry": "GB"
-    },
-    "areaServed": {
-      "@type": "Country",
-      "name": "United Kingdom"
-    },
-    "priceRange": "££"
+    "@graph": [
+      {
+        "@type": "WebSite",
+        "@id": "https://londonchoralservice.com/#website",
+        "name": "The London Choral Service",
+        "url": "https://londonchoralservice.com",
+        "description": "Exceptional singers, choirs, and instrumentalists for funerals, weddings, memorials, and ceremonies across the United Kingdom.",
+        "inLanguage": "en-GB",
+        "publisher": {
+          "@id": "https://londonchoralservice.com/#organization"
+        }
+      },
+      {
+        "@type": "LocalBusiness",
+        "@id": "https://londonchoralservice.com/#organization",
+        "name": "The London Choral Service",
+        "url": "https://londonchoralservice.com",
+        "description": "Exceptional singers, choirs, and instrumentalists for funerals, weddings, memorials, and ceremonies across the United Kingdom.",
+        "telephone": "+447356042468",
+        "email": "office@londonchoralservice.com",
+        "image": "https://londonchoralservice.com/assets/og-image.png",
+        "address": {
+          "@type": "PostalAddress",
+          "addressLocality": "London",
+          "addressCountry": "GB"
+        },
+        "areaServed": {
+          "@type": "Country",
+          "name": "United Kingdom"
+        },
+        "priceRange": "££",
+        "founder": {
+          "@type": "Person",
+          "name": "Luca Wetherall",
+          "jobTitle": "Artistic Director",
+          "affiliation": {
+            "@type": "Organization",
+            "name": "University of Oxford"
+          }
+        },
+        "knowsAbout": [
+          "funeral music",
+          "wedding choirs",
+          "memorial service music",
+          "celebration of life music",
+          "choral music",
+          "hymns"
+        ]
+      }
+    ]
   }
   </script>
 </head>

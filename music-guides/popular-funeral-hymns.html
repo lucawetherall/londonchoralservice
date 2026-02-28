@@ -35,24 +35,43 @@
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
-    "@type": "Article",
-    "headline": "The most popular funeral hymns",
-    "description": "The funeral hymns families choose most often, from Abide with Me to The Lord's My Shepherd. What makes each one work and how to choose the right hymns for your service.",
-    "datePublished": "2026-02-28",
-    "author": {
-      "@type": "Organization",
-      "name": "The London Choral Service",
-      "url": "https://londonchoralservice.com"
-    },
-    "publisher": {
-      "@type": "Organization",
-      "name": "The London Choral Service",
-      "url": "https://londonchoralservice.com"
-    },
-    "mainEntityOfPage": {
-      "@type": "WebPage",
-      "@id": "https://londonchoralservice.com/music-guides/popular-funeral-hymns.html"
-    }
+    "@graph": [
+      {
+        "@type": "Article",
+        "headline": "The most popular funeral hymns",
+        "url": "https://londonchoralservice.com/music-guides/popular-funeral-hymns.html",
+        "inLanguage": "en-GB",
+        "datePublished": "2026-02-28",
+        "dateModified": "2026-02-28",
+        "description": "The funeral hymns families choose most often, from Abide with Me to The Lord's My Shepherd. What makes each one work and how to choose the right hymns for your service.",
+        "author": {
+          "@type": "Organization",
+          "name": "The London Choral Service",
+          "url": "https://londonchoralservice.com"
+        },
+        "publisher": {
+          "@type": "Organization",
+          "name": "The London Choral Service",
+          "url": "https://londonchoralservice.com",
+          "logo": {
+            "@type": "ImageObject",
+            "url": "https://londonchoralservice.com/assets/og-image.png"
+          }
+        },
+        "mainEntityOfPage": {
+          "@type": "WebPage",
+          "@id": "https://londonchoralservice.com/music-guides/popular-funeral-hymns.html"
+        }
+      },
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://londonchoralservice.com/" },
+          { "@type": "ListItem", "position": 2, "name": "Music Guides", "item": "https://londonchoralservice.com/music-guides/" },
+          { "@type": "ListItem", "position": 3, "name": "The Most Popular Funeral Hymns" }
+        ]
+      }
+    ]
   }
   </script>
 </head>
