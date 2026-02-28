@@ -31,6 +31,24 @@
   <link rel="stylesheet" href="css/pages.css">
 
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "ContactPage",
+    "name": "Contact Us",
+    "url": "https://londonchoralservice.com/contact.html",
+    "inLanguage": "en-GB",
+    "mainEntity": {
+      "@type": "LocalBusiness",
+      "@id": "https://londonchoralservice.com/#organization",
+      "name": "The London Choral Service",
+      "telephone": "+447356042468",
+      "email": "office@londonchoralservice.com",
+      "openingHours": "Mo-Fr 09:00-18:00"
+    }
+  }
+  </script>
 </head>
 <body>
 
@@ -47,6 +65,7 @@
         <li><a href="about.html">About</a></li>
         <li><a href="services.html">Services</a></li>
         <li><a href="listen.html">Listen</a></li>
+        <li><a href="music-guides/">Music Guides</a></li>
         <li><a href="pricing.html">Pricing</a></li>
         <li><a href="contact.html" aria-current="page">Contact</a></li>
       </ul>
@@ -84,9 +103,12 @@
         <div class="form-status form-status--error" data-visible="false" role="alert">
           <p>Something went wrong. Please try again, or reach us directly by email or telephone.</p>
         </div>
-        <form class="contact-form" action="#" method="post" novalidate>
+        <form class="contact-form" method="post" novalidate>
           <fieldset>
             <legend class="sr-only">Enquiry details</legend>
+            <input type="hidden" name="access_key" value="dc1af546-26ac-45b3-a85d-064a3a59886d">
+            <input type="hidden" name="subject" value="New enquiry — London Choral Service">
+            <input type="checkbox" name="botcheck" class="sr-only" tabindex="-1" aria-hidden="true">
             <div class="form-field">
               <label for="name">Your name</label>
               <input type="text" id="name" name="name" required autocomplete="name" aria-describedby="name-error">
@@ -122,6 +144,8 @@
               <textarea id="message" name="message" rows="6" required aria-describedby="message-error"></textarea>
               <p class="form-error" id="message-error">Please enter a message.</p>
             </div>
+            <div class="h-captcha" data-captcha="true"></div>
+            <p class="form-error" id="captcha-error">Please complete the captcha before sending.</p>
             <button type="submit" class="btn">Send enquiry</button>
           </fieldset>
         </form>
@@ -148,6 +172,8 @@
     </div>
   </footer>
 
+  <script src="https://web3forms.com/client/script.js" async defer></script>
   <script src="js/nav.js"></script>
+  <script src="js/contact.js"></script>
 </body>
 </html>
