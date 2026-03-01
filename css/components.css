@@ -365,3 +365,128 @@
   color: var(--color-text-mid);
   margin-bottom: 0;
 }
+
+/* ═══════════════════════════════════
+   CTA Button Link
+   ═══════════════════════════════════ */
+.btn-link {
+  display: inline-block;
+  font-family: var(--font-heading);
+  font-weight: 500;
+  font-size: var(--text-base);
+  letter-spacing: 0.02em;
+  padding: var(--space-md) var(--space-2xl);
+  background-color: var(--color-accent);
+  color: var(--color-bg);
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+}
+
+.btn-link:hover {
+  background-color: var(--color-accent-hover);
+  color: var(--color-bg);
+}
+
+.btn-link:focus-visible {
+  outline: 2px solid var(--color-text);
+  outline-offset: 2px;
+}
+
+/* ═══════════════════════════════════
+   Breadcrumb Navigation
+   ═══════════════════════════════════ */
+.breadcrumb {
+  margin-bottom: var(--space-lg);
+}
+
+.breadcrumb ol {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0;
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  color: var(--color-text-mid);
+}
+
+.breadcrumb li::after {
+  content: '\203A';
+  margin-inline: 0.5em;
+  color: var(--color-rule);
+}
+
+.breadcrumb li:last-child::after {
+  display: none;
+}
+
+.breadcrumb a {
+  color: var(--color-text-mid);
+  text-decoration: none;
+}
+
+.breadcrumb a:hover {
+  color: var(--color-accent);
+}
+
+/* ═══════════════════════════════════
+   Sticky Mobile CTA Bar
+   ═══════════════════════════════════ */
+.mobile-cta {
+  display: none;
+}
+
+@media (max-width: 767px) {
+  .mobile-cta {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 200;
+    background-color: var(--color-bg);
+    border-top: 1px solid var(--color-rule);
+    padding: var(--space-sm) var(--space-lg);
+    gap: var(--space-sm);
+    align-items: center;
+    justify-content: center;
+  }
+
+  .mobile-cta a {
+    text-decoration: none;
+    font-family: var(--font-heading);
+    font-weight: 500;
+    font-size: var(--text-sm);
+    letter-spacing: 0.02em;
+    padding: var(--space-sm) var(--space-lg);
+    text-align: center;
+    flex: 1;
+  }
+
+  .mobile-cta-phone {
+    color: var(--color-text);
+    border: 1px solid var(--color-rule);
+  }
+
+  .mobile-cta-phone:hover {
+    border-color: var(--color-accent);
+    color: var(--color-accent);
+  }
+
+  .mobile-cta-enquire {
+    background-color: var(--color-accent);
+    color: var(--color-bg);
+  }
+
+  .mobile-cta-enquire:hover {
+    background-color: var(--color-accent-hover);
+  }
+
+  /* Prevent content from being hidden behind the sticky bar */
+  .site-footer {
+    padding-bottom: calc(var(--space-4xl) + 3.5rem);
+  }
+}
