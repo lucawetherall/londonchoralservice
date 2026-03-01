@@ -13,4 +13,23 @@
   if (yearEl) {
     yearEl.textContent = new Date().getFullYear();
   }
+
+  // ── Mobile CTA: hide on scroll-up, show on scroll-down ──
+  var cta = document.querySelector('.mobile-cta');
+  if (cta) {
+    var lastY = window.scrollY;
+    var threshold = 10;
+
+    window.addEventListener('scroll', function () {
+      var currentY = window.scrollY;
+      if (Math.abs(currentY - lastY) < threshold) return;
+
+      if (currentY > lastY) {
+        cta.classList.remove('is-hidden');
+      } else {
+        cta.classList.add('is-hidden');
+      }
+      lastY = currentY;
+    }, { passive: true });
+  }
 })();

@@ -453,6 +453,11 @@
     gap: var(--space-sm);
     align-items: center;
     justify-content: center;
+    transition: transform var(--transition-base);
+  }
+
+  .mobile-cta.is-hidden {
+    transform: translateY(100%);
   }
 
   .mobile-cta a {
