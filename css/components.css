@@ -317,7 +317,7 @@
   letter-spacing: 0.02em;
   padding: var(--space-md) var(--space-2xl);
   background-color: var(--color-accent);
-  color: var(--color-bg);
+  color: #fff;
   border: none;
   cursor: pointer;
   transition: background-color var(--transition-fast);
@@ -377,7 +377,7 @@
   letter-spacing: 0.02em;
   padding: var(--space-md) var(--space-2xl);
   background-color: var(--color-accent);
-  color: var(--color-bg);
+  color: #fff;
   text-decoration: none;
   border: none;
   cursor: pointer;
@@ -386,7 +386,7 @@
 
 .btn-link:hover {
   background-color: var(--color-accent-hover);
-  color: var(--color-bg);
+  color: #fff;
 }
 
 .btn-link:focus-visible {
@@ -468,7 +468,7 @@
 
   .mobile-cta-enquire {
     background-color: var(--color-accent);
-    color: var(--color-bg);
+    color: #fff;
   }
 
   .mobile-cta-enquire:hover {
