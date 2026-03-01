@@ -466,16 +466,6 @@
     flex: 1;
   }
 
-  .mobile-cta-phone {
-    color: var(--color-text);
-    border: 1px solid var(--color-rule);
-  }
-
-  .mobile-cta-phone:hover {
-    border-color: var(--color-accent);
-    color: var(--color-accent);
-  }
-
   .mobile-cta-enquire {
     background-color: var(--color-accent);
     color: var(--color-bg);

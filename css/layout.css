@@ -99,21 +99,6 @@
   border-bottom: 2px solid var(--color-accent);
 }
 
-/* ── Header Phone ── */
-.header-phone {
-  font-family: var(--font-body);
-  font-size: var(--text-sm);
-  color: var(--color-text-mid);
-  text-decoration: none;
-  white-space: nowrap;
-  letter-spacing: 0.02em;
-  transition: color var(--transition-fast);
-}
-
-.header-phone:hover {
-  color: var(--color-accent);
-}
-
 /* ── Hamburger Toggle ── */
 .nav-toggle {
   display: none;
@@ -220,13 +205,6 @@
     position: relative;
   }
 
-  .header-phone {
-    display: block;
-    padding: var(--space-md) 0;
-    font-size: var(--text-base);
-    border-bottom: 1px solid var(--color-rule);
-    order: -1;
-  }
 }
 
 /* ═══════════════════════════════════
