@@ -14,22 +14,19 @@
     yearEl.textContent = new Date().getFullYear();
   }
 
-  // ── Mobile CTA: hide on scroll-up, show on scroll-down ──
+  // ── Mobile CTA: always visible, hide only when footer is on-screen ──
   var cta = document.querySelector('.mobile-cta');
-  if (cta) {
-    var lastY = window.scrollY;
-    var threshold = 10;
-
-    window.addEventListener('scroll', function () {
-      var currentY = window.scrollY;
-      if (Math.abs(currentY - lastY) < threshold) return;
-
-      if (currentY > lastY) {
-        cta.classList.remove('is-hidden');
-      } else {
-        cta.classList.add('is-hidden');
-      }
-      lastY = currentY;
-    }, { passive: true });
+  var footer = document.querySelector('.site-footer');
+  if (cta && footer) {
+    var footerObserver = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (entry.isIntersecting) {
+          cta.classList.add('is-hidden');
+        } else {
+          cta.classList.remove('is-hidden');
+        }
+      });
+    }, { threshold: 0 });
+    footerObserver.observe(footer);
   }
 })();

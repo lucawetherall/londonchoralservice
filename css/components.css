@@ -450,10 +450,11 @@
     background-color: var(--color-bg);
     border-top: 1px solid var(--color-rule);
     padding: var(--space-sm) var(--space-lg);
+    padding-bottom: calc(var(--space-sm) + env(safe-area-inset-bottom, 0px));
     gap: var(--space-sm);
     align-items: center;
     justify-content: center;
-    transition: transform var(--transition-base);
+    transition: transform 0.3s ease;
   }
 
   .mobile-cta.is-hidden {
@@ -471,13 +472,16 @@
     flex: 1;
   }
 
-  .mobile-cta-enquire {
+  .mobile-cta .mobile-cta-enquire,
+  .mobile-cta .mobile-cta-enquire:visited,
+  .mobile-cta .mobile-cta-enquire:active {
     background-color: var(--color-accent);
     color: var(--color-bg);
   }
 
-  .mobile-cta-enquire:hover {
+  .mobile-cta .mobile-cta-enquire:hover {
     background-color: var(--color-accent-hover);
+    color: var(--color-bg);
   }
 
   /* Prevent content from being hidden behind the sticky bar */
