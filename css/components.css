@@ -454,13 +454,12 @@
     gap: var(--space-sm);
     align-items: center;
     justify-content: center;
-    transition: transform 0.3s ease, background-color 0.3s ease, border-top-color 0.3s ease;
+    transition: transform 0.3s ease;
   }
 
   .mobile-cta.is-hidden {
     transform: translateY(100%);
-    background-color: transparent;
-    border-top-color: transparent;
+    pointer-events: none;
   }
 
   .mobile-cta a {
