@@ -58,8 +58,7 @@
       })
       .then(function (payload) {
         if (payload.ok && payload.result.success) {
-          form.hidden = true;
-          if (successBox) successBox.setAttribute('data-visible', 'true');
+          window.location.href = 'thank-you.html';
         } else {
           throw new Error(payload.result.message || 'Submission failed');
         }
