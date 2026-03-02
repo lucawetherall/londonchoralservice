@@ -56,15 +56,15 @@
 
     <section class="section">
       <div class="prose">
-        <h1>Thank you for your enquiry</h1>
-        <p class="lede">We&rsquo;ll be in touch within 24 hours, usually much sooner.</p>
+        <h1 id="ty-heading">Thank you for your enquiry</h1>
+        <p class="lede" id="ty-lede">We&rsquo;ll be in touch within 24 hours, usually much sooner.</p>
         <hr class="rule">
       </div>
     </section>
 
     <section class="section">
       <div class="prose">
-        <p>One of our team will read your message personally and come back to you with honest, practical suggestions. In the meantime, you might find these useful:</p>
+        <p id="ty-detail">One of our team will read your message personally and come back to you with honest, practical suggestions. In the meantime, you might find these useful:</p>
         <ul>
           <li><a href="services.html">Our services</a> &mdash; what we offer and how it works</li>
           <li><a href="music-guides/">Music guides</a> &mdash; help choosing the right music</li>
@@ -98,6 +98,17 @@
     <a href="contact.html" class="mobile-cta-enquire">Enquire</a>
   </div>
 
+  <script>
+  (function () {
+    if (new URLSearchParams(window.location.search).get('from') !== 'call') return;
+    var h1 = document.getElementById('ty-heading');
+    var lede = document.getElementById('ty-lede');
+    var detail = document.getElementById('ty-detail');
+    if (h1) h1.textContent = 'Thank you for calling';
+    if (lede) lede.innerHTML = 'If we missed your call, we\u2019ll ring you back within 4\u00a0hours\u2009\u2014\u2009usually much sooner.';
+    if (detail) detail.textContent = 'If you\u2019d like to leave us some details in the meantime, you might find these useful:';
+  })();
+  </script>
   <script src="js/nav.js"></script>
 </body>
 </html>
