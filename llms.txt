@@ -26,6 +26,39 @@ The London Choral Service provides live music for life's most important occasion
 
 - [Areas We Serve](https://londonchoralservice.com/areas/): All locations where we provide funeral singers, wedding choirs, and ceremony musicians
 - [London](https://londonchoralservice.com/areas/london.html): Funeral singers and wedding choirs across all London boroughs
+  - [Westminster](https://londonchoralservice.com/areas/london/westminster.html): Westminster Abbey, St Martin-in-the-Fields, and churches across the City of Westminster
+  - [City of London](https://londonchoralservice.com/areas/london/city-of-london.html): St Paul's Cathedral, Temple Church, and the historic Square Mile
+  - [Kensington & Chelsea](https://londonchoralservice.com/areas/london/kensington-chelsea.html): Brompton Oratory, Chelsea Old Church, and Holy Trinity Brompton
+  - [Camden](https://londonchoralservice.com/areas/london/camden.html): Hampstead Parish Church, St Pancras New Church, and NW London
+  - [Islington](https://londonchoralservice.com/areas/london/islington.html): Union Chapel, St Mary's Islington, and St James Clerkenwell
+  - [Barnet](https://londonchoralservice.com/areas/london/barnet.html): Hendon and Golders Green Crematoriums, Chipping Barnet and Finchley
+  - [Enfield](https://londonchoralservice.com/areas/london/enfield.html): Enfield Crematorium, Southgate, and Edmonton
+  - [Haringey](https://londonchoralservice.com/areas/london/haringey.html): Highgate, Muswell Hill, Tottenham, and New Southgate Cemetery
+  - [Hackney](https://londonchoralservice.com/areas/london/hackney.html): St John at Hackney, Abney Park, and Stoke Newington
+  - [Tower Hamlets](https://londonchoralservice.com/areas/london/tower-hamlets.html): Christ Church Spitalfields, St Dunstan's Stepney, and Limehouse
+  - [Waltham Forest](https://londonchoralservice.com/areas/london/waltham-forest.html): St Mary's Walthamstow and Chingford Mount Cemetery
+  - [Brent](https://londonchoralservice.com/areas/london/brent.html): St Mary's Willesden, Wembley, and Kilburn
+  - [Harrow](https://londonchoralservice.com/areas/london/harrow.html): St Mary's Harrow-on-the-Hill, Pinner, and Stanmore
+  - [Newham](https://londonchoralservice.com/areas/london/newham.html): East London Crematorium, City of London Cemetery, and Stratford
+  - [Redbridge](https://londonchoralservice.com/areas/london/redbridge.html): Forest Park Crematorium, Ilford, and Wanstead
+  - [Havering](https://londonchoralservice.com/areas/london/havering.html): South Essex Crematorium, Hornchurch, Romford, and Upminster
+  - [Barking & Dagenham](https://londonchoralservice.com/areas/london/barking-dagenham.html): St Margaret's Barking and Eastbrookend Cemetery
+  - [Southwark](https://londonchoralservice.com/areas/london/southwark.html): Southwark Cathedral, Honor Oak Crematorium, and Dulwich
+  - [Lambeth](https://londonchoralservice.com/areas/london/lambeth.html): St John's Waterloo, Lambeth Palace Chapel, and West Norwood
+  - [Lewisham](https://londonchoralservice.com/areas/london/lewisham.html): Hither Green Crematorium and St Mary's Lewisham
+  - [Greenwich](https://londonchoralservice.com/areas/london/greenwich.html): St Alfege Greenwich, Royal Naval Chapel, and Eltham Crematorium
+  - [Bromley](https://londonchoralservice.com/areas/london/bromley.html): Beckenham Crematorium, Bromley Parish Church, and Orpington
+  - [Croydon](https://londonchoralservice.com/areas/london/croydon.html): Croydon Minster, Croydon Crematorium, and surrounding areas
+  - [Bexley](https://londonchoralservice.com/areas/london/bexley.html): St Mary the Virgin Bexley, Erith Crematorium, and Sidcup
+  - [Hammersmith & Fulham](https://londonchoralservice.com/areas/london/hammersmith-fulham.html): St Paul's Hammersmith and Fulham Palace Chapel
+  - [Ealing](https://londonchoralservice.com/areas/london/ealing.html): St Mary's Ealing and South West Middlesex Crematorium
+  - [Hounslow](https://londonchoralservice.com/areas/london/hounslow.html): West London Crematorium, Chiswick, and Isleworth
+  - [Hillingdon](https://londonchoralservice.com/areas/london/hillingdon.html): Breakspear Crematorium, Uxbridge, and Hillingdon
+  - [Richmond upon Thames](https://londonchoralservice.com/areas/london/richmond.html): Mortlake Crematorium, St Anne's Kew, and Hampton Court
+  - [Kingston upon Thames](https://londonchoralservice.com/areas/london/kingston.html): All Saints Kingston and Kingston Crematorium
+  - [Wandsworth](https://londonchoralservice.com/areas/london/wandsworth.html): Putney Vale Crematorium and St Mary's Battersea
+  - [Merton](https://londonchoralservice.com/areas/london/merton.html): Wimbledon Parish Church and South London Crematorium
+  - [Sutton](https://londonchoralservice.com/areas/london/sutton.html): North East Surrey Crematorium and All Saints Carshalton
 - [Birmingham](https://londonchoralservice.com/areas/birmingham.html): Musicians for funerals and weddings in Birmingham and the West Midlands
 - [Manchester](https://londonchoralservice.com/areas/manchester.html): Choirs and singers across Manchester and Greater Manchester
 - [Liverpool](https://londonchoralservice.com/areas/liverpool.html): Funeral and wedding musicians for Liverpool and Merseyside
