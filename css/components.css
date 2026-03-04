@@ -366,6 +366,21 @@
   margin-bottom: 0;
 }
 
+.guide-category {
+  font-size: var(--text-2xl);
+  margin-top: var(--space-3xl);
+  margin-bottom: var(--space-md);
+}
+
+.guide-category:first-child {
+  margin-top: 0;
+}
+
+.guide-list h3 {
+  font-size: var(--text-xl);
+  margin-bottom: var(--space-sm);
+}
+
 /* ═══════════════════════════════════
    CTA Button Link
    ═══════════════════════════════════ */
