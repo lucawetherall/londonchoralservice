@@ -271,7 +271,7 @@
 .form-field input:user-invalid,
 .form-field select:user-invalid,
 .form-field textarea:user-invalid {
-  border-color: #9B2C2C;
+  border-color: var(--color-error);
 }
 
 .form-field input:user-invalid + .form-error,
@@ -283,8 +283,12 @@
 .form-error {
   display: none;
   font-size: var(--text-sm);
-  color: #9B2C2C;
+  color: var(--color-error);
   margin-top: var(--space-xs);
+}
+
+.form-error[data-visible="true"] {
+  display: block;
 }
 
 .form-status {
@@ -299,15 +303,15 @@
 }
 
 .form-status--success {
-  background-color: #E8F0E4;
-  color: #2D5016;
-  border: 1px solid #A8C99B;
+  background-color: var(--color-success-bg);
+  color: var(--color-success);
+  border: 1px solid var(--color-success-border);
 }
 
 .form-status--error {
-  background-color: #FBEBE9;
-  color: #9B2C2C;
-  border: 1px solid #E0A8A8;
+  background-color: var(--color-error-bg);
+  color: var(--color-error);
+  border: 1px solid var(--color-error-border);
 }
 
 .btn {
