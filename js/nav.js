@@ -34,8 +34,12 @@
   var isMobile = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
   if (isMobile && !/thank-you\.html/.test(window.location.pathname)) {
     var telLinks = document.querySelectorAll('a[href^="tel:"]');
-    var thankYouBase = window.location.pathname.indexOf('/music-guides/') !== -1
-      ? '../thank-you.html' : 'thank-you.html';
+    var path = window.location.pathname;
+    var thankYouBase = path.indexOf('/areas/london/') !== -1
+      ? '../../thank-you.html'
+      : path.indexOf('/areas/') !== -1 || path.indexOf('/music-guides/') !== -1
+      ? '../thank-you.html'
+      : 'thank-you.html';
     for (var i = 0; i < telLinks.length; i++) {
       telLinks[i].addEventListener('click', function () {
         setTimeout(function () {

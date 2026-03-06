@@ -8,6 +8,14 @@
   --color-accent-hover: #A85454;
   --color-rule:       #D6CEC6;
 
+  /* ── Feedback Colours ── */
+  --color-error:      #9B2C2C;
+  --color-error-bg:   #FBEBE9;
+  --color-error-border: #E0A8A8;
+  --color-success:    #2D5016;
+  --color-success-bg: #E8F0E4;
+  --color-success-border: #A8C99B;
+
   /* ── Type Scale (Major Third · 1.25) ── */
   --text-xs:      0.8rem;
   --text-sm:      0.875rem;

@@ -19,10 +19,10 @@
 
     // hCaptcha guard
     var captchaError = document.getElementById('captcha-error');
-    if (captchaError) captchaError.style.display = 'none';
+    if (captchaError) captchaError.setAttribute('data-visible', 'false');
     var captchaResponse = form.querySelector('textarea[name=h-captcha-response]');
     if (!captchaResponse || !captchaResponse.value) {
-      if (captchaError) captchaError.style.display = 'block';
+      if (captchaError) captchaError.setAttribute('data-visible', 'true');
       return;
     }
 
@@ -63,7 +63,8 @@
           throw new Error(payload.result.message || 'Submission failed');
         }
       })
-      .catch(function () {
+      .catch(function (err) {
+        console.error('Form submission error:', err);
         if (errorBox) errorBox.setAttribute('data-visible', 'true');
         if (submitBtn) {
           submitBtn.disabled = false;
