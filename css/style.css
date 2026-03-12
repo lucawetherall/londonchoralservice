@@ -1009,6 +1009,17 @@ table {
     padding-bottom: calc(var(--space-4xl) + 3.5rem);
   }
 }
+
+/* ═══════════════════════════════════
+   H1 Sub-heading
+   ═══════════════════════════════════ */
+.h1-sub {
+  display: block;
+  font-size: var(--text-2xl);
+  font-weight: 300;
+  font-style: italic;
+  margin-top: var(--space-sm);
+}
 /* ═══════════════════════════════════
    Print Styles
    ═══════════════════════════════════ */
