@@ -1062,6 +1062,11 @@ table {
     flex-direction: column;
     gap: var(--space-2xl);
   }
+
+  .hero-video {
+    flex: none;
+    width: 100%;
+  }
 }
 /* ═══════════════════════════════════
    Print Styles
