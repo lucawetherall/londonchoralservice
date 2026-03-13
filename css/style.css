@@ -1020,6 +1020,49 @@ table {
   font-style: italic;
   margin-top: var(--space-sm);
 }
+
+/* ═══════════════════════════════════
+   Hero Banner Layout
+   ═══════════════════════════════════ */
+.hero {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3xl);
+}
+
+.hero-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.hero-video {
+  flex: 1;
+  min-width: 0;
+}
+
+/* ── Responsive Video Embed ── */
+.video-embed {
+  position: relative;
+  padding-bottom: 56.25%; /* 16:9 */
+  height: 0;
+  overflow: hidden;
+}
+
+.video-embed iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+@media (max-width: 767px) {
+  .hero {
+    flex-direction: column;
+    gap: var(--space-2xl);
+  }
+}
 /* ═══════════════════════════════════
    Print Styles
    ═══════════════════════════════════ */
@@ -1044,7 +1087,8 @@ table {
   .skip-link,
   .audio-placeholder,
   .contact-form,
-  .btn {
+  .btn,
+  .video-embed {
     display: none !important;
   }
 
