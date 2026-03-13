@@ -1077,6 +1077,49 @@
       font-style: italic;
       margin-top: var(--space-sm);
     }
+    
+    /* ═══════════════════════════════════
+       Hero Banner Layout
+       ═══════════════════════════════════ */
+    .hero {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3xl);
+    }
+    
+    .hero-text {
+      flex: 1;
+      min-width: 0;
+    }
+    
+    .hero-video {
+      flex: 1;
+      min-width: 0;
+    }
+    
+    /* ── Responsive Video Embed ── */
+    .video-embed {
+      position: relative;
+      padding-bottom: 56.25%; /* 16:9 */
+      height: 0;
+      overflow: hidden;
+    }
+    
+    .video-embed iframe {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      border: 0;
+    }
+    
+    @media (max-width: 767px) {
+      .hero {
+        flex-direction: column;
+        gap: var(--space-2xl);
+      }
+    }
     /* ═══════════════════════════════════
        Print Styles
        ═══════════════════════════════════ */
@@ -1101,7 +1144,8 @@
       .skip-link,
       .audio-placeholder,
       .contact-form,
-      .btn {
+      .btn,
+      .video-embed {
         display: none !important;
       }
     
@@ -1288,10 +1332,21 @@
   <main id="main">
 
     <section class="section">
-      <div class="prose">
-        <h1>The London Choral Service<br><span class="h1-sub">When the music has to be perfect</span></h1>
-        <p class="lede">Exceptional singers, choirs, and instrumentalists for funerals, weddings, memorials, and ceremonies across the United Kingdom. Conservatoire-trained musicians who understand that the occasion matters as much as the music.</p>
-        <hr class="rule">
+      <div class="wide hero">
+        <div class="hero-text">
+          <h1>The London Choral Service<br><span class="h1-sub">When the music has to be perfect</span></h1>
+          <p class="lede">Exceptional singers, choirs, and instrumentalists for funerals, weddings, memorials, and ceremonies across the United Kingdom. Conservatoire-trained musicians who understand that the occasion matters as much as the music.</p>
+          <hr class="rule">
+        </div>
+        <div class="hero-video">
+          <div class="video-embed">
+            <iframe src="https://www.youtube-nocookie.com/embed/Lov_NegzVhM"
+                    title="The London Choral Service"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowfullscreen
+                    loading="lazy"></iframe>
+          </div>
+        </div>
       </div>
     </section>
 

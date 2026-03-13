@@ -22,7 +22,8 @@
   .skip-link,
   .audio-placeholder,
   .contact-form,
-  .btn {
+  .btn,
+  .video-embed {
     display: none !important;
   }
 
