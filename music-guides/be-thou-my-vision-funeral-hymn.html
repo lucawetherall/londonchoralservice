@@ -27,24 +27,26 @@
     });
   </script>
 
-  <title>Listen to Our Singers &amp; Musicians — London Choral Service</title>
-  <meta name="description" content="Hear our singers and musicians perform the most requested funeral hymns, wedding music, and ceremony pieces. Samples from Ave Maria to Jerusalem.">
+  <title>Why Be Thou My Vision Is the Best Funeral Hymn — London Choral Service</title>
+  <meta name="description" content="Be Thou My Vision is the most comforting and beautiful funeral hymn you can choose. Here's why this ancient Irish hymn offers genuine consolation and sounds glorious at any service.">
   <meta name="theme-color" content="#F7F3EE">
   <meta name="robots" content="index, follow">
-  <link rel="canonical" href="https://londonchoralservice.com/listen.html">
-  <link rel="alternate" hreflang="en-gb" href="https://londonchoralservice.com/listen.html">
-  <link rel="alternate" hreflang="x-default" href="https://londonchoralservice.com/listen.html">
+  <link rel="canonical" href="https://londonchoralservice.com/music-guides/be-thou-my-vision-funeral-hymn.html">
+  <link rel="alternate" hreflang="en-gb" href="https://londonchoralservice.com/music-guides/be-thou-my-vision-funeral-hymn.html">
+  <link rel="alternate" hreflang="x-default" href="https://londonchoralservice.com/music-guides/be-thou-my-vision-funeral-hymn.html">
 
-  <meta property="og:title" content="Listen to Our Singers &amp; Musicians &mdash; London Choral Service">
-  <meta property="og:description" content="Hear our singers and musicians perform the most requested funeral hymns, wedding music, and ceremony pieces.">
-  <meta property="og:type" content="website">
-  <meta property="og:url" content="https://londonchoralservice.com/listen.html">
+  <meta property="og:title" content="Why Be Thou My Vision Is the Best Funeral Hymn &mdash; London Choral Service">
+  <meta property="og:description" content="Be Thou My Vision is the most comforting and beautiful funeral hymn you can choose. Here's why this ancient Irish hymn offers genuine consolation and sounds glorious at any service.">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://londonchoralservice.com/music-guides/be-thou-my-vision-funeral-hymn.html">
   <meta property="og:locale" content="en_GB">
   <meta property="og:image" content="https://londonchoralservice.com/assets/og-image.png">
+  <meta property="article:published_time" content="2026-03-18">
+  <meta property="article:modified_time" content="2026-03-18">
 
   <meta name="twitter:card" content="summary">
-  <meta name="twitter:title" content="Listen to Our Singers &amp; Musicians &mdash; London Choral Service">
-  <meta name="twitter:description" content="Hear our singers and musicians perform the most requested funeral hymns, wedding music, and ceremony pieces.">
+  <meta name="twitter:title" content="Why Be Thou My Vision Is the Best Funeral Hymn &mdash; London Choral Service">
+  <meta name="twitter:description" content="Be Thou My Vision is the most comforting and beautiful funeral hymn you can choose. Here's why this ancient Irish hymn offers genuine consolation and sounds glorious at any service.">
   <meta name="twitter:image" content="https://londonchoralservice.com/assets/og-image.png">
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1077,6 +1079,87 @@
       font-style: italic;
       margin-top: var(--space-sm);
     }
+    
+    /* ═══════════════════════════════════
+       Hero Banner Layout
+       ═══════════════════════════════════ */
+    .hero {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3xl);
+    }
+    
+    .hero-text {
+      flex: 2;
+      min-width: 0;
+    }
+    
+    .hero-video {
+      flex: 3;
+      min-width: 0;
+    }
+    
+    /* ── Responsive Video Embed ── */
+    .video-embed {
+      position: relative;
+      padding-bottom: 56.25%; /* 16:9 */
+      height: 0;
+      overflow: hidden;
+    }
+    
+    .video-embed iframe {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      border: 0;
+    }
+    
+    .video-thumb {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      padding: 0;
+      border: 0;
+      cursor: pointer;
+      background: #000;
+    }
+    
+    .video-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    
+    .play-btn {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 68px;
+      height: 48px;
+      transform: translate(-50%, -50%);
+      transition: opacity 0.2s;
+    }
+    
+    .video-thumb:hover .play-btn,
+    .video-thumb:focus-visible .play-btn {
+      opacity: 0.85;
+    }
+    
+    @media (max-width: 767px) {
+      .hero {
+        flex-direction: column;
+        gap: var(--space-2xl);
+      }
+    
+      .hero-video {
+        flex: none;
+        width: 100%;
+      }
+    }
     /* ═══════════════════════════════════
        Print Styles
        ═══════════════════════════════════ */
@@ -1101,7 +1184,8 @@
       .skip-link,
       .audio-placeholder,
       .contact-form,
-      .btn {
+      .btn,
+      .video-embed {
         display: none !important;
       }
     
@@ -1158,31 +1242,61 @@
     }
   </style>
 
-  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
 
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
-    "@type": "WebPage",
-    "name": "Listen to Our Singers and Musicians",
-    "url": "https://londonchoralservice.com/listen.html",
-    "inLanguage": "en-GB",
-    "description": "Hear our singers and musicians perform the most requested funeral hymns, wedding music, and ceremony pieces.",
-    "mainEntity": {
-      "@type": "ItemList",
-      "name": "Most Requested Pieces",
-      "itemListElement": [
-        { "@type": "ListItem", "position": 1, "name": "Ave Maria (Schubert) — Soloist" },
-        { "@type": "ListItem", "position": 2, "name": "How Great Thou Art — Full Choir" },
-        { "@type": "ListItem", "position": 3, "name": "Ave Verum Corpus (Mozart) — Full Choir" },
-        { "@type": "ListItem", "position": 4, "name": "The Lord's My Shepherd (Crimond) — Small Choir" },
-        { "@type": "ListItem", "position": 5, "name": "Abide With Me — Full Choir" },
-        { "@type": "ListItem", "position": 6, "name": "Amazing Grace — Soloist" },
-        { "@type": "ListItem", "position": 7, "name": "Jerusalem — Full Choir" }
-      ]
-    }
+    "@graph": [
+      {
+        "@type": "Article",
+        "headline": "Why Be Thou My Vision is the best funeral hymn",
+        "url": "https://londonchoralservice.com/music-guides/be-thou-my-vision-funeral-hymn.html",
+        "inLanguage": "en-GB",
+        "datePublished": "2026-03-18",
+        "dateModified": "2026-03-18",
+        "description": "Be Thou My Vision is the most comforting and beautiful funeral hymn you can choose. Here's why this ancient Irish hymn offers genuine consolation and sounds glorious at any service.",
+        "author": [
+          {
+            "@type": "Person",
+            "name": "Luca Wetherall",
+            "jobTitle": "Artistic Director",
+            "url": "https://londonchoralservice.com/about.html"
+          },
+          {
+            "@type": "Organization",
+            "name": "The London Choral Service",
+            "alternateName": "London Choral Service",
+            "url": "https://londonchoralservice.com"
+          }
+        ],
+        "publisher": {
+          "@type": "Organization",
+          "name": "The London Choral Service",
+          "alternateName": "London Choral Service",
+          "url": "https://londonchoralservice.com",
+          "logo": {
+            "@type": "ImageObject",
+            "url": "https://londonchoralservice.com/assets/og-image.png"
+          }
+        },
+        "mainEntityOfPage": {
+          "@type": "WebPage",
+          "@id": "https://londonchoralservice.com/music-guides/be-thou-my-vision-funeral-hymn.html"
+        }
+      },
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://londonchoralservice.com/" },
+          { "@type": "ListItem", "position": 2, "name": "Music Guides", "item": "https://londonchoralservice.com/music-guides/" },
+          { "@type": "ListItem", "position": 3, "name": "Why Be Thou My Vision Is the Best Funeral Hymn" }
+        ]
+      }
+    ]
   }
   </script>
+
 </head>
 <body>
 
@@ -1190,163 +1304,121 @@
 
   <header class="site-header">
     <nav class="site-nav page-wrap" aria-label="Main navigation">
-      <a href="index.html" class="site-name">The London Choral Service</a>
+      <a href="../index.html" class="site-name">The London Choral Service</a>
       <button class="nav-toggle" aria-expanded="false" aria-controls="nav-menu" aria-label="Menu">
         <span class="nav-toggle-bar"></span>
       </button>
       <ul id="nav-menu" class="nav-links" role="list">
-        <li><a href="index.html">Home</a></li>
-        <li><a href="about.html">About</a></li>
-        <li><a href="services.html">Services</a></li>
-        <li><a href="listen.html" aria-current="page">Listen</a></li>
-        <li><a href="music-guides/">Music Guides</a></li>
-        <li><a href="pricing.html">Pricing</a></li>
-        <li><a href="contact.html">Contact</a></li>
+        <li><a href="../index.html">Home</a></li>
+        <li><a href="../about.html">About</a></li>
+        <li><a href="../services.html">Services</a></li>
+        <li><a href="../listen.html">Listen</a></li>
+        <li><a href="./">Music Guides</a></li>
+        <li><a href="../pricing.html">Pricing</a></li>
+        <li><a href="../contact.html">Contact</a></li>
       </ul>
     </nav>
   </header>
 
   <main id="main">
+    <article>
+
+      <section class="section">
+        <div class="prose">
+          <nav class="breadcrumb" aria-label="Breadcrumb">
+            <ol>
+              <li><a href="../index.html">Home</a></li>
+              <li><a href="./">Music Guides</a></li>
+              <li>Why Be Thou My Vision Is the Best Funeral Hymn</li>
+            </ol>
+          </nav>
+          <h1>Why Be Thou My Vision is the best funeral hymn</h1>
+          <p class="guide-meta">Published 18 March 2026</p>
+          <hr class="rule">
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="prose">
+          <p class="lede">Choosing music for a funeral is one of the hardest things you will ever do. You want something that honours the person you have lost, comforts the people who loved them, and holds the room together when grief threatens to pull it apart. Be Thou My Vision does all of this&thinsp;&mdash;&thinsp;with a quiet, ancient grace that nothing else in the hymn book quite achieves.</p>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="prose">
+          <h2>The words offer real comfort without clich&eacute;</h2>
+          <p>Funeral hymns can fall into two traps: they are either so familiar that the words wash over people without landing, or so specific in their theology that they exclude half the congregation. Be Thou My Vision avoids both.</p>
+          <p>&ldquo;Be thou my vision, O Lord of my heart; naught be all else to me, save that thou art.&rdquo; These are words about trust. About placing yourself in the hands of something larger than your own grief. They do not promise that everything will be all right&thinsp;&mdash;&thinsp;they promise that there is something worth holding on to. At a funeral, that distinction matters enormously.</p>
+          <p>The hymn moves through its verses from personal devotion to transcendence. &ldquo;Be thou my best thought by day or by night&rdquo; becomes &ldquo;Heart of my own heart, whatever befall&rdquo; and finally &ldquo;High King of heaven, my victory won.&rdquo; There is a journey in these words from darkness to light, from loss to hope, and the congregation travels it together. By the final verse, something has shifted in the room. People stand a little straighter. The weight of the occasion has not gone, but it has become bearable.</p>
+          <p>For families who are not especially religious, Be Thou My Vision still works. Its language is poetic rather than doctrinal. It speaks of vision, light, wisdom, and love&thinsp;&mdash;&thinsp;things that resonate whether you are a person of deep faith or none at all. We have performed it at church funerals, crematorium services, and non-religious memorial gatherings, and it has felt right every time.</p>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="prose">
+          <h2>The melody carries people through</h2>
+          <p>The tune, Slane, is named after the Hill of Slane in County Meath, Ireland, and it has the quality that all great folk melodies share: it is simple enough to sing through tears.</p>
+          <p>This matters more than people realise. At a funeral, voices break. Throats tighten. People want to sing but find they cannot. A hymn with a difficult melody or an awkward range will lose them entirely. Slane is gentle enough that even when your voice falters, you can find it again. The melody rises and falls naturally, like breathing, and its unhurried pace gives people time to steady themselves between phrases.</p>
+          <p>Compare this to other popular funeral hymns. Abide With Me is magnificent but builds to a climax that can overwhelm. The Lord&rsquo;s My Shepherd is comforting but so familiar that some people find it difficult to sing without breaking down. How Great Thou Art is powerful but demands vocal confidence. Be Thou My Vision occupies a unique space: it is moving without being overwhelming, gentle without being weak, and it lets people sing even when singing feels impossible.</p>
+          <p>By the final verse, the melody lifts&thinsp;&mdash;&thinsp;not dramatically, but enough. There is a sense of arrival, of having come through something together. It is one of the most powerful moments in any funeral service, and it happens almost without anyone noticing how they got there.</p>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="prose">
+          <h2>It suits every kind of funeral</h2>
+          <p>Be Thou My Vision works in a grand church with a full congregation and in a small crematorium chapel with twenty people. It works at a traditional Church of England funeral, a Catholic Requiem Mass, a Free Church service, and a less formal celebration of life. It works for someone who was deeply religious and for someone who was not religious at all but whose family wanted something beautiful and meaningful.</p>
+          <p>Part of this versatility comes from the hymn&rsquo;s age. The text dates to sixth-century Ireland, attributed to the monk Dallan Forgaill, and the English translation we sing was made by Mary Byrne in 1905. A hymn that has comforted people for fourteen hundred years carries a weight of shared human experience that newer songs cannot replicate. When you sing Be Thou My Vision at a funeral, you are joining a tradition that stretches back to the early days of Christianity in these islands. There is something profoundly reassuring about that.</p>
+          <p>The Irish heritage also gives it a particular warmth. For families with Irish roots, it often feels deeply personal&thinsp;&mdash;&thinsp;a connection to home, to ancestry, to the landscape and faith of their forebears. But you do not need to be Irish for it to move you. The hymn has long since become part of the wider British and global Christian tradition, and its beauty is universal.</p>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="prose">
+          <h2>It sounds beautiful with live musicians</h2>
+          <p>Be Thou My Vision is lovely when a congregation sings it with just an organ. But with a professional choir, it becomes something that stays with people for years.</p>
+          <p>A skilled choral arrangement builds the hymn gradually. The first verse might be sung in gentle unison&thinsp;&mdash;&thinsp;a single line of melody, unadorned, letting the words do the work. With each verse, the harmonies deepen: a second voice joins, then a third, then the full choir opens out into rich, four-part harmony for the final verse. The effect is like watching a sunrise&thinsp;&mdash;&thinsp;slow, inevitable, and by the end, transformative.</p>
+          <p>We perform Be Thou My Vision at funerals regularly, and even after hundreds of services, it still has the power to stop us in our tracks. The combination of that ancient melody, those extraordinary words, and the sound of voices filling a sacred space creates something that goes beyond music. It becomes an act of care&thinsp;&mdash;&thinsp;a gift to the person who has died and to everyone who loved them. You can <a href="../listen.html">hear our singers perform it</a> on our listening page.</p>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="prose">
+          <h2>It sits well alongside other funeral music</h2>
+          <p>A funeral typically has two or three hymns, and Be Thou My Vision pairs naturally with the other pieces families choose most often. It works beautifully alongside Abide With Me, which provides the emotional weight of farewell, while Be Thou My Vision offers the quieter promise of something beyond. Paired with The Lord&rsquo;s My Shepherd, it adds depth and a different texture&thinsp;&mdash;&thinsp;the two hymns complement each other without overlapping.</p>
+          <p>For families choosing a mixture of hymns and non-hymn music, Be Thou My Vision sits comfortably next to pieces like Ave Maria, In Paradisum, or a secular song that held personal meaning. Its folk-melody character means it does not clash with anything&thinsp;&mdash;&thinsp;it enhances whatever surrounds it.</p>
+          <p>We often suggest placing Be Thou My Vision as the final hymn in a funeral service. Its journey from darkness to light, from grief to hope, gives the congregation something to carry with them as they leave. It is the last sound ringing in the building, and it leaves exactly the right feeling in the air. For more ideas on structuring funeral music, see our <a href="funeral-music-guide.html">complete guide to choosing funeral music</a>.</p>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="prose">
+          <h2>What families tell us</h2>
+          <p>The families we work with often say the same thing about Be Thou My Vision: it was the moment in the service where they felt held. Not by any one person, but by the music itself&thinsp;&mdash;&thinsp;by the melody, by the sound of everyone singing together, by the sense that they were part of something larger than their own loss. That is what the best funeral music does. It does not take the grief away. It makes the grief bearable. And Be Thou My Vision does it better than anything else we know.</p>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="prose">
+          <h2>We&rsquo;re here if you&rsquo;d like a hand</h2>
+          <p>Choosing funeral music can feel overwhelming, especially when you are already dealing with so much. We help families with this every day, and we are always happy to talk things through&thinsp;&mdash;&thinsp;whether you know exactly what you want or have no idea where to begin. There is no charge for an initial conversation, and no obligation at all.</p>
+          <p>You might also find these guides helpful: our <a href="popular-funeral-hymns.html">guide to the most popular funeral hymns</a> covers the ten hymns families choose most often, our <a href="funeral-music-guide.html">complete funeral music guide</a> walks through the whole process step by step, and our <a href="funeral-choir-guide.html">funeral choir guide</a> explains what it is like to have professional singers at a service.</p>
+          <p>Be Thou My Vision is also one of the most beautiful <a href="be-thou-my-vision-wedding-hymn.html">wedding hymns</a> you can choose&thinsp;&mdash;&thinsp;our companion guide explores why it works so extraordinarily well in that setting too.</p>
+          <p><a href="../contact.html" class="btn-link">Tell us about the service you&rsquo;re planning</a></p>
+        </div>
+      </section>
+
+    </article>
 
     <section class="section">
       <div class="prose">
-        <nav class="breadcrumb" aria-label="Breadcrumb">
-          <ol>
-            <li><a href="index.html">Home</a></li>
-            <li>Listen</li>
-          </ol>
-        </nav>
-        <h1>Hear our singers and musicians</h1>
-        <p class="lede">A selection of the pieces our clients request most often, performed by our singers and instrumentalists.</p>
-        <hr class="rule">
-      </div>
-    </section>
-
-    <section class="section">
-      <div class="prose">
-        <h2>Most requested</h2>
-
-        <article class="track">
-          <h3 class="track-title">Be Thou My Vision <span class="track-meta">&mdash; Full Choir</span></h3>
-          <p class="track-description">An ancient Irish hymn with a timeless, haunting melody. Especially beautiful in a choral setting with organ accompaniment.</p>
-          <div class="video-embed">
-            <button class="video-thumb" aria-label="Play Be Thou My Vision"
-                    data-video="SaLTS_-I-q4">
-              <img src="https://img.youtube.com/vi/SaLTS_-I-q4/maxresdefault.jpg"
-                   alt="Be Thou My Vision — The London Choral Service" loading="lazy">
-              <svg class="play-btn" viewBox="0 0 68 48" aria-hidden="true">
-                <path d="M66.52 7.74c-.78-2.93-2.49-5.41-5.42-6.19C55.79.13 34 0 34 0S12.21.13 6.9 1.55c-2.93.78-4.63 3.26-5.42 6.19C.06 13.05 0 24 0 24s.06 10.95 1.48 16.26c.78 2.93 2.49 5.41 5.42 6.19C12.21 47.87 34 48 34 48s21.79-.13 27.1-1.55c2.93-.78 4.63-3.26 5.42-6.19C67.94 34.95 68 24 68 24s-.06-10.95-1.48-16.26z" fill="rgba(0,0,0,.7)"/>
-                <path d="M45 24 27 14v20z" fill="#fff"/>
-              </svg>
-            </button>
-          </div>
-        </article>
-
-        <article class="track">
-          <h3 class="track-title">Ave Maria <span class="track-meta">&mdash; Soloist</span></h3>
-          <p class="track-description">Schubert's beloved setting&thinsp;&mdash;&thinsp;by far the most requested piece across all our services. Luminous, moving, and profoundly comforting. Traditionally performed by a solo soprano.</p>
-        </article>
-
-        <article class="track">
-          <h3 class="track-title">How Great Thou Art <span class="track-meta">&mdash; Full Choir</span></h3>
-          <p class="track-description">A hymn of tremendous power. The choral harmonies build gradually, culminating in one of the most stirring, unforgettable climaxes in all congregational music. Genuinely transcendent.</p>
-        </article>
-
-        <article class="track">
-          <h3 class="track-title">Ave Verum Corpus <span class="track-meta">&mdash; Full Choir</span></h3>
-          <p class="track-description">Mozart's sublime motet&thinsp;&mdash;&thinsp;just four minutes of extraordinary beauty, serenity, and grace. One of the perfect pieces of choral music ever written.</p>
-        </article>
-
-        <article class="track">
-          <h3 class="track-title">The Lord's My Shepherd <span class="track-meta">&mdash; Small Choir</span></h3>
-          <p class="track-description">The most beloved hymn at funerals across the United Kingdom, sung here to the well-known Crimond melody. Gentle, familiar, and deeply comforting.</p>
-        </article>
-
-        <article class="track">
-          <h3 class="track-title">Abide With Me <span class="track-meta">&mdash; Full Choir</span></h3>
-          <p class="track-description">A hymn of profound comfort. The final verse&thinsp;&mdash;&thinsp;&ldquo;in life, in death, O Lord, abide with me&rdquo;&thinsp;&mdash;&thinsp;is one of the most powerful moments in any funeral service. Sung with conviction, it offers genuine consolation.</p>
-        </article>
-
-        <article class="track">
-          <h3 class="track-title">Amazing Grace <span class="track-meta">&mdash; Soloist</span></h3>
-          <p class="track-description">Perhaps the world's best-known hymn. As powerful a solo as in a full choral arrangement.</p>
-        </article>
-
-        <article class="track">
-          <h3 class="track-title">Jerusalem <span class="track-meta">&mdash; Full Choir</span></h3>
-          <p class="track-description">Parry's magnificent setting of Blake's visionary poem. A favourite at weddings, memorials, and national occasions&thinsp;&mdash;&thinsp;thrilling with a full choir and organ.</p>
-        </article>
-      </div>
-    </section>
-
-    <section class="section">
-      <div class="prose">
-        <h2>Something different</h2>
-
-        <article class="track">
-          <h3 class="track-title">Fields of Gold <span class="track-meta">&mdash; Soloist</span></h3>
-          <p class="track-description">Sting's gentle, luminous ballad. Perfectly suited to a solo voice with piano accompaniment&thinsp;&mdash;&thinsp;reflective and warm, without being sad. A beautiful choice for celebrations of life.</p>
-        </article>
-
-        <article class="track">
-          <h3 class="track-title">Somewhere Over the Rainbow <span class="track-meta">&mdash; Soloist</span></h3>
-          <p class="track-description">A timeless classic that speaks to hope and yearning without demanding sadness. Disarmingly simple, extraordinarily affecting. Often chosen to capture someone's optimism or adventurous spirit.</p>
-        </article>
-
-        <article class="track">
-          <h3 class="track-title">In Paradisum <span class="track-meta">&mdash; Small Choir</span></h3>
-          <p class="track-description">The closing movement of the Faur&eacute; Requiem&thinsp;&mdash;&thinsp;ethereal, weightless, and profoundly tender. One of the most beautiful pieces in the choral repertoire.</p>
-        </article>
-
-        <article class="track">
-          <h3 class="track-title">Danny Boy <span class="track-meta">&mdash; Soloist</span></h3>
-          <p class="track-description">The beloved Irish air, set to the Londonderry melody. Performed with warmth and feeling, it never fails to move.</p>
-        </article>
-
-        <article class="track">
-          <h3 class="track-title">Time to Say Goodbye <span class="track-meta">&mdash; Soloist</span></h3>
-          <p class="track-description">Dramatic, soaring, and unmistakable. A bold choice that makes a powerful statement at celebrations of life.</p>
-        </article>
-      </div>
-    </section>
-
-    <section class="section">
-      <div class="prose">
-        <h2>Hymns</h2>
-
-        <article class="track">
-          <h3 class="track-title">Make Me a Channel of Your Peace <span class="track-meta">&mdash; Small Choir</span></h3>
-          <p class="track-description">The prayer of St&nbsp;Francis, set to a gentle, singable melody that congregations find easy to join in with.</p>
-        </article>
-
-        <article class="track">
-          <h3 class="track-title">Guide Me, O Thou Great Redeemer <span class="track-meta">&mdash; Full Choir</span></h3>
-          <p class="track-description">The great Welsh hymn, sung to Cwm Rhondda. Rousing, powerful, and guaranteed to lift the spirits of everyone present.</p>
-        </article>
-
-        <article class="track">
-          <h3 class="track-title">All Things Bright and Beautiful <span class="track-meta">&mdash; Small Choir</span></h3>
-          <p class="track-description">A joyful, uplifting hymn that celebrates the natural world. Particularly well suited to celebrations of life and outdoor services.</p>
-        </article>
-      </div>
-    </section>
-
-    <section class="section">
-      <div class="prose">
-        <figure class="pull-quote">
-          <blockquote>
-            <p>&ldquo;We&rsquo;d listened to a few recordings online but nothing prepared us for hearing them in person. Three voices and it filled the entire chapel. People were in tears.&rdquo;</p>
-          </blockquote>
-          <figcaption>&mdash;&ensp;David, Kensington</figcaption>
-        </figure>
-      </div>
-    </section>
-
-    <section class="section">
-      <div class="prose">
-        <p>This is just a sample of what we offer. If there&rsquo;s a piece you&rsquo;ve always imagined hearing at your occasion&thinsp;&mdash;&thinsp;classical, sacred, contemporary, or something completely different&thinsp;&mdash;&thinsp;we can perform virtually anything, and we&rsquo;re happy to create bespoke arrangements for your occasion.</p>
-        <p>For help choosing the right pieces, explore our <a href="music-guides/funeral-music-guide.html">funeral music guide</a> or <a href="music-guides/choosing-wedding-hymns.html">wedding hymns guide</a>.</p>
-        <p><a href="contact.html" class="btn-link">Tell us about your occasion</a></p>
+        <p class="text-sm text-mid">We provide singers and musicians for funerals and memorial services across the UK, including
+          <a href="../areas/london.html">London</a>,
+          <a href="../areas/birmingham.html">Birmingham</a>,
+          <a href="../areas/manchester.html">Manchester</a>,
+          <a href="../areas/oxford.html">Oxford</a>, and
+          <a href="../areas/cambridge.html">Cambridge</a>.
+          <a href="../areas/">See all areas</a>.</p>
       </div>
     </section>
 
@@ -1363,10 +1435,10 @@
         <a href="tel:+447356042468">07356 042468</a>
       </p>
       <p class="text-xs text-mid">
-        Areas we serve: <a href="areas/london.html">London</a> &middot; <a href="areas/birmingham.html">Birmingham</a> &middot; <a href="areas/manchester.html">Manchester</a> &middot; <a href="areas/liverpool.html">Liverpool</a> &middot; <a href="areas/oxford.html">Oxford</a> &middot; <a href="areas/cambridge.html">Cambridge</a> &middot; <a href="areas/reading.html">Reading</a> &middot; <a href="areas/slough-maidenhead.html">Slough &amp; Maidenhead</a> &middot; <a href="areas/guildford.html">Guildford</a> &middot; <a href="areas/brighton.html">Brighton</a> &middot; <a href="areas/chester.html">Chester</a> &middot; <a href="areas/st-albans.html">St Albans</a> &middot; <a href="areas/canterbury.html">Canterbury</a> &middot; <a href="areas/windsor.html">Windsor</a> &middot; <a href="areas/winchester.html">Winchester</a> &middot; <a href="areas/salisbury.html">Salisbury</a> &middot; <a href="areas/bath.html">Bath</a> &middot; <a href="areas/chelmsford.html">Chelmsford</a> &middot; <a href="areas/rochester.html">Rochester</a>
+        Areas we serve: <a href="../areas/london.html">London</a> &middot; <a href="../areas/birmingham.html">Birmingham</a> &middot; <a href="../areas/manchester.html">Manchester</a> &middot; <a href="../areas/liverpool.html">Liverpool</a> &middot; <a href="../areas/oxford.html">Oxford</a> &middot; <a href="../areas/cambridge.html">Cambridge</a> &middot; <a href="../areas/reading.html">Reading</a> &middot; <a href="../areas/slough-maidenhead.html">Slough &amp; Maidenhead</a> &middot; <a href="../areas/guildford.html">Guildford</a> &middot; <a href="../areas/brighton.html">Brighton</a> &middot; <a href="../areas/chester.html">Chester</a> &middot; <a href="../areas/st-albans.html">St Albans</a> &middot; <a href="../areas/canterbury.html">Canterbury</a> &middot; <a href="../areas/windsor.html">Windsor</a> &middot; <a href="../areas/winchester.html">Winchester</a> &middot; <a href="../areas/salisbury.html">Salisbury</a> &middot; <a href="../areas/bath.html">Bath</a> &middot; <a href="../areas/chelmsford.html">Chelmsford</a> &middot; <a href="../areas/rochester.html">Rochester</a>
       </p>
       <p class="text-xs text-mid">
-        <a href="privacy.html">Privacy policy</a>
+        <a href="../privacy.html">Privacy policy</a>
       </p>
       <p class="text-xs text-mid">The London Choral Service is the operating name of Alma Consort Ltd. Based in London, serving the whole of the United Kingdom.</p>
       <p class="text-xs text-mid">&copy; <span data-year>2026</span> The London Choral Service. All rights reserved.</p>
@@ -1374,25 +1446,9 @@
   </footer>
 
   <div class="mobile-cta" aria-label="Quick contact">
-    <a href="contact.html" class="mobile-cta-enquire">Enquire</a>
+    <a href="../contact.html" class="mobile-cta-enquire">Enquire</a>
   </div>
 
-  <script src="js/nav.js" defer></script>
-  <script>
-    document.querySelectorAll('.video-thumb').forEach(function(btn) {
-      btn.addEventListener('click', function() {
-        var id = btn.getAttribute('data-video');
-        var wrap = btn.closest('.video-embed');
-        var iframe = document.createElement('iframe');
-        iframe.src = 'https://www.youtube-nocookie.com/embed/' + id + '?autoplay=1';
-        iframe.title = 'The London Choral Service';
-        iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
-        iframe.allowFullscreen = true;
-        iframe.style.border = '0';
-        wrap.innerHTML = '';
-        wrap.appendChild(iframe);
-      });
-    });
-  </script>
+  <script src="../js/nav.js" defer></script>
 </body>
 </html>
