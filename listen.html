@@ -1078,6 +1078,58 @@
       margin-top: var(--space-sm);
     }
     /* ═══════════════════════════════════
+       Responsive Video Embed
+       ═══════════════════════════════════ */
+    .video-embed {
+      position: relative;
+      padding-bottom: 56.25%; /* 16:9 */
+      height: 0;
+      overflow: hidden;
+    }
+
+    .video-embed iframe {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      border: 0;
+    }
+
+    .video-thumb {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      padding: 0;
+      border: 0;
+      cursor: pointer;
+      background: #000;
+    }
+
+    .video-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .play-btn {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 68px;
+      height: 48px;
+      transform: translate(-50%, -50%);
+      transition: opacity 0.2s;
+    }
+
+    .video-thumb:hover .play-btn,
+    .video-thumb:focus-visible .play-btn {
+      opacity: 0.85;
+    }
+
+    /* ═══════════════════════════════════
        Print Styles
        ═══════════════════════════════════ */
     @media print {
@@ -1101,7 +1153,8 @@
       .skip-link,
       .audio-placeholder,
       .contact-form,
-      .btn {
+      .btn,
+      .video-embed {
         display: none !important;
       }
     
@@ -1225,6 +1278,27 @@
     <section class="section">
       <div class="prose">
         <h2>Most requested</h2>
+
+        <!--
+          VIDEO EMBED TEMPLATE — copy this block into any <article class="track">
+          to add a YouTube video. Replace YOUTUBE_ID with the video ID and
+          update the aria-label / alt text for the piece name.
+
+          <div class="video-embed">
+            <button class="video-thumb" aria-label="Play PIECE NAME"
+                    data-video="YOUTUBE_ID">
+              <img src="https://img.youtube.com/vi/YOUTUBE_ID/maxresdefault.jpg"
+                   alt="PIECE NAME — The London Choral Service" loading="lazy">
+              <svg class="play-btn" viewBox="0 0 68 48" aria-hidden="true">
+                <path d="M66.52 7.74c-.78-2.93-2.49-5.41-5.42-6.19C55.79.13 34 0 34 0S12.21.13 6.9 1.55c-2.93.78-4.63 3.26-5.42 6.19C.06 13.05 0 24 0 24s.06 10.95 1.48 16.26c.78 2.93 2.49 5.41 5.42 6.19C12.21 47.87 34 48 34 48s21.79-.13 27.1-1.55c2.93-.78 4.63-3.26 5.42-6.19C67.94 34.95 68 24 68 24s-.06-10.95-1.48-16.26z" fill="rgba(0,0,0,.7)"/>
+                <path d="M45 24 27 14v20z" fill="#fff"/>
+              </svg>
+            </button>
+          </div>
+
+          The required CSS (.video-embed, .video-thumb, .play-btn) and the
+          click-to-play JS handler are already on this page — no extra code needed.
+        -->
 
         <article class="track">
           <h3 class="track-title">Be Thou My Vision <span class="track-meta">&mdash; Full Choir</span></h3>
