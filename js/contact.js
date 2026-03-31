@@ -17,15 +17,6 @@
       return;
     }
 
-    // hCaptcha guard
-    var captchaError = document.getElementById('captcha-error');
-    if (captchaError) captchaError.setAttribute('data-visible', 'false');
-    var captchaResponse = form.querySelector('textarea[name=h-captcha-response]');
-    if (!captchaResponse || !captchaResponse.value) {
-      if (captchaError) captchaError.setAttribute('data-visible', 'true');
-      return;
-    }
-
     // Reset previous status
     if (successBox) successBox.setAttribute('data-visible', 'false');
     if (errorBox)   errorBox.setAttribute('data-visible', 'false');

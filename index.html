@@ -1493,7 +1493,7 @@
         var wrap = btn.closest('.video-embed');
         var iframe = document.createElement('iframe');
         iframe.src = 'https://www.youtube-nocookie.com/embed/' + id + '?autoplay=1';
-        iframe.title = 'The London Choral Service';
+        iframe.title = (btn.getAttribute('aria-label') || 'The London Choral Service').replace(/^Play /, '') + ' — The London Choral Service';
         iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
         iframe.allowFullscreen = true;
         iframe.style.border = '0';
