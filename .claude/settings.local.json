@@ -6,7 +6,8 @@
       "WebFetch(domain:fonts.googleapis.com)",
       "mcp__Claude_Preview__preview_start",
       "Bash(git config --local --list)",
-      "Bash(git show-ref)"
+      "Bash(git show-ref)",
+      "Bash(python3 fix_spacing.py)"
     ]
   }
 }
