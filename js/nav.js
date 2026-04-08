@@ -30,20 +30,34 @@
     footerObserver.observe(footer);
   }
 
-  // ── Phone call tracking (mobile only): redirect to thank-you after tel: tap ──
-  var isMobile = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-  if (isMobile && !/thank-you\.html/.test(window.location.pathname)) {
-    var telLinks = document.querySelectorAll('a[href^="tel:"]');
+  // ── Conversion tracking: redirect to thank-you after tel:/mailto: clicks ──
+  if (!/thank-you\.html/.test(window.location.pathname)) {
     var path = window.location.pathname;
     var thankYouBase = path.indexOf('/areas/london/') !== -1
       ? '../../thank-you.html'
       : path.indexOf('/areas/') !== -1 || path.indexOf('/music-guides/') !== -1
       ? '../thank-you.html'
       : 'thank-you.html';
-    for (var i = 0; i < telLinks.length; i++) {
-      telLinks[i].addEventListener('click', function () {
+
+    // Phone call tracking (mobile only — tel: only works where a dialer exists)
+    var isMobile = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+    if (isMobile) {
+      var telLinks = document.querySelectorAll('a[href^="tel:"]');
+      for (var i = 0; i < telLinks.length; i++) {
+        telLinks[i].addEventListener('click', function () {
+          setTimeout(function () {
+            window.location.href = thankYouBase + '?from=call';
+          }, 300);
+        });
+      }
+    }
+
+    // Email tracking (all devices)
+    var mailLinks = document.querySelectorAll('a[href^="mailto:"]');
+    for (var j = 0; j < mailLinks.length; j++) {
+      mailLinks[j].addEventListener('click', function () {
         setTimeout(function () {
-          window.location.href = thankYouBase + '?from=call';
+          window.location.href = thankYouBase + '?from=email';
         }, 300);
       });
     }
