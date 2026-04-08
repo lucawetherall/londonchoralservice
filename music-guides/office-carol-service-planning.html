@@ -12,6 +12,7 @@
       loadGA.done = true;
       gtag('js', new Date());
       gtag('config', 'G-9FENN7VS0E');
+      gtag('config', 'AW-17988388404');
       var s = document.createElement('script');
       s.src = 'https://www.googletagmanager.com/gtag/js?id=G-9FENN7VS0E';
       document.head.appendChild(s);
@@ -21,6 +22,7 @@
     } else {
       window.addEventListener('load', function() { setTimeout(loadGA, 100); });
     }
+    if (/[?&](gclid|gbraid|wbraid)=/.test(location.search)) loadGA();
     ['scroll', 'click', 'touchstart', 'keydown'].forEach(function(evt) {
       window.addEventListener(evt, loadGA, { once: true, passive: true });
     });
