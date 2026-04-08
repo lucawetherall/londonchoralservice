@@ -25,6 +25,13 @@
     ['scroll', 'click', 'touchstart', 'keydown'].forEach(function(evt) {
       window.addEventListener(evt, loadGA, { once: true, passive: true });
     });
+    // Ensure Ads conversion fires immediately on this success page
+    loadGA();
+  </script>
+
+  <!-- Google Ads conversion event -->
+  <script>
+    gtag('event', 'ads_conversion_Contact_1', {});
   </script>
 
   <title>Thank You — London Choral Service</title>
