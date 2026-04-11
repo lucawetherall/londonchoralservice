@@ -31,9 +31,20 @@
     loadGA();
   </script>
 
-  <!-- Google Ads conversion event -->
+  <!-- Google Ads conversion events -->
   <script>
     gtag('event', 'ads_conversion_Contact_1', {});
+    (function () {
+      var from = new URLSearchParams(window.location.search).get('from');
+      var events = {
+        wedding:   'ads_conversion_Wedding_1',
+        funeral:   'ads_conversion_Funeral_1',
+        christmas: 'ads_conversion_Christmas_1'
+      };
+      if (from && events[from]) {
+        gtag('event', events[from], {});
+      }
+    })();
   </script>
 
   <title>Thank You — London Choral Service</title>
@@ -1341,13 +1352,26 @@
 
   <script>
   (function () {
-    if (new URLSearchParams(window.location.search).get('from') !== 'call') return;
+    var from = new URLSearchParams(window.location.search).get('from');
+    if (!from) return;
     var h1 = document.getElementById('ty-heading');
     var lede = document.getElementById('ty-lede');
     var detail = document.getElementById('ty-detail');
-    if (h1) h1.textContent = 'Thank you for calling';
-    if (lede) lede.innerHTML = 'If we missed your call, we\u2019ll ring you back within 4\u00a0hours\u2009\u2014\u2009usually much sooner.';
-    if (detail) detail.textContent = 'If you\u2019d like to leave us some details in the meantime, you might find these useful:';
+
+    if (from === 'call') {
+      if (h1) h1.textContent = 'Thank you for calling';
+      if (lede) lede.innerHTML = 'If we missed your call, we\u2019ll ring you back within 4\u00a0hours\u2009\u2014\u2009usually much sooner.';
+      if (detail) detail.textContent = 'If you\u2019d like to leave us some details in the meantime, you might find these useful:';
+    } else if (from === 'wedding') {
+      if (h1) h1.textContent = 'Thank you for your wedding enquiry';
+      if (detail) detail.innerHTML = 'Luca or a member of our team will read your message and come back to you with music suggestions for your wedding. In the meantime, you might find these useful:';
+    } else if (from === 'funeral') {
+      if (h1) h1.textContent = 'Thank you for your enquiry';
+      if (detail) detail.innerHTML = 'Luca or a member of our team will read your message and come back to you with music suggestions tailored to the service. In the meantime, you might find these useful:';
+    } else if (from === 'christmas') {
+      if (h1) h1.textContent = 'Thank you for your enquiry';
+      if (detail) detail.innerHTML = 'Luca or a member of our team will read your message and come back to you with a proposal for your event. In the meantime, you might find these useful:';
+    }
   })();
   </script>
   <script src="js/nav.js" defer></script>
