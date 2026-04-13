@@ -1,6 +1,8 @@
 # SEO & Lead Conversion Improvements — Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking. Use @anthropic-skills:stop-slop for ALL copy written in this plan. Use @anthropic-skills:seo-audit principles when validating schema changes.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking. Use @anthropic-skills:stop-slop for ALL copy written in this plan. Use @anthropic-skills:seo-audit principles when validating schema changes.
+
+> **Status (2026-04-13):** All 12 tasks complete. Commits: 39810c0 (Task 1), 4e496a2 (Task 2), d7989be (Task 3), 21daf89 (Task 4), 8f1c6f4 (Task 5), d0cdd4f (Task 6), 296139f (Task 7), 4e3384c (Task 8), 7e9c4c3 (Task 9), 0343c59 (Task 10), dd25dbb (Task 11).
 
 **Goal:** Close the ranking gap with The London Funeral Singers by propagating schema markup sitewide, enriching content on priority pages, and improving the conversion path from reading to enquiry.
 
@@ -123,13 +125,13 @@ The homepage already has AggregateRating (5 stars, 4 reviews) in its LocalBusine
 
 **What NOT to touch:** `index.html` (already has it), `thank-you.html`, `privacy.html`, `404.html`.
 
-- [ ] **Step 1: Identify which pages need AggregateRating**
+- [x] **Step 1: Identify which pages need AggregateRating**
 
 Read each page's JSON-LD block. Pages that have a LocalBusiness `@id` reference or a Service/Article type should get AggregateRating added to whichever node represents the organization or provider.
 
 For pages with a `Service` type (area pages), add to the `provider` or add a separate LocalBusiness reference. For pages with `Article` type (music guides), add a separate LocalBusiness node. For pages with their own schemas (pricing has OfferCatalog, services has Service), add as a sibling node in `@graph`.
 
-- [ ] **Step 2: Add AggregateRating to core pages**
+- [x] **Step 2: Add AggregateRating to core pages**
 
 For `services.html`, `pricing.html`, `contact.html`, `about.html`, `listen.html`: add a LocalBusiness node to the `@graph` array with `aggregateRating` and `review` data matching the homepage pattern:
 
@@ -149,15 +151,15 @@ For `services.html`, `pricing.html`, `contact.html`, `about.html`, `listen.html`
 
 If the page already references `@id: "https://londonchoralservice.com/#organization"`, add `aggregateRating` to that existing node instead of creating a duplicate.
 
-- [ ] **Step 3: Add AggregateRating to all music guide pages**
+- [x] **Step 3: Add AggregateRating to all music guide pages**
 
 For each file in `music-guides/*.html` (excluding `index.html`): add a LocalBusiness node with AggregateRating to the `@graph` array, referencing `@id: "https://londonchoralservice.com/#organization"`.
 
-- [ ] **Step 4: Add AggregateRating to all area pages**
+- [x] **Step 4: Add AggregateRating to all area pages**
 
 For each file in `areas/*.html` and `areas/london/*.html`: add the AggregateRating to the existing provider reference or add a LocalBusiness node with the `@id` reference.
 
-- [ ] **Step 5: Validate JSON-LD across all modified files**
+- [x] **Step 5: Validate JSON-LD across all modified files**
 
 Run a check that every modified file's JSON-LD block parses as valid JSON. Check for:
 - No trailing commas
@@ -186,7 +188,7 @@ done
 echo "All JSON-LD valid"
 ```
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add -A
@@ -201,7 +203,7 @@ Several music guides have FAQPage schema in their JSON-LD but no matching visibl
 
 **Files:** All `music-guides/*.html` files that have FAQPage schema but no `<h2>Frequently asked questions</h2>` in the visible HTML.
 
-- [ ] **Step 1: Audit which guides need visible FAQs**
+- [x] **Step 1: Audit which guides need visible FAQs**
 
 For each music guide, check:
 1. Does the JSON-LD contain `"@type": "FAQPage"`?
@@ -209,7 +211,7 @@ For each music guide, check:
 
 If (1) is yes and (2) is no, the guide needs a visible FAQ section added.
 
-- [ ] **Step 2: Add visible FAQ sections**
+- [x] **Step 2: Add visible FAQ sections**
 
 For each guide identified in Step 1, add a visible FAQ section before the final CTA section. The content must match the JSON-LD FAQPage questions and answers exactly. Use the existing pattern from area pages:
 
@@ -226,11 +228,11 @@ For each guide identified in Step 1, add a visible FAQ section before the final 
 
 Place this section before the "You don't have to do this alone" / final CTA section.
 
-- [ ] **Step 3: Validate alignment between schema and visible content**
+- [x] **Step 3: Validate alignment between schema and visible content**
 
 For each modified guide, confirm the visible FAQ questions match the JSON-LD FAQPage `mainEntity` questions word-for-word.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add music-guides/
@@ -245,7 +247,7 @@ Music guides and area pages already have BreadcrumbList schema. Core pages (serv
 
 **Files:** `services.html`, `pricing.html`, `about.html`, `contact.html`, `listen.html`
 
-- [ ] **Step 1: Add BreadcrumbList to each core page's JSON-LD**
+- [x] **Step 1: Add BreadcrumbList to each core page's JSON-LD**
 
 For each file, add a `BreadcrumbList` node to the `@graph` array:
 
@@ -261,7 +263,7 @@ For each file, add a `BreadcrumbList` node to the `@graph` array:
 
 Use appropriate page names: "Services", "Pricing", "About", "Contact", "Listen".
 
-- [ ] **Step 2: Add visible breadcrumb nav to pages missing it**
+- [x] **Step 2: Add visible breadcrumb nav to pages missing it**
 
 Check each core page for a `<nav class="breadcrumb">` element. If missing, add it at the top of `<main>` inside the first `<section class="section"><div class="prose">`, before the `<h1>`:
 
@@ -274,7 +276,7 @@ Check each core page for a `<nav class="breadcrumb">` element. If missing, add i
 </nav>
 ```
 
-- [ ] **Step 3: Validate and commit**
+- [x] **Step 3: Validate and commit**
 
 Validate JSON-LD parses correctly. Commit:
 
@@ -291,17 +293,17 @@ Currently 436 words. Needs expansion with FAQ content, value clarification, and 
 
 **File:** `pricing.html`
 
-- [ ] **Step 1: Read the current page content**
+- [x] **Step 1: Read the current page content**
 
 Read `pricing.html` fully. Note the existing structure, pricing tiers, and FAQ schema content.
 
-- [ ] **Step 2: Expand pricing descriptions**
+- [x] **Step 2: Expand pricing descriptions**
 
 For each pricing tier, add a brief description of what the client gets. Not a feature list. Practical information: what the ensemble sounds like, what occasions it suits, what the experience is like on the day. 2-3 sentences per tier.
 
 Follow stop-slop rules. No "whether you're looking for..." openers. No "perfect for any occasion" filler. State what happens.
 
-- [ ] **Step 3: Add visible FAQ section**
+- [x] **Step 3: Add visible FAQ section**
 
 The page has FAQPage schema with 4 Q&As. Add a visible FAQ section matching the schema content. Check if a visible FAQ section already exists. If not, add one using the standard pattern:
 
@@ -318,7 +320,7 @@ The page has FAQPage schema with 4 Q&As. Add a visible FAQ section matching the 
 
 Expand the FAQ answers beyond the schema minimum to provide genuinely useful detail (the schema text can be a summary; the visible text can be longer).
 
-- [ ] **Step 4: Add testimonial relevant to pricing**
+- [x] **Step 4: Add testimonial relevant to pricing**
 
 Add a pull-quote from someone who found the pricing fair or the value good. Use the existing pattern:
 
@@ -331,7 +333,7 @@ Add a pull-quote from someone who found the pricing fair or the value good. Use 
 
 Place near the pricing section to reduce price anxiety.
 
-- [ ] **Step 5: Add phone number in content**
+- [x] **Step 5: Add phone number in content**
 
 Add a line below the main CTA with the phone number:
 
@@ -339,7 +341,7 @@ Add a line below the main CTA with the phone number:
 <p class="text-sm text-mid">Or call us on <a href="tel:+447356042468">07356 042468</a> to talk through options.</p>
 ```
 
-- [ ] **Step 6: Validate and commit**
+- [x] **Step 6: Validate and commit**
 
 Run `./build.sh`. Validate JSON-LD. Commit:
 
@@ -356,11 +358,11 @@ Currently 733 words. Needs expansion with process detail, testimonials per servi
 
 **File:** `services.html`
 
-- [ ] **Step 1: Read the current page content**
+- [x] **Step 1: Read the current page content**
 
 Read `services.html` fully. Note existing service categories and structure.
 
-- [ ] **Step 2: Expand each service type section**
+- [x] **Step 2: Expand each service type section**
 
 For each service type (funerals, weddings, memorials, celebrations of life, corporate), add:
 - What's included at a practical level
@@ -369,22 +371,22 @@ For each service type (funerals, weddings, memorials, celebrations of life, corp
 
 Target: 200-300 words per service type. Stop-slop rules apply.
 
-- [ ] **Step 3: Add visible FAQ section**
+- [x] **Step 3: Add visible FAQ section**
 
 The page has FAQPage schema. Add matching visible FAQ section if not present. Expand answers to be genuinely helpful.
 
-- [ ] **Step 4: Add phone number in content**
+- [x] **Step 4: Add phone number in content**
 
 Add phone number near the main CTA, following the same pattern as Task 4.
 
-- [ ] **Step 5: Strengthen internal links**
+- [x] **Step 5: Strengthen internal links**
 
 Add contextual links to:
 - Relevant music guides (funeral music guide from funeral section, wedding guides from wedding section)
 - Pricing page
 - Area pages (brief "We serve [areas]" with links)
 
-- [ ] **Step 6: Validate and commit**
+- [x] **Step 6: Validate and commit**
 
 Run `./build.sh`. Validate JSON-LD. Commit:
 
@@ -401,11 +403,11 @@ Currently 495 words with minimal trust signals. Needs to compete with the compet
 
 **File:** `about.html`
 
-- [ ] **Step 1: Read the current page content**
+- [x] **Step 1: Read the current page content**
 
 Read `about.html` fully. Note existing content about the founder and musicians.
 
-- [ ] **Step 2: Add schema markup**
+- [x] **Step 2: Add schema markup**
 
 The about page currently has no JSON-LD beyond meta tags. Add an `@graph` with:
 - `AboutPage` type
@@ -444,7 +446,7 @@ The about page currently has no JSON-LD beyond meta tags. Add an `@graph` with:
 }
 ```
 
-- [ ] **Step 3: Expand trust signals**
+- [x] **Step 3: Expand trust signals**
 
 Add concrete credentials and social proof:
 - Founder's Oxford affiliation and relevant background
@@ -455,11 +457,11 @@ Add concrete credentials and social proof:
 
 No vague claims. Specific numbers and names. Stop-slop rules apply.
 
-- [ ] **Step 4: Add testimonials**
+- [x] **Step 4: Add testimonials**
 
 Add 2-3 pull-quote testimonials distributed through the page, not clustered at the bottom.
 
-- [ ] **Step 5: Validate and commit**
+- [x] **Step 5: Validate and commit**
 
 Run `./build.sh`. Validate JSON-LD. Commit:
 
@@ -476,11 +478,11 @@ The homepage is the most-visited page. It already has good schema, a video embed
 
 **File:** `index.html`
 
-- [ ] **Step 1: Read the current homepage content**
+- [x] **Step 1: Read the current homepage content**
 
 Read `index.html` main content fully. Note existing sections and their order.
 
-- [ ] **Step 2: Add trust signals above the fold**
+- [x] **Step 2: Add trust signals above the fold**
 
 In the hero section or immediately after it, add specific credibility markers:
 - Review rating (e.g. "Rated 5 stars by every family we've worked with")
@@ -489,15 +491,15 @@ In the hero section or immediately after it, add specific credibility markers:
 
 Keep it brief. One or two lines. Not a trust badge wall.
 
-- [ ] **Step 3: Tighten the value proposition**
+- [x] **Step 3: Tighten the value proposition**
 
 Review the hero text (`<h1>` and `.lede`). Does it differentiate from competitors or state something generic? If generic, rewrite to lead with what makes this service different. Stop-slop rules apply.
 
-- [ ] **Step 4: Strengthen the CTA section**
+- [x] **Step 4: Strengthen the CTA section**
 
 The final CTA section currently reads: "A ten-minute conversation..." Review and sharpen. The CTA should connect emotionally without being manipulative. Add phone number alongside the contact link.
 
-- [ ] **Step 5: Validate and commit**
+- [x] **Step 5: Validate and commit**
 
 Run `./build.sh`. Validate JSON-LD. Commit:
 
@@ -520,7 +522,7 @@ Music guides have strong content and CTAs but no testimonials. Adding 1-2 pull-q
 - `music-guides/celebration-of-life-music.html`
 - `music-guides/wedding-ceremony-music.html`
 
-- [ ] **Step 1: Add one testimonial per priority guide**
+- [x] **Step 1: Add one testimonial per priority guide**
 
 Insert a `<figure class="pull-quote">` after the second or third content section (not at the top, not at the very end). Choose testimonials that relate to the guide's topic:
 - Funeral guides: testimonials about funeral music experience
@@ -528,7 +530,7 @@ Insert a `<figure class="pull-quote">` after the second or third content section
 
 Use the existing testimonials from the homepage schema or ask for new ones. Each testimonial should feel connected to what the reader just read about.
 
-- [ ] **Step 2: Validate and commit**
+- [x] **Step 2: Validate and commit**
 
 ```bash
 git add music-guides/
@@ -548,11 +550,11 @@ Area pages average ~700 words with templated content. Priority boroughs need uni
 - `areas/london/southwark.html`
 - `areas/london/lambeth.html`
 
-- [ ] **Step 1: Read all 5 pages and identify shared/templated content**
+- [x] **Step 1: Read all 5 pages and identify shared/templated content**
 
 Read each page. Note which paragraphs are identical or near-identical across pages (the boilerplate). Note which content is genuinely unique (venue names, local details).
 
-- [ ] **Step 2: Expand unique content for each borough**
+- [x] **Step 2: Expand unique content for each borough**
 
 For each page, add genuinely borough-specific information:
 - Name specific churches, crematoriums, and ceremony venues in that borough
@@ -562,15 +564,15 @@ For each page, add genuinely borough-specific information:
 
 Target: expand from ~700 words to 1,000-1,200 words of genuinely distinct content. Stop-slop rules apply. No "nestled in the heart of..." filler.
 
-- [ ] **Step 3: Add cross-links to music guides**
+- [x] **Step 3: Add cross-links to music guides**
 
 Each area page should link to 2-3 relevant music guides contextually within the content. For example: "Choosing hymns for a funeral at [Venue]? Our [funeral hymns guide](../music-guides/popular-funeral-hymns.html) covers the most popular options."
 
-- [ ] **Step 4: Add cross-links to adjacent boroughs**
+- [x] **Step 4: Add cross-links to adjacent boroughs**
 
 Add a brief "Nearby areas" section or inline mentions linking to adjacent borough pages.
 
-- [ ] **Step 5: Validate and commit**
+- [x] **Step 5: Validate and commit**
 
 Run `./build.sh`. Validate JSON-LD. Commit:
 
@@ -587,24 +589,24 @@ Strengthen the link graph between pages with contextual (in-content) links. Focu
 
 **Files:** Core pages, priority music guides, priority area pages.
 
-- [ ] **Step 1: Map existing internal links**
+- [x] **Step 1: Map existing internal links**
 
 For each priority page, list all internal links currently present. Identify gaps:
 - Do music guides link to area pages? (Currently: minimal — funeral-music-guide.html has a brief area links section at the bottom)
 - Do area pages link to specific music guides? (Currently: some but could be more contextual)
 - Do core pages cross-link effectively?
 
-- [ ] **Step 2: Add contextual internal links to music guides**
+- [x] **Step 2: Add contextual internal links to music guides**
 
 For each priority music guide, add 2-3 contextual links to area pages within the content. Not a separate "areas" section (that exists), but inline links like: "Families in [area] often choose [piece] for services at [venue] — see our [area page]."
 
-- [ ] **Step 3: Add contextual internal links to core pages**
+- [x] **Step 3: Add contextual internal links to core pages**
 
 - Services page: link to specific music guides from each service type section
 - Pricing page: link to relevant guides that discuss costs in more detail
 - About page: link to listen page and services page contextually
 
-- [ ] **Step 4: Validate no broken links**
+- [x] **Step 4: Validate no broken links**
 
 Check that all added links resolve to existing pages:
 
@@ -623,7 +625,7 @@ for f in $(find . -name '*.html' -not -path '*/.git/*'); do
 done
 ```
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add -A
@@ -638,7 +640,7 @@ Small improvements to reduce friction at the point of conversion.
 
 **Files:** `contact.html`, `thank-you.html`
 
-- [ ] **Step 1: Add reassurance line near the form**
+- [x] **Step 1: Add reassurance line near the form**
 
 In `contact.html`, add a brief line near the submit button that sets expectations:
 
@@ -648,7 +650,7 @@ In `contact.html`, add a brief line near the submit button that sets expectation
 
 Place it between the hCaptcha and the submit button, or immediately after the submit button.
 
-- [ ] **Step 2: Consider occasion dropdown refinement**
+- [x] **Step 2: Consider occasion dropdown refinement**
 
 Review the current dropdown options:
 ```
@@ -657,7 +659,7 @@ Funeral | Wedding | Memorial service | Celebration of life | Corporate event | O
 
 Consider whether splitting "Funeral" into "Church funeral" and "Crematorium service" adds useful specificity. If it adds complexity without clear benefit, leave it as is.
 
-- [ ] **Step 3: Improve thank-you page**
+- [x] **Step 3: Improve thank-you page**
 
 Read `thank-you.html`. It already has good content ("We'll be in touch within 24 hours"). Add:
 - Who will respond (e.g. "Luca or a member of our team")
@@ -665,7 +667,7 @@ Read `thank-you.html`. It already has good content ("We'll be in touch within 24
 
 Keep it concise. 1-2 additional sentences.
 
-- [ ] **Step 4: Validate and commit**
+- [x] **Step 4: Validate and commit**
 
 Run `./build.sh`. Commit:
 
@@ -682,11 +684,11 @@ Update lastmod dates in the sitemap for all modified pages and run the full buil
 
 **File:** `sitemap.xml`
 
-- [ ] **Step 1: Update lastmod dates**
+- [x] **Step 1: Update lastmod dates**
 
 For every page modified in Tasks 1-11, update the `<lastmod>` value in `sitemap.xml` to today's date (YYYY-MM-DD format).
 
-- [ ] **Step 2: Run full build**
+- [x] **Step 2: Run full build**
 
 ```bash
 ./build.sh
@@ -694,11 +696,11 @@ For every page modified in Tasks 1-11, update the `<lastmod>` value in `sitemap.
 
 Verify output shows the expected number of files processed.
 
-- [ ] **Step 3: Validate all JSON-LD sitewide**
+- [x] **Step 3: Validate all JSON-LD sitewide**
 
 Run the JSON validation script from Task 1 Step 5 across all HTML files. Fix any errors.
 
-- [ ] **Step 4: Spot-check key pages visually**
+- [x] **Step 4: Spot-check key pages visually**
 
 Open in a browser and verify:
 - Homepage trust signals display correctly
@@ -708,7 +710,7 @@ Open in a browser and verify:
 - Contact page reassurance line appears near form
 - Thank-you page updates display
 
-- [ ] **Step 5: Final commit**
+- [x] **Step 5: Final commit**
 
 ```bash
 git add sitemap.xml

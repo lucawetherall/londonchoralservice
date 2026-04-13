@@ -39,4 +39,8 @@ for file in $(find "$SCRIPT_DIR" -name '*.html' -not -path '*/.git/*'); do
 done
 
 echo "Inlined CSS into $count HTML files"
+
+echo "Validating JSON-LD..."
+python3 validate_jsonld.py
+
 echo "Done."
