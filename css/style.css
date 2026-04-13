@@ -60,8 +60,10 @@
 @media (max-width: 599px) {
   :root {
     --text-3xl:     2.2rem;
+    --text-2xl:     1.953rem;
+    --text-xl:      1.563rem;
     --text-display: 2.6rem;
-    --space-4xl:    4rem;
+    --space-4xl:    3rem;
   }
 }
 
@@ -636,16 +638,25 @@ table {
     display: block;
     width: 100%;
     padding-inline: 0;
+    padding-block: var(--space-sm);
+  }
+
+  .pricing-table tr:first-child td:first-child {
+    padding-top: var(--space-lg);
+  }
+
+  .pricing-table tr td:last-child {
+    padding-bottom: var(--space-lg);
   }
 
   .pricing-detail {
     padding-inline: 0;
-    margin-top: var(--space-sm);
+    margin-top: 0;
   }
 
   .pricing-price {
     text-align: left;
-    margin-top: var(--space-sm);
+    margin-top: 0;
   }
 }
 
