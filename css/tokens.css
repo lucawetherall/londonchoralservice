@@ -60,8 +60,10 @@
 @media (max-width: 599px) {
   :root {
     --text-3xl:     2.2rem;
+    --text-2xl:     1.953rem;
+    --text-xl:      1.563rem;
     --text-display: 2.6rem;
-    --space-4xl:    4rem;
+    --space-4xl:    3rem;
   }
 }
 
