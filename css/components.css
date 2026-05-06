@@ -107,16 +107,25 @@
     display: block;
     width: 100%;
     padding-inline: 0;
+    padding-block: var(--space-sm);
+  }
+
+  .pricing-table tr:first-child td:first-child {
+    padding-top: var(--space-lg);
+  }
+
+  .pricing-table tr td:last-child {
+    padding-bottom: var(--space-lg);
   }
 
   .pricing-detail {
     padding-inline: 0;
-    margin-top: var(--space-sm);
+    margin-top: 0;
   }
 
   .pricing-price {
     text-align: left;
-    margin-top: var(--space-sm);
+    margin-top: 0;
   }
 }
 
