@@ -14,7 +14,7 @@
   </url>
   <url>
     <loc>https://londonchoralservice.com/services.html</loc>
-    <lastmod>2026-03-28</lastmod>
+    <lastmod>2026-05-02</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -26,7 +26,7 @@
   </url>
   <url>
     <loc>https://londonchoralservice.com/pricing.html</loc>
-    <lastmod>2026-03-28</lastmod>
+    <lastmod>2026-05-02</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -38,43 +38,73 @@
   </url>
   <url>
     <loc>https://londonchoralservice.com/weddings.html</loc>
-    <lastmod>2026-04-16</lastmod>
+    <lastmod>2026-05-02</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://londonchoralservice.com/funerals.html</loc>
-    <lastmod>2026-04-11</lastmod>
+    <lastmod>2026-05-02</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://londonchoralservice.com/christmas.html</loc>
-    <lastmod>2026-04-11</lastmod>
+    <lastmod>2026-05-02</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://londonchoralservice.com/for-funeral-directors.html</loc>
+    <lastmod>2026-05-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://londonchoralservice.com/for-wedding-planners.html</loc>
+    <lastmod>2026-05-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://londonchoralservice.com/corporate.html</loc>
+    <lastmod>2026-05-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://londonchoralservice.com/music-guides/abide-with-me.html</loc>
+    <lastmod>2026-05-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://londonchoralservice.com/music-guides/jerusalem.html</loc>
+    <lastmod>2026-05-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
     <loc>https://londonchoralservice.com/music-guides/</loc>
-    <lastmod>2026-03-28</lastmod>
+    <lastmod>2026-05-02</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://londonchoralservice.com/music-guides/funeral-music-guide.html</loc>
-    <lastmod>2026-03-28</lastmod>
+    <lastmod>2026-05-02</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://londonchoralservice.com/music-guides/popular-funeral-hymns.html</loc>
-    <lastmod>2026-03-28</lastmod>
+    <lastmod>2026-05-02</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://londonchoralservice.com/music-guides/choosing-wedding-hymns.html</loc>
-    <lastmod>2026-03-28</lastmod>
+    <lastmod>2026-05-02</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
@@ -218,13 +248,13 @@
   </url>
   <url>
     <loc>https://londonchoralservice.com/areas/birmingham.html</loc>
-    <lastmod>2026-03-28</lastmod>
+    <lastmod>2026-05-02</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://londonchoralservice.com/areas/manchester.html</loc>
-    <lastmod>2026-03-28</lastmod>
+    <lastmod>2026-05-02</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
@@ -236,13 +266,13 @@
   </url>
   <url>
     <loc>https://londonchoralservice.com/areas/oxford.html</loc>
-    <lastmod>2026-03-28</lastmod>
+    <lastmod>2026-05-02</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://londonchoralservice.com/areas/cambridge.html</loc>
-    <lastmod>2026-03-28</lastmod>
+    <lastmod>2026-05-02</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
@@ -266,7 +296,7 @@
   </url>
   <url>
     <loc>https://londonchoralservice.com/areas/brighton.html</loc>
-    <lastmod>2026-03-28</lastmod>
+    <lastmod>2026-05-02</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>

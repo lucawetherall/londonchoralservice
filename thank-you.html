@@ -40,6 +40,9 @@
         wedding:   'ads_conversion_Wedding_1',
         funeral:   'ads_conversion_Funeral_1',
         christmas: 'ads_conversion_Christmas_1'
+        // To add a corporate-specific conversion: create the event in Google Ads
+        // and add: corporate: 'ads_conversion_Corporate_1' here.
+        // Until then, corporate enquiries fire the generic Contact conversion above.
       };
       if (from && events[from]) {
         gtag('event', events[from], {});
@@ -1371,6 +1374,9 @@
     } else if (from === 'christmas') {
       if (h1) h1.textContent = 'Thank you for your enquiry';
       if (detail) detail.innerHTML = 'Luca or a member of our team will read your message and come back to you with a proposal for your event. In the meantime, you might find these useful:';
+    } else if (from === 'corporate') {
+      if (h1) h1.textContent = 'Thank you for your enquiry';
+      if (detail) detail.innerHTML = 'Luca or a member of our team will read your message and come back to you with a proposal within 48 hours. In the meantime, you might find these useful:';
     }
   })();
   </script>
