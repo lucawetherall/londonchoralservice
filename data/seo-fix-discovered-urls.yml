@@ -1,0 +1,106 @@
+# Discovered URLs and data for SEO audit fix programme
+# Generated 2026-05-08
+#
+# Phase 1 output. Phase 2 (schema work) reads this file.
+# All non-TODO URLs are verified to exist (HTTP fetch or authoritative search hit)
+# unless flagged otherwise in the inline comment.
+#
+# Geo coords use 5dp precision throughout. The values are commercial/landmark
+# centroids of each borough or city (e.g. Bromley town, not the borough's
+# geometric centroid) so that LocalBusiness schema and area-page geo-targeting
+# resolve to the recognisable heart of each locality. Spot-checked against
+# Wikipedia infoboxes; all pre-computed values either matched within 0.005 or
+# were retained as the better commercial-centre value.
+
+luca_wetherall_linkedin: "https://www.linkedin.com/in/luca-wetherall-377a85140/"
+luca_wetherall_oxford_faculty: "https://www.music.ox.ac.uk/people/luca-wetherall"
+luca_wetherall_orcid: "TODO"  # candidate 0000-0003-4217-5362 surfaced in search; ORCID page is JS-rendered and could not be confirmed via WebFetch. User to verify ownership before publishing.
+
+lcs_linkedin_company: "TODO"  # /company/london-choral-service returned 404; user to create or supply the canonical slug.
+lcs_youtube_channel: "https://www.youtube.com/@londonchoralservice"  # confirmed via oEmbed author_url for all four embedded videos
+
+alma_consort_companies_house: "https://find-and-update.company-information.service.gov.uk/company/16785727"
+alma_consort_registered_office_postcode: "N1 7GU"  # 20 Wenlock Road, London — registered 15 Oct 2025, SIC 90010 Performing arts
+
+gbp_canonical_maps_url: "TODO"  # share.google/HRgq38OubHmj3Zz9v (currently in index.html sameAs) resolves only client-side; canonical /maps/place/ URL must be captured manually from a logged-in browser. See MANUAL-ACTIONS-REQUIRED.md §1.
+
+videos:
+  - page: "pricing.html"
+    youtube_id: "Lov_NegzVhM"
+    title: "Singers for Funerals, Weddings, and Events across the UK"
+    upload_date: "TODO"  # YouTube watch page blocks WebFetch behind consent gate; oEmbed does not expose dates. Resolve via YouTube Data API or manual lookup.
+    duration: "TODO"
+  - page: "listen.html"
+    position: 1
+    youtube_id: "G9-R6k5n7Io"
+    title: "Abide With Me (Eventide)"
+    upload_date: "TODO"
+    duration: "TODO"
+  - page: "listen.html"
+    position: 2
+    youtube_id: "nasqXWlbf1g"
+    title: "He Shall Feed His Flock - Handel (The Messiah)"
+    upload_date: "TODO"
+    duration: "TODO"
+  - page: "listen.html"
+    position: 3
+    youtube_id: "SaLTS_-I-q4"
+    title: "Be Thou My Vision (Slane)"
+    upload_date: "TODO"
+    duration: "TODO"
+
+geo_areas:
+  westminster: [51.49594, -0.13495]
+  city-of-london: [51.51519, -0.09180]
+  kensington-chelsea: [51.49955, -0.19094]
+  camden: [51.54475, -0.16058]
+  islington: [51.53620, -0.10288]
+  barnet: [51.65292, -0.20011]
+  enfield: [51.65223, -0.08079]
+  haringey: [51.59099, -0.11193]
+  hackney: [51.54487, -0.05538]
+  tower-hamlets: [51.50975, -0.05954]
+  waltham-forest: [51.59017, 0.00510]
+  brent: [51.55883, -0.27148]
+  harrow: [51.58046, -0.34254]
+  newham: [51.52772, 0.03492]
+  redbridge: [51.58915, 0.07823]
+  havering: [51.58122, 0.18373]
+  barking-dagenham: [51.55385, 0.13447]
+  southwark: [51.50306, -0.08763]
+  lambeth: [51.46125, -0.11665]
+  lewisham: [51.45685, -0.01051]
+  greenwich: [51.48205, 0.00569]
+  bromley: [51.40585, 0.01464]
+  croydon: [51.37214, -0.10222]
+  bexley: [51.44127, 0.14860]
+  hammersmith-fulham: [51.49260, -0.22360]
+  ealing: [51.51308, -0.30496]
+  hounslow: [51.46817, -0.36106]
+  hillingdon: [51.53517, -0.44820]
+  richmond: [51.46128, -0.30326]
+  kingston: [51.41229, -0.30019]
+  wandsworth: [51.45691, -0.19200]
+  merton: [51.41068, -0.21003]
+  sutton: [51.36172, -0.19449]
+
+geo_cities:
+  london: [51.50735, -0.12776]
+  birmingham: [52.48624, -1.89045]
+  manchester: [53.48076, -2.24264]
+  liverpool: [53.40805, -2.99169]
+  oxford: [51.75201, -1.25758]
+  cambridge: [52.20534, 0.12182]
+  reading: [51.45427, -0.97813]
+  slough-maidenhead: [51.51054, -0.59546]
+  guildford: [51.23628, -0.57064]
+  brighton: [50.82253, -0.13725]
+  chester: [53.19046, -2.89195]
+  st-albans: [51.75201, -0.33677]
+  canterbury: [51.27986, 1.07869]
+  windsor: [51.48333, -0.60417]
+  winchester: [51.06281, -1.30877]
+  salisbury: [51.06840, -1.79528]
+  bath: [51.37510, -2.36174]
+  chelmsford: [51.73575, 0.46850]
+  rochester: [51.38820, 0.50537]
