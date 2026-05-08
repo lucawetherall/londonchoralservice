@@ -1688,109 +1688,110 @@
 
   <script type="application/ld+json">
   {
-  "@context": "https://schema.org",
-  "@graph": [
-    {
-      "@type": "Service",
-      "name": "Funeral Singers & Wedding Choirs in Hounslow",
-      "url": "https://londonchoralservice.com/areas/london/hounslow.html",
-      "description": "Professional funeral singers and wedding choirs in Hounslow, London.",
-      "provider": {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Service",
+        "name": "Funeral Singers & Wedding Choirs in Hounslow",
+        "url": "https://londonchoralservice.com/areas/london/hounslow.html",
+        "description": "Professional funeral singers and wedding choirs in Hounslow, London.",
+        "provider": {
+          "@type": "LocalBusiness",
+          "@id": "https://londonchoralservice.com/#organization"
+        },
+        "areaServed": {
+          "@type": "AdministrativeArea",
+          "name": "London Borough of Hounslow",
+          "containedInPlace": {
+            "@type": "City",
+            "name": "London",
+            "addressCountry": "GB"
+          }
+        },
+        "serviceType": [
+          "Funeral Music",
+          "Wedding Music",
+          "Memorial Music",
+          "Ceremony Music"
+        ],
+        "geo": {
+          "@type": "GeoCoordinates",
+          "latitude": 51.46817,
+          "longitude": -0.36106
+        }
+      },
+      {
         "@type": "LocalBusiness",
-        "name": "The London Choral Service",
-        "alternateName": "London Choral Service",
-        "url": "https://londonchoralservice.com",
-        "telephone": "+447356042468",
-        "email": "office@londonchoralservice.com"
+        "@id": "https://londonchoralservice.com/#organization",
+        "name": "The London Choral Service"
       },
-      "areaServed": {
-        "@type": "AdministrativeArea",
-        "name": "London Borough of Hounslow",
-        "containedInPlace": {
-          "@type": "City",
-          "name": "London",
-          "addressCountry": "GB"
-        }
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "https://londonchoralservice.com/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Areas We Serve",
+            "item": "https://londonchoralservice.com/areas/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 3,
+            "name": "London",
+            "item": "https://londonchoralservice.com/areas/london.html"
+          },
+          {
+            "@type": "ListItem",
+            "position": 4,
+            "name": "Hounslow"
+          }
+        ]
       },
-      "serviceType": [
-        "Funeral Music",
-        "Wedding Music",
-        "Memorial Music",
-        "Ceremony Music"
-      ]
-    },
-    {
-      "@type": "LocalBusiness",
-      "@id": "https://londonchoralservice.com/#organization",
-      "name": "The London Choral Service"
-    },
-    {
-      "@type": "BreadcrumbList",
-      "itemListElement": [
-        {
-          "@type": "ListItem",
-          "position": 1,
-          "name": "Home",
-          "item": "https://londonchoralservice.com/"
-        },
-        {
-          "@type": "ListItem",
-          "position": 2,
-          "name": "Areas We Serve",
-          "item": "https://londonchoralservice.com/areas/"
-        },
-        {
-          "@type": "ListItem",
-          "position": 3,
-          "name": "London",
-          "item": "https://londonchoralservice.com/areas/london.html"
-        },
-        {
-          "@type": "ListItem",
-          "position": 4,
-          "name": "Hounslow"
-        }
-      ]
-    },
-    {
-      "@type": "FAQPage",
-      "mainEntity": [
-        {
-          "@type": "Question",
-          "name": "How much does a funeral singer cost in Hounslow?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "For services at St Mary's Hounslow, West London Crematorium in Hanwell, or parish churches in Feltham, Chiswick, and Isleworth, a soloist starts from £215. A small choir of four is from £1,150, a quintet from £1,400, a sextet from £1,600, and a full choir of eight from £2,000. All prices include travel within Greater London."
+      {
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "How much does a funeral singer cost in Hounslow?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "For services at St Mary's Hounslow, West London Crematorium in Hanwell, or parish churches in Feltham, Chiswick, and Isleworth, a soloist starts from £215. A small choir of four is from £1,150, a quintet from £1,400, a sextet from £1,600, and a full choir of eight from £2,000. All prices include travel within Greater London."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Can you provide a choir for a wedding in Hounslow?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes. From the handsome churches of Chiswick to Isleworth's charming riverside setting, Hounslow has a lovely range of wedding venues. We provide ensembles from a solo vocalist to a twelve-voice chorus and sing at both church ceremonies and civil services at licensed venues across the borough."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "What types of music can you perform at a funeral in Hounslow?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "At St Mary's Hounslow or the parish churches of Chiswick and Isleworth, traditional hymns, psalms, and sacred choral works ring out beautifully. At West London Crematorium, we often perform more reflective repertoire — popular songs, gentle classical pieces, or a bespoke arrangement of something that held special significance for the family."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Do you cover crematorium services in Hounslow?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes. West London Crematorium in Hanwell is the nearest crematorium to much of the borough, and our singers are well accustomed to its chapel and service timings. We work closely with crematorium staff and your funeral director to make sure the music fits seamlessly into the service."
+            }
           }
-        },
-        {
-          "@type": "Question",
-          "name": "Can you provide a choir for a wedding in Hounslow?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Yes. From the handsome churches of Chiswick to Isleworth's charming riverside setting, Hounslow has a lovely range of wedding venues. We provide ensembles from a solo vocalist to a twelve-voice chorus and sing at both church ceremonies and civil services at licensed venues across the borough."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "What types of music can you perform at a funeral in Hounslow?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "At St Mary's Hounslow or the parish churches of Chiswick and Isleworth, traditional hymns, psalms, and sacred choral works ring out beautifully. At West London Crematorium, we often perform more reflective repertoire — popular songs, gentle classical pieces, or a bespoke arrangement of something that held special significance for the family."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "Do you cover crematorium services in Hounslow?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Yes. West London Crematorium in Hanwell is the nearest crematorium to much of the borough, and our singers are well accustomed to its chapel and service timings. We work closely with crematorium staff and your funeral director to make sure the music fits seamlessly into the service."
-          }
-        }
-      ]
-    }
-  ]
-}
+        ]
+      }
+    ]
+  }
   </script>
 </head>
 <body>

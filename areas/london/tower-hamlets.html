@@ -1688,109 +1688,110 @@
 
   <script type="application/ld+json">
   {
-  "@context": "https://schema.org",
-  "@graph": [
-    {
-      "@type": "Service",
-      "name": "Funeral Singers & Wedding Choirs in Tower Hamlets",
-      "url": "https://londonchoralservice.com/areas/london/tower-hamlets.html",
-      "description": "Professional funeral singers and wedding choirs in Tower Hamlets, London.",
-      "provider": {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Service",
+        "name": "Funeral Singers & Wedding Choirs in Tower Hamlets",
+        "url": "https://londonchoralservice.com/areas/london/tower-hamlets.html",
+        "description": "Professional funeral singers and wedding choirs in Tower Hamlets, London.",
+        "provider": {
+          "@type": "LocalBusiness",
+          "@id": "https://londonchoralservice.com/#organization"
+        },
+        "areaServed": {
+          "@type": "AdministrativeArea",
+          "name": "Tower Hamlets",
+          "containedInPlace": {
+            "@type": "City",
+            "name": "London",
+            "addressCountry": "GB"
+          }
+        },
+        "serviceType": [
+          "Funeral Music",
+          "Wedding Music",
+          "Memorial Music",
+          "Ceremony Music"
+        ],
+        "geo": {
+          "@type": "GeoCoordinates",
+          "latitude": 51.50975,
+          "longitude": -0.05954
+        }
+      },
+      {
         "@type": "LocalBusiness",
-        "name": "The London Choral Service",
-        "alternateName": "London Choral Service",
-        "url": "https://londonchoralservice.com",
-        "telephone": "+447356042468",
-        "email": "office@londonchoralservice.com"
+        "@id": "https://londonchoralservice.com/#organization",
+        "name": "The London Choral Service"
       },
-      "areaServed": {
-        "@type": "AdministrativeArea",
-        "name": "Tower Hamlets",
-        "containedInPlace": {
-          "@type": "City",
-          "name": "London",
-          "addressCountry": "GB"
-        }
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "https://londonchoralservice.com/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Areas We Serve",
+            "item": "https://londonchoralservice.com/areas/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 3,
+            "name": "London",
+            "item": "https://londonchoralservice.com/areas/london.html"
+          },
+          {
+            "@type": "ListItem",
+            "position": 4,
+            "name": "Tower Hamlets"
+          }
+        ]
       },
-      "serviceType": [
-        "Funeral Music",
-        "Wedding Music",
-        "Memorial Music",
-        "Ceremony Music"
-      ]
-    },
-    {
-      "@type": "LocalBusiness",
-      "@id": "https://londonchoralservice.com/#organization",
-      "name": "The London Choral Service"
-    },
-    {
-      "@type": "BreadcrumbList",
-      "itemListElement": [
-        {
-          "@type": "ListItem",
-          "position": 1,
-          "name": "Home",
-          "item": "https://londonchoralservice.com/"
-        },
-        {
-          "@type": "ListItem",
-          "position": 2,
-          "name": "Areas We Serve",
-          "item": "https://londonchoralservice.com/areas/"
-        },
-        {
-          "@type": "ListItem",
-          "position": 3,
-          "name": "London",
-          "item": "https://londonchoralservice.com/areas/london.html"
-        },
-        {
-          "@type": "ListItem",
-          "position": 4,
-          "name": "Tower Hamlets"
-        }
-      ]
-    },
-    {
-      "@type": "FAQPage",
-      "mainEntity": [
-        {
-          "@type": "Question",
-          "name": "How much does a funeral singer cost in Tower Hamlets?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "For services at churches such as St Dunstan's Stepney or Christ Church Spitalfields, a soloist starts from £215, a small choir of four from £1,150, a quintet from £1,400, a sextet from £1,600, and a full choir of eight from £2,000. All prices include travel within Greater London, and we liaise directly with your funeral director."
+      {
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "How much does a funeral singer cost in Tower Hamlets?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "For services at churches such as St Dunstan's Stepney or Christ Church Spitalfields, a soloist starts from £215, a small choir of four from £1,150, a quintet from £1,400, a sextet from £1,600, and a full choir of eight from £2,000. All prices include travel within Greater London, and we liaise directly with your funeral director."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Can you provide a choir for a wedding in Tower Hamlets?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Absolutely. We regularly provide wedding choirs at Christ Church Spitalfields, St Anne's Limehouse, and the growing number of licensed warehouse and gallery venues across the borough. From a solo vocalist to a full twelve-voice chorus, we tailor the ensemble to your venue and handle all the musical planning."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "What types of music can you perform at a funeral in Tower Hamlets?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Our repertoire spans traditional hymns and Anglican choral works through to contemporary songs and popular favourites. The grand acoustics of Hawksmoor churches like Christ Church Spitalfields suit large-scale sacred works particularly well, but we also prepare bespoke arrangements of any piece that holds personal meaning for your family."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Do you cover crematorium services in Tower Hamlets?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Tower Hamlets does not have its own crematorium, but we regularly sing at the City of London Crematorium at Manor Park and other nearby facilities in east London. Our singers are well practised at working within fixed crematorium time slots, and we coordinate with staff to ensure the music runs seamlessly."
+            }
           }
-        },
-        {
-          "@type": "Question",
-          "name": "Can you provide a choir for a wedding in Tower Hamlets?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Absolutely. We regularly provide wedding choirs at Christ Church Spitalfields, St Anne's Limehouse, and the growing number of licensed warehouse and gallery venues across the borough. From a solo vocalist to a full twelve-voice chorus, we tailor the ensemble to your venue and handle all the musical planning."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "What types of music can you perform at a funeral in Tower Hamlets?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Our repertoire spans traditional hymns and Anglican choral works through to contemporary songs and popular favourites. The grand acoustics of Hawksmoor churches like Christ Church Spitalfields suit large-scale sacred works particularly well, but we also prepare bespoke arrangements of any piece that holds personal meaning for your family."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "Do you cover crematorium services in Tower Hamlets?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Tower Hamlets does not have its own crematorium, but we regularly sing at the City of London Crematorium at Manor Park and other nearby facilities in east London. Our singers are well practised at working within fixed crematorium time slots, and we coordinate with staff to ensure the music runs seamlessly."
-          }
-        }
-      ]
-    }
-  ]
-}
+        ]
+      }
+    ]
+  }
   </script>
 </head>
 <body>

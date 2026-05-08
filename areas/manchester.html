@@ -1688,96 +1688,101 @@
 
   <script type="application/ld+json">
   {
-  "@context": "https://schema.org",
-  "@graph": [
-    {
-      "@type": "Service",
-      "name": "Funeral Singers & Wedding Choirs in Manchester",
-      "url": "https://londonchoralservice.com/areas/manchester.html",
-      "description": "Professional funeral singers, wedding choirs, and ceremony musicians in Manchester and across Greater Manchester.",
-      "provider": {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Service",
+        "name": "Funeral Singers & Wedding Choirs in Manchester",
+        "url": "https://londonchoralservice.com/areas/manchester.html",
+        "description": "Professional funeral singers, wedding choirs, and ceremony musicians in Manchester and across Greater Manchester.",
+        "provider": {
+          "@type": "LocalBusiness",
+          "@id": "https://londonchoralservice.com/#organization",
+          "name": "The London Choral Service",
+          "alternateName": "London Choral Service"
+        },
+        "areaServed": {
+          "@type": "City",
+          "name": "Manchester"
+        },
+        "serviceType": [
+          "Funeral Music",
+          "Wedding Music",
+          "Memorial Music",
+          "Ceremony Music"
+        ],
+        "geo": {
+          "@type": "GeoCoordinates",
+          "latitude": 53.48076,
+          "longitude": -2.24264
+        }
+      },
+      {
         "@type": "LocalBusiness",
         "@id": "https://londonchoralservice.com/#organization",
-        "name": "The London Choral Service",
-        "alternateName": "London Choral Service"
+        "name": "The London Choral Service"
       },
-      "areaServed": {
-        "@type": "City",
-        "name": "Manchester"
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "https://londonchoralservice.com/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Areas We Serve",
+            "item": "https://londonchoralservice.com/areas/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 3,
+            "name": "Manchester"
+          }
+        ]
       },
-      "serviceType": [
-        "Funeral Music",
-        "Wedding Music",
-        "Memorial Music",
-        "Ceremony Music"
-      ]
-    },
-    {
-      "@type": "LocalBusiness",
-      "@id": "https://londonchoralservice.com/#organization",
-      "name": "The London Choral Service"
-    },
-    {
-      "@type": "BreadcrumbList",
-      "itemListElement": [
-        {
-          "@type": "ListItem",
-          "position": 1,
-          "name": "Home",
-          "item": "https://londonchoralservice.com/"
-        },
-        {
-          "@type": "ListItem",
-          "position": 2,
-          "name": "Areas We Serve",
-          "item": "https://londonchoralservice.com/areas/"
-        },
-        {
-          "@type": "ListItem",
-          "position": 3,
-          "name": "Manchester"
-        }
-      ]
-    },
-    {
-      "@type": "FAQPage",
-      "mainEntity": [
-        {
-          "@type": "Question",
-          "name": "How much does a funeral singer cost in Manchester?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "A solo funeral singer in Manchester starts from £215. A small choir of four voices starts from £1,150, a quintet from £1,400, a sextet from £1,600, and a full choir of eight from £2,000. A modest travel supplement may apply for services in parts of Greater Manchester outside the city centre."
+      {
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "How much does a funeral singer cost in Manchester?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "A solo funeral singer in Manchester starts from £215. A small choir of four voices starts from £1,150, a quintet from £1,400, a sextet from £1,600, and a full choir of eight from £2,000. A modest travel supplement may apply for services in parts of Greater Manchester outside the city centre."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Can you provide a choir for a wedding in Manchester?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Absolutely. Our wedding choirs sing at Manchester Cathedral, at parish churches across Salford, Stockport, and Trafford, and at licensed venues including converted mills and waterfront spaces. We offer anything from a solo vocalist to a twelve-voice chorus and take care of all the musical planning."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "What types of music can you perform at a funeral in Manchester?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Our repertoire covers traditional hymns, classical sacred works such as Pie Jesu and Ave Maria, and contemporary songs or personal favourites. For services at Manchester Cathedral we can draw on the full Anglican choral tradition, and bespoke arrangements are always available."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Do you cover crematorium services in Manchester?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes, we regularly sing at Manchester Crematorium, Agecroft Crematorium, and Blackley Crematorium, as well as other chapels across Greater Manchester. Our musicians know these venues well and are experienced in working within their specific timings and acoustics."
+            }
           }
-        },
-        {
-          "@type": "Question",
-          "name": "Can you provide a choir for a wedding in Manchester?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Absolutely. Our wedding choirs sing at Manchester Cathedral, at parish churches across Salford, Stockport, and Trafford, and at licensed venues including converted mills and waterfront spaces. We offer anything from a solo vocalist to a twelve-voice chorus and take care of all the musical planning."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "What types of music can you perform at a funeral in Manchester?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Our repertoire covers traditional hymns, classical sacred works such as Pie Jesu and Ave Maria, and contemporary songs or personal favourites. For services at Manchester Cathedral we can draw on the full Anglican choral tradition, and bespoke arrangements are always available."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "Do you cover crematorium services in Manchester?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Yes, we regularly sing at Manchester Crematorium, Agecroft Crematorium, and Blackley Crematorium, as well as other chapels across Greater Manchester. Our musicians know these venues well and are experienced in working within their specific timings and acoustics."
-          }
-        }
-      ]
-    }
-  ]
-}
+        ]
+      }
+    ]
+  }
   </script>
 </head>
 <body>

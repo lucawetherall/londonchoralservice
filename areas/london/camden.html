@@ -1688,109 +1688,110 @@
 
   <script type="application/ld+json">
   {
-  "@context": "https://schema.org",
-  "@graph": [
-    {
-      "@type": "Service",
-      "name": "Funeral Singers & Wedding Choirs in Camden",
-      "url": "https://londonchoralservice.com/areas/london/camden.html",
-      "description": "Professional funeral singers and wedding choirs for services and ceremonies in the London Borough of Camden.",
-      "provider": {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Service",
+        "name": "Funeral Singers & Wedding Choirs in Camden",
+        "url": "https://londonchoralservice.com/areas/london/camden.html",
+        "description": "Professional funeral singers and wedding choirs for services and ceremonies in the London Borough of Camden.",
+        "provider": {
+          "@type": "LocalBusiness",
+          "@id": "https://londonchoralservice.com/#organization"
+        },
+        "areaServed": {
+          "@type": "AdministrativeArea",
+          "name": "London Borough of Camden",
+          "containedInPlace": {
+            "@type": "City",
+            "name": "London",
+            "addressCountry": "GB"
+          }
+        },
+        "serviceType": [
+          "Funeral Music",
+          "Wedding Music",
+          "Memorial Music",
+          "Ceremony Music"
+        ],
+        "geo": {
+          "@type": "GeoCoordinates",
+          "latitude": 51.54475,
+          "longitude": -0.16058
+        }
+      },
+      {
         "@type": "LocalBusiness",
-        "name": "The London Choral Service",
-        "alternateName": "London Choral Service",
-        "url": "https://londonchoralservice.com",
-        "telephone": "+447356042468",
-        "email": "office@londonchoralservice.com"
+        "@id": "https://londonchoralservice.com/#organization",
+        "name": "The London Choral Service"
       },
-      "areaServed": {
-        "@type": "AdministrativeArea",
-        "name": "London Borough of Camden",
-        "containedInPlace": {
-          "@type": "City",
-          "name": "London",
-          "addressCountry": "GB"
-        }
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "https://londonchoralservice.com/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Areas We Serve",
+            "item": "https://londonchoralservice.com/areas/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 3,
+            "name": "London",
+            "item": "https://londonchoralservice.com/areas/london.html"
+          },
+          {
+            "@type": "ListItem",
+            "position": 4,
+            "name": "Camden"
+          }
+        ]
       },
-      "serviceType": [
-        "Funeral Music",
-        "Wedding Music",
-        "Memorial Music",
-        "Ceremony Music"
-      ]
-    },
-    {
-      "@type": "LocalBusiness",
-      "@id": "https://londonchoralservice.com/#organization",
-      "name": "The London Choral Service"
-    },
-    {
-      "@type": "BreadcrumbList",
-      "itemListElement": [
-        {
-          "@type": "ListItem",
-          "position": 1,
-          "name": "Home",
-          "item": "https://londonchoralservice.com/"
-        },
-        {
-          "@type": "ListItem",
-          "position": 2,
-          "name": "Areas We Serve",
-          "item": "https://londonchoralservice.com/areas/"
-        },
-        {
-          "@type": "ListItem",
-          "position": 3,
-          "name": "London",
-          "item": "https://londonchoralservice.com/areas/london.html"
-        },
-        {
-          "@type": "ListItem",
-          "position": 4,
-          "name": "Camden"
-        }
-      ]
-    },
-    {
-      "@type": "FAQPage",
-      "mainEntity": [
-        {
-          "@type": "Question",
-          "name": "How much does a funeral singer cost in Camden?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "A solo funeral singer in Camden starts from £215. A quartet starts from £1,150, a quintet from £1,400, a sextet from £1,600, and an octet from £2,000. Prices include travel within Greater London and coordination with your funeral director."
+      {
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "How much does a funeral singer cost in Camden?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "A solo funeral singer in Camden starts from £215. A quartet starts from £1,150, a quintet from £1,400, a sextet from £1,600, and an octet from £2,000. Prices include travel within Greater London and coordination with your funeral director."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Can you sing at Hampstead Crematorium?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes. We sing at Hampstead Crematorium on Fortune Green Road regularly. The chapels have fixed time slots, so we plan the music to fit within the allocated period. A solo singer or duet suits the smaller chapel; a trio or quartet works well in the larger one."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "What types of music can you perform at a funeral in Camden?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Traditional hymns, sacred choral music, contemporary songs, and popular favourites. We create bespoke arrangements on request."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Do you provide wedding choirs at St John-at-Hampstead?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes. We provide choirs of four to twelve voices at St John-at-Hampstead and coordinate with the church's director of music. We also cover nearby venues in Barnet and Haringey."
+            }
           }
-        },
-        {
-          "@type": "Question",
-          "name": "Can you sing at Hampstead Crematorium?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Yes. We sing at Hampstead Crematorium on Fortune Green Road regularly. The chapels have fixed time slots, so we plan the music to fit within the allocated period. A solo singer or duet suits the smaller chapel; a trio or quartet works well in the larger one."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "What types of music can you perform at a funeral in Camden?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Traditional hymns, sacred choral music, contemporary songs, and popular favourites. We create bespoke arrangements on request."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "Do you provide wedding choirs at St John-at-Hampstead?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Yes. We provide choirs of four to twelve voices at St John-at-Hampstead and coordinate with the church's director of music. We also cover nearby venues in Barnet and Haringey."
-          }
-        }
-      ]
-    }
-  ]
-}
+        ]
+      }
+    ]
+  }
   </script>
 </head>
 <body>

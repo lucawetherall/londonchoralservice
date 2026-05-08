@@ -1688,109 +1688,110 @@
 
   <script type="application/ld+json">
   {
-  "@context": "https://schema.org",
-  "@graph": [
-    {
-      "@type": "Service",
-      "name": "Funeral Singers & Wedding Choirs in Southwark",
-      "url": "https://londonchoralservice.com/areas/london/southwark.html",
-      "description": "Professional funeral singers and wedding choirs in Southwark, London.",
-      "provider": {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Service",
+        "name": "Funeral Singers & Wedding Choirs in Southwark",
+        "url": "https://londonchoralservice.com/areas/london/southwark.html",
+        "description": "Professional funeral singers and wedding choirs in Southwark, London.",
+        "provider": {
+          "@type": "LocalBusiness",
+          "@id": "https://londonchoralservice.com/#organization"
+        },
+        "areaServed": {
+          "@type": "AdministrativeArea",
+          "name": "London Borough of Southwark",
+          "containedInPlace": {
+            "@type": "City",
+            "name": "London",
+            "addressCountry": "GB"
+          }
+        },
+        "serviceType": [
+          "Funeral Music",
+          "Wedding Music",
+          "Memorial Music",
+          "Ceremony Music"
+        ],
+        "geo": {
+          "@type": "GeoCoordinates",
+          "latitude": 51.50306,
+          "longitude": -0.08763
+        }
+      },
+      {
         "@type": "LocalBusiness",
-        "name": "The London Choral Service",
-        "alternateName": "London Choral Service",
-        "url": "https://londonchoralservice.com",
-        "telephone": "+447356042468",
-        "email": "office@londonchoralservice.com"
+        "@id": "https://londonchoralservice.com/#organization",
+        "name": "The London Choral Service"
       },
-      "areaServed": {
-        "@type": "AdministrativeArea",
-        "name": "London Borough of Southwark",
-        "containedInPlace": {
-          "@type": "City",
-          "name": "London",
-          "addressCountry": "GB"
-        }
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "https://londonchoralservice.com/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Areas We Serve",
+            "item": "https://londonchoralservice.com/areas/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 3,
+            "name": "London",
+            "item": "https://londonchoralservice.com/areas/london.html"
+          },
+          {
+            "@type": "ListItem",
+            "position": 4,
+            "name": "Southwark"
+          }
+        ]
       },
-      "serviceType": [
-        "Funeral Music",
-        "Wedding Music",
-        "Memorial Music",
-        "Ceremony Music"
-      ]
-    },
-    {
-      "@type": "LocalBusiness",
-      "@id": "https://londonchoralservice.com/#organization",
-      "name": "The London Choral Service"
-    },
-    {
-      "@type": "BreadcrumbList",
-      "itemListElement": [
-        {
-          "@type": "ListItem",
-          "position": 1,
-          "name": "Home",
-          "item": "https://londonchoralservice.com/"
-        },
-        {
-          "@type": "ListItem",
-          "position": 2,
-          "name": "Areas We Serve",
-          "item": "https://londonchoralservice.com/areas/"
-        },
-        {
-          "@type": "ListItem",
-          "position": 3,
-          "name": "London",
-          "item": "https://londonchoralservice.com/areas/london.html"
-        },
-        {
-          "@type": "ListItem",
-          "position": 4,
-          "name": "Southwark"
-        }
-      ]
-    },
-    {
-      "@type": "FAQPage",
-      "mainEntity": [
-        {
-          "@type": "Question",
-          "name": "How much does a funeral singer cost in Southwark?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "For services at Honor Oak Crematorium, Southwark Cathedral, or parish churches in Camberwell and Dulwich, a solo funeral singer starts from £215. A small choir of four starts from £1,150, a quintet from £1,400, a sextet from £1,600, and a full choir of eight from £2,000. Cathedral services often benefit from six voices or more; all prices include travel within Greater London."
+      {
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "How much does a funeral singer cost in Southwark?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "For services at Honor Oak Crematorium, Southwark Cathedral, or parish churches in Camberwell and Dulwich, a solo funeral singer starts from £215. A small choir of four starts from £1,150, a quintet from £1,400, a sextet from £1,600, and a full choir of eight from £2,000. Cathedral services often benefit from six voices or more; all prices include travel within Greater London."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Can you provide a choir for a wedding in Southwark?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes. Southwark Cathedral seats a large congregation and we provide choirs of six to twelve voices there, with repertoire from Stanford and Parry to contemporary settings. For more intimate ceremonies at parish churches in Dulwich and Camberwell, our quartets and sextets suit the space beautifully."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "What types of music can you perform at a funeral in Southwark?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Traditional hymns, sacred choral works, contemporary songs, and popular favourites. Southwark Cathedral's Gothic nave rewards large-scale choral pieces, while the smaller churches of Bermondsey and Camberwell suit more intimate repertoire. We also arrange bespoke versions of any piece a family requests."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Do you cover crematorium services in Southwark?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes, we sing at Honor Oak Crematorium on Brenchley Gardens regularly. The chapels run to fixed time slots, so we plan the programme carefully to fit. A solo singer or duet is the most common choice there, though we can provide larger ensembles when the family wishes."
+            }
           }
-        },
-        {
-          "@type": "Question",
-          "name": "Can you provide a choir for a wedding in Southwark?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Yes. Southwark Cathedral seats a large congregation and we provide choirs of six to twelve voices there, with repertoire from Stanford and Parry to contemporary settings. For more intimate ceremonies at parish churches in Dulwich and Camberwell, our quartets and sextets suit the space beautifully."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "What types of music can you perform at a funeral in Southwark?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Traditional hymns, sacred choral works, contemporary songs, and popular favourites. Southwark Cathedral's Gothic nave rewards large-scale choral pieces, while the smaller churches of Bermondsey and Camberwell suit more intimate repertoire. We also arrange bespoke versions of any piece a family requests."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "Do you cover crematorium services in Southwark?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Yes, we sing at Honor Oak Crematorium on Brenchley Gardens regularly. The chapels run to fixed time slots, so we plan the programme carefully to fit. A solo singer or duet is the most common choice there, though we can provide larger ensembles when the family wishes."
-          }
-        }
-      ]
-    }
-  ]
-}
+        ]
+      }
+    ]
+  }
   </script>
 </head>
 <body>

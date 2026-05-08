@@ -1688,109 +1688,110 @@
 
   <script type="application/ld+json">
   {
-  "@context": "https://schema.org",
-  "@graph": [
-    {
-      "@type": "Service",
-      "name": "Funeral Singers & Wedding Choirs in Islington",
-      "url": "https://londonchoralservice.com/areas/london/islington.html",
-      "description": "Professional funeral singers and wedding choirs for services and ceremonies in the London Borough of Islington.",
-      "provider": {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Service",
+        "name": "Funeral Singers & Wedding Choirs in Islington",
+        "url": "https://londonchoralservice.com/areas/london/islington.html",
+        "description": "Professional funeral singers and wedding choirs for services and ceremonies in the London Borough of Islington.",
+        "provider": {
+          "@type": "LocalBusiness",
+          "@id": "https://londonchoralservice.com/#organization"
+        },
+        "areaServed": {
+          "@type": "AdministrativeArea",
+          "name": "London Borough of Islington",
+          "containedInPlace": {
+            "@type": "City",
+            "name": "London",
+            "addressCountry": "GB"
+          }
+        },
+        "serviceType": [
+          "Funeral Music",
+          "Wedding Music",
+          "Memorial Music",
+          "Ceremony Music"
+        ],
+        "geo": {
+          "@type": "GeoCoordinates",
+          "latitude": 51.5362,
+          "longitude": -0.10288
+        }
+      },
+      {
         "@type": "LocalBusiness",
-        "name": "The London Choral Service",
-        "alternateName": "London Choral Service",
-        "url": "https://londonchoralservice.com",
-        "telephone": "+447356042468",
-        "email": "office@londonchoralservice.com"
+        "@id": "https://londonchoralservice.com/#organization",
+        "name": "The London Choral Service"
       },
-      "areaServed": {
-        "@type": "AdministrativeArea",
-        "name": "London Borough of Islington",
-        "containedInPlace": {
-          "@type": "City",
-          "name": "London",
-          "addressCountry": "GB"
-        }
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "https://londonchoralservice.com/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Areas We Serve",
+            "item": "https://londonchoralservice.com/areas/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 3,
+            "name": "London",
+            "item": "https://londonchoralservice.com/areas/london.html"
+          },
+          {
+            "@type": "ListItem",
+            "position": 4,
+            "name": "Islington"
+          }
+        ]
       },
-      "serviceType": [
-        "Funeral Music",
-        "Wedding Music",
-        "Memorial Music",
-        "Ceremony Music"
-      ]
-    },
-    {
-      "@type": "LocalBusiness",
-      "@id": "https://londonchoralservice.com/#organization",
-      "name": "The London Choral Service"
-    },
-    {
-      "@type": "BreadcrumbList",
-      "itemListElement": [
-        {
-          "@type": "ListItem",
-          "position": 1,
-          "name": "Home",
-          "item": "https://londonchoralservice.com/"
-        },
-        {
-          "@type": "ListItem",
-          "position": 2,
-          "name": "Areas We Serve",
-          "item": "https://londonchoralservice.com/areas/"
-        },
-        {
-          "@type": "ListItem",
-          "position": 3,
-          "name": "London",
-          "item": "https://londonchoralservice.com/areas/london.html"
-        },
-        {
-          "@type": "ListItem",
-          "position": 4,
-          "name": "Islington"
-        }
-      ]
-    },
-    {
-      "@type": "FAQPage",
-      "mainEntity": [
-        {
-          "@type": "Question",
-          "name": "How much does a funeral singer cost in Islington?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "For services at Union Chapel, St Mary's Islington, or St James Clerkenwell, a soloist starts from £215. A small choir of four starts from £1,150, a quintet from £1,400, a sextet from £1,600, and a full choir of eight from £2,000. All prices include travel within Greater London and coordination with your funeral director."
+      {
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "How much does a funeral singer cost in Islington?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "For services at Union Chapel, St Mary's Islington, or St James Clerkenwell, a soloist starts from £215. A small choir of four starts from £1,150, a quintet from £1,400, a sextet from £1,600, and a full choir of eight from £2,000. All prices include travel within Greater London and coordination with your funeral director."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Can you provide a choir for a wedding in Islington?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Absolutely. Union Chapel's soaring Gothic interior rewards a larger ensemble, while St Mary's on Upper Street suits anything from a quartet to a full choir. We work with couples to choose hymns, anthems, and processional music that make the most of each venue's acoustic."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "What types of music can you perform at a funeral in Islington?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Our repertoire spans traditional hymns, classical sacred works, and contemporary songs. Union Chapel's rich acoustic is particularly well suited to choral pieces, while the lighter interior of St Mary's carries solo and small-ensemble music beautifully. We also create bespoke arrangements on request."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Do you cover crematorium services in Islington?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Islington has no crematorium within its boundaries, but we regularly sing at Islington Cemetery's chapel on High Road in East Finchley and at nearby crematoria serving the borough. Our singers are well practised in the precise timings crematorium services require."
+            }
           }
-        },
-        {
-          "@type": "Question",
-          "name": "Can you provide a choir for a wedding in Islington?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Absolutely. Union Chapel's soaring Gothic interior rewards a larger ensemble, while St Mary's on Upper Street suits anything from a quartet to a full choir. We work with couples to choose hymns, anthems, and processional music that make the most of each venue's acoustic."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "What types of music can you perform at a funeral in Islington?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Our repertoire spans traditional hymns, classical sacred works, and contemporary songs. Union Chapel's rich acoustic is particularly well suited to choral pieces, while the lighter interior of St Mary's carries solo and small-ensemble music beautifully. We also create bespoke arrangements on request."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "Do you cover crematorium services in Islington?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Islington has no crematorium within its boundaries, but we regularly sing at Islington Cemetery's chapel on High Road in East Finchley and at nearby crematoria serving the borough. Our singers are well practised in the precise timings crematorium services require."
-          }
-        }
-      ]
-    }
-  ]
-}
+        ]
+      }
+    ]
+  }
   </script>
 </head>
 <body>
