@@ -378,6 +378,16 @@
       border-top: 1px solid var(--color-rule);
     }
     
+    /* Compact-edge variants for stacking sections that should read as one
+       continuous block (e.g. hero immediately followed by content). */
+    .section--compact-bottom {
+      padding-block-end: var(--space-xl);
+    }
+    
+    .section--compact-top {
+      padding-block-start: var(--space-xl);
+    }
+    
     /* ── Lede Paragraph ── */
     .lede {
       font-size: var(--text-md);
@@ -931,6 +941,34 @@
       outline-offset: 2px;
     }
     
+    /* On narrow viewports, give the contact form's submit a full-width tap
+       target so it reads as the page's clear primary action. */
+    @media (max-width: 600px) {
+      .contact-form .btn {
+        width: 100%;
+      }
+    }
+    
+    /* ═══════════════════════════════════
+       Hero Trust Chip
+       ═══════════════════════════════════ */
+    .hero-trust {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-sm);
+      margin-top: var(--space-md);
+      margin-bottom: 0;
+      font-size: var(--text-sm);
+      color: var(--color-text-mid);
+    }
+    
+    .hero-trust__stars {
+      color: var(--color-accent);
+      letter-spacing: 0.08em;
+      font-size: var(--text-base);
+      line-height: 1;
+    }
+    
     /* ═══════════════════════════════════
        Music Guides
        ═══════════════════════════════════ */
@@ -1011,6 +1049,30 @@
     .btn-link:focus-visible {
       outline: 2px solid var(--color-text);
       outline-offset: 2px;
+    }
+    
+    /* Tighten horizontal padding on narrow viewports so labels keep to one line. */
+    @media (max-width: 480px) {
+      .btn,
+      .btn-link {
+        padding-inline: var(--space-lg);
+      }
+    }
+    
+    /* Modifier — button with leading inline icon (e.g. WhatsApp).
+       Icon stays subordinate to the label: 0.85em with a tight gap so the
+       button reads as text-first, with the glyph as a quiet accent. */
+    .btn-link--icon {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.55em;
+    }
+    
+    .btn-link--icon svg {
+      width: 0.85em;
+      height: 0.85em;
+      flex-shrink: 0;
+      opacity: 0.92;
     }
     
     /* ═══════════════════════════════════
@@ -1694,7 +1756,7 @@
   <!-- @include-end partials/nav.html -->
   <main id="main">
 
-    <section class="section" style="padding-block-end: var(--space-2xl)">
+    <section class="section section--compact-bottom">
       <div class="prose">
         <nav class="breadcrumb" aria-label="Breadcrumb">
           <ol>
@@ -1703,12 +1765,11 @@
           </ol>
         </nav>
         <h1>Contact us</h1>
-        <p class="lede">Whether you have dates and venues confirmed, or you're just starting to think about the music, we're here to help. Tell us as much or as little as you know, and we&rsquo;ll take it from there.</p>
-        <hr class="rule">
+        <p class="lede">Whether your dates are confirmed or you&rsquo;re just starting to think about the music, we&rsquo;re here to help &mdash; usually replying within a few hours.</p>
       </div>
     </section>
 
-    <section class="section" style="padding-block-start: var(--space-2xl)">
+    <section class="section section--compact-top">
       <div class="prose">
         <h2>By email</h2>
         <p><a href="mailto:office@londonchoralservice.com">office@londonchoralservice.com</a></p>
@@ -1716,14 +1777,15 @@
         <h2>By telephone</h2>
         <p><a href="tel:+447356042468">07356 042468</a></p>
         <p class="text-sm text-mid">Monday to Friday, 9am&ndash;6pm. We aim to answer every call personally. If we're unavailable, we'll return your call within 4 hours.</p>
-      </div>
-    </section>
 
-    <section class="section">
-      <div class="prose">
-        <h2>Send us a message</h2>
-        <p>Tell us about your occasion and we&rsquo;ll come back to you with honest, practical suggestions. We respond to every enquiry personally.</p>
-        <p class="text-sm text-mid">We respond to all enquiries within 24 hours &mdash; usually much sooner.</p>
+        <h2>By WhatsApp</h2>
+        <p>
+          <a class="btn-link btn-link--icon" href="https://wa.me/447356042468?text=Hello%20London%20Choral%20Service%2C%20I%27d%20like%20to%20enquire%20about%20music%20for%20an%20upcoming%20occasion." target="_blank" rel="noopener" data-whatsapp>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" aria-hidden="true" focusable="false"><path fill="currentColor" d="M16 .395a15.6 15.6 0 0 0-13.534 23.36L0 32l8.43-2.42A15.6 15.6 0 0 0 31.6 16.005 15.6 15.6 0 0 0 16 .395Zm0 28.41a12.78 12.78 0 0 1-6.523-1.79l-.467-.28-4.846 1.39 1.42-4.738-.305-.486A12.78 12.78 0 0 1 16 3.214a12.81 12.81 0 0 1 12.81 12.81A12.81 12.81 0 0 1 16 28.805Zm7.025-9.575c-.385-.193-2.275-1.122-2.628-1.25-.353-.13-.609-.193-.866.193s-.994 1.25-1.218 1.508c-.225.257-.45.29-.834.097-.385-.193-1.626-.6-3.097-1.911-1.144-1.02-1.916-2.28-2.14-2.665-.225-.385-.024-.594.169-.787.174-.173.385-.45.578-.674.193-.225.257-.385.385-.642.13-.257.064-.482-.032-.674-.097-.193-.866-2.087-1.187-2.857-.312-.75-.628-.65-.866-.66l-.738-.013a1.42 1.42 0 0 0-1.027.482c-.353.385-1.347 1.315-1.347 3.207s1.379 3.72 1.572 3.977c.193.257 2.715 4.146 6.578 5.815.92.397 1.637.633 2.196.81.923.293 1.762.252 2.426.153.74-.11 2.275-.93 2.595-1.829.32-.898.32-1.668.225-1.829-.097-.16-.353-.257-.738-.45Z"/></svg>
+            Message us on WhatsApp
+          </a>
+        </p>
+        <p class="text-sm text-mid">Same number as our telephone &mdash; quicker if you&rsquo;d rather type than talk.</p>
 
         <figure class="pull-quote">
           <blockquote>
@@ -1731,6 +1793,13 @@
           </blockquote>
           <figcaption>&mdash;&ensp;Pamela, Richmond</figcaption>
         </figure>
+      </div>
+    </section>
+
+    <section class="section" id="enquiry">
+      <div class="prose">
+        <h2>Send us a message</h2>
+        <p>Tell us about your occasion &mdash; we&rsquo;ll come back with honest, practical suggestions, usually within a few hours.</p>
 
         <div class="form-status form-status--success" data-visible="false" role="status" aria-live="polite">
           <p>Thank you for your message. We'll be in touch within 24 hours, usually much sooner.</p>
@@ -1755,7 +1824,7 @@
               <p class="form-error" id="email-error">Please enter a valid email address.</p>
             </div>
             <div class="form-field">
-              <label for="phone">Telephone <span class="optional">(optional)</span></label>
+              <label for="phone">Telephone <span class="optional">(optional &mdash; if you&rsquo;d like a call back)</span></label>
               <input type="tel" id="phone" name="phone" autocomplete="tel">
             </div>
             <div class="form-field">
@@ -1771,8 +1840,8 @@
               </select>
             </div>
             <div class="form-field">
-              <label for="date">Approximate date <span class="optional">(optional)</span></label>
-              <input type="date" id="date" name="date">
+              <label for="date">Date or timeframe <span class="optional">(optional)</span></label>
+              <input type="text" id="date" name="date" placeholder="e.g. 14 June 2026, summer, undecided" autocomplete="off">
             </div>
             <div class="form-field">
               <label for="message">Your message</label>
@@ -1781,7 +1850,7 @@
             </div>
             <div class="h-captcha" data-captcha="true"></div>
             <button type="submit" class="btn">Send enquiry</button>
-            <p class="text-sm text-mid">We reply personally within 24 hours, usually the same day.</p>
+            <p class="text-sm text-mid" style="margin-top: var(--space-md)">We reply personally within 24 hours, usually the same day.</p>
           </fieldset>
         </form>
       </div>
@@ -1799,6 +1868,8 @@
         <a href="mailto:office@londonchoralservice.com">office@londonchoralservice.com</a>
         &ensp;|&ensp;
         <a href="tel:+447356042468">07356 042468</a>
+        &ensp;|&ensp;
+        <a href="https://wa.me/447356042468" target="_blank" rel="noopener" data-whatsapp>WhatsApp</a>
       </p>
       <p class="text-xs text-mid">
         Areas we serve: <a href="/areas/london.html">London</a> &middot; <a href="/areas/birmingham.html">Birmingham</a> &middot; <a href="/areas/manchester.html">Manchester</a> &middot; <a href="/areas/liverpool.html">Liverpool</a> &middot; <a href="/areas/oxford.html">Oxford</a> &middot; <a href="/areas/cambridge.html">Cambridge</a> &middot; <a href="/areas/reading.html">Reading</a> &middot; <a href="/areas/slough-maidenhead.html">Slough &amp; Maidenhead</a> &middot; <a href="/areas/guildford.html">Guildford</a> &middot; <a href="/areas/brighton.html">Brighton</a> &middot; <a href="/areas/chester.html">Chester</a> &middot; <a href="/areas/st-albans.html">St Albans</a> &middot; <a href="/areas/canterbury.html">Canterbury</a> &middot; <a href="/areas/windsor.html">Windsor</a> &middot; <a href="/areas/winchester.html">Winchester</a> &middot; <a href="/areas/salisbury.html">Salisbury</a> &middot; <a href="/areas/bath.html">Bath</a> &middot; <a href="/areas/chelmsford.html">Chelmsford</a> &middot; <a href="/areas/rochester.html">Rochester</a>

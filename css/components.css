@@ -345,6 +345,34 @@
   outline-offset: 2px;
 }
 
+/* On narrow viewports, give the contact form's submit a full-width tap
+   target so it reads as the page's clear primary action. */
+@media (max-width: 600px) {
+  .contact-form .btn {
+    width: 100%;
+  }
+}
+
+/* ═══════════════════════════════════
+   Hero Trust Chip
+   ═══════════════════════════════════ */
+.hero-trust {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-top: var(--space-md);
+  margin-bottom: 0;
+  font-size: var(--text-sm);
+  color: var(--color-text-mid);
+}
+
+.hero-trust__stars {
+  color: var(--color-accent);
+  letter-spacing: 0.08em;
+  font-size: var(--text-base);
+  line-height: 1;
+}
+
 /* ═══════════════════════════════════
    Music Guides
    ═══════════════════════════════════ */
@@ -425,6 +453,30 @@
 .btn-link:focus-visible {
   outline: 2px solid var(--color-text);
   outline-offset: 2px;
+}
+
+/* Tighten horizontal padding on narrow viewports so labels keep to one line. */
+@media (max-width: 480px) {
+  .btn,
+  .btn-link {
+    padding-inline: var(--space-lg);
+  }
+}
+
+/* Modifier — button with leading inline icon (e.g. WhatsApp).
+   Icon stays subordinate to the label: 0.85em with a tight gap so the
+   button reads as text-first, with the glyph as a quiet accent. */
+.btn-link--icon {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55em;
+}
+
+.btn-link--icon svg {
+  width: 0.85em;
+  height: 0.85em;
+  flex-shrink: 0;
+  opacity: 0.92;
 }
 
 /* ═══════════════════════════════════
