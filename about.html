@@ -1686,6 +1686,7 @@
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
 
+  <!-- TODO: add luca_wetherall_orcid to Person.sameAs once confirmed -->
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -1701,7 +1702,7 @@
         }
       },
       {
-        "@type": "LocalBusiness",
+        "@type": ["LocalBusiness", "PerformingGroup", "MusicGroup"],
         "@id": "https://londonchoralservice.com/#organization",
         "name": "The London Choral Service",
         "alternateName": "London Choral Service",
@@ -1715,7 +1716,18 @@
           "affiliation": {
             "@type": "Organization",
             "name": "University of Oxford"
-          }
+          },
+          "alumniOf": {
+            "@type": "Organization",
+            "name": "University of Oxford"
+          },
+          "worksFor": {
+            "@id": "https://londonchoralservice.com/#organization"
+          },
+          "sameAs": [
+            "https://www.music.ox.ac.uk/people/luca-wetherall",
+            "https://www.linkedin.com/in/luca-wetherall-377a85140/"
+          ]
         },
         "areaServed": {
           "@type": "Country",
