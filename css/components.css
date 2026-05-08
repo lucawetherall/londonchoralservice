@@ -615,3 +615,228 @@
     width: 100%;
   }
 }
+
+/* ═══════════════════════════════════
+   Guide Index — Filter Chips
+   ═══════════════════════════════════ */
+.filter-bar {
+  margin-block: var(--space-xl) var(--space-2xl);
+}
+
+.filter-bar-label {
+  font-family: var(--font-heading);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-text-mid);
+  margin-bottom: var(--space-md);
+  display: block;
+}
+
+.filter-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.filter-chips li {
+  margin: 0;
+}
+
+.filter-chip {
+  display: inline-block;
+  font-family: var(--font-heading);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  padding: var(--space-sm) var(--space-lg);
+  border: 1px solid var(--color-rule);
+  background-color: transparent;
+  color: var(--color-text);
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast);
+}
+
+.filter-chip:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.filter-chip[aria-pressed="true"] {
+  background-color: var(--color-accent);
+  color: var(--color-bg);
+  border-color: var(--color-accent);
+}
+
+.filter-chip[aria-pressed="true"]:hover {
+  background-color: var(--color-accent-hover);
+  border-color: var(--color-accent-hover);
+  color: var(--color-bg);
+}
+
+/* ═══════════════════════════════════
+   Guide Index — Start Here Card
+   ═══════════════════════════════════ */
+.start-here {
+  position: relative;
+  padding: var(--space-xl);
+  background-color: var(--color-bg-alt);
+  border-left: 3px solid var(--color-accent);
+  margin-block: var(--space-xl) var(--space-2xl);
+}
+
+.start-here__eyebrow {
+  display: block;
+  font-family: var(--font-heading);
+  font-size: var(--text-xs);
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+  margin-bottom: var(--space-sm);
+}
+
+.start-here h2 {
+  font-size: var(--text-xl);
+  font-weight: 500;
+  margin-bottom: var(--space-sm);
+}
+
+.start-here h2 a {
+  color: var(--color-text);
+  text-decoration: none;
+}
+
+.start-here h2 a::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+}
+
+.start-here:hover h2 a {
+  color: var(--color-accent);
+}
+
+.start-here p {
+  color: var(--color-text-mid);
+  margin-bottom: 0;
+}
+
+.start-here__cta {
+  display: inline-block;
+  margin-top: var(--space-md);
+  font-family: var(--font-heading);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--color-accent);
+}
+
+/* ═══════════════════════════════════
+   Guide Index — Card Grid
+   ═══════════════════════════════════ */
+.guide-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-lg);
+  list-style: none;
+  padding: 0;
+  margin: 0 0 var(--space-3xl);
+}
+
+@media (max-width: 599px) {
+  .guide-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.guide-card {
+  position: relative;
+  padding: var(--space-xl);
+  background-color: var(--color-bg-alt);
+  border: 1px solid transparent;
+  transition: border-color var(--transition-fast), background-color var(--transition-fast);
+  margin: 0;
+}
+
+.guide-card:hover {
+  border-color: var(--color-accent);
+}
+
+.guide-card h3 {
+  font-size: var(--text-lg);
+  font-weight: 500;
+  margin-bottom: var(--space-sm);
+}
+
+.guide-card h3 a {
+  color: var(--color-text);
+  text-decoration: none;
+}
+
+.guide-card h3 a::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+}
+
+.guide-card:hover h3 a {
+  color: var(--color-accent);
+}
+
+.guide-card p {
+  color: var(--color-text-mid);
+  margin-bottom: var(--space-md);
+}
+
+.guide-card__cta {
+  display: inline-block;
+  font-family: var(--font-heading);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--color-accent);
+}
+
+/* Anchor card — full width, slightly different background */
+.guide-card--anchor {
+  grid-column: 1 / -1;
+  background-color: var(--color-bg);
+  border: 1px solid var(--color-rule);
+}
+
+.guide-card--anchor h3 {
+  font-size: var(--text-xl);
+}
+
+/* ═══════════════════════════════════
+   Guide Index — Category Section
+   ═══════════════════════════════════ */
+.guide-category-section {
+  margin-block: var(--space-3xl);
+}
+
+.guide-category-section:first-of-type {
+  margin-top: var(--space-xl);
+}
+
+.guide-category-section h2 {
+  font-size: var(--text-2xl);
+  font-weight: 400;
+  margin-bottom: var(--space-md);
+}
+
+.guide-category-section .category-rule {
+  border: none;
+  border-top: 2px solid var(--color-accent);
+  width: 3rem;
+  margin: 0 0 var(--space-xl) 0;
+}
+
+/* Hidden state via JS or no-JS fallback */
+.guide-category-section[hidden] {
+  display: none;
+}
