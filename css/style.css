@@ -1146,6 +1146,343 @@ table {
     width: 100%;
   }
 }
+
+/* ═══════════════════════════════════
+   Guide Index — Filter Chips
+   ═══════════════════════════════════ */
+.filter-bar {
+  margin-block: var(--space-xl) var(--space-2xl);
+}
+
+.filter-bar-label {
+  font-family: var(--font-heading);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-text-mid);
+  margin-bottom: var(--space-md);
+  display: block;
+}
+
+.filter-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.filter-chips li {
+  margin: 0;
+}
+
+.filter-chip {
+  display: inline-block;
+  font-family: var(--font-heading);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  padding: var(--space-sm) var(--space-lg);
+  border: 1px solid var(--color-rule);
+  background-color: transparent;
+  color: var(--color-text);
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast);
+}
+
+.filter-chip:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.filter-chip[aria-pressed="true"] {
+  background-color: var(--color-accent);
+  color: var(--color-bg);
+  border-color: var(--color-accent);
+}
+
+.filter-chip[aria-pressed="true"]:hover {
+  background-color: var(--color-accent-hover);
+  border-color: var(--color-accent-hover);
+  color: var(--color-bg);
+}
+
+/* ═══════════════════════════════════
+   Guide Index — Start Here Card
+   ═══════════════════════════════════ */
+.start-here {
+  position: relative;
+  padding: var(--space-xl);
+  background-color: var(--color-bg-alt);
+  border-left: 3px solid var(--color-accent);
+  margin-block: var(--space-xl) var(--space-2xl);
+}
+
+.start-here__eyebrow {
+  display: block;
+  font-family: var(--font-heading);
+  font-size: var(--text-xs);
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+  margin-bottom: var(--space-sm);
+}
+
+.start-here h2 {
+  font-size: var(--text-xl);
+  font-weight: 500;
+  margin-bottom: var(--space-sm);
+}
+
+.start-here h2 a {
+  color: var(--color-text);
+  text-decoration: none;
+}
+
+.start-here h2 a::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+}
+
+.start-here:hover h2 a {
+  color: var(--color-accent);
+}
+
+.start-here p {
+  color: var(--color-text-mid);
+  margin-bottom: 0;
+}
+
+.start-here__cta {
+  display: inline-block;
+  margin-top: var(--space-md);
+  font-family: var(--font-heading);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--color-accent);
+}
+
+/* ═══════════════════════════════════
+   Guide Index — Card Grid
+   ═══════════════════════════════════ */
+.guide-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-lg);
+  list-style: none;
+  padding: 0;
+  margin: 0 0 var(--space-3xl);
+}
+
+@media (max-width: 599px) {
+  .guide-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.guide-card {
+  position: relative;
+  padding: var(--space-xl);
+  background-color: var(--color-bg-alt);
+  border: 1px solid transparent;
+  transition: border-color var(--transition-fast), background-color var(--transition-fast);
+  margin: 0;
+}
+
+.guide-card:hover {
+  border-color: var(--color-accent);
+}
+
+.guide-card h3 {
+  font-size: var(--text-lg);
+  font-weight: 500;
+  margin-bottom: var(--space-sm);
+}
+
+.guide-card h3 a {
+  color: var(--color-text);
+  text-decoration: none;
+}
+
+.guide-card h3 a::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+}
+
+.guide-card:hover h3 a {
+  color: var(--color-accent);
+}
+
+.guide-card p {
+  color: var(--color-text-mid);
+  margin-bottom: var(--space-md);
+}
+
+.guide-card__cta {
+  display: inline-block;
+  font-family: var(--font-heading);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--color-accent);
+}
+
+/* Anchor card — full width, slightly different background */
+.guide-card--anchor {
+  grid-column: 1 / -1;
+  background-color: var(--color-bg);
+  border: 1px solid var(--color-rule);
+}
+
+.guide-card--anchor h3 {
+  font-size: var(--text-xl);
+}
+
+/* ═══════════════════════════════════
+   Guide Index — Category Section
+   ═══════════════════════════════════ */
+.guide-category-section {
+  margin-block: var(--space-3xl);
+}
+
+.guide-category-section:first-of-type {
+  margin-top: var(--space-xl);
+}
+
+.guide-category-section h2 {
+  font-size: var(--text-2xl);
+  font-weight: 400;
+  margin-bottom: var(--space-md);
+}
+
+.guide-category-section .category-rule {
+  border: none;
+  border-top: 2px solid var(--color-accent);
+  width: 3rem;
+  margin: 0 0 var(--space-xl) 0;
+}
+
+/* Hidden state via JS or no-JS fallback */
+.guide-category-section[hidden] {
+  display: none;
+}
+
+/* ═══════════════════════════════════
+   Nav Dropdown (Music Guides)
+   ═══════════════════════════════════ */
+.has-dropdown {
+  position: relative;
+}
+
+.dropdown-caret {
+  display: inline-block;
+  margin-left: 0.25em;
+  font-size: 0.75em;
+  transition: transform var(--transition-fast);
+}
+
+.dropdown-menu {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  min-width: 12rem;
+  list-style: none;
+  padding: var(--space-sm) 0;
+  margin: 0;
+  background-color: var(--color-bg);
+  border: 1px solid var(--color-rule);
+  z-index: 150;
+}
+
+.dropdown-menu li {
+  margin: 0;
+}
+
+.dropdown-menu a {
+  display: block;
+  padding: var(--space-sm) var(--space-lg);
+  font-family: var(--font-heading);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-text);
+  text-decoration: none;
+  transition: background-color var(--transition-fast), color var(--transition-fast);
+}
+
+.dropdown-menu a:hover,
+.dropdown-menu a:focus-visible {
+  background-color: var(--color-bg-alt);
+  color: var(--color-accent);
+  outline: none;
+}
+
+.dropdown-separator {
+  height: 1px;
+  background-color: var(--color-rule);
+  margin: var(--space-sm) var(--space-md);
+}
+
+/* Open on hover / keyboard focus / explicit aria-expanded */
+.has-dropdown:hover > .dropdown-menu,
+.has-dropdown:focus-within > .dropdown-menu,
+.has-dropdown[data-open="true"] > .dropdown-menu {
+  display: block;
+}
+
+.has-dropdown:hover > .dropdown-trigger .dropdown-caret,
+.has-dropdown:focus-within > .dropdown-trigger .dropdown-caret,
+.has-dropdown[data-open="true"] > .dropdown-trigger .dropdown-caret {
+  transform: rotate(180deg);
+}
+
+/* Mobile: dropdown becomes an inline expandable block inside the hamburger */
+@media (max-width: 767px) {
+  .dropdown-menu {
+    display: none;
+    position: static;
+    border: none;
+    border-top: 1px solid var(--color-rule);
+    padding: 0;
+    background: transparent;
+  }
+
+  .has-dropdown[data-open="true"] > .dropdown-menu {
+    display: block;
+  }
+
+  /* Disable hover-open on touch devices — only the explicit toggle opens it */
+  .has-dropdown:hover > .dropdown-menu,
+  .has-dropdown:focus-within > .dropdown-menu {
+    display: none;
+  }
+
+  .has-dropdown[data-open="true"] > .dropdown-menu {
+    display: block;
+  }
+
+  .dropdown-menu a {
+    padding-left: var(--space-2xl);
+    text-transform: none;
+    font-size: var(--text-base);
+    border-bottom: 1px solid var(--color-rule);
+  }
+
+  .dropdown-menu li:last-child a {
+    border-bottom: none;
+  }
+
+  .dropdown-separator {
+    display: none;
+  }
+}
 /* ═══════════════════════════════════
    Print Styles
    ═══════════════════════════════════ */
