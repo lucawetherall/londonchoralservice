@@ -113,7 +113,18 @@ IndexNow is Microsoft + Yandex's submit-on-change protocol. Google doesn't use i
 
 1. Generate a key at `https://www.indexnow.org/`. The key is a random 32-char string; no account is needed. Save it somewhere durable (1Password, repo `.env` not committed).
 2. Drop a file `<key>.txt` in the repo root. Its contents is the same key. This is how the search engines verify you own the domain.
-3. After the key file is in place and the site is rebuilt, extend `build.sh` to POST changed URLs to `https://api.indexnow.org/indexnow` with the key as a query parameter and the changed URL list in the body. The endpoint is documented at `https://www.indexnow.org/documentation`. Run this only on production builds, not on every local rebuild.
+3. After the key file is in place and the site is rebuilt, extend `build.sh` to notify IndexNow on each production deploy. Two flows are supported by the protocol:
+   - **Single URL**: `GET https://api.indexnow.org/indexnow?url=<encoded-url>&key=<key>`
+   - **Multiple URLs (preferred for batch deploys)**: `POST https://api.indexnow.org/indexnow` with `Content-Type: application/json` and a body of the shape:
+     ```json
+     {
+       "host": "londonchoralservice.com",
+       "key": "<your-32-char-key>",
+       "keyLocation": "https://londonchoralservice.com/<your-key>.txt",
+       "urlList": ["https://londonchoralservice.com/path1.html", "..."]
+     }
+     ```
+   The key goes inside the JSON body — not as a query parameter — for the POST flow. Spec: `https://www.indexnow.org/documentation`. Run this only on production builds, not on every local rebuild.
 
 Step 3 is code and goes into a later phase. Steps 1 and 2 are manual prerequisites and need to happen first.
 
