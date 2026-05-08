@@ -9,6 +9,14 @@
       var expanded = toggle.getAttribute('aria-expanded') === 'true';
       toggle.setAttribute('aria-expanded', String(!expanded));
       menu.classList.toggle('is-open');
+      // When closing the hamburger, also collapse any expanded dropdowns
+      if (expanded) {
+        document.querySelectorAll('.has-dropdown').forEach(function (item) {
+          item.setAttribute('data-open', 'false');
+          var trig = item.querySelector('.dropdown-trigger');
+          if (trig) trig.setAttribute('aria-expanded', 'false');
+        });
+      }
     });
   }
 
