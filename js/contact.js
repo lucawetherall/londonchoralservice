@@ -7,6 +7,23 @@
   var submitBtn  = form.querySelector('[type="submit"]');
   var btnLabel   = submitBtn ? submitBtn.textContent : 'Send enquiry';
 
+  // Pre-fill the occasion select from a ?occasion= URL parameter so traffic
+  // arriving from /weddings.html, /funerals.html, etc. lands with the right
+  // option already chosen.
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var occasionParam = params.get('occasion');
+    if (occasionParam) {
+      var select = form.querySelector('#occasion');
+      if (select) {
+        var match = Array.prototype.find.call(select.options, function (o) {
+          return o.value === occasionParam;
+        });
+        if (match) select.value = occasionParam;
+      }
+    }
+  } catch (_) { /* URLSearchParams unsupported — non-fatal */ }
+
   form.addEventListener('submit', function (e) {
     e.preventDefault();
 
