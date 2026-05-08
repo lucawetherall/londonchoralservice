@@ -26,6 +26,16 @@
   border-top: 1px solid var(--color-rule);
 }
 
+/* Compact-edge variants for stacking sections that should read as one
+   continuous block (e.g. hero immediately followed by content). */
+.section--compact-bottom {
+  padding-block-end: var(--space-xl);
+}
+
+.section--compact-top {
+  padding-block-start: var(--space-xl);
+}
+
 /* ── Lede Paragraph ── */
 .lede {
   font-size: var(--text-md);
