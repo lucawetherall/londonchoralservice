@@ -66,6 +66,54 @@ echo "Populated partials in $include_count HTML files"
 
 echo "Inlining CSS into HTML files..."
 
+# Pass A: convert any existing inlined-CSS <style> blocks back to <link> tags
+# so the next pass can re-inline them with the latest css/style.css.
+# Detect via the signature: a line "  <style>" whose next non-blank line
+# contains ":root {" (the start of tokens.css, which is the first file
+# concatenated into style.css).
+restore_count=0
+for file in $(find "$SCRIPT_DIR" -name '*.html' -not -path '*/.git/*' -not -path '*/partials/*'); do
+  # Skip files that already have a link tag (not yet inlined).
+  if grep -q '<link rel="stylesheet" href=.*style\.css">' "$file"; then
+    continue
+  fi
+  # Skip files that have no inlined style block.
+  if ! grep -q '^  <style>$' "$file"; then
+    continue
+  fi
+  awk '
+    /^  <style>$/ && !done {
+      saved = $0
+      if ((getline next_line) > 0) {
+        if (next_line ~ /:root \{/) {
+          # This is the inlined CSS block — replace it with a <link> tag.
+          print "  <link rel=\"stylesheet\" href=\"/css/style.css\">"
+          # Consume input until the matching </style> line.
+          while ((getline skip_line) > 0) {
+            if (skip_line ~ /^  <\/style>$/) break
+          }
+          done = 1
+          next
+        } else {
+          # Not the inlined block — emit both lines and continue normally.
+          print saved
+          print next_line
+          next
+        }
+      } else {
+        # End of file mid-style — emit what we have.
+        print saved
+        next
+      }
+    }
+    { print }
+  ' "$file" > "$file.tmp" && mv "$file.tmp" "$file"
+  restore_count=$((restore_count + 1))
+done
+
+echo "Restored $restore_count inlined CSS blocks to link tags"
+
+# Pass B: existing inlining pass — operates on link tags.
 count=0
 for file in $(find "$SCRIPT_DIR" -name '*.html' -not -path '*/.git/*' -not -path '*/partials/*'); do
   if grep -q '<link rel="stylesheet" href=.*style\.css">' "$file"; then
