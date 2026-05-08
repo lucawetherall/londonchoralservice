@@ -124,5 +124,14 @@
         }, 300);
       });
     }
+
+    var waLinks = document.querySelectorAll('a[href*="wa.me/"]');
+    for (var k = 0; k < waLinks.length; k++) {
+      waLinks[k].addEventListener('click', function () {
+        setTimeout(function () {
+          window.location.href = thankYouBase + '?from=whatsapp';
+        }, 300);
+      });
+    }
   }
 })();
