@@ -26,9 +26,21 @@ echo "Populating HTML partials..."
 include_count=0
 for file in $(find "$SCRIPT_DIR" -name '*.html' -not -path '*/.git/*' -not -path '*/partials/*'); do
   if grep -q '@include-start' "$file"; then
+    # Validate that every referenced partial exists; fail loudly if not.
+    # Done in shell (not awk) so set -euo pipefail catches the failure cleanly.
+    while IFS= read -r marker_line; do
+      partial=$(echo "$marker_line" | sed -n 's/.*@include-start \([^ ]*\) -->.*/\1/p')
+      partial_path="$SCRIPT_DIR/$partial"
+      if [[ ! -f "$partial_path" ]]; then
+        echo "build.sh: partial not found: $partial_path (referenced from $file)" >&2
+        exit 1
+      fi
+    done < <(grep '@include-start' "$file")
+
     awk -v root="$SCRIPT_DIR" '
       /<!-- @include-start [^ ]+ -->/ {
         match($0, /@include-start [^ ]+/)
+        # 15 = length("@include-start ")
         partial = substr($0, RSTART + 15, RLENGTH - 15)
         partial_path = root "/" partial
         print
