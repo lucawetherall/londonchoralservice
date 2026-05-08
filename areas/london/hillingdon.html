@@ -1688,109 +1688,110 @@
 
   <script type="application/ld+json">
   {
-  "@context": "https://schema.org",
-  "@graph": [
-    {
-      "@type": "Service",
-      "name": "Funeral Singers & Wedding Choirs in Hillingdon",
-      "url": "https://londonchoralservice.com/areas/london/hillingdon.html",
-      "description": "Professional funeral singers and wedding choirs in Hillingdon, London.",
-      "provider": {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Service",
+        "name": "Funeral Singers & Wedding Choirs in Hillingdon",
+        "url": "https://londonchoralservice.com/areas/london/hillingdon.html",
+        "description": "Professional funeral singers and wedding choirs in Hillingdon, London.",
+        "provider": {
+          "@type": "LocalBusiness",
+          "@id": "https://londonchoralservice.com/#organization"
+        },
+        "areaServed": {
+          "@type": "AdministrativeArea",
+          "name": "London Borough of Hillingdon",
+          "containedInPlace": {
+            "@type": "City",
+            "name": "London",
+            "addressCountry": "GB"
+          }
+        },
+        "serviceType": [
+          "Funeral Music",
+          "Wedding Music",
+          "Memorial Music",
+          "Ceremony Music"
+        ],
+        "geo": {
+          "@type": "GeoCoordinates",
+          "latitude": 51.53517,
+          "longitude": -0.4482
+        }
+      },
+      {
         "@type": "LocalBusiness",
-        "name": "The London Choral Service",
-        "alternateName": "London Choral Service",
-        "url": "https://londonchoralservice.com",
-        "telephone": "+447356042468",
-        "email": "office@londonchoralservice.com"
+        "@id": "https://londonchoralservice.com/#organization",
+        "name": "The London Choral Service"
       },
-      "areaServed": {
-        "@type": "AdministrativeArea",
-        "name": "London Borough of Hillingdon",
-        "containedInPlace": {
-          "@type": "City",
-          "name": "London",
-          "addressCountry": "GB"
-        }
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "https://londonchoralservice.com/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Areas We Serve",
+            "item": "https://londonchoralservice.com/areas/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 3,
+            "name": "London",
+            "item": "https://londonchoralservice.com/areas/london.html"
+          },
+          {
+            "@type": "ListItem",
+            "position": 4,
+            "name": "Hillingdon"
+          }
+        ]
       },
-      "serviceType": [
-        "Funeral Music",
-        "Wedding Music",
-        "Memorial Music",
-        "Ceremony Music"
-      ]
-    },
-    {
-      "@type": "LocalBusiness",
-      "@id": "https://londonchoralservice.com/#organization",
-      "name": "The London Choral Service"
-    },
-    {
-      "@type": "BreadcrumbList",
-      "itemListElement": [
-        {
-          "@type": "ListItem",
-          "position": 1,
-          "name": "Home",
-          "item": "https://londonchoralservice.com/"
-        },
-        {
-          "@type": "ListItem",
-          "position": 2,
-          "name": "Areas We Serve",
-          "item": "https://londonchoralservice.com/areas/"
-        },
-        {
-          "@type": "ListItem",
-          "position": 3,
-          "name": "London",
-          "item": "https://londonchoralservice.com/areas/london.html"
-        },
-        {
-          "@type": "ListItem",
-          "position": 4,
-          "name": "Hillingdon"
-        }
-      ]
-    },
-    {
-      "@type": "FAQPage",
-      "mainEntity": [
-        {
-          "@type": "Question",
-          "name": "How much does a funeral singer cost in Hillingdon?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "For services at Breakspear Crematorium, Hillingdon Cemetery, St John's Hillingdon, or churches in Uxbridge and Ruislip, a soloist starts from £215. A small choir of four is from £1,150, a quintet from £1,400, a sextet from £1,600, and a full choir of eight from £2,000. All prices include travel within Greater London."
+      {
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "How much does a funeral singer cost in Hillingdon?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "For services at Breakspear Crematorium, Hillingdon Cemetery, St John's Hillingdon, or churches in Uxbridge and Ruislip, a soloist starts from £215. A small choir of four is from £1,150, a quintet from £1,400, a sextet from £1,600, and a full choir of eight from £2,000. All prices include travel within Greater London."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Can you provide a choir for a wedding in Hillingdon?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes. St John's Hillingdon is a popular choice for a traditional church wedding with full choral music, and Uxbridge has a range of licensed venues suited to civil ceremonies. We provide ensembles from a solo vocalist to a twelve-voice chorus, and we handle all the musical planning from first enquiry to the day itself."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "What types of music can you perform at a funeral in Hillingdon?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "At St John's Hillingdon or the parish churches of Ruislip and Hayes, traditional hymns, psalms, and sacred choral works sound magnificent. At Breakspear Crematorium or Hillingdon Cemetery, we often sing more reflective pieces — contemporary songs, classical solos, or bespoke arrangements tailored to the family's wishes."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Do you cover crematorium services in Hillingdon?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes. Breakspear Crematorium is one of north-west London's busiest crematoria, and our singers know its chapel well. Live music changes the atmosphere there in a way recorded music does not. We liaise with crematorium staff and funeral directors to ensure seamless timing throughout."
+            }
           }
-        },
-        {
-          "@type": "Question",
-          "name": "Can you provide a choir for a wedding in Hillingdon?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Yes. St John's Hillingdon is a popular choice for a traditional church wedding with full choral music, and Uxbridge has a range of licensed venues suited to civil ceremonies. We provide ensembles from a solo vocalist to a twelve-voice chorus, and we handle all the musical planning from first enquiry to the day itself."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "What types of music can you perform at a funeral in Hillingdon?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "At St John's Hillingdon or the parish churches of Ruislip and Hayes, traditional hymns, psalms, and sacred choral works sound magnificent. At Breakspear Crematorium or Hillingdon Cemetery, we often sing more reflective pieces — contemporary songs, classical solos, or bespoke arrangements tailored to the family's wishes."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "Do you cover crematorium services in Hillingdon?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Yes. Breakspear Crematorium is one of north-west London's busiest crematoria, and our singers know its chapel well. Live music changes the atmosphere there in a way recorded music does not. We liaise with crematorium staff and funeral directors to ensure seamless timing throughout."
-          }
-        }
-      ]
-    }
-  ]
-}
+        ]
+      }
+    ]
+  }
   </script>
 </head>
 <body>

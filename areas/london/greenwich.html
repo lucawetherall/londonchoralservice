@@ -1688,109 +1688,110 @@
 
   <script type="application/ld+json">
   {
-  "@context": "https://schema.org",
-  "@graph": [
-    {
-      "@type": "Service",
-      "name": "Funeral Singers & Wedding Choirs in Greenwich",
-      "url": "https://londonchoralservice.com/areas/london/greenwich.html",
-      "description": "Professional funeral singers and wedding choirs in Greenwich, London.",
-      "provider": {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Service",
+        "name": "Funeral Singers & Wedding Choirs in Greenwich",
+        "url": "https://londonchoralservice.com/areas/london/greenwich.html",
+        "description": "Professional funeral singers and wedding choirs in Greenwich, London.",
+        "provider": {
+          "@type": "LocalBusiness",
+          "@id": "https://londonchoralservice.com/#organization"
+        },
+        "areaServed": {
+          "@type": "AdministrativeArea",
+          "name": "Royal Borough of Greenwich",
+          "containedInPlace": {
+            "@type": "City",
+            "name": "London",
+            "addressCountry": "GB"
+          }
+        },
+        "serviceType": [
+          "Funeral Music",
+          "Wedding Music",
+          "Memorial Music",
+          "Ceremony Music"
+        ],
+        "geo": {
+          "@type": "GeoCoordinates",
+          "latitude": 51.48205,
+          "longitude": 0.00569
+        }
+      },
+      {
         "@type": "LocalBusiness",
-        "name": "The London Choral Service",
-        "alternateName": "London Choral Service",
-        "url": "https://londonchoralservice.com",
-        "telephone": "+447356042468",
-        "email": "office@londonchoralservice.com"
+        "@id": "https://londonchoralservice.com/#organization",
+        "name": "The London Choral Service"
       },
-      "areaServed": {
-        "@type": "AdministrativeArea",
-        "name": "Royal Borough of Greenwich",
-        "containedInPlace": {
-          "@type": "City",
-          "name": "London",
-          "addressCountry": "GB"
-        }
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "https://londonchoralservice.com/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Areas We Serve",
+            "item": "https://londonchoralservice.com/areas/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 3,
+            "name": "London",
+            "item": "https://londonchoralservice.com/areas/london.html"
+          },
+          {
+            "@type": "ListItem",
+            "position": 4,
+            "name": "Greenwich"
+          }
+        ]
       },
-      "serviceType": [
-        "Funeral Music",
-        "Wedding Music",
-        "Memorial Music",
-        "Ceremony Music"
-      ]
-    },
-    {
-      "@type": "LocalBusiness",
-      "@id": "https://londonchoralservice.com/#organization",
-      "name": "The London Choral Service"
-    },
-    {
-      "@type": "BreadcrumbList",
-      "itemListElement": [
-        {
-          "@type": "ListItem",
-          "position": 1,
-          "name": "Home",
-          "item": "https://londonchoralservice.com/"
-        },
-        {
-          "@type": "ListItem",
-          "position": 2,
-          "name": "Areas We Serve",
-          "item": "https://londonchoralservice.com/areas/"
-        },
-        {
-          "@type": "ListItem",
-          "position": 3,
-          "name": "London",
-          "item": "https://londonchoralservice.com/areas/london.html"
-        },
-        {
-          "@type": "ListItem",
-          "position": 4,
-          "name": "Greenwich"
-        }
-      ]
-    },
-    {
-      "@type": "FAQPage",
-      "mainEntity": [
-        {
-          "@type": "Question",
-          "name": "How much does a funeral singer cost in Greenwich?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Whether you are planning a service at St Alfege Greenwich, Eltham Crematorium, or Charlton Cemetery, a soloist starts from £215. A small choir of four is from £1,150, a quintet from £1,400, a sextet from £1,600, and a full choir of eight from £2,000. All prices include travel within Greater London."
+      {
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "How much does a funeral singer cost in Greenwich?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Whether you are planning a service at St Alfege Greenwich, Eltham Crematorium, or Charlton Cemetery, a soloist starts from £215. A small choir of four is from £1,150, a quintet from £1,400, a sextet from £1,600, and a full choir of eight from £2,000. All prices include travel within Greater London."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Can you provide a choir for a wedding in Greenwich?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Absolutely. St Alfege Greenwich and the chapels of the Old Royal Naval College are stunning settings for a wedding choir, and we provide ensembles from a solo vocalist up to a twelve-voice chorus. We also sing at smaller parish churches and licensed venues across the borough, handling every musical detail for you."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "What types of music can you perform at a funeral in Greenwich?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "The Hawksmoor interior of St Alfege Greenwich rewards choral music beautifully, and we often sing traditional hymns, psalms, and sacred anthems there. At Eltham Crematorium or Charlton Cemetery, we adapt to more reflective repertoire — popular songs, contemporary pieces, or bespoke arrangements of a song that held special meaning."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Do you cover crematorium services in Greenwich?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes. Eltham Crematorium is the principal crematorium serving Greenwich families, and our singers know its chapel and service timings well. We coordinate directly with crematorium staff and your funeral director so the music fits naturally into the service."
+            }
           }
-        },
-        {
-          "@type": "Question",
-          "name": "Can you provide a choir for a wedding in Greenwich?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Absolutely. St Alfege Greenwich and the chapels of the Old Royal Naval College are stunning settings for a wedding choir, and we provide ensembles from a solo vocalist up to a twelve-voice chorus. We also sing at smaller parish churches and licensed venues across the borough, handling every musical detail for you."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "What types of music can you perform at a funeral in Greenwich?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "The Hawksmoor interior of St Alfege Greenwich rewards choral music beautifully, and we often sing traditional hymns, psalms, and sacred anthems there. At Eltham Crematorium or Charlton Cemetery, we adapt to more reflective repertoire — popular songs, contemporary pieces, or bespoke arrangements of a song that held special meaning."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "Do you cover crematorium services in Greenwich?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Yes. Eltham Crematorium is the principal crematorium serving Greenwich families, and our singers know its chapel and service timings well. We coordinate directly with crematorium staff and your funeral director so the music fits naturally into the service."
-          }
-        }
-      ]
-    }
-  ]
-}
+        ]
+      }
+    ]
+  }
   </script>
 </head>
 <body>

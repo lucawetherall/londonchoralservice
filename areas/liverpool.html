@@ -1688,96 +1688,101 @@
 
   <script type="application/ld+json">
   {
-  "@context": "https://schema.org",
-  "@graph": [
-    {
-      "@type": "Service",
-      "name": "Funeral Singers & Wedding Choirs in Liverpool",
-      "url": "https://londonchoralservice.com/areas/liverpool.html",
-      "description": "Professional funeral singers, wedding choirs, and ceremony musicians in Liverpool and across Merseyside.",
-      "provider": {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Service",
+        "name": "Funeral Singers & Wedding Choirs in Liverpool",
+        "url": "https://londonchoralservice.com/areas/liverpool.html",
+        "description": "Professional funeral singers, wedding choirs, and ceremony musicians in Liverpool and across Merseyside.",
+        "provider": {
+          "@type": "LocalBusiness",
+          "@id": "https://londonchoralservice.com/#organization",
+          "name": "The London Choral Service",
+          "alternateName": "London Choral Service"
+        },
+        "areaServed": {
+          "@type": "City",
+          "name": "Liverpool"
+        },
+        "serviceType": [
+          "Funeral Music",
+          "Wedding Music",
+          "Memorial Music",
+          "Ceremony Music"
+        ],
+        "geo": {
+          "@type": "GeoCoordinates",
+          "latitude": 53.40805,
+          "longitude": -2.99169
+        }
+      },
+      {
         "@type": "LocalBusiness",
         "@id": "https://londonchoralservice.com/#organization",
-        "name": "The London Choral Service",
-        "alternateName": "London Choral Service"
+        "name": "The London Choral Service"
       },
-      "areaServed": {
-        "@type": "City",
-        "name": "Liverpool"
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "https://londonchoralservice.com/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Areas We Serve",
+            "item": "https://londonchoralservice.com/areas/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 3,
+            "name": "Liverpool"
+          }
+        ]
       },
-      "serviceType": [
-        "Funeral Music",
-        "Wedding Music",
-        "Memorial Music",
-        "Ceremony Music"
-      ]
-    },
-    {
-      "@type": "LocalBusiness",
-      "@id": "https://londonchoralservice.com/#organization",
-      "name": "The London Choral Service"
-    },
-    {
-      "@type": "BreadcrumbList",
-      "itemListElement": [
-        {
-          "@type": "ListItem",
-          "position": 1,
-          "name": "Home",
-          "item": "https://londonchoralservice.com/"
-        },
-        {
-          "@type": "ListItem",
-          "position": 2,
-          "name": "Areas We Serve",
-          "item": "https://londonchoralservice.com/areas/"
-        },
-        {
-          "@type": "ListItem",
-          "position": 3,
-          "name": "Liverpool"
-        }
-      ]
-    },
-    {
-      "@type": "FAQPage",
-      "mainEntity": [
-        {
-          "@type": "Question",
-          "name": "How much does a funeral singer cost in Liverpool?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "A solo funeral singer in Liverpool starts from £215. A small choir of four voices starts from £1,150, a quintet from £1,400, a sextet from £1,600, and a full choir of eight from £2,000. Travel costs may apply for services across Merseyside, including Wirral, Sefton, Knowsley, and St Helens."
+      {
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "How much does a funeral singer cost in Liverpool?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "A solo funeral singer in Liverpool starts from £215. A small choir of four voices starts from £1,150, a quintet from £1,400, a sextet from £1,600, and a full choir of eight from £2,000. Travel costs may apply for services across Merseyside, including Wirral, Sefton, Knowsley, and St Helens."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Can you provide a choir for a wedding in Liverpool?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Of course. Our choirs and soloists perform at weddings in Liverpool Cathedral, the Metropolitan Cathedral of Christ the King, and at intimate churches in Woolton, Aigburth, and Crosby, as well as waterfront venues along the Pier Head. Ensembles range from a solo vocalist to a full twelve-voice chorus."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "What types of music can you perform at a funeral in Liverpool?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Our singers perform traditional hymns, classical sacred works, and contemporary songs or personal favourites. At Liverpool Cathedral or the Metropolitan Cathedral we can offer the full breadth of the choral repertoire, from a solo Ave Maria to a large-scale requiem. Bespoke arrangements are always available."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Do you cover crematorium services in Liverpool?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes, we regularly sing at Anfield Crematorium, Thornton Crematorium, and other crematoriums across Merseyside. Our musicians are familiar with each chapel's layout and timing requirements, and coordinate directly with crematorium staff to ensure everything runs smoothly."
+            }
           }
-        },
-        {
-          "@type": "Question",
-          "name": "Can you provide a choir for a wedding in Liverpool?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Of course. Our choirs and soloists perform at weddings in Liverpool Cathedral, the Metropolitan Cathedral of Christ the King, and at intimate churches in Woolton, Aigburth, and Crosby, as well as waterfront venues along the Pier Head. Ensembles range from a solo vocalist to a full twelve-voice chorus."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "What types of music can you perform at a funeral in Liverpool?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Our singers perform traditional hymns, classical sacred works, and contemporary songs or personal favourites. At Liverpool Cathedral or the Metropolitan Cathedral we can offer the full breadth of the choral repertoire, from a solo Ave Maria to a large-scale requiem. Bespoke arrangements are always available."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "Do you cover crematorium services in Liverpool?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Yes, we regularly sing at Anfield Crematorium, Thornton Crematorium, and other crematoriums across Merseyside. Our musicians are familiar with each chapel's layout and timing requirements, and coordinate directly with crematorium staff to ensure everything runs smoothly."
-          }
-        }
-      ]
-    }
-  ]
-}
+        ]
+      }
+    ]
+  }
   </script>
 </head>
 <body>

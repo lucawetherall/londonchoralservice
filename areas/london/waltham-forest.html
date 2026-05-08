@@ -1688,109 +1688,110 @@
 
   <script type="application/ld+json">
   {
-  "@context": "https://schema.org",
-  "@graph": [
-    {
-      "@type": "Service",
-      "name": "Funeral Singers & Wedding Choirs in Waltham Forest",
-      "url": "https://londonchoralservice.com/areas/london/waltham-forest.html",
-      "description": "Professional funeral singers and wedding choirs in Waltham Forest, London.",
-      "provider": {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Service",
+        "name": "Funeral Singers & Wedding Choirs in Waltham Forest",
+        "url": "https://londonchoralservice.com/areas/london/waltham-forest.html",
+        "description": "Professional funeral singers and wedding choirs in Waltham Forest, London.",
+        "provider": {
+          "@type": "LocalBusiness",
+          "@id": "https://londonchoralservice.com/#organization"
+        },
+        "areaServed": {
+          "@type": "AdministrativeArea",
+          "name": "Waltham Forest",
+          "containedInPlace": {
+            "@type": "City",
+            "name": "London",
+            "addressCountry": "GB"
+          }
+        },
+        "serviceType": [
+          "Funeral Music",
+          "Wedding Music",
+          "Memorial Music",
+          "Ceremony Music"
+        ],
+        "geo": {
+          "@type": "GeoCoordinates",
+          "latitude": 51.59017,
+          "longitude": 0.0051
+        }
+      },
+      {
         "@type": "LocalBusiness",
-        "name": "The London Choral Service",
-        "alternateName": "London Choral Service",
-        "url": "https://londonchoralservice.com",
-        "telephone": "+447356042468",
-        "email": "office@londonchoralservice.com"
+        "@id": "https://londonchoralservice.com/#organization",
+        "name": "The London Choral Service"
       },
-      "areaServed": {
-        "@type": "AdministrativeArea",
-        "name": "Waltham Forest",
-        "containedInPlace": {
-          "@type": "City",
-          "name": "London",
-          "addressCountry": "GB"
-        }
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "https://londonchoralservice.com/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Areas We Serve",
+            "item": "https://londonchoralservice.com/areas/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 3,
+            "name": "London",
+            "item": "https://londonchoralservice.com/areas/london.html"
+          },
+          {
+            "@type": "ListItem",
+            "position": 4,
+            "name": "Waltham Forest"
+          }
+        ]
       },
-      "serviceType": [
-        "Funeral Music",
-        "Wedding Music",
-        "Memorial Music",
-        "Ceremony Music"
-      ]
-    },
-    {
-      "@type": "LocalBusiness",
-      "@id": "https://londonchoralservice.com/#organization",
-      "name": "The London Choral Service"
-    },
-    {
-      "@type": "BreadcrumbList",
-      "itemListElement": [
-        {
-          "@type": "ListItem",
-          "position": 1,
-          "name": "Home",
-          "item": "https://londonchoralservice.com/"
-        },
-        {
-          "@type": "ListItem",
-          "position": 2,
-          "name": "Areas We Serve",
-          "item": "https://londonchoralservice.com/areas/"
-        },
-        {
-          "@type": "ListItem",
-          "position": 3,
-          "name": "London",
-          "item": "https://londonchoralservice.com/areas/london.html"
-        },
-        {
-          "@type": "ListItem",
-          "position": 4,
-          "name": "Waltham Forest"
-        }
-      ]
-    },
-    {
-      "@type": "FAQPage",
-      "mainEntity": [
-        {
-          "@type": "Question",
-          "name": "How much does a funeral singer cost in Waltham Forest?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Whether the service is at St Mary's Walthamstow, Queens Road Cemetery chapel, or Chingford Mount Cemetery, a soloist starts from £215, a small choir of four from £1,150, a quintet from £1,400, a sextet from £1,600, and a full choir of eight from £2,000. All prices include travel within Greater London."
+      {
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "How much does a funeral singer cost in Waltham Forest?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Whether the service is at St Mary's Walthamstow, Queens Road Cemetery chapel, or Chingford Mount Cemetery, a soloist starts from £215, a small choir of four from £1,150, a quintet from £1,400, a sextet from £1,600, and a full choir of eight from £2,000. All prices include travel within Greater London."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Can you provide a choir for a wedding in Waltham Forest?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes. St Mary's Walthamstow is a particularly charming setting for a wedding with live choral music, and we also perform at licensed venues such as the William Morris Gallery and other stylish spaces around the borough. We provide anything from a solo singer to a twelve-voice chorus and handle all the musical arrangements for you."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "What types of music can you perform at a funeral in Waltham Forest?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "We cover the full range — traditional hymns, classical sacred works, contemporary songs, and popular favourites. If a song held special meaning for the person being remembered, we are always happy to learn it or create a bespoke arrangement. The intimate chapel settings at Queens Road and Chingford Mount work well with both solo voices and small ensembles."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Do you cover crematorium services in Waltham Forest?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Waltham Forest does not have a crematorium within the borough, but we regularly sing at the City of London Crematorium at Manor Park and other facilities nearby. Our singers are experienced with the fixed time slots that crematorium services require and liaise with staff beforehand to ensure everything runs to schedule."
+            }
           }
-        },
-        {
-          "@type": "Question",
-          "name": "Can you provide a choir for a wedding in Waltham Forest?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Yes. St Mary's Walthamstow is a particularly charming setting for a wedding with live choral music, and we also perform at licensed venues such as the William Morris Gallery and other stylish spaces around the borough. We provide anything from a solo singer to a twelve-voice chorus and handle all the musical arrangements for you."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "What types of music can you perform at a funeral in Waltham Forest?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "We cover the full range — traditional hymns, classical sacred works, contemporary songs, and popular favourites. If a song held special meaning for the person being remembered, we are always happy to learn it or create a bespoke arrangement. The intimate chapel settings at Queens Road and Chingford Mount work well with both solo voices and small ensembles."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "Do you cover crematorium services in Waltham Forest?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Waltham Forest does not have a crematorium within the borough, but we regularly sing at the City of London Crematorium at Manor Park and other facilities nearby. Our singers are experienced with the fixed time slots that crematorium services require and liaise with staff beforehand to ensure everything runs to schedule."
-          }
-        }
-      ]
-    }
-  ]
-}
+        ]
+      }
+    ]
+  }
   </script>
 </head>
 <body>

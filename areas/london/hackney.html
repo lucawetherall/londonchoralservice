@@ -1688,109 +1688,110 @@
 
   <script type="application/ld+json">
   {
-  "@context": "https://schema.org",
-  "@graph": [
-    {
-      "@type": "Service",
-      "name": "Funeral Singers & Wedding Choirs in Hackney",
-      "url": "https://londonchoralservice.com/areas/london/hackney.html",
-      "description": "Professional funeral singers and wedding choirs in Hackney, London.",
-      "provider": {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Service",
+        "name": "Funeral Singers & Wedding Choirs in Hackney",
+        "url": "https://londonchoralservice.com/areas/london/hackney.html",
+        "description": "Professional funeral singers and wedding choirs in Hackney, London.",
+        "provider": {
+          "@type": "LocalBusiness",
+          "@id": "https://londonchoralservice.com/#organization"
+        },
+        "areaServed": {
+          "@type": "AdministrativeArea",
+          "name": "Hackney",
+          "containedInPlace": {
+            "@type": "City",
+            "name": "London",
+            "addressCountry": "GB"
+          }
+        },
+        "serviceType": [
+          "Funeral Music",
+          "Wedding Music",
+          "Memorial Music",
+          "Ceremony Music"
+        ],
+        "geo": {
+          "@type": "GeoCoordinates",
+          "latitude": 51.54487,
+          "longitude": -0.05538
+        }
+      },
+      {
         "@type": "LocalBusiness",
-        "name": "The London Choral Service",
-        "alternateName": "London Choral Service",
-        "url": "https://londonchoralservice.com",
-        "telephone": "+447356042468",
-        "email": "office@londonchoralservice.com"
+        "@id": "https://londonchoralservice.com/#organization",
+        "name": "The London Choral Service"
       },
-      "areaServed": {
-        "@type": "AdministrativeArea",
-        "name": "Hackney",
-        "containedInPlace": {
-          "@type": "City",
-          "name": "London",
-          "addressCountry": "GB"
-        }
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "https://londonchoralservice.com/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Areas We Serve",
+            "item": "https://londonchoralservice.com/areas/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 3,
+            "name": "London",
+            "item": "https://londonchoralservice.com/areas/london.html"
+          },
+          {
+            "@type": "ListItem",
+            "position": 4,
+            "name": "Hackney"
+          }
+        ]
       },
-      "serviceType": [
-        "Funeral Music",
-        "Wedding Music",
-        "Memorial Music",
-        "Ceremony Music"
-      ]
-    },
-    {
-      "@type": "LocalBusiness",
-      "@id": "https://londonchoralservice.com/#organization",
-      "name": "The London Choral Service"
-    },
-    {
-      "@type": "BreadcrumbList",
-      "itemListElement": [
-        {
-          "@type": "ListItem",
-          "position": 1,
-          "name": "Home",
-          "item": "https://londonchoralservice.com/"
-        },
-        {
-          "@type": "ListItem",
-          "position": 2,
-          "name": "Areas We Serve",
-          "item": "https://londonchoralservice.com/areas/"
-        },
-        {
-          "@type": "ListItem",
-          "position": 3,
-          "name": "London",
-          "item": "https://londonchoralservice.com/areas/london.html"
-        },
-        {
-          "@type": "ListItem",
-          "position": 4,
-          "name": "Hackney"
-        }
-      ]
-    },
-    {
-      "@type": "FAQPage",
-      "mainEntity": [
-        {
-          "@type": "Question",
-          "name": "How much does a funeral singer cost in Hackney?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "For services at St John at Hackney, Abney Park Cemetery, St Mary of Eton, or any other venue in the borough, a soloist starts from £215. A small choir of four is from £1,150, a quintet from £1,400, a sextet from £1,600, and a full choir of eight from £2,000. All prices include travel within Greater London."
+      {
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "How much does a funeral singer cost in Hackney?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "For services at St John at Hackney, Abney Park Cemetery, St Mary of Eton, or any other venue in the borough, a soloist starts from £215. A small choir of four is from £1,150, a quintet from £1,400, a sextet from £1,600, and a full choir of eight from £2,000. All prices include travel within Greater London."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Can you provide a choir for a wedding in Hackney?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "We do. St John at Hackney on Mare Street is a magnificent church for a wedding choir, and its acoustic makes congregational singing feel effortless. We also perform at Hackney's many licensed venues — from restored warehouses to elegant town halls — with ensembles ranging from a solo vocalist to a full twelve-voice chorus."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "What types of music can you perform at a funeral in Hackney?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "At St John at Hackney, the soaring Georgian interior suits traditional hymns, psalms, and choral anthems particularly well. At Abney Park Cemetery or St Mary of Eton, we often perform more intimate, reflective pieces — contemporary songs, classical arias, or bespoke arrangements of something personally meaningful to the family."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Do you cover crematorium services in Hackney?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Hackney does not have its own crematorium, but we regularly sing at nearby crematoria including the City of London Cemetery and Crematorium and Manor Park. Our singers handle the logistics and liaise with funeral directors to ensure everything is coordinated smoothly on the day."
+            }
           }
-        },
-        {
-          "@type": "Question",
-          "name": "Can you provide a choir for a wedding in Hackney?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "We do. St John at Hackney on Mare Street is a magnificent church for a wedding choir, and its acoustic makes congregational singing feel effortless. We also perform at Hackney's many licensed venues — from restored warehouses to elegant town halls — with ensembles ranging from a solo vocalist to a full twelve-voice chorus."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "What types of music can you perform at a funeral in Hackney?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "At St John at Hackney, the soaring Georgian interior suits traditional hymns, psalms, and choral anthems particularly well. At Abney Park Cemetery or St Mary of Eton, we often perform more intimate, reflective pieces — contemporary songs, classical arias, or bespoke arrangements of something personally meaningful to the family."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "Do you cover crematorium services in Hackney?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Hackney does not have its own crematorium, but we regularly sing at nearby crematoria including the City of London Cemetery and Crematorium and Manor Park. Our singers handle the logistics and liaise with funeral directors to ensure everything is coordinated smoothly on the day."
-          }
-        }
-      ]
-    }
-  ]
-}
+        ]
+      }
+    ]
+  }
   </script>
 </head>
 <body>
