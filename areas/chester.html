@@ -1426,6 +1426,118 @@
     .guide-category-section[hidden] {
       display: none;
     }
+    
+    /* ═══════════════════════════════════
+       Nav Dropdown (Music Guides)
+       ═══════════════════════════════════ */
+    .has-dropdown {
+      position: relative;
+    }
+    
+    .dropdown-caret {
+      display: inline-block;
+      margin-left: 0.25em;
+      font-size: 0.75em;
+      transition: transform var(--transition-fast);
+    }
+    
+    .dropdown-menu {
+      display: none;
+      position: absolute;
+      top: 100%;
+      left: 0;
+      min-width: 12rem;
+      list-style: none;
+      padding: var(--space-sm) 0;
+      margin: 0;
+      background-color: var(--color-bg);
+      border: 1px solid var(--color-rule);
+      z-index: 150;
+    }
+    
+    .dropdown-menu li {
+      margin: 0;
+    }
+    
+    .dropdown-menu a {
+      display: block;
+      padding: var(--space-sm) var(--space-lg);
+      font-family: var(--font-heading);
+      font-size: var(--text-sm);
+      font-weight: 500;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--color-text);
+      text-decoration: none;
+      transition: background-color var(--transition-fast), color var(--transition-fast);
+    }
+    
+    .dropdown-menu a:hover,
+    .dropdown-menu a:focus-visible {
+      background-color: var(--color-bg-alt);
+      color: var(--color-accent);
+      outline: none;
+    }
+    
+    .dropdown-separator {
+      height: 1px;
+      background-color: var(--color-rule);
+      margin: var(--space-sm) var(--space-md);
+    }
+    
+    /* Open on hover / keyboard focus / explicit aria-expanded */
+    .has-dropdown:hover > .dropdown-menu,
+    .has-dropdown:focus-within > .dropdown-menu,
+    .has-dropdown[data-open="true"] > .dropdown-menu {
+      display: block;
+    }
+    
+    .has-dropdown:hover > .dropdown-trigger .dropdown-caret,
+    .has-dropdown:focus-within > .dropdown-trigger .dropdown-caret,
+    .has-dropdown[data-open="true"] > .dropdown-trigger .dropdown-caret {
+      transform: rotate(180deg);
+    }
+    
+    /* Mobile: dropdown becomes an inline expandable block inside the hamburger */
+    @media (max-width: 767px) {
+      .dropdown-menu {
+        display: none;
+        position: static;
+        border: none;
+        border-top: 1px solid var(--color-rule);
+        padding: 0;
+        background: transparent;
+      }
+    
+      .has-dropdown[data-open="true"] > .dropdown-menu {
+        display: block;
+      }
+    
+      /* Disable hover-open on touch devices — only the explicit toggle opens it */
+      .has-dropdown:hover > .dropdown-menu,
+      .has-dropdown:focus-within > .dropdown-menu {
+        display: none;
+      }
+    
+      .has-dropdown[data-open="true"] > .dropdown-menu {
+        display: block;
+      }
+    
+      .dropdown-menu a {
+        padding-left: var(--space-2xl);
+        text-transform: none;
+        font-size: var(--text-base);
+        border-bottom: 1px solid var(--color-rule);
+      }
+    
+      .dropdown-menu li:last-child a {
+        border-bottom: none;
+      }
+    
+      .dropdown-separator {
+        display: none;
+      }
+    }
     /* ═══════════════════════════════════
        Print Styles
        ═══════════════════════════════════ */
@@ -1634,7 +1746,16 @@
         <li><a href="/about.html">About</a></li>
         <li><a href="/services.html">Services</a></li>
         <li><a href="/listen.html">Listen</a></li>
-        <li><a href="/music-guides/">Music Guides</a></li>
+        <li class="has-dropdown">
+          <a href="/music-guides/" aria-haspopup="true" aria-expanded="false" class="dropdown-trigger">Music Guides<span class="dropdown-caret" aria-hidden="true">&#9662;</span></a>
+          <ul class="dropdown-menu" role="menu">
+            <li role="none"><a role="menuitem" href="/music-guides/?category=weddings">Weddings</a></li>
+            <li role="none"><a role="menuitem" href="/music-guides/?category=funerals">Funerals</a></li>
+            <li role="none"><a role="menuitem" href="/music-guides/?category=christmas">Christmas</a></li>
+            <li role="separator" class="dropdown-separator"></li>
+            <li role="none"><a role="menuitem" href="/music-guides/">Browse all</a></li>
+          </ul>
+        </li>
         <li><a href="/pricing.html">Pricing</a></li>
         <li><a href="/contact.html">Contact</a></li>
       </ul>
