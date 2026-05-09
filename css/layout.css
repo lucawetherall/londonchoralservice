@@ -83,7 +83,8 @@
 
 .nav-links {
   display: flex;
-  gap: var(--space-xl);
+  flex-wrap: nowrap;
+  gap: clamp(0.75rem, 1.6vw, var(--space-xl));
   list-style: none;
   padding: 0;
   margin: 0;
@@ -99,6 +100,7 @@
   text-decoration: none;
   padding-bottom: 2px;
   transition: color var(--transition-fast);
+  white-space: nowrap;
 }
 
 .nav-links a:hover {
@@ -173,7 +175,7 @@
 }
 
 /* ── Mobile Navigation ── */
-@media (max-width: 767px) {
+@media (max-width: 805px) {
   .nav-toggle {
     display: block;
   }

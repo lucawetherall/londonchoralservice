@@ -380,7 +380,8 @@ table {
 
 .nav-links {
   display: flex;
-  gap: var(--space-xl);
+  flex-wrap: nowrap;
+  gap: clamp(0.75rem, 1.6vw, var(--space-xl));
   list-style: none;
   padding: 0;
   margin: 0;
@@ -396,6 +397,7 @@ table {
   text-decoration: none;
   padding-bottom: 2px;
   transition: color var(--transition-fast);
+  white-space: nowrap;
 }
 
 .nav-links a:hover {
@@ -470,7 +472,7 @@ table {
 }
 
 /* ── Mobile Navigation ── */
-@media (max-width: 767px) {
+@media (max-width: 805px) {
   .nav-toggle {
     display: block;
   }
@@ -1065,7 +1067,7 @@ table {
   display: none;
 }
 
-@media (max-width: 767px) {
+@media (max-width: 805px) {
   .mobile-cta {
     display: flex;
     position: fixed;
@@ -1197,7 +1199,7 @@ table {
   opacity: 0.85;
 }
 
-@media (max-width: 767px) {
+@media (max-width: 805px) {
   .hero {
     flex-direction: column;
     gap: var(--space-2xl);
@@ -1506,7 +1508,7 @@ table {
 }
 
 /* Mobile: dropdown becomes an inline expandable block inside the hamburger */
-@media (max-width: 767px) {
+@media (max-width: 805px) {
   .dropdown-menu {
     display: none;
     position: static;
