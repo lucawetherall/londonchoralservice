@@ -2,6 +2,10 @@
 <html lang="en-GB">
 <head>
   <meta charset="UTF-8">
+  <!-- @include-start partials/head-extras.html -->
+<link rel="preload" href="/fonts/cormorant-garamond.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/source-serif-4.woff2" as="font" type="font/woff2" crossorigin>
+  <!-- @include-end partials/head-extras.html -->
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
   <!-- Google Analytics (GA4) — deferred until after load -->
@@ -29,16 +33,16 @@
     });
   </script>
 
-  <title>Funeral Singers in Westminster — London Choral Service</title>
-  <meta name="description" content="Professional funeral singers and wedding choirs in Westminster. Experienced ensembles for services at Westminster Abbey, St Margaret's, and churches across the borough.">
+  <title>Funeral and wedding choirs in Westminster</title>
+  <meta name="description" content="Professional funeral singers and wedding choirs in Westminster.">
   <meta name="theme-color" content="#F7F3EE">
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://londonchoralservice.com/areas/london/westminster.html">
   <link rel="alternate" hreflang="en-gb" href="https://londonchoralservice.com/areas/london/westminster.html">
   <link rel="alternate" hreflang="x-default" href="https://londonchoralservice.com/areas/london/westminster.html">
 
-  <meta property="og:title" content="Funeral Singers in Westminster | London Choral Service">
-  <meta property="og:description" content="Professional funeral singers and wedding choirs in Westminster. Experienced ensembles for services at Westminster Abbey and churches across the borough.">
+  <meta property="og:title" content="Funeral and wedding choirs in Westminster">
+  <meta property="og:description" content="Professional funeral singers and wedding choirs in Westminster.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://londonchoralservice.com/areas/london/westminster.html">
   <meta property="og:locale" content="en_GB">
@@ -46,8 +50,8 @@
   <meta property="og:image" content="https://londonchoralservice.com/assets/og-image.png">
 
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Funeral Singers in Westminster | London Choral Service">
-  <meta name="twitter:description" content="Professional funeral singers and wedding choirs in Westminster. Experienced ensembles for services at Westminster Abbey and churches across the borough.">
+  <meta name="twitter:title" content="Funeral and wedding choirs in Westminster">
+  <meta name="twitter:description" content="Professional funeral singers and wedding choirs in Westminster.">
   <meta name="twitter:image" content="https://londonchoralservice.com/assets/og-image.png">
   <link rel="dns-prefetch" href="https://www.googletagmanager.com">
   <link rel="dns-prefetch" href="https://api.web3forms.com">
@@ -1827,115 +1831,110 @@
 
   <script type="application/ld+json">
   {
-  "@context": "https://schema.org",
-  "@graph": [
-    {
-      "@type": "Service",
-      "name": "Funeral Singers & Wedding Choirs in Westminster",
-      "url": "https://londonchoralservice.com/areas/london/westminster.html",
-      "description": "Professional funeral singers and wedding choirs for services and ceremonies in the City of Westminster, London.",
-      "provider": {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Service",
+        "name": "Funeral Singers & Wedding Choirs in Westminster",
+        "url": "https://londonchoralservice.com/areas/london/westminster.html",
+        "description": "Professional funeral singers and wedding choirs for services and ceremonies in the City of Westminster, London.",
+        "provider": {
+          "@type": "LocalBusiness",
+          "@id": "https://londonchoralservice.com/#organization"
+        },
+        "areaServed": {
+          "@type": "AdministrativeArea",
+          "name": "City of Westminster",
+          "containedInPlace": {
+            "@type": "City",
+            "name": "London",
+            "addressCountry": "GB"
+          }
+        },
+        "serviceType": [
+          "Funeral Music",
+          "Wedding Music",
+          "Memorial Music",
+          "Ceremony Music"
+        ],
+        "geo": {
+          "@type": "GeoCoordinates",
+          "latitude": 51.49594,
+          "longitude": -0.13495
+        }
+      },
+      {
         "@type": "LocalBusiness",
-        "name": "The London Choral Service",
-        "alternateName": "London Choral Service",
-        "url": "https://londonchoralservice.com",
-        "telephone": "+447356042468",
-        "email": "office@londonchoralservice.com"
+        "@id": "https://londonchoralservice.com/#organization",
+        "name": "The London Choral Service"
       },
-      "areaServed": {
-        "@type": "AdministrativeArea",
-        "name": "City of Westminster",
-        "containedInPlace": {
-          "@type": "City",
-          "name": "London",
-          "addressCountry": "GB"
-        }
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "https://londonchoralservice.com/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Areas We Serve",
+            "item": "https://londonchoralservice.com/areas/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 3,
+            "name": "London",
+            "item": "https://londonchoralservice.com/areas/london.html"
+          },
+          {
+            "@type": "ListItem",
+            "position": 4,
+            "name": "Westminster"
+          }
+        ]
       },
-      "serviceType": [
-        "Funeral Music",
-        "Wedding Music",
-        "Memorial Music",
-        "Ceremony Music"
-      ]
-    },
-    {
-      "@type": "LocalBusiness",
-      "@id": "https://londonchoralservice.com/#organization",
-      "name": "The London Choral Service",
-      "aggregateRating": {
-        "@type": "AggregateRating",
-        "ratingValue": "5",
-        "reviewCount": "4",
-        "bestRating": "5"
+      {
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "How much does a funeral singer cost in Westminster?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "A solo funeral singer in Westminster starts from £215. A quartet starts from £1,150, a quintet from £1,400, a sextet from £1,600, and an octet from £2,000. Prices include travel within Greater London and liaison with your funeral director. For services at Westminster Abbey or Westminster Cathedral, we may recommend a larger ensemble to suit the acoustic."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Can you provide a choir for a wedding at St Margaret's Westminster?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes. We provide wedding choirs of four to twelve voices at St Margaret's and other Westminster churches. We coordinate with the church's own organist and verger, handle all rehearsal scheduling, and supply printed orders of service with hymn texts if needed."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "What types of music can you perform at a funeral in Westminster?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Traditional hymns, sacred choral works, contemporary songs, and popular favourites. We also arrange bespoke versions of any piece a family requests. Our funeral music guide lists the pieces we perform most often, and our crematorium music guide covers shorter services with fixed time slots."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Do you sing at crematoriums near Westminster?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Westminster itself has no crematorium, but we regularly sing at Mortlake Crematorium in Richmond and at Putney Vale. Both are accessible from central London. Our singers adapt to the tighter timings of crematorium services. For guidance on music choices for these venues, see our crematorium music guide."
+            }
+          }
+        ]
       }
-    },
-    {
-      "@type": "BreadcrumbList",
-      "itemListElement": [
-        {
-          "@type": "ListItem",
-          "position": 1,
-          "name": "Home",
-          "item": "https://londonchoralservice.com/"
-        },
-        {
-          "@type": "ListItem",
-          "position": 2,
-          "name": "Areas We Serve",
-          "item": "https://londonchoralservice.com/areas/"
-        },
-        {
-          "@type": "ListItem",
-          "position": 3,
-          "name": "London",
-          "item": "https://londonchoralservice.com/areas/london.html"
-        },
-        {
-          "@type": "ListItem",
-          "position": 4,
-          "name": "Westminster"
-        }
-      ]
-    },
-    {
-      "@type": "FAQPage",
-      "mainEntity": [
-        {
-          "@type": "Question",
-          "name": "How much does a funeral singer cost in Westminster?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "A solo funeral singer in Westminster starts from £215. A quartet starts from £1,150, a quintet from £1,400, a sextet from £1,600, and an octet from £2,000. Prices include travel within Greater London and liaison with your funeral director. For services at Westminster Abbey or Westminster Cathedral, we may recommend a larger ensemble to suit the acoustic."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "Can you provide a choir for a wedding at St Margaret's Westminster?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Yes. We provide wedding choirs of four to twelve voices at St Margaret's and other Westminster churches. We coordinate with the church's own organist and verger, handle all rehearsal scheduling, and supply printed orders of service with hymn texts if needed."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "What types of music can you perform at a funeral in Westminster?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Traditional hymns, sacred choral works, contemporary songs, and popular favourites. We also arrange bespoke versions of any piece a family requests. Our funeral music guide lists the pieces we perform most often, and our crematorium music guide covers shorter services with fixed time slots."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "Do you sing at crematoriums near Westminster?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Westminster itself has no crematorium, but we regularly sing at Mortlake Crematorium in Richmond and at Putney Vale. Both are accessible from central London. Our singers adapt to the tighter timings of crematorium services. For guidance on music choices for these venues, see our crematorium music guide."
-          }
-        }
-      ]
-    }
-  ]
-}
+    ]
+  }
   </script>
 </head>
 <body>
@@ -1953,6 +1952,10 @@
         <li><a href="/">Home</a></li>
         <li><a href="/about.html">About</a></li>
         <li><a href="/services.html">Services</a></li>
+        <li><a href="/weddings.html">Weddings</a></li>
+        <li><a href="/funerals.html">Funerals</a></li>
+        <li><a href="/corporate.html">Corporate</a></li>
+        <li><a href="/christmas.html">Christmas</a></li>
         <li><a href="/listen.html">Listen</a></li>
         <li class="has-dropdown">
           <a href="/music-guides/" aria-haspopup="true" aria-expanded="false" class="dropdown-trigger">Music Guides<span class="dropdown-caret" aria-hidden="true">&#9662;</span></a>
@@ -1982,7 +1985,7 @@
             <li>Westminster</li>
           </ol>
         </nav>
-        <h1>Funeral singers and choirs in Westminster</h1>
+        <h1>Funeral and wedding choirs in Westminster</h1>
         <p class="lede">The City of Westminster is home to some of Britain&rsquo;s most celebrated churches and ceremonial spaces. We provide professional singers and choirs for funerals, weddings, and memorial services at venues throughout the borough.</p>
         <hr class="rule">
       </div>
@@ -2042,7 +2045,7 @@
 
     <section class="section">
       <div class="prose">
-        <p class="text-sm text-mid">Nearby boroughs: <a href="camden.html">Camden</a> &middot; <a href="kensington-chelsea.html">Kensington &amp; Chelsea</a> &middot; <a href="city-of-london.html">City of London</a> &middot; <a href="southwark.html">Southwark</a> &middot; <a href="lambeth.html">Lambeth</a></p>
+        <p class="text-sm text-mid">Nearby boroughs: <a href="kensington-chelsea.html">Kensington &amp; Chelsea</a> &middot; <a href="camden.html">Camden</a> &middot; <a href="lambeth.html">Lambeth</a> &middot; <a href="southwark.html">Southwark</a> &middot; <a href="city-of-london.html">City of London</a></p>
       </div>
     </section>
 

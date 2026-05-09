@@ -2,6 +2,10 @@
 <html lang="en-GB">
 <head>
   <meta charset="UTF-8">
+  <!-- @include-start partials/head-extras.html -->
+<link rel="preload" href="/fonts/cormorant-garamond.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/source-serif-4.woff2" as="font" type="font/woff2" crossorigin>
+  <!-- @include-end partials/head-extras.html -->
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
   <!-- Google Analytics (GA4) — deferred until after load -->
@@ -29,16 +33,16 @@
     });
   </script>
 
-  <title>Funeral Singers &amp; Wedding Choirs in Islington — London Choral Service</title>
-  <meta name="description" content="Professional funeral singers and wedding choirs in Islington. Experienced ensembles for services at Union Chapel, St Mary's Islington, and churches across the borough.">
+  <title>Funeral and wedding choirs in Islington</title>
+  <meta name="description" content="Professional funeral singers and wedding choirs in Islington.">
   <meta name="theme-color" content="#F7F3EE">
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://londonchoralservice.com/areas/london/islington.html">
   <link rel="alternate" hreflang="en-gb" href="https://londonchoralservice.com/areas/london/islington.html">
   <link rel="alternate" hreflang="x-default" href="https://londonchoralservice.com/areas/london/islington.html">
 
-  <meta property="og:title" content="Funeral Singers &amp; Wedding Choirs in Islington | London Choral Service">
-  <meta property="og:description" content="Professional funeral singers and wedding choirs in Islington. Experienced ensembles for services at Union Chapel and churches across the borough.">
+  <meta property="og:title" content="Funeral and wedding choirs in Islington">
+  <meta property="og:description" content="Professional funeral singers and wedding choirs in Islington.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://londonchoralservice.com/areas/london/islington.html">
   <meta property="og:locale" content="en_GB">
@@ -46,8 +50,8 @@
   <meta property="og:image" content="https://londonchoralservice.com/assets/og-image.png">
 
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Funeral Singers &amp; Wedding Choirs in Islington | London Choral Service">
-  <meta name="twitter:description" content="Professional funeral singers and wedding choirs in Islington. Experienced ensembles for services at Union Chapel and churches across the borough.">
+  <meta name="twitter:title" content="Funeral and wedding choirs in Islington">
+  <meta name="twitter:description" content="Professional funeral singers and wedding choirs in Islington.">
   <meta name="twitter:image" content="https://londonchoralservice.com/assets/og-image.png">
   <link rel="dns-prefetch" href="https://www.googletagmanager.com">
   <link rel="dns-prefetch" href="https://api.web3forms.com">
@@ -1827,115 +1831,110 @@
 
   <script type="application/ld+json">
   {
-  "@context": "https://schema.org",
-  "@graph": [
-    {
-      "@type": "Service",
-      "name": "Funeral Singers & Wedding Choirs in Islington",
-      "url": "https://londonchoralservice.com/areas/london/islington.html",
-      "description": "Professional funeral singers and wedding choirs for services and ceremonies in the London Borough of Islington.",
-      "provider": {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Service",
+        "name": "Funeral Singers & Wedding Choirs in Islington",
+        "url": "https://londonchoralservice.com/areas/london/islington.html",
+        "description": "Professional funeral singers and wedding choirs for services and ceremonies in the London Borough of Islington.",
+        "provider": {
+          "@type": "LocalBusiness",
+          "@id": "https://londonchoralservice.com/#organization"
+        },
+        "areaServed": {
+          "@type": "AdministrativeArea",
+          "name": "London Borough of Islington",
+          "containedInPlace": {
+            "@type": "City",
+            "name": "London",
+            "addressCountry": "GB"
+          }
+        },
+        "serviceType": [
+          "Funeral Music",
+          "Wedding Music",
+          "Memorial Music",
+          "Ceremony Music"
+        ],
+        "geo": {
+          "@type": "GeoCoordinates",
+          "latitude": 51.5362,
+          "longitude": -0.10288
+        }
+      },
+      {
         "@type": "LocalBusiness",
-        "name": "The London Choral Service",
-        "alternateName": "London Choral Service",
-        "url": "https://londonchoralservice.com",
-        "telephone": "+447356042468",
-        "email": "office@londonchoralservice.com"
+        "@id": "https://londonchoralservice.com/#organization",
+        "name": "The London Choral Service"
       },
-      "areaServed": {
-        "@type": "AdministrativeArea",
-        "name": "London Borough of Islington",
-        "containedInPlace": {
-          "@type": "City",
-          "name": "London",
-          "addressCountry": "GB"
-        }
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "https://londonchoralservice.com/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Areas We Serve",
+            "item": "https://londonchoralservice.com/areas/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 3,
+            "name": "London",
+            "item": "https://londonchoralservice.com/areas/london.html"
+          },
+          {
+            "@type": "ListItem",
+            "position": 4,
+            "name": "Islington"
+          }
+        ]
       },
-      "serviceType": [
-        "Funeral Music",
-        "Wedding Music",
-        "Memorial Music",
-        "Ceremony Music"
-      ]
-    },
-    {
-      "@type": "LocalBusiness",
-      "@id": "https://londonchoralservice.com/#organization",
-      "name": "The London Choral Service",
-      "aggregateRating": {
-        "@type": "AggregateRating",
-        "ratingValue": "5",
-        "reviewCount": "4",
-        "bestRating": "5"
+      {
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "How much does a funeral singer cost in Islington?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "For services at Union Chapel, St Mary's Islington, or St James Clerkenwell, a soloist starts from £215. A small choir of four starts from £1,150, a quintet from £1,400, a sextet from £1,600, and a full choir of eight from £2,000. All prices include travel within Greater London and coordination with your funeral director."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Can you provide a choir for a wedding in Islington?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Absolutely. Union Chapel's soaring Gothic interior rewards a larger ensemble, while St Mary's on Upper Street suits anything from a quartet to a full choir. We work with couples to choose hymns, anthems, and processional music that make the most of each venue's acoustic."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "What types of music can you perform at a funeral in Islington?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Our repertoire spans traditional hymns, classical sacred works, and contemporary songs. Union Chapel's rich acoustic is particularly well suited to choral pieces, while the lighter interior of St Mary's carries solo and small-ensemble music beautifully. We also create bespoke arrangements on request."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Do you cover crematorium services in Islington?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Islington has no crematorium within its boundaries, but we regularly sing at Islington Cemetery's chapel on High Road in East Finchley and at nearby crematoria serving the borough. Our singers are well practised in the precise timings crematorium services require."
+            }
+          }
+        ]
       }
-    },
-    {
-      "@type": "BreadcrumbList",
-      "itemListElement": [
-        {
-          "@type": "ListItem",
-          "position": 1,
-          "name": "Home",
-          "item": "https://londonchoralservice.com/"
-        },
-        {
-          "@type": "ListItem",
-          "position": 2,
-          "name": "Areas We Serve",
-          "item": "https://londonchoralservice.com/areas/"
-        },
-        {
-          "@type": "ListItem",
-          "position": 3,
-          "name": "London",
-          "item": "https://londonchoralservice.com/areas/london.html"
-        },
-        {
-          "@type": "ListItem",
-          "position": 4,
-          "name": "Islington"
-        }
-      ]
-    },
-    {
-      "@type": "FAQPage",
-      "mainEntity": [
-        {
-          "@type": "Question",
-          "name": "How much does a funeral singer cost in Islington?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "For services at Union Chapel, St Mary's Islington, or St James Clerkenwell, a soloist starts from £215. A small choir of four starts from £1,150, a quintet from £1,400, a sextet from £1,600, and a full choir of eight from £2,000. All prices include travel within Greater London and coordination with your funeral director."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "Can you provide a choir for a wedding in Islington?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Absolutely. Union Chapel's soaring Gothic interior rewards a larger ensemble, while St Mary's on Upper Street suits anything from a quartet to a full choir. We work with couples to choose hymns, anthems, and processional music that make the most of each venue's acoustic."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "What types of music can you perform at a funeral in Islington?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Our repertoire spans traditional hymns, classical sacred works, and contemporary songs. Union Chapel's rich acoustic is particularly well suited to choral pieces, while the lighter interior of St Mary's carries solo and small-ensemble music beautifully. We also create bespoke arrangements on request."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "Do you cover crematorium services in Islington?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Islington has no crematorium within its boundaries, but we regularly sing at Islington Cemetery's chapel on High Road in East Finchley and at nearby crematoria serving the borough. Our singers are well practised in the precise timings crematorium services require."
-          }
-        }
-      ]
-    }
-  ]
-}
+    ]
+  }
   </script>
 </head>
 <body>
@@ -1953,6 +1952,10 @@
         <li><a href="/">Home</a></li>
         <li><a href="/about.html">About</a></li>
         <li><a href="/services.html">Services</a></li>
+        <li><a href="/weddings.html">Weddings</a></li>
+        <li><a href="/funerals.html">Funerals</a></li>
+        <li><a href="/corporate.html">Corporate</a></li>
+        <li><a href="/christmas.html">Christmas</a></li>
         <li><a href="/listen.html">Listen</a></li>
         <li class="has-dropdown">
           <a href="/music-guides/" aria-haspopup="true" aria-expanded="false" class="dropdown-trigger">Music Guides<span class="dropdown-caret" aria-hidden="true">&#9662;</span></a>
@@ -1982,7 +1985,7 @@
             <li>Islington</li>
           </ol>
         </nav>
-        <h1>Funeral singers and choirs in Islington</h1>
+        <h1>Funeral and wedding choirs in Islington</h1>
         <p class="lede">The London Borough of Islington stretches from the bustle of Angel and Clerkenwell to the quieter reaches of Highbury and Holloway. We provide professional singers and choirs for funerals, weddings, and memorial services at churches and venues throughout the borough.</p>
         <hr class="rule">
       </div>
@@ -2034,7 +2037,7 @@
 
     <section class="section">
       <div class="prose">
-        <p class="text-sm text-mid">Nearby boroughs: <a href="camden.html">Camden</a> &middot; <a href="haringey.html">Haringey</a> &middot; <a href="hackney.html">Hackney</a> &middot; <a href="city-of-london.html">City of London</a></p>
+        <p class="text-sm text-mid">Nearby boroughs: <a href="camden.html">Camden</a> &middot; <a href="hackney.html">Hackney</a> &middot; <a href="haringey.html">Haringey</a> &middot; <a href="city-of-london.html">City of London</a> &middot; <a href="tower-hamlets.html">Tower Hamlets</a></p>
       </div>
     </section>
 

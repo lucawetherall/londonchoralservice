@@ -2,6 +2,10 @@
 <html lang="en-GB">
 <head>
   <meta charset="UTF-8">
+  <!-- @include-start partials/head-extras.html -->
+<link rel="preload" href="/fonts/cormorant-garamond.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/source-serif-4.woff2" as="font" type="font/woff2" crossorigin>
+  <!-- @include-end partials/head-extras.html -->
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
   <!-- Google Analytics (GA4) — deferred until after load -->
@@ -30,7 +34,7 @@
   </script>
 
   <title>Funeral Singers &amp; Choirs &mdash; London Choral Service</title>
-  <meta name="description" content="Professional funeral singers and choirs for services across the UK. Hymn leading, solo pieces, and choral works for churches, crematoriums, and chapels. From £215.">
+  <meta name="description" content="Professional funeral singers and choirs for services across the UK. Hymn leading, solo pieces, and choral works for churches, crematoriums, and chapels.">
   <meta name="theme-color" content="#F7F3EE">
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://londonchoralservice.com/funerals.html">
@@ -38,7 +42,7 @@
   <link rel="alternate" hreflang="x-default" href="https://londonchoralservice.com/funerals.html">
 
   <meta property="og:title" content="Funeral Singers &amp; Choirs &mdash; London Choral Service">
-  <meta property="og:description" content="Professional funeral singers and choirs for services across the UK. Hymn leading, solo pieces, and choral works for churches, crematoriums, and chapels. From £215.">
+  <meta property="og:description" content="Professional funeral singers and choirs for services across the UK. Hymn leading, solo pieces, and choral works for churches, crematoriums, and chapels.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://londonchoralservice.com/funerals.html">
   <meta property="og:locale" content="en_GB">
@@ -47,7 +51,7 @@
 
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Funeral Singers &amp; Choirs &mdash; London Choral Service">
-  <meta name="twitter:description" content="Professional funeral singers and choirs for services across the UK. Hymn leading, solo pieces, and choral works for churches, crematoriums, and chapels. From £215.">
+  <meta name="twitter:description" content="Professional funeral singers and choirs for services across the UK. Hymn leading, solo pieces, and choral works for churches, crematoriums, and chapels.">
   <meta name="twitter:image" content="https://londonchoralservice.com/assets/og-image.png">
   <link rel="dns-prefetch" href="https://www.googletagmanager.com">
   <link rel="dns-prefetch" href="https://api.web3forms.com">
@@ -1833,31 +1837,39 @@
         "@type": "Service",
         "name": "Funeral Music",
         "serviceType": "Funeral Music",
+        "dateModified": "2026-05-08",
         "description": "Professional singers and choirs for funeral services across the United Kingdom.",
         "url": "https://londonchoralservice.com/funerals.html",
         "provider": {
           "@type": "LocalBusiness",
           "@id": "https://londonchoralservice.com/#organization"
         },
-        "areaServed": { "@type": "Country", "name": "United Kingdom" },
+        "areaServed": {
+          "@type": "Country",
+          "name": "United Kingdom"
+        },
         "offers": {
           "@type": "AggregateOffer",
           "lowPrice": "215",
           "highPrice": "3000",
-          "priceCurrency": "GBP"
-        },
-        "aggregateRating": {
-          "@type": "AggregateRating",
-          "ratingValue": "5.0",
-          "bestRating": "5",
-          "ratingCount": "4"
+          "priceCurrency": "GBP",
+          "priceValidUntil": "2026-12-31"
         }
       },
       {
         "@type": "BreadcrumbList",
         "itemListElement": [
-          { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://londonchoralservice.com/" },
-          { "@type": "ListItem", "position": 2, "name": "Funerals" }
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "https://londonchoralservice.com/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Funerals"
+          }
         ]
       }
     ]
@@ -1879,6 +1891,10 @@
         <li><a href="/">Home</a></li>
         <li><a href="/about.html">About</a></li>
         <li><a href="/services.html">Services</a></li>
+        <li><a href="/weddings.html">Weddings</a></li>
+        <li><a href="/funerals.html">Funerals</a></li>
+        <li><a href="/corporate.html">Corporate</a></li>
+        <li><a href="/christmas.html">Christmas</a></li>
         <li><a href="/listen.html">Listen</a></li>
         <li class="has-dropdown">
           <a href="/music-guides/" aria-haspopup="true" aria-expanded="false" class="dropdown-trigger">Music Guides<span class="dropdown-caret" aria-hidden="true">&#9662;</span></a>
@@ -1909,6 +1925,7 @@
             </ol>
           </nav>
           <h1>Funeral Singers &amp; Choirs<br><span class="h1-sub">When the music has to be perfect</span></h1>
+          <p class="guide-meta">Last updated: May 2026</p>
           <p class="lede">Professional singers, choirs, and instrumentalists for funeral services across the United Kingdom. Congregational hymns led with warmth and authority, solo pieces, and choral works for churches, crematoriums, chapels, and outdoor spaces.</p>
           <p class="text-sm text-mid">Rated 5&nbsp;stars across all reviews. Musicians from the Royal Academy, Royal College, and Britain&rsquo;s leading conservatoires.</p>
           <p><a href="#enquiry" class="btn-link">Talk to us about funeral music</a></p>
@@ -1917,7 +1934,7 @@
         <div class="hero-video">
           <div class="video-embed">
             <button class="video-thumb" aria-label="Play video" data-video="Lov_NegzVhM">
-              <img src="https://img.youtube.com/vi/Lov_NegzVhM/maxresdefault.jpg" alt="The London Choral Service" loading="lazy">
+              <img src="https://img.youtube.com/vi/Lov_NegzVhM/maxresdefault.jpg" alt="The London Choral Service" loading="lazy" width="1280" height="720">
               <svg class="play-btn" viewBox="0 0 68 48" aria-hidden="true">
                 <path d="M66.52 7.74c-.78-2.93-2.49-5.41-5.42-6.19C55.79.13 34 0 34 0S12.21.13 6.9 1.55c-2.93.78-4.63 3.26-5.42 6.19C.06 13.05 0 24 0 24s.06 10.95 1.48 16.26c.78 2.93 2.49 5.41 5.42 6.19C12.21 47.87 34 48 34 48s21.79-.13 27.1-1.55c2.93-.78 4.63-3.26 5.42-6.19C67.94 34.95 68 24 68 24s-.06-10.95-1.48-16.26z" fill="rgba(0,0,0,.7)"/>
                 <path d="M45 24 27 14v20z" fill="#fff"/>
@@ -1959,6 +1976,9 @@
         <p>Every funeral booking includes a personal consultation with Luca Wetherall, our Artistic Director. He will talk through your music choices, suggest repertoire that suits the tone you want, and handle coordination with your funeral director and officiant. You receive a confirmed running order at least 48 hours before the service.</p>
         <p>On the day, our singers arrive 45 minutes before the service begins. They rehearse in the venue, check acoustics, and confirm positions with the officiant. During the service, they lead up to three congregational hymns and perform up to three choral or solo pieces. After the service, they can provide reflective music as mourners leave.</p>
         <p>We perform in churches, crematoriums, chapels, synagogues, and outdoor spaces across the UK. Most families complete the whole process in two or three short conversations. If time is short, do not wait: we have arranged singers at a few hours of notice before, and most families contact us two to five days before the service.</p>
+        <p>We sing at churches, crematoriums, and chapels across the UK &mdash; most often in <a href="areas/london.html">London</a>, <a href="areas/oxford.html">Oxford</a>, and <a href="areas/manchester.html">Manchester</a>, but we travel further when families need us.</p>
+        <p>Many of our bookings are for non-religious or humanist services &mdash; celebrations of life held at crematoriums, woodland venues, or community halls. We adapt the music accordingly: secular songs and instrumental pieces work as well as hymns, and a soloist or small ensemble suits the more intimate format. See our guide to <a href="music-guides/non-religious-funeral-music.html">non-religious funeral music</a> and <a href="music-guides/celebration-of-life-music.html">celebration of life music</a> for fuller suggestions.</p>
+        <p>In the event of a musician&rsquo;s illness, we always have a replacement available from our roster of over 150 singers &mdash; bookings are never cancelled at short notice for our reasons.</p>
 
         <figure class="pull-quote">
           <blockquote><p>&ldquo;I still can&rsquo;t talk about it without welling up. The moment they started singing, the whole room just fell silent. Dad would have been so chuffed.&rdquo;</p></blockquote>
@@ -1983,7 +2003,7 @@
           <p class="track-description">One of the most beloved funeral hymns in the English tradition. The choral harmonies bring a depth of consolation and warmth that is deeply moving in a service setting.</p>
           <div class="video-embed">
             <button class="video-thumb" aria-label="Play Abide With Me" data-video="G9-R6k5n7Io">
-              <img src="https://img.youtube.com/vi/G9-R6k5n7Io/maxresdefault.jpg" alt="Abide With Me — The London Choral Service" loading="lazy">
+              <img src="https://img.youtube.com/vi/G9-R6k5n7Io/maxresdefault.jpg" alt="Abide With Me — The London Choral Service" loading="lazy" width="1280" height="720">
               <svg class="play-btn" viewBox="0 0 68 48" aria-hidden="true">
                 <path d="M66.52 7.74c-.78-2.93-2.49-5.41-5.42-6.19C55.79.13 34 0 34 0S12.21.13 6.9 1.55c-2.93.78-4.63 3.26-5.42 6.19C.06 13.05 0 24 0 24s.06 10.95 1.48 16.26c.78 2.93 2.49 5.41 5.42 6.19C12.21 47.87 34 48 34 48s21.79-.13 27.1-1.55c2.93-.78 4.63-3.26 5.42-6.19C67.94 34.95 68 24 68 24s-.06-10.95-1.48-16.26z" fill="rgba(0,0,0,.7)"/>
                 <path d="M45 24 27 14v20z" fill="#fff"/>
@@ -1997,7 +2017,7 @@
           <p class="track-description">One of the most tender and consoling arias in all of Handel&rsquo;s Messiah. Gentle, unhurried, and profoundly peaceful.</p>
           <div class="video-embed">
             <button class="video-thumb" aria-label="Play He Shall Feed His Flock" data-video="nasqXWlbf1g">
-              <img src="https://img.youtube.com/vi/nasqXWlbf1g/maxresdefault.jpg" alt="He Shall Feed His Flock — The London Choral Service" loading="lazy">
+              <img src="https://img.youtube.com/vi/nasqXWlbf1g/maxresdefault.jpg" alt="He Shall Feed His Flock — The London Choral Service" loading="lazy" width="1280" height="720">
               <svg class="play-btn" viewBox="0 0 68 48" aria-hidden="true">
                 <path d="M66.52 7.74c-.78-2.93-2.49-5.41-5.42-6.19C55.79.13 34 0 34 0S12.21.13 6.9 1.55c-2.93.78-4.63 3.26-5.42 6.19C.06 13.05 0 24 0 24s.06 10.95 1.48 16.26c.78 2.93 2.49 5.41 5.42 6.19C12.21 47.87 34 48 34 48s21.79-.13 27.1-1.55c2.93-.78 4.63-3.26 5.42-6.19C67.94 34.95 68 24 68 24s-.06-10.95-1.48-16.26z" fill="rgba(0,0,0,.7)"/>
                 <path d="M45 24 27 14v20z" fill="#fff"/>
@@ -2020,6 +2040,7 @@
       <div class="prose">
         <h2>Pricing</h2>
         <p>Flat prices, no hidden fees. Each booking includes a personal consultation, custom repertoire planning, and coordination with your venue.</p>
+        <p>A soloist starts from &pound;215; a quartet from &pound;1,150; a quintet &pound;1,400; a sextet &pound;1,600; full choirs from &pound;2,000. All ensemble sizes include preparation, travel within London, and a music director on the day. We can usually accommodate short-notice bookings from our roster of over 150 singers.</p>
         <div class="price-cards">
           <div class="price-card">
             <div class="price">&pound;215</div>

@@ -2,6 +2,10 @@
 <html lang="en-GB">
 <head>
   <meta charset="UTF-8">
+  <!-- @include-start partials/head-extras.html -->
+<link rel="preload" href="/fonts/cormorant-garamond.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/source-serif-4.woff2" as="font" type="font/woff2" crossorigin>
+  <!-- @include-end partials/head-extras.html -->
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
   <!-- Google Analytics (GA4) — deferred until after load -->
@@ -29,15 +33,15 @@
     });
   </script>
 
-  <title>Funeral Singers &amp; Wedding Choirs in Enfield — London Choral Service</title>
-  <meta name="description" content="Professional funeral singers and wedding choirs in Enfield. Conservatoire-trained musicians for funerals, weddings, memorials, and ceremonies. Part of The London Choral Service.">
+  <title>Funeral and wedding choirs in Enfield</title>
+  <meta name="description" content="Professional funeral singers and wedding choirs in Enfield. Conservatoire-trained musicians for funerals, weddings, memorials, and ceremonies.">
   <meta name="theme-color" content="#F7F3EE">
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://londonchoralservice.com/areas/london/enfield.html">
   <link rel="alternate" hreflang="en-gb" href="https://londonchoralservice.com/areas/london/enfield.html">
   <link rel="alternate" hreflang="x-default" href="https://londonchoralservice.com/areas/london/enfield.html">
 
-  <meta property="og:title" content="Funeral Singers &amp; Wedding Choirs in Enfield | London Choral Service">
+  <meta property="og:title" content="Funeral and wedding choirs in Enfield">
   <meta property="og:description" content="Professional funeral singers and wedding choirs in Enfield. Conservatoire-trained musicians for funerals, weddings, memorials, and ceremonies.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://londonchoralservice.com/areas/london/enfield.html">
@@ -46,7 +50,7 @@
   <meta property="og:image" content="https://londonchoralservice.com/assets/og-image.png">
 
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Funeral Singers &amp; Wedding Choirs in Enfield | London Choral Service">
+  <meta name="twitter:title" content="Funeral and wedding choirs in Enfield">
   <meta name="twitter:description" content="Professional funeral singers and wedding choirs in Enfield. Conservatoire-trained musicians for funerals, weddings, memorials, and ceremonies.">
   <meta name="twitter:image" content="https://londonchoralservice.com/assets/og-image.png">
   <link rel="dns-prefetch" href="https://www.googletagmanager.com">
@@ -1827,115 +1831,110 @@
 
   <script type="application/ld+json">
   {
-  "@context": "https://schema.org",
-  "@graph": [
-    {
-      "@type": "Service",
-      "name": "Funeral Singers & Wedding Choirs in Enfield",
-      "url": "https://londonchoralservice.com/areas/london/enfield.html",
-      "description": "Professional funeral singers and wedding choirs in Enfield, London.",
-      "provider": {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Service",
+        "name": "Funeral Singers & Wedding Choirs in Enfield",
+        "url": "https://londonchoralservice.com/areas/london/enfield.html",
+        "description": "Professional funeral singers and wedding choirs in Enfield, London.",
+        "provider": {
+          "@type": "LocalBusiness",
+          "@id": "https://londonchoralservice.com/#organization"
+        },
+        "areaServed": {
+          "@type": "AdministrativeArea",
+          "name": "Enfield",
+          "containedInPlace": {
+            "@type": "City",
+            "name": "London",
+            "addressCountry": "GB"
+          }
+        },
+        "serviceType": [
+          "Funeral Music",
+          "Wedding Music",
+          "Memorial Music",
+          "Ceremony Music"
+        ],
+        "geo": {
+          "@type": "GeoCoordinates",
+          "latitude": 51.65223,
+          "longitude": -0.08079
+        }
+      },
+      {
         "@type": "LocalBusiness",
-        "name": "The London Choral Service",
-        "alternateName": "London Choral Service",
-        "url": "https://londonchoralservice.com",
-        "telephone": "+447356042468",
-        "email": "office@londonchoralservice.com"
+        "@id": "https://londonchoralservice.com/#organization",
+        "name": "The London Choral Service"
       },
-      "areaServed": {
-        "@type": "AdministrativeArea",
-        "name": "Enfield",
-        "containedInPlace": {
-          "@type": "City",
-          "name": "London",
-          "addressCountry": "GB"
-        }
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "https://londonchoralservice.com/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Areas We Serve",
+            "item": "https://londonchoralservice.com/areas/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 3,
+            "name": "London",
+            "item": "https://londonchoralservice.com/areas/london.html"
+          },
+          {
+            "@type": "ListItem",
+            "position": 4,
+            "name": "Enfield"
+          }
+        ]
       },
-      "serviceType": [
-        "Funeral Music",
-        "Wedding Music",
-        "Memorial Music",
-        "Ceremony Music"
-      ]
-    },
-    {
-      "@type": "LocalBusiness",
-      "@id": "https://londonchoralservice.com/#organization",
-      "name": "The London Choral Service",
-      "aggregateRating": {
-        "@type": "AggregateRating",
-        "ratingValue": "5",
-        "reviewCount": "4",
-        "bestRating": "5"
+      {
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "How much does a funeral singer cost in Enfield?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "For services at Enfield Crematorium, St Andrew's Enfield, or Edmonton Cemetery, a soloist starts from £215. A small choir of four is from £1,150, a quintet from £1,400, a sextet from £1,600, and a full choir of eight from £2,000. Prices include travel anywhere within Greater London."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Can you provide a choir for a wedding in Enfield?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "We do, and Enfield has some lovely settings for it. St Andrew's Enfield suits a full choir beautifully, while Christ Church Southgate is ideal for a more intimate ensemble. We also sing at licensed venues across the borough and manage all the musical details for you."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "What types of music can you perform at a funeral in Enfield?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Our repertoire spans traditional hymns, classical sacred music, and contemporary songs. At St Andrew's Enfield, for example, the generous acoustic lends itself to choral psalms and anthems, while at Enfield Crematorium we often perform reflective solos and well-loved popular songs. We can also create bespoke arrangements of any piece."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Do you cover crematorium services in Enfield?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes. Enfield Crematorium on Great Cambridge Road is a venue we know well. Our singers are experienced with its chapel timings and work closely with funeral directors to ensure the music is delivered with care and without any time pressure."
+            }
+          }
+        ]
       }
-    },
-    {
-      "@type": "BreadcrumbList",
-      "itemListElement": [
-        {
-          "@type": "ListItem",
-          "position": 1,
-          "name": "Home",
-          "item": "https://londonchoralservice.com/"
-        },
-        {
-          "@type": "ListItem",
-          "position": 2,
-          "name": "Areas We Serve",
-          "item": "https://londonchoralservice.com/areas/"
-        },
-        {
-          "@type": "ListItem",
-          "position": 3,
-          "name": "London",
-          "item": "https://londonchoralservice.com/areas/london.html"
-        },
-        {
-          "@type": "ListItem",
-          "position": 4,
-          "name": "Enfield"
-        }
-      ]
-    },
-    {
-      "@type": "FAQPage",
-      "mainEntity": [
-        {
-          "@type": "Question",
-          "name": "How much does a funeral singer cost in Enfield?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "For services at Enfield Crematorium, St Andrew's Enfield, or Edmonton Cemetery, a soloist starts from £215. A small choir of four is from £1,150, a quintet from £1,400, a sextet from £1,600, and a full choir of eight from £2,000. Prices include travel anywhere within Greater London."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "Can you provide a choir for a wedding in Enfield?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "We do, and Enfield has some lovely settings for it. St Andrew's Enfield suits a full choir beautifully, while Christ Church Southgate is ideal for a more intimate ensemble. We also sing at licensed venues across the borough and manage all the musical details for you."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "What types of music can you perform at a funeral in Enfield?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Our repertoire spans traditional hymns, classical sacred music, and contemporary songs. At St Andrew's Enfield, for example, the generous acoustic lends itself to choral psalms and anthems, while at Enfield Crematorium we often perform reflective solos and well-loved popular songs. We can also create bespoke arrangements of any piece."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "Do you cover crematorium services in Enfield?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Yes. Enfield Crematorium on Great Cambridge Road is a venue we know well. Our singers are experienced with its chapel timings and work closely with funeral directors to ensure the music is delivered with care and without any time pressure."
-          }
-        }
-      ]
-    }
-  ]
-}
+    ]
+  }
   </script>
 </head>
 <body>
@@ -1953,6 +1952,10 @@
         <li><a href="/">Home</a></li>
         <li><a href="/about.html">About</a></li>
         <li><a href="/services.html">Services</a></li>
+        <li><a href="/weddings.html">Weddings</a></li>
+        <li><a href="/funerals.html">Funerals</a></li>
+        <li><a href="/corporate.html">Corporate</a></li>
+        <li><a href="/christmas.html">Christmas</a></li>
         <li><a href="/listen.html">Listen</a></li>
         <li class="has-dropdown">
           <a href="/music-guides/" aria-haspopup="true" aria-expanded="false" class="dropdown-trigger">Music Guides<span class="dropdown-caret" aria-hidden="true">&#9662;</span></a>
@@ -1982,7 +1985,7 @@
             <li>Enfield</li>
           </ol>
         </nav>
-        <h1>Funeral singers and choirs in Enfield</h1>
+        <h1>Funeral and wedding choirs in Enfield</h1>
         <p class="lede">The London Borough of Enfield sits at the very top of London, where the city gives way to the green spaces of Hertfordshire. From Enfield Town and Palmers Green to Southgate and Edmonton, our professional singers provide heartfelt music for funerals, weddings, and memorial services at churches, crematoriums, and ceremony venues across the borough.</p>
         <hr class="rule">
       </div>
@@ -1992,13 +1995,14 @@
       <div class="prose">
         <h2>Funeral music in Enfield</h2>
         <p>Enfield Crematorium, located on Great Cambridge Road, is the principal crematorium serving the borough and the surrounding areas of north London. Our singers know its chapel well and are experienced in working within its service timings to deliver music that is both moving and unhurried. We also perform regularly at Edmonton Cemetery, where graveside services benefit greatly from the presence of a clear, unaccompanied voice or a small vocal ensemble. Parish churches across Enfield offer beautiful settings for funeral services&thinsp;&mdash;&thinsp;St&nbsp;Andrew&rsquo;s Enfield, with its striking tower and spacious interior, provides a fine acoustic for choral singing, while Christ Church Southgate, set amid its leafy churchyard, is an intimate and dignified venue for smaller gatherings.</p>
+        <p>For practical guidance on music at crematorium services &mdash; timing, acoustics, and making a shorter service meaningful &mdash; see our <a href="../../music-guides/crematorium-music.html">guide to crematorium music</a>.</p>
         <p>We sing hymns, anthems, classical pieces, and contemporary songs, and we are happy to learn any special requests. If you are unsure where to begin, our <a href="../../music-guides/funeral-music-guide.html">funeral music guide</a> offers practical suggestions for choosing music that reflects the life being celebrated. You can also view the full range of what we offer on our <a href="../../services.html">services page</a>, or <a href="../../contact.html">contact us</a> to talk through your plans in detail.</p>
 
         <h2>Wedding choirs in Enfield</h2>
         <p>Enfield&rsquo;s churches and licensed venues make wonderful settings for wedding ceremonies. St&nbsp;Andrew&rsquo;s Enfield is a popular choice for couples seeking a traditional church wedding with the uplift of live choral music, and Christ Church Southgate offers a charming, more intimate alternative. Beyond churches, the borough has a number of licensed wedding venues where our singers can perform during the ceremony itself or provide background music for drinks receptions. We work closely with couples to choose hymns and choral pieces that suit the tone of their day&thinsp;&mdash;&thinsp;our <a href="../../music-guides/choosing-wedding-hymns.html">guide to choosing wedding hymns</a> is a popular starting point for ideas.</p>
 
         <h2>Ensembles for weddings, funerals, and memorials</h2>
-        <p>Not every occasion calls for the same size of ensemble, and part of our job is helping you find the right balance for your venue, your budget, and the feeling you want to create. We offer everything from a single soloist&thinsp;&mdash;&thinsp;whose voice can hold a room in complete stillness&thinsp;&mdash;&thinsp;through to duets, quartets, octets, and a full twelve-voice chorus with instrumental accompaniment. Organists, harpists, and string players are also available. Visit our <a href="../../pricing.html">pricing page</a> for a clear guide to ensemble sizes and costs.</p>
+        <p>Enfield Crematorium has a fixed service length, so a quartet is usually the right call &mdash; large enough to lead a hymn, small enough to keep the chapel uncluttered. St&nbsp;Andrew&rsquo;s Enfield is a much bigger room with a fine acoustic; for a wedding there a sextet works well, and a full eight-voice choir is worth considering when the congregation is large and the music programme leans on hymns. Christ Church Southgate is more intimate, and a quartet generally suits the space better than a larger group. For graveside services at Edmonton Cemetery, an unaccompanied soloist or duo is often more fitting than a full ensemble &mdash; a clear voice carries outdoors in a way a larger group sometimes doesn&rsquo;t. Our <a href="../../pricing.html">pricing page</a> sets out the costs.</p>
 
         <figure class="pull-quote">
           <blockquote>
@@ -2029,7 +2033,7 @@
 
     <section class="section">
       <div class="prose">
-        <p class="text-sm text-mid">Nearby boroughs: <a href="barnet.html">Barnet</a> &middot; <a href="haringey.html">Haringey</a> &middot; <a href="waltham-forest.html">Waltham Forest</a></p>
+        <p class="text-sm text-mid">Nearby boroughs: <a href="barnet.html">Barnet</a> &middot; <a href="haringey.html">Haringey</a> &middot; <a href="waltham-forest.html">Waltham Forest</a> &middot; <a href="hackney.html">Hackney</a></p>
       </div>
     </section>
 

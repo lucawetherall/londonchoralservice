@@ -2,6 +2,10 @@
 <html lang="en-GB">
 <head>
   <meta charset="UTF-8">
+  <!-- @include-start partials/head-extras.html -->
+<link rel="preload" href="/fonts/cormorant-garamond.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/source-serif-4.woff2" as="font" type="font/woff2" crossorigin>
+  <!-- @include-end partials/head-extras.html -->
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
   <!-- Google Analytics (GA4) — deferred until after load -->
@@ -29,15 +33,15 @@
     });
   </script>
 
-  <title>Funeral Singers &amp; Wedding Choirs in Brighton — London Choral Service</title>
-  <meta name="description" content="Professional funeral singers, wedding choirs, and conservatoire-trained musicians in Brighton and across East Sussex. Soloists, choirs, and instrumentalists for services at St Bartholomew's Church, St Peter's Brighton, Woodvale Crematorium, The Downs Crematorium, and venues throughout the area.">
+  <title>Funeral and wedding choirs in Brighton</title>
+  <meta name="description" content="Professional funeral singers, wedding choirs, and conservatoire-trained musicians in Brighton and across East Sussex.">
   <meta name="theme-color" content="#F7F3EE">
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://londonchoralservice.com/areas/brighton.html">
   <link rel="alternate" hreflang="en-gb" href="https://londonchoralservice.com/areas/brighton.html">
   <link rel="alternate" hreflang="x-default" href="https://londonchoralservice.com/areas/brighton.html">
 
-  <meta property="og:title" content="Funeral Singers &amp; Wedding Choirs in Brighton | London Choral Service">
+  <meta property="og:title" content="Funeral and wedding choirs in Brighton">
   <meta property="og:description" content="Professional funeral singers, wedding choirs, and conservatoire-trained musicians in Brighton and across East Sussex.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://londonchoralservice.com/areas/brighton.html">
@@ -46,7 +50,7 @@
   <meta property="og:image" content="https://londonchoralservice.com/assets/og-image.png">
 
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Funeral Singers &amp; Wedding Choirs in Brighton | London Choral Service">
+  <meta name="twitter:title" content="Funeral and wedding choirs in Brighton">
   <meta name="twitter:description" content="Professional funeral singers, wedding choirs, and conservatoire-trained musicians in Brighton and across East Sussex.">
   <meta name="twitter:image" content="https://londonchoralservice.com/assets/og-image.png">
   <link rel="dns-prefetch" href="https://www.googletagmanager.com">
@@ -1827,108 +1831,103 @@
 
   <script type="application/ld+json">
   {
-  "@context": "https://schema.org",
-  "@graph": [
-    {
-      "@type": "Service",
-      "name": "Funeral Singers & Wedding Choirs in Brighton",
-      "provider": {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Service",
+        "name": "Funeral Singers & Wedding Choirs in Brighton",
+        "provider": {
+          "@type": "LocalBusiness",
+          "@id": "https://londonchoralservice.com/#organization"
+        },
+        "areaServed": {
+          "@type": "City",
+          "name": "Brighton",
+          "containedInPlace": {
+            "@type": "AdministrativeArea",
+            "name": "East Sussex"
+          }
+        },
+        "description": "Professional funeral singers, wedding choirs, and conservatoire-trained musicians in Brighton and across East Sussex.",
+        "url": "https://londonchoralservice.com/areas/brighton.html",
+        "serviceType": [
+          "Funeral Music",
+          "Wedding Music",
+          "Memorial Music",
+          "Ceremony Music"
+        ],
+        "geo": {
+          "@type": "GeoCoordinates",
+          "latitude": 50.82253,
+          "longitude": -0.13725
+        }
+      },
+      {
         "@type": "LocalBusiness",
-        "name": "The London Choral Service",
-        "alternateName": "London Choral Service",
-        "url": "https://londonchoralservice.com",
-        "telephone": "+447356042468",
-        "email": "office@londonchoralservice.com"
+        "@id": "https://londonchoralservice.com/#organization",
+        "name": "The London Choral Service"
       },
-      "areaServed": {
-        "@type": "City",
-        "name": "Brighton",
-        "containedInPlace": {
-          "@type": "AdministrativeArea",
-          "name": "East Sussex"
-        }
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "https://londonchoralservice.com/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Areas We Serve",
+            "item": "https://londonchoralservice.com/areas/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 3,
+            "name": "Brighton"
+          }
+        ]
       },
-      "description": "Professional funeral singers, wedding choirs, and conservatoire-trained musicians in Brighton and across East Sussex.",
-      "url": "https://londonchoralservice.com/areas/brighton.html",
-      "serviceType": [
-        "Funeral Music",
-        "Wedding Music",
-        "Memorial Music",
-        "Ceremony Music"
-      ]
-    },
-    {
-      "@type": "LocalBusiness",
-      "@id": "https://londonchoralservice.com/#organization",
-      "name": "The London Choral Service",
-      "aggregateRating": {
-        "@type": "AggregateRating",
-        "ratingValue": "5",
-        "reviewCount": "4",
-        "bestRating": "5"
+      {
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "How much does a funeral singer cost in Brighton?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "A solo funeral singer in Brighton starts from £215. A small choir of four voices starts from £1,150, a quintet from £1,400, a sextet from £1,600, and a full choir of eight from £2,000. As Brighton is outside Greater London, a small travel supplement may apply depending on the venue. All fees include liaison with your funeral director."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Can you provide a choir for a wedding in Brighton?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Absolutely. Our wedding choirs sing at venues right across Brighton and East Sussex, from the dramatic Victorian interior of St Bartholomew's Church to the elegant setting of St Peter's Brighton and the flint churches dotted along the South Downs. We tailor the ensemble and repertoire to suit your ceremony and venue."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "What types of music can you perform at a funeral in Brighton?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Our repertoire spans traditional hymns, classical sacred works, and contemporary songs. Many families at St Bartholomew's or St Peter's request well-loved hymns alongside a reflective solo, while crematorium services at Woodvale or The Downs often suit gentler, more intimate pieces. We can also arrange any personal favourite for voices or instruments."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Do you cover crematorium services in Brighton?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes. We sing regularly at both Woodvale Crematorium and The Downs Crematorium, and our musicians are well used to the timing and acoustic considerations these services require. We coordinate directly with crematorium staff and your funeral director so that the music fits seamlessly into the order of service."
+            }
+          }
+        ]
       }
-    },
-    {
-      "@type": "BreadcrumbList",
-      "itemListElement": [
-        {
-          "@type": "ListItem",
-          "position": 1,
-          "name": "Home",
-          "item": "https://londonchoralservice.com/"
-        },
-        {
-          "@type": "ListItem",
-          "position": 2,
-          "name": "Areas We Serve",
-          "item": "https://londonchoralservice.com/areas/"
-        },
-        {
-          "@type": "ListItem",
-          "position": 3,
-          "name": "Brighton"
-        }
-      ]
-    },
-    {
-      "@type": "FAQPage",
-      "mainEntity": [
-        {
-          "@type": "Question",
-          "name": "How much does a funeral singer cost in Brighton?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "A solo funeral singer in Brighton starts from £215. A small choir of four voices starts from £1,150, a quintet from £1,400, a sextet from £1,600, and a full choir of eight from £2,000. As Brighton is outside Greater London, a small travel supplement may apply depending on the venue. All fees include liaison with your funeral director."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "Can you provide a choir for a wedding in Brighton?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Absolutely. Our wedding choirs sing at venues right across Brighton and East Sussex, from the dramatic Victorian interior of St Bartholomew's Church to the elegant setting of St Peter's Brighton and the flint churches dotted along the South Downs. We tailor the ensemble and repertoire to suit your ceremony and venue."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "What types of music can you perform at a funeral in Brighton?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Our repertoire spans traditional hymns, classical sacred works, and contemporary songs. Many families at St Bartholomew's or St Peter's request well-loved hymns alongside a reflective solo, while crematorium services at Woodvale or The Downs often suit gentler, more intimate pieces. We can also arrange any personal favourite for voices or instruments."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "Do you cover crematorium services in Brighton?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Yes. We sing regularly at both Woodvale Crematorium and The Downs Crematorium, and our musicians are well used to the timing and acoustic considerations these services require. We coordinate directly with crematorium staff and your funeral director so that the music fits seamlessly into the order of service."
-          }
-        }
-      ]
-    }
-  ]
-}
+    ]
+  }
   </script>
 </head>
 <body>
@@ -1946,6 +1945,10 @@
         <li><a href="/">Home</a></li>
         <li><a href="/about.html">About</a></li>
         <li><a href="/services.html">Services</a></li>
+        <li><a href="/weddings.html">Weddings</a></li>
+        <li><a href="/funerals.html">Funerals</a></li>
+        <li><a href="/corporate.html">Corporate</a></li>
+        <li><a href="/christmas.html">Christmas</a></li>
         <li><a href="/listen.html">Listen</a></li>
         <li class="has-dropdown">
           <a href="/music-guides/" aria-haspopup="true" aria-expanded="false" class="dropdown-trigger">Music Guides<span class="dropdown-caret" aria-hidden="true">&#9662;</span></a>
@@ -1974,7 +1977,7 @@
             <li>Brighton</li>
           </ol>
         </nav>
-        <h1>Funeral singers and choirs in Brighton</h1>
+        <h1>Funeral and wedding choirs in Brighton</h1>
         <p class="lede">The London Choral Service provides professional singers, choirs, and instrumentalists for funerals, weddings, memorials, and ceremonies across Brighton and the wider East Sussex area. Every musician we work with is conservatoire-trained, and every performance is shaped with real thought and tenderness around the occasion and the people at its heart.</p>
         <hr class="rule">
       </div>
