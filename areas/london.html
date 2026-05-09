@@ -2,6 +2,10 @@
 <html lang="en-GB">
 <head>
   <meta charset="UTF-8">
+  <!-- @include-start partials/head-extras.html -->
+<link rel="preload" href="/fonts/cormorant-garamond.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/source-serif-4.woff2" as="font" type="font/woff2" crossorigin>
+  <!-- @include-end partials/head-extras.html -->
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
   <!-- Google Analytics (GA4) — deferred until after load -->
@@ -29,16 +33,16 @@
     });
   </script>
 
-  <title>Funeral Singers &amp; Wedding Choirs in London — London Choral Service</title>
-  <meta name="description" content="Professional funeral singers and wedding choirs in London. Conservatoire-trained musicians for funerals, weddings, memorials, and ceremonies across all London boroughs. Over 150 exceptional musicians.">
+  <title>Funeral and wedding choirs in London</title>
+  <meta name="description" content="Professional funeral singers and wedding choirs in London.">
   <meta name="theme-color" content="#F7F3EE">
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://londonchoralservice.com/areas/london.html">
   <link rel="alternate" hreflang="en-gb" href="https://londonchoralservice.com/areas/london.html">
   <link rel="alternate" hreflang="x-default" href="https://londonchoralservice.com/areas/london.html">
 
-  <meta property="og:title" content="Funeral Singers &amp; Wedding Choirs in London | London Choral Service">
-  <meta property="og:description" content="Professional funeral singers and wedding choirs in London. Conservatoire-trained musicians for funerals, weddings, memorials, and ceremonies across all London boroughs.">
+  <meta property="og:title" content="Funeral and wedding choirs in London">
+  <meta property="og:description" content="Professional funeral singers and wedding choirs in London.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://londonchoralservice.com/areas/london.html">
   <meta property="og:locale" content="en_GB">
@@ -46,8 +50,8 @@
   <meta property="og:image" content="https://londonchoralservice.com/assets/og-image.png">
 
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Funeral Singers &amp; Wedding Choirs in London | London Choral Service">
-  <meta name="twitter:description" content="Professional funeral singers and wedding choirs in London. Conservatoire-trained musicians for funerals, weddings, memorials, and ceremonies across all London boroughs.">
+  <meta name="twitter:title" content="Funeral and wedding choirs in London">
+  <meta name="twitter:description" content="Professional funeral singers and wedding choirs in London.">
   <meta name="twitter:image" content="https://londonchoralservice.com/assets/og-image.png">
   <link rel="dns-prefetch" href="https://www.googletagmanager.com">
   <link rel="dns-prefetch" href="https://api.web3forms.com">
@@ -1688,105 +1692,100 @@
 
   <script type="application/ld+json">
   {
-  "@context": "https://schema.org",
-  "@graph": [
-    {
-      "@type": "Service",
-      "name": "Funeral Singers & Wedding Choirs in London",
-      "url": "https://londonchoralservice.com/areas/london.html",
-      "description": "Professional funeral singers and wedding choirs in London. Conservatoire-trained musicians for funerals, weddings, memorials, and ceremonies across all London boroughs.",
-      "provider": {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Service",
+        "name": "Funeral Singers & Wedding Choirs in London",
+        "url": "https://londonchoralservice.com/areas/london.html",
+        "description": "Professional funeral singers and wedding choirs in London. Conservatoire-trained musicians for funerals, weddings, memorials, and ceremonies across all London boroughs.",
+        "provider": {
+          "@type": "LocalBusiness",
+          "@id": "https://londonchoralservice.com/#organization"
+        },
+        "areaServed": {
+          "@type": "City",
+          "name": "London",
+          "addressCountry": "GB"
+        },
+        "serviceType": [
+          "Funeral Music",
+          "Wedding Music",
+          "Memorial Music",
+          "Ceremony Music"
+        ],
+        "geo": {
+          "@type": "GeoCoordinates",
+          "latitude": 51.50735,
+          "longitude": -0.12776
+        }
+      },
+      {
         "@type": "LocalBusiness",
-        "name": "The London Choral Service",
-        "alternateName": "London Choral Service",
-        "url": "https://londonchoralservice.com",
-        "telephone": "+447356042468",
-        "email": "office@londonchoralservice.com"
+        "@id": "https://londonchoralservice.com/#organization",
+        "name": "The London Choral Service"
       },
-      "areaServed": {
-        "@type": "City",
-        "name": "London",
-        "addressCountry": "GB"
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "https://londonchoralservice.com/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Areas We Serve",
+            "item": "https://londonchoralservice.com/areas/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 3,
+            "name": "London"
+          }
+        ]
       },
-      "serviceType": [
-        "Funeral Music",
-        "Wedding Music",
-        "Memorial Music",
-        "Ceremony Music"
-      ]
-    },
-    {
-      "@type": "LocalBusiness",
-      "@id": "https://londonchoralservice.com/#organization",
-      "name": "The London Choral Service",
-      "aggregateRating": {
-        "@type": "AggregateRating",
-        "ratingValue": "5",
-        "reviewCount": "4",
-        "bestRating": "5"
+      {
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "How much does a funeral singer cost in London?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "A solo funeral singer in London starts from £215. A small choir of four voices starts from £1,150, a quintet from £1,400, a sextet from £1,600, and a full choir of eight from £2,000. As we are based in London, there are no additional travel costs for services anywhere in the capital."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Can you provide a choir for a wedding in London?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Absolutely. We provide wedding choirs from a solo vocalist up to a twelve-voice chorus, and regularly sing at venues including St Martin-in-the-Fields, the Temple Church, Chelsea Old Church, and Brompton Oratory. We take care of all the musical planning and liaise directly with your venue."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "What types of music can you perform at a funeral in London?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Our repertoire spans traditional hymns, classical sacred works, and contemporary songs. We regularly perform pieces ranging from Fauré's Pie Jesu at intimate parish church services to full choral requiems at St Paul's Cathedral and Southwark Cathedral. We can also arrange any piece you have in mind."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Do you cover crematorium services in London?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes, we sing at crematoriums right across the capital, including City of London Crematorium, Mortlake, Putney Vale, Golders Green, and Hendon. Our musicians know these venues well and are experienced in working within their specific timings and acoustics."
+            }
+          }
+        ]
       }
-    },
-    {
-      "@type": "BreadcrumbList",
-      "itemListElement": [
-        {
-          "@type": "ListItem",
-          "position": 1,
-          "name": "Home",
-          "item": "https://londonchoralservice.com/"
-        },
-        {
-          "@type": "ListItem",
-          "position": 2,
-          "name": "Areas We Serve",
-          "item": "https://londonchoralservice.com/areas/"
-        },
-        {
-          "@type": "ListItem",
-          "position": 3,
-          "name": "London"
-        }
-      ]
-    },
-    {
-      "@type": "FAQPage",
-      "mainEntity": [
-        {
-          "@type": "Question",
-          "name": "How much does a funeral singer cost in London?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "A solo funeral singer in London starts from £215. A small choir of four voices starts from £1,150, a quintet from £1,400, a sextet from £1,600, and a full choir of eight from £2,000. As we are based in London, there are no additional travel costs for services anywhere in the capital."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "Can you provide a choir for a wedding in London?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Absolutely. We provide wedding choirs from a solo vocalist up to a twelve-voice chorus, and regularly sing at venues including St Martin-in-the-Fields, the Temple Church, Chelsea Old Church, and Brompton Oratory. We take care of all the musical planning and liaise directly with your venue."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "What types of music can you perform at a funeral in London?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Our repertoire spans traditional hymns, classical sacred works, and contemporary songs. We regularly perform pieces ranging from Fauré's Pie Jesu at intimate parish church services to full choral requiems at St Paul's Cathedral and Southwark Cathedral. We can also arrange any piece you have in mind."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "Do you cover crematorium services in London?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Yes, we sing at crematoriums right across the capital, including City of London Crematorium, Mortlake, Putney Vale, Golders Green, and Hendon. Our musicians know these venues well and are experienced in working within their specific timings and acoustics."
-          }
-        }
-      ]
-    }
-  ]
-}
+    ]
+  }
   </script>
 </head>
 <body>
@@ -1804,6 +1803,10 @@
         <li><a href="/">Home</a></li>
         <li><a href="/about.html">About</a></li>
         <li><a href="/services.html">Services</a></li>
+        <li><a href="/weddings.html">Weddings</a></li>
+        <li><a href="/funerals.html">Funerals</a></li>
+        <li><a href="/corporate.html">Corporate</a></li>
+        <li><a href="/christmas.html">Christmas</a></li>
         <li><a href="/listen.html">Listen</a></li>
         <li class="has-dropdown">
           <a href="/music-guides/" aria-haspopup="true" aria-expanded="false" class="dropdown-trigger">Music Guides<span class="dropdown-caret" aria-hidden="true">&#9662;</span></a>
@@ -1832,7 +1835,7 @@
             <li>London</li>
           </ol>
         </nav>
-        <h1>Funeral singers and choirs in London</h1>
+        <h1>Funeral and wedding choirs in London</h1>
         <p class="lede">London is our home. With a handpicked team of professional singers and instrumentalists based across the capital, we provide live music for funerals, weddings, memorials, and ceremonies in every London borough&thinsp;&mdash;&thinsp;from historic cathedrals to local crematoriums, hotel ballrooms to quiet parish churches.</p>
         <hr class="rule">
       </div>

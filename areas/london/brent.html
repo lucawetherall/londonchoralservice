@@ -2,6 +2,10 @@
 <html lang="en-GB">
 <head>
   <meta charset="UTF-8">
+  <!-- @include-start partials/head-extras.html -->
+<link rel="preload" href="/fonts/cormorant-garamond.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/source-serif-4.woff2" as="font" type="font/woff2" crossorigin>
+  <!-- @include-end partials/head-extras.html -->
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
   <!-- Google Analytics (GA4) — deferred until after load -->
@@ -29,15 +33,15 @@
     });
   </script>
 
-  <title>Funeral Singers &amp; Wedding Choirs in Brent — London Choral Service</title>
-  <meta name="description" content="Professional funeral singers and wedding choirs in Brent. Conservatoire-trained musicians for funerals, weddings, memorials, and ceremonies. Part of The London Choral Service.">
+  <title>Funeral and wedding choirs in Brent</title>
+  <meta name="description" content="Professional funeral singers and wedding choirs in Brent. Conservatoire-trained musicians for funerals, weddings, memorials, and ceremonies.">
   <meta name="theme-color" content="#F7F3EE">
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://londonchoralservice.com/areas/london/brent.html">
   <link rel="alternate" hreflang="en-gb" href="https://londonchoralservice.com/areas/london/brent.html">
   <link rel="alternate" hreflang="x-default" href="https://londonchoralservice.com/areas/london/brent.html">
 
-  <meta property="og:title" content="Funeral Singers &amp; Wedding Choirs in Brent | London Choral Service">
+  <meta property="og:title" content="Funeral and wedding choirs in Brent">
   <meta property="og:description" content="Professional funeral singers and wedding choirs in Brent. Conservatoire-trained musicians for funerals, weddings, memorials, and ceremonies.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://londonchoralservice.com/areas/london/brent.html">
@@ -46,7 +50,7 @@
   <meta property="og:image" content="https://londonchoralservice.com/assets/og-image.png">
 
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Funeral Singers &amp; Wedding Choirs in Brent | London Choral Service">
+  <meta name="twitter:title" content="Funeral and wedding choirs in Brent">
   <meta name="twitter:description" content="Professional funeral singers and wedding choirs in Brent. Conservatoire-trained musicians for funerals, weddings, memorials, and ceremonies.">
   <meta name="twitter:image" content="https://londonchoralservice.com/assets/og-image.png">
   <link rel="dns-prefetch" href="https://www.googletagmanager.com">
@@ -1688,115 +1692,110 @@
 
   <script type="application/ld+json">
   {
-  "@context": "https://schema.org",
-  "@graph": [
-    {
-      "@type": "Service",
-      "name": "Funeral Singers & Wedding Choirs in Brent",
-      "url": "https://londonchoralservice.com/areas/london/brent.html",
-      "description": "Professional funeral singers and wedding choirs in Brent, London.",
-      "provider": {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Service",
+        "name": "Funeral Singers & Wedding Choirs in Brent",
+        "url": "https://londonchoralservice.com/areas/london/brent.html",
+        "description": "Professional funeral singers and wedding choirs in Brent, London.",
+        "provider": {
+          "@type": "LocalBusiness",
+          "@id": "https://londonchoralservice.com/#organization"
+        },
+        "areaServed": {
+          "@type": "AdministrativeArea",
+          "name": "Brent",
+          "containedInPlace": {
+            "@type": "City",
+            "name": "London",
+            "addressCountry": "GB"
+          }
+        },
+        "serviceType": [
+          "Funeral Music",
+          "Wedding Music",
+          "Memorial Music",
+          "Ceremony Music"
+        ],
+        "geo": {
+          "@type": "GeoCoordinates",
+          "latitude": 51.55883,
+          "longitude": -0.27148
+        }
+      },
+      {
         "@type": "LocalBusiness",
-        "name": "The London Choral Service",
-        "alternateName": "London Choral Service",
-        "url": "https://londonchoralservice.com",
-        "telephone": "+447356042468",
-        "email": "office@londonchoralservice.com"
+        "@id": "https://londonchoralservice.com/#organization",
+        "name": "The London Choral Service"
       },
-      "areaServed": {
-        "@type": "AdministrativeArea",
-        "name": "Brent",
-        "containedInPlace": {
-          "@type": "City",
-          "name": "London",
-          "addressCountry": "GB"
-        }
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "https://londonchoralservice.com/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Areas We Serve",
+            "item": "https://londonchoralservice.com/areas/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 3,
+            "name": "London",
+            "item": "https://londonchoralservice.com/areas/london.html"
+          },
+          {
+            "@type": "ListItem",
+            "position": 4,
+            "name": "Brent"
+          }
+        ]
       },
-      "serviceType": [
-        "Funeral Music",
-        "Wedding Music",
-        "Memorial Music",
-        "Ceremony Music"
-      ]
-    },
-    {
-      "@type": "LocalBusiness",
-      "@id": "https://londonchoralservice.com/#organization",
-      "name": "The London Choral Service",
-      "aggregateRating": {
-        "@type": "AggregateRating",
-        "ratingValue": "5",
-        "reviewCount": "4",
-        "bestRating": "5"
+      {
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "How much does a funeral singer cost in Brent?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "For services at St Mary's Willesden, Willesden New Cemetery, or any other Brent venue, a soloist starts from £215. A small choir of four is from £1,150, a quintet from £1,400, a sextet from £1,600, and a full choir of eight from £2,000. All prices include travel within Greater London."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Can you provide a choir for a wedding in Brent?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes. St Mary's Willesden is a wonderful medieval church for a wedding, and we also sing at venues around Wembley and across the borough. We provide anything from a solo vocalist to a twelve-voice chorus and coordinate the full musical programme with you."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "What types of music can you perform at a funeral in Brent?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Our repertoire covers traditional hymns, classical sacred works, contemporary songs, and bespoke arrangements. Brent's diverse communities often request music from a wide range of traditions, and our singers are experienced in adapting to services of all faiths and none."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Do you cover crematorium services in Brent?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes. Brent is well served by crematoriums in neighbouring boroughs, and we sing at all of them regularly. Our singers know the timing and layout requirements at each venue and coordinate directly with crematorium staff to keep everything running smoothly."
+            }
+          }
+        ]
       }
-    },
-    {
-      "@type": "BreadcrumbList",
-      "itemListElement": [
-        {
-          "@type": "ListItem",
-          "position": 1,
-          "name": "Home",
-          "item": "https://londonchoralservice.com/"
-        },
-        {
-          "@type": "ListItem",
-          "position": 2,
-          "name": "Areas We Serve",
-          "item": "https://londonchoralservice.com/areas/"
-        },
-        {
-          "@type": "ListItem",
-          "position": 3,
-          "name": "London",
-          "item": "https://londonchoralservice.com/areas/london.html"
-        },
-        {
-          "@type": "ListItem",
-          "position": 4,
-          "name": "Brent"
-        }
-      ]
-    },
-    {
-      "@type": "FAQPage",
-      "mainEntity": [
-        {
-          "@type": "Question",
-          "name": "How much does a funeral singer cost in Brent?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "For services at St Mary's Willesden, Willesden New Cemetery, or any other Brent venue, a soloist starts from £215. A small choir of four is from £1,150, a quintet from £1,400, a sextet from £1,600, and a full choir of eight from £2,000. All prices include travel within Greater London."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "Can you provide a choir for a wedding in Brent?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Yes. St Mary's Willesden is a wonderful medieval church for a wedding, and we also sing at venues around Wembley and across the borough. We provide anything from a solo vocalist to a twelve-voice chorus and coordinate the full musical programme with you."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "What types of music can you perform at a funeral in Brent?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Our repertoire covers traditional hymns, classical sacred works, contemporary songs, and bespoke arrangements. Brent's diverse communities often request music from a wide range of traditions, and our singers are experienced in adapting to services of all faiths and none."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "Do you cover crematorium services in Brent?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Yes. Brent is well served by crematoriums in neighbouring boroughs, and we sing at all of them regularly. Our singers know the timing and layout requirements at each venue and coordinate directly with crematorium staff to keep everything running smoothly."
-          }
-        }
-      ]
-    }
-  ]
-}
+    ]
+  }
   </script>
 </head>
 <body>
@@ -1814,6 +1813,10 @@
         <li><a href="/">Home</a></li>
         <li><a href="/about.html">About</a></li>
         <li><a href="/services.html">Services</a></li>
+        <li><a href="/weddings.html">Weddings</a></li>
+        <li><a href="/funerals.html">Funerals</a></li>
+        <li><a href="/corporate.html">Corporate</a></li>
+        <li><a href="/christmas.html">Christmas</a></li>
         <li><a href="/listen.html">Listen</a></li>
         <li class="has-dropdown">
           <a href="/music-guides/" aria-haspopup="true" aria-expanded="false" class="dropdown-trigger">Music Guides<span class="dropdown-caret" aria-hidden="true">&#9662;</span></a>
@@ -1843,7 +1846,7 @@
             <li>Brent</li>
           </ol>
         </nav>
-        <h1>Funeral singers and choirs in Brent</h1>
+        <h1>Funeral and wedding choirs in Brent</h1>
         <p class="lede">The London Borough of Brent is one of north-west London&rsquo;s most diverse and vibrant boroughs, home to communities in Wembley, Willesden, Kilburn, Kingsbury, and Alperton. Our conservatoire-trained singers provide music of the highest quality for funerals, weddings, memorials, and ceremonies at venues throughout Brent and its surrounding areas.</p>
         <hr class="rule">
       </div>
@@ -1859,7 +1862,7 @@
         <p>Brent offers a range of wonderful settings for weddings, from the historic charm of St&nbsp;Mary&rsquo;s Willesden to the modern grandeur of venues around Wembley. Our singers can provide anything from a soloist performing during the signing of the register to a full choir leading congregational hymns with energy and confidence. For civil ceremonies at licensed venues across the borough, we adapt our approach to suit the space and the couple&rsquo;s wishes, whether that means a contemplative classical piece or a more celebratory choral arrangement. Our <a href="../../music-guides/choosing-wedding-hymns.html">guide to choosing wedding hymns</a> is a helpful starting point for planning your wedding music.</p>
 
         <h2>Ensembles for weddings, funerals, and memorials</h2>
-        <p>Not every occasion calls for the same size of ensemble, and part of our job is helping you find the right balance for your venue, your budget, and the feeling you want to create. We offer everything from a single soloist&thinsp;&mdash;&thinsp;whose voice can hold a room in complete stillness&thinsp;&mdash;&thinsp;through to duets, quartets, octets, and a full twelve-voice chorus with instrumental accompaniment. Organists, harpists, and string players are also available. Visit our <a href="../../pricing.html">pricing page</a> for a clear guide to ensemble sizes and costs.</p>
+        <p>St&nbsp;Mary&rsquo;s Willesden is a medieval church with a quiet, contained acoustic, and a quartet usually carries the music there without overwhelming the space &mdash; though for a wedding with a fuller congregation a sextet adds weight to the hymns. Willesden New Cemetery&rsquo;s chapel runs to a tighter timing, so a quartet tends to be the right call: enough for a hymn, compact enough to fit the room. At Alperton Cemetery a smaller group, two or three voices, often suits the more intimate setting better. For weddings around Wembley, especially the larger licensed venues, a sextet or full eight-voice choir gives the day proper presence. For graveside committals across Brent, a soloist or duo is often more fitting than a larger ensemble. Our <a href="../../pricing.html">pricing page</a> sets out the costs.</p>
 
         <figure class="pull-quote">
           <blockquote>
@@ -1890,7 +1893,7 @@
 
     <section class="section">
       <div class="prose">
-        <p class="text-sm text-mid">Nearby boroughs: <a href="barnet.html">Barnet</a> &middot; <a href="harrow.html">Harrow</a> &middot; <a href="ealing.html">Ealing</a> &middot; <a href="hammersmith-fulham.html">Hammersmith &amp; Fulham</a></p>
+        <p class="text-sm text-mid">Nearby boroughs: <a href="barnet.html">Barnet</a> &middot; <a href="camden.html">Camden</a> &middot; <a href="harrow.html">Harrow</a> &middot; <a href="ealing.html">Ealing</a> &middot; <a href="westminster.html">Westminster</a> &middot; <a href="kensington-chelsea.html">Kensington &amp; Chelsea</a></p>
       </div>
     </section>
 

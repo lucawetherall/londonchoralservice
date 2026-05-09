@@ -2,6 +2,10 @@
 <html lang="en-GB">
 <head>
   <meta charset="UTF-8">
+  <!-- @include-start partials/head-extras.html -->
+<link rel="preload" href="/fonts/cormorant-garamond.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/source-serif-4.woff2" as="font" type="font/woff2" crossorigin>
+  <!-- @include-end partials/head-extras.html -->
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
   <!-- Google Analytics (GA4) — deferred until after load -->
@@ -29,7 +33,7 @@
     });
   </script>
 
-  <title>Professional Funeral Singers &amp; Wedding Choirs — London Choral Service</title>
+  <title>Professional Funeral Singers &amp; Wedding Choirs | LCS</title>
   <meta name="description" content="London Choral Service provides exceptional singers, choirs, and instrumentalists for funerals, weddings, memorials, and ceremonies across the United Kingdom.">
   <meta name="theme-color" content="#F7F3EE">
   <meta name="robots" content="index, follow">
@@ -37,7 +41,7 @@
   <link rel="alternate" hreflang="en-gb" href="https://londonchoralservice.com/">
   <link rel="alternate" hreflang="x-default" href="https://londonchoralservice.com/">
 
-  <meta property="og:title" content="Professional Funeral Singers &amp; Wedding Choirs — London Choral Service">
+  <meta property="og:title" content="Professional Funeral Singers &amp; Wedding Choirs | LCS">
   <meta property="og:description" content="London Choral Service provides exceptional singers, choirs, and instrumentalists for funerals, weddings, memorials, and ceremonies across the United Kingdom.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://londonchoralservice.com/">
@@ -46,7 +50,7 @@
   <meta property="og:image" content="https://londonchoralservice.com/assets/og-image.png">
 
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Professional Funeral Singers &amp; Wedding Choirs — London Choral Service">
+  <meta name="twitter:title" content="Professional Funeral Singers &amp; Wedding Choirs | LCS">
   <meta name="twitter:description" content="London Choral Service provides exceptional singers, choirs, and instrumentalists for funerals, weddings, memorials, and ceremonies across the United Kingdom.">
   <meta name="twitter:image" content="https://londonchoralservice.com/assets/og-image.png">
   <link rel="dns-prefetch" href="https://www.googletagmanager.com">
@@ -1686,6 +1690,7 @@
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
 
+  <!-- TODO: add gbp_canonical_maps_url + lcs_linkedin_company to LocalBusiness.sameAs once discovered -->
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -1707,6 +1712,7 @@
         "@id": "https://londonchoralservice.com/#organization",
         "name": "The London Choral Service",
         "alternateName": "London Choral Service",
+        "legalName": "Alma Consort Ltd",
         "url": "https://londonchoralservice.com",
         "description": "London Choral Service provides exceptional singers, choirs, and instrumentalists for funerals, weddings, memorials, and ceremonies across the United Kingdom.",
         "telephone": "+447356042468",
@@ -1715,6 +1721,8 @@
         "address": {
           "@type": "PostalAddress",
           "addressLocality": "London",
+          "addressRegion": "Greater London",
+          "postalCode": "N1 7GU",
           "addressCountry": "GB"
         },
         "geo": {
@@ -1745,9 +1753,16 @@
           "choral music",
           "hymns"
         ],
-        "openingHours": "Mo-Fr 09:00-18:00",
+        "openingHoursSpecification": [{
+          "@type": "OpeningHoursSpecification",
+          "dayOfWeek": ["Monday","Tuesday","Wednesday","Thursday","Friday"],
+          "opens": "09:00",
+          "closes": "18:00"
+        }],
         "sameAs": [
-          "https://share.google/HRgq38OubHmj3Zz9v"
+          "https://share.google/HRgq38OubHmj3Zz9v",
+          "https://find-and-update.company-information.service.gov.uk/company/16785727",
+          "https://www.youtube.com/@londonchoralservice"
         ],
         "numberOfEmployees": {
           "@type": "QuantitativeValue",
@@ -1805,6 +1820,10 @@
         <li><a href="/">Home</a></li>
         <li><a href="/about.html">About</a></li>
         <li><a href="/services.html">Services</a></li>
+        <li><a href="/weddings.html">Weddings</a></li>
+        <li><a href="/funerals.html">Funerals</a></li>
+        <li><a href="/corporate.html">Corporate</a></li>
+        <li><a href="/christmas.html">Christmas</a></li>
         <li><a href="/listen.html">Listen</a></li>
         <li class="has-dropdown">
           <a href="/music-guides/" aria-haspopup="true" aria-expanded="false" class="dropdown-trigger">Music Guides<span class="dropdown-caret" aria-hidden="true">&#9662;</span></a>
@@ -1837,7 +1856,7 @@
             <button class="video-thumb" aria-label="Play video"
                     data-video="Lov_NegzVhM">
               <img src="https://img.youtube.com/vi/Lov_NegzVhM/maxresdefault.jpg"
-                   alt="The London Choral Service" loading="lazy">
+                   alt="The London Choral Service" loading="lazy" width="1280" height="720">
               <svg class="play-btn" viewBox="0 0 68 48" aria-hidden="true">
                 <path d="M66.52 7.74c-.78-2.93-2.49-5.41-5.42-6.19C55.79.13 34 0 34 0S12.21.13 6.9 1.55c-2.93.78-4.63 3.26-5.42 6.19C.06 13.05 0 24 0 24s.06 10.95 1.48 16.26c.78 2.93 2.49 5.41 5.42 6.19C12.21 47.87 34 48 34 48s21.79-.13 27.1-1.55c2.93-.78 4.63-3.26 5.42-6.19C67.94 34.95 68 24 68 24s-.06-10.95-1.48-16.26z" fill="rgba(0,0,0,.7)"/>
                 <path d="M45 24 27 14v20z" fill="#fff"/>

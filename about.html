@@ -2,6 +2,10 @@
 <html lang="en-GB">
 <head>
   <meta charset="UTF-8">
+  <!-- @include-start partials/head-extras.html -->
+<link rel="preload" href="/fonts/cormorant-garamond.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/source-serif-4.woff2" as="font" type="font/woff2" crossorigin>
+  <!-- @include-end partials/head-extras.html -->
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
   <!-- Google Analytics (GA4) — deferred until after load -->
@@ -30,14 +34,14 @@
   </script>
 
   <title>About Our Musicians — London Choral Service</title>
-  <meta name="description" content="London Choral Service is a handpicked team of professional singers and instrumentalists, personally chosen for funerals, weddings, and ceremonies across the United Kingdom.">
+  <meta name="description" content="London Choral Service is a handpicked team of professional singers and instrumentalists for funerals, weddings, and ceremonies across the UK.">
   <meta name="theme-color" content="#F7F3EE">
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://londonchoralservice.com/about.html">
   <link rel="alternate" hreflang="en-gb" href="https://londonchoralservice.com/about.html">
   <link rel="alternate" hreflang="x-default" href="https://londonchoralservice.com/about.html">
 
-  <meta property="og:title" content="About Our Musicians &mdash; London Choral Service">
+  <meta property="og:title" content="About Our Musicians — London Choral Service">
   <meta property="og:description" content="London Choral Service is a handpicked team of professional singers and instrumentalists for funerals, weddings, and ceremonies across the UK.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://londonchoralservice.com/about.html">
@@ -46,7 +50,7 @@
   <meta property="og:image" content="https://londonchoralservice.com/assets/og-image.png">
 
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="About Our Musicians &mdash; London Choral Service">
+  <meta name="twitter:title" content="About Our Musicians — London Choral Service">
   <meta name="twitter:description" content="London Choral Service is a handpicked team of professional singers and instrumentalists for funerals, weddings, and ceremonies across the UK.">
   <meta name="twitter:image" content="https://londonchoralservice.com/assets/og-image.png">
   <link rel="dns-prefetch" href="https://www.googletagmanager.com">
@@ -1686,6 +1690,7 @@
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
 
+  <!-- TODO: add luca_wetherall_orcid to Person.sameAs once confirmed -->
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -1701,7 +1706,7 @@
         }
       },
       {
-        "@type": "LocalBusiness",
+        "@type": ["LocalBusiness", "PerformingGroup", "MusicGroup"],
         "@id": "https://londonchoralservice.com/#organization",
         "name": "The London Choral Service",
         "alternateName": "London Choral Service",
@@ -1715,7 +1720,18 @@
           "affiliation": {
             "@type": "Organization",
             "name": "University of Oxford"
-          }
+          },
+          "alumniOf": {
+            "@type": "Organization",
+            "name": "University of Oxford"
+          },
+          "worksFor": {
+            "@id": "https://londonchoralservice.com/#organization"
+          },
+          "sameAs": [
+            "https://www.music.ox.ac.uk/people/luca-wetherall",
+            "https://www.linkedin.com/in/luca-wetherall-377a85140/"
+          ]
         },
         "areaServed": {
           "@type": "Country",
@@ -1767,6 +1783,10 @@
         <li><a href="/">Home</a></li>
         <li><a href="/about.html">About</a></li>
         <li><a href="/services.html">Services</a></li>
+        <li><a href="/weddings.html">Weddings</a></li>
+        <li><a href="/funerals.html">Funerals</a></li>
+        <li><a href="/corporate.html">Corporate</a></li>
+        <li><a href="/christmas.html">Christmas</a></li>
         <li><a href="/listen.html">Listen</a></li>
         <li class="has-dropdown">
           <a href="/music-guides/" aria-haspopup="true" aria-expanded="false" class="dropdown-trigger">Music Guides<span class="dropdown-caret" aria-hidden="true">&#9662;</span></a>

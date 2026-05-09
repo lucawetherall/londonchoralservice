@@ -2,6 +2,10 @@
 <html lang="en-GB">
 <head>
   <meta charset="UTF-8">
+  <!-- @include-start partials/head-extras.html -->
+<link rel="preload" href="/fonts/cormorant-garamond.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/source-serif-4.woff2" as="font" type="font/woff2" crossorigin>
+  <!-- @include-end partials/head-extras.html -->
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
   <!-- Google Analytics (GA4) — deferred until after load -->
@@ -29,16 +33,16 @@
     });
   </script>
 
-  <title>Funeral Singers in Hammersmith &amp; Fulham — London Choral Service</title>
-  <meta name="description" content="Professional funeral singers and wedding choirs in Hammersmith and Fulham, London. Conservatoire-trained musicians for funerals, weddings, memorials, and ceremonies.">
+  <title>Funeral and wedding choirs in Hammersmith &amp; Fulham</title>
+  <meta name="description" content="Professional funeral singers and wedding choirs in Hammersmith and Fulham, London.">
   <meta name="theme-color" content="#F7F3EE">
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://londonchoralservice.com/areas/london/hammersmith-fulham.html">
   <link rel="alternate" hreflang="en-gb" href="https://londonchoralservice.com/areas/london/hammersmith-fulham.html">
   <link rel="alternate" hreflang="x-default" href="https://londonchoralservice.com/areas/london/hammersmith-fulham.html">
 
-  <meta property="og:title" content="Funeral Singers in Hammersmith &amp; Fulham | London Choral Service">
-  <meta property="og:description" content="Professional funeral singers and wedding choirs in Hammersmith and Fulham, London. Conservatoire-trained musicians for funerals, weddings, and ceremonies.">
+  <meta property="og:title" content="Funeral and wedding choirs in Hammersmith &amp; Fulham">
+  <meta property="og:description" content="Professional funeral singers and wedding choirs in Hammersmith and Fulham, London.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://londonchoralservice.com/areas/london/hammersmith-fulham.html">
   <meta property="og:locale" content="en_GB">
@@ -46,7 +50,7 @@
   <meta property="og:image" content="https://londonchoralservice.com/assets/og-image.png">
 
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Funeral Singers in Hammersmith &amp; Fulham | London Choral Service">
+  <meta name="twitter:title" content="Funeral and wedding choirs in Hammersmith &amp; Fulham">
   <meta name="twitter:description" content="Professional funeral singers and wedding choirs in Hammersmith and Fulham, London.">
   <meta name="twitter:image" content="https://londonchoralservice.com/assets/og-image.png">
   <link rel="dns-prefetch" href="https://www.googletagmanager.com">
@@ -1688,115 +1692,110 @@
 
   <script type="application/ld+json">
   {
-  "@context": "https://schema.org",
-  "@graph": [
-    {
-      "@type": "Service",
-      "name": "Funeral Singers & Wedding Choirs in Hammersmith & Fulham",
-      "url": "https://londonchoralservice.com/areas/london/hammersmith-fulham.html",
-      "description": "Professional funeral singers and wedding choirs in Hammersmith and Fulham, London.",
-      "provider": {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Service",
+        "name": "Funeral Singers & Wedding Choirs in Hammersmith & Fulham",
+        "url": "https://londonchoralservice.com/areas/london/hammersmith-fulham.html",
+        "description": "Professional funeral singers and wedding choirs in Hammersmith and Fulham, London.",
+        "provider": {
+          "@type": "LocalBusiness",
+          "@id": "https://londonchoralservice.com/#organization"
+        },
+        "areaServed": {
+          "@type": "AdministrativeArea",
+          "name": "London Borough of Hammersmith and Fulham",
+          "containedInPlace": {
+            "@type": "City",
+            "name": "London",
+            "addressCountry": "GB"
+          }
+        },
+        "serviceType": [
+          "Funeral Music",
+          "Wedding Music",
+          "Memorial Music",
+          "Ceremony Music"
+        ],
+        "geo": {
+          "@type": "GeoCoordinates",
+          "latitude": 51.4926,
+          "longitude": -0.2236
+        }
+      },
+      {
         "@type": "LocalBusiness",
-        "name": "The London Choral Service",
-        "alternateName": "London Choral Service",
-        "url": "https://londonchoralservice.com",
-        "telephone": "+447356042468",
-        "email": "office@londonchoralservice.com"
+        "@id": "https://londonchoralservice.com/#organization",
+        "name": "The London Choral Service"
       },
-      "areaServed": {
-        "@type": "AdministrativeArea",
-        "name": "London Borough of Hammersmith and Fulham",
-        "containedInPlace": {
-          "@type": "City",
-          "name": "London",
-          "addressCountry": "GB"
-        }
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "https://londonchoralservice.com/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Areas We Serve",
+            "item": "https://londonchoralservice.com/areas/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 3,
+            "name": "London",
+            "item": "https://londonchoralservice.com/areas/london.html"
+          },
+          {
+            "@type": "ListItem",
+            "position": 4,
+            "name": "Hammersmith & Fulham"
+          }
+        ]
       },
-      "serviceType": [
-        "Funeral Music",
-        "Wedding Music",
-        "Memorial Music",
-        "Ceremony Music"
-      ]
-    },
-    {
-      "@type": "LocalBusiness",
-      "@id": "https://londonchoralservice.com/#organization",
-      "name": "The London Choral Service",
-      "aggregateRating": {
-        "@type": "AggregateRating",
-        "ratingValue": "5",
-        "reviewCount": "4",
-        "bestRating": "5"
+      {
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "How much does a funeral singer cost in Hammersmith and Fulham?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "For services at St Paul's Hammersmith, Fulham Palace Chapel, All Saints Fulham, or Margravine Cemetery, a soloist starts from £215. A small choir of four is from £1,150, a quintet from £1,400, a sextet from £1,600, and a full choir of eight from £2,000. All prices include travel within Greater London."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Can you provide a choir for a wedding in Hammersmith and Fulham?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes. The grand interior of St Paul's Hammersmith suits a full choir and organ, while the intimate Fulham Palace Chapel is perfect for a smaller ensemble. We provide anything from a solo vocalist to a twelve-voice chorus, and we also sing at licensed riverside venues across the borough."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "What types of music can you perform at a funeral in Hammersmith and Fulham?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "At St Paul's Hammersmith or All Saints Fulham, the acoustics suit traditional hymns, psalms, and sacred choral works beautifully. At Fulham Palace Chapel or Margravine Cemetery, we tend towards more intimate, reflective music. We also prepare bespoke arrangements of any song that held particular meaning for your loved one."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Do you cover crematorium services in Hammersmith and Fulham?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "The borough does not have its own crematorium, but we regularly sing at nearby facilities including Mortlake Crematorium and West London Crematorium in Hanwell. Our singers coordinate with funeral directors to manage the logistics, ensuring the music is delivered with care and within the allotted time."
+            }
+          }
+        ]
       }
-    },
-    {
-      "@type": "BreadcrumbList",
-      "itemListElement": [
-        {
-          "@type": "ListItem",
-          "position": 1,
-          "name": "Home",
-          "item": "https://londonchoralservice.com/"
-        },
-        {
-          "@type": "ListItem",
-          "position": 2,
-          "name": "Areas We Serve",
-          "item": "https://londonchoralservice.com/areas/"
-        },
-        {
-          "@type": "ListItem",
-          "position": 3,
-          "name": "London",
-          "item": "https://londonchoralservice.com/areas/london.html"
-        },
-        {
-          "@type": "ListItem",
-          "position": 4,
-          "name": "Hammersmith & Fulham"
-        }
-      ]
-    },
-    {
-      "@type": "FAQPage",
-      "mainEntity": [
-        {
-          "@type": "Question",
-          "name": "How much does a funeral singer cost in Hammersmith and Fulham?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "For services at St Paul's Hammersmith, Fulham Palace Chapel, All Saints Fulham, or Margravine Cemetery, a soloist starts from £215. A small choir of four is from £1,150, a quintet from £1,400, a sextet from £1,600, and a full choir of eight from £2,000. All prices include travel within Greater London."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "Can you provide a choir for a wedding in Hammersmith and Fulham?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Yes. The grand interior of St Paul's Hammersmith suits a full choir and organ, while the intimate Fulham Palace Chapel is perfect for a smaller ensemble. We provide anything from a solo vocalist to a twelve-voice chorus, and we also sing at licensed riverside venues across the borough."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "What types of music can you perform at a funeral in Hammersmith and Fulham?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "At St Paul's Hammersmith or All Saints Fulham, the acoustics suit traditional hymns, psalms, and sacred choral works beautifully. At Fulham Palace Chapel or Margravine Cemetery, we tend towards more intimate, reflective music. We also prepare bespoke arrangements of any song that held particular meaning for your loved one."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "Do you cover crematorium services in Hammersmith and Fulham?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "The borough does not have its own crematorium, but we regularly sing at nearby facilities including Mortlake Crematorium and West London Crematorium in Hanwell. Our singers coordinate with funeral directors to manage the logistics, ensuring the music is delivered with care and within the allotted time."
-          }
-        }
-      ]
-    }
-  ]
-}
+    ]
+  }
   </script>
 </head>
 <body>
@@ -1814,6 +1813,10 @@
         <li><a href="/">Home</a></li>
         <li><a href="/about.html">About</a></li>
         <li><a href="/services.html">Services</a></li>
+        <li><a href="/weddings.html">Weddings</a></li>
+        <li><a href="/funerals.html">Funerals</a></li>
+        <li><a href="/corporate.html">Corporate</a></li>
+        <li><a href="/christmas.html">Christmas</a></li>
         <li><a href="/listen.html">Listen</a></li>
         <li class="has-dropdown">
           <a href="/music-guides/" aria-haspopup="true" aria-expanded="false" class="dropdown-trigger">Music Guides<span class="dropdown-caret" aria-hidden="true">&#9662;</span></a>
@@ -1842,7 +1845,7 @@
             <li>Hammersmith &amp; Fulham</li>
           </ol>
         </nav>
-        <h1>Funeral singers and choirs in Hammersmith &amp; Fulham</h1>
+        <h1>Funeral and wedding choirs in Hammersmith &amp; Fulham</h1>
         <p class="lede">The London Borough of Hammersmith and Fulham stretches along the north bank of the Thames, home to a rich mix of Victorian churches, riverside chapels, and historic estates. The London Choral Service provides conservatoire-trained singers and instrumentalists for funerals, weddings, memorials, and ceremonies throughout the borough.</p>
         <hr class="rule">
       </div>
@@ -1858,7 +1861,7 @@
         <p>Hammersmith and Fulham offers some truly distinctive settings for a wedding ceremony. The grand interior of St&nbsp;Paul&rsquo;s Hammersmith suits a full choir and organ, while the intimate Fulham Palace Chapel&thinsp;&mdash;&thinsp;set within the beautiful grounds of the Bishop&rsquo;s Palace&thinsp;&mdash;&thinsp;is perfect for a smaller ensemble. Our singers can also perform at licensed venues along the river and at local register offices. We help couples select hymns, anthems, and songs that set the tone for their day, and our <a href="../../music-guides/choosing-wedding-hymns.html">guide to choosing wedding hymns</a> is full of practical advice for those just starting to plan.</p>
 
         <h2>Ensembles for weddings, funerals, and memorials</h2>
-        <p>Not every occasion calls for the same size of ensemble, and part of our job is helping you find the right balance for your venue, your budget, and the feeling you want to create. We offer everything from a single soloist&thinsp;&mdash;&thinsp;whose voice can hold a room in complete stillness&thinsp;&mdash;&thinsp;through to duets, quartets, octets, and a full twelve-voice chorus with instrumental accompaniment. Organists, harpists, and string players are also available. Visit our <a href="../../pricing.html">pricing page</a> for a clear guide to ensemble sizes and costs.</p>
+        <p>St&nbsp;Paul&rsquo;s Hammersmith is a sizeable church, and for a wedding there a sextet usually feels right &mdash; large enough to lead processional hymns, small enough to keep the chancel uncluttered. A full eight-voice choir suits ceremonies with a substantial congregation. Fulham Palace Chapel is the opposite: a small, intimate space where a quartet, or even a duo for a quieter service, sits better than a larger group. All Saints Fulham handles a quartet or sextet comfortably depending on the size of the day. For a service at Margravine Cemetery&rsquo;s chapel, a quartet keeps the music compact within the timing. For a graveside committal there or elsewhere in the borough, a soloist or duo is often more fitting. Our <a href="../../pricing.html">pricing page</a> sets out costs.</p>
 
         <figure class="pull-quote">
           <blockquote><p>&ldquo;The singers were quite simply wonderful. They brought such warmth to the service&thinsp;&mdash;&thinsp;it was exactly what we had hoped for and more.&rdquo;</p></blockquote>
@@ -1887,7 +1890,7 @@
 
     <section class="section">
       <div class="prose">
-        <p class="text-sm text-mid">Nearby boroughs: <a href="kensington-chelsea.html">Kensington &amp; Chelsea</a> &middot; <a href="westminster.html">Westminster</a> &middot; <a href="brent.html">Brent</a> &middot; <a href="ealing.html">Ealing</a></p>
+        <p class="text-sm text-mid">Nearby boroughs: <a href="kensington-chelsea.html">Kensington &amp; Chelsea</a> &middot; <a href="ealing.html">Ealing</a> &middot; <a href="hounslow.html">Hounslow</a> &middot; <a href="wandsworth.html">Wandsworth</a> &middot; <a href="westminster.html">Westminster</a></p>
       </div>
     </section>
 
