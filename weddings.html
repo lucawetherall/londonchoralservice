@@ -2,6 +2,10 @@
 <html lang="en-GB">
 <head>
   <meta charset="UTF-8">
+  <!-- @include-start partials/head-extras.html -->
+<link rel="preload" href="/fonts/cormorant-garamond.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/source-serif-4.woff2" as="font" type="font/woff2" crossorigin>
+  <!-- @include-end partials/head-extras.html -->
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
   <!-- Google Analytics (GA4) — deferred until after load -->
@@ -1694,31 +1698,39 @@
         "@type": "Service",
         "name": "Wedding Music",
         "serviceType": "Wedding Music",
+        "dateModified": "2026-05-08",
         "description": "Professional singers, choirs, and instrumentalists for wedding ceremonies across the United Kingdom.",
         "url": "https://londonchoralservice.com/weddings.html",
         "provider": {
           "@type": "LocalBusiness",
           "@id": "https://londonchoralservice.com/#organization"
         },
-        "areaServed": { "@type": "Country", "name": "United Kingdom" },
+        "areaServed": {
+          "@type": "Country",
+          "name": "United Kingdom"
+        },
         "offers": {
           "@type": "AggregateOffer",
           "lowPrice": "215",
           "highPrice": "3000",
-          "priceCurrency": "GBP"
-        },
-        "aggregateRating": {
-          "@type": "AggregateRating",
-          "ratingValue": "5.0",
-          "bestRating": "5",
-          "ratingCount": "4"
+          "priceCurrency": "GBP",
+          "priceValidUntil": "2026-12-31"
         }
       },
       {
         "@type": "BreadcrumbList",
         "itemListElement": [
-          { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://londonchoralservice.com/" },
-          { "@type": "ListItem", "position": 2, "name": "Weddings" }
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "https://londonchoralservice.com/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Weddings"
+          }
         ]
       }
     ]
@@ -1740,6 +1752,10 @@
         <li><a href="/">Home</a></li>
         <li><a href="/about.html">About</a></li>
         <li><a href="/services.html">Services</a></li>
+        <li><a href="/weddings.html">Weddings</a></li>
+        <li><a href="/funerals.html">Funerals</a></li>
+        <li><a href="/corporate.html">Corporate</a></li>
+        <li><a href="/christmas.html">Christmas</a></li>
         <li><a href="/listen.html">Listen</a></li>
         <li class="has-dropdown">
           <a href="/music-guides/" aria-haspopup="true" aria-expanded="false" class="dropdown-trigger">Music Guides<span class="dropdown-caret" aria-hidden="true">&#9662;</span></a>
@@ -1770,6 +1786,7 @@
             </ol>
           </nav>
           <h1>Wedding Choirs &amp; Singers<br><span class="h1-sub">Singers and musicians for ceremonies across the UK</span></h1>
+          <p class="guide-meta">Last updated: May 2026</p>
           <p class="lede">Choirs, soloists, and organists for wedding ceremonies in churches and venues nationwide. Processionals, hymns, the register signing, and the recessional &mdash; planned with you and performed by singers from the Royal Academy, the Royal College, and Britain&rsquo;s leading conservatoires.</p>
           <p class="text-sm text-mid">5&nbsp;stars from every couple we have worked with. Bespoke arrangements included at no extra charge.</p>
           <p><a href="#enquiry" class="btn-link">Send a wedding enquiry</a></p>
@@ -1778,7 +1795,7 @@
         <div class="hero-video">
           <div class="video-embed">
             <button class="video-thumb" aria-label="Play video" data-video="Lov_NegzVhM">
-              <img src="https://img.youtube.com/vi/Lov_NegzVhM/maxresdefault.jpg" alt="The London Choral Service" loading="lazy">
+              <img src="https://img.youtube.com/vi/Lov_NegzVhM/maxresdefault.jpg" alt="The London Choral Service" loading="lazy" width="1280" height="720">
               <svg class="play-btn" viewBox="0 0 68 48" aria-hidden="true">
                 <path d="M66.52 7.74c-.78-2.93-2.49-5.41-5.42-6.19C55.79.13 34 0 34 0S12.21.13 6.9 1.55c-2.93.78-4.63 3.26-5.42 6.19C.06 13.05 0 24 0 24s.06 10.95 1.48 16.26c.78 2.93 2.49 5.41 5.42 6.19C12.21 47.87 34 48 34 48s21.79-.13 27.1-1.55c2.93-.78 4.63-3.26 5.42-6.19C67.94 34.95 68 24 68 24s-.06-10.95-1.48-16.26z" fill="rgba(0,0,0,.7)"/>
                 <path d="M45 24 27 14v20z" fill="#fff"/>
@@ -1821,6 +1838,7 @@
         <p>Our repertoire covers classical, sacred, and contemporary music. If you want a Bach chorale, we play it. If you want A Thousand Years sung by four voices, we arrange it. Bespoke arrangements are included at no extra charge.</p>
         <p>Our singers and instrumentalists cover the processional, hymns, register signing, and recessional. We can carry on through the drinks reception and the wedding breakfast if you want music running across the whole day.</p>
         <p>You receive a confirmed running order a week before the wedding. On the day, musicians arrive an hour before the ceremony to set up and coordinate with your planner or venue manager. Book early to secure your date, though we do take late bookings when we can.</p>
+        <p>We sing in churches, hotels, country houses, and registry offices across the UK &mdash; most often in <a href="areas/london.html">London</a>, <a href="areas/oxford.html">Oxford</a>, and <a href="areas/manchester.html">Manchester</a>, but we travel further when the booking warrants it.</p>
 
         <figure class="pull-quote">
           <blockquote><p>&ldquo;Our guests kept saying the music was the highlight. The choir sang during the signing of the register and you could hear a pin drop. Perfect.&rdquo;</p></blockquote>
@@ -1845,7 +1863,7 @@
           <p class="track-description">An ancient Irish hymn with a timeless, haunting melody. One of the most popular choices for wedding ceremonies.</p>
           <div class="video-embed">
             <button class="video-thumb" aria-label="Play Be Thou My Vision" data-video="SaLTS_-I-q4">
-              <img src="https://img.youtube.com/vi/SaLTS_-I-q4/maxresdefault.jpg" alt="Be Thou My Vision — The London Choral Service" loading="lazy">
+              <img src="https://img.youtube.com/vi/SaLTS_-I-q4/maxresdefault.jpg" alt="Be Thou My Vision — The London Choral Service" loading="lazy" width="1280" height="720">
               <svg class="play-btn" viewBox="0 0 68 48" aria-hidden="true">
                 <path d="M66.52 7.74c-.78-2.93-2.49-5.41-5.42-6.19C55.79.13 34 0 34 0S12.21.13 6.9 1.55c-2.93.78-4.63 3.26-5.42 6.19C.06 13.05 0 24 0 24s.06 10.95 1.48 16.26c.78 2.93 2.49 5.41 5.42 6.19C12.21 47.87 34 48 34 48s21.79-.13 27.1-1.55c2.93-.78 4.63-3.26 5.42-6.19C67.94 34.95 68 24 68 24s-.06-10.95-1.48-16.26z" fill="rgba(0,0,0,.7)"/>
                 <path d="M45 24 27 14v20z" fill="#fff"/>
@@ -1873,6 +1891,7 @@
       <div class="prose">
         <h2>Pricing</h2>
         <p>Flat prices. No hidden fees. The price you&rsquo;re quoted covers the full booking, including a personal consultation, repertoire planning, and coordination with your venue.</p>
+        <p>A small choir of four singers starts from &pound;1,150; a quintet &pound;1,400; a sextet &pound;1,600; full choirs from &pound;2,000. All ensemble sizes include preparation, travel within London, and a music director on the day.</p>
         <div class="price-cards">
           <div class="price-card">
             <div class="price">&pound;215</div>

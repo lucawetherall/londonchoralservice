@@ -2,6 +2,10 @@
 <html lang="en-GB">
 <head>
   <meta charset="UTF-8">
+  <!-- @include-start partials/head-extras.html -->
+<link rel="preload" href="/fonts/cormorant-garamond.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/source-serif-4.woff2" as="font" type="font/woff2" crossorigin>
+  <!-- @include-end partials/head-extras.html -->
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
   <!-- Google Analytics (GA4) — deferred until after load -->
@@ -29,7 +33,7 @@
     });
   </script>
 
-  <title>Funeral Singers &amp; Wedding Choirs in Hounslow — London Choral Service</title>
+  <title>Funeral and wedding choirs in Hounslow</title>
   <meta name="description" content="Professional funeral singers and wedding choirs in Hounslow, London. Conservatoire-trained musicians for funerals, weddings, memorials, and ceremonies.">
   <meta name="theme-color" content="#F7F3EE">
   <meta name="robots" content="index, follow">
@@ -37,8 +41,8 @@
   <link rel="alternate" hreflang="en-gb" href="https://londonchoralservice.com/areas/london/hounslow.html">
   <link rel="alternate" hreflang="x-default" href="https://londonchoralservice.com/areas/london/hounslow.html">
 
-  <meta property="og:title" content="Funeral Singers &amp; Wedding Choirs in Hounslow | London Choral Service">
-  <meta property="og:description" content="Professional funeral singers and wedding choirs in Hounslow, London. Conservatoire-trained musicians for funerals, weddings, and ceremonies.">
+  <meta property="og:title" content="Funeral and wedding choirs in Hounslow">
+  <meta property="og:description" content="Professional funeral singers and wedding choirs in Hounslow, London. Conservatoire-trained musicians for funerals, weddings, memorials, and ceremonies.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://londonchoralservice.com/areas/london/hounslow.html">
   <meta property="og:locale" content="en_GB">
@@ -46,8 +50,8 @@
   <meta property="og:image" content="https://londonchoralservice.com/assets/og-image.png">
 
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Funeral Singers &amp; Wedding Choirs in Hounslow | London Choral Service">
-  <meta name="twitter:description" content="Professional funeral singers and wedding choirs in Hounslow, London.">
+  <meta name="twitter:title" content="Funeral and wedding choirs in Hounslow">
+  <meta name="twitter:description" content="Professional funeral singers and wedding choirs in Hounslow, London. Conservatoire-trained musicians for funerals, weddings, memorials, and ceremonies.">
   <meta name="twitter:image" content="https://londonchoralservice.com/assets/og-image.png">
   <link rel="dns-prefetch" href="https://www.googletagmanager.com">
   <link rel="dns-prefetch" href="https://api.web3forms.com">
@@ -1688,115 +1692,110 @@
 
   <script type="application/ld+json">
   {
-  "@context": "https://schema.org",
-  "@graph": [
-    {
-      "@type": "Service",
-      "name": "Funeral Singers & Wedding Choirs in Hounslow",
-      "url": "https://londonchoralservice.com/areas/london/hounslow.html",
-      "description": "Professional funeral singers and wedding choirs in Hounslow, London.",
-      "provider": {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Service",
+        "name": "Funeral Singers & Wedding Choirs in Hounslow",
+        "url": "https://londonchoralservice.com/areas/london/hounslow.html",
+        "description": "Professional funeral singers and wedding choirs in Hounslow, London.",
+        "provider": {
+          "@type": "LocalBusiness",
+          "@id": "https://londonchoralservice.com/#organization"
+        },
+        "areaServed": {
+          "@type": "AdministrativeArea",
+          "name": "London Borough of Hounslow",
+          "containedInPlace": {
+            "@type": "City",
+            "name": "London",
+            "addressCountry": "GB"
+          }
+        },
+        "serviceType": [
+          "Funeral Music",
+          "Wedding Music",
+          "Memorial Music",
+          "Ceremony Music"
+        ],
+        "geo": {
+          "@type": "GeoCoordinates",
+          "latitude": 51.46817,
+          "longitude": -0.36106
+        }
+      },
+      {
         "@type": "LocalBusiness",
-        "name": "The London Choral Service",
-        "alternateName": "London Choral Service",
-        "url": "https://londonchoralservice.com",
-        "telephone": "+447356042468",
-        "email": "office@londonchoralservice.com"
+        "@id": "https://londonchoralservice.com/#organization",
+        "name": "The London Choral Service"
       },
-      "areaServed": {
-        "@type": "AdministrativeArea",
-        "name": "London Borough of Hounslow",
-        "containedInPlace": {
-          "@type": "City",
-          "name": "London",
-          "addressCountry": "GB"
-        }
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "https://londonchoralservice.com/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Areas We Serve",
+            "item": "https://londonchoralservice.com/areas/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 3,
+            "name": "London",
+            "item": "https://londonchoralservice.com/areas/london.html"
+          },
+          {
+            "@type": "ListItem",
+            "position": 4,
+            "name": "Hounslow"
+          }
+        ]
       },
-      "serviceType": [
-        "Funeral Music",
-        "Wedding Music",
-        "Memorial Music",
-        "Ceremony Music"
-      ]
-    },
-    {
-      "@type": "LocalBusiness",
-      "@id": "https://londonchoralservice.com/#organization",
-      "name": "The London Choral Service",
-      "aggregateRating": {
-        "@type": "AggregateRating",
-        "ratingValue": "5",
-        "reviewCount": "4",
-        "bestRating": "5"
+      {
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "How much does a funeral singer cost in Hounslow?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "For services at St Mary's Hounslow, West London Crematorium in Hanwell, or parish churches in Feltham, Chiswick, and Isleworth, a soloist starts from £215. A small choir of four is from £1,150, a quintet from £1,400, a sextet from £1,600, and a full choir of eight from £2,000. All prices include travel within Greater London."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Can you provide a choir for a wedding in Hounslow?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes. From the handsome churches of Chiswick to Isleworth's charming riverside setting, Hounslow has a lovely range of wedding venues. We provide ensembles from a solo vocalist to a twelve-voice chorus and sing at both church ceremonies and civil services at licensed venues across the borough."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "What types of music can you perform at a funeral in Hounslow?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "At St Mary's Hounslow or the parish churches of Chiswick and Isleworth, traditional hymns, psalms, and sacred choral works ring out beautifully. At West London Crematorium, we often perform more reflective repertoire — popular songs, gentle classical pieces, or a bespoke arrangement of something that held special significance for the family."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Do you cover crematorium services in Hounslow?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes. West London Crematorium in Hanwell is the nearest crematorium to much of the borough, and our singers are well accustomed to its chapel and service timings. We work closely with crematorium staff and your funeral director to make sure the music fits seamlessly into the service."
+            }
+          }
+        ]
       }
-    },
-    {
-      "@type": "BreadcrumbList",
-      "itemListElement": [
-        {
-          "@type": "ListItem",
-          "position": 1,
-          "name": "Home",
-          "item": "https://londonchoralservice.com/"
-        },
-        {
-          "@type": "ListItem",
-          "position": 2,
-          "name": "Areas We Serve",
-          "item": "https://londonchoralservice.com/areas/"
-        },
-        {
-          "@type": "ListItem",
-          "position": 3,
-          "name": "London",
-          "item": "https://londonchoralservice.com/areas/london.html"
-        },
-        {
-          "@type": "ListItem",
-          "position": 4,
-          "name": "Hounslow"
-        }
-      ]
-    },
-    {
-      "@type": "FAQPage",
-      "mainEntity": [
-        {
-          "@type": "Question",
-          "name": "How much does a funeral singer cost in Hounslow?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "For services at St Mary's Hounslow, West London Crematorium in Hanwell, or parish churches in Feltham, Chiswick, and Isleworth, a soloist starts from £215. A small choir of four is from £1,150, a quintet from £1,400, a sextet from £1,600, and a full choir of eight from £2,000. All prices include travel within Greater London."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "Can you provide a choir for a wedding in Hounslow?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Yes. From the handsome churches of Chiswick to Isleworth's charming riverside setting, Hounslow has a lovely range of wedding venues. We provide ensembles from a solo vocalist to a twelve-voice chorus and sing at both church ceremonies and civil services at licensed venues across the borough."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "What types of music can you perform at a funeral in Hounslow?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "At St Mary's Hounslow or the parish churches of Chiswick and Isleworth, traditional hymns, psalms, and sacred choral works ring out beautifully. At West London Crematorium, we often perform more reflective repertoire — popular songs, gentle classical pieces, or a bespoke arrangement of something that held special significance for the family."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "Do you cover crematorium services in Hounslow?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Yes. West London Crematorium in Hanwell is the nearest crematorium to much of the borough, and our singers are well accustomed to its chapel and service timings. We work closely with crematorium staff and your funeral director to make sure the music fits seamlessly into the service."
-          }
-        }
-      ]
-    }
-  ]
-}
+    ]
+  }
   </script>
 </head>
 <body>
@@ -1814,6 +1813,10 @@
         <li><a href="/">Home</a></li>
         <li><a href="/about.html">About</a></li>
         <li><a href="/services.html">Services</a></li>
+        <li><a href="/weddings.html">Weddings</a></li>
+        <li><a href="/funerals.html">Funerals</a></li>
+        <li><a href="/corporate.html">Corporate</a></li>
+        <li><a href="/christmas.html">Christmas</a></li>
         <li><a href="/listen.html">Listen</a></li>
         <li class="has-dropdown">
           <a href="/music-guides/" aria-haspopup="true" aria-expanded="false" class="dropdown-trigger">Music Guides<span class="dropdown-caret" aria-hidden="true">&#9662;</span></a>
@@ -1842,7 +1845,7 @@
             <li>Hounslow</li>
           </ol>
         </nav>
-        <h1>Funeral singers and choirs in Hounslow</h1>
+        <h1>Funeral and wedding choirs in Hounslow</h1>
         <p class="lede">The London Borough of Hounslow spans a broad sweep of west London, from the Georgian elegance of Chiswick to the green open spaces of Feltham and Isleworth. The London Choral Service provides conservatoire-trained singers and instrumentalists for funerals, weddings, memorials, and ceremonies at venues throughout the borough.</p>
         <hr class="rule">
       </div>
@@ -1852,13 +1855,14 @@
       <div class="prose">
         <h2>Funeral music in Hounslow</h2>
         <p>Our singers perform regularly at churches and crematoria across Hounslow, including St&nbsp;Mary&rsquo;s Hounslow, West London Crematorium in Hanwell, and parish churches in Feltham, Chiswick, and Isleworth. Each venue has its own character and acoustic, and we take care to match our ensemble and repertoire to the setting. Whether a family requests a single voice singing <em>Ave Maria</em> or a quartet leading a congregation through well-loved hymns, we bring the same commitment to musical excellence and pastoral care. Our <a href="../../music-guides/funeral-music-guide.html">funeral music guide</a> offers suggestions across many traditions, and we are always glad to help you plan. Please <a href="../../contact.html">contact us</a> whenever you are ready.</p>
+        <p>For practical guidance on music at crematorium services &mdash; timing, acoustics, and making a shorter service meaningful &mdash; see our <a href="../../music-guides/crematorium-music.html">guide to crematorium music</a>.</p>
         <p>We work closely with funeral directors and officiants across the borough to ensure that the musical elements of a service are coordinated with care. Our singers arrive early, dress appropriately, and conduct themselves with the utmost professionalism. For many families, live singing transforms a funeral from an ordeal into something genuinely comforting&thinsp;&mdash;&thinsp;a moment of shared beauty in the midst of grief. You can read more about how we approach each booking on our <a href="../../services.html">services page</a>.</p>
 
         <h2>Wedding choirs in Hounslow</h2>
         <p>From the handsome churches of Chiswick to Isleworth&rsquo;s charming riverside setting, Hounslow offers a surprisingly varied range of wedding venues. Our singers can provide rousing congregational hymns, a reflective anthem during the signing of the register, or uplifting music as the couple leave the church. We also perform at civil ceremonies in licensed venues across the borough, bringing the warmth and polish of live choral music to every celebration. Browse our <a href="../../music-guides/choosing-wedding-hymns.html">guide to choosing wedding hymns</a> for ideas on building your perfect programme.</p>
 
         <h2>Ensembles for weddings, funerals, and memorials</h2>
-        <p>Not every occasion calls for the same size of ensemble, and part of our job is helping you find the right balance for your venue, your budget, and the feeling you want to create. We offer everything from a single soloist&thinsp;&mdash;&thinsp;whose voice can hold a room in complete stillness&thinsp;&mdash;&thinsp;through to duets, quartets, octets, and a full twelve-voice chorus with instrumental accompaniment. Organists, harpists, and string players are also available. Visit our <a href="../../pricing.html">pricing page</a> for a clear guide to ensemble sizes and costs.</p>
+        <p>West London Crematorium in Hanwell runs to a fixed service length, so a quartet is usually the right call &mdash; large enough for a hymn, compact enough for the chapel. St&nbsp;Mary&rsquo;s Hounslow handles a quartet or sextet well depending on the size of the congregation. For weddings in the larger parish churches of Chiswick, a sextet generally suits the buildings &mdash; the acoustic rewards a fuller sound, and processional hymns sit better with more voices. The riverside churches at Isleworth tend to be more intimate; a quartet works well there. For a quiet funeral or a small civil ceremony, a duo singing something simple often sits better than a larger group. For a graveside committal, two voices are usually plenty. Our <a href="../../pricing.html">pricing page</a> sets out costs.</p>
 
         <figure class="pull-quote">
           <blockquote><p>&ldquo;We were absolutely delighted with the choir. The four singers you arranged for our wedding were outstanding&thinsp;&mdash;&thinsp;confident, warm, and utterly professional.&rdquo;</p></blockquote>
@@ -1887,7 +1891,7 @@
 
     <section class="section">
       <div class="prose">
-        <p class="text-sm text-mid">Nearby boroughs: <a href="hillingdon.html">Hillingdon</a> &middot; <a href="ealing.html">Ealing</a> &middot; <a href="hammersmith-fulham.html">Hammersmith &amp; Fulham</a> &middot; <a href="richmond.html">Richmond</a></p>
+        <p class="text-sm text-mid">Nearby boroughs: <a href="ealing.html">Ealing</a> &middot; <a href="hammersmith-fulham.html">Hammersmith &amp; Fulham</a> &middot; <a href="richmond.html">Richmond upon Thames</a> &middot; <a href="hillingdon.html">Hillingdon</a></p>
       </div>
     </section>
 

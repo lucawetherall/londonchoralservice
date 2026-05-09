@@ -2,6 +2,10 @@
 <html lang="en-GB">
 <head>
   <meta charset="UTF-8">
+  <!-- @include-start partials/head-extras.html -->
+<link rel="preload" href="/fonts/cormorant-garamond.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/source-serif-4.woff2" as="font" type="font/woff2" crossorigin>
+  <!-- @include-end partials/head-extras.html -->
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
   <!-- Google Analytics (GA4) — deferred until after load -->
@@ -29,7 +33,7 @@
     });
   </script>
 
-  <title>Funeral Singers &amp; Wedding Choirs in Lewisham — London Choral Service</title>
+  <title>Funeral and wedding choirs in Lewisham</title>
   <meta name="description" content="Professional funeral singers and wedding choirs in Lewisham, London. Conservatoire-trained musicians for funerals, weddings, memorials, and ceremonies.">
   <meta name="theme-color" content="#F7F3EE">
   <meta name="robots" content="index, follow">
@@ -37,8 +41,8 @@
   <link rel="alternate" hreflang="en-gb" href="https://londonchoralservice.com/areas/london/lewisham.html">
   <link rel="alternate" hreflang="x-default" href="https://londonchoralservice.com/areas/london/lewisham.html">
 
-  <meta property="og:title" content="Funeral Singers &amp; Wedding Choirs in Lewisham | London Choral Service">
-  <meta property="og:description" content="Professional funeral singers and wedding choirs in Lewisham, London. Conservatoire-trained musicians for funerals, weddings, and ceremonies.">
+  <meta property="og:title" content="Funeral and wedding choirs in Lewisham">
+  <meta property="og:description" content="Professional funeral singers and wedding choirs in Lewisham, London. Conservatoire-trained musicians for funerals, weddings, memorials, and ceremonies.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://londonchoralservice.com/areas/london/lewisham.html">
   <meta property="og:locale" content="en_GB">
@@ -46,8 +50,8 @@
   <meta property="og:image" content="https://londonchoralservice.com/assets/og-image.png">
 
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Funeral Singers &amp; Wedding Choirs in Lewisham | London Choral Service">
-  <meta name="twitter:description" content="Professional funeral singers and wedding choirs in Lewisham, London.">
+  <meta name="twitter:title" content="Funeral and wedding choirs in Lewisham">
+  <meta name="twitter:description" content="Professional funeral singers and wedding choirs in Lewisham, London. Conservatoire-trained musicians for funerals, weddings, memorials, and ceremonies.">
   <meta name="twitter:image" content="https://londonchoralservice.com/assets/og-image.png">
   <link rel="dns-prefetch" href="https://www.googletagmanager.com">
   <link rel="dns-prefetch" href="https://api.web3forms.com">
@@ -1688,115 +1692,110 @@
 
   <script type="application/ld+json">
   {
-  "@context": "https://schema.org",
-  "@graph": [
-    {
-      "@type": "Service",
-      "name": "Funeral Singers & Wedding Choirs in Lewisham",
-      "url": "https://londonchoralservice.com/areas/london/lewisham.html",
-      "description": "Professional funeral singers and wedding choirs in Lewisham, London.",
-      "provider": {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Service",
+        "name": "Funeral Singers & Wedding Choirs in Lewisham",
+        "url": "https://londonchoralservice.com/areas/london/lewisham.html",
+        "description": "Professional funeral singers and wedding choirs in Lewisham, London.",
+        "provider": {
+          "@type": "LocalBusiness",
+          "@id": "https://londonchoralservice.com/#organization"
+        },
+        "areaServed": {
+          "@type": "AdministrativeArea",
+          "name": "London Borough of Lewisham",
+          "containedInPlace": {
+            "@type": "City",
+            "name": "London",
+            "addressCountry": "GB"
+          }
+        },
+        "serviceType": [
+          "Funeral Music",
+          "Wedding Music",
+          "Memorial Music",
+          "Ceremony Music"
+        ],
+        "geo": {
+          "@type": "GeoCoordinates",
+          "latitude": 51.45685,
+          "longitude": -0.01051
+        }
+      },
+      {
         "@type": "LocalBusiness",
-        "name": "The London Choral Service",
-        "alternateName": "London Choral Service",
-        "url": "https://londonchoralservice.com",
-        "telephone": "+447356042468",
-        "email": "office@londonchoralservice.com"
+        "@id": "https://londonchoralservice.com/#organization",
+        "name": "The London Choral Service"
       },
-      "areaServed": {
-        "@type": "AdministrativeArea",
-        "name": "London Borough of Lewisham",
-        "containedInPlace": {
-          "@type": "City",
-          "name": "London",
-          "addressCountry": "GB"
-        }
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "https://londonchoralservice.com/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Areas We Serve",
+            "item": "https://londonchoralservice.com/areas/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 3,
+            "name": "London",
+            "item": "https://londonchoralservice.com/areas/london.html"
+          },
+          {
+            "@type": "ListItem",
+            "position": 4,
+            "name": "Lewisham"
+          }
+        ]
       },
-      "serviceType": [
-        "Funeral Music",
-        "Wedding Music",
-        "Memorial Music",
-        "Ceremony Music"
-      ]
-    },
-    {
-      "@type": "LocalBusiness",
-      "@id": "https://londonchoralservice.com/#organization",
-      "name": "The London Choral Service",
-      "aggregateRating": {
-        "@type": "AggregateRating",
-        "ratingValue": "5",
-        "reviewCount": "4",
-        "bestRating": "5"
+      {
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "How much does a funeral singer cost in Lewisham?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "For services at Hither Green Crematorium, Lewisham Crematorium, or St Mary’s Lewisham, a soloist starts from £215. A small choir of four starts from £1,150, a quintet from £1,400, a sextet from £1,600, and a full choir of eight from £2,000. All prices include travel within Greater London."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Can you provide a choir for a wedding in Lewisham?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes. The churches of Blackheath and Lee have particularly fine acoustics for choral singing, and St Mary’s Lewisham provides a handsome traditional setting. We offer ensembles from a solo vocalist to a twelve-voice choir and handle all the musical planning with the church and your wedding coordinator."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "What types of music can you perform at a funeral in Lewisham?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Traditional hymns, classical sacred music, contemporary songs, and popular favourites. At Hither Green and Lewisham crematoria we tailor the programme to fit the allotted service time, and at St Mary’s Lewisham we can draw on a wider choral repertoire. Bespoke arrangements are available on request."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Do you cover crematorium services in Lewisham?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes. We sing regularly at both Hither Green Crematorium and Lewisham Crematorium. Our singers understand the fixed timings these chapels require and coordinate directly with staff to ensure the music runs seamlessly. We also provide singers for graveside services at Grove Park Cemetery."
+            }
+          }
+        ]
       }
-    },
-    {
-      "@type": "BreadcrumbList",
-      "itemListElement": [
-        {
-          "@type": "ListItem",
-          "position": 1,
-          "name": "Home",
-          "item": "https://londonchoralservice.com/"
-        },
-        {
-          "@type": "ListItem",
-          "position": 2,
-          "name": "Areas We Serve",
-          "item": "https://londonchoralservice.com/areas/"
-        },
-        {
-          "@type": "ListItem",
-          "position": 3,
-          "name": "London",
-          "item": "https://londonchoralservice.com/areas/london.html"
-        },
-        {
-          "@type": "ListItem",
-          "position": 4,
-          "name": "Lewisham"
-        }
-      ]
-    },
-    {
-      "@type": "FAQPage",
-      "mainEntity": [
-        {
-          "@type": "Question",
-          "name": "How much does a funeral singer cost in Lewisham?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "For services at Hither Green Crematorium, Lewisham Crematorium, or St Mary\u2019s Lewisham, a soloist starts from £215. A small choir of four starts from £1,150, a quintet from £1,400, a sextet from £1,600, and a full choir of eight from £2,000. All prices include travel within Greater London."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "Can you provide a choir for a wedding in Lewisham?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Yes. The churches of Blackheath and Lee have particularly fine acoustics for choral singing, and St Mary\u2019s Lewisham provides a handsome traditional setting. We offer ensembles from a solo vocalist to a twelve-voice choir and handle all the musical planning with the church and your wedding coordinator."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "What types of music can you perform at a funeral in Lewisham?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Traditional hymns, classical sacred music, contemporary songs, and popular favourites. At Hither Green and Lewisham crematoria we tailor the programme to fit the allotted service time, and at St Mary\u2019s Lewisham we can draw on a wider choral repertoire. Bespoke arrangements are available on request."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "Do you cover crematorium services in Lewisham?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Yes. We sing regularly at both Hither Green Crematorium and Lewisham Crematorium. Our singers understand the fixed timings these chapels require and coordinate directly with staff to ensure the music runs seamlessly. We also provide singers for graveside services at Grove Park Cemetery."
-          }
-        }
-      ]
-    }
-  ]
-}
+    ]
+  }
   </script>
 </head>
 <body>
@@ -1814,6 +1813,10 @@
         <li><a href="/">Home</a></li>
         <li><a href="/about.html">About</a></li>
         <li><a href="/services.html">Services</a></li>
+        <li><a href="/weddings.html">Weddings</a></li>
+        <li><a href="/funerals.html">Funerals</a></li>
+        <li><a href="/corporate.html">Corporate</a></li>
+        <li><a href="/christmas.html">Christmas</a></li>
         <li><a href="/listen.html">Listen</a></li>
         <li class="has-dropdown">
           <a href="/music-guides/" aria-haspopup="true" aria-expanded="false" class="dropdown-trigger">Music Guides<span class="dropdown-caret" aria-hidden="true">&#9662;</span></a>
@@ -1843,7 +1846,7 @@
             <li>Lewisham</li>
           </ol>
         </nav>
-        <h1>Funeral singers and choirs in Lewisham</h1>
+        <h1>Funeral and wedding choirs in Lewisham</h1>
         <p class="lede">The London Borough of Lewisham encompasses the diverse communities of Lewisham, Catford, Blackheath, and Grove Park. We provide professional singers and choirs for funerals, weddings, memorials, and ceremonies at churches, crematoria, and cemeteries throughout the borough.</p>
         <hr class="rule">
       </div>
@@ -1853,6 +1856,7 @@
       <div class="prose">
         <h2>Funeral music in Lewisham</h2>
         <p>Lewisham&rsquo;s crematoria and churches are places where families gather to say goodbye, and our role is to ensure the music honours the occasion with dignity and beauty. Hither Green Crematorium is one of South London&rsquo;s busiest and most well-known crematoria, and we have provided singers there on many occasions, understanding the precise timings and gentle approach that crematorium services require. Lewisham Crematorium, located in the south of the borough, offers a similarly peaceful setting for farewell services. At both venues, even a single trained voice can bring a remarkable depth of feeling to a short ceremony. For advice on choosing suitable music, please see our <a href="../../music-guides/funeral-music-guide.html">funeral music guide</a> or <a href="../../contact.html">get in touch</a> to talk through your wishes.</p>
+        <p>For practical guidance on music at crematorium services &mdash; timing, acoustics, and making a shorter service meaningful &mdash; see our <a href="../../music-guides/crematorium-music.html">guide to crematorium music</a>.</p>
 
         <p>For church funerals, St&nbsp;Mary&rsquo;s Lewisham provides a handsome and welcoming space with a long history of serving the local community. Grove Park Cemetery is another venue where families often request live music for graveside services or committal rites, and our singers are experienced in performing outdoors with poise and sensitivity. We liaise directly with funeral directors and clergy to ensure that every practical detail is taken care of, leaving you free to focus on what matters most. You can read more about our approach on our <a href="../../services.html">services page</a>.</p>
 
@@ -1860,7 +1864,7 @@
         <p>Whether you are planning a grand celebration at one of Lewisham&rsquo;s larger churches or an intimate ceremony in a smaller parish setting, live choral music will bring a special quality to your wedding day. The churches of Blackheath and Lee offer particularly attractive venues, with fine acoustics and beautiful interiors. Our singers will work with you to create a programme of hymns, anthems, and choral pieces that reflects your personality and the spirit of the day. For ideas on building the perfect musical programme, explore our guide to <a href="../../music-guides/choosing-wedding-hymns.html">choosing wedding hymns</a>.</p>
 
         <h2>Ensembles for weddings, funerals, and memorials</h2>
-        <p>Not every occasion calls for the same size of ensemble, and part of our job is helping you find the right balance for your venue, your budget, and the feeling you want to create. We offer everything from a single soloist&thinsp;&mdash;&thinsp;whose voice can hold a room in complete stillness&thinsp;&mdash;&thinsp;through to duets, quartets, octets, and a full twelve-voice chorus with instrumental accompaniment. Organists, harpists, and string players are also available. Visit our <a href="../../pricing.html">pricing page</a> for a clear guide to ensemble sizes and costs.</p>
+        <p>St&nbsp;Mary&rsquo;s Lewisham is a substantial parish church, and a sextet usually carries a wedding there confidently &mdash; with a full eight-voice choir worth considering when the congregation is large and the music programme leans on processional hymns. The churches around Blackheath and Lee tend to have fine acoustics that reward a sextet for weddings, while a quartet works well for smaller services. For a graveside service at Grove Park Cemetery, a soloist or duo is often more fitting than a larger ensemble: a clear unaccompanied voice carries outdoors well and suits the simplicity of the moment. For chapel committals, a quartet keeps the music compact within the timing. We&rsquo;re happy to talk it through once we know the venue. Our <a href="../../pricing.html">pricing page</a> sets out costs.</p>
 
         <figure class="pull-quote">
           <blockquote>
@@ -1891,7 +1895,7 @@
 
     <section class="section">
       <div class="prose">
-        <p class="text-sm text-mid">Nearby boroughs: <a href="southwark.html">Southwark</a> &middot; <a href="greenwich.html">Greenwich</a> &middot; <a href="bromley.html">Bromley</a> &middot; <a href="croydon.html">Croydon</a></p>
+        <p class="text-sm text-mid">Nearby boroughs: <a href="southwark.html">Southwark</a> &middot; <a href="lambeth.html">Lambeth</a> &middot; <a href="greenwich.html">Greenwich</a> &middot; <a href="bromley.html">Bromley</a> &middot; <a href="croydon.html">Croydon</a></p>
       </div>
     </section>
 

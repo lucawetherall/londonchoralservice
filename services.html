@@ -2,6 +2,10 @@
 <html lang="en-GB">
 <head>
   <meta charset="UTF-8">
+  <!-- @include-start partials/head-extras.html -->
+<link rel="preload" href="/fonts/cormorant-garamond.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/source-serif-4.woff2" as="font" type="font/woff2" crossorigin>
+  <!-- @include-end partials/head-extras.html -->
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
   <!-- Google Analytics (GA4) — deferred until after load -->
@@ -29,16 +33,16 @@
     });
   </script>
 
-  <title>Funeral, Wedding &amp; Ceremony Music Services — London Choral Service</title>
-  <meta name="description" content="Live music for funerals, weddings, memorials, and ceremonies. Soloists, choirs of 4 to 12 voices, organists, harpists, and string quartets available across the UK.">
+  <title>Funeral, Wedding &amp; Ceremony Music Services | LCS</title>
+  <meta name="description" content="Live music for funerals, weddings, and ceremonies — soloists, quartets, choirs of four to twelve, and instrumentalists across London and the UK.">
   <meta name="theme-color" content="#F7F3EE">
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://londonchoralservice.com/services.html">
   <link rel="alternate" hreflang="en-gb" href="https://londonchoralservice.com/services.html">
   <link rel="alternate" hreflang="x-default" href="https://londonchoralservice.com/services.html">
 
-  <meta property="og:title" content="Funeral, Wedding &amp; Ceremony Music Services &mdash; London Choral Service">
-  <meta property="og:description" content="Live music for funerals, weddings, memorials, and ceremonies. Soloists, choirs, and instrumentalists across the UK.">
+  <meta property="og:title" content="Funeral, Wedding &amp; Ceremony Music Services | LCS">
+  <meta property="og:description" content="Live music for funerals, weddings, and ceremonies — soloists, quartets, choirs of four to twelve, and instrumentalists across London and the UK.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://londonchoralservice.com/services.html">
   <meta property="og:locale" content="en_GB">
@@ -46,8 +50,8 @@
   <meta property="og:image" content="https://londonchoralservice.com/assets/og-image.png">
 
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Funeral, Wedding &amp; Ceremony Music Services &mdash; London Choral Service">
-  <meta name="twitter:description" content="Live music for funerals, weddings, memorials, and ceremonies. Soloists, choirs, and instrumentalists across the UK.">
+  <meta name="twitter:title" content="Funeral, Wedding &amp; Ceremony Music Services | LCS">
+  <meta name="twitter:description" content="Live music for funerals, weddings, and ceremonies — soloists, quartets, choirs of four to twelve, and instrumentalists across London and the UK.">
   <meta name="twitter:image" content="https://londonchoralservice.com/assets/og-image.png">
   <link rel="dns-prefetch" href="https://www.googletagmanager.com">
   <link rel="dns-prefetch" href="https://api.web3forms.com">
@@ -1692,14 +1696,14 @@
     "@graph": [
       {
         "@type": "Service",
+        "name": "Live Music for Ceremonies",
         "serviceType": "Live Music for Ceremonies",
         "url": "https://londonchoralservice.com/services.html",
         "inLanguage": "en-GB",
+        "dateModified": "2026-05-08",
         "provider": {
           "@type": "LocalBusiness",
-          "name": "The London Choral Service",
-          "alternateName": "London Choral Service",
-          "url": "https://londonchoralservice.com"
+          "@id": "https://londonchoralservice.com/#organization"
         },
         "areaServed": {
           "@type": "Country",
@@ -1791,13 +1795,7 @@
       {
         "@type": "LocalBusiness",
         "@id": "https://londonchoralservice.com/#organization",
-        "name": "The London Choral Service",
-        "aggregateRating": {
-          "@type": "AggregateRating",
-          "ratingValue": "5",
-          "reviewCount": "4",
-          "bestRating": "5"
-        }
+        "name": "The London Choral Service"
       },
       {
         "@type": "FAQPage",
@@ -1839,8 +1837,17 @@
       {
         "@type": "BreadcrumbList",
         "itemListElement": [
-          { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://londonchoralservice.com/" },
-          { "@type": "ListItem", "position": 2, "name": "Services" }
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "https://londonchoralservice.com/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Services"
+          }
         ]
       }
     ]
@@ -1862,6 +1869,10 @@
         <li><a href="/">Home</a></li>
         <li><a href="/about.html">About</a></li>
         <li><a href="/services.html">Services</a></li>
+        <li><a href="/weddings.html">Weddings</a></li>
+        <li><a href="/funerals.html">Funerals</a></li>
+        <li><a href="/corporate.html">Corporate</a></li>
+        <li><a href="/christmas.html">Christmas</a></li>
         <li><a href="/listen.html">Listen</a></li>
         <li class="has-dropdown">
           <a href="/music-guides/" aria-haspopup="true" aria-expanded="false" class="dropdown-trigger">Music Guides<span class="dropdown-caret" aria-hidden="true">&#9662;</span></a>
@@ -1890,6 +1901,7 @@
           </ol>
         </nav>
         <h1>Music for funerals, weddings, and ceremonies</h1>
+        <p class="guide-meta">Last updated: May 2026</p>
         <p class="lede">From the most solemn farewells to the most joyful celebrations, we provide live music that rises to the occasion.</p>
         <hr class="rule">
       </div>

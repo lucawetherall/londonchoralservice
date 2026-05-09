@@ -2,6 +2,10 @@
 <html lang="en-GB">
 <head>
   <meta charset="UTF-8">
+  <!-- @include-start partials/head-extras.html -->
+<link rel="preload" href="/fonts/cormorant-garamond.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/source-serif-4.woff2" as="font" type="font/woff2" crossorigin>
+  <!-- @include-end partials/head-extras.html -->
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
   <!-- Google Analytics (GA4) — deferred until after load -->
@@ -37,8 +41,8 @@
   <link rel="alternate" hreflang="en-gb" href="https://londonchoralservice.com/listen.html">
   <link rel="alternate" hreflang="x-default" href="https://londonchoralservice.com/listen.html">
 
-  <meta property="og:title" content="Listen to Our Singers &amp; Musicians &mdash; London Choral Service">
-  <meta property="og:description" content="Hear our singers and musicians perform the most requested funeral hymns, wedding music, and ceremony pieces.">
+  <meta property="og:title" content="Listen to Our Singers &amp; Musicians — London Choral Service">
+  <meta property="og:description" content="Hear our singers and musicians perform the most requested funeral hymns, wedding music, and ceremony pieces. Samples from Ave Maria to Jerusalem.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://londonchoralservice.com/listen.html">
   <meta property="og:locale" content="en_GB">
@@ -46,8 +50,8 @@
   <meta property="og:image" content="https://londonchoralservice.com/assets/og-image.png">
 
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Listen to Our Singers &amp; Musicians &mdash; London Choral Service">
-  <meta name="twitter:description" content="Hear our singers and musicians perform the most requested funeral hymns, wedding music, and ceremony pieces.">
+  <meta name="twitter:title" content="Listen to Our Singers &amp; Musicians — London Choral Service">
+  <meta name="twitter:description" content="Hear our singers and musicians perform the most requested funeral hymns, wedding music, and ceremony pieces. Samples from Ave Maria to Jerusalem.">
   <meta name="twitter:image" content="https://londonchoralservice.com/assets/og-image.png">
   <link rel="dns-prefetch" href="https://www.googletagmanager.com">
   <link rel="dns-prefetch" href="https://api.web3forms.com">
@@ -1686,6 +1690,9 @@
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
 
+  <!-- TODO: replace placeholder VideoObject.uploadDate; add ISO 8601 duration. YouTube ID: G9-R6k5n7Io -->
+  <!-- TODO: replace placeholder VideoObject.uploadDate; add ISO 8601 duration. YouTube ID: nasqXWlbf1g -->
+  <!-- TODO: replace placeholder VideoObject.uploadDate; add ISO 8601 duration. YouTube ID: SaLTS_-I-q4 -->
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -1700,32 +1707,63 @@
           "@type": "ItemList",
           "name": "Most Requested Pieces",
           "itemListElement": [
-            { "@type": "ListItem", "position": 1, "name": "Ave Maria (Schubert) — Soloist" },
-            { "@type": "ListItem", "position": 2, "name": "How Great Thou Art — Full Choir" },
-            { "@type": "ListItem", "position": 3, "name": "Ave Verum Corpus (Mozart) — Full Choir" },
-            { "@type": "ListItem", "position": 4, "name": "The Lord's My Shepherd (Crimond) — Small Choir" },
-            { "@type": "ListItem", "position": 5, "name": "Abide With Me — Full Choir" },
-            { "@type": "ListItem", "position": 6, "name": "Amazing Grace — Soloist" },
-            { "@type": "ListItem", "position": 7, "name": "Jerusalem — Full Choir" }
+            {
+              "@type": "ListItem",
+              "position": 1,
+              "name": "Ave Maria (Schubert) — Soloist"
+            },
+            {
+              "@type": "ListItem",
+              "position": 2,
+              "name": "How Great Thou Art — Full Choir"
+            },
+            {
+              "@type": "ListItem",
+              "position": 3,
+              "name": "Ave Verum Corpus (Mozart) — Full Choir"
+            },
+            {
+              "@type": "ListItem",
+              "position": 4,
+              "name": "The Lord's My Shepherd (Crimond) — Small Choir"
+            },
+            {
+              "@type": "ListItem",
+              "position": 5,
+              "name": "Abide With Me — Full Choir"
+            },
+            {
+              "@type": "ListItem",
+              "position": 6,
+              "name": "Amazing Grace — Soloist"
+            },
+            {
+              "@type": "ListItem",
+              "position": 7,
+              "name": "Jerusalem — Full Choir"
+            }
           ]
         }
       },
       {
-        "@type": "LocalBusiness",
+        "@type": ["LocalBusiness", "PerformingGroup", "MusicGroup"],
         "@id": "https://londonchoralservice.com/#organization",
-        "name": "The London Choral Service",
-        "aggregateRating": {
-          "@type": "AggregateRating",
-          "ratingValue": "5",
-          "reviewCount": "4",
-          "bestRating": "5"
-        }
+        "name": "The London Choral Service"
       },
       {
         "@type": "BreadcrumbList",
         "itemListElement": [
-          { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://londonchoralservice.com/" },
-          { "@type": "ListItem", "position": 2, "name": "Listen" }
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "https://londonchoralservice.com/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Listen"
+          }
         ]
       },
       {
@@ -1736,7 +1774,9 @@
         "uploadDate": "2025-01-01",
         "contentUrl": "https://www.youtube.com/watch?v=G9-R6k5n7Io",
         "embedUrl": "https://www.youtube-nocookie.com/embed/G9-R6k5n7Io",
-        "publisher": { "@id": "https://londonchoralservice.com/#organization" }
+        "publisher": {
+          "@id": "https://londonchoralservice.com/#organization"
+        }
       },
       {
         "@type": "VideoObject",
@@ -1746,7 +1786,9 @@
         "uploadDate": "2025-01-01",
         "contentUrl": "https://www.youtube.com/watch?v=nasqXWlbf1g",
         "embedUrl": "https://www.youtube-nocookie.com/embed/nasqXWlbf1g",
-        "publisher": { "@id": "https://londonchoralservice.com/#organization" }
+        "publisher": {
+          "@id": "https://londonchoralservice.com/#organization"
+        }
       },
       {
         "@type": "VideoObject",
@@ -1756,7 +1798,9 @@
         "uploadDate": "2025-01-01",
         "contentUrl": "https://www.youtube.com/watch?v=SaLTS_-I-q4",
         "embedUrl": "https://www.youtube-nocookie.com/embed/SaLTS_-I-q4",
-        "publisher": { "@id": "https://londonchoralservice.com/#organization" }
+        "publisher": {
+          "@id": "https://londonchoralservice.com/#organization"
+        }
       }
     ]
   }
@@ -1777,6 +1821,10 @@
         <li><a href="/">Home</a></li>
         <li><a href="/about.html">About</a></li>
         <li><a href="/services.html">Services</a></li>
+        <li><a href="/weddings.html">Weddings</a></li>
+        <li><a href="/funerals.html">Funerals</a></li>
+        <li><a href="/corporate.html">Corporate</a></li>
+        <li><a href="/christmas.html">Christmas</a></li>
         <li><a href="/listen.html">Listen</a></li>
         <li class="has-dropdown">
           <a href="/music-guides/" aria-haspopup="true" aria-expanded="false" class="dropdown-trigger">Music Guides<span class="dropdown-caret" aria-hidden="true">&#9662;</span></a>
@@ -1821,7 +1869,7 @@
             <button class="video-thumb" aria-label="Play Abide With Me"
                     data-video="G9-R6k5n7Io">
               <img src="https://img.youtube.com/vi/G9-R6k5n7Io/maxresdefault.jpg"
-                   alt="Abide With Me — The London Choral Service" loading="lazy">
+                   alt="Abide With Me — The London Choral Service" loading="lazy" width="1280" height="720">
               <svg class="play-btn" viewBox="0 0 68 48" aria-hidden="true">
                 <path d="M66.52 7.74c-.78-2.93-2.49-5.41-5.42-6.19C55.79.13 34 0 34 0S12.21.13 6.9 1.55c-2.93.78-4.63 3.26-5.42 6.19C.06 13.05 0 24 0 24s.06 10.95 1.48 16.26c.78 2.93 2.49 5.41 5.42 6.19C12.21 47.87 34 48 34 48s21.79-.13 27.1-1.55c2.93-.78 4.63-3.26 5.42-6.19C67.94 34.95 68 24 68 24s-.06-10.95-1.48-16.26z" fill="rgba(0,0,0,.7)"/>
                 <path d="M45 24 27 14v20z" fill="#fff"/>
@@ -1837,7 +1885,7 @@
             <button class="video-thumb" aria-label="Play He Shall Feed His Flock"
                     data-video="nasqXWlbf1g">
               <img src="https://img.youtube.com/vi/nasqXWlbf1g/maxresdefault.jpg"
-                   alt="He Shall Feed His Flock — The London Choral Service" loading="lazy">
+                   alt="He Shall Feed His Flock — The London Choral Service" loading="lazy" width="1280" height="720">
               <svg class="play-btn" viewBox="0 0 68 48" aria-hidden="true">
                 <path d="M66.52 7.74c-.78-2.93-2.49-5.41-5.42-6.19C55.79.13 34 0 34 0S12.21.13 6.9 1.55c-2.93.78-4.63 3.26-5.42 6.19C.06 13.05 0 24 0 24s.06 10.95 1.48 16.26c.78 2.93 2.49 5.41 5.42 6.19C12.21 47.87 34 48 34 48s21.79-.13 27.1-1.55c2.93-.78 4.63-3.26 5.42-6.19C67.94 34.95 68 24 68 24s-.06-10.95-1.48-16.26z" fill="rgba(0,0,0,.7)"/>
                 <path d="M45 24 27 14v20z" fill="#fff"/>
@@ -1853,7 +1901,7 @@
             <button class="video-thumb" aria-label="Play Be Thou My Vision"
                     data-video="SaLTS_-I-q4">
               <img src="https://img.youtube.com/vi/SaLTS_-I-q4/maxresdefault.jpg"
-                   alt="Be Thou My Vision — The London Choral Service" loading="lazy">
+                   alt="Be Thou My Vision — The London Choral Service" loading="lazy" width="1280" height="720">
               <svg class="play-btn" viewBox="0 0 68 48" aria-hidden="true">
                 <path d="M66.52 7.74c-.78-2.93-2.49-5.41-5.42-6.19C55.79.13 34 0 34 0S12.21.13 6.9 1.55c-2.93.78-4.63 3.26-5.42 6.19C.06 13.05 0 24 0 24s.06 10.95 1.48 16.26c.78 2.93 2.49 5.41 5.42 6.19C12.21 47.87 34 48 34 48s21.79-.13 27.1-1.55c2.93-.78 4.63-3.26 5.42-6.19C67.94 34.95 68 24 68 24s-.06-10.95-1.48-16.26z" fill="rgba(0,0,0,.7)"/>
                 <path d="M45 24 27 14v20z" fill="#fff"/>

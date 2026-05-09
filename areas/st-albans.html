@@ -2,6 +2,10 @@
 <html lang="en-GB">
 <head>
   <meta charset="UTF-8">
+  <!-- @include-start partials/head-extras.html -->
+<link rel="preload" href="/fonts/cormorant-garamond.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/source-serif-4.woff2" as="font" type="font/woff2" crossorigin>
+  <!-- @include-end partials/head-extras.html -->
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
   <!-- Google Analytics (GA4) — deferred until after load -->
@@ -29,15 +33,15 @@
     });
   </script>
 
-  <title>Funeral Singers &amp; Wedding Choirs in St Albans — London Choral Service</title>
-  <meta name="description" content="Professional funeral singers, wedding choirs, and conservatoire-trained musicians in St Albans and across Hertfordshire. Soloists, choirs, and instrumentalists for services at St Albans Cathedral, St Stephen's Church, West Hertfordshire Crematorium, and venues throughout the county.">
+  <title>Funeral and wedding choirs in St Albans</title>
+  <meta name="description" content="Professional funeral singers, wedding choirs, and conservatoire-trained musicians in St Albans and across Hertfordshire.">
   <meta name="theme-color" content="#F7F3EE">
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://londonchoralservice.com/areas/st-albans.html">
   <link rel="alternate" hreflang="en-gb" href="https://londonchoralservice.com/areas/st-albans.html">
   <link rel="alternate" hreflang="x-default" href="https://londonchoralservice.com/areas/st-albans.html">
 
-  <meta property="og:title" content="Funeral Singers &amp; Wedding Choirs in St Albans | London Choral Service">
+  <meta property="og:title" content="Funeral and wedding choirs in St Albans">
   <meta property="og:description" content="Professional funeral singers, wedding choirs, and conservatoire-trained musicians in St Albans and across Hertfordshire.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://londonchoralservice.com/areas/st-albans.html">
@@ -46,7 +50,7 @@
   <meta property="og:image" content="https://londonchoralservice.com/assets/og-image.png">
 
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Funeral Singers &amp; Wedding Choirs in St Albans | London Choral Service">
+  <meta name="twitter:title" content="Funeral and wedding choirs in St Albans">
   <meta name="twitter:description" content="Professional funeral singers, wedding choirs, and conservatoire-trained musicians in St Albans and across Hertfordshire.">
   <meta name="twitter:image" content="https://londonchoralservice.com/assets/og-image.png">
   <link rel="dns-prefetch" href="https://www.googletagmanager.com">
@@ -1688,108 +1692,103 @@
 
   <script type="application/ld+json">
   {
-  "@context": "https://schema.org",
-  "@graph": [
-    {
-      "@type": "Service",
-      "name": "Funeral Singers & Wedding Choirs in St Albans",
-      "provider": {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Service",
+        "name": "Funeral Singers & Wedding Choirs in St Albans",
+        "provider": {
+          "@type": "LocalBusiness",
+          "@id": "https://londonchoralservice.com/#organization"
+        },
+        "areaServed": {
+          "@type": "City",
+          "name": "St Albans",
+          "containedInPlace": {
+            "@type": "AdministrativeArea",
+            "name": "Hertfordshire"
+          }
+        },
+        "description": "Professional funeral singers, wedding choirs, and conservatoire-trained musicians in St Albans and across Hertfordshire.",
+        "url": "https://londonchoralservice.com/areas/st-albans.html",
+        "serviceType": [
+          "Funeral Music",
+          "Wedding Music",
+          "Memorial Music",
+          "Ceremony Music"
+        ],
+        "geo": {
+          "@type": "GeoCoordinates",
+          "latitude": 51.75201,
+          "longitude": -0.33677
+        }
+      },
+      {
         "@type": "LocalBusiness",
-        "name": "The London Choral Service",
-        "alternateName": "London Choral Service",
-        "url": "https://londonchoralservice.com",
-        "telephone": "+447356042468",
-        "email": "office@londonchoralservice.com"
+        "@id": "https://londonchoralservice.com/#organization",
+        "name": "The London Choral Service"
       },
-      "areaServed": {
-        "@type": "City",
-        "name": "St Albans",
-        "containedInPlace": {
-          "@type": "AdministrativeArea",
-          "name": "Hertfordshire"
-        }
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "https://londonchoralservice.com/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Areas We Serve",
+            "item": "https://londonchoralservice.com/areas/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 3,
+            "name": "St Albans"
+          }
+        ]
       },
-      "description": "Professional funeral singers, wedding choirs, and conservatoire-trained musicians in St Albans and across Hertfordshire.",
-      "url": "https://londonchoralservice.com/areas/st-albans.html",
-      "serviceType": [
-        "Funeral Music",
-        "Wedding Music",
-        "Memorial Music",
-        "Ceremony Music"
-      ]
-    },
-    {
-      "@type": "LocalBusiness",
-      "@id": "https://londonchoralservice.com/#organization",
-      "name": "The London Choral Service",
-      "aggregateRating": {
-        "@type": "AggregateRating",
-        "ratingValue": "5",
-        "reviewCount": "4",
-        "bestRating": "5"
+      {
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "How much does a funeral singer cost in St Albans?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "A soloist in St Albans starts from £215, a small choir of four from £1,150, a quintet from £1,400, a sextet from £1,600, and a full choir of eight from £2,000. St Albans is just north of London, so travel costs are generally modest. All fees include liaison with your funeral director and full coordination of the music."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Can you provide a choir for a wedding in St Albans?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes. Our choirs perform at weddings across St Albans and Hertfordshire, including the magnificent nave of St Albans Cathedral, the beautiful St Stephen's Church on the old Watling Street, and parish churches throughout the county from Harpenden to Berkhamsted. We match the ensemble size and repertoire to each venue and ceremony."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "What types of music can you perform at a funeral in St Albans?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Our singers perform traditional hymns, classical sacred works, and contemporary songs. The vast Norman nave of St Albans Cathedral carries choral music with extraordinary resonance, while St Stephen's Church and West Hertfordshire Crematorium suit more intimate pieces — a reflective solo or a gentle trio. We can also arrange any personal favourite for voices or instruments."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Do you cover crematorium services in St Albans?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes. We sing regularly at West Hertfordshire Crematorium and are well acquainted with its acoustic and timing requirements. Our musicians coordinate directly with crematorium staff and your funeral director so the music is handled with care throughout."
+            }
+          }
+        ]
       }
-    },
-    {
-      "@type": "BreadcrumbList",
-      "itemListElement": [
-        {
-          "@type": "ListItem",
-          "position": 1,
-          "name": "Home",
-          "item": "https://londonchoralservice.com/"
-        },
-        {
-          "@type": "ListItem",
-          "position": 2,
-          "name": "Areas We Serve",
-          "item": "https://londonchoralservice.com/areas/"
-        },
-        {
-          "@type": "ListItem",
-          "position": 3,
-          "name": "St Albans"
-        }
-      ]
-    },
-    {
-      "@type": "FAQPage",
-      "mainEntity": [
-        {
-          "@type": "Question",
-          "name": "How much does a funeral singer cost in St Albans?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "A soloist in St Albans starts from £215, a small choir of four from £1,150, a quintet from £1,400, a sextet from £1,600, and a full choir of eight from £2,000. St Albans is just north of London, so travel costs are generally modest. All fees include liaison with your funeral director and full coordination of the music."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "Can you provide a choir for a wedding in St Albans?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Yes. Our choirs perform at weddings across St Albans and Hertfordshire, including the magnificent nave of St Albans Cathedral, the beautiful St Stephen's Church on the old Watling Street, and parish churches throughout the county from Harpenden to Berkhamsted. We match the ensemble size and repertoire to each venue and ceremony."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "What types of music can you perform at a funeral in St Albans?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Our singers perform traditional hymns, classical sacred works, and contemporary songs. The vast Norman nave of St Albans Cathedral carries choral music with extraordinary resonance, while St Stephen's Church and West Hertfordshire Crematorium suit more intimate pieces — a reflective solo or a gentle trio. We can also arrange any personal favourite for voices or instruments."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "Do you cover crematorium services in St Albans?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Yes. We sing regularly at West Hertfordshire Crematorium and are well acquainted with its acoustic and timing requirements. Our musicians coordinate directly with crematorium staff and your funeral director so the music is handled with care throughout."
-          }
-        }
-      ]
-    }
-  ]
-}
+    ]
+  }
   </script>
 </head>
 <body>
@@ -1807,6 +1806,10 @@
         <li><a href="/">Home</a></li>
         <li><a href="/about.html">About</a></li>
         <li><a href="/services.html">Services</a></li>
+        <li><a href="/weddings.html">Weddings</a></li>
+        <li><a href="/funerals.html">Funerals</a></li>
+        <li><a href="/corporate.html">Corporate</a></li>
+        <li><a href="/christmas.html">Christmas</a></li>
         <li><a href="/listen.html">Listen</a></li>
         <li class="has-dropdown">
           <a href="/music-guides/" aria-haspopup="true" aria-expanded="false" class="dropdown-trigger">Music Guides<span class="dropdown-caret" aria-hidden="true">&#9662;</span></a>
@@ -1835,7 +1838,7 @@
             <li>St Albans</li>
           </ol>
         </nav>
-        <h1>Funeral singers and choirs in St Albans</h1>
+        <h1>Funeral and wedding choirs in St Albans</h1>
         <p class="lede">The London Choral Service provides professional singers, choirs, and instrumentalists for funerals, weddings, memorials, and ceremonies across St Albans and the surrounding Hertfordshire countryside. With its magnificent cathedral and abbey church standing watch over the city for nearly a thousand years, St Albans has a long and unbroken tradition of sacred music&thinsp;&mdash;&thinsp;and there is something deeply fitting about live voices continuing that tradition at the moments that matter most.</p>
         <hr class="rule">
       </div>

@@ -2,6 +2,10 @@
 <html lang="en-GB">
 <head>
   <meta charset="UTF-8">
+  <!-- @include-start partials/head-extras.html -->
+<link rel="preload" href="/fonts/cormorant-garamond.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/source-serif-4.woff2" as="font" type="font/woff2" crossorigin>
+  <!-- @include-end partials/head-extras.html -->
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
   <!-- Google Analytics (GA4) — deferred until after load -->
@@ -29,7 +33,7 @@
     });
   </script>
 
-  <title>Funeral Singers &amp; Wedding Choirs in Bexley — London Choral Service</title>
+  <title>Funeral and wedding choirs in Bexley</title>
   <meta name="description" content="Professional funeral singers and wedding choirs in Bexley, London. Conservatoire-trained musicians for funerals, weddings, memorials, and ceremonies.">
   <meta name="theme-color" content="#F7F3EE">
   <meta name="robots" content="index, follow">
@@ -37,8 +41,8 @@
   <link rel="alternate" hreflang="en-gb" href="https://londonchoralservice.com/areas/london/bexley.html">
   <link rel="alternate" hreflang="x-default" href="https://londonchoralservice.com/areas/london/bexley.html">
 
-  <meta property="og:title" content="Funeral Singers &amp; Wedding Choirs in Bexley | London Choral Service">
-  <meta property="og:description" content="Professional funeral singers and wedding choirs in Bexley, London. Conservatoire-trained musicians for funerals, weddings, and ceremonies.">
+  <meta property="og:title" content="Funeral and wedding choirs in Bexley">
+  <meta property="og:description" content="Professional funeral singers and wedding choirs in Bexley, London. Conservatoire-trained musicians for funerals, weddings, memorials, and ceremonies.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://londonchoralservice.com/areas/london/bexley.html">
   <meta property="og:locale" content="en_GB">
@@ -46,8 +50,8 @@
   <meta property="og:image" content="https://londonchoralservice.com/assets/og-image.png">
 
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Funeral Singers &amp; Wedding Choirs in Bexley | London Choral Service">
-  <meta name="twitter:description" content="Professional funeral singers and wedding choirs in Bexley, London.">
+  <meta name="twitter:title" content="Funeral and wedding choirs in Bexley">
+  <meta name="twitter:description" content="Professional funeral singers and wedding choirs in Bexley, London. Conservatoire-trained musicians for funerals, weddings, memorials, and ceremonies.">
   <meta name="twitter:image" content="https://londonchoralservice.com/assets/og-image.png">
   <link rel="dns-prefetch" href="https://www.googletagmanager.com">
   <link rel="dns-prefetch" href="https://api.web3forms.com">
@@ -1688,115 +1692,110 @@
 
   <script type="application/ld+json">
   {
-  "@context": "https://schema.org",
-  "@graph": [
-    {
-      "@type": "Service",
-      "name": "Funeral Singers & Wedding Choirs in Bexley",
-      "url": "https://londonchoralservice.com/areas/london/bexley.html",
-      "description": "Professional funeral singers and wedding choirs in Bexley, London.",
-      "provider": {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Service",
+        "name": "Funeral Singers & Wedding Choirs in Bexley",
+        "url": "https://londonchoralservice.com/areas/london/bexley.html",
+        "description": "Professional funeral singers and wedding choirs in Bexley, London.",
+        "provider": {
+          "@type": "LocalBusiness",
+          "@id": "https://londonchoralservice.com/#organization"
+        },
+        "areaServed": {
+          "@type": "AdministrativeArea",
+          "name": "London Borough of Bexley",
+          "containedInPlace": {
+            "@type": "City",
+            "name": "London",
+            "addressCountry": "GB"
+          }
+        },
+        "serviceType": [
+          "Funeral Music",
+          "Wedding Music",
+          "Memorial Music",
+          "Ceremony Music"
+        ],
+        "geo": {
+          "@type": "GeoCoordinates",
+          "latitude": 51.44127,
+          "longitude": 0.1486
+        }
+      },
+      {
         "@type": "LocalBusiness",
-        "name": "The London Choral Service",
-        "alternateName": "London Choral Service",
-        "url": "https://londonchoralservice.com",
-        "telephone": "+447356042468",
-        "email": "office@londonchoralservice.com"
+        "@id": "https://londonchoralservice.com/#organization",
+        "name": "The London Choral Service"
       },
-      "areaServed": {
-        "@type": "AdministrativeArea",
-        "name": "London Borough of Bexley",
-        "containedInPlace": {
-          "@type": "City",
-          "name": "London",
-          "addressCountry": "GB"
-        }
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "https://londonchoralservice.com/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Areas We Serve",
+            "item": "https://londonchoralservice.com/areas/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 3,
+            "name": "London",
+            "item": "https://londonchoralservice.com/areas/london.html"
+          },
+          {
+            "@type": "ListItem",
+            "position": 4,
+            "name": "Bexley"
+          }
+        ]
       },
-      "serviceType": [
-        "Funeral Music",
-        "Wedding Music",
-        "Memorial Music",
-        "Ceremony Music"
-      ]
-    },
-    {
-      "@type": "LocalBusiness",
-      "@id": "https://londonchoralservice.com/#organization",
-      "name": "The London Choral Service",
-      "aggregateRating": {
-        "@type": "AggregateRating",
-        "ratingValue": "5",
-        "reviewCount": "4",
-        "bestRating": "5"
+      {
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "How much does a funeral singer cost in Bexley?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "For a funeral at St Mary the Virgin Bexley, Erith Crematorium, or any other venue in the borough, a soloist starts from £215. A small choir of four is from £1,150, a quintet from £1,400, a sextet from £1,600, and a full choir of eight from £2,000. All prices include travel within Greater London."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Can you provide a choir for a wedding in Bexley?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Absolutely. St Mary the Virgin Bexley, with its thirteenth-century origins and riverside setting beside the Cray, is a beautiful church for a wedding choir. We also sing at churches in Bexleyheath, Sidcup, and Crayford, and can provide anything from a soloist to a twelve-voice chorus."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "What types of music can you perform at a funeral in Bexley?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Traditional hymns, classical sacred works, and contemporary songs all feature in our repertoire. The intimate acoustic at St Mary the Virgin suits small vocal ensembles particularly well, while at Erith Crematorium a solo voice or duet is often the most effective choice."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Do you cover crematorium services in Bexley?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes. We sing regularly at Erith Crematorium and are familiar with its chapel layout and timing requirements. Our singers arrive early, liaise with crematorium staff, and ensure the music fits precisely within the allotted service time."
+            }
+          }
+        ]
       }
-    },
-    {
-      "@type": "BreadcrumbList",
-      "itemListElement": [
-        {
-          "@type": "ListItem",
-          "position": 1,
-          "name": "Home",
-          "item": "https://londonchoralservice.com/"
-        },
-        {
-          "@type": "ListItem",
-          "position": 2,
-          "name": "Areas We Serve",
-          "item": "https://londonchoralservice.com/areas/"
-        },
-        {
-          "@type": "ListItem",
-          "position": 3,
-          "name": "London",
-          "item": "https://londonchoralservice.com/areas/london.html"
-        },
-        {
-          "@type": "ListItem",
-          "position": 4,
-          "name": "Bexley"
-        }
-      ]
-    },
-    {
-      "@type": "FAQPage",
-      "mainEntity": [
-        {
-          "@type": "Question",
-          "name": "How much does a funeral singer cost in Bexley?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "For a funeral at St Mary the Virgin Bexley, Erith Crematorium, or any other venue in the borough, a soloist starts from £215. A small choir of four is from £1,150, a quintet from £1,400, a sextet from £1,600, and a full choir of eight from £2,000. All prices include travel within Greater London."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "Can you provide a choir for a wedding in Bexley?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Absolutely. St Mary the Virgin Bexley, with its thirteenth-century origins and riverside setting beside the Cray, is a beautiful church for a wedding choir. We also sing at churches in Bexleyheath, Sidcup, and Crayford, and can provide anything from a soloist to a twelve-voice chorus."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "What types of music can you perform at a funeral in Bexley?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Traditional hymns, classical sacred works, and contemporary songs all feature in our repertoire. The intimate acoustic at St Mary the Virgin suits small vocal ensembles particularly well, while at Erith Crematorium a solo voice or duet is often the most effective choice."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "Do you cover crematorium services in Bexley?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Yes. We sing regularly at Erith Crematorium and are familiar with its chapel layout and timing requirements. Our singers arrive early, liaise with crematorium staff, and ensure the music fits precisely within the allotted service time."
-          }
-        }
-      ]
-    }
-  ]
-}
+    ]
+  }
   </script>
 </head>
 <body>
@@ -1814,6 +1813,10 @@
         <li><a href="/">Home</a></li>
         <li><a href="/about.html">About</a></li>
         <li><a href="/services.html">Services</a></li>
+        <li><a href="/weddings.html">Weddings</a></li>
+        <li><a href="/funerals.html">Funerals</a></li>
+        <li><a href="/corporate.html">Corporate</a></li>
+        <li><a href="/christmas.html">Christmas</a></li>
         <li><a href="/listen.html">Listen</a></li>
         <li class="has-dropdown">
           <a href="/music-guides/" aria-haspopup="true" aria-expanded="false" class="dropdown-trigger">Music Guides<span class="dropdown-caret" aria-hidden="true">&#9662;</span></a>
@@ -1843,7 +1846,7 @@
             <li>Bexley</li>
           </ol>
         </nav>
-        <h1>Funeral singers and choirs in Bexley</h1>
+        <h1>Funeral and wedding choirs in Bexley</h1>
         <p class="lede">The London Borough of Bexley sits on London&rsquo;s south-eastern edge, where the city meets the green landscapes of Kent. From the historic village of Bexley to the communities of Erith, Bexleyheath, and Sidcup, we provide professional singers and choirs for funerals, weddings, memorials, and ceremonies at venues across the borough.</p>
         <hr class="rule">
       </div>
@@ -1860,7 +1863,7 @@
         <p>Bexley&rsquo;s village churches and historic parish settings provide a charming backdrop for weddings, and live choral music brings an atmosphere that recorded music simply cannot achieve. St&nbsp;Mary the Virgin Bexley is a particularly romantic choice, while the churches of Bexleyheath, Sidcup, and Crayford each have their own distinctive character. Our singers will work with you to plan a programme of hymns, anthems, and choral pieces that makes your ceremony truly memorable. Browse our guide to <a href="../../music-guides/choosing-wedding-hymns.html">choosing wedding hymns</a> for inspiration.</p>
 
         <h2>Ensembles for weddings, funerals, and memorials</h2>
-        <p>Not every occasion calls for the same size of ensemble, and part of our job is helping you find the right balance for your venue, your budget, and the feeling you want to create. We offer everything from a single soloist&thinsp;&mdash;&thinsp;whose voice can hold a room in complete stillness&thinsp;&mdash;&thinsp;through to duets, quartets, octets, and a full twelve-voice chorus with instrumental accompaniment. Organists, harpists, and string players are also available. Visit our <a href="../../pricing.html">pricing page</a> for a clear guide to ensemble sizes and costs.</p>
+        <p>St&nbsp;Mary the Virgin Bexley is a village-scale church, and a quartet usually fits the room well for both weddings and funerals &mdash; large enough to lead a hymn, small enough not to overwhelm the building. The parish churches of Bexleyheath, Sidcup, and Crayford vary in size, but most sit comfortably with a quartet or sextet. If you&rsquo;re booking a wedding with a full congregation in one of the larger spaces, a sextet adds weight to processional hymns without becoming dominant. For a quiet funeral, two or three voices can be more affecting than a full choir &mdash; particularly at a graveside, where simplicity tends to suit the moment. We&rsquo;re happy to help you decide once we know the venue. Our <a href="../../pricing.html">pricing page</a> sets out costs.</p>
 
         <figure class="pull-quote">
           <blockquote>
@@ -1891,7 +1894,7 @@
 
     <section class="section">
       <div class="prose">
-        <p class="text-sm text-mid">Nearby boroughs: <a href="greenwich.html">Greenwich</a> &middot; <a href="bromley.html">Bromley</a> &middot; <a href="havering.html">Havering</a></p>
+        <p class="text-sm text-mid">Nearby boroughs: <a href="greenwich.html">Greenwich</a> &middot; <a href="bromley.html">Bromley</a></p>
       </div>
     </section>
 
