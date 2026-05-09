@@ -36,7 +36,7 @@
     // hits the trigger AND the menu is currently closed as "open
     // first, navigate next time".
     trigger.addEventListener('click', function (e) {
-      var isMobile = window.matchMedia('(max-width: 767px)').matches;
+      var isMobile = window.matchMedia('(max-width: 805px)').matches;
       if (!isMobile) return; // desktop: hover handles it
       var isOpen = item.getAttribute('data-open') === 'true';
       if (!isOpen) {
