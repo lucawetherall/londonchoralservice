@@ -2,6 +2,10 @@
 <html lang="en-GB">
 <head>
   <meta charset="UTF-8">
+  <!-- @include-start partials/head-extras.html -->
+<link rel="preload" href="/fonts/cormorant-garamond.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/source-serif-4.woff2" as="font" type="font/woff2" crossorigin>
+  <!-- @include-end partials/head-extras.html -->
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
   <!-- Google Analytics (GA4) — deferred until after load -->
@@ -29,7 +33,7 @@
     });
   </script>
 
-  <title>Funeral Singers &amp; Wedding Choirs in Greenwich — London Choral Service</title>
+  <title>Funeral and wedding choirs in Greenwich</title>
   <meta name="description" content="Professional funeral singers and wedding choirs in Greenwich, London. Conservatoire-trained musicians for funerals, weddings, memorials, and ceremonies.">
   <meta name="theme-color" content="#F7F3EE">
   <meta name="robots" content="index, follow">
@@ -37,8 +41,8 @@
   <link rel="alternate" hreflang="en-gb" href="https://londonchoralservice.com/areas/london/greenwich.html">
   <link rel="alternate" hreflang="x-default" href="https://londonchoralservice.com/areas/london/greenwich.html">
 
-  <meta property="og:title" content="Funeral Singers &amp; Wedding Choirs in Greenwich | London Choral Service">
-  <meta property="og:description" content="Professional funeral singers and wedding choirs in Greenwich, London. Conservatoire-trained musicians for funerals, weddings, and ceremonies.">
+  <meta property="og:title" content="Funeral and wedding choirs in Greenwich">
+  <meta property="og:description" content="Professional funeral singers and wedding choirs in Greenwich, London. Conservatoire-trained musicians for funerals, weddings, memorials, and ceremonies.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://londonchoralservice.com/areas/london/greenwich.html">
   <meta property="og:locale" content="en_GB">
@@ -46,8 +50,8 @@
   <meta property="og:image" content="https://londonchoralservice.com/assets/og-image.png">
 
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Funeral Singers &amp; Wedding Choirs in Greenwich | London Choral Service">
-  <meta name="twitter:description" content="Professional funeral singers and wedding choirs in Greenwich, London.">
+  <meta name="twitter:title" content="Funeral and wedding choirs in Greenwich">
+  <meta name="twitter:description" content="Professional funeral singers and wedding choirs in Greenwich, London. Conservatoire-trained musicians for funerals, weddings, memorials, and ceremonies.">
   <meta name="twitter:image" content="https://londonchoralservice.com/assets/og-image.png">
   <link rel="dns-prefetch" href="https://www.googletagmanager.com">
   <link rel="dns-prefetch" href="https://api.web3forms.com">
@@ -1602,6 +1606,145 @@
         display: none;
       }
     }
+    
+    /* ═══════════════════════════════════
+       Pull Quote — Marquee Variant
+       (services.html hero treatment)
+       ═══════════════════════════════════ */
+    .pull-quote--marquee {
+      margin-block: 0 var(--space-2xl);
+      max-width: 30rem;
+    }
+    
+    .pull-quote--marquee p {
+      font-size: var(--text-3xl);
+      line-height: var(--leading-tight);
+    }
+    
+    .pull-quote--marquee::before {
+      font-size: 8rem;
+      top: -0.3em;
+      left: -0.08em;
+      opacity: 0.18;
+    }
+    
+    .pull-quote--marquee figcaption {
+      margin-top: var(--space-lg);
+    }
+    
+    /* ═══════════════════════════════════
+       Occasion List (services.html hub)
+       ═══════════════════════════════════ */
+    .occasion-list {
+      list-style: none;
+      padding-left: 0;
+      margin: 0 0 var(--space-2xl);
+    }
+    
+    .occasion-list li {
+      display: grid;
+      grid-template-columns: minmax(0, 14rem) 1fr;
+      gap: var(--space-2xl);
+      padding-block: var(--space-xl);
+      border-top: 1px solid var(--color-rule);
+      margin: 0;
+    }
+    
+    .occasion-list li:last-child {
+      border-bottom: 1px solid var(--color-rule);
+    }
+    
+    .occasion-list h3 {
+      font-size: var(--text-xl);
+      font-weight: 400;
+      margin: 0;
+    }
+    
+    .occasion-list p {
+      color: var(--color-text-mid);
+      margin-bottom: var(--space-md);
+    }
+    
+    .occasion-list .occasion-cta {
+      font-family: var(--font-heading);
+      font-weight: 500;
+      font-size: var(--text-base);
+      color: var(--color-accent);
+      text-decoration: none;
+    }
+    
+    .occasion-list .occasion-cta:hover {
+      color: var(--color-accent-hover);
+      text-decoration: underline;
+    }
+    
+    @media (max-width: 767px) {
+      .occasion-list li {
+        grid-template-columns: 1fr;
+        gap: var(--space-sm);
+      }
+    }
+    
+    /* ═══════════════════════════════════
+       Ensemble Grid (services.html)
+       ═══════════════════════════════════ */
+    .ensemble-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: var(--space-lg);
+      list-style: none;
+      padding: 0;
+      margin: var(--space-xl) 0 var(--space-2xl);
+    }
+    
+    .ensemble-grid li {
+      margin: 0;
+    }
+    
+    @media (max-width: 899px) {
+      .ensemble-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+    
+    @media (max-width: 599px) {
+      .ensemble-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    
+    .ensemble-card {
+      padding: var(--space-xl);
+      background-color: var(--color-bg-alt);
+      border: 1px solid transparent;
+      transition: border-color var(--transition-fast);
+      height: 100%;
+    }
+    
+    .ensemble-card:hover {
+      border-color: var(--color-accent);
+    }
+    
+    .ensemble-card h3 {
+      font-family: var(--font-heading);
+      font-size: var(--text-lg);
+      font-weight: 500;
+      margin-bottom: var(--space-xs);
+    }
+    
+    .ensemble-card .voices {
+      display: block;
+      font-family: var(--font-body);
+      font-size: var(--text-sm);
+      color: var(--color-text-mid);
+      margin-bottom: var(--space-md);
+      letter-spacing: 0.02em;
+    }
+    
+    .ensemble-card p {
+      color: var(--color-text-mid);
+      margin-bottom: 0;
+    }
     /* ═══════════════════════════════════
        Print Styles
        ═══════════════════════════════════ */
@@ -1690,115 +1833,110 @@
 
   <script type="application/ld+json">
   {
-  "@context": "https://schema.org",
-  "@graph": [
-    {
-      "@type": "Service",
-      "name": "Funeral Singers & Wedding Choirs in Greenwich",
-      "url": "https://londonchoralservice.com/areas/london/greenwich.html",
-      "description": "Professional funeral singers and wedding choirs in Greenwich, London.",
-      "provider": {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Service",
+        "name": "Funeral Singers & Wedding Choirs in Greenwich",
+        "url": "https://londonchoralservice.com/areas/london/greenwich.html",
+        "description": "Professional funeral singers and wedding choirs in Greenwich, London.",
+        "provider": {
+          "@type": "LocalBusiness",
+          "@id": "https://londonchoralservice.com/#organization"
+        },
+        "areaServed": {
+          "@type": "AdministrativeArea",
+          "name": "Royal Borough of Greenwich",
+          "containedInPlace": {
+            "@type": "City",
+            "name": "London",
+            "addressCountry": "GB"
+          }
+        },
+        "serviceType": [
+          "Funeral Music",
+          "Wedding Music",
+          "Memorial Music",
+          "Ceremony Music"
+        ],
+        "geo": {
+          "@type": "GeoCoordinates",
+          "latitude": 51.48205,
+          "longitude": 0.00569
+        }
+      },
+      {
         "@type": "LocalBusiness",
-        "name": "The London Choral Service",
-        "alternateName": "London Choral Service",
-        "url": "https://londonchoralservice.com",
-        "telephone": "+447356042468",
-        "email": "office@londonchoralservice.com"
+        "@id": "https://londonchoralservice.com/#organization",
+        "name": "The London Choral Service"
       },
-      "areaServed": {
-        "@type": "AdministrativeArea",
-        "name": "Royal Borough of Greenwich",
-        "containedInPlace": {
-          "@type": "City",
-          "name": "London",
-          "addressCountry": "GB"
-        }
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "https://londonchoralservice.com/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Areas We Serve",
+            "item": "https://londonchoralservice.com/areas/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 3,
+            "name": "London",
+            "item": "https://londonchoralservice.com/areas/london.html"
+          },
+          {
+            "@type": "ListItem",
+            "position": 4,
+            "name": "Greenwich"
+          }
+        ]
       },
-      "serviceType": [
-        "Funeral Music",
-        "Wedding Music",
-        "Memorial Music",
-        "Ceremony Music"
-      ]
-    },
-    {
-      "@type": "LocalBusiness",
-      "@id": "https://londonchoralservice.com/#organization",
-      "name": "The London Choral Service",
-      "aggregateRating": {
-        "@type": "AggregateRating",
-        "ratingValue": "5",
-        "reviewCount": "4",
-        "bestRating": "5"
+      {
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "How much does a funeral singer cost in Greenwich?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Whether you are planning a service at St Alfege Greenwich, Eltham Crematorium, or Charlton Cemetery, a soloist starts from £215. A small choir of four is from £1,150, a quintet from £1,400, a sextet from £1,600, and a full choir of eight from £2,000. All prices include travel within Greater London."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Can you provide a choir for a wedding in Greenwich?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Absolutely. St Alfege Greenwich and the chapels of the Old Royal Naval College are stunning settings for a wedding choir, and we provide ensembles from a solo vocalist up to a twelve-voice chorus. We also sing at smaller parish churches and licensed venues across the borough, handling every musical detail for you."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "What types of music can you perform at a funeral in Greenwich?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "The Hawksmoor interior of St Alfege Greenwich rewards choral music beautifully, and we often sing traditional hymns, psalms, and sacred anthems there. At Eltham Crematorium or Charlton Cemetery, we adapt to more reflective repertoire — popular songs, contemporary pieces, or bespoke arrangements of a song that held special meaning."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Do you cover crematorium services in Greenwich?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes. Eltham Crematorium is the principal crematorium serving Greenwich families, and our singers know its chapel and service timings well. We coordinate directly with crematorium staff and your funeral director so the music fits naturally into the service."
+            }
+          }
+        ]
       }
-    },
-    {
-      "@type": "BreadcrumbList",
-      "itemListElement": [
-        {
-          "@type": "ListItem",
-          "position": 1,
-          "name": "Home",
-          "item": "https://londonchoralservice.com/"
-        },
-        {
-          "@type": "ListItem",
-          "position": 2,
-          "name": "Areas We Serve",
-          "item": "https://londonchoralservice.com/areas/"
-        },
-        {
-          "@type": "ListItem",
-          "position": 3,
-          "name": "London",
-          "item": "https://londonchoralservice.com/areas/london.html"
-        },
-        {
-          "@type": "ListItem",
-          "position": 4,
-          "name": "Greenwich"
-        }
-      ]
-    },
-    {
-      "@type": "FAQPage",
-      "mainEntity": [
-        {
-          "@type": "Question",
-          "name": "How much does a funeral singer cost in Greenwich?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Whether you are planning a service at St Alfege Greenwich, Eltham Crematorium, or Charlton Cemetery, a soloist starts from £215. A small choir of four is from £1,150, a quintet from £1,400, a sextet from £1,600, and a full choir of eight from £2,000. All prices include travel within Greater London."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "Can you provide a choir for a wedding in Greenwich?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Absolutely. St Alfege Greenwich and the chapels of the Old Royal Naval College are stunning settings for a wedding choir, and we provide ensembles from a solo vocalist up to a twelve-voice chorus. We also sing at smaller parish churches and licensed venues across the borough, handling every musical detail for you."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "What types of music can you perform at a funeral in Greenwich?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "The Hawksmoor interior of St Alfege Greenwich rewards choral music beautifully, and we often sing traditional hymns, psalms, and sacred anthems there. At Eltham Crematorium or Charlton Cemetery, we adapt to more reflective repertoire — popular songs, contemporary pieces, or bespoke arrangements of a song that held special meaning."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "Do you cover crematorium services in Greenwich?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Yes. Eltham Crematorium is the principal crematorium serving Greenwich families, and our singers know its chapel and service timings well. We coordinate directly with crematorium staff and your funeral director so the music fits naturally into the service."
-          }
-        }
-      ]
-    }
-  ]
-}
+    ]
+  }
   </script>
 </head>
 <body>
@@ -1854,7 +1992,7 @@
             <li>Greenwich</li>
           </ol>
         </nav>
-        <h1>Funeral singers and choirs in Greenwich</h1>
+        <h1>Funeral and wedding choirs in Greenwich</h1>
         <p class="lede">The Royal Borough of Greenwich is steeped in maritime history and architectural grandeur, from the painted halls of the Old Royal Naval College to the hilltop views of Greenwich Park. We provide professional singers and choirs for funerals, weddings, memorials, and ceremonies at venues throughout the borough, including Eltham, Charlton, and Woolwich.</p>
         <hr class="rule">
       </div>
@@ -1864,6 +2002,7 @@
       <div class="prose">
         <h2>Funeral music in Greenwich</h2>
         <p>Greenwich&rsquo;s churches and ceremony venues are among the most historically significant in South East London, and our singers bring a level of musicianship worthy of these remarkable settings. St&nbsp;Alfege Greenwich, designed by Nicholas Hawksmoor and standing at the heart of Greenwich town centre, is a church of exceptional beauty with a resonant acoustic that responds wonderfully to choral music. We have been privileged to provide singers for funeral and memorial services there on numerous occasions. The Royal Naval Chapel within the Old Royal Naval College is another extraordinary venue, and its baroque interior lends a unique solemnity to services held within its walls. For advice on choosing music, see our <a href="../../music-guides/funeral-music-guide.html">funeral music guide</a> or <a href="../../contact.html">contact us</a> to discuss your requirements.</p>
+        <p>For practical guidance on music at crematorium services &mdash; timing, acoustics, and making a shorter service meaningful &mdash; see our <a href="../../music-guides/crematorium-music.html">guide to crematorium music</a>.</p>
 
         <p>Eltham Crematorium serves families from across the borough and the wider South East London area, and our singers are well accustomed to its setting and requirements. We also provide musicians for services at Charlton Cemetery, where graveside singing can bring a profound sense of comfort, and at churches and chapels in Woolwich, Plumstead, and Abbey Wood. In every case, we coordinate closely with funeral directors and clergy to ensure the music is prepared and delivered with the utmost care. You can learn more about our approach on our <a href="../../services.html">services page</a>.</p>
 
@@ -1871,7 +2010,7 @@
         <p>Few boroughs in London can rival Greenwich for the splendour of its wedding venues. St&nbsp;Alfege Greenwich and the chapels of the Old Royal Naval College offer couples a setting of genuine grandeur, while the borough&rsquo;s smaller parish churches provide a more intimate atmosphere. Our singers will work with you to create a programme of music that complements the architecture and the spirit of your day, from rousing congregational hymns to delicate choral motets. For help choosing your wedding music, explore our guide to <a href="../../music-guides/choosing-wedding-hymns.html">choosing wedding hymns</a>.</p>
 
         <h2>Ensembles for weddings, funerals, and memorials</h2>
-        <p>Not every occasion calls for the same size of ensemble, and part of our job is helping you find the right balance for your venue, your budget, and the feeling you want to create. We offer everything from a single soloist&thinsp;&mdash;&thinsp;whose voice can hold a room in complete stillness&thinsp;&mdash;&thinsp;through to duets, quartets, octets, and a full twelve-voice chorus with instrumental accompaniment. Organists, harpists, and string players are also available. Visit our <a href="../../pricing.html">pricing page</a> for a clear guide to ensemble sizes and costs.</p>
+        <p>For a wedding at St&nbsp;Alfege Greenwich or one of the chapels at the Old Royal Naval College, we&rsquo;d typically suggest a sextet or larger &mdash; the volume of those buildings rewards more voices, and the acoustic carries even quiet passages right to the back. A full eight-voice choir is worth considering for a Naval College chapel ceremony with a substantial congregation. Eltham Crematorium runs to a fixed service length, so a quartet is usually the right call: enough to lead a hymn, compact enough for the chapel. The smaller parish churches in Woolwich, Plumstead, and Abbey Wood also sit comfortably with a quartet. For a graveside at Charlton Cemetery, a soloist or duo is often more fitting than a larger group. Our <a href="../../pricing.html">pricing page</a> lists costs.</p>
 
         <figure class="pull-quote">
           <blockquote>
@@ -1902,7 +2041,7 @@
 
     <section class="section">
       <div class="prose">
-        <p class="text-sm text-mid">Nearby boroughs: <a href="lewisham.html">Lewisham</a> &middot; <a href="bexley.html">Bexley</a> &middot; <a href="bromley.html">Bromley</a> &middot; <a href="tower-hamlets.html">Tower Hamlets</a></p>
+        <p class="text-sm text-mid">Nearby boroughs: <a href="lewisham.html">Lewisham</a> &middot; <a href="bromley.html">Bromley</a> &middot; <a href="bexley.html">Bexley</a> &middot; <a href="newham.html">Newham</a> &middot; <a href="tower-hamlets.html">Tower Hamlets</a></p>
       </div>
     </section>
 

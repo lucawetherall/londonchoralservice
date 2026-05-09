@@ -2,6 +2,10 @@
 <html lang="en-GB">
 <head>
   <meta charset="UTF-8">
+  <!-- @include-start partials/head-extras.html -->
+<link rel="preload" href="/fonts/cormorant-garamond.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/source-serif-4.woff2" as="font" type="font/woff2" crossorigin>
+  <!-- @include-end partials/head-extras.html -->
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
   <!-- Google Analytics (GA4) — deferred until after load -->
@@ -29,16 +33,16 @@
     });
   </script>
 
-  <title>Choosing Hymns for Your Wedding — London Choral Service</title>
-  <meta name="description" content="How to pick wedding hymns your guests will actually sing, with suggestions for traditional, modern, and less common choices. Practical advice from professional church musicians.">
+  <title>Choosing Hymns for Your Wedding</title>
+  <meta name="description" content="How to pick wedding hymns your guests will actually sing, with suggestions for traditional, modern, and less common choices.">
   <meta name="theme-color" content="#F7F3EE">
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://londonchoralservice.com/music-guides/choosing-wedding-hymns.html">
   <link rel="alternate" hreflang="en-gb" href="https://londonchoralservice.com/music-guides/choosing-wedding-hymns.html">
   <link rel="alternate" hreflang="x-default" href="https://londonchoralservice.com/music-guides/choosing-wedding-hymns.html">
 
-  <meta property="og:title" content="Choosing Hymns for Your Wedding &mdash; London Choral Service">
-  <meta property="og:description" content="How to pick wedding hymns your guests will actually sing, with suggestions for traditional, modern, and less common choices. Practical advice from professional church musicians.">
+  <meta property="og:title" content="Choosing Hymns for Your Wedding">
+  <meta property="og:description" content="How to pick wedding hymns your guests will actually sing, with suggestions for traditional, modern, and less common choices.">
   <meta property="og:type" content="article">
   <meta property="og:url" content="https://londonchoralservice.com/music-guides/choosing-wedding-hymns.html">
   <meta property="og:locale" content="en_GB">
@@ -48,8 +52,8 @@
   <meta property="article:modified_time" content="2026-02-28">
 
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Choosing Hymns for Your Wedding &mdash; London Choral Service">
-  <meta name="twitter:description" content="How to pick wedding hymns your guests will actually sing, with suggestions for traditional, modern, and less common choices. Practical advice from professional church musicians.">
+  <meta name="twitter:title" content="Choosing Hymns for Your Wedding">
+  <meta name="twitter:description" content="How to pick wedding hymns your guests will actually sing, with suggestions for traditional, modern, and less common choices.">
   <meta name="twitter:image" content="https://londonchoralservice.com/assets/og-image.png">
   <link rel="dns-prefetch" href="https://www.googletagmanager.com">
   <link rel="dns-prefetch" href="https://api.web3forms.com">
@@ -1604,6 +1608,145 @@
         display: none;
       }
     }
+    
+    /* ═══════════════════════════════════
+       Pull Quote — Marquee Variant
+       (services.html hero treatment)
+       ═══════════════════════════════════ */
+    .pull-quote--marquee {
+      margin-block: 0 var(--space-2xl);
+      max-width: 30rem;
+    }
+    
+    .pull-quote--marquee p {
+      font-size: var(--text-3xl);
+      line-height: var(--leading-tight);
+    }
+    
+    .pull-quote--marquee::before {
+      font-size: 8rem;
+      top: -0.3em;
+      left: -0.08em;
+      opacity: 0.18;
+    }
+    
+    .pull-quote--marquee figcaption {
+      margin-top: var(--space-lg);
+    }
+    
+    /* ═══════════════════════════════════
+       Occasion List (services.html hub)
+       ═══════════════════════════════════ */
+    .occasion-list {
+      list-style: none;
+      padding-left: 0;
+      margin: 0 0 var(--space-2xl);
+    }
+    
+    .occasion-list li {
+      display: grid;
+      grid-template-columns: minmax(0, 14rem) 1fr;
+      gap: var(--space-2xl);
+      padding-block: var(--space-xl);
+      border-top: 1px solid var(--color-rule);
+      margin: 0;
+    }
+    
+    .occasion-list li:last-child {
+      border-bottom: 1px solid var(--color-rule);
+    }
+    
+    .occasion-list h3 {
+      font-size: var(--text-xl);
+      font-weight: 400;
+      margin: 0;
+    }
+    
+    .occasion-list p {
+      color: var(--color-text-mid);
+      margin-bottom: var(--space-md);
+    }
+    
+    .occasion-list .occasion-cta {
+      font-family: var(--font-heading);
+      font-weight: 500;
+      font-size: var(--text-base);
+      color: var(--color-accent);
+      text-decoration: none;
+    }
+    
+    .occasion-list .occasion-cta:hover {
+      color: var(--color-accent-hover);
+      text-decoration: underline;
+    }
+    
+    @media (max-width: 767px) {
+      .occasion-list li {
+        grid-template-columns: 1fr;
+        gap: var(--space-sm);
+      }
+    }
+    
+    /* ═══════════════════════════════════
+       Ensemble Grid (services.html)
+       ═══════════════════════════════════ */
+    .ensemble-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: var(--space-lg);
+      list-style: none;
+      padding: 0;
+      margin: var(--space-xl) 0 var(--space-2xl);
+    }
+    
+    .ensemble-grid li {
+      margin: 0;
+    }
+    
+    @media (max-width: 899px) {
+      .ensemble-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+    
+    @media (max-width: 599px) {
+      .ensemble-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    
+    .ensemble-card {
+      padding: var(--space-xl);
+      background-color: var(--color-bg-alt);
+      border: 1px solid transparent;
+      transition: border-color var(--transition-fast);
+      height: 100%;
+    }
+    
+    .ensemble-card:hover {
+      border-color: var(--color-accent);
+    }
+    
+    .ensemble-card h3 {
+      font-family: var(--font-heading);
+      font-size: var(--text-lg);
+      font-weight: 500;
+      margin-bottom: var(--space-xs);
+    }
+    
+    .ensemble-card .voices {
+      display: block;
+      font-family: var(--font-body);
+      font-size: var(--text-sm);
+      color: var(--color-text-mid);
+      margin-bottom: var(--space-md);
+      letter-spacing: 0.02em;
+    }
+    
+    .ensemble-card p {
+      color: var(--color-text-mid);
+      margin-bottom: 0;
+    }
     /* ═══════════════════════════════════
        Print Styles
        ═══════════════════════════════════ */
@@ -1692,136 +1835,117 @@
 
   <script type="application/ld+json">
   {
-  "@context": "https://schema.org",
-  "@graph": [
-    {
-      "@type": "Article",
-      "headline": "Choosing hymns for your wedding",
-      "url": "https://londonchoralservice.com/music-guides/choosing-wedding-hymns.html",
-      "inLanguage": "en-GB",
-      "datePublished": "2026-02-28",
-      "dateModified": "2026-02-28",
-      "description": "How to pick wedding hymns your guests will actually sing, with suggestions for traditional, modern, and less common choices. Practical advice from professional church musicians.",
-      "author": [
-        {
-          "@type": "Person",
-          "name": "Luca Wetherall",
-          "jobTitle": "Artistic Director",
-          "url": "https://londonchoralservice.com/about.html"
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Article",
+        "headline": "Choosing hymns for your wedding",
+        "url": "https://londonchoralservice.com/music-guides/choosing-wedding-hymns.html",
+        "inLanguage": "en-GB",
+        "datePublished": "2026-02-28",
+        "dateModified": "2026-02-28",
+        "description": "How to pick wedding hymns your guests will actually sing, with suggestions for traditional, modern, and less common choices. Practical advice from professional church musicians.",
+        "author": [
+          {
+            "@type": "Person",
+            "name": "Luca Wetherall",
+            "jobTitle": "Artistic Director",
+            "url": "https://londonchoralservice.com/about.html"
+          },
+          {
+            "@type": "Organization",
+            "name": "The London Choral Service",
+            "alternateName": "London Choral Service",
+            "url": "https://londonchoralservice.com"
+          }
+        ],
+        "image": {
+          "@type": "ImageObject",
+          "url": "https://londonchoralservice.com/assets/og-image.png",
+          "width": 1200,
+          "height": 630
         },
-        {
+        "wordCount": 1700,
+        "speakable": {
+          "@type": "SpeakableSpecification",
+          "cssSelector": [
+            ".lede",
+            ".guide-body p:first-of-type"
+          ]
+        },
+        "publisher": {
           "@type": "Organization",
           "name": "The London Choral Service",
           "alternateName": "London Choral Service",
-          "url": "https://londonchoralservice.com"
-        }
-      ],
-      "publisher": {
-        "@type": "Organization",
-        "name": "The London Choral Service",
-        "alternateName": "London Choral Service",
-        "url": "https://londonchoralservice.com",
-        "logo": {
-          "@type": "ImageObject",
-          "url": "https://londonchoralservice.com/assets/og-image.png"
+          "url": "https://londonchoralservice.com",
+          "logo": {
+            "@type": "ImageObject",
+            "url": "https://londonchoralservice.com/assets/og-image.png"
+          }
+        },
+        "mainEntityOfPage": {
+          "@type": "WebPage",
+          "@id": "https://londonchoralservice.com/music-guides/choosing-wedding-hymns.html"
         }
       },
-      "mainEntityOfPage": {
-        "@type": "WebPage",
-        "@id": "https://londonchoralservice.com/music-guides/choosing-wedding-hymns.html"
+      {
+        "@type": "LocalBusiness",
+        "@id": "https://londonchoralservice.com/#organization",
+        "name": "The London Choral Service"
+      },
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "https://londonchoralservice.com/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Music Guides",
+            "item": "https://londonchoralservice.com/music-guides/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 3,
+            "name": "Choosing Hymns for Your Wedding"
+          }
+        ]
+      },
+      {
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "How many hymns should a wedding have?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "A Church of England wedding typically has two or three hymns. Two is perfectly normal; three works well if you want music at different points throughout the service, such as after the entrance, mid-service, and before the couple leave."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "What are the most popular wedding hymns?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "The most popular wedding hymns include Love Divine All Loves Excelling, Jerusalem, Dear Lord and Father of Mankind, Guide Me O Thou Great Redeemer, All Things Bright and Beautiful, Lord of All Hopefulness, and Morning Has Broken."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Can we choose hymns if we are not religious?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "If you are having a civil ceremony, hymns will not be part of the programme. For church weddings, you can choose hymns based on familiarity and melody rather than personal faith. Many popular wedding hymns are chosen because guests know the tunes, not for religious reasons."
+            }
+          }
+        ]
       }
-    },
-    {
-      "@type": "LocalBusiness",
-      "@id": "https://londonchoralservice.com/#organization",
-      "name": "The London Choral Service",
-      "aggregateRating": {
-        "@type": "AggregateRating",
-        "ratingValue": "5",
-        "reviewCount": "4",
-        "bestRating": "5"
-      }
-    },
-    {
-      "@type": "BreadcrumbList",
-      "itemListElement": [
-        {
-          "@type": "ListItem",
-          "position": 1,
-          "name": "Home",
-          "item": "https://londonchoralservice.com/"
-        },
-        {
-          "@type": "ListItem",
-          "position": 2,
-          "name": "Music Guides",
-          "item": "https://londonchoralservice.com/music-guides/"
-        },
-        {
-          "@type": "ListItem",
-          "position": 3,
-          "name": "Choosing Hymns for Your Wedding"
-        }
-      ]
-    },
-    {
-      "@type": "FAQPage",
-      "mainEntity": [
-        {
-          "@type": "Question",
-          "name": "How many hymns should a wedding have?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "A Church of England wedding typically has two or three hymns. Two is perfectly normal; three works well if you want music at different points throughout the service, such as after the entrance, mid-service, and before the couple leave."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "What are the most popular wedding hymns?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "The most popular wedding hymns include Love Divine All Loves Excelling, Jerusalem, Dear Lord and Father of Mankind, Guide Me O Thou Great Redeemer, All Things Bright and Beautiful, Lord of All Hopefulness, and Morning Has Broken."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "Can we choose hymns if we are not religious?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "If you are having a civil ceremony, hymns will not be part of the programme. For church weddings, you can choose hymns based on familiarity and melody rather than personal faith. Many popular wedding hymns are chosen because guests know the tunes, not for religious reasons."
-          }
-        }
-      ]
-    },
-    {
-      "@type": "HowTo",
-      "name": "How to choose hymns for your wedding",
-      "description": "A practical guide to picking wedding hymns your guests will actually sing.",
-      "step": [
-        {
-          "@type": "HowToStep",
-          "name": "Decide how many hymns you need",
-          "text": "A Church of England wedding typically has two or three hymns. Check with your clergy about specific requirements for placement in the order of service."
-        },
-        {
-          "@type": "HowToStep",
-          "name": "Choose tunes your guests know",
-          "text": "Pick hymns with familiar melodies like Love Divine, Jerusalem, or Guide Me O Thou Great Redeemer. If you hum the tune and most friends would recognise it, you are on safe ground."
-        },
-        {
-          "@type": "HowToStep",
-          "name": "Consider less traditional choices",
-          "text": "Contemporary worship songs, folk hymns, and less commonly heard pieces can work well, but make sure your musicians know them properly and have the music well in advance."
-        },
-        {
-          "@type": "HowToStep",
-          "name": "Ensure your congregation will sing",
-          "text": "Book a professional choir to lead the singing, choose the well-known tune for each hymn, ensure good organ or piano accompaniment, and print the words clearly in your order of service."
-        }
-      ]
-    }
-  ]
-}
+    ]
+  }
   </script>
 
 </head>
@@ -1879,6 +2003,7 @@
             </ol>
           </nav>
           <h1>Choosing hymns for your wedding</h1>
+          <p class="guide-meta">By Luca Wetherall, Artistic Director &amp; Tutor in Music, University of Oxford</p>
           <p class="guide-meta">Published 28 February 2026</p>
           <hr class="rule">
         </div>
@@ -1996,6 +2121,17 @@
           <a href="../areas/cambridge.html">Cambridge</a>.
           <a href="../areas/">See all areas</a>.</p>
       </div>
+    </section>
+
+  
+    <section class="related-guides">
+      <h2>Related</h2>
+      <p><strong>If you&rsquo;re planning a wedding</strong> &mdash; see our <a href="../weddings.html">Weddings</a> page or <a href="../for-wedding-planners.html">information for wedding planners</a>.</p>
+      <ul>
+        <li><a href="be-thou-my-vision-wedding-hymn.html">Why Be Thou My Vision Is the Best Wedding Hymn</a></li>
+        <li><a href="jerusalem.html">Jerusalem — the most British of wedding hymns</a></li>
+        <li><a href="wedding-ceremony-music.html">A Complete Guide to Wedding Ceremony Music</a></li>
+      </ul>
     </section>
 
   </main>

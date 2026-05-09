@@ -2,6 +2,10 @@
 <html lang="en-GB">
 <head>
   <meta charset="UTF-8">
+  <!-- @include-start partials/head-extras.html -->
+<link rel="preload" href="/fonts/cormorant-garamond.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/source-serif-4.woff2" as="font" type="font/woff2" crossorigin>
+  <!-- @include-end partials/head-extras.html -->
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
   <!-- Google Analytics (GA4) — deferred until after load -->
@@ -29,15 +33,15 @@
     });
   </script>
 
-  <title>Funeral Singers &amp; Wedding Choirs in Reading — London Choral Service</title>
-  <meta name="description" content="Professional funeral singers, wedding choirs, and conservatoire-trained musicians in Reading and across Berkshire. Soloists, choirs, and instrumentalists for services at Reading Minster, Reading Crematorium, and venues throughout the area.">
+  <title>Funeral and wedding choirs in Reading</title>
+  <meta name="description" content="Professional funeral singers, wedding choirs, and conservatoire-trained musicians in Reading and across Berkshire.">
   <meta name="theme-color" content="#F7F3EE">
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://londonchoralservice.com/areas/reading.html">
   <link rel="alternate" hreflang="en-gb" href="https://londonchoralservice.com/areas/reading.html">
   <link rel="alternate" hreflang="x-default" href="https://londonchoralservice.com/areas/reading.html">
 
-  <meta property="og:title" content="Funeral Singers &amp; Wedding Choirs in Reading | London Choral Service">
+  <meta property="og:title" content="Funeral and wedding choirs in Reading">
   <meta property="og:description" content="Professional funeral singers, wedding choirs, and conservatoire-trained musicians in Reading and across Berkshire.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://londonchoralservice.com/areas/reading.html">
@@ -46,7 +50,7 @@
   <meta property="og:image" content="https://londonchoralservice.com/assets/og-image.png">
 
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Funeral Singers &amp; Wedding Choirs in Reading | London Choral Service">
+  <meta name="twitter:title" content="Funeral and wedding choirs in Reading">
   <meta name="twitter:description" content="Professional funeral singers, wedding choirs, and conservatoire-trained musicians in Reading and across Berkshire.">
   <meta name="twitter:image" content="https://londonchoralservice.com/assets/og-image.png">
   <link rel="dns-prefetch" href="https://www.googletagmanager.com">
@@ -1602,6 +1606,145 @@
         display: none;
       }
     }
+    
+    /* ═══════════════════════════════════
+       Pull Quote — Marquee Variant
+       (services.html hero treatment)
+       ═══════════════════════════════════ */
+    .pull-quote--marquee {
+      margin-block: 0 var(--space-2xl);
+      max-width: 30rem;
+    }
+    
+    .pull-quote--marquee p {
+      font-size: var(--text-3xl);
+      line-height: var(--leading-tight);
+    }
+    
+    .pull-quote--marquee::before {
+      font-size: 8rem;
+      top: -0.3em;
+      left: -0.08em;
+      opacity: 0.18;
+    }
+    
+    .pull-quote--marquee figcaption {
+      margin-top: var(--space-lg);
+    }
+    
+    /* ═══════════════════════════════════
+       Occasion List (services.html hub)
+       ═══════════════════════════════════ */
+    .occasion-list {
+      list-style: none;
+      padding-left: 0;
+      margin: 0 0 var(--space-2xl);
+    }
+    
+    .occasion-list li {
+      display: grid;
+      grid-template-columns: minmax(0, 14rem) 1fr;
+      gap: var(--space-2xl);
+      padding-block: var(--space-xl);
+      border-top: 1px solid var(--color-rule);
+      margin: 0;
+    }
+    
+    .occasion-list li:last-child {
+      border-bottom: 1px solid var(--color-rule);
+    }
+    
+    .occasion-list h3 {
+      font-size: var(--text-xl);
+      font-weight: 400;
+      margin: 0;
+    }
+    
+    .occasion-list p {
+      color: var(--color-text-mid);
+      margin-bottom: var(--space-md);
+    }
+    
+    .occasion-list .occasion-cta {
+      font-family: var(--font-heading);
+      font-weight: 500;
+      font-size: var(--text-base);
+      color: var(--color-accent);
+      text-decoration: none;
+    }
+    
+    .occasion-list .occasion-cta:hover {
+      color: var(--color-accent-hover);
+      text-decoration: underline;
+    }
+    
+    @media (max-width: 767px) {
+      .occasion-list li {
+        grid-template-columns: 1fr;
+        gap: var(--space-sm);
+      }
+    }
+    
+    /* ═══════════════════════════════════
+       Ensemble Grid (services.html)
+       ═══════════════════════════════════ */
+    .ensemble-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: var(--space-lg);
+      list-style: none;
+      padding: 0;
+      margin: var(--space-xl) 0 var(--space-2xl);
+    }
+    
+    .ensemble-grid li {
+      margin: 0;
+    }
+    
+    @media (max-width: 899px) {
+      .ensemble-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+    
+    @media (max-width: 599px) {
+      .ensemble-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    
+    .ensemble-card {
+      padding: var(--space-xl);
+      background-color: var(--color-bg-alt);
+      border: 1px solid transparent;
+      transition: border-color var(--transition-fast);
+      height: 100%;
+    }
+    
+    .ensemble-card:hover {
+      border-color: var(--color-accent);
+    }
+    
+    .ensemble-card h3 {
+      font-family: var(--font-heading);
+      font-size: var(--text-lg);
+      font-weight: 500;
+      margin-bottom: var(--space-xs);
+    }
+    
+    .ensemble-card .voices {
+      display: block;
+      font-family: var(--font-body);
+      font-size: var(--text-sm);
+      color: var(--color-text-mid);
+      margin-bottom: var(--space-md);
+      letter-spacing: 0.02em;
+    }
+    
+    .ensemble-card p {
+      color: var(--color-text-mid);
+      margin-bottom: 0;
+    }
     /* ═══════════════════════════════════
        Print Styles
        ═══════════════════════════════════ */
@@ -1690,108 +1833,103 @@
 
   <script type="application/ld+json">
   {
-  "@context": "https://schema.org",
-  "@graph": [
-    {
-      "@type": "Service",
-      "name": "Funeral Singers & Wedding Choirs in Reading",
-      "provider": {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Service",
+        "name": "Funeral Singers & Wedding Choirs in Reading",
+        "provider": {
+          "@type": "LocalBusiness",
+          "@id": "https://londonchoralservice.com/#organization"
+        },
+        "areaServed": {
+          "@type": "City",
+          "name": "Reading",
+          "containedInPlace": {
+            "@type": "AdministrativeArea",
+            "name": "Berkshire"
+          }
+        },
+        "description": "Professional funeral singers, wedding choirs, and conservatoire-trained musicians in Reading and across Berkshire.",
+        "url": "https://londonchoralservice.com/areas/reading.html",
+        "serviceType": [
+          "Funeral Music",
+          "Wedding Music",
+          "Memorial Music",
+          "Ceremony Music"
+        ],
+        "geo": {
+          "@type": "GeoCoordinates",
+          "latitude": 51.45427,
+          "longitude": -0.97813
+        }
+      },
+      {
         "@type": "LocalBusiness",
-        "name": "The London Choral Service",
-        "alternateName": "London Choral Service",
-        "url": "https://londonchoralservice.com",
-        "telephone": "+447356042468",
-        "email": "office@londonchoralservice.com"
+        "@id": "https://londonchoralservice.com/#organization",
+        "name": "The London Choral Service"
       },
-      "areaServed": {
-        "@type": "City",
-        "name": "Reading",
-        "containedInPlace": {
-          "@type": "AdministrativeArea",
-          "name": "Berkshire"
-        }
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "https://londonchoralservice.com/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Areas We Serve",
+            "item": "https://londonchoralservice.com/areas/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 3,
+            "name": "Reading"
+          }
+        ]
       },
-      "description": "Professional funeral singers, wedding choirs, and conservatoire-trained musicians in Reading and across Berkshire.",
-      "url": "https://londonchoralservice.com/areas/reading.html",
-      "serviceType": [
-        "Funeral Music",
-        "Wedding Music",
-        "Memorial Music",
-        "Ceremony Music"
-      ]
-    },
-    {
-      "@type": "LocalBusiness",
-      "@id": "https://londonchoralservice.com/#organization",
-      "name": "The London Choral Service",
-      "aggregateRating": {
-        "@type": "AggregateRating",
-        "ratingValue": "5",
-        "reviewCount": "4",
-        "bestRating": "5"
+      {
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "How much does a funeral singer cost in Reading?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "A soloist in Reading starts from £215, a small choir of four from £1,150, a quintet from £1,400, a sextet from £1,600, and a full choir of eight from £2,000. Reading is within comfortable reach of London, though a small travel supplement may apply for venues further out in Berkshire. All fees include liaison with your funeral director."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Can you provide a choir for a wedding in Reading?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes. Our wedding choirs perform at Reading Minster, St Giles' Church, and the lovely parish churches in Sonning, Pangbourne, Goring, and Henley-on-Thames. We also sing at civil ceremony venues and riverside hotels across the Thames Valley, and we tailor the ensemble and repertoire to suit your ceremony."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "What types of music can you perform at a funeral in Reading?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Our singers perform traditional hymns, classical sacred works, and contemporary songs. The medieval nave of Reading Minster carries choral music beautifully, while services at Reading Crematorium or Henley Road Cemetery and Crematorium often suit a soloist or smaller ensemble. We can also arrange any personal favourite for voices or instruments."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Do you cover crematorium services in Reading?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes. We sing regularly at Reading Crematorium and at Henley Road Cemetery and Crematorium, and our musicians are well accustomed to the timing and acoustic of both venues. We liaise directly with crematorium staff and your funeral director so the music fits seamlessly into the service."
+            }
+          }
+        ]
       }
-    },
-    {
-      "@type": "BreadcrumbList",
-      "itemListElement": [
-        {
-          "@type": "ListItem",
-          "position": 1,
-          "name": "Home",
-          "item": "https://londonchoralservice.com/"
-        },
-        {
-          "@type": "ListItem",
-          "position": 2,
-          "name": "Areas We Serve",
-          "item": "https://londonchoralservice.com/areas/"
-        },
-        {
-          "@type": "ListItem",
-          "position": 3,
-          "name": "Reading"
-        }
-      ]
-    },
-    {
-      "@type": "FAQPage",
-      "mainEntity": [
-        {
-          "@type": "Question",
-          "name": "How much does a funeral singer cost in Reading?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "A soloist in Reading starts from £215, a small choir of four from £1,150, a quintet from £1,400, a sextet from £1,600, and a full choir of eight from £2,000. Reading is within comfortable reach of London, though a small travel supplement may apply for venues further out in Berkshire. All fees include liaison with your funeral director."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "Can you provide a choir for a wedding in Reading?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Yes. Our wedding choirs perform at Reading Minster, St Giles' Church, and the lovely parish churches in Sonning, Pangbourne, Goring, and Henley-on-Thames. We also sing at civil ceremony venues and riverside hotels across the Thames Valley, and we tailor the ensemble and repertoire to suit your ceremony."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "What types of music can you perform at a funeral in Reading?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Our singers perform traditional hymns, classical sacred works, and contemporary songs. The medieval nave of Reading Minster carries choral music beautifully, while services at Reading Crematorium or Henley Road Cemetery and Crematorium often suit a soloist or smaller ensemble. We can also arrange any personal favourite for voices or instruments."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "Do you cover crematorium services in Reading?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Yes. We sing regularly at Reading Crematorium and at Henley Road Cemetery and Crematorium, and our musicians are well accustomed to the timing and acoustic of both venues. We liaise directly with crematorium staff and your funeral director so the music fits seamlessly into the service."
-          }
-        }
-      ]
-    }
-  ]
-}
+    ]
+  }
   </script>
 </head>
 <body>
@@ -1846,7 +1984,7 @@
             <li>Reading</li>
           </ol>
         </nav>
-        <h1>Funeral singers and choirs in Reading</h1>
+        <h1>Funeral and wedding choirs in Reading</h1>
         <p class="lede">Reading sits at the heart of Berkshire, where the Kennet meets the Thames and centuries-old churches stand alongside a modern, growing town. The London Choral Service provides professional singers, choirs, and instrumentalists for funerals, weddings, memorials, and ceremonies across Reading and the surrounding Berkshire countryside. Every musician on our roster is conservatoire-trained, and every performance is shaped with care around the occasion and the people it&rsquo;s for.</p>
         <hr class="rule">
       </div>

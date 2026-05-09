@@ -2,6 +2,10 @@
 <html lang="en-GB">
 <head>
   <meta charset="UTF-8">
+  <!-- @include-start partials/head-extras.html -->
+<link rel="preload" href="/fonts/cormorant-garamond.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/source-serif-4.woff2" as="font" type="font/woff2" crossorigin>
+  <!-- @include-end partials/head-extras.html -->
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
   <!-- Google Analytics (GA4) — deferred until after load -->
@@ -29,15 +33,15 @@
     });
   </script>
 
-  <title>Funeral Singers &amp; Wedding Choirs in Hackney — London Choral Service</title>
-  <meta name="description" content="Professional funeral singers and wedding choirs in Hackney. Conservatoire-trained musicians for funerals, weddings, memorials, and ceremonies. Part of The London Choral Service.">
+  <title>Funeral and wedding choirs in Hackney</title>
+  <meta name="description" content="Professional funeral singers and wedding choirs in Hackney. Conservatoire-trained musicians for funerals, weddings, memorials, and ceremonies.">
   <meta name="theme-color" content="#F7F3EE">
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://londonchoralservice.com/areas/london/hackney.html">
   <link rel="alternate" hreflang="en-gb" href="https://londonchoralservice.com/areas/london/hackney.html">
   <link rel="alternate" hreflang="x-default" href="https://londonchoralservice.com/areas/london/hackney.html">
 
-  <meta property="og:title" content="Funeral Singers &amp; Wedding Choirs in Hackney | London Choral Service">
+  <meta property="og:title" content="Funeral and wedding choirs in Hackney">
   <meta property="og:description" content="Professional funeral singers and wedding choirs in Hackney. Conservatoire-trained musicians for funerals, weddings, memorials, and ceremonies.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://londonchoralservice.com/areas/london/hackney.html">
@@ -46,7 +50,7 @@
   <meta property="og:image" content="https://londonchoralservice.com/assets/og-image.png">
 
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Funeral Singers &amp; Wedding Choirs in Hackney | London Choral Service">
+  <meta name="twitter:title" content="Funeral and wedding choirs in Hackney">
   <meta name="twitter:description" content="Professional funeral singers and wedding choirs in Hackney. Conservatoire-trained musicians for funerals, weddings, memorials, and ceremonies.">
   <meta name="twitter:image" content="https://londonchoralservice.com/assets/og-image.png">
   <link rel="dns-prefetch" href="https://www.googletagmanager.com">
@@ -1602,6 +1606,145 @@
         display: none;
       }
     }
+    
+    /* ═══════════════════════════════════
+       Pull Quote — Marquee Variant
+       (services.html hero treatment)
+       ═══════════════════════════════════ */
+    .pull-quote--marquee {
+      margin-block: 0 var(--space-2xl);
+      max-width: 30rem;
+    }
+    
+    .pull-quote--marquee p {
+      font-size: var(--text-3xl);
+      line-height: var(--leading-tight);
+    }
+    
+    .pull-quote--marquee::before {
+      font-size: 8rem;
+      top: -0.3em;
+      left: -0.08em;
+      opacity: 0.18;
+    }
+    
+    .pull-quote--marquee figcaption {
+      margin-top: var(--space-lg);
+    }
+    
+    /* ═══════════════════════════════════
+       Occasion List (services.html hub)
+       ═══════════════════════════════════ */
+    .occasion-list {
+      list-style: none;
+      padding-left: 0;
+      margin: 0 0 var(--space-2xl);
+    }
+    
+    .occasion-list li {
+      display: grid;
+      grid-template-columns: minmax(0, 14rem) 1fr;
+      gap: var(--space-2xl);
+      padding-block: var(--space-xl);
+      border-top: 1px solid var(--color-rule);
+      margin: 0;
+    }
+    
+    .occasion-list li:last-child {
+      border-bottom: 1px solid var(--color-rule);
+    }
+    
+    .occasion-list h3 {
+      font-size: var(--text-xl);
+      font-weight: 400;
+      margin: 0;
+    }
+    
+    .occasion-list p {
+      color: var(--color-text-mid);
+      margin-bottom: var(--space-md);
+    }
+    
+    .occasion-list .occasion-cta {
+      font-family: var(--font-heading);
+      font-weight: 500;
+      font-size: var(--text-base);
+      color: var(--color-accent);
+      text-decoration: none;
+    }
+    
+    .occasion-list .occasion-cta:hover {
+      color: var(--color-accent-hover);
+      text-decoration: underline;
+    }
+    
+    @media (max-width: 767px) {
+      .occasion-list li {
+        grid-template-columns: 1fr;
+        gap: var(--space-sm);
+      }
+    }
+    
+    /* ═══════════════════════════════════
+       Ensemble Grid (services.html)
+       ═══════════════════════════════════ */
+    .ensemble-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: var(--space-lg);
+      list-style: none;
+      padding: 0;
+      margin: var(--space-xl) 0 var(--space-2xl);
+    }
+    
+    .ensemble-grid li {
+      margin: 0;
+    }
+    
+    @media (max-width: 899px) {
+      .ensemble-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+    
+    @media (max-width: 599px) {
+      .ensemble-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    
+    .ensemble-card {
+      padding: var(--space-xl);
+      background-color: var(--color-bg-alt);
+      border: 1px solid transparent;
+      transition: border-color var(--transition-fast);
+      height: 100%;
+    }
+    
+    .ensemble-card:hover {
+      border-color: var(--color-accent);
+    }
+    
+    .ensemble-card h3 {
+      font-family: var(--font-heading);
+      font-size: var(--text-lg);
+      font-weight: 500;
+      margin-bottom: var(--space-xs);
+    }
+    
+    .ensemble-card .voices {
+      display: block;
+      font-family: var(--font-body);
+      font-size: var(--text-sm);
+      color: var(--color-text-mid);
+      margin-bottom: var(--space-md);
+      letter-spacing: 0.02em;
+    }
+    
+    .ensemble-card p {
+      color: var(--color-text-mid);
+      margin-bottom: 0;
+    }
     /* ═══════════════════════════════════
        Print Styles
        ═══════════════════════════════════ */
@@ -1690,115 +1833,110 @@
 
   <script type="application/ld+json">
   {
-  "@context": "https://schema.org",
-  "@graph": [
-    {
-      "@type": "Service",
-      "name": "Funeral Singers & Wedding Choirs in Hackney",
-      "url": "https://londonchoralservice.com/areas/london/hackney.html",
-      "description": "Professional funeral singers and wedding choirs in Hackney, London.",
-      "provider": {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Service",
+        "name": "Funeral Singers & Wedding Choirs in Hackney",
+        "url": "https://londonchoralservice.com/areas/london/hackney.html",
+        "description": "Professional funeral singers and wedding choirs in Hackney, London.",
+        "provider": {
+          "@type": "LocalBusiness",
+          "@id": "https://londonchoralservice.com/#organization"
+        },
+        "areaServed": {
+          "@type": "AdministrativeArea",
+          "name": "Hackney",
+          "containedInPlace": {
+            "@type": "City",
+            "name": "London",
+            "addressCountry": "GB"
+          }
+        },
+        "serviceType": [
+          "Funeral Music",
+          "Wedding Music",
+          "Memorial Music",
+          "Ceremony Music"
+        ],
+        "geo": {
+          "@type": "GeoCoordinates",
+          "latitude": 51.54487,
+          "longitude": -0.05538
+        }
+      },
+      {
         "@type": "LocalBusiness",
-        "name": "The London Choral Service",
-        "alternateName": "London Choral Service",
-        "url": "https://londonchoralservice.com",
-        "telephone": "+447356042468",
-        "email": "office@londonchoralservice.com"
+        "@id": "https://londonchoralservice.com/#organization",
+        "name": "The London Choral Service"
       },
-      "areaServed": {
-        "@type": "AdministrativeArea",
-        "name": "Hackney",
-        "containedInPlace": {
-          "@type": "City",
-          "name": "London",
-          "addressCountry": "GB"
-        }
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "https://londonchoralservice.com/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Areas We Serve",
+            "item": "https://londonchoralservice.com/areas/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 3,
+            "name": "London",
+            "item": "https://londonchoralservice.com/areas/london.html"
+          },
+          {
+            "@type": "ListItem",
+            "position": 4,
+            "name": "Hackney"
+          }
+        ]
       },
-      "serviceType": [
-        "Funeral Music",
-        "Wedding Music",
-        "Memorial Music",
-        "Ceremony Music"
-      ]
-    },
-    {
-      "@type": "LocalBusiness",
-      "@id": "https://londonchoralservice.com/#organization",
-      "name": "The London Choral Service",
-      "aggregateRating": {
-        "@type": "AggregateRating",
-        "ratingValue": "5",
-        "reviewCount": "4",
-        "bestRating": "5"
+      {
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "How much does a funeral singer cost in Hackney?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "For services at St John at Hackney, Abney Park Cemetery, St Mary of Eton, or any other venue in the borough, a soloist starts from £215. A small choir of four is from £1,150, a quintet from £1,400, a sextet from £1,600, and a full choir of eight from £2,000. All prices include travel within Greater London."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Can you provide a choir for a wedding in Hackney?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "We do. St John at Hackney on Mare Street is a magnificent church for a wedding choir, and its acoustic makes congregational singing feel effortless. We also perform at Hackney's many licensed venues — from restored warehouses to elegant town halls — with ensembles ranging from a solo vocalist to a full twelve-voice chorus."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "What types of music can you perform at a funeral in Hackney?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "At St John at Hackney, the soaring Georgian interior suits traditional hymns, psalms, and choral anthems particularly well. At Abney Park Cemetery or St Mary of Eton, we often perform more intimate, reflective pieces — contemporary songs, classical arias, or bespoke arrangements of something personally meaningful to the family."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Do you cover crematorium services in Hackney?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Hackney does not have its own crematorium, but we regularly sing at nearby crematoria including the City of London Cemetery and Crematorium and Manor Park. Our singers handle the logistics and liaise with funeral directors to ensure everything is coordinated smoothly on the day."
+            }
+          }
+        ]
       }
-    },
-    {
-      "@type": "BreadcrumbList",
-      "itemListElement": [
-        {
-          "@type": "ListItem",
-          "position": 1,
-          "name": "Home",
-          "item": "https://londonchoralservice.com/"
-        },
-        {
-          "@type": "ListItem",
-          "position": 2,
-          "name": "Areas We Serve",
-          "item": "https://londonchoralservice.com/areas/"
-        },
-        {
-          "@type": "ListItem",
-          "position": 3,
-          "name": "London",
-          "item": "https://londonchoralservice.com/areas/london.html"
-        },
-        {
-          "@type": "ListItem",
-          "position": 4,
-          "name": "Hackney"
-        }
-      ]
-    },
-    {
-      "@type": "FAQPage",
-      "mainEntity": [
-        {
-          "@type": "Question",
-          "name": "How much does a funeral singer cost in Hackney?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "For services at St John at Hackney, Abney Park Cemetery, St Mary of Eton, or any other venue in the borough, a soloist starts from £215. A small choir of four is from £1,150, a quintet from £1,400, a sextet from £1,600, and a full choir of eight from £2,000. All prices include travel within Greater London."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "Can you provide a choir for a wedding in Hackney?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "We do. St John at Hackney on Mare Street is a magnificent church for a wedding choir, and its acoustic makes congregational singing feel effortless. We also perform at Hackney's many licensed venues — from restored warehouses to elegant town halls — with ensembles ranging from a solo vocalist to a full twelve-voice chorus."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "What types of music can you perform at a funeral in Hackney?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "At St John at Hackney, the soaring Georgian interior suits traditional hymns, psalms, and choral anthems particularly well. At Abney Park Cemetery or St Mary of Eton, we often perform more intimate, reflective pieces — contemporary songs, classical arias, or bespoke arrangements of something personally meaningful to the family."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "Do you cover crematorium services in Hackney?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Hackney does not have its own crematorium, but we regularly sing at nearby crematoria including the City of London Cemetery and Crematorium and Manor Park. Our singers handle the logistics and liaise with funeral directors to ensure everything is coordinated smoothly on the day."
-          }
-        }
-      ]
-    }
-  ]
-}
+    ]
+  }
   </script>
 </head>
 <body>
@@ -1854,7 +1992,7 @@
             <li>Hackney</li>
           </ol>
         </nav>
-        <h1>Funeral singers and choirs in Hackney</h1>
+        <h1>Funeral and wedding choirs in Hackney</h1>
         <p class="lede">The London Borough of Hackney is one of east London&rsquo;s most culturally rich boroughs, home to communities in Stoke Newington, Dalston, Clapton, and Shoreditch. Our conservatoire-trained singers provide thoughtful, beautifully delivered music for funerals, weddings, and memorial services at churches, cemeteries, and ceremony venues throughout Hackney.</p>
         <hr class="rule">
       </div>
@@ -1870,7 +2008,7 @@
         <p>Hackney has become one of London&rsquo;s most sought-after boroughs for weddings, and its venues reflect the area&rsquo;s creative, independent spirit. St&nbsp;John at Hackney is a magnificent church for a wedding ceremony, and its acoustic makes congregational singing feel effortless and uplifting. For couples choosing civil ceremonies, Hackney&rsquo;s many licensed venues&thinsp;&mdash;&thinsp;from restored warehouses to elegant town halls&thinsp;&mdash;&thinsp;offer settings where a vocal soloist or small ensemble can create something truly memorable. We help couples plan their music from the first enquiry through to the day itself. Our <a href="../../music-guides/choosing-wedding-hymns.html">guide to choosing wedding hymns</a> offers practical advice for getting started.</p>
 
         <h2>Ensembles for weddings, funerals, and memorials</h2>
-        <p>Not every occasion calls for the same size of ensemble, and part of our job is helping you find the right balance for your venue, your budget, and the feeling you want to create. We offer everything from a single soloist&thinsp;&mdash;&thinsp;whose voice can hold a room in complete stillness&thinsp;&mdash;&thinsp;through to duets, quartets, octets, and a full twelve-voice chorus with instrumental accompaniment. Organists, harpists, and string players are also available. Visit our <a href="../../pricing.html">pricing page</a> for a clear guide to ensemble sizes and costs.</p>
+        <p>St&nbsp;John at Hackney has the kind of soaring Georgian interior that rewards more voices &mdash; for a wedding there a sextet or full eight-voice choir suits the building, and the acoustic makes even four singers sound bigger than the number suggests. St&nbsp;Mary of Eton, beside the Hackney Marshes, is more intimate, and a quartet generally fits the room better. For a graveside service at Abney Park Cemetery, a soloist or duo is usually more fitting than a full ensemble: a clear unaccompanied voice carries well outdoors and suits the reflective character of the place. For civil ceremonies in Hackney&rsquo;s converted warehouses and town halls, the right size depends on the room &mdash; a duo or quartet generally sits well in those spaces. Our <a href="../../pricing.html">pricing page</a> sets out the costs.</p>
 
         <figure class="pull-quote">
           <blockquote>
@@ -1901,7 +2039,7 @@
 
     <section class="section">
       <div class="prose">
-        <p class="text-sm text-mid">Nearby boroughs: <a href="islington.html">Islington</a> &middot; <a href="haringey.html">Haringey</a> &middot; <a href="waltham-forest.html">Waltham Forest</a> &middot; <a href="tower-hamlets.html">Tower Hamlets</a></p>
+        <p class="text-sm text-mid">Nearby boroughs: <a href="islington.html">Islington</a> &middot; <a href="tower-hamlets.html">Tower Hamlets</a> &middot; <a href="haringey.html">Haringey</a> &middot; <a href="waltham-forest.html">Waltham Forest</a> &middot; <a href="newham.html">Newham</a> &middot; <a href="city-of-london.html">City of London</a></p>
       </div>
     </section>
 

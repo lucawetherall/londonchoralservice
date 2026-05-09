@@ -2,6 +2,10 @@
 <html lang="en-GB">
 <head>
   <meta charset="UTF-8">
+  <!-- @include-start partials/head-extras.html -->
+<link rel="preload" href="/fonts/cormorant-garamond.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/source-serif-4.woff2" as="font" type="font/woff2" crossorigin>
+  <!-- @include-end partials/head-extras.html -->
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
   <!-- Google Analytics (GA4) — deferred until after load -->
@@ -29,16 +33,16 @@
     });
   </script>
 
-  <title>For Wedding Planners &amp; Venue Coordinators &mdash; London Choral Service</title>
-  <meta name="description" content="How professional wedding singers and choirs work alongside wedding planners and venue coordinators. Booking lead times, technical needs, on-the-day coordination, repertoire flexibility.">
+  <title>For Wedding Planners &amp; Venue Coordinators | LCS</title>
+  <meta name="description" content="How professional wedding singers and choirs work alongside wedding planners and venue coordinators.">
   <meta name="theme-color" content="#F7F3EE">
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://londonchoralservice.com/for-wedding-planners.html">
   <link rel="alternate" hreflang="en-gb" href="https://londonchoralservice.com/for-wedding-planners.html">
   <link rel="alternate" hreflang="x-default" href="https://londonchoralservice.com/for-wedding-planners.html">
 
-  <meta property="og:title" content="For Wedding Planners &amp; Venue Coordinators &mdash; London Choral Service">
-  <meta property="og:description" content="How professional wedding singers and choirs work alongside wedding planners and venue coordinators. Booking lead times, technical needs, on-the-day coordination, repertoire flexibility.">
+  <meta property="og:title" content="For Wedding Planners &amp; Venue Coordinators | LCS">
+  <meta property="og:description" content="How professional wedding singers and choirs work alongside wedding planners and venue coordinators.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://londonchoralservice.com/for-wedding-planners.html">
   <meta property="og:locale" content="en_GB">
@@ -46,8 +50,8 @@
   <meta property="og:image" content="https://londonchoralservice.com/assets/og-image.png">
 
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="For Wedding Planners &amp; Venue Coordinators &mdash; London Choral Service">
-  <meta name="twitter:description" content="How professional wedding singers and choirs work alongside wedding planners and venue coordinators. Booking lead times, technical needs, on-the-day coordination, repertoire flexibility.">
+  <meta name="twitter:title" content="For Wedding Planners &amp; Venue Coordinators | LCS">
+  <meta name="twitter:description" content="How professional wedding singers and choirs work alongside wedding planners and venue coordinators.">
   <meta name="twitter:image" content="https://londonchoralservice.com/assets/og-image.png">
   <link rel="dns-prefetch" href="https://www.googletagmanager.com">
   <link rel="dns-prefetch" href="https://api.web3forms.com">
@@ -1602,6 +1606,145 @@
         display: none;
       }
     }
+    
+    /* ═══════════════════════════════════
+       Pull Quote — Marquee Variant
+       (services.html hero treatment)
+       ═══════════════════════════════════ */
+    .pull-quote--marquee {
+      margin-block: 0 var(--space-2xl);
+      max-width: 30rem;
+    }
+    
+    .pull-quote--marquee p {
+      font-size: var(--text-3xl);
+      line-height: var(--leading-tight);
+    }
+    
+    .pull-quote--marquee::before {
+      font-size: 8rem;
+      top: -0.3em;
+      left: -0.08em;
+      opacity: 0.18;
+    }
+    
+    .pull-quote--marquee figcaption {
+      margin-top: var(--space-lg);
+    }
+    
+    /* ═══════════════════════════════════
+       Occasion List (services.html hub)
+       ═══════════════════════════════════ */
+    .occasion-list {
+      list-style: none;
+      padding-left: 0;
+      margin: 0 0 var(--space-2xl);
+    }
+    
+    .occasion-list li {
+      display: grid;
+      grid-template-columns: minmax(0, 14rem) 1fr;
+      gap: var(--space-2xl);
+      padding-block: var(--space-xl);
+      border-top: 1px solid var(--color-rule);
+      margin: 0;
+    }
+    
+    .occasion-list li:last-child {
+      border-bottom: 1px solid var(--color-rule);
+    }
+    
+    .occasion-list h3 {
+      font-size: var(--text-xl);
+      font-weight: 400;
+      margin: 0;
+    }
+    
+    .occasion-list p {
+      color: var(--color-text-mid);
+      margin-bottom: var(--space-md);
+    }
+    
+    .occasion-list .occasion-cta {
+      font-family: var(--font-heading);
+      font-weight: 500;
+      font-size: var(--text-base);
+      color: var(--color-accent);
+      text-decoration: none;
+    }
+    
+    .occasion-list .occasion-cta:hover {
+      color: var(--color-accent-hover);
+      text-decoration: underline;
+    }
+    
+    @media (max-width: 767px) {
+      .occasion-list li {
+        grid-template-columns: 1fr;
+        gap: var(--space-sm);
+      }
+    }
+    
+    /* ═══════════════════════════════════
+       Ensemble Grid (services.html)
+       ═══════════════════════════════════ */
+    .ensemble-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: var(--space-lg);
+      list-style: none;
+      padding: 0;
+      margin: var(--space-xl) 0 var(--space-2xl);
+    }
+    
+    .ensemble-grid li {
+      margin: 0;
+    }
+    
+    @media (max-width: 899px) {
+      .ensemble-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+    
+    @media (max-width: 599px) {
+      .ensemble-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    
+    .ensemble-card {
+      padding: var(--space-xl);
+      background-color: var(--color-bg-alt);
+      border: 1px solid transparent;
+      transition: border-color var(--transition-fast);
+      height: 100%;
+    }
+    
+    .ensemble-card:hover {
+      border-color: var(--color-accent);
+    }
+    
+    .ensemble-card h3 {
+      font-family: var(--font-heading);
+      font-size: var(--text-lg);
+      font-weight: 500;
+      margin-bottom: var(--space-xs);
+    }
+    
+    .ensemble-card .voices {
+      display: block;
+      font-family: var(--font-body);
+      font-size: var(--text-sm);
+      color: var(--color-text-mid);
+      margin-bottom: var(--space-md);
+      letter-spacing: 0.02em;
+    }
+    
+    .ensemble-card p {
+      color: var(--color-text-mid);
+      margin-bottom: 0;
+    }
     /* ═══════════════════════════════════
        Print Styles
        ═══════════════════════════════════ */
@@ -1706,13 +1849,25 @@
           "@type": "BusinessAudience",
           "audienceType": "Wedding Planners and Venue Coordinators"
         },
-        "areaServed": { "@type": "Country", "name": "United Kingdom" }
+        "areaServed": {
+          "@type": "Country",
+          "name": "United Kingdom"
+        }
       },
       {
         "@type": "BreadcrumbList",
         "itemListElement": [
-          { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://londonchoralservice.com/" },
-          { "@type": "ListItem", "position": 2, "name": "For Wedding Planners" }
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "https://londonchoralservice.com/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "For Wedding Planners"
+          }
         ]
       },
       {
@@ -1755,13 +1910,7 @@
       {
         "@type": "LocalBusiness",
         "@id": "https://londonchoralservice.com/#organization",
-        "name": "The London Choral Service",
-        "aggregateRating": {
-          "@type": "AggregateRating",
-          "ratingValue": "5",
-          "reviewCount": "4",
-          "bestRating": "5"
-        }
+        "name": "The London Choral Service"
       }
     ]
   }
@@ -1829,7 +1978,7 @@
         <div class="hero-video">
           <div class="video-embed">
             <button class="video-thumb" aria-label="Play video" data-video="Lov_NegzVhM">
-              <img src="https://img.youtube.com/vi/Lov_NegzVhM/maxresdefault.jpg" alt="The London Choral Service" loading="lazy">
+              <img src="https://img.youtube.com/vi/Lov_NegzVhM/maxresdefault.jpg" alt="The London Choral Service" loading="lazy" width="1280" height="720">
               <svg class="play-btn" viewBox="0 0 68 48" aria-hidden="true">
                 <path d="M66.52 7.74c-.78-2.93-2.49-5.41-5.42-6.19C55.79.13 34 0 34 0S12.21.13 6.9 1.55c-2.93.78-4.63 3.26-5.42 6.19C.06 13.05 0 24 0 24s.06 10.95 1.48 16.26c.78 2.93 2.49 5.41 5.42 6.19C12.21 47.87 34 48 34 48s21.79-.13 27.1-1.55c2.93-.78 4.63-3.26 5.42-6.19C67.94 34.95 68 24 68 24s-.06-10.95-1.48-16.26z" fill="rgba(0,0,0,.7)"/>
                 <path d="M45 24 27 14v20z" fill="#fff"/>
@@ -1904,6 +2053,19 @@
           </div>
         </div>
         <p><a href="pricing.html">Full pricing with all ensemble options &rarr;</a></p>
+      </div>
+    </section>
+
+    <!-- Section 5b: Useful resources for couples -->
+    <section class="section useful-resources">
+      <div class="prose">
+        <h2>Useful resources for couples</h2>
+        <ul>
+          <li><a href="music-guides/wedding-ceremony-music.html">Choosing music for the wedding ceremony</a></li>
+          <li><a href="music-guides/choosing-wedding-hymns.html">How to choose wedding hymns your guests will sing</a></li>
+          <li><a href="music-guides/wedding-readings-and-music.html">Pairing readings with music</a></li>
+          <li><a href="music-guides/wedding-music-ideas.html">Wedding music ideas &mdash; beyond the obvious</a></li>
+        </ul>
       </div>
     </section>
 

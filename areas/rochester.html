@@ -2,6 +2,10 @@
 <html lang="en-GB">
 <head>
   <meta charset="UTF-8">
+  <!-- @include-start partials/head-extras.html -->
+<link rel="preload" href="/fonts/cormorant-garamond.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/source-serif-4.woff2" as="font" type="font/woff2" crossorigin>
+  <!-- @include-end partials/head-extras.html -->
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
   <!-- Google Analytics (GA4) — deferred until after load -->
@@ -29,15 +33,15 @@
     });
   </script>
 
-  <title>Funeral Singers &amp; Wedding Choirs in Rochester — London Choral Service</title>
-  <meta name="description" content="Professional funeral singers, wedding choirs, and ceremony musicians in Rochester and across Medway and north Kent. Conservatoire-trained vocalists and instrumentalists for services at Rochester Cathedral, St Nicholas Church, Medway Crematorium, and churches throughout the area.">
+  <title>Funeral and wedding choirs in Rochester</title>
+  <meta name="description" content="Professional funeral singers, wedding choirs, and ceremony musicians in Rochester and across Medway and north Kent.">
   <meta name="theme-color" content="#F7F3EE">
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://londonchoralservice.com/areas/rochester.html">
   <link rel="alternate" hreflang="en-gb" href="https://londonchoralservice.com/areas/rochester.html">
   <link rel="alternate" hreflang="x-default" href="https://londonchoralservice.com/areas/rochester.html">
 
-  <meta property="og:title" content="Funeral Singers &amp; Wedding Choirs in Rochester | London Choral Service">
+  <meta property="og:title" content="Funeral and wedding choirs in Rochester">
   <meta property="og:description" content="Professional funeral singers, wedding choirs, and ceremony musicians in Rochester and across Medway and north Kent.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://londonchoralservice.com/areas/rochester.html">
@@ -46,7 +50,7 @@
   <meta property="og:image" content="https://londonchoralservice.com/assets/og-image.png">
 
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Funeral Singers &amp; Wedding Choirs in Rochester | London Choral Service">
+  <meta name="twitter:title" content="Funeral and wedding choirs in Rochester">
   <meta name="twitter:description" content="Professional funeral singers, wedding choirs, and ceremony musicians in Rochester and across Medway and north Kent.">
   <meta name="twitter:image" content="https://londonchoralservice.com/assets/og-image.png">
   <link rel="dns-prefetch" href="https://www.googletagmanager.com">
@@ -1602,6 +1606,145 @@
         display: none;
       }
     }
+    
+    /* ═══════════════════════════════════
+       Pull Quote — Marquee Variant
+       (services.html hero treatment)
+       ═══════════════════════════════════ */
+    .pull-quote--marquee {
+      margin-block: 0 var(--space-2xl);
+      max-width: 30rem;
+    }
+    
+    .pull-quote--marquee p {
+      font-size: var(--text-3xl);
+      line-height: var(--leading-tight);
+    }
+    
+    .pull-quote--marquee::before {
+      font-size: 8rem;
+      top: -0.3em;
+      left: -0.08em;
+      opacity: 0.18;
+    }
+    
+    .pull-quote--marquee figcaption {
+      margin-top: var(--space-lg);
+    }
+    
+    /* ═══════════════════════════════════
+       Occasion List (services.html hub)
+       ═══════════════════════════════════ */
+    .occasion-list {
+      list-style: none;
+      padding-left: 0;
+      margin: 0 0 var(--space-2xl);
+    }
+    
+    .occasion-list li {
+      display: grid;
+      grid-template-columns: minmax(0, 14rem) 1fr;
+      gap: var(--space-2xl);
+      padding-block: var(--space-xl);
+      border-top: 1px solid var(--color-rule);
+      margin: 0;
+    }
+    
+    .occasion-list li:last-child {
+      border-bottom: 1px solid var(--color-rule);
+    }
+    
+    .occasion-list h3 {
+      font-size: var(--text-xl);
+      font-weight: 400;
+      margin: 0;
+    }
+    
+    .occasion-list p {
+      color: var(--color-text-mid);
+      margin-bottom: var(--space-md);
+    }
+    
+    .occasion-list .occasion-cta {
+      font-family: var(--font-heading);
+      font-weight: 500;
+      font-size: var(--text-base);
+      color: var(--color-accent);
+      text-decoration: none;
+    }
+    
+    .occasion-list .occasion-cta:hover {
+      color: var(--color-accent-hover);
+      text-decoration: underline;
+    }
+    
+    @media (max-width: 767px) {
+      .occasion-list li {
+        grid-template-columns: 1fr;
+        gap: var(--space-sm);
+      }
+    }
+    
+    /* ═══════════════════════════════════
+       Ensemble Grid (services.html)
+       ═══════════════════════════════════ */
+    .ensemble-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: var(--space-lg);
+      list-style: none;
+      padding: 0;
+      margin: var(--space-xl) 0 var(--space-2xl);
+    }
+    
+    .ensemble-grid li {
+      margin: 0;
+    }
+    
+    @media (max-width: 899px) {
+      .ensemble-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+    
+    @media (max-width: 599px) {
+      .ensemble-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    
+    .ensemble-card {
+      padding: var(--space-xl);
+      background-color: var(--color-bg-alt);
+      border: 1px solid transparent;
+      transition: border-color var(--transition-fast);
+      height: 100%;
+    }
+    
+    .ensemble-card:hover {
+      border-color: var(--color-accent);
+    }
+    
+    .ensemble-card h3 {
+      font-family: var(--font-heading);
+      font-size: var(--text-lg);
+      font-weight: 500;
+      margin-bottom: var(--space-xs);
+    }
+    
+    .ensemble-card .voices {
+      display: block;
+      font-family: var(--font-body);
+      font-size: var(--text-sm);
+      color: var(--color-text-mid);
+      margin-bottom: var(--space-md);
+      letter-spacing: 0.02em;
+    }
+    
+    .ensemble-card p {
+      color: var(--color-text-mid);
+      margin-bottom: 0;
+    }
     /* ═══════════════════════════════════
        Print Styles
        ═══════════════════════════════════ */
@@ -1690,102 +1833,101 @@
 
   <script type="application/ld+json">
   {
-  "@context": "https://schema.org",
-  "@graph": [
-    {
-      "@type": "Service",
-      "name": "Funeral Singers & Wedding Choirs in Rochester",
-      "url": "https://londonchoralservice.com/areas/rochester.html",
-      "description": "Professional funeral singers, wedding choirs, and ceremony musicians in Rochester and across Medway and north Kent.",
-      "provider": {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Service",
+        "name": "Funeral Singers & Wedding Choirs in Rochester",
+        "url": "https://londonchoralservice.com/areas/rochester.html",
+        "description": "Professional funeral singers, wedding choirs, and ceremony musicians in Rochester and across Medway and north Kent.",
+        "provider": {
+          "@type": "LocalBusiness",
+          "@id": "https://londonchoralservice.com/#organization",
+          "name": "The London Choral Service",
+          "alternateName": "London Choral Service"
+        },
+        "areaServed": {
+          "@type": "City",
+          "name": "Rochester"
+        },
+        "serviceType": [
+          "Funeral Music",
+          "Wedding Music",
+          "Memorial Music",
+          "Ceremony Music"
+        ],
+        "geo": {
+          "@type": "GeoCoordinates",
+          "latitude": 51.3882,
+          "longitude": 0.50537
+        }
+      },
+      {
         "@type": "LocalBusiness",
         "@id": "https://londonchoralservice.com/#organization",
-        "name": "The London Choral Service",
-        "alternateName": "London Choral Service"
+        "name": "The London Choral Service"
       },
-      "areaServed": {
-        "@type": "City",
-        "name": "Rochester"
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "https://londonchoralservice.com/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Areas We Serve",
+            "item": "https://londonchoralservice.com/areas/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 3,
+            "name": "Rochester"
+          }
+        ]
       },
-      "serviceType": [
-        "Funeral Music",
-        "Wedding Music",
-        "Memorial Music",
-        "Ceremony Music"
-      ]
-    },
-    {
-      "@type": "LocalBusiness",
-      "@id": "https://londonchoralservice.com/#organization",
-      "name": "The London Choral Service",
-      "aggregateRating": {
-        "@type": "AggregateRating",
-        "ratingValue": "5",
-        "reviewCount": "4",
-        "bestRating": "5"
+      {
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "How much does a funeral singer cost in Rochester?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "For funerals at Rochester Cathedral, St Nicholas Church, Medway Crematorium, and churches across the Medway towns and north Kent, a soloist starts from £215, a small choir of four from £1,150, a quintet from £1,400, a sextet from £1,600, and a full choir of eight from £2,000. Rochester is reasonably close to London, so travel costs are kept to a minimum, though a supplement may apply for venues further into Kent."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Can you provide a choir for a wedding in Rochester?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes. Rochester Cathedral — the second oldest in England — has a Norman nave that produces a wonderful sound for choral singing, and we also perform at St Nicholas Church and the many fine medieval and Georgian churches across Medway and north Kent. Ensembles range from a solo vocalist to a chorus of twelve, and we are always glad to learn new repertoire for your ceremony."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "What types of music can you perform at a funeral in Rochester?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Our singers cover the full range — traditional hymns such as Dear Lord and Father of Mankind and Ave Maria, classical sacred works, and contemporary or popular songs. Rochester Cathedral's ancient Norman nave lends a particular richness to choral pieces, but we adapt our approach to suit any venue in the Medway area, from a large church to a quiet crematorium chapel. Bespoke arrangements are always available."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Do you cover crematorium services in Rochester?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes. Medway Crematorium is the principal crematorium for the Rochester area, and our singers perform there regularly. They are familiar with its chapel, comfortable with its timed service format, and always liaise with both the crematorium staff and your funeral director well before the day to make sure everything goes smoothly."
+            }
+          }
+        ]
       }
-    },
-    {
-      "@type": "BreadcrumbList",
-      "itemListElement": [
-        {
-          "@type": "ListItem",
-          "position": 1,
-          "name": "Home",
-          "item": "https://londonchoralservice.com/"
-        },
-        {
-          "@type": "ListItem",
-          "position": 2,
-          "name": "Areas We Serve",
-          "item": "https://londonchoralservice.com/areas/"
-        },
-        {
-          "@type": "ListItem",
-          "position": 3,
-          "name": "Rochester"
-        }
-      ]
-    },
-    {
-      "@type": "FAQPage",
-      "mainEntity": [
-        {
-          "@type": "Question",
-          "name": "How much does a funeral singer cost in Rochester?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "For funerals at Rochester Cathedral, St Nicholas Church, Medway Crematorium, and churches across the Medway towns and north Kent, a soloist starts from £215, a small choir of four from £1,150, a quintet from £1,400, a sextet from £1,600, and a full choir of eight from £2,000. Rochester is reasonably close to London, so travel costs are kept to a minimum, though a supplement may apply for venues further into Kent."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "Can you provide a choir for a wedding in Rochester?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Yes. Rochester Cathedral — the second oldest in England — has a Norman nave that produces a wonderful sound for choral singing, and we also perform at St Nicholas Church and the many fine medieval and Georgian churches across Medway and north Kent. Ensembles range from a solo vocalist to a chorus of twelve, and we are always glad to learn new repertoire for your ceremony."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "What types of music can you perform at a funeral in Rochester?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Our singers cover the full range — traditional hymns such as Dear Lord and Father of Mankind and Ave Maria, classical sacred works, and contemporary or popular songs. Rochester Cathedral's ancient Norman nave lends a particular richness to choral pieces, but we adapt our approach to suit any venue in the Medway area, from a large church to a quiet crematorium chapel. Bespoke arrangements are always available."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "Do you cover crematorium services in Rochester?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Yes. Medway Crematorium is the principal crematorium for the Rochester area, and our singers perform there regularly. They are familiar with its chapel, comfortable with its timed service format, and always liaise with both the crematorium staff and your funeral director well before the day to make sure everything goes smoothly."
-          }
-        }
-      ]
-    }
-  ]
-}
+    ]
+  }
   </script>
 </head>
 <body>
@@ -1841,7 +1983,7 @@
           </ol>
         </nav>
 
-        <h1>Funeral singers and choirs in Rochester</h1>
+        <h1>Funeral and wedding choirs in Rochester</h1>
 
         <p class="lede">Rochester is one of England&rsquo;s oldest and most characterful cities, a place of ancient stone and literary heritage set on the banks of the River Medway. Charles Dickens loved it so dearly that it wove its way into almost everything he wrote, and the cathedral and castle that rise above the high street give the city a quiet grandeur that few places of its size can match. The London Choral Service provides professional singers, choirs, and instrumentalists for funerals, weddings, memorials, and ceremonies across Rochester, Medway, and north Kent, bringing the care and musicianship that occasions of this importance deserve.</p>
 

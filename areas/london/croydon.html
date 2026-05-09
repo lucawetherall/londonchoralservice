@@ -2,6 +2,10 @@
 <html lang="en-GB">
 <head>
   <meta charset="UTF-8">
+  <!-- @include-start partials/head-extras.html -->
+<link rel="preload" href="/fonts/cormorant-garamond.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/source-serif-4.woff2" as="font" type="font/woff2" crossorigin>
+  <!-- @include-end partials/head-extras.html -->
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
   <!-- Google Analytics (GA4) — deferred until after load -->
@@ -29,7 +33,7 @@
     });
   </script>
 
-  <title>Funeral Singers &amp; Wedding Choirs in Croydon — London Choral Service</title>
+  <title>Funeral and wedding choirs in Croydon</title>
   <meta name="description" content="Professional funeral singers and wedding choirs in Croydon, London. Conservatoire-trained musicians for funerals, weddings, memorials, and ceremonies.">
   <meta name="theme-color" content="#F7F3EE">
   <meta name="robots" content="index, follow">
@@ -37,8 +41,8 @@
   <link rel="alternate" hreflang="en-gb" href="https://londonchoralservice.com/areas/london/croydon.html">
   <link rel="alternate" hreflang="x-default" href="https://londonchoralservice.com/areas/london/croydon.html">
 
-  <meta property="og:title" content="Funeral Singers &amp; Wedding Choirs in Croydon | London Choral Service">
-  <meta property="og:description" content="Professional funeral singers and wedding choirs in Croydon, London. Conservatoire-trained musicians for funerals, weddings, and ceremonies.">
+  <meta property="og:title" content="Funeral and wedding choirs in Croydon">
+  <meta property="og:description" content="Professional funeral singers and wedding choirs in Croydon, London. Conservatoire-trained musicians for funerals, weddings, memorials, and ceremonies.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://londonchoralservice.com/areas/london/croydon.html">
   <meta property="og:locale" content="en_GB">
@@ -46,8 +50,8 @@
   <meta property="og:image" content="https://londonchoralservice.com/assets/og-image.png">
 
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Funeral Singers &amp; Wedding Choirs in Croydon | London Choral Service">
-  <meta name="twitter:description" content="Professional funeral singers and wedding choirs in Croydon, London.">
+  <meta name="twitter:title" content="Funeral and wedding choirs in Croydon">
+  <meta name="twitter:description" content="Professional funeral singers and wedding choirs in Croydon, London. Conservatoire-trained musicians for funerals, weddings, memorials, and ceremonies.">
   <meta name="twitter:image" content="https://londonchoralservice.com/assets/og-image.png">
   <link rel="dns-prefetch" href="https://www.googletagmanager.com">
   <link rel="dns-prefetch" href="https://api.web3forms.com">
@@ -1602,6 +1606,145 @@
         display: none;
       }
     }
+    
+    /* ═══════════════════════════════════
+       Pull Quote — Marquee Variant
+       (services.html hero treatment)
+       ═══════════════════════════════════ */
+    .pull-quote--marquee {
+      margin-block: 0 var(--space-2xl);
+      max-width: 30rem;
+    }
+    
+    .pull-quote--marquee p {
+      font-size: var(--text-3xl);
+      line-height: var(--leading-tight);
+    }
+    
+    .pull-quote--marquee::before {
+      font-size: 8rem;
+      top: -0.3em;
+      left: -0.08em;
+      opacity: 0.18;
+    }
+    
+    .pull-quote--marquee figcaption {
+      margin-top: var(--space-lg);
+    }
+    
+    /* ═══════════════════════════════════
+       Occasion List (services.html hub)
+       ═══════════════════════════════════ */
+    .occasion-list {
+      list-style: none;
+      padding-left: 0;
+      margin: 0 0 var(--space-2xl);
+    }
+    
+    .occasion-list li {
+      display: grid;
+      grid-template-columns: minmax(0, 14rem) 1fr;
+      gap: var(--space-2xl);
+      padding-block: var(--space-xl);
+      border-top: 1px solid var(--color-rule);
+      margin: 0;
+    }
+    
+    .occasion-list li:last-child {
+      border-bottom: 1px solid var(--color-rule);
+    }
+    
+    .occasion-list h3 {
+      font-size: var(--text-xl);
+      font-weight: 400;
+      margin: 0;
+    }
+    
+    .occasion-list p {
+      color: var(--color-text-mid);
+      margin-bottom: var(--space-md);
+    }
+    
+    .occasion-list .occasion-cta {
+      font-family: var(--font-heading);
+      font-weight: 500;
+      font-size: var(--text-base);
+      color: var(--color-accent);
+      text-decoration: none;
+    }
+    
+    .occasion-list .occasion-cta:hover {
+      color: var(--color-accent-hover);
+      text-decoration: underline;
+    }
+    
+    @media (max-width: 767px) {
+      .occasion-list li {
+        grid-template-columns: 1fr;
+        gap: var(--space-sm);
+      }
+    }
+    
+    /* ═══════════════════════════════════
+       Ensemble Grid (services.html)
+       ═══════════════════════════════════ */
+    .ensemble-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: var(--space-lg);
+      list-style: none;
+      padding: 0;
+      margin: var(--space-xl) 0 var(--space-2xl);
+    }
+    
+    .ensemble-grid li {
+      margin: 0;
+    }
+    
+    @media (max-width: 899px) {
+      .ensemble-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+    
+    @media (max-width: 599px) {
+      .ensemble-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    
+    .ensemble-card {
+      padding: var(--space-xl);
+      background-color: var(--color-bg-alt);
+      border: 1px solid transparent;
+      transition: border-color var(--transition-fast);
+      height: 100%;
+    }
+    
+    .ensemble-card:hover {
+      border-color: var(--color-accent);
+    }
+    
+    .ensemble-card h3 {
+      font-family: var(--font-heading);
+      font-size: var(--text-lg);
+      font-weight: 500;
+      margin-bottom: var(--space-xs);
+    }
+    
+    .ensemble-card .voices {
+      display: block;
+      font-family: var(--font-body);
+      font-size: var(--text-sm);
+      color: var(--color-text-mid);
+      margin-bottom: var(--space-md);
+      letter-spacing: 0.02em;
+    }
+    
+    .ensemble-card p {
+      color: var(--color-text-mid);
+      margin-bottom: 0;
+    }
     /* ═══════════════════════════════════
        Print Styles
        ═══════════════════════════════════ */
@@ -1690,115 +1833,110 @@
 
   <script type="application/ld+json">
   {
-  "@context": "https://schema.org",
-  "@graph": [
-    {
-      "@type": "Service",
-      "name": "Funeral Singers & Wedding Choirs in Croydon",
-      "url": "https://londonchoralservice.com/areas/london/croydon.html",
-      "description": "Professional funeral singers and wedding choirs in Croydon, London.",
-      "provider": {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Service",
+        "name": "Funeral Singers & Wedding Choirs in Croydon",
+        "url": "https://londonchoralservice.com/areas/london/croydon.html",
+        "description": "Professional funeral singers and wedding choirs in Croydon, London.",
+        "provider": {
+          "@type": "LocalBusiness",
+          "@id": "https://londonchoralservice.com/#organization"
+        },
+        "areaServed": {
+          "@type": "AdministrativeArea",
+          "name": "London Borough of Croydon",
+          "containedInPlace": {
+            "@type": "City",
+            "name": "London",
+            "addressCountry": "GB"
+          }
+        },
+        "serviceType": [
+          "Funeral Music",
+          "Wedding Music",
+          "Memorial Music",
+          "Ceremony Music"
+        ],
+        "geo": {
+          "@type": "GeoCoordinates",
+          "latitude": 51.37214,
+          "longitude": -0.10222
+        }
+      },
+      {
         "@type": "LocalBusiness",
-        "name": "The London Choral Service",
-        "alternateName": "London Choral Service",
-        "url": "https://londonchoralservice.com",
-        "telephone": "+447356042468",
-        "email": "office@londonchoralservice.com"
+        "@id": "https://londonchoralservice.com/#organization",
+        "name": "The London Choral Service"
       },
-      "areaServed": {
-        "@type": "AdministrativeArea",
-        "name": "London Borough of Croydon",
-        "containedInPlace": {
-          "@type": "City",
-          "name": "London",
-          "addressCountry": "GB"
-        }
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "https://londonchoralservice.com/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Areas We Serve",
+            "item": "https://londonchoralservice.com/areas/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 3,
+            "name": "London",
+            "item": "https://londonchoralservice.com/areas/london.html"
+          },
+          {
+            "@type": "ListItem",
+            "position": 4,
+            "name": "Croydon"
+          }
+        ]
       },
-      "serviceType": [
-        "Funeral Music",
-        "Wedding Music",
-        "Memorial Music",
-        "Ceremony Music"
-      ]
-    },
-    {
-      "@type": "LocalBusiness",
-      "@id": "https://londonchoralservice.com/#organization",
-      "name": "The London Choral Service",
-      "aggregateRating": {
-        "@type": "AggregateRating",
-        "ratingValue": "5",
-        "reviewCount": "4",
-        "bestRating": "5"
+      {
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "How much does a funeral singer cost in Croydon?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "For services at Croydon Minster, Croydon Crematorium, or any other venue in the borough, a soloist starts from £215. A small choir of four is from £1,150, a quintet from £1,400, a sextet from £1,600, and a full choir of eight from £2,000. All prices include travel within Greater London."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Can you provide a choir for a wedding in Croydon?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes. Croydon Minster is a grand and beautiful church for a wedding, and we also sing at parish churches in Sanderstead, Purley, and Selsdon. We provide anything from a solo vocalist to a twelve-voice chorus and take care of all the musical planning."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "What types of music can you perform at a funeral in Croydon?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Our repertoire spans traditional hymns, classical sacred works, and contemporary songs. The spacious interior and fine organ at Croydon Minster suit larger choral ensembles, while at Croydon Crematorium or Mitcham Road Cemetery a solo voice or small group is often the most fitting choice."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Do you cover crematorium services in Croydon?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes. We sing at Croydon Crematorium on Mitcham Road regularly and are familiar with its chapel layout and timing requirements. Our singers arrive early, liaise with crematorium staff, and ensure the music fits precisely within the allotted service time."
+            }
+          }
+        ]
       }
-    },
-    {
-      "@type": "BreadcrumbList",
-      "itemListElement": [
-        {
-          "@type": "ListItem",
-          "position": 1,
-          "name": "Home",
-          "item": "https://londonchoralservice.com/"
-        },
-        {
-          "@type": "ListItem",
-          "position": 2,
-          "name": "Areas We Serve",
-          "item": "https://londonchoralservice.com/areas/"
-        },
-        {
-          "@type": "ListItem",
-          "position": 3,
-          "name": "London",
-          "item": "https://londonchoralservice.com/areas/london.html"
-        },
-        {
-          "@type": "ListItem",
-          "position": 4,
-          "name": "Croydon"
-        }
-      ]
-    },
-    {
-      "@type": "FAQPage",
-      "mainEntity": [
-        {
-          "@type": "Question",
-          "name": "How much does a funeral singer cost in Croydon?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "For services at Croydon Minster, Croydon Crematorium, or any other venue in the borough, a soloist starts from £215. A small choir of four is from £1,150, a quintet from £1,400, a sextet from £1,600, and a full choir of eight from £2,000. All prices include travel within Greater London."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "Can you provide a choir for a wedding in Croydon?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Yes. Croydon Minster is a grand and beautiful church for a wedding, and we also sing at parish churches in Sanderstead, Purley, and Selsdon. We provide anything from a solo vocalist to a twelve-voice chorus and take care of all the musical planning."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "What types of music can you perform at a funeral in Croydon?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Our repertoire spans traditional hymns, classical sacred works, and contemporary songs. The spacious interior and fine organ at Croydon Minster suit larger choral ensembles, while at Croydon Crematorium or Mitcham Road Cemetery a solo voice or small group is often the most fitting choice."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "Do you cover crematorium services in Croydon?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Yes. We sing at Croydon Crematorium on Mitcham Road regularly and are familiar with its chapel layout and timing requirements. Our singers arrive early, liaise with crematorium staff, and ensure the music fits precisely within the allotted service time."
-          }
-        }
-      ]
-    }
-  ]
-}
+    ]
+  }
   </script>
 </head>
 <body>
@@ -1854,7 +1992,7 @@
             <li>Croydon</li>
           </ol>
         </nav>
-        <h1>Funeral singers and choirs in Croydon</h1>
+        <h1>Funeral and wedding choirs in Croydon</h1>
         <p class="lede">Croydon is one of South London&rsquo;s largest and most populous boroughs, with a rich history that stretches back to Saxon times. We provide professional singers and choirs for funerals, weddings, memorials, and ceremonies at churches, crematoria, and cemeteries throughout the borough, from the town centre to Purley, Sanderstead, and South Norwood.</p>
         <hr class="rule">
       </div>
@@ -1871,7 +2009,7 @@
         <p>From the grandeur of Croydon Minster to the quaint charm of smaller parish churches in Sanderstead, Purley, and Selsdon, the borough offers couples a fine choice of wedding venues. A professional choir brings an unmistakable quality to any wedding ceremony, filling the church with sound that recorded music cannot replicate. Our singers will help you choose hymns, anthems, and choral pieces that suit both the venue and the tone of your celebration. For ideas and inspiration, browse our guide to <a href="../../music-guides/choosing-wedding-hymns.html">choosing wedding hymns</a>.</p>
 
         <h2>Ensembles for weddings, funerals, and memorials</h2>
-        <p>Not every occasion calls for the same size of ensemble, and part of our job is helping you find the right balance for your venue, your budget, and the feeling you want to create. We offer everything from a single soloist&thinsp;&mdash;&thinsp;whose voice can hold a room in complete stillness&thinsp;&mdash;&thinsp;through to duets, quartets, octets, and a full twelve-voice chorus with instrumental accompaniment. Organists, harpists, and string players are also available. Visit our <a href="../../pricing.html">pricing page</a> for a clear guide to ensemble sizes and costs.</p>
+        <p>Croydon Minster is a large church with a generous acoustic, and a sextet or full eight-voice choir is usually the right call there &mdash; the volume of the building rewards more voices, and processional hymns sit better with a fuller sound. St&nbsp;John the Baptist Old Town is more intimate; a quartet tends to suit the room well. For services at Mitcham Road Cemetery, where the chapel is smaller and timings are tight, a quartet keeps things compact without losing musical weight. The smaller parish churches in Sanderstead, Purley, and Selsdon also sit comfortably with a quartet. For a graveside committal, a soloist or duo is often more fitting than a larger group. Our <a href="../../pricing.html">pricing page</a> sets out costs by ensemble size.</p>
 
         <figure class="pull-quote">
           <blockquote>
@@ -1902,7 +2040,7 @@
 
     <section class="section">
       <div class="prose">
-        <p class="text-sm text-mid">Nearby boroughs: <a href="bromley.html">Bromley</a> &middot; <a href="lewisham.html">Lewisham</a> &middot; <a href="lambeth.html">Lambeth</a> &middot; <a href="merton.html">Merton</a></p>
+        <p class="text-sm text-mid">Nearby boroughs: <a href="lambeth.html">Lambeth</a> &middot; <a href="lewisham.html">Lewisham</a> &middot; <a href="bromley.html">Bromley</a> &middot; <a href="sutton.html">Sutton</a> &middot; <a href="merton.html">Merton</a></p>
       </div>
     </section>
 

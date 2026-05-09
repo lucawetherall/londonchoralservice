@@ -2,6 +2,10 @@
 <html lang="en-GB">
 <head>
   <meta charset="UTF-8">
+  <!-- @include-start partials/head-extras.html -->
+<link rel="preload" href="/fonts/cormorant-garamond.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/source-serif-4.woff2" as="font" type="font/woff2" crossorigin>
+  <!-- @include-end partials/head-extras.html -->
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
   <!-- Google Analytics (GA4) — deferred until after load -->
@@ -29,7 +33,7 @@
     });
   </script>
 
-  <title>Funeral Singers &amp; Wedding Choirs in Ealing — London Choral Service</title>
+  <title>Funeral and wedding choirs in Ealing</title>
   <meta name="description" content="Professional funeral singers and wedding choirs in Ealing, London. Conservatoire-trained musicians for funerals, weddings, memorials, and ceremonies.">
   <meta name="theme-color" content="#F7F3EE">
   <meta name="robots" content="index, follow">
@@ -37,8 +41,8 @@
   <link rel="alternate" hreflang="en-gb" href="https://londonchoralservice.com/areas/london/ealing.html">
   <link rel="alternate" hreflang="x-default" href="https://londonchoralservice.com/areas/london/ealing.html">
 
-  <meta property="og:title" content="Funeral Singers &amp; Wedding Choirs in Ealing | London Choral Service">
-  <meta property="og:description" content="Professional funeral singers and wedding choirs in Ealing, London. Conservatoire-trained musicians for funerals, weddings, and ceremonies.">
+  <meta property="og:title" content="Funeral and wedding choirs in Ealing">
+  <meta property="og:description" content="Professional funeral singers and wedding choirs in Ealing, London. Conservatoire-trained musicians for funerals, weddings, memorials, and ceremonies.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://londonchoralservice.com/areas/london/ealing.html">
   <meta property="og:locale" content="en_GB">
@@ -46,8 +50,8 @@
   <meta property="og:image" content="https://londonchoralservice.com/assets/og-image.png">
 
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Funeral Singers &amp; Wedding Choirs in Ealing | London Choral Service">
-  <meta name="twitter:description" content="Professional funeral singers and wedding choirs in Ealing, London.">
+  <meta name="twitter:title" content="Funeral and wedding choirs in Ealing">
+  <meta name="twitter:description" content="Professional funeral singers and wedding choirs in Ealing, London. Conservatoire-trained musicians for funerals, weddings, memorials, and ceremonies.">
   <meta name="twitter:image" content="https://londonchoralservice.com/assets/og-image.png">
   <link rel="dns-prefetch" href="https://www.googletagmanager.com">
   <link rel="dns-prefetch" href="https://api.web3forms.com">
@@ -1602,6 +1606,145 @@
         display: none;
       }
     }
+    
+    /* ═══════════════════════════════════
+       Pull Quote — Marquee Variant
+       (services.html hero treatment)
+       ═══════════════════════════════════ */
+    .pull-quote--marquee {
+      margin-block: 0 var(--space-2xl);
+      max-width: 30rem;
+    }
+    
+    .pull-quote--marquee p {
+      font-size: var(--text-3xl);
+      line-height: var(--leading-tight);
+    }
+    
+    .pull-quote--marquee::before {
+      font-size: 8rem;
+      top: -0.3em;
+      left: -0.08em;
+      opacity: 0.18;
+    }
+    
+    .pull-quote--marquee figcaption {
+      margin-top: var(--space-lg);
+    }
+    
+    /* ═══════════════════════════════════
+       Occasion List (services.html hub)
+       ═══════════════════════════════════ */
+    .occasion-list {
+      list-style: none;
+      padding-left: 0;
+      margin: 0 0 var(--space-2xl);
+    }
+    
+    .occasion-list li {
+      display: grid;
+      grid-template-columns: minmax(0, 14rem) 1fr;
+      gap: var(--space-2xl);
+      padding-block: var(--space-xl);
+      border-top: 1px solid var(--color-rule);
+      margin: 0;
+    }
+    
+    .occasion-list li:last-child {
+      border-bottom: 1px solid var(--color-rule);
+    }
+    
+    .occasion-list h3 {
+      font-size: var(--text-xl);
+      font-weight: 400;
+      margin: 0;
+    }
+    
+    .occasion-list p {
+      color: var(--color-text-mid);
+      margin-bottom: var(--space-md);
+    }
+    
+    .occasion-list .occasion-cta {
+      font-family: var(--font-heading);
+      font-weight: 500;
+      font-size: var(--text-base);
+      color: var(--color-accent);
+      text-decoration: none;
+    }
+    
+    .occasion-list .occasion-cta:hover {
+      color: var(--color-accent-hover);
+      text-decoration: underline;
+    }
+    
+    @media (max-width: 767px) {
+      .occasion-list li {
+        grid-template-columns: 1fr;
+        gap: var(--space-sm);
+      }
+    }
+    
+    /* ═══════════════════════════════════
+       Ensemble Grid (services.html)
+       ═══════════════════════════════════ */
+    .ensemble-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: var(--space-lg);
+      list-style: none;
+      padding: 0;
+      margin: var(--space-xl) 0 var(--space-2xl);
+    }
+    
+    .ensemble-grid li {
+      margin: 0;
+    }
+    
+    @media (max-width: 899px) {
+      .ensemble-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+    
+    @media (max-width: 599px) {
+      .ensemble-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    
+    .ensemble-card {
+      padding: var(--space-xl);
+      background-color: var(--color-bg-alt);
+      border: 1px solid transparent;
+      transition: border-color var(--transition-fast);
+      height: 100%;
+    }
+    
+    .ensemble-card:hover {
+      border-color: var(--color-accent);
+    }
+    
+    .ensemble-card h3 {
+      font-family: var(--font-heading);
+      font-size: var(--text-lg);
+      font-weight: 500;
+      margin-bottom: var(--space-xs);
+    }
+    
+    .ensemble-card .voices {
+      display: block;
+      font-family: var(--font-body);
+      font-size: var(--text-sm);
+      color: var(--color-text-mid);
+      margin-bottom: var(--space-md);
+      letter-spacing: 0.02em;
+    }
+    
+    .ensemble-card p {
+      color: var(--color-text-mid);
+      margin-bottom: 0;
+    }
     /* ═══════════════════════════════════
        Print Styles
        ═══════════════════════════════════ */
@@ -1690,115 +1833,110 @@
 
   <script type="application/ld+json">
   {
-  "@context": "https://schema.org",
-  "@graph": [
-    {
-      "@type": "Service",
-      "name": "Funeral Singers & Wedding Choirs in Ealing",
-      "url": "https://londonchoralservice.com/areas/london/ealing.html",
-      "description": "Professional funeral singers and wedding choirs in Ealing, London.",
-      "provider": {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Service",
+        "name": "Funeral Singers & Wedding Choirs in Ealing",
+        "url": "https://londonchoralservice.com/areas/london/ealing.html",
+        "description": "Professional funeral singers and wedding choirs in Ealing, London.",
+        "provider": {
+          "@type": "LocalBusiness",
+          "@id": "https://londonchoralservice.com/#organization"
+        },
+        "areaServed": {
+          "@type": "AdministrativeArea",
+          "name": "London Borough of Ealing",
+          "containedInPlace": {
+            "@type": "City",
+            "name": "London",
+            "addressCountry": "GB"
+          }
+        },
+        "serviceType": [
+          "Funeral Music",
+          "Wedding Music",
+          "Memorial Music",
+          "Ceremony Music"
+        ],
+        "geo": {
+          "@type": "GeoCoordinates",
+          "latitude": 51.51308,
+          "longitude": -0.30496
+        }
+      },
+      {
         "@type": "LocalBusiness",
-        "name": "The London Choral Service",
-        "alternateName": "London Choral Service",
-        "url": "https://londonchoralservice.com",
-        "telephone": "+447356042468",
-        "email": "office@londonchoralservice.com"
+        "@id": "https://londonchoralservice.com/#organization",
+        "name": "The London Choral Service"
       },
-      "areaServed": {
-        "@type": "AdministrativeArea",
-        "name": "London Borough of Ealing",
-        "containedInPlace": {
-          "@type": "City",
-          "name": "London",
-          "addressCountry": "GB"
-        }
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "https://londonchoralservice.com/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Areas We Serve",
+            "item": "https://londonchoralservice.com/areas/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 3,
+            "name": "London",
+            "item": "https://londonchoralservice.com/areas/london.html"
+          },
+          {
+            "@type": "ListItem",
+            "position": 4,
+            "name": "Ealing"
+          }
+        ]
       },
-      "serviceType": [
-        "Funeral Music",
-        "Wedding Music",
-        "Memorial Music",
-        "Ceremony Music"
-      ]
-    },
-    {
-      "@type": "LocalBusiness",
-      "@id": "https://londonchoralservice.com/#organization",
-      "name": "The London Choral Service",
-      "aggregateRating": {
-        "@type": "AggregateRating",
-        "ratingValue": "5",
-        "reviewCount": "4",
-        "bestRating": "5"
+      {
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "How much does a funeral singer cost in Ealing?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "For services at St Mary's Ealing, South West Middlesex Crematorium, or Greenford Park Cemetery, a solo funeral singer starts from £215. A small choir of four is from £1,150, a quintet from £1,400, a sextet from £1,600, and a full choir of eight from £2,000. All prices include travel within Greater London."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Can you provide a choir for a wedding in Ealing?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Absolutely. We provide wedding choirs from a solo vocalist to a full twelve-voice ensemble for ceremonies at St Mary's Ealing, Pitzhanger Manor, and other licensed venues across the borough. We take care of all the musical planning so you can enjoy your day."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "What types of music can you perform at a funeral in Ealing?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "At churches like St Mary's Ealing we often sing traditional hymns, psalms, and sacred choral works, but we are equally comfortable with contemporary songs and popular pieces. We also prepare bespoke arrangements on request, so if there is a particular song that meant something to your loved one, we can make it work beautifully for voices."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Do you cover crematorium services in Ealing?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes. We sing regularly at South West Middlesex Crematorium and are familiar with its chapel layout and service timings. Our singers liaise directly with crematorium staff and your funeral director to ensure the music fits seamlessly within the allocated time."
+            }
+          }
+        ]
       }
-    },
-    {
-      "@type": "BreadcrumbList",
-      "itemListElement": [
-        {
-          "@type": "ListItem",
-          "position": 1,
-          "name": "Home",
-          "item": "https://londonchoralservice.com/"
-        },
-        {
-          "@type": "ListItem",
-          "position": 2,
-          "name": "Areas We Serve",
-          "item": "https://londonchoralservice.com/areas/"
-        },
-        {
-          "@type": "ListItem",
-          "position": 3,
-          "name": "London",
-          "item": "https://londonchoralservice.com/areas/london.html"
-        },
-        {
-          "@type": "ListItem",
-          "position": 4,
-          "name": "Ealing"
-        }
-      ]
-    },
-    {
-      "@type": "FAQPage",
-      "mainEntity": [
-        {
-          "@type": "Question",
-          "name": "How much does a funeral singer cost in Ealing?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "For services at St Mary's Ealing, South West Middlesex Crematorium, or Greenford Park Cemetery, a solo funeral singer starts from £215. A small choir of four is from £1,150, a quintet from £1,400, a sextet from £1,600, and a full choir of eight from £2,000. All prices include travel within Greater London."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "Can you provide a choir for a wedding in Ealing?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Absolutely. We provide wedding choirs from a solo vocalist to a full twelve-voice ensemble for ceremonies at St Mary's Ealing, Pitzhanger Manor, and other licensed venues across the borough. We take care of all the musical planning so you can enjoy your day."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "What types of music can you perform at a funeral in Ealing?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "At churches like St Mary's Ealing we often sing traditional hymns, psalms, and sacred choral works, but we are equally comfortable with contemporary songs and popular pieces. We also prepare bespoke arrangements on request, so if there is a particular song that meant something to your loved one, we can make it work beautifully for voices."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "Do you cover crematorium services in Ealing?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Yes. We sing regularly at South West Middlesex Crematorium and are familiar with its chapel layout and service timings. Our singers liaise directly with crematorium staff and your funeral director to ensure the music fits seamlessly within the allocated time."
-          }
-        }
-      ]
-    }
-  ]
-}
+    ]
+  }
   </script>
 </head>
 <body>
@@ -1853,7 +1991,7 @@
             <li>Ealing</li>
           </ol>
         </nav>
-        <h1>Funeral singers and choirs in Ealing</h1>
+        <h1>Funeral and wedding choirs in Ealing</h1>
         <p class="lede">Known as the &ldquo;Queen of the Suburbs,&rdquo; the London Borough of Ealing is a leafy and diverse corner of west London with a proud community spirit. The London Choral Service provides conservatoire-trained singers and instrumentalists for funerals, weddings, memorials, and ceremonies across Ealing, Greenford, Hanwell, Northolt, and Southall.</p>
         <hr class="rule">
       </div>
@@ -1863,13 +2001,14 @@
       <div class="prose">
         <h2>Funeral music in Ealing</h2>
         <p>We regularly sing at services throughout the borough, from the historic St&nbsp;Mary&rsquo;s Ealing&thinsp;&mdash;&thinsp;one of west London&rsquo;s finest parish churches&thinsp;&mdash;&thinsp;to South West Middlesex Crematorium and Greenford Park Cemetery. Our singers are equally at home in large, resonant naves and in the quieter setting of a crematorium chapel, adjusting their sound and repertoire to suit each space. Whether you would like traditional hymns, a choral setting of a psalm, or a well-loved song arranged for voices, our <a href="../../music-guides/funeral-music-guide.html">funeral music guide</a> can help you explore your options, and we are always happy to discuss your ideas by phone or email. Please <a href="../../contact.html">get in touch</a> at any time.</p>
+        <p>For practical guidance on music at crematorium services &mdash; timing, acoustics, and making a shorter service meaningful &mdash; see our <a href="../../music-guides/crematorium-music.html">guide to crematorium music</a>.</p>
         <p>Families across Ealing trust us to bring warmth and professionalism to the most important of days. We liaise directly with funeral directors and clergy so that the musical elements of the service run seamlessly, and we arrive in good time to rehearse and settle into the acoustic. From a single soloist singing <em>Pie Jesu</em> to a quartet performing a favourite hymn, we tailor every detail to your wishes. You can find a full overview of how we work on our <a href="../../services.html">services page</a>.</p>
 
         <h2>Wedding choirs in Ealing</h2>
         <p>Ealing&rsquo;s variety of wedding venues makes it easy to find a setting that reflects your personality as a couple. The elegant interior of St&nbsp;Mary&rsquo;s Ealing provides a traditional backdrop for a choral wedding, while the Regency splendour of Pitzhanger Manor offers something more intimate and distinctive. Our singers can also perform at licensed venues across the borough, bringing beautiful live music to civil ceremonies and receptions alike. For inspiration on hymns, anthems, and processional music, take a look at our <a href="../../music-guides/choosing-wedding-hymns.html">guide to choosing wedding hymns</a>.</p>
 
         <h2>Ensembles for weddings, funerals, and memorials</h2>
-        <p>Not every occasion calls for the same size of ensemble, and part of our job is helping you find the right balance for your venue, your budget, and the feeling you want to create. We offer everything from a single soloist&thinsp;&mdash;&thinsp;whose voice can hold a room in complete stillness&thinsp;&mdash;&thinsp;through to duets, quartets, octets, and a full twelve-voice chorus with instrumental accompaniment. Organists, harpists, and string players are also available. Visit our <a href="../../pricing.html">pricing page</a> for a clear guide to ensemble sizes and costs.</p>
+        <p>St&nbsp;Mary&rsquo;s Ealing is a substantial parish church with a fine resonance, and for a wedding there a sextet usually feels right &mdash; large enough to lead congregational hymns, small enough not to crowd the chancel. South West Middlesex Crematorium runs to a fixed service length, so a quartet is generally the right call: enough to carry a hymn confidently, compact enough to fit the chapel. Greenford Park Cemetery is a similar pick. For a wedding at Pitzhanger Manor, where the rooms are more intimate, a quartet or even a duo can feel more in keeping with the scale of the building. For a graveside or a short committal, two singers are usually plenty. Our <a href="../../pricing.html">pricing page</a> lists sizes and costs.</p>
 
         <figure class="pull-quote">
           <blockquote><p>&ldquo;I still can&rsquo;t talk about it without welling up. The moment they started singing, the whole room just fell silent. Dad would have been so chuffed.&rdquo;</p></blockquote>
@@ -1898,7 +2037,7 @@
 
     <section class="section">
       <div class="prose">
-        <p class="text-sm text-mid">Nearby boroughs: <a href="brent.html">Brent</a> &middot; <a href="harrow.html">Harrow</a> &middot; <a href="hillingdon.html">Hillingdon</a> &middot; <a href="hounslow.html">Hounslow</a></p>
+        <p class="text-sm text-mid">Nearby boroughs: <a href="brent.html">Brent</a> &middot; <a href="hammersmith-fulham.html">Hammersmith &amp; Fulham</a> &middot; <a href="hounslow.html">Hounslow</a> &middot; <a href="hillingdon.html">Hillingdon</a> &middot; <a href="harrow.html">Harrow</a></p>
       </div>
     </section>
 

@@ -2,6 +2,10 @@
 <html lang="en-GB">
 <head>
   <meta charset="UTF-8">
+  <!-- @include-start partials/head-extras.html -->
+<link rel="preload" href="/fonts/cormorant-garamond.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/source-serif-4.woff2" as="font" type="font/woff2" crossorigin>
+  <!-- @include-end partials/head-extras.html -->
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
   <!-- Google Analytics (GA4) — deferred until after load -->
@@ -29,7 +33,7 @@
     });
   </script>
 
-  <title>Christmas Carol Singers for Corporate Events &mdash; London Choral Service</title>
+  <title>Christmas Carol Singers for Corporate Events | LCS</title>
   <meta name="description" content="Hire professional Christmas carol singers for corporate events, office parties, and company carol services across the UK. Choirs of 4 to 12 voices. From £1,150.">
   <meta name="theme-color" content="#F7F3EE">
   <meta name="robots" content="index, follow">
@@ -37,7 +41,7 @@
   <link rel="alternate" hreflang="en-gb" href="https://londonchoralservice.com/christmas.html">
   <link rel="alternate" hreflang="x-default" href="https://londonchoralservice.com/christmas.html">
 
-  <meta property="og:title" content="Christmas Carol Singers for Corporate Events &mdash; London Choral Service">
+  <meta property="og:title" content="Christmas Carol Singers for Corporate Events | LCS">
   <meta property="og:description" content="Hire professional Christmas carol singers for corporate events, office parties, and company carol services across the UK. Choirs of 4 to 12 voices. From £1,150.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://londonchoralservice.com/christmas.html">
@@ -46,7 +50,7 @@
   <meta property="og:image" content="https://londonchoralservice.com/assets/og-image.png">
 
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Christmas Carol Singers for Corporate Events &mdash; London Choral Service">
+  <meta name="twitter:title" content="Christmas Carol Singers for Corporate Events | LCS">
   <meta name="twitter:description" content="Hire professional Christmas carol singers for corporate events, office parties, and company carol services across the UK. Choirs of 4 to 12 voices. From £1,150.">
   <meta name="twitter:image" content="https://londonchoralservice.com/assets/og-image.png">
   <link rel="dns-prefetch" href="https://www.googletagmanager.com">
@@ -1602,6 +1606,145 @@
         display: none;
       }
     }
+    
+    /* ═══════════════════════════════════
+       Pull Quote — Marquee Variant
+       (services.html hero treatment)
+       ═══════════════════════════════════ */
+    .pull-quote--marquee {
+      margin-block: 0 var(--space-2xl);
+      max-width: 30rem;
+    }
+    
+    .pull-quote--marquee p {
+      font-size: var(--text-3xl);
+      line-height: var(--leading-tight);
+    }
+    
+    .pull-quote--marquee::before {
+      font-size: 8rem;
+      top: -0.3em;
+      left: -0.08em;
+      opacity: 0.18;
+    }
+    
+    .pull-quote--marquee figcaption {
+      margin-top: var(--space-lg);
+    }
+    
+    /* ═══════════════════════════════════
+       Occasion List (services.html hub)
+       ═══════════════════════════════════ */
+    .occasion-list {
+      list-style: none;
+      padding-left: 0;
+      margin: 0 0 var(--space-2xl);
+    }
+    
+    .occasion-list li {
+      display: grid;
+      grid-template-columns: minmax(0, 14rem) 1fr;
+      gap: var(--space-2xl);
+      padding-block: var(--space-xl);
+      border-top: 1px solid var(--color-rule);
+      margin: 0;
+    }
+    
+    .occasion-list li:last-child {
+      border-bottom: 1px solid var(--color-rule);
+    }
+    
+    .occasion-list h3 {
+      font-size: var(--text-xl);
+      font-weight: 400;
+      margin: 0;
+    }
+    
+    .occasion-list p {
+      color: var(--color-text-mid);
+      margin-bottom: var(--space-md);
+    }
+    
+    .occasion-list .occasion-cta {
+      font-family: var(--font-heading);
+      font-weight: 500;
+      font-size: var(--text-base);
+      color: var(--color-accent);
+      text-decoration: none;
+    }
+    
+    .occasion-list .occasion-cta:hover {
+      color: var(--color-accent-hover);
+      text-decoration: underline;
+    }
+    
+    @media (max-width: 767px) {
+      .occasion-list li {
+        grid-template-columns: 1fr;
+        gap: var(--space-sm);
+      }
+    }
+    
+    /* ═══════════════════════════════════
+       Ensemble Grid (services.html)
+       ═══════════════════════════════════ */
+    .ensemble-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: var(--space-lg);
+      list-style: none;
+      padding: 0;
+      margin: var(--space-xl) 0 var(--space-2xl);
+    }
+    
+    .ensemble-grid li {
+      margin: 0;
+    }
+    
+    @media (max-width: 899px) {
+      .ensemble-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+    
+    @media (max-width: 599px) {
+      .ensemble-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    
+    .ensemble-card {
+      padding: var(--space-xl);
+      background-color: var(--color-bg-alt);
+      border: 1px solid transparent;
+      transition: border-color var(--transition-fast);
+      height: 100%;
+    }
+    
+    .ensemble-card:hover {
+      border-color: var(--color-accent);
+    }
+    
+    .ensemble-card h3 {
+      font-family: var(--font-heading);
+      font-size: var(--text-lg);
+      font-weight: 500;
+      margin-bottom: var(--space-xs);
+    }
+    
+    .ensemble-card .voices {
+      display: block;
+      font-family: var(--font-body);
+      font-size: var(--text-sm);
+      color: var(--color-text-mid);
+      margin-bottom: var(--space-md);
+      letter-spacing: 0.02em;
+    }
+    
+    .ensemble-card p {
+      color: var(--color-text-mid);
+      margin-bottom: 0;
+    }
     /* ═══════════════════════════════════
        Print Styles
        ═══════════════════════════════════ */
@@ -1696,37 +1839,45 @@
         "@type": "Service",
         "name": "Christmas Carol Service",
         "serviceType": "Christmas Carol Service",
+        "dateModified": "2026-05-08",
         "description": "Professional Christmas carol singers for corporate events, office parties, and company carol services across the United Kingdom.",
         "url": "https://londonchoralservice.com/christmas.html",
         "provider": {
           "@type": "LocalBusiness",
           "@id": "https://londonchoralservice.com/#organization"
         },
-        "areaServed": { "@type": "Country", "name": "United Kingdom" },
+        "areaServed": {
+          "@type": "Country",
+          "name": "United Kingdom"
+        },
         "offers": {
           "@type": "AggregateOffer",
           "lowPrice": "1150",
           "highPrice": "3000",
-          "priceCurrency": "GBP"
+          "priceCurrency": "GBP",
+          "priceValidUntil": "2026-12-31"
         }
       },
       {
         "@type": "BreadcrumbList",
         "itemListElement": [
-          { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://londonchoralservice.com/" },
-          { "@type": "ListItem", "position": 2, "name": "Christmas" }
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "https://londonchoralservice.com/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Christmas"
+          }
         ]
       },
       {
         "@type": "LocalBusiness",
         "@id": "https://londonchoralservice.com/#organization",
-        "name": "The London Choral Service",
-        "aggregateRating": {
-          "@type": "AggregateRating",
-          "ratingValue": "5",
-          "reviewCount": "4",
-          "bestRating": "5"
-        }
+        "name": "The London Choral Service"
       }
     ]
   }
@@ -1786,6 +1937,7 @@
             </ol>
           </nav>
           <h1>Christmas Carol Singers for Corporate Events<br><span class="h1-sub">Professional choirs for your company carol service</span></h1>
+          <p class="guide-meta">Last updated: May 2026</p>
           <p class="lede">Professional singers and choirs for corporate carol concerts, gala dinners, drinks receptions, and office Christmas parties across the United Kingdom. Ensembles of 4 to 12 voices, tailored to your event.</p>
           <p class="text-sm text-mid">Trusted by law firms, banks, charities, and City livery companies. Musicians from the Royal Academy, Royal College, and Britain&rsquo;s leading conservatoires.</p>
           <p><a href="#enquiry" class="btn-link">Tell us about your event</a></p>
@@ -1793,7 +1945,7 @@
         <div class="hero-video">
           <div class="video-embed">
             <button class="video-thumb" aria-label="Play video" data-video="Lov_NegzVhM">
-              <img src="https://img.youtube.com/vi/Lov_NegzVhM/maxresdefault.jpg" alt="The London Choral Service" loading="lazy">
+              <img src="https://img.youtube.com/vi/Lov_NegzVhM/maxresdefault.jpg" alt="The London Choral Service" loading="lazy" width="1280" height="720">
               <svg class="play-btn" viewBox="0 0 68 48" aria-hidden="true">
                 <path d="M66.52 7.74c-.78-2.93-2.49-5.41-5.42-6.19C55.79.13 34 0 34 0S12.21.13 6.9 1.55c-2.93.78-4.63 3.26-5.42 6.19C.06 13.05 0 24 0 24s.06 10.95 1.48 16.26c.78 2.93 2.49 5.41 5.42 6.19C12.21 47.87 34 48 34 48s21.79-.13 27.1-1.55c2.93-.78 4.63-3.26 5.42-6.19C67.94 34.95 68 24 68 24s-.06-10.95-1.48-16.26z" fill="rgba(0,0,0,.7)"/>
                 <path d="M45 24 27 14v20z" fill="#fff"/>
@@ -1836,6 +1988,7 @@
         <p>Luca Wetherall, our Artistic Director, discusses your event with you or your event coordinator, then sends a proposal with ensemble options and a programme outline. We handle all coordination with your venue or event manager. Our musicians arrive in concert dress, set up without fuss, and perform to the brief.</p>
         <p>Beyond the music, we can help organise the wider event. We assist with finding and booking a venue, printing programmes, and arranging refreshments &mdash; so you can hand off as much or as little of the planning as you like.</p>
         <p>Our clients include law firms, banks, charities, schools, and City livery companies across London and the UK.</p>
+        <p>For company Christmas parties, awards dinners, and year-round corporate events, see also our <a href="corporate.html">corporate music page</a>.</p>
 
         <figure class="pull-quote">
           <blockquote><p>&ldquo;We hire the London Choral Service for our annual carol service every December. The choir knows the building, the format, and exactly what we need. Our partners and clients look forward to it each year.&rdquo;</p></blockquote>
@@ -1860,7 +2013,7 @@
           <p class="track-description">An ancient Irish hymn with a timeless, haunting melody. Especially beautiful in a choral setting with organ accompaniment.</p>
           <div class="video-embed">
             <button class="video-thumb" aria-label="Play Be Thou My Vision" data-video="SaLTS_-I-q4">
-              <img src="https://img.youtube.com/vi/SaLTS_-I-q4/maxresdefault.jpg" alt="Be Thou My Vision — The London Choral Service" loading="lazy">
+              <img src="https://img.youtube.com/vi/SaLTS_-I-q4/maxresdefault.jpg" alt="Be Thou My Vision — The London Choral Service" loading="lazy" width="1280" height="720">
               <svg class="play-btn" viewBox="0 0 68 48" aria-hidden="true">
                 <path d="M66.52 7.74c-.78-2.93-2.49-5.41-5.42-6.19C55.79.13 34 0 34 0S12.21.13 6.9 1.55c-2.93.78-4.63 3.26-5.42 6.19C.06 13.05 0 24 0 24s.06 10.95 1.48 16.26c.78 2.93 2.49 5.41 5.42 6.19C12.21 47.87 34 48 34 48s21.79-.13 27.1-1.55c2.93-.78 4.63-3.26 5.42-6.19C67.94 34.95 68 24 68 24s-.06-10.95-1.48-16.26z" fill="rgba(0,0,0,.7)"/>
                 <path d="M45 24 27 14v20z" fill="#fff"/>
