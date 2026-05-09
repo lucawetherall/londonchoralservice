@@ -524,7 +524,7 @@
   display: none;
 }
 
-@media (max-width: 767px) {
+@media (max-width: 805px) {
   .mobile-cta {
     display: flex;
     position: fixed;
@@ -656,7 +656,7 @@
   opacity: 0.85;
 }
 
-@media (max-width: 767px) {
+@media (max-width: 805px) {
   .hero {
     flex-direction: column;
     gap: var(--space-2xl);
@@ -965,7 +965,7 @@
 }
 
 /* Mobile: dropdown becomes an inline expandable block inside the hamburger */
-@media (max-width: 767px) {
+@media (max-width: 805px) {
   .dropdown-menu {
     display: none;
     position: static;
