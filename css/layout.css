@@ -175,7 +175,7 @@
 }
 
 /* ── Mobile Navigation ── */
-@media (max-width: 767px) {
+@media (max-width: 805px) {
   .nav-toggle {
     display: block;
   }
