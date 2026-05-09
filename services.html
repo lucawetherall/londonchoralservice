@@ -2,6 +2,10 @@
 <html lang="en-GB">
 <head>
   <meta charset="UTF-8">
+  <!-- @include-start partials/head-extras.html -->
+<link rel="preload" href="/fonts/cormorant-garamond.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/source-serif-4.woff2" as="font" type="font/woff2" crossorigin>
+  <!-- @include-end partials/head-extras.html -->
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
   <!-- Google Analytics (GA4) — deferred until after load -->
@@ -29,16 +33,16 @@
     });
   </script>
 
-  <title>Funeral, Wedding &amp; Ceremony Music Services — London Choral Service</title>
-  <meta name="description" content="Live music for funerals, weddings, memorials, and ceremonies. Soloists, choirs of 4 to 12 voices, organists, harpists, and string quartets available across the UK.">
+  <title>Funeral, Wedding &amp; Ceremony Music Services | LCS</title>
+  <meta name="description" content="Live music for funerals, weddings, and ceremonies — soloists, quartets, choirs of four to twelve, and instrumentalists across London and the UK.">
   <meta name="theme-color" content="#F7F3EE">
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://londonchoralservice.com/services.html">
   <link rel="alternate" hreflang="en-gb" href="https://londonchoralservice.com/services.html">
   <link rel="alternate" hreflang="x-default" href="https://londonchoralservice.com/services.html">
 
-  <meta property="og:title" content="Funeral, Wedding &amp; Ceremony Music Services &mdash; London Choral Service">
-  <meta property="og:description" content="Live music for funerals, weddings, memorials, and ceremonies. Soloists, choirs, and instrumentalists across the UK.">
+  <meta property="og:title" content="Funeral, Wedding &amp; Ceremony Music Services | LCS">
+  <meta property="og:description" content="Live music for funerals, weddings, and ceremonies — soloists, quartets, choirs of four to twelve, and instrumentalists across London and the UK.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://londonchoralservice.com/services.html">
   <meta property="og:locale" content="en_GB">
@@ -46,8 +50,8 @@
   <meta property="og:image" content="https://londonchoralservice.com/assets/og-image.png">
 
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Funeral, Wedding &amp; Ceremony Music Services &mdash; London Choral Service">
-  <meta name="twitter:description" content="Live music for funerals, weddings, memorials, and ceremonies. Soloists, choirs, and instrumentalists across the UK.">
+  <meta name="twitter:title" content="Funeral, Wedding &amp; Ceremony Music Services | LCS">
+  <meta name="twitter:description" content="Live music for funerals, weddings, and ceremonies — soloists, quartets, choirs of four to twelve, and instrumentalists across London and the UK.">
   <meta name="twitter:image" content="https://londonchoralservice.com/assets/og-image.png">
   <link rel="dns-prefetch" href="https://www.googletagmanager.com">
   <link rel="dns-prefetch" href="https://api.web3forms.com">
@@ -1602,6 +1606,145 @@
         display: none;
       }
     }
+    
+    /* ═══════════════════════════════════
+       Pull Quote — Marquee Variant
+       (services.html hero treatment)
+       ═══════════════════════════════════ */
+    .pull-quote--marquee {
+      margin-block: 0 var(--space-2xl);
+      max-width: 30rem;
+    }
+    
+    .pull-quote--marquee p {
+      font-size: var(--text-3xl);
+      line-height: var(--leading-tight);
+    }
+    
+    .pull-quote--marquee::before {
+      font-size: 8rem;
+      top: -0.3em;
+      left: -0.08em;
+      opacity: 0.18;
+    }
+    
+    .pull-quote--marquee figcaption {
+      margin-top: var(--space-lg);
+    }
+    
+    /* ═══════════════════════════════════
+       Occasion List (services.html hub)
+       ═══════════════════════════════════ */
+    .occasion-list {
+      list-style: none;
+      padding-left: 0;
+      margin: 0 0 var(--space-2xl);
+    }
+    
+    .occasion-list li {
+      display: grid;
+      grid-template-columns: minmax(0, 14rem) 1fr;
+      gap: var(--space-2xl);
+      padding-block: var(--space-xl);
+      border-top: 1px solid var(--color-rule);
+      margin: 0;
+    }
+    
+    .occasion-list li:last-child {
+      border-bottom: 1px solid var(--color-rule);
+    }
+    
+    .occasion-list h3 {
+      font-size: var(--text-xl);
+      font-weight: 400;
+      margin: 0;
+    }
+    
+    .occasion-list p {
+      color: var(--color-text-mid);
+      margin-bottom: var(--space-md);
+    }
+    
+    .occasion-list .occasion-cta {
+      font-family: var(--font-heading);
+      font-weight: 500;
+      font-size: var(--text-base);
+      color: var(--color-accent);
+      text-decoration: none;
+    }
+    
+    .occasion-list .occasion-cta:hover {
+      color: var(--color-accent-hover);
+      text-decoration: underline;
+    }
+    
+    @media (max-width: 767px) {
+      .occasion-list li {
+        grid-template-columns: 1fr;
+        gap: var(--space-sm);
+      }
+    }
+    
+    /* ═══════════════════════════════════
+       Ensemble Grid (services.html)
+       ═══════════════════════════════════ */
+    .ensemble-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: var(--space-lg);
+      list-style: none;
+      padding: 0;
+      margin: var(--space-xl) 0 var(--space-2xl);
+    }
+    
+    .ensemble-grid li {
+      margin: 0;
+    }
+    
+    @media (max-width: 899px) {
+      .ensemble-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+    
+    @media (max-width: 599px) {
+      .ensemble-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    
+    .ensemble-card {
+      padding: var(--space-xl);
+      background-color: var(--color-bg-alt);
+      border: 1px solid transparent;
+      transition: border-color var(--transition-fast);
+      height: 100%;
+    }
+    
+    .ensemble-card:hover {
+      border-color: var(--color-accent);
+    }
+    
+    .ensemble-card h3 {
+      font-family: var(--font-heading);
+      font-size: var(--text-lg);
+      font-weight: 500;
+      margin-bottom: var(--space-xs);
+    }
+    
+    .ensemble-card .voices {
+      display: block;
+      font-family: var(--font-body);
+      font-size: var(--text-sm);
+      color: var(--color-text-mid);
+      margin-bottom: var(--space-md);
+      letter-spacing: 0.02em;
+    }
+    
+    .ensemble-card p {
+      color: var(--color-text-mid);
+      margin-bottom: 0;
+    }
     /* ═══════════════════════════════════
        Print Styles
        ═══════════════════════════════════ */
@@ -1694,14 +1837,14 @@
     "@graph": [
       {
         "@type": "Service",
+        "name": "Live music for funerals, weddings, and ceremonies",
         "serviceType": "Live Music for Ceremonies",
         "url": "https://londonchoralservice.com/services.html",
         "inLanguage": "en-GB",
+        "dateModified": "2026-05-08",
         "provider": {
           "@type": "LocalBusiness",
-          "name": "The London Choral Service",
-          "alternateName": "London Choral Service",
-          "url": "https://londonchoralservice.com"
+          "@id": "https://londonchoralservice.com/#organization"
         },
         "areaServed": {
           "@type": "Country",
@@ -1727,7 +1870,7 @@
                   "@type": "Offer",
                   "itemOffered": {
                     "@type": "Service",
-                    "name": "Small Choir (4 singers)",
+                    "name": "Quartet (4 singers)",
                     "description": "Four-part harmony that fills a room with warmth and depth without overwhelming the space."
                   }
                 },
@@ -1791,15 +1934,9 @@
         }
       },
       {
-        "@type": "LocalBusiness",
+        "@type": ["LocalBusiness", "PerformingGroup", "MusicGroup"],
         "@id": "https://londonchoralservice.com/#organization",
-        "name": "The London Choral Service",
-        "aggregateRating": {
-          "@type": "AggregateRating",
-          "ratingValue": "5",
-          "reviewCount": "4",
-          "bestRating": "5"
-        }
+        "name": "The London Choral Service"
       },
       {
         "@type": "FAQPage",
@@ -1817,15 +1954,15 @@
             "name": "What ensemble sizes are available?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "We offer a soloist (single voice), small choir (4 singers), quintet (5 singers), sextet (6 singers), full choir (8 singers), and chorus (12 singers). We also provide organists, pianists, harpists, and string quartets."
+              "text": "We offer a soloist (single voice), quartet (4 singers), quintet (5 singers), sextet (6 singers), full choir (8 singers), and chorus (12 singers). We also provide organists, pianists, harpists, and string quartets."
             }
           },
           {
             "@type": "Question",
-            "name": "Do you perform at crematoriums?",
+            "name": "How quickly can you respond?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Yes. Our musicians perform in every imaginable setting: parish churches, crematoriums, cathedrals, chapels, synagogues, private estates, hotels, concert halls, and outdoor spaces."
+              "text": "Most enquiries get a reply from Luca the same day, often within a few hours. We have arranged singers at a few hours' notice when families had no other option. If your service is in the next 48 hours, call us on 07356 042468 — email may not be fast enough."
             }
           },
           {
@@ -1841,8 +1978,17 @@
       {
         "@type": "BreadcrumbList",
         "itemListElement": [
-          { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://londonchoralservice.com/" },
-          { "@type": "ListItem", "position": 2, "name": "Services" }
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "https://londonchoralservice.com/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Services"
+          }
         ]
       }
     ]
@@ -1900,142 +2046,128 @@
             <li>Services</li>
           </ol>
         </nav>
-        <h1>Music for funerals, weddings, and ceremonies</h1>
-        <p class="lede">From the most solemn farewells to the most joyful celebrations, we provide live music that rises to the occasion.</p>
+
+        <figure class="pull-quote pull-quote--marquee">
+          <blockquote><p>&ldquo;The moment they started singing, the whole room just fell silent.&rdquo;</p></blockquote>
+          <figcaption>&mdash;&ensp;Margaret, Dulwich&ensp;&middot;&ensp;Funeral</figcaption>
+        </figure>
+
         <hr class="rule">
+
+        <h1>Music for funerals, weddings, and ceremonies</h1>
+        <p class="guide-meta">Last updated: May 2026</p>
+        <p class="lede">From the most solemn farewells to the most joyful celebrations, we provide live music that rises to the occasion.</p>
+
+        <p><a href="contact.html" class="btn-link">Tell us about your occasion</a></p>
+        <p class="text-sm text-mid">Or call us on <a href="tel:+447356042468">07356 042468</a> to talk through options.</p>
+
+        <p class="hero-trust">
+          <span class="hero-trust__stars" aria-hidden="true">&#9733;&#9733;&#9733;&#9733;&#9733;</span>
+          <span>5 stars from every family we&rsquo;ve worked with.</span>
+        </p>
       </div>
     </section>
 
     <section class="section" style="padding-block-start: var(--space-2xl)">
       <div class="prose">
-        <h2>Funerals</h2>
-        <p>The right music brings comfort that words alone cannot. Our singers lead congregational hymns with warmth and authority, giving everyone present the confidence to join in. Between hymns, solo pieces and choral works create moments of stillness and reflection.</p>
-
-        <h3>What we provide</h3>
-        <p>Every funeral booking includes a personal consultation with Luca Wetherall, our Artistic Director. He will talk through your music choices, suggest repertoire that suits the tone you want, and handle coordination with your funeral director and officiant. You receive a confirmed running order at least 48 hours before the service.</p>
-        <p>On the day, our singers arrive 45 minutes before the service begins. They rehearse in the venue, check acoustics, and confirm positions with the officiant. During the service, they lead up to three congregational hymns and perform up to three choral or solo pieces. After the service, they can provide reflective music as mourners leave.</p>
-
-        <h3>From first contact to the day</h3>
-        <p>You get in touch by phone, email, or through our <a href="contact.html">contact form</a>. Luca calls you back within a few hours to discuss the occasion, the venue, and your music preferences. He then sends a written proposal with repertoire suggestions and a clear quote. Once you confirm, we handle everything else. Most families complete the whole process in two or three short conversations. If time is short, contact us anyway: most families reach us two to five days before the service, and we have arranged singers at a few hours of notice before.</p>
-        <p>We perform in churches, crematoriums, chapels, synagogues, and outdoor spaces across the UK. Read our guide to <a href="music-guides/crematorium-music.html">music at crematoriums</a> if your service is at a crematorium. For help choosing hymns and songs, see our <a href="music-guides/funeral-music-guide.html">funeral music guide</a>, our list of <a href="music-guides/popular-funeral-hymns.html">popular funeral hymns</a>, our guide to <a href="music-guides/funeral-songs.html">popular funeral songs</a>, our <a href="music-guides/catholic-funeral-hymns.html">Catholic funeral hymns</a> guide, or our guide to <a href="music-guides/non-religious-funeral-music.html">non-religious funeral music</a>.</p>
-
-        <figure class="pull-quote">
-          <blockquote><p>&ldquo;I still can&rsquo;t talk about it without welling up. The moment they started singing, the whole room just fell silent. Dad would have been so chuffed.&rdquo;</p></blockquote>
-          <figcaption>&mdash;&ensp;Margaret, Dulwich</figcaption>
-        </figure>
-
-        <p><a href="pricing.html">View funeral music pricing</a></p>
-        <p><a href="contact.html" class="btn-link">Talk to us about music for a funeral</a></p>
-        <p><a href="funerals.html">Learn more about our funeral music &rarr;</a></p>
-        <p class="text-sm text-mid">Or call us on <a href="tel:+447356042468">07356 042468</a> to talk through options.</p>
-        <p class="text-sm text-mid">Funeral director arranging music on behalf of a family? See <a href="for-funeral-directors.html">how we work with funeral directors</a>.</p>
+        <h2>How it works</h2>
+        <p>Tell us the date, the venue, and the kind of occasion. Luca Wetherall, our Artistic Director, sends back music suggestions, recordings, and a quote &mdash; usually the same day. We handle repertoire, rehearsals, and logistics. You hear the music on the day.</p>
       </div>
     </section>
 
     <section class="section">
       <div class="prose">
-        <h2>Weddings</h2>
-        <p>Live music turns a ceremony into something people remember for years. Our singers and instrumentalists perform during the processional, hymns, signing of the register, and recessional. We can continue through drinks and the wedding breakfast if you want a single musical thread running through the whole day.</p>
-
-        <h3>What we provide</h3>
-        <p>Every wedding booking begins with a conversation about your vision for the day. Luca Wetherall, our Artistic Director, helps you choose repertoire that fits the tone you want. You might know you want "Zadok the Priest" for the processional, or you might have no idea where to start. Either way, Luca walks you through the options and sends you recordings of suggested pieces.</p>
-        <p>Our repertoire spans classical, sacred, and contemporary music. If there is a piece you have always imagined hearing on your wedding day, whether it is a Bach chorale or a pop song, we can arrange it for your chosen ensemble. We prepare custom arrangements at no extra charge.</p>
-
-        <h3>From first contact to the day</h3>
-        <p>You get in touch and tell us your wedding date, venue, and any initial music ideas. Luca sends a proposal with ensemble options, repertoire suggestions, and a clear quote. After you confirm, he finalises the programme with you over email or a short call. Our musicians receive the confirmed running order a week before the wedding. On the day, they arrive an hour before the ceremony to set up and coordinate with your wedding planner or venue manager. Book as far ahead as you can to secure your date. We can also accommodate short-notice bookings, so contact us as soon as you have a date.</p>
-
-        <figure class="pull-quote">
-          <blockquote><p>&ldquo;Our guests kept saying the music was the highlight. The choir sang during the signing of the register and you could hear a pin drop. Perfect.&rdquo;</p></blockquote>
-          <figcaption>&mdash;&ensp;Sophie &amp; James, Richmond</figcaption>
-        </figure>
-
-        <p>Read our guides: <a href="music-guides/choosing-wedding-hymns.html">Choosing hymns for your wedding</a> · <a href="music-guides/wedding-ceremony-music.html">Wedding ceremony music</a> · <a href="music-guides/wedding-choir-guide.html">Hiring a wedding choir</a> · <a href="music-guides/wedding-organist-guide.html">Choosing a wedding organist</a></p>
-        <p><a href="pricing.html">View wedding music pricing</a></p>
-        <p><a href="contact.html" class="btn-link">Talk to us about your wedding music</a></p>
-        <p><a href="weddings.html">Learn more about our wedding music &rarr;</a></p>
-        <p class="text-sm text-mid">Or call us on <a href="tel:+447356042468">07356 042468</a> to talk through options.</p>
-        <p class="text-sm text-mid">Wedding planner or venue coordinator? See <a href="for-wedding-planners.html">how we work with planners</a>.</p>
-      </div>
-    </section>
-
-    <section class="section">
-      <div class="prose">
-        <h2>Memorials &amp; celebrations of life</h2>
-        <p>A memorial or celebration of life should reflect the person being honoured. Some families want reflective, sacred music. Others want something uplifting and personal. Many want both. We shape the music around the story you want to tell.</p>
-
-        <h3>What we provide</h3>
-        <p>Luca Wetherall talks with you about the person being remembered, the setting, and the atmosphere you want to create. He suggests repertoire that fits. If the person loved jazz, we can arrange a jazz standard for vocal ensemble. If they sang in a church choir, we can perform the pieces they loved. You receive a full programme in advance with every piece, every cue point, and every transition mapped out.</p>
-        <p>We perform in churches, community halls, hotels, private homes, gardens, marquees, and outdoor spaces. We bring portable amplification when the venue needs it. If you can hold a gathering there, we can perform there.</p>
-
-        <h3>From first contact to the day</h3>
-        <p>You tell us about the person and the occasion. Luca sends repertoire suggestions within 24 hours and a written quote. Once confirmed, he coordinates timing with your celebrant or officiant. Our musicians arrive 45 minutes early to rehearse in the space, check sight lines, and confirm positions. After the event, several families have told us they received comments about the music for weeks afterwards.</p>
-
-        <figure class="pull-quote">
-          <blockquote><p>&ldquo;Mum was a singer herself, so the music had to be right. Luca understood that straight away. The choir performed her favourite Rutter piece and it was exactly what she would have wanted.&rdquo;</p></blockquote>
-          <figcaption>&mdash;&ensp;David, Kensington</figcaption>
-        </figure>
-
-        <p>Read our guides: <a href="music-guides/celebration-of-life-music.html">Music for a celebration of life</a> · <a href="music-guides/memorial-service-planning.html">Planning a memorial service</a></p>
-        <p><a href="pricing.html">View pricing</a></p>
-        <p><a href="contact.html" class="btn-link">Talk to us about your celebration of life</a></p>
-        <p class="text-sm text-mid">Or call us on <a href="tel:+447356042468">07356 042468</a> to talk through options.</p>
-      </div>
-    </section>
-
-    <section class="section">
-      <div class="prose">
-        <h2>Corporate events &amp; ceremonies</h2>
-        <p>Award ceremonies, gala dinners, commemorative services, product launches, and carol concerts all gain weight and atmosphere from live music. We perform at corporate events for law firms, banks, charities, schools, and City livery companies across London and the UK.</p>
-
-        <h3>What we provide</h3>
-        <p>We tailor the ensemble and repertoire to your event. A carol concert might call for a full choir of eight singers with an organist. A drinks reception might suit a vocal quartet performing a mix of classical and popular music. A formal dinner might need a soloist for one set piece. Luca Wetherall discusses your event with you or your event coordinator, then sends a proposal with ensemble options and a programme outline.</p>
-
-        <h3>From first contact to the day</h3>
-        <p>You share the event details: date, venue, format, and any music preferences. We send a proposal and quote within 48 hours. Once confirmed, Luca finalises the programme and coordinates arrival times, positioning, and technical requirements with your venue or event manager. Our musicians arrive in concert dress, set up without fuss, and perform to the brief.</p>
-
-        <figure class="pull-quote">
-          <blockquote><p>&ldquo;We hire the London Choral Service for our annual carol service every December. The choir knows the building, the format, and exactly what we need. Our partners and clients look forward to it each year.&rdquo;</p></blockquote>
-          <figcaption>&mdash;&ensp;Helen, Events Manager, City of London</figcaption>
-        </figure>
-
-        <p>Read our guides: <a href="music-guides/corporate-carol-service.html">Planning a corporate carol service</a> · <a href="music-guides/christmas-choir-hire.html">Hiring a Christmas choir</a></p>
-        <p><a href="pricing.html">View pricing</a></p>
-        <p><a href="contact.html" class="btn-link">Tell us about your event</a></p>
-        <p><a href="corporate.html">Live music for corporate events &rarr;</a> &ensp;|&ensp; <a href="christmas.html">Christmas carol services &rarr;</a></p>
-        <p class="text-sm text-mid">Or call us on <a href="tel:+447356042468">07356 042468</a> to talk through options.</p>
+        <h2>Occasions we perform for</h2>
+        <ul class="occasion-list">
+          <li>
+            <h3>Funerals</h3>
+            <div>
+              <p>Our singers lead congregational hymns with warmth and authority, and perform solo and choral pieces between them. We perform in churches, crematoriums, and chapels across the UK. Most families reach us two to five days before the service.</p>
+              <a href="funerals.html" class="occasion-cta">Funeral music &rarr;</a>
+            </div>
+          </li>
+          <li>
+            <h3>Weddings</h3>
+            <div>
+              <p>Singers and instrumentalists for the processional, hymns, the register signing, and the recessional. We can carry on through the drinks reception and the wedding breakfast if you want music running across the whole day. Bespoke arrangements available on request.</p>
+              <a href="weddings.html" class="occasion-cta">Wedding music &rarr;</a>
+            </div>
+          </li>
+          <li>
+            <h3>Memorials &amp; celebrations of life</h3>
+            <div>
+              <p>Reflective, sacred, uplifting, personal &mdash; or all four. We shape the music around the person being remembered, in churches, halls, gardens, marquees, or wherever you&rsquo;re gathering.</p>
+              <a href="contact.html" class="occasion-cta">Talk to us about a memorial &rarr;</a>
+            </div>
+          </li>
+          <li>
+            <h3>Corporate events &amp; ceremonies</h3>
+            <div>
+              <p>Award ceremonies, gala dinners, commemorative services, product launches. We perform regularly for City livery companies, law firms, banks, charities, and schools across London and the UK.</p>
+              <a href="corporate.html" class="occasion-cta">Corporate music &rarr;</a>
+            </div>
+          </li>
+          <li>
+            <h3>Christmas</h3>
+            <div>
+              <p>Carol services, December receptions, and Christmas concerts. A full choir with organist for a traditional service, or a vocal quartet for a drinks reception &mdash; Luca will recommend the right size for your venue.</p>
+              <a href="christmas.html" class="occasion-cta">Christmas music &rarr;</a>
+            </div>
+          </li>
+        </ul>
       </div>
     </section>
 
     <section class="section">
       <div class="prose">
         <h2>Our ensembles</h2>
-        <dl class="ensemble-list">
-          <dt>Soloist</dt>
-          <dd>A single, exceptional voice for intimate settings and moments that call for simplicity and purity. One to three performance pieces, plus leading congregation through up to three hymns.</dd>
-
-          <dt>Small Choir <span class="aside">(4 singers)</span></dt>
-          <dd>Four-part harmony that fills a room with warmth and depth without overwhelming the space. Ideal for mid-sized venues and ceremonies of 50-200 people. One to three performance pieces, plus leading congregation through up to three hymns.</dd>
-
-          <dt>Quintet <span class="aside">(5 singers)</span></dt>
-          <dd>Adding a second soprano to the choral quartet makes a huge difference to the sound in your venue and can really help lead the congregation in their singing. It also allows for much more freedom of repertoire as many pieces are written with two soprano parts. One to three performance pieces, plus leading congregation through up to three hymns.</dd>
-
-          <dt>Sextet <span class="aside">(6 singers)</span></dt>
-          <dd>Six voices give you the warmth and depth of a choir at a price closer to a quartet. The extra parts open up a wider repertoire, and the sound carries beautifully in larger churches and chapels. One to three performance pieces, plus leading congregation through up to three hymns.</dd>
-
-          <dt>Full Choir <span class="aside">(8 singers)</span></dt>
-          <dd>A richer, more resonant sound for larger venues and occasions that need greater presence. Powerful without dominating the space. One to three performance pieces, plus leading congregation through up to three hymns.</dd>
-
-          <dt>Chorus <span class="aside">(12 singers)</span></dt>
-          <dd>The full choral experience: a powerful, moving ensemble that can fill a cathedral and create moments people never forget. One to four performance pieces, plus leading congregation through up to four hymns.</dd>
-        </dl>
-      </div>
-    </section>
-
-    <section class="section">
-      <div class="prose">
-        <h2>Instrumentalists</h2>
+        <p>Every booking includes one to three performance pieces and leading the congregation through up to three hymns. The chorus does up to four of each.</p>
+        <ul class="ensemble-grid">
+          <li>
+            <article class="ensemble-card">
+              <h3>Soloist</h3>
+              <span class="voices">One voice</span>
+              <p>A single, exceptional voice for intimate settings and moments that call for simplicity and purity.</p>
+            </article>
+          </li>
+          <li>
+            <article class="ensemble-card">
+              <h3>Quartet</h3>
+              <span class="voices">4 singers</span>
+              <p>Four-part harmony that fills a room with warmth and depth without overwhelming the space. Mid-sized venues, 50&ndash;200 people.</p>
+            </article>
+          </li>
+          <li>
+            <article class="ensemble-card">
+              <h3>Quintet</h3>
+              <span class="voices">5 singers</span>
+              <p>A second soprano makes a real difference to the sound and opens up the repertoire. Helps lead the congregation more confidently.</p>
+            </article>
+          </li>
+          <li>
+            <article class="ensemble-card">
+              <h3>Sextet</h3>
+              <span class="voices">6 singers</span>
+              <p>Six voices give you the warmth of a choir at a price closer to a quartet. Carries beautifully in larger churches.</p>
+            </article>
+          </li>
+          <li>
+            <article class="ensemble-card">
+              <h3>Full Choir</h3>
+              <span class="voices">8 singers</span>
+              <p>A richer, more resonant sound for larger venues and occasions that need greater presence. Powerful without dominating.</p>
+            </article>
+          </li>
+          <li>
+            <article class="ensemble-card">
+              <h3>Chorus</h3>
+              <span class="voices">12 singers</span>
+              <p>The full choral experience: a powerful ensemble that can fill a cathedral and create moments people never forget.</p>
+            </article>
+          </li>
+        </ul>
         <p>Pianists, organists, harpists, and string quartets perform alongside our singers or on their own. We tailor the instrumentation to your venue, your repertoire, and the character of the occasion.</p>
-        <p><a href="pricing.html">View our pricing</a> &ensp;|&ensp; <a href="listen.html">Listen to our musicians</a></p>
+        <p><a href="pricing.html">View pricing &rarr;</a> &ensp;|&ensp; <a href="listen.html">Listen to our musicians &rarr;</a></p>
       </div>
     </section>
 
@@ -2055,13 +2187,13 @@
         <p>We provide live music for funerals, weddings, memorials, celebrations of life, corporate events, and ceremonies of all kinds across the United Kingdom. That includes religious services, civil ceremonies, humanist celebrations, and private gatherings. If your occasion does not fit a standard category, get in touch. We have performed at naming ceremonies, anniversary services, charity galas, and school events.</p>
 
         <h3>What ensemble sizes are available?</h3>
-        <p>We offer a soloist (single voice), small choir (4 singers), quintet (5 singers), sextet (6 singers), full choir (8 singers), and chorus (12 singers). We also provide organists, pianists, harpists, and string quartets. The right ensemble depends on your venue size, your budget, and the sound you want. A soloist suits an intimate crematorium chapel. A full choir fills a large parish church. Luca will recommend the best option when you get in touch.</p>
+        <p>We offer a soloist (single voice), quartet (4 singers), quintet (5 singers), sextet (6 singers), full choir (8 singers), and chorus (12 singers). We also provide organists, pianists, harpists, and string quartets. The right ensemble depends on your venue size, your budget, and the sound you want. A soloist suits an intimate crematorium chapel. A full choir fills a large parish church. Luca will recommend the best option when you get in touch.</p>
 
-        <h3>Do you perform at crematoriums?</h3>
-        <p>Yes. Our musicians perform at crematoriums across the UK. Crematorium services are shorter than church services, so we adapt our programme to fit the time available. We typically perform one or two pieces and lead one or two hymns. Our singers project well in smaller spaces without overwhelming the room. Read our <a href="music-guides/crematorium-music.html">guide to crematorium music</a> for more detail on what works well in these settings.</p>
+        <h3>How quickly can you respond?</h3>
+        <p>Most enquiries get a reply from Luca the same day, often within a few hours. We have arranged singers at a few hours&rsquo; notice when families had no other option. If your service is in the next 48 hours, call us on <a href="tel:+447356042468">07356 042468</a> &mdash; email may not be fast enough.</p>
 
         <h3>Can you arrange any piece of music?</h3>
-        <p>Our repertoire spans classical, sacred, and contemporary music. If there is a piece you want to hear, whether it is a Bach chorale, a folk song, or a pop ballad, we can arrange it for your chosen ensemble. Luca prepares custom arrangements at no extra charge. He will send you a recording of the arrangement before the day so you can hear how it sounds. The only limitation is copyright: some publishers restrict live performance of certain works, but this affects very few pieces.</p>
+        <p>Our repertoire spans classical, sacred, and contemporary music. If there is a piece you want to hear, whether it is a Bach chorale, a folk song, or a pop ballad, we can arrange it for your chosen ensemble. Luca will quote for the arrangement up front, and send you a recording of it before the day so you can hear how it sounds. The only limitation is copyright: some publishers restrict live performance of certain works, but this affects very few pieces.</p>
       </div>
     </section>
 

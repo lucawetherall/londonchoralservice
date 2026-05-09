@@ -2,6 +2,10 @@
 <html lang="en-GB">
 <head>
   <meta charset="UTF-8">
+  <!-- @include-start partials/head-extras.html -->
+<link rel="preload" href="/fonts/cormorant-garamond.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/source-serif-4.woff2" as="font" type="font/woff2" crossorigin>
+  <!-- @include-end partials/head-extras.html -->
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
   <!-- Google Analytics (GA4) — deferred until after load -->
@@ -30,15 +34,15 @@
   </script>
 
   <title>Choir &amp; Singer Pricing — London Choral Service</title>
-  <meta name="description" content="Clear, upfront pricing for funeral singers, wedding choirs, and instrumentalists. Solo voice from &pound;215, quartet &pound;1,150, quintet &pound;1,400, sextet &pound;1,600, full choir &pound;2,000. All UK venues.">
+  <meta name="description" content="Clear, upfront pricing for funeral singers, wedding choirs, and instrumentalists — from £215 for a soloist to £3,000 for a twelve-voice chorus.">
   <meta name="theme-color" content="#F7F3EE">
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://londonchoralservice.com/pricing.html">
   <link rel="alternate" hreflang="en-gb" href="https://londonchoralservice.com/pricing.html">
   <link rel="alternate" hreflang="x-default" href="https://londonchoralservice.com/pricing.html">
 
-  <meta property="og:title" content="Choir &amp; Singer Pricing &mdash; London Choral Service">
-  <meta property="og:description" content="Clear, upfront pricing for funeral singers, wedding choirs, and instrumentalists across the UK.">
+  <meta property="og:title" content="Choir &amp; Singer Pricing — London Choral Service">
+  <meta property="og:description" content="Clear, upfront pricing for funeral singers, wedding choirs, and instrumentalists — from £215 for a soloist to £3,000 for a twelve-voice chorus.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://londonchoralservice.com/pricing.html">
   <meta property="og:locale" content="en_GB">
@@ -46,8 +50,8 @@
   <meta property="og:image" content="https://londonchoralservice.com/assets/og-image.png">
 
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Choir &amp; Singer Pricing &mdash; London Choral Service">
-  <meta name="twitter:description" content="Clear, upfront pricing for funeral singers, wedding choirs, and instrumentalists across the UK.">
+  <meta name="twitter:title" content="Choir &amp; Singer Pricing — London Choral Service">
+  <meta name="twitter:description" content="Clear, upfront pricing for funeral singers, wedding choirs, and instrumentalists — from £215 for a soloist to £3,000 for a twelve-voice chorus.">
   <meta name="twitter:image" content="https://londonchoralservice.com/assets/og-image.png">
   <link rel="dns-prefetch" href="https://www.googletagmanager.com">
   <link rel="dns-prefetch" href="https://api.web3forms.com">
@@ -1602,6 +1606,145 @@
         display: none;
       }
     }
+    
+    /* ═══════════════════════════════════
+       Pull Quote — Marquee Variant
+       (services.html hero treatment)
+       ═══════════════════════════════════ */
+    .pull-quote--marquee {
+      margin-block: 0 var(--space-2xl);
+      max-width: 30rem;
+    }
+    
+    .pull-quote--marquee p {
+      font-size: var(--text-3xl);
+      line-height: var(--leading-tight);
+    }
+    
+    .pull-quote--marquee::before {
+      font-size: 8rem;
+      top: -0.3em;
+      left: -0.08em;
+      opacity: 0.18;
+    }
+    
+    .pull-quote--marquee figcaption {
+      margin-top: var(--space-lg);
+    }
+    
+    /* ═══════════════════════════════════
+       Occasion List (services.html hub)
+       ═══════════════════════════════════ */
+    .occasion-list {
+      list-style: none;
+      padding-left: 0;
+      margin: 0 0 var(--space-2xl);
+    }
+    
+    .occasion-list li {
+      display: grid;
+      grid-template-columns: minmax(0, 14rem) 1fr;
+      gap: var(--space-2xl);
+      padding-block: var(--space-xl);
+      border-top: 1px solid var(--color-rule);
+      margin: 0;
+    }
+    
+    .occasion-list li:last-child {
+      border-bottom: 1px solid var(--color-rule);
+    }
+    
+    .occasion-list h3 {
+      font-size: var(--text-xl);
+      font-weight: 400;
+      margin: 0;
+    }
+    
+    .occasion-list p {
+      color: var(--color-text-mid);
+      margin-bottom: var(--space-md);
+    }
+    
+    .occasion-list .occasion-cta {
+      font-family: var(--font-heading);
+      font-weight: 500;
+      font-size: var(--text-base);
+      color: var(--color-accent);
+      text-decoration: none;
+    }
+    
+    .occasion-list .occasion-cta:hover {
+      color: var(--color-accent-hover);
+      text-decoration: underline;
+    }
+    
+    @media (max-width: 767px) {
+      .occasion-list li {
+        grid-template-columns: 1fr;
+        gap: var(--space-sm);
+      }
+    }
+    
+    /* ═══════════════════════════════════
+       Ensemble Grid (services.html)
+       ═══════════════════════════════════ */
+    .ensemble-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: var(--space-lg);
+      list-style: none;
+      padding: 0;
+      margin: var(--space-xl) 0 var(--space-2xl);
+    }
+    
+    .ensemble-grid li {
+      margin: 0;
+    }
+    
+    @media (max-width: 899px) {
+      .ensemble-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+    
+    @media (max-width: 599px) {
+      .ensemble-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    
+    .ensemble-card {
+      padding: var(--space-xl);
+      background-color: var(--color-bg-alt);
+      border: 1px solid transparent;
+      transition: border-color var(--transition-fast);
+      height: 100%;
+    }
+    
+    .ensemble-card:hover {
+      border-color: var(--color-accent);
+    }
+    
+    .ensemble-card h3 {
+      font-family: var(--font-heading);
+      font-size: var(--text-lg);
+      font-weight: 500;
+      margin-bottom: var(--space-xs);
+    }
+    
+    .ensemble-card .voices {
+      display: block;
+      font-family: var(--font-body);
+      font-size: var(--text-sm);
+      color: var(--color-text-mid);
+      margin-bottom: var(--space-md);
+      letter-spacing: 0.02em;
+    }
+    
+    .ensemble-card p {
+      color: var(--color-text-mid);
+      margin-bottom: 0;
+    }
     /* ═══════════════════════════════════
        Print Styles
        ═══════════════════════════════════ */
@@ -1688,6 +1831,7 @@
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
 
+  <!-- TODO: replace placeholder VideoObject.uploadDate; add ISO 8601 duration. YouTube ID: Lov_NegzVhM -->
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -1697,7 +1841,7 @@
         "name": "Choir and Singer Pricing",
         "url": "https://londonchoralservice.com/pricing.html",
         "inLanguage": "en-GB",
-        "dateModified": "2026-02-28",
+        "dateModified": "2026-05-08",
         "mainEntity": {
           "@type": "OfferCatalog",
           "name": "The London Choral Service Pricing",
@@ -1712,7 +1856,10 @@
                 "priceCurrency": "GBP",
                 "minPrice": "215"
               },
-              "offeredBy": { "@id": "https://londonchoralservice.com/#organization" }
+              "priceValidUntil": "2026-12-31",
+              "offeredBy": {
+                "@id": "https://londonchoralservice.com/#organization"
+              }
             },
             {
               "@type": "Offer",
@@ -1723,7 +1870,10 @@
                 "price": "1150",
                 "priceCurrency": "GBP"
               },
-              "offeredBy": { "@id": "https://londonchoralservice.com/#organization" }
+              "priceValidUntil": "2026-12-31",
+              "offeredBy": {
+                "@id": "https://londonchoralservice.com/#organization"
+              }
             },
             {
               "@type": "Offer",
@@ -1734,7 +1884,10 @@
                 "price": "1400",
                 "priceCurrency": "GBP"
               },
-              "offeredBy": { "@id": "https://londonchoralservice.com/#organization" }
+              "priceValidUntil": "2026-12-31",
+              "offeredBy": {
+                "@id": "https://londonchoralservice.com/#organization"
+              }
             },
             {
               "@type": "Offer",
@@ -1745,7 +1898,10 @@
                 "price": "1600",
                 "priceCurrency": "GBP"
               },
-              "offeredBy": { "@id": "https://londonchoralservice.com/#organization" }
+              "priceValidUntil": "2026-12-31",
+              "offeredBy": {
+                "@id": "https://londonchoralservice.com/#organization"
+              }
             },
             {
               "@type": "Offer",
@@ -1756,7 +1912,10 @@
                 "price": "2000",
                 "priceCurrency": "GBP"
               },
-              "offeredBy": { "@id": "https://londonchoralservice.com/#organization" }
+              "priceValidUntil": "2026-12-31",
+              "offeredBy": {
+                "@id": "https://londonchoralservice.com/#organization"
+              }
             },
             {
               "@type": "Offer",
@@ -1767,7 +1926,10 @@
                 "price": "3000",
                 "priceCurrency": "GBP"
               },
-              "offeredBy": { "@id": "https://londonchoralservice.com/#organization" }
+              "priceValidUntil": "2026-12-31",
+              "offeredBy": {
+                "@id": "https://londonchoralservice.com/#organization"
+              }
             },
             {
               "@type": "Offer",
@@ -1778,7 +1940,10 @@
                 "price": "215",
                 "priceCurrency": "GBP"
               },
-              "offeredBy": { "@id": "https://londonchoralservice.com/#organization" }
+              "priceValidUntil": "2026-12-31",
+              "offeredBy": {
+                "@id": "https://londonchoralservice.com/#organization"
+              }
             },
             {
               "@type": "Offer",
@@ -1790,7 +1955,10 @@
                 "priceCurrency": "GBP",
                 "minPrice": "215"
               },
-              "offeredBy": { "@id": "https://londonchoralservice.com/#organization" }
+              "priceValidUntil": "2026-12-31",
+              "offeredBy": {
+                "@id": "https://londonchoralservice.com/#organization"
+              }
             }
           ]
         }
@@ -1798,13 +1966,7 @@
       {
         "@type": "LocalBusiness",
         "@id": "https://londonchoralservice.com/#organization",
-        "name": "The London Choral Service",
-        "aggregateRating": {
-          "@type": "AggregateRating",
-          "ratingValue": "5",
-          "reviewCount": "4",
-          "bestRating": "5"
-        }
+        "name": "The London Choral Service"
       },
       {
         "@type": "FAQPage",
@@ -1854,8 +2016,17 @@
       {
         "@type": "BreadcrumbList",
         "itemListElement": [
-          { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://londonchoralservice.com/" },
-          { "@type": "ListItem", "position": 2, "name": "Pricing" }
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "https://londonchoralservice.com/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Pricing"
+          }
         ]
       },
       {
@@ -1866,7 +2037,9 @@
         "uploadDate": "2025-01-01",
         "contentUrl": "https://www.youtube.com/watch?v=Lov_NegzVhM",
         "embedUrl": "https://www.youtube-nocookie.com/embed/Lov_NegzVhM",
-        "publisher": { "@id": "https://londonchoralservice.com/#organization" }
+        "publisher": {
+          "@id": "https://londonchoralservice.com/#organization"
+        }
       }
     ]
   }
@@ -1925,6 +2098,7 @@
             </ol>
           </nav>
           <h1>Choir and singer pricing</h1>
+          <p class="guide-meta">Last updated: May 2026</p>
           <p class="lede">Clear, transparent pricing. What you see is what you pay&thinsp;&mdash;&thinsp;no hidden fees, no surprises. Prices include all fees and taxes. Travel costs may apply for venues beyond Greater London.</p>
           <hr class="rule">
         </div>
@@ -1933,7 +2107,7 @@
             <button class="video-thumb" aria-label="Play video"
                     data-video="Lov_NegzVhM">
               <img src="https://img.youtube.com/vi/Lov_NegzVhM/maxresdefault.jpg"
-                   alt="The London Choral Service" loading="lazy">
+                   alt="The London Choral Service" loading="lazy" width="1280" height="720">
               <svg class="play-btn" viewBox="0 0 68 48" aria-hidden="true">
                 <path d="M66.52 7.74c-.78-2.93-2.49-5.41-5.42-6.19C55.79.13 34 0 34 0S12.21.13 6.9 1.55c-2.93.78-4.63 3.26-5.42 6.19C.06 13.05 0 24 0 24s.06 10.95 1.48 16.26c.78 2.93 2.49 5.41 5.42 6.19C12.21 47.87 34 48 34 48s21.79-.13 27.1-1.55c2.93-.78 4.63-3.26 5.42-6.19C67.94 34.95 68 24 68 24s-.06-10.95-1.48-16.26z" fill="rgba(0,0,0,.7)"/>
                 <path d="M45 24 27 14v20z" fill="#fff"/>
@@ -2077,6 +2251,7 @@
       <div class="prose">
         <h2>What happens next</h2>
         <p>Tell us about your occasion and we&rsquo;ll send you a clear, written quote tailored to your venue and repertoire. If you&rsquo;d like to go ahead, we take care of everything from that point: rehearsals, sheet music, and full coordination with your venue or funeral director. You won&rsquo;t need to chase us or manage logistics. Most funeral bookings come through at short notice. Contact us and we will confirm availability the same day. If you are still deciding on repertoire, our <a href="music-guides/celebration-of-life-music.html">celebration of life music</a> and <a href="music-guides/funeral-songs.html">funeral songs</a> guides are good starting points.</p>
+        <p>For funerals and weddings in <a href="areas/london.html">London</a>, there are no travel costs.</p>
       </div>
     </section>
 

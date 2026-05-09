@@ -2,6 +2,10 @@
 <html lang="en-GB">
 <head>
   <meta charset="UTF-8">
+  <!-- @include-start partials/head-extras.html -->
+<link rel="preload" href="/fonts/cormorant-garamond.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/source-serif-4.woff2" as="font" type="font/woff2" crossorigin>
+  <!-- @include-end partials/head-extras.html -->
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
   <!-- Google Analytics (GA4) — deferred until after load -->
@@ -29,15 +33,15 @@
     });
   </script>
 
-  <title>Funeral Singers &amp; Wedding Choirs in Barnet — London Choral Service</title>
-  <meta name="description" content="Professional funeral singers and wedding choirs in Barnet. Conservatoire-trained musicians for funerals, weddings, memorials, and ceremonies. Part of The London Choral Service.">
+  <title>Funeral and wedding choirs in Barnet</title>
+  <meta name="description" content="Professional funeral singers and wedding choirs in Barnet. Conservatoire-trained musicians for funerals, weddings, memorials, and ceremonies.">
   <meta name="theme-color" content="#F7F3EE">
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://londonchoralservice.com/areas/london/barnet.html">
   <link rel="alternate" hreflang="en-gb" href="https://londonchoralservice.com/areas/london/barnet.html">
   <link rel="alternate" hreflang="x-default" href="https://londonchoralservice.com/areas/london/barnet.html">
 
-  <meta property="og:title" content="Funeral Singers &amp; Wedding Choirs in Barnet | London Choral Service">
+  <meta property="og:title" content="Funeral and wedding choirs in Barnet">
   <meta property="og:description" content="Professional funeral singers and wedding choirs in Barnet. Conservatoire-trained musicians for funerals, weddings, memorials, and ceremonies.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://londonchoralservice.com/areas/london/barnet.html">
@@ -46,7 +50,7 @@
   <meta property="og:image" content="https://londonchoralservice.com/assets/og-image.png">
 
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Funeral Singers &amp; Wedding Choirs in Barnet | London Choral Service">
+  <meta name="twitter:title" content="Funeral and wedding choirs in Barnet">
   <meta name="twitter:description" content="Professional funeral singers and wedding choirs in Barnet. Conservatoire-trained musicians for funerals, weddings, memorials, and ceremonies.">
   <meta name="twitter:image" content="https://londonchoralservice.com/assets/og-image.png">
   <link rel="dns-prefetch" href="https://www.googletagmanager.com">
@@ -1602,6 +1606,145 @@
         display: none;
       }
     }
+    
+    /* ═══════════════════════════════════
+       Pull Quote — Marquee Variant
+       (services.html hero treatment)
+       ═══════════════════════════════════ */
+    .pull-quote--marquee {
+      margin-block: 0 var(--space-2xl);
+      max-width: 30rem;
+    }
+    
+    .pull-quote--marquee p {
+      font-size: var(--text-3xl);
+      line-height: var(--leading-tight);
+    }
+    
+    .pull-quote--marquee::before {
+      font-size: 8rem;
+      top: -0.3em;
+      left: -0.08em;
+      opacity: 0.18;
+    }
+    
+    .pull-quote--marquee figcaption {
+      margin-top: var(--space-lg);
+    }
+    
+    /* ═══════════════════════════════════
+       Occasion List (services.html hub)
+       ═══════════════════════════════════ */
+    .occasion-list {
+      list-style: none;
+      padding-left: 0;
+      margin: 0 0 var(--space-2xl);
+    }
+    
+    .occasion-list li {
+      display: grid;
+      grid-template-columns: minmax(0, 14rem) 1fr;
+      gap: var(--space-2xl);
+      padding-block: var(--space-xl);
+      border-top: 1px solid var(--color-rule);
+      margin: 0;
+    }
+    
+    .occasion-list li:last-child {
+      border-bottom: 1px solid var(--color-rule);
+    }
+    
+    .occasion-list h3 {
+      font-size: var(--text-xl);
+      font-weight: 400;
+      margin: 0;
+    }
+    
+    .occasion-list p {
+      color: var(--color-text-mid);
+      margin-bottom: var(--space-md);
+    }
+    
+    .occasion-list .occasion-cta {
+      font-family: var(--font-heading);
+      font-weight: 500;
+      font-size: var(--text-base);
+      color: var(--color-accent);
+      text-decoration: none;
+    }
+    
+    .occasion-list .occasion-cta:hover {
+      color: var(--color-accent-hover);
+      text-decoration: underline;
+    }
+    
+    @media (max-width: 767px) {
+      .occasion-list li {
+        grid-template-columns: 1fr;
+        gap: var(--space-sm);
+      }
+    }
+    
+    /* ═══════════════════════════════════
+       Ensemble Grid (services.html)
+       ═══════════════════════════════════ */
+    .ensemble-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: var(--space-lg);
+      list-style: none;
+      padding: 0;
+      margin: var(--space-xl) 0 var(--space-2xl);
+    }
+    
+    .ensemble-grid li {
+      margin: 0;
+    }
+    
+    @media (max-width: 899px) {
+      .ensemble-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+    
+    @media (max-width: 599px) {
+      .ensemble-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    
+    .ensemble-card {
+      padding: var(--space-xl);
+      background-color: var(--color-bg-alt);
+      border: 1px solid transparent;
+      transition: border-color var(--transition-fast);
+      height: 100%;
+    }
+    
+    .ensemble-card:hover {
+      border-color: var(--color-accent);
+    }
+    
+    .ensemble-card h3 {
+      font-family: var(--font-heading);
+      font-size: var(--text-lg);
+      font-weight: 500;
+      margin-bottom: var(--space-xs);
+    }
+    
+    .ensemble-card .voices {
+      display: block;
+      font-family: var(--font-body);
+      font-size: var(--text-sm);
+      color: var(--color-text-mid);
+      margin-bottom: var(--space-md);
+      letter-spacing: 0.02em;
+    }
+    
+    .ensemble-card p {
+      color: var(--color-text-mid);
+      margin-bottom: 0;
+    }
     /* ═══════════════════════════════════
        Print Styles
        ═══════════════════════════════════ */
@@ -1690,115 +1833,110 @@
 
   <script type="application/ld+json">
   {
-  "@context": "https://schema.org",
-  "@graph": [
-    {
-      "@type": "Service",
-      "name": "Funeral Singers & Wedding Choirs in Barnet",
-      "url": "https://londonchoralservice.com/areas/london/barnet.html",
-      "description": "Professional funeral singers and wedding choirs in Barnet, London.",
-      "provider": {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Service",
+        "name": "Funeral Singers & Wedding Choirs in Barnet",
+        "url": "https://londonchoralservice.com/areas/london/barnet.html",
+        "description": "Professional funeral singers and wedding choirs in Barnet, London.",
+        "provider": {
+          "@type": "LocalBusiness",
+          "@id": "https://londonchoralservice.com/#organization"
+        },
+        "areaServed": {
+          "@type": "AdministrativeArea",
+          "name": "Barnet",
+          "containedInPlace": {
+            "@type": "City",
+            "name": "London",
+            "addressCountry": "GB"
+          }
+        },
+        "serviceType": [
+          "Funeral Music",
+          "Wedding Music",
+          "Memorial Music",
+          "Ceremony Music"
+        ],
+        "geo": {
+          "@type": "GeoCoordinates",
+          "latitude": 51.65292,
+          "longitude": -0.20011
+        }
+      },
+      {
         "@type": "LocalBusiness",
-        "name": "The London Choral Service",
-        "alternateName": "London Choral Service",
-        "url": "https://londonchoralservice.com",
-        "telephone": "+447356042468",
-        "email": "office@londonchoralservice.com"
+        "@id": "https://londonchoralservice.com/#organization",
+        "name": "The London Choral Service"
       },
-      "areaServed": {
-        "@type": "AdministrativeArea",
-        "name": "Barnet",
-        "containedInPlace": {
-          "@type": "City",
-          "name": "London",
-          "addressCountry": "GB"
-        }
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "https://londonchoralservice.com/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Areas We Serve",
+            "item": "https://londonchoralservice.com/areas/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 3,
+            "name": "London",
+            "item": "https://londonchoralservice.com/areas/london.html"
+          },
+          {
+            "@type": "ListItem",
+            "position": 4,
+            "name": "Barnet"
+          }
+        ]
       },
-      "serviceType": [
-        "Funeral Music",
-        "Wedding Music",
-        "Memorial Music",
-        "Ceremony Music"
-      ]
-    },
-    {
-      "@type": "LocalBusiness",
-      "@id": "https://londonchoralservice.com/#organization",
-      "name": "The London Choral Service",
-      "aggregateRating": {
-        "@type": "AggregateRating",
-        "ratingValue": "5",
-        "reviewCount": "4",
-        "bestRating": "5"
+      {
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "How much does a funeral singer cost in Barnet?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "A soloist for a funeral at Hendon Crematorium, Golders Green Crematorium, or any Barnet venue starts from £215. A small choir of four is from £1,150, a quintet from £1,400, a sextet from £1,600, and a full choir of eight from £2,000. Prices include travel within Greater London and liaison with your funeral director."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Can you provide a choir for a wedding in Barnet?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes. We provide choirs from a solo vocalist to a chorus of twelve for weddings at St John the Baptist in Chipping Barnet, St Mary at Finchley, and licensed venues throughout the borough. We coordinate the full musical programme so you can enjoy the day."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "What types of music can you perform at a funeral in Barnet?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Everything from traditional hymns and Anglican choral works to contemporary songs and bespoke arrangements. The fine acoustic at St John the Baptist in Chipping Barnet rewards choral anthems, while at Hendon or Golders Green Crematorium a solo voice or duet often suits the space best."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Do you cover crematorium services in Barnet?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes. We sing regularly at both Hendon Crematorium and Golders Green Crematorium and know each venue's layout, acoustics, and timing requirements well. Our singers arrive early, coordinate with crematorium staff, and ensure the music fits seamlessly within the allotted service time."
+            }
+          }
+        ]
       }
-    },
-    {
-      "@type": "BreadcrumbList",
-      "itemListElement": [
-        {
-          "@type": "ListItem",
-          "position": 1,
-          "name": "Home",
-          "item": "https://londonchoralservice.com/"
-        },
-        {
-          "@type": "ListItem",
-          "position": 2,
-          "name": "Areas We Serve",
-          "item": "https://londonchoralservice.com/areas/"
-        },
-        {
-          "@type": "ListItem",
-          "position": 3,
-          "name": "London",
-          "item": "https://londonchoralservice.com/areas/london.html"
-        },
-        {
-          "@type": "ListItem",
-          "position": 4,
-          "name": "Barnet"
-        }
-      ]
-    },
-    {
-      "@type": "FAQPage",
-      "mainEntity": [
-        {
-          "@type": "Question",
-          "name": "How much does a funeral singer cost in Barnet?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "A soloist for a funeral at Hendon Crematorium, Golders Green Crematorium, or any Barnet venue starts from £215. A small choir of four is from £1,150, a quintet from £1,400, a sextet from £1,600, and a full choir of eight from £2,000. Prices include travel within Greater London and liaison with your funeral director."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "Can you provide a choir for a wedding in Barnet?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Yes. We provide choirs from a solo vocalist to a chorus of twelve for weddings at St John the Baptist in Chipping Barnet, St Mary at Finchley, and licensed venues throughout the borough. We coordinate the full musical programme so you can enjoy the day."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "What types of music can you perform at a funeral in Barnet?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Everything from traditional hymns and Anglican choral works to contemporary songs and bespoke arrangements. The fine acoustic at St John the Baptist in Chipping Barnet rewards choral anthems, while at Hendon or Golders Green Crematorium a solo voice or duet often suits the space best."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "Do you cover crematorium services in Barnet?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Yes. We sing regularly at both Hendon Crematorium and Golders Green Crematorium and know each venue's layout, acoustics, and timing requirements well. Our singers arrive early, coordinate with crematorium staff, and ensure the music fits seamlessly within the allotted service time."
-          }
-        }
-      ]
-    }
-  ]
-}
+    ]
+  }
   </script>
 </head>
 <body>
@@ -1854,7 +1992,7 @@
             <li>Barnet</li>
           </ol>
         </nav>
-        <h1>Funeral singers and choirs in Barnet</h1>
+        <h1>Funeral and wedding choirs in Barnet</h1>
         <p class="lede">The London Borough of Barnet stretches across the northern reaches of the capital, encompassing communities from Chipping Barnet and High Barnet in the north to Golders Green, Finchley, and Hendon in the south. Our conservatoire-trained singers bring dignified, expressive music to funerals, weddings, memorials, and ceremonies at venues throughout this diverse borough.</p>
         <hr class="rule">
       </div>
@@ -1864,13 +2002,14 @@
       <div class="prose">
         <h2>Funeral music in Barnet</h2>
         <p>Barnet is home to some of north London&rsquo;s most important funeral venues, and our singers perform regularly at many of them. Hendon Crematorium, set within its peaceful grounds off Holders Hill Road, is one of the borough&rsquo;s busiest crematoriums, and we understand its layout, acoustics, and timing requirements well. Golders Green Crematorium&thinsp;&mdash;&thinsp;one of London&rsquo;s oldest and most distinguished&thinsp;&mdash;&thinsp;has welcomed our singers for services ranging from intimate family farewells to larger memorial gatherings. We also sing at East Finchley Cemetery and at parish churches including St&nbsp;John the Baptist in Chipping Barnet, a medieval church with a resonant nave that suits choral music beautifully, and St&nbsp;Mary at Finchley, whose warm acoustic lends itself to both hymns and contemplative anthems.</p>
+        <p>For practical guidance on music at crematorium services &mdash; timing, acoustics, and making a shorter service meaningful &mdash; see our <a href="../../music-guides/crematorium-music.html">guide to crematorium music</a>.</p>
         <p>Whether you are planning a traditional Church of England funeral, a non-religious ceremony, or a service that blends elements of both, we can help you choose music that feels right. Our <a href="../../music-guides/funeral-music-guide.html">funeral music guide</a> offers suggestions for hymns, anthems, and reflective pieces, and we are always happy to learn new repertoire on request. To discuss your requirements, please visit our <a href="../../services.html">services page</a> or <a href="../../contact.html">get in touch</a> directly.</p>
 
         <h2>Wedding choirs in Barnet</h2>
         <p>Barnet offers a wonderful range of settings for wedding ceremonies, from the historic grandeur of St&nbsp;John the Baptist in Chipping Barnet to the elegant simplicity of St&nbsp;Mary at Finchley. Many couples also choose licensed venues across the borough, including country house hotels and restored halls, where our singers can provide anything from a single soloist during the signing of the register to a full choir processional. We regularly help couples select hymns that their guests will know and enjoy alongside choral pieces that add a touch of something special. Our <a href="../../music-guides/choosing-wedding-hymns.html">guide to choosing wedding hymns</a> is a helpful starting point.</p>
 
         <h2>Ensembles for weddings, funerals, and memorials</h2>
-        <p>Not every occasion calls for the same size of ensemble, and part of our job is helping you find the right balance for your venue, your budget, and the feeling you want to create. We offer everything from a single soloist&thinsp;&mdash;&thinsp;whose voice can hold a room in complete stillness&thinsp;&mdash;&thinsp;through to duets, quartets, octets, and a full twelve-voice chorus with instrumental accompaniment. Organists, harpists, and string players are also available. Visit our <a href="../../pricing.html">pricing page</a> for a clear guide to ensemble sizes and costs.</p>
+        <p>Crematorium services at Hendon or Golders Green run to a fixed length, often around 30 minutes, so a quartet is usually the right call &mdash; large enough to carry a hymn, small enough to fit the chapel without crowding the family. For larger funerals or weddings at St&nbsp;John the Baptist in Chipping Barnet, the medieval nave rewards more voices, and a sextet or full eight-voice choir suits both the volume of the room and the resonance. St&nbsp;Mary at Finchley sits comfortably between the two: a quartet works well for most services, and a sextet is worth considering when the congregation is larger. For a graveside at East Finchley Cemetery, a soloist or duo is often more fitting than a full ensemble. Our <a href="../../pricing.html">pricing page</a> sets out the costs.</p>
 
         <figure class="pull-quote">
           <blockquote>
@@ -1901,7 +2040,7 @@
 
     <section class="section">
       <div class="prose">
-        <p class="text-sm text-mid">Nearby boroughs: <a href="enfield.html">Enfield</a> &middot; <a href="haringey.html">Haringey</a> &middot; <a href="brent.html">Brent</a> &middot; <a href="harrow.html">Harrow</a></p>
+        <p class="text-sm text-mid">Nearby boroughs: <a href="enfield.html">Enfield</a> &middot; <a href="harrow.html">Harrow</a> &middot; <a href="brent.html">Brent</a> &middot; <a href="camden.html">Camden</a> &middot; <a href="haringey.html">Haringey</a></p>
       </div>
     </section>
 

@@ -2,6 +2,10 @@
 <html lang="en-GB">
 <head>
   <meta charset="UTF-8">
+  <!-- @include-start partials/head-extras.html -->
+<link rel="preload" href="/fonts/cormorant-garamond.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/source-serif-4.woff2" as="font" type="font/woff2" crossorigin>
+  <!-- @include-end partials/head-extras.html -->
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
   <!-- Google Analytics (GA4) — deferred until after load -->
@@ -29,15 +33,15 @@
     });
   </script>
 
-  <title>Funeral Singers &amp; Wedding Choirs in Liverpool — London Choral Service</title>
-  <meta name="description" content="Professional funeral singers, wedding choirs, and ceremony musicians in Liverpool and across Merseyside. Conservatoire-trained vocalists and instrumentalists for weddings, funerals, and memorials.">
+  <title>Funeral and wedding choirs in Liverpool</title>
+  <meta name="description" content="Professional funeral singers, wedding choirs, and ceremony musicians in Liverpool and across Merseyside.">
   <meta name="theme-color" content="#F7F3EE">
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://londonchoralservice.com/areas/liverpool.html">
   <link rel="alternate" hreflang="en-gb" href="https://londonchoralservice.com/areas/liverpool.html">
   <link rel="alternate" hreflang="x-default" href="https://londonchoralservice.com/areas/liverpool.html">
 
-  <meta property="og:title" content="Funeral Singers &amp; Wedding Choirs in Liverpool | London Choral Service">
+  <meta property="og:title" content="Funeral and wedding choirs in Liverpool">
   <meta property="og:description" content="Professional funeral singers, wedding choirs, and ceremony musicians in Liverpool and across Merseyside.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://londonchoralservice.com/areas/liverpool.html">
@@ -46,7 +50,7 @@
   <meta property="og:image" content="https://londonchoralservice.com/assets/og-image.png">
 
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Funeral Singers &amp; Wedding Choirs in Liverpool | London Choral Service">
+  <meta name="twitter:title" content="Funeral and wedding choirs in Liverpool">
   <meta name="twitter:description" content="Professional funeral singers, wedding choirs, and ceremony musicians in Liverpool and across Merseyside.">
   <meta name="twitter:image" content="https://londonchoralservice.com/assets/og-image.png">
   <link rel="dns-prefetch" href="https://www.googletagmanager.com">
@@ -1602,6 +1606,145 @@
         display: none;
       }
     }
+    
+    /* ═══════════════════════════════════
+       Pull Quote — Marquee Variant
+       (services.html hero treatment)
+       ═══════════════════════════════════ */
+    .pull-quote--marquee {
+      margin-block: 0 var(--space-2xl);
+      max-width: 30rem;
+    }
+    
+    .pull-quote--marquee p {
+      font-size: var(--text-3xl);
+      line-height: var(--leading-tight);
+    }
+    
+    .pull-quote--marquee::before {
+      font-size: 8rem;
+      top: -0.3em;
+      left: -0.08em;
+      opacity: 0.18;
+    }
+    
+    .pull-quote--marquee figcaption {
+      margin-top: var(--space-lg);
+    }
+    
+    /* ═══════════════════════════════════
+       Occasion List (services.html hub)
+       ═══════════════════════════════════ */
+    .occasion-list {
+      list-style: none;
+      padding-left: 0;
+      margin: 0 0 var(--space-2xl);
+    }
+    
+    .occasion-list li {
+      display: grid;
+      grid-template-columns: minmax(0, 14rem) 1fr;
+      gap: var(--space-2xl);
+      padding-block: var(--space-xl);
+      border-top: 1px solid var(--color-rule);
+      margin: 0;
+    }
+    
+    .occasion-list li:last-child {
+      border-bottom: 1px solid var(--color-rule);
+    }
+    
+    .occasion-list h3 {
+      font-size: var(--text-xl);
+      font-weight: 400;
+      margin: 0;
+    }
+    
+    .occasion-list p {
+      color: var(--color-text-mid);
+      margin-bottom: var(--space-md);
+    }
+    
+    .occasion-list .occasion-cta {
+      font-family: var(--font-heading);
+      font-weight: 500;
+      font-size: var(--text-base);
+      color: var(--color-accent);
+      text-decoration: none;
+    }
+    
+    .occasion-list .occasion-cta:hover {
+      color: var(--color-accent-hover);
+      text-decoration: underline;
+    }
+    
+    @media (max-width: 767px) {
+      .occasion-list li {
+        grid-template-columns: 1fr;
+        gap: var(--space-sm);
+      }
+    }
+    
+    /* ═══════════════════════════════════
+       Ensemble Grid (services.html)
+       ═══════════════════════════════════ */
+    .ensemble-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: var(--space-lg);
+      list-style: none;
+      padding: 0;
+      margin: var(--space-xl) 0 var(--space-2xl);
+    }
+    
+    .ensemble-grid li {
+      margin: 0;
+    }
+    
+    @media (max-width: 899px) {
+      .ensemble-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+    
+    @media (max-width: 599px) {
+      .ensemble-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    
+    .ensemble-card {
+      padding: var(--space-xl);
+      background-color: var(--color-bg-alt);
+      border: 1px solid transparent;
+      transition: border-color var(--transition-fast);
+      height: 100%;
+    }
+    
+    .ensemble-card:hover {
+      border-color: var(--color-accent);
+    }
+    
+    .ensemble-card h3 {
+      font-family: var(--font-heading);
+      font-size: var(--text-lg);
+      font-weight: 500;
+      margin-bottom: var(--space-xs);
+    }
+    
+    .ensemble-card .voices {
+      display: block;
+      font-family: var(--font-body);
+      font-size: var(--text-sm);
+      color: var(--color-text-mid);
+      margin-bottom: var(--space-md);
+      letter-spacing: 0.02em;
+    }
+    
+    .ensemble-card p {
+      color: var(--color-text-mid);
+      margin-bottom: 0;
+    }
     /* ═══════════════════════════════════
        Print Styles
        ═══════════════════════════════════ */
@@ -1690,102 +1833,101 @@
 
   <script type="application/ld+json">
   {
-  "@context": "https://schema.org",
-  "@graph": [
-    {
-      "@type": "Service",
-      "name": "Funeral Singers & Wedding Choirs in Liverpool",
-      "url": "https://londonchoralservice.com/areas/liverpool.html",
-      "description": "Professional funeral singers, wedding choirs, and ceremony musicians in Liverpool and across Merseyside.",
-      "provider": {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Service",
+        "name": "Funeral Singers & Wedding Choirs in Liverpool",
+        "url": "https://londonchoralservice.com/areas/liverpool.html",
+        "description": "Professional funeral singers, wedding choirs, and ceremony musicians in Liverpool and across Merseyside.",
+        "provider": {
+          "@type": "LocalBusiness",
+          "@id": "https://londonchoralservice.com/#organization",
+          "name": "The London Choral Service",
+          "alternateName": "London Choral Service"
+        },
+        "areaServed": {
+          "@type": "City",
+          "name": "Liverpool"
+        },
+        "serviceType": [
+          "Funeral Music",
+          "Wedding Music",
+          "Memorial Music",
+          "Ceremony Music"
+        ],
+        "geo": {
+          "@type": "GeoCoordinates",
+          "latitude": 53.40805,
+          "longitude": -2.99169
+        }
+      },
+      {
         "@type": "LocalBusiness",
         "@id": "https://londonchoralservice.com/#organization",
-        "name": "The London Choral Service",
-        "alternateName": "London Choral Service"
+        "name": "The London Choral Service"
       },
-      "areaServed": {
-        "@type": "City",
-        "name": "Liverpool"
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "https://londonchoralservice.com/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Areas We Serve",
+            "item": "https://londonchoralservice.com/areas/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 3,
+            "name": "Liverpool"
+          }
+        ]
       },
-      "serviceType": [
-        "Funeral Music",
-        "Wedding Music",
-        "Memorial Music",
-        "Ceremony Music"
-      ]
-    },
-    {
-      "@type": "LocalBusiness",
-      "@id": "https://londonchoralservice.com/#organization",
-      "name": "The London Choral Service",
-      "aggregateRating": {
-        "@type": "AggregateRating",
-        "ratingValue": "5",
-        "reviewCount": "4",
-        "bestRating": "5"
+      {
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "How much does a funeral singer cost in Liverpool?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "A solo funeral singer in Liverpool starts from £215. A small choir of four voices starts from £1,150, a quintet from £1,400, a sextet from £1,600, and a full choir of eight from £2,000. Travel costs may apply for services across Merseyside, including Wirral, Sefton, Knowsley, and St Helens."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Can you provide a choir for a wedding in Liverpool?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Of course. Our choirs and soloists perform at weddings in Liverpool Cathedral, the Metropolitan Cathedral of Christ the King, and at intimate churches in Woolton, Aigburth, and Crosby, as well as waterfront venues along the Pier Head. Ensembles range from a solo vocalist to a full twelve-voice chorus."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "What types of music can you perform at a funeral in Liverpool?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Our singers perform traditional hymns, classical sacred works, and contemporary songs or personal favourites. At Liverpool Cathedral or the Metropolitan Cathedral we can offer the full breadth of the choral repertoire, from a solo Ave Maria to a large-scale requiem. Bespoke arrangements are always available."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Do you cover crematorium services in Liverpool?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes, we regularly sing at Anfield Crematorium, Thornton Crematorium, and other crematoriums across Merseyside. Our musicians are familiar with each chapel's layout and timing requirements, and coordinate directly with crematorium staff to ensure everything runs smoothly."
+            }
+          }
+        ]
       }
-    },
-    {
-      "@type": "BreadcrumbList",
-      "itemListElement": [
-        {
-          "@type": "ListItem",
-          "position": 1,
-          "name": "Home",
-          "item": "https://londonchoralservice.com/"
-        },
-        {
-          "@type": "ListItem",
-          "position": 2,
-          "name": "Areas We Serve",
-          "item": "https://londonchoralservice.com/areas/"
-        },
-        {
-          "@type": "ListItem",
-          "position": 3,
-          "name": "Liverpool"
-        }
-      ]
-    },
-    {
-      "@type": "FAQPage",
-      "mainEntity": [
-        {
-          "@type": "Question",
-          "name": "How much does a funeral singer cost in Liverpool?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "A solo funeral singer in Liverpool starts from £215. A small choir of four voices starts from £1,150, a quintet from £1,400, a sextet from £1,600, and a full choir of eight from £2,000. Travel costs may apply for services across Merseyside, including Wirral, Sefton, Knowsley, and St Helens."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "Can you provide a choir for a wedding in Liverpool?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Of course. Our choirs and soloists perform at weddings in Liverpool Cathedral, the Metropolitan Cathedral of Christ the King, and at intimate churches in Woolton, Aigburth, and Crosby, as well as waterfront venues along the Pier Head. Ensembles range from a solo vocalist to a full twelve-voice chorus."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "What types of music can you perform at a funeral in Liverpool?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Our singers perform traditional hymns, classical sacred works, and contemporary songs or personal favourites. At Liverpool Cathedral or the Metropolitan Cathedral we can offer the full breadth of the choral repertoire, from a solo Ave Maria to a large-scale requiem. Bespoke arrangements are always available."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "Do you cover crematorium services in Liverpool?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Yes, we regularly sing at Anfield Crematorium, Thornton Crematorium, and other crematoriums across Merseyside. Our musicians are familiar with each chapel's layout and timing requirements, and coordinate directly with crematorium staff to ensure everything runs smoothly."
-          }
-        }
-      ]
-    }
-  ]
-}
+    ]
+  }
   </script>
 </head>
 <body>
@@ -1841,7 +1983,7 @@
           </ol>
         </nav>
 
-        <h1>Funeral singers and choirs in Liverpool</h1>
+        <h1>Funeral and wedding choirs in Liverpool</h1>
 
         <p class="lede">Liverpool is a city shaped by music&thinsp;&mdash;&thinsp;from the great cathedral choral tradition on St James&rsquo;s Mount to the hymns sung in parish churches across Merseyside. Whether you are arranging a funeral, planning a wedding, or organising a memorial service, our conservatoire-trained singers and instrumentalists bring sensitivity, skill, and genuine warmth to every occasion in Liverpool and the surrounding boroughs of Wirral, Sefton, Knowsley, and St Helens.</p>
 

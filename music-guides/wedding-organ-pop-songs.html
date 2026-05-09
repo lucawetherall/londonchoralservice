@@ -2,6 +2,10 @@
 <html lang="en-GB">
 <head>
   <meta charset="UTF-8">
+  <!-- @include-start partials/head-extras.html -->
+<link rel="preload" href="/fonts/cormorant-garamond.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/source-serif-4.woff2" as="font" type="font/woff2" crossorigin>
+  <!-- @include-end partials/head-extras.html -->
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
   <!-- Google Analytics (GA4) — deferred until after load -->
@@ -29,16 +33,16 @@
     });
   </script>
 
-  <title>Popular Songs on the Organ at Your Wedding — London Choral Service</title>
-  <meta name="description" content="Pop, film, and musical theatre songs that work on a church organ at a wedding. What to choose, what falls flat, and how to brief your organist on a bespoke arrangement.">
+  <title>Popular Songs on the Organ at Your Wedding</title>
+  <meta name="description" content="Pop, film, and musical theatre songs that work on a church organ at a wedding.">
   <meta name="theme-color" content="#F7F3EE">
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://londonchoralservice.com/music-guides/wedding-organ-pop-songs.html">
   <link rel="alternate" hreflang="en-gb" href="https://londonchoralservice.com/music-guides/wedding-organ-pop-songs.html">
   <link rel="alternate" hreflang="x-default" href="https://londonchoralservice.com/music-guides/wedding-organ-pop-songs.html">
 
-  <meta property="og:title" content="Popular Songs on the Organ at Your Wedding &mdash; London Choral Service">
-  <meta property="og:description" content="Pop, film, and musical theatre songs that work on a church organ at a wedding. What to choose, what falls flat, and how to brief your organist on a bespoke arrangement.">
+  <meta property="og:title" content="Popular Songs on the Organ at Your Wedding">
+  <meta property="og:description" content="Pop, film, and musical theatre songs that work on a church organ at a wedding.">
   <meta property="og:type" content="article">
   <meta property="og:url" content="https://londonchoralservice.com/music-guides/wedding-organ-pop-songs.html">
   <meta property="og:locale" content="en_GB">
@@ -48,8 +52,8 @@
   <meta property="article:modified_time" content="2026-05-06">
 
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Popular Songs on the Organ at Your Wedding &mdash; London Choral Service">
-  <meta name="twitter:description" content="Pop, film, and musical theatre songs that work on a church organ at a wedding. What to choose, what falls flat, and how to brief your organist on a bespoke arrangement.">
+  <meta name="twitter:title" content="Popular Songs on the Organ at Your Wedding">
+  <meta name="twitter:description" content="Pop, film, and musical theatre songs that work on a church organ at a wedding.">
   <meta name="twitter:image" content="https://londonchoralservice.com/assets/og-image.png">
   <link rel="dns-prefetch" href="https://www.googletagmanager.com">
   <link rel="dns-prefetch" href="https://api.web3forms.com">
@@ -1604,6 +1608,145 @@
         display: none;
       }
     }
+    
+    /* ═══════════════════════════════════
+       Pull Quote — Marquee Variant
+       (services.html hero treatment)
+       ═══════════════════════════════════ */
+    .pull-quote--marquee {
+      margin-block: 0 var(--space-2xl);
+      max-width: 30rem;
+    }
+    
+    .pull-quote--marquee p {
+      font-size: var(--text-3xl);
+      line-height: var(--leading-tight);
+    }
+    
+    .pull-quote--marquee::before {
+      font-size: 8rem;
+      top: -0.3em;
+      left: -0.08em;
+      opacity: 0.18;
+    }
+    
+    .pull-quote--marquee figcaption {
+      margin-top: var(--space-lg);
+    }
+    
+    /* ═══════════════════════════════════
+       Occasion List (services.html hub)
+       ═══════════════════════════════════ */
+    .occasion-list {
+      list-style: none;
+      padding-left: 0;
+      margin: 0 0 var(--space-2xl);
+    }
+    
+    .occasion-list li {
+      display: grid;
+      grid-template-columns: minmax(0, 14rem) 1fr;
+      gap: var(--space-2xl);
+      padding-block: var(--space-xl);
+      border-top: 1px solid var(--color-rule);
+      margin: 0;
+    }
+    
+    .occasion-list li:last-child {
+      border-bottom: 1px solid var(--color-rule);
+    }
+    
+    .occasion-list h3 {
+      font-size: var(--text-xl);
+      font-weight: 400;
+      margin: 0;
+    }
+    
+    .occasion-list p {
+      color: var(--color-text-mid);
+      margin-bottom: var(--space-md);
+    }
+    
+    .occasion-list .occasion-cta {
+      font-family: var(--font-heading);
+      font-weight: 500;
+      font-size: var(--text-base);
+      color: var(--color-accent);
+      text-decoration: none;
+    }
+    
+    .occasion-list .occasion-cta:hover {
+      color: var(--color-accent-hover);
+      text-decoration: underline;
+    }
+    
+    @media (max-width: 767px) {
+      .occasion-list li {
+        grid-template-columns: 1fr;
+        gap: var(--space-sm);
+      }
+    }
+    
+    /* ═══════════════════════════════════
+       Ensemble Grid (services.html)
+       ═══════════════════════════════════ */
+    .ensemble-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: var(--space-lg);
+      list-style: none;
+      padding: 0;
+      margin: var(--space-xl) 0 var(--space-2xl);
+    }
+    
+    .ensemble-grid li {
+      margin: 0;
+    }
+    
+    @media (max-width: 899px) {
+      .ensemble-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+    
+    @media (max-width: 599px) {
+      .ensemble-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    
+    .ensemble-card {
+      padding: var(--space-xl);
+      background-color: var(--color-bg-alt);
+      border: 1px solid transparent;
+      transition: border-color var(--transition-fast);
+      height: 100%;
+    }
+    
+    .ensemble-card:hover {
+      border-color: var(--color-accent);
+    }
+    
+    .ensemble-card h3 {
+      font-family: var(--font-heading);
+      font-size: var(--text-lg);
+      font-weight: 500;
+      margin-bottom: var(--space-xs);
+    }
+    
+    .ensemble-card .voices {
+      display: block;
+      font-family: var(--font-body);
+      font-size: var(--text-sm);
+      color: var(--color-text-mid);
+      margin-bottom: var(--space-md);
+      letter-spacing: 0.02em;
+    }
+    
+    .ensemble-card p {
+      color: var(--color-text-mid);
+      margin-bottom: 0;
+    }
     /* ═══════════════════════════════════
        Print Styles
        ═══════════════════════════════════ */
@@ -1692,109 +1835,117 @@
 
   <script type="application/ld+json">
   {
-  "@context": "https://schema.org",
-  "@graph": [
-    {
-      "@type": "Article",
-      "headline": "Popular songs on the organ at your wedding",
-      "url": "https://londonchoralservice.com/music-guides/wedding-organ-pop-songs.html",
-      "inLanguage": "en-GB",
-      "datePublished": "2026-03-06",
-      "dateModified": "2026-05-06",
-      "description": "Pop, film, and musical theatre songs that work on a church organ at a wedding. What to choose, what falls flat, and how to brief your organist on a bespoke arrangement.",
-      "author": [
-        {
-          "@type": "Person",
-          "name": "Luca Wetherall",
-          "jobTitle": "Artistic Director",
-          "url": "https://londonchoralservice.com/about.html"
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Article",
+        "headline": "Popular songs on the organ at your wedding",
+        "url": "https://londonchoralservice.com/music-guides/wedding-organ-pop-songs.html",
+        "inLanguage": "en-GB",
+        "datePublished": "2026-03-06",
+        "dateModified": "2026-05-06",
+        "description": "Pop, film, and musical theatre songs that work on a church organ at a wedding. What to choose, what falls flat, and how to brief your organist on a bespoke arrangement.",
+        "author": [
+          {
+            "@type": "Person",
+            "name": "Luca Wetherall",
+            "jobTitle": "Artistic Director",
+            "url": "https://londonchoralservice.com/about.html"
+          },
+          {
+            "@type": "Organization",
+            "name": "The London Choral Service",
+            "alternateName": "London Choral Service",
+            "url": "https://londonchoralservice.com"
+          }
+        ],
+        "image": {
+          "@type": "ImageObject",
+          "url": "https://londonchoralservice.com/assets/og-image.png",
+          "width": 1200,
+          "height": 630
         },
-        {
+        "wordCount": 2600,
+        "speakable": {
+          "@type": "SpeakableSpecification",
+          "cssSelector": [
+            ".lede",
+            ".guide-body p:first-of-type"
+          ]
+        },
+        "publisher": {
           "@type": "Organization",
           "name": "The London Choral Service",
           "alternateName": "London Choral Service",
-          "url": "https://londonchoralservice.com"
-        }
-      ],
-      "publisher": {
-        "@type": "Organization",
-        "name": "The London Choral Service",
-        "alternateName": "London Choral Service",
-        "url": "https://londonchoralservice.com",
-        "logo": {
-          "@type": "ImageObject",
-          "url": "https://londonchoralservice.com/assets/og-image.png"
+          "url": "https://londonchoralservice.com",
+          "logo": {
+            "@type": "ImageObject",
+            "url": "https://londonchoralservice.com/assets/og-image.png"
+          }
+        },
+        "mainEntityOfPage": {
+          "@type": "WebPage",
+          "@id": "https://londonchoralservice.com/music-guides/wedding-organ-pop-songs.html"
         }
       },
-      "mainEntityOfPage": {
-        "@type": "WebPage",
-        "@id": "https://londonchoralservice.com/music-guides/wedding-organ-pop-songs.html"
+      {
+        "@type": "LocalBusiness",
+        "@id": "https://londonchoralservice.com/#organization",
+        "name": "The London Choral Service"
+      },
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "https://londonchoralservice.com/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Music Guides",
+            "item": "https://londonchoralservice.com/music-guides/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 3,
+            "name": "Popular Songs on the Organ at Your Wedding"
+          }
+        ]
+      },
+      {
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "Can an organist play modern songs at a wedding?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes. Most professional church organists play bespoke arrangements of pop songs, film themes, and musical theatre numbers. The organ suits songs with legato melodies and rich harmony; it handles Can't Help Falling in Love, Perfect, A Thousand Years, and All of Me well. Tracks built on drums or dense studio production translate less well."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Is it appropriate to play pop songs on the organ at a church wedding?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Most vicars and priests welcome pop songs on the organ during the prelude, register signing, or recessional. A small number of churches restrict secular music during the vows themselves. Ask your celebrant when you book the church."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "How far ahead should I ask my organist for a pop song arrangement?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Give your organist at least eight weeks for a bespoke arrangement. Four weeks is the absolute minimum. If you book through London Choral Service, bespoke arrangements are included at no extra charge."
+            }
+          }
+        ]
       }
-    },
-    {
-      "@type": "LocalBusiness",
-      "@id": "https://londonchoralservice.com/#organization",
-      "name": "The London Choral Service",
-      "aggregateRating": {
-        "@type": "AggregateRating",
-        "ratingValue": "5",
-        "reviewCount": "4",
-        "bestRating": "5"
-      }
-    },
-    {
-      "@type": "BreadcrumbList",
-      "itemListElement": [
-        {
-          "@type": "ListItem",
-          "position": 1,
-          "name": "Home",
-          "item": "https://londonchoralservice.com/"
-        },
-        {
-          "@type": "ListItem",
-          "position": 2,
-          "name": "Music Guides",
-          "item": "https://londonchoralservice.com/music-guides/"
-        },
-        {
-          "@type": "ListItem",
-          "position": 3,
-          "name": "Popular Songs on the Organ at Your Wedding"
-        }
-      ]
-    },
-    {
-      "@type": "FAQPage",
-      "mainEntity": [
-        {
-          "@type": "Question",
-          "name": "Can an organist play modern songs at a wedding?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Yes. Most professional church organists play bespoke arrangements of pop songs, film themes, and musical theatre numbers. The organ suits songs with legato melodies and rich harmony; it handles Can't Help Falling in Love, Perfect, A Thousand Years, and All of Me well. Tracks built on drums or dense studio production translate less well."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "Is it appropriate to play pop songs on the organ at a church wedding?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Most vicars and priests welcome pop songs on the organ during the prelude, register signing, or recessional. A small number of churches restrict secular music during the vows themselves. Ask your celebrant when you book the church."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "How far ahead should I ask my organist for a pop song arrangement?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Give your organist at least eight weeks for a bespoke arrangement. Four weeks is the absolute minimum. If you book through London Choral Service, bespoke arrangements are included at no extra charge."
-          }
-        }
-      ]
-    }
-  ]
-}
+    ]
+  }
   </script>
 
 </head>
@@ -1852,6 +2003,7 @@
             </ol>
           </nav>
           <h1>Popular songs on the organ at your wedding</h1>
+          <p class="guide-meta">By Luca Wetherall, Artistic Director &amp; Tutor in Music, University of Oxford</p>
           <p class="guide-meta">Published 6 March 2026</p>
           <hr class="rule">
         </div>
@@ -2034,6 +2186,17 @@
           <a href="../areas/cambridge.html">Cambridge</a>.
           <a href="../areas/">See all areas</a>.</p>
       </div>
+    </section>
+
+  
+    <section class="related-guides">
+      <h2>Related</h2>
+      <p><strong>If you&rsquo;re planning a wedding</strong> &mdash; see our <a href="../weddings.html">Weddings</a> page or <a href="../for-wedding-planners.html">information for wedding planners</a>.</p>
+      <ul>
+        <li><a href="wedding-organ-repertoire.html">The Best Organ Pieces for a Wedding</a></li>
+        <li><a href="wedding-pop-songs-choir.html">Pop Songs for a Wedding Choir to Sing</a></li>
+        <li><a href="popular-wedding-organ-music.html">Popular Wedding Organ Music</a></li>
+      </ul>
     </section>
 
   </main>

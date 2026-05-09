@@ -2,6 +2,10 @@
 <html lang="en-GB">
 <head>
   <meta charset="UTF-8">
+  <!-- @include-start partials/head-extras.html -->
+<link rel="preload" href="/fonts/cormorant-garamond.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/source-serif-4.woff2" as="font" type="font/woff2" crossorigin>
+  <!-- @include-end partials/head-extras.html -->
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
   <!-- Google Analytics (GA4) — deferred until after load -->
@@ -29,16 +33,16 @@
     });
   </script>
 
-  <title>Funeral Singers in Richmond upon Thames — London Choral Service</title>
-  <meta name="description" content="Professional funeral singers and wedding choirs in Richmond upon Thames, London. Conservatoire-trained musicians for funerals, weddings, memorials, and ceremonies.">
+  <title>Funeral and wedding choirs in Richmond upon Thames</title>
+  <meta name="description" content="Professional funeral singers and wedding choirs in Richmond upon Thames, London.">
   <meta name="theme-color" content="#F7F3EE">
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://londonchoralservice.com/areas/london/richmond.html">
   <link rel="alternate" hreflang="en-gb" href="https://londonchoralservice.com/areas/london/richmond.html">
   <link rel="alternate" hreflang="x-default" href="https://londonchoralservice.com/areas/london/richmond.html">
 
-  <meta property="og:title" content="Funeral Singers in Richmond upon Thames | London Choral Service">
-  <meta property="og:description" content="Professional funeral singers and wedding choirs in Richmond upon Thames, London. Conservatoire-trained musicians for funerals, weddings, and ceremonies.">
+  <meta property="og:title" content="Funeral and wedding choirs in Richmond upon Thames">
+  <meta property="og:description" content="Professional funeral singers and wedding choirs in Richmond upon Thames, London.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://londonchoralservice.com/areas/london/richmond.html">
   <meta property="og:locale" content="en_GB">
@@ -46,7 +50,7 @@
   <meta property="og:image" content="https://londonchoralservice.com/assets/og-image.png">
 
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Funeral Singers in Richmond upon Thames | London Choral Service">
+  <meta name="twitter:title" content="Funeral and wedding choirs in Richmond upon Thames">
   <meta name="twitter:description" content="Professional funeral singers and wedding choirs in Richmond upon Thames, London.">
   <meta name="twitter:image" content="https://londonchoralservice.com/assets/og-image.png">
   <link rel="dns-prefetch" href="https://www.googletagmanager.com">
@@ -1602,6 +1606,145 @@
         display: none;
       }
     }
+    
+    /* ═══════════════════════════════════
+       Pull Quote — Marquee Variant
+       (services.html hero treatment)
+       ═══════════════════════════════════ */
+    .pull-quote--marquee {
+      margin-block: 0 var(--space-2xl);
+      max-width: 30rem;
+    }
+    
+    .pull-quote--marquee p {
+      font-size: var(--text-3xl);
+      line-height: var(--leading-tight);
+    }
+    
+    .pull-quote--marquee::before {
+      font-size: 8rem;
+      top: -0.3em;
+      left: -0.08em;
+      opacity: 0.18;
+    }
+    
+    .pull-quote--marquee figcaption {
+      margin-top: var(--space-lg);
+    }
+    
+    /* ═══════════════════════════════════
+       Occasion List (services.html hub)
+       ═══════════════════════════════════ */
+    .occasion-list {
+      list-style: none;
+      padding-left: 0;
+      margin: 0 0 var(--space-2xl);
+    }
+    
+    .occasion-list li {
+      display: grid;
+      grid-template-columns: minmax(0, 14rem) 1fr;
+      gap: var(--space-2xl);
+      padding-block: var(--space-xl);
+      border-top: 1px solid var(--color-rule);
+      margin: 0;
+    }
+    
+    .occasion-list li:last-child {
+      border-bottom: 1px solid var(--color-rule);
+    }
+    
+    .occasion-list h3 {
+      font-size: var(--text-xl);
+      font-weight: 400;
+      margin: 0;
+    }
+    
+    .occasion-list p {
+      color: var(--color-text-mid);
+      margin-bottom: var(--space-md);
+    }
+    
+    .occasion-list .occasion-cta {
+      font-family: var(--font-heading);
+      font-weight: 500;
+      font-size: var(--text-base);
+      color: var(--color-accent);
+      text-decoration: none;
+    }
+    
+    .occasion-list .occasion-cta:hover {
+      color: var(--color-accent-hover);
+      text-decoration: underline;
+    }
+    
+    @media (max-width: 767px) {
+      .occasion-list li {
+        grid-template-columns: 1fr;
+        gap: var(--space-sm);
+      }
+    }
+    
+    /* ═══════════════════════════════════
+       Ensemble Grid (services.html)
+       ═══════════════════════════════════ */
+    .ensemble-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: var(--space-lg);
+      list-style: none;
+      padding: 0;
+      margin: var(--space-xl) 0 var(--space-2xl);
+    }
+    
+    .ensemble-grid li {
+      margin: 0;
+    }
+    
+    @media (max-width: 899px) {
+      .ensemble-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+    
+    @media (max-width: 599px) {
+      .ensemble-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    
+    .ensemble-card {
+      padding: var(--space-xl);
+      background-color: var(--color-bg-alt);
+      border: 1px solid transparent;
+      transition: border-color var(--transition-fast);
+      height: 100%;
+    }
+    
+    .ensemble-card:hover {
+      border-color: var(--color-accent);
+    }
+    
+    .ensemble-card h3 {
+      font-family: var(--font-heading);
+      font-size: var(--text-lg);
+      font-weight: 500;
+      margin-bottom: var(--space-xs);
+    }
+    
+    .ensemble-card .voices {
+      display: block;
+      font-family: var(--font-body);
+      font-size: var(--text-sm);
+      color: var(--color-text-mid);
+      margin-bottom: var(--space-md);
+      letter-spacing: 0.02em;
+    }
+    
+    .ensemble-card p {
+      color: var(--color-text-mid);
+      margin-bottom: 0;
+    }
     /* ═══════════════════════════════════
        Print Styles
        ═══════════════════════════════════ */
@@ -1690,115 +1833,110 @@
 
   <script type="application/ld+json">
   {
-  "@context": "https://schema.org",
-  "@graph": [
-    {
-      "@type": "Service",
-      "name": "Funeral Singers & Wedding Choirs in Richmond upon Thames",
-      "url": "https://londonchoralservice.com/areas/london/richmond.html",
-      "description": "Professional funeral singers and wedding choirs in Richmond upon Thames, London.",
-      "provider": {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Service",
+        "name": "Funeral Singers & Wedding Choirs in Richmond upon Thames",
+        "url": "https://londonchoralservice.com/areas/london/richmond.html",
+        "description": "Professional funeral singers and wedding choirs in Richmond upon Thames, London.",
+        "provider": {
+          "@type": "LocalBusiness",
+          "@id": "https://londonchoralservice.com/#organization"
+        },
+        "areaServed": {
+          "@type": "AdministrativeArea",
+          "name": "London Borough of Richmond upon Thames",
+          "containedInPlace": {
+            "@type": "City",
+            "name": "London",
+            "addressCountry": "GB"
+          }
+        },
+        "serviceType": [
+          "Funeral Music",
+          "Wedding Music",
+          "Memorial Music",
+          "Ceremony Music"
+        ],
+        "geo": {
+          "@type": "GeoCoordinates",
+          "latitude": 51.46128,
+          "longitude": -0.30326
+        }
+      },
+      {
         "@type": "LocalBusiness",
-        "name": "The London Choral Service",
-        "alternateName": "London Choral Service",
-        "url": "https://londonchoralservice.com",
-        "telephone": "+447356042468",
-        "email": "office@londonchoralservice.com"
+        "@id": "https://londonchoralservice.com/#organization",
+        "name": "The London Choral Service"
       },
-      "areaServed": {
-        "@type": "AdministrativeArea",
-        "name": "London Borough of Richmond upon Thames",
-        "containedInPlace": {
-          "@type": "City",
-          "name": "London",
-          "addressCountry": "GB"
-        }
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "https://londonchoralservice.com/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Areas We Serve",
+            "item": "https://londonchoralservice.com/areas/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 3,
+            "name": "London",
+            "item": "https://londonchoralservice.com/areas/london.html"
+          },
+          {
+            "@type": "ListItem",
+            "position": 4,
+            "name": "Richmond upon Thames"
+          }
+        ]
       },
-      "serviceType": [
-        "Funeral Music",
-        "Wedding Music",
-        "Memorial Music",
-        "Ceremony Music"
-      ]
-    },
-    {
-      "@type": "LocalBusiness",
-      "@id": "https://londonchoralservice.com/#organization",
-      "name": "The London Choral Service",
-      "aggregateRating": {
-        "@type": "AggregateRating",
-        "ratingValue": "5",
-        "reviewCount": "4",
-        "bestRating": "5"
+      {
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "How much does a funeral singer cost in Richmond?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Whether the service is at Mortlake Crematorium, St Mary Magdalene Richmond, or St Anne's Kew, a solo funeral singer starts from £215. A small choir of four starts from £1,150, a quintet from £1,400, a sextet from £1,600, and a full choir of eight from £2,000. Prices include travel within Greater London."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Can you provide a choir for a wedding in Richmond?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes. Richmond is one of London's most sought-after wedding locations, and we provide choirs at St Mary Magdalene, Hampton Court Chapel, and churches across Twickenham, Kew, and Ham. Ensembles range from a solo vocalist to a full twelve-voice chorus with instrumental accompaniment."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "What types of music can you perform at a funeral in Richmond?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "We cover the full range — traditional hymns and sacred choral music through to contemporary songs, folk arrangements, and popular favourites. At St Mary Magdalene's riverside setting or the intimate churches of Teddington and Barnes, we tailor the programme to the venue and the family's wishes. We also prepare bespoke arrangements on request."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Do you cover crematorium services in Richmond?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes, we sing at Mortlake Crematorium regularly and know its chapels well. Our singers arrive early to coordinate with staff and plan the programme to fit within the allocated time slots. A solo voice or duet is often the best choice for crematorium services, though quartets also work beautifully there."
+            }
+          }
+        ]
       }
-    },
-    {
-      "@type": "BreadcrumbList",
-      "itemListElement": [
-        {
-          "@type": "ListItem",
-          "position": 1,
-          "name": "Home",
-          "item": "https://londonchoralservice.com/"
-        },
-        {
-          "@type": "ListItem",
-          "position": 2,
-          "name": "Areas We Serve",
-          "item": "https://londonchoralservice.com/areas/"
-        },
-        {
-          "@type": "ListItem",
-          "position": 3,
-          "name": "London",
-          "item": "https://londonchoralservice.com/areas/london.html"
-        },
-        {
-          "@type": "ListItem",
-          "position": 4,
-          "name": "Richmond upon Thames"
-        }
-      ]
-    },
-    {
-      "@type": "FAQPage",
-      "mainEntity": [
-        {
-          "@type": "Question",
-          "name": "How much does a funeral singer cost in Richmond?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Whether the service is at Mortlake Crematorium, St Mary Magdalene Richmond, or St Anne's Kew, a solo funeral singer starts from £215. A small choir of four starts from £1,150, a quintet from £1,400, a sextet from £1,600, and a full choir of eight from £2,000. Prices include travel within Greater London."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "Can you provide a choir for a wedding in Richmond?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Yes. Richmond is one of London's most sought-after wedding locations, and we provide choirs at St Mary Magdalene, Hampton Court Chapel, and churches across Twickenham, Kew, and Ham. Ensembles range from a solo vocalist to a full twelve-voice chorus with instrumental accompaniment."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "What types of music can you perform at a funeral in Richmond?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "We cover the full range — traditional hymns and sacred choral music through to contemporary songs, folk arrangements, and popular favourites. At St Mary Magdalene's riverside setting or the intimate churches of Teddington and Barnes, we tailor the programme to the venue and the family's wishes. We also prepare bespoke arrangements on request."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "Do you cover crematorium services in Richmond?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Yes, we sing at Mortlake Crematorium regularly and know its chapels well. Our singers arrive early to coordinate with staff and plan the programme to fit within the allocated time slots. A solo voice or duet is often the best choice for crematorium services, though quartets also work beautifully there."
-          }
-        }
-      ]
-    }
-  ]
-}
+    ]
+  }
   </script>
 </head>
 <body>
@@ -1853,8 +1991,9 @@
             <li>Richmond upon Thames</li>
           </ol>
         </nav>
-        <h1>Funeral singers and choirs in Richmond upon Thames</h1>
+        <h1>Funeral and wedding choirs in Richmond upon Thames</h1>
         <p class="lede">The London Borough of Richmond upon Thames is widely regarded as one of the most beautiful parts of London, with its royal parks, Thames-side walks, and handsome period architecture. The London Choral Service provides conservatoire-trained singers and instrumentalists for funerals, weddings, memorials, and ceremonies across Richmond, Twickenham, Kew, Ham, and the surrounding areas.</p>
+        <p>Richmond is one of <a href="../london.html">over thirty London boroughs we cover</a> &mdash; see the full list, with named venues, on our London hub page.</p>
         <hr class="rule">
       </div>
     </section>
@@ -1863,13 +2002,14 @@
       <div class="prose">
         <h2>Funeral music in Richmond upon Thames</h2>
         <p>We regularly perform at services throughout the borough, including St&nbsp;Mary Magdalene Richmond&thinsp;&mdash;&thinsp;a landmark church overlooking the Thames&thinsp;&mdash;&thinsp;Mortlake Crematorium, and St&nbsp;Anne&rsquo;s Kew. Our singers also work at churches and chapels in Ham, Twickenham, Teddington, and Barnes, bringing the same care and professionalism to every service. Whether you would like a soloist singing a reflective piece or a quartet leading the congregation in traditional hymns, we help you find music that feels right for the person you are remembering. Our <a href="../../music-guides/funeral-music-guide.html">funeral music guide</a> offers a wide range of suggestions, and we encourage you to <a href="../../contact.html">get in touch</a> to discuss your plans.</p>
+        <p>For practical guidance on music at crematorium services &mdash; timing, acoustics, and making a shorter service meaningful &mdash; see our <a href="../../music-guides/crematorium-music.html">guide to crematorium music</a>.</p>
         <p>Mortlake Crematorium serves a wide area of south-west London, and our singers know its chapels well. We understand the particular timing constraints of crematorium services and work efficiently within them, ensuring that every note counts. Live singing at a crematorium service changes the mood of the room in a way recorded music rarely does. You can find out more about how we prepare for each service on our <a href="../../services.html">services page</a>.</p>
 
         <h2>Wedding choirs in Richmond upon Thames</h2>
         <p>Richmond upon Thames is one of London&rsquo;s most sought-after wedding locations, and it is easy to see why. The Tudor splendour of Hampton Court Chapel, the riverside elegance of St&nbsp;Mary Magdalene, and the botanical beauty of Kew all provide extraordinary settings for a marriage ceremony. Our singers can perform at any of these venues, as well as at the many licensed venues in Twickenham, Ham, and beyond. From triumphant hymns to tender motets, we work with each couple to create a musical programme that enhances the joy of the day. Our <a href="../../music-guides/choosing-wedding-hymns.html">guide to choosing wedding hymns</a> is a good place to start.</p>
 
         <h2>Ensembles for weddings, funerals, and memorials</h2>
-        <p>Not every occasion calls for the same size of ensemble, and part of our job is helping you find the right balance for your venue, your budget, and the feeling you want to create. We offer everything from a single soloist&thinsp;&mdash;&thinsp;whose voice can hold a room in complete stillness&thinsp;&mdash;&thinsp;through to duets, quartets, octets, and a full twelve-voice chorus with instrumental accompaniment. Organists, harpists, and string players are also available. Visit our <a href="../../pricing.html">pricing page</a> for a clear guide to ensemble sizes and costs.</p>
+        <p>For a wedding at Hampton Court Chapel or St&nbsp;Mary Magdalene Richmond, we&rsquo;d typically suggest a sextet or larger &mdash; the volume of those buildings rewards more voices, and a full eight-voice choir suits Hampton Court&rsquo;s Tudor scale particularly well. St&nbsp;Anne&rsquo;s Kew is more intimate; a quartet or sextet sits comfortably there depending on the size of the congregation. Mortlake Crematorium runs to a fixed service length, so a quartet is generally the right call: enough to lead a hymn, compact enough for the chapel. The parish churches in Twickenham, Teddington, Ham, and Barnes vary in scale; most handle a quartet well, with a sextet adding weight at the larger ones. For a graveside committal, a soloist or duo is often more fitting. Our <a href="../../pricing.html">pricing page</a> sets out costs.</p>
 
         <figure class="pull-quote">
           <blockquote><p>&ldquo;The singers were quite simply wonderful. They brought such warmth to the service&thinsp;&mdash;&thinsp;it was exactly what we had hoped for and more.&rdquo;</p></blockquote>
@@ -1898,7 +2038,7 @@
 
     <section class="section">
       <div class="prose">
-        <p class="text-sm text-mid">Nearby boroughs: <a href="hounslow.html">Hounslow</a> &middot; <a href="hammersmith-fulham.html">Hammersmith &amp; Fulham</a> &middot; <a href="wandsworth.html">Wandsworth</a> &middot; <a href="kingston.html">Kingston</a></p>
+        <p class="text-sm text-mid">Nearby boroughs: <a href="hounslow.html">Hounslow</a> &middot; <a href="kingston.html">Kingston upon Thames</a> &middot; <a href="wandsworth.html">Wandsworth</a> &middot; <a href="hammersmith-fulham.html">Hammersmith &amp; Fulham</a></p>
       </div>
     </section>
 

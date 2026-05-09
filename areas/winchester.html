@@ -2,6 +2,10 @@
 <html lang="en-GB">
 <head>
   <meta charset="UTF-8">
+  <!-- @include-start partials/head-extras.html -->
+<link rel="preload" href="/fonts/cormorant-garamond.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/source-serif-4.woff2" as="font" type="font/woff2" crossorigin>
+  <!-- @include-end partials/head-extras.html -->
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
   <!-- Google Analytics (GA4) — deferred until after load -->
@@ -29,15 +33,15 @@
     });
   </script>
 
-  <title>Funeral Singers &amp; Wedding Choirs in Winchester — London Choral Service</title>
-  <meta name="description" content="Professional funeral singers, wedding choirs, and ceremony musicians in Winchester and across Hampshire. Conservatoire-trained vocalists and instrumentalists for services at Winchester Cathedral, St Cross Hospital & Church, Southampton Crematorium, Basingstoke Crematorium, and churches throughout the county.">
+  <title>Funeral and wedding choirs in Winchester</title>
+  <meta name="description" content="Professional funeral singers, wedding choirs, and ceremony musicians in Winchester and across Hampshire.">
   <meta name="theme-color" content="#F7F3EE">
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://londonchoralservice.com/areas/winchester.html">
   <link rel="alternate" hreflang="en-gb" href="https://londonchoralservice.com/areas/winchester.html">
   <link rel="alternate" hreflang="x-default" href="https://londonchoralservice.com/areas/winchester.html">
 
-  <meta property="og:title" content="Funeral Singers &amp; Wedding Choirs in Winchester | London Choral Service">
+  <meta property="og:title" content="Funeral and wedding choirs in Winchester">
   <meta property="og:description" content="Professional funeral singers, wedding choirs, and ceremony musicians in Winchester and across Hampshire.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://londonchoralservice.com/areas/winchester.html">
@@ -46,7 +50,7 @@
   <meta property="og:image" content="https://londonchoralservice.com/assets/og-image.png">
 
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Funeral Singers &amp; Wedding Choirs in Winchester | London Choral Service">
+  <meta name="twitter:title" content="Funeral and wedding choirs in Winchester">
   <meta name="twitter:description" content="Professional funeral singers, wedding choirs, and ceremony musicians in Winchester and across Hampshire.">
   <meta name="twitter:image" content="https://londonchoralservice.com/assets/og-image.png">
   <link rel="dns-prefetch" href="https://www.googletagmanager.com">
@@ -1602,6 +1606,145 @@
         display: none;
       }
     }
+    
+    /* ═══════════════════════════════════
+       Pull Quote — Marquee Variant
+       (services.html hero treatment)
+       ═══════════════════════════════════ */
+    .pull-quote--marquee {
+      margin-block: 0 var(--space-2xl);
+      max-width: 30rem;
+    }
+    
+    .pull-quote--marquee p {
+      font-size: var(--text-3xl);
+      line-height: var(--leading-tight);
+    }
+    
+    .pull-quote--marquee::before {
+      font-size: 8rem;
+      top: -0.3em;
+      left: -0.08em;
+      opacity: 0.18;
+    }
+    
+    .pull-quote--marquee figcaption {
+      margin-top: var(--space-lg);
+    }
+    
+    /* ═══════════════════════════════════
+       Occasion List (services.html hub)
+       ═══════════════════════════════════ */
+    .occasion-list {
+      list-style: none;
+      padding-left: 0;
+      margin: 0 0 var(--space-2xl);
+    }
+    
+    .occasion-list li {
+      display: grid;
+      grid-template-columns: minmax(0, 14rem) 1fr;
+      gap: var(--space-2xl);
+      padding-block: var(--space-xl);
+      border-top: 1px solid var(--color-rule);
+      margin: 0;
+    }
+    
+    .occasion-list li:last-child {
+      border-bottom: 1px solid var(--color-rule);
+    }
+    
+    .occasion-list h3 {
+      font-size: var(--text-xl);
+      font-weight: 400;
+      margin: 0;
+    }
+    
+    .occasion-list p {
+      color: var(--color-text-mid);
+      margin-bottom: var(--space-md);
+    }
+    
+    .occasion-list .occasion-cta {
+      font-family: var(--font-heading);
+      font-weight: 500;
+      font-size: var(--text-base);
+      color: var(--color-accent);
+      text-decoration: none;
+    }
+    
+    .occasion-list .occasion-cta:hover {
+      color: var(--color-accent-hover);
+      text-decoration: underline;
+    }
+    
+    @media (max-width: 767px) {
+      .occasion-list li {
+        grid-template-columns: 1fr;
+        gap: var(--space-sm);
+      }
+    }
+    
+    /* ═══════════════════════════════════
+       Ensemble Grid (services.html)
+       ═══════════════════════════════════ */
+    .ensemble-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: var(--space-lg);
+      list-style: none;
+      padding: 0;
+      margin: var(--space-xl) 0 var(--space-2xl);
+    }
+    
+    .ensemble-grid li {
+      margin: 0;
+    }
+    
+    @media (max-width: 899px) {
+      .ensemble-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+    
+    @media (max-width: 599px) {
+      .ensemble-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    
+    .ensemble-card {
+      padding: var(--space-xl);
+      background-color: var(--color-bg-alt);
+      border: 1px solid transparent;
+      transition: border-color var(--transition-fast);
+      height: 100%;
+    }
+    
+    .ensemble-card:hover {
+      border-color: var(--color-accent);
+    }
+    
+    .ensemble-card h3 {
+      font-family: var(--font-heading);
+      font-size: var(--text-lg);
+      font-weight: 500;
+      margin-bottom: var(--space-xs);
+    }
+    
+    .ensemble-card .voices {
+      display: block;
+      font-family: var(--font-body);
+      font-size: var(--text-sm);
+      color: var(--color-text-mid);
+      margin-bottom: var(--space-md);
+      letter-spacing: 0.02em;
+    }
+    
+    .ensemble-card p {
+      color: var(--color-text-mid);
+      margin-bottom: 0;
+    }
     /* ═══════════════════════════════════
        Print Styles
        ═══════════════════════════════════ */
@@ -1690,102 +1833,101 @@
 
   <script type="application/ld+json">
   {
-  "@context": "https://schema.org",
-  "@graph": [
-    {
-      "@type": "Service",
-      "name": "Funeral Singers & Wedding Choirs in Winchester",
-      "url": "https://londonchoralservice.com/areas/winchester.html",
-      "description": "Professional funeral singers, wedding choirs, and ceremony musicians in Winchester and across Hampshire.",
-      "provider": {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Service",
+        "name": "Funeral Singers & Wedding Choirs in Winchester",
+        "url": "https://londonchoralservice.com/areas/winchester.html",
+        "description": "Professional funeral singers, wedding choirs, and ceremony musicians in Winchester and across Hampshire.",
+        "provider": {
+          "@type": "LocalBusiness",
+          "@id": "https://londonchoralservice.com/#organization",
+          "name": "The London Choral Service",
+          "alternateName": "London Choral Service"
+        },
+        "areaServed": {
+          "@type": "City",
+          "name": "Winchester"
+        },
+        "serviceType": [
+          "Funeral Music",
+          "Wedding Music",
+          "Memorial Music",
+          "Ceremony Music"
+        ],
+        "geo": {
+          "@type": "GeoCoordinates",
+          "latitude": 51.06281,
+          "longitude": -1.30877
+        }
+      },
+      {
         "@type": "LocalBusiness",
         "@id": "https://londonchoralservice.com/#organization",
-        "name": "The London Choral Service",
-        "alternateName": "London Choral Service"
+        "name": "The London Choral Service"
       },
-      "areaServed": {
-        "@type": "City",
-        "name": "Winchester"
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "https://londonchoralservice.com/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Areas We Serve",
+            "item": "https://londonchoralservice.com/areas/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 3,
+            "name": "Winchester"
+          }
+        ]
       },
-      "serviceType": [
-        "Funeral Music",
-        "Wedding Music",
-        "Memorial Music",
-        "Ceremony Music"
-      ]
-    },
-    {
-      "@type": "LocalBusiness",
-      "@id": "https://londonchoralservice.com/#organization",
-      "name": "The London Choral Service",
-      "aggregateRating": {
-        "@type": "AggregateRating",
-        "ratingValue": "5",
-        "reviewCount": "4",
-        "bestRating": "5"
+      {
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "How much does a funeral singer cost in Winchester?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Pricing is the same for all Hampshire venues — Winchester Cathedral, St Cross Hospital and Church, Southampton Crematorium, Basingstoke Crematorium, and local parish churches alike. A soloist starts from £215, a small choir of four from £1,150, a quintet from £1,400, a sextet from £1,600, and a full choir of eight from £2,000. As Winchester is outside Greater London, a travel supplement may apply."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Can you provide a choir for a wedding in Winchester?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Gladly. Winchester Cathedral's enormous nave has one of the finest acoustics in Hampshire for choral music, and the ancient St Cross Hospital and Church beside the water meadows is a wonderfully romantic setting for a smaller ensemble. We also sing at parish churches throughout the county, offering anything from a single vocalist to a chorus of twelve."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "What types of music can you perform at a funeral in Winchester?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Our Winchester singers perform everything from traditional hymns — The Lord Is My Shepherd and Jerusalem are perennial favourites — to classical solos like Pie Jesu and contemporary songs chosen by the family. The cathedral's soaring nave rewards larger choral pieces especially, though we adapt comfortably to the more intimate scale of St Cross or a village church. Bespoke arrangements are always available."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Do you cover crematorium services in Winchester?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes. Southampton Crematorium and Basingstoke Crematorium are the two we visit most frequently for Winchester-area families, and we also cover other crematoriums across Hampshire. Our singers are used to working within timed crematorium slots and will speak directly with staff and your funeral director ahead of the service to make sure every detail is in place."
+            }
+          }
+        ]
       }
-    },
-    {
-      "@type": "BreadcrumbList",
-      "itemListElement": [
-        {
-          "@type": "ListItem",
-          "position": 1,
-          "name": "Home",
-          "item": "https://londonchoralservice.com/"
-        },
-        {
-          "@type": "ListItem",
-          "position": 2,
-          "name": "Areas We Serve",
-          "item": "https://londonchoralservice.com/areas/"
-        },
-        {
-          "@type": "ListItem",
-          "position": 3,
-          "name": "Winchester"
-        }
-      ]
-    },
-    {
-      "@type": "FAQPage",
-      "mainEntity": [
-        {
-          "@type": "Question",
-          "name": "How much does a funeral singer cost in Winchester?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Pricing is the same for all Hampshire venues — Winchester Cathedral, St Cross Hospital and Church, Southampton Crematorium, Basingstoke Crematorium, and local parish churches alike. A soloist starts from £215, a small choir of four from £1,150, a quintet from £1,400, a sextet from £1,600, and a full choir of eight from £2,000. As Winchester is outside Greater London, a travel supplement may apply."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "Can you provide a choir for a wedding in Winchester?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Gladly. Winchester Cathedral's enormous nave has one of the finest acoustics in Hampshire for choral music, and the ancient St Cross Hospital and Church beside the water meadows is a wonderfully romantic setting for a smaller ensemble. We also sing at parish churches throughout the county, offering anything from a single vocalist to a chorus of twelve."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "What types of music can you perform at a funeral in Winchester?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Our Winchester singers perform everything from traditional hymns — The Lord Is My Shepherd and Jerusalem are perennial favourites — to classical solos like Pie Jesu and contemporary songs chosen by the family. The cathedral's soaring nave rewards larger choral pieces especially, though we adapt comfortably to the more intimate scale of St Cross or a village church. Bespoke arrangements are always available."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "Do you cover crematorium services in Winchester?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Yes. Southampton Crematorium and Basingstoke Crematorium are the two we visit most frequently for Winchester-area families, and we also cover other crematoriums across Hampshire. Our singers are used to working within timed crematorium slots and will speak directly with staff and your funeral director ahead of the service to make sure every detail is in place."
-          }
-        }
-      ]
-    }
-  ]
-}
+    ]
+  }
   </script>
 </head>
 <body>
@@ -1841,7 +1983,7 @@
           </ol>
         </nav>
 
-        <h1>Funeral singers and choirs in Winchester</h1>
+        <h1>Funeral and wedding choirs in Winchester</h1>
 
         <p class="lede">Winchester is one of the most historically significant cities in England. Once the capital of the Anglo-Saxon kingdom of Wessex and seat of King Alfred the Great, its ancient streets, water meadows, and magnificent cathedral have drawn people here for well over a thousand years. The London Choral Service provides professional singers, choirs, and instrumentalists for funerals, weddings, memorials, and ceremonies across Winchester and Hampshire, bringing music of the highest quality to occasions that matter most.</p>
 

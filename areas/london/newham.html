@@ -2,6 +2,10 @@
 <html lang="en-GB">
 <head>
   <meta charset="UTF-8">
+  <!-- @include-start partials/head-extras.html -->
+<link rel="preload" href="/fonts/cormorant-garamond.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/source-serif-4.woff2" as="font" type="font/woff2" crossorigin>
+  <!-- @include-end partials/head-extras.html -->
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
   <!-- Google Analytics (GA4) — deferred until after load -->
@@ -29,7 +33,7 @@
     });
   </script>
 
-  <title>Funeral Singers &amp; Wedding Choirs in Newham — London Choral Service</title>
+  <title>Funeral and wedding choirs in Newham</title>
   <meta name="description" content="Professional funeral singers and wedding choirs in Newham, London. Conservatoire-trained musicians for funerals, weddings, memorials, and ceremonies.">
   <meta name="theme-color" content="#F7F3EE">
   <meta name="robots" content="index, follow">
@@ -37,8 +41,8 @@
   <link rel="alternate" hreflang="en-gb" href="https://londonchoralservice.com/areas/london/newham.html">
   <link rel="alternate" hreflang="x-default" href="https://londonchoralservice.com/areas/london/newham.html">
 
-  <meta property="og:title" content="Funeral Singers &amp; Wedding Choirs in Newham | London Choral Service">
-  <meta property="og:description" content="Professional funeral singers and wedding choirs in Newham, London. Conservatoire-trained musicians for funerals, weddings, and ceremonies.">
+  <meta property="og:title" content="Funeral and wedding choirs in Newham">
+  <meta property="og:description" content="Professional funeral singers and wedding choirs in Newham, London. Conservatoire-trained musicians for funerals, weddings, memorials, and ceremonies.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://londonchoralservice.com/areas/london/newham.html">
   <meta property="og:locale" content="en_GB">
@@ -46,8 +50,8 @@
   <meta property="og:image" content="https://londonchoralservice.com/assets/og-image.png">
 
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Funeral Singers &amp; Wedding Choirs in Newham | London Choral Service">
-  <meta name="twitter:description" content="Professional funeral singers and wedding choirs in Newham, London.">
+  <meta name="twitter:title" content="Funeral and wedding choirs in Newham">
+  <meta name="twitter:description" content="Professional funeral singers and wedding choirs in Newham, London. Conservatoire-trained musicians for funerals, weddings, memorials, and ceremonies.">
   <meta name="twitter:image" content="https://londonchoralservice.com/assets/og-image.png">
   <link rel="dns-prefetch" href="https://www.googletagmanager.com">
   <link rel="dns-prefetch" href="https://api.web3forms.com">
@@ -1602,6 +1606,145 @@
         display: none;
       }
     }
+    
+    /* ═══════════════════════════════════
+       Pull Quote — Marquee Variant
+       (services.html hero treatment)
+       ═══════════════════════════════════ */
+    .pull-quote--marquee {
+      margin-block: 0 var(--space-2xl);
+      max-width: 30rem;
+    }
+    
+    .pull-quote--marquee p {
+      font-size: var(--text-3xl);
+      line-height: var(--leading-tight);
+    }
+    
+    .pull-quote--marquee::before {
+      font-size: 8rem;
+      top: -0.3em;
+      left: -0.08em;
+      opacity: 0.18;
+    }
+    
+    .pull-quote--marquee figcaption {
+      margin-top: var(--space-lg);
+    }
+    
+    /* ═══════════════════════════════════
+       Occasion List (services.html hub)
+       ═══════════════════════════════════ */
+    .occasion-list {
+      list-style: none;
+      padding-left: 0;
+      margin: 0 0 var(--space-2xl);
+    }
+    
+    .occasion-list li {
+      display: grid;
+      grid-template-columns: minmax(0, 14rem) 1fr;
+      gap: var(--space-2xl);
+      padding-block: var(--space-xl);
+      border-top: 1px solid var(--color-rule);
+      margin: 0;
+    }
+    
+    .occasion-list li:last-child {
+      border-bottom: 1px solid var(--color-rule);
+    }
+    
+    .occasion-list h3 {
+      font-size: var(--text-xl);
+      font-weight: 400;
+      margin: 0;
+    }
+    
+    .occasion-list p {
+      color: var(--color-text-mid);
+      margin-bottom: var(--space-md);
+    }
+    
+    .occasion-list .occasion-cta {
+      font-family: var(--font-heading);
+      font-weight: 500;
+      font-size: var(--text-base);
+      color: var(--color-accent);
+      text-decoration: none;
+    }
+    
+    .occasion-list .occasion-cta:hover {
+      color: var(--color-accent-hover);
+      text-decoration: underline;
+    }
+    
+    @media (max-width: 767px) {
+      .occasion-list li {
+        grid-template-columns: 1fr;
+        gap: var(--space-sm);
+      }
+    }
+    
+    /* ═══════════════════════════════════
+       Ensemble Grid (services.html)
+       ═══════════════════════════════════ */
+    .ensemble-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: var(--space-lg);
+      list-style: none;
+      padding: 0;
+      margin: var(--space-xl) 0 var(--space-2xl);
+    }
+    
+    .ensemble-grid li {
+      margin: 0;
+    }
+    
+    @media (max-width: 899px) {
+      .ensemble-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+    
+    @media (max-width: 599px) {
+      .ensemble-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    
+    .ensemble-card {
+      padding: var(--space-xl);
+      background-color: var(--color-bg-alt);
+      border: 1px solid transparent;
+      transition: border-color var(--transition-fast);
+      height: 100%;
+    }
+    
+    .ensemble-card:hover {
+      border-color: var(--color-accent);
+    }
+    
+    .ensemble-card h3 {
+      font-family: var(--font-heading);
+      font-size: var(--text-lg);
+      font-weight: 500;
+      margin-bottom: var(--space-xs);
+    }
+    
+    .ensemble-card .voices {
+      display: block;
+      font-family: var(--font-body);
+      font-size: var(--text-sm);
+      color: var(--color-text-mid);
+      margin-bottom: var(--space-md);
+      letter-spacing: 0.02em;
+    }
+    
+    .ensemble-card p {
+      color: var(--color-text-mid);
+      margin-bottom: 0;
+    }
     /* ═══════════════════════════════════
        Print Styles
        ═══════════════════════════════════ */
@@ -1690,115 +1833,110 @@
 
   <script type="application/ld+json">
   {
-  "@context": "https://schema.org",
-  "@graph": [
-    {
-      "@type": "Service",
-      "name": "Funeral Singers & Wedding Choirs in Newham",
-      "url": "https://londonchoralservice.com/areas/london/newham.html",
-      "description": "Professional funeral singers and wedding choirs in Newham, London.",
-      "provider": {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Service",
+        "name": "Funeral Singers & Wedding Choirs in Newham",
+        "url": "https://londonchoralservice.com/areas/london/newham.html",
+        "description": "Professional funeral singers and wedding choirs in Newham, London.",
+        "provider": {
+          "@type": "LocalBusiness",
+          "@id": "https://londonchoralservice.com/#organization"
+        },
+        "areaServed": {
+          "@type": "AdministrativeArea",
+          "name": "London Borough of Newham",
+          "containedInPlace": {
+            "@type": "City",
+            "name": "London",
+            "addressCountry": "GB"
+          }
+        },
+        "serviceType": [
+          "Funeral Music",
+          "Wedding Music",
+          "Memorial Music",
+          "Ceremony Music"
+        ],
+        "geo": {
+          "@type": "GeoCoordinates",
+          "latitude": 51.52772,
+          "longitude": 0.03492
+        }
+      },
+      {
         "@type": "LocalBusiness",
-        "name": "The London Choral Service",
-        "alternateName": "London Choral Service",
-        "url": "https://londonchoralservice.com",
-        "telephone": "+447356042468",
-        "email": "office@londonchoralservice.com"
+        "@id": "https://londonchoralservice.com/#organization",
+        "name": "The London Choral Service"
       },
-      "areaServed": {
-        "@type": "AdministrativeArea",
-        "name": "London Borough of Newham",
-        "containedInPlace": {
-          "@type": "City",
-          "name": "London",
-          "addressCountry": "GB"
-        }
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "https://londonchoralservice.com/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Areas We Serve",
+            "item": "https://londonchoralservice.com/areas/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 3,
+            "name": "London",
+            "item": "https://londonchoralservice.com/areas/london.html"
+          },
+          {
+            "@type": "ListItem",
+            "position": 4,
+            "name": "Newham"
+          }
+        ]
       },
-      "serviceType": [
-        "Funeral Music",
-        "Wedding Music",
-        "Memorial Music",
-        "Ceremony Music"
-      ]
-    },
-    {
-      "@type": "LocalBusiness",
-      "@id": "https://londonchoralservice.com/#organization",
-      "name": "The London Choral Service",
-      "aggregateRating": {
-        "@type": "AggregateRating",
-        "ratingValue": "5",
-        "reviewCount": "4",
-        "bestRating": "5"
+      {
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "How much does a funeral singer cost in Newham?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "For services at East London Crematorium, the City of London Cemetery, or St Mary Magdalene East Ham, a soloist starts from £215. A small choir of four starts from £1,150, a quintet from £1,400, a sextet from £1,600, and a full choir of eight from £2,000. Prices include travel within Greater London."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Can you provide a choir for a wedding in Newham?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes. St Mary Magdalene East Ham is a beautiful medieval church well suited to choral weddings, and we also sing at modern event spaces in Stratford. We provide ensembles from a solo vocalist to a twelve-voice choir and handle all the musical planning with the venue and your wedding coordinator."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "What types of music can you perform at a funeral in Newham?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Traditional hymns, classical sacred music, contemporary songs, and popular favourites. At East London Crematorium we tailor the programme to the allotted service time, while the City of London Cemetery’s chapel and St Mary Magdalene’s warm interior suit a broader choral repertoire. Bespoke arrangements are available on request."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Do you cover crematorium services in Newham?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes. We sing regularly at East London Crematorium and the City of London Cemetery and Crematorium in Manor Park. Our singers understand the fixed timings and measured acoustics of both chapels and coordinate with staff to ensure the music fits the service precisely."
+            }
+          }
+        ]
       }
-    },
-    {
-      "@type": "BreadcrumbList",
-      "itemListElement": [
-        {
-          "@type": "ListItem",
-          "position": 1,
-          "name": "Home",
-          "item": "https://londonchoralservice.com/"
-        },
-        {
-          "@type": "ListItem",
-          "position": 2,
-          "name": "Areas We Serve",
-          "item": "https://londonchoralservice.com/areas/"
-        },
-        {
-          "@type": "ListItem",
-          "position": 3,
-          "name": "London",
-          "item": "https://londonchoralservice.com/areas/london.html"
-        },
-        {
-          "@type": "ListItem",
-          "position": 4,
-          "name": "Newham"
-        }
-      ]
-    },
-    {
-      "@type": "FAQPage",
-      "mainEntity": [
-        {
-          "@type": "Question",
-          "name": "How much does a funeral singer cost in Newham?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "For services at East London Crematorium, the City of London Cemetery, or St Mary Magdalene East Ham, a soloist starts from £215. A small choir of four starts from £1,150, a quintet from £1,400, a sextet from £1,600, and a full choir of eight from £2,000. Prices include travel within Greater London."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "Can you provide a choir for a wedding in Newham?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Yes. St Mary Magdalene East Ham is a beautiful medieval church well suited to choral weddings, and we also sing at modern event spaces in Stratford. We provide ensembles from a solo vocalist to a twelve-voice choir and handle all the musical planning with the venue and your wedding coordinator."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "What types of music can you perform at a funeral in Newham?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Traditional hymns, classical sacred music, contemporary songs, and popular favourites. At East London Crematorium we tailor the programme to the allotted service time, while the City of London Cemetery\u2019s chapel and St Mary Magdalene\u2019s warm interior suit a broader choral repertoire. Bespoke arrangements are available on request."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "Do you cover crematorium services in Newham?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Yes. We sing regularly at East London Crematorium and the City of London Cemetery and Crematorium in Manor Park. Our singers understand the fixed timings and measured acoustics of both chapels and coordinate with staff to ensure the music fits the service precisely."
-          }
-        }
-      ]
-    }
-  ]
-}
+    ]
+  }
   </script>
 </head>
 <body>
@@ -1854,7 +1992,7 @@
             <li>Newham</li>
           </ol>
         </nav>
-        <h1>Funeral singers and choirs in Newham</h1>
+        <h1>Funeral and wedding choirs in Newham</h1>
         <p class="lede">Newham lies at the heart of East London, stretching from the regenerated landscapes of Stratford and the Queen Elizabeth Olympic Park to the established communities of East Ham, West Ham, and Manor Park. We provide professional singers and choirs for funerals, weddings, memorials, and ceremonies at venues across the borough.</p>
         <hr class="rule">
       </div>
@@ -1864,6 +2002,7 @@
       <div class="prose">
         <h2>Funeral music in Newham</h2>
         <p>East London Crematorium on the borders of Newham and Redbridge is one of the busiest in the capital, and our singers have performed there on many occasions. The chapel&rsquo;s measured acoustic suits a wide range of repertoire, from traditional hymns to contemporary songs, and we take care to tailor every performance to the wishes of the family. Nearby, the City of London Cemetery and Crematorium in Manor Park offers a grand and peaceful setting among landscaped gardens, with a chapel that responds beautifully to choral singing. St&nbsp;Mary Magdalene in East Ham, a fine medieval church with a warm and welcoming interior, is another venue where we regularly provide funeral music. For help choosing the right pieces, please see our <a href="../../music-guides/funeral-music-guide.html">funeral music guide</a> or <a href="../../contact.html">get in touch</a> directly.</p>
+        <p>For practical guidance on music at crematorium services &mdash; timing, acoustics, and making a shorter service meaningful &mdash; see our <a href="../../music-guides/crematorium-music.html">guide to crematorium music</a>.</p>
 
         <p>Whether a service takes place in a historic parish church, a modern crematorium chapel, or a community venue in Stratford or West Ham, we work closely with funeral directors, clergy, and families to ensure that every musical detail is handled with sensitivity and professionalism. Our singers are experienced in services of all faiths and none, and we are happy to learn specific pieces on request. You can learn more about our approach on our <a href="../../services.html">services page</a>.</p>
 
@@ -1871,7 +2010,7 @@
         <p>Newham&rsquo;s transformation in recent years has brought striking new venues alongside the borough&rsquo;s established churches. Whether you are planning a traditional ceremony at St&nbsp;Mary Magdalene East Ham or a contemporary celebration in one of Stratford&rsquo;s modern event spaces, a live choir can bring a sense of occasion that recorded music simply cannot match. Our singers are skilled at leading congregational hymns with confidence while also delivering polished choral pieces during the signing of the register or as guests arrive. Browse our guide to <a href="../../music-guides/choosing-wedding-hymns.html">choosing wedding hymns</a> for inspiration.</p>
 
         <h2>Ensembles for weddings, funerals, and memorials</h2>
-        <p>Not every occasion calls for the same size of ensemble, and part of our job is helping you find the right balance for your venue, your budget, and the feeling you want to create. We offer everything from a single soloist&thinsp;&mdash;&thinsp;whose voice can hold a room in complete stillness&thinsp;&mdash;&thinsp;through to duets, quartets, octets, and a full twelve-voice chorus with instrumental accompaniment. Organists, harpists, and string players are also available. Visit our <a href="../../pricing.html">pricing page</a> for a clear guide to ensemble sizes and costs.</p>
+        <p>St&nbsp;Mary Magdalene East Ham is one of London&rsquo;s oldest parish churches and has a generous acoustic, so a sextet usually feels right for a wedding there &mdash; with a full eight-voice choir worth considering when the congregation is large. The parish churches around West Ham handle a quartet or sextet comfortably depending on the scale of the day. For a contemporary civil ceremony in one of Stratford&rsquo;s modern event spaces, the right size depends on the room: a quartet generally sits well, while a duo or soloist suits the more intimate venues. For a smaller funeral or a chapel service in a crematorium, a quartet keeps the music compact within the timing. For a graveside committal, two voices are usually plenty. Our <a href="../../pricing.html">pricing page</a> sets out costs.</p>
 
         <figure class="pull-quote">
           <blockquote>
@@ -1902,7 +2041,7 @@
 
     <section class="section">
       <div class="prose">
-        <p class="text-sm text-mid">Nearby boroughs: <a href="tower-hamlets.html">Tower Hamlets</a> &middot; <a href="hackney.html">Hackney</a> &middot; <a href="waltham-forest.html">Waltham Forest</a> &middot; <a href="redbridge.html">Redbridge</a></p>
+        <p class="text-sm text-mid">Nearby boroughs: <a href="tower-hamlets.html">Tower Hamlets</a> &middot; <a href="hackney.html">Hackney</a> &middot; <a href="waltham-forest.html">Waltham Forest</a> &middot; <a href="redbridge.html">Redbridge</a> &middot; <a href="barking-dagenham.html">Barking &amp; Dagenham</a> &middot; <a href="greenwich.html">Greenwich</a></p>
       </div>
     </section>
 
