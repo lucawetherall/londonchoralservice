@@ -1736,9 +1736,18 @@
         <span class="nav-toggle-bar"></span>
       </button>
       <ul id="nav-menu" class="nav-links" role="list">
-        <li><a href="/">Home</a></li>
         <li><a href="/about.html">About</a></li>
-        <li><a href="/services.html">Services</a></li>
+        <li class="has-dropdown">
+          <a href="/services.html" aria-haspopup="true" aria-expanded="false" class="dropdown-trigger">Services<span class="dropdown-caret" aria-hidden="true">&#9662;</span></a>
+          <ul class="dropdown-menu" role="menu">
+            <li role="none"><a role="menuitem" href="/weddings.html">Weddings</a></li>
+            <li role="none"><a role="menuitem" href="/funerals.html">Funerals</a></li>
+            <li role="none"><a role="menuitem" href="/corporate.html">Corporate</a></li>
+            <li role="none"><a role="menuitem" href="/christmas.html">Christmas</a></li>
+            <li role="separator" class="dropdown-separator"></li>
+            <li role="none"><a role="menuitem" href="/services.html">All services</a></li>
+          </ul>
+        </li>
         <li><a href="/listen.html">Listen</a></li>
         <li class="has-dropdown">
           <a href="/music-guides/" aria-haspopup="true" aria-expanded="false" class="dropdown-trigger">Music Guides<span class="dropdown-caret" aria-hidden="true">&#9662;</span></a>
