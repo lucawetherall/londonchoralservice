@@ -65,6 +65,9 @@
   // ── aria-current on the matching nav link ──
   // Set aria-current="page" on the nav link whose href matches
   // the current document path. Handles "/" matching index.html.
+  // Second pass also lights up dropdown triggers whose children
+  // include the current page (covers Services dropdown where
+  // children sit at root level rather than under /services/).
   (function setAriaCurrent() {
     var navLinks = document.querySelectorAll('#nav-menu > li > a');
     var here = window.location.pathname.replace(/\/index\.html$/, '/');
@@ -74,6 +77,21 @@
       var linkPath = href.replace(/\/index\.html$/, '/');
       if (linkPath === here || (linkPath !== '/' && here.indexOf(linkPath) === 0)) {
         link.setAttribute('aria-current', 'page');
+      }
+    });
+
+    document.querySelectorAll('.has-dropdown').forEach(function (item) {
+      var trigger = item.querySelector('.dropdown-trigger');
+      if (!trigger || trigger.getAttribute('aria-current') === 'page') return;
+      var children = item.querySelectorAll('.dropdown-menu a');
+      for (var i = 0; i < children.length; i++) {
+        var raw = children[i].getAttribute('href');
+        if (!raw || raw.indexOf('://') !== -1) continue;
+        var clean = raw.split('?')[0].replace(/\/index\.html$/, '/');
+        if (clean === here) {
+          trigger.setAttribute('aria-current', 'page');
+          break;
+        }
       }
     });
   })();
