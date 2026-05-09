@@ -2,6 +2,10 @@
 <html lang="en-GB">
 <head>
   <meta charset="UTF-8">
+  <!-- @include-start partials/head-extras.html -->
+<link rel="preload" href="/fonts/cormorant-garamond.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/source-serif-4.woff2" as="font" type="font/woff2" crossorigin>
+  <!-- @include-end partials/head-extras.html -->
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
   <!-- Google Analytics (GA4) — deferred until after load -->
@@ -37,8 +41,8 @@
   <link rel="alternate" hreflang="en-gb" href="https://londonchoralservice.com/contact.html">
   <link rel="alternate" hreflang="x-default" href="https://londonchoralservice.com/contact.html">
 
-  <meta property="og:title" content="Contact Us &mdash; London Choral Service">
-  <meta property="og:description" content="Speak to us about music for your funeral, wedding, memorial, or ceremony. No-obligation advice.">
+  <meta property="og:title" content="Contact Us — London Choral Service">
+  <meta property="og:description" content="Speak to us about music for your funeral, wedding, memorial, or ceremony. Call 07356 042468, email office@londonchoralservice.com, or send us a message online.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://londonchoralservice.com/contact.html">
   <meta property="og:locale" content="en_GB">
@@ -46,8 +50,8 @@
   <meta property="og:image" content="https://londonchoralservice.com/assets/og-image.png">
 
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Contact Us &mdash; London Choral Service">
-  <meta name="twitter:description" content="Speak to us about music for your funeral, wedding, memorial, or ceremony. No-obligation advice.">
+  <meta name="twitter:title" content="Contact Us — London Choral Service">
+  <meta name="twitter:description" content="Speak to us about music for your funeral, wedding, memorial, or ceremony. Call 07356 042468, email office@londonchoralservice.com, or send us a message online.">
   <meta name="twitter:image" content="https://londonchoralservice.com/assets/og-image.png">
   <link rel="dns-prefetch" href="https://www.googletagmanager.com">
   <link rel="dns-prefetch" href="https://api.web3forms.com">
@@ -1841,20 +1845,57 @@
           "alternateName": "London Choral Service",
           "telephone": "+447356042468",
           "email": "office@londonchoralservice.com",
-          "openingHours": "Mo-Fr 09:00-18:00",
-          "aggregateRating": {
-            "@type": "AggregateRating",
-            "ratingValue": "5",
-            "reviewCount": "4",
-            "bestRating": "5"
-          }
+          "openingHoursSpecification": [{
+            "@type": "OpeningHoursSpecification",
+            "dayOfWeek": ["Monday","Tuesday","Wednesday","Thursday","Friday"],
+            "opens": "09:00",
+            "closes": "18:00"
+          }]
         }
       },
       {
         "@type": "BreadcrumbList",
         "itemListElement": [
-          { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://londonchoralservice.com/" },
-          { "@type": "ListItem", "position": 2, "name": "Contact" }
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "https://londonchoralservice.com/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Contact"
+          }
+        ]
+      },
+      {
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "How quickly do you reply?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Usually within one working day, often within a few hours during business hours. For short-notice funeral enquiries we reply same-day."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "What information should I include in my enquiry?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "The date and time, the venue (with postcode if you have it), and the approximate ensemble size you're considering. If you don't know the size, that's fine — tell us the occasion and we'll suggest options."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Can I phone instead of emailing?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes — call 07356 042468. Email is often faster because we can attach example recordings and a written quote, but for short-notice or sensitive enquiries the phone is best."
+            }
+          }
         ]
       }
     ]
@@ -1876,6 +1917,10 @@
         <li><a href="/">Home</a></li>
         <li><a href="/about.html">About</a></li>
         <li><a href="/services.html">Services</a></li>
+        <li><a href="/weddings.html">Weddings</a></li>
+        <li><a href="/funerals.html">Funerals</a></li>
+        <li><a href="/corporate.html">Corporate</a></li>
+        <li><a href="/christmas.html">Christmas</a></li>
         <li><a href="/listen.html">Listen</a></li>
         <li class="has-dropdown">
           <a href="/music-guides/" aria-haspopup="true" aria-expanded="false" class="dropdown-trigger">Music Guides<span class="dropdown-caret" aria-hidden="true">&#9662;</span></a>
@@ -1905,6 +1950,7 @@
         </nav>
         <h1>Contact us</h1>
         <p class="lede">Whether your dates are confirmed or you&rsquo;re just starting to think about the music, we&rsquo;re here to help &mdash; usually replying within a few hours.</p>
+        <p>Contact The London Choral Service to enquire about singers, choirs, or instrumentalists for a funeral, wedding, memorial, or corporate event. Please include the date, venue, and approximate ensemble size if you know it; we&rsquo;ll come back with options and a quote.</p>
       </div>
     </section>
 
@@ -1992,6 +2038,21 @@
             <p class="text-sm text-mid" style="margin-top: var(--space-md)">We reply personally within 24 hours, usually the same day.</p>
           </fieldset>
         </form>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="prose">
+        <h2>Frequently asked questions</h2>
+
+        <h3>How quickly do you reply?</h3>
+        <p>Usually within one working day, often within a few hours during business hours. For short-notice funeral enquiries we reply same-day.</p>
+
+        <h3>What information should I include in my enquiry?</h3>
+        <p>The date and time, the venue (with postcode if you have it), and the approximate ensemble size you&rsquo;re considering. If you don&rsquo;t know the size, that&rsquo;s fine &mdash; tell us the occasion and we&rsquo;ll suggest options.</p>
+
+        <h3>Can I phone instead of emailing?</h3>
+        <p>Yes &mdash; call <a href="tel:+447356042468">07356 042468</a>. Email is often faster because we can attach example recordings and a written quote, but for short-notice or sensitive enquiries the phone is best.</p>
       </div>
     </section>
 

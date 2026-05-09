@@ -2,6 +2,10 @@
 <html lang="en-GB">
 <head>
   <meta charset="UTF-8">
+  <!-- @include-start partials/head-extras.html -->
+<link rel="preload" href="/fonts/cormorant-garamond.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/source-serif-4.woff2" as="font" type="font/woff2" crossorigin>
+  <!-- @include-end partials/head-extras.html -->
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
   <!-- Google Analytics (GA4) — deferred until after load -->
@@ -29,15 +33,15 @@
     });
   </script>
 
-  <title>Funeral Singers &amp; Wedding Choirs in Bath — London Choral Service</title>
-  <meta name="description" content="Professional funeral singers, wedding choirs, and ceremony musicians in Bath and across Somerset. Conservatoire-trained vocalists and instrumentalists for services at Bath Abbey, St Swithin's Walcot, St Mary's Bathwick, Haycombe Crematorium, and churches throughout the area.">
+  <title>Funeral and wedding choirs in Bath</title>
+  <meta name="description" content="Professional funeral singers, wedding choirs, and ceremony musicians in Bath and across Somerset.">
   <meta name="theme-color" content="#F7F3EE">
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://londonchoralservice.com/areas/bath.html">
   <link rel="alternate" hreflang="en-gb" href="https://londonchoralservice.com/areas/bath.html">
   <link rel="alternate" hreflang="x-default" href="https://londonchoralservice.com/areas/bath.html">
 
-  <meta property="og:title" content="Funeral Singers &amp; Wedding Choirs in Bath | London Choral Service">
+  <meta property="og:title" content="Funeral and wedding choirs in Bath">
   <meta property="og:description" content="Professional funeral singers, wedding choirs, and ceremony musicians in Bath and across Somerset.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://londonchoralservice.com/areas/bath.html">
@@ -46,7 +50,7 @@
   <meta property="og:image" content="https://londonchoralservice.com/assets/og-image.png">
 
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Funeral Singers &amp; Wedding Choirs in Bath | London Choral Service">
+  <meta name="twitter:title" content="Funeral and wedding choirs in Bath">
   <meta name="twitter:description" content="Professional funeral singers, wedding choirs, and ceremony musicians in Bath and across Somerset.">
   <meta name="twitter:image" content="https://londonchoralservice.com/assets/og-image.png">
   <link rel="dns-prefetch" href="https://www.googletagmanager.com">
@@ -1827,102 +1831,101 @@
 
   <script type="application/ld+json">
   {
-  "@context": "https://schema.org",
-  "@graph": [
-    {
-      "@type": "Service",
-      "name": "Funeral Singers & Wedding Choirs in Bath",
-      "url": "https://londonchoralservice.com/areas/bath.html",
-      "description": "Professional funeral singers, wedding choirs, and ceremony musicians in Bath and across Somerset.",
-      "provider": {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Service",
+        "name": "Funeral Singers & Wedding Choirs in Bath",
+        "url": "https://londonchoralservice.com/areas/bath.html",
+        "description": "Professional funeral singers, wedding choirs, and ceremony musicians in Bath and across Somerset.",
+        "provider": {
+          "@type": "LocalBusiness",
+          "@id": "https://londonchoralservice.com/#organization",
+          "name": "The London Choral Service",
+          "alternateName": "London Choral Service"
+        },
+        "areaServed": {
+          "@type": "City",
+          "name": "Bath"
+        },
+        "serviceType": [
+          "Funeral Music",
+          "Wedding Music",
+          "Memorial Music",
+          "Ceremony Music"
+        ],
+        "geo": {
+          "@type": "GeoCoordinates",
+          "latitude": 51.3751,
+          "longitude": -2.36174
+        }
+      },
+      {
         "@type": "LocalBusiness",
         "@id": "https://londonchoralservice.com/#organization",
-        "name": "The London Choral Service",
-        "alternateName": "London Choral Service"
+        "name": "The London Choral Service"
       },
-      "areaServed": {
-        "@type": "City",
-        "name": "Bath"
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "https://londonchoralservice.com/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Areas We Serve",
+            "item": "https://londonchoralservice.com/areas/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 3,
+            "name": "Bath"
+          }
+        ]
       },
-      "serviceType": [
-        "Funeral Music",
-        "Wedding Music",
-        "Memorial Music",
-        "Ceremony Music"
-      ]
-    },
-    {
-      "@type": "LocalBusiness",
-      "@id": "https://londonchoralservice.com/#organization",
-      "name": "The London Choral Service",
-      "aggregateRating": {
-        "@type": "AggregateRating",
-        "ratingValue": "5",
-        "reviewCount": "4",
-        "bestRating": "5"
+      {
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "How much does a funeral singer cost in Bath?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "A soloist in Bath starts from £215, a small choir of four from £1,150, a quintet from £1,400, a sextet from £1,600, and a full choir of eight from £2,000. Bath is outside Greater London, so a modest travel supplement may apply for services at Bath Abbey, Haycombe Crematorium, or churches further into Somerset. All fees include full coordination with your funeral director."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Can you provide a choir for a wedding in Bath?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Absolutely. Our choirs sing at weddings across Bath and Somerset, and the acoustics in Bath's Georgian stone churches are outstanding for vocal music. Bath Abbey, St Swithin's Walcot, St Mary's Bathwick, and the pretty parish churches in the surrounding countryside are all venues we know well, and we match the ensemble size to each space."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "What types of music can you perform at a funeral in Bath?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Our repertoire covers traditional hymns, classical sacred works by composers such as Fauré and Mozart, and contemporary songs arranged for voices or instruments. The soaring fan-vaulted ceiling of Bath Abbey rewards grand choral pieces, while more intimate settings like St Swithin's Walcot or Haycombe Crematorium suit gentler solos and smaller ensembles. We are always happy to arrange a personal favourite."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Do you cover crematorium services in Bath?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes. We sing regularly at Haycombe Crematorium and are familiar with its layout, timing requirements, and acoustic. Our musicians coordinate directly with crematorium staff and your funeral director to make sure the music fits naturally into the order of service."
+            }
+          }
+        ]
       }
-    },
-    {
-      "@type": "BreadcrumbList",
-      "itemListElement": [
-        {
-          "@type": "ListItem",
-          "position": 1,
-          "name": "Home",
-          "item": "https://londonchoralservice.com/"
-        },
-        {
-          "@type": "ListItem",
-          "position": 2,
-          "name": "Areas We Serve",
-          "item": "https://londonchoralservice.com/areas/"
-        },
-        {
-          "@type": "ListItem",
-          "position": 3,
-          "name": "Bath"
-        }
-      ]
-    },
-    {
-      "@type": "FAQPage",
-      "mainEntity": [
-        {
-          "@type": "Question",
-          "name": "How much does a funeral singer cost in Bath?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "A soloist in Bath starts from £215, a small choir of four from £1,150, a quintet from £1,400, a sextet from £1,600, and a full choir of eight from £2,000. Bath is outside Greater London, so a modest travel supplement may apply for services at Bath Abbey, Haycombe Crematorium, or churches further into Somerset. All fees include full coordination with your funeral director."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "Can you provide a choir for a wedding in Bath?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Absolutely. Our choirs sing at weddings across Bath and Somerset, and the acoustics in Bath's Georgian stone churches are outstanding for vocal music. Bath Abbey, St Swithin's Walcot, St Mary's Bathwick, and the pretty parish churches in the surrounding countryside are all venues we know well, and we match the ensemble size to each space."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "What types of music can you perform at a funeral in Bath?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Our repertoire covers traditional hymns, classical sacred works by composers such as Fauré and Mozart, and contemporary songs arranged for voices or instruments. The soaring fan-vaulted ceiling of Bath Abbey rewards grand choral pieces, while more intimate settings like St Swithin's Walcot or Haycombe Crematorium suit gentler solos and smaller ensembles. We are always happy to arrange a personal favourite."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "Do you cover crematorium services in Bath?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Yes. We sing regularly at Haycombe Crematorium and are familiar with its layout, timing requirements, and acoustic. Our musicians coordinate directly with crematorium staff and your funeral director to make sure the music fits naturally into the order of service."
-          }
-        }
-      ]
-    }
-  ]
-}
+    ]
+  }
   </script>
 </head>
 <body>
@@ -1940,6 +1943,10 @@
         <li><a href="/">Home</a></li>
         <li><a href="/about.html">About</a></li>
         <li><a href="/services.html">Services</a></li>
+        <li><a href="/weddings.html">Weddings</a></li>
+        <li><a href="/funerals.html">Funerals</a></li>
+        <li><a href="/corporate.html">Corporate</a></li>
+        <li><a href="/christmas.html">Christmas</a></li>
         <li><a href="/listen.html">Listen</a></li>
         <li class="has-dropdown">
           <a href="/music-guides/" aria-haspopup="true" aria-expanded="false" class="dropdown-trigger">Music Guides<span class="dropdown-caret" aria-hidden="true">&#9662;</span></a>
@@ -1969,7 +1976,7 @@
           </ol>
         </nav>
 
-        <h1>Funeral singers and choirs in Bath</h1>
+        <h1>Funeral and wedding choirs in Bath</h1>
 
         <p class="lede">Bath is one of the most beautiful cities in the world&thinsp;&mdash;&thinsp;a place where golden Georgian stone, ancient hot springs, and centuries of worship come together in a setting of extraordinary grace. As a UNESCO World Heritage city, it carries a weight of history and architecture that few places in England can match. The London Choral Service provides professional singers, choirs, and instrumentalists for funerals, weddings, memorials, and ceremonies across Bath, the surrounding Somerset countryside, and nearby Bristol, bringing musicianship and warmth to occasions that deserve nothing less.</p>
 

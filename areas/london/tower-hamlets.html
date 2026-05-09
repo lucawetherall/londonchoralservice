@@ -2,6 +2,10 @@
 <html lang="en-GB">
 <head>
   <meta charset="UTF-8">
+  <!-- @include-start partials/head-extras.html -->
+<link rel="preload" href="/fonts/cormorant-garamond.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/source-serif-4.woff2" as="font" type="font/woff2" crossorigin>
+  <!-- @include-end partials/head-extras.html -->
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
   <!-- Google Analytics (GA4) — deferred until after load -->
@@ -29,15 +33,15 @@
     });
   </script>
 
-  <title>Funeral Singers in Tower Hamlets — London Choral Service</title>
-  <meta name="description" content="Professional funeral singers and wedding choirs in Tower Hamlets. Conservatoire-trained musicians for funerals, weddings, memorials, and ceremonies. Part of The London Choral Service.">
+  <title>Funeral and wedding choirs in Tower Hamlets</title>
+  <meta name="description" content="Professional funeral singers and wedding choirs in Tower Hamlets. Conservatoire-trained musicians for funerals, weddings, memorials, and ceremonies.">
   <meta name="theme-color" content="#F7F3EE">
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://londonchoralservice.com/areas/london/tower-hamlets.html">
   <link rel="alternate" hreflang="en-gb" href="https://londonchoralservice.com/areas/london/tower-hamlets.html">
   <link rel="alternate" hreflang="x-default" href="https://londonchoralservice.com/areas/london/tower-hamlets.html">
 
-  <meta property="og:title" content="Funeral Singers in Tower Hamlets | London Choral Service">
+  <meta property="og:title" content="Funeral and wedding choirs in Tower Hamlets">
   <meta property="og:description" content="Professional funeral singers and wedding choirs in Tower Hamlets. Conservatoire-trained musicians for funerals, weddings, memorials, and ceremonies.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://londonchoralservice.com/areas/london/tower-hamlets.html">
@@ -46,7 +50,7 @@
   <meta property="og:image" content="https://londonchoralservice.com/assets/og-image.png">
 
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Funeral Singers in Tower Hamlets | London Choral Service">
+  <meta name="twitter:title" content="Funeral and wedding choirs in Tower Hamlets">
   <meta name="twitter:description" content="Professional funeral singers and wedding choirs in Tower Hamlets. Conservatoire-trained musicians for funerals, weddings, memorials, and ceremonies.">
   <meta name="twitter:image" content="https://londonchoralservice.com/assets/og-image.png">
   <link rel="dns-prefetch" href="https://www.googletagmanager.com">
@@ -1827,115 +1831,110 @@
 
   <script type="application/ld+json">
   {
-  "@context": "https://schema.org",
-  "@graph": [
-    {
-      "@type": "Service",
-      "name": "Funeral Singers & Wedding Choirs in Tower Hamlets",
-      "url": "https://londonchoralservice.com/areas/london/tower-hamlets.html",
-      "description": "Professional funeral singers and wedding choirs in Tower Hamlets, London.",
-      "provider": {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Service",
+        "name": "Funeral Singers & Wedding Choirs in Tower Hamlets",
+        "url": "https://londonchoralservice.com/areas/london/tower-hamlets.html",
+        "description": "Professional funeral singers and wedding choirs in Tower Hamlets, London.",
+        "provider": {
+          "@type": "LocalBusiness",
+          "@id": "https://londonchoralservice.com/#organization"
+        },
+        "areaServed": {
+          "@type": "AdministrativeArea",
+          "name": "Tower Hamlets",
+          "containedInPlace": {
+            "@type": "City",
+            "name": "London",
+            "addressCountry": "GB"
+          }
+        },
+        "serviceType": [
+          "Funeral Music",
+          "Wedding Music",
+          "Memorial Music",
+          "Ceremony Music"
+        ],
+        "geo": {
+          "@type": "GeoCoordinates",
+          "latitude": 51.50975,
+          "longitude": -0.05954
+        }
+      },
+      {
         "@type": "LocalBusiness",
-        "name": "The London Choral Service",
-        "alternateName": "London Choral Service",
-        "url": "https://londonchoralservice.com",
-        "telephone": "+447356042468",
-        "email": "office@londonchoralservice.com"
+        "@id": "https://londonchoralservice.com/#organization",
+        "name": "The London Choral Service"
       },
-      "areaServed": {
-        "@type": "AdministrativeArea",
-        "name": "Tower Hamlets",
-        "containedInPlace": {
-          "@type": "City",
-          "name": "London",
-          "addressCountry": "GB"
-        }
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "https://londonchoralservice.com/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Areas We Serve",
+            "item": "https://londonchoralservice.com/areas/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 3,
+            "name": "London",
+            "item": "https://londonchoralservice.com/areas/london.html"
+          },
+          {
+            "@type": "ListItem",
+            "position": 4,
+            "name": "Tower Hamlets"
+          }
+        ]
       },
-      "serviceType": [
-        "Funeral Music",
-        "Wedding Music",
-        "Memorial Music",
-        "Ceremony Music"
-      ]
-    },
-    {
-      "@type": "LocalBusiness",
-      "@id": "https://londonchoralservice.com/#organization",
-      "name": "The London Choral Service",
-      "aggregateRating": {
-        "@type": "AggregateRating",
-        "ratingValue": "5",
-        "reviewCount": "4",
-        "bestRating": "5"
+      {
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "How much does a funeral singer cost in Tower Hamlets?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "For services at churches such as St Dunstan's Stepney or Christ Church Spitalfields, a soloist starts from £215, a small choir of four from £1,150, a quintet from £1,400, a sextet from £1,600, and a full choir of eight from £2,000. All prices include travel within Greater London, and we liaise directly with your funeral director."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Can you provide a choir for a wedding in Tower Hamlets?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Absolutely. We regularly provide wedding choirs at Christ Church Spitalfields, St Anne's Limehouse, and the growing number of licensed warehouse and gallery venues across the borough. From a solo vocalist to a full twelve-voice chorus, we tailor the ensemble to your venue and handle all the musical planning."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "What types of music can you perform at a funeral in Tower Hamlets?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Our repertoire spans traditional hymns and Anglican choral works through to contemporary songs and popular favourites. The grand acoustics of Hawksmoor churches like Christ Church Spitalfields suit large-scale sacred works particularly well, but we also prepare bespoke arrangements of any piece that holds personal meaning for your family."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Do you cover crematorium services in Tower Hamlets?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Tower Hamlets does not have its own crematorium, but we regularly sing at the City of London Crematorium at Manor Park and other nearby facilities in east London. Our singers are well practised at working within fixed crematorium time slots, and we coordinate with staff to ensure the music runs seamlessly."
+            }
+          }
+        ]
       }
-    },
-    {
-      "@type": "BreadcrumbList",
-      "itemListElement": [
-        {
-          "@type": "ListItem",
-          "position": 1,
-          "name": "Home",
-          "item": "https://londonchoralservice.com/"
-        },
-        {
-          "@type": "ListItem",
-          "position": 2,
-          "name": "Areas We Serve",
-          "item": "https://londonchoralservice.com/areas/"
-        },
-        {
-          "@type": "ListItem",
-          "position": 3,
-          "name": "London",
-          "item": "https://londonchoralservice.com/areas/london.html"
-        },
-        {
-          "@type": "ListItem",
-          "position": 4,
-          "name": "Tower Hamlets"
-        }
-      ]
-    },
-    {
-      "@type": "FAQPage",
-      "mainEntity": [
-        {
-          "@type": "Question",
-          "name": "How much does a funeral singer cost in Tower Hamlets?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "For services at churches such as St Dunstan's Stepney or Christ Church Spitalfields, a soloist starts from £215, a small choir of four from £1,150, a quintet from £1,400, a sextet from £1,600, and a full choir of eight from £2,000. All prices include travel within Greater London, and we liaise directly with your funeral director."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "Can you provide a choir for a wedding in Tower Hamlets?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Absolutely. We regularly provide wedding choirs at Christ Church Spitalfields, St Anne's Limehouse, and the growing number of licensed warehouse and gallery venues across the borough. From a solo vocalist to a full twelve-voice chorus, we tailor the ensemble to your venue and handle all the musical planning."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "What types of music can you perform at a funeral in Tower Hamlets?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Our repertoire spans traditional hymns and Anglican choral works through to contemporary songs and popular favourites. The grand acoustics of Hawksmoor churches like Christ Church Spitalfields suit large-scale sacred works particularly well, but we also prepare bespoke arrangements of any piece that holds personal meaning for your family."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "Do you cover crematorium services in Tower Hamlets?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Tower Hamlets does not have its own crematorium, but we regularly sing at the City of London Crematorium at Manor Park and other nearby facilities in east London. Our singers are well practised at working within fixed crematorium time slots, and we coordinate with staff to ensure the music runs seamlessly."
-          }
-        }
-      ]
-    }
-  ]
-}
+    ]
+  }
   </script>
 </head>
 <body>
@@ -1953,6 +1952,10 @@
         <li><a href="/">Home</a></li>
         <li><a href="/about.html">About</a></li>
         <li><a href="/services.html">Services</a></li>
+        <li><a href="/weddings.html">Weddings</a></li>
+        <li><a href="/funerals.html">Funerals</a></li>
+        <li><a href="/corporate.html">Corporate</a></li>
+        <li><a href="/christmas.html">Christmas</a></li>
         <li><a href="/listen.html">Listen</a></li>
         <li class="has-dropdown">
           <a href="/music-guides/" aria-haspopup="true" aria-expanded="false" class="dropdown-trigger">Music Guides<span class="dropdown-caret" aria-hidden="true">&#9662;</span></a>
@@ -1982,7 +1985,7 @@
             <li>Tower Hamlets</li>
           </ol>
         </nav>
-        <h1>Funeral singers and choirs in Tower Hamlets</h1>
+        <h1>Funeral and wedding choirs in Tower Hamlets</h1>
         <p class="lede">The London Borough of Tower Hamlets lies at the historic heart of London&rsquo;s East End, encompassing Stepney, Bow, Whitechapel, Spitalfields, Limehouse, and the Isle of Dogs. Our professional singers bring polished, heartfelt music to funerals, weddings, and memorial services at the borough&rsquo;s remarkable churches and ceremony venues.</p>
         <hr class="rule">
       </div>
@@ -1998,7 +2001,7 @@
         <p>The great churches of Tower Hamlets are increasingly popular as wedding venues, and it is easy to understand why. Christ Church Spitalfields offers a truly spectacular backdrop for a wedding ceremony, and our choirs have performed there to wonderful effect. St&nbsp;Anne&rsquo;s Limehouse, with its riverside setting and soaring columns, is another outstanding choice. Beyond the churches, Tower Hamlets has a growing number of licensed wedding venues in converted warehouses, galleries, and hotels where a vocal ensemble can provide the perfect accompaniment. Our <a href="../../music-guides/choosing-wedding-hymns.html">guide to choosing wedding hymns</a> is a helpful resource for couples beginning to plan their music.</p>
 
         <h2>Ensembles for weddings, funerals, and memorials</h2>
-        <p>Not every occasion calls for the same size of ensemble, and part of our job is helping you find the right balance for your venue, your budget, and the feeling you want to create. We offer everything from a single soloist&thinsp;&mdash;&thinsp;whose voice can hold a room in complete stillness&thinsp;&mdash;&thinsp;through to duets, quartets, octets, and a full twelve-voice chorus with instrumental accompaniment. Organists, harpists, and string players are also available. Visit our <a href="../../pricing.html">pricing page</a> for a clear guide to ensemble sizes and costs.</p>
+        <p>Christ Church Spitalfields has a vast Baroque interior, and a full eight-voice choir genuinely earns its place there &mdash; the acoustic carries voices with great clarity, and processional hymns benefit from the additional weight. A sextet works well for smaller weddings or funerals in the same building. St&nbsp;Anne&rsquo;s Limehouse, also Hawksmoor, is similar in scale and similarly suits a sextet or larger. St&nbsp;Dunstan&rsquo;s Stepney has a warmer, more contained acoustic; a quartet or sextet sits comfortably depending on the size of the day. For a service at the Chapel Royal of St&nbsp;Peter ad Vincula, the smaller scale of the chapel suits a quartet better than a larger group. For converted-warehouse civil ceremonies, a duo or quartet generally works best. Our <a href="../../pricing.html">pricing page</a> sets out costs.</p>
 
         <figure class="pull-quote">
           <blockquote>
@@ -2029,7 +2032,7 @@
 
     <section class="section">
       <div class="prose">
-        <p class="text-sm text-mid">Nearby boroughs: <a href="city-of-london.html">City of London</a> &middot; <a href="hackney.html">Hackney</a> &middot; <a href="newham.html">Newham</a> &middot; <a href="greenwich.html">Greenwich</a></p>
+        <p class="text-sm text-mid">Nearby boroughs: <a href="city-of-london.html">City of London</a> &middot; <a href="hackney.html">Hackney</a> &middot; <a href="newham.html">Newham</a> &middot; <a href="southwark.html">Southwark</a> &middot; <a href="islington.html">Islington</a></p>
       </div>
     </section>
 
