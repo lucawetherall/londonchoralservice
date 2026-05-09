@@ -20,6 +20,16 @@ What to do:
 
 If the listing turns out not to exist or isn't verified, claim it before doing any of the citation work in §2 — third-party citations should resolve back to a verified GBP, not orphan listings.
 
+### Other discovery items still TODO
+
+Three other items in `data/seo-fix-discovered-urls.yml` couldn't be resolved at Phase 1. Each ships as a TODO comment in the schema until you fill it in:
+
+- **`luca_wetherall_orcid`** — if Luca has an ORCID, add it to `data/seo-fix-discovered-urls.yml` and rerun the schema sweep on `about.html` to populate `Person.sameAs`.
+- **`lcs_linkedin_company`** — if a LinkedIn company page exists for The London Choral Service or Alma Consort, add its URL to the YAML and rerun the schema sweep on `index.html` to populate `Organization.sameAs`.
+- **`videos[*].upload_date`** + **`videos[*].duration`** — four YouTube video metadata fields couldn't be resolved via WebFetch (consent gate). Open each video on YouTube manually, capture the upload date (YYYY-MM-DD) and the duration (convert to ISO 8601, e.g. 3:42 → `PT3M42S`), update the YAML, and rerun the VideoObject sweep on `pricing.html` and `listen.html`.
+
+These are LOW priority next to the GBP work above — they affect knowledge-graph completeness and AI-citation strength, not local-pack ranking.
+
 ---
 
 ## 2. Third-party citation building
