@@ -1746,6 +1746,55 @@
       margin-bottom: 0;
     }
     /* ═══════════════════════════════════
+       Pricing Cards
+       ═══════════════════════════════════ */
+    .price-cards {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: var(--space-lg);
+      margin: var(--space-xl) 0 var(--space-lg);
+    }
+
+    .price-card {
+      padding: var(--space-lg) var(--space-md);
+      background-color: var(--color-bg-alt);
+      border: 1px solid transparent;
+      text-align: center;
+      transition: border-color var(--transition-fast);
+    }
+
+    .price-card:hover {
+      border-color: var(--color-accent);
+    }
+
+    .price-card .price {
+      font-family: var(--font-heading);
+      font-size: var(--text-xl);
+      font-weight: 600;
+      color: var(--color-text);
+      line-height: var(--leading-tight);
+    }
+
+    .price-card .price-label {
+      font-family: var(--font-body);
+      font-size: var(--text-sm);
+      color: var(--color-text-mid);
+      margin-top: var(--space-xs);
+      letter-spacing: 0.02em;
+    }
+
+    @media (max-width: 899px) {
+      .price-cards {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 599px) {
+      .price-cards {
+        grid-template-columns: 1fr;
+      }
+    }
+    /* ═══════════════════════════════════
        Print Styles
        ═══════════════════════════════════ */
     @media print {
@@ -1852,7 +1901,7 @@
         },
         "offers": {
           "@type": "AggregateOffer",
-          "lowPrice": "1150",
+          "lowPrice": "215",
           "highPrice": "3000",
           "priceCurrency": "GBP",
           "priceValidUntil": "2026-12-31"
@@ -1890,7 +1939,15 @@
             "name": "How much does corporate live music cost?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "A small choir of four singers starts from £1,150, a sextet from £1,600, and a full eight-voice choir from £2,000. Pricing covers up to 45 minutes of performance and includes a sound check. Travel beyond Greater London is quoted upfront."
+              "text": "A solo pianist or solo instrumentalist starts from £215, piano with a singer from £430, and piano with a small choir from £1,365. A small choir on its own starts from £1,150, and a full eight-voice choir from £2,000. Pricing covers up to 45 minutes of performance and includes a sound check. Travel beyond Greater London is quoted upfront. Custom arrangements may add to the fee depending on what you need."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Can you provide just a pianist?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes. A solo pianist is one of the formats we book most often for corporate events. Background piano during arrivals or dinner sits under conversation rather than over it; a featured solo set works as the live music moment after the speeches. We also pair the pianist with a singer, with another instrumentalist (violin, cello, flute, harp), or with a choir if you want fuller harmony for one part of the evening. If your venue does not have a piano, we bring a stage-grade portable keyboard."
             }
           },
           {
@@ -1973,9 +2030,9 @@
               <li>Corporate Events</li>
             </ol>
           </nav>
-          <h1>Live music for corporate events<br><span class="h1-sub">Professional singers and ensembles, all year round</span></h1>
+          <h1>Live music for corporate events<br><span class="h1-sub">Pianists, singers, and choirs, all year round</span></h1>
           <p class="guide-meta">Last updated: May 2026</p>
-          <p class="lede">Choirs, soloists, and instrumental ensembles for awards dinners, product launches, charity galas, conferences, summer parties, and client entertainment across the United Kingdom. From a string quartet over canap&eacute;s to a full chorus as the showpiece of the evening.</p>
+          <p class="lede">A solo pianist for the drinks reception, a singer-and-piano duo over dinner, a choir for the showpiece moment after the loyal toast. We arrange pianists, instrumentalists, soloists, and choirs for awards dinners, product launches, charity galas, conferences, summer parties, and client entertainment across the United Kingdom.</p>
           <p class="text-sm text-mid">Trusted by law firms, banks, charities, and City livery companies. Musicians from the Royal Academy, Royal College, and Britain&rsquo;s leading conservatoires.</p>
           <p><a href="#enquiry" class="btn-link">Tell us about your event</a></p>
           <p class="text-sm text-mid">For Christmas events specifically, see our <a href="christmas.html">corporate carol service page</a>.</p>
@@ -2023,9 +2080,10 @@
       <div class="prose">
         <h2>Events we perform at</h2>
         <p>Awards dinners and gala evenings call for an ensemble that holds the room without competing with the speeches. A vocal quartet during canap&eacute;s, a full performance between courses, or a closing piece as guests stand for the loyal toast. We work to a brief and finish on time.</p>
+        <p>A solo pianist is the format we book most often for corporate work. Background piano during arrivals, dinner, or a drinks reception holds a room of 200 people without competing with conversation. The same pianist can step forward for a 20-minute featured set after the speeches if you want a live music moment in the evening. We also book piano in combination: piano with a violinist or cellist for receptions where you want more than one voice, piano with a singer for cabaret-style sets or a sung welcome, and piano with a choir when you want the harmonic depth a choir alone cannot reach.</p>
         <p>Product launches and brand events use music to set tone. We can perform a custom-arranged anthem, a piece that signals the moment a product is unveiled, or background music that supports the room without distracting from the staging. We're happy to do custom arrangements, but this may result in an extra charge depending on the specific requirements.</p>
         <p>Charity galas and fundraising dinners benefit from a showpiece moment. A small choir performing during the auction adds gravitas. A larger ensemble closing the evening with a familiar piece sends guests home talking about the event. Charities we have worked with include national arts organisations, City livery companies, and local hospices.</p>
-        <p>Conferences, summer parties, and client entertainment work well with smaller, flexible ensembles. A string quartet can hold the energy of a drinks reception across two hours. A jazz trio can underscore an evening of networking. We discuss the format with you and recommend the ensemble that fits the room and the budget.</p>
+        <p>Conferences, summer parties, and client entertainment work well with smaller, flexible formats. We discuss the brief with you and recommend the configuration that fits the room and the budget.</p>
 
         <figure class="pull-quote">
           <blockquote><p>&ldquo;The quartet pitched it perfectly. They knew when to be background and when to step forward. The CEO&rsquo;s speech got more laughs because the room was in a good mood by then.&rdquo;</p></blockquote>
@@ -2039,7 +2097,7 @@
       <div class="prose">
         <h2>What we provide</h2>
         <p>Luca Wetherall, our Artistic Director, takes the brief from you or your events coordinator. He sends a proposal within 48 hours, including ensemble options, programme suggestions, and a written quote. We handle all coordination with your venue or event manager directly.</p>
-        <p>On the day, our musicians arrive in concert dress at the time you specify, set up without fuss, perform the agreed programme, and clear the space cleanly when finished. We bring our own stands, music, and water, and need only a small space and (for keyboard accompaniment) one standard 13-amp socket.</p>
+        <p>On the day, our musicians arrive in concert dress at the time you specify, set up without fuss, perform the agreed programme, and clear the space cleanly when finished. We bring our own stands, music, and water. For piano-led bookings we can supply a stage-grade portable keyboard if your venue does not have a piano. The only thing we need from the venue is a small space and one standard 13-amp socket.</p>
         <p>For larger events we can help with the wider production: finding and booking a venue, printing programmes, arranging refreshments, coordinating with caterers and tech crews. Hand off as much or as little of the planning as you like.</p>
       </div>
     </section>
@@ -2048,23 +2106,31 @@
     <section class="section">
       <div class="prose">
         <h2>Pricing</h2>
-        <p>Transparent pricing, no hidden fees. Every booking includes the consultation with Luca, custom programme planning, and on-the-day coordination. Custom arrangements are available, though this may result in an extra charge depending on the specific requirements.</p>
+        <p>Flat starting prices, no hidden fees. Every booking includes a consultation with Luca, programme planning, and on-the-day coordination. Piano combinations are quoted from the starting points below; we confirm the figure once we know the date and the venue. Custom arrangements are available; depending on what you need, this may add to the fee.</p>
         <div class="price-cards">
           <div class="price-card">
-            <div class="price">&pound;1,150</div>
+            <div class="price">From &pound;215</div>
+            <div class="price-label">Solo Pianist</div>
+          </div>
+          <div class="price-card">
+            <div class="price">From &pound;215</div>
+            <div class="price-label">Solo Instrumentalist</div>
+          </div>
+          <div class="price-card">
+            <div class="price">From &pound;430</div>
+            <div class="price-label">Piano + Singer</div>
+          </div>
+          <div class="price-card">
+            <div class="price">From &pound;1,365</div>
+            <div class="price-label">Piano + Choir</div>
+          </div>
+          <div class="price-card">
+            <div class="price">From &pound;1,150</div>
             <div class="price-label">Quartet</div>
           </div>
           <div class="price-card">
-            <div class="price">&pound;1,600</div>
-            <div class="price-label">Sextet</div>
-          </div>
-          <div class="price-card">
-            <div class="price">&pound;2,000</div>
+            <div class="price">From &pound;2,000</div>
             <div class="price-label">Full Choir</div>
-          </div>
-          <div class="price-card">
-            <div class="price">&pound;3,000</div>
-            <div class="price-label">Chorus (12)</div>
           </div>
         </div>
         <p><a href="pricing.html">Full pricing with all ensemble options &rarr;</a></p>
@@ -2080,7 +2146,10 @@
         <p>Awards dinners, product launches, charity galas, conferences, summer parties, client entertainment, and Christmas carol services. Our ensembles range from a string quartet for elegant background music to a full chorus for a showpiece performance. We have worked at venues from the Great Hall of the Honourable Society of Lincoln&rsquo;s Inn to the Royal Albert Hall.</p>
 
         <h3>How much does corporate live music cost?</h3>
-        <p>A small choir of four singers starts from &pound;1,150, a sextet from &pound;1,600, and a full eight-voice choir from &pound;2,000. Pricing covers up to 45 minutes of performance and includes a sound check. Travel beyond Greater London is quoted upfront. We're happy to do custom arrangements, though this may add to the fee depending on the specific requirements. See our <a href="pricing.html">full pricing page</a> for all ensemble options.</p>
+        <p>A solo pianist or solo instrumentalist starts from &pound;215, piano with a singer from &pound;430, and piano with a small choir from &pound;1,365. A small choir on its own starts from &pound;1,150, and a full eight-voice choir from &pound;2,000. Pricing covers up to 45 minutes of performance and includes a sound check. Travel beyond Greater London is quoted upfront. Custom arrangements may add to the fee depending on what you need. See our <a href="pricing.html">full pricing page</a> for all ensemble options.</p>
+
+        <h3>Can you provide just a pianist?</h3>
+        <p>Yes. A solo pianist is one of the formats we book most often for corporate events. Background piano during arrivals or dinner sits under conversation rather than over it; a featured solo set works as the live music moment after the speeches. We also pair the pianist with a singer, with another instrumentalist (violin, cello, flute, harp), or with a choir if you want fuller harmony for one part of the evening. If your venue does not have a piano, we bring a stage-grade portable keyboard.</p>
 
         <h3>Can you arrange custom repertoire for our event?</h3>
         <p>Yes. We're happy to arrange custom pieces — whether you want our singers to perform your company anthem, a classical piece that fits your brand, or popular songs your guests will recognise — though this may result in an extra charge depending on the specific requirements. Recordings of suggested arrangements go to you before you commit.</p>
