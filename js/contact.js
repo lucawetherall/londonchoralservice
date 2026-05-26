@@ -34,6 +34,20 @@
       return;
     }
 
+    // hCaptcha guard — Web3Forms rejects submissions without a token,
+    // so block early and surface a specific inline message instead of
+    // letting the user see the generic "something went wrong" box.
+    var captchaError = document.getElementById('captcha-error');
+    if (captchaError) captchaError.setAttribute('data-visible', 'false');
+    var captchaResponse = form.querySelector('textarea[name=h-captcha-response]');
+    if (!captchaResponse || !captchaResponse.value) {
+      if (captchaError) {
+        captchaError.setAttribute('data-visible', 'true');
+        captchaError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+      return;
+    }
+
     // Reset previous status
     if (successBox) successBox.setAttribute('data-visible', 'false');
     if (errorBox)   errorBox.setAttribute('data-visible', 'false');
