@@ -24,8 +24,21 @@
     }
   } catch (_) { /* URLSearchParams unsupported — non-fatal */ }
 
+  var captchaError = document.getElementById('captcha-error');
+
+  function showCaptchaError() {
+    if (!captchaError) return;
+    captchaError.setAttribute('data-visible', 'true');
+    captchaError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
   form.addEventListener('submit', function (e) {
     e.preventDefault();
+
+    // Clear all prior status messages so previous attempts don't linger
+    if (successBox)   successBox.setAttribute('data-visible', 'false');
+    if (errorBox)     errorBox.setAttribute('data-visible', 'false');
+    if (captchaError) captchaError.setAttribute('data-visible', 'false');
 
     // Basic required-field guard (CSS :user-invalid handles visual state)
     var invalid = form.querySelectorAll(':invalid');
@@ -37,20 +50,11 @@
     // hCaptcha guard — Web3Forms rejects submissions without a token,
     // so block early and surface a specific inline message instead of
     // letting the user see the generic "something went wrong" box.
-    var captchaError = document.getElementById('captcha-error');
-    if (captchaError) captchaError.setAttribute('data-visible', 'false');
     var captchaResponse = form.querySelector('textarea[name=h-captcha-response]');
     if (!captchaResponse || !captchaResponse.value) {
-      if (captchaError) {
-        captchaError.setAttribute('data-visible', 'true');
-        captchaError.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
+      showCaptchaError();
       return;
     }
-
-    // Reset previous status
-    if (successBox) successBox.setAttribute('data-visible', 'false');
-    if (errorBox)   errorBox.setAttribute('data-visible', 'false');
 
     // Loading state
     if (submitBtn) {
@@ -87,7 +91,15 @@
       })
       .catch(function (err) {
         console.error('Form submission error:', err);
-        if (errorBox) errorBox.setAttribute('data-visible', 'true');
+        // If the server rejected for a captcha-related reason (e.g. token
+        // expired between tick and submit), point the user at the captcha
+        // instead of showing the generic "something went wrong" box.
+        var msg = String(err && err.message || '').toLowerCase();
+        if (msg.indexOf('captcha') !== -1) {
+          showCaptchaError();
+        } else if (errorBox) {
+          errorBox.setAttribute('data-visible', 'true');
+        }
         if (submitBtn) {
           submitBtn.disabled = false;
           submitBtn.textContent = btnLabel;
