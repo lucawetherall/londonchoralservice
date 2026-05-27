@@ -91,6 +91,15 @@
       })
       .catch(function (err) {
         console.error('Form submission error:', err);
+        // hCaptcha tokens are single-use, so any submission attempt may
+        // have consumed it. Clear the response field and reset the widget
+        // so the user gets a fresh challenge on retry — otherwise their
+        // next submit would resend the same stale token and loop on the
+        // same error.
+        if (captchaResponse) captchaResponse.value = '';
+        if (window.hcaptcha && typeof window.hcaptcha.reset === 'function') {
+          try { window.hcaptcha.reset(); } catch (_) { /* non-fatal */ }
+        }
         // If the server rejected for a captcha-related reason (e.g. token
         // expired between tick and submit), point the user at the captcha
         // instead of showing the generic "something went wrong" box.
