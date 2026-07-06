@@ -46,6 +46,15 @@
       // If already open, the click navigates to the trigger's href.
     });
 
+    // Desktop: CSS :hover opens the menu — keep aria-expanded in sync
+    // for assistive tech, since the click handler above only runs on mobile.
+    item.addEventListener('mouseenter', function () {
+      if (!window.matchMedia('(max-width: 805px)').matches) setOpen(true);
+    });
+    item.addEventListener('mouseleave', function () {
+      if (!window.matchMedia('(max-width: 805px)').matches) setOpen(false);
+    });
+
     // Keyboard: ESC closes the dropdown and returns focus to the trigger.
     item.addEventListener('keydown', function (e) {
       if (e.key === 'Escape') {
