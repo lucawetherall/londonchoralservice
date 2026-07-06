@@ -1730,6 +1730,55 @@
       margin-bottom: 0;
     }
     /* ═══════════════════════════════════
+       Pricing Cards
+       ═══════════════════════════════════ */
+    .price-cards {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: var(--space-lg);
+      margin: var(--space-xl) 0 var(--space-lg);
+    }
+    
+    .price-card {
+      padding: var(--space-lg) var(--space-md);
+      background-color: var(--color-bg-alt);
+      border: 1px solid transparent;
+      text-align: center;
+      transition: border-color var(--transition-fast);
+    }
+    
+    .price-card:hover {
+      border-color: var(--color-accent);
+    }
+    
+    .price-card .price {
+      font-family: var(--font-heading);
+      font-size: var(--text-xl);
+      font-weight: 600;
+      color: var(--color-text);
+      line-height: var(--leading-tight);
+    }
+    
+    .price-card .price-label {
+      font-family: var(--font-body);
+      font-size: var(--text-sm);
+      color: var(--color-text-mid);
+      margin-top: var(--space-xs);
+      letter-spacing: 0.02em;
+    }
+    
+    @media (max-width: 899px) {
+      .price-cards {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+    
+    @media (max-width: 599px) {
+      .price-cards {
+        grid-template-columns: 1fr;
+      }
+    }
+    /* ═══════════════════════════════════
        Print Styles
        ═══════════════════════════════════ */
     @media print {
@@ -1811,9 +1860,9 @@
     }
   </style>
 
-  <link rel="icon" href="assets/favicon.ico" sizes="any">
-  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
-  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+  <link rel="icon" href="/assets/favicon.ico" sizes="any">
+  <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
 </head>
 <body>
 
@@ -1870,11 +1919,11 @@
       <div class="prose">
         <p>Here are some pages that might help:</p>
         <ul>
-          <li><a href="index.html">Home</a></li>
-          <li><a href="services.html">Our services</a></li>
-          <li><a href="pricing.html">Pricing</a></li>
-          <li><a href="music-guides/">Music guides</a></li>
-          <li><a href="contact.html">Contact us</a></li>
+          <li><a href="/">Home</a></li>
+          <li><a href="/services.html">Our services</a></li>
+          <li><a href="/pricing.html">Pricing</a></li>
+          <li><a href="/music-guides/">Music guides</a></li>
+          <li><a href="/contact.html">Contact us</a></li>
         </ul>
       </div>
     </section>
@@ -1909,6 +1958,6 @@
   <div class="mobile-cta" aria-label="Quick contact">
     <a href="/contact.html" class="mobile-cta-enquire">Enquire</a>
   </div>
-  <script src="js/nav.js" defer></script>
+  <script src="/js/nav.js" defer></script>
 </body>
 </html>
