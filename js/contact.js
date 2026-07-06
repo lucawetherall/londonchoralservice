@@ -85,7 +85,7 @@
       })
       .then(function (payload) {
         if (payload.ok && payload.result.success) {
-          window.location.href = 'thank-you.html';
+          window.location.href = '/thank-you.html';
         } else {
           throw new Error(payload.result.message || 'Submission failed');
         }

@@ -2167,7 +2167,8 @@
                 <option value="wedding">Wedding</option>
                 <option value="memorial">Memorial service</option>
                 <option value="celebration">Celebration of life</option>
-                <option value="corporate" selected>Corporate event</option>
+                <option value="christmas" selected>Christmas / carol service</option>
+                <option value="corporate">Corporate event</option>
                 <option value="other">Other</option>
               </select>
             </div>
@@ -2179,6 +2180,8 @@
               <label for="message">Your message</label>
               <textarea id="message" name="message" rows="5"></textarea>
             </div>
+            <div class="h-captcha" data-captcha="true"></div>
+            <p class="form-error" id="captcha-error" role="alert">Please tick the box above to confirm you&rsquo;re not a robot, then try again.</p>
             <button type="submit" class="btn">Send enquiry</button>
           </div>
         </form>
@@ -2223,6 +2226,7 @@
   <div class="mobile-cta" aria-label="Quick contact">
     <a href="#enquiry" class="mobile-cta-enquire">Enquire</a>
   </div>
+  <script src="https://web3forms.com/client/script.js" async defer></script>
   <script src="js/nav.js" defer></script>
   <script src="js/landing-form.js" defer></script>
   <script>
