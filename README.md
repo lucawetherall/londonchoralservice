@@ -1,0 +1,30 @@
+# The London Choral Service — website
+
+Source for [londonchoralservice.com](https://londonchoralservice.com) — professional funeral singers, wedding choirs, and ceremony musicians across the UK. The trading site of Alma Consort Ltd.
+
+Hand-authored static HTML (~106 pages), no framework. Hosted on GitHub Pages with a custom domain (`CNAME`).
+
+## Quick start
+
+```sh
+git clone https://github.com/lucawetherall/londonchoralservice
+cd londonchoralservice
+# edit sources (css/*.css, partials/*.html, or page HTML)
+./build.sh                    # concat CSS, expand partials, inline CSS, validate JSON-LD
+python3 -m http.server 8000   # preview at http://localhost:8000
+```
+
+## How deployment works
+
+GitHub Pages serves the committed files directly — there is **no CI build step**. That's why `./build.sh` must be run before committing any change to `css/` or `partials/`: the built output is the deployed artifact. A rebuild rewrites the inlined CSS and expanded partials in every page, so a ~106-file diff after a style change is expected.
+
+## Where things are
+
+| | |
+|---|---|
+| Agent handover / conventions | [`CLAUDE.md`](CLAUDE.md) |
+| Prioritised backlog | [`docs/ROADMAP.md`](docs/ROADMAP.md) |
+| Feature specs and plans | [`docs/superpowers/`](docs/superpowers/) |
+| Tasks needing a human (dashboards, listings) | [`MANUAL-ACTIONS-REQUIRED.md`](MANUAL-ACTIONS-REQUIRED.md) |
+| House copy-style audit | [`SITE-STOP-SLOP-PLAN.md`](SITE-STOP-SLOP-PLAN.md) |
+| Claude Code project skills | `.claude/skills/` |
