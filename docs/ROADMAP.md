@@ -15,7 +15,11 @@ Statuses: `[ready]` `[BLOCKED-ON-HUMAN]` `[SPEC-FIRST]` `[DECISION-NEEDED]` `[do
 
 ---
 
-## R1 — Remove self-serving review schema and rating claims  [P1] [ready] [S]
+## R1 — Remove self-serving review schema and rating claims  [P1] [done 2026-07-29 — Christmas expansion]
+
+Completed as part of the Christmas expansion (see `docs/superpowers/plans/2026-07-29-christmas-expansion.md`): AggregateRating/Review removed from index.html and about.html JSON-LD, "Rated 5 stars" meta claims removed from weddings.html, services.html star row replaced with the verifiable 150-musician trust line. Original item preserved below for the verify commands.
+
+## R1 (original) — Remove self-serving review schema and rating claims  [P1] [ready] [S]
 
 **Why:** `index.html` carries `AggregateRating` (ratingValue 5, reviewCount 4) plus four `Review` objects with first-name-only authors inside the LocalBusiness JSON-LD. Google's structured-data policy treats reviews marked up by the entity being reviewed as self-serving: they are ignored at best and can trigger a manual action. The claim leaks into visible copy ("Rated 5 stars" in weddings.html meta descriptions; a ★★★★★ row on services.html), where it is unverifiable and a trust exposure. This is the highest-priority fix on the site.
 
@@ -44,6 +48,8 @@ python3 -c "import re;d=re.search(r'name=\"description\" content=\"([^\"]*)\"',o
 ## R2 — Refresh stale sitemap lastmod dates  [P2] [ready] [S]
 
 **Why:** 82 of 103 `<url>` entries say `<lastmod>2026-05-14` while the underlying files were last edited 2026-07-08 (several copy sweeps since). Stale lastmod misrepresents freshness to crawlers and erodes trust in the whole sitemap signal.
+
+**Update 2026-07-29:** the Christmas expansion refreshed lastmod for ~65 entries (12 new pages, christmas.html, and all 52 area pages). The scripted git-date sweep below is still worth running for the remaining untouched entries.
 
 **Files & anchors:** `grep -c '2026-05-14' sitemap.xml` (82 at time of writing)
 
@@ -155,6 +161,18 @@ print(round((max(l1,l2)+0.05)/(min(l1,l2)+0.05),2))   # must be >= 4.5
 EOF
 ```
 Remember any `css/tokens.css` edit requires `./build.sh` (see build-and-verify).
+
+---
+
+## R9 — January: demote seasonal Christmas nav + annual price date bump  [P3] [scheduled Jan 2027] [S]
+
+**Why:** The Christmas expansion (July 2026) promoted Christmas to a top-level nav item in `partials/nav.html` for the booking season. After the season it should return to the Services dropdown only. The same pass should bump `priceValidUntil` (currently `2027-12-31` on christmas.html and carol-singers.html) each January.
+
+**Do (in January):** Remove the top-level `<li><a href="/christmas.html">Christmas</a></li>` from `partials/nav.html` (keep the Services-dropdown entry), run `./build.sh` (expect the ~106-file diff), and check `grep -rn 'priceValidUntil'` dates are next-Dec-31. Consider whether the index.html "Christmas 2026" section and footer link should also be softened out of season.
+
+**Verify:** `./build.sh` exits 0; nav renders correctly at 375px; sitemap untouched.
+
+**Skills:** build-and-verify
 
 ---
 
