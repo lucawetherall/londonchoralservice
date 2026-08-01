@@ -170,6 +170,8 @@ Remember any `css/tokens.css` edit requires `./build.sh` (see build-and-verify).
 
 **Do (in January):** Remove the top-level `<li><a href="/christmas.html">Christmas</a></li>` from `partials/nav.html` (keep the Services-dropdown entry), run `./build.sh` (expect the ~106-file diff), and check `grep -rn 'priceValidUntil'` dates are next-Dec-31. Consider whether the index.html "Christmas 2026" section and footer link should also be softened out of season.
 
+**Update 2026-07-31:** the Christmas content overhaul added 11 guides (24 Christmas guides in total). The January pass should also refresh the "Last updated" byline and `dateModified` on the Christmas guide set, and re-check the four-group guide block on `christmas.html` still reads well if any guides are added or retired.
+
 **Verify:** `./build.sh` exits 0; nav renders correctly at 375px; sitemap untouched.
 
 **Skills:** build-and-verify
@@ -181,3 +183,39 @@ Remember any `css/tokens.css` edit requires `./build.sh` (see build-and-verify).
 - **Copy rewrites** — tracked separately in `SITE-STOP-SLOP-PLAN.md` (Parts 3–4 are its own prioritised backlog).
 - **Off-site SEO / listings / GBP** — human-only, in `MANUAL-ACTIONS-REQUIRED.md`.
 - Strengths to leave alone: semantic HTML + skip links + labelled forms, complete sitemap coverage, disciplined meta/canonical/hreflang/OG, deferred GA4 loading, self-hosted preloaded fonts.
+
+---
+
+## R10 — Two duplicate FAQ questions site-wide  [P3] [ready] [S]
+
+**Why:** Two `FAQPage` question strings appear on two pages each, which splits the rich-result signal between them. Found during the July 2026 Christmas overhaul; neither pair is Christmas content, so it was left out of scope at the time.
+
+**Files & anchors:**
+- `grep -rn 'How much does a funeral singer cost?' --include='*.html' .` — `music-guides/funeral-music-costs.html` and `pricing.html`
+- `grep -rn 'How far ahead should we book?' --include='*.html' .` — `corporate.html` and `for-wedding-planners.html`
+
+**Do:** Keep the question on the page that best owns the intent and reword the other so both the visible text and the schema answer differ. The visible FAQ text and the `FAQPage` answer text must stay identical strings on each page.
+
+**Verify:**
+```sh
+python3 -c "
+import re,glob,collections
+q=[]
+for f in glob.glob('**/*.html',recursive=True):
+    q += re.findall(r'\"@type\": \"Question\",\s*\"name\": \"([^\"]+)\"', open(f).read())
+print([k for k,v in collections.Counter(q).items() if v>1] or 'unique')"   # -> unique
+```
+**Skills:** writing-site-copy, build-and-verify
+
+---
+
+## R11 — Replace the "Victorian" verification grep with an allowlist  [P4] [ready] [XS]
+
+**Why:** The July 2026 Christmas spec set `grep -rn -i 'Victorian' --include='*.html' .` → empty as an acceptance check, enforcing the rule that Victorian costume is never offered or claimed. Three legitimate uses now exist and no regex distinguishes them from a violation, because the difference is whether the sentence *offers* the thing:
+
+- `music-guides/best-christmas-carol-singers.html` describes Victorian costume as a market option a buyer will encounter, then states plainly "London Choral Service sings in concert dress, all black, casual wear, or Christmas jumpers &hellip; we do not perform in period costume". That is the rule being honoured, not broken.
+- `music-guides/christmas-carol-lyrics-meanings.html` uses "Victorian" twice in its historical sense — Victorian schoolroom morality in the text of *Once in Royal David&rsquo;s City*, and Victorian critics of J. M. Neale.
+
+**Do:** Replace the empty-grep check in `docs/superpowers/specs/2026-07-29-christmas-expansion-design.md` §2 with: list every `Victorian` hit and confirm each either (a) sits on one of the two allowlisted files above, or (b) carries an explicit statement that we do not perform in costume. The underlying rule is unchanged and unweakened: costume is not offered.
+
+**Skills:** none
