@@ -1194,7 +1194,7 @@
        ═══════════════════════════════════ */
     .hero {
       display: flex;
-      align-items: center;
+      align-items: start;
       gap: var(--space-3xl);
     }
     
@@ -1206,6 +1206,8 @@
     .hero-video {
       flex: 3;
       min-width: 0;
+      position: sticky;
+      top: var(--space-2xl);
     }
     
     /* ── Responsive Video Embed ── */
@@ -1267,6 +1269,7 @@
       .hero-video {
         flex: none;
         width: 100%;
+        position: static;
       }
     }
     
@@ -1630,6 +1633,24 @@
     
     .pull-quote--marquee figcaption {
       margin-top: var(--space-lg);
+    }
+    
+    .services-hero {
+      display: grid;
+      gap: var(--space-2xl);
+      align-items: start;
+    }
+    
+    @media (min-width: 52rem) {
+      .services-hero {
+        grid-template-columns: 1fr 1.4fr;
+      }
+    }
+    
+    .services-hero .pull-quote--marquee {
+      margin-block: 0;
+      position: sticky;
+      top: var(--space-2xl);
     }
     
     /* ═══════════════════════════════════
@@ -2278,7 +2299,7 @@
 
         <article class="track">
           <h3 class="track-title">Be Thou My Vision <span class="track-meta">&mdash; Full Choir</span></h3>
-          <p class="track-description">An ancient Irish hymn with a timeless, haunting melody. Especially beautiful in a choral setting with organ accompaniment.</p>
+          <p class="track-description">A 6th-century Irish hymn, usually sung to the melody Slane. The organ lifts the final verse.</p>
           <div class="video-embed">
             <button class="video-thumb" aria-label="Play Be Thou My Vision" data-video="SaLTS_-I-q4">
               <img src="https://img.youtube.com/vi/SaLTS_-I-q4/maxresdefault.jpg" alt="Be Thou My Vision — The London Choral Service" loading="lazy" width="1280" height="720">
@@ -2292,12 +2313,12 @@
 
         <article class="track">
           <h3 class="track-title">Guide Me, O Thou Great Redeemer <span class="track-meta">&mdash; Full Choir</span></h3>
-          <p class="track-description">The great Welsh hymn, sung to Cwm Rhondda. Rousing, powerful, and guaranteed to lift the spirits of everyone present.</p>
+          <p class="track-description">The great Welsh hymn, sung to Cwm Rhondda. The congregation joins in whether they planned to or not.</p>
         </article>
 
         <article class="track">
           <h3 class="track-title">All Things Bright and Beautiful <span class="track-meta">&mdash; Small Choir</span></h3>
-          <p class="track-description">A joyful, uplifting hymn that celebrates the natural world. A favourite at carol services and seasonal gatherings.</p>
+          <p class="track-description">Cecil Frances Alexander&rsquo;s hymn about the natural world, light and easy to sing along with.</p>
         </article>
 
         <p><a href="listen.html">Hear more recordings &rarr;</a></p>
@@ -2308,7 +2329,7 @@
     <section class="section">
       <div class="prose">
         <h2>Pricing</h2>
-        <p>Transparent pricing, no hidden fees. Every booking includes a personal consultation, custom programme planning, and coordination with your venue.</p>
+        <p>Flat prices, no hidden fees. Luca discusses your event with you, builds the programme, and coordinates with your venue.</p>
         <div class="price-cards">
           <div class="price-card">
             <div class="price">&pound;1,150</div>
@@ -2493,7 +2514,7 @@
         <a href="https://wa.me/447356042468" target="_blank" rel="noopener" data-whatsapp>WhatsApp</a>
       </p>
       <p class="text-xs text-mid">
-        Areas we serve: <a href="/areas/london.html">London</a> &middot; <a href="/areas/birmingham.html">Birmingham</a> &middot; <a href="/areas/manchester.html">Manchester</a> &middot; <a href="/areas/liverpool.html">Liverpool</a> &middot; <a href="/areas/oxford.html">Oxford</a> &middot; <a href="/areas/cambridge.html">Cambridge</a> &middot; <a href="/areas/reading.html">Reading</a> &middot; <a href="/areas/slough-maidenhead.html">Slough &amp; Maidenhead</a> &middot; <a href="/areas/guildford.html">Guildford</a> &middot; <a href="/areas/brighton.html">Brighton</a> &middot; <a href="/areas/chester.html">Chester</a> &middot; <a href="/areas/st-albans.html">St Albans</a> &middot; <a href="/areas/canterbury.html">Canterbury</a> &middot; <a href="/areas/windsor.html">Windsor</a> &middot; <a href="/areas/winchester.html">Winchester</a> &middot; <a href="/areas/salisbury.html">Salisbury</a> &middot; <a href="/areas/bath.html">Bath</a> &middot; <a href="/areas/chelmsford.html">Chelmsford</a> &middot; <a href="/areas/rochester.html">Rochester</a>
+        Areas we serve: <a href="/areas/london.html">London</a> &middot; <a href="/areas/birmingham.html">Birmingham</a> &middot; <a href="/areas/manchester.html">Manchester</a> &middot; <a href="/areas/liverpool.html">Liverpool</a> &middot; <a href="/areas/oxford.html">Oxford</a> &middot; <a href="/areas/cambridge.html">Cambridge</a> &middot; <a href="/areas/reading.html">Reading</a> &middot; <a href="/areas/slough-maidenhead.html">Slough &amp; Maidenhead</a> &middot; <a href="/areas/guildford.html">Guildford</a> &middot; <a href="/areas/brighton.html">Brighton</a> &middot; <a href="/areas/chester.html">Chester</a> &middot; <a href="/areas/st-albans.html">St Albans</a> &middot; <a href="/areas/canterbury.html">Canterbury</a> &middot; <a href="/areas/windsor.html">Windsor</a> &middot; <a href="/areas/winchester.html">Winchester</a> &middot; <a href="/areas/salisbury.html">Salisbury</a> &middot; <a href="/areas/bath.html">Bath</a> &middot; <a href="/areas/chelmsford.html">Chelmsford</a> &middot; <a href="/areas/rochester.html">Rochester</a> &middot; <a href="/areas/">All areas</a>
       </p>
       <p class="text-xs text-mid">
         Christmas: <a href="/christmas.html">Carol services</a> &middot; <a href="/carol-singers.html">Hire carol singers</a>

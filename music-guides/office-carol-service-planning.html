@@ -1191,7 +1191,7 @@
        ═══════════════════════════════════ */
     .hero {
       display: flex;
-      align-items: center;
+      align-items: start;
       gap: var(--space-3xl);
     }
     
@@ -1203,6 +1203,8 @@
     .hero-video {
       flex: 3;
       min-width: 0;
+      position: sticky;
+      top: var(--space-2xl);
     }
     
     /* ── Responsive Video Embed ── */
@@ -1264,6 +1266,7 @@
       .hero-video {
         flex: none;
         width: 100%;
+        position: static;
       }
     }
     
@@ -1627,6 +1630,24 @@
     
     .pull-quote--marquee figcaption {
       margin-top: var(--space-lg);
+    }
+    
+    .services-hero {
+      display: grid;
+      gap: var(--space-2xl);
+      align-items: start;
+    }
+    
+    @media (min-width: 52rem) {
+      .services-hero {
+        grid-template-columns: 1fr 1.4fr;
+      }
+    }
+    
+    .services-hero .pull-quote--marquee {
+      margin-block: 0;
+      position: sticky;
+      top: var(--space-2xl);
     }
     
     /* ═══════════════════════════════════
@@ -2050,7 +2071,7 @@
 
       <section class="section" style="padding-block-start: var(--space-2xl)">
         <div class="prose">
-          <p class="lede">An office carol service is simpler to organise than most people think&thinsp;&mdash;&thinsp;and when it comes together, it is one of those rare events that everyone in the building actually enjoys. Not tolerates, not attends out of obligation, but looks forward to. The music fills the space, people sing who haven&rsquo;t sung since school, and for forty-five minutes the laptops and deadlines feel a long way off. If you&rsquo;ve been asked to make it happen&thinsp;&mdash;&thinsp;or you&rsquo;re the person quietly thinking <em>we should do something like that</em>&thinsp;&mdash;&thinsp;this guide covers the date, the venue, the readings, and the running order.</p>
+          <p class="lede">An office carol service is simpler to organise than most people think&thinsp;&mdash;&thinsp;and when it comes together, it is one of those rare events that everyone in the building looks forward to. The music fills the space, people sing who haven&rsquo;t sung since school, and for forty-five minutes the laptops and deadlines feel a long way off. If you&rsquo;ve been asked to make it happen&thinsp;&mdash;&thinsp;or you&rsquo;re the person quietly thinking <em>we should do something like that</em>&thinsp;&mdash;&thinsp;this guide covers the date, the venue, the readings, and the running order.</p>
         </div>
       </section>
 
@@ -2059,7 +2080,7 @@
           <h2>Is a carol service right for your workplace?</h2>
           <p>Almost certainly, yes. Office carol services work for teams of twenty and companies of two thousand. They work in glass-walled atriums and in rented church halls. They work for organisations with deep traditions and for start-ups that have never tried anything like this before.</p>
           <p>One concern people sometimes raise is whether a carol service feels too religious for a modern, diverse workplace. It&rsquo;s a fair question, and the honest answer is that it needn&rsquo;t be religious at all if you don&rsquo;t want it to be. Many of the best-loved carols are as much cultural as they are theological&thinsp;&mdash;&thinsp;people sing <em>Silent Night</em> because the melody is beautiful, not because they&rsquo;re making a statement of faith. You can frame the event as a winter celebration, a festive music event, or an end-of-year gathering that happens to have carols in it. Say on the invitation that everyone is welcome regardless of belief, and that attendance is optional.</p>
-          <p>At its heart, an office carol service is about bringing people together. The music provides the structure; the shared experience provides the warmth. That&rsquo;s something every workplace can benefit from. For an overview of <a href="/corporate.html">live music for corporate events</a> beyond the festive season, see our corporate page.</p>
+          <p>At its heart, an office carol service is about bringing people together. The music provides the structure; the shared experience provides the warmth. For an overview of <a href="/corporate.html">live music for corporate events</a> beyond the festive season, see our corporate page.</p>
         </div>
       </section>
 
@@ -2144,7 +2165,7 @@
             <li><strong>Welcome</strong> (2 minutes)&thinsp;&mdash;&thinsp;A senior colleague or office host opens with a few warm, informal words. Keep it brief.</li>
             <li><strong><em>O Come, All Ye Faithful</em></strong> (congregational)&thinsp;&mdash;&thinsp;A rousing opening carol that everyone knows. The choir leads; the room follows.</li>
             <li><strong>First reading: Charles Dickens</strong> (3 minutes)&thinsp;&mdash;&thinsp;The opening passage of <em>A Christmas Carol</em>, or the Fezziwig party scene. Read by a colleague.</li>
-            <li><strong><em>In the Bleak Midwinter</em></strong> (choir)&thinsp;&mdash;&thinsp;A beautiful, reflective piece performed by the choir alone. This is one of those moments that makes people stop and listen.</li>
+            <li><strong><em>In the Bleak Midwinter</em></strong> (choir)&thinsp;&mdash;&thinsp;A beautiful, reflective piece performed by the choir alone.</li>
             <li><strong>Second reading: Dylan Thomas</strong> (3 minutes)&thinsp;&mdash;&thinsp;An extract from <em>A Child&rsquo;s Christmas in Wales</em>. Warm, funny, and about the right length.</li>
             <li><strong><em>Hark! The Herald Angels Sing</em></strong> (congregational)&thinsp;&mdash;&thinsp;A grand, uplifting carol. The choir adds harmonies and a descant on the final verse.</li>
             <li><strong>Third reading: a colleague</strong> (2 minutes)&thinsp;&mdash;&thinsp;A brief, personal reflection from a business leader or team member. A thank-you for the year, a look ahead, or a few words about what Christmas means to them.</li>
@@ -2217,7 +2238,7 @@
         <a href="https://wa.me/447356042468" target="_blank" rel="noopener" data-whatsapp>WhatsApp</a>
       </p>
       <p class="text-xs text-mid">
-        Areas we serve: <a href="/areas/london.html">London</a> &middot; <a href="/areas/birmingham.html">Birmingham</a> &middot; <a href="/areas/manchester.html">Manchester</a> &middot; <a href="/areas/liverpool.html">Liverpool</a> &middot; <a href="/areas/oxford.html">Oxford</a> &middot; <a href="/areas/cambridge.html">Cambridge</a> &middot; <a href="/areas/reading.html">Reading</a> &middot; <a href="/areas/slough-maidenhead.html">Slough &amp; Maidenhead</a> &middot; <a href="/areas/guildford.html">Guildford</a> &middot; <a href="/areas/brighton.html">Brighton</a> &middot; <a href="/areas/chester.html">Chester</a> &middot; <a href="/areas/st-albans.html">St Albans</a> &middot; <a href="/areas/canterbury.html">Canterbury</a> &middot; <a href="/areas/windsor.html">Windsor</a> &middot; <a href="/areas/winchester.html">Winchester</a> &middot; <a href="/areas/salisbury.html">Salisbury</a> &middot; <a href="/areas/bath.html">Bath</a> &middot; <a href="/areas/chelmsford.html">Chelmsford</a> &middot; <a href="/areas/rochester.html">Rochester</a>
+        Areas we serve: <a href="/areas/london.html">London</a> &middot; <a href="/areas/birmingham.html">Birmingham</a> &middot; <a href="/areas/manchester.html">Manchester</a> &middot; <a href="/areas/liverpool.html">Liverpool</a> &middot; <a href="/areas/oxford.html">Oxford</a> &middot; <a href="/areas/cambridge.html">Cambridge</a> &middot; <a href="/areas/reading.html">Reading</a> &middot; <a href="/areas/slough-maidenhead.html">Slough &amp; Maidenhead</a> &middot; <a href="/areas/guildford.html">Guildford</a> &middot; <a href="/areas/brighton.html">Brighton</a> &middot; <a href="/areas/chester.html">Chester</a> &middot; <a href="/areas/st-albans.html">St Albans</a> &middot; <a href="/areas/canterbury.html">Canterbury</a> &middot; <a href="/areas/windsor.html">Windsor</a> &middot; <a href="/areas/winchester.html">Winchester</a> &middot; <a href="/areas/salisbury.html">Salisbury</a> &middot; <a href="/areas/bath.html">Bath</a> &middot; <a href="/areas/chelmsford.html">Chelmsford</a> &middot; <a href="/areas/rochester.html">Rochester</a> &middot; <a href="/areas/">All areas</a>
       </p>
       <p class="text-xs text-mid">
         Christmas: <a href="/christmas.html">Carol services</a> &middot; <a href="/carol-singers.html">Hire carol singers</a>

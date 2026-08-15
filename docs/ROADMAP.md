@@ -45,7 +45,7 @@ python3 -c "import re;d=re.search(r'name=\"description\" content=\"([^\"]*)\"',o
 
 ---
 
-## R2 — Refresh stale sitemap lastmod dates  [P2] [ready] [S]
+## R2 — Refresh stale sitemap lastmod dates  [P2] [done 2026-08-15] [S]
 
 **Why:** 82 of 103 `<url>` entries say `<lastmod>2026-05-14` while the underlying files were last edited 2026-07-08 (several copy sweeps since). Stale lastmod misrepresents freshness to crawlers and erodes trust in the whole sitemap signal.
 
@@ -71,20 +71,11 @@ grep -c '2026-05-14' sitemap.xml   # ≈0 (only files genuinely last touched tha
 
 ---
 
-## R3 — Real VideoObject dates/durations + missing sameAs  [P2] [BLOCKED-ON-HUMAN]
+## R3 — Real VideoObject dates/durations + missing sameAs  [P2] [done 2026-08-15 (video dates); sameAs still BLOCKED-ON-HUMAN]
 
-**Why:** Five `VideoObject` nodes ship placeholder `"uploadDate": "2025-01-01"` and no `duration` (flagged by inline TODO comments); `LocalBusiness.sameAs` lacks the canonical Google Maps URL and LinkedIn, `Person.sameAs` lacks ORCID. Fake dates in production structured data undercut the credibility of everything else in the graph. The fifth video (Blue Christmas, `mKMjUvCCW3E`) is done — the user supplied real values on 2026-08-15 and its nodes on listen.html, christmas.html, and carol-singers.html carry both `uploadDate` and `duration`; copy their shape for the remaining five, which now include the Anima Christi recording `ZVSQ2Ts4GZE` on `listen.html`, `music-guides/anima-christi-catholic-wedding.html`, and `music-guides/anima-christi-catholic-funeral.html`.
+All seven VideoObject nodes now carry real `uploadDate` and `duration` values, verified via `ytInitialPlayerResponse` on the YouTube watch pages. Zero placeholder dates remain (`grep -rn '2025-01-01' --include='*.html' .` → empty). Updated files: listen.html (6 videos), pricing.html (1), music-guides/anima-christi-catholic-wedding.html, music-guides/anima-christi-catholic-funeral.html, music-guides/ubi-caritas-wedding.html, christmas.html, carol-singers.html. `data/seo-fix-discovered-urls.yml` updated with all values.
 
-**Files & anchors:**
-- `grep -n 'uploadDate' listen.html pricing.html music-guides/anima-christi-*.html` — placeholders
-- `grep -n 'TODO' data/seo-fix-discovered-urls.yml` — the values awaiting human resolution
-- `grep -n 'TODO' index.html about.html` — the sameAs insertion points
-
-**Blocked on:** MANUAL-ACTIONS-REQUIRED.md §1 (GBP canonical URL) and the YAML's video-metadata lookups (YouTube consent gate blocks automated fetch). The human fills `data/seo-fix-discovered-urls.yml`.
-
-**Do (once unblocked):** Copy each resolved value from the YAML into the matching JSON-LD field: `uploadDate` (YYYY-MM-DD) and `duration` (ISO 8601, e.g. `PT3M42S`) for the four videos in listen.html (3) and pricing.html (1); append GBP + LinkedIn URLs to `LocalBusiness.sameAs` in index.html (replacing the share.google short link); ORCID to `Person.sameAs` in about.html. Remove the corresponding TODO comments.
-
-**Verify:** `grep -rn '2025-01-01' --include='*.html' .` → empty; `./build.sh` green; TODO comments gone from touched files.
+**Still blocked:** GBP canonical Maps URL, LinkedIn company page, and ORCID for sameAs fields — see MANUAL-ACTIONS-REQUIRED.md.
 
 **Skills:** build-and-verify
 
@@ -186,7 +177,7 @@ Remember any `css/tokens.css` edit requires `./build.sh` (see build-and-verify).
 
 ---
 
-## R10 — Two duplicate FAQ questions site-wide  [P3] [ready] [S]
+## R10 — Two duplicate FAQ questions site-wide  [P3] [done 2026-08-15] [S]
 
 **Why:** Two `FAQPage` question strings appear on two pages each, which splits the rich-result signal between them. Found during the July 2026 Christmas overhaul; neither pair is Christmas content, so it was left out of scope at the time.
 

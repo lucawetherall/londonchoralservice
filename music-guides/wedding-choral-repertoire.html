@@ -1196,7 +1196,7 @@
        ═══════════════════════════════════ */
     .hero {
       display: flex;
-      align-items: center;
+      align-items: start;
       gap: var(--space-3xl);
     }
     
@@ -1208,6 +1208,8 @@
     .hero-video {
       flex: 3;
       min-width: 0;
+      position: sticky;
+      top: var(--space-2xl);
     }
     
     /* ── Responsive Video Embed ── */
@@ -1269,6 +1271,7 @@
       .hero-video {
         flex: none;
         width: 100%;
+        position: static;
       }
     }
     
@@ -1632,6 +1635,24 @@
     
     .pull-quote--marquee figcaption {
       margin-top: var(--space-lg);
+    }
+    
+    .services-hero {
+      display: grid;
+      gap: var(--space-2xl);
+      align-items: start;
+    }
+    
+    @media (min-width: 52rem) {
+      .services-hero {
+        grid-template-columns: 1fr 1.4fr;
+      }
+    }
+    
+    .services-hero .pull-quote--marquee {
+      margin-block: 0;
+      position: sticky;
+      top: var(--space-2xl);
     }
     
     /* ═══════════════════════════════════
@@ -2087,7 +2108,7 @@
           </div>
 
           <h3><em>Ave Verum Corpus</em> (Mozart)</h3>
-          <p>One of Mozart&rsquo;s most perfect miniatures. It is short, simple, and devastatingly beautiful&thinsp;&mdash;&thinsp;four voices moving together in gentle harmony, the melody rising and falling with a grace that only Mozart achieves. It works as a prelude piece because it draws people in without demanding their full attention. They settle into their seats, the music washes over them, and the room begins to feel sacred.</p>
+          <p>One of Mozart&rsquo;s most perfect miniatures. It is short, simple, and beautiful&thinsp;&mdash;&thinsp;four voices moving together in gentle harmony, the melody rising and falling with a grace that only Mozart achieves. It works as a prelude piece because it draws people in without demanding their full attention. They settle into their seats, the music washes over them, and the room begins to feel sacred.</p>
 
           <h3><em>Locus Iste</em> (Bruckner)</h3>
           <p>&ldquo;This place was made by God.&rdquo; There is something fitting about singing those words as guests arrive at a church for a wedding. Bruckner&rsquo;s setting is broad and warm, with rich harmonies that expand to fill the space. It has a grandeur to it, but a quiet grandeur&thinsp;&mdash;&thinsp;not showy, not insistent. It needs at least four good voices to do it justice, and in a resonant building it is breathtaking.</p>
@@ -2109,13 +2130,13 @@
           <p>Tender, reflective, and well suited to a soprano soloist. The Faur&eacute; version, from his Requiem, is the more restrained&thinsp;&mdash;&thinsp;a prayer of extraordinary simplicity and purity. The Lloyd Webber version, from his Requiem, is warmer and more lyrical, with a melody that is instantly memorable. Both work beautifully, and both create a moment of quiet stillness in the ceremony.</p>
 
           <h3><em>Laudate Dominum</em> (Mozart)</h3>
-          <p>Radiant, uplifting, and astonishingly beautiful. A soprano solo with choral and organ accompaniment, it lifts the room in a way that is hard to describe&thinsp;&mdash;&thinsp;it seems to fill the space with light. It is one of the great moments in the choral repertoire. If you want a piece that makes people hold their breath, this is it.</p>
+          <p>Radiant and uplifting. A soprano solo with choral and organ accompaniment, the melody sits high enough to carry over the congregation while the choral and organ parts beneath give it warmth and depth. It runs about five minutes, which covers the register signing comfortably.</p>
 
           <h3><em>The Lord Bless You and Keep You</em> (Rutter)</h3>
           <p>The modern classic blessing. John Rutter&rsquo;s setting of the Aaronic blessing has become one of the most performed pieces at weddings in the English-speaking world, and it has earned that place. It is warm, generous, and beautifully singable, with harmonies that glow. A choir of four or more gives it real richness. Many couples choose it for the register signing; some prefer to have it sung at the very end of the ceremony, as a blessing on the new marriage.</p>
 
           <h3><em>O Mio Babbino Caro</em> (Puccini)</h3>
-          <p>Operatic, romantic, and utterly gorgeous. It is a soprano showpiece&thinsp;&mdash;&thinsp;a declaration of love that builds to a soaring climax before subsiding into tenderness. In the context of a wedding ceremony, it is a show-stopper. It is a less traditional choice than the sacred pieces above, and it carries a theatrical quality that some couples love and others feel is too much for a church. If you are the kind of couple who wants a moment of unapologetic glamour in your ceremony, this is the piece.</p>
+          <p>Operatic, romantic, and gorgeous. It is a soprano showpiece&thinsp;&mdash;&thinsp;a declaration of love that builds to a soaring climax before subsiding into tenderness. In the context of a wedding ceremony, it is a show-stopper. It is a less traditional choice than the sacred pieces above, and it carries a theatrical quality that some couples love and others feel is too much for a church. If you are the kind of couple who wants a moment of unapologetic glamour in your ceremony, this is the piece.</p>
         </div>
       </section>
 
@@ -2137,10 +2158,10 @@
           <p>&ldquo;May the road rise to meet you, may the wind be always at your back.&rdquo; This text has been set by many composers, and it works beautifully in almost any arrangement. It is a wish for the future&thinsp;&mdash;&thinsp;warm and generous. A four-part choir sings it with a richness that makes the blessing feel real and present, and it sits naturally after the vows or as a closing piece. Our guide to <a href="wedding-readings-and-music.html">pairing readings with music</a> has more on how to coordinate these moments.</p>
 
           <h3><em>A Gaelic Blessing</em> (Rutter)</h3>
-          <p>Another Rutter gem&thinsp;&mdash;&thinsp;gentle, lyrical, and quietly devastating. &ldquo;Deep peace of the running wave to you.&rdquo; The harmonies are lush without being cloying, and the melody floats above them with a simplicity that is deceptively hard to achieve. It suits a moment of quiet after the vows, or the very end of the ceremony as people prepare to leave. It is one of those pieces that makes a church feel like the most peaceful place in the world.</p>
+          <p>Another Rutter gem&thinsp;&mdash;&thinsp;gentle, lyrical, and quietly devastating. &ldquo;Deep peace of the running wave to you.&rdquo; The harmonies are lush without being cloying, and the melody floats above them with a simplicity that is deceptively hard to achieve. It suits a moment of quiet after the vows, or the very end of the ceremony as people prepare to leave. In a resonant church, the harmonies hang in the air long after the choir finishes.</p>
 
           <h3><em>Brother James&rsquo;s Air</em></h3>
-          <p>&ldquo;The Lord&rsquo;s my Shepherd&rdquo; in a more intimate arrangement than the usual hymn-tune version. The melody is gentler and more contemplative, and it works as a choral piece rather than a congregational one. A four-part choir singing this softly after the vows creates a moment of profound stillness. Families who love Psalm 23 but want something more delicate than Crimond often choose this.</p>
+          <p>&ldquo;The Lord&rsquo;s my Shepherd&rdquo; in a more intimate arrangement than the usual hymn-tune version. The melody is gentler and more contemplative, and it works as a choral piece rather than a congregational one. A four-part choir singing this softly after the vows creates a moment of stillness. Families who love Psalm 23 but want something more delicate than Crimond often choose this.</p>
         </div>
       </section>
 
@@ -2224,7 +2245,7 @@
         <a href="https://wa.me/447356042468" target="_blank" rel="noopener" data-whatsapp>WhatsApp</a>
       </p>
       <p class="text-xs text-mid">
-        Areas we serve: <a href="/areas/london.html">London</a> &middot; <a href="/areas/birmingham.html">Birmingham</a> &middot; <a href="/areas/manchester.html">Manchester</a> &middot; <a href="/areas/liverpool.html">Liverpool</a> &middot; <a href="/areas/oxford.html">Oxford</a> &middot; <a href="/areas/cambridge.html">Cambridge</a> &middot; <a href="/areas/reading.html">Reading</a> &middot; <a href="/areas/slough-maidenhead.html">Slough &amp; Maidenhead</a> &middot; <a href="/areas/guildford.html">Guildford</a> &middot; <a href="/areas/brighton.html">Brighton</a> &middot; <a href="/areas/chester.html">Chester</a> &middot; <a href="/areas/st-albans.html">St Albans</a> &middot; <a href="/areas/canterbury.html">Canterbury</a> &middot; <a href="/areas/windsor.html">Windsor</a> &middot; <a href="/areas/winchester.html">Winchester</a> &middot; <a href="/areas/salisbury.html">Salisbury</a> &middot; <a href="/areas/bath.html">Bath</a> &middot; <a href="/areas/chelmsford.html">Chelmsford</a> &middot; <a href="/areas/rochester.html">Rochester</a>
+        Areas we serve: <a href="/areas/london.html">London</a> &middot; <a href="/areas/birmingham.html">Birmingham</a> &middot; <a href="/areas/manchester.html">Manchester</a> &middot; <a href="/areas/liverpool.html">Liverpool</a> &middot; <a href="/areas/oxford.html">Oxford</a> &middot; <a href="/areas/cambridge.html">Cambridge</a> &middot; <a href="/areas/reading.html">Reading</a> &middot; <a href="/areas/slough-maidenhead.html">Slough &amp; Maidenhead</a> &middot; <a href="/areas/guildford.html">Guildford</a> &middot; <a href="/areas/brighton.html">Brighton</a> &middot; <a href="/areas/chester.html">Chester</a> &middot; <a href="/areas/st-albans.html">St Albans</a> &middot; <a href="/areas/canterbury.html">Canterbury</a> &middot; <a href="/areas/windsor.html">Windsor</a> &middot; <a href="/areas/winchester.html">Winchester</a> &middot; <a href="/areas/salisbury.html">Salisbury</a> &middot; <a href="/areas/bath.html">Bath</a> &middot; <a href="/areas/chelmsford.html">Chelmsford</a> &middot; <a href="/areas/rochester.html">Rochester</a> &middot; <a href="/areas/">All areas</a>
       </p>
       <p class="text-xs text-mid">
         Christmas: <a href="/christmas.html">Carol services</a> &middot; <a href="/carol-singers.html">Hire carol singers</a>

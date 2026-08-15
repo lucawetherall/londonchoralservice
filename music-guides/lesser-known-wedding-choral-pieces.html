@@ -1196,7 +1196,7 @@
        ═══════════════════════════════════ */
     .hero {
       display: flex;
-      align-items: center;
+      align-items: start;
       gap: var(--space-3xl);
     }
     
@@ -1208,6 +1208,8 @@
     .hero-video {
       flex: 3;
       min-width: 0;
+      position: sticky;
+      top: var(--space-2xl);
     }
     
     /* ── Responsive Video Embed ── */
@@ -1269,6 +1271,7 @@
       .hero-video {
         flex: none;
         width: 100%;
+        position: static;
       }
     }
     
@@ -1632,6 +1635,24 @@
     
     .pull-quote--marquee figcaption {
       margin-top: var(--space-lg);
+    }
+    
+    .services-hero {
+      display: grid;
+      gap: var(--space-2xl);
+      align-items: start;
+    }
+    
+    @media (min-width: 52rem) {
+      .services-hero {
+        grid-template-columns: 1fr 1.4fr;
+      }
+    }
+    
+    .services-hero .pull-quote--marquee {
+      margin-block: 0;
+      position: sticky;
+      top: var(--space-2xl);
     }
     
     /* ═══════════════════════════════════
@@ -2069,7 +2090,7 @@
       <section class="section">
         <div class="prose">
           <h2>Renaissance motets</h2>
-          <p>The great vocal music of the sixteenth century was written for the acoustic of stone buildings, which is exactly where most church weddings take place. A Renaissance motet in a resonant church is one of the loveliest sounds in all music &mdash; and because most guests have never heard these pieces before, their effect is completely fresh.</p>
+          <p>The great vocal music of the sixteenth century was written for the acoustic of stone buildings, which is exactly where most church weddings take place. A Renaissance motet in a resonant church suits the acoustic the building was designed for &mdash; and because most guests have never heard these pieces before, the effect is fresh.</p>
 
           <h3><em>Sicut Cervus</em> (Palestrina, c. 1581)</h3>
           <p>&ldquo;As the hart longs for flowing streams, so longs my soul for you.&rdquo; Palestrina&rsquo;s setting is the calmest music ever written for four voices. The entries weave in and out of one another, and the piece creates an atmosphere of settled, devotional stillness. Four voices suffice; eight are ideal. Best as a prelude piece or during the signing of the register.</p>
@@ -2091,7 +2112,7 @@
           <p>The English choral tradition of the last hundred and fifty years has produced some of the most distinctive sacred music ever written. Many of these pieces are performed every day in cathedrals and college chapels across the country, but they are almost never heard at weddings &mdash; which is why they are so striking when they appear in one.</p>
 
           <h3><em>Faire Is the Heaven</em> (William Harris, 1925)</h3>
-          <p>A double-choir anthem &mdash; two choirs of four voices each singing antiphonally &mdash; setting Edmund Spenser&rsquo;s poem about angelic light. The sound of eight voices moving in and out of one another in a resonant acoustic is breathtaking. You need a choir of at least eight. It works either as a prelude showpiece or as a moment after the vows. Expensive in voices; worth every one.</p>
+          <p>A double-choir anthem &mdash; two choirs of four voices each singing antiphonally &mdash; setting Edmund Spenser&rsquo;s poem about angelic light. The sound of eight voices moving in and out of one another fills a resonant acoustic completely. You need a choir of at least eight. It works either as a prelude showpiece or as a moment after the vows.</p>
 
           <h3><em>I Was Glad</em> (Parry, 1902)</h3>
           <p>Written for the coronation of Edward VII and performed at every coronation since. It is unapologetically grand, jubilant, and hymn-like in its opening. Most guests will recognise it from royal ceremonies, which lends your wedding an unusual weight of occasion. Best as a recessional if you have a choir of eight or more and a big organ.</p>
@@ -2100,7 +2121,7 @@
           <p>Six-part unaccompanied setting of Psalm 119. One of the most perfect short pieces in the English tradition &mdash; the writing is elegant, the harmonies are rich, and the piece builds to a full climax and retreats again in three minutes. If your choir has six good voices, this is a near-ideal register-signing piece.</p>
 
           <h3><em>Like as the Hart</em> (Howells, 1941)</h3>
-          <p>Herbert Howells wrote this during the early years of the Second World War. The result is a setting of Psalm 42 that feels like longing given sound &mdash; yearning, intimate, finally consolatory. It is more emotionally demanding than anything else on this list, and in the right hands it is unforgettable. A small choir of six to twelve, with organ accompaniment, suits it best. Register signing or post-vows.</p>
+          <p>Herbert Howells wrote this during the early years of the Second World War. The result is a setting of Psalm 42 that feels like longing given sound &mdash; yearning, intimate, finally consolatory. It is more emotionally demanding than anything else on this list, and it rewards singers who can control its dynamics. A small choir of six to twelve, with organ accompaniment, suits it best. Register signing or post-vows.</p>
         </div>
       </section>
 
@@ -2134,7 +2155,7 @@
           <p>The last fifty years of choral writing have produced a handful of pieces that have already entered the permanent repertoire. These are the modern classics &mdash; recent enough that most guests will not know them, established enough that choirs sing them with real familiarity.</p>
 
           <h3><em>O Magnum Mysterium</em> (Lauridsen, 1994)</h3>
-          <p>Morten Lauridsen wrote this for the Los Angeles Master Chorale, and it has become one of the most-performed choral works of the late twentieth century. The harmonic language is lush and consonant, the atmosphere is rapt and still, and the effect in a church is extraordinary. Six to twelve voices. Best during the signing of the register.</p>
+          <p>Morten Lauridsen wrote this for the Los Angeles Master Chorale, and it has become one of the most-performed choral works of the late twentieth century. The harmonic language is lush and consonant, the atmosphere is rapt and still, and in a resonant church the sustained chords fill the building. Six to twelve voices. Best during the signing of the register.</p>
 
           <h3><em>Sleep</em> (Eric Whitacre, 2000)</h3>
           <p>Originally set to a Robert Frost poem, later re-set to a new text when the Frost estate withdrew permission. The harmonic vocabulary is Whitacre&rsquo;s signature &mdash; suspended chords that resolve slowly and sweetly. Eight voices minimum. Works during the signing of the register or at the end of the prelude, as the last thing guests hear before the ceremony begins.</p>
@@ -2229,7 +2250,7 @@
         <a href="https://wa.me/447356042468" target="_blank" rel="noopener" data-whatsapp>WhatsApp</a>
       </p>
       <p class="text-xs text-mid">
-        Areas we serve: <a href="/areas/london.html">London</a> &middot; <a href="/areas/birmingham.html">Birmingham</a> &middot; <a href="/areas/manchester.html">Manchester</a> &middot; <a href="/areas/liverpool.html">Liverpool</a> &middot; <a href="/areas/oxford.html">Oxford</a> &middot; <a href="/areas/cambridge.html">Cambridge</a> &middot; <a href="/areas/reading.html">Reading</a> &middot; <a href="/areas/slough-maidenhead.html">Slough &amp; Maidenhead</a> &middot; <a href="/areas/guildford.html">Guildford</a> &middot; <a href="/areas/brighton.html">Brighton</a> &middot; <a href="/areas/chester.html">Chester</a> &middot; <a href="/areas/st-albans.html">St Albans</a> &middot; <a href="/areas/canterbury.html">Canterbury</a> &middot; <a href="/areas/windsor.html">Windsor</a> &middot; <a href="/areas/winchester.html">Winchester</a> &middot; <a href="/areas/salisbury.html">Salisbury</a> &middot; <a href="/areas/bath.html">Bath</a> &middot; <a href="/areas/chelmsford.html">Chelmsford</a> &middot; <a href="/areas/rochester.html">Rochester</a>
+        Areas we serve: <a href="/areas/london.html">London</a> &middot; <a href="/areas/birmingham.html">Birmingham</a> &middot; <a href="/areas/manchester.html">Manchester</a> &middot; <a href="/areas/liverpool.html">Liverpool</a> &middot; <a href="/areas/oxford.html">Oxford</a> &middot; <a href="/areas/cambridge.html">Cambridge</a> &middot; <a href="/areas/reading.html">Reading</a> &middot; <a href="/areas/slough-maidenhead.html">Slough &amp; Maidenhead</a> &middot; <a href="/areas/guildford.html">Guildford</a> &middot; <a href="/areas/brighton.html">Brighton</a> &middot; <a href="/areas/chester.html">Chester</a> &middot; <a href="/areas/st-albans.html">St Albans</a> &middot; <a href="/areas/canterbury.html">Canterbury</a> &middot; <a href="/areas/windsor.html">Windsor</a> &middot; <a href="/areas/winchester.html">Winchester</a> &middot; <a href="/areas/salisbury.html">Salisbury</a> &middot; <a href="/areas/bath.html">Bath</a> &middot; <a href="/areas/chelmsford.html">Chelmsford</a> &middot; <a href="/areas/rochester.html">Rochester</a> &middot; <a href="/areas/">All areas</a>
       </p>
       <p class="text-xs text-mid">
         Christmas: <a href="/christmas.html">Carol services</a> &middot; <a href="/carol-singers.html">Hire carol singers</a>

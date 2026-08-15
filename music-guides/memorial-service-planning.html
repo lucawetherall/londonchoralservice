@@ -34,7 +34,7 @@
   </script>
 
   <title>How to Plan a Memorial Service</title>
-  <meta name="description" content="A practical guide to planning a memorial service — from choosing the format and venue to selecting music and readings.">
+  <meta name="description" content="A practical guide to planning a memorial service, covering format, venue, music, and readings. Written by The London Choral Service. Singers from £195.">
   <meta name="theme-color" content="#F7F3EE">
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://londonchoralservice.com/music-guides/memorial-service-planning.html">
@@ -42,7 +42,7 @@
   <link rel="alternate" hreflang="x-default" href="https://londonchoralservice.com/music-guides/memorial-service-planning.html">
 
   <meta property="og:title" content="How to Plan a Memorial Service">
-  <meta property="og:description" content="A practical guide to planning a memorial service — from choosing the format and venue to selecting music and readings.">
+  <meta property="og:description" content="A practical guide to planning a memorial service, covering format, venue, music, and readings. Written by The London Choral Service. Singers from £195.">
   <meta property="og:type" content="article">
   <meta property="og:url" content="https://londonchoralservice.com/music-guides/memorial-service-planning.html">
   <meta property="og:locale" content="en_GB">
@@ -53,7 +53,7 @@
 
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="How to Plan a Memorial Service">
-  <meta name="twitter:description" content="A practical guide to planning a memorial service — from choosing the format and venue to selecting music and readings.">
+  <meta name="twitter:description" content="A practical guide to planning a memorial service, covering format, venue, music, and readings. Written by The London Choral Service. Singers from £195.">
   <meta name="twitter:image" content="https://londonchoralservice.com/assets/og-image.png">
   <link rel="dns-prefetch" href="https://www.googletagmanager.com">
   <link rel="dns-prefetch" href="https://api.web3forms.com">
@@ -1196,7 +1196,7 @@
        ═══════════════════════════════════ */
     .hero {
       display: flex;
-      align-items: center;
+      align-items: start;
       gap: var(--space-3xl);
     }
     
@@ -1208,6 +1208,8 @@
     .hero-video {
       flex: 3;
       min-width: 0;
+      position: sticky;
+      top: var(--space-2xl);
     }
     
     /* ── Responsive Video Embed ── */
@@ -1269,6 +1271,7 @@
       .hero-video {
         flex: none;
         width: 100%;
+        position: static;
       }
     }
     
@@ -1632,6 +1635,24 @@
     
     .pull-quote--marquee figcaption {
       margin-top: var(--space-lg);
+    }
+    
+    .services-hero {
+      display: grid;
+      gap: var(--space-2xl);
+      align-items: start;
+    }
+    
+    @media (min-width: 52rem) {
+      .services-hero {
+        grid-template-columns: 1fr 1.4fr;
+      }
+    }
+    
+    .services-hero .pull-quote--marquee {
+      margin-block: 0;
+      position: sticky;
+      top: var(--space-2xl);
     }
     
     /* ═══════════════════════════════════
@@ -2088,7 +2109,7 @@
           <h2>Deciding on the format</h2>
           <p>The first question is whether you want a religious service, a secular gathering, or something that draws from both. There is no right answer&thinsp;&mdash;&thinsp;it depends entirely on the person being remembered and the family organising it.</p>
           <p>A religious memorial service follows a familiar structure: hymns, prayers, readings from scripture, and perhaps a sermon or reflection from the minister. This is reassuring for families who find comfort in tradition, and the liturgy provides a shape to the event that means you do not have to invent everything from scratch.</p>
-          <p>A secular memorial is more flexible. You can build the service around tributes, stories, poetry, and music. The tone can be whatever feels right&thinsp;&mdash;&thinsp;reflective, celebratory, even funny. Some of the most memorable memorials we have been part of have mixed laughter and tears in equal measure, which is usually a sign that the person has been honoured properly.</p>
+          <p>A secular memorial is more flexible. You can build the service around tributes, stories, poetry, and music. The tone can be whatever feels right&thinsp;&mdash;&thinsp;reflective, celebratory, even funny. Some of the most memorable memorials we have been part of have mixed laughter and tears in equal measure, and the balance felt right for the person.</p>
           <p>Many families choose a blend: a service in a church with traditional hymns and prayers, but with personal tributes and music that reflects the individual rather than the liturgy. This works well and feels natural to most congregations.</p>
         </div>
       </section>
@@ -2120,7 +2141,7 @@
             <li><strong>Welcome and opening words</strong>&thinsp;&mdash;&thinsp;from a minister, a celebrant, or a family member. This frames the occasion and makes everyone feel included.</li>
             <li><strong>A hymn or piece of music</strong>&thinsp;&mdash;&thinsp;singing together is a powerful way to begin. Even at a secular service, a well-known song that everyone can join in with creates a sense of unity.</li>
             <li><strong>Readings and tributes</strong>&thinsp;&mdash;&thinsp;two or three speakers is usually right. Poems, passages from favourite books, letters, or simply spoken memories. These are the heart of the service.</li>
-            <li><strong>A solo or choral piece</strong>&thinsp;&mdash;&thinsp;a moment for the congregation to sit and listen. A beautiful piece of music performed live in a quiet room is one of the most emotionally powerful things you can offer.</li>
+            <li><strong>A solo or choral piece</strong>&thinsp;&mdash;&thinsp;a moment for the congregation to sit and listen. Live music in a quiet room shapes the atmosphere of the entire service.</li>
             <li><strong>Further tributes or a reflection</strong>&thinsp;&mdash;&thinsp;space for additional speakers, a moment of silence, or a prayer.</li>
             <li><strong>A closing hymn or song</strong>&thinsp;&mdash;&thinsp;something uplifting that sends people out with a sense of warmth rather than sorrow.</li>
             <li><strong>Music as guests depart</strong>&thinsp;&mdash;&thinsp;live music again, leading naturally into the reception if there is one.</li>
@@ -2135,7 +2156,7 @@
           <p>Music at a memorial service has a slightly different role from music at a funeral. At a funeral, the music is doing emotional work in real time&thinsp;&mdash;&thinsp;it is holding people through the raw shock of loss. At a memorial, the grief is less acute, and the music can do something broader: it can celebrate, it can comfort, it can make people smile as well as cry.</p>
           <p>This means the repertoire can be wider. Traditional hymns work beautifully&thinsp;&mdash;&thinsp;&ldquo;Jerusalem&rdquo;, &ldquo;Dear Lord and Father of Mankind&rdquo;, &ldquo;I Vow to Thee My Country&rdquo;&thinsp;&mdash;&thinsp;but so do jazz standards, folk songs, show tunes, and popular music performed live. We have performed everything from Bach cantatas to Sting&rsquo;s &ldquo;Fields of Gold&rdquo; at memorial services, and each was exactly right for the occasion.</p>
           <p>If you are unsure where to start, our guides to <a href="funeral-music-guide.html">choosing funeral music</a>, <a href="popular-funeral-hymns.html">popular funeral hymns</a>, and <a href="celebration-of-life-music.html">celebration of life music</a> cover the most requested pieces across all our services.</p>
-          <p>Live music makes an outsized difference at memorial services. A recorded track played through speakers can feel flat in a large room. A single trained voice singing something beautiful can fill the space and stop everyone in their tracks. If there is one element of a memorial worth investing in, it is this.</p>
+          <p>Live music makes an outsized difference at memorial services. A recorded track played through speakers can feel flat in a large room. A single trained voice fills the same space naturally and gives the music a presence a recording lacks.</p>
         </div>
       </section>
 
@@ -2228,7 +2249,7 @@
         <a href="https://wa.me/447356042468" target="_blank" rel="noopener" data-whatsapp>WhatsApp</a>
       </p>
       <p class="text-xs text-mid">
-        Areas we serve: <a href="/areas/london.html">London</a> &middot; <a href="/areas/birmingham.html">Birmingham</a> &middot; <a href="/areas/manchester.html">Manchester</a> &middot; <a href="/areas/liverpool.html">Liverpool</a> &middot; <a href="/areas/oxford.html">Oxford</a> &middot; <a href="/areas/cambridge.html">Cambridge</a> &middot; <a href="/areas/reading.html">Reading</a> &middot; <a href="/areas/slough-maidenhead.html">Slough &amp; Maidenhead</a> &middot; <a href="/areas/guildford.html">Guildford</a> &middot; <a href="/areas/brighton.html">Brighton</a> &middot; <a href="/areas/chester.html">Chester</a> &middot; <a href="/areas/st-albans.html">St Albans</a> &middot; <a href="/areas/canterbury.html">Canterbury</a> &middot; <a href="/areas/windsor.html">Windsor</a> &middot; <a href="/areas/winchester.html">Winchester</a> &middot; <a href="/areas/salisbury.html">Salisbury</a> &middot; <a href="/areas/bath.html">Bath</a> &middot; <a href="/areas/chelmsford.html">Chelmsford</a> &middot; <a href="/areas/rochester.html">Rochester</a>
+        Areas we serve: <a href="/areas/london.html">London</a> &middot; <a href="/areas/birmingham.html">Birmingham</a> &middot; <a href="/areas/manchester.html">Manchester</a> &middot; <a href="/areas/liverpool.html">Liverpool</a> &middot; <a href="/areas/oxford.html">Oxford</a> &middot; <a href="/areas/cambridge.html">Cambridge</a> &middot; <a href="/areas/reading.html">Reading</a> &middot; <a href="/areas/slough-maidenhead.html">Slough &amp; Maidenhead</a> &middot; <a href="/areas/guildford.html">Guildford</a> &middot; <a href="/areas/brighton.html">Brighton</a> &middot; <a href="/areas/chester.html">Chester</a> &middot; <a href="/areas/st-albans.html">St Albans</a> &middot; <a href="/areas/canterbury.html">Canterbury</a> &middot; <a href="/areas/windsor.html">Windsor</a> &middot; <a href="/areas/winchester.html">Winchester</a> &middot; <a href="/areas/salisbury.html">Salisbury</a> &middot; <a href="/areas/bath.html">Bath</a> &middot; <a href="/areas/chelmsford.html">Chelmsford</a> &middot; <a href="/areas/rochester.html">Rochester</a> &middot; <a href="/areas/">All areas</a>
       </p>
       <p class="text-xs text-mid">
         Christmas: <a href="/christmas.html">Carol services</a> &middot; <a href="/carol-singers.html">Hire carol singers</a>

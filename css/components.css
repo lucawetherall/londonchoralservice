@@ -592,7 +592,7 @@
    ═══════════════════════════════════ */
 .hero {
   display: flex;
-  align-items: center;
+  align-items: start;
   gap: var(--space-3xl);
 }
 
@@ -604,6 +604,8 @@
 .hero-video {
   flex: 3;
   min-width: 0;
+  position: sticky;
+  top: var(--space-2xl);
 }
 
 /* ── Responsive Video Embed ── */
@@ -665,6 +667,7 @@
   .hero-video {
     flex: none;
     width: 100%;
+    position: static;
   }
 }
 
@@ -1028,6 +1031,24 @@
 
 .pull-quote--marquee figcaption {
   margin-top: var(--space-lg);
+}
+
+.services-hero {
+  display: grid;
+  gap: var(--space-2xl);
+  align-items: start;
+}
+
+@media (min-width: 52rem) {
+  .services-hero {
+    grid-template-columns: 1fr 1.4fr;
+  }
+}
+
+.services-hero .pull-quote--marquee {
+  margin-block: 0;
+  position: sticky;
+  top: var(--space-2xl);
 }
 
 /* ═══════════════════════════════════
