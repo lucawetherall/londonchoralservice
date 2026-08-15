@@ -48,14 +48,19 @@ videos:
     title: "Be Thou My Vision (Slane)"
     upload_date: "TODO"
     duration: "TODO"
-  - page: "listen.html"
+  - page: "listen.html, christmas.html, carol-singers.html"
     position: 4
+    youtube_id: "mKMjUvCCW3E"
+    title: "Blue Christmas"
+    upload_date: "2026-08-14"  # supplied by the user 2026-08-15; YouTube is blocked by the egress proxy, so this was not machine-verified.
+    duration: "PT1M40S"  # 1:40, supplied by the user 2026-08-15
+  - page: "listen.html, weddings.html, funerals.html"
+    position: 5
     youtube_id: "ZVSQ2Ts4GZE"
     title: "Anima Christi (Marco Frisina)"
-    upload_date: "TODO"  # supplied by the user as https://youtu.be/ZVSQ2Ts4GZE; youtube.com is blocked by the agent proxy, so oEmbed/watch-page metadata could not be fetched to confirm the date or duration.
+    upload_date: "TODO"  # supplied by the user as https://youtu.be/ZVSQ2Ts4GZE; YouTube is blocked by the egress proxy, so oEmbed/watch-page metadata could not be fetched. Follow the mKMjUvCCW3E node above for the shape once the user supplies the date and duration.
     duration: "TODO"
-    # Also embedded on: weddings.html, funerals.html,
-    # music-guides/anima-christi-catholic-wedding.html,
+    # Also embedded on: music-guides/anima-christi-catholic-wedding.html,
     # music-guides/anima-christi-catholic-funeral.html,
     # music-guides/catholic-funeral-hymns.html
 
