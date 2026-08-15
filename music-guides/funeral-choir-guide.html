@@ -1196,7 +1196,7 @@
        ═══════════════════════════════════ */
     .hero {
       display: flex;
-      align-items: center;
+      align-items: start;
       gap: var(--space-3xl);
     }
     
@@ -1208,6 +1208,8 @@
     .hero-video {
       flex: 3;
       min-width: 0;
+      position: sticky;
+      top: var(--space-2xl);
     }
     
     /* ── Responsive Video Embed ── */
@@ -1269,6 +1271,7 @@
       .hero-video {
         flex: none;
         width: 100%;
+        position: static;
       }
     }
     
@@ -1632,6 +1635,24 @@
     
     .pull-quote--marquee figcaption {
       margin-top: var(--space-lg);
+    }
+    
+    .services-hero {
+      display: grid;
+      gap: var(--space-2xl);
+      align-items: start;
+    }
+    
+    @media (min-width: 52rem) {
+      .services-hero {
+        grid-template-columns: 1fr 1.4fr;
+      }
+    }
+    
+    .services-hero .pull-quote--marquee {
+      margin-block: 0;
+      position: sticky;
+      top: var(--space-2xl);
     }
     
     /* ═══════════════════════════════════
@@ -2069,7 +2090,7 @@
       <section class="section">
         <div class="prose">
           <h2>What a funeral choir actually does</h2>
-          <p>The most important thing a choir does at a funeral is lead the hymns. This sounds simple, and it is&thinsp;&mdash;&thinsp;but the difference it makes is extraordinary.</p>
+          <p>The most important thing a choir does at a funeral is lead the hymns. This sounds simple, and it is&thinsp;&mdash;&thinsp;but it changes how confidently the congregation sings.</p>
           <p>Think about what happens when a congregation tries to sing without a musical lead. People are emotional, uncertain, self-conscious. The organist plays an introduction, a few brave souls start singing, the sound is thin and hesitant, and by the second verse half the room has given up. This is not a criticism of anyone&thinsp;&mdash;&thinsp;it is simply what happens when grieving people are asked to sing in public without support.</p>
           <p>Now picture the same moment with professional singers in the room. The choir begins with warmth and confidence. The melody is clear, the harmonies are beautiful, and suddenly everyone has something to lean into. People who thought they could not sing find themselves singing. The sound fills the church. For a few minutes, the whole room is doing the same thing. It is the single biggest reason families hire a choir.</p>
           <p>Beyond hymn-leading, a funeral choir provides music at other key moments. As people enter the church, the choir may sing softly&thinsp;&mdash;&thinsp;gentle, atmospheric music that settles the room and signals that something sacred is about to begin. During the service, the choir performs solo or choral pieces: <em>Ave Maria</em>, <em>Pie Jesu</em>, <em>In Paradisum</em>, or any number of other works chosen for their beauty and emotional weight. As the coffin leaves and people follow, the choir may sing a final piece&thinsp;&mdash;&thinsp;something that carries people gently out of the service and back into the world.</p>
@@ -2085,7 +2106,7 @@
           <p><strong>A small choir of four singers</strong> gives you warmth and richness. Four voices in harmony create a sound that is fuller and more enveloping than a single voice. This is our most popular option for church funerals. It provides strong hymn-leading for congregations of any size and allows for beautiful choral pieces during the service. A small choir starts from &pound;1,150.</p>
           <p><strong>A quintet of five singers</strong> adds a second soprano to the choral quartet, making a huge difference to the sound in your venue. It can really help lead the congregation in their singing and allows for much more freedom of repertoire as many pieces are written with two soprano parts. A quintet starts from &pound;1,400.</p>
           <p><strong>A sextet of six singers</strong> is one of our most cost effective options if you want the sound of a big choir for less. They produce a far bigger sound than a quartet and provide a musical boost to any service. A sextet starts from &pound;1,600.</p>
-          <p><strong>A full choir of eight singers</strong> is a substantial musical presence. It fills a large church with ease and produces the kind of sound that stops people in their tracks. For a significant funeral with a large congregation, this is the option that delivers the most impact. Eight voices singing <em>In Paradisum</em> or <em>Lux Aeterna</em> in a resonant church is something people remember for the rest of their lives. A full choir starts from &pound;2,000.</p>
+          <p><strong>A full choir of eight singers</strong> is a substantial musical presence. It fills a large church with ease and produces the kind of sound that stops people in their tracks. For a significant funeral with a large congregation, this is the option that delivers the most impact. Eight voices singing <em>In Paradisum</em> or <em>Lux Aeterna</em> in a resonant church fills the building. A full choir starts from &pound;2,000.</p>
           <p><strong>A chorus of twelve singers</strong> is the most immersive option we offer. It creates a wall of sound that is both powerful and moving. This is typically chosen for memorial services, thanksgiving services, or funerals where the family wants the music to be a central, defining feature of the occasion. A chorus starts from &pound;3,000.</p>
           <p>All of our options include an accompanist. For full pricing details, see our <a href="../pricing.html">pricing page</a>, or our <a href="funeral-music-costs.html">funeral music costs guide</a> explains what everything costs and what you get for it.</p>
         </div>
@@ -2105,7 +2126,7 @@
           <h2>What they sing</h2>
           <p>The repertoire divides naturally into three categories.</p>
           <p><strong>Hymns.</strong> These are the congregational pieces&thinsp;&mdash;&thinsp;<em>The Lord Is My Shepherd</em>, <em>Abide with Me</em>, <em>Dear Lord and Father of Mankind</em>, and many others. The choir leads these, carrying the melody and harmonies so that the congregation feels supported. Most funerals include two or three hymns. Our guide to <a href="popular-funeral-hymns.html">popular funeral hymns</a> covers the most commonly chosen. For Catholic funerals, our <a href="catholic-funeral-hymns.html">Catholic funeral hymns guide</a> covers the tradition-specific choices.</p>
-          <p><strong>Solo and choral pieces.</strong> These are the pieces the congregation listens to&thinsp;&mdash;&thinsp;performed by one or more of the singers as a dedicated musical moment. <em>Ave Maria</em> (Schubert), <em>Pie Jesu</em> (Faur&eacute;), <em>Panis Angelicus</em> (Franck), <em>In Paradisum</em>, <em>Lux Aeterna</em>, and <em>The Irish Blessing</em> are among the most requested. These pieces are often the musical highlight of the service&thinsp;&mdash;&thinsp;the moment where the room falls silent and the music does something that words alone cannot.</p>
+          <p><strong>Solo and choral pieces.</strong> These are the pieces the congregation listens to&thinsp;&mdash;&thinsp;performed by one or more of the singers as a dedicated musical moment. <em>Ave Maria</em> (Schubert), <em>Pie Jesu</em> (Faur&eacute;), <em>Panis Angelicus</em> (Franck), <em>In Paradisum</em>, <em>Lux Aeterna</em>, and <em>The Irish Blessing</em> are among the most requested. These pieces are often the musical highlight of the service&thinsp;&mdash;&thinsp;the moment where the room falls silent.</p>
           <p><strong>Ambient music.</strong> Gentle, unobtrusive music as people enter and leave. This might be quiet choral singing, an organ voluntary, or piano music. Its job is to create atmosphere and hold the space while the congregation settles or departs. It is the frame around the picture, and it matters more than people realise.</p>
           <p>If the family would like to include non-hymn songs&thinsp;&mdash;&thinsp;popular music, show tunes, classical favourites&thinsp;&mdash;&thinsp;our guide to <a href="funeral-songs.html">popular funeral songs</a> and our <a href="non-religious-funeral-music.html">non-religious funeral music guide</a> cover the options.</p>
         </div>
@@ -2135,8 +2156,8 @@
       <section class="section">
         <div class="prose">
           <h2>What it actually feels like</h2>
-          <p>At most funerals, the music is the part people carry with them longest. Not the words, not the readings&thinsp;&mdash;&thinsp;the music. There is something about live voices in a sacred or ceremonial space that goes beyond what anyone expects. It reaches people in a place that language does not quite get to.</p>
-          <p>The moment the choir begins singing, the room changes. People stop fidgeting. The tension in the air softens. And when the congregation joins in on a hymn&thinsp;&mdash;&thinsp;supported, carried, lifted by the professional voices around them&thinsp;&mdash;&thinsp;something happens that is hard to describe until you have felt it. It is communal and personal at the same time. It is grief and beauty held together in the same breath.</p>
+          <p>At most funerals, the music is the part people carry with them longest. Not the words, not the readings&thinsp;&mdash;&thinsp;the music.</p>
+          <p>The moment the choir begins singing, the room changes. People stop fidgeting. The tension in the air softens. And when the congregation joins in on a hymn&thinsp;&mdash;&thinsp;supported, carried, lifted by the professional voices around them&thinsp;&mdash;&thinsp;the singing becomes shared in a way the rest of the service is not.</p>
           <p>You can hear our musicians on our <a href="../listen.html">listening page</a>.</p>
 
           <figure class="pull-quote">
@@ -2210,7 +2231,7 @@
         <a href="https://wa.me/447356042468" target="_blank" rel="noopener" data-whatsapp>WhatsApp</a>
       </p>
       <p class="text-xs text-mid">
-        Areas we serve: <a href="/areas/london.html">London</a> &middot; <a href="/areas/birmingham.html">Birmingham</a> &middot; <a href="/areas/manchester.html">Manchester</a> &middot; <a href="/areas/liverpool.html">Liverpool</a> &middot; <a href="/areas/oxford.html">Oxford</a> &middot; <a href="/areas/cambridge.html">Cambridge</a> &middot; <a href="/areas/reading.html">Reading</a> &middot; <a href="/areas/slough-maidenhead.html">Slough &amp; Maidenhead</a> &middot; <a href="/areas/guildford.html">Guildford</a> &middot; <a href="/areas/brighton.html">Brighton</a> &middot; <a href="/areas/chester.html">Chester</a> &middot; <a href="/areas/st-albans.html">St Albans</a> &middot; <a href="/areas/canterbury.html">Canterbury</a> &middot; <a href="/areas/windsor.html">Windsor</a> &middot; <a href="/areas/winchester.html">Winchester</a> &middot; <a href="/areas/salisbury.html">Salisbury</a> &middot; <a href="/areas/bath.html">Bath</a> &middot; <a href="/areas/chelmsford.html">Chelmsford</a> &middot; <a href="/areas/rochester.html">Rochester</a>
+        Areas we serve: <a href="/areas/london.html">London</a> &middot; <a href="/areas/birmingham.html">Birmingham</a> &middot; <a href="/areas/manchester.html">Manchester</a> &middot; <a href="/areas/liverpool.html">Liverpool</a> &middot; <a href="/areas/oxford.html">Oxford</a> &middot; <a href="/areas/cambridge.html">Cambridge</a> &middot; <a href="/areas/reading.html">Reading</a> &middot; <a href="/areas/slough-maidenhead.html">Slough &amp; Maidenhead</a> &middot; <a href="/areas/guildford.html">Guildford</a> &middot; <a href="/areas/brighton.html">Brighton</a> &middot; <a href="/areas/chester.html">Chester</a> &middot; <a href="/areas/st-albans.html">St Albans</a> &middot; <a href="/areas/canterbury.html">Canterbury</a> &middot; <a href="/areas/windsor.html">Windsor</a> &middot; <a href="/areas/winchester.html">Winchester</a> &middot; <a href="/areas/salisbury.html">Salisbury</a> &middot; <a href="/areas/bath.html">Bath</a> &middot; <a href="/areas/chelmsford.html">Chelmsford</a> &middot; <a href="/areas/rochester.html">Rochester</a> &middot; <a href="/areas/">All areas</a>
       </p>
       <p class="text-xs text-mid">
         Christmas: <a href="/christmas.html">Carol services</a> &middot; <a href="/carol-singers.html">Hire carol singers</a>

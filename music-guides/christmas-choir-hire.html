@@ -1191,7 +1191,7 @@
        ═══════════════════════════════════ */
     .hero {
       display: flex;
-      align-items: center;
+      align-items: start;
       gap: var(--space-3xl);
     }
     
@@ -1203,6 +1203,8 @@
     .hero-video {
       flex: 3;
       min-width: 0;
+      position: sticky;
+      top: var(--space-2xl);
     }
     
     /* ── Responsive Video Embed ── */
@@ -1264,6 +1266,7 @@
       .hero-video {
         flex: none;
         width: 100%;
+        position: static;
       }
     }
     
@@ -1627,6 +1630,24 @@
     
     .pull-quote--marquee figcaption {
       margin-top: var(--space-lg);
+    }
+    
+    .services-hero {
+      display: grid;
+      gap: var(--space-2xl);
+      align-items: start;
+    }
+    
+    @media (min-width: 52rem) {
+      .services-hero {
+        grid-template-columns: 1fr 1.4fr;
+      }
+    }
+    
+    .services-hero .pull-quote--marquee {
+      margin-block: 0;
+      position: sticky;
+      top: var(--space-2xl);
     }
     
     /* ═══════════════════════════════════
@@ -2059,7 +2080,7 @@
           <h2>What a Christmas choir does</h2>
           <p>One group of singers can work in several different modes across a single evening, and a good ensemble will move between them without being asked twice.</p>
           <p><strong>Ambient carol-singing</strong> is what most people picture first: singers performing well-loved carols as guests arrive, mingle, and find their seats. This suits drinks receptions and the first half-hour of a dinner. Guests can talk over it, and most of them will not notice the moment the singing starts, only that the room has changed.</p>
-          <p><strong>Formal performance</strong> is the opposite end of the spectrum. Here the choir takes centre stage and the audience listens. This might be a short concert of Christmas music, a sequence of carols and readings, or a handful of more sophisticated choral pieces performed between courses at a dinner. The effect is striking&thinsp;&mdash;&thinsp;live choral music in a beautiful setting is something most people rarely experience, and it tends to stop a room.</p>
+          <p><strong>Formal performance</strong> is the opposite end of the spectrum. Here the choir takes centre stage and the audience listens. This might be a short concert of Christmas music, a sequence of carols and readings, or a handful of more sophisticated choral pieces performed between courses at a dinner. The effect is striking&thinsp;&mdash;&thinsp;live choral music in a beautiful setting stops a room.</p>
           <p><strong>Audience participation</strong> is usually the part people remember. A confident choir can lead a whole room in <em>O Come All Ye Faithful</em> or <em>Hark! The Herald Angels Sing</em>, holding the melody firmly enough that the reluctant singers at the back join in by the second verse. At a corporate event it is the point where colleagues stop standing in departmental clumps.</p>
           <p>Most bookings involve a blend of all three. A typical evening might begin with ambient carols during the drinks reception, move into a few choir-only pieces during dinner, and finish with a rousing singalong. We shape the format around the event, not the other way round.</p>
         </div>
@@ -2097,9 +2118,9 @@
           <h2>How many singers do you need?</h2>
           <p>The right number of voices depends on your venue, your guest count, and the feel you&rsquo;re after. Here&rsquo;s a practical guide:</p>
           <p><strong>A solo singer</strong> suits intimate settings: a private dinner party, a boutique hotel reception, a small drinks gathering. One trained voice in a contained space is personal and elegant without being overpowering, and works well alongside a pianist if the venue has an instrument.</p>
-          <p><strong>A quartet</strong> is our most popular Christmas ensemble, and for good reason. Four voices&thinsp;&mdash;&thinsp;soprano, alto, tenor, and bass&thinsp;&mdash;&thinsp;give you the full richness of four-part harmony. A quartet can comfortably fill a reception room, a restaurant, a livery hall, or a medium-sized church. For most Christmas parties and receptions, this is the sweet spot.</p>
+          <p><strong>A quartet</strong> is our most popular Christmas ensemble. Four voices&thinsp;&mdash;&thinsp;soprano, alto, tenor, and bass&thinsp;&mdash;&thinsp;give you the full richness of four-part harmony. A quartet can comfortably fill a reception room, a restaurant, a livery hall, or a medium-sized church. For most Christmas parties and receptions, this is the sweet spot.</p>
           <p><strong>Eight voices</strong> bring real choral power. This is the ensemble to choose for larger venues, formal carol services, and events where you want the music to make a significant impact. Eight singers can deliver sophisticated repertoire&thinsp;&mdash;&thinsp;double-choir carols, richer harmonies, more complex arrangements&thinsp;&mdash;&thinsp;while still leading congregational singing with authority.</p>
-          <p><strong>Twelve voices</strong> are reserved for the grandest occasions: large-scale corporate carol services, cathedral events, black-tie galas. The sound is thrilling. If you want your guests to feel they&rsquo;ve walked into something rare, this is the way to do it.</p>
+          <p><strong>Twelve voices</strong> are reserved for the grandest occasions: large-scale corporate carol services, cathedral events, black-tie galas. The sound is thrilling.</p>
           <p>Not sure which size is right? <a href="../contact.html">Tell us about your event</a> and we&rsquo;ll recommend the best option for your venue and occasion. We&rsquo;d always rather suggest the right ensemble than sell you something larger than you need.</p>
         </div>
       </section>
@@ -2108,9 +2129,9 @@
         <div class="prose">
           <h2>What a Christmas choir sings</h2>
           <p>The repertoire for a Christmas event typically draws from three pools, and a well-planned programme weaves between them.</p>
-          <p><strong>The well-known carols</strong> are the backbone of any Christmas booking. <em>O Come All Ye Faithful</em>, <em>Silent Night</em>, <em>Hark! The Herald Angels Sing</em>, <em>Away in a Manger</em>, <em>O Holy Night</em>, <em>The First Nowell</em>&thinsp;&mdash;&thinsp;these are the pieces your guests know and love. When the choir performs them, they carry the melody with confidence so that everyone in the room feels invited to sing along. A good choir adds descants and harmonies that lift these familiar tunes into something spine-tingling. For a deeper look at the most-loved carols and their histories, see our <a href="christmas-carols-guide.html">guide to Christmas carols</a>.</p>
+          <p><strong>The well-known carols</strong> are the backbone of any Christmas booking. <em>O Come All Ye Faithful</em>, <em>Silent Night</em>, <em>Hark! The Herald Angels Sing</em>, <em>Away in a Manger</em>, <em>O Holy Night</em>, <em>The First Nowell</em>&thinsp;&mdash;&thinsp;these are the pieces your guests know and love. When the choir performs them, they carry the melody with confidence so that everyone in the room feels invited to sing along. A good choir brings descants and richer harmonies to these familiar tunes. For a deeper look at the most-loved carols and their histories, see our <a href="christmas-carols-guide.html">guide to Christmas carols</a>.</p>
           <p><strong>Close-harmony and popular arrangements</strong> bring variety and charm. Think <em>White Christmas</em>, <em>Have Yourself a Merry Little Christmas</em>, or <em>Winter Wonderland</em> arranged for four voices in tight, jazz-inflected harmony. These work particularly well during dinner or a drinks reception, where the mood is relaxed and convivial.</p>
-          <p><strong>Choir-only pieces</strong> are what the ensemble is for. These might include settings from the great choral tradition&thinsp;&mdash;&thinsp;<em>In the Bleak Midwinter</em> in the Darke setting, Rutter&rsquo;s <em>What Sweeter Music</em>, Lauridsen&rsquo;s <em>O Magnum Mysterium</em>, or a haunting <em>Coventry Carol</em>. These are the moments where the room goes quiet. A larger ensemble opens up double-choir writing and the thicker textures that four voices cannot cover.</p>
+          <p><strong>Choir-only pieces</strong> are what the ensemble is for. These might include settings from the great choral tradition&thinsp;&mdash;&thinsp;<em>In the Bleak Midwinter</em> in the Darke setting, Rutter&rsquo;s <em>What Sweeter Music</em>, Lauridsen&rsquo;s <em>O Magnum Mysterium</em>, or a haunting <em>Coventry Carol</em>. A larger ensemble opens up double-choir writing and the thicker textures that four voices cannot cover.</p>
           <p>We can also learn specific requests. If there&rsquo;s a particular carol or song that matters to you&thinsp;&mdash;&thinsp;perhaps something connected to your organisation, or a favourite piece your CEO insists on&thinsp;&mdash;&thinsp;we&rsquo;ll make it happen. Our singers are experienced sight-readers and can prepare new material at short notice when needed.</p>
         </div>
       </section>
@@ -2216,7 +2237,7 @@
         <a href="https://wa.me/447356042468" target="_blank" rel="noopener" data-whatsapp>WhatsApp</a>
       </p>
       <p class="text-xs text-mid">
-        Areas we serve: <a href="/areas/london.html">London</a> &middot; <a href="/areas/birmingham.html">Birmingham</a> &middot; <a href="/areas/manchester.html">Manchester</a> &middot; <a href="/areas/liverpool.html">Liverpool</a> &middot; <a href="/areas/oxford.html">Oxford</a> &middot; <a href="/areas/cambridge.html">Cambridge</a> &middot; <a href="/areas/reading.html">Reading</a> &middot; <a href="/areas/slough-maidenhead.html">Slough &amp; Maidenhead</a> &middot; <a href="/areas/guildford.html">Guildford</a> &middot; <a href="/areas/brighton.html">Brighton</a> &middot; <a href="/areas/chester.html">Chester</a> &middot; <a href="/areas/st-albans.html">St Albans</a> &middot; <a href="/areas/canterbury.html">Canterbury</a> &middot; <a href="/areas/windsor.html">Windsor</a> &middot; <a href="/areas/winchester.html">Winchester</a> &middot; <a href="/areas/salisbury.html">Salisbury</a> &middot; <a href="/areas/bath.html">Bath</a> &middot; <a href="/areas/chelmsford.html">Chelmsford</a> &middot; <a href="/areas/rochester.html">Rochester</a>
+        Areas we serve: <a href="/areas/london.html">London</a> &middot; <a href="/areas/birmingham.html">Birmingham</a> &middot; <a href="/areas/manchester.html">Manchester</a> &middot; <a href="/areas/liverpool.html">Liverpool</a> &middot; <a href="/areas/oxford.html">Oxford</a> &middot; <a href="/areas/cambridge.html">Cambridge</a> &middot; <a href="/areas/reading.html">Reading</a> &middot; <a href="/areas/slough-maidenhead.html">Slough &amp; Maidenhead</a> &middot; <a href="/areas/guildford.html">Guildford</a> &middot; <a href="/areas/brighton.html">Brighton</a> &middot; <a href="/areas/chester.html">Chester</a> &middot; <a href="/areas/st-albans.html">St Albans</a> &middot; <a href="/areas/canterbury.html">Canterbury</a> &middot; <a href="/areas/windsor.html">Windsor</a> &middot; <a href="/areas/winchester.html">Winchester</a> &middot; <a href="/areas/salisbury.html">Salisbury</a> &middot; <a href="/areas/bath.html">Bath</a> &middot; <a href="/areas/chelmsford.html">Chelmsford</a> &middot; <a href="/areas/rochester.html">Rochester</a> &middot; <a href="/areas/">All areas</a>
       </p>
       <p class="text-xs text-mid">
         Christmas: <a href="/christmas.html">Carol services</a> &middot; <a href="/carol-singers.html">Hire carol singers</a>

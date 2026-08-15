@@ -1196,7 +1196,7 @@
        ═══════════════════════════════════ */
     .hero {
       display: flex;
-      align-items: center;
+      align-items: start;
       gap: var(--space-3xl);
     }
     
@@ -1208,6 +1208,8 @@
     .hero-video {
       flex: 3;
       min-width: 0;
+      position: sticky;
+      top: var(--space-2xl);
     }
     
     /* ── Responsive Video Embed ── */
@@ -1269,6 +1271,7 @@
       .hero-video {
         flex: none;
         width: 100%;
+        position: static;
       }
     }
     
@@ -1632,6 +1635,24 @@
     
     .pull-quote--marquee figcaption {
       margin-top: var(--space-lg);
+    }
+    
+    .services-hero {
+      display: grid;
+      gap: var(--space-2xl);
+      align-items: start;
+    }
+    
+    @media (min-width: 52rem) {
+      .services-hero {
+        grid-template-columns: 1fr 1.4fr;
+      }
+    }
+    
+    .services-hero .pull-quote--marquee {
+      margin-block: 0;
+      position: sticky;
+      top: var(--space-2xl);
     }
     
     /* ═══════════════════════════════════
@@ -2086,7 +2107,7 @@
         <div class="prose">
           <h2>What to look for</h2>
           <p>The first thing to look for is qualification. Funeral singing is real work: sight-reading hymns and anthems, holding a tune above an unfamiliar congregation, blending in four-part harmony with three colleagues, often in a difficult acoustic. The singers you want will be conservatoire-trained or cathedral-trained, with regular professional engagements outside funeral work. Ask. A good provider will tell you where their singers studied and what else they sing.</p>
-          <p>The second thing &mdash; less obvious, more important &mdash; is whether the musicians actually sing together as an ensemble. There is a real difference between a quartet who rehearse together every week and a quartet assembled from four diaries on a Tuesday for a Friday funeral. Both are technically a quartet. Only one of them sounds like one. Ensemble cohesion is what makes a four-voice group fill a parish church; without it the sound is competent but thin.</p>
+          <p>The second thing &mdash; less obvious, more important &mdash; is whether the musicians actually sing together as an ensemble. There is a real difference between a quartet who rehearse together every week and a quartet assembled from four diaries on a Tuesday for a Friday funeral. Both are technically a quartet, but only the first sounds like one. Ensemble cohesion is what makes a four-voice group fill a parish church; without it the sound is competent but thin.</p>
           <p>Look at repertoire next. The standard funeral hymns are the floor, not the ceiling. The singers you want will be comfortable across the range &mdash; Anglican hymnody, Catholic Mass settings, the classical solo repertoire (Schubert, Faur&eacute;, Franck), and secular pieces a family might request: a Beatles song, a folk tune, something the person sang at home. If a provider has only the popular hymns, they cannot meet the request when it comes.</p>
           <p>Then professionalism, which at a funeral means specific things. Singers who arrive 45 to 60 minutes early and check in with the funeral director. Singers who know to stand at the back, not the front, unless asked otherwise. Singers who do not chat in the porch as mourners arrive. Singers who, if a family member is overcome and cannot read, can step forward and read the lesson without making a thing of it. This last rarely comes up but it is worth knowing the people in the choir stalls could handle it if it did.</p>
           <p>And discretion. Plain dark dress is the default. No social-media posting from the service. No introducing themselves to the family unless invited to. The job is to support what is happening in the room, not to be visible in it.</p>
@@ -2100,7 +2121,7 @@
           <p>The right size depends on the venue and on what you want the music to do. The four common configurations:</p>
 
           <h3>Solo singer</h3>
-          <p>A single trained voice singing one or two pieces &mdash; Pie Jesu, Ave Maria, Panis Angelicus, or a hymn the family wants sung rather than congregational. At a small service, particularly in a chapel of rest or a quiet crematorium slot, a soloist is often the most powerful option of all. Nothing competes with it. The room goes still in a way a larger ensemble cannot quite produce.</p>
+          <p>A single trained voice singing one or two pieces &mdash; Pie Jesu, Ave Maria, Panis Angelicus, or a hymn the family wants sung rather than congregational. At a small service, particularly in a chapel of rest or a quiet crematorium slot, a soloist often fills the room more effectively than a larger ensemble, because a single voice leaves silence around it for the congregation to sit in.</p>
 
           <h3>Small Choir (4)</h3>
           <p>One voice on each of four parts &mdash; soprano, alto, tenor, bass. A quartet is the most useful configuration for almost every London funeral. It is large enough to lead the congregation in hymns and to sing four-part anthems with proper harmonic colour, and small enough to fit a crematorium chapel without crowding the family or to sit in a smaller parish church without dominating it. If you are unsure what to book, a quartet is almost always the answer.</p>
@@ -2111,7 +2132,7 @@
           <h3>Full choir</h3>
           <p>Eight to twelve singers (or more). Reserved for memorial services with substantial congregations, civic funerals, and services in cathedrals or abbeys &mdash; Westminster Abbey, Southwark Cathedral, the larger Wren churches in the City. A full choir is rarely the right answer at a crematorium; the rooms at Honor Oak, Golders Green, Mortlake, and the rest are not built to hold the sound of twelve voices, and the family ends up sitting closer to the choir than to the coffin.</p>
 
-          <p>One useful test if you are unsure. Visit the venue, or ask the funeral director how many it seats. Under sixty seats, lean toward soloist or quartet. Sixty to two hundred, quartet is almost always right. Two hundred to four hundred and a parish-church acoustic, sextet. Larger than that, or a service with public attendance, full choir. The sound of an under-sized ensemble in a large room is thin; the sound of an over-sized ensemble in a small room is closer to overwhelming. Both are uncomfortable in different ways.</p>
+          <p>One useful test if you are unsure. Visit the venue, or ask the funeral director how many it seats. Under sixty seats, lean toward soloist or quartet. Sixty to two hundred, quartet is almost always right. Two hundred to four hundred and a parish-church acoustic, sextet. Larger than that, or a service with public attendance, full choir. The sound of an under-sized ensemble in a large room is thin; the sound of an over-sized ensemble in a small room is closer to overwhelming.</p>
         </div>
       </section>
 
@@ -2157,7 +2178,7 @@
             <li>Can you accommodate a short-notice booking &mdash; less than seven days?</li>
             <li>Will the singers be in plain dark dress, in robes, or something else? (And does that match the venue?)</li>
           </ul>
-          <p>Any reputable provider will have a clear answer to all six. If a question gets a vague answer, push on it. A funeral is not the day to find out the replacement plan was &ldquo;hope nothing happens.&rdquo;</p>
+          <p>Any reputable provider will have a clear answer to all six. If a question gets a vague answer, push on it &mdash; a funeral is not the day to discover the replacement plan was &ldquo;hope nothing happens.&rdquo;</p>
         </div>
       </section>
 
@@ -2228,7 +2249,7 @@
         <a href="https://wa.me/447356042468" target="_blank" rel="noopener" data-whatsapp>WhatsApp</a>
       </p>
       <p class="text-xs text-mid">
-        Areas we serve: <a href="/areas/london.html">London</a> &middot; <a href="/areas/birmingham.html">Birmingham</a> &middot; <a href="/areas/manchester.html">Manchester</a> &middot; <a href="/areas/liverpool.html">Liverpool</a> &middot; <a href="/areas/oxford.html">Oxford</a> &middot; <a href="/areas/cambridge.html">Cambridge</a> &middot; <a href="/areas/reading.html">Reading</a> &middot; <a href="/areas/slough-maidenhead.html">Slough &amp; Maidenhead</a> &middot; <a href="/areas/guildford.html">Guildford</a> &middot; <a href="/areas/brighton.html">Brighton</a> &middot; <a href="/areas/chester.html">Chester</a> &middot; <a href="/areas/st-albans.html">St Albans</a> &middot; <a href="/areas/canterbury.html">Canterbury</a> &middot; <a href="/areas/windsor.html">Windsor</a> &middot; <a href="/areas/winchester.html">Winchester</a> &middot; <a href="/areas/salisbury.html">Salisbury</a> &middot; <a href="/areas/bath.html">Bath</a> &middot; <a href="/areas/chelmsford.html">Chelmsford</a> &middot; <a href="/areas/rochester.html">Rochester</a>
+        Areas we serve: <a href="/areas/london.html">London</a> &middot; <a href="/areas/birmingham.html">Birmingham</a> &middot; <a href="/areas/manchester.html">Manchester</a> &middot; <a href="/areas/liverpool.html">Liverpool</a> &middot; <a href="/areas/oxford.html">Oxford</a> &middot; <a href="/areas/cambridge.html">Cambridge</a> &middot; <a href="/areas/reading.html">Reading</a> &middot; <a href="/areas/slough-maidenhead.html">Slough &amp; Maidenhead</a> &middot; <a href="/areas/guildford.html">Guildford</a> &middot; <a href="/areas/brighton.html">Brighton</a> &middot; <a href="/areas/chester.html">Chester</a> &middot; <a href="/areas/st-albans.html">St Albans</a> &middot; <a href="/areas/canterbury.html">Canterbury</a> &middot; <a href="/areas/windsor.html">Windsor</a> &middot; <a href="/areas/winchester.html">Winchester</a> &middot; <a href="/areas/salisbury.html">Salisbury</a> &middot; <a href="/areas/bath.html">Bath</a> &middot; <a href="/areas/chelmsford.html">Chelmsford</a> &middot; <a href="/areas/rochester.html">Rochester</a> &middot; <a href="/areas/">All areas</a>
       </p>
       <p class="text-xs text-mid">
         Christmas: <a href="/christmas.html">Carol services</a> &middot; <a href="/carol-singers.html">Hire carol singers</a>

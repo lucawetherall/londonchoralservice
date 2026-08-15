@@ -1194,7 +1194,7 @@
        ═══════════════════════════════════ */
     .hero {
       display: flex;
-      align-items: center;
+      align-items: start;
       gap: var(--space-3xl);
     }
     
@@ -1206,6 +1206,8 @@
     .hero-video {
       flex: 3;
       min-width: 0;
+      position: sticky;
+      top: var(--space-2xl);
     }
     
     /* ── Responsive Video Embed ── */
@@ -1267,6 +1269,7 @@
       .hero-video {
         flex: none;
         width: 100%;
+        position: static;
       }
     }
     
@@ -1630,6 +1633,24 @@
     
     .pull-quote--marquee figcaption {
       margin-top: var(--space-lg);
+    }
+    
+    .services-hero {
+      display: grid;
+      gap: var(--space-2xl);
+      align-items: start;
+    }
+    
+    @media (min-width: 52rem) {
+      .services-hero {
+        grid-template-columns: 1fr 1.4fr;
+      }
+    }
+    
+    .services-hero .pull-quote--marquee {
+      margin-block: 0;
+      position: sticky;
+      top: var(--space-2xl);
     }
     
     /* ═══════════════════════════════════
@@ -2098,23 +2119,25 @@
           </ol>
         </nav>
 
-        <figure class="pull-quote pull-quote--marquee">
-          <blockquote><p>&ldquo;The moment they started singing, the whole room just fell silent.&rdquo;</p></blockquote>
-          <figcaption>&mdash;&ensp;Margaret, Dulwich&ensp;&middot;&ensp;Funeral</figcaption>
-        </figure>
+        <div class="services-hero">
+          <figure class="pull-quote pull-quote--marquee">
+            <blockquote><p>&ldquo;The moment they started singing, the whole room just fell silent.&rdquo;</p></blockquote>
+            <figcaption>&mdash;&ensp;Margaret, Dulwich&ensp;&middot;&ensp;Funeral</figcaption>
+          </figure>
 
-        <hr class="rule">
+          <div>
+            <h1>Music for funerals, weddings, and ceremonies</h1>
+            <p class="guide-meta">Last updated: May 2026</p>
+            <p class="lede">Trained singers and instrumentalists for funerals, weddings, memorials, and corporate occasions. One voice or twelve, with organ, piano, harp, or strings to match.</p>
 
-        <h1>Music for funerals, weddings, and ceremonies</h1>
-        <p class="guide-meta">Last updated: May 2026</p>
-        <p class="lede">From the most solemn farewells to the most joyful celebrations, we provide live music that rises to the occasion.</p>
+            <p><a href="contact.html" class="btn-link">Tell us about your occasion</a></p>
+            <p class="text-sm text-mid">Or call us on <a href="tel:+447356042468">07356 042468</a> to talk through options.</p>
 
-        <p><a href="contact.html" class="btn-link">Tell us about your occasion</a></p>
-        <p class="text-sm text-mid">Or call us on <a href="tel:+447356042468">07356 042468</a> to talk through options.</p>
-
-        <p class="hero-trust">
-          <span>Over 150 auditioned singers and instrumentalists from Britain&rsquo;s leading conservatoires.</span>
-        </p>
+            <p class="hero-trust">
+              <span>Over 150 auditioned singers and instrumentalists from Britain&rsquo;s leading conservatoires.</span>
+            </p>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -2132,14 +2155,14 @@
           <li>
             <h3>Funerals</h3>
             <div>
-              <p>Our singers lead congregational hymns with warmth and authority, and perform solo and choral pieces between them. We perform in churches, crematoriums, and chapels across the UK. Most families reach us two to five days before the service.</p>
+              <p>Our singers carry the congregation through the hymns and perform solo and choral pieces between them. We perform in churches, crematoriums, and chapels across the UK. Most families reach us two to five days before the service.</p>
               <a href="funerals.html" class="occasion-cta">Funeral music &rarr;</a>
             </div>
           </li>
           <li>
             <h3>Weddings</h3>
             <div>
-              <p>Singers and instrumentalists for the processional, hymns, the register signing, and the recessional. We can carry on through the drinks reception and the wedding breakfast if you want music running across the whole day. Bespoke arrangements available on request.</p>
+              <p>Singers and instrumentalists for the processional, hymns, the register signing, and the recessional. We can carry on through the drinks reception and the wedding breakfast if you want music running across the whole day. We arrange any piece you want for your chosen ensemble.</p>
               <a href="weddings.html" class="occasion-cta">Wedding music &rarr;</a>
             </div>
           </li>
@@ -2184,14 +2207,14 @@
             <article class="ensemble-card">
               <h3>Soloist</h3>
               <span class="voices">One voice</span>
-              <p>A single, exceptional voice for intimate settings and moments that call for simplicity and purity.</p>
+              <p>One trained singer, suited to smaller chapels and crematoriums where the voice sits close to the congregation.</p>
             </article>
           </li>
           <li>
             <article class="ensemble-card">
               <h3>Small Choir</h3>
               <span class="voices">4 singers</span>
-              <p>Four-part harmony that fills a room with warmth and depth without overwhelming the space. Mid-sized venues, 50&ndash;200 people.</p>
+              <p>Soprano, alto, tenor, and bass in four-part harmony. Fills a church seating 50 to 200 without overpowering the room.</p>
             </article>
           </li>
           <li>
@@ -2205,25 +2228,25 @@
             <article class="ensemble-card">
               <h3>Sextet</h3>
               <span class="voices">6 singers</span>
-              <p>Six voices give you the warmth of a choir at a price closer to a quartet. Carries beautifully in larger churches.</p>
+              <p>Six voices produce a bigger sound than a quartet at a price well below a full choir. Suits mid-to-large churches.</p>
             </article>
           </li>
           <li>
             <article class="ensemble-card">
               <h3>Full Choir</h3>
               <span class="voices">8 singers</span>
-              <p>A richer, more resonant sound for larger venues and occasions that need greater presence. Powerful without dominating.</p>
+              <p>Eight voices carry to the back of a large church or cathedral and split into eight-part harmony for Stanford or Parry.</p>
             </article>
           </li>
           <li>
             <article class="ensemble-card">
               <h3>Chorus</h3>
               <span class="voices">12 singers</span>
-              <p>The full choral experience: a powerful ensemble that can fill a cathedral and create moments people never forget.</p>
+              <p>Twelve voices fill a cathedral and handle complex works that smaller groups cannot attempt, from Faur&eacute; to large-scale anthems.</p>
             </article>
           </li>
         </ul>
-        <p>Pianists, organists, harpists, and string quartets perform alongside our singers or on their own. We tailor the instrumentation to your venue, your repertoire, and the character of the occasion.</p>
+        <p>Pianists, organists, harpists, and string quartets perform alongside our singers or on their own. We match the instrumentation to your venue, your repertoire, and whether the music is sacred, classical, or contemporary.</p>
         <p><a href="pricing.html">View pricing &rarr;</a> &ensp;|&ensp; <a href="listen.html">Listen to our musicians &rarr;</a></p>
       </div>
     </section>
@@ -2278,7 +2301,7 @@
         <a href="https://wa.me/447356042468" target="_blank" rel="noopener" data-whatsapp>WhatsApp</a>
       </p>
       <p class="text-xs text-mid">
-        Areas we serve: <a href="/areas/london.html">London</a> &middot; <a href="/areas/birmingham.html">Birmingham</a> &middot; <a href="/areas/manchester.html">Manchester</a> &middot; <a href="/areas/liverpool.html">Liverpool</a> &middot; <a href="/areas/oxford.html">Oxford</a> &middot; <a href="/areas/cambridge.html">Cambridge</a> &middot; <a href="/areas/reading.html">Reading</a> &middot; <a href="/areas/slough-maidenhead.html">Slough &amp; Maidenhead</a> &middot; <a href="/areas/guildford.html">Guildford</a> &middot; <a href="/areas/brighton.html">Brighton</a> &middot; <a href="/areas/chester.html">Chester</a> &middot; <a href="/areas/st-albans.html">St Albans</a> &middot; <a href="/areas/canterbury.html">Canterbury</a> &middot; <a href="/areas/windsor.html">Windsor</a> &middot; <a href="/areas/winchester.html">Winchester</a> &middot; <a href="/areas/salisbury.html">Salisbury</a> &middot; <a href="/areas/bath.html">Bath</a> &middot; <a href="/areas/chelmsford.html">Chelmsford</a> &middot; <a href="/areas/rochester.html">Rochester</a>
+        Areas we serve: <a href="/areas/london.html">London</a> &middot; <a href="/areas/birmingham.html">Birmingham</a> &middot; <a href="/areas/manchester.html">Manchester</a> &middot; <a href="/areas/liverpool.html">Liverpool</a> &middot; <a href="/areas/oxford.html">Oxford</a> &middot; <a href="/areas/cambridge.html">Cambridge</a> &middot; <a href="/areas/reading.html">Reading</a> &middot; <a href="/areas/slough-maidenhead.html">Slough &amp; Maidenhead</a> &middot; <a href="/areas/guildford.html">Guildford</a> &middot; <a href="/areas/brighton.html">Brighton</a> &middot; <a href="/areas/chester.html">Chester</a> &middot; <a href="/areas/st-albans.html">St Albans</a> &middot; <a href="/areas/canterbury.html">Canterbury</a> &middot; <a href="/areas/windsor.html">Windsor</a> &middot; <a href="/areas/winchester.html">Winchester</a> &middot; <a href="/areas/salisbury.html">Salisbury</a> &middot; <a href="/areas/bath.html">Bath</a> &middot; <a href="/areas/chelmsford.html">Chelmsford</a> &middot; <a href="/areas/rochester.html">Rochester</a> &middot; <a href="/areas/">All areas</a>
       </p>
       <p class="text-xs text-mid">
         Christmas: <a href="/christmas.html">Carol services</a> &middot; <a href="/carol-singers.html">Hire carol singers</a>

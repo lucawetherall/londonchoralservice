@@ -1191,7 +1191,7 @@
        ═══════════════════════════════════ */
     .hero {
       display: flex;
-      align-items: center;
+      align-items: start;
       gap: var(--space-3xl);
     }
     
@@ -1203,6 +1203,8 @@
     .hero-video {
       flex: 3;
       min-width: 0;
+      position: sticky;
+      top: var(--space-2xl);
     }
     
     /* ── Responsive Video Embed ── */
@@ -1264,6 +1266,7 @@
       .hero-video {
         flex: none;
         width: 100%;
+        position: static;
       }
     }
     
@@ -1627,6 +1630,24 @@
     
     .pull-quote--marquee figcaption {
       margin-top: var(--space-lg);
+    }
+    
+    .services-hero {
+      display: grid;
+      gap: var(--space-2xl);
+      align-items: start;
+    }
+    
+    @media (min-width: 52rem) {
+      .services-hero {
+        grid-template-columns: 1fr 1.4fr;
+      }
+    }
+    
+    .services-hero .pull-quote--marquee {
+      margin-block: 0;
+      position: sticky;
+      top: var(--space-2xl);
     }
     
     /* ═══════════════════════════════════
@@ -2086,7 +2107,7 @@
           <p>Not every carol needs the congregation to sing along. Some of the strongest moments in a carol service come when the audience listens instead of singing, and the choir sings something a congregation could not attempt. These are the carols that reward skilled singing and repay close attention.</p>
 
           <h3><i>In the Bleak Midwinter</i></h3>
-          <p>Two settings dominate, and both are superb. Harold Darke&rsquo;s version is the more sophisticated&thinsp;&mdash;&thinsp;rich, shifting harmonies that seem to glow from within, building to a final verse of extraordinary tenderness. Gustav Holst&rsquo;s Cranham setting is more familiar to most congregations, and its stark, folk-like simplicity suits Rossetti&rsquo;s words. Either setting will quieten a room. If your choir can manage the Darke, it will be the highlight of the evening.</p>
+          <p>Two settings dominate, and both are superb. Harold Darke&rsquo;s version is the more sophisticated&thinsp;&mdash;&thinsp;rich, shifting harmonies that build to a final verse of quiet tenderness. Gustav Holst&rsquo;s Cranham setting is more familiar to most congregations, and its stark, folk-like simplicity suits Rossetti&rsquo;s words. Either setting will quieten a room. If your choir can manage the Darke, it will be the highlight of the evening.</p>
 
           <h3><i>O Holy Night</i></h3>
           <p>Dramatic, soaring, and unapologetically operatic. <i>O Holy Night</i> requires a strong soloist&thinsp;&mdash;&thinsp;someone who can handle the wide vocal range and the big climax on &ldquo;O night divine&rdquo; without sounding strained. When it&rsquo;s done well, it is a showstopper. When it&rsquo;s done badly, it&rsquo;s painful. This is emphatically a piece for a professional singer, not a well-meaning volunteer, and it&rsquo;s one of the most requested items at the <a href="corporate-carol-service.html">corporate carol services</a> we perform at.</p>
@@ -2114,13 +2135,13 @@
           <p>A carol service made up entirely of greatest hits can start to feel predictable. One or two less familiar pieces give your programme depth and give your audience something new to take away. These are carols that consistently surprise and delight people who haven&rsquo;t encountered them before.</p>
 
           <h3><i>Coventry Carol</i></h3>
-          <p>Haunting, stark, and unlike anything else you&rsquo;ll hear at a carol service. The <i>Coventry Carol</i> dates from the sixteenth century and tells the story of the Massacre of the Innocents&thinsp;&mdash;&thinsp;a mother&rsquo;s lullaby to her child. It&rsquo;s in a minor key, with bare, open harmonies that sound almost medieval. In a programme full of major-key celebration, it provides a moment of real emotional weight. Audiences find it beautiful and unexpected in equal measure.</p>
+          <p>Haunting and stark. The <i>Coventry Carol</i> dates from the sixteenth century and tells the story of the Massacre of the Innocents&thinsp;&mdash;&thinsp;a mother&rsquo;s lullaby to her child. It&rsquo;s in a minor key, with bare, open harmonies that sound almost medieval. In a programme full of major-key celebration, it provides a moment of real emotional weight.</p>
 
           <h3><i>Adam Lay Ybounden</i></h3>
-          <p>Boris Ord&rsquo;s setting of this fifteenth-century text is barely two minutes long, but it is exquisite. The melody is deceptively simple, and the harmonies shift and shimmer beneath it in ways that reward repeated listening. It is short, and it asks more of a choir than its length suggests. If your choir can sing it well, programme it early in the service as a quiet, arresting opening to a set of choir pieces.</p>
+          <p>Boris Ord&rsquo;s setting of this fifteenth-century text is barely two minutes long, but every phrase counts. The melody is deceptively simple, and the harmonies shift and shimmer beneath it in ways that reward repeated listening. It is short, and it asks more of a choir than its length suggests. If your choir can sing it well, programme it early in the service as a quiet, arresting opening to a set of choir pieces.</p>
 
           <h3><i>A Spotless Rose</i></h3>
-          <p>Herbert Howells wrote some of the finest English choral music of the twentieth century, and <i>A Spotless Rose</i> is among his most luminous creations. The harmonies are rich and warm, the melodic lines interweave with a naturalness that makes the whole thing seem to float, and the quiet ending is as fine as anything in the English choral repertoire. It demands a choir that can sing quietly without losing the line. Put it at the reflective point of the service, well away from anything loud.</p>
+          <p>Herbert Howells wrote some of the finest English choral music of the twentieth century, and <i>A Spotless Rose</i> is among his best known. The harmonies are rich and warm, the melodic lines interweave with a naturalness that makes the whole thing seem to float, and the quiet ending is the hardest passage to bring off. It demands a choir that can sing quietly without losing the line. Put it at the reflective point of the service, well away from anything loud.</p>
 
           <h3><i>Tomorrow Shall Be My Dancing Day</i></h3>
           <p>Fast, and built on a folk-dance rhythm that sets it apart from the more stately items in the repertoire. John Gardner&rsquo;s setting keeps that momentum running through all four parts. Audiences who have not heard it before tend to ask afterwards what it was.</p>
@@ -2213,7 +2234,7 @@
         <a href="https://wa.me/447356042468" target="_blank" rel="noopener" data-whatsapp>WhatsApp</a>
       </p>
       <p class="text-xs text-mid">
-        Areas we serve: <a href="/areas/london.html">London</a> &middot; <a href="/areas/birmingham.html">Birmingham</a> &middot; <a href="/areas/manchester.html">Manchester</a> &middot; <a href="/areas/liverpool.html">Liverpool</a> &middot; <a href="/areas/oxford.html">Oxford</a> &middot; <a href="/areas/cambridge.html">Cambridge</a> &middot; <a href="/areas/reading.html">Reading</a> &middot; <a href="/areas/slough-maidenhead.html">Slough &amp; Maidenhead</a> &middot; <a href="/areas/guildford.html">Guildford</a> &middot; <a href="/areas/brighton.html">Brighton</a> &middot; <a href="/areas/chester.html">Chester</a> &middot; <a href="/areas/st-albans.html">St Albans</a> &middot; <a href="/areas/canterbury.html">Canterbury</a> &middot; <a href="/areas/windsor.html">Windsor</a> &middot; <a href="/areas/winchester.html">Winchester</a> &middot; <a href="/areas/salisbury.html">Salisbury</a> &middot; <a href="/areas/bath.html">Bath</a> &middot; <a href="/areas/chelmsford.html">Chelmsford</a> &middot; <a href="/areas/rochester.html">Rochester</a>
+        Areas we serve: <a href="/areas/london.html">London</a> &middot; <a href="/areas/birmingham.html">Birmingham</a> &middot; <a href="/areas/manchester.html">Manchester</a> &middot; <a href="/areas/liverpool.html">Liverpool</a> &middot; <a href="/areas/oxford.html">Oxford</a> &middot; <a href="/areas/cambridge.html">Cambridge</a> &middot; <a href="/areas/reading.html">Reading</a> &middot; <a href="/areas/slough-maidenhead.html">Slough &amp; Maidenhead</a> &middot; <a href="/areas/guildford.html">Guildford</a> &middot; <a href="/areas/brighton.html">Brighton</a> &middot; <a href="/areas/chester.html">Chester</a> &middot; <a href="/areas/st-albans.html">St Albans</a> &middot; <a href="/areas/canterbury.html">Canterbury</a> &middot; <a href="/areas/windsor.html">Windsor</a> &middot; <a href="/areas/winchester.html">Winchester</a> &middot; <a href="/areas/salisbury.html">Salisbury</a> &middot; <a href="/areas/bath.html">Bath</a> &middot; <a href="/areas/chelmsford.html">Chelmsford</a> &middot; <a href="/areas/rochester.html">Rochester</a> &middot; <a href="/areas/">All areas</a>
       </p>
       <p class="text-xs text-mid">
         Christmas: <a href="/christmas.html">Carol services</a> &middot; <a href="/carol-singers.html">Hire carol singers</a>
