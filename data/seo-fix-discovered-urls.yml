@@ -48,6 +48,12 @@ videos:
     title: "Be Thou My Vision (Slane)"
     upload_date: "TODO"
     duration: "TODO"
+  - page: "listen.html, christmas.html, carol-singers.html"
+    position: 4
+    youtube_id: "mKMjUvCCW3E"
+    title: "Blue Christmas"
+    upload_date: "TODO"  # supplied by the user as a share link (2026-08-15); YouTube is blocked by the egress proxy so nothing could be fetched. No VideoObject was written for this video — the embed ships without schema rather than with a fifth placeholder date.
+    duration: "TODO"
 
 geo_areas:
   westminster: [51.49594, -0.13495]

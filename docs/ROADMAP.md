@@ -73,16 +73,17 @@ grep -c '2026-05-14' sitemap.xml   # ≈0 (only files genuinely last touched tha
 
 ## R3 — Real VideoObject dates/durations + missing sameAs  [P2] [BLOCKED-ON-HUMAN]
 
-**Why:** Four `VideoObject` nodes ship placeholder `"uploadDate": "2025-01-01"` and no `duration` (flagged by inline TODO comments); `LocalBusiness.sameAs` lacks the canonical Google Maps URL and LinkedIn, `Person.sameAs` lacks ORCID. Fake dates in production structured data undercut the credibility of everything else in the graph.
+**Why:** Four `VideoObject` nodes ship placeholder `"uploadDate": "2025-01-01"` and no `duration` (flagged by inline TODO comments); a fifth video (Blue Christmas, `mKMjUvCCW3E`) is embedded on three pages with no `VideoObject` at all, because writing one would have meant inventing a sixth date; `LocalBusiness.sameAs` lacks the canonical Google Maps URL and LinkedIn, `Person.sameAs` lacks ORCID. Fake dates in production structured data undercut the credibility of everything else in the graph.
 
 **Files & anchors:**
 - `grep -n 'uploadDate' listen.html pricing.html` — placeholders
+- `grep -rn 'mKMjUvCCW3E' --include='*.html' .` — the embed sites awaiting a first `VideoObject`
 - `grep -n 'TODO' data/seo-fix-discovered-urls.yml` — the values awaiting human resolution
 - `grep -n 'TODO' index.html about.html` — the sameAs insertion points
 
 **Blocked on:** MANUAL-ACTIONS-REQUIRED.md §1 (GBP canonical URL) and the YAML's video-metadata lookups (YouTube consent gate blocks automated fetch). The human fills `data/seo-fix-discovered-urls.yml`.
 
-**Do (once unblocked):** Copy each resolved value from the YAML into the matching JSON-LD field: `uploadDate` (YYYY-MM-DD) and `duration` (ISO 8601, e.g. `PT3M42S`) for the four videos in listen.html (3) and pricing.html (1); append GBP + LinkedIn URLs to `LocalBusiness.sameAs` in index.html (replacing the share.google short link); ORCID to `Person.sameAs` in about.html. Remove the corresponding TODO comments.
+**Do (once unblocked):** Copy each resolved value from the YAML into the matching JSON-LD field: `uploadDate` (YYYY-MM-DD) and `duration` (ISO 8601, e.g. `PT3M42S`) for the four videos in listen.html (3) and pricing.html (1); write a new `VideoObject` for `mKMjUvCCW3E` on listen.html, christmas.html, and carol-singers.html, following the shape of the existing listen.html nodes; append GBP + LinkedIn URLs to `LocalBusiness.sameAs` in index.html (replacing the share.google short link); ORCID to `Person.sameAs` in about.html. Remove the corresponding TODO comments.
 
 **Verify:** `grep -rn '2025-01-01' --include='*.html' .` → empty; `./build.sh` green; TODO comments gone from touched files.
 
