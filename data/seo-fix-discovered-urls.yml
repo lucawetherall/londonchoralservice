@@ -48,8 +48,17 @@ videos:
     title: "Be Thou My Vision (Slane)"
     upload_date: "TODO"
     duration: "TODO"
-  - page: "listen.html, christmas.html, carol-singers.html"
+  # Added 2026-08-15. Embedded on listen.html, weddings.html, funerals.html,
+  # music-guides/ubi-caritas-wedding.html and music-guides/wedding-choral-repertoire.html.
+  # VideoObject schema is emitted on listen.html and ubi-caritas-wedding.html only.
+  - page: "listen.html"
     position: 4
+    youtube_id: "-GQaQEGhYEs"
+    title: "Ubi Caritas (Ola Gjeilo)"
+    upload_date: "TODO"  # youtube.com is blocked by the agent proxy; resolve via YouTube Data API or manual lookup
+    duration: "TODO"
+  - page: "listen.html, christmas.html, carol-singers.html"
+    position: 5
     youtube_id: "mKMjUvCCW3E"
     title: "Blue Christmas"
     upload_date: "2026-08-14"  # supplied by the user 2026-08-15; YouTube is blocked by the egress proxy, so this was not machine-verified.
