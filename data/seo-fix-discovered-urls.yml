@@ -57,6 +57,12 @@ videos:
     title: "Ubi Caritas (Ola Gjeilo)"
     upload_date: "TODO"  # youtube.com is blocked by the agent proxy; resolve via YouTube Data API or manual lookup
     duration: "TODO"
+  - page: "listen.html, christmas.html, carol-singers.html"
+    position: 5
+    youtube_id: "mKMjUvCCW3E"
+    title: "Blue Christmas"
+    upload_date: "2026-08-14"  # supplied by the user 2026-08-15; YouTube is blocked by the egress proxy, so this was not machine-verified.
+    duration: "PT1M40S"  # 1:40, supplied by the user 2026-08-15
 
 geo_areas:
   westminster: [51.49594, -0.13495]
