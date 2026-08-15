@@ -1191,7 +1191,7 @@
        ═══════════════════════════════════ */
     .hero {
       display: flex;
-      align-items: center;
+      align-items: start;
       gap: var(--space-3xl);
     }
     
@@ -1203,6 +1203,8 @@
     .hero-video {
       flex: 3;
       min-width: 0;
+      position: sticky;
+      top: var(--space-2xl);
     }
     
     /* ── Responsive Video Embed ── */
@@ -1264,6 +1266,7 @@
       .hero-video {
         flex: none;
         width: 100%;
+        position: static;
       }
     }
     
@@ -1627,6 +1630,24 @@
     
     .pull-quote--marquee figcaption {
       margin-top: var(--space-lg);
+    }
+    
+    .services-hero {
+      display: grid;
+      gap: var(--space-2xl);
+      align-items: start;
+    }
+    
+    @media (min-width: 52rem) {
+      .services-hero {
+        grid-template-columns: 1fr 1.4fr;
+      }
+    }
+    
+    .services-hero .pull-quote--marquee {
+      margin-block: 0;
+      position: sticky;
+      top: var(--space-2xl);
     }
     
     /* ═══════════════════════════════════
@@ -2050,16 +2071,16 @@
 
       <section class="section" style="padding-block-start: var(--space-2xl)">
         <div class="prose">
-          <p class="lede">A carol service brings people together in a way no other corporate event quite manages. It isn&rsquo;t a drinks reception where people cluster in familiar groups, or a dinner where conversation is limited to whoever happens to be seated beside you. It is shared, not just attended. When a room full of people sings together, something shifts. For sixty or ninety minutes, the hierarchies and habits of the working week fall away, and you&rsquo;re left with something that feels closer to community.</p>
+          <p class="lede">A carol service brings a room together more effectively than a drinks reception or a dinner. It isn&rsquo;t a drinks reception where people cluster in familiar groups, or a dinner where conversation is limited to whoever happens to be seated beside you. It is shared, not just attended. When a room full of people sings together, something shifts. For sixty or ninety minutes, the hierarchies and habits of the working week fall away, and you&rsquo;re left with something that feels closer to community.</p>
         </div>
       </section>
 
       <section class="section">
         <div class="prose">
           <h2>Why a carol service works for businesses</h2>
-          <p>The office Christmas party has its place, of course. But a carol service does something different. Among <a href="/corporate.html">corporate event music</a> options, it creates an atmosphere of warmth and occasion without the unpredictability that can come with an open bar and a DJ. People leave a carol service feeling uplifted rather than merely entertained.</p>
-          <p>For client-facing firms&thinsp;&mdash;&thinsp;law practices, financial advisors, property companies, professional services of all kinds&thinsp;&mdash;&thinsp;a carol service is an unusually effective piece of hospitality. It says something about your organisation without saying it loudly. The care that goes into the music, the readings, the venue itself: clients notice. They remember it, and they talk about it afterwards. A well-run carol service will be the best invitation some of your guests receive all December.</p>
-          <p>Internally, it works just as well. Large companies with staff spread across multiple floors or offices rarely have occasions where everyone is in the same room doing the same thing. A carol service provides exactly that. New joiners, senior partners, the post-room team&thinsp;&mdash;&thinsp;everyone is on equal footing when <em>O Come, All Ye Faithful</em> starts. That matters more than it might seem.</p>
+          <p>The office Christmas party has its place, of course. But a carol service does something different. Among <a href="/corporate.html">corporate event music</a> options, it creates an atmosphere of warmth and occasion without the unpredictability that can come with an open bar and a DJ. People leave a carol service feeling uplifted.</p>
+          <p>For client-facing firms&thinsp;&mdash;&thinsp;law practices, financial advisors, property companies, professional services of all kinds&thinsp;&mdash;&thinsp;a carol service is an unusually effective piece of hospitality. It says something about your organisation without saying it loudly. The care that goes into the music, the readings, the venue itself: clients notice. They remember it, and they talk about it afterwards.</p>
+          <p>Internally, it works just as well. Large companies with staff spread across multiple floors or offices rarely have occasions where everyone is in the same room doing the same thing. A carol service provides exactly that. New joiners, senior partners, the post-room team&thinsp;&mdash;&thinsp;everyone is on equal footing when <em>O Come, All Ye Faithful</em> starts.</p>
           <p>It&rsquo;s also, frankly, a manageable event to organise. There is no seating plan, no dietary-requirements spreadsheet, and no debate about the playlist. The format is well understood, the running time is predictable, and the whole thing can be handed off to people who know what they&rsquo;re doing.</p>
         </div>
       </section>
@@ -2115,7 +2136,7 @@
           <h2>The music</h2>
           <p>Getting the music right is the single most important decision you&rsquo;ll make. Everything else&thinsp;&mdash;&thinsp;the venue, the readings, the mince pies&thinsp;&mdash;&thinsp;supports the music, not the other way around.</p>
           <p><strong>How many carols?</strong> Six to eight is the sweet spot. Fewer than six and the service feels slight; more than eight and people start to tire, especially if they&rsquo;re standing. Within those six to eight, aim for a mix of rousing, well-known carols that everyone can sing (<em>Hark! The Herald Angels Sing</em>, <em>O Come, All Ye Faithful</em>, <em>Once in Royal David&rsquo;s City</em>) and one or two that are slightly more reflective (<em>Silent Night</em>, <em>In the Bleak Midwinter</em>). Our <a href="christmas-carols-guide.html">guide to Christmas carols</a> covers the most popular choices in detail.</p>
-          <p><strong>The choir&rsquo;s role.</strong> A professional choir does two things at a carol service. First, it leads the congregational singing&thinsp;&mdash;&thinsp;giving confidence to a room full of people who may not have sung together before, holding the tempo, and filling the harmonies so that even tentative singers feel supported. Second, it performs two or three pieces on its own: an unaccompanied anthem, a descant on the final verse of a carol, a piece that lifts the evening into something people weren&rsquo;t quite expecting. These choir-only moments are often what people remember most.</p>
+          <p><strong>The choir&rsquo;s role.</strong> A professional choir does two things at a carol service. First, it leads the congregational singing&thinsp;&mdash;&thinsp;giving confidence to a room full of people who may not have sung together before, holding the tempo, and filling the harmonies so that even tentative singers feel supported. Second, it performs two or three pieces on its own: an unaccompanied anthem, a descant on the final verse of a carol, a piece that lifts the evening into something people weren&rsquo;t quite expecting.</p>
           <p>We provide a <a href="christmas-choir-hire.html">handpicked team of professional singers and instrumentalists</a> for corporate carol services of every size. Whether you need a small chamber choir for an intimate gathering or a larger ensemble for a grand church, we&rsquo;ll match the musicians to the space and the occasion.</p>
           <p><strong>Accompaniment.</strong> Most carol services are accompanied by organ, piano, or both. If you&rsquo;re in a church with a good organ, use it&thinsp;&mdash;&thinsp;there is no substitute for the sound of a full organ on the final verse of <em>O Come, All Ye Faithful</em>. In an office or hotel, a piano or keyboard covers the same ground. Some companies add brass&thinsp;&mdash;&thinsp;a trumpet or a small brass ensemble&thinsp;&mdash;&thinsp;which brings a thrilling brightness to the bigger carols.</p>
         </div>
@@ -2211,7 +2232,7 @@
         <a href="https://wa.me/447356042468" target="_blank" rel="noopener" data-whatsapp>WhatsApp</a>
       </p>
       <p class="text-xs text-mid">
-        Areas we serve: <a href="/areas/london.html">London</a> &middot; <a href="/areas/birmingham.html">Birmingham</a> &middot; <a href="/areas/manchester.html">Manchester</a> &middot; <a href="/areas/liverpool.html">Liverpool</a> &middot; <a href="/areas/oxford.html">Oxford</a> &middot; <a href="/areas/cambridge.html">Cambridge</a> &middot; <a href="/areas/reading.html">Reading</a> &middot; <a href="/areas/slough-maidenhead.html">Slough &amp; Maidenhead</a> &middot; <a href="/areas/guildford.html">Guildford</a> &middot; <a href="/areas/brighton.html">Brighton</a> &middot; <a href="/areas/chester.html">Chester</a> &middot; <a href="/areas/st-albans.html">St Albans</a> &middot; <a href="/areas/canterbury.html">Canterbury</a> &middot; <a href="/areas/windsor.html">Windsor</a> &middot; <a href="/areas/winchester.html">Winchester</a> &middot; <a href="/areas/salisbury.html">Salisbury</a> &middot; <a href="/areas/bath.html">Bath</a> &middot; <a href="/areas/chelmsford.html">Chelmsford</a> &middot; <a href="/areas/rochester.html">Rochester</a>
+        Areas we serve: <a href="/areas/london.html">London</a> &middot; <a href="/areas/birmingham.html">Birmingham</a> &middot; <a href="/areas/manchester.html">Manchester</a> &middot; <a href="/areas/liverpool.html">Liverpool</a> &middot; <a href="/areas/oxford.html">Oxford</a> &middot; <a href="/areas/cambridge.html">Cambridge</a> &middot; <a href="/areas/reading.html">Reading</a> &middot; <a href="/areas/slough-maidenhead.html">Slough &amp; Maidenhead</a> &middot; <a href="/areas/guildford.html">Guildford</a> &middot; <a href="/areas/brighton.html">Brighton</a> &middot; <a href="/areas/chester.html">Chester</a> &middot; <a href="/areas/st-albans.html">St Albans</a> &middot; <a href="/areas/canterbury.html">Canterbury</a> &middot; <a href="/areas/windsor.html">Windsor</a> &middot; <a href="/areas/winchester.html">Winchester</a> &middot; <a href="/areas/salisbury.html">Salisbury</a> &middot; <a href="/areas/bath.html">Bath</a> &middot; <a href="/areas/chelmsford.html">Chelmsford</a> &middot; <a href="/areas/rochester.html">Rochester</a> &middot; <a href="/areas/">All areas</a>
       </p>
       <p class="text-xs text-mid">
         Christmas: <a href="/christmas.html">Carol services</a> &middot; <a href="/carol-singers.html">Hire carol singers</a>

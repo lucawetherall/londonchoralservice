@@ -1196,7 +1196,7 @@
        ═══════════════════════════════════ */
     .hero {
       display: flex;
-      align-items: center;
+      align-items: start;
       gap: var(--space-3xl);
     }
     
@@ -1208,6 +1208,8 @@
     .hero-video {
       flex: 3;
       min-width: 0;
+      position: sticky;
+      top: var(--space-2xl);
     }
     
     /* ── Responsive Video Embed ── */
@@ -1269,6 +1271,7 @@
       .hero-video {
         flex: none;
         width: 100%;
+        position: static;
       }
     }
     
@@ -1634,6 +1637,24 @@
       margin-top: var(--space-lg);
     }
     
+    .services-hero {
+      display: grid;
+      gap: var(--space-2xl);
+      align-items: start;
+    }
+    
+    @media (min-width: 52rem) {
+      .services-hero {
+        grid-template-columns: 1fr 1.4fr;
+      }
+    }
+    
+    .services-hero .pull-quote--marquee {
+      margin-block: 0;
+      position: sticky;
+      top: var(--space-2xl);
+    }
+    
     /* ═══════════════════════════════════
        Occasion List (services.html hub)
        ═══════════════════════════════════ */
@@ -1970,7 +1991,8 @@
         "name": "Ubi Caritas (Ola Gjeilo) \u2014 Full Choir",
         "description": "Live performance by The London Choral Service.",
         "thumbnailUrl": "https://img.youtube.com/vi/-GQaQEGhYEs/maxresdefault.jpg",
-        "uploadDate": "2025-01-01",
+        "uploadDate": "2026-08-14",
+        "duration": "PT3M28S",
         "contentUrl": "https://www.youtube.com/watch?v=-GQaQEGhYEs",
         "embedUrl": "https://www.youtube-nocookie.com/embed/-GQaQEGhYEs",
         "publisher": {
@@ -2084,6 +2106,16 @@
       <section class="section" style="padding-block-start: var(--space-2xl)">
         <div class="prose">
           <p class="lede">Most wedding music is about love by association. Ubi Caritas is about love outright: the Latin says that where charity and love are, God is there. Ola Gjeilo&rsquo;s setting is the modern choral piece couples ask us for most, and the first one we suggest when a couple has run out of ideas for the register signing.</p>
+          <div class="video-embed" style="margin-block-start: var(--space-lg)">
+            <button class="video-thumb" aria-label="Play Ubi Caritas" data-video="-GQaQEGhYEs">
+              <img src="https://img.youtube.com/vi/-GQaQEGhYEs/maxresdefault.jpg" alt="Ubi Caritas by Ola Gjeilo &mdash; The London Choral Service" loading="lazy" width="1280" height="720">
+              <svg class="play-btn" viewBox="0 0 68 48" aria-hidden="true">
+                <path d="M66.52 7.74c-.78-2.93-2.49-5.41-5.42-6.19C55.79.13 34 0 34 0S12.21.13 6.9 1.55c-2.93.78-4.63 3.26-5.42 6.19C.06 13.05 0 24 0 24s.06 10.95 1.48 16.26c.78 2.93 2.49 5.41 5.42 6.19C12.21 47.87 34 48 34 48s21.79-.13 27.1-1.55c2.93-.78 4.63-3.26 5.42-6.19C67.94 34.95 68 24 68 24s-.06-10.95-1.48-16.26z" fill="rgba(0,0,0,.7)"/>
+                <path d="M45 24 27 14v20z" fill="#fff"/>
+              </svg>
+            </button>
+          </div>
+          <p class="text-sm text-mid">Our choir singing Ubi Caritas by Ola Gjeilo. <a href="../listen.html">Hear more recordings</a>.</p>
         </div>
       </section>
 
@@ -2121,23 +2153,6 @@
           <p>Ubi Caritas is unaccompanied. That makes it one of the few pieces of this quality you can have in a building with no organ, a bad organ, or an organ nobody has tuned since 2009 &mdash; which covers a fair number of the country houses, barns, and school chapels where people now get married.</p>
           <p>Four singers can sing it, one voice to a part, and it works. Five or more makes a real difference: the music divides the voices at its fullest points, and the extra singers cover those divisions instead of leaving them folded back into the line. With eight in a resonant church you get the full spread of the chords. See <a href="../pricing.html">our pricing</a> for what each size of ensemble costs.</p>
           <p>Acoustics matter more here than with a hymn. Unaccompanied voices need something to sing into: a stone church, or a hall with a high ceiling. Outdoors the sound has nothing to reflect off and the piece thins out, so we would add singers or suggest something else for an open-air ceremony.</p>
-        </div>
-      </section>
-
-      <section class="section">
-        <div class="prose">
-          <h2>What it sounds like with our choir</h2>
-          <p>Below is our choir singing it. Listen for the point about two-thirds through where the texture opens up: that is the moment couples mention to us afterwards, mostly as the bit where a parent started crying.</p>
-          <div class="video-embed">
-            <button class="video-thumb" aria-label="Play Ubi Caritas" data-video="-GQaQEGhYEs">
-              <img src="https://img.youtube.com/vi/-GQaQEGhYEs/maxresdefault.jpg" alt="Ubi Caritas by Ola Gjeilo &mdash; The London Choral Service" loading="lazy" width="1280" height="720">
-              <svg class="play-btn" viewBox="0 0 68 48" aria-hidden="true">
-                <path d="M66.52 7.74c-.78-2.93-2.49-5.41-5.42-6.19C55.79.13 34 0 34 0S12.21.13 6.9 1.55c-2.93.78-4.63 3.26-5.42 6.19C.06 13.05 0 24 0 24s.06 10.95 1.48 16.26c.78 2.93 2.49 5.41 5.42 6.19C12.21 47.87 34 48 34 48s21.79-.13 27.1-1.55c2.93-.78 4.63-3.26 5.42-6.19C67.94 34.95 68 24 68 24s-.06-10.95-1.48-16.26z" fill="rgba(0,0,0,.7)"/>
-                <path d="M45 24 27 14v20z" fill="#fff"/>
-              </svg>
-            </button>
-          </div>
-          <p class="text-sm text-mid">Our choir singing Ubi Caritas by Ola Gjeilo. <a href="../listen.html">Hear more recordings</a>.</p>
         </div>
       </section>
 
@@ -2231,7 +2246,7 @@
         <a href="https://wa.me/447356042468" target="_blank" rel="noopener" data-whatsapp>WhatsApp</a>
       </p>
       <p class="text-xs text-mid">
-        Areas we serve: <a href="/areas/london.html">London</a> &middot; <a href="/areas/birmingham.html">Birmingham</a> &middot; <a href="/areas/manchester.html">Manchester</a> &middot; <a href="/areas/liverpool.html">Liverpool</a> &middot; <a href="/areas/oxford.html">Oxford</a> &middot; <a href="/areas/cambridge.html">Cambridge</a> &middot; <a href="/areas/reading.html">Reading</a> &middot; <a href="/areas/slough-maidenhead.html">Slough &amp; Maidenhead</a> &middot; <a href="/areas/guildford.html">Guildford</a> &middot; <a href="/areas/brighton.html">Brighton</a> &middot; <a href="/areas/chester.html">Chester</a> &middot; <a href="/areas/st-albans.html">St Albans</a> &middot; <a href="/areas/canterbury.html">Canterbury</a> &middot; <a href="/areas/windsor.html">Windsor</a> &middot; <a href="/areas/winchester.html">Winchester</a> &middot; <a href="/areas/salisbury.html">Salisbury</a> &middot; <a href="/areas/bath.html">Bath</a> &middot; <a href="/areas/chelmsford.html">Chelmsford</a> &middot; <a href="/areas/rochester.html">Rochester</a>
+        Areas we serve: <a href="/areas/london.html">London</a> &middot; <a href="/areas/birmingham.html">Birmingham</a> &middot; <a href="/areas/manchester.html">Manchester</a> &middot; <a href="/areas/liverpool.html">Liverpool</a> &middot; <a href="/areas/oxford.html">Oxford</a> &middot; <a href="/areas/cambridge.html">Cambridge</a> &middot; <a href="/areas/reading.html">Reading</a> &middot; <a href="/areas/slough-maidenhead.html">Slough &amp; Maidenhead</a> &middot; <a href="/areas/guildford.html">Guildford</a> &middot; <a href="/areas/brighton.html">Brighton</a> &middot; <a href="/areas/chester.html">Chester</a> &middot; <a href="/areas/st-albans.html">St Albans</a> &middot; <a href="/areas/canterbury.html">Canterbury</a> &middot; <a href="/areas/windsor.html">Windsor</a> &middot; <a href="/areas/winchester.html">Winchester</a> &middot; <a href="/areas/salisbury.html">Salisbury</a> &middot; <a href="/areas/bath.html">Bath</a> &middot; <a href="/areas/chelmsford.html">Chelmsford</a> &middot; <a href="/areas/rochester.html">Rochester</a> &middot; <a href="/areas/">All areas</a>
       </p>
       <p class="text-xs text-mid">
         Christmas: <a href="/christmas.html">Carol services</a> &middot; <a href="/carol-singers.html">Hire carol singers</a>

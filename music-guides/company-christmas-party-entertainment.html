@@ -1191,7 +1191,7 @@
        ═══════════════════════════════════ */
     .hero {
       display: flex;
-      align-items: center;
+      align-items: start;
       gap: var(--space-3xl);
     }
     
@@ -1203,6 +1203,8 @@
     .hero-video {
       flex: 3;
       min-width: 0;
+      position: sticky;
+      top: var(--space-2xl);
     }
     
     /* ── Responsive Video Embed ── */
@@ -1264,6 +1266,7 @@
       .hero-video {
         flex: none;
         width: 100%;
+        position: static;
       }
     }
     
@@ -1627,6 +1630,24 @@
     
     .pull-quote--marquee figcaption {
       margin-top: var(--space-lg);
+    }
+    
+    .services-hero {
+      display: grid;
+      gap: var(--space-2xl);
+      align-items: start;
+    }
+    
+    @media (min-width: 52rem) {
+      .services-hero {
+        grid-template-columns: 1fr 1.4fr;
+      }
+    }
+    
+    .services-hero .pull-quote--marquee {
+      margin-block: 0;
+      position: sticky;
+      top: var(--space-2xl);
     }
     
     /* ═══════════════════════════════════
@@ -2058,10 +2079,10 @@
         <div class="prose">
           <h2>Why live music works</h2>
           <p>A playlist fills a silence. Singers standing in the room change how people behave in it, which is a different job.</p>
-          <p>The effect is partly acoustic&thinsp;&mdash;&thinsp;trained voices resonate in a space in a way that speakers never quite manage&thinsp;&mdash;&thinsp;but it&rsquo;s also something less tangible. When people hear live singing, they stop and pay attention. Conversations don&rsquo;t cease entirely (nor should they at a party), but the quality of the room changes. The room becomes the kind of place where people stay later than they planned to.</p>
-          <p>Live choral music also creates a <strong>shared experience</strong>. At most Christmas parties, people drift into their usual groups and talk to the colleagues they already know. Live music gives everyone in the room something in common&thinsp;&mdash;&thinsp;something to react to, to comment on, and eventually to join in with. When an entire room sings <em>Hark! The Herald Angels Sing</em> together, the barriers between departments, between junior staff and senior partners, come down for a few minutes. That&rsquo;s worth more than any team-building exercise.</p>
+          <p>The effect is partly acoustic&thinsp;&mdash;&thinsp;trained voices resonate in a space in a way that speakers never quite manage. When people hear live singing, they stop and pay attention. Conversations don&rsquo;t cease entirely (nor should they at a party), but the quality of the room changes. The room becomes the kind of place where people stay later than they planned to.</p>
+          <p>Live choral music also creates a <strong>shared experience</strong>. At most Christmas parties, people drift into their usual groups and talk to the colleagues they already know. Live music gives everyone in the room something in common&thinsp;&mdash;&thinsp;something to react to, to comment on, and eventually to join in with. When an entire room sings <em>Hark! The Herald Angels Sing</em> together, the barriers between departments, between junior staff and senior partners, come down for a few minutes.</p>
           <p>There&rsquo;s a sophistication to it, too, but it&rsquo;s sophistication without stuffiness. Professional carol singers bring elegance and polish without making the evening feel formal or stiff. The music can be lively, fun, and moving by turns&thinsp;&mdash;&thinsp;and the best ensembles read a room instinctively, adjusting their energy to match the mood of the crowd.</p>
-          <p>And then there&rsquo;s the <strong>wow factor</strong>. The moment guests arrive to live carol singing is the moment your party becomes an event. It&rsquo;s the detail people mention when they tell friends about their evening. &ldquo;There were actual carol singers&rdquo; carries more weight than any amount of decorative tinsel.</p>
+          <p>Live carol singing is also the detail guests mention afterwards. &ldquo;There were actual carol singers&rdquo; sticks in conversation longer than anything else about the evening.</p>
           <p>For events outside the Christmas season, see our wider <a href="/corporate.html">corporate music</a> page.</p>
         </div>
       </section>
@@ -2078,7 +2099,7 @@
           <p>Live carols during a seated dinner require a lighter touch. The aim is to enhance the conversation, not overwhelm it. Four voices performing quiet arrangements of well-known carols suit this best. The singers position themselves at a comfortable distance from the tables, keeping the volume conversational rather than theatrical. Think of it as a warm, festive backdrop: close-harmony <em>Silent Night</em>, a soft <em>Away in a Manger</em>, arrangements of seasonal favourites like <em>Have Yourself a Merry Little Christmas</em>. The music fills the pauses and gives the room a glow without anyone having to raise their voice to be heard.</p>
 
           <h3>A featured performance slot</h3>
-          <p>For some events, the live music <em>is</em> the centrepiece. A fifteen- to twenty-minute performance set, delivered between courses or after dinner, gives the choir a chance to really shine. This is where the more ambitious repertoire comes out&thinsp;&mdash;&thinsp;a beautiful unaccompanied arrangement, a show-stopping descant on a well-known carol, and a rousing audience singalong to close. The room quiets and guests stop talking to listen. This is usually the part they describe afterwards.</p>
+          <p>For some events, the live music <em>is</em> the centrepiece. A fifteen- to twenty-minute performance set, delivered between courses or after dinner, gives the choir a chance to really shine. This is where the more ambitious repertoire comes out&thinsp;&mdash;&thinsp;a beautiful unaccompanied arrangement, a show-stopping descant on a well-known carol, and a rousing audience singalong to close. The room quiets and guests stop talking to listen.</p>
 
           <h3>An intimate team gathering</h3>
           <p>Not every Christmas party is a two-hundred-person affair. For a smaller team dinner or departmental celebration, a duo or trio of singers creates something wonderfully personal. The scale is more intimate, the interaction between singers and guests is closer, and there&rsquo;s more room for fun&thinsp;&mdash;&thinsp;audience participation, light-hearted banter between carols, even a bit of good-natured competition over who knows the second verse of <em>Good King Wenceslas</em>. Smaller groups often produce the most joyful evenings, precisely because the music feels like it belongs to the room rather than being performed <em>at</em> it.</p>
@@ -2141,7 +2162,7 @@
           <p>For most December events, <strong>September or October</strong> is the ideal time to get in touch. By then you&rsquo;ll usually know your party date and venue, and our singers will still have good availability. If you leave it until November, we can often still help, but your options may be more limited&thinsp;&mdash;&thinsp;particularly for larger ensembles or the most popular dates.</p>
           <p>Speaking of dates: the <strong>Friday evenings in December</strong> go first. These are the classic office-party nights, and they book up faster than any other slots. The first two or three Fridays of the month are especially competitive. Thursday and Saturday evenings are close behind. If your party falls on one of these dates, early booking is essential.</p>
           <p><strong>What we need from you.</strong> When you enquire, it helps to know the date (or a shortlist of possible dates), the venue, the approximate number of guests, and a rough idea of what you&rsquo;re looking for&thinsp;&mdash;&thinsp;ambient carols, a performance set, a full evening, or something in between. None of it has to be settled before you enquire. We can work out the format with you once we know the room and the guest count.</p>
-          <p><strong>The planning process.</strong> Once you&rsquo;ve confirmed the booking, we take care of the musical side. We&rsquo;ll suggest a programme, agree the timing with you, confirm the details with the singers, and handle all the coordination. In the week before the event, you&rsquo;ll receive a final confirmation with arrival times and any last details. On the night, the singers arrive in good time, find their position, and the music begins. It really is that straightforward. You can read more about the full process in our <a href="hiring-a-choir.html">guide to hiring a choir</a>.</p>
+          <p><strong>The planning process.</strong> Once you&rsquo;ve confirmed the booking, we take care of the musical side. We&rsquo;ll suggest a programme, agree the timing with you, confirm the details with the singers, and handle all the coordination. In the week before the event, you&rsquo;ll receive a final confirmation with arrival times and any last details. On the night, the singers arrive in good time, find their position, and the music begins. You can read more about the full process in our <a href="hiring-a-choir.html">guide to hiring a choir</a>.</p>
         </div>
       </section>
 
@@ -2207,7 +2228,7 @@
         <a href="https://wa.me/447356042468" target="_blank" rel="noopener" data-whatsapp>WhatsApp</a>
       </p>
       <p class="text-xs text-mid">
-        Areas we serve: <a href="/areas/london.html">London</a> &middot; <a href="/areas/birmingham.html">Birmingham</a> &middot; <a href="/areas/manchester.html">Manchester</a> &middot; <a href="/areas/liverpool.html">Liverpool</a> &middot; <a href="/areas/oxford.html">Oxford</a> &middot; <a href="/areas/cambridge.html">Cambridge</a> &middot; <a href="/areas/reading.html">Reading</a> &middot; <a href="/areas/slough-maidenhead.html">Slough &amp; Maidenhead</a> &middot; <a href="/areas/guildford.html">Guildford</a> &middot; <a href="/areas/brighton.html">Brighton</a> &middot; <a href="/areas/chester.html">Chester</a> &middot; <a href="/areas/st-albans.html">St Albans</a> &middot; <a href="/areas/canterbury.html">Canterbury</a> &middot; <a href="/areas/windsor.html">Windsor</a> &middot; <a href="/areas/winchester.html">Winchester</a> &middot; <a href="/areas/salisbury.html">Salisbury</a> &middot; <a href="/areas/bath.html">Bath</a> &middot; <a href="/areas/chelmsford.html">Chelmsford</a> &middot; <a href="/areas/rochester.html">Rochester</a>
+        Areas we serve: <a href="/areas/london.html">London</a> &middot; <a href="/areas/birmingham.html">Birmingham</a> &middot; <a href="/areas/manchester.html">Manchester</a> &middot; <a href="/areas/liverpool.html">Liverpool</a> &middot; <a href="/areas/oxford.html">Oxford</a> &middot; <a href="/areas/cambridge.html">Cambridge</a> &middot; <a href="/areas/reading.html">Reading</a> &middot; <a href="/areas/slough-maidenhead.html">Slough &amp; Maidenhead</a> &middot; <a href="/areas/guildford.html">Guildford</a> &middot; <a href="/areas/brighton.html">Brighton</a> &middot; <a href="/areas/chester.html">Chester</a> &middot; <a href="/areas/st-albans.html">St Albans</a> &middot; <a href="/areas/canterbury.html">Canterbury</a> &middot; <a href="/areas/windsor.html">Windsor</a> &middot; <a href="/areas/winchester.html">Winchester</a> &middot; <a href="/areas/salisbury.html">Salisbury</a> &middot; <a href="/areas/bath.html">Bath</a> &middot; <a href="/areas/chelmsford.html">Chelmsford</a> &middot; <a href="/areas/rochester.html">Rochester</a> &middot; <a href="/areas/">All areas</a>
       </p>
       <p class="text-xs text-mid">
         Christmas: <a href="/christmas.html">Carol services</a> &middot; <a href="/carol-singers.html">Hire carol singers</a>
