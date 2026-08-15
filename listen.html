@@ -1194,7 +1194,7 @@
        ═══════════════════════════════════ */
     .hero {
       display: flex;
-      align-items: center;
+      align-items: start;
       gap: var(--space-3xl);
     }
     
@@ -1206,6 +1206,8 @@
     .hero-video {
       flex: 3;
       min-width: 0;
+      position: sticky;
+      top: var(--space-2xl);
     }
     
     /* ── Responsive Video Embed ── */
@@ -1267,6 +1269,7 @@
       .hero-video {
         flex: none;
         width: 100%;
+        position: static;
       }
     }
     
@@ -1632,6 +1635,24 @@
       margin-top: var(--space-lg);
     }
     
+    .services-hero {
+      display: grid;
+      gap: var(--space-2xl);
+      align-items: start;
+    }
+    
+    @media (min-width: 52rem) {
+      .services-hero {
+        grid-template-columns: 1fr 1.4fr;
+      }
+    }
+    
+    .services-hero .pull-quote--marquee {
+      margin-block: 0;
+      position: sticky;
+      top: var(--space-2xl);
+    }
+    
     /* ═══════════════════════════════════
        Occasion List (services.html hub)
        ═══════════════════════════════════ */
@@ -1973,7 +1994,8 @@
         "name": "Abide With Me — Full Choir",
         "description": "Live performance by The London Choral Service.",
         "thumbnailUrl": "https://img.youtube.com/vi/G9-R6k5n7Io/maxresdefault.jpg",
-        "uploadDate": "2025-01-01",
+        "uploadDate": "2026-04-02",
+        "duration": "PT1M2S",
         "contentUrl": "https://www.youtube.com/watch?v=G9-R6k5n7Io",
         "embedUrl": "https://www.youtube-nocookie.com/embed/G9-R6k5n7Io",
         "publisher": {
@@ -1985,7 +2007,8 @@
         "name": "He Shall Feed His Flock — Soloist, from Handel's Messiah",
         "description": "Live performance by The London Choral Service.",
         "thumbnailUrl": "https://img.youtube.com/vi/nasqXWlbf1g/maxresdefault.jpg",
-        "uploadDate": "2025-01-01",
+        "uploadDate": "2026-03-27",
+        "duration": "PT4M39S",
         "contentUrl": "https://www.youtube.com/watch?v=nasqXWlbf1g",
         "embedUrl": "https://www.youtube-nocookie.com/embed/nasqXWlbf1g",
         "publisher": {
@@ -1997,7 +2020,8 @@
         "name": "Be Thou My Vision — Full Choir",
         "description": "Live performance by The London Choral Service.",
         "thumbnailUrl": "https://img.youtube.com/vi/SaLTS_-I-q4/maxresdefault.jpg",
-        "uploadDate": "2025-01-01",
+        "uploadDate": "2026-03-18",
+        "duration": "PT43S",
         "contentUrl": "https://www.youtube.com/watch?v=SaLTS_-I-q4",
         "embedUrl": "https://www.youtube-nocookie.com/embed/SaLTS_-I-q4",
         "publisher": {
@@ -2009,7 +2033,8 @@
         "name": "Ubi Caritas (Ola Gjeilo) — Full Choir",
         "description": "Live performance by The London Choral Service.",
         "thumbnailUrl": "https://img.youtube.com/vi/-GQaQEGhYEs/maxresdefault.jpg",
-        "uploadDate": "2025-01-01",
+        "uploadDate": "2026-08-14",
+        "duration": "PT3M28S",
         "contentUrl": "https://www.youtube.com/watch?v=-GQaQEGhYEs",
         "embedUrl": "https://www.youtube-nocookie.com/embed/-GQaQEGhYEs",
         "publisher": {
@@ -2034,7 +2059,8 @@
         "name": "Anima Christi — Marco Frisina",
         "description": "Live performance by The London Choral Service.",
         "thumbnailUrl": "https://img.youtube.com/vi/ZVSQ2Ts4GZE/maxresdefault.jpg",
-        "uploadDate": "2025-01-01",
+        "uploadDate": "2026-07-31",
+        "duration": "PT2M41S",
         "contentUrl": "https://www.youtube.com/watch?v=ZVSQ2Ts4GZE",
         "embedUrl": "https://www.youtube-nocookie.com/embed/ZVSQ2Ts4GZE",
         "publisher": {
@@ -2324,7 +2350,7 @@
         <a href="https://wa.me/447356042468" target="_blank" rel="noopener" data-whatsapp>WhatsApp</a>
       </p>
       <p class="text-xs text-mid">
-        Areas we serve: <a href="/areas/london.html">London</a> &middot; <a href="/areas/birmingham.html">Birmingham</a> &middot; <a href="/areas/manchester.html">Manchester</a> &middot; <a href="/areas/liverpool.html">Liverpool</a> &middot; <a href="/areas/oxford.html">Oxford</a> &middot; <a href="/areas/cambridge.html">Cambridge</a> &middot; <a href="/areas/reading.html">Reading</a> &middot; <a href="/areas/slough-maidenhead.html">Slough &amp; Maidenhead</a> &middot; <a href="/areas/guildford.html">Guildford</a> &middot; <a href="/areas/brighton.html">Brighton</a> &middot; <a href="/areas/chester.html">Chester</a> &middot; <a href="/areas/st-albans.html">St Albans</a> &middot; <a href="/areas/canterbury.html">Canterbury</a> &middot; <a href="/areas/windsor.html">Windsor</a> &middot; <a href="/areas/winchester.html">Winchester</a> &middot; <a href="/areas/salisbury.html">Salisbury</a> &middot; <a href="/areas/bath.html">Bath</a> &middot; <a href="/areas/chelmsford.html">Chelmsford</a> &middot; <a href="/areas/rochester.html">Rochester</a>
+        Areas we serve: <a href="/areas/london.html">London</a> &middot; <a href="/areas/birmingham.html">Birmingham</a> &middot; <a href="/areas/manchester.html">Manchester</a> &middot; <a href="/areas/liverpool.html">Liverpool</a> &middot; <a href="/areas/oxford.html">Oxford</a> &middot; <a href="/areas/cambridge.html">Cambridge</a> &middot; <a href="/areas/reading.html">Reading</a> &middot; <a href="/areas/slough-maidenhead.html">Slough &amp; Maidenhead</a> &middot; <a href="/areas/guildford.html">Guildford</a> &middot; <a href="/areas/brighton.html">Brighton</a> &middot; <a href="/areas/chester.html">Chester</a> &middot; <a href="/areas/st-albans.html">St Albans</a> &middot; <a href="/areas/canterbury.html">Canterbury</a> &middot; <a href="/areas/windsor.html">Windsor</a> &middot; <a href="/areas/winchester.html">Winchester</a> &middot; <a href="/areas/salisbury.html">Salisbury</a> &middot; <a href="/areas/bath.html">Bath</a> &middot; <a href="/areas/chelmsford.html">Chelmsford</a> &middot; <a href="/areas/rochester.html">Rochester</a> &middot; <a href="/areas/">All areas</a>
       </p>
       <p class="text-xs text-mid">
         Christmas: <a href="/christmas.html">Carol services</a> &middot; <a href="/carol-singers.html">Hire carol singers</a>

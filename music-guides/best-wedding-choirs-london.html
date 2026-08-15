@@ -1196,7 +1196,7 @@
        ═══════════════════════════════════ */
     .hero {
       display: flex;
-      align-items: center;
+      align-items: start;
       gap: var(--space-3xl);
     }
     
@@ -1208,6 +1208,8 @@
     .hero-video {
       flex: 3;
       min-width: 0;
+      position: sticky;
+      top: var(--space-2xl);
     }
     
     /* ── Responsive Video Embed ── */
@@ -1269,6 +1271,7 @@
       .hero-video {
         flex: none;
         width: 100%;
+        position: static;
       }
     }
     
@@ -1632,6 +1635,24 @@
     
     .pull-quote--marquee figcaption {
       margin-top: var(--space-lg);
+    }
+    
+    .services-hero {
+      display: grid;
+      gap: var(--space-2xl);
+      align-items: start;
+    }
+    
+    @media (min-width: 52rem) {
+      .services-hero {
+        grid-template-columns: 1fr 1.4fr;
+      }
+    }
+    
+    .services-hero .pull-quote--marquee {
+      margin-block: 0;
+      position: sticky;
+      top: var(--space-2xl);
     }
     
     /* ═══════════════════════════════════
@@ -2079,7 +2100,7 @@
 
       <section class="section" style="padding-block-start: var(--space-2xl)">
         <div class="prose guide-body">
-          <p class="lede">If you are getting married in London and want a choir to sing at the ceremony, you have more options than almost anywhere in the world &mdash; and that is part of the problem. The city has hundreds of trained singers passing through Royal Academy of Music, Royal College of Music, Guildhall, and Trinity Laban each year, parish choirs at every level, and a long tail of agency listings on Encore, Alive Network, and PopTop that flatten quality and price into a single grid. This guide is for couples and wedding planners trying to make a sensible choice. It covers what training and experience to look for, how to match ensemble size to venue, what realistic 2026 prices look like across the market, and the six questions worth asking any provider before you book.</p>
+          <p class="lede">If you are getting married in London and want a choir to sing at the ceremony, you have a wider choice than in most cities &mdash; and that is part of the problem. The city has hundreds of trained singers passing through Royal Academy of Music, Royal College of Music, Guildhall, and Trinity Laban each year, parish choirs at every level, and a long tail of agency listings on Encore, Alive Network, and PopTop that flatten quality and price into a single grid. This guide is for couples and wedding planners trying to make a sensible choice. It covers what training and experience to look for, how to match ensemble size to venue, what realistic 2026 prices look like across the market, and the six questions worth asking any provider before you book.</p>
         </div>
       </section>
 
@@ -2090,7 +2111,7 @@
           <p>Repertoire breadth matters more than couples expect. A ceremony usually wants a sacred choral piece for the entrance or signing of the register, two or three congregational hymns, perhaps a secular art song, and increasingly a pop arrangement somewhere in the service. A choir that lives entirely inside the Anglican service tradition will be wonderful at the hymns and Stanford anthems and out of its depth in a Sondheim setting. A choir that lives entirely in pop arrangements will be the opposite. Ask for a sample programme of recent weddings rather than a polished showcase &mdash; the spread tells you what they actually do.</p>
           <p>The other thing worth checking is whether the singers regularly work together. Some London ensembles are fixed groups that rehearse weekly through the year. Others are fixers who book a different four singers for each gig from a shared pool. The latter can deliver a fine sound if the personnel are strong, but the blend and the visual cohesion will not match a settled ensemble. For a wedding, where the choir stands in front of every guest for an hour, that distinction is audible and visible.</p>
           <p>Professionalism on the day is the part that does not show up on a website. Singers who arrive in matching dress, half an hour before guests start arriving, with their music already learned, are the difference between a service that runs on rails and one that does not. Ask whether the choir provides its own folders, whether the music director is included in the fee, and how they handle the practicalities of a ten-minute window between the previous wedding and yours.</p>
-          <p>References and recordings are non-negotiable. A polished studio recording proves a choir can sound good with multiple takes and post-production; it does not prove they can deliver a service live. Ask for an unedited recording from a recent wedding &mdash; ideally one shot on a phone from the back of a church. If a provider cannot produce one, that is information.</p>
+          <p>References and recordings are non-negotiable. A polished studio recording proves a choir can sound good with multiple takes and post-production; it does not prove they can deliver a service live. Ask for an unedited recording from a recent wedding &mdash; ideally one shot on a phone from the back of a church. If a provider cannot produce one, ask why.</p>
         </div>
       </section>
 
@@ -2098,7 +2119,7 @@
         <div class="prose">
           <h2>Ensemble size guidance</h2>
           <p>Match the choir to the room. The acoustic of a London ceremony venue does most of the work; oversizing the ensemble is the most common and most expensive mistake couples make.</p>
-          <p>For the largest spaces &mdash; Westminster Abbey, St Bride&rsquo;s Fleet Street, St Paul&rsquo;s Knightsbridge, the Temple Church &mdash; a sextet is the practical minimum for a confident sound, and an eight- to twelve-voice ensemble starts to feel proportionate to the architecture. Below a sextet, the building swallows the voices and the choir reads as decorative rather than musical. These are buildings designed for choral foundations of twenty or more, and the music written for them assumes that.</p>
+          <p>For the largest spaces &mdash; Westminster Abbey, St Bride&rsquo;s Fleet Street, St Paul&rsquo;s Knightsbridge, the Temple Church &mdash; a sextet is the practical minimum for a confident sound, and an eight- to twelve-voice ensemble starts to feel proportionate to the architecture. Below a sextet, the voices do not carry and the choir reads as decorative rather than musical. These are buildings designed for choral foundations of twenty or more, and the music written for them assumes that.</p>
           <p>For mid-sized London churches and chapels &mdash; the Brompton Oratory, Chelsea Old Church, Holy Trinity Sloane Square, St Mary&rsquo;s Bourne Street, the Guards&rsquo; Chapel &mdash; a quartet to sextet is usually right. A quartet of strong soloists can hold one of these rooms if the singers are first-rate; a sextet adds depth at the bottom and confidence in congregational hymns. Country house chapels with a hundred or so guests fall into this band too.</p>
           <p>Smaller City churches, registry offices, and intimate ceremonies of forty or fifty guests do not need more than a quartet, and a single strong soloist will often carry the ceremony on their own. At Old Marylebone Town Hall or Chelsea Town Hall the room itself is acoustically dry, and a small ensemble singing close to the couple will read better than a larger one fighting the architecture. For garden ceremonies and marquees, treat any voice count as a chamber-music decision rather than a choral one &mdash; a quartet at most, and it should be one chosen for clean blend rather than weight.</p>
           <p>For reception singing &mdash; singers wandering through canap&eacute;s &mdash; you do not want a full choir. One or two confident soloists with a guitar or a pianist behind them will work the room rather than perform at it; if you would rather have no instrument at all, take a quartet, because two voices on their own run out of harmony fast. This is a different skillset, and not every classical ensemble does it well; ask specifically.</p>
@@ -2194,7 +2215,7 @@
         <a href="https://wa.me/447356042468" target="_blank" rel="noopener" data-whatsapp>WhatsApp</a>
       </p>
       <p class="text-xs text-mid">
-        Areas we serve: <a href="/areas/london.html">London</a> &middot; <a href="/areas/birmingham.html">Birmingham</a> &middot; <a href="/areas/manchester.html">Manchester</a> &middot; <a href="/areas/liverpool.html">Liverpool</a> &middot; <a href="/areas/oxford.html">Oxford</a> &middot; <a href="/areas/cambridge.html">Cambridge</a> &middot; <a href="/areas/reading.html">Reading</a> &middot; <a href="/areas/slough-maidenhead.html">Slough &amp; Maidenhead</a> &middot; <a href="/areas/guildford.html">Guildford</a> &middot; <a href="/areas/brighton.html">Brighton</a> &middot; <a href="/areas/chester.html">Chester</a> &middot; <a href="/areas/st-albans.html">St Albans</a> &middot; <a href="/areas/canterbury.html">Canterbury</a> &middot; <a href="/areas/windsor.html">Windsor</a> &middot; <a href="/areas/winchester.html">Winchester</a> &middot; <a href="/areas/salisbury.html">Salisbury</a> &middot; <a href="/areas/bath.html">Bath</a> &middot; <a href="/areas/chelmsford.html">Chelmsford</a> &middot; <a href="/areas/rochester.html">Rochester</a>
+        Areas we serve: <a href="/areas/london.html">London</a> &middot; <a href="/areas/birmingham.html">Birmingham</a> &middot; <a href="/areas/manchester.html">Manchester</a> &middot; <a href="/areas/liverpool.html">Liverpool</a> &middot; <a href="/areas/oxford.html">Oxford</a> &middot; <a href="/areas/cambridge.html">Cambridge</a> &middot; <a href="/areas/reading.html">Reading</a> &middot; <a href="/areas/slough-maidenhead.html">Slough &amp; Maidenhead</a> &middot; <a href="/areas/guildford.html">Guildford</a> &middot; <a href="/areas/brighton.html">Brighton</a> &middot; <a href="/areas/chester.html">Chester</a> &middot; <a href="/areas/st-albans.html">St Albans</a> &middot; <a href="/areas/canterbury.html">Canterbury</a> &middot; <a href="/areas/windsor.html">Windsor</a> &middot; <a href="/areas/winchester.html">Winchester</a> &middot; <a href="/areas/salisbury.html">Salisbury</a> &middot; <a href="/areas/bath.html">Bath</a> &middot; <a href="/areas/chelmsford.html">Chelmsford</a> &middot; <a href="/areas/rochester.html">Rochester</a> &middot; <a href="/areas/">All areas</a>
       </p>
       <p class="text-xs text-mid">
         Christmas: <a href="/christmas.html">Carol services</a> &middot; <a href="/carol-singers.html">Hire carol singers</a>

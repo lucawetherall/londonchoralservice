@@ -1196,7 +1196,7 @@
        ═══════════════════════════════════ */
     .hero {
       display: flex;
-      align-items: center;
+      align-items: start;
       gap: var(--space-3xl);
     }
     
@@ -1208,6 +1208,8 @@
     .hero-video {
       flex: 3;
       min-width: 0;
+      position: sticky;
+      top: var(--space-2xl);
     }
     
     /* ── Responsive Video Embed ── */
@@ -1269,6 +1271,7 @@
       .hero-video {
         flex: none;
         width: 100%;
+        position: static;
       }
     }
     
@@ -1632,6 +1635,24 @@
     
     .pull-quote--marquee figcaption {
       margin-top: var(--space-lg);
+    }
+    
+    .services-hero {
+      display: grid;
+      gap: var(--space-2xl);
+      align-items: start;
+    }
+    
+    @media (min-width: 52rem) {
+      .services-hero {
+        grid-template-columns: 1fr 1.4fr;
+      }
+    }
+    
+    .services-hero .pull-quote--marquee {
+      margin-block: 0;
+      position: sticky;
+      top: var(--space-2xl);
     }
     
     /* ═══════════════════════════════════
@@ -2062,7 +2083,7 @@
       <!-- LEDE SECTION -->
       <section class="section" style="padding-block-start: var(--space-2xl)">
         <div class="prose">
-          <p class="lede">A professional choir does something quite remarkable at a wedding: it gives your guests permission to sing. Most people, even those who love a good hymn, feel self-conscious about singing in public. But when four or eight trained voices lead from the front&thinsp;&mdash;&thinsp;confident, warm, and beautifully in tune&thinsp;&mdash;&thinsp;something shifts. The congregation joins in. The sound swells. And the ceremony stops being something your guests merely watch and becomes something they are part of.</p>
+          <p class="lede">A professional choir does something specific at a wedding: it gives your guests permission to sing. Most people, even those who love a good hymn, feel self-conscious about singing in public. But when four or eight trained voices lead from the front&thinsp;&mdash;&thinsp;confident, warm, and beautifully in tune&thinsp;&mdash;&thinsp;something shifts. The congregation joins in. The sound swells. And the ceremony becomes something your guests are part of.</p>
         </div>
       </section>
 
@@ -2119,7 +2140,7 @@
 
           <h3>Twelve-voice chorus&thinsp;&mdash;&thinsp;from &pound;3,000</h3>
 
-          <p>For cathedral-scale weddings or ceremonies where you want music to be a centrepiece of the day, a twelve-voice chorus delivers something magnificent. The additional voices allow for the widest range of repertoire, the most powerful hymn-leading, and a depth of sound that your guests will remember for years. This option is particularly striking in large, reverberant buildings where the sound can bloom and fill the space.</p>
+          <p>For cathedral-scale weddings or ceremonies where you want music to be a centrepiece of the day, a twelve-voice chorus delivers something magnificent. The additional voices allow for the widest range of repertoire, the most powerful hymn-leading, and a depth of sound that comes into its own in large, reverberant buildings where the full chorus can bloom and fill the space.</p>
 
           <p>Not sure which size is right for you? Our <a href="../pricing.html">pricing page</a> gives a full breakdown of costs, and we&rsquo;re always happy to advise once we know your venue and guest numbers. For a broader look at what wedding music costs, see our <a href="wedding-music-costs.html">guide to wedding music pricing</a>.</p>
         </div>
@@ -2193,7 +2214,7 @@
 
           <p><strong>Refining the music.</strong> In the weeks before the wedding, we&rsquo;ll finalise the running order and repertoire with you. If you&rsquo;d like help choosing hymns, we&rsquo;ll suggest options. If you want a bespoke arrangement, we&rsquo;ll get that prepared. We liaise with your venue, your vicar or registrar, and your wedding planner if you have one, so that everyone is on the same page.</p>
 
-          <p><strong>On the day.</strong> Our singers arrive in good time to warm up and familiarise themselves with the acoustic. They dress formally and discreetly&thinsp;&mdash;&thinsp;they&rsquo;re there to enhance your ceremony, not to draw attention to themselves. From the moment the first guest walks in to the moment you leave as a married couple, the music unfolds seamlessly. You won&rsquo;t need to think about it; you&rsquo;ll simply hear it and feel the difference it makes.</p>
+          <p><strong>On the day.</strong> Our singers arrive in good time to warm up and familiarise themselves with the acoustic. They dress formally and discreetly&thinsp;&mdash;&thinsp;they&rsquo;re there to enhance your ceremony, not to draw attention to themselves. From the moment the first guest walks in to the moment you leave as a married couple, the music unfolds seamlessly.</p>
 
           <p>For more detail on how we work and what we offer, see our <a href="../services.html">services page</a>.</p>
         </div>
@@ -2261,7 +2282,7 @@
         <a href="https://wa.me/447356042468" target="_blank" rel="noopener" data-whatsapp>WhatsApp</a>
       </p>
       <p class="text-xs text-mid">
-        Areas we serve: <a href="/areas/london.html">London</a> &middot; <a href="/areas/birmingham.html">Birmingham</a> &middot; <a href="/areas/manchester.html">Manchester</a> &middot; <a href="/areas/liverpool.html">Liverpool</a> &middot; <a href="/areas/oxford.html">Oxford</a> &middot; <a href="/areas/cambridge.html">Cambridge</a> &middot; <a href="/areas/reading.html">Reading</a> &middot; <a href="/areas/slough-maidenhead.html">Slough &amp; Maidenhead</a> &middot; <a href="/areas/guildford.html">Guildford</a> &middot; <a href="/areas/brighton.html">Brighton</a> &middot; <a href="/areas/chester.html">Chester</a> &middot; <a href="/areas/st-albans.html">St Albans</a> &middot; <a href="/areas/canterbury.html">Canterbury</a> &middot; <a href="/areas/windsor.html">Windsor</a> &middot; <a href="/areas/winchester.html">Winchester</a> &middot; <a href="/areas/salisbury.html">Salisbury</a> &middot; <a href="/areas/bath.html">Bath</a> &middot; <a href="/areas/chelmsford.html">Chelmsford</a> &middot; <a href="/areas/rochester.html">Rochester</a>
+        Areas we serve: <a href="/areas/london.html">London</a> &middot; <a href="/areas/birmingham.html">Birmingham</a> &middot; <a href="/areas/manchester.html">Manchester</a> &middot; <a href="/areas/liverpool.html">Liverpool</a> &middot; <a href="/areas/oxford.html">Oxford</a> &middot; <a href="/areas/cambridge.html">Cambridge</a> &middot; <a href="/areas/reading.html">Reading</a> &middot; <a href="/areas/slough-maidenhead.html">Slough &amp; Maidenhead</a> &middot; <a href="/areas/guildford.html">Guildford</a> &middot; <a href="/areas/brighton.html">Brighton</a> &middot; <a href="/areas/chester.html">Chester</a> &middot; <a href="/areas/st-albans.html">St Albans</a> &middot; <a href="/areas/canterbury.html">Canterbury</a> &middot; <a href="/areas/windsor.html">Windsor</a> &middot; <a href="/areas/winchester.html">Winchester</a> &middot; <a href="/areas/salisbury.html">Salisbury</a> &middot; <a href="/areas/bath.html">Bath</a> &middot; <a href="/areas/chelmsford.html">Chelmsford</a> &middot; <a href="/areas/rochester.html">Rochester</a> &middot; <a href="/areas/">All areas</a>
       </p>
       <p class="text-xs text-mid">
         Christmas: <a href="/christmas.html">Carol services</a> &middot; <a href="/carol-singers.html">Hire carol singers</a>
