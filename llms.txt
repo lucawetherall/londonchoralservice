@@ -4,7 +4,7 @@
 
 > Professional singers, choirs, and instrumentalists for funerals, weddings, memorials, and ceremonies across the United Kingdom. Over 150 conservatoire-trained musicians based in London.
 
-> Content last updated: July 2026. 54 music guides available.
+> Content last updated: August 2026. 54 music guides available.
 
 The London Choral Service provides live music for life's most important occasions. Founded and led by Artistic Director Luca Wetherall (Tutor in Music, University of Oxford), the ensemble comprises prize-winning graduates of the Royal Academy of Music, the Royal College of Music, and Britain's leading music colleges. Their credits include the coronation of King Charles III, the Royal Albert Hall, Westminster Abbey, and the BBC Proms. The service is the operating name of Alma Consort Ltd.
 
@@ -141,5 +141,5 @@ The London Choral Service provides live music for life's most important occasion
 
 ## Optional
 
-- [Listen](https://londonchoralservice.com/listen.html): Sample performances and repertoire from our singers and musicians
+- [Listen](https://londonchoralservice.com/listen.html): Sample performances and repertoire from our singers and musicians, including a Christmas recording
 - [Privacy Policy](https://londonchoralservice.com/privacy.html): Data protection and privacy information
