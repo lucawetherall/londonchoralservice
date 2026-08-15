@@ -73,10 +73,10 @@ grep -c '2026-05-14' sitemap.xml   # ≈0 (only files genuinely last touched tha
 
 ## R3 — Real VideoObject dates/durations + missing sameAs  [P2] [BLOCKED-ON-HUMAN]
 
-**Why:** Four `VideoObject` nodes ship placeholder `"uploadDate": "2025-01-01"` and no `duration` (flagged by inline TODO comments); `LocalBusiness.sameAs` lacks the canonical Google Maps URL and LinkedIn, `Person.sameAs` lacks ORCID. Fake dates in production structured data undercut the credibility of everything else in the graph.
+**Why:** Five `VideoObject` nodes ship placeholder `"uploadDate": "2025-01-01"` and no `duration` (flagged by inline TODO comments); `LocalBusiness.sameAs` lacks the canonical Google Maps URL and LinkedIn, `Person.sameAs` lacks ORCID. Fake dates in production structured data undercut the credibility of everything else in the graph. The fifth video (Blue Christmas, `mKMjUvCCW3E`) is done — the user supplied real values on 2026-08-15 and its nodes on listen.html, christmas.html, and carol-singers.html carry both `uploadDate` and `duration`; copy their shape for the remaining five, which now include the Anima Christi recording `ZVSQ2Ts4GZE` on `listen.html`, `music-guides/anima-christi-catholic-wedding.html`, and `music-guides/anima-christi-catholic-funeral.html`.
 
 **Files & anchors:**
-- `grep -n 'uploadDate' listen.html pricing.html` — placeholders
+- `grep -n 'uploadDate' listen.html pricing.html music-guides/anima-christi-*.html` — placeholders
 - `grep -n 'TODO' data/seo-fix-discovered-urls.yml` — the values awaiting human resolution
 - `grep -n 'TODO' index.html about.html` — the sameAs insertion points
 
