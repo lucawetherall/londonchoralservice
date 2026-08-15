@@ -115,6 +115,18 @@
     <priority>0.7</priority>
   </url>
   <url>
+    <loc>https://londonchoralservice.com/music-guides/anima-christi-catholic-wedding.html</loc>
+    <lastmod>2026-08-15</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://londonchoralservice.com/music-guides/anima-christi-catholic-funeral.html</loc>
+    <lastmod>2026-08-15</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
     <loc>https://londonchoralservice.com/music-guides/</loc>
     <lastmod>2026-08-15</lastmod>
     <changefreq>monthly</changefreq>
@@ -230,7 +242,7 @@
   </url>
   <url>
     <loc>https://londonchoralservice.com/music-guides/catholic-funeral-hymns.html</loc>
-    <lastmod>2026-05-14</lastmod>
+    <lastmod>2026-08-15</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
