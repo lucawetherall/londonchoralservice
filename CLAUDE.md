@@ -21,6 +21,7 @@ The website of The London Choral Service (Alma Consort Ltd) — a choir-for-hire
 - `docs/ROADMAP.md` — prioritised backlog with self-contained items; `docs/superpowers/` — dated specs and plans
 - `MANUAL-ACTIONS-REQUIRED.md` — human-only dashboard tasks. **Never attempt these**
 - `SITE-STOP-SLOP-PLAN.md` — house copy-style audit (distilled into the `writing-site-copy` skill)
+- `graphify-out/` — pre-built knowledge graph of the whole repo (pages, guides, boroughs, skills, plans, cross-links). **Committed and checked in** — query it instead of re-exploring the codebase for broad "how does X relate to Y" or "what links to Z" questions. See Commands below.
 
 ## Commands
 
@@ -29,6 +30,7 @@ The website of The London Choral Service (Alma Consort Ltd) — a choir-for-hire
 - Competitor claim check alone: `python3 validate_competitor_claims.py`
 - Validator tests: `python3 tests/test_competitor_claims.py`
 - Local preview: `python3 -m http.server 8000`
+- Query the repo graph: `/graphify query "<question>"` (reads the committed `graphify-out/graph.json` — do not rebuild unless files have changed since the last graph commit). Refresh after a large content sweep with `/graphify --update`.
 
 ## Conventions
 
@@ -48,6 +50,7 @@ The website of The London Choral Service (Alma Consort Ltd) — a choir-for-hire
 - Small tasks: pick from `docs/ROADMAP.md` — items are self-contained with verification commands; don't re-derive the analysis. Respect `BLOCKED-ON-HUMAN` and `SPEC-FIRST` labels.
 - Larger features: write a spec in `docs/superpowers/specs/` and a plan in `docs/superpowers/plans/`, named `YYYY-MM-DD-<name>.md`, matching the existing documents' style.
 - Before committing: run the `build-and-verify` checklist. Commit messages follow the existing history style (`fix(scope): …`, `copy: …`, `chore: …`).
+- If a change adds/removes/materially rewrites pages (new-page work, a site-wide sweep, a bulk content edit), refresh the graph with `/graphify --update` and commit `graphify-out/` alongside the content change so it doesn't drift stale.
 
 ## Project skills
 
