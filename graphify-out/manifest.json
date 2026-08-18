@@ -1,0 +1,1220 @@
+{
+  ".claude/launch.json": {
+    "mtime": 1787064426.7089727,
+    "seen": 1787076870.532022,
+    "ast_hash": "2bef74bac9d01254ef8c15dfde088971",
+    "semantic_hash": "2bef74bac9d01254ef8c15dfde088971"
+  },
+  ".claude/settings.local.json": {
+    "mtime": 1786814394.9732935,
+    "seen": 1787076870.532025,
+    "ast_hash": "a7c0fc1455c4c83f24f67ad13049c7eb",
+    "semantic_hash": "a7c0fc1455c4c83f24f67ad13049c7eb"
+  },
+  "build.sh": {
+    "mtime": 1787075036.9706287,
+    "seen": 1787076870.532026,
+    "ast_hash": "e382a0a10a1cee27790d4d938f2bcb77",
+    "semantic_hash": "e382a0a10a1cee27790d4d938f2bcb77"
+  },
+  "js/contact.js": {
+    "mtime": 1786814395.0926669,
+    "seen": 1787076870.5320268,
+    "ast_hash": "20e603dfeaf6cfa2879755b7c3fcfc26",
+    "semantic_hash": "20e603dfeaf6cfa2879755b7c3fcfc26"
+  },
+  "js/landing-form.js": {
+    "mtime": 1786814395.092927,
+    "seen": 1787076870.5320268,
+    "ast_hash": "8046f6426fa3e961de04bbfb0f35a937",
+    "semantic_hash": "8046f6426fa3e961de04bbfb0f35a937"
+  },
+  "js/music-guides.js": {
+    "mtime": 1786814395.0931835,
+    "seen": 1787076870.532028,
+    "ast_hash": "e372189794480503c9ae1a937d7aa9e1",
+    "semantic_hash": "e372189794480503c9ae1a937d7aa9e1"
+  },
+  "js/nav.js": {
+    "mtime": 1786814395.0933397,
+    "seen": 1787076870.532028,
+    "ast_hash": "2940837aa4a03ca2e1757d1efbd4abcb",
+    "semantic_hash": "2940837aa4a03ca2e1757d1efbd4abcb"
+  },
+  "tests/test_competitor_claims.py": {
+    "mtime": 1787075036.9904015,
+    "seen": 1787076870.532029,
+    "ast_hash": "f3ef506ac4d2478723d2dbd47286f5c1",
+    "semantic_hash": "f3ef506ac4d2478723d2dbd47286f5c1"
+  },
+  "tests/test_house_claims.py": {
+    "mtime": 1787075036.9905999,
+    "seen": 1787076870.532029,
+    "ast_hash": "4e36c37f71e24b0fd9651495326dae3c",
+    "semantic_hash": "4e36c37f71e24b0fd9651495326dae3c"
+  },
+  "validate_competitor_claims.py": {
+    "mtime": 1787075036.990856,
+    "seen": 1787076870.5320299,
+    "ast_hash": "47a7c9bbb13c07f9eeef52b9d978a7a5",
+    "semantic_hash": "47a7c9bbb13c07f9eeef52b9d978a7a5"
+  },
+  "validate_house_claims.py": {
+    "mtime": 1787075036.9910636,
+    "seen": 1787076870.5320299,
+    "ast_hash": "82d2d4509d66059db9672482129d0f5c",
+    "semantic_hash": "82d2d4509d66059db9672482129d0f5c"
+  },
+  "validate_jsonld.py": {
+    "mtime": 1787075036.991452,
+    "seen": 1787076870.532031,
+    "ast_hash": "da9011ee2f1b198027988120a32df107",
+    "semantic_hash": "da9011ee2f1b198027988120a32df107"
+  },
+  ".claude/skills/build-and-verify/SKILL.md": {
+    "mtime": 1786814394.973815,
+    "seen": 1787076870.532031,
+    "ast_hash": "27911b50298a63b334678d15daab1330",
+    "semantic_hash": "27911b50298a63b334678d15daab1330"
+  },
+  ".claude/skills/copy-editing/SKILL.md": {
+    "mtime": 1786814394.974317,
+    "seen": 1787076870.532032,
+    "ast_hash": "420f9b3c23c50fcb140e32b371c02932",
+    "semantic_hash": "420f9b3c23c50fcb140e32b371c02932"
+  },
+  ".claude/skills/copy-editing/references/plain-english-alternatives.md": {
+    "mtime": 1786814394.974563,
+    "seen": 1787076870.532032,
+    "ast_hash": "845c585322fdda86640587093bcda4c9",
+    "semantic_hash": "845c585322fdda86640587093bcda4c9"
+  },
+  ".claude/skills/new-page/SKILL.md": {
+    "mtime": 1786814394.9786043,
+    "seen": 1787076870.532033,
+    "ast_hash": "8385dab81debc2d6fd4e887861cc0b88",
+    "semantic_hash": "8385dab81debc2d6fd4e887861cc0b88"
+  },
+  ".claude/skills/new-page/references/head-checklist.md": {
+    "mtime": 1786814394.979806,
+    "seen": 1787076870.532033,
+    "ast_hash": "5101a1757bbdc71f6f2592548b14254c",
+    "semantic_hash": "5101a1757bbdc71f6f2592548b14254c"
+  },
+  ".claude/skills/new-page/references/internal-linking.md": {
+    "mtime": 1786814394.9799232,
+    "seen": 1787076870.5320342,
+    "ast_hash": "16fbf2a4e4501afffb44d89f2d24c4af",
+    "semantic_hash": "16fbf2a4e4501afffb44d89f2d24c4af"
+  },
+  ".claude/skills/new-page/references/jsonld-by-page-type.md": {
+    "mtime": 1786814394.980018,
+    "seen": 1787076870.5320342,
+    "ast_hash": "a179fbe68193e97c689412e5c6bbdc8b",
+    "semantic_hash": "a179fbe68193e97c689412e5c6bbdc8b"
+  },
+  ".claude/skills/seo-audit/SKILL.md": {
+    "mtime": 1786814394.9803314,
+    "seen": 1787076870.532035,
+    "ast_hash": "687b91aeabdc08b5e7bb5653072ef68a",
+    "semantic_hash": "687b91aeabdc08b5e7bb5653072ef68a"
+  },
+  ".claude/skills/seo-audit/references/ai-writing-detection.md": {
+    "mtime": 1786814394.9808567,
+    "seen": 1787076870.532035,
+    "ast_hash": "26787dad8564856ee9c9a4fa64a919de",
+    "semantic_hash": "26787dad8564856ee9c9a4fa64a919de"
+  },
+  ".claude/skills/site-architecture/SKILL.md": {
+    "mtime": 1786814394.9811413,
+    "seen": 1787076870.532036,
+    "ast_hash": "38788fba3791807548eee1d614af40af",
+    "semantic_hash": "38788fba3791807548eee1d614af40af"
+  },
+  ".claude/skills/site-architecture/references/mermaid-templates.md": {
+    "mtime": 1786814394.981354,
+    "seen": 1787076870.532036,
+    "ast_hash": "7fe021149a4803d117467544b26aeedd",
+    "semantic_hash": "7fe021149a4803d117467544b26aeedd"
+  },
+  ".claude/skills/site-architecture/references/navigation-patterns.md": {
+    "mtime": 1786814394.9815464,
+    "seen": 1787076870.532037,
+    "ast_hash": "0eb4f19b4ba0a5be0990c8698cd435b0",
+    "semantic_hash": "0eb4f19b4ba0a5be0990c8698cd435b0"
+  },
+  ".claude/skills/site-architecture/references/site-type-templates.md": {
+    "mtime": 1786814394.981712,
+    "seen": 1787076870.532037,
+    "ast_hash": "c972619dbe809eeb3da3f3adc50358b4",
+    "semantic_hash": "c972619dbe809eeb3da3f3adc50358b4"
+  },
+  ".claude/skills/writing-site-copy/SKILL.md": {
+    "mtime": 1786814394.9818392,
+    "seen": 1787076870.532038,
+    "ast_hash": "c02527992b36c6fb52489f7294c59d42",
+    "semantic_hash": "c02527992b36c6fb52489f7294c59d42"
+  },
+  "404.html": {
+    "mtime": 1787074280.349107,
+    "seen": 1787076870.532038,
+    "ast_hash": "ee5e14079b06cc591d45ebde69e4117f",
+    "semantic_hash": "ee5e14079b06cc591d45ebde69e4117f"
+  },
+  "CLAUDE.md": {
+    "mtime": 1787075036.9574504,
+    "seen": 1787076870.532039,
+    "ast_hash": "dfdae510508df1dce5c355d9640408cd",
+    "semantic_hash": "dfdae510508df1dce5c355d9640408cd"
+  },
+  "MANUAL-ACTIONS-REQUIRED.md": {
+    "mtime": 1787075036.958195,
+    "seen": 1787076870.532039,
+    "ast_hash": "e5ab925109ff71609adedd186231c0aa",
+    "semantic_hash": "e5ab925109ff71609adedd186231c0aa"
+  },
+  "README.md": {
+    "mtime": 1786814394.995275,
+    "seen": 1787076870.532039,
+    "ast_hash": "12b945b0af1204d82ff1ce0d7fd70dee",
+    "semantic_hash": "12b945b0af1204d82ff1ce0d7fd70dee"
+  },
+  "SEO-AUDIT-2026-05-08.md": {
+    "mtime": 1786814394.996226,
+    "seen": 1787076870.5320399,
+    "ast_hash": "40420c98827ebb5c3457f4f58ce92a28",
+    "semantic_hash": "40420c98827ebb5c3457f4f58ce92a28"
+  },
+  "SITE-STOP-SLOP-PLAN.md": {
+    "mtime": 1786814394.996522,
+    "seen": 1787076870.5320399,
+    "ast_hash": "f5151c99588f920b0bc73d7aaed8d18e",
+    "semantic_hash": "f5151c99588f920b0bc73d7aaed8d18e"
+  },
+  "about.html": {
+    "mtime": 1787075036.9591055,
+    "seen": 1787076870.532041,
+    "ast_hash": "cef677149be995a7bea1a552e2202c8e",
+    "semantic_hash": "cef677149be995a7bea1a552e2202c8e"
+  },
+  "areas/bath.html": {
+    "mtime": 1787075036.9613395,
+    "seen": 1787076870.532041,
+    "ast_hash": "bdf1aa11e0b06a634160c14165143aea",
+    "semantic_hash": "bdf1aa11e0b06a634160c14165143aea"
+  },
+  "areas/birmingham.html": {
+    "mtime": 1787074279.3872292,
+    "seen": 1787076870.532042,
+    "ast_hash": "082ea47d04fcd175ce0f989e3f441822",
+    "semantic_hash": "082ea47d04fcd175ce0f989e3f441822"
+  },
+  "areas/brighton.html": {
+    "mtime": 1787074278.806453,
+    "seen": 1787076870.532042,
+    "ast_hash": "bca91e072cae38aaa9e0aeafd5f9a7a2",
+    "semantic_hash": "bca91e072cae38aaa9e0aeafd5f9a7a2"
+  },
+  "areas/cambridge.html": {
+    "mtime": 1787075036.9623199,
+    "seen": 1787076870.532043,
+    "ast_hash": "49281462981b5db9028f0f51be7a0722",
+    "semantic_hash": "49281462981b5db9028f0f51be7a0722"
+  },
+  "areas/canterbury.html": {
+    "mtime": 1787075036.9642193,
+    "seen": 1787076870.532043,
+    "ast_hash": "21324387cf9a9dcaf66568f0061d37b8",
+    "semantic_hash": "21324387cf9a9dcaf66568f0061d37b8"
+  },
+  "areas/chelmsford.html": {
+    "mtime": 1787075036.9647431,
+    "seen": 1787076870.532044,
+    "ast_hash": "0602dd8b29b0d671fb18cc3276cc4ac8",
+    "semantic_hash": "0602dd8b29b0d671fb18cc3276cc4ac8"
+  },
+  "areas/chester.html": {
+    "mtime": 1787075036.9653323,
+    "seen": 1787076870.532044,
+    "ast_hash": "4b0c198fc6ed4e6f9edfaeb42344fb63",
+    "semantic_hash": "4b0c198fc6ed4e6f9edfaeb42344fb63"
+  },
+  "areas/guildford.html": {
+    "mtime": 1787074278.7444115,
+    "seen": 1787076870.5320451,
+    "ast_hash": "d732a8bee796038bba211e1e3dff3073",
+    "semantic_hash": "d732a8bee796038bba211e1e3dff3073"
+  },
+  "areas/index.html": {
+    "mtime": 1787075036.9657393,
+    "seen": 1787076870.5320451,
+    "ast_hash": "690470288d0522731eb6030a41017e0e",
+    "semantic_hash": "690470288d0522731eb6030a41017e0e"
+  },
+  "areas/liverpool.html": {
+    "mtime": 1787075036.9660962,
+    "seen": 1787076870.532046,
+    "ast_hash": "a672f55a5305abf18e18744e1375e0fa",
+    "semantic_hash": "a672f55a5305abf18e18744e1375e0fa"
+  },
+  "areas/london.html": {
+    "mtime": 1787074278.8905842,
+    "seen": 1787076870.532046,
+    "ast_hash": "25b7855516f31a1eb24fe24f516c21d3",
+    "semantic_hash": "25b7855516f31a1eb24fe24f516c21d3"
+  },
+  "areas/london/barking-dagenham.html": {
+    "mtime": 1787074278.9987652,
+    "seen": 1787076870.532047,
+    "ast_hash": "6f26c3b25b894793adf578b24c6aa4d5",
+    "semantic_hash": "6f26c3b25b894793adf578b24c6aa4d5"
+  },
+  "areas/london/barnet.html": {
+    "mtime": 1787074279.3486087,
+    "seen": 1787076870.532047,
+    "ast_hash": "b4cee874fb32cd1583649c55ae23ac0e",
+    "semantic_hash": "b4cee874fb32cd1583649c55ae23ac0e"
+  },
+  "areas/london/bexley.html": {
+    "mtime": 1787074279.0935452,
+    "seen": 1787076870.532048,
+    "ast_hash": "27733ec8d6853e7ccf1de1626706f938",
+    "semantic_hash": "27733ec8d6853e7ccf1de1626706f938"
+  },
+  "areas/london/brent.html": {
+    "mtime": 1787074278.9619212,
+    "seen": 1787076870.532048,
+    "ast_hash": "ec46f14d5f4509ce620a13f113b38eba",
+    "semantic_hash": "ec46f14d5f4509ce620a13f113b38eba"
+  },
+  "areas/london/bromley.html": {
+    "mtime": 1787074278.9498572,
+    "seen": 1787076870.532049,
+    "ast_hash": "572cc3eb24b1bcc967edbb3c115caf29",
+    "semantic_hash": "572cc3eb24b1bcc967edbb3c115caf29"
+  },
+  "areas/london/camden.html": {
+    "mtime": 1787074279.0820916,
+    "seen": 1787076870.532049,
+    "ast_hash": "d6f330ef71cd1d1c112ea49c27ddb30b",
+    "semantic_hash": "d6f330ef71cd1d1c112ea49c27ddb30b"
+  },
+  "areas/london/city-of-london.html": {
+    "mtime": 1787074278.9861255,
+    "seen": 1787076870.532049,
+    "ast_hash": "3085f8def260a2b5239cf8e0f5c3ae4a",
+    "semantic_hash": "3085f8def260a2b5239cf8e0f5c3ae4a"
+  },
+  "areas/london/croydon.html": {
+    "mtime": 1787074279.3747504,
+    "seen": 1787076870.53205,
+    "ast_hash": "a5d8d8f44b5e4d50c1118211249de6b3",
+    "semantic_hash": "a5d8d8f44b5e4d50c1118211249de6b3"
+  },
+  "areas/london/ealing.html": {
+    "mtime": 1787074279.3308003,
+    "seen": 1787076870.53205,
+    "ast_hash": "40f00874b18367642b53f019f54f7d40",
+    "semantic_hash": "40f00874b18367642b53f019f54f7d40"
+  },
+  "areas/london/enfield.html": {
+    "mtime": 1787074279.058227,
+    "seen": 1787076870.5320508,
+    "ast_hash": "fd31dd9353e3ad74c4b43a424fbe3bd1",
+    "semantic_hash": "fd31dd9353e3ad74c4b43a424fbe3bd1"
+  },
+  "areas/london/greenwich.html": {
+    "mtime": 1787074279.181298,
+    "seen": 1787076870.5320508,
+    "ast_hash": "ed601cc1e1f277191844bcae10f7369d",
+    "semantic_hash": "ed601cc1e1f277191844bcae10f7369d"
+  },
+  "areas/london/hackney.html": {
+    "mtime": 1787074279.2167947,
+    "seen": 1787076870.532052,
+    "ast_hash": "0484bae467e5716ef721384c2fd80262",
+    "semantic_hash": "0484bae467e5716ef721384c2fd80262"
+  },
+  "areas/london/hammersmith-fulham.html": {
+    "mtime": 1787074279.0230818,
+    "seen": 1787076870.532052,
+    "ast_hash": "23fac43faf22e39a5028461bcab79c30",
+    "semantic_hash": "23fac43faf22e39a5028461bcab79c30"
+  },
+  "areas/london/haringey.html": {
+    "mtime": 1787074279.0468318,
+    "seen": 1787076870.532053,
+    "ast_hash": "fbc4a5036fc59bba3deaf52538299208",
+    "semantic_hash": "fbc4a5036fc59bba3deaf52538299208"
+  },
+  "areas/london/harrow.html": {
+    "mtime": 1787074279.3141234,
+    "seen": 1787076870.532053,
+    "ast_hash": "38c1ee2470c1fc9721698f87667f4164",
+    "semantic_hash": "38c1ee2470c1fc9721698f87667f4164"
+  },
+  "areas/london/havering.html": {
+    "mtime": 1787074279.0703104,
+    "seen": 1787076870.532054,
+    "ast_hash": "331fc352ca09690f872aadef0e729caf",
+    "semantic_hash": "331fc352ca09690f872aadef0e729caf"
+  },
+  "areas/london/hillingdon.html": {
+    "mtime": 1787074279.1699834,
+    "seen": 1787076870.532054,
+    "ast_hash": "98bdebd488c49cd9f25b7a8fe32a4480",
+    "semantic_hash": "98bdebd488c49cd9f25b7a8fe32a4480"
+  },
+  "areas/london/hounslow.html": {
+    "mtime": 1787074279.0110085,
+    "seen": 1787076870.5320551,
+    "ast_hash": "89e38a528dc6dbae78ea8fd9a42792ab",
+    "semantic_hash": "89e38a528dc6dbae78ea8fd9a42792ab"
+  },
+  "areas/london/islington.html": {
+    "mtime": 1787074279.269651,
+    "seen": 1787076870.5320551,
+    "ast_hash": "8f0b623c6b4f9aa183fcb027792a187b",
+    "semantic_hash": "8f0b623c6b4f9aa183fcb027792a187b"
+  },
+  "areas/london/kensington-chelsea.html": {
+    "mtime": 1787074279.105828,
+    "seen": 1787076870.532056,
+    "ast_hash": "0582f420041b061008ae628cacceeca5",
+    "semantic_hash": "0582f420041b061008ae628cacceeca5"
+  },
+  "areas/london/kingston.html": {
+    "mtime": 1787074279.1441345,
+    "seen": 1787076870.532056,
+    "ast_hash": "a9429cf313bbcdee780d6639ec6b7114",
+    "semantic_hash": "a9429cf313bbcdee780d6639ec6b7114"
+  },
+  "areas/london/lambeth.html": {
+    "mtime": 1787074279.1311564,
+    "seen": 1787076870.532056,
+    "ast_hash": "bc625dc9ce3bc05bb38a7ac5112ba8c2",
+    "semantic_hash": "bc625dc9ce3bc05bb38a7ac5112ba8c2"
+  },
+  "areas/london/lewisham.html": {
+    "mtime": 1787074278.9741707,
+    "seen": 1787076870.532057,
+    "ast_hash": "c3c9cabd25a49d1ba59789f32cdc745b",
+    "semantic_hash": "c3c9cabd25a49d1ba59789f32cdc745b"
+  },
+  "areas/london/merton.html": {
+    "mtime": 1787074279.1936073,
+    "seen": 1787076870.532057,
+    "ast_hash": "313c9f678c901cc591f935ae86bf9071",
+    "semantic_hash": "313c9f678c901cc591f935ae86bf9071"
+  },
+  "areas/london/newham.html": {
+    "mtime": 1787074279.3609867,
+    "seen": 1787076870.532058,
+    "ast_hash": "56bdbf5a40abcee120f34d0619073ab8",
+    "semantic_hash": "56bdbf5a40abcee120f34d0619073ab8"
+  },
+  "areas/london/redbridge.html": {
+    "mtime": 1787074279.299458,
+    "seen": 1787076870.532058,
+    "ast_hash": "5d9a705a3da5d8f13731d40f6a5691a4",
+    "semantic_hash": "5d9a705a3da5d8f13731d40f6a5691a4"
+  },
+  "areas/london/richmond.html": {
+    "mtime": 1787074279.284306,
+    "seen": 1787076870.532059,
+    "ast_hash": "faeb7bc233fd9526e2faa03fab31b2d8",
+    "semantic_hash": "faeb7bc233fd9526e2faa03fab31b2d8"
+  },
+  "areas/london/southwark.html": {
+    "mtime": 1787074279.0348847,
+    "seen": 1787076870.532059,
+    "ast_hash": "cfa065e50f300759bac0cd67d509afd8",
+    "semantic_hash": "cfa065e50f300759bac0cd67d509afd8"
+  },
+  "areas/london/sutton.html": {
+    "mtime": 1787074279.2497814,
+    "seen": 1787076870.53206,
+    "ast_hash": "7fffa2727e239ba00037feb61b59473a",
+    "semantic_hash": "7fffa2727e239ba00037feb61b59473a"
+  },
+  "areas/london/tower-hamlets.html": {
+    "mtime": 1787074279.157345,
+    "seen": 1787076870.53206,
+    "ast_hash": "83b6cdd211528a420e0111502d459939",
+    "semantic_hash": "83b6cdd211528a420e0111502d459939"
+  },
+  "areas/london/waltham-forest.html": {
+    "mtime": 1787074279.117198,
+    "seen": 1787076870.5320609,
+    "ast_hash": "aededae2ab704ce361db7c21f3cfac06",
+    "semantic_hash": "aededae2ab704ce361db7c21f3cfac06"
+  },
+  "areas/london/wandsworth.html": {
+    "mtime": 1787074278.937926,
+    "seen": 1787076870.5320609,
+    "ast_hash": "eb5631a8e112e4727dc9f66c8e747449",
+    "semantic_hash": "eb5631a8e112e4727dc9f66c8e747449"
+  },
+  "areas/london/westminster.html": {
+    "mtime": 1787074279.2054722,
+    "seen": 1787076870.5320609,
+    "ast_hash": "f9bd5fa8b5c8e4d576bf85bee1328d6a",
+    "semantic_hash": "f9bd5fa8b5c8e4d576bf85bee1328d6a"
+  },
+  "areas/manchester.html": {
+    "mtime": 1787075036.966612,
+    "seen": 1787076870.532062,
+    "ast_hash": "c7f82395b8d1128d69efa99a4c2fa457",
+    "semantic_hash": "c7f82395b8d1128d69efa99a4c2fa457"
+  },
+  "areas/oxford.html": {
+    "mtime": 1787075036.967185,
+    "seen": 1787076870.532062,
+    "ast_hash": "20f9ebab58f10be09f31f5d4272be4ad",
+    "semantic_hash": "20f9ebab58f10be09f31f5d4272be4ad"
+  },
+  "areas/reading.html": {
+    "mtime": 1787075036.967606,
+    "seen": 1787076870.532063,
+    "ast_hash": "9d6d6dc39a0e002f4f44ea5d93c64e33",
+    "semantic_hash": "9d6d6dc39a0e002f4f44ea5d93c64e33"
+  },
+  "areas/rochester.html": {
+    "mtime": 1787075036.9680836,
+    "seen": 1787076870.532063,
+    "ast_hash": "ed3d13b13dc6738c58a256ee16715211",
+    "semantic_hash": "ed3d13b13dc6738c58a256ee16715211"
+  },
+  "areas/salisbury.html": {
+    "mtime": 1787075036.96862,
+    "seen": 1787076870.532064,
+    "ast_hash": "a7e1c87d1c2093b00853f3e2fc50ab31",
+    "semantic_hash": "a7e1c87d1c2093b00853f3e2fc50ab31"
+  },
+  "areas/slough-maidenhead.html": {
+    "mtime": 1787074278.720357,
+    "seen": 1787076870.532064,
+    "ast_hash": "f48c9052a559b068b454d192f2bd44c3",
+    "semantic_hash": "f48c9052a559b068b454d192f2bd44c3"
+  },
+  "areas/st-albans.html": {
+    "mtime": 1787075036.9693484,
+    "seen": 1787076870.532065,
+    "ast_hash": "e9591728188da9816eecdb53208fc63b",
+    "semantic_hash": "e9591728188da9816eecdb53208fc63b"
+  },
+  "areas/winchester.html": {
+    "mtime": 1787075036.9697628,
+    "seen": 1787076870.532065,
+    "ast_hash": "eca784c16f89be9597c32ce389c2066d",
+    "semantic_hash": "eca784c16f89be9597c32ce389c2066d"
+  },
+  "areas/windsor.html": {
+    "mtime": 1787075036.970159,
+    "seen": 1787076870.532066,
+    "ast_hash": "359f534372005a141e2d0ac7d39a9585",
+    "semantic_hash": "359f534372005a141e2d0ac7d39a9585"
+  },
+  "carol-singers.html": {
+    "mtime": 1787074278.6727426,
+    "seen": 1787076870.532067,
+    "ast_hash": "adaa390a6555d29b66666aa21423120f",
+    "semantic_hash": "adaa390a6555d29b66666aa21423120f"
+  },
+  "christmas.html": {
+    "mtime": 1787074280.6158202,
+    "seen": 1787076870.532067,
+    "ast_hash": "417c82e05ed52ce43388da2b379bcc81",
+    "semantic_hash": "417c82e05ed52ce43388da2b379bcc81"
+  },
+  "compare/london-funeral-singers.html": {
+    "mtime": 1787075036.9712558,
+    "seen": 1787076870.532067,
+    "ast_hash": "bcc0d556a49de47cc1eff59155e3946e",
+    "semantic_hash": "bcc0d556a49de47cc1eff59155e3946e"
+  },
+  "contact.html": {
+    "mtime": 1787074278.6971667,
+    "seen": 1787076870.532068,
+    "ast_hash": "f73354a61f7be6d8ddea76719dac7237",
+    "semantic_hash": "f73354a61f7be6d8ddea76719dac7237"
+  },
+  "corporate.html": {
+    "mtime": 1787074280.373894,
+    "seen": 1787076870.532068,
+    "ast_hash": "f4838f9c2e3b0b4f4f163f4c22e37198",
+    "semantic_hash": "f4838f9c2e3b0b4f4f163f4c22e37198"
+  },
+  "data/competitor-pricing.yml": {
+    "mtime": 1787075036.971612,
+    "seen": 1787076870.5320692,
+    "ast_hash": "42737b2572c2b97b964a917e02980737",
+    "semantic_hash": "42737b2572c2b97b964a917e02980737"
+  },
+  "data/seo-fix-discovered-urls.yml": {
+    "mtime": 1786815467.7113254,
+    "seen": 1787076870.5320692,
+    "ast_hash": "13550ef432f7681cce33839e511d1896",
+    "semantic_hash": "13550ef432f7681cce33839e511d1896"
+  },
+  "docs/ROADMAP.md": {
+    "mtime": 1787075036.9727015,
+    "seen": 1787076870.53207,
+    "ast_hash": "52b02dfb30b025d5e9ad01b596ed7fdb",
+    "semantic_hash": "52b02dfb30b025d5e9ad01b596ed7fdb"
+  },
+  "docs/superpowers/plans/2026-03-28-seo-and-conversion-improvements.md": {
+    "mtime": 1786814395.077787,
+    "seen": 1787076870.53207,
+    "ast_hash": "22190d6d3b95e79c7332f8a3cc0c554c",
+    "semantic_hash": "22190d6d3b95e79c7332f8a3cc0c554c"
+  },
+  "docs/superpowers/plans/2026-05-02-site-improvements.md": {
+    "mtime": 1786814395.0781612,
+    "seen": 1787076870.5320709,
+    "ast_hash": "a7416b67b53015d7803f51814849073a",
+    "semantic_hash": "a7416b67b53015d7803f51814849073a"
+  },
+  "docs/superpowers/plans/2026-05-06-music-guides-redesign.md": {
+    "mtime": 1786814395.0791135,
+    "seen": 1787076870.5320709,
+    "ast_hash": "00b103282716099e72b15e79471d8ba8",
+    "semantic_hash": "00b103282716099e72b15e79471d8ba8"
+  },
+  "docs/superpowers/plans/2026-05-08-seo-audit-fixes.md": {
+    "mtime": 1786814395.0807858,
+    "seen": 1787076870.5320718,
+    "ast_hash": "22ade640ed06202bfaae24f46bf18f13",
+    "semantic_hash": "22ade640ed06202bfaae24f46bf18f13"
+  },
+  "docs/superpowers/plans/2026-05-09-nav-services-dropdown.md": {
+    "mtime": 1786814395.0815701,
+    "seen": 1787076870.5320718,
+    "ast_hash": "2637440d4350bcd4949b4ce4823ca7dd",
+    "semantic_hash": "2637440d4350bcd4949b4ce4823ca7dd"
+  },
+  "docs/superpowers/plans/2026-05-09-services-page-redesign.md": {
+    "mtime": 1786814395.0821939,
+    "seen": 1787076870.5320718,
+    "ast_hash": "f5fa7c5532f35f66902d76b8556f80d7",
+    "semantic_hash": "f5fa7c5532f35f66902d76b8556f80d7"
+  },
+  "docs/superpowers/plans/2026-07-29-christmas-expansion.md": {
+    "mtime": 1786814395.0823743,
+    "seen": 1787076870.532073,
+    "ast_hash": "43ab618b909b3eceda3553603f2ee6e9",
+    "semantic_hash": "43ab618b909b3eceda3553603f2ee6e9"
+  },
+  "docs/superpowers/plans/2026-08-18-competitive-capture.md": {
+    "mtime": 1787075036.9733896,
+    "seen": 1787076870.532073,
+    "ast_hash": "d54437038ee9220aadf5143f081a3c95",
+    "semantic_hash": "d54437038ee9220aadf5143f081a3c95"
+  },
+  "docs/superpowers/plans/2026-08-18-value-care-and-onpage-seo.md": {
+    "mtime": 1787062001.422979,
+    "seen": 1787076870.532074,
+    "ast_hash": "f45d26bd6642388b4e2203032370436d",
+    "semantic_hash": "f45d26bd6642388b4e2203032370436d"
+  },
+  "docs/superpowers/specs/2026-03-28-seo-and-conversion-improvements-design.md": {
+    "mtime": 1786814395.0827427,
+    "seen": 1787076870.532074,
+    "ast_hash": "c6ec1c6214649293f65796d3bccd3404",
+    "semantic_hash": "c6ec1c6214649293f65796d3bccd3404"
+  },
+  "docs/superpowers/specs/2026-05-06-music-guides-redesign-design.md": {
+    "mtime": 1786814395.0836234,
+    "seen": 1787076870.532075,
+    "ast_hash": "2c5037d95250faed89ad0b6143790be2",
+    "semantic_hash": "2c5037d95250faed89ad0b6143790be2"
+  },
+  "docs/superpowers/specs/2026-05-08-seo-audit-fixes-design.md": {
+    "mtime": 1786814395.0841534,
+    "seen": 1787076870.532075,
+    "ast_hash": "72415caed8f9cbf2efe30d6ee9fd0681",
+    "semantic_hash": "72415caed8f9cbf2efe30d6ee9fd0681"
+  },
+  "docs/superpowers/specs/2026-05-09-nav-services-dropdown-design.md": {
+    "mtime": 1786814395.0842614,
+    "seen": 1787076870.5320761,
+    "ast_hash": "63a0e362f7c8be81defe2321408dfd06",
+    "semantic_hash": "63a0e362f7c8be81defe2321408dfd06"
+  },
+  "docs/superpowers/specs/2026-05-09-services-page-redesign-design.md": {
+    "mtime": 1786814395.0844443,
+    "seen": 1787076870.5320761,
+    "ast_hash": "a0ac1212e2c57e20043dba4076d4b46b",
+    "semantic_hash": "a0ac1212e2c57e20043dba4076d4b46b"
+  },
+  "docs/superpowers/specs/2026-07-29-christmas-expansion-design.md": {
+    "mtime": 1786814395.08462,
+    "seen": 1787076870.532077,
+    "ast_hash": "1b75f112819093105c0c1ec2c63e5391",
+    "semantic_hash": "1b75f112819093105c0c1ec2c63e5391"
+  },
+  "docs/superpowers/specs/2026-08-18-competitive-capture-design.md": {
+    "mtime": 1787075036.974007,
+    "seen": 1787076870.532077,
+    "ast_hash": "c37525e4f82ca98201552d93328d9411",
+    "semantic_hash": "c37525e4f82ca98201552d93328d9411"
+  },
+  "docs/superpowers/specs/2026-08-18-value-care-and-onpage-seo-design.md": {
+    "mtime": 1787061167.1069882,
+    "seen": 1787076870.532077,
+    "ast_hash": "361415b149e68c668347033d2e297037",
+    "semantic_hash": "361415b149e68c668347033d2e297037"
+  },
+  "faq.html": {
+    "mtime": 1787075036.9749215,
+    "seen": 1787076870.532078,
+    "ast_hash": "c8271ac4345a203648341c1d3dbec307",
+    "semantic_hash": "c8271ac4345a203648341c1d3dbec307"
+  },
+  "for-charities.html": {
+    "mtime": 1787075036.9755397,
+    "seen": 1787076870.532078,
+    "ast_hash": "3f324ef2151345860258ffca8e2267b5",
+    "semantic_hash": "3f324ef2151345860258ffca8e2267b5"
+  },
+  "for-event-managers.html": {
+    "mtime": 1787075036.976212,
+    "seen": 1787076870.5320792,
+    "ast_hash": "42dc752949b3847adbc55159caa9125b",
+    "semantic_hash": "42dc752949b3847adbc55159caa9125b"
+  },
+  "for-funeral-directors.html": {
+    "mtime": 1787075036.9768178,
+    "seen": 1787076870.5320792,
+    "ast_hash": "7eb124de9fa5cacf36417d50f84c1fa0",
+    "semantic_hash": "7eb124de9fa5cacf36417d50f84c1fa0"
+  },
+  "for-hotels.html": {
+    "mtime": 1787075036.9778068,
+    "seen": 1787076870.5320802,
+    "ast_hash": "777e0d7f7ea5f3aa71b44c0baea13c08",
+    "semantic_hash": "777e0d7f7ea5f3aa71b44c0baea13c08"
+  },
+  "for-livery-companies.html": {
+    "mtime": 1787075036.978671,
+    "seen": 1787076870.5320802,
+    "ast_hash": "2f8d8a00f68fdd4cd67dec8a0cc95426",
+    "semantic_hash": "2f8d8a00f68fdd4cd67dec8a0cc95426"
+  },
+  "for-property-managers.html": {
+    "mtime": 1787075036.9793935,
+    "seen": 1787076870.532081,
+    "ast_hash": "31095c386b5f18a7f1d811d57512acce",
+    "semantic_hash": "31095c386b5f18a7f1d811d57512acce"
+  },
+  "for-wedding-planners.html": {
+    "mtime": 1787074280.3374908,
+    "seen": 1787076870.532081,
+    "ast_hash": "0894d569e7faaac08d9eb326f7c454b4",
+    "semantic_hash": "0894d569e7faaac08d9eb326f7c454b4"
+  },
+  "funerals.html": {
+    "mtime": 1787075036.9800198,
+    "seen": 1787076870.532081,
+    "ast_hash": "496cb56b2a1b94cf46ae4bf7684158de",
+    "semantic_hash": "496cb56b2a1b94cf46ae4bf7684158de"
+  },
+  "index.html": {
+    "mtime": 1787075036.981033,
+    "seen": 1787076870.5320818,
+    "ast_hash": "ebe9249f7b607652f8e95a4b33af6520",
+    "semantic_hash": "ebe9249f7b607652f8e95a4b33af6520"
+  },
+  "listen.html": {
+    "mtime": 1787074280.4670484,
+    "seen": 1787076870.5320818,
+    "ast_hash": "c562f64b8bc72210536e81e838d699c6",
+    "semantic_hash": "c562f64b8bc72210536e81e838d699c6"
+  },
+  "llms.txt": {
+    "mtime": 1787075036.9817553,
+    "seen": 1787076870.532083,
+    "ast_hash": "11e869cd08ad4da0ad512ae3024b2eb7",
+    "semantic_hash": "11e869cd08ad4da0ad512ae3024b2eb7"
+  },
+  "music-guides/a-cappella-christmas-songs.html": {
+    "mtime": 1787074279.451217,
+    "seen": 1787076870.532083,
+    "ast_hash": "ff45309d988d996fde5b564d8e8db240",
+    "semantic_hash": "ff45309d988d996fde5b564d8e8db240"
+  },
+  "music-guides/abide-with-me.html": {
+    "mtime": 1787074280.2479913,
+    "seen": 1787076870.532084,
+    "ast_hash": "5511b8876590b012961ad96fffdd150e",
+    "semantic_hash": "5511b8876590b012961ad96fffdd150e"
+  },
+  "music-guides/advent-carols-vs-christmas-carols.html": {
+    "mtime": 1787074279.4278085,
+    "seen": 1787076870.532084,
+    "ast_hash": "5d6b324c19b3cd6de3dbf262b934efe2",
+    "semantic_hash": "5d6b324c19b3cd6de3dbf262b934efe2"
+  },
+  "music-guides/anima-christi-catholic-funeral.html": {
+    "mtime": 1787074279.7488437,
+    "seen": 1787076870.532085,
+    "ast_hash": "d9ac41f6e8f1983e2bccf7f3956d43c3",
+    "semantic_hash": "d9ac41f6e8f1983e2bccf7f3956d43c3"
+  },
+  "music-guides/anima-christi-catholic-wedding.html": {
+    "mtime": 1787074279.8989534,
+    "seen": 1787076870.532085,
+    "ast_hash": "4a781f737109bca498c82963240904c5",
+    "semantic_hash": "4a781f737109bca498c82963240904c5"
+  },
+  "music-guides/be-thou-my-vision-funeral-hymn.html": {
+    "mtime": 1787074280.2992404,
+    "seen": 1787076870.532085,
+    "ast_hash": "989724a7db5cddd5e9ee69c9633ee729",
+    "semantic_hash": "989724a7db5cddd5e9ee69c9633ee729"
+  },
+  "music-guides/be-thou-my-vision-wedding-hymn.html": {
+    "mtime": 1787074279.831409,
+    "seen": 1787076870.5320861,
+    "ast_hash": "fe8755729db0ec561be4336e429bde94",
+    "semantic_hash": "fe8755729db0ec561be4336e429bde94"
+  },
+  "music-guides/best-carols-for-four-voices.html": {
+    "mtime": 1787074279.5398462,
+    "seen": 1787076870.5320861,
+    "ast_hash": "bf1d06c7b03b94b37acd6a45deb4b867",
+    "semantic_hash": "bf1d06c7b03b94b37acd6a45deb4b867"
+  },
+  "music-guides/best-christmas-carol-singers.html": {
+    "mtime": 1787074279.872838,
+    "seen": 1787076870.532087,
+    "ast_hash": "a74f5691ea4559cbad241c5b9ba04e70",
+    "semantic_hash": "a74f5691ea4559cbad241c5b9ba04e70"
+  },
+  "music-guides/best-funeral-singers-london.html": {
+    "mtime": 1787075036.982769,
+    "seen": 1787076870.532087,
+    "ast_hash": "58b58f8cd244098984670ba83421e92f",
+    "semantic_hash": "58b58f8cd244098984670ba83421e92f"
+  },
+  "music-guides/best-wedding-choirs-london.html": {
+    "mtime": 1787074279.859668,
+    "seen": 1787076870.532088,
+    "ast_hash": "2224f5cfcf337a6a464df43238cd8a60",
+    "semantic_hash": "2224f5cfcf337a6a464df43238cd8a60"
+  },
+  "music-guides/booking-carol-singers-agency-vs-direct.html": {
+    "mtime": 1787075036.9845524,
+    "seen": 1787076870.532088,
+    "ast_hash": "9c793b81f57967c23758beb3dee6bf1d",
+    "semantic_hash": "9c793b81f57967c23758beb3dee6bf1d"
+  },
+  "music-guides/carol-singers-cost.html": {
+    "mtime": 1787074279.911893,
+    "seen": 1787076870.532089,
+    "ast_hash": "80e37a36ac626eceba36178d20ccc224",
+    "semantic_hash": "80e37a36ac626eceba36178d20ccc224"
+  },
+  "music-guides/carol-singers-law-firms.html": {
+    "mtime": 1787074279.638532,
+    "seen": 1787076870.532089,
+    "ast_hash": "32c76964101ef5ac14aed1b6a9d8d853",
+    "semantic_hash": "32c76964101ef5ac14aed1b6a9d8d853"
+  },
+  "music-guides/carols-by-candlelight.html": {
+    "mtime": 1787074279.6748385,
+    "seen": 1787076870.532089,
+    "ast_hash": "d41143d90522b44c0030ee73e4347653",
+    "semantic_hash": "d41143d90522b44c0030ee73e4347653"
+  },
+  "music-guides/catholic-funeral-hymns.html": {
+    "mtime": 1787074280.1455927,
+    "seen": 1787076870.5320902,
+    "ast_hash": "84bdfc77110c6171be64e7e7b7b7c59c",
+    "semantic_hash": "84bdfc77110c6171be64e7e7b7b7c59c"
+  },
+  "music-guides/celebration-of-life-music.html": {
+    "mtime": 1787074279.4748979,
+    "seen": 1787076870.5320902,
+    "ast_hash": "011f4cec35616a18121dd9ee20b2df2a",
+    "semantic_hash": "011f4cec35616a18121dd9ee20b2df2a"
+  },
+  "music-guides/charity-carol-concert.html": {
+    "mtime": 1787074279.415616,
+    "seen": 1787076870.532091,
+    "ast_hash": "8b74c834acaf7f47cf49a742406d8475",
+    "semantic_hash": "8b74c834acaf7f47cf49a742406d8475"
+  },
+  "music-guides/choosing-wedding-hymns.html": {
+    "mtime": 1787074279.5589602,
+    "seen": 1787076870.532091,
+    "ast_hash": "9e23f4a006ecd13a60c3a1252834178f",
+    "semantic_hash": "9e23f4a006ecd13a60c3a1252834178f"
+  },
+  "music-guides/christmas-carol-lyrics-meanings.html": {
+    "mtime": 1787074279.7062697,
+    "seen": 1787076870.5320919,
+    "ast_hash": "d64e2955aa4c4d66668cd2ac6175e736",
+    "semantic_hash": "d64e2955aa4c4d66668cd2ac6175e736"
+  },
+  "music-guides/christmas-carols-guide.html": {
+    "mtime": 1787074280.215651,
+    "seen": 1787076870.5320919,
+    "ast_hash": "8f16dfd226e9aa0c5c8a4b4e4d176201",
+    "semantic_hash": "8f16dfd226e9aa0c5c8a4b4e4d176201"
+  },
+  "music-guides/christmas-choir-hire.html": {
+    "mtime": 1787074280.004515,
+    "seen": 1787076870.5320928,
+    "ast_hash": "e688f849ce8876b5b0797acd5eb5e592",
+    "semantic_hash": "e688f849ce8876b5b0797acd5eb5e592"
+  },
+  "music-guides/christmas-drinks-reception-music.html": {
+    "mtime": 1787074279.515187,
+    "seen": 1787076870.5320928,
+    "ast_hash": "79ce593a710496e81f16cc2b96bb3d1d",
+    "semantic_hash": "79ce593a710496e81f16cc2b96bb3d1d"
+  },
+  "music-guides/christmas-gala-dinner-music.html": {
+    "mtime": 1787074280.1207225,
+    "seen": 1787076870.532094,
+    "ast_hash": "c0b59d710a7cbfad33fca0e418fcf49a",
+    "semantic_hash": "c0b59d710a7cbfad33fca0e418fcf49a"
+  },
+  "music-guides/church-carol-service-choir-hire.html": {
+    "mtime": 1787074280.032386,
+    "seen": 1787076870.532094,
+    "ast_hash": "6a74b7fdd5972621cdfe83f43c5e563d",
+    "semantic_hash": "6a74b7fdd5972621cdfe83f43c5e563d"
+  },
+  "music-guides/company-christmas-party-entertainment.html": {
+    "mtime": 1787074279.7342546,
+    "seen": 1787076870.532094,
+    "ast_hash": "079f0e5a5f06eeff790fae06edd83c30",
+    "semantic_hash": "079f0e5a5f06eeff790fae06edd83c30"
+  },
+  "music-guides/corporate-carol-service.html": {
+    "mtime": 1787074280.0479167,
+    "seen": 1787076870.532095,
+    "ast_hash": "e0fa58695b82e66a540f130b8e72ce86",
+    "semantic_hash": "e0fa58695b82e66a540f130b8e72ce86"
+  },
+  "music-guides/crematorium-music.html": {
+    "mtime": 1787074279.576067,
+    "seen": 1787076870.532095,
+    "ast_hash": "bde946b471d4c51ffa3d22800b68a9a9",
+    "semantic_hash": "bde946b471d4c51ffa3d22800b68a9a9"
+  },
+  "music-guides/funeral-choir-guide.html": {
+    "mtime": 1787074279.7204764,
+    "seen": 1787076870.532096,
+    "ast_hash": "1362e5bb018334154947c6411ea44ce4",
+    "semantic_hash": "1362e5bb018334154947c6411ea44ce4"
+  },
+  "music-guides/funeral-music-costs.html": {
+    "mtime": 1787075036.9857466,
+    "seen": 1787076870.532096,
+    "ast_hash": "aff1a349c1cbc988424cb176647b81e7",
+    "semantic_hash": "aff1a349c1cbc988424cb176647b81e7"
+  },
+  "music-guides/funeral-music-guide.html": {
+    "mtime": 1787074279.8146222,
+    "seen": 1787076870.532097,
+    "ast_hash": "6179b700bfb00b670bfcf489fba51ae9",
+    "semantic_hash": "6179b700bfb00b670bfcf489fba51ae9"
+  },
+  "music-guides/funeral-songs.html": {
+    "mtime": 1787074279.788398,
+    "seen": 1787076870.532097,
+    "ast_hash": "b0fb0aad566790c5325027b0f4d318aa",
+    "semantic_hash": "b0fb0aad566790c5325027b0f4d318aa"
+  },
+  "music-guides/hiring-a-choir.html": {
+    "mtime": 1787074279.7746124,
+    "seen": 1787076870.532098,
+    "ast_hash": "42d6aa1c89ee1ad87ce3fd7ce694592e",
+    "semantic_hash": "42d6aa1c89ee1ad87ce3fd7ce694592e"
+  },
+  "music-guides/hotel-christmas-entertainment.html": {
+    "mtime": 1787074280.312022,
+    "seen": 1787076870.532098,
+    "ast_hash": "fa70b6f4d61d075f33813b1ea81597ea",
+    "semantic_hash": "fa70b6f4d61d075f33813b1ea81597ea"
+  },
+  "music-guides/how-many-carol-singers.html": {
+    "mtime": 1787074279.4897342,
+    "seen": 1787076870.532099,
+    "ast_hash": "0c4ff7adcfcff962b20c2adf51eb9022",
+    "semantic_hash": "0c4ff7adcfcff962b20c2adf51eb9022"
+  },
+  "music-guides/index.html": {
+    "mtime": 1787074279.5274057,
+    "seen": 1787076870.532099,
+    "ast_hash": "4f57ec1b900c69b3d7f5f132aefb13e9",
+    "semantic_hash": "4f57ec1b900c69b3d7f5f132aefb13e9"
+  },
+  "music-guides/jerusalem.html": {
+    "mtime": 1787074280.0179663,
+    "seen": 1787076870.5321002,
+    "ast_hash": "ae26acd3edd9ea3412018623bab33ab6",
+    "semantic_hash": "ae26acd3edd9ea3412018623bab33ab6"
+  },
+  "music-guides/lesser-known-wedding-choral-pieces.html": {
+    "mtime": 1787074279.8866088,
+    "seen": 1787076870.5321002,
+    "ast_hash": "21d5624994e32a451c87f01313460533",
+    "semantic_hash": "21d5624994e32a451c87f01313460533"
+  },
+  "music-guides/memorial-service-planning.html": {
+    "mtime": 1787074279.4630318,
+    "seen": 1787076870.5321012,
+    "ast_hash": "f7556e95ba063ec77d927eed93f972f0",
+    "semantic_hash": "f7556e95ba063ec77d927eed93f972f0"
+  },
+  "music-guides/nine-lessons-and-carols.html": {
+    "mtime": 1787074279.5913925,
+    "seen": 1787076870.5321012,
+    "ast_hash": "d212e01485cf734c50a182f396e0026e",
+    "semantic_hash": "d212e01485cf734c50a182f396e0026e"
+  },
+  "music-guides/non-religious-funeral-music.html": {
+    "mtime": 1787074280.230588,
+    "seen": 1787076870.5321012,
+    "ast_hash": "b147adbd708b014ff2ebc059c8f3878c",
+    "semantic_hash": "b147adbd708b014ff2ebc059c8f3878c"
+  },
+  "music-guides/office-carol-service-planning.html": {
+    "mtime": 1787074280.0864537,
+    "seen": 1787076870.5321019,
+    "ast_hash": "f2722094dea2eea058a409525d4c0c4d",
+    "semantic_hash": "f2722094dea2eea058a409525d4c0c4d"
+  },
+  "music-guides/outdoor-carol-singing.html": {
+    "mtime": 1787074279.9673562,
+    "seen": 1787076870.5321019,
+    "ast_hash": "602a3811c5b734a0ab4870be766a75cf",
+    "semantic_hash": "602a3811c5b734a0ab4870be766a75cf"
+  },
+  "music-guides/popular-funeral-hymns.html": {
+    "mtime": 1787074279.503207,
+    "seen": 1787076870.5321028,
+    "ast_hash": "201d687813bb3509ed0a10f5988cbf12",
+    "semantic_hash": "201d687813bb3509ed0a10f5988cbf12"
+  },
+  "music-guides/popular-wedding-organ-music.html": {
+    "mtime": 1787074279.4395816,
+    "seen": 1787076870.5321028,
+    "ast_hash": "2bcbb265a569359aac11686e4d676255",
+    "semantic_hash": "2bcbb265a569359aac11686e4d676255"
+  },
+  "music-guides/residents-christmas-carol-event.html": {
+    "mtime": 1787074280.286881,
+    "seen": 1787076870.532104,
+    "ast_hash": "ae3f2761f1b58d6f1fd206c7feac478a",
+    "semantic_hash": "ae3f2761f1b58d6f1fd206c7feac478a"
+  },
+  "music-guides/ubi-caritas-wedding.html": {
+    "mtime": 1787074279.6585214,
+    "seen": 1787076870.532104,
+    "ast_hash": "7df518604b13647099b98be0f39bdd5b",
+    "semantic_hash": "7df518604b13647099b98be0f39bdd5b"
+  },
+  "music-guides/wedding-ceremony-music.html": {
+    "mtime": 1787074279.9486446,
+    "seen": 1787076870.532105,
+    "ast_hash": "957aac227fa3e6f5f2f2aabd20f7bbac",
+    "semantic_hash": "957aac227fa3e6f5f2f2aabd20f7bbac"
+  },
+  "music-guides/wedding-choir-guide.html": {
+    "mtime": 1787074279.8468163,
+    "seen": 1787076870.532106,
+    "ast_hash": "0b8f1b572866d7f094edc45747a186f3",
+    "semantic_hash": "0b8f1b572866d7f094edc45747a186f3"
+  },
+  "music-guides/wedding-choral-repertoire.html": {
+    "mtime": 1787074280.273616,
+    "seen": 1787076870.532106,
+    "ast_hash": "b560649480e9b7f46d928f11d4cb69f8",
+    "semantic_hash": "b560649480e9b7f46d928f11d4cb69f8"
+  },
+  "music-guides/wedding-music-costs.html": {
+    "mtime": 1787074279.6184783,
+    "seen": 1787076870.532107,
+    "ast_hash": "48395bc1e52daeda604504668ddd6181",
+    "semantic_hash": "48395bc1e52daeda604504668ddd6181"
+  },
+  "music-guides/wedding-music-ideas.html": {
+    "mtime": 1787074280.2612333,
+    "seen": 1787076870.532107,
+    "ast_hash": "d3cc3b41a2be109b72edaad9f4a20771",
+    "semantic_hash": "d3cc3b41a2be109b72edaad9f4a20771"
+  },
+  "music-guides/wedding-organ-pop-songs.html": {
+    "mtime": 1787074280.1642652,
+    "seen": 1787076870.532107,
+    "ast_hash": "5aa8c0ef72f98c3b89fdeeb2c9925aff",
+    "semantic_hash": "5aa8c0ef72f98c3b89fdeeb2c9925aff"
+  },
+  "music-guides/wedding-organ-repertoire.html": {
+    "mtime": 1787074280.1037352,
+    "seen": 1787076870.532108,
+    "ast_hash": "15ce581b4ba78352df6ddd3554446a5c",
+    "semantic_hash": "15ce581b4ba78352df6ddd3554446a5c"
+  },
+  "music-guides/wedding-organist-guide.html": {
+    "mtime": 1787074280.1980567,
+    "seen": 1787076870.532108,
+    "ast_hash": "f44500c651ecf2633067356e16d76e5c",
+    "semantic_hash": "f44500c651ecf2633067356e16d76e5c"
+  },
+  "music-guides/wedding-pop-songs-choir.html": {
+    "mtime": 1787074279.9315262,
+    "seen": 1787076870.532109,
+    "ast_hash": "2cbfc65a64025152c66a00dcbeffff5c",
+    "semantic_hash": "2cbfc65a64025152c66a00dcbeffff5c"
+  },
+  "music-guides/wedding-readings-and-music.html": {
+    "mtime": 1787074280.0726593,
+    "seen": 1787076870.532109,
+    "ast_hash": "0aafb268f2b7608187ec9962595e87ed",
+    "semantic_hash": "0aafb268f2b7608187ec9962595e87ed"
+  },
+  "music-guides/when-to-book-christmas-entertainment.html": {
+    "mtime": 1787074279.8010302,
+    "seen": 1787076870.53211,
+    "ast_hash": "7505b03efe8be4e417ccb5d1eacb0c06",
+    "semantic_hash": "7505b03efe8be4e417ccb5d1eacb0c06"
+  },
+  "partials/care-strip.html": {
+    "mtime": 1787062613.541829,
+    "seen": 1787076870.53211,
+    "ast_hash": "11ac8e1378325b7a59725dbbf24653bc",
+    "semantic_hash": "11ac8e1378325b7a59725dbbf24653bc"
+  },
+  "partials/footer.html": {
+    "mtime": 1787071463.7406955,
+    "seen": 1787076870.53211,
+    "ast_hash": "7301b95fd71655d981d25fc73bc78cc4",
+    "semantic_hash": "7301b95fd71655d981d25fc73bc78cc4"
+  },
+  "partials/head-extras.html": {
+    "mtime": 1786814395.1382535,
+    "seen": 1787076870.5321112,
+    "ast_hash": "23777c1e5e5fb14a6dfba4b262194e33",
+    "semantic_hash": "23777c1e5e5fb14a6dfba4b262194e33"
+  },
+  "partials/nav.html": {
+    "mtime": 1786814395.1383512,
+    "seen": 1787076870.5321112,
+    "ast_hash": "eebaec166660ae02accd95ba85d9d407",
+    "semantic_hash": "eebaec166660ae02accd95ba85d9d407"
+  },
+  "pricing.html": {
+    "mtime": 1787075036.987195,
+    "seen": 1787076870.532112,
+    "ast_hash": "fdbe7e4219b55a0acbf00cd0f6102859",
+    "semantic_hash": "fdbe7e4219b55a0acbf00cd0f6102859"
+  },
+  "privacy.html": {
+    "mtime": 1787074280.6012678,
+    "seen": 1787076870.532112,
+    "ast_hash": "5a6d4d237390328cf4eabfedf9b2c8c0",
+    "semantic_hash": "5a6d4d237390328cf4eabfedf9b2c8c0"
+  },
+  "robots.txt": {
+    "mtime": 1786814395.1397069,
+    "seen": 1787076870.5321128,
+    "ast_hash": "56ea949b5bcd1a0d913ec3261468cd2c",
+    "semantic_hash": "56ea949b5bcd1a0d913ec3261468cd2c"
+  },
+  "services.html": {
+    "mtime": 1787075036.9888062,
+    "seen": 1787076870.5321128,
+    "ast_hash": "f4d35c342ddd1a3cc1f5e0beb6f5cb30",
+    "semantic_hash": "f4d35c342ddd1a3cc1f5e0beb6f5cb30"
+  },
+  "thank-you.html": {
+    "mtime": 1787074280.5897412,
+    "seen": 1787076870.5321128,
+    "ast_hash": "98ab6ef4857566edfa36d70846426776",
+    "semantic_hash": "98ab6ef4857566edfa36d70846426776"
+  },
+  "weddings.html": {
+    "mtime": 1787075036.9922037,
+    "seen": 1787076870.532114,
+    "ast_hash": "9d3a6f6b686caeb4a51f3ca14eed82a6",
+    "semantic_hash": "9d3a6f6b686caeb4a51f3ca14eed82a6"
+  },
+  "assets/apple-touch-icon.png": {
+    "mtime": 1786814395.0646627,
+    "seen": 1787076870.532114,
+    "ast_hash": "e5cccb3eabba7bb68fce8e432615f99c",
+    "semantic_hash": "e5cccb3eabba7bb68fce8e432615f99c"
+  },
+  "assets/favicon-192.png": {
+    "mtime": 1786814395.065587,
+    "seen": 1787076870.532115,
+    "ast_hash": "5e004619664b6abfa46682effefbc107",
+    "semantic_hash": "5e004619664b6abfa46682effefbc107"
+  },
+  "assets/favicon-32.png": {
+    "mtime": 1786814395.0658855,
+    "seen": 1787076870.532115,
+    "ast_hash": "d7e3590beac8d32d69bf2b1681b812e0",
+    "semantic_hash": "d7e3590beac8d32d69bf2b1681b812e0"
+  },
+  "assets/favicon-48.png": {
+    "mtime": 1786814395.0662713,
+    "seen": 1787076870.532115,
+    "ast_hash": "da7e48ba396eae9bfb2fe47661a8bb66",
+    "semantic_hash": "da7e48ba396eae9bfb2fe47661a8bb66"
+  },
+  "assets/favicon.svg": {
+    "mtime": 1786814395.067195,
+    "seen": 1787076870.532116,
+    "ast_hash": "8ef783a6b833b96c26d77dae6f581b82",
+    "semantic_hash": "8ef783a6b833b96c26d77dae6f581b82"
+  },
+  "assets/og-christmas.png": {
+    "mtime": 1787073947.7238503,
+    "seen": 1787076870.532116,
+    "ast_hash": "871110bda8427bd2f76ccaf958a9df04",
+    "semantic_hash": "871110bda8427bd2f76ccaf958a9df04"
+  },
+  "assets/og-corporate.png": {
+    "mtime": 1787073947.6738462,
+    "seen": 1787076870.532117,
+    "ast_hash": "09c2a9085585c26a69ed4f2d8073ba97",
+    "semantic_hash": "09c2a9085585c26a69ed4f2d8073ba97"
+  },
+  "assets/og-funerals.png": {
+    "mtime": 1787073947.5672607,
+    "seen": 1787076870.532117,
+    "ast_hash": "82cced4ebc56fd81c6d0e0582c507b54",
+    "semantic_hash": "82cced4ebc56fd81c6d0e0582c507b54"
+  },
+  "assets/og-image.png": {
+    "mtime": 1786814395.0676517,
+    "seen": 1787076870.532118,
+    "ast_hash": "6170be94d929954faa41a6173a8e6da4",
+    "semantic_hash": "6170be94d929954faa41a6173a8e6da4"
+  },
+  "assets/og-pricing.png": {
+    "mtime": 1787073947.8340645,
+    "seen": 1787076870.532118,
+    "ast_hash": "4d242c3e16c940af4b5d1e371b090391",
+    "semantic_hash": "4d242c3e16c940af4b5d1e371b090391"
+  },
+  "assets/og-services.png": {
+    "mtime": 1787073947.7795496,
+    "seen": 1787076870.532119,
+    "ast_hash": "e822d5d4594496cdb2b18e752d357df9",
+    "semantic_hash": "e822d5d4594496cdb2b18e752d357df9"
+  },
+  "assets/og-weddings.png": {
+    "mtime": 1787073947.6215281,
+    "seen": 1787076870.532119,
+    "ast_hash": "bc8be0f3f49e543c29bba8b71af6039c",
+    "semantic_hash": "bc8be0f3f49e543c29bba8b71af6039c"
+  }
+}
