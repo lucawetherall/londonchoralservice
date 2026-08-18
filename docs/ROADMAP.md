@@ -210,3 +210,34 @@ print([k for k,v in collections.Counter(q).items() if v>1] or 'unique')"   # -> 
 **Do:** Replace the empty-grep check in `docs/superpowers/specs/2026-07-29-christmas-expansion-design.md` §2 with: list every `Victorian` hit and confirm each either (a) sits on one of the two allowlisted files above, or (b) carries an explicit statement that we do not perform in costume. The underlying rule is unchanged and unweakened: costume is not offered.
 
 **Skills:** none
+
+---
+
+## R9 — Competitive capture: The London Funeral Singers  [P1] [done 2026-08-18]
+
+**What shipped:** a sourced, family-facing comparison page at `compare/london-funeral-singers.html`, backed by a build gate so quoted competitor figures cannot go stale or be invented.
+
+- `data/competitor-pricing.yml` — every competitor figure with the verbatim published string it came from and a `checked_date`.
+- `validate_competitor_claims.py` + `tests/test_competitor_claims.py` — the repo's first test. `build.sh` hard-fails on any money figure under `compare/` not declared in the YAML, and warns once the data passes 120 days. Allowed figures are declared explicitly; deriving them arithmetically admitted thousands of values and would have let a wrong figure through by coincidence.
+- `validate_jsonld.py` now globs `compare/` too — it previously did not, so JSON-LD there went unchecked.
+- Cost guide gained a sourced market comparison; `best-funeral-singers-london.html` market table corrected upward (its quartet range topped out below the one published London price list).
+- `pricing.html` gained a named inclusions block; `funerals.html` gained the fixed-ensemble argument and on-the-day service standards.
+
+**Two site-wide corrections this surfaced, both shipped separately:**
+- Six B2B pages stated "We are VAT-registered" in 13 places including two JSON-LD answers. Alma Consort Ltd is not VAT-registered. A finance team reading that would expect a VAT number on the invoice.
+- The site advertised "over 150 auditioned singers and instrumentalists" in 13 places — near-verbatim the competitor's own line — while the actual positioning is a small hand-picked team. 43 edits across 23 files.
+
+**Not done, deliberately:** no named-singer roster page (owner's decision); crematorium and borough landing pages deferred as a separate programmatic project; Google Ads recorded in `MANUAL-ACTIONS-REQUIRED.md` §11 as human-only.
+
+**Blocked on merge order:** `site-audit-improvements-47d735` must land first — it is the authority on LCS prices and raises the soloist rate to £250, which this work assumes throughout. See "Before merging this branch" in the plan.
+
+**Spec:** `docs/superpowers/specs/2026-08-18-competitive-capture-design.md`
+**Plan:** `docs/superpowers/plans/2026-08-18-competitive-capture.md`
+
+**Verify:**
+```sh
+./build.sh                                    # ends "Competitor claims valid across 1 compare/ page(s)."
+python3 tests/test_competitor_claims.py       # 0 failure(s)
+grep -rn 'VAT' --include='for-*.html' .       # empty
+grep -rn 'over 150\|150 auditioned' --include='*.html' --include='*.txt' .   # empty
+```
