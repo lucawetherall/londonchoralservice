@@ -139,4 +139,7 @@ python3 validate_jsonld.py
 echo "Validating competitor claims..."
 python3 validate_competitor_claims.py
 
+echo "Validating house claims..."
+python3 validate_house_claims.py
+
 echo "Done."
