@@ -95,7 +95,11 @@ All seven VideoObject nodes now carry real `uploadDate` and `duration` values, v
 
 ---
 
-## R5 — Merge duplicate form scripts  [P4] [ready] [M]
+## R5 — Merge duplicate form scripts  [P4] [done 2026-08-18 — site audit] [M]
+
+Merged into `js/form.js` (occasion pre-fill from contact.js + `data-redirect` support from landing-form.js, default `/thank-you.html`); all 13 referencing pages updated; `js/contact.js` and `js/landing-form.js` deleted. hCaptcha guard, botcheck honeypot, and Web3Forms behaviour unchanged. Original item preserved below.
+
+## R5 (original) — Merge duplicate form scripts  [P4] [ready] [M]
 
 **Why:** `js/contact.js` (109 lines, used by 1 page) and `js/landing-form.js` (87 lines, used by 7 pages) are near-duplicates: both POST JSON to Web3Forms, guard on hCaptcha, reset the captcha on retry, redirect on success. Two copies means bugs get fixed in one and not the other (this has already happened historically with the hCaptcha guard).
 
