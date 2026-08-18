@@ -33,7 +33,7 @@
     });
   </script>
 
-  <title>London Funeral Singers vs The London Choral Service</title>
+  <title>London Funeral Singers vs The London Choral Service: Prices Compared</title>
   <meta name="description" content="Comparing quotes for funeral singers in London? See what The London Funeral Singers charge, what we charge, and what each price actually includes.">
   <meta name="theme-color" content="#F7F3EE">
   <meta name="robots" content="index, follow">
@@ -41,7 +41,7 @@
   <link rel="alternate" hreflang="en-gb" href="https://londonchoralservice.com/compare/london-funeral-singers.html">
   <link rel="alternate" hreflang="x-default" href="https://londonchoralservice.com/compare/london-funeral-singers.html">
 
-  <meta property="og:title" content="London Funeral Singers vs The London Choral Service">
+  <meta property="og:title" content="London Funeral Singers vs The London Choral Service: Prices Compared">
   <meta property="og:description" content="Comparing quotes for funeral singers in London? See what The London Funeral Singers charge, what we charge, and what each price actually includes.">
   <meta property="og:type" content="article">
   <meta property="og:url" content="https://londonchoralservice.com/compare/london-funeral-singers.html">
@@ -52,7 +52,7 @@
   <meta property="article:modified_time" content="2026-08-18">
 
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="London Funeral Singers vs The London Choral Service">
+  <meta name="twitter:title" content="London Funeral Singers vs The London Choral Service: Prices Compared">
   <meta name="twitter:description" content="Comparing quotes for funeral singers in London? See what The London Funeral Singers charge, what we charge, and what each price actually includes.">
   <meta name="twitter:image" content="https://londonchoralservice.com/assets/og-image.png">
   <link rel="dns-prefetch" href="https://www.googletagmanager.com">
@@ -731,6 +731,202 @@
         text-align: left;
         margin-top: 0;
       }
+    }
+    
+    /* ═══════════════════════════════════
+       Comparison Table (compare/ pages)
+       ═══════════════════════════════════ */
+    .compare-table {
+      width: 100%;
+      margin-block: var(--space-xl);
+      border-collapse: collapse;
+    }
+    
+    .compare-table th {
+      font-family: var(--font-body);
+      font-size: var(--text-xs);
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--color-text-mid);
+      text-align: left;
+      padding: var(--space-sm) var(--space-lg) var(--space-sm) 0;
+      border-bottom: 1px solid var(--color-text-mid);
+    }
+    
+    .compare-table tbody tr {
+      border-bottom: 1px solid var(--color-rule);
+    }
+    
+    .compare-table td {
+      padding: var(--space-lg) var(--space-lg) var(--space-lg) 0;
+      vertical-align: top;
+    }
+    
+    .compare-ensemble {
+      font-family: var(--font-heading);
+      font-size: var(--text-lg);
+      width: 26%;
+    }
+    
+    .compare-ensemble strong {
+      font-weight: 500;
+    }
+    
+    .compare-figure {
+      display: block;
+      font-family: var(--font-heading);
+      font-size: var(--text-xl);
+      font-weight: 600;
+      line-height: var(--leading-tight);
+    }
+    
+    .compare-note {
+      display: block;
+      font-size: var(--text-sm);
+      color: var(--color-text-mid);
+      margin-top: var(--space-xs);
+    }
+    
+    th.compare-us,
+    td.compare-us {
+      background: var(--color-bg-alt);
+      padding-inline: var(--space-lg);
+    }
+    
+    td.compare-us .compare-figure,
+    td.compare-us .compare-saving {
+      color: var(--color-accent);
+    }
+    
+    .compare-saving {
+      display: block;
+      font-size: var(--text-sm);
+      font-weight: 600;
+      margin-top: var(--space-xs);
+    }
+    
+    @media (max-width: 599px) {
+      .compare-table thead {
+        display: none;
+      }
+    
+      .compare-table td {
+        display: block;
+        width: 100%;
+        padding: var(--space-sm) 0;
+      }
+    
+      .compare-table td.compare-ensemble {
+        padding-top: var(--space-lg);
+      }
+    
+      .compare-table td:last-child {
+        margin-bottom: var(--space-lg);
+      }
+    
+      td[data-label]::before {
+        content: attr(data-label);
+        display: block;
+        font-size: var(--text-xs);
+        font-weight: 600;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--color-text-mid);
+        margin-bottom: var(--space-xs);
+      }
+    
+      td.compare-us {
+        padding: var(--space-md) var(--space-md);
+      }
+    }
+    
+    /* ── Compare summary panel ── */
+    .compare-summary {
+      border: 1px solid var(--color-rule);
+      border-left: 3px solid var(--color-accent);
+      background: var(--color-bg-alt);
+      padding: var(--space-lg) var(--space-xl);
+      margin-block: var(--space-xl);
+    }
+    
+    .compare-summary dt {
+      font-family: var(--font-body);
+      font-size: var(--text-xs);
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--color-text-mid);
+      margin-top: var(--space-md);
+    }
+    
+    .compare-summary dt:first-child {
+      margin-top: 0;
+    }
+    
+    .compare-summary dd {
+      margin: var(--space-xs) 0 0;
+      font-size: var(--text-base);
+    }
+    
+    /* ── Compare columns (what each price covers) ── */
+    .compare-cols {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--space-xl);
+      margin-block: var(--space-lg);
+    }
+    
+    .compare-cols h3 {
+      margin-top: 0;
+    }
+    
+    .compare-cols ul {
+      padding-left: 1.2em;
+      margin-block: var(--space-sm);
+    }
+    
+    .compare-cols li {
+      margin-block: var(--space-xs);
+    }
+    
+    .compare-col-us {
+      background: var(--color-bg-alt);
+      border-left: 3px solid var(--color-accent);
+      padding: var(--space-lg) var(--space-xl);
+    }
+    
+    @media (max-width: 599px) {
+      .compare-cols {
+        grid-template-columns: 1fr;
+      }
+    }
+    
+    /* ═══════════════════════════════════
+       Related Guides
+       ═══════════════════════════════════ */
+    .related-guides {
+      max-width: var(--width-prose);
+      margin-inline: auto;
+      padding: var(--space-4xl) var(--space-lg);
+      border-top: 1px solid var(--color-rule);
+    }
+    
+    .related-guides h2 {
+      margin-top: 0;
+    }
+    
+    .related-guides p {
+      margin-block: var(--space-md);
+    }
+    
+    .related-guides ul {
+      padding-left: 1.2em;
+      margin-block: var(--space-md);
+    }
+    
+    .related-guides li {
+      margin-block: var(--space-xs);
     }
     
     /* ═══════════════════════════════════
@@ -1979,7 +2175,7 @@
     "@graph": [
       {
         "@type": "Article",
-        "headline": "London Funeral Singers vs The London Choral Service",
+        "headline": "London Funeral Singers vs The London Choral Service: Prices Compared",
         "url": "https://londonchoralservice.com/compare/london-funeral-singers.html",
         "inLanguage": "en-GB",
         "datePublished": "2026-08-18",
@@ -2030,7 +2226,8 @@
       {
         "@type": "LocalBusiness",
         "@id": "https://londonchoralservice.com/#organization",
-        "name": "The London Choral Service"
+        "name": "The London Choral Service",
+        "legalName": "Alma Consort Ltd"
       },
       {
         "@type": "FAQPage",
@@ -2048,7 +2245,7 @@
             "name": "Do you charge VAT?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "No. Alma Consort Ltd is not VAT-registered, so the price we quote is the price on the invoice."
+              "text": "No. Your invoice comes from Alma Consort Ltd, the operating company behind The London Choral Service. It is not VAT-registered, so the price we quote is the price you pay."
             }
           },
           {
@@ -2169,63 +2366,111 @@
       <section class="section" style="padding-block-start: var(--space-2xl)">
         <div class="prose">
           <p class="lede">If you are comparing quotes for funeral singers in London, you are doing it in a week with a great deal else to arrange. This page sets out what The London Funeral Singers charge, what we charge, and what each price covers.</p>
-          <p>They quote before VAT. We quote with everything in, so the figure you see is the figure on the invoice.</p>
+          <dl class="compare-summary">
+            <dt>Price</dt>
+            <dd>You save &pound;80 on a soloist, rising to &pound;1,800 on a twelve-voice chorus.</dd>
+            <dt>VAT</dt>
+            <dd>Their prices are quoted plus VAT. We invoice as Alma Consort Ltd, trading as The London Choral Service, and are not VAT-registered, so the figure we quote is the figure on the invoice.</dd>
+            <dt>Music</dt>
+            <dd>Our choirs of four to eight sing up to three performance pieces and every hymn. Their equivalent packages publish one piece and up to three hymns.</dd>
+          </dl>
         </div>
       </section>
 
       <section class="section">
         <div class="prose">
           <h2>The gap is wider than it looks</h2>
-          <p>The London Funeral Singers list a soloist at &pound;275 + VAT. On the invoice that is &pound;330. We are not VAT-registered, so our &pound;250 stays &pound;250.</p>
-          <p>The same holds at every size. Their small choir of four is &pound;1,400 + VAT, which comes to &pound;1,680. Ours is &pound;1,150, with travel inside Greater London already in the figure.</p>
+          <p>The London Funeral Singers quote before VAT, so the printed price is not the invoice price. The table below shows both figures next to ours, which already include travel inside Greater London.</p>
         </div>
       </section>
 
       <section class="section">
         <div class="wide">
-          <table class="pricing-table" role="table">
-            <thead class="sr-only">
+          <table class="compare-table">
+            <thead>
               <tr>
                 <th scope="col">Ensemble</th>
                 <th scope="col">The London Funeral Singers</th>
-                <th scope="col">Our price</th>
+                <th scope="col" class="compare-us">The London Choral Service</th>
               </tr>
             </thead>
             <tbody>
               <tr>
-                <td class="pricing-name"><strong>Soloist</strong></td>
-                <td class="pricing-detail">They list &pound;275 + VAT, which is &pound;330 on the invoice. You save &pound;80.</td>
-                <td class="pricing-price">&pound;250</td>
+                <td class="compare-ensemble"><strong>Soloist</strong></td>
+                <td data-label="The London Funeral Singers">
+                  <span class="compare-figure">&pound;330</span>
+                  <span class="compare-note">&pound;275 + VAT as published</span>
+                </td>
+                <td class="compare-us" data-label="The London Choral Service">
+                  <span class="compare-figure">&pound;250</span>
+                  <span class="compare-saving">You save &pound;80</span>
+                </td>
               </tr>
               <tr>
-                <td class="pricing-name"><strong>Organist</strong></td>
-                <td class="pricing-detail">Also &pound;275 + VAT with them, so &pound;330 to pay. Ours is &pound;80 less.</td>
-                <td class="pricing-price">&pound;250</td>
+                <td class="compare-ensemble"><strong>Organist</strong></td>
+                <td data-label="The London Funeral Singers">
+                  <span class="compare-figure">&pound;330</span>
+                  <span class="compare-note">&pound;275 + VAT as published</span>
+                </td>
+                <td class="compare-us" data-label="The London Choral Service">
+                  <span class="compare-figure">&pound;250</span>
+                  <span class="compare-saving">You save &pound;80</span>
+                </td>
               </tr>
               <tr>
-                <td class="pricing-name"><strong>Soloist with organist</strong></td>
-                <td class="pricing-detail">&pound;550 + VAT with them. With VAT that is &pound;660, and you save &pound;210.</td>
-                <td class="pricing-price">&pound;450</td>
+                <td class="compare-ensemble"><strong>Soloist with organist</strong></td>
+                <td data-label="The London Funeral Singers">
+                  <span class="compare-figure">&pound;660</span>
+                  <span class="compare-note">&pound;550 + VAT as published</span>
+                </td>
+                <td class="compare-us" data-label="The London Choral Service">
+                  <span class="compare-figure">&pound;450</span>
+                  <span class="compare-saving">You save &pound;210</span>
+                </td>
               </tr>
               <tr>
-                <td class="pricing-name"><strong>Small choir</strong><span class="pricing-sub">Four singers</span></td>
-                <td class="pricing-detail">Theirs is &pound;1,400 + VAT. The invoice comes to &pound;1,680, so you save &pound;530.</td>
-                <td class="pricing-price">&pound;1,150</td>
+                <td class="compare-ensemble"><strong>Small choir</strong><span class="compare-note">Four singers</span></td>
+                <td data-label="The London Funeral Singers">
+                  <span class="compare-figure">&pound;1,680</span>
+                  <span class="compare-note">&pound;1,400 + VAT as published</span>
+                </td>
+                <td class="compare-us" data-label="The London Choral Service">
+                  <span class="compare-figure">&pound;1,150</span>
+                  <span class="compare-saving">You save &pound;530</span>
+                </td>
               </tr>
               <tr>
-                <td class="pricing-name"><strong>Small choir with organist</strong></td>
-                <td class="pricing-detail">&pound;1,675 + VAT with them, which is &pound;2,010 to pay. You save &pound;635.</td>
-                <td class="pricing-price">&pound;1,375</td>
+                <td class="compare-ensemble"><strong>Small choir with organist</strong></td>
+                <td data-label="The London Funeral Singers">
+                  <span class="compare-figure">&pound;2,010</span>
+                  <span class="compare-note">&pound;1,675 + VAT as published</span>
+                </td>
+                <td class="compare-us" data-label="The London Choral Service">
+                  <span class="compare-figure">&pound;1,375</span>
+                  <span class="compare-saving">You save &pound;635</span>
+                </td>
               </tr>
               <tr>
-                <td class="pricing-name"><strong>Full choir</strong><span class="pricing-sub">Eight singers</span></td>
-                <td class="pricing-detail">&pound;2,400 + VAT with them, &pound;2,880 on the invoice. That is &pound;880 less with us.</td>
-                <td class="pricing-price">&pound;2,000</td>
+                <td class="compare-ensemble"><strong>Full choir</strong><span class="compare-note">Eight singers</span></td>
+                <td data-label="The London Funeral Singers">
+                  <span class="compare-figure">&pound;2,880</span>
+                  <span class="compare-note">&pound;2,400 + VAT as published</span>
+                </td>
+                <td class="compare-us" data-label="The London Choral Service">
+                  <span class="compare-figure">&pound;2,000</span>
+                  <span class="compare-saving">You save &pound;880</span>
+                </td>
               </tr>
               <tr>
-                <td class="pricing-name"><strong>Chorus</strong><span class="pricing-sub">Twelve singers</span></td>
-                <td class="pricing-detail">&pound;4,000 + VAT with them, or &pound;4,800 to pay. You save &pound;1,800.</td>
-                <td class="pricing-price">&pound;3,000</td>
+                <td class="compare-ensemble"><strong>Chorus</strong><span class="compare-note">Twelve singers</span></td>
+                <td data-label="The London Funeral Singers">
+                  <span class="compare-figure">&pound;4,800</span>
+                  <span class="compare-note">&pound;4,000 + VAT as published</span>
+                </td>
+                <td class="compare-us" data-label="The London Choral Service">
+                  <span class="compare-figure">&pound;3,000</span>
+                  <span class="compare-saving">You save &pound;1,800</span>
+                </td>
               </tr>
             </tbody>
           </table>
@@ -2235,38 +2480,43 @@
 
       <section class="section">
         <div class="prose">
+          <p>Already holding their quote? Send it over and we will price the same service, itemised, with no obligation.</p>
+          <p><a href="../contact.html?occasion=quote-check" class="btn-link">Send us your quote</a></p>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="prose">
           <h2>How much singing you get</h2>
           <p>Price is half the comparison. The other half is how much music the price buys.</p>
-          <p>Their small choir of four includes one performance piece and up to three hymns. Their full choir of eight includes the same. Ours include up to three performance pieces and every hymn in the service.</p>
-          <p>At quartet level that works out at three times the sung music for about two-thirds of the price.</p>
         </div>
       </section>
 
       <section class="section">
         <div class="wide">
-          <table class="pricing-table" role="table">
-            <thead class="sr-only">
+          <table class="compare-table">
+            <thead>
               <tr>
                 <th scope="col">Ensemble</th>
                 <th scope="col">The London Funeral Singers</th>
-                <th scope="col">The London Choral Service</th>
+                <th scope="col" class="compare-us">The London Choral Service</th>
               </tr>
             </thead>
             <tbody>
               <tr>
-                <td class="pricing-name"><strong>Four singers</strong></td>
-                <td class="pricing-detail">Theirs covers one performance piece and up to three hymns.</td>
-                <td class="pricing-detail"><strong>Ours covers up to three performance pieces and every hymn.</strong></td>
+                <td class="compare-ensemble"><strong>Four singers</strong></td>
+                <td data-label="The London Funeral Singers">One performance piece; up to three hymns</td>
+                <td class="compare-us" data-label="The London Choral Service">Up to three performance pieces; every hymn in the service</td>
               </tr>
               <tr>
-                <td class="pricing-name"><strong>Eight singers</strong></td>
-                <td class="pricing-detail">Theirs is the same again: one performance piece and up to three hymns.</td>
-                <td class="pricing-detail"><strong>Ours still covers up to three performance pieces and every hymn.</strong></td>
+                <td class="compare-ensemble"><strong>Eight singers</strong></td>
+                <td data-label="The London Funeral Singers">One performance piece; up to three hymns</td>
+                <td class="compare-us" data-label="The London Choral Service">Up to three performance pieces; every hymn in the service</td>
               </tr>
               <tr>
-                <td class="pricing-name"><strong>Twelve singers</strong></td>
-                <td class="pricing-detail">Theirs covers two performance pieces and up to four hymns.</td>
-                <td class="pricing-detail"><strong>Ours covers up to four performance pieces and every hymn.</strong></td>
+                <td class="compare-ensemble"><strong>Twelve singers</strong></td>
+                <td data-label="The London Funeral Singers">Two performance pieces; up to four hymns</td>
+                <td class="compare-us" data-label="The London Choral Service">Up to four performance pieces; every hymn in the service</td>
               </tr>
             </tbody>
           </table>
@@ -2275,6 +2525,7 @@
 
       <section class="section">
         <div class="prose">
+          <p>At quartet level that works out at three times the sung music for about two-thirds of the price.</p>
           <p>We also offer five and six singers, at &pound;1,400 and &pound;1,600. If you want six voices, you can book six.</p>
         </div>
       </section>
@@ -2327,10 +2578,31 @@
       <section class="section">
         <div class="prose">
           <h2>What each price covers</h2>
-          <h3>What we include</h3>
-          <p>Rehearsal and preparation, sheet music, a music director, coordination with your funeral director and the venue, and travel within Greater London. No VAT, and no fee added afterwards.</p>
-          <h3>What they publish</h3>
-          <p>Their site lists coordination with funeral directors and venues, musician selection, sheet music, rehearsal, and personal support. It also states that travel charges apply outside London, and that prices are quoted plus VAT.</p>
+          <div class="compare-cols">
+            <div>
+              <h3>What they publish</h3>
+              <ul>
+                <li>Coordination with funeral directors and venues</li>
+                <li>Musician selection</li>
+                <li>Sheet music</li>
+                <li>Rehearsal</li>
+                <li>Personal support</li>
+                <li>Travel charges apply outside London</li>
+                <li>Prices quoted plus VAT</li>
+              </ul>
+            </div>
+            <div class="compare-col-us">
+              <h3>What we include</h3>
+              <ul>
+                <li>Rehearsal and preparation</li>
+                <li>Sheet music</li>
+                <li>A music director</li>
+                <li>Coordination with your funeral director and the venue</li>
+                <li>Travel within Greater London</li>
+                <li>No VAT, and no fee added afterwards</li>
+              </ul>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -2349,7 +2621,7 @@
           <h3>Why are your prices lower?</h3>
           <p>We are not VAT-registered, so nothing is added at the end. We keep a small team rather than a large agency book. Travel within Greater London, sheet music, and rehearsal are already in the quoted figure.</p>
           <h3>Do you charge VAT?</h3>
-          <p>No. Alma Consort Ltd is not VAT-registered, so the price we quote is the price on the invoice.</p>
+          <p>No. Your invoice comes from Alma Consort Ltd, the operating company behind The London Choral Service. It is not VAT-registered, so the price we quote is the price you pay.</p>
           <h3>What is included in the price?</h3>
           <p>Rehearsal and preparation, sheet music, a music director, coordination with your funeral director and the venue, and travel within Greater London.</p>
           <h3>How many pieces will the choir sing?</h3>
