@@ -2525,13 +2525,6 @@
 
       <section class="section">
         <div class="prose">
-          <p>At quartet level that works out at three times the sung music for about two-thirds of the price.</p>
-          <p>We also offer five and six singers, at &pound;1,400 and &pound;1,600. If you want six voices, you can book six.</p>
-        </div>
-      </section>
-
-      <section class="section">
-        <div class="prose">
           <h2>Who sings</h2>
           <p>We keep the team small on purpose. Luca Wetherall, our Artistic Director and a Tutor in Music at the University of Oxford, auditions every singer himself and picks the ensemble for your service.</p>
           <p>Our quartets and sextets rehearse and sing together rather than coming together for a single booking. That is what lets four voices fill a parish church without straining.</p>
@@ -2677,5 +2670,21 @@
     <a href="/funerals.html" class="mobile-cta-enquire">Enquire</a>
   </div>
   <script src="../js/nav.js" defer></script>
+  <script>
+    document.querySelectorAll('.video-thumb').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var id = btn.getAttribute('data-video');
+        var wrap = btn.closest('.video-embed');
+        var iframe = document.createElement('iframe');
+        iframe.src = 'https://www.youtube-nocookie.com/embed/' + id + '?autoplay=1';
+        iframe.title = (btn.getAttribute('aria-label') || 'The London Choral Service').replace(/^Play /, '') + ' — The London Choral Service';
+        iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
+        iframe.allowFullscreen = true;
+        iframe.style.border = '0';
+        wrap.innerHTML = '';
+        wrap.appendChild(iframe);
+      });
+    });
+  </script>
 </body>
 </html>
