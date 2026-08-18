@@ -3,3 +3,5 @@
 .DS_Store
 .claude/.DS_Store
 __pycache__/
+graphify-out/.graphify_python
+graphify-out/.graphify_root
