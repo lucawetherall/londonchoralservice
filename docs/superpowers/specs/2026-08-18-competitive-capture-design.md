@@ -26,6 +26,7 @@ Point 3 is the strategic centre of this document, and it required repairing the 
 - **Comparisons against providers other than The London Funeral Singers.** The architecture extends to more, but each added competitor multiplies the fact-checking burden. One is enough to prove the model.
 - **Crematorium and borough landing pages.** High value, but a distinct programmatic project. Deferred, not dismissed.
 - **Any claim about the competitor beyond price, VAT treatment, and published package inclusions.** These three are the only things they publish in writing, and therefore the only things we can source.
+- **Comparison content anywhere in the B2B funnel.** `compare/` addresses families arranging a funeral. The `for-*.html` pages and `for-funeral-directors.html` keep their existing framing, carry no comparison, and neither link to it nor are linked from it.
 - **Cookie consent / Consent Mode v2.** Still ROADMAP R4. It limits conversion modelling but does not block this work.
 
 ---
@@ -50,7 +51,9 @@ LCS figures are the post-merge values from the `site-audit-improvements-47d735` 
 
 **The VAT point is load-bearing, and it is where the soloist comparison lives or dies.** £250 against £275 looks like a rounding difference. £250 against £330 does not. A family ringing round hears the pre-VAT number and forms an impression that the invoice then contradicts.
 
-**The honest qualifier, which must appear in the copy.** Alma Consort Ltd is not VAT-registered, so nothing is added to a LCS invoice and there is nothing to reclaim from one. A VAT-registered business buyer reclaims the VAT on a competitor's invoice, so for them the real comparison is £250 against £275 — 9%, not 24%. Families cannot reclaim, so the full gap is the correct figure on family-facing pages. Use the full gap on funeral and comparison pages; use ex-VAT figures on the `for-*.html` B2B pages.
+**Audience: families, and only families.** Alma Consort Ltd is not VAT-registered, so nothing is added to an LCS invoice. A family arranging a funeral cannot reclaim VAT from anyone, so the inc-VAT column is simply what they will pay, and the full gap is the correct figure to show them.
+
+Scoping the page this way is what keeps that figure honest. The `for-*.html` B2B pages keep their existing commercial framing, carry no comparison content, and do not link to `compare/` — a VAT-registered business buyer reclaims the VAT on a competitor's invoice, so the family-facing figures do not describe their position and must not be reused there.
 
 ### Repertoire allowance
 
@@ -133,7 +136,7 @@ A new top-level `compare/` directory rather than `music-guides/`. This is a comm
 
 1. **Opening.** Two or three sentences acknowledging that the reader is comparing quotes during a hard week, and stating plainly what the page contains. No hook, no marketing throat-clearing.
 2. **The price table.** Their published figure, the same figure with VAT, ours, the difference. Source link and retrieval date directly beneath.
-3. **The VAT explanation.** Why one quote says £275 and another says £250, and what each becomes on the invoice. Includes the business-buyer qualifier.
+3. **The VAT explanation.** Why one quote says £275 and another says £250, and what each becomes on the invoice.
 4. **Repertoire allowance.** The three-pieces-against-one table. This section carries the most weight and should come before any quality argument.
 5. **How the ensemble is put together.** The fixed-quartet argument — singers who rehearse together against four diaries booked for a Friday. The material already exists, well written, in [best-funeral-singers-london.html](../../../music-guides/best-funeral-singers-london.html); adapt rather than rewrite.
 6. **Listen.** The existing quartet recording of *Abide With Me* (`G9-R6k5n7Io`) embedded, plus *Anima Christi* (`ZVSQ2Ts4GZE`). IDs and durations are in `data/seo-fix-discovered-urls.yml`. This is the quality evidence; it is not decoration and belongs high on the page, not in a footer.
@@ -217,7 +220,7 @@ Binding rules for anything on `compare/`:
 3. **State the VAT basis on both sides,** every time a figure appears.
 4. **No adjectives about them.** Not "better", not "cheaper than they let on", nothing implying they mislead or overcharge. State what each includes; the reader draws the conclusion, and the conclusion is more persuasive for being theirs.
 5. **No claims about their musicians, their staff, or their quality.** Price, VAT, and published inclusions only.
-6. **The business-buyer qualifier stays in,** even though it weakens the headline. Omitting it would make the page misleading to a segment of its readers, which is precisely the failure mode the regulations describe.
+6. **The page addresses families, and every figure assumes a reader who cannot reclaim VAT** — which is true of every family arranging a funeral. This is what makes the inc-VAT comparison accurate rather than flattering. Do not reuse these figures, tables, or framing on the `for-*.html` B2B pages, and do not link to `compare/` from them.
 7. **House copy rules apply in full** — the `writing-site-copy` skill, loaded before writing any visible text. Funeral copy is restrained and practical. This page in particular must never read as a price war; the reader is bereaved and comparing quotes because they have to.
 
 ---
@@ -258,7 +261,7 @@ Five campaigns, in order of expected return.
 1. **Generic funeral, price-led.** "funeral singer london", "funeral choir hire london", "singer for funeral service", "funeral choir cost". RSA headlines led on *"From £250, nothing added"* and *"Three sung pieces included, not one"*. Landing: `funerals.html`, with the comparison page as a tested alternative. **This is where the budget goes.**
 2. **Call-only, short notice.** Funerals are urgent and a bereaved person at nine in the evening rings rather than fills in a form. Evening and weekend scheduling. Keywords around "short notice", "this week", "urgent".
 3. **Brand defence.** LCS brand terms, exact match, capped budget. Cheap insurance.
-4. **Conquest.** Competitor brand terms as keywords, landing on the comparison page. **Their trademark must not appear in ad text** — Google permits the mark as a keyword but restricts it in creative, and the owner can complain. The landing page does the naming; the ad does not. Expect low volume, high CPC, and a poor quality score. Worth running as a small line item, not as the strategy.
+4. **Conquest.** Competitor brand terms as keywords, landing on the comparison page. **Their trademark must not appear in ad text** — Google permits the mark as a keyword but restricts it in creative, and the owner can complain. The landing page does the naming; the ad does not. Negative-match trade terms ("funeral director", "for funeral directors", "trade", "supplier") so the campaign stays on the family audience the landing page is written for. Expect low volume, high CPC, and a poor quality score. Worth running as a small line item, not as the strategy.
 5. **Borough and crematorium geo.** Held until those landing pages exist.
 
 ### Before spend
