@@ -43,74 +43,32 @@
 
 ---
 
-## Task 1: Confirm prerequisites and finish the £215 sweep
+## Task 1: Record the pricing dependency
 
-The comparison page quotes £250 for a soloist. If the pricing branch has not merged, the site would state two different soloist prices at once. **This task gates everything else.**
+**Decision (2026-08-18):** build this branch against the £250 rates without waiting for `site-audit-improvements-47d735`, and gate the **merge** on that branch landing first.
+
+**Do not sweep `£215` to `£250` in this branch.** That branch is 140 files and 10,464 insertions — it rewrites `pricing.html`, `sitemap.xml`, `services.html`, `weddings.html`, and many `music-guides/` pages, and adds a new `partials/care-strip.html`. Editing the same price lines here would produce conflicts on every one of them for no benefit, since that branch is the authority on LCS prices.
+
+The consequence to hold in mind for every later task: **`pricing.html` in this working tree still says £215 while everything you write says £250.** That is expected and correct. It resolves at merge.
 
 **Files:**
-- Modify: `music-guides/funeral-music-costs.html`, `funerals.html`, `llms.txt` (confirm by grep, do not trust this list)
+- Modify: `docs/superpowers/plans/2026-08-18-competitive-capture.md` (tick this task only)
 
-- [ ] **Step 1: Confirm the pricing branch has merged**
-
-```bash
-grep -c 'From &pound;250' pricing.html
-```
-
-Expected: `3` (soloist, organist, instrumentalists rows).
-
-If this returns `0`, **stop**. `site-audit-improvements-47d735` has not merged. Do not continue; report the blocker.
-
-- [ ] **Step 2: Find every surviving £215**
+- [ ] **Step 1: Record the current state**
 
 ```bash
-grep -rn '£215\|&pound;215\|"215"' --include='*.html' --include='*.txt' .
+grep -c 'From &pound;250' pricing.html; grep -rc '&pound;215' pricing.html
 ```
 
-Expected: hits in `music-guides/funeral-music-costs.html` (×4, one inside a `FAQPage` answer), `funerals.html` (×1), `llms.txt` (×1). Treat the grep output as authoritative, not this list.
+Expected while the other branch is outstanding: `0` then a non-zero count. Note both numbers in your task report.
 
-- [ ] **Step 3: Replace them**
+- [ ] **Step 2: Confirm the merge gate is documented**
 
-Every `215` becomes `250`. The `FAQPage` answer and its visible counterpart must stay identical — Google requires parity between marked-up and visible FAQ text.
+The "Before merging this branch" section at the foot of this plan is the gate. Read it and confirm it covers the £215 sweep, the sitemap collision, and the footer/care-strip partial interaction.
 
-```bash
-python3 - <<'PYEOF'
-import glob
-files = glob.glob("*.html") + glob.glob("areas/*.html") + glob.glob("areas/**/*.html") \
-      + glob.glob("music-guides/*.html") + ["llms.txt"]
-pairs = [("&pound;215", "&pound;250"), ("£215", "£250"), ('"215"', '"250"'), ('"minPrice": "215"', '"minPrice": "250"')]
-total = 0
-for path in sorted(set(files)):
-    src = open(path, encoding="utf-8").read()
-    out = src
-    for old, new in pairs:
-        out = out.replace(old, new)
-    if out != src:
-        open(path, "w", encoding="utf-8").write(out)
-        n = sum(src.count(o) for o, _ in pairs)
-        print(f"{path}: {n}")
-        total += n
-print("TOTAL:", total)
-PYEOF
-```
+- [ ] **Step 3: No commit**
 
-- [ ] **Step 4: Verify nothing survives and the build is green**
-
-```bash
-grep -rn '£215\|&pound;215\|"215"' --include='*.html' --include='*.txt' . ; ./build.sh
-```
-
-Expected: no grep output, then `build.sh` prints its four counts and ends with `JSON-LD valid in 132 files checked.` and `Done.`
-
-- [ ] **Step 5: Commit**
-
-```bash
-git add -A
-git commit -m "fix(pricing): sweep residual £215 references to £250
-
-The pricing branch raised the single-musician rate but did not reach the
-cost guide, the funerals page, or llms.txt. FAQPage answers updated in
-step with their visible counterparts to preserve schema parity."
-```
+Nothing to commit. Move to Task 2.
 
 ---
 
@@ -225,7 +183,9 @@ for key, val in d['lcs_prices'].items():
 PYEOF
 ```
 
-Expected: `OK` for soloist (250), small_choir (1,150), quintet (1,400), sextet (1,600), full_choir (2,000), chorus (3,000), organist_added_to_choir (225), soloist_with_organist (450). Any `MISSING` means the YAML disagrees with `pricing.html`; fix the YAML, never the other way round.
+Expected **while `site-audit-improvements-47d735` is outstanding**: `OK` for small_choir (1,150), quintet (1,400), sextet (1,600), full_choir (2,000), chorus (3,000); `MISSING` for soloist (250), organist_standalone (250), organist_added_to_choir (225), soloist_with_organist (450), because this working tree still carries the old £215 rates.
+
+That is the expected state per Task 1. Record the output in your task report and continue — do **not** "fix" it by changing the YAML to £215, and do **not** edit `pricing.html`. After the pricing branch merges, this same command must return `OK` on every line; that check is in the merge gate at the foot of this plan.
 
 - [ ] **Step 4: Commit**
 
@@ -1195,7 +1155,51 @@ git commit -m "docs: record competitor-claim conventions and close out the progr
 - `./build.sh` exits 0 and ends with `Competitor claims valid across 1 compare/ page(s).`
 - `python3 tests/test_competitor_claims.py` reports `0 failure(s)`.
 - A hand-edited unsourced figure on the comparison page fails the build (verified in Task 4 step 3).
-- `grep -rn '£215' --include='*.html' --include='*.txt' .` is empty.
 - `grep -rn 'VAT' --include='for-*.html' .` is empty.
 - The comparison page is reachable from at least four hub pages and absent from the main nav.
 - No `for-*.html` page links to `compare/`.
+
+`£215` is **not** in this list. It is a merge-gate item, not a branch item — see below.
+
+---
+
+## Before merging this branch
+
+`site-audit-improvements-47d735` must merge **first**. It is 140 files and 10,464 insertions and is the authority on LCS prices. Until it lands, this branch says £250 while `pricing.html` says £215, which is the known and accepted state during development.
+
+Work through this after that branch has merged into `main` and `main` has been merged into this one.
+
+- [ ] **1. Confirm the new rates are present**
+
+```bash
+grep -c 'From &pound;250' pricing.html
+```
+
+Expected: `3`. If `0`, stop — the other branch has not landed and this branch must not merge.
+
+- [ ] **2. Confirm the YAML now agrees with pricing.html**
+
+Re-run Task 2 step 3. Every line must read `OK`. If any reads `MISSING`, the merged prices differ from what this branch assumed, and both `data/competitor-pricing.yml` and every figure on the comparison page need updating together.
+
+- [ ] **3. Sweep the residual £215**
+
+```bash
+grep -rn '£215\|&pound;215\|"215"' --include='*.html' --include='*.txt' .
+```
+
+Expect hits in `music-guides/funeral-music-costs.html` (including a `FAQPage` answer), `funerals.html`, and `llms.txt`. Replace each `215` with `250`. **`FAQPage` answers and their visible counterparts must change together** — Google requires parity.
+
+- [ ] **4. Check the three collision points**
+
+- **`sitemap.xml`** — the other branch rewrites ~180 lines. Confirm the `compare/london-funeral-singers.html` entry survived the merge and the file still parses: `python3 -c "import xml.dom.minidom; xml.dom.minidom.parse('sitemap.xml'); print('ok')"`
+- **`partials/care-strip.html`** — a new partial from that branch. Confirm the footer link added in Task 7 survived, and that the new partial did not displace it.
+- **`music-guides/`** — that branch edits many guides. Re-check the sections added in Tasks 8 and 9 are intact and not duplicated.
+
+- [ ] **5. Rebuild and run everything**
+
+```bash
+./build.sh && python3 tests/test_competitor_claims.py && \
+  grep -rn '£215\|&pound;215' --include='*.html' --include='*.txt' .
+```
+
+Expected: build green ending `Competitor claims valid across 1 compare/ page(s).`; `0 failure(s)`; no grep output.
