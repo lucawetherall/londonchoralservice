@@ -1165,11 +1165,13 @@ git commit -m "docs: record competitor-claim conventions and close out the progr
 
 ## Before merging this branch
 
+**COMPLETE — 2026-08-18.** `site-audit-improvements-47d735` merged as part of `origin/main` (3e8c19c), merged in here at ed02763. All gate items below verified; every checkbox ticked from a real run, not by inspection.
+
 `site-audit-improvements-47d735` must merge **first**. It is 140 files and 10,464 insertions and is the authority on LCS prices. Until it lands, this branch says £250 while `pricing.html` says £215, which is the known and accepted state during development.
 
 Work through this after that branch has merged into `main` and `main` has been merged into this one.
 
-- [ ] **1. Confirm the new rates are present**
+- [x] **1. Confirm the new rates are present**
 
 ```bash
 grep -c 'From &pound;250' pricing.html
@@ -1177,11 +1179,11 @@ grep -c 'From &pound;250' pricing.html
 
 Expected: `3`. If `0`, stop — the other branch has not landed and this branch must not merge.
 
-- [ ] **2. Confirm the YAML now agrees with pricing.html**
+- [x] **2. Confirm the YAML now agrees with pricing.html**
 
 Re-run Task 2 step 3. Every line must read `OK`. If any reads `MISSING`, the merged prices differ from what this branch assumed, and both `data/competitor-pricing.yml` and every figure on the comparison page need updating together.
 
-- [ ] **3. Sweep the residual £215**
+- [x] **3. Sweep the residual £215**
 
 ```bash
 grep -rn '£215\|&pound;215\|"215"' --include='*.html' --include='*.txt' .
@@ -1189,13 +1191,13 @@ grep -rn '£215\|&pound;215\|"215"' --include='*.html' --include='*.txt' .
 
 Expect hits in `music-guides/funeral-music-costs.html` (including a `FAQPage` answer), `funerals.html`, and `llms.txt`. Replace each `215` with `250`. **`FAQPage` answers and their visible counterparts must change together** — Google requires parity.
 
-- [ ] **4. Check the three collision points**
+- [x] **4. Check the three collision points**
 
 - **`sitemap.xml`** — the other branch rewrites ~180 lines. Confirm the `compare/london-funeral-singers.html` entry survived the merge and the file still parses: `python3 -c "import xml.dom.minidom; xml.dom.minidom.parse('sitemap.xml'); print('ok')"`
 - **`partials/care-strip.html`** — a new partial from that branch. Confirm the footer link added in Task 7 survived, and that the new partial did not displace it.
 - **`music-guides/`** — that branch edits many guides. Re-check the sections added in Tasks 8 and 9 are intact and not duplicated.
 
-- [ ] **5. Rebuild and run everything**
+- [x] **5. Rebuild and run everything**
 
 ```bash
 ./build.sh && python3 tests/test_competitor_claims.py && \
