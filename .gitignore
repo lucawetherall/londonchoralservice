@@ -2,3 +2,4 @@
 .superpowers/
 .DS_Store
 .claude/.DS_Store
+__pycache__/

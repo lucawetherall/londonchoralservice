@@ -26,6 +26,8 @@ The website of The London Choral Service (Alma Consort Ltd) — a choir-for-hire
 
 - Build + validate: `./build.sh`
 - JSON-LD check alone: `python3 validate_jsonld.py`
+- Competitor claim check alone: `python3 validate_competitor_claims.py`
+- Validator tests: `python3 tests/test_competitor_claims.py`
 - Local preview: `python3 -m http.server 8000`
 
 ## Conventions
@@ -36,6 +38,9 @@ The website of The London Choral Service (Alma Consort Ltd) — a choir-for-hire
 - UK English everywhere. All visible copy must pass the `writing-site-copy` skill.
 - GA4/Ads IDs `G-9FENN7VS0E` / `AW-17988388404`: the snippet is duplicated per page, *not* a partial — analytics changes are scripted site-wide sweeps (see `build-and-verify`).
 - Prices quoted anywhere must match `pricing.html`.
+- Competitor figures must match `data/competitor-pricing.yml`, quote the source verbatim, and carry a visible checked date. `build.sh` fails if a price on a `compare/` page is not derivable from that file. Re-check quarterly (`MANUAL-ACTIONS-REQUIRED.md` §11).
+- `compare/` addresses families. Never link to it from a `for-*.html` page or reuse its inc-VAT figures there — a VAT-registered business buyer reclaims VAT, so those figures do not describe their position.
+- **Alma Consort Ltd is not VAT-registered.** Never state or imply otherwise.
 - Forms POST to Web3Forms with an hCaptcha guard — don't remove the `h-captcha-response` check or the `botcheck` honeypot.
 
 ## Workflow

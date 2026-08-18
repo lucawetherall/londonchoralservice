@@ -10,7 +10,8 @@ files = (
     glob.glob('*.html') +
     glob.glob('areas/*.html') +
     glob.glob('areas/**/*.html') +
-    glob.glob('music-guides/*.html')
+    glob.glob('music-guides/*.html') +
+    glob.glob('compare/*.html')
 )
 
 errors = 0

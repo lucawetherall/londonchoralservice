@@ -1,0 +1,78 @@
+# Competitor pricing — source of truth for anything published under compare/
+#
+# Every figure carries the verbatim string it was taken from. validate_competitor_claims.py
+# hard-fails the build if a price appears on a compare/ page without a match here, and warns
+# when checked_date is more than 120 days old.
+#
+# Re-check quarterly. See MANUAL-ACTIONS-REQUIRED.md. Update checked_date and the page in the
+# same commit — a figure and its date must never disagree.
+#
+# vat_rate is the UK standard rate used to derive inc-VAT figures for family-facing copy.
+# Families cannot reclaim VAT, so the inc-VAT column is what they actually pay.
+
+vat_rate: 0.20
+
+providers:
+  london-funeral-singers:
+    name: "The London Funeral Singers"
+    url: "https://www.londonfuneralsingers.co.uk/"
+    pricing_url: "https://www.londonfuneralsingers.co.uk/pricing"
+    checked_date: "2026-08-18"
+    vat_treatment: "quoted excluding VAT"
+    travel: "Travel charges apply outside of London"
+    packages:
+      soloist:
+        price_ex_vat: 275
+        source_quote: "Soloist: From £275 + VAT"
+        includes: "One solo performance piece; Congregation leading - up to three hymns"
+      organist:
+        price_ex_vat: 275
+        source_quote: "Organist: £275 + VAT"
+        includes: "Professional accompaniment for hymns with rehearsal"
+      instrumentalists:
+        price_ex_vat: 275
+        source_quote: "Instrumentalists: Starting at £275 + VAT"
+        includes: "Pianists, string quartets, harpists, bugle players"
+      small_choir:
+        price_ex_vat: 1400
+        source_quote: "Small Choir: £1,400 + VAT"
+        includes: "Four singers; One performance piece; Leading the congregation - up to three hymns"
+      full_choir:
+        price_ex_vat: 2400
+        source_quote: "Full Choir: £2,400 + VAT"
+        includes: "Eight singers; One performance piece; Leading the congregation - up to three hymns"
+      chorus:
+        price_ex_vat: 4000
+        source_quote: "Chorus: £4,000 + VAT"
+        includes: "Twelve singers; Two performance pieces; Leading the congregation - up to four hymns; organist-conductor"
+
+# LCS figures are mirrored here only so the validator can whitelist them on comparison pages.
+# pricing.html remains the source of truth for LCS prices; these must match it.
+lcs_prices:
+  soloist: 250
+  organist_standalone: 250
+  organist_added_to_choir: 225
+  soloist_with_organist: 450
+  small_choir: 1150
+  quintet: 1400
+  sextet: 1600
+  full_choir: 2000
+  chorus: 3000
+
+# Every combination total and saving the comparison page is allowed to print.
+# The validator accepts NOTHING beyond the figures above plus this list, so a new
+# number on the page means adding it here with a note explaining the arithmetic.
+# Deliberately explicit: deriving these by summing and subtracting the base prices
+# would admit thousands of values and let a wrong figure through by coincidence.
+derived_figures:
+  550:  "LFS soloist + organist, ex VAT (275 + 275)"
+  660:  "LFS soloist + organist, inc VAT (330 + 330)"
+  1675: "LFS small choir + organist, ex VAT (1400 + 275)"
+  2010: "LFS small choir + organist, inc VAT (1680 + 330)"
+  1375: "LCS small choir + organist (1150 + 225)"
+  80:   "Saving on a soloist (330 - 250)"
+  210:  "Saving on soloist with organist (660 - 450)"
+  530:  "Saving on a small choir (1680 - 1150)"
+  635:  "Saving on small choir with organist (2010 - 1375)"
+  880:  "Saving on a full choir (2880 - 2000)"
+  1800: "Saving on a chorus (4800 - 3000)"
