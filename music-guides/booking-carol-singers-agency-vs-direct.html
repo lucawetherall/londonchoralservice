@@ -1817,6 +1817,76 @@
         grid-template-columns: 1fr;
       }
     }
+    
+    /* ── Value block: "Included with every booking" ───────────────────── */
+    .included-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .included-list li {
+      display: flex;
+      gap: var(--space-sm);
+      align-items: flex-start;
+      padding-block: var(--space-sm);
+      border-block-end: 1px solid var(--color-rule);
+    }
+    .included-list li:last-child {
+      border-block-end: 0;
+    }
+    .included-list .tick {
+      flex: none;
+      width: 1.4rem;
+      height: 1.4rem;
+      border-radius: 50%;
+      background: var(--color-bg-alt);
+      color: var(--color-accent);
+      display: grid;
+      place-items: center;
+      font-size: 0.8rem;
+      margin-block-start: 0.15rem;
+    }
+    .included-price {
+      margin-block-start: var(--space-lg);
+      color: var(--color-text-mid);
+    }
+    .included-price strong {
+      font-family: var(--font-heading);
+      font-weight: 600;
+      font-size: 1.2rem;
+      color: var(--color-accent);
+    }
+    
+    /* ── Care strip: "We take the whole thing off your hands" ──────────── */
+    .care-steps {
+      list-style: none;
+      padding: 0;
+      margin-block: var(--space-lg);
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: var(--space-lg);
+    }
+    .care-steps .n {
+      display: block;
+      font-family: var(--font-heading);
+      font-weight: 600;
+      font-size: 2rem;
+      line-height: 1;
+      color: var(--color-accent);
+    }
+    .care-steps h3 {
+      font-size: 1.15rem;
+      margin-block: var(--space-xs) var(--space-xs);
+    }
+    .care-steps p {
+      margin: 0;
+      color: var(--color-text-mid);
+    }
+    @media (max-width: 599px) {
+      .care-steps {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
     /* ═══════════════════════════════════
        Print Styles
        ═══════════════════════════════════ */
@@ -1913,7 +1983,7 @@
         "url": "https://londonchoralservice.com/music-guides/booking-carol-singers-agency-vs-direct.html",
         "inLanguage": "en-GB",
         "datePublished": "2026-07-29",
-        "dateModified": "2026-07-29",
+        "dateModified": "2026-08-18",
         "description": "Booking carol singers through an agency or direct with a choir: how each route works, what a listing cannot tell you, and the questions to ask either way.",
         "author": [
           {
@@ -2153,7 +2223,7 @@
         <div class="prose">
           <h2>Price transparency</h2>
           <p>Typical agency carol-group bookings run to around four figures, which is the right order of magnitude for four to six professional singers for an evening. The trouble with comparing quotes is that the headline number and the invoice number are not always the same: travel, VAT, and platform fees sit inside some quotes and outside others.</p>
-          <p>Ours are published on the <a href="../pricing.html">pricing page</a>. A Small Choir of four is &pound;1,150, a quintet &pound;1,400, a sextet &pound;1,600, a full choir of eight &pound;2,000, and a twelve-voice chorus &pound;3,000; a soloist is &pound;215. Those figures include all taxes and fees, and travel within Greater London. They do not go up for December&thinsp;&mdash;&thinsp;we charge no Christmas uplift. Christmas Eve and Christmas Day carry a premium, typically around 25 per cent, confirmed in your written quote before you commit to anything.</p>
+          <p>Ours are published on the <a href="../pricing.html">pricing page</a>. A Small Choir of four is &pound;1,150, a quintet &pound;1,400, a sextet &pound;1,600, a full choir of eight &pound;2,000, and a twelve-voice chorus &pound;3,000; a soloist is &pound;250. Those figures include all taxes and fees, and travel within Greater London. They do not go up for December&thinsp;&mdash;&thinsp;we charge no Christmas uplift. Christmas Eve and Christmas Day carry a premium, typically around 25 per cent, confirmed in your written quote before you commit to anything.</p>
           <p>If you are weighing us against a quote from a platform, the useful exercise is to put both totals on the same all-in basis and then ask both providers the five questions above.</p>
         </div>
       </section>
@@ -2229,6 +2299,8 @@
         Christmas: <a href="/christmas.html">Carol services</a> &middot; <a href="/carol-singers.html">Hire carol singers</a>
       </p>
       <p class="text-xs text-mid">
+        <a href="/faq.html">FAQ</a>
+        &ensp;|&ensp;
         <a href="/privacy.html">Privacy policy</a>
       </p>
       <p class="text-xs text-mid">The London Choral Service is the operating name of Alma Consort Ltd. Based in London, serving the whole of the United Kingdom.</p>

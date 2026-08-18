@@ -1815,6 +1815,76 @@
         grid-template-columns: 1fr;
       }
     }
+    
+    /* ── Value block: "Included with every booking" ───────────────────── */
+    .included-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .included-list li {
+      display: flex;
+      gap: var(--space-sm);
+      align-items: flex-start;
+      padding-block: var(--space-sm);
+      border-block-end: 1px solid var(--color-rule);
+    }
+    .included-list li:last-child {
+      border-block-end: 0;
+    }
+    .included-list .tick {
+      flex: none;
+      width: 1.4rem;
+      height: 1.4rem;
+      border-radius: 50%;
+      background: var(--color-bg-alt);
+      color: var(--color-accent);
+      display: grid;
+      place-items: center;
+      font-size: 0.8rem;
+      margin-block-start: 0.15rem;
+    }
+    .included-price {
+      margin-block-start: var(--space-lg);
+      color: var(--color-text-mid);
+    }
+    .included-price strong {
+      font-family: var(--font-heading);
+      font-weight: 600;
+      font-size: 1.2rem;
+      color: var(--color-accent);
+    }
+    
+    /* ── Care strip: "We take the whole thing off your hands" ──────────── */
+    .care-steps {
+      list-style: none;
+      padding: 0;
+      margin-block: var(--space-lg);
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: var(--space-lg);
+    }
+    .care-steps .n {
+      display: block;
+      font-family: var(--font-heading);
+      font-weight: 600;
+      font-size: 2rem;
+      line-height: 1;
+      color: var(--color-accent);
+    }
+    .care-steps h3 {
+      font-size: 1.15rem;
+      margin-block: var(--space-xs) var(--space-xs);
+    }
+    .care-steps p {
+      margin: 0;
+      color: var(--color-text-mid);
+    }
+    @media (max-width: 599px) {
+      .care-steps {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
     /* ═══════════════════════════════════
        Print Styles
        ═══════════════════════════════════ */
@@ -1968,7 +2038,7 @@
             "name": "How much does a funeral singer cost in Liverpool?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "A solo funeral singer in Liverpool starts from £215. A small choir of four voices starts from £1,150, a quintet from £1,400, a sextet from £1,600, and a full choir of eight from £2,000. Travel costs may apply for services across Merseyside, including Wirral, Sefton, Knowsley, and St Helens."
+              "text": "A solo funeral singer in Liverpool starts from £250. A small choir of four voices starts from £1,150, a quintet from £1,400, a sextet from £1,600, and a full choir of eight from £2,000. Travel costs may apply for services across Merseyside, including Wirral, Sefton, Knowsley, and St Helens."
             }
           },
           {
@@ -2098,7 +2168,7 @@
         <h2>Frequently asked questions</h2>
         
         <h3>How much does a funeral singer cost in Liverpool?</h3>
-        <p>A solo funeral singer in Liverpool starts from &pound;215. A small choir of four voices starts from &pound;1,150, a quintet from &pound;1,400, a sextet from &pound;1,600, and a full choir of eight from &pound;2,000. Travel costs may apply for services across Merseyside, including Wirral, Sefton, Knowsley, and St Helens.</p>
+        <p>A solo funeral singer in Liverpool starts from &pound;250. A small choir of four voices starts from &pound;1,150, a quintet from &pound;1,400, a sextet from &pound;1,600, and a full choir of eight from &pound;2,000. Travel costs may apply for services across Merseyside, including Wirral, Sefton, Knowsley, and St Helens.</p>
 
         <h3>Can you provide a choir for a wedding in Liverpool?</h3>
         <p>Of course. Our choirs and soloists perform at weddings in Liverpool Cathedral, the Metropolitan Cathedral of Christ the King, and at intimate churches in Woolton, Aigburth, and Crosby, as well as waterfront venues along the Pier Head. Ensembles range from a solo vocalist to a full twelve-voice chorus.</p>
@@ -2140,6 +2210,8 @@
         Christmas: <a href="/christmas.html">Carol services</a> &middot; <a href="/carol-singers.html">Hire carol singers</a>
       </p>
       <p class="text-xs text-mid">
+        <a href="/faq.html">FAQ</a>
+        &ensp;|&ensp;
         <a href="/privacy.html">Privacy policy</a>
       </p>
       <p class="text-xs text-mid">The London Choral Service is the operating name of Alma Consort Ltd. Based in London, serving the whole of the United Kingdom.</p>

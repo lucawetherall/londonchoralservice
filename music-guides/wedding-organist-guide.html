@@ -1817,6 +1817,76 @@
         grid-template-columns: 1fr;
       }
     }
+    
+    /* ── Value block: "Included with every booking" ───────────────────── */
+    .included-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .included-list li {
+      display: flex;
+      gap: var(--space-sm);
+      align-items: flex-start;
+      padding-block: var(--space-sm);
+      border-block-end: 1px solid var(--color-rule);
+    }
+    .included-list li:last-child {
+      border-block-end: 0;
+    }
+    .included-list .tick {
+      flex: none;
+      width: 1.4rem;
+      height: 1.4rem;
+      border-radius: 50%;
+      background: var(--color-bg-alt);
+      color: var(--color-accent);
+      display: grid;
+      place-items: center;
+      font-size: 0.8rem;
+      margin-block-start: 0.15rem;
+    }
+    .included-price {
+      margin-block-start: var(--space-lg);
+      color: var(--color-text-mid);
+    }
+    .included-price strong {
+      font-family: var(--font-heading);
+      font-weight: 600;
+      font-size: 1.2rem;
+      color: var(--color-accent);
+    }
+    
+    /* ── Care strip: "We take the whole thing off your hands" ──────────── */
+    .care-steps {
+      list-style: none;
+      padding: 0;
+      margin-block: var(--space-lg);
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: var(--space-lg);
+    }
+    .care-steps .n {
+      display: block;
+      font-family: var(--font-heading);
+      font-weight: 600;
+      font-size: 2rem;
+      line-height: 1;
+      color: var(--color-accent);
+    }
+    .care-steps h3 {
+      font-size: 1.15rem;
+      margin-block: var(--space-xs) var(--space-xs);
+    }
+    .care-steps p {
+      margin: 0;
+      color: var(--color-text-mid);
+    }
+    @media (max-width: 599px) {
+      .care-steps {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
     /* ═══════════════════════════════════
        Print Styles
        ═══════════════════════════════════ */
@@ -1913,7 +1983,7 @@
         "url": "https://londonchoralservice.com/music-guides/wedding-organist-guide.html",
         "inLanguage": "en-GB",
         "datePublished": "2026-03-04",
-        "dateModified": "2026-03-04",
+        "dateModified": "2026-08-18",
         "description": "Everything you need to know about booking an organist for your wedding — repertoire, fees, and how to find the right player for your church.",
         "author": [
           {
@@ -1993,7 +2063,7 @@
             "name": "How much does a wedding organist cost?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "A professional wedding organist typically costs from £215. This covers the prelude, hymn accompaniment, music during the signing of the register, and the recessional."
+              "text": "A professional wedding organist typically costs from £250. This covers the prelude, hymn accompaniment, music during the signing of the register, and the recessional."
             }
           },
           {
@@ -2173,7 +2243,7 @@
         <div class="prose">
           <h2>What does a wedding organist cost?</h2>
           <p>Fees vary, but here is a realistic picture of what to expect.</p>
-          <p>A professional organist&thinsp;&mdash;&thinsp;someone with conservatoire training, a broad repertoire, and real experience of playing at weddings&thinsp;&mdash;&thinsp;typically charges from around <strong>&pound;215</strong>. That fee usually covers preparation time (learning or brushing up on your chosen pieces), travel to the venue, arrival well before the ceremony to check the instrument, and the performance itself from prelude through to recessional.</p>
+          <p>A professional organist&thinsp;&mdash;&thinsp;someone with conservatoire training, a broad repertoire, and real experience of playing at weddings&thinsp;&mdash;&thinsp;typically charges from around <strong>&pound;250</strong>. That fee usually covers preparation time (learning or brushing up on your chosen pieces), travel to the venue, arrival well before the ceremony to check the instrument, and the performance itself from prelude through to recessional.</p>
           <p>What you get for that fee is not just someone pressing keys. You get a musician who knows how to pace a ceremony, who can adapt if the bride is a few minutes late or the vicar adds an unscripted prayer, and who understands how to draw the best possible sound from whatever instrument is in front of them. That level of professionalism is worth paying for.</p>
           <p>On top of the organist&rsquo;s own fee, many churches charge a separate organist fee as part of their standard wedding costs. This typically ranges from <strong>&pound;100 to &pound;200</strong> and is payable to the church, not to the player. It may apply even if you bring in your own organist rather than using the church&rsquo;s resident musician. It&rsquo;s worth asking the church about this early so there are no surprises.</p>
           <p>For a broader picture of what wedding music costs&thinsp;&mdash;&thinsp;including choirs, soloists, and other instrumentalists&thinsp;&mdash;&thinsp;see our <a href="wedding-music-costs.html">wedding music costs guide</a> and our <a href="../pricing.html">pricing page</a>, where everything is set out clearly with no hidden extras.</p>
@@ -2184,7 +2254,7 @@
         <div class="prose">
           <h2>Frequently asked questions</h2>
           <h3>How much does a wedding organist cost?</h3>
-          <p>A professional wedding organist typically costs from £215. This covers the prelude, hymn accompaniment, music during the signing of the register, and the recessional.</p>
+          <p>A professional wedding organist typically costs from £250. This covers the prelude, hymn accompaniment, music during the signing of the register, and the recessional.</p>
           <h3>Does the church provide an organist?</h3>
           <p>Some churches have a resident organist who may be available for weddings, though this varies by parish. Many couples choose to bring in an external organist to ensure a high standard of playing and a wider repertoire.</p>
           <h3>When should I book a wedding organist?</h3>
@@ -2248,6 +2318,8 @@
         Christmas: <a href="/christmas.html">Carol services</a> &middot; <a href="/carol-singers.html">Hire carol singers</a>
       </p>
       <p class="text-xs text-mid">
+        <a href="/faq.html">FAQ</a>
+        &ensp;|&ensp;
         <a href="/privacy.html">Privacy policy</a>
       </p>
       <p class="text-xs text-mid">The London Choral Service is the operating name of Alma Consort Ltd. Based in London, serving the whole of the United Kingdom.</p>
