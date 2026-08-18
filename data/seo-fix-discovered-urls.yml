@@ -36,6 +36,7 @@ videos:
     title: "Abide With Me (Eventide)"
     upload_date: "2026-04-02"  # verified via ytInitialPlayerResponse 2026-08-15
     duration: "PT1M2S"
+    # Also embedded on: compare/london-funeral-singers.html
   - page: "listen.html"
     position: 2
     youtube_id: "nasqXWlbf1g"
@@ -71,7 +72,8 @@ videos:
     duration: "PT2M41S"
     # Also embedded on: music-guides/anima-christi-catholic-wedding.html,
     # music-guides/anima-christi-catholic-funeral.html,
-    # music-guides/catholic-funeral-hymns.html
+    # music-guides/catholic-funeral-hymns.html,
+    # compare/london-funeral-singers.html
 
 geo_areas:
   westminster: [51.49594, -0.13495]
