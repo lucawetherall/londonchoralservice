@@ -803,11 +803,11 @@ Under `## Main Pages`:
 - [London Funeral Singers Comparison](https://londonchoralservice.com/compare/london-funeral-singers.html): How our funeral singer prices and repertoire compare with The London Funeral Singers — sourced figures, VAT treatment, and what each package includes
 ```
 
-- [ ] **Step 3: Add the footer link**
+- [ ] **Step 3: No footer link** *(revised during execution, 2026-08-18)*
 
-Edit `partials/footer.html`, not the expanded copies. Put it alongside the existing footer links, not in a new prominent block.
+The original plan called for a link in `partials/footer.html`. **Do not add one.** The footer is a global partial, so the link lands on all 133 pages including every `for-*.html` B2B page — which §Non-goals explicitly excludes, because a VAT-registered business buyer reclaims VAT and the page's inc-VAT figures do not describe their position. A global partial cannot honour a per-page exclusion.
 
-**This is a partial edit, so `./build.sh` is mandatory** and will rewrite ~132 files.
+A comparison page is also not footer furniture: the footer carries navigation, contact, areas, and legal. The four contextual links in Step 4 sit on the funeral funnel where the page belongs, and the sitemap entry covers discovery.
 
 - [ ] **Step 4: Add body links from four pages**
 
