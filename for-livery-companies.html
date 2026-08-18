@@ -1815,6 +1815,76 @@
         grid-template-columns: 1fr;
       }
     }
+    
+    /* ── Value block: "Included with every booking" ───────────────────── */
+    .included-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .included-list li {
+      display: flex;
+      gap: var(--space-sm);
+      align-items: flex-start;
+      padding-block: var(--space-sm);
+      border-block-end: 1px solid var(--color-rule);
+    }
+    .included-list li:last-child {
+      border-block-end: 0;
+    }
+    .included-list .tick {
+      flex: none;
+      width: 1.4rem;
+      height: 1.4rem;
+      border-radius: 50%;
+      background: var(--color-bg-alt);
+      color: var(--color-accent);
+      display: grid;
+      place-items: center;
+      font-size: 0.8rem;
+      margin-block-start: 0.15rem;
+    }
+    .included-price {
+      margin-block-start: var(--space-lg);
+      color: var(--color-text-mid);
+    }
+    .included-price strong {
+      font-family: var(--font-heading);
+      font-weight: 600;
+      font-size: 1.2rem;
+      color: var(--color-accent);
+    }
+    
+    /* ── Care strip: "We take the whole thing off your hands" ──────────── */
+    .care-steps {
+      list-style: none;
+      padding: 0;
+      margin-block: var(--space-lg);
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: var(--space-lg);
+    }
+    .care-steps .n {
+      display: block;
+      font-family: var(--font-heading);
+      font-weight: 600;
+      font-size: 2rem;
+      line-height: 1;
+      color: var(--color-accent);
+    }
+    .care-steps h3 {
+      font-size: 1.15rem;
+      margin-block: var(--space-xs) var(--space-xs);
+    }
+    .care-steps p {
+      margin: 0;
+      color: var(--color-text-mid);
+    }
+    @media (max-width: 599px) {
+      .care-steps {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
     /* ═══════════════════════════════════
        Print Styles
        ═══════════════════════════════════ */
@@ -1911,7 +1981,7 @@
         "serviceType": "Christmas Carol Services",
         "description": "Professional choirs and organists for City of London livery companies: carol services in livery halls and City churches, Nine Lessons and Carols, and sung grace at Christmas court dinners and banquets. Invoiced by Alma Consort Ltd on 30-day terms, \u00a35m public liability cover.",
         "url": "https://londonchoralservice.com/for-livery-companies.html",
-        "dateModified": "2026-07-29",
+        "dateModified": "2026-08-18",
         "priceRange": "\u00a3215\u2013\u00a33,000",
         "provider": {
           "@type": "LocalBusiness",
@@ -1956,7 +2026,7 @@
             "name": "Can you sing a full Nine Lessons and Carols with an organist in a City church?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Yes. A Full Choir of eight singers with an organist is the usual shape for it, and the organist is booked as part of the same quote (from £215). We work to your order of service: nine readings, the congregational carols between them, and the pieces you want the choir to sing alone."
+              "text": "Yes. A Full Choir of eight singers with an organist is the usual shape for it, and the organist is booked as part of the same quote (from £225). We work to your order of service: nine readings, the congregational carols between them, and the pieces you want the choir to sing alone."
             }
           },
           {
@@ -2084,7 +2154,7 @@
         <h2>How we work with livery companies</h2>
         <p>Send us the date, the hall or the church, whether the building has a playable organ, and the numbers you expect. A written quote comes back within 24 hours with a suggested ensemble, two or three programme options, and a running order the Clerk can put in front of the Court.</p>
         <p>Ensemble size follows the room. A Small Choir of four covers grace at dinner and a short set of carols in the hall. A Full Choir of eight with an organist is the usual shape for a service in a City church. Where the church is large and the congregation sings, the twelve-voice Chorus leads the carols and still has the weight for a descant on the last verse.</p>
-        <p>Accompaniment follows the building. If the church has a pipe organ we send an organist who knows that kind of instrument, from &pound;215. Halls without an instrument are straightforward, because the choir sings unaccompanied and needs no power supply and no amplification. For a drinks reception or a dinner we can also provide a pianist, including a package where the piano plays quietly between the choir&rsquo;s sets.</p>
+        <p>Accompaniment follows the building. If the church has a pipe organ we send an organist who knows that kind of instrument, from &pound;250. Halls without an instrument are straightforward, because the choir sings unaccompanied and needs no power supply and no amplification. For a drinks reception or a dinner we can also provide a pianist, including a package where the piano plays quietly between the choir&rsquo;s sets.</p>
         <p>Lead times are the one thing worth acting on early. We close December out by mid&#8209;September every year, so a service in the second week of December is best confirmed as soon as the Court fixes the date. Christmas Eve and Christmas Day are bookable; both carry a premium, which we confirm in the written quote rather than adding later.</p>
       </div>
     </section>
@@ -2130,7 +2200,7 @@
         <h2>Frequently asked questions</h2>
 
         <h3>Can you sing a full Nine Lessons and Carols with an organist in a City church?</h3>
-        <p>Yes. A Full Choir of eight singers with an organist is the usual shape for it, and the organist is booked as part of the same quote (from &pound;215). We work to your order of service: nine readings, the congregational carols between them, and the pieces you want the choir to sing alone.</p>
+        <p>Yes. A Full Choir of eight singers with an organist is the usual shape for it, and the organist is booked as part of the same quote (from &pound;225). We work to your order of service: nine readings, the congregational carols between them, and the pieces you want the choir to sing alone.</p>
 
         <h3>Can the choir sing grace at a Christmas court dinner?</h3>
         <p>Yes. We sing a traditional grace setting, and if the company has its own grace, or a setting it has used for years, send it over and we learn it. Four singers are enough for grace in most halls, and the same four can perform a set of carols later in the evening.</p>
@@ -2241,6 +2311,8 @@
         Christmas: <a href="/christmas.html">Carol services</a> &middot; <a href="/carol-singers.html">Hire carol singers</a>
       </p>
       <p class="text-xs text-mid">
+        <a href="/faq.html">FAQ</a>
+        &ensp;|&ensp;
         <a href="/privacy.html">Privacy policy</a>
       </p>
       <p class="text-xs text-mid">The London Choral Service is the operating name of Alma Consort Ltd. Based in London, serving the whole of the United Kingdom.</p>

@@ -1812,6 +1812,76 @@
         grid-template-columns: 1fr;
       }
     }
+    
+    /* ── Value block: "Included with every booking" ───────────────────── */
+    .included-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .included-list li {
+      display: flex;
+      gap: var(--space-sm);
+      align-items: flex-start;
+      padding-block: var(--space-sm);
+      border-block-end: 1px solid var(--color-rule);
+    }
+    .included-list li:last-child {
+      border-block-end: 0;
+    }
+    .included-list .tick {
+      flex: none;
+      width: 1.4rem;
+      height: 1.4rem;
+      border-radius: 50%;
+      background: var(--color-bg-alt);
+      color: var(--color-accent);
+      display: grid;
+      place-items: center;
+      font-size: 0.8rem;
+      margin-block-start: 0.15rem;
+    }
+    .included-price {
+      margin-block-start: var(--space-lg);
+      color: var(--color-text-mid);
+    }
+    .included-price strong {
+      font-family: var(--font-heading);
+      font-weight: 600;
+      font-size: 1.2rem;
+      color: var(--color-accent);
+    }
+    
+    /* ── Care strip: "We take the whole thing off your hands" ──────────── */
+    .care-steps {
+      list-style: none;
+      padding: 0;
+      margin-block: var(--space-lg);
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: var(--space-lg);
+    }
+    .care-steps .n {
+      display: block;
+      font-family: var(--font-heading);
+      font-weight: 600;
+      font-size: 2rem;
+      line-height: 1;
+      color: var(--color-accent);
+    }
+    .care-steps h3 {
+      font-size: 1.15rem;
+      margin-block: var(--space-xs) var(--space-xs);
+    }
+    .care-steps p {
+      margin: 0;
+      color: var(--color-text-mid);
+    }
+    @media (max-width: 599px) {
+      .care-steps {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
     /* ═══════════════════════════════════
        Print Styles
        ═══════════════════════════════════ */
@@ -2185,7 +2255,7 @@
       <section class="section">
         <div class="prose">
           <h2>Let us plan your carol service</h2>
-          <p>We organise corporate carol services for companies of every size, from intimate gatherings of thirty people in a City chapel to large-scale events for several hundred guests in major London churches. We provide a handpicked team of professional singers and instrumentalists, help you choose the music and the readings, liaise with the venue, and manage the logistics on the day. You can also explore our <a href="company-christmas-party-entertainment.html">guide to company Christmas entertainment</a> and our full <a href="../services.html">range of services</a> to see how we can help.</p>
+          <p>We organise corporate carol services for companies of every size, from intimate gatherings of thirty people in a City chapel to large-scale events for several hundred guests in major London churches. We provide a handpicked team of professional singers and instrumentalists, help you choose the music and the readings, liaise with the venue, and manage the logistics on the day. You can also explore our <a href="company-christmas-party-entertainment.html">guide to company Christmas entertainment</a>, our <a href="../corporate.html">corporate music</a> page, and our full <a href="../services.html">range of services</a> to see how we can help.</p>
           <p>If you&rsquo;re considering a carol service for your organisation this Christmas, the best time to start the conversation is now. We&rsquo;ll talk you through the options, answer your questions, and give you a clear idea of what&rsquo;s involved&thinsp;&mdash;&thinsp;with no obligation at all.</p>
           <p><a href="../christmas.html" class="btn-link">Get in touch about your Christmas event</a></p>
         </div>
@@ -2238,6 +2308,8 @@
         Christmas: <a href="/christmas.html">Carol services</a> &middot; <a href="/carol-singers.html">Hire carol singers</a>
       </p>
       <p class="text-xs text-mid">
+        <a href="/faq.html">FAQ</a>
+        &ensp;|&ensp;
         <a href="/privacy.html">Privacy policy</a>
       </p>
       <p class="text-xs text-mid">The London Choral Service is the operating name of Alma Consort Ltd. Based in London, serving the whole of the United Kingdom.</p>

@@ -1815,6 +1815,76 @@
         grid-template-columns: 1fr;
       }
     }
+    
+    /* ── Value block: "Included with every booking" ───────────────────── */
+    .included-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .included-list li {
+      display: flex;
+      gap: var(--space-sm);
+      align-items: flex-start;
+      padding-block: var(--space-sm);
+      border-block-end: 1px solid var(--color-rule);
+    }
+    .included-list li:last-child {
+      border-block-end: 0;
+    }
+    .included-list .tick {
+      flex: none;
+      width: 1.4rem;
+      height: 1.4rem;
+      border-radius: 50%;
+      background: var(--color-bg-alt);
+      color: var(--color-accent);
+      display: grid;
+      place-items: center;
+      font-size: 0.8rem;
+      margin-block-start: 0.15rem;
+    }
+    .included-price {
+      margin-block-start: var(--space-lg);
+      color: var(--color-text-mid);
+    }
+    .included-price strong {
+      font-family: var(--font-heading);
+      font-weight: 600;
+      font-size: 1.2rem;
+      color: var(--color-accent);
+    }
+    
+    /* ── Care strip: "We take the whole thing off your hands" ──────────── */
+    .care-steps {
+      list-style: none;
+      padding: 0;
+      margin-block: var(--space-lg);
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: var(--space-lg);
+    }
+    .care-steps .n {
+      display: block;
+      font-family: var(--font-heading);
+      font-weight: 600;
+      font-size: 2rem;
+      line-height: 1;
+      color: var(--color-accent);
+    }
+    .care-steps h3 {
+      font-size: 1.15rem;
+      margin-block: var(--space-xs) var(--space-xs);
+    }
+    .care-steps p {
+      margin: 0;
+      color: var(--color-text-mid);
+    }
+    @media (max-width: 599px) {
+      .care-steps {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
     /* ═══════════════════════════════════
        Print Styles
        ═══════════════════════════════════ */
@@ -1909,7 +1979,7 @@
         "@type": "Service",
         "name": "Funeral Music",
         "serviceType": "Funeral Music",
-        "dateModified": "2026-05-08",
+        "dateModified": "2026-08-18",
         "description": "Professional singers and choirs for funeral services across the United Kingdom.",
         "url": "https://londonchoralservice.com/funerals.html",
         "provider": {
@@ -1922,7 +1992,7 @@
         },
         "offers": {
           "@type": "AggregateOffer",
-          "lowPrice": "215",
+          "lowPrice": "250",
           "highPrice": "3000",
           "priceCurrency": "GBP",
           "priceValidUntil": "2027-12-31"
@@ -1941,6 +2011,43 @@
             "@type": "ListItem",
             "position": 2,
             "name": "Funerals"
+          }
+        ]
+      },
+      {
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "How much notice do you need for a funeral?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "We take bookings at short notice and confirm availability the same day. Most funerals come to us with one or two weeks' notice, and we have covered services booked within forty-eight hours. Tell us the date and we will tell you straight away whether we can be there."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Can you sing at a crematorium as well as a church?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes. We sing at crematoria, churches, cemetery chapels, and woodland burial sites across the UK. A soloist or small group suits the shorter crematorium slot; a larger choir suits a church service with hymns. We match the ensemble to the venue and the time you have."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Can you learn a song the family has asked for?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes. If a piece mattered to the person who died, we prepare it, whether it is a hymn, a pop song, or something from the classical repertoire. Send us the song and we arrange it for the voices you have booked."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Will the singers lead the hymns so guests feel confident?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "That is one of the main reasons families book us. Trained voices carry the melody, so a congregation that half-remembers a hymn will still join in. It is the difference between a silent room and one that sings."
+            }
           }
         ]
       }
@@ -2023,6 +2130,21 @@
         </div>
       </div>
     </section>
+
+        <section class="section">
+          <div class="prose">
+            <h2>Included with every booking</h2>
+            <p class="lede">One flat price, and a team chosen for your occasion.</p>
+            <ul class="included-list">
+              <li><span class="tick" aria-hidden="true">&#10003;</span><span>A one-to-one music consultation with our Artistic Director, Luca Wetherall (Tutor in Music, University of Oxford), who plans your repertoire with you.</span></li>
+              <li><span class="tick" aria-hidden="true">&#10003;</span><span>A handpicked ensemble, matched to your occasion. We choose every singer for you, never send whoever is free from a rota.</span></li>
+              <li><span class="tick" aria-hidden="true">&#10003;</span><span>All rehearsals, preparation, and sheet music.</span></li>
+              <li><span class="tick" aria-hidden="true">&#10003;</span><span>We coordinate with your venue and funeral director.</span></li>
+              <li><span class="tick" aria-hidden="true">&#10003;</span><span>A written quote, confirmed before you commit. No hidden fees.</span></li>
+            </ul>
+            <p class="included-price"><strong>From &pound;250 for a solo singer</strong>, all in. Travel within Greater London included.</p>
+          </div>
+        </section>
 
     <!-- Section 2: How It Works -->
     <section class="section">
@@ -2147,10 +2269,10 @@
       <div class="prose">
         <h2>Pricing</h2>
         <p>Flat prices. The quote we send is the price you pay. Each booking includes a personal consultation, custom repertoire planning, and coordination with your venue.</p>
-        <p>A soloist starts from &pound;215; a quartet from &pound;1,150; a quintet &pound;1,400; a sextet &pound;1,600; full choirs from &pound;2,000. All ensemble sizes include preparation, travel within London, and a music director on the day. We can usually accommodate short-notice bookings from our roster of over 150 singers.</p>
+        <p>A soloist starts from &pound;250; a quartet from &pound;1,150; a quintet &pound;1,400; a sextet &pound;1,600; full choirs from &pound;2,000. All ensemble sizes include preparation, travel within London, and a music director on the day. We can usually accommodate short-notice bookings from our roster of over 150 singers.</p>
         <div class="price-cards">
           <div class="price-card">
-            <div class="price">&pound;215</div>
+            <div class="price">&pound;250</div>
             <div class="price-label">Soloist</div>
           </div>
           <div class="price-card">
@@ -2189,6 +2311,25 @@
         </div>
       </div>
     </section>
+
+
+        <section class="section">
+          <div class="prose">
+            <h2>Funeral music questions</h2>
+
+            <h3>How much notice do you need for a funeral?</h3>
+            <p>We take bookings at short notice and confirm availability the same day. Most funerals come to us with one or two weeks' notice, and we have covered services booked within forty-eight hours. Tell us the date and we will tell you straight away whether we can be there.</p>
+
+            <h3>Can you sing at a crematorium as well as a church?</h3>
+            <p>Yes. We sing at crematoria, churches, cemetery chapels, and woodland burial sites across the UK. A soloist or small group suits the shorter crematorium slot; a larger choir suits a church service with hymns. We match the ensemble to the venue and the time you have.</p>
+
+            <h3>Can you learn a song the family has asked for?</h3>
+            <p>Yes. If a piece mattered to the person who died, we prepare it, whether it is a hymn, a pop song, or something from the classical repertoire. Send us the song and we arrange it for the voices you have booked.</p>
+
+            <h3>Will the singers lead the hymns so guests feel confident?</h3>
+            <p>That is one of the main reasons families book us. Trained voices carry the melody, so a congregation that half-remembers a hymn will still join in. It is the difference between a silent room and one that sings.</p>
+          </div>
+        </section>
 
     <!-- Section 7: Contact Form -->
     <section class="section" id="enquiry">
@@ -2281,6 +2422,8 @@
         Christmas: <a href="/christmas.html">Carol services</a> &middot; <a href="/carol-singers.html">Hire carol singers</a>
       </p>
       <p class="text-xs text-mid">
+        <a href="/faq.html">FAQ</a>
+        &ensp;|&ensp;
         <a href="/privacy.html">Privacy policy</a>
       </p>
       <p class="text-xs text-mid">The London Choral Service is the operating name of Alma Consort Ltd. Based in London, serving the whole of the United Kingdom.</p>

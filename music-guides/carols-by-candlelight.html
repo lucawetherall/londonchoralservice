@@ -1817,6 +1817,76 @@
         grid-template-columns: 1fr;
       }
     }
+    
+    /* ── Value block: "Included with every booking" ───────────────────── */
+    .included-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .included-list li {
+      display: flex;
+      gap: var(--space-sm);
+      align-items: flex-start;
+      padding-block: var(--space-sm);
+      border-block-end: 1px solid var(--color-rule);
+    }
+    .included-list li:last-child {
+      border-block-end: 0;
+    }
+    .included-list .tick {
+      flex: none;
+      width: 1.4rem;
+      height: 1.4rem;
+      border-radius: 50%;
+      background: var(--color-bg-alt);
+      color: var(--color-accent);
+      display: grid;
+      place-items: center;
+      font-size: 0.8rem;
+      margin-block-start: 0.15rem;
+    }
+    .included-price {
+      margin-block-start: var(--space-lg);
+      color: var(--color-text-mid);
+    }
+    .included-price strong {
+      font-family: var(--font-heading);
+      font-weight: 600;
+      font-size: 1.2rem;
+      color: var(--color-accent);
+    }
+    
+    /* ── Care strip: "We take the whole thing off your hands" ──────────── */
+    .care-steps {
+      list-style: none;
+      padding: 0;
+      margin-block: var(--space-lg);
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: var(--space-lg);
+    }
+    .care-steps .n {
+      display: block;
+      font-family: var(--font-heading);
+      font-weight: 600;
+      font-size: 2rem;
+      line-height: 1;
+      color: var(--color-accent);
+    }
+    .care-steps h3 {
+      font-size: 1.15rem;
+      margin-block: var(--space-xs) var(--space-xs);
+    }
+    .care-steps p {
+      margin: 0;
+      color: var(--color-text-mid);
+    }
+    @media (max-width: 599px) {
+      .care-steps {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
     /* ═══════════════════════════════════
        Print Styles
        ═══════════════════════════════════ */
@@ -1913,7 +1983,7 @@
         "url": "https://londonchoralservice.com/music-guides/carols-by-candlelight.html",
         "inLanguage": "en-GB",
         "datePublished": "2026-07-31",
-        "dateModified": "2026-07-31",
+        "dateModified": "2026-08-18",
         "description": "How to plan a carols by candlelight service: the running order, which carols suit low light, fire and safety rules, and booking a choir for December.",
         "author": [
           {
@@ -2166,7 +2236,7 @@
         <div class="prose">
           <h2>What we provide</h2>
           <p>Four voices will carry a candlelit church seating up to about 200; eight will carry one seating 400. Because a candlelit programme leans on quiet repertoire, the room needs to be quiet, which in practice means the singing has to be good enough to hold silence rather than fill it.</p>
-          <p>Where the building has an organ, an organist covers the congregational carols and plays before and after, at &pound;215. Where it does not, the choir sings the whole service unaccompanied, which suits this repertoire.</p>
+          <p>Where the building has an organ, an organist covers the congregational carols and plays before and after, at &pound;250. Where it does not, the choir sings the whole service unaccompanied, which suits this repertoire.</p>
           <p>A Small Choir of four is &pound;1,150 and a Full Choir of eight is &pound;2,000, inclusive of taxes, fees and travel within Greater London.</p>
         </div>
       </section>
@@ -2221,6 +2291,8 @@
         Christmas: <a href="/christmas.html">Carol services</a> &middot; <a href="/carol-singers.html">Hire carol singers</a>
       </p>
       <p class="text-xs text-mid">
+        <a href="/faq.html">FAQ</a>
+        &ensp;|&ensp;
         <a href="/privacy.html">Privacy policy</a>
       </p>
       <p class="text-xs text-mid">The London Choral Service is the operating name of Alma Consort Ltd. Based in London, serving the whole of the United Kingdom.</p>

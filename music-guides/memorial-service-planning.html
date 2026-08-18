@@ -1817,6 +1817,76 @@
         grid-template-columns: 1fr;
       }
     }
+    
+    /* ── Value block: "Included with every booking" ───────────────────── */
+    .included-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .included-list li {
+      display: flex;
+      gap: var(--space-sm);
+      align-items: flex-start;
+      padding-block: var(--space-sm);
+      border-block-end: 1px solid var(--color-rule);
+    }
+    .included-list li:last-child {
+      border-block-end: 0;
+    }
+    .included-list .tick {
+      flex: none;
+      width: 1.4rem;
+      height: 1.4rem;
+      border-radius: 50%;
+      background: var(--color-bg-alt);
+      color: var(--color-accent);
+      display: grid;
+      place-items: center;
+      font-size: 0.8rem;
+      margin-block-start: 0.15rem;
+    }
+    .included-price {
+      margin-block-start: var(--space-lg);
+      color: var(--color-text-mid);
+    }
+    .included-price strong {
+      font-family: var(--font-heading);
+      font-weight: 600;
+      font-size: 1.2rem;
+      color: var(--color-accent);
+    }
+    
+    /* ── Care strip: "We take the whole thing off your hands" ──────────── */
+    .care-steps {
+      list-style: none;
+      padding: 0;
+      margin-block: var(--space-lg);
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: var(--space-lg);
+    }
+    .care-steps .n {
+      display: block;
+      font-family: var(--font-heading);
+      font-weight: 600;
+      font-size: 2rem;
+      line-height: 1;
+      color: var(--color-accent);
+    }
+    .care-steps h3 {
+      font-size: 1.15rem;
+      margin-block: var(--space-xs) var(--space-xs);
+    }
+    .care-steps p {
+      margin: 0;
+      color: var(--color-text-mid);
+    }
+    @media (max-width: 599px) {
+      .care-steps {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
     /* ═══════════════════════════════════
        Print Styles
        ═══════════════════════════════════ */
@@ -1913,7 +1983,7 @@
         "url": "https://londonchoralservice.com/music-guides/memorial-service-planning.html",
         "inLanguage": "en-GB",
         "datePublished": "2026-03-08",
-        "dateModified": "2026-03-08",
+        "dateModified": "2026-08-18",
         "description": "A practical guide to planning a memorial service — from choosing the format and venue to selecting music and readings. Advice from musicians who help families every week.",
         "author": [
           {
@@ -2017,7 +2087,7 @@
             "name": "How much does music for a memorial service cost?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "A solo singer for a memorial service starts from £215, a small choir of four voices from £1,150, a quintet of five from £1,400, and a sextet of six from £1,600. The cost depends on the size of ensemble and the venue. All our prices are transparent and include travel within Greater London."
+              "text": "A solo singer for a memorial service starts from £250, a small choir of four voices from £1,150, a quintet of five from £1,400, and a sextet of six from £1,600. The cost depends on the size of ensemble and the venue. All our prices are transparent and include travel within Greater London."
             }
           }
         ]
@@ -2194,7 +2264,7 @@
           <p>Almost anything. Memorial services tend to be less formal than funerals, so the music can range from traditional hymns and classical pieces to popular songs, jazz standards, and folk music. The key is choosing pieces that reflect the person being remembered.</p>
 
           <h3>How much does music for a memorial service cost?</h3>
-          <p>A solo singer for a memorial service starts from &pound;215, a small choir of four voices from &pound;1,150, a quintet of five from &pound;1,400, and a sextet of six from &pound;1,600. The cost depends on the size of ensemble and the venue. All our prices are transparent and include travel within Greater London. See our <a href="../pricing.html">pricing page</a> for full details.</p>
+          <p>A solo singer for a memorial service starts from &pound;250, a small choir of four voices from &pound;1,150, a quintet of five from &pound;1,400, and a sextet of six from &pound;1,600. The cost depends on the size of ensemble and the venue. All our prices are transparent and include travel within Greater London. See our <a href="../pricing.html">pricing page</a> for full details.</p>
         </div>
       </section>
 
@@ -2255,6 +2325,8 @@
         Christmas: <a href="/christmas.html">Carol services</a> &middot; <a href="/carol-singers.html">Hire carol singers</a>
       </p>
       <p class="text-xs text-mid">
+        <a href="/faq.html">FAQ</a>
+        &ensp;|&ensp;
         <a href="/privacy.html">Privacy policy</a>
       </p>
       <p class="text-xs text-mid">The London Choral Service is the operating name of Alma Consort Ltd. Based in London, serving the whole of the United Kingdom.</p>
