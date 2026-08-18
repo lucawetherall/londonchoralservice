@@ -168,3 +168,25 @@ The 2026-07-31 overhaul added 11 further Christmas guides (24 in total), set a v
 2. **Cannibalisation watch.** The Christmas guide set is now 24 pages and several sit close together — `how-many-carol-singers` against the sizing FAQ on `carol-singers.html`, `best-carols-for-four-voices` against `christmas-carols-guide`, and `christmas-drinks-reception-music` against `company-christmas-party-entertainment`. Each has an exclusive title and H1, but watch the GSC query report from September for the two pages swapping positions on the same term.
 3. **Confirm the accompanied small-group pricing is right.** `pricing.html` now publishes £645 for two singers with organ or piano and £860 for three, derived as £215 per singer plus £215 for the accompanist. If that arithmetic is not how you actually quote it, tell an agent the real figures — the derivation is stated on the page and in three guides.
 4. **Decide on the lambeth testimonial.** `areas/london/lambeth.html` carries a client quote describing a *trio* singing at an outdoor committal, which the new floor no longer offers. It was left untouched because editing a genuine quote would be fabricating it. Removing it is a business decision, not an agent one.
+
+---
+
+## 11. Google Ads campaigns for the competitive capture programme
+
+Spec: `docs/superpowers/specs/2026-08-18-competitive-capture-design.md` §6. Landing page: `compare/london-funeral-singers.html`.
+
+**Do first, before any spend.** Confirm phone-click and WhatsApp-click conversion actions exist and fire. `AW-17988388404` is on every page and wired for form submissions; call conversions are unverified. A call-only campaign without a call conversion action spends blind.
+
+1. **Generic funeral, price-led.** "funeral singer london", "funeral choir hire london", "singer for funeral service", "funeral choir cost". RSA headlines led on "From £250, nothing added" and "Three sung pieces included, not one". Landing: `funerals.html`, with the comparison page as an A/B alternative. This is where the budget goes.
+2. **Call-only, short notice.** Evening and weekend scheduling. Keywords around "short notice", "this week", "urgent". Funerals are urgent and a bereaved person at nine in the evening rings rather than fills in a form.
+3. **Brand defence.** LCS brand terms, exact match, capped budget.
+4. **Conquest.** Competitor brand terms as keywords, landing on the comparison page. **Their trademark must not appear in ad text** — Google permits the mark as a keyword but restricts it in creative, and the owner can complain. The landing page does the naming; the ad does not. Negative-match trade terms ("funeral director", "trade", "supplier") so the campaign stays on the family audience the landing page addresses. Expect low volume and a poor quality score; keep it a small line item, not the strategy.
+5. **Borough and crematorium geo.** Hold until those landing pages exist.
+
+Site-wide negatives: jobs, wanted, free, karaoke, courses, "become a".
+
+Conversion modelling is degraded until Consent Mode v2 exists (ROADMAP R4). Read the figures accordingly.
+
+### Quarterly: re-check competitor pricing
+
+`data/competitor-pricing.yml` carries a `checked_date`, and `build.sh` prints a STALE warning once it passes 120 days. Every quarter, open https://www.londonfuneralsingers.co.uk/pricing, compare each `source_quote` against what is published, and update the figures, the `checked_date`, and `compare/london-funeral-singers.html` **in the same commit** — a figure and its date must never disagree. If their prices moved, the `derived_figures` totals and savings need recomputing too, and the build will fail until they are.
