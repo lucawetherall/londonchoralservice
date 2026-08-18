@@ -1816,6 +1816,76 @@
         grid-template-columns: 1fr;
       }
     }
+    
+    /* ── Value block: "Included with every booking" ───────────────────── */
+    .included-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .included-list li {
+      display: flex;
+      gap: var(--space-sm);
+      align-items: flex-start;
+      padding-block: var(--space-sm);
+      border-block-end: 1px solid var(--color-rule);
+    }
+    .included-list li:last-child {
+      border-block-end: 0;
+    }
+    .included-list .tick {
+      flex: none;
+      width: 1.4rem;
+      height: 1.4rem;
+      border-radius: 50%;
+      background: var(--color-bg-alt);
+      color: var(--color-accent);
+      display: grid;
+      place-items: center;
+      font-size: 0.8rem;
+      margin-block-start: 0.15rem;
+    }
+    .included-price {
+      margin-block-start: var(--space-lg);
+      color: var(--color-text-mid);
+    }
+    .included-price strong {
+      font-family: var(--font-heading);
+      font-weight: 600;
+      font-size: 1.2rem;
+      color: var(--color-accent);
+    }
+    
+    /* ── Care strip: "We take the whole thing off your hands" ──────────── */
+    .care-steps {
+      list-style: none;
+      padding: 0;
+      margin-block: var(--space-lg);
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: var(--space-lg);
+    }
+    .care-steps .n {
+      display: block;
+      font-family: var(--font-heading);
+      font-weight: 600;
+      font-size: 2rem;
+      line-height: 1;
+      color: var(--color-accent);
+    }
+    .care-steps h3 {
+      font-size: 1.15rem;
+      margin-block: var(--space-xs) var(--space-xs);
+    }
+    .care-steps p {
+      margin: 0;
+      color: var(--color-text-mid);
+    }
+    @media (max-width: 599px) {
+      .care-steps {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
     /* ═══════════════════════════════════
        Print Styles
        ═══════════════════════════════════ */
@@ -1912,7 +1982,7 @@
         "url": "https://londonchoralservice.com/music-guides/nine-lessons-and-carols.html",
         "inLanguage": "en-GB",
         "datePublished": "2026-07-29",
-        "dateModified": "2026-07-29",
+        "dateModified": "2026-08-18",
         "description": "Planning a service of Nine Lessons and Carols: the history, the nine readings, who reads them, where the carols sit, and how to hire a choir and organist.",
         "author": [
           {
@@ -2191,7 +2261,7 @@
         <div class="prose">
           <h2>Hiring a choir and an organist into a church you have booked</h2>
           <p>Most of the Nine Lessons services we sing are not in our church, and not in yours. A company or a charity books a church for the evening, we arrive with the singers, and the building&rsquo;s own staff run everything except the music. It works well, provided four things are settled early.</p>
-          <p><strong>The organ, and who plays it.</strong> Ask the church whether an outside organist may play the instrument, whether there is a fee for its use, and whether the parish expects its own organist to play. We provide an organist from &pound;215, and where the venue has a pipe organ we send someone experienced with that kind of instrument. Where there is no organ at all, the choir can sing the whole service unaccompanied, or we can bring a keyboard for an additional cost quoted upfront.</p>
+          <p><strong>The organ, and who plays it.</strong> Ask the church whether an outside organist may play the instrument, whether there is a fee for its use, and whether the parish expects its own organist to play. We provide an organist from &pound;250, and where the venue has a pipe organ we send someone experienced with that kind of instrument. Where there is no organ at all, the choir can sing the whole service unaccompanied, or we can bring a keyboard for an additional cost quoted upfront.</p>
           <p><strong>Access and rehearsal.</strong> We rehearse in the building on the day, and for that we need the church open, lit, and warm for an hour or so before the congregation arrives. Ask the parish office who unlocks, when the heating goes on, and what else is happening in the church that afternoon. A funeral at two o&rsquo;clock makes a three o&rsquo;clock rehearsal impossible, and nobody thinks to mention it.</p>
           <p><strong>The clergy and the vergers.</strong> The officiant owns the service: the bidding, the blessing, and any decision about candles. The verger owns the building: seating, lighting, where the choir stands, whether the chancel is used, how the collection is taken, and what the fire risk assessment says about naked flames. Put both on the same email a month out. Vergers are the most useful people in any church and the most reliably forgotten.</p>
           <p><strong>Service sheets.</strong> Print the full words of every congregational carol, mark the choir items so nobody stands up, list the readings with the readers&rsquo; names, and send us the final text a week before so that the order in our folders matches the order in the pews. Check the copyright position on printed hymn words with the church as well&thinsp;&mdash;&thinsp;most parishes hold a reprint licence, and it is worth confirming that yours covers your sheets.</p>
@@ -2271,6 +2341,8 @@
         Christmas: <a href="/christmas.html">Carol services</a> &middot; <a href="/carol-singers.html">Hire carol singers</a>
       </p>
       <p class="text-xs text-mid">
+        <a href="/faq.html">FAQ</a>
+        &ensp;|&ensp;
         <a href="/privacy.html">Privacy policy</a>
       </p>
       <p class="text-xs text-mid">The London Choral Service is the operating name of Alma Consort Ltd. Based in London, serving the whole of the United Kingdom.</p>

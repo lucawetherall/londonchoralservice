@@ -1817,6 +1817,76 @@
         grid-template-columns: 1fr;
       }
     }
+    
+    /* ── Value block: "Included with every booking" ───────────────────── */
+    .included-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .included-list li {
+      display: flex;
+      gap: var(--space-sm);
+      align-items: flex-start;
+      padding-block: var(--space-sm);
+      border-block-end: 1px solid var(--color-rule);
+    }
+    .included-list li:last-child {
+      border-block-end: 0;
+    }
+    .included-list .tick {
+      flex: none;
+      width: 1.4rem;
+      height: 1.4rem;
+      border-radius: 50%;
+      background: var(--color-bg-alt);
+      color: var(--color-accent);
+      display: grid;
+      place-items: center;
+      font-size: 0.8rem;
+      margin-block-start: 0.15rem;
+    }
+    .included-price {
+      margin-block-start: var(--space-lg);
+      color: var(--color-text-mid);
+    }
+    .included-price strong {
+      font-family: var(--font-heading);
+      font-weight: 600;
+      font-size: 1.2rem;
+      color: var(--color-accent);
+    }
+    
+    /* ── Care strip: "We take the whole thing off your hands" ──────────── */
+    .care-steps {
+      list-style: none;
+      padding: 0;
+      margin-block: var(--space-lg);
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: var(--space-lg);
+    }
+    .care-steps .n {
+      display: block;
+      font-family: var(--font-heading);
+      font-weight: 600;
+      font-size: 2rem;
+      line-height: 1;
+      color: var(--color-accent);
+    }
+    .care-steps h3 {
+      font-size: 1.15rem;
+      margin-block: var(--space-xs) var(--space-xs);
+    }
+    .care-steps p {
+      margin: 0;
+      color: var(--color-text-mid);
+    }
+    @media (max-width: 599px) {
+      .care-steps {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
     /* ═══════════════════════════════════
        Print Styles
        ═══════════════════════════════════ */
@@ -1913,7 +1983,7 @@
         "url": "https://londonchoralservice.com/music-guides/church-carol-service-choir-hire.html",
         "inLanguage": "en-GB",
         "datePublished": "2026-07-31",
-        "dateModified": "2026-07-31",
+        "dateModified": "2026-08-18",
         "description": "For parishes and schools without a choir of their own: what hiring singers for a carol service involves, what it costs, and how it works with your organist.",
         "author": [
           {
@@ -2009,7 +2079,7 @@
             "name": "Do we need to provide an organist?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Keep yours if you have one, since they know the instrument and the building. If the post is vacant or your organist is committed elsewhere that week, we can provide one from £215. December organists book up as fast as singers, so say early which you need."
+              "text": "Keep yours if you have one, since they know the instrument and the building. If the post is vacant or your organist is committed elsewhere that week, we can provide one from £250. December organists book up as fast as singers, so say early which you need."
             }
           },
           {
@@ -2111,7 +2181,7 @@
           <h2>Working with your own organist</h2>
           <p>If you have an organist, keep them. They know the instrument, they know the building, and an organ is idiosyncratic enough that familiarity matters more than most clergy realise. We send singers and they play, which is the cheapest and usually the best arrangement.</p>
           <p>What the choir needs from your organist is a copy of the hymn and carol list a few weeks out, and agreement on which verses are harmonised, which are in unison, and where any descants fall. Those decisions are quick to make and expensive to improvise on the night.</p>
-          <p>Where your organist is already committed that week, or the post is vacant, we can provide one at &pound;215. Say early which it is, because December organists go at least as fast as December singers.</p>
+          <p>Where your organist is already committed that week, or the post is vacant, we can provide one at &pound;250. Say early which it is, because December organists go at least as fast as December singers.</p>
         </div>
       </section>
       <section class="section">
@@ -2169,7 +2239,7 @@
           <h3>Will a hired choir sing with our existing parish choir?</h3>
           <p>Either arrangement works. Our singers can sit within the existing choir to hold up the parts from inside, or the two choirs can split the items so the parish choir keeps the carols it knows and ours take the harder pieces. Decide which in advance, and tell your choir.</p>
           <h3>Do we need to provide an organist?</h3>
-          <p>Keep yours if you have one, since they know the instrument and the building. If the post is vacant or your organist is committed elsewhere that week, we can provide one from £215. December organists book up as fast as singers, so say early which you need.</p>
+          <p>Keep yours if you have one, since they know the instrument and the building. If the post is vacant or your organist is committed elsewhere that week, we can provide one from £250. December organists book up as fast as singers, so say early which you need.</p>
           <h3>How much does it cost for a church to hire a carol service choir?</h3>
           <p>Four singers is £1,150 and eight is £2,000, inclusive of taxes, fees and travel within Greater London. December is charged at the same rates as the rest of the year, with a premium of around 25 per cent on Christmas Eve and Christmas Day only.</p>
         </div>
@@ -2212,6 +2282,8 @@
         Christmas: <a href="/christmas.html">Carol services</a> &middot; <a href="/carol-singers.html">Hire carol singers</a>
       </p>
       <p class="text-xs text-mid">
+        <a href="/faq.html">FAQ</a>
+        &ensp;|&ensp;
         <a href="/privacy.html">Privacy policy</a>
       </p>
       <p class="text-xs text-mid">The London Choral Service is the operating name of Alma Consort Ltd. Based in London, serving the whole of the United Kingdom.</p>

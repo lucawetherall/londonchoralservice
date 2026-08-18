@@ -115,6 +115,8 @@ Two viable implementations:
 
 For 16 pages that change rarely, Cloudinary is the lower-effort choice. Pick the route, generate the 16 images, then update the `og:image` meta tag on each page. Phase 4 of the programme can wire this into the build script.
 
+**Update 2026-08-18 (value/care + on-page SEO programme):** prioritise the four service pages — `funerals.html`, `weddings.html`, `corporate.html`, `christmas.html` — for the first per-service images, since they are the main conversion landings (now carrying the value block, and FAQ schema on funerals/weddings). Wiring is trivial once assets exist: swap `og:image` + `twitter:image` (1200×630) per page; no build-script change required. `[BLOCKED-ON-HUMAN]` on the image assets themselves.
+
 ---
 
 ## 7. IndexNow protocol
