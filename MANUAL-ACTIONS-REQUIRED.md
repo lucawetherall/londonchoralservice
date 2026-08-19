@@ -142,6 +142,8 @@ IndexNow is Microsoft + Yandex's submit-on-change protocol. Google doesn't use i
 
 Step 3 is code and goes into a later phase. Steps 1 and 2 are manual prerequisites and need to happen first.
 
+**Update 2026-08-19:** the submission code now exists at `scripts/indexnow-ping.py`. It refuses to run until the `<key>.txt` file from steps 1–2 is committed, then submits every sitemap URL (or specific URLs passed as arguments) in one POST. Run it after each merge to main once the pages are live. Why this matters beyond Bing rankings: Bing's index feeds ChatGPT's browsing and several other assistants' search grounding, so fast Bing pickup is the shortest route to appearing in AI-assistant recommendations.
+
 ---
 
 ## 8. CSS extraction refactor
@@ -194,3 +196,26 @@ Conversion modelling is degraded until Consent Mode v2 exists (ROADMAP R4). Read
 ### Quarterly: re-check competitor pricing
 
 `data/competitor-pricing.yml` carries a `checked_date`, and `build.sh` prints a STALE warning once it passes 120 days. Every quarter, open https://www.londonfuneralsingers.co.uk/pricing, compare each `source_quote` against what is published, and update the figures, the `checked_date`, and `compare/london-funeral-singers.html` **in the same commit** — a figure and its date must never disagree. If their prices moved, the `derived_figures` totals and savings need recomputing too, and the build will fail until they are.
+
+---
+
+## 12. SERP baseline, 2026-08-19 — where the buyers actually are
+
+An agent measured live search results for the three money verticals (caveat: US-indexed results, so UK SERPs will differ in ordering, but the pattern is stark). The on-page work is in a strong state; the gap is presence, and every lever for it is in §§1–3 above.
+
+**"funeral singers London hire"** — top results: Surrey & London Funeral Singers, The Funeral Singers, EventZone (marketplace), Singers for Funerals, Funeral Singer Hire UK, **The London Funeral Singers**, The London Funeral Choir. londonchoralservice.com absent.
+
+**"wedding choir hire London"** — top results: Poptop (marketplace listicle), Encore Musicians (×3 listings), Bands for Hire, Some Voices, londonweddingchoir.com. londonchoralservice.com absent.
+
+**"hire carol singers London office Christmas"** — top results: Music for London, Musicians Inc, Poptop, Alive Network, Hartley Voices, Encore (×3), londoncarolsingers.com. londonchoralservice.com absent.
+
+**Brand check:** a quoted search for "London Choral Service" returned amateur concert choirs (London Concert Choir, London Oriana Choir, The London Chorus) and no trace of the business.
+
+What this means, in priority order:
+
+1. **Marketplace listings are most of the SERP.** Poptop, Encore, Bands for Hire, EventZone, and Alive Network hold multiple top-ten slots in every vertical, and AI assistants cite these platforms when recommending suppliers. A profile on each (see §2 and §9.6) puts the business inside results it cannot currently reach with its own site. Encore and Poptop appear in all three verticals — do those two first.
+2. **GBP (§1) remains the highest-impact single action** for local-pack and Maps-grounded AI answers.
+3. **Reviews (§3)** are what the marketplaces and Google both rank profiles by.
+4. **IndexNow (§7)** — the key file is the only human step left; the submission code is written. Bing's index feeds ChatGPT browsing, so this is the cheapest direct route into AI-assistant answers.
+
+The competitor everyone outranks us with — The London Funeral Singers — is the one `compare/london-funeral-singers.html` already addresses. Once citations and GBP exist, that page and the two "best X in London" guides are positioned to capture comparison-shopping and AI-recommendation queries; they were de-orphaned and internally linked on 2026-08-19.
