@@ -27,3 +27,16 @@ Allow: /
 
 User-agent: Applebot-Extended
 Allow: /
+
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: Meta-ExternalAgent
+Allow: /
+
+User-agent: Amazonbot
+Allow: /
+
+# Structured summaries for LLMs:
+# https://londonchoralservice.com/llms.txt
+# https://londonchoralservice.com/llms-full.txt

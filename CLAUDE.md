@@ -36,6 +36,7 @@ The website of The London Choral Service (Alma Consort Ltd) — a choir-for-hire
 
 - Meta descriptions: unique, 141–161 chars. Every page: canonical + hreflang (en-gb, x-default) + full OG/Twitter tags.
 - `sitemap.xml` and `llms.txt` are hand-maintained — update both (fresh `lastmod`) when adding or materially editing a page.
+- `llms-full.txt` is **generated** by `build.sh` (`scripts/generate_llms_full.py`) from the built pages — never hand-edit it.
 - **Never add `AggregateRating`/`Review`/star-rating schema** — self-serving review markup violates Google policy.
 - UK English everywhere. All visible copy must pass the `writing-site-copy` skill.
 - GA4/Ads IDs `G-9FENN7VS0E` / `AW-17988388404`: the snippet is duplicated per page, *not* a partial — analytics changes are scripted site-wide sweeps (see `build-and-verify`).
