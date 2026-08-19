@@ -151,3 +151,4 @@ The London Choral Service provides live music for life's most important occasion
 
 - [Listen](https://londonchoralservice.com/listen.html): Sample performances and repertoire from our singers and musicians, including a Christmas recording
 - [Privacy Policy](https://londonchoralservice.com/privacy.html): Data protection and privacy information
+- [Full site text](https://londonchoralservice.com/llms-full.txt): The complete visible text of every page in one markdown file, regenerated on each build
