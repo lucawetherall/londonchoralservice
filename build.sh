@@ -133,6 +133,9 @@ done
 
 echo "Inlined CSS into $count HTML files"
 
+echo "Generating llms-full.txt..."
+python3 scripts/generate_llms_full.py
+
 echo "Validating JSON-LD..."
 python3 validate_jsonld.py
 
