@@ -10,7 +10,7 @@ Ready-to-paste copy for the §12 actions in `MANUAL-ACTIONS-REQUIRED.md`. Every 
 | Phone | 07356 042468 |
 | Email | office@londonchoralservice.com |
 | Website | https://londonchoralservice.com |
-| Postcode on record | N1 7GU (confirm the full street address once, on GBP first, then copy it everywhere exactly) |
+| Postcode on record | N1 7GU registered office; the Maps listing is anchored "The London Choral Service, Maidenhead" — confirm the address GBP shows and copy that everywhere exactly |
 | Legal entity | Alma Consort Ltd (Companies House 16785727) |
 
 Whatever address and phone format GBP ends up with is the master. Copy it character-for-character into every other listing.
