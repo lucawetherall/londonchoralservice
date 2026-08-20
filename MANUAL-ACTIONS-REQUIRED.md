@@ -211,6 +211,8 @@ An agent measured live search results for the three money verticals (caveat: US-
 
 **Brand check:** a quoted search for "London Choral Service" returned amateur concert choirs (London Concert Choir, London Oriana Choir, The London Chorus) and no trace of the business.
 
+Ready-to-paste copy for every action below — GBP description and categories, Encore/Poptop/Bark profiles, and the three review-request emails — is in `docs/off-site-listings-pack.md`, fact-checked against `pricing.html` and the house claim gates.
+
 What this means, in priority order:
 
 1. **Marketplace listings are most of the SERP.** Poptop, Encore, Bands for Hire, EventZone, and Alive Network hold multiple top-ten slots in every vertical, and AI assistants cite these platforms when recommending suppliers. A profile on each (see §2 and §9.6) puts the business inside results it cannot currently reach with its own site. Encore and Poptop appear in all three verticals — do those two first.
