@@ -8,6 +8,8 @@ These items came out of the 2026-05-08 SEO audit but cannot be implemented in co
 
 The site already references a Google Maps presence — `index.html` carries `sameAs: ["https://share.google/HRgq38OubHmj3Zz9v"]` in the Organization schema. That's a share-style short link, not the canonical place URL, and the audit flags it as the single highest-impact local-SEO blocker.
 
+**Update 2026-08-19:** the owner reports the listing has been claimed. Remaining work is the category audit (steps 3–4) and capturing the canonical Maps URL (steps 5–7) — an agent tried to resolve the `share.google` short link and Companies House from the sandbox on 2026-08-19; both are egress-blocked, so the long-form URL has to come from a browser.
+
 What to do:
 
 1. Open the Google Business Profile dashboard at `https://business.google.com/`. Sign in with the account that controls the listing.
