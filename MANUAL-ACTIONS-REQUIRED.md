@@ -144,7 +144,7 @@ IndexNow is Microsoft + Yandex's submit-on-change protocol. Google doesn't use i
 
 Step 3 is code and goes into a later phase. Steps 1 and 2 are manual prerequisites and need to happen first.
 
-**Update 2026-08-19 (steps 1–2 done, owner-approved):** the key was generated and committed as `4751d098385ed7e02df93e8b2f957673.txt` in the repo root — no account is involved and the file is public by design, so nothing secret lives in the repo. Remaining: merge + deploy, then run `python3 scripts/indexnow-ping.py` once the file is live at the domain root.
+**Update 2026-08-19 (steps 1–2 done, owner-approved):** the key was generated and committed as `4751d098385ed7e02df93e8b2f957673.txt` in the repo root — no account is involved and the file is public by design, so nothing secret lives in the repo. Remaining: none — the key file deployed on 2026-08-20, and `.github/workflows/indexnow.yml` now runs the ping automatically from GitHub-hosted runners after every Pages deploy (the sandbox proxy blocks the IndexNow endpoints, so the ping runs in CI rather than locally). Manual re-submission any time: Actions → "IndexNow ping" → Run workflow.
 
 **Update 2026-08-19:** the submission code now exists at `scripts/indexnow-ping.py`. It refuses to run until the `<key>.txt` file from steps 1–2 is committed, then submits every sitemap URL (or specific URLs passed as arguments) in one POST. Run it after each merge to main once the pages are live. Why this matters beyond Bing rankings: Bing's index feeds ChatGPT's browsing and several other assistants' search grounding, so fast Bing pickup is the shortest route to appearing in AI-assistant recommendations.
 
