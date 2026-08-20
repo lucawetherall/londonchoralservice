@@ -8,7 +8,9 @@ These items came out of the 2026-05-08 SEO audit but cannot be implemented in co
 
 The site already references a Google Maps presence — `index.html` carries `sameAs: ["https://share.google/HRgq38OubHmj3Zz9v"]` in the Organization schema. That's a share-style short link, not the canonical place URL, and the audit flags it as the single highest-impact local-SEO blocker.
 
-**Update 2026-08-19:** the owner reports the listing has been claimed. Remaining work is the category audit (steps 3–4) and capturing the canonical Maps URL (steps 5–7) — an agent tried to resolve the `share.google` short link and Companies House from the sandbox on 2026-08-19; both are egress-blocked, so the long-form URL has to come from a browser.
+**Update 2026-08-20 (steps 5–7 done):** the owner supplied the full Maps URL; the canonical cid form (`https://www.google.com/maps?cid=12581882416994311757`, derived from the URL's ftid) now replaces the share.google short link in index.html's Organization sameAs, and `data/seo-fix-discovered-urls.yml` is updated. The Maps listing is anchored as "The London Choral Service, Maidenhead" — whatever address GBP shows is the NAP master for §2. **Remaining in §1: the category audit only (steps 3–4).**
+
+**Update 2026-08-19:** the owner reports the listing has been claimed.
 
 What to do:
 
