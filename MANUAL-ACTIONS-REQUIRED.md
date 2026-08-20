@@ -8,6 +8,8 @@ These items came out of the 2026-05-08 SEO audit but cannot be implemented in co
 
 The site already references a Google Maps presence — `index.html` carries `sameAs: ["https://share.google/HRgq38OubHmj3Zz9v"]` in the Organization schema. That's a share-style short link, not the canonical place URL, and the audit flags it as the single highest-impact local-SEO blocker.
 
+**Update 2026-08-19:** the owner reports the listing has been claimed. Remaining work is the category audit (steps 3–4) and capturing the canonical Maps URL (steps 5–7) — an agent tried to resolve the `share.google` short link and Companies House from the sandbox on 2026-08-19; both are egress-blocked, so the long-form URL has to come from a browser.
+
 What to do:
 
 1. Open the Google Business Profile dashboard at `https://business.google.com/`. Sign in with the account that controls the listing.
@@ -141,6 +143,8 @@ IndexNow is Microsoft + Yandex's submit-on-change protocol. Google doesn't use i
    The key goes inside the JSON body — not as a query parameter — for the POST flow. Spec: `https://www.indexnow.org/documentation`. Run this only on production builds, not on every local rebuild.
 
 Step 3 is code and goes into a later phase. Steps 1 and 2 are manual prerequisites and need to happen first.
+
+**Update 2026-08-19 (steps 1–2 done, owner-approved):** the key was generated and committed as `4751d098385ed7e02df93e8b2f957673.txt` in the repo root — no account is involved and the file is public by design, so nothing secret lives in the repo. Remaining: merge + deploy, then run `python3 scripts/indexnow-ping.py` once the file is live at the domain root.
 
 **Update 2026-08-19:** the submission code now exists at `scripts/indexnow-ping.py`. It refuses to run until the `<key>.txt` file from steps 1–2 is committed, then submits every sitemap URL (or specific URLs passed as arguments) in one POST. Run it after each merge to main once the pages are live. Why this matters beyond Bing rankings: Bing's index feeds ChatGPT's browsing and several other assistants' search grounding, so fast Bing pickup is the shortest route to appearing in AI-assistant recommendations.
 
