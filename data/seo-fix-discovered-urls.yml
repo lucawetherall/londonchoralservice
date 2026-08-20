@@ -22,8 +22,8 @@ lcs_youtube_channel: "https://www.youtube.com/@londonchoralservice"  # confirmed
 alma_consort_companies_house: "https://find-and-update.company-information.service.gov.uk/company/16785727"
 alma_consort_registered_office_postcode: "N1 7GU"  # 20 Wenlock Road, London — registered 15 Oct 2025, SIC 90010 Performing arts
 
-gbp_canonical_maps_url: "TODO"  # canonical /maps/place/ URL still needed: open the interim link below on a desktop browser and copy the address-bar URL. See MANUAL-ACTIONS-REQUIRED.md §1.
-gbp_interim_short_link: "https://maps.app.goo.gl/bqn5pG4tpJ5RY8ET6"  # supplied by owner 2026-08-19 (listing claimed); a Google short link, not the canonical form — both share.google and maps.app.goo.gl are egress-blocked from the agent sandbox, so it could not be resolved automatically.
+gbp_canonical_maps_url: "https://www.google.com/maps?cid=12581882416994311757"  # resolved 2026-08-20: owner supplied the full Maps URL (q=The+London+Choral+Service,+Maidenhead with ftid=0xa19a60657d276719:0xae9bd36586adde4d); the stable cid form is the ftid's second component in decimal. Listing name/anchor on Maps: "The London Choral Service, Maidenhead".
+gbp_interim_short_link: "https://maps.app.goo.gl/bqn5pG4tpJ5RY8ET6"  # superseded by the canonical URL above; kept for reference (supplied by owner 2026-08-19).
 
 videos:
   - page: "pricing.html"
