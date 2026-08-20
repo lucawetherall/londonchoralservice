@@ -1,0 +1,22 @@
+name: IndexNow ping
+
+# Submits every sitemap URL to IndexNow (Bing/Yandex) after each GitHub Pages
+# deploy, so new and edited pages reach Bing's index fast — Bing grounds
+# ChatGPT browsing and other AI assistants' search. See
+# MANUAL-ACTIONS-REQUIRED.md §7. The key file at the repo root is public by
+# design; no secrets are involved.
+
+on:
+  page_build:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Submit sitemap URLs to IndexNow
+        run: python3 scripts/indexnow-ping.py
