@@ -22,7 +22,8 @@ lcs_youtube_channel: "https://www.youtube.com/@londonchoralservice"  # confirmed
 alma_consort_companies_house: "https://find-and-update.company-information.service.gov.uk/company/16785727"
 alma_consort_registered_office_postcode: "N1 7GU"  # 20 Wenlock Road, London — registered 15 Oct 2025, SIC 90010 Performing arts
 
-gbp_canonical_maps_url: "TODO"  # share.google/HRgq38OubHmj3Zz9v (currently in index.html sameAs) resolves only client-side; canonical /maps/place/ URL must be captured manually from a logged-in browser. See MANUAL-ACTIONS-REQUIRED.md §1.
+gbp_canonical_maps_url: "TODO"  # canonical /maps/place/ URL still needed: open the interim link below on a desktop browser and copy the address-bar URL. See MANUAL-ACTIONS-REQUIRED.md §1.
+gbp_interim_short_link: "https://maps.app.goo.gl/bqn5pG4tpJ5RY8ET6"  # supplied by owner 2026-08-19 (listing claimed); a Google short link, not the canonical form — both share.google and maps.app.goo.gl are egress-blocked from the agent sandbox, so it could not be resolved automatically.
 
 videos:
   - page: "pricing.html"
