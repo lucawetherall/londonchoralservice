@@ -37,7 +37,8 @@ videos:
     title: "Abide With Me (Eventide)"
     upload_date: "2026-04-02"  # verified via ytInitialPlayerResponse 2026-08-15
     duration: "PT1M2S"
-    # Also embedded on: compare/london-funeral-singers.html
+    # Also embedded on: compare/london-funeral-singers.html,
+    # music-guides/last-minute-funeral-singers.html (VideoObject emitted there too, added 2026-08-20)
   - page: "listen.html"
     position: 2
     youtube_id: "nasqXWlbf1g"
