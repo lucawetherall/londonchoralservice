@@ -226,4 +226,6 @@ What this means, in priority order:
 3. **Reviews (§3)** are what the marketplaces and Google both rank profiles by.
 4. **IndexNow (§7)** — the key file is the only human step left; the submission code is written. Bing's index feeds ChatGPT browsing, so this is the cheapest direct route into AI-assistant answers.
 
+**Indexation diagnostic (2026-08-20):** a `site:londonchoralservice.com` probe through the agent's search tool returned no pages from the domain, but the tool appears to ignore the `site:` operator, so this is inconclusive. The authoritative check is Google Search Console's coverage report (§4/§9.5) — if GSC shows pages excluded or undiscovered, sitemap resubmission there outranks even the marketplace work; if coverage is healthy, the gap is authority and citations, and §§1–3 stand as ordered. Bing-side indexation is already handled: every deploy submits the sitemap via IndexNow (§7).
+
 The competitor everyone outranks us with — The London Funeral Singers — is the one `compare/london-funeral-singers.html` already addresses. Once citations and GBP exist, that page and the two "best X in London" guides are positioned to capture comparison-shopping and AI-recommendation queries; they were de-orphaned and internally linked on 2026-08-19.
