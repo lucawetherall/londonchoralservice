@@ -1374,6 +1374,27 @@
         color: var(--color-bg);
       }
     
+      .mobile-cta .mobile-cta-whatsapp,
+      .mobile-cta .mobile-cta-whatsapp:visited,
+      .mobile-cta .mobile-cta-whatsapp:active {
+        border: 1px solid var(--color-rule);
+        color: var(--color-text);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: var(--space-xs);
+      }
+    
+      .mobile-cta .mobile-cta-whatsapp:hover {
+        border-color: var(--color-accent);
+      }
+    
+      .mobile-cta .mobile-cta-whatsapp svg {
+        width: 1em;
+        height: 1em;
+        flex-shrink: 0;
+      }
+    
       /* Prevent content from being hidden behind the sticky bar */
       .site-footer {
         padding-bottom: calc(var(--space-4xl) + 3.5rem);
@@ -2420,7 +2441,7 @@
         <div class="prose">
           <p>The right ensemble size depends on your venue, your guest numbers, and the style of ceremony you have in mind. We’re happy to advise once we know a little more.</p>
           <p><a href="../weddings.html" class="btn-link">Talk to us about your wedding choir</a></p>
-          <p class="text-sm text-mid">Or call us on <a href="tel:+447356042468">07356 042468</a>.</p>
+          <p class="text-sm text-mid">Text us on WhatsApp for the fastest reply, or call us on <a href="tel:+447356042468">07356 042468</a>.</p>
         </div>
       </section>
 
@@ -2545,11 +2566,11 @@
       <p class="footer-name">The London Choral Service</p>
       <p class="text-sm text-mid">Exceptional singers, choirs, and instrumentalists for funerals, weddings, memorials, Christmas, and corporate events across the United Kingdom.</p>
       <p class="text-sm text-mid">
-        <a href="mailto:office@londonchoralservice.com">office@londonchoralservice.com</a>
+        Text us on <a href="https://wa.me/447356042468" target="_blank" rel="noopener" data-whatsapp>WhatsApp</a> (fastest reply)
         &ensp;|&ensp;
         <a href="tel:+447356042468">07356 042468</a>
         &ensp;|&ensp;
-        <a href="https://wa.me/447356042468" target="_blank" rel="noopener" data-whatsapp>WhatsApp</a>
+        <a href="mailto:office@londonchoralservice.com">office@londonchoralservice.com</a>
       </p>
       <p class="text-xs text-mid">
         Areas we serve: <a href="/areas/london.html">London</a> &middot; <a href="/areas/birmingham.html">Birmingham</a> &middot; <a href="/areas/manchester.html">Manchester</a> &middot; <a href="/areas/liverpool.html">Liverpool</a> &middot; <a href="/areas/oxford.html">Oxford</a> &middot; <a href="/areas/cambridge.html">Cambridge</a> &middot; <a href="/areas/reading.html">Reading</a> &middot; <a href="/areas/slough-maidenhead.html">Slough &amp; Maidenhead</a> &middot; <a href="/areas/guildford.html">Guildford</a> &middot; <a href="/areas/brighton.html">Brighton</a> &middot; <a href="/areas/chester.html">Chester</a> &middot; <a href="/areas/st-albans.html">St Albans</a> &middot; <a href="/areas/canterbury.html">Canterbury</a> &middot; <a href="/areas/windsor.html">Windsor</a> &middot; <a href="/areas/winchester.html">Winchester</a> &middot; <a href="/areas/salisbury.html">Salisbury</a> &middot; <a href="/areas/bath.html">Bath</a> &middot; <a href="/areas/chelmsford.html">Chelmsford</a> &middot; <a href="/areas/rochester.html">Rochester</a> &middot; <a href="/areas/">All areas</a>
@@ -2569,6 +2590,7 @@
   <!-- @include-end partials/footer.html -->
 
   <div class="mobile-cta" aria-label="Quick contact">
+    <a href="https://wa.me/447356042468" target="_blank" rel="noopener" class="mobile-cta-whatsapp" data-whatsapp><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" aria-hidden="true" focusable="false"><path fill="currentColor" d="M16 .395a15.6 15.6 0 0 0-13.534 23.36L0 32l8.43-2.42A15.6 15.6 0 0 0 31.6 16.005 15.6 15.6 0 0 0 16 .395Zm0 28.41a12.78 12.78 0 0 1-6.523-1.79l-.467-.28-4.846 1.39 1.42-4.738-.305-.486A12.78 12.78 0 0 1 16 3.214a12.81 12.81 0 0 1 12.81 12.81A12.81 12.81 0 0 1 16 28.805Zm7.025-9.575c-.385-.193-2.275-1.122-2.628-1.25-.353-.13-.609-.193-.866.193s-.994 1.25-1.218 1.508c-.225.257-.45.29-.834.097-.385-.193-1.626-.6-3.097-1.911-1.144-1.02-1.916-2.28-2.14-2.665-.225-.385-.024-.594.169-.787.174-.173.385-.45.578-.674.193-.225.257-.385.385-.642.13-.257.064-.482-.032-.674-.097-.193-.866-2.087-1.187-2.857-.312-.75-.628-.65-.866-.66l-.738-.013a1.42 1.42 0 0 0-1.027.482c-.353.385-1.347 1.315-1.347 3.207s1.379 3.72 1.572 3.977c.193.257 2.715 4.146 6.578 5.815.92.397 1.637.633 2.196.81.923.293 1.762.252 2.426.153.74-.11 2.275-.93 2.595-1.829.32-.898.32-1.668.225-1.829-.097-.16-.353-.257-.738-.45Z"/></svg>WhatsApp</a>
     <a href="/weddings.html" class="mobile-cta-enquire">Enquire</a>
   </div>
   <script src="../js/nav.js" defer></script>

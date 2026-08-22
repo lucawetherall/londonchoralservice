@@ -1309,6 +1309,27 @@ td.compare-us .compare-saving {
     color: var(--color-bg);
   }
 
+  .mobile-cta .mobile-cta-whatsapp,
+  .mobile-cta .mobile-cta-whatsapp:visited,
+  .mobile-cta .mobile-cta-whatsapp:active {
+    border: 1px solid var(--color-rule);
+    color: var(--color-text);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-xs);
+  }
+
+  .mobile-cta .mobile-cta-whatsapp:hover {
+    border-color: var(--color-accent);
+  }
+
+  .mobile-cta .mobile-cta-whatsapp svg {
+    width: 1em;
+    height: 1em;
+    flex-shrink: 0;
+  }
+
   /* Prevent content from being hidden behind the sticky bar */
   .site-footer {
     padding-bottom: calc(var(--space-4xl) + 3.5rem);
