@@ -110,7 +110,7 @@
       --choirStall: #2A1708;
       --cassockRed: #7E1818;
       --organPipe: #5F544A;
-      --naveStone: #9A8F7F;
+      --naveStone: #9A8F7F; /* reserved, decorative-only — fails contrast for text */
       --limestone: #C8BFA9;
       --parchment: #F0E9DC;
       --parchmentLight: #FAF6EE;
@@ -222,7 +222,7 @@
     .pe-body a {
       color: var(--choirStall);
       text-decoration: underline;
-      text-decoration-color: var(--limestone);
+      text-decoration-color: var(--organPipe);
       text-underline-offset: .2em;
     }
     .pe-body a:hover { text-decoration-color: var(--choirStall); }
@@ -305,14 +305,18 @@
     }
 
     /* ── Voicing selector ── */
+    .pe-voicing {
+      border: 0;
+      min-inline-size: 0; /* lets the fieldset shrink inside the grid column */
+    }
     .pe-voices {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(4, minmax(0, 1fr));
       gap: .75rem;
       margin-top: 1.75rem;
     }
-    @media (max-width: 40rem) {
-      .pe-voices { grid-template-columns: repeat(2, 1fr); }
+    @media (max-width: 47.9375rem) {
+      .pe-voices { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     }
     .pe-voice-card {
       display: block;
@@ -396,12 +400,18 @@
     }
     .video-thumb:hover .play-btn,
     .video-thumb:focus-visible .play-btn { opacity: .85; }
+    /* The media frame clips overflow, so the global offset outline would be
+       invisible here — draw the focus ring inside the frame instead. */
+    .video-thumb:focus-visible {
+      outline: none;
+      box-shadow: inset 0 0 0 3px var(--parchmentLight);
+    }
     #voicing-media:empty + .pe-media-caption { display: none; }
     .pe-media-caption { margin-top: .75rem; }
 
     /* ── Venues list ── */
     .pe-venues {
-      list-style: none;
+      list-style: none; /* role="list" in the markup keeps AT list semantics */
       margin-top: 1rem;
       columns: 2;
       column-gap: 2.5rem;
@@ -420,7 +430,7 @@
 
     /* ── Process: the page's only numbered component ── */
     .pe-process {
-      list-style: none;
+      list-style: none; /* role="list" in the markup keeps AT list semantics */
       margin-top: 1.75rem;
       display: grid;
       gap: 2rem;
@@ -481,6 +491,19 @@
     .pe-field select:focus,
     .pe-field textarea:focus {
       border-color: var(--choirStall);
+    }
+    /* Invalid state appears only after the user has interacted (site
+       feedback red, not the decorative cassock red). */
+    .pe-field input:user-invalid,
+    .pe-field select:user-invalid,
+    .pe-field textarea:user-invalid {
+      border-color: #9B2C2C;
+    }
+    .pe-field input:disabled,
+    .pe-field select:disabled,
+    .pe-field textarea:disabled {
+      color: var(--organPipe);
+      border-bottom-style: dotted;
     }
     .pe-check-label {
       display: flex;
@@ -556,7 +579,11 @@
         transform-origin: left;
         animation: pe-draw 900ms ease 200ms forwards;
       }
-      html.pe-motion .pe-hero__cta { animation-delay: 700ms; }
+      /* The :not() in the shared rule counts toward specificity, so this
+         override must repeat it to win — the CTA rises last. */
+      html.pe-motion .pe-hero__inner > :not(.pe-hairline--candle).pe-hero__cta {
+        animation-delay: 700ms;
+      }
       html.pe-motion [data-fade] {
         opacity: 0;
         transform: translateY(12px);
@@ -574,6 +601,9 @@
         to { transform: scaleX(1); }
       }
     }
+    @media (prefers-reduced-motion: reduce) {
+      .pe-btn, .play-btn { transition: none; }
+    }
   </style>
 
   <script type="application/ld+json">
@@ -587,7 +617,7 @@
         "serviceType": "Private and international choral engagements",
         "description": "Private and international choral engagements sung by Alma Consort, a professional consort of eight to twenty-four voices based in London, for weddings, memorials, and private ceremonies in the United Kingdom, Europe, the Gulf, and North America.",
         "url": "https://londonchoralservice.com/private-events.html",
-        "provider": {"@id": "https://londonchoralservice.com/#organization"},
+        "provider": {"@type": "LocalBusiness", "@id": "https://londonchoralservice.com/#organization", "name": "The London Choral Service"},
         "areaServed": [
           {"@type": "Country", "name": "United Kingdom"},
           {"@type": "Place", "name": "International"}
@@ -603,7 +633,7 @@
           "https://find-and-update.company-information.service.gov.uk/company/16785727"
         ],
         "description": "Alma Consort is a professional ensemble of consort singers based in London, directed by Luca Wetherall. The London Choral Service is its booking office; the same singers perform every engagement.",
-        "parentOrganization": {"@id": "https://londonchoralservice.com/#organization"}
+        "parentOrganization": {"@type": "LocalBusiness", "@id": "https://londonchoralservice.com/#organization", "name": "The London Choral Service"}
       }
     ]
   }
@@ -630,11 +660,11 @@
         <p class="pe-eyebrow">Alma Consort &middot; London</p>
         <h1>English choral singing, wherever you are marrying.</h1>
         <div class="pe-hairline--candle" aria-hidden="true"></div>
-        <p class="pe-hero__sub">A professional consort of eight to twenty-four voices, travelling from London to sing weddings, memorials and private ceremonies in Europe, the Gulf and North America.</p>
+        <p class="pe-hero__sub">A professional consort of eight to twenty-four voices, travelling from London to sing weddings, memorials, and private ceremonies in Europe, the Gulf, and North America.</p>
         <p class="pe-hero__cta"><a class="pe-btn" href="#enquire">Enquire about your event</a></p>
       </div>
       <!-- Hero H1 A/B alternatives (owner's, for later testing — do not delete):
-        B: Four hundred years of English choral singing, brought to your ceremony.
+        B: Four hundred years of English choral singing, at your ceremony.
         C: The sound of an English cathedral, in your chapel.
       -->
     </section>
@@ -645,10 +675,9 @@
         <p class="pe-rail-label" aria-hidden="true">The ensemble</p>
         <div class="pe-body" data-fade>
           <h2>The ensemble</h2>
-          <p>London Choral Service is the booking office of Alma Consort, a professional ensemble of consort singers based in London. The same singers perform every engagement.</p>
+          <p>The London Choral Service is the booking office of Alma Consort, a professional ensemble of consort singers based in London. The same singers perform every engagement.</p>
           <p>The singers are prize-winning graduates of the Royal Academy of Music, the Royal College of Music, the Guildhall School of Music &amp; Drama, and the Universities of Oxford and Cambridge. Their credits include the coronation of King Charles&nbsp;III, the BBC Proms, Westminster Abbey, St&nbsp;Paul&rsquo;s Cathedral, the Royal Opera House, and the English National Opera. Luca Wetherall, Tutor in Music at the University of Oxford, directs the consort and auditions every singer himself.</p>
           <p>The ensemble&rsquo;s own site is <a href="https://www.almaconsort.com">almaconsort.com</a>.</p>
-          <p class="pe-pull">The ensemble you book is the ensemble that arrives.</p>
         </div>
       </div>
     </section>
@@ -664,28 +693,28 @@
             <legend class="sr-only">Choosing a voicing</legend>
             <div class="pe-voices">
               <label class="pe-voice-card" data-note="Eight voices, two to a part, will fill a chapel of eighty guests. This is the scale for a private chapel, a drawing room, or a civil ceremony where the singers stand close to the congregation.">
-                <input type="radio" name="voicing-choice" value="eight">
+                <input type="radio" name="voicing-choice" value="eight" data-play-label="Play a recording of eight voices">
                 <span class="pe-voice-card__num">Eight</span>
                 <span class="pe-voice-card__sub">voices</span>
               </label>
-              <label class="pe-voice-card" data-note="Twelve voices give two singers to each part, with soloists besides. This is our recommendation for most churches: enough sound for the nave, and a solo voice free to step forward for an Ave Maria or a solo verse.">
-                <input type="radio" name="voicing-choice" value="twelve" checked>
+              <label class="pe-voice-card" data-note="Twelve voices give two singers to each part, with four soloists besides. This is our recommendation for most churches: enough sound for the nave, and a solo voice free to step forward for an Ave Maria or a solo verse.">
+                <input type="radio" name="voicing-choice" value="twelve" checked data-play-label="Play a recording of twelve voices">
                 <span class="pe-voice-card__num">Twelve</span>
                 <span class="pe-voice-card__sub">voices</span>
               </label>
               <label class="pe-voice-card" data-note="Sixteen voices fill a cathedral nave. This is the full consort sound, with the depth to lead several hundred guests through a hymn.">
-                <input type="radio" name="voicing-choice" value="sixteen">
+                <input type="radio" name="voicing-choice" value="sixteen" data-play-label="Play a recording of sixteen voices">
                 <span class="pe-voice-card__num">Sixteen</span>
                 <span class="pe-voice-card__sub">voices</span>
               </label>
               <label class="pe-voice-card" data-note="Twenty-four voices are for occasions that need weight: an outdoor ceremony, or a great hall with no stone acoustic to help the sound.">
-                <input type="radio" name="voicing-choice" value="twenty-four">
+                <input type="radio" name="voicing-choice" value="twenty-four" data-play-label="Play a recording of twenty-four voices">
                 <span class="pe-voice-card__num">Twenty-four</span>
                 <span class="pe-voice-card__sub">voices</span>
               </label>
             </div>
           </fieldset>
-          <p id="voicing-note" aria-live="polite">Twelve voices give two singers to each part, with soloists besides. This is our recommendation for most churches: enough sound for the nave, and a solo voice free to step forward for an Ave Maria or a solo verse.</p>
+          <p id="voicing-note" aria-live="polite">Twelve voices give two singers to each part, with four soloists besides. This is our recommendation for most churches: enough sound for the nave, and a solo voice free to step forward for an Ave Maria or a solo verse.</p>
           <div id="voicing-media"></div>
           <p class="pe-caption pe-media-caption">Alma Consort in performance.</p>
         </div>
@@ -698,21 +727,21 @@
         <p class="pe-rail-label" aria-hidden="true">Repertoire</p>
         <div class="pe-body" data-fade>
           <h2>Repertoire</h2>
-          <p>We sing sacred and secular music, with the English tradition at its core: Byrd and Tallis through Parry and Howells, alongside plainsong, European polyphony, and contemporary settings. If a piece matters to you and no choral setting exists, we will prepare an arrangement or commission one. Luca Wetherall directs every engagement and plans the programme with you, around the occasion and the building.</p>
+          <p>We sing sacred and secular music, with the English tradition at its core: Byrd and Tallis through Parry and Howells, alongside plainsong, European polyphony, and contemporary settings. If a piece matters to you and no choral setting exists, we will prepare an arrangement or commission one. Luca Wetherall plans the programme with you, around the occasion and the building.</p>
           <h3>Where we have sung</h3>
-          <p>Our singers have performed at:</p>
-          <ul class="pe-venues">
+          <p>We have sung at:</p>
+          <ul class="pe-venues" role="list">
             <li>Westminster Abbey</li>
-            <li>St Paul's Cathedral</li>
+            <li>St&nbsp;Paul&rsquo;s Cathedral</li>
             <li>Southwark Cathedral</li>
             <li>Brompton Oratory</li>
             <li>Temple Church</li>
-            <li>the Guards' Chapel</li>
+            <li>the Guards&rsquo; Chapel</li>
             <li>St Martin-in-the-Fields</li>
             <li>Chelsea Old Church</li>
           </ul>
           <!-- Fuller venue list (fifteen-plus venues) to be supplied by Luca —
-               see MANUAL-ACTIONS-REQUIRED.md. Add further <li> items here;
+               see MANUAL-ACTIONS-REQUIRED.md. Add further list items above;
                every venue must be one our singers have actually sung in. -->
         </div>
       </div>
@@ -724,11 +753,11 @@
         <p class="pe-rail-label" aria-hidden="true">Process</p>
         <div class="pe-body" data-fade>
           <h2>How it works</h2>
-          <ol class="pe-process">
+          <ol class="pe-process" role="list">
             <li>
               <span class="n" aria-hidden="true">1</span>
               <h3>Enquiry</h3>
-              <p>Tell us the date, the venue, and the shape of the occasion.</p>
+              <p>Tell us the date, the venue, and the occasion.</p>
             </li>
             <li>
               <span class="n" aria-hidden="true">2</span>
@@ -753,7 +782,7 @@
     <!-- §6 For planners and venues -->
     <section class="pe-section pe-section--mid">
       <div class="pe-rail">
-        <p class="pe-rail-label" aria-hidden="true">Trade</p>
+        <p class="pe-rail-label" aria-hidden="true">Planners &amp; venues</p>
         <div class="pe-body" data-fade>
           <h2>For planners and venues</h2>
           <p>We work with wedding planners, event agencies, and the events teams of luxury hotels. We hold public liability insurance and can provide risk assessments and method statements. We invoice in pounds sterling, euros, or US dollars.</p>
@@ -769,10 +798,14 @@
         <div class="pe-body" data-fade>
           <h2>Enquire</h2>
           <p>We take a small number of engagements each year. Tell us about yours.</p>
+          <p class="pe-caption">Fields marked * are required.</p>
 
-          <form id="pe-enquiry" class="pe-form" method="post" novalidate>
+          <form id="pe-enquiry" class="pe-form" method="post" action="https://api.web3forms.com/submit">
             <input type="hidden" name="access_key" value="dc1af546-26ac-45b3-a85d-064a3a59886d">
             <input type="hidden" name="subject" value="Private events enquiry — Alma Consort / LCS">
+            <!-- No-JS fallback only: the plain HTML POST lands here and Web3Forms
+                 redirects to the site thank-you page. The JS flow ignores it. -->
+            <input type="hidden" name="redirect" value="https://londonchoralservice.com/thank-you.html">
             <input type="hidden" name="utm_source" value="">
             <input type="hidden" name="utm_medium" value="">
             <input type="hidden" name="utm_campaign" value="">
@@ -784,11 +817,11 @@
             <input type="checkbox" name="botcheck" class="sr-only" tabindex="-1" aria-hidden="true" autocomplete="off">
 
             <div class="pe-field">
-              <label for="pe-name">Your name</label>
+              <label for="pe-name">Your name <span aria-hidden="true">*</span></label>
               <input type="text" id="pe-name" name="name" autocomplete="name" required>
             </div>
             <div class="pe-field">
-              <label for="pe-email">Email</label>
+              <label for="pe-email">Email <span aria-hidden="true">*</span></label>
               <input type="email" id="pe-email" name="email" autocomplete="email" required>
             </div>
             <div class="pe-field">
@@ -796,7 +829,7 @@
               <input type="tel" id="pe-phone" name="phone" autocomplete="tel">
             </div>
             <div class="pe-field">
-              <label for="enquiring-as">Enquiring as</label>
+              <label for="enquiring-as">Enquiring as <span aria-hidden="true">*</span></label>
               <select id="enquiring-as" name="enquiring-as" required>
                 <option value="" selected>Please choose</option>
                 <option>Private client</option>
@@ -818,11 +851,11 @@
               </label>
             </div>
             <div class="pe-field">
-              <label for="pe-venue">Venue and location</label>
+              <label for="pe-venue">Venue and location <span aria-hidden="true">*</span></label>
               <input type="text" id="pe-venue" name="venue" required>
             </div>
             <div class="pe-field">
-              <label for="pe-occasion">Occasion</label>
+              <label for="pe-occasion">Occasion <span aria-hidden="true">*</span></label>
               <select id="pe-occasion" name="occasion" required>
                 <option value="" selected>Please choose</option>
                 <option>Wedding</option>
@@ -843,7 +876,7 @@
               </select>
             </div>
             <div class="pe-field">
-              <label for="pe-budget">Indicative budget for music</label>
+              <label for="pe-budget">Indicative budget for music <span aria-hidden="true">*</span></label>
               <select id="pe-budget" name="budget" required>
                 <option value="" selected>Please choose</option>
                 <option>Under &pound;5,000</option>
@@ -875,13 +908,15 @@
             </div>
 
             <div class="pe-form-error" data-visible="false" role="alert">
-              <p>We could not send your enquiry. Email <a href="mailto:office@londonchoralservice.com">office@londonchoralservice.com</a> or call <a href="tel:+447356042468">07356 042468</a> and we will take it from there.</p>
+              <p data-error-msg="incomplete" hidden>Please complete the highlighted fields, then send again.</p>
+              <p data-error-msg="timing" hidden>Please take a moment over the form, then press Send enquiry again.</p>
+              <p data-error-msg="network">We could not send your enquiry. Email <a href="mailto:office@londonchoralservice.com">office@londonchoralservice.com</a> or call <a href="tel:+447356042468">+44 7356 042468</a> and we will take it from there.</p>
             </div>
 
             <button type="submit" class="pe-btn">Send enquiry</button>
           </form>
 
-          <div id="pe-form-success" tabindex="-1" hidden>
+          <div id="pe-form-success" role="status" tabindex="-1" hidden>
             <p>Thank you. Luca Wetherall will reply personally within one working day.</p>
           </div>
         </div>
