@@ -235,3 +235,15 @@ What this means, in priority order:
 **Indexation diagnostic (2026-08-20):** a `site:londonchoralservice.com` probe through the agent's search tool returned no pages from the domain, but the tool appears to ignore the `site:` operator, so this is inconclusive. The authoritative check is Google Search Console's coverage report (§4/§9.5) — if GSC shows pages excluded or undiscovered, sitemap resubmission there outranks even the marketplace work; if coverage is healthy, the gap is authority and citations, and §§1–3 stand as ordered. Bing-side indexation is already handled: every deploy submits the sitemap via IndexNow (§7).
 
 The competitor everyone outranks us with — The London Funeral Singers — is the one `compare/london-funeral-singers.html` already addresses. Once citations and GBP exist, that page and the two "best X in London" guides are positioned to capture comparison-shopping and AI-recommendation queries; they were de-orphaned and internally linked on 2026-08-19.
+
+---
+
+## 13. Private events page launch follow-ups, 2026-08-26
+
+The page is `private-events.html` (spec: `docs/superpowers/specs/2026-08-26-private-events-design.md`). It is live and converting from day one; these items segment the tracking and complete the assets.
+
+1. **Google Ads: dedicated conversion action.** Create a conversion action named **"Private events enquiry"** in Google Ads (`AW-17988388404`) and map the GA4 event `ads_conversion_PrivateEvents_1` to it — the same procedure documented for the corporate audience in `thank-you.html` (lines 52–54). Then paste the new action's `send_to` label over `PE.ADS_CONVERSION` in `js/private-events.js`. Until both steps are done, the page fires the existing generic Contact conversion label (`AW-17988388404/RjhECKGP7akcELSMxIFD`) — tracking works from day one, but private-events enquiries are not segmented from ordinary contact conversions.
+2. **Photography and the fuller venue list.** Supply hero and section photography (the page ships typographic-only), and the fuller fifteen-plus venue list for the "Where we have sung" section — the HTML comment slot after `ul.pe-venues` marks where the items go. Every venue listed must be one the singers have actually performed in.
+3. **Voicing videos.** Map one YouTube video per voicing into `PE.VOICING_VIDEOS` in `js/private-events.js` (keys: `eight`, `twelve`, `sixteen`, `twenty-four`). Video IDs MUST first exist in `data/seo-fix-discovered-urls.yml` — add any new video there first, with a verified upload date, before pasting its ID into the JS. A voicing left `null` renders no player, which is the shipped state.
+4. **almaconsort.com.** Verify that https://www.almaconsort.com renders well as the target of the ensemble-section link (it could not be checked from the build environment), and add a reciprocal link from that site back to https://londonchoralservice.com/private-events.html.
+5. **Optional: bespoke OG image.** The page currently shares `assets/og-image.png`. A bespoke 1200×630 image for private/international engagements would improve link previews; replace the `og:image`/`twitter:image` URLs and alt text on the page when it exists.
