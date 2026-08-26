@@ -47,18 +47,19 @@
   <meta property="og:url" content="https://londonchoralservice.com/private-events.html">
   <meta property="og:locale" content="en_GB">
   <meta property="og:site_name" content="London Choral Service">
-  <meta property="og:image" content="https://londonchoralservice.com/assets/og-image.png">
+  <meta property="og:image" content="https://londonchoralservice.com/assets/og-private-events.png">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
-  <meta property="og:image:alt" content="The London Choral Service: booking office of Alma Consort, a professional consort of singers based in London">
+  <meta property="og:image:alt" content="Alma Consort, London: the sound of an English cathedral, wherever you are — private and international choral engagements">
 
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Private &amp; International Choral Engagements | Alma Consort">
   <meta name="twitter:description" content="Alma Consort, the ensemble of the London Choral Service, sings weddings, memorials, private concerts and ceremonies in Europe, the Gulf and North America.">
-  <meta name="twitter:image" content="https://londonchoralservice.com/assets/og-image.png">
-  <meta name="twitter:image:alt" content="The London Choral Service: booking office of Alma Consort, a professional consort of singers based in London">
+  <meta name="twitter:image" content="https://londonchoralservice.com/assets/og-private-events.png">
+  <meta name="twitter:image:alt" content="Alma Consort, London: the sound of an English cathedral, wherever you are — private and international choral engagements">
   <link rel="dns-prefetch" href="https://www.googletagmanager.com">
   <link rel="dns-prefetch" href="https://api.web3forms.com">
+  <link rel="dns-prefetch" href="https://hcaptcha.com">
 
   <style>
     /* private-events.html — bespoke scoped styles; NOT the generated site bundle.
@@ -527,6 +528,7 @@
       border: 1px solid #E0A8A8;
     }
     .pe-form-error[data-visible="true"] { display: block; }
+    .h-captcha { margin-top: 2rem; }
     #pe-form-success {
       margin-top: 2.25rem;
       padding: 1rem 1.25rem;
@@ -733,7 +735,7 @@
           <p>We sing sacred and secular music, with the English tradition at its core: Byrd and Tallis through Parry and Howells, alongside plainsong, European polyphony, and contemporary settings. For a reception, a dinner, or a private concert we sing part-songs and folk arrangements, and we arrange songs written for other forces &mdash; if a piece matters to you and no choral setting exists, we will make one or commission it.</p>
           <p>The consort sings unaccompanied or with an organist; we can also bring instrumentalists where the programme asks for them. Luca Wetherall plans the whole programme with you, around the occasion and the building.</p>
           <h3>Where we have sung</h3>
-          <p>We sing in churches, chapels, hotels, country houses, and private estates, at home and abroad. In London, our singers have performed at:</p>
+          <p>We sing at private events in churches, chapels, hotels, country houses, and private estates, and we travel internationally, including across Europe and the United States. In London, our singers have performed at:</p>
           <ul class="pe-venues" role="list">
             <li>Westminster Abbey</li>
             <li>St&nbsp;Paul&rsquo;s Cathedral</li>
@@ -912,6 +914,9 @@
               <input type="text" id="hear-detail" name="hear-detail" disabled>
             </div>
 
+            <div class="h-captcha" data-captcha="true"></div>
+            <p class="pe-form-error pe-captcha-error" id="captcha-error" data-visible="false" role="alert">Please tick the box above to confirm you&rsquo;re not a robot, then send again.</p>
+
             <div class="pe-form-error" data-visible="false" role="alert">
               <p data-error-msg="incomplete" hidden>Please complete the highlighted fields, then send again.</p>
               <p data-error-msg="timing" hidden>Please take a moment over the form, then press Send enquiry again.</p>
@@ -935,6 +940,7 @@
     <p>The London Choral Service is the operating name of Alma Consort Ltd, registered in England and Wales, company no. 16785727.</p>
   </footer>
 
+  <script src="https://web3forms.com/client/script.js" async defer></script>
   <script src="/js/private-events.js" defer></script>
 </body>
 </html>

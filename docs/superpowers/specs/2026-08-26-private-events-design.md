@@ -97,7 +97,7 @@ Application-style: the form's register does some of the qualifying before the bu
 
 **Budget bands:** Under £5,000 · £5,000–£10,000 · £10,000–£25,000 · £25,000+ · Prefer to discuss. **"Under £5,000" stays, and stays first** — owner's decision. No routing by band: every enquiry lands in the same inbox and gets the same reply. The bands are the only £ figures on the page, and they are the client's budget, not our prices.
 
-**No hCaptcha — a deliberate deviation from site convention, on the owner's decision.** Every other form on the site carries an hCaptcha guard; this one must not put a challenge box between a luxury planner and the send button. In its place: the `botcheck` honeypot and a minimum-seconds timing check.
+**hCaptcha, matching the rest of the site.** The page was first specified without one, on the argument that a challenge box between a luxury planner and the send button costs conversions that are individually worth thousands, and that the honeypot plus a timing check would carry the load. That argument was weighed and set aside on 2026-08-26: the shared Web3Forms access key rejects token-less submissions, and a form that silently fails is worse than a form with friction. The guard mirrors `js/form.js` — it blocks only when the widget actually rendered, so a blocked or failed captcha script still lets the request through to the generic error with the email and phone fallback, and the token is reset after a failed send. The `botcheck` honeypot and the minimum-seconds timing check remain in place alongside it; both are client-side deterrents only, and Web3Forms is the only server involved.
 
 **Honest note on what that protection is:** the honeypot and timing check are **client-side deterrents only**. Web3Forms is the only server in the pipeline and there is no server-side validation under our control — a bot that posts directly to the endpoint bypasses both. Accepted risk: possible spam rise on the shared access key; the distinct subject line enables inbox filtering. This paragraph exists so nobody later mistakes the deterrents for security.
 
@@ -128,7 +128,7 @@ Banned outright, enforced by the house-claims validator:
 - **A named-singer roster.** Standing owner decision, site-wide. Proof of quality is the credential, the recordings, and the fixed-ensemble argument.
 - **Prices anywhere on the page.** The budget bands are the enquirer's figures, not ours; nothing on this page quotes or implies a fee.
 - **Review or rating schema.** Prohibited site-wide.
-- **hCaptcha.** Deliberate deviation, recorded above.
+- **A form without a captcha.** Specified, then reversed on 2026-08-26 — see above.
 - **The standard nav/footer partials.** The insulation rationale above is the decision record.
 - **A dark design.** Considered and dropped by the owner; the light parchment register is the decision.
 - **An on-site `/alma-consort` page.** The ensemble's home is the external, owner-controlled `almaconsort.com`; a second home on this domain would split it.
