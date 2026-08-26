@@ -206,7 +206,8 @@
     form.setAttribute('novalidate', '');
 
     var successBox = document.getElementById('pe-form-success');
-    var errorBox = document.querySelector('.pe-form-error');
+    var errorBox = document.querySelector('.pe-form-error:not(.pe-captcha-error)');
+    var captchaError = document.getElementById('captcha-error');
     var submitBtn = form.querySelector('[type="submit"]');
     var btnLabel = submitBtn ? submitBtn.textContent : 'Send enquiry';
 
@@ -237,6 +238,23 @@
       // silently do nothing.
       var honeypot = form.querySelector('input[name="botcheck"]');
       if (honeypot && honeypot.checked) return;
+
+      // hCaptcha guard (mirrors js/form.js): Web3Forms rejects submissions
+      // without a token, so block early and name the reason. Only block when
+      // the widget actually rendered — if the captcha script was blocked or
+      // failed to load, let the request through so the visitor sees the
+      // generic error with the email and phone fallback rather than a
+      // message about a checkbox that is not on the page.
+      if (captchaError) captchaError.setAttribute('data-visible', 'false');
+      var captchaResponse = form.querySelector('[name=h-captcha-response]');
+      var captchaWidget = form.querySelector('.h-captcha iframe');
+      if (captchaWidget && (!captchaResponse || !captchaResponse.value)) {
+        if (captchaError) {
+          captchaError.setAttribute('data-visible', 'true');
+          captchaError.scrollIntoView({ block: 'center' });
+        }
+        return;
+      }
 
       if (errorBox) errorBox.setAttribute('data-visible', 'false');
 
@@ -290,6 +308,10 @@
           }
         })
         .catch(function () {
+          // hCaptcha tokens are single-use — reset so a retry can succeed.
+          try {
+            if (window.hcaptcha && typeof window.hcaptcha.reset === 'function') window.hcaptcha.reset();
+          } catch (_) { /* widget absent or blocked */ }
           showError('network', true);
           if (submitBtn) {
             submitBtn.disabled = false;
