@@ -25,7 +25,9 @@
 
   // ── Motion ──
   // Entrance styles are gated on .pe-motion so reduced-motion users get the
-  // page with no opacity:0 rules ever applied.
+  // page with no opacity:0 rules ever applied. scrollIntoView calls below
+  // deliberately omit behavior: the CSS scroll-behavior rule, itself gated
+  // on reduced-motion, decides whether scrolling is smooth.
   if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: no-preference)').matches) {
     document.documentElement.classList.add('pe-motion');
   }
@@ -69,8 +71,8 @@
     btn.innerHTML =
       '<img src="https://i.ytimg.com/vi/' + videoId + '/hqdefault.jpg" alt="" loading="lazy" width="480" height="360">' +
       '<svg class="play-btn" viewBox="0 0 68 48" aria-hidden="true">' +
-      '<path d="M66.52 7.74c-.78-2.93-2.49-5.41-5.42-6.19C55.79.13 34 0 34 0S12.21.13 6.9 1.55c-2.93.78-4.63 3.26-5.42 6.19C.06 13.05 0 24 0 24s.06 10.95 1.48 16.26c.78 2.93 2.49 5.41 5.42 6.19C12.21 47.87 34 48 34 48s21.79-.13 27.1-1.55c2.93-.78 4.63-3.26 5.42-6.19C67.94 34.95 68 24 68 24s-.06-10.95-1.48-16.26z" fill="rgba(0,0,0,.7)"/>' +
-      '<path d="M45 24 27 14v20z" fill="#fff"/>' +
+      '<path d="M66.52 7.74c-.78-2.93-2.49-5.41-5.42-6.19C55.79.13 34 0 34 0S12.21.13 6.9 1.55c-2.93.78-4.63 3.26-5.42 6.19C.06 13.05 0 24 0 24s.06 10.95 1.48 16.26c.78 2.93 2.49 5.41 5.42 6.19C12.21 47.87 34 48 34 48s21.79-.13 27.1-1.55c2.93-.78 4.63-3.26 5.42-6.19C67.94 34.95 68 24 68 24s-.06-10.95-1.48-16.26z" fill="rgba(42, 23, 8, .72)"/>' +
+      '<path d="M45 24 27 14v20z" fill="#FAF6EE"/>' +
       '</svg>';
 
     // Third-party embed loads only on click (site-wide pattern).
@@ -88,7 +90,10 @@
     voicingMedia.appendChild(btn);
   }
 
-  function applyVoicing(radio) {
+  // syncForm is false on page load: the enquiry form must keep its
+  // "Guidance welcome" default, and voicing_explored must only record a
+  // choice the visitor actually made.
+  function applyVoicing(radio, syncForm) {
     var value = radio.value;
 
     // The prose lives in the markup, not here: each radio's parent label
@@ -99,18 +104,19 @@
       if (note) voicingNote.textContent = note;
     }
 
-    // Keep the enquiry form in step with what was explored.
-    if (ensembleSelect) ensembleSelect.value = value + '-voices';
-    if (voicingExplored) voicingExplored.value = value;
+    if (syncForm) {
+      if (ensembleSelect) ensembleSelect.value = value + '-voices';
+      if (voicingExplored) voicingExplored.value = value;
+    }
 
     renderVoicingMedia(value, radio);
   }
 
   voicingRadios.forEach(function (radio) {
     radio.addEventListener('change', function () {
-      if (radio.checked) applyVoicing(radio);
+      if (radio.checked) applyVoicing(radio, true);
     });
-    if (radio.checked) applyVoicing(radio);
+    if (radio.checked) applyVoicing(radio, false);
   });
 
   // ── UTM / click-ID capture ──
@@ -128,6 +134,10 @@
 
   // ── Conditional fields ──
   // Hidden wrappers also disable their fields so FormData excludes them.
+  // Sync functions are re-run on pageshow: browsers restore form state on
+  // back/forward navigation without firing change events.
+  var syncFns = [];
+
   function setFieldVisible(wrapper, visible) {
     if (!wrapper) return;
     wrapper.hidden = !visible;
@@ -144,7 +154,7 @@
       setFieldVisible(companyField, v === 'Planner or agency' || v === 'Venue or hotel');
     };
     enquiringAs.addEventListener('change', syncCompany);
-    syncCompany();
+    syncFns.push(syncCompany);
   }
 
   var dateFlexible = document.getElementById('date-flexible');
@@ -155,18 +165,23 @@
       if (dateFlexible.checked) eventDate.value = '';
     };
     dateFlexible.addEventListener('change', syncDate);
-    syncDate();
+    syncFns.push(syncDate);
   }
 
   var hearSelect = document.getElementById('hear');
   var hearDetailField = document.querySelector('.pe-field--hear-detail');
   if (hearSelect && hearDetailField) {
     var syncHear = function () {
-      setFieldVisible(hearDetailField, hearSelect.value === 'Referred by a planner');
+      // "Who referred you?" applies to every referral-type answer.
+      setFieldVisible(hearDetailField, /^(Referred|Recommended) /.test(hearSelect.value));
     };
     hearSelect.addEventListener('change', syncHear);
-    syncHear();
+    syncFns.push(syncHear);
   }
+
+  function runSyncs() { syncFns.forEach(function (fn) { fn(); }); }
+  runSyncs();
+  window.addEventListener('pageshow', runSyncs);
 
   // ── Conversion tracking ──
   // The GA head snippet defines global gtag() (a dataLayer queue, live
@@ -185,18 +200,35 @@
 
   // ── Form submit ──
   if (form) {
+    // The markup omits novalidate so no-JS visitors keep native browser
+    // validation on the plain HTML POST fallback; with JS running, the
+    // custom flow below takes over.
+    form.setAttribute('novalidate', '');
+
     var successBox = document.getElementById('pe-form-success');
     var errorBox = document.querySelector('.pe-form-error');
     var submitBtn = form.querySelector('[type="submit"]');
     var btnLabel = submitBtn ? submitBtn.textContent : 'Send enquiry';
 
+    // The error box holds one message per failure mode; showError reveals
+    // the box with only the relevant message visible.
+    function showError(kind, scroll) {
+      if (!errorBox) return;
+      errorBox.querySelectorAll('[data-error-msg]').forEach(function (msg) {
+        msg.hidden = msg.getAttribute('data-error-msg') !== kind;
+      });
+      errorBox.setAttribute('data-visible', 'true');
+      if (scroll) errorBox.scrollIntoView({ block: 'center' });
+    }
+
     form.addEventListener('submit', function (e) {
       e.preventDefault();
 
-      // Required-field guard (the form carries novalidate; CSS handles
-      // the visual invalid state).
+      // Required-field guard: focus the first invalid field and name the
+      // problem (the CSS :user-invalid rule marks the fields themselves).
       var invalid = form.querySelectorAll(':invalid');
       if (invalid.length) {
+        showError('incomplete', false);
         invalid[0].focus();
         return;
       }
@@ -211,10 +243,7 @@
       // Timing check: a submit within seconds of page load is not a person.
       var elapsed = (Date.now() - pageLoadTs) / 1000;
       if (elapsed < PE.MIN_SECONDS) {
-        if (errorBox) {
-          errorBox.setAttribute('data-visible', 'true');
-          errorBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
+        showError('timing', true);
         return;
       }
 
@@ -261,10 +290,7 @@
           }
         })
         .catch(function () {
-          if (errorBox) {
-            errorBox.setAttribute('data-visible', 'true');
-            errorBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          }
+          showError('network', true);
           if (submitBtn) {
             submitBtn.disabled = false;
             submitBtn.textContent = btnLabel;
