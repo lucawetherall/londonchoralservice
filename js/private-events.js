@@ -159,6 +159,16 @@
 
   var dateFlexible = document.getElementById('date-flexible');
   var eventDate = document.getElementById('event-date');
+
+  // A past date is never a real enquiry, so pin the picker's floor to today.
+  // Built from local date parts rather than toISOString(), which is UTC and
+  // would offer yesterday to anyone east of Greenwich late in the evening.
+  if (eventDate) {
+    var now = new Date();
+    var pad2 = function (n) { return n < 10 ? '0' + n : String(n); };
+    eventDate.min = now.getFullYear() + '-' + pad2(now.getMonth() + 1) + '-' + pad2(now.getDate());
+  }
+
   if (dateFlexible && eventDate) {
     var syncDate = function () {
       eventDate.disabled = dateFlexible.checked;
