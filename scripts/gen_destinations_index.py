@@ -72,7 +72,7 @@ FAQS = [
      'Most destination ceremonies happen outdoors or in a room with no organ, and the consort is built for '
      'exactly that: unaccompanied singing needs no instrument, no stage and no amplification. What it does '
      'need is the right number of voices for the space, which is why an open terrace usually wants more '
-     'singers than a stone chapel of the same guest count.'),
+     'singers than a stone chapel does. The room decides the number, not the size of the guest list.'),
 ]
 
 def jsonld():

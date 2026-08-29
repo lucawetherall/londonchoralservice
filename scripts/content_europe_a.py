@@ -100,7 +100,7 @@ n = build('italy', 'Italy',
     'readings and spoken rite stay in Italian, and we can add an English motet where you want the '
     'service to feel like yours rather than a translation.'),
    ('How many singers do we need for a Tuscan church?',
-    'Fewer than you would need at home for the same guest count. A stone church with a vaulted nave '
+    'Fewer than you would need at home in a drier room. A stone church with a vaulted nave '
     'does half the work: eight voices carries a congregation of eighty comfortably, and twelve fills a '
     'substantial parish church. An outdoor ceremony or a garden chapel is the opposite case and wants '
     'more voices, not fewer. Send us a photograph of the space and we will tell you.'),
@@ -188,8 +188,8 @@ n = build('france', 'France',
     'celebrant-led ceremony that follows, which is also the one your guests will treat as the wedding.'),
    ('Can you sing at a ch&acirc;teau ceremony rather than in a church?',
     'Yes, and it is a large part of what we do in France. The main thing to plan for is the acoustic: '
-    'an outdoor ceremony gives nothing back, so we usually recommend more voices than the guest count '
-    'alone suggests, and placing the consort nearer the guests. If the ch&acirc;teau has a chapel, an '
+    'an outdoor ceremony gives nothing back, so we usually recommend more voices than the same ceremony '
+    'would need indoors, and placing the consort nearer you. If the ch&acirc;teau has a chapel, an '
     'orangery or a vaulted hall, ask about using it for the ceremony itself.'),
    ('Will the music be in French?',
     'Some of it, if you want it to be. We usually sing the ordinary in Latin and include at least one '
@@ -280,7 +280,7 @@ n = build('spain', 'Spain',
     'all work, and we will arrange something for the consort if no choral setting exists.'),
    ('Do we need more singers for an outdoor ceremony?',
     'Usually yes. An open terrace returns no sound and a coastal breeze carries it away from the guests. '
-    'Where a stone church would be well served by eight voices, the same guest count outdoors is better '
+    'Where a stone church would be well served by eight voices, the same ceremony outdoors is better '
     'with twelve. Send us a photograph of where the ceremony will happen and we will give you a straight '
     'recommendation rather than the largest number.'),
    ('Will you sing in Spanish?',
@@ -364,7 +364,7 @@ n = build('portugal', 'Portugal',
    ('What is the acoustic like in Portuguese churches?',
     'Bright, and often more reverberant than you would expect, because tiled surfaces reflect sound '
     'rather than absorbing it. That suits polyphony and rewards a slower tempo. Eight voices is usually '
-    'plenty in a parish church; an outdoor quinta ceremony with the same guest count wants twelve.'),
+    'plenty in a parish church; an outdoor quinta ceremony wants twelve.'),
    ('How does the cost compare with Italy or Greece?',
     'Portugal is at the more affordable end. The flight is short, the transfers are usually brief, and '
     'one night away is often enough outside high season. Our UK rates are published on the '
