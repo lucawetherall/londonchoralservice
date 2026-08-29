@@ -19,8 +19,10 @@ GROUPS = [
         ('malta', 'Malta', ['Valletta', 'Mdina', 'Gozo'], 'rite'),
         ('croatia', 'Croatia', ['Dubrovnik', 'Hvar', 'Split', 'Istria'], 'rite'),
         ('gibraltar', 'Gibraltar', ['the Rock', 'the Botanic Gardens'], 'rite'),
-        ('ireland', 'Ireland', [], 'rite'),
-        ('scotland', 'Scotland', [], 'rite'),
+        # Ireland and Scotland regions set provisionally 2026-08-29 pending owner
+        # confirmation — see MANUAL-ACTIONS-REQUIRED.md §14 item 1.
+        ('ireland', 'Ireland', ['Dublin', 'County Wicklow', 'the south west', 'the west'], 'rite'),
+        ('scotland', 'Scotland', ['Edinburgh', 'the Highlands', 'Loch Lomond', 'Perthshire'], 'rite'),
     ]),
     ('The Americas and the Caribbean', [
         ('united-states', 'United States', ['New York City', 'Florida', 'Las Vegas'], 'both'),
