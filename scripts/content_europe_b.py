@@ -21,9 +21,7 @@ n = build('greece', 'Greece',
      'sung as part of that tradition rather than accompanied by outside music.',
      'The rite is therefore complete without us, and we leave it to itself. What the consort does is '
      'sing everywhere else in the day, and at a Greek wedding that is a great deal: as your guests gather and are seated beforehand, at the drinks that follow, through the '
-     'wedding breakfast, and at a welcome dinner the evening before. Couples who have had both tell us '
-     'the contrast works in their favour &mdash; the chanting belongs to the rite, and the consort '
-     'belongs to the celebration around it.',
+     'wedding breakfast, and at a welcome dinner the evening before. Couples who have had both tell us the contrast works in their favour. The chanting belongs to the rite, and the consort belongs to the celebration around it.',
      'Many couples in this position have both &mdash; an Orthodox service for the family and a '
      'ceremony of their own, humanist or celebrant-led, at the venue &mdash; and we sing at the second '
      'from beginning to end.']),
@@ -85,8 +83,7 @@ n = build('greece', 'Greece',
     'Everywhere except inside the Orthodox rite itself, which is chanted by a cantor in its own tradition '
     'and is complete as it stands. Around it there is a great deal: as your guests gather and are seated, '
     'at the drinks afterwards, through the wedding breakfast, and at a welcome dinner the evening before. '
-    'And if you are having a symbolic ceremony as well &mdash; as most British couples in Greece are '
-    '&mdash; we sing at that from start to finish.'),
+    'And if you are having a symbolic ceremony as well, as most British couples in Greece are, we sing at that from start to finish.'),
    ('What if our ceremony is symbolic rather than religious?',
     'Then the music is open, and most British couples marrying in Greece are in exactly this '
     'position. With no liturgy to work around, we would suggest three or four deliberate moments rather '
@@ -97,8 +94,7 @@ n = build('greece', 'Greece',
     'a programme that favours pieces with body over the most delicate ones. Tell us where the ceremony '
     'will be and we will tell you what we would do.'),
    ('How much of the cost is accommodation?',
-    'On Santorini and Mykonos in July and August, more than most couples expect &mdash; enough that it '
-    'is worth discussing before you settle the date. Rooms for twelve to twenty-four people on those '
+    'On Santorini and Mykonos in July and August, more than most couples expect. Enough that it is worth discussing before you settle the date. Rooms for twelve to twenty-four people on those '
     'islands in high season are a material part of the quote. Crete and Rhodes cost less on that front.'),
   ])
 print(f'greece {n}')
@@ -142,8 +138,7 @@ n = build('cyprus', 'Cyprus',
      'a coastal breeze, and a recommendation of twelve voices where a church would want eight. Cyprus '
      'is hot late into the season, and an afternoon ceremony in August needs shade for the singers '
      'arranged in advance.',
-     'The island does have stone worth singing in &mdash; monastery churches inland and the older '
-     'buildings in Paphos among them. Where a venue offers an indoor or courtyard option, it is usually '
+     'The island does have stone worth singing in, monastery churches inland and the older buildings in Paphos among them. Where a venue offers an indoor or courtyard option, it is usually '
      'the better room even when the terrace is the better view.']),
    ('Travel', 'Getting a consort to Cyprus',
     ['Direct flights from London to Paphos and Larnaca run daily and year-round, and the island is small '
@@ -166,9 +161,7 @@ n = build('cyprus', 'Cyprus',
      'positions for it.']),
    ('Ayia Napa', 'ayia-napa',
     ['Hotel and beach weddings on the east coast, with the easiest logistics on the island and a long '
-     'season. Ceremonies here are compact and the guests are usually close in, which suits a smaller '
-     'group singing near them as well as it suits a full consort &mdash; a quartet at the ceremony and '
-     'again over drinks is a shape that works well in this part of Cyprus.']),
+     'season. Ceremonies here are compact and the guests are usually close in, which suits a smaller group singing near them as well as it suits a full consort. A quartet at the ceremony and again over drinks is a shape that works well in this part of Cyprus.']),
   ],
   [
    ('How many singers suit a Cyprus wedding?',
@@ -222,8 +215,7 @@ n = build('malta', 'Malta',
      'tell you which. Either way we would sing the ordinary in Latin, which needs no negotiation in a '
      'Catholic church and suits these buildings.',
      'Because English is an official language, this is the one Mediterranean destination where you can '
-     'reasonably expect the congregation to sing a hymn. If you want that &mdash; and a congregation '
-     'singing in a Maltese church is a considerable sound &mdash; choose something well known and let '
+     'reasonably expect the congregation to sing a hymn. If you want that, and a congregation singing in a Maltese church is a considerable sound, choose something well known and let '
      'us lead it. Our guide to <a href="/music-guides/choosing-wedding-hymns.html">choosing wedding '
      'hymns</a> applies here almost unchanged.']),
    ('Buildings', 'Stone, height and a great deal of reverberation',
@@ -254,8 +246,7 @@ n = build('malta', 'Malta',
      'smaller churches within the walls are both worth singing in; the smaller ones need eight voices '
      'rather than sixteen. Vehicle access inside the walls is restricted, so plan the approach.']),
    ('Gozo', 'gozo',
-    ['Quieter, greener, and with parish churches out of all proportion to the size of their villages '
-     '&mdash; which is excellent news acoustically. The ferry crossing means building an extra hour into '
+    ['Quieter, greener, and with parish churches out of all proportion to the size of their villages, which is excellent news acoustically. The ferry crossing means building an extra hour into '
      'the schedule each way, and we would generally arrive the day before rather than the morning of.']),
   ],
   [
@@ -317,8 +308,7 @@ n = build('croatia', 'Croatia',
      'islands are reached by ferry or catamaran from Split, on schedules that thin out sharply outside '
      'summer and can be disrupted by weather. Moving twelve to twenty-four people plus luggage across a '
      'ferry connection on the morning of a wedding is a risk we will not take, so for island weddings we '
-     'arrive two days early rather than one. That is a second night in the quote, and it is not '
-     'negotiable &mdash; it is the difference between a choir at your wedding and a choir on a quayside.',
+     'arrive two days early rather than one. That is a second night in the quote, and it is not negotiable. It is the difference between a choir at your wedding and a choir on a quayside.',
      'Croatia is in the European Union and the Schengen area, and we travel as British musicians under '
      'the arrangements that apply there, handling the paperwork ourselves.']),
   ],
@@ -329,7 +319,7 @@ n = build('croatia', 'Croatia',
      'which is worth knowing when scheduling a group in August. The airport is close.']),
    ('Split', 'split',
     ['Diocletian&rsquo;s palace and the buildings inside it, with a good deal of enclosed stone and an '
-     'easy airport. Split is also the ferry port for the islands, so a wedding here avoids the crossing &mdash; the simplest choice in Dalmatia for a group this size.']),
+     'easy airport. Split is also the ferry port for the islands, so a wedding here avoids the crossing, the simplest choice in Dalmatia for a group this size.']),
    ('Hvar', 'hvar',
     ['Beautiful, and the most logistically demanding place on this page. The ferry from Split is the '
      'binding constraint and the reason we plan two nights rather than one. Once there, the town has '

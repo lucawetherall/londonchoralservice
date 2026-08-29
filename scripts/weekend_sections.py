@@ -20,9 +20,7 @@ WEEKEND = {
  'many stay through Sunday lunch.',
  'The thing worth knowing is that a consort which has flown out for the ceremony costs very little more '
  'to keep for the rest of it. The flights and the rooms are the expensive part and they are already '
- 'paid. Singing at a welcome dinner in a courtyard on the Friday, then in the church on the Saturday, '
- 'then again over drinks in the villa garden, gives your guests three quite different experiences of '
- 'the same group &mdash; and in Italy the first two usually happen in different buildings, so the two sound quite different.',
+ 'paid. Singing at a welcome dinner in a courtyard on the Friday, then in the church on the Saturday, then again over drinks in the villa garden, gives your guests three quite different experiences of the same group, and in Italy the first two usually happen in different buildings, so the two sound quite different.',
  'Italy&rsquo;s one geographical quirk: the church and the reception villa are often twenty to forty '
  'minutes apart. Tell us the plan and we will work out whether we travel with the guests or go ahead. '
  'One sizing note: the villa set has to carry over a party in full flow, so it usually wants more '
@@ -32,10 +30,7 @@ WEEKEND = {
  'A French ch&acirc;teau wedding is usually an exclusive-use booking for two or three nights, with '
  'guests sleeping on the estate. That is close to the ideal shape for us: everyone is in one place, '
  'nobody is driving anywhere, and the whole party is together from Friday evening to Sunday morning.',
- 'It also means the ceremony is a small part of what we could do. A consort can sing at the welcome '
- 'dinner, at the ceremony itself, through the drinks in the gardens, and unaccompanied in a stone hall '
- 'after the meal &mdash; which, with the lights down and the guests close in, tends to be the part '
- 'they describe afterwards. All of it on one set of fares.',
+ 'It also means the ceremony is a small part of what we could do. A consort can sing at the welcome dinner, at the ceremony itself, through the drinks in the gardens, and unaccompanied in a stone hall after the meal, which, with the lights down and the guests close in, tends to be the part they describe afterwards. All of it on one set of fares.',
  'France also has the mairie in the mix for couples marrying legally there, which spreads the weekend '
  'across another day. We can sing at the celebration afterwards if the two are separated. Bear in mind '
  'that the ch&acirc;teau dinner is a noisier room than the blessing was: singing over a party in full '
@@ -47,9 +42,7 @@ WEEKEND = {
  'Sunday. People are together for days rather than hours.',
  'With the travel already paid for, a consort can appear at more than one of those. Something the '
  'guests do not expect on the Friday evening; the ceremony on the Saturday; and part-songs and '
- 'arrangements during the aperitif afterwards. Spain is also the country where couples most often ask '
- 'us to sing something unexpected late on &mdash; a piece arranged for the consort that means something '
- 'to the two of them.',
+ 'arrangements during the aperitif afterwards. Spain is also the country where couples most often ask us to sing something unexpected late on. A piece arranged for the consort that means something to the two of them.',
  'If your ceremony is in a town church and the reception is at a finca, factor the transfer in; we '
  'will plan around whichever end you want us at.']),
 
@@ -63,9 +56,7 @@ WEEKEND = {
  'and without a single additional fare. Of everywhere we travel, Portugal is where a group that has '
  'flown out earns its journey most easily.',
  'If your ceremony is in a Lisbon or Porto church with the reception up the valley, that changes; tell '
- 'us and we will plan the day around the drive. Worth flagging when you plan the day: the quinta '
- 'terrace during drinks is a talking room, and a talking room needs more voices to carry than a quiet '
- 'church does &mdash; the number rises with the size of the party, not with the size of the estate.']),
+ 'us and we will plan the day around the drive. Worth flagging when you plan the day: the quinta terrace during drinks is a talking room, and a talking room needs more voices to carry than a quiet church does. The number rises with the size of the party, not with the size of the estate.']),
 
 'greece': ('The weekend', 'Across an island weekend', [
  'A Greek island wedding is a three- or four-day event by necessity: guests fly in, there is nowhere '
@@ -97,9 +88,7 @@ WEEKEND = {
  'Malta is small enough that a wedding weekend has no logistics to speak of. Guests stay in Valletta or '
  'Sliema, the church may be in Mdina, the reception somewhere else again, and none of it is more than '
  'half an hour away. The whole party moves easily.',
- 'With the buildings Malta has, that is worth exploiting. A consort can sing at a welcome dinner, then '
- 'in a baroque church on the Saturday, then at the reception &mdash; and the church is such a different '
- 'acoustic from anything else on the island that guests hear two distinct things from the same singers.',
+ 'With the buildings Malta has, that is worth exploiting. A consort can sing at a welcome dinner, then in a baroque church on the Saturday, then at the reception, and the church is such a different acoustic from anything else on the island that guests hear two distinct things from the same singers.',
  'If any part of the weekend is on Gozo, add the ferry to the plan; everything else is straightforward.']),
 
 'croatia': ('The weekend', 'Across a Dalmatian weekend', [
@@ -150,9 +139,7 @@ WEEKEND = {
  'The multi-day wedding weekend is more established in the United States than anywhere else, and the '
  'vocabulary already exists for it: the rehearsal dinner on the Friday, the ceremony and reception on '
  'the Saturday, the farewell brunch on the Sunday. Guests expect three events, not one.',
- 'That is a good fit for a group that has crossed the Atlantic. The rehearsal dinner in particular '
- 'suits a consort &mdash; it is smaller, indoors, and the guests are close, which is where '
- 'unaccompanied singing is at its best. With the flights and visas already arranged, adding it costs '
+ 'That is a good fit for a group that has crossed the Atlantic. The rehearsal dinner in particular suits a consort. It is smaller, indoors, and the guests are close, which is where unaccompanied singing is at its best. With the flights and visas already arranged, adding it costs '
  'very little.',
  'If your ceremony is in a New York church and the reception is elsewhere in the city, that is an easy '
  'transfer; Florida and Nevada resorts usually keep everything on one site. Size the cocktail hour on '
@@ -165,9 +152,7 @@ WEEKEND = {
  'Everybody being in one place for days is the argument for using a consort more than once. The '
  'transatlantic flights are the expensive part of bringing us and they are already spent, so a welcome '
  'party on the Thursday and the ceremony on the Saturday cost far less together than they would apart.',
- 'Worth thinking about where each moment happens. If the resort has a cenote, a chapel or any enclosed '
- 'space, put one of the performances there rather than putting everything on the beach &mdash; the '
- 'contrast is what your guests will remember.']),
+ 'Worth thinking about where each moment happens. If the resort has a cenote, a chapel or any enclosed space, put one of the performances there rather than putting everything on the beach. The contrast is what your guests will remember.']),
 
 'barbados': ('The weekend', 'Across a Barbados week', [
  'Barbados weddings tend to run longer than a weekend. Guests fly eight hours and make a holiday of it, '
@@ -182,8 +167,7 @@ WEEKEND = {
 'st-lucia': ('The weekend', 'Across a St Lucia week', [
  'Like Barbados, St Lucia is a week rather than a weekend: guests come a long way and stay, and the '
  'wedding is the centre of a longer holiday for everybody.',
- 'With the fares already paid, a consort can appear more than once across that &mdash; a welcome '
- 'evening, the ceremony, the reception. The one thing to plan carefully is movement: the island is '
+ 'With the fares already paid, a consort can appear more than once across that: a welcome evening, the ceremony, the reception. The one thing to plan carefully is movement: the island is '
  'steep, transfers between the north and Souffri&egrave;re take real time, and a group of singers in '
  'formal dress does not move quickly on a hillside.',
  'If everything is at one resort, none of that applies and the weekend is straightforward.']),
@@ -193,7 +177,7 @@ WEEKEND = {
  'America with family who live on the island. That combination shapes what works: a service with real '
  'congregational singing lands differently when half the congregation grew up singing in church.',
  'Across the week a consort can sing at a welcome event, at the church, and at a great house reception. '
- 'The great house is worth using for at least one of them &mdash; hard surfaces and an enclosed room carry where a lawn does not, and it gives your guests something distinct from the beach.',
+ 'The great house is worth using for at least one of them. Hard surfaces and an enclosed room carry where a lawn does not, and it gives your guests something distinct from the beach.',
  'Negril adds a long transfer from Montego Bay; Ocho Rios and the north coast keep the week compact.']),
 
 'mauritius': ('The weekend', 'Across a Mauritius week', [
@@ -221,9 +205,7 @@ WEEKEND = {
  'Seychelles weddings run over a week, with guests staying at one or two resorts and the wedding day '
  'in the middle. The islands are quiet enough that the party tends to stay together throughout.',
  'Because getting a consort here is the expensive part, spreading its appearances across the stay is '
- 'the sensible plan: a welcome evening, the ceremony, and the reception. If a church is part of it, put '
- 'one appearance there &mdash; it is the only setting in the Seychelles with a real acoustic, and the '
- 'difference against a beach is large.',
+ 'the sensible plan: a welcome evening, the ceremony, and the reception. If a church is part of it, put one appearance there. It is the only setting in the Seychelles with a real acoustic, and the difference against a beach is large.',
  'If guests are split across islands, tell us early; ferry and domestic flight timings shape what is '
  'possible across a week as much as they shape the arrival.']),
 
@@ -252,8 +234,7 @@ WEEKEND = {
  'Cape wine estates are set up for multi-day weddings: guest accommodation on the property, a welcome '
  'dinner in the cellar or on the stoep, the wedding day itself, and often a long Sunday lunch before '
  'people scatter to safari or the coast.',
- 'For a consort this is close to the Portuguese case &mdash; everyone in one place, no transfers, and '
- 'several natural moments to sing across two or three days. The barrel cellar is the room to use for '
+ 'For a consort this is close to the Portuguese case. Everyone in one place, no transfers, and several natural moments to sing across two or three days. The barrel cellar is the room to use for '
  'at least one of them.',
  'South Africa has an advantage nowhere else on this list has: the flight is long but the time change '
  'is an hour or two, so singers arrive able to work rather than needing a day to recover. A multi-part '
