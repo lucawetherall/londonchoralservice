@@ -347,8 +347,8 @@ n = build('indonesia', 'Bali',
      'recessional, and a set afterwards.',
      'Where a couple wants the day to acknowledge the island, the honest way to do it is to let Balinese '
      'musicians do what they do &mdash; a gamelan ensemble during the reception is a genuinely beautiful '
-     'thing &mdash; rather than asking an English consort to approximate it. The two sit perfectly well '
-     'in one day as long as each is allowed to be itself.']),
+     'thing &mdash; rather than asking an English consort to approximate it. The two sit well '
+     'together in one day, as long as each is allowed to be itself.']),
    ('Buildings', 'The glass chapels, and why they matter',
     ['Bali is unusual, and in a way that works in our favour. The island&rsquo;s wedding industry has '
      'built a considerable number of purpose-made chapels &mdash; glass and stone structures on the '

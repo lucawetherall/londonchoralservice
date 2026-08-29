@@ -2,7 +2,7 @@
 
 **Date:** 2026-08-29
 **Author:** Luca Wetherall (with Claude)
-**Status:** Draft for review
+**Status:** Shipped 2026-08-29 (all four workstreams; region pages remain a later phase)
 **Related:** [docs/superpowers/plans/2026-08-29-international-luxury-weddings.md](../plans/2026-08-29-international-luxury-weddings.md), [2026-08-26-private-events-design.md](2026-08-26-private-events-design.md), [private-events.html](../../../private-events.html), [MANUAL-ACTIONS-REQUIRED.md](../../../MANUAL-ACTIONS-REQUIRED.md)
 
 ---

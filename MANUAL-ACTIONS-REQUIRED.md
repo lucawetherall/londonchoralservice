@@ -286,4 +286,10 @@ Spec: `docs/superpowers/specs/2026-08-29-international-luxury-weddings-design.md
 6. **A bespoke OG image** for `/destinations/` and `/planners-and-venues.html`;
    both currently reuse `assets/og-private-events.png`.
 7. **Planner-network and luxury-directory outreach**, and wedding-press placement
-   — there are now pages to point at.
+   &mdash; there are now pages to point at.
+8. **Refresh the repo graph.** `graphify-out/` is now stale: this programme added
+   twenty-five pages and edited nineteen more, and the graphify tool was not
+   available in the session that built them, so the committed graph still
+   describes the site as it was before. Run `/graphify --update` and commit
+   `graphify-out/` when convenient. Nothing depends on it at runtime; it only
+   affects agents querying the graph instead of re-reading the repo.
