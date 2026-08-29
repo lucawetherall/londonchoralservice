@@ -272,7 +272,7 @@ n = build('spain', 'Spain',
    ('Can a British choir sing at a Catholic wedding in Spain?',
     'Yes. Spanish parishes are generally used to sung Masses and welcoming to visiting singers. Confirm '
     'with the church that a visiting choir is acceptable and whether they expect their own organist to '
-    'be involved, and tell us either way &mdash; we work alongside a house organist perfectly happily.'),
+    'be involved, and tell us either way &mdash; we are glad to work alongside a house organist.'),
    ('What music suits a villa ceremony in Ibiza or Mallorca?',
     'Fewer pieces, placed deliberately. An entrance, one piece during the signing or the vows, and a '
     'recessional will do more than a long list. Because there is no liturgy, the repertoire is entirely '

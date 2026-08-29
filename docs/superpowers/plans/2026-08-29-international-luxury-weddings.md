@@ -14,6 +14,9 @@
 
 ## Delivery: four shipments, not one
 
+> **Status, 2026-08-29:** PRs 1, 2 and 3 are shipped. Region pages (PR 4+) are
+> not built. Two findings from execution are recorded inline below.
+
 Twenty-five-plus hand-authored pages in one pull request is unreviewable. Ship in this order — Luca's priority order (guide → planners → cross-links → destinations), adjusted so each PR stands alone.
 
 | PR | Contents | Rationale |
@@ -21,7 +24,7 @@ Twenty-five-plus hand-authored pages in one pull request is unreviewable. Ship i
 | **1** | Phase 1 partial extraction · hub copy fixes · `/destinations/index.html` · Workstream A guide · Workstream B planners page · Workstream C's eighteen cross-links | Everything high-yield that needs no country page. The index ships with the country list as its content, so the guide and the cross-links have a live target from day one. |
 | **2** | Eleven Europe/short-haul country pages | Shortest travel-and-permit research; highest volume. Mostly rite-spine pages, but Greece and Cyprus straddle — the split is by haul, and each page picks its spine per the spec. |
 | **3** | Eleven long-haul country pages | The heavy permit research, the United States especially. Mostly no-building pages, but the US, Mexico and the Caribbean carry rite material — again, haul decides the shipment, the spec decides the spine. |
-| **4+** | Region pages, prioritised by market value | Luxury tier first: Lake Como, Amalfi, Tuscany, Côte d'Azur, Ibiza, Mallorca, Santorini. |
+| **4+** | Region pages, prioritised by market value | Luxury tier first: Lake Como, Amalfi, Tuscany, Côte d'Azur, Ibiza, Mallorca, Santorini. **Not yet built.** |
 
 Phases 2 onward repeat per shipment. Phase 1 happens once, in PR 1.
 
@@ -34,6 +37,10 @@ Phases 2 onward repeat per shipment. Phase 1 happens once, in PR 1.
 - **Sequencing is not optional.** `generate_llms_full.py` walks `sitemap.xml` `<loc>` entries and **fails the build** on a sitemap entry whose file is not on disk. Page files first, sitemap second, build third.
 - **New directories, new globs.** `validate_jsonld.py` (its `files` tuple) and `validate_house_claims.py` (its `FILES` tuple) both enumerate directories explicitly. Add **both** `destinations/*.html` and `destinations/**/*.html` in PR 1, so the later region pages are covered without a second edit.
 - **House-claims traps.** Voicings as words (Eight / Twelve / Sixteen / Twenty-four), never digits; no "roster"; "luxury hotels" never "five-star"; no VAT wording; no "over 150"; "elite" banned in this register.
+- **The doorway-page test caught a real failure in PR 3** and is not theatre. A
+  cost paragraph reused verbatim across four long-haul pages pushed the
+  Thailand/Bali pair to 42.3% shared vocabulary; rewriting it per country brought
+  the worst pair to 35.7%. Measure it, do not assume it.
 - **The doorway-page test is a ship gate, not advice.** ≥60% unique body copy per page, country-specific answers rather than synonyms. Fifteen good destinations beat twenty-two templated ones — drop one rather than pad it.
 - **Two page shapes, not one.** The rite spine and the no-building spine are different documents. See the spec; do not force one outline onto both.
 - **The long-haul capability is owner-confirmed (2026-08-29)** and recorded in the spec. Do not strip those pages as over-claims. Everything else stays capability-and-process: no invented venues, clients or case studies.
