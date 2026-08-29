@@ -47,7 +47,7 @@ n = build('gibraltar', 'Gibraltar',
      'enough that everything is within a few minutes of everything else, which removes the usual risk '
      'of a long drive after a delayed flight.',
      'There is no work-permit or visa requirement for British musicians performing here, which is why '
-     'Gibraltar is the one destination where a shorter lead time is genuinely workable. Accommodation '
+     'Gibraltar is the one destination where a shorter lead time works. Accommodation '
      'for a group of twelve to twenty-four is the main thing to book early, because the territory is '
      'small and has a finite number of rooms.']),
   ],
@@ -162,11 +162,10 @@ n = build('ireland', 'Ireland',
    ('Can you sing at a castle or country house ceremony?',
     'Yes, and it is a large share of what we do in Ireland, because the law allows legally binding '
     'ceremonies at approved venues rather than requiring a church. Ask your venue whether there is a '
-    'chapel or a vaulted room available: it will sound considerably better than a function room, and it '
+    'chapel or a vaulted room available: it will sound better than a function room by a wide margin, and it '
     'solves the weather problem at the same time.'),
    ('What about rain?',
-    'Plan for it, and include the singers in the plan. An outdoor ceremony in Ireland needs an indoor '
-    'alternative that somebody has actually thought through, including where twelve people stand and '
+    'Plan for it, and include the singers in the plan. An outdoor ceremony in Ireland needs an indoor alternative somebody has thought through, including where twelve people stand and '
     'whether the music still works in that room. We will ask about this when we quote; it is easier '
     'settled early than at nine in the morning on the day.'),
   ])
@@ -225,8 +224,7 @@ n = build('scotland', 'Scotland',
   [
    ('Edinburgh and the Lothians', 'edinburgh',
     ['City churches, the Old Town and a strong choral tradition already in the air. The simplest travel '
-     'in Scotland &mdash; the train from London runs directly and a day trip is genuinely possible for '
-     'an afternoon ceremony, which keeps the cost at its lowest.']),
+     'in Scotland &mdash; the train from London runs directly and a day trip works for an afternoon ceremony, which keeps the cost at its lowest.']),
    ('The Highlands', 'the-highlands',
     ['Castles, glens and lochs, and the setting most couples picture when they choose Scotland. Also the '
      'longest journeys, the most weather and the driest acoustics. Plan for an overnight stay, twelve '
@@ -244,8 +242,7 @@ n = build('scotland', 'Scotland',
    ('Can we have a legally binding ceremony outdoors in Scotland?',
     'Yes, and it is the main reason couples choose Scotland. Scots law attaches the authority to the '
     'celebrant rather than the building, so a religious or belief celebrant can marry you in a castle '
-    'courtyard, a glen or beside a loch. Your celebrant will confirm the detail; from our side it simply '
-    'means planning for an outdoor acoustic.'),
+    'courtyard, a glen or beside a loch. Your celebrant will confirm the detail; from our side it means planning for an outdoor acoustic.'),
    ('Do you charge extra because Scotland is far from London?',
     'Our published UK rates apply &mdash; a soloist from &pound;250, eight voices at &pound;2,000, '
     'twelve at &pound;3,000, on the <a href="/pricing.html">pricing page</a>. What a Scottish booking may '

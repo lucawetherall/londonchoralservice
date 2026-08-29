@@ -1,5 +1,19 @@
 #!/usr/bin/env python3
-"""Rewrites music-guides/destination-wedding-choir.html from the cloned exemplar."""
+"""ONE-SHOT. Already run; do NOT run again.
+
+This built music-guides/destination-wedding-choir.html once, from a cloned
+exemplar. The page has been hand-edited many times since (the weekend section,
+the ceremony-type reframing, the sizing rules, a stop-slop pass), and none of
+that is reflected here. Re-running this script would overwrite all of it.
+
+Kept only as a record of how the page was first assembled. Edit the built page
+directly; the destination country pages are the ones with live generators.
+"""
+import sys
+if __name__ == '__main__':
+    sys.exit("gen_destination_guide.py is one-shot and already run — see the "
+             "module docstring. Edit music-guides/destination-wedding-choir.html directly.")
+
 import re, json, pathlib
 
 P = pathlib.Path('music-guides/destination-wedding-choir.html')
@@ -118,7 +132,7 @@ BODY = '''  <main id="main">
             a wedding in Tuscany, the Algarve or Barbados, and assume it is either impossible or
             extravagant beyond reason. It is neither, but it is a different kind of booking from hiring
             singers at home, and the differences are worth understanding before you fall in love with the
-            idea. This guide covers what actually determines the cost, how far ahead you need to commit,
+            idea. This guide covers what determines the cost, how far ahead you need to commit,
             the work-permit question almost nobody raises until it is late, and what changes musically when
             there is no organ and no stone.</p>
         </div>
@@ -126,7 +140,7 @@ BODY = '''  <main id="main">
 
       <section class="section">
         <div class="prose">
-          <h2>What you are actually paying for</h2>
+          <h2>What you are paying for</h2>
           <p>Three things move the figure, and only one of them is the music: the number of singers, the
             distance they travel, and the nights they stay.</p>
           <p>The fee for the singing is the part you can look up. Our rates are published on the
@@ -178,7 +192,7 @@ BODY = '''  <main id="main">
             Spanish, Portuguese and German where the ceremony calls for it. Where the congregation is split
             between two languages, the usual solution is to sing the ordinary in Latin, which belongs to
             neither family and is recognisable to both, and to keep the congregational hymns in whichever
-            language most of the guests will actually sing.</p>
+            language most of the guests will sing.</p>
           <p>For the repertoire itself, our guides to
             <a href="wedding-choral-repertoire.html">choral pieces for a wedding</a> and
             <a href="choosing-wedding-hymns.html">choosing wedding hymns</a> apply the same abroad as at
