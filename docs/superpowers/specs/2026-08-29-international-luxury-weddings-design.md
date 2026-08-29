@@ -17,18 +17,18 @@ Four workstreams, in the owner's priority order:
 |---|---|---|
 | **A** | Search intent nobody targets | One guide: `music-guides/destination-wedding-choir.html` |
 | **B** | Planners, venues and estates | One private-register page: `/planners-and-venues.html` |
-| **C** | Feed the hub from existing traffic | In-copy links from the eighteen wedding guides |
+| **C** | Feed the hub from existing traffic | In-copy links from the wedding guides (see Workstream C for the definition of the set) |
 | **D** | Destination pages | `/destinations/` — index plus twenty-two country pages |
 
 **Success metric, unchanged from the private-events spec: cost per qualified enquiry.** Twenty-two destination pages producing five serious conversations a month have done their job. Twenty-two pages producing two hundred tyre-kickers have made the inbox worse, and at this page count that is the live risk rather than a theoretical one.
 
 ## The one architectural decision: the register becomes a partial
 
-`private-events.html` carries its own hand-authored 545-line `<style>` block (lines 64–609) because the private register must not enter `css/pages.css`, which the build would inline into every other page on the site. That reasoning is correct and stands.
+`private-events.html` carries its own hand-authored 545-line `<style>` block (the one whose first inner line is the Pass A comment — `grep -n 'bespoke scoped styles' private-events.html`) because the private register must not enter `css/pages.css`, which the build would inline into every other page on the site. That reasoning is correct and stands.
 
 It does not survive being copied twenty-five times. Twenty-five hand-maintained duplicates of the same stylesheet is the kind of drift that produces a page in the wrong red eighteen months from now, and every one of them is a fresh chance to delete the Pass A comment.
 
-**The existing partial mechanism solves this with no change to `build.sh`.** Partial expansion (build.sh:27–63) runs *before* Pass A (build.sh:75–112). A `<style>` block delivered by a partial is materialised into the page, then examined by Pass A exactly like a hand-authored one — and skipped, because its first inner line is a comment rather than `:root {`. So:
+**The existing partial mechanism solves this with no change to `build.sh`.** The partial-expansion pass runs *before* Pass A (the inlined-CSS restore pass) in `build.sh` — verify with a read of the script before relying on it. A `<style>` block delivered by a partial is materialised into the page, then examined by Pass A exactly like a hand-authored one — and skipped, because its first inner line is a comment rather than `:root {`. So:
 
 - **`partials/private-register.css.html`** — the `<style>` block, comment first, becomes the single source of truth for the register.
 - **`partials/private-footer.html`** — the two-line private footer, identical on every page in the register.
@@ -126,15 +126,15 @@ Both are built. Every destination page carries an honest cost-drivers section �
 The site must not claim engagements it has not performed. Every workstream here is written in the register of *capability and process* — what we do, how we do it, what it depends on — never invented history.
 
 - **The twenty-two-country footprint is confirmed by the owner, 2026-08-29**, including the ultra-long-haul destinations (Maldives, Seychelles, Mauritius, Bali, Thailand). These pages may assert that we travel there. **This confirmation is recorded here so a later reader does not strip the long-haul pages as over-claims** — the hub's own FAQ still named only four countries when it was written, and that is now out of date rather than a limit.
-- No "we have sung at" for a venue where we have not sung. The hub's London venue list (private-events.html:782–791) is vetted; the destination pages get no equivalent list until there is one to write.
+- No "we have sung at" for a venue where we have not sung. The hub's London venue list (`grep -n 'pe-venues' private-events.html`) is vetted; the destination pages get no equivalent list until there is one to write.
 - No named clients, no invented case studies. The hub already commits to not naming private clients; a destination page inventing one would contradict its own hub.
 
 ## The hub is now out of date and in scope
 
 `private-events.html` was written for a four-country world:
 
-- **Line 708** — "Europe, North America, and the Gulf" no longer describes the footprint.
-- **Line 852** — the "Where do you travel?" answer names only Italy, France, Ireland and Scotland.
+- The hero footprint sentence (`grep -n 'Europe, North America, and the Gulf' private-events.html`) no longer describes the footprint.
+- The "Where do you travel?" FAQ answer (`grep -n 'Where do you travel' private-events.html`) names only Italy, France, Ireland and Scotland.
 - **Its JSON-LD `areaServed`** carries `United Kingdom` plus a generic `International` place.
 
 All three are rewritten in the same change that ships the destinations index, so the hub and its children never contradict each other. The rewrite must not turn the FAQ answer into a list of twenty-two countries — it points at the index.
@@ -172,7 +172,7 @@ Search intent currently unserved by this site: *uk choir destination wedding*, *
 
 ## Workstream B — planners and venues
 
-`/planners-and-venues.html` expands what is currently three paragraphs on the hub (private-events.html:836–839) into the page a planner can send to a client or file as a supplier record.
+`/planners-and-venues.html` expands what is currently three paragraphs on the hub (`grep -n 'For planners and venues' private-events.html`) into the page a planner can send to a client or file as a supplier record.
 
 Content: how a standing arrangement works; what we need from a planner and by when; what we provide unprompted (insurance, risk assessments, method statements, confidentiality agreement); the running order and the day-before rehearsal; invoicing in pounds sterling, euros or US dollars; and what a venue's events team specifically needs to know — where the consort stands, what the acoustic does, what we do not need (no stage, no PA, no piano).
 
@@ -182,19 +182,19 @@ It carries the same enquiry form as the hub, with "Enquiring as" defaulting to p
 
 ## Workstream C — feeding the hub
 
-Each of the eighteen wedding music-guides gains **one** in-copy sentence linking into the private register — to `/destinations/` where the guide's subject suggests a destination, otherwise to `/private-events.html`. It sits in the existing closing CTA section (the `<h2>Let us help you plan your wedding music</h2>` block, e.g. music-guides/wedding-ceremony-music.html:2527) or the `related-guides` block below it.
+Each guide listed under `data-category="weddings"` in `music-guides/index.html` — eighteen at the time of writing, including `jerusalem.html`, whose filename a keyword search would miss; **that list is the source of truth, not the number** — gains **one** in-copy sentence linking into the private register — to `/destinations/` where the guide's subject suggests a destination, otherwise to `/private-events.html`. It sits in the existing closing CTA section (the `<h2>Let us help you plan your wedding music</h2>` block, anchor: `grep -n 'Let us help you plan your wedding music' music-guides/*.html`) or the `related-guides` block below it.
 
 Constraints that make this a content edit rather than a find-and-replace:
 
 - **The sentence must fit the guide it sits in.** A hymn-choice guide and an organ-repertoire guide reach the international question by different routes. Eighteen identical sentences would read as boilerplate to a human and as a template to a crawler.
-- **It must not undercut the LCS funnel.** The guides serve UK couples on the published rates; the international line is an aside for the minority marrying abroad, not a redirect. Model it on the existing weddings.html hand-off (weddings.html:2404), which does exactly this in one sentence.
+- **It must not undercut the LCS funnel.** The guides serve UK couples on the published rates; the international line is an aside for the minority marrying abroad, not a redirect. Model it on the existing weddings.html hand-off (`grep -n 'private and international engagements' weddings.html`), which does exactly this in one sentence.
 - **Wedding guides only** — never a funeral or Christmas guide.
 
 ## Enquiry attribution
 
 Every page's form carries a static hidden input `source_page` with the page's own path as its value. Without it, twenty-five pages feed one inbox and the metric — cost per qualified enquiry, per page — cannot be computed, which makes the whole programme unmeasurable.
 
-`js/private-events.js` needs **no change**. It is already null-guarded throughout (the voicing selector, media slot and ensemble select are all optional, js/private-events.js:56–64), so a page without a voicing selector runs it safely, and a static hidden input is submitted by `FormData` without any script. New pages reuse the same element IDs (`pe-enquiry`, `pe-form-success`, `ensemble-size`, and the rest) so the existing handler binds unchanged.
+`js/private-events.js` needs **no change**. It is already null-guarded throughout (the voicing selector, media slot and ensemble select are all optional — `grep -n 'no mapped video' js/private-events.js` lands in the guarded block), so a page without a voicing selector runs it safely, and a static hidden input is submitted by `FormData` without any script. New pages reuse the same element IDs (`pe-enquiry`, `pe-form-success`, `ensemble-size`, and the rest) so the existing handler binds unchanged.
 
 The Ads conversion continues to fire on the existing generic Contact label. Segmenting it is an owner action.
 
