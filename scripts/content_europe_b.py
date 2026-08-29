@@ -93,7 +93,7 @@ n = build('greece', 'Greece',
     'than a continuous programme, and repertoire chosen purely because you like it.'),
    ('Will the wind be a problem on a clifftop?',
     'It can be, and it is the thing couples underestimate most about the Cyclades. We plan around it: '
-    'more voices than the guest count alone would need, the consort positioned upwind of the guests, and '
+    'more voices than the same ceremony would need in a church, the consort positioned upwind of you, and '
     'a programme that favours pieces with body over the most delicate ones. Tell us where the ceremony '
     'will be and we will tell you what we would do.'),
    ('How much of the cost is accommodation?',
@@ -235,8 +235,8 @@ n = build('malta', 'Malta',
      'tempo becomes the main musical decision. Polyphony sounds magnificent; anything fast turns to mud. '
      'We plan Maltese programmes slower than we would at home, and we use the building rather than '
      'fighting it.',
-     'The size of these churches means the number of singers is driven by the room rather than the guest '
-     'count. A large parish church or the co-cathedral scale of building wants sixteen voices to feel '
+     'The size of these churches means the number of singers is driven by the room rather than by how '
+     'many people are standing in it. A large parish church or the co-cathedral scale of building wants sixteen voices to feel '
      'proportionate even with a modest congregation; a small chapel in Mdina or on Gozo is well served '
      'by eight. This is the one destination where we regularly recommend more singers because of the '
      'architecture rather than because of an absent acoustic.']),
@@ -274,7 +274,7 @@ n = build('malta', 'Malta',
     'around them. Tell us early what the parish expects.'),
    ('How many singers for a Maltese church?',
     'Driven by the building more than the guest list. A large parish church wants sixteen voices to feel '
-    'proportionate however many guests you have, because the room is enormous. A small chapel in Mdina or a village '
+    'proportionate, because the room is enormous. A small chapel in Mdina or a village '
     'church on Gozo is well served by eight. Send us the church and we will tell you.'),
    ('Can our guests sing hymns?',
     'Yes, and Malta is the destination where we most often suggest it. With English as an official '

@@ -1424,7 +1424,7 @@ Voicing
 
 ### Choosing a voicing
 
-Alma Consort sings in four sizes, and the right one depends on the building and the number of guests.
+Alma Consort sings in four sizes. The right one follows the building and what you want the music to do — how much stone there is to carry the sound, whether the programme needs soloists, whether you are indoors at all. It does not follow the length of your guest list.
 
 Twelve voices give two singers to each part, with four soloists besides. This is our recommendation for most churches: enough sound for the nave, and a solo voice free to step forward for an Ave Maria or a solo verse.
 
@@ -1674,7 +1674,7 @@ We sing the Latin ordinary as a matter of course, and we sing in Italian, French
 
 #### What if there is no church and no organ?
 
-Most destination ceremonies happen outdoors or in a room with no organ, and the consort is built for exactly that: unaccompanied singing needs no instrument, no stage and no amplification. What it does need is the right number of voices for the space, which is why an open terrace usually wants more singers than a stone chapel of the same guest count.
+Most destination ceremonies happen outdoors or in a room with no organ, and the consort is built for exactly that: unaccompanied singing needs no instrument, no stage and no amplification. What it does need is the right number of voices for the space, which is why an open terrace usually wants more singers than a stone chapel does. The room decides the number, not the size of the guest list.
 
 Enquire
 
@@ -1822,7 +1822,7 @@ We usually suggest Latin for the sung ordinary. It is neutral between a British 
 
 #### How many singers do we need for a Tuscan church?
 
-Fewer than you would need at home for the same guest count. A stone church with a vaulted nave does half the work: eight voices carries a congregation of eighty comfortably, and twelve fills a substantial parish church. An outdoor ceremony or a garden chapel is the opposite case and wants more voices, not fewer. Send us a photograph of the space and we will tell you.
+Fewer than you would need at home in a drier room. A stone church with a vaulted nave does half the work: eight voices carries a congregation of eighty comfortably, and twelve fills a substantial parish church. An outdoor ceremony or a garden chapel is the opposite case and wants more voices, not fewer. Send us a photograph of the space and we will tell you.
 
 
 #### How far ahead should we book for an Italian wedding?
@@ -1963,7 +1963,7 @@ No, and in most cases you could not have one if you wanted. The civil ceremony a
 
 #### Can you sing at a château ceremony rather than in a church?
 
-Yes, and it is a large part of what we do in France. The main thing to plan for is the acoustic: an outdoor ceremony gives nothing back, so we usually recommend more voices than the guest count alone suggests, and placing the consort nearer the guests. If the château has a chapel, an orangery or a vaulted hall, ask about using it for the ceremony itself.
+Yes, and it is a large part of what we do in France. The main thing to plan for is the acoustic: an outdoor ceremony gives nothing back, so we usually recommend more voices than the same ceremony would need indoors, and placing the consort nearer you. If the château has a chapel, an orangery or a vaulted hall, ask about using it for the ceremony itself.
 
 
 #### Will the music be in French?
@@ -2116,7 +2116,7 @@ Fewer pieces, placed deliberately. An entrance, one piece during the signing or 
 
 #### Do we need more singers for an outdoor ceremony?
 
-Usually yes. An open terrace returns no sound and a coastal breeze carries it away from the guests. Where a stone church would be well served by eight voices, the same guest count outdoors is better with twelve. Send us a photograph of where the ceremony will happen and we will give you a straight recommendation rather than the largest number.
+Usually yes. An open terrace returns no sound and a coastal breeze carries it away from the guests. Where a stone church would be well served by eight voices, the same ceremony outdoors is better with twelve. Send us a photograph of where the ceremony will happen and we will give you a straight recommendation rather than the largest number.
 
 
 #### Will you sing in Spanish?
@@ -2260,7 +2260,7 @@ In Portugal, more often than anywhere else, yes. Because the ceremony and recept
 
 #### What is the acoustic like in Portuguese churches?
 
-Bright, and often more reverberant than you would expect, because tiled surfaces reflect sound rather than absorbing it. That suits polyphony and rewards a slower tempo. Eight voices is usually plenty in a parish church; an outdoor quinta ceremony with the same guest count wants twelve.
+Bright, and often more reverberant than you would expect, because tiled surfaces reflect sound rather than absorbing it. That suits polyphony and rewards a slower tempo. Eight voices is usually plenty in a parish church; an outdoor quinta ceremony wants twelve.
 
 
 #### How does the cost compare with Italy or Greece?
@@ -2411,7 +2411,7 @@ Then the music is completely open, and most British couples marrying in Greece a
 
 #### Will the wind be a problem on a clifftop?
 
-It can be, and it is the thing couples underestimate most about the Cyclades. We plan around it: more voices than the guest count alone would need, the consort positioned upwind of the guests, and a programme that favours pieces with body over the most delicate ones. Tell us where the ceremony will be and we will tell you what we would do.
+It can be, and it is the thing couples underestimate most about the Cyclades. We plan around it: more voices than the same ceremony would need in a church, the consort positioned upwind of you, and a programme that favours pieces with body over the most delicate ones. Tell us where the ceremony will be and we will tell you what we would do.
 
 
 #### How much of the cost is accommodation?
@@ -2659,7 +2659,7 @@ Buildings
 
 Maltese limestone churches are reverberant, sometimes strikingly so, with tails long enough that tempo becomes the main musical decision. Polyphony sounds magnificent; anything fast turns to mud. We plan Maltese programmes slower than we would at home, and we use the building rather than fighting it.
 
-The size of these churches means the number of singers is driven by the room rather than the guest count. A large parish church or the co-cathedral scale of building wants sixteen voices to feel proportionate even with a modest congregation; a small chapel in Mdina or on Gozo is well served by eight. This is the one destination where we regularly recommend more singers because of the architecture rather than because of an absent acoustic.
+The size of these churches means the number of singers is driven by the room rather than by how many people are standing in it. A large parish church or the co-cathedral scale of building wants sixteen voices to feel proportionate even with a modest congregation; a small chapel in Mdina or on Gozo is well served by eight. This is the one destination where we regularly recommend more singers because of the architecture rather than because of an absent acoustic.
 
 Travel
 
@@ -2708,7 +2708,7 @@ Often, yes, and that is a good thing rather than a complication. An organ in a M
 
 #### How many singers for a Maltese church?
 
-Driven by the building more than the guest list. A large parish church wants sixteen voices to feel proportionate however many guests you have, because the room is enormous. A small chapel in Mdina or a village church on Gozo is well served by eight. Send us the church and we will tell you.
+Driven by the building more than the guest list. A large parish church wants sixteen voices to feel proportionate, because the room is enormous. A small chapel in Mdina or a village church on Gozo is well served by eight. Send us the church and we will tell you.
 
 
 #### Can our guests sing hymns?
@@ -4867,7 +4867,7 @@ Venues
 
 A consort makes fewer demands on a building than almost any other kind of live music. Unaccompanied singing needs no stage, no power, no PA and no piano, and it leaves no rig to strike afterwards. In a stone building it needs no amplification at all.
 
-What matters instead is where the singers stand and what the room does to the sound. A chancel, a gallery or the west end of a church all work. A ballroom with a carpeted floor and soft furnishings absorbs sound a chapel would carry, and an outdoor terrace gives nothing back at all, so both usually want more voices than the guest count alone would suggest. Send us dimensions and a photograph and we will tell you what we would recommend before you quote it to a client.
+What matters instead is where the singers stand and what the room does to the sound. A chancel, a gallery or the west end of a church all work. A ballroom with a carpeted floor and soft furnishings absorbs sound a chapel would carry, and an outdoor terrace gives nothing back at all, so both usually want more voices than a stone room would. Send us dimensions and a photograph and we will tell you what we would recommend before you quote it to a client.
 
 If you keep a preferred-supplier list, we are glad to go on it and to hold whatever paperwork your compliance process needs on file.
 
@@ -7331,7 +7331,7 @@ A single professional voice is a wonderful choice for smaller, more intimate wed
 
 #### Small choir of four — from £1,150
 
-This is our most popular option for weddings, and for good reason. A quartet of soprano, alto, tenor, and bass gives you full four-part harmony — the complete choral sound — in a compact format. Four excellent singers can lead a congregation of up to about 150 guests with confidence, and the part-singing during the register fills the room. For most parish churches, country houses, and college chapels, a quartet is the ideal balance of musical impact and value.
+This is our most popular option for weddings, and for good reason. A quartet of soprano, alto, tenor, and bass gives you full four-part harmony — the complete choral sound — in a compact format. Four excellent singers lead a congregation with confidence in most parish churches, and the part-singing during the register fills the room. For most parish churches, country houses, and college chapels, a quartet is the ideal balance of musical impact and value.
 
 
 #### Quintet of five — from £1,400
@@ -7422,7 +7422,7 @@ A solo singer starts from £250, a small choir of four from £1,150, a quintet o
 
 #### How many singers do I need for a wedding choir?
 
-A quartet of four singers is the most popular option for weddings, providing full four-part harmony and confident hymn-leading for congregations of up to about 150 guests. Eight singers suit larger churches and more complex repertoire.
+A quartet of four singers is the most popular option for weddings, providing full four-part harmony and confident hymn-leading in a typical parish church. Eight singers suit larger churches and more complex repertoire.
 
 
 #### How far in advance should I book a wedding choir?
@@ -7677,7 +7677,7 @@ For the repertoire itself, our guides to choral pieces for a wedding and choosin
 
 Most destination weddings happen somewhere that was never built for music: a terrace, a cloister, a lawn, a beach. This suits an unaccompanied consort better than it suits a string quartet or a band, because there is nothing to plug in, nothing to tune, and nothing to strike afterwards.
 
-What it does change is the number of voices. A stone church returns sound to the room and flatters a small group; an outdoor ceremony returns nothing at all, and a carpeted ballroom actively absorbs it. As a rule of thumb, a space with no reverberation wants more singers than the guest count alone would suggest — twelve where a chapel would have been happy with eight. Heat matters too: a group singing at four in the afternoon in the Caribbean needs shade and water in a way it does not in Winchester, and that belongs in the running order rather than being discovered on the day.
+What it does change is the number of voices. A stone church returns sound to the room and flatters a small group; an outdoor ceremony returns nothing at all, and a carpeted ballroom actively absorbs it. As a rule of thumb, a space with no reverberation wants more singers than the same ceremony would need indoors — twelve where a chapel would have been happy with eight. Heat matters too: a group singing at four in the afternoon in the Caribbean needs shade and water in a way it does not in Winchester, and that belongs in the running order rather than being discovered on the day.
 
 
 ### Questions couples ask
@@ -7705,7 +7705,7 @@ It depends on the country, and the honest answer is that this is the question mo
 
 #### What if there is no church, no organ and no stage?
 
-That describes most destination weddings, and it suits a consort better than it suits almost any other kind of live music. Unaccompanied singing needs no instrument, no power and no amplification. What changes is the number of voices: an open terrace or a beach gives nothing back acoustically, so it wants more singers than a stone chapel with the same number of guests.
+That describes most destination weddings, and it suits a consort better than it suits almost any other kind of live music. Unaccompanied singing needs no instrument, no power and no amplification. What changes is the number of voices: an open terrace or a beach gives nothing back acoustically, so it wants more singers than a stone chapel would.
 
 
 ### If you are marrying abroad
