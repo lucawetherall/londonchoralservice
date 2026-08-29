@@ -22,8 +22,7 @@ CEREMONY = {
  'too, and more often than couples realise: the Diocese in Europe has Anglican chaplaincies in '
  'Florence, Milan, Rome and elsewhere, and an English-language Anglican wedding in Italy runs on the '
  'order of service you would recognise from home, hymns included. A <strong>humanist or '
- 'celebrant-led ceremony</strong> at a villa or garden has no liturgy at all, which leaves the music '
- 'entirely open. Many couples handle the legal marriage quietly at home and treat the Italian day as '
+ 'celebrant-led ceremony</strong> at a villa or garden has no liturgy at all, which leaves the music open. Many couples handle the legal marriage quietly at home and treat the Italian day as '
  'the ceremony that matters.',
  'Tell us which of those you are having when you enquire, because it changes the programme more than '
  'the venue does. A Mass wants a sung ordinary; a humanist ceremony wants three or four pieces placed '
@@ -39,8 +38,7 @@ CEREMONY = {
  'substantial, so a <strong>Church of England service</strong> is a real option rather than a stretch. '
  'A <strong>humanist or celebrant-led ceremony</strong> at a ch&acirc;teau is now the most common '
  'choice of all among the couples we sing for.',
- 'Many couples marry legally at home first and have a single ceremony in France, which avoids the '
- 'mairie entirely. Whichever route you take, the ceremony your guests will remember is the one we '
+ 'Many couples marry legally at home first and have a single ceremony in France, which avoids the mairie. Whichever route you take, the ceremony your guests will remember is the one we '
  'sing at.']),
 
 'spain': ('Your ceremony', 'What kind of ceremony are you having?', [
@@ -52,12 +50,10 @@ CEREMONY = {
  'kind of congregation. Or a <strong>humanist, non-denominational or celebrant-led ceremony</strong> '
  'at a villa or finca, which is what most of our Ibiza and Marbella enquiries turn out to be.',
  'Spanish civil marriage has residency and paperwork requirements that many visiting couples find '
- 'easier to sidestep by marrying legally at home, then having the ceremony they actually want in '
- 'Spain. That choice has no effect on the music at all, and it is worth knowing you have it.']),
+ 'easier to sidestep by marrying legally at home, then having the ceremony they want in Spain. That choice has no effect on the music at all, and it is worth knowing you have it.']),
 
 'portugal': ('Your ceremony', 'What kind of ceremony are you having?', [
- 'Portugal is one of the easier countries in Europe for a visiting couple, and the ceremony is '
- 'genuinely your choice rather than the country&rsquo;s.',
+ 'Portugal is one of the easier countries in Europe for a visiting couple, and the ceremony is your choice rather than the country&rsquo;s.',
  'A <strong>Catholic nuptial Mass</strong> if one of you is Catholic, in parishes that take music '
  'seriously. A <strong>Church of England service</strong> through the Anglican chaplaincies in Lisbon '
  'and the Algarve, which serve a large resident British community and are used to visiting couples. '
@@ -73,8 +69,7 @@ CEREMONY = {
  'to have an Orthodox wedding, and the great majority of couples we sing for there do not.',
  'A <strong>symbolic, humanist or celebrant-led ceremony</strong> at a hotel, villa or clifftop '
  'terrace is far and away the most common choice, with the legal marriage done at home beforehand. '
- 'There is no liturgy, no repertoire restriction and no language barrier, so the music is entirely '
- 'yours. A <strong>Church of England service</strong> is available through the Anglican chaplaincies '
+ 'There is no liturgy, no repertoire restriction and no language barrier, so the music is yours. A <strong>Church of England service</strong> is available through the Anglican chaplaincies '
  'in Athens and on Corfu. A <strong>Greek Orthodox wedding</strong> is the route for couples where one '
  'partner is Greek or Orthodox, and some couples have an Orthodox blessing for the family alongside a '
  'ceremony of their own.',
@@ -164,10 +159,10 @@ CEREMONY = {
  'For a British couple marrying in the United States, the ceremony is unusually unconstrained. Most '
  'states will license almost any officiant, so the form of service follows what you want rather than '
  'what is on offer.',
- 'An <strong>Episcopal service</strong> is Anglican and will feel entirely familiar &mdash; the same '
+ 'An <strong>Episcopal service</strong> is Anglican and will feel familiar &mdash; the same '
  'order, the same hymnody, and in the north east some of the finest church buildings we could sing in '
  'anywhere. A <strong>Catholic nuptial Mass</strong> gives the fuller sung shape. <strong>Humanist, '
- 'interfaith and non-denominational ceremonies</strong> are widespread and entirely normal, often '
+ 'interfaith and non-denominational ceremonies</strong> are widespread and unremarkable, often '
  'conducted by a friend or family member licensed for the day, and carry no liturgy at all.',
  'Legal marriage is generally simple for visitors, with requirements varying by state. The '
  'complication in the United States is not the ceremony &mdash; it is our side of the arrangement, '
@@ -178,7 +173,7 @@ CEREMONY = {
  'States, and nearly every one is having a symbolic ceremony rather than a Mexican legal one.',
  'Mexican civil marriage involves residency, translated documents and local medical requirements that '
  'most visiting couples decide are not worth the trouble, so they <strong>marry legally at home</strong> '
- 'and have the ceremony that matters in Mexico. That ceremony is then completely open: '
+ 'and have the ceremony that matters in Mexico. That ceremony is then open: '
  '<strong>humanist, non-denominational, celebrant-led or spiritual</strong>, on a beach, in a jungle '
  'clearing or beside a cenote, shaped however you want it.',
  'A <strong>Catholic nuptial Mass</strong> is available in the colonial churches for couples who want '
@@ -196,7 +191,7 @@ CEREMONY = {
  'That is the single best reason to bring a consort here. A <strong>Catholic wedding</strong> is '
  'available, and <strong>humanist or celebrant-led ceremonies</strong> on the beach or at a hotel are '
  'common for couples who want something secular.',
- 'If the music matters to you, the church is the option that repays the journey most obviously.']),
+ 'If the music matters to you, the church is the option that repays the journey.']),
 
 'st-lucia': ('Your ceremony', 'What kind of ceremony are you having?', [
  'St Lucia is straightforward for visiting couples to marry in legally, and the ceremony can take '
@@ -214,8 +209,7 @@ CEREMONY = {
  'and the ceremony is yours to choose.',
  'The island has a deep and living <strong>Anglican</strong> tradition alongside Baptist and Methodist '
  'churches, and church singing here is participatory in a way it often is not at home. A Church of '
- 'England service in a Jamaican parish church puts a consort in front of a congregation that will '
- 'genuinely sing. A <strong>Catholic wedding</strong> is available. And <strong>humanist and '
+ 'England service in a Jamaican parish church puts a consort in front of a congregation that will sing. A <strong>Catholic wedding</strong> is available. And <strong>humanist and '
  'celebrant-led ceremonies</strong> at great houses and north coast resorts are the other common '
  'shape, with no liturgy and an open programme.',
  'If any of your guests are Jamaican, the congregational singing is worth planning around rather than '
@@ -226,7 +220,7 @@ CEREMONY = {
  'forms of ceremony.',
  'The great majority of what we are asked about is a <strong>humanist, non-denominational or '
  'celebrant-led ceremony</strong> at a resort &mdash; a beach, a garden, or a deck over the lagoon '
- '&mdash; with no liturgy and a programme entirely of your choosing. A <strong>Catholic wedding</strong> '
+ '&mdash; with no liturgy and a programme of your choosing. A <strong>Catholic wedding</strong> '
  'is available in the island&rsquo;s colonial-era churches, which are the only settings here with a '
  'real acoustic and are covered below. <strong>Anglican</strong> provision exists in Port Louis and '
  'elsewhere for couples who want a Church of England service.',
@@ -239,8 +233,7 @@ CEREMONY = {
  '<strong>symbolic ceremony</strong>, with the legal marriage completed at home before or after.',
  'That sounds like a limitation and functions as a freedom. There is no registrar, no prescribed '
  'wording, no liturgy and no restriction on repertoire. A <strong>humanist, non-denominational or '
- 'celebrant-led ceremony</strong> on a sandbank or a jetty can be built entirely around the two of '
- 'you, in whatever order you like, for exactly as long as you want it to last. Some couples write the '
+ 'celebrant-led ceremony</strong> on a sandbank or a jetty can be built around the two of you, in whatever order you like, for exactly as long as you want it to last. Some couples write the '
  'whole thing themselves.',
  'For the music, that means we are not fitting around a service &mdash; we are helping you build one. '
  'Tell us the shape you have in mind and we will suggest where the singing belongs.']),
@@ -251,7 +244,7 @@ CEREMONY = {
  'Most of what we are asked about is a <strong>humanist, non-denominational or celebrant-led '
  'ceremony</strong> on a beach or in a resort garden, with no liturgy and an open programme. The '
  'islands are also strongly <strong>Catholic</strong>, with real parish churches on Mah&eacute; and '
- 'Praslin, so a nuptial Mass is genuinely available &mdash; and those are the only buildings here with '
+ 'Praslin, so a nuptial Mass is available &mdash; and those are the only buildings here with '
  'an acoustic worth the name. <strong>Anglican</strong> provision exists on Mah&eacute; for a Church '
  'of England service.',
  'The church option is underused by visiting couples, largely because resorts do not tend to mention '
@@ -287,7 +280,7 @@ CEREMONY = {
 
 'south-africa': ('Your ceremony', 'What kind of ceremony are you having?', [
  'South Africa is straightforward for visiting couples to marry in legally, and it is one of the few '
- 'long-haul destinations where a full range of ceremony is genuinely available rather than nominally so.',
+ 'long-haul destinations where a full range of ceremony is available in practice rather than on paper.',
  'An <strong>Anglican service</strong> is the closest thing to home: the Anglican Church of Southern '
  'Africa is substantial, Cape Town has real churches and a cathedral, and the congregational singing '
  'is better than you will hear in most English parishes. A <strong>Catholic nuptial Mass</strong> '

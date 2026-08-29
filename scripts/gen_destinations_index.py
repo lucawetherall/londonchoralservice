@@ -50,7 +50,7 @@ FAQS = [
     ('Do we have to have a religious ceremony?',
      'No, and most of the couples we sing for abroad do not. Humanist, non-denominational and '
      'celebrant-led ceremonies are the most common thing we are asked about, and without a liturgy to '
-     'work around, the music is entirely yours to place. Anglican and Catholic services are available in '
+     'work around, the music is yours to place. Anglican and Catholic services are available in '
      'more of these countries than couples expect, including through English-speaking chaplaincies '
      'across Europe. Whichever you choose, the country you have picked rarely restricts it.'),
     ('How far ahead should we book a wedding abroad?',

@@ -28,7 +28,7 @@ n = build('united-states', 'United States',
      'flights, no language barrier, and venues used to handling suppliers professionally.']),
    ('The rite', 'What a US wedding asks of a choir',
     ['American weddings vary more than European ones, because the format follows the couple rather than '
-     'the country. An Episcopal service in a New York church is Anglican and will feel entirely familiar '
+     'the country. An Episcopal service in a New York church is Anglican and will feel familiar '
      '&mdash; hymns the congregation can sing, an order of service a British couple would recognise, and '
      'a building that supports a consort properly. A Catholic nuptial Mass gives the full sung shape.',
      'Most destination weddings in Florida and Nevada, though, are celebrant-led ceremonies at a hotel, '
@@ -78,7 +78,7 @@ n = build('united-states', 'United States',
     'engagement. This is the single most important thing to know about booking a British choir for an '
     'American wedding, and it is why the answer depends on your timeline before it depends on our diary.'),
    ('How far ahead do we need to book?',
-    'Considerably further than anywhere else we sing. Where Europe works at six to twelve months, the '
+    'Far further than anywhere else we sing. Where Europe works at six to twelve months, the '
     'States needs the visa timeline built in on top, so the advice is to raise it before you fix the '
     'date rather than after. If your wedding is sooner than that, ask us anyway &mdash; the position '
     'depends on the visa route and on how the calendar is running, and we would rather look at your '
@@ -89,7 +89,7 @@ n = build('united-states', 'United States',
     'cost per engagement. We itemise all three in the quote rather than hiding them in one number, '
     'because you should be able to see what you are paying for.'),
    ('Where does the music go at an American wedding?',
-    'It depends entirely on the format. An Episcopal or Catholic church service has the familiar shape '
+    'It depends on the format. An Episcopal or Catholic church service has the familiar shape '
     'and gives a choir a great deal to do. A celebrant-led ceremony at a hotel or beach has no liturgy, '
     'so the music carries the structure &mdash; processional, a piece within the ceremony, recessional '
     '&mdash; and the cocktail hour afterwards is a natural second set.'),
@@ -113,15 +113,13 @@ n = build('mexico', 'Mexico',
      'towns, are magnificent buildings and the best acoustics in the country, and we would build the '
      'programme around one.',
      'A cenote ceremony &mdash; in or beside one of the limestone sinkholes of the Yucat&aacute;n &mdash; '
-     'is a case worth mentioning on its own. Enclosed rock returns sound the way a chapel does, and a '
-     'consort singing in one is a genuinely extraordinary thing. If your venue offers it, ask us about it.']),
+     'is a case worth mentioning on its own. Enclosed rock returns sound the way a chapel does, and a consort singing in one is unlike anything else we do. If your venue offers it, ask us about it.']),
    ('Climate', 'What tropical heat does to a choir',
     ['This deserves a section rather than a footnote, because it affects the result more than the '
      'repertoire does.',
      'Singing is physical work, and doing it in thirty-plus degrees with high humidity, after a '
      'ten-hour flight and a six-hour time change, is a different proposition from doing it in a cool '
-     'English church. Voices tire faster, the group needs water and shade genuinely rather than '
-     'nominally, and heavy formal dress in direct sun is not workable.',
+     'English church. Voices tire faster, the group needs water and shade arranged rather than assumed, and heavy formal dress in direct sun is not workable.',
      'None of this is a reason not to do it. It is a reason to plan the ceremony for late afternoon or '
      'early evening rather than the middle of the day, to arrange shade for the singers as a matter of '
      'course, and to arrive two days ahead rather than one. We raise this at the quote stage because it '
@@ -132,7 +130,7 @@ n = build('mexico', 'Mexico',
      'placed close to the guests and upwind where there is a choice.',
      'Jungle and garden ceremonies are marginally better because of the surrounding vegetation, though '
      'still dry. Cenotes and colonial churches are the two settings in Mexico with real acoustics, and '
-     'both flatter a consort considerably.']),
+     'both flatter a consort.']),
    ('Travel', 'Getting a consort to Mexico',
     ['Canc&uacute;n is served directly from London and is the arrival point for the whole Riviera Maya, '
      'with transfers of up to two hours to the southern resorts and Tulum. The flight is around ten '
@@ -174,7 +172,7 @@ n = build('mexico', 'Mexico',
     'late-afternoon or evening ceremony, shade arranged in advance, water on hand, and arriving two days '
     'early rather than one.'),
    ('How does the cost compare with Europe?',
-    'Substantially higher, and it is worth being clear about why. Transatlantic flights for the whole '
+    'Higher, and it is worth being clear about why. Transatlantic flights for the whole '
     'consort, two nights rather than one because of the flight and the time change, and the local '
     'permissions for foreign performers all add to the figure. We quote the whole engagement itemised '
     'before you commit to anything.'),
@@ -205,8 +203,7 @@ n = build('barbados', 'Barbados',
     ['An Anglican wedding in a Barbadian parish church has the shape you would find in an English one: '
      'a processional, hymns, an anthem during the signing of the register, and a recessional. A consort '
      'of eight to twelve leads it and the congregation joins in. Our guide to '
-     '<a href="/music-guides/choosing-wedding-hymns.html">choosing wedding hymns</a> applies here '
-     'essentially unchanged.',
+     '<a href="/music-guides/choosing-wedding-hymns.html">choosing wedding hymns</a> applies here almost unchanged.',
      'The alternative format is a beach or hotel ceremony on the west or south coast, celebrant-led and '
      'without liturgy. Those work too, on the usual outdoor terms. Where a couple is choosing between '
      'them and cares about the music, the parish church is the better room by a considerable margin '
@@ -314,7 +311,7 @@ n = build('st-lucia', 'St Lucia',
     ['Beneath the Pitons, and the most dramatic setting in the Caribbean for a wedding. Also the steepest: '
      'venues here are cut into hillsides and the approach to a ceremony spot can involve a significant '
      'climb. Worth planning properly for a group of twelve. The parish church in the town is a good '
-     'building and a considerably easier one to sing in.']),
+     'building and an easier one to sing in.']),
    ('Rodney Bay', 'rodney-bay',
     ['The north of the island, with the largest concentration of hotels and the easiest logistics. '
      'Beach and terrace ceremonies predominate, on the usual dry outdoor terms. Transfers from the '
@@ -352,8 +349,7 @@ n = build('jamaica', 'Jamaica',
   [
    ('The rite', 'A choral culture of its own',
     ['Jamaica has a deep and living church-music tradition &mdash; Anglican, Baptist and Methodist &mdash; '
-     'and congregational singing here is not a polite formality but something people actually do, and do '
-     'well. A visiting English consort arrives somewhere that understands exactly what it is for, which '
+     'and congregational singing here is not a polite formality but something people do, and do well. A visiting English consort arrives somewhere that understands exactly what it is for, which '
      'is not true of every destination on this list.',
      'An Anglican service in a Jamaican parish church has the order of service a British couple would '
      'recognise, with hymns the congregation will sing with more conviction than most English '
@@ -368,8 +364,7 @@ n = build('jamaica', 'Jamaica',
      'and worth asking about if the venue offers a choice. Resort ceremonies on the north coast are the '
      'standard outdoor case &mdash; dry, breezy, and better served by twelve voices than eight.',
      'The heat is significant and the humidity more so. As with the rest of the Caribbean, a '
-     'late-afternoon ceremony, shade for the singers, and two days on the island before the wedding all '
-     'improve what you actually hear.']),
+     'late-afternoon ceremony, shade for the singers, and two days on the island before the wedding all improve what you hear.']),
    ('Travel', 'Getting a consort to Jamaica',
     ['Direct flights from London to Montego Bay run several times a week at around ten hours, with a '
      'five- or six-hour time change. Montego Bay is the arrival point for the whole north coast, with '
@@ -388,8 +383,7 @@ n = build('jamaica', 'Jamaica',
      'hours from the airport. Some fine great house venues inland, which are acoustically much better '
      'than a beach and worth seeking out.']),
    ('Negril', 'negril',
-    ['The west end, beaches and cliffs, and the longest transfer from the airport. Ceremonies here are '
-     'almost entirely outdoors and often at sunset, which is beautiful and means the consort is working '
+    ['The west end, beaches and cliffs, and the longest transfer from the airport. Ceremonies here are outdoors and often at sunset, which is beautiful and means the consort is working '
      'at the end of a hot day; plan shade and water in advance rather than on the afternoon.']),
   ],
   [

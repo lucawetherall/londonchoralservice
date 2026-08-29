@@ -11,8 +11,7 @@ DESC = ('How Alma Consort works with wedding planners, venues and private office
 FAQS = [
     ('What do you need from us, and by when?',
      'The date, the venue and the running order as soon as they exist, even in draft. Everything else can '
-     'follow. Six to twelve months is the usual lead time for Europe; the United States needs considerably '
-     'longer because paid performance there runs through a visa petition. If a date is closer than that, '
+     'follow. Six to twelve months is the usual lead time for Europe; the United States needs far longer because paid performance there runs through a visa petition. If a date is closer than that, '
      'ask anyway — a free Saturday is a free Saturday.'),
     ('Do you carry insurance and provide method statements?',
      'We hold public liability insurance, and we provide risk assessments and method statements on request. '

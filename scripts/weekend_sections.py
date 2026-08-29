@@ -22,8 +22,7 @@ WEEKEND = {
  'to keep for the rest of it. The flights and the rooms are the expensive part and they are already '
  'paid. Singing at a welcome dinner in a courtyard on the Friday, then in the church on the Saturday, '
  'then again over drinks in the villa garden, gives your guests three quite different experiences of '
- 'the same group &mdash; and in Italy the first two usually happen in different buildings, so they '
- 'genuinely do sound different.',
+ 'the same group &mdash; and in Italy the first two usually happen in different buildings, so the two sound quite different.',
  'Italy&rsquo;s one geographical quirk: the church and the reception villa are often twenty to forty '
  'minutes apart. Tell us the plan and we will work out whether we travel with the guests or go ahead. '
  'One sizing note: the villa set has to carry over a party in full flow, so it usually wants more '
@@ -77,7 +76,7 @@ WEEKEND = {
  'dinner on a terrace, or indoors somewhere with stone around it, gives your guests the version of the '
  'group that the clifftop ceremony acoustically cannot.',
  'Worth planning deliberately in Greece: the best-sounding moment of the weekend is often not the '
- 'ceremony. Ask us where on the island the singing will land best and we will tell you honestly. And '
+ 'ceremony. Ask us where on the island the singing will land best and we will tell you. And '
  'size the two differently: the clifftop ceremony is quiet, the taverna dinner is not, and voices have '
  'to clear the noise of however many people are talking through it.']),
 
@@ -87,7 +86,7 @@ WEEKEND = {
  'arrival to departure with no coaches and no scattering.',
  'The season is long here too, which means guests often stay a week rather than a weekend. That gives '
  'a consort more than one natural moment: a welcome dinner, the ceremony, the reception, and sometimes '
- 'a second evening entirely of its own. All on one set of fares, since the expensive part of bringing '
+ 'a second evening of its own. All on one set of fares, since the expensive part of bringing '
  'us is the getting here.',
  'Cyprus also has the shortest transfers on this list. Whatever the plan, nothing is more than an hour '
  'from anything else. One thing to price separately: a poolside reception with a bar running is a '
@@ -100,8 +99,7 @@ WEEKEND = {
  'half an hour away. The whole party moves easily.',
  'With the buildings Malta has, that is worth exploiting. A consort can sing at a welcome dinner, then '
  'in a baroque church on the Saturday, then at the reception &mdash; and the church is such a different '
- 'acoustic from anything else on the island that guests hear two genuinely distinct things from the '
- 'same singers.',
+ 'acoustic from anything else on the island that guests hear two distinct things from the same singers.',
  'If any part of the weekend is on Gozo, add the ferry to the plan; everything else is straightforward.']),
 
 'croatia': ('The weekend', 'Across a Dalmatian weekend', [
@@ -144,7 +142,7 @@ WEEKEND = {
  'A consort can be part of more than one of those, and because Scotland is a domestic engagement on our '
  '<a href="/pricing.html">published rates</a> with no flights to price for the whole group, the cost of '
  'adding a second appearance is smaller here than anywhere else we sing.',
- 'Scotland also has the ceilidh problem, which is really an opportunity: the evening belongs to a band, '
+ 'Scotland also has the ceilidh problem, which is an opportunity: the evening belongs to a band, '
  'so the consort&rsquo;s moments are the day and the dinner. Placed there, the two do not compete at '
  'all.']),
 
@@ -174,7 +172,7 @@ WEEKEND = {
 'barbados': ('The weekend', 'Across a Barbados week', [
  'Barbados weddings tend to run longer than a weekend. Guests fly eight hours and make a holiday of it, '
  'so the party is on the island for a week and the wedding sits in the middle of it.',
- 'That is a genuinely different opportunity from a European weekend. A consort can sing at a welcome '
+ 'That opens up a different shape from a European weekend. A consort can sing at a welcome '
  'dinner early in the week, at the church service, and at the reception afterwards, with days in '
  'between rather than hours. And because the parish churches are the best rooms on the island, the '
  'church appearance is the one that will sound quite unlike the others.',
@@ -195,8 +193,7 @@ WEEKEND = {
  'America with family who live on the island. That combination shapes what works: a service with real '
  'congregational singing lands differently when half the congregation grew up singing in church.',
  'Across the week a consort can sing at a welcome event, at the church, and at a great house reception. '
- 'The great house is worth using for at least one of them &mdash; hard surfaces and an enclosed room '
- 'sound considerably better than a lawn, and it gives your guests something distinct from the beach.',
+ 'The great house is worth using for at least one of them &mdash; hard surfaces and an enclosed room carry where a lawn does not, and it gives your guests something distinct from the beach.',
  'Negril adds a long transfer from Montego Bay; Ocho Rios and the north coast keep the week compact.']),
 
 'mauritius': ('The weekend', 'Across a Mauritius week', [

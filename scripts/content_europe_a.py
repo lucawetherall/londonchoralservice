@@ -100,9 +100,7 @@ n = build('italy', 'Italy',
     'readings and spoken rite stay in Italian, and we can add an English motet where you want the '
     'service to feel like yours rather than a translation.'),
    ('How many singers do we need for a Tuscan church?',
-    'Fewer than you would need at home in a drier room. A stone church with a vaulted nave '
-    'does half the work: eight voices carries a congregation of eighty comfortably, and twelve fills a '
-    'substantial parish church. An outdoor ceremony or a garden chapel is the opposite case and wants '
+    'Fewer than you would need at home in a drier room. A stone church with a vaulted nave does half the work: eight voices fill it, and twelve is enough for a substantial parish church. An outdoor ceremony or a garden chapel is the opposite case and wants '
     'more voices, not fewer. Send us a photograph of the space and we will tell you.'),
    ('How far ahead should we book for an Italian wedding?',
     'Nine to twelve months for a summer Saturday. The constraint is rarely the singers&rsquo; diaries; it '
@@ -126,12 +124,12 @@ n = build('france', 'France',
      'administrative in tone, and there is generally no place in it for a choir.',
      'The ceremony your guests will remember is the one that follows: a Catholic or Protestant blessing '
      'in a church, or a celebrant-led ceremony in a ch&acirc;teau garden. That is where the music goes, '
-     'and because it carries no legal weight it can be shaped entirely around what you want. In practice '
+     'and because it carries no legal weight you can shape it around what you want. In practice '
      'this is a gift. A blessing has no fixed liturgy to work around, so an entrance, two or three pieces '
      'across the vows and readings, and a recessional can be placed wherever they land best.',
      'Where the church ceremony is a full Catholic nuptial Mass, the shape is the same as it would be in '
      'Italy or Spain, with a sung ordinary and communion motets. Ask your parish which form of service '
-     'you are having; the answer changes the programme substantially.']),
+     'you are having; the answer changes the programme.']),
    ('Language', 'French, Latin, and what your guests will follow',
     ['A church blessing in France will be conducted in French, sometimes with English readings where the '
      'celebrant is willing. For the sung music we generally set the ordinary in Latin and place at least '
@@ -194,7 +192,7 @@ n = build('france', 'France',
    ('Will the music be in French?',
     'Some of it, if you want it to be. We usually sing the ordinary in Latin and include at least one '
     'French piece &mdash; Fauré and Duruflé sit beautifully in these buildings. For a celebrant-led '
-    'ceremony in English the choice is entirely yours, and there is no obligation to balance the languages.'),
+    'ceremony in English the choice is yours, and there is no obligation to balance the languages.'),
    ('Is it cheaper because France is close?',
     'Yes, meaningfully. Distance and nights are two of the three things that move the cost, and northern '
     'and central France can often be reached by train with a single night away rather than two. It is the '
@@ -230,7 +228,7 @@ n = build('spain', 'Spain',
      'Spanish sacred music is worth using rather than ignoring. Victoria and Guerrero wrote some of the '
      'finest Renaissance polyphony in Europe, and singing a Victoria motet in a Spanish church is not a '
      'gesture &mdash; it is the right piece in the right place. For an island ceremony in English, none '
-     'of this applies and you should choose whatever you actually like.']),
+     'of this applies and you should choose whatever you like.']),
    ('Buildings', 'Stone churches and stone terraces',
     ['Mainland and Mallorcan town churches are large, stone and reverberant, and a consort of twelve '
      'will fill one without effort. Cathedral-scale buildings in Seville, Palma or Marbella&rsquo;s old '
@@ -252,9 +250,9 @@ n = build('spain', 'Spain',
    ('Mallorca', 'mallorca',
     ['The best of both cases. Palma and the inland towns have serious stone churches with real acoustics, '
      'while the coast and the Tramuntana offer villa and finca ceremonies outdoors. If you have any '
-     'appetite for a church ceremony, Mallorca is where a consort earns its fare most obviously.']),
+     'appetite for a church ceremony, Mallorca is where a consort earns its fare.']),
    ('Ibiza', 'ibiza',
-    ['Almost entirely villa and finca ceremonies, symbolic rather than liturgical, usually outdoors at '
+    ['Villa and finca ceremonies, almost without exception, symbolic rather than liturgical, usually outdoors at '
      'the end of the afternoon. Plan for a dry acoustic and a breeze. Ibiza also has the highest '
      'concentration of couples who want the consort to sing again during drinks, which works well and '
      'should be agreed in advance so the singers are not standing in the sun for three hours.']),
@@ -275,8 +273,7 @@ n = build('spain', 'Spain',
     'be involved, and tell us either way &mdash; we are glad to work alongside a house organist.'),
    ('What music suits a villa ceremony in Ibiza or Mallorca?',
     'Fewer pieces, placed deliberately. An entrance, one piece during the signing or the vows, and a '
-    'recessional will do more than a long list. Because there is no liturgy, the repertoire is entirely '
-    'open: unaccompanied part-songs, folk arrangements, and choral versions of songs that matter to you '
+    'recessional will do more than a long list. Because there is no liturgy, the repertoire is open: unaccompanied part-songs, folk arrangements, and choral versions of songs that matter to you '
     'all work, and we will arrange something for the consort if no choral setting exists.'),
    ('Do we need more singers for an outdoor ceremony?',
     'Usually yes. An open terrace returns no sound and a coastal breeze carries it away from the guests. '
@@ -319,7 +316,7 @@ n = build('portugal', 'Portugal',
     ['Portuguese churches are stone and often tiled, and tile is acoustically hard: many of these '
      'buildings are brighter and more reverberant than their English equivalents. That flatters '
      'polyphony and punishes anything sung too fast. Eight voices goes a long way in a tiled church.',
-     'The Sintra palaces and estates offer some genuinely fine interior rooms, and if you have the '
+     'The Sintra palaces and estates offer some of the finest interior rooms in Portugal, and if you have the '
      'option of an indoor ceremony there we would take it. The Algarve is the opposite: quinta '
      'ceremonies are outdoors on lawns or terraces with no reverberation, and want twelve voices where '
      'a church would have been content with eight.']),

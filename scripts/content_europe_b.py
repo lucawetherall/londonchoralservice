@@ -31,7 +31,7 @@ n = build('greece', 'Greece',
     ['For a symbolic or civil ceremony, we would usually suggest three or four pieces rather than a long '
      'programme. Something as the guests are seated and the bride arrives; something in the still moment '
      'before or after the vows; something as you leave. A consort singing unaccompanied on a terrace '
-     'above the caldera is a genuinely striking thing, and it works better as a few deliberate moments '
+     'above the caldera is a striking thing, and it works better as a few deliberate moments '
      'than as continuous background.',
      'A second set during the drinks that follow is worth considering. The singers have already flown '
      'out, the ceremony itself uses perhaps twenty minutes of them, and an hour of part-songs and '
@@ -40,7 +40,7 @@ n = build('greece', 'Greece',
     ['Greece is acoustically the hardest place we sing. Almost every ceremony is outdoors, in the late '
      'afternoon, on a hard terrace with the sea below and open sky above, and open air returns nothing. '
      'On top of that, the islands are windy in a way photographs never convey. The meltemi in the '
-     'Cyclades can take a quiet piece away from the guests entirely.',
+     'Cyclades can take a quiet piece away from the guests.',
      'What follows is practical. Twelve voices rather than eight for an outdoor island ceremony; the '
      'singers positioned upwind of the guests rather than beside them; and a programme weighted towards '
      'pieces with weight and momentum rather than the most delicate thing in the repertoire. Where a '
@@ -66,7 +66,7 @@ n = build('greece', 'Greece',
      'towards sunset, which is beautiful and means the singers are working at the end of a hot day; '
      'water and shade beforehand are not a courtesy but a requirement for a group that has to sing.']),
    ('Crete', 'crete',
-    ['Larger, greener and considerably easier logistically than the Cyclades, with more venues that have '
+    ['Larger, greener and easier logistically than the Cyclades, with more venues that have '
      'an indoor option and better flight resilience. If you are choosing between islands and want the '
      'music to be at its best, Crete gives you more to work with.']),
    ('Rhodes', 'rhodes',
@@ -88,7 +88,7 @@ n = build('greece', 'Greece',
     'And if you are having a symbolic ceremony as well &mdash; as most British couples in Greece are '
     '&mdash; we sing at that from start to finish.'),
    ('What if our ceremony is symbolic rather than religious?',
-    'Then the music is completely open, and most British couples marrying in Greece are in exactly this '
+    'Then the music is open, and most British couples marrying in Greece are in exactly this '
     'position. With no liturgy to work around, we would suggest three or four deliberate moments rather '
     'than a continuous programme, and repertoire chosen purely because you like it.'),
    ('Will the wind be a problem on a clifftop?',
@@ -99,8 +99,7 @@ n = build('greece', 'Greece',
    ('How much of the cost is accommodation?',
     'On Santorini and Mykonos in July and August, more than most couples expect &mdash; enough that it '
     'is worth discussing before you settle the date. Rooms for twelve to twenty-four people on those '
-    'islands in high season are a material part of the quote. Crete and Rhodes are considerably easier '
-    'on that front.'),
+    'islands in high season are a material part of the quote. Crete and Rhodes cost less on that front.'),
   ])
 print(f'greece {n}')
 
@@ -116,8 +115,7 @@ n = build('cyprus', 'Cyprus',
     ['A <strong>civil ceremony</strong> at a municipality is short and businesslike, and the music '
      'generally works better around it &mdash; as guests gather outside, or at the reception &mdash; '
      'than inside a ten-minute formality.',
-     'A <strong>humanist or celebrant-led ceremony</strong> at a hotel or villa has no liturgy, so the '
-     'programme is entirely open: an entrance, a piece at the vows, a recessional, and as much or as '
+     'A <strong>humanist or celebrant-led ceremony</strong> at a hotel or villa has no liturgy, so the programme is open: an entrance, a piece at the vows, a recessional, and as much or as '
      'little else as you want.',
      'An <strong>Anglican service</strong> is the one that gives a consort most to do, and the one '
      'couples least often realise is available. It runs on the order of service you would recognise '
@@ -177,10 +175,9 @@ n = build('cyprus', 'Cyprus',
     'It depends on the room more than on a standard answer. An open villa terrace in the Paphos hills '
     'gives nothing back acoustically and wants twelve voices; a compact hotel ceremony with the guests '
     'close in can be better served by four singing near them than by twelve at a distance. We come in '
-    'sizes from a soloist upwards. Tell us the venue and the numbers and we will recommend what we would '
-    'actually bring.'),
+    'sizes from a soloist upwards. Tell us the venue and the numbers and we will recommend what we would bring.'),
    ('Can you sing at a Cypriot civil ceremony?',
-    'Yes. Civil and celebrant-led ceremonies have no liturgy, so the music is entirely open. Municipal '
+    'Yes. Civil and celebrant-led ceremonies have no liturgy, so the music is open. Municipal '
     'ceremony rooms are small and acoustically flat, so we often suggest placing the singing outside as '
     'guests gather, and around the ceremony rather than inside a ten-minute formality.'),
    ('What about a Greek Orthodox ceremony in Cyprus?',
@@ -211,8 +208,7 @@ n = build('malta', 'Malta',
      'translating. The country is Catholic, so a nuptial Mass with a full sung ordinary is the norm '
      'rather than something to negotiate. And the flight is under three and a half hours.',
      'The practical consequence is that almost everything that makes a destination wedding musically '
-     'awkward elsewhere &mdash; no building, no liturgy, a language barrier, a dry outdoor acoustic '
-     '&mdash; simply does not apply here.']),
+     'awkward elsewhere &mdash; no building, no liturgy, a language barrier, a dry outdoor acoustic &mdash; does not apply here.']),
    ('The rite', 'The nuptial Mass in a Maltese church',
     ['A Maltese wedding is usually a full nuptial Mass, and the parishes are accustomed to music being '
      'taken seriously. The shape is the familiar one: entrance, Kyrie and Gloria, psalm and acclamation, '
@@ -224,7 +220,7 @@ n = build('malta', 'Malta',
    ('Language', 'English, Latin and Maltese',
     ['The service may be conducted in English or in Maltese, or in a mixture, and your celebrant will '
      'tell you which. Either way we would sing the ordinary in Latin, which needs no negotiation in a '
-     'Catholic church and suits these buildings completely.',
+     'Catholic church and suits these buildings.',
      'Because English is an official language, this is the one Mediterranean destination where you can '
      'reasonably expect the congregation to sing a hymn. If you want that &mdash; and a congregation '
      'singing in a Maltese church is a considerable sound &mdash; choose something well known and let '
@@ -265,8 +261,7 @@ n = build('malta', 'Malta',
   [
    ('Why is Malta better for a choir than Italy or Spain?',
     'Three reasons that stack. The churches are baroque, stone and tall, which is the acoustic this '
-    'repertoire assumes. English is an official language, so nothing is lost in translation and your '
-    'guests can actually sing a hymn. And a nuptial Mass with a sung ordinary is the normal form of '
+    'repertoire assumes. English is an official language, so nothing is lost in translation and your guests can sing a hymn. And a nuptial Mass with a sung ordinary is the normal form of '
     'service rather than something to request. Elsewhere you get one or two of those; Malta gives you all three.'),
    ('Will the church have its own organist?',
     'Often, yes, and that is a good thing rather than a complication. An organ in a Maltese church is '
@@ -311,10 +306,9 @@ n = build('croatia', 'Croatia',
    ('Buildings', 'Cloisters, old-town churches and enclosed courtyards',
     ['This is Croatia&rsquo;s advantage over most of the Mediterranean. The old towns are built of stone '
      'and built tight, and a cloister or a walled courtyard behaves acoustically far more like a church '
-     'than like a terrace. A consort of eight in a Dubrovnik cloister sounds substantially better than '
-     'the same eight on a hotel lawn anywhere else on this list.',
+     'than like a terrace. A consort of eight in a Dubrovnik cloister carries in a way the same eight would not on a hotel lawn anywhere else on this list.',
      'The churches themselves are stone-vaulted and generous, and eight to twelve voices covers almost '
-     'anything. Where a ceremony is genuinely open-air &mdash; a clifftop on Hvar, a vineyard in Istria '
+     'anything. Where a ceremony is open-air &mdash; a clifftop on Hvar, a vineyard in Istria '
      '&mdash; the usual outdoor rules return and we would recommend twelve.']),
    ('Travel', 'Getting a consort to Croatia, and the island question',
     ['Dubrovnik, Split and Zagreb are served directly from London through the season, and Pula for '
@@ -335,8 +329,7 @@ n = build('croatia', 'Croatia',
      'which is worth knowing when scheduling a group in August. The airport is close.']),
    ('Split', 'split',
     ['Diocletian&rsquo;s palace and the buildings inside it, with a good deal of enclosed stone and an '
-     'easy airport. Split is also the ferry port for the islands, so a wedding here avoids the crossing '
-     'entirely &mdash; the simplest choice in Dalmatia for a group this size.']),
+     'easy airport. Split is also the ferry port for the islands, so a wedding here avoids the crossing &mdash; the simplest choice in Dalmatia for a group this size.']),
    ('Hvar', 'hvar',
     ['Beautiful, and the most logistically demanding place on this page. The ferry from Split is the '
      'binding constraint and the reason we plan two nights rather than one. Once there, the town has '
@@ -348,9 +341,8 @@ n = build('croatia', 'Croatia',
   ],
   [
    ('Is a cloister really better than a terrace?',
-    'Considerably, and it is the main reason Croatia punches above its weight musically. Enclosed stone '
-    'returns sound the way a church does, so eight voices in a Dubrovnik cloister carries and blooms '
-    'where the same eight on an open lawn would sound thin. If your venue offers both, we would push you '
+    'By a wide margin, and it is the main reason Croatia punches above its weight musically. Enclosed stone '
+    'returns sound the way a church does, so eight voices in a Dubrovnik cloister carry and bloom where the same eight on an open lawn would sound thin. If your venue offers both, we would push you '
     'towards the cloister.'),
    ('Why do you need two nights for an island wedding?',
     'Because the ferry is the weak link. Catamaran and ferry schedules to Hvar and the other islands '
