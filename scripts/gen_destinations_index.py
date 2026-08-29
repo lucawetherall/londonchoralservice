@@ -35,6 +35,17 @@ FAQS = [
      'paid performance, what kind of ceremony you are having, and what the building does to the sound. '
      'The answers differ enough by country that we have written them up one country at a time rather '
      'than offering a single reassurance.'),
+    ('Can you sing more than once across the weekend?',
+     'Yes, and it is the thing we would most encourage you to consider. The expensive part of bringing a '
+     'consort abroad is the fares and the rooms, and those are spent whether we sing once or four times. '
+     'A welcome dinner, the ceremony, the drinks afterwards and a late unaccompanied set in a stone room '
+     'cost far less together than they look, and they give guests who have travelled a long way something '
+     'at each stage rather than twenty minutes in the middle of a Saturday.'),
+    ('We live in the country rather than flying out. Does that change anything?',
+     'Only in your favour. Everything on these guides applies, and the planning is simpler because you '
+     'already know the venue, the celebrant and the season. We travel from London either way; what '
+     'changes is that you will have far better local knowledge than most couples we work with, and we '
+     'will lean on it.'),
     ('Do we have to have a religious ceremony?',
      'No, and most of the couples we sing for abroad do not. Humanist, non-denominational and '
      'celebrant-led ceremonies are the most common thing we are asked about, and without a liturgy to '
@@ -113,8 +124,9 @@ BODY = f'''
         <p class="pe-eyebrow">Alma Consort &middot; London</p>
         <h1>English choral singing, wherever you are marrying.</h1>
         <div class="pe-hairline--candle" aria-hidden="true"></div>
-        <p class="pe-hero__sub">A consort of eight to twenty-four voices, flying from London to sing in
-          Tuscan churches, French ch&acirc;teaux, Caribbean parish churches and on beaches in the Indian Ocean.</p>
+        <p class="pe-hero__sub">You have asked a hundred people to fly somewhere. A consort of eight to
+          twenty-four voices flies out too, and sings across the whole weekend &mdash; the welcome dinner,
+          the ceremony, the reception.</p>
         <p class="pe-hero__cta"><a class="pe-btn" href="#enquire">Enquire about your wedding</a></p>
       </div>
     </section>
@@ -124,14 +136,34 @@ BODY = f'''
       <div class="pe-rail">
         <p class="pe-rail-label" aria-hidden="true">Travelling</p>
         <div class="pe-body" data-fade>
-          <h2>What travelling with a consort involves</h2>
-          <p>Almost everyone we sing for abroad is British, Irish, American or Australian, marrying in
-            a country they do not live in and choosing the shape of the day themselves. Your ceremony
-            might be humanist, non-denominational, celebrant-led, Anglican, Catholic or interfaith, and
-            in most of these countries all of those are available to you &mdash; the local majority
-            religion decides far less than couples expect. What the country changes is which routes are
-            legally recognised, whether there is an English-speaking chaplaincy, and what buildings you
-            can get into. Each guide sets that out.</p>
+          <h2>A wedding that lasts a weekend</h2>
+          <p>A destination wedding is not a ceremony with a holiday attached. You have moved your family
+            and your closest friends to one place, at real expense to them and to you, and they will be
+            together for three or four days. That is the thing worth designing around, and it changes
+            what live music can do for you.</p>
+          <p>A consort that has flown out for the ceremony is already paid for in the part that costs
+            most: the fares and the rooms. Singing again at the welcome dinner on the Friday, or over
+            drinks after the ceremony, or unaccompanied in a stone hall once the meal is over, costs a
+            fraction of what the first appearance did. Guests who have crossed a continent to be there
+            hear three different things instead of one, and the two evenings either side of the wedding
+            day stop being the parts nobody planned.</p>
+          <p>Where each of those moments works best depends on the country, and the guides below say so
+            one at a time &mdash; a Portuguese quinta keeps everybody on one estate, a Dalmatian old town
+            has your guests walking between stone rooms, and a Maldivian resort island has nobody going
+            anywhere at all.</p>
+
+          <h3>Whatever kind of ceremony you are having</h3>
+          <p>Most couples we sing for abroad are British, Irish, American or Australian, marrying in a
+            country they do not live in and choosing the shape of the day themselves. Your ceremony might
+            be humanist, non-denominational, celebrant-led, Anglican, Catholic or interfaith, and in most
+            of these countries all of those are open to you &mdash; the local majority religion decides
+            far less than couples expect. What the country changes is which routes are legally
+            recognised, whether there is an English-speaking chaplaincy, and what buildings you can get
+            into. Each guide sets that out.</p>
+          <p>If you live in the country rather than travelling to it, everything here applies just as
+            well; we sing for couples based abroad as readily as for those flying their guests out.</p>
+
+          <h3>What travels with us</h3>
           <p>The singing is the part that does not change. The consort rehearses in London, flies out
             together, arrives the day before, and rehearses in the building where it will sing. Everything
             around that changes by country, and the differences are large enough to be worth writing down
