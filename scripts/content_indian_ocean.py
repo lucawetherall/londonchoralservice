@@ -271,10 +271,10 @@ n = build('thailand', 'Thailand',
   'Alma Consort travels from London to sing at villa, resort and beach ceremonies in Phuket and on '
   'Koh Samui.',
   [
-   ('The ceremony', 'Western ceremonies, and the Thai blessing alongside them',
-    ['Weddings in Thailand for foreign couples are symbolic or celebrant-led ceremonies at a villa, a '
-     'resort or on a beach, with the legal marriage usually completed at home. There is no Western '
-     'liturgy, so the music is entirely open and does the structural work.',
+   ('The day', 'Where the music sits, and the Thai blessing alongside it',
+    ['Whichever form your ceremony takes, it will almost certainly be outdoors or in a pavilion rather '
+     'than a church, and without a liturgy to sit inside, the music does the structural work: the '
+     'entrance, a piece at the vows, the recessional, and a set during the drinks that follow.',
      'Many couples also include a traditional Thai element &mdash; a Buddhist blessing, a monks&rsquo; '
      'ceremony in the morning, or the water-pouring <em>rod nam sang</em> ritual. Those have their own '
      'form and their own sound and are complete without us, so we leave them to stand on their own and '
@@ -342,17 +342,14 @@ n = build('indonesia', 'Bali',
   'Alma Consort travels from London to sing at clifftop, jungle and resort ceremonies at Uluwatu, '
   'Ubud and Seminyak.',
   [
-   ('The ceremony', 'Western ceremonies on a Hindu island',
-    ['What foreign couples have in Bali is a Western-style symbolic or celebrant-led ceremony at a '
-     'resort or villa, with the legal marriage usually handled at home. There is no liturgy, so the '
-     'programme is entirely open and the music carries the structure: the entrance, a piece at the vows, '
-     'the recessional, and a set afterwards. That is where a consort does its work here, and it is the '
-     'ceremony almost every couple we speak to is planning.',
-     'Bali is also Hindu, and Balinese religious ceremony is an elaborate living tradition with its own '
-     'music &mdash; gamelan, chant, and forms of its own. We do not sing inside that; it is complete '
-     'without us. Where a couple is having a Balinese blessing alongside their own ceremony, the two sit '
-     'well together in one day, and a gamelan ensemble at the reception alongside a consort earlier is a '
-     'combination worth planning for rather than choosing between.',
+   ('The day', 'Where the music sits across a Balinese wedding',
+    ['With no liturgy to sit inside, the music carries the structure of your ceremony: the entrance, a '
+     'piece at the vows, the recessional, and a set afterwards. That is where a consort does most of '
+     'its work in Bali.',
+     'If you are also having a Balinese Hindu blessing, it belongs to a living tradition with its own '
+     'musicians and is complete without us, so the two stand side by side in one day. A gamelan '
+     'ensemble at the reception alongside a consort earlier is a combination worth planning for rather '
+     'than choosing between.',
      'Across a Balinese wedding there is a good deal for us to sing at beyond the ceremony: the arrival, '
      'the drinks on the cliff, the dinner, and a welcome party the night before, which at a destination '
      'wedding with guests who have flown a long way is often the warmest hour of the whole trip.']),

@@ -12,7 +12,7 @@ n = build('greece', 'Greece',
   'Alma Consort travels from London to sing at clifftop and resort ceremonies in Santorini, Mykonos, '
   'Crete, Rhodes and Zakynthos.',
   [
-   ('The rite', 'Why an Orthodox wedding is a different proposition',
+   ('Orthodox', 'If you are having an Orthodox service',
     ['This is the most important thing on the page, and it is better said plainly than discovered late. '
      'A Greek Orthodox wedding is not structured like a Western one. It has no congregational hymns, no '
      'sung ordinary in the Latin sense, and no natural gaps for a visiting choir. The service is chanted '
@@ -24,11 +24,9 @@ n = build('greece', 'Greece',
      'wedding breakfast, and at a welcome dinner the evening before. Couples who have had both tell us '
      'the contrast works in their favour &mdash; the chanting belongs to the rite, and the consort '
      'belongs to the celebration around it.',
-     'Most British couples marrying in Greece are not having an Orthodox service at all. They are '
-     'having a symbolic or civil ceremony at a hotel, a villa or a clifftop terrace, and that format is '
-     'entirely open: no liturgy to respect, no repertoire restriction, and the music placed wherever it '
-     'works best. Many couples have both &mdash; an Orthodox blessing for the family and a symbolic '
-     'ceremony of their own &mdash; and we sing at the second.']),
+     'Many couples in this position have both &mdash; an Orthodox service for the family and a '
+     'ceremony of their own, humanist or celebrant-led, at the venue &mdash; and we sing at the second '
+     'from beginning to end.']),
    ('The ceremony', 'What we do at a Greek destination wedding',
     ['For a symbolic or civil ceremony, we would usually suggest three or four pieces rather than a long '
      'programme. Something as the guests are seated and the bride arrives; something in the still moment '
@@ -114,18 +112,19 @@ n = build('cyprus', 'Cyprus',
   'Alma Consort travels from London to sing at civil, hotel and villa ceremonies in Paphos, Protaras '
   'and Ayia Napa.',
   [
-   ('The rite', 'Civil ceremonies, hotel weddings and the Orthodox question',
-    ['Cyprus is one of the simplest places for a British couple to marry legally, which is why so many '
-     'do. The great majority of those weddings are civil ceremonies conducted by a municipality &mdash; '
-     'Paphos town hall being the best known &mdash; or celebrant-led ceremonies at a hotel or villa. '
-     'Neither has a liturgy, so the music is entirely yours to place.',
-     'The Greek Orthodox position in Cyprus is the same as in Greece: the service is chanted in its own '
-     'tradition and has no natural place for a visiting Western choir. If your ceremony is Orthodox, the '
-     'sensible use of a consort is before or after rather than during.',
-     'There is also a long-standing Anglican presence on the island, and a small number of couples marry '
-     'in an Anglican church there. That service is the one most British couples would recognise, with '
-     'hymns the congregation can actually sing, and it suits a consort better than any other option in '
-     'Cyprus.']),
+   ('Options', 'What each route means for the music',
+    ['A <strong>civil ceremony</strong> at a municipality is short and businesslike, and the music '
+     'generally works better around it &mdash; as guests gather outside, or at the reception &mdash; '
+     'than inside a ten-minute formality.',
+     'A <strong>humanist or celebrant-led ceremony</strong> at a hotel or villa has no liturgy, so the '
+     'programme is entirely open: an entrance, a piece at the vows, a recessional, and as much or as '
+     'little else as you want.',
+     'An <strong>Anglican service</strong> is the one that gives a consort most to do, and the one '
+     'couples least often realise is available. It runs on the order of service you would recognise '
+     'from home, with hymns your guests can sing and a natural place for an anthem during the signing.',
+     'A <strong>Greek Orthodox service</strong>, where one partner is Cypriot or Orthodox, is chanted '
+     'in its own tradition and is complete without us; we sing around it, which at a Cypriot wedding '
+     'covers a great deal of the day.']),
    ('Across the day', 'Where the music goes at a Cypriot wedding',
     ['Cyprus suits singing across a whole day better than most destinations, because so many weddings '
      'here keep everybody in one place. The ceremony, the drinks and the dinner are frequently at the '

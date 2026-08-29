@@ -104,15 +104,14 @@ n = build('mexico', 'Mexico',
   'Alma Consort travels from London to sing at beach, jungle and church ceremonies in the Riviera Maya, '
   'Tulum and Canc&uacute;n.',
   [
-   ('The rite', 'Resort ceremonies and colonial churches',
-    ['The great majority of destination weddings in Mexico are symbolic or celebrant-led ceremonies at a '
-     'resort, on a beach, or in a jungle clearing, with the legal formality handled at home beforehand. '
-     'These have no liturgy, and the music does structural work: the processional, a piece at the '
-     'exchange of vows, the recessional, and a set during the cocktail hour.',
-     'Mexico is strongly Catholic and there are magnificent colonial churches, particularly inland and '
-     'in the older towns, where a nuptial Mass has the full sung shape. If your wedding includes a church '
-     'ceremony as well as a beach celebration, the church is where a consort earns its journey, and we '
-     'would build the programme around it.',
+   ('The day', 'Where the music sits, and the buildings worth seeking out',
+    ['Without a liturgy to sit inside, the music does the structural work: the processional, a piece at '
+     'the exchange of vows, the recessional, and a set during the cocktail hour, which in Mexico is a '
+     'well-established part of the day.',
+     'If your wedding includes a church ceremony as well as a beach celebration, the church is where a '
+     'consort earns its journey. Mexico&rsquo;s colonial churches, particularly inland and in the older '
+     'towns, are magnificent buildings and the best acoustics in the country, and we would build the '
+     'programme around one.',
      'A cenote ceremony &mdash; in or beside one of the limestone sinkholes of the Yucat&aacute;n &mdash; '
      'is a case worth mentioning on its own. Enclosed rock returns sound the way a chapel does, and a '
      'consort singing in one is a genuinely extraordinary thing. If your venue offers it, ask us about it.']),

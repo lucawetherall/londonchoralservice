@@ -14,6 +14,7 @@ import sys, os, json
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import build_register_page as B
 import destinations_data as D
+from ceremony_sections import CEREMONY
 
 CHECKED = '29 August 2026'
 
@@ -50,7 +51,13 @@ def jsonld(slug, name, title, desc, faqs):
 
 def build(slug, name, title, desc, hero_h1, hero_sub, sections, regions, faqs,
           nav_prev=None, nav_next=None):
-    """sections: list of (rail_label, heading, [paragraph_html, ...])"""
+    """sections: list of (rail_label, heading, [paragraph_html, ...])
+
+    The 'what kind of ceremony are you having?' section is prepended for every
+    country: the reader is an English-speaking couple travelling out and choosing
+    their own form of service, not a local having the local rite.
+    """
+    sections = [CEREMONY[slug]] + list(sections)
     body = f'''
     <section class="pe-section pe-section--light pe-hero">
       <div class="pe-hero__inner">
