@@ -73,9 +73,7 @@ FAQS = [
      'exactly that: unaccompanied singing needs no instrument, no stage and no amplification. What it does '
      'need is the right number of voices for the space, which is why an open terrace usually wants more '
      'singers than a stone chapel does. One caveat worth knowing: that holds for the ceremony, when '
-     'everyone is listening. For a set during drinks or dinner the singers have to clear the noise of a '
-     'talking room, and that does rise with the number of people making it &mdash; a reception often '
-     'wants more voices than the ceremony did.'),
+     'everyone is listening. For a set during drinks or dinner the singers have to clear the noise of a talking room, and that does rise with the number of people making it. A reception often wants more voices than the ceremony did.'),
 ]
 
 def jsonld():
@@ -129,8 +127,7 @@ BODY = f'''
         <h1>English choral singing, wherever you are marrying.</h1>
         <div class="pe-hairline--candle" aria-hidden="true"></div>
         <p class="pe-hero__sub">Your guests have travelled to be there, and they will be together for
-          days. A consort of eight to twenty-four voices travels too, and sings across the whole weekend
-          &mdash; the welcome dinner, the ceremony, the reception.</p>
+          days. A consort of eight to twenty-four voices travels too, and sings across the whole weekend: the welcome dinner, the ceremony, the reception.</p>
         <p class="pe-hero__cta"><a class="pe-btn" href="#enquire">Enquire about your wedding</a></p>
       </div>
     </section>
@@ -153,17 +150,11 @@ BODY = f'''
             a room that is talking rather than listening. Guests who have travelled to be there hear three
             different things instead of one, and the two evenings either side of the wedding day stop
             being the parts nobody planned.</p>
-          <p>Where each of those moments works best depends on the country, and the guides below say so
-            one at a time &mdash; a Portuguese quinta keeps everybody on one estate, a Dalmatian old town
-            has your guests walking between stone rooms, and a Maldivian resort island has nobody going
-            anywhere at all.</p>
+          <p>Where each of those moments works best depends on the country, and the guides below say so one at a time: a Portuguese quinta keeps everybody on one estate, a Dalmatian old town has your guests walking between stone rooms, and a Maldivian resort island has nobody going anywhere at all.</p>
 
           <h3>Whatever kind of ceremony you are having</h3>
           <p>Most couples we sing for abroad are British, Irish, American or Australian, marrying in a
-            country they do not live in and choosing the shape of the day themselves. Your ceremony might
-            be humanist, non-denominational, celebrant-led, Anglican, Catholic or interfaith, and in most
-            of these countries all of those are open to you &mdash; the local majority religion decides
-            far less than couples expect. What the country changes is which routes are legally
+            country they do not live in and choosing the shape of the day themselves. Your ceremony might be humanist, non-denominational, celebrant-led, Anglican, Catholic or interfaith, and in most of these countries all of those are open to you. The local majority religion decides far less than couples expect. What the country changes is which routes are legally
             recognised, whether there is an English-speaking chaplaincy, and what buildings you can get
             into. Each guide sets that out.</p>
           <p>If you live in the country rather than travelling to it, everything here applies just as

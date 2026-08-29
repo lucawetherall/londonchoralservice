@@ -11,24 +11,20 @@ DESC = ('How Alma Consort works with wedding planners, venues and private office
 FAQS = [
     ('What do you need from us, and by when?',
      'The date, the venue and the running order as soon as they exist, even in draft. Everything else can '
-     'follow. Six to twelve months is the usual lead time for Europe; the United States needs far longer because paid performance there runs through a visa petition. If a date is closer than that, '
-     'ask anyway — a free Saturday is a free Saturday.'),
+     'follow. Six to twelve months is the usual lead time for Europe; the United States needs far longer because paid performance there runs through a visa petition. If a date is closer than that, ask anyway. A free Saturday is a free Saturday.'),
     ('Do you carry insurance and provide method statements?',
      'We hold public liability insurance, and we provide risk assessments and method statements on request. '
      'Venues that need a supplier pack before they will confirm can have one; tell us what your compliance '
      'team asks for and we will send it in their format rather than ours.'),
     ('Will the consort sign a confidentiality agreement?',
-     'Yes. We do not name clients, publish photographs, or release recordings from a private engagement '
-     'without permission, and every singer on the engagement signs the same agreement — including a deputy '
-     'brought in at short notice.'),
+     'Yes. We do not name clients, publish photographs, or release recordings from a private engagement without permission, and every singer on the engagement signs the same agreement, including a deputy brought in at short notice.'),
     ('What does the consort need from the venue?',
      'Room to stand where the guests can hear them, which in a church usually means the chancel, a gallery '
      'or the west end. No stage, no PA, no piano. For a ballroom, a terrace or a marquee, send us the '
      'dimensions and tell us whether the floor is carpeted: a soft room absorbs sound a chapel would carry, '
      'and that changes the number of singers we recommend.'),
     ('How do you invoice?',
-     'In pounds sterling, euros or US dollars, to whichever entity you nominate — the couple, your agency, '
-     'or the venue. Deposit and balance terms are set out in the booking agreement before anything is '
+     'In pounds sterling, euros or US dollars, to whichever entity you nominate: the couple, your agency, or the venue. Deposit and balance terms are set out in the booking agreement before anything is '
      'confirmed. Alma Consort Ltd is not registered for VAT, so no VAT is added to our invoices.'),
     ('Can we set up a standing arrangement?',
      'Yes, and it is worth doing if you expect to bring us more than one engagement. A standing arrangement '
@@ -77,8 +73,7 @@ BODY = f'''
         <p class="pe-eyebrow">Alma Consort &middot; London</p>
         <h1>A supplier your compliance team will not have to chase.</h1>
         <div class="pe-hairline--candle" aria-hidden="true"></div>
-        <p class="pe-hero__sub">How we work with wedding and event planners, venue and hotel event teams,
-          and private offices &mdash; in the United Kingdom and at destinations worldwide.</p>
+        <p class="pe-hero__sub">How we work with wedding and event planners, venue and hotel event teams, and private offices, in the United Kingdom and at destinations worldwide.</p>
         <p class="pe-hero__cta"><a class="pe-btn" href="#enquire">Tell us about your events</a></p>
       </div>
     </section>

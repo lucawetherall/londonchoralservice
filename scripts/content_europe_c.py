@@ -42,8 +42,7 @@ n = build('gibraltar', 'Gibraltar',
      'off the Strait, and a recommendation of twelve voices placed close to the guests. The Rock itself '
      'creates its own weather, and an exposed spot can be breezier than the town below.']),
    ('Travel', 'Getting a consort to Gibraltar',
-    ['Direct flights from London run daily, at around three hours, and the airport is a walk from the '
-     'town centre &mdash; the shortest transfer of any destination we sing at. The territory is small '
+    ['Direct flights from London run daily, at around three hours, and the airport is a walk from the town centre. The shortest transfer of any destination we sing at. The territory is small '
      'enough that everything is within a few minutes of everything else, which removes the usual risk '
      'of a long drive after a delayed flight.',
      'There is no work-permit or visa requirement for British musicians performing here, which is why '
@@ -117,16 +116,10 @@ n = build('ireland', 'Ireland',
     ['Irish churches, Catholic and Church of Ireland alike, are generally stone and generous, and eight '
      'to twelve voices covers almost any of them. These are conditions the repertoire assumes and there '
      'is little to plan around.',
-     'Castles and country houses are more variable. A vaulted hall or a chapel is excellent. A large '
-     'timber-floored function room with soft furnishings absorbs a great deal, and an outdoor ceremony '
-     'in a walled garden gives nothing back at all &mdash; and in Ireland an outdoor ceremony needs a '
-     'wet-weather plan that includes the singers, because moving twelve people indoors at short notice '
-     'is easier if somebody has thought about where they will stand.']),
+     'Castles and country houses are more variable. A vaulted hall or a chapel is excellent. A large timber-floored function room with soft furnishings absorbs a great deal, and an outdoor ceremony in a walled garden gives nothing back at all, and in Ireland an outdoor ceremony needs a wet-weather plan that includes the singers, because moving twelve people indoors at short notice is easier if somebody has thought about where they will stand.']),
    ('Travel', 'The easiest journey we make',
     ['Flights from London to Dublin, Cork, Shannon and Knock run constantly, and the crossing takes '
-     'about an hour. Ireland and the United Kingdom share the Common Travel Area, so there is no visa '
-     'or work-permit question at all for British musicians &mdash; the same position as Gibraltar, and '
-     'unlike anywhere in the Schengen area.',
+     'about an hour. Ireland and the United Kingdom share the Common Travel Area, so there is no visa or work-permit question at all for British musicians, the same position as Gibraltar, and unlike anywhere in the Schengen area.',
      'The practical effect is on cost and lead time. Ireland is the least expensive destination on this '
      'list: a short flight, often a single night, and no paperwork. For a wedding within reach of '
      'Dublin, the gap between an Irish engagement and an English one is smaller than most couples '
@@ -176,15 +169,12 @@ n = build('scotland', 'Scotland',
   'A British consort at Scottish weddings: why Scots law allows a legal ceremony anywhere, what that '
   'means for the music, and our published UK rates.',
   'Scotland lets you marry anywhere, which changes where the music goes.',
-  'Alma Consort travels from London to sing at castle, Highland and city ceremonies across Scotland '
-  '&mdash; on our published UK rates.',
+  'Alma Consort travels from London to sing at castle, Highland and city ceremonies across Scotland, on our published UK rates.',
   [
    ('The law', 'Why Scottish weddings happen in places English ones cannot',
     ['One difference in Scots law explains most of what is distinctive about a Scottish wedding. In '
      'England and Wales a legally binding marriage must take place in a registered building or approved '
-     'premises. In Scotland the authority rests with the celebrant rather than the building, so a '
-     'religious or belief celebrant can conduct a legally binding ceremony almost anywhere &mdash; a '
-     'castle courtyard, a glen, a loch shore, a hotel lawn.',
+     'premises. In Scotland the authority rests with the celebrant rather than the building, so a religious or belief celebrant can conduct a legally binding ceremony almost anywhere: a castle courtyard, a glen, a loch shore, a hotel lawn.',
      'That is why so many Scottish weddings happen somewhere spectacular and nowhere near a church, and '
      'why couples who wanted an outdoor ceremony in England often end up in Scotland instead.',
      'Musically it has one consequence worth planning for: the ceremony is frequently outdoors and '
@@ -223,8 +213,7 @@ n = build('scotland', 'Scotland',
   ],
   [
    ('Edinburgh and the Lothians', 'edinburgh',
-    ['City churches, the Old Town and a strong choral tradition already in the air. The simplest travel '
-     'in Scotland &mdash; the train from London runs directly and a day trip works for an afternoon ceremony, which keeps the cost at its lowest.']),
+    ['City churches, the Old Town and a strong choral tradition already in the air. The simplest travel in Scotland. The train from London runs directly and a day trip works for an afternoon ceremony, which keeps the cost at its lowest.']),
    ('The Highlands', 'the-highlands',
     ['Castles, glens and lochs, and the setting most couples picture when they choose Scotland. Also the '
      'longest journeys, the most weather and the driest acoustics. Plan for an overnight stay, twelve '
@@ -253,9 +242,7 @@ n = build('scotland', 'Scotland',
     'ground returns no sound and the wind takes what there is away from the guests. If the venue has a '
     'vaulted hall or a chapel, using it will get you a better result with fewer singers.'),
    ('What happens if the weather turns?',
-    'We plan for it when you book. The question we will ask is where the singers stand if the ceremony '
-    'moves indoors, and whether the programme still works in that room &mdash; a piece written for a '
-    'stone chapel behaves differently in a marquee. Settling that in advance takes the decision out of '
+    'We plan for it when you book. The question we will ask is where the singers stand if the ceremony moves indoors, and whether the programme still works in that room. A piece written for a stone chapel behaves differently in a marquee. Settling that in advance takes the decision out of '
     'the morning of the wedding.'),
   ])
 print(f'scotland {n}')

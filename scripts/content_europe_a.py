@@ -18,8 +18,7 @@ n = build('italy', 'Italy',
      'psalm and Gospel acclamation, the exchange of consent, an offertory, the Sanctus and Agnus Dei '
      'around the Eucharistic Prayer, communion motets, and a recessional. That is eight or nine points '
      'where music belongs, against three or four at a civil ceremony.',
-     'A wedding without a Mass &mdash; a nuptial liturgy with the rite of marriage but no Eucharist &mdash; '
-     'is common where one partner is not Catholic, and shortens the middle of the service without '
+     'A wedding without a Mass, a nuptial liturgy with the rite of marriage but no Eucharist, is common where one partner is not Catholic, and shortens the middle of the service without '
      'changing its shape.',
      'One practical point worth raising early with your parish: many Italian churches take a firmer '
      'line than English ones on what may be sung inside them. Requests for the Wagner and Mendelssohn '
@@ -70,15 +69,13 @@ n = build('italy', 'Italy',
      'running order.']),
    ('The Amalfi Coast', 'amalfi-coast',
     ['Cliffside churches with vertical approaches and, often, no vehicle access to the door. Ravello and '
-     'Positano both work well musically &mdash; the churches are stone and generous &mdash; but tell us '
-     'early if the singers face a long stair climb in August heat, because that belongs in the schedule '
+     'Positano both work well musically, the churches are stone and generous, but tell us early if the singers face a long stair climb in August heat, because that belongs in the schedule '
      'rather than in the surprise. Terraces here are spectacular and acoustically dead; plan voices '
      'accordingly.']),
    ('Lake Como', 'lake-como',
     ['A villa wedding on Como is usually a symbolic or civil ceremony in a garden or a loggia rather '
      'than a Mass, so the music sits differently: an entrance, something during the vows, and a set '
-     'during the aperitivo. Several villas have small private chapels, which are lovely and small &mdash; '
-     'eight voices is often the maximum the space physically allows, and it is enough.']),
+     'during the aperitivo. Several villas have small private chapels, which are lovely and small. Eight voices is often the maximum the space physically allows, and it is enough.']),
    ('Puglia', 'puglia',
     ['Masserie and baroque town churches. Lecce and the surrounding towns have some of the most '
      'flattering interiors in Italy for a choir. Bari and Brindisi are the airports; both add a drive, '
@@ -92,8 +89,7 @@ n = build('italy', 'Italy',
    ('Can we have a choir at a Catholic wedding in Italy?',
     'Yes, and the nuptial Mass is the service that gives a choir most to do. What varies is the '
     'repertoire the parish will allow. Sacred music is never an issue; secular pieces and the two famous '
-    'wedding marches are refused by some churches. Ask your priest early, and tell us what comes back '
-    '&mdash; there is always a sacred piece that does the same job in the same place.'),
+    'wedding marches are refused by some churches. Ask your priest early, and tell us what comes back. There is always a sacred piece that does the same job in the same place.'),
    ('Should the Mass be sung in Latin or Italian?',
     'We usually suggest Latin for the sung ordinary. It is neutral between a British and an Italian '
     'congregation, it suits the buildings, and it is what most of the repertoire was written for. The '
@@ -132,9 +128,7 @@ n = build('france', 'France',
      'you are having; the answer changes the programme.']),
    ('Language', 'French, Latin, and what your guests will follow',
     ['A church blessing in France will be conducted in French, sometimes with English readings where the '
-     'celebrant is willing. For the sung music we generally set the ordinary in Latin and place at least '
-     'one French piece in the programme &mdash; Fauré, Duruflé, Poulenc and Messiaen all wrote music '
-     'that belongs in these buildings and signals to French guests that the day is theirs too.',
+     'celebrant is willing. For the sung music we generally set the ordinary in Latin and place at least one French piece in the programme. Fauré, Duruflé, Poulenc and Messiaen all wrote music that belongs in these buildings and signals to French guests that the day is theirs too.',
      'A celebrant-led ceremony at a ch&acirc;teau is usually in English if the couple is British, and '
      'then the choice is open. We are happy to sing in either language or both, and there is no need to '
      'balance them for the sake of it.']),
@@ -190,8 +184,7 @@ n = build('france', 'France',
     'would need indoors, and placing the consort nearer you. If the ch&acirc;teau has a chapel, an '
     'orangery or a vaulted hall, ask about using it for the ceremony itself.'),
    ('Will the music be in French?',
-    'Some of it, if you want it to be. We usually sing the ordinary in Latin and include at least one '
-    'French piece &mdash; Fauré and Duruflé sit beautifully in these buildings. For a celebrant-led '
+    'Some of it, if you want it to be. We usually sing the ordinary in Latin and include at least one French piece. Fauré and Duruflé sit beautifully in these buildings. For a celebrant-led '
     'ceremony in English the choice is yours, and there is no obligation to balance the languages.'),
    ('Is it cheaper because France is close?',
     'Yes, meaningfully. Distance and nights are two of the three things that move the cost, and northern '
@@ -225,9 +218,7 @@ n = build('spain', 'Spain',
     ['A Spanish nuptial Mass will be spoken in Spanish, and often in Catalan in Mallorca and parts of '
      'the mainland. We sing the ordinary in Latin for the same reason we do in Italy: it is neutral, '
      'and it is what the buildings and the repertoire assume.',
-     'Spanish sacred music is worth using rather than ignoring. Victoria and Guerrero wrote some of the '
-     'finest Renaissance polyphony in Europe, and singing a Victoria motet in a Spanish church is not a '
-     'gesture &mdash; it is the right piece in the right place. For an island ceremony in English, none '
+     'Spanish sacred music is worth using rather than ignoring. Victoria and Guerrero wrote some of the finest Renaissance polyphony in Europe, and singing a Victoria motet in a Spanish church is not a gesture. It is the right piece in the right place. For an island ceremony in English, none '
      'of this applies and you should choose whatever you like.']),
    ('Buildings', 'Stone churches and stone terraces',
     ['Mainland and Mallorcan town churches are large, stone and reverberant, and a consort of twelve '
@@ -268,9 +259,7 @@ n = build('spain', 'Spain',
   ],
   [
    ('Can a British choir sing at a Catholic wedding in Spain?',
-    'Yes. Spanish parishes are generally used to sung Masses and welcoming to visiting singers. Confirm '
-    'with the church that a visiting choir is acceptable and whether they expect their own organist to '
-    'be involved, and tell us either way &mdash; we are glad to work alongside a house organist.'),
+    'Yes. Spanish parishes are generally used to sung Masses and welcoming to visiting singers. Confirm with the church that a visiting choir is acceptable and whether they expect their own organist to be involved, and tell us either way. We are glad to work alongside a house organist.'),
    ('What music suits a villa ceremony in Ibiza or Mallorca?',
     'Fewer pieces, placed deliberately. An entrance, one piece during the signing or the vows, and a '
     'recessional will do more than a long list. Because there is no liturgy, the repertoire is open: unaccompanied part-songs, folk arrangements, and choral versions of songs that matter to you '
@@ -281,8 +270,7 @@ n = build('spain', 'Spain',
     'with twelve. Send us a photograph of where the ceremony will happen and we will give you a straight '
     'recommendation rather than the largest number.'),
    ('Will you sing in Spanish?',
-    'We sing the Latin ordinary at a Mass, and we sing Spanish repertoire &mdash; Victoria and Guerrero '
-    'especially &mdash; which in a Spanish church is the natural rather than the decorative choice. For '
+    'We sing the Latin ordinary at a Mass, and we sing Spanish repertoire, Victoria and Guerrero especially, which in a Spanish church is the natural rather than the decorative choice. For '
     'an English-language ceremony on the islands there is no need for Spanish at all unless you want it.'),
   ])
 print(f'spain {n}')
@@ -301,10 +289,7 @@ n = build('portugal', 'Portugal',
      'Portuguese parishes are used to music and, in our experience, generous about a visiting choir.',
      'Most British couples marrying in Portugal, though, are at a quinta, a palace or a hotel rather '
      'than in a parish church, with a celebrant-led or symbolic ceremony. That format has no liturgy, so '
-     'the music defines the structure instead. Portugal is also unusual in how often the ceremony space '
-     'and the reception space are the same estate, which makes it easy to have the consort sing again '
-     'during drinks without a transfer &mdash; worth planning for, because it is the cheapest way to '
-     'get more out of a group that has already flown out.']),
+     'the music defines the structure instead. Portugal is also unusual in how often the ceremony space and the reception space are the same estate, which makes it easy to have the consort sing again during drinks without a transfer. Worth planning for, because it is the cheapest way to get more out of a group that has already flown out.']),
    ('Language', 'Portuguese, Latin and what to sing',
     ['A church service will be in Portuguese. As elsewhere we would sing the ordinary in Latin, which '
      'sits naturally in these buildings and needs no translation for either half of a mixed congregation.',

@@ -9,8 +9,7 @@ n = build('united-states', 'United States',
   'A British consort at American weddings: the performance visa that governs the timeline, what it '
   'means for your date, and where the music goes at a US ceremony.',
   'Start with the visa. Everything else follows from it.',
-  'Alma Consort travels from London to sing at weddings in New York, Florida and Las Vegas &mdash; on '
-  'a timeline set by immigration rather than by aviation.',
+  'Alma Consort travels from London to sing at weddings in New York, Florida and Las Vegas, on a timeline set by immigration rather than by aviation.',
   [
    ('The constraint', 'Why the United States is different from everywhere else we sing',
     ['This page leads with paperwork rather than music, because on this one destination the paperwork '
@@ -22,20 +21,14 @@ n = build('united-states', 'United States',
      'The practical consequence is simple: the visa calendar, not the flight schedule, decides when we '
      'can come. A couple planning a New York wedding eighteen months out has no difficulty at all; one '
      'asking about a date six months away needs us to look at the specific timings before anyone '
-     'promises anything. So raise it early &mdash; the earlier this conversation starts, the more of '
-     'the calendar is open to you.',
+     'promises anything. So raise it early. The earlier this conversation starts, the more of the calendar is open to you.',
      'Where the timeline does work, everything else about the States is straightforward: excellent '
      'flights, no language barrier, and venues used to handling suppliers professionally.']),
    ('The rite', 'What a US wedding asks of a choir',
     ['American weddings vary more than European ones, because the format follows the couple rather than '
-     'the country. An Episcopal service in a New York church is Anglican and will feel familiar '
-     '&mdash; hymns the congregation can sing, an order of service a British couple would recognise, and '
-     'a building that supports a consort properly. A Catholic nuptial Mass gives the full sung shape.',
+     'the country. An Episcopal service in a New York church is Anglican and will feel familiar. Hymns the congregation can sing, an order of service a British couple would recognise, and a building that supports a consort properly. A Catholic nuptial Mass gives the full sung shape.',
      'Most destination weddings in Florida and Nevada, though, are celebrant-led ceremonies at a hotel, '
-     'a beach or a garden venue, with no liturgy at all. There the music defines the structure: the '
-     'processional, a piece during the ceremony, the recessional, and a set during the cocktail hour '
-     'afterwards &mdash; which in the United States is a more established part of the day than it is in '
-     'Britain, and a good use of a group that has flown a long way.']),
+     'a beach or a garden venue, with no liturgy at all. There the music defines the structure: the processional, a piece during the ceremony, the recessional, and a set during the cocktail hour afterwards, which in the United States is a more established part of the day than it is in Britain, and a good use of a group that has flown a long way.']),
    ('Buildings', 'East coast stone against Florida sun',
     ['New York and the north east have serious stone churches, and they are among the best rooms we '
      'could sing in anywhere. Where a couple is marrying in one, a consort of twelve to sixteen is '
@@ -67,9 +60,7 @@ n = build('united-states', 'United States',
      'eight is the shape that works.']),
    ('Las Vegas', 'las-vegas',
     ['Chapel, hotel and resort ceremonies, with venues as capable as any in the world at running a large '
-     'private event and a level of production polish that is hard to find elsewhere. Ceremonies are often '
-     'tightly scheduled, so the programme wants to be precise rather than long &mdash; and the reception '
-     'that follows is usually where a consort has the most room to work.']),
+     'private event and a level of production polish that is hard to find elsewhere. Ceremonies are often tightly scheduled, so the programme wants to be precise rather than long, and the reception that follows is usually where a consort has the most room to work.']),
   ],
   [
    ('Do British musicians need a visa to perform at a US wedding?',
@@ -80,9 +71,7 @@ n = build('united-states', 'United States',
    ('How far ahead do we need to book?',
     'Far further than anywhere else we sing. Where Europe works at six to twelve months, the '
     'States needs the visa timeline built in on top, so the advice is to raise it before you fix the '
-    'date rather than after. If your wedding is sooner than that, ask us anyway &mdash; the position '
-    'depends on the visa route and on how the calendar is running, and we would rather look at your '
-    'specific dates than turn you away on a general rule.'),
+    'date rather than after. If your wedding is sooner than that, ask us anyway. The position depends on the visa route and on how the calendar is running, and we would rather look at your specific dates than turn you away on a general rule.'),
    ('Why is a US booking more expensive?',
     'Three things stack: transatlantic flights for the whole consort, two nights rather than one because '
     'we will not sing well the morning after an overnight flight and a large time change, and the visa '
@@ -193,8 +182,7 @@ n = build('barbados', 'Barbados',
      'The island has been Anglican since the seventeenth century, and it shows in the buildings and in '
      'the services held in them. The parish churches are stone, they are old, and they were built by '
      'people who expected the Book of Common Prayer to be read in them and hymns to be sung. A wedding '
-     'at St James Parish Church &mdash; a foundation dating to the earliest years of English settlement '
-     '&mdash; is a service a British congregation would recognise in every particular, in a building '
+     'at St James Parish Church, a foundation dating to the earliest years of English settlement, is a service a British congregation would recognise in every particular, in a building '
      'that carries voices properly.',
      'The practical consequence is that everything we do at home transfers directly: the hymnody, the '
      'anthems, the order of service, the expectation that the congregation sings. There is no rite to '
@@ -205,22 +193,16 @@ n = build('barbados', 'Barbados',
      'of eight to twelve leads it and the congregation joins in. Our guide to '
      '<a href="/music-guides/choosing-wedding-hymns.html">choosing wedding hymns</a> applies here almost unchanged.',
      'The alternative format is a beach or hotel ceremony on the west or south coast, celebrant-led and '
-     'without liturgy. Those work too, on the usual outdoor terms. Where a couple is choosing between '
-     'them and cares about the music, the parish church is the better room by a considerable margin '
-     '&mdash; and combining the two, with a church service and a beach reception, is a common and '
-     'sensible shape.']),
+     'without liturgy. Those work too, on the usual outdoor terms. Where a couple is choosing between them and cares about the music, the parish church is the better room by a considerable margin, and combining the two, with a church service and a beach reception, is a common and sensible shape.']),
    ('Buildings', 'Coral stone and the trade wind',
-    ['Barbadian parish churches are built of coral stone, with height and hard surfaces, and they behave '
-     'much as English stone churches do &mdash; generous, forgiving, and well suited to eight or twelve '
-     'voices. Several have galleries, which give a consort an excellent position.',
+    ['Barbadian parish churches are built of coral stone, with height and hard surfaces, and they behave much as English stone churches do: generous, forgiving, and well suited to eight or twelve voices. Several have galleries, which give a consort an excellent position.',
      'Beach and terrace ceremonies on the west coast are the standard dry outdoor case with one addition: '
      'the trade wind blows reliably here, more so than in the Mediterranean. Twelve voices, positioned '
      'upwind of the guests, is the recommendation. The heat is more manageable than in Mexico or the '
      'Indian Ocean because of that same wind, but a late-afternoon ceremony is still kinder to singers '
      'than a midday one.']),
    ('Travel', 'Getting a consort to Barbados',
-    ['Direct flights from London to Bridgetown run daily, at around eight and a half hours with a four-hour '
-     'time change &mdash; the shortest and least disruptive long-haul journey on this list. We travel two '
+    ['Direct flights from London to Bridgetown run daily, at around eight and a half hours with a four-hour time change, the shortest and least disruptive long-haul journey on this list. We travel two '
      'days ahead rather than one so the singers arrive rested, and that second night is in the quote.',
      'Barbados is a Commonwealth country and well used to visiting performers and to British suppliers '
      'generally. We confirm the current requirements for foreign performers working for a fee when we '
@@ -229,8 +211,7 @@ n = build('barbados', 'Barbados',
   ],
   [
    ('St James', 'st-james',
-    ['The west coast, the concentration of luxury hotels and villas, and St James Parish Church itself '
-     '&mdash; one of the oldest Anglican foundations in the western hemisphere and the best building on '
+    ['The west coast, the concentration of luxury hotels and villas, and St James Parish Church itself. One of the oldest Anglican foundations in the western hemisphere and the best building on '
      'the island to sing a wedding in. Ceremony in the church and reception at a west coast hotel is the '
      'shape we would recommend to anyone who cares how the day sounds.']),
    ('Christ Church', 'christ-church',
@@ -244,9 +225,7 @@ n = build('barbados', 'Barbados',
   ],
   [
    ('Will a Barbadian church wedding feel familiar?',
-    'Very. Barbados has been Anglican since the seventeenth century, so the order of service, the hymnody '
-    'and the expectation that the congregation sings are all as they would be in an English parish church '
-    '&mdash; in a coral stone building that carries voices properly. Of everywhere we travel long-haul, '
+    'Very. Barbados has been Anglican since the seventeenth century, so the order of service, the hymnody and the expectation that the congregation sings are all as they would be in an English parish church. In a coral stone building that carries voices properly. Of everywhere we travel long-haul, '
     'this is the one where nothing has to be adapted.'),
    ('Church or beach?',
     'On musical grounds, the church, and not by a small margin. The parish churches are stone, tall and '
@@ -276,8 +255,7 @@ n = build('st-lucia', 'St Lucia',
      'a consort a different and fuller option: a nuptial Mass, with a sung ordinary, psalm and '
      'acclamation, offertory and communion motets. The island has substantial parish churches, and a '
      'Mass in one is the most rewarding thing we could be asked to sing here.',
-     'Most weddings on the island, though, are resort ceremonies &mdash; celebrant-led, outdoors, and '
-     'usually with the Pitons somewhere in the frame. Those have no liturgy and an open programme, and '
+     'Most weddings on the island, though, are resort ceremonies: celebrant-led, outdoors, and usually with the Pitons somewhere in the frame. Those have no liturgy and an open programme, and '
      'the music does the structural work: an entrance, a piece at the vows, a recessional, and a set '
      'during the drinks afterwards.',
      'If you are having a church ceremony and a resort reception, that is the combination we would '
@@ -293,16 +271,14 @@ n = build('st-lucia', 'St Lucia',
    ('Buildings and terrain', 'Churches, resorts, and a great deal of hillside',
     ['The parish churches are stone and generous, and eight to twelve voices covers them comfortably. '
      'They are the best rooms on the island by a distance.',
-     'Resort ceremonies are outdoors, dry, and frequently on a terrace cut into a hillside &mdash; which '
-     'brings a practical point specific to St Lucia. The island is steep, and venues around Souffri&egrave;re '
+     'Resort ceremonies are outdoors, dry, and frequently on a terrace cut into a hillside, which brings a practical point specific to St Lucia. The island is steep, and venues around Souffri&egrave;re '
      'in particular involve serious gradients and sometimes long stepped approaches to the ceremony '
      'spot. Moving twelve singers, in formal dress, up a hillside in tropical heat is a schedule item '
      'rather than an afterthought. Tell us what the approach looks like and we will plan for it.']),
    ('Travel', 'Getting a consort to St Lucia',
     ['Direct flights from London run several times a week to Hewanorra in the south of the island, at '
      'around nine hours with a four- or five-hour time change. The transfer from the airport to '
-     'Souffri&egrave;re or the north is long by island standards &mdash; the roads are mountainous and '
-     'slow &mdash; so we plan arrivals two days ahead rather than one, both for the flight and for the drive.',
+     'Souffri&egrave;re or the north is long by island standards, the roads are mountainous and slow, so we plan arrivals two days ahead rather than one, both for the flight and for the drive.',
      'St Lucia is a Commonwealth country used to visiting suppliers. We confirm the current requirements '
      'for foreign performers working for a fee at the point of quoting, and handle whatever applies.']),
   ],
@@ -329,8 +305,7 @@ n = build('st-lucia', 'St Lucia',
     'dress climbing that in tropical heat needs to be in the running order, with time and water allowed '
     'for. Send us a description of the approach and we will plan it.'),
    ('Church or resort?',
-    'The church sounds better; the resort looks better. If the day can accommodate both &mdash; a church '
-    'ceremony and a resort reception &mdash; that is what we would suggest, and it is a common shape here. '
+    'The church sounds better; the resort looks better. If the day can accommodate both, a church ceremony and a resort reception, that is what we would suggest, and it is a common shape here. '
     'If it has to be one, and the music matters most to you, choose the church.'),
    ('How far ahead should we book?',
     'Nine to twelve months. The flight is direct but runs only a few times a week, which makes the travel '
@@ -361,8 +336,7 @@ n = build('jamaica', 'Jamaica',
     ['Jamaican parish churches are stone, often eighteenth century, and behave much as English ones do. '
      'Eight to twelve voices is right for most of them.',
      'Great houses give you a hard-surfaced interior room, which is a considerable improvement on a lawn '
-     'and worth asking about if the venue offers a choice. Resort ceremonies on the north coast are the '
-     'standard outdoor case &mdash; dry, breezy, and better served by twelve voices than eight.',
+     'and worth asking about if the venue offers a choice. Resort ceremonies on the north coast are the standard outdoor case: dry, breezy, and better served by twelve voices than eight.',
      'The heat is significant and the humidity more so. As with the rest of the Caribbean, a '
      'late-afternoon ceremony, shade for the singers, and two days on the island before the wedding all improve what you hear.']),
    ('Travel', 'Getting a consort to Jamaica',
@@ -388,8 +362,7 @@ n = build('jamaica', 'Jamaica',
   ],
   [
    ('Will Jamaican guests expect to sing?',
-    'If your congregation includes Jamaican guests, expect the hymns to be sung with real conviction '
-    '&mdash; the church-music tradition here is strong and participatory. Plan for it: choose hymns that '
+    'If your congregation includes Jamaican guests, expect the hymns to be sung with real conviction. The church-music tradition here is strong and participatory. Plan for it: choose hymns that '
     'reward a congregation singing properly, and let the consort lead the singing rather than perform '
     'over it. It is one of the better sounds available at any wedding.'),
    ('Can you sing at a great house wedding?',

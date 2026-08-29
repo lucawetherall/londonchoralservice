@@ -45,9 +45,9 @@ CEREMONY = {
  'The couples we sing for in Spain are almost all travelling out, and their ceremonies fall into '
  'three broad shapes.',
  'A <strong>Catholic nuptial Mass</strong> in a mainland or Mallorcan town church, if one of you is '
- 'Catholic. A <strong>Church of England service</strong> — the Diocese in Europe has long-established '
- 'Anglican chaplaincies on the Costa del Sol, in Madrid and in the Balearics, serving exactly this '
- 'kind of congregation. Or a <strong>humanist, non-denominational or celebrant-led ceremony</strong> '
+ 'Catholic. A <strong>Church of England service</strong>, since the Diocese in Europe has '
+ 'long-established Anglican chaplaincies on the Costa del Sol, in Madrid and in the Balearics, '
+ 'serving exactly this kind of congregation. Or a <strong>humanist, non-denominational or celebrant-led ceremony</strong> '
  'at a villa or finca, which is what most of our Ibiza and Marbella enquiries turn out to be.',
  'Spanish civil marriage has residency and paperwork requirements that many visiting couples find '
  'easier to sidestep by marrying legally at home, then having the ceremony they want in Spain. That choice has no effect on the music at all, and it is worth knowing you have it.']),
@@ -77,8 +77,7 @@ CEREMONY = {
  'For everything else, you are choosing the shape of your own day.']),
 
 'cyprus': ('Your ceremony', 'What kind of ceremony are you having?', [
- 'Cyprus is among the simplest countries in Europe for a British couple to marry in legally, which is '
- 'why so many do — and the ceremony itself can take almost any form you want.',
+ 'Cyprus is among the simplest countries in Europe for a British couple to marry in legally, which is why so many do, and the ceremony itself can take almost any form you want.',
  'A <strong>civil ceremony</strong> conducted by a municipality is legally binding and straightforward '
  'for visitors; Paphos town hall marries a great many British couples every year. A <strong>Church of '
  'England service</strong> is a genuine option here, more so than on most of this list: the Anglican '
@@ -99,8 +98,7 @@ CEREMONY = {
  'wedding there is as close to an English cathedral wedding as you will get outside England. A '
  '<strong>civil ceremony</strong> is legally straightforward for visitors, and <strong>humanist or '
  'celebrant-led ceremonies</strong> at hotels and private venues are common.',
- 'English is an official language, so whichever you choose, nothing has to be translated and your '
- 'guests can follow — and sing — throughout.']),
+ 'English is an official language, so whichever you choose, nothing has to be translated and your guests can follow, and sing, throughout.']),
 
 'croatia': ('Your ceremony', 'What kind of ceremony are you having?', [
  'The couples we sing for in Croatia are travelling out, and the country accommodates most shapes of '
@@ -108,9 +106,7 @@ CEREMONY = {
  'A <strong>Catholic nuptial Mass</strong> in an old-town church if one of you is Catholic. A '
  '<strong>humanist, non-denominational or celebrant-led ceremony</strong> in a cloister, a courtyard '
  'or a garden, which is what most foreign weddings here are. A <strong>civil ceremony</strong> for the '
- 'legal side, which many couples complete at home instead to keep the paperwork simple. Anglican '
- 'provision is thinner here than in Italy or Spain, so if a Church of England service matters to you, '
- 'raise it early &mdash; a visiting chaplain is sometimes possible.',
+ 'legal side, which many couples complete at home instead to keep the paperwork simple. Anglican provision is thinner here than in Italy or Spain, so if a Church of England service matters to you, raise it early. A visiting chaplain is sometimes possible.',
  'Croatia&rsquo;s particular advantage is that the non-liturgical venues are often as good acoustically '
  'as the churches, which is unusual and covered below.']),
 
@@ -118,9 +114,7 @@ CEREMONY = {
  'Gibraltar removes more obstacles than anywhere else on this list, because it is a British Overseas '
  'Territory: British legal framework, English throughout, and no visa or work-permit question for '
  'anybody involved, us included.',
- 'A <strong>Church of England service</strong> at the Cathedral of the Holy Trinity is the option '
- 'closest to a wedding at home &mdash; same order of service, same hymnody, same expectation that the '
- 'congregation sings. A <strong>Catholic wedding</strong> at the Cathedral of St Mary the Crowned '
+ 'A <strong>Church of England service</strong> at the Cathedral of the Holy Trinity is the option closest to a wedding at home. Same order of service, same hymnody, same expectation that the congregation sings. A <strong>Catholic wedding</strong> at the Cathedral of St Mary the Crowned '
  'gives the fuller sung Mass. A <strong>civil ceremony</strong> at the registry is legally simple and '
  'famously quick, and <strong>celebrant-led ceremonies</strong> at the Botanic Gardens and other '
  'venues are straightforward.',
@@ -151,9 +145,7 @@ CEREMONY = {
  '<strong>Scottish Episcopal service</strong> is Anglican and will feel like an English parish '
  'wedding. A <strong>Church of Scotland service</strong> is Presbyterian, plainer, and strong on '
  'congregational singing. A <strong>Catholic nuptial Mass</strong> gives the full sung liturgy.',
- 'The practical upshot for the music is that there is no second ceremony to work around and no '
- 'compromise between legality and setting &mdash; but the ceremony is frequently outdoors, which is '
- 'its own problem and covered below.']),
+ 'The practical upshot for the music is that there is no second ceremony to work around and no compromise between legality and setting, but the ceremony is frequently outdoors, which is its own problem and covered below.']),
 
 'united-states': ('Your ceremony', 'What kind of ceremony are you having?', [
  'For a British couple marrying in the United States, the ceremony is unusually unconstrained. Most '
@@ -164,9 +156,7 @@ CEREMONY = {
  'anywhere. A <strong>Catholic nuptial Mass</strong> gives the fuller sung shape. <strong>Humanist, '
  'interfaith and non-denominational ceremonies</strong> are widespread and unremarkable, often '
  'conducted by a friend or family member licensed for the day, and carry no liturgy at all.',
- 'Legal marriage is generally simple for visitors, with requirements varying by state. The '
- 'complication in the United States is not the ceremony &mdash; it is our side of the arrangement, '
- 'and it is significant enough to take the next section.']),
+ 'Legal marriage is generally simple for visitors, with requirements varying by state. The complication in the United States is not the ceremony. It is our side of the arrangement, and it is significant enough to take the next section.']),
 
 'mexico': ('Your ceremony', 'What kind of ceremony are you having?', [
  'Nearly every couple we are asked about in Mexico is travelling from Britain, Ireland or the United '
@@ -182,9 +172,7 @@ CEREMONY = {
  'sing at.']),
 
 'barbados': ('Your ceremony', 'What kind of ceremony are you having?', [
- 'Barbados is one of the easiest countries in the world for a visiting couple to marry in legally '
- '&mdash; a licence can usually be obtained without a residency period &mdash; and the range of '
- 'ceremony available to you is wide.',
+ 'Barbados is one of the easiest countries in the world for a visiting couple to marry in legally, a licence can usually be obtained without a residency period, and the range of ceremony available to you is wide.',
  'The island has been <strong>Anglican</strong> since the seventeenth century, so a Church of England '
  'service in a Barbadian parish church is not an approximation of an English wedding; it is the same '
  'service, in a coral stone building that carries voices properly, with a congregation that sings. '
@@ -205,15 +193,13 @@ CEREMONY = {
  'guests will follow the service without effort.']),
 
 'jamaica': ('Your ceremony', 'What kind of ceremony are you having?', [
- 'Jamaica is simple for visitors to marry in legally &mdash; a short residency and a licence &mdash; '
- 'and the ceremony is yours to choose.',
+ 'Jamaica is simple for visitors to marry in legally, a short residency and a licence, and the ceremony is yours to choose.',
  'The island has a deep and living <strong>Anglican</strong> tradition alongside Baptist and Methodist '
  'churches, and church singing here is participatory in a way it often is not at home. A Church of '
  'England service in a Jamaican parish church puts a consort in front of a congregation that will sing. A <strong>Catholic wedding</strong> is available. And <strong>humanist and '
  'celebrant-led ceremonies</strong> at great houses and north coast resorts are the other common '
  'shape, with no liturgy and an open programme.',
- 'If any of your guests are Jamaican, the congregational singing is worth planning around rather than '
- 'through &mdash; more on that below.']),
+ 'If any of your guests are Jamaican, the congregational singing is worth planning around rather than through. More on that below.']),
 
 'mauritius': ('Your ceremony', 'What kind of ceremony are you having?', [
  'Mauritius allows visiting couples to marry legally with a short residency, and it accommodates most '
@@ -235,7 +221,7 @@ CEREMONY = {
  'wording, no liturgy and no restriction on repertoire. A <strong>humanist, non-denominational or '
  'celebrant-led ceremony</strong> on a sandbank or a jetty can be built around the two of you, in whatever order you like, for exactly as long as you want it to last. Some couples write the '
  'whole thing themselves.',
- 'For the music, that means we are not fitting around a service &mdash; we are helping you build one. '
+ 'For the music, that means we are not fitting around a service. We are helping you build one. '
  'Tell us the shape you have in mind and we will suggest where the singing belongs.']),
 
 'seychelles': ('Your ceremony', 'What kind of ceremony are you having?', [
@@ -244,8 +230,7 @@ CEREMONY = {
  'Most of what we are asked about is a <strong>humanist, non-denominational or celebrant-led '
  'ceremony</strong> on a beach or in a resort garden, with no liturgy and an open programme. The '
  'islands are also strongly <strong>Catholic</strong>, with real parish churches on Mah&eacute; and '
- 'Praslin, so a nuptial Mass is available &mdash; and those are the only buildings here with '
- 'an acoustic worth the name. <strong>Anglican</strong> provision exists on Mah&eacute; for a Church '
+ 'Praslin, so a nuptial Mass is available, and those are the only buildings here with an acoustic worth the name. <strong>Anglican</strong> provision exists on Mah&eacute; for a Church '
  'of England service.',
  'The church option is underused by visiting couples, largely because resorts do not tend to mention '
  'it. If the singing matters to you, it is worth asking about.']),
@@ -288,6 +273,5 @@ CEREMONY = {
  'common and unremarkable, and wine estate weddings are usually of this kind. South Africa also '
  'recognises a wide range of marriage officers, so an officiant can generally be found for whatever '
  'you have in mind.',
- 'This is the long-haul destination with the strongest choral culture of its own, which changes what a '
- 'visiting consort walks into &mdash; covered next.']),
+ 'This is the long-haul destination with the strongest choral culture of its own, which changes what a visiting consort walks into, covered next.']),
 }
