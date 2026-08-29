@@ -12,9 +12,9 @@ n = build('italy', 'Italy',
   'Alma Consort flies from London to sing nuptial Masses and blessings in Tuscany, on the Amalfi Coast, '
   'at Lake Como, in Puglia and in Florence.',
   [
-   ('The rite', 'What gets sung at an Italian wedding',
-    ['Most church weddings in Italy are Catholic nuptial Masses, and a Mass is the most rewarding '
-     'shape a choir can be asked to fill. There is an entrance, a Kyrie and Gloria, a responsorial '
+   ('The Mass', 'If you are having a nuptial Mass',
+    ['A Mass is the most rewarding shape a choir can be asked to fill, and if it is the route you are '
+     'taking it is worth understanding what it gives you. There is an entrance, a Kyrie and Gloria, a responsorial '
      'psalm and Gospel acclamation, the exchange of consent, an offertory, the Sanctus and Agnus Dei '
      'around the Eucharistic Prayer, communion motets, and a recessional. That is eight or nine points '
      'where music belongs, against three or four at a civil ceremony.',
@@ -211,8 +211,8 @@ n = build('spain', 'Spain',
   'Alma Consort travels from London to sing nuptial Masses, blessings and villa ceremonies in Mallorca, '
   'Ibiza, Marbella and Tenerife.',
   [
-   ('The rite', 'Which kind of Spanish wedding are you having?',
-    ['Spain divides more sharply than most destinations, and the answer changes the music completely.',
+   ('The music', 'What each route asks of a choir',
+    ['The choice you make changes the music more than the venue does.',
      'A Catholic nuptial Mass on the mainland or in a Mallorcan town church is the full liturgical shape: '
      'sung ordinary, psalm, acclamation, offertory, communion motets, recessional. Spanish parishes are '
      'generally welcoming to a visiting choir and used to sung Masses. If your ceremony is a Mass, you '

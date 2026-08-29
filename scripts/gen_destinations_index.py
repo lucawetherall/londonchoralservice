@@ -31,10 +31,16 @@ def groups_html():
 
 FAQS = [
     ('Can a British choir sing at a wedding abroad?',
-     'Yes, and the practical questions are the same everywhere: whether the country requires a permit for '
-     'paid performance, whether the ceremony has a sung rite to build a programme around, and what the '
-     'building does to the sound. The answers differ enough by country that we have written them up one '
-     'country at a time rather than offering a single reassurance.'),
+     'Yes. The practical questions are the same everywhere: whether the country requires a permit for '
+     'paid performance, what kind of ceremony you are having, and what the building does to the sound. '
+     'The answers differ enough by country that we have written them up one country at a time rather '
+     'than offering a single reassurance.'),
+    ('Do we have to have a religious ceremony?',
+     'No, and most of the couples we sing for abroad do not. Humanist, non-denominational and '
+     'celebrant-led ceremonies are the most common thing we are asked about, and without a liturgy to '
+     'work around, the music is entirely yours to place. Anglican and Catholic services are available in '
+     'more of these countries than couples expect, including through English-speaking chaplaincies '
+     'across Europe. Whichever you choose, the country you have picked rarely restricts it.'),
     ('How far ahead should we book a wedding abroad?',
      'Six to twelve months for Europe, and the longer end of that in practice: booking flights and rooms '
      'for twelve to twenty-four people takes longer than clearing the singers&rsquo; diaries. The United States '
@@ -119,6 +125,13 @@ BODY = f'''
         <p class="pe-rail-label" aria-hidden="true">Travelling</p>
         <div class="pe-body" data-fade>
           <h2>What travelling with a consort involves</h2>
+          <p>Almost everyone we sing for abroad is British, Irish, American or Australian, marrying in
+            a country they do not live in and choosing the shape of the day themselves. Your ceremony
+            might be humanist, non-denominational, celebrant-led, Anglican, Catholic or interfaith, and
+            in most of these countries all of those are available to you &mdash; the local majority
+            religion decides far less than couples expect. What the country changes is which routes are
+            legally recognised, whether there is an English-speaking chaplaincy, and what buildings you
+            can get into. Each guide sets that out.</p>
           <p>The singing is the part that does not change. The consort rehearses in London, flies out
             together, arrives the day before, and rehearses in the building where it will sing. Everything
             around that changes by country, and the differences are large enough to be worth writing down
