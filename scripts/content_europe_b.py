@@ -174,11 +174,11 @@ n = build('cyprus', 'Cyprus',
   ],
   [
    ('How many singers suit a Cyprus wedding?',
-    'It depends on the room and the guest numbers rather than on a standard answer. A villa ceremony in '
-    'the Paphos hills with a hundred guests suits twelve voices; a compact hotel ceremony with forty '
-    'guests close in can be better served by four singing near them than by twelve at a distance. We '
-    'come in sizes from a soloist upwards. Tell us the venue and the numbers and we will recommend what '
-    'we would actually bring.'),
+    'It depends on the room more than on a standard answer. An open villa terrace in the Paphos hills '
+    'gives nothing back acoustically and wants twelve voices; a compact hotel ceremony with the guests '
+    'close in can be better served by four singing near them than by twelve at a distance. We come in '
+    'sizes from a soloist upwards. Tell us the venue and the numbers and we will recommend what we would '
+    'actually bring.'),
    ('Can you sing at a Cypriot civil ceremony?',
     'Yes. Civil and celebrant-led ceremonies have no liturgy, so the music is entirely open. Municipal '
     'ceremony rooms are small and acoustically flat, so we often suggest placing the singing outside as '
@@ -274,7 +274,7 @@ n = build('malta', 'Malta',
     'around them. Tell us early what the parish expects.'),
    ('How many singers for a Maltese church?',
     'Driven by the building more than the guest list. A large parish church wants sixteen voices to feel '
-    'right even with eighty guests, because the room is enormous. A small chapel in Mdina or a village '
+    'proportionate however many guests you have, because the room is enormous. A small chapel in Mdina or a village '
     'church on Gozo is well served by eight. Send us the church and we will tell you.'),
    ('Can our guests sing hymns?',
     'Yes, and Malta is the destination where we most often suggest it. With English as an official '

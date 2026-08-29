@@ -39,8 +39,9 @@ FAQS = [
      'Yes, and it is the thing we would most encourage you to consider. The expensive part of bringing a '
      'consort abroad is the fares and the rooms, and those are spent whether we sing once or four times. '
      'A welcome dinner, the ceremony, the drinks afterwards and a late unaccompanied set in a stone room '
-     'cost far less together than they look, and they give guests who have travelled a long way something '
-     'at each stage rather than twenty minutes in the middle of a Saturday.'),
+     'cost far less together than they look, and they give your guests something at each stage rather '
+     'than twenty minutes in the middle of a Saturday. It works at any size of wedding: a small party '
+     'close in wants fewer voices, not fewer moments.'),
     ('We live in the country rather than flying out. Does that change anything?',
      'Only in your favour. Everything on these guides applies, and the planning is simpler because you '
      'already know the venue, the celebrant and the season. We travel from London either way; what '
@@ -124,9 +125,9 @@ BODY = f'''
         <p class="pe-eyebrow">Alma Consort &middot; London</p>
         <h1>English choral singing, wherever you are marrying.</h1>
         <div class="pe-hairline--candle" aria-hidden="true"></div>
-        <p class="pe-hero__sub">You have asked a hundred people to fly somewhere. A consort of eight to
-          twenty-four voices flies out too, and sings across the whole weekend &mdash; the welcome dinner,
-          the ceremony, the reception.</p>
+        <p class="pe-hero__sub">Your guests have travelled to be there, and they will be together for
+          days. A consort of eight to twenty-four voices travels too, and sings across the whole weekend
+          &mdash; the welcome dinner, the ceremony, the reception.</p>
         <p class="pe-hero__cta"><a class="pe-btn" href="#enquire">Enquire about your wedding</a></p>
       </div>
     </section>
@@ -139,14 +140,14 @@ BODY = f'''
           <h2>A wedding that lasts a weekend</h2>
           <p>A destination wedding is not a ceremony with a holiday attached. You have moved your family
             and your closest friends to one place, at real expense to them and to you, and they will be
-            together for three or four days. That is the thing worth designing around, and it changes
-            what live music can do for you.</p>
+            together for three or four days. Whether that is thirty people or two hundred, it is the
+            thing worth designing around, and it changes what live music can do for you.</p>
           <p>A consort that has flown out for the ceremony is already paid for in the part that costs
             most: the fares and the rooms. Singing again at the welcome dinner on the Friday, or over
             drinks after the ceremony, or unaccompanied in a stone hall once the meal is over, costs a
-            fraction of what the first appearance did. Guests who have crossed a continent to be there
-            hear three different things instead of one, and the two evenings either side of the wedding
-            day stop being the parts nobody planned.</p>
+            fraction of what the first appearance did. Guests who have travelled to be there hear three
+            different things instead of one, and the two evenings either side of the wedding day stop
+            being the parts nobody planned.</p>
           <p>Where each of those moments works best depends on the country, and the guides below say so
             one at a time &mdash; a Portuguese quinta keeps everybody on one estate, a Dalmatian old town
             has your guests walking between stone rooms, and a Maldivian resort island has nobody going
