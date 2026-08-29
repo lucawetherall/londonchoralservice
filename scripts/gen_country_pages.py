@@ -15,6 +15,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import build_register_page as B
 import destinations_data as D
 from ceremony_sections import CEREMONY
+from weekend_sections import WEEKEND
 
 CHECKED = '29 August 2026'
 
@@ -57,7 +58,10 @@ def build(slug, name, title, desc, hero_h1, hero_sub, sections, regions, faqs,
     country: the reader is an English-speaking couple travelling out and choosing
     their own form of service, not a local having the local rite.
     """
-    sections = [CEREMONY[slug]] + list(sections)
+    # Ceremony framing first (the reader chooses the service, not the country),
+    # then the weekend: the primary buyer is having a destination wedding, so the
+    # marginal cost of singing more than once is the strongest argument we have.
+    sections = [CEREMONY[slug], WEEKEND[slug]] + list(sections)
     body = f'''
     <section class="pe-section pe-section--light pe-hero">
       <div class="pe-hero__inner">
