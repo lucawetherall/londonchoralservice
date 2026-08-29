@@ -18,15 +18,15 @@ Four workstreams, in the owner's priority order:
 | **A** | Search intent nobody targets | One guide: `music-guides/destination-wedding-choir.html` |
 | **B** | Planners, venues and estates | One private-register page: `/planners-and-venues.html` |
 | **C** | Feed the hub from existing traffic | In-copy links from the eighteen wedding guides |
-| **D** | Destination pages | `/destinations/` — index plus Italy, France, Ireland, Scotland |
+| **D** | Destination pages | `/destinations/` — index plus twenty-two country pages |
 
-**Success metric, unchanged from the private-events spec: cost per qualified enquiry.** Four destination pages producing two serious conversations a month have done their job. Four pages producing forty tyre-kickers have made the inbox worse.
+**Success metric, unchanged from the private-events spec: cost per qualified enquiry.** Twenty-two destination pages producing five serious conversations a month have done their job. Twenty-two pages producing two hundred tyre-kickers have made the inbox worse, and at this page count that is the live risk rather than a theoretical one.
 
 ## The one architectural decision: the register becomes a partial
 
 `private-events.html` carries its own hand-authored 545-line `<style>` block (lines 64–609) because the private register must not enter `css/pages.css`, which the build would inline into every other page on the site. That reasoning is correct and stands.
 
-It does not survive being copied six times. Six hand-maintained duplicates of the same stylesheet is the kind of drift that produces a page in the wrong red eighteen months from now, and every one of them is a fresh chance to delete the Pass A comment.
+It does not survive being copied twenty-five times. Twenty-five hand-maintained duplicates of the same stylesheet is the kind of drift that produces a page in the wrong red eighteen months from now, and every one of them is a fresh chance to delete the Pass A comment.
 
 **The existing partial mechanism solves this with no change to `build.sh`.** Partial expansion (build.sh:27–63) runs *before* Pass A (build.sh:75–112). A `<style>` block delivered by a partial is materialised into the page, then examined by Pass A exactly like a hand-authored one — and skipped, because its first inner line is a comment rather than `:root {`. So:
 
@@ -41,61 +41,134 @@ Two invariants carry over unchanged and now apply to the partial:
 - **Never remove the comment line at the top of the `<style>` block.** Without it the next build replaces the whole register with the site bundle.
 - **No page in the private register may contain a `style.css` link.** Pass B inlines the site bundle wherever that link appears.
 
+## The destinations
+
+Twenty-two countries, confirmed by the owner on 2026-08-29.
+
+| Group | Countries | Regions |
+|---|---|---|
+| **Europe, short-haul** | Italy | Tuscany, Amalfi Coast, Lake Como, Puglia, Florence |
+| | Spain | Ibiza, Mallorca, Marbella, Tenerife |
+| | Portugal | The Algarve, Sintra, Porto, Lisbon |
+| | France | Dordogne, Loire Valley, French Riviera (Côte d'Azur), Provence |
+| | Greece | Santorini, Rhodes, Crete, Zakynthos, Mykonos |
+| | Cyprus | Paphos, Ayia Napa, Protaras |
+| | Malta | Valletta, Mdina, Gozo |
+| | Croatia | Dubrovnik, Hvar, Split, Istria |
+| | Gibraltar | The Rock, Botanical Gardens |
+| | Ireland | To be set with the owner |
+| | Scotland | To be set with the owner |
+| **Americas** | United States | Las Vegas, New York City, Florida (Orlando and Miami) |
+| | Mexico | Riviera Maya, Cancún, Tulum |
+| | Barbados | St James, Christ Church, St Peter |
+| | St Lucia | Soufrière, Rodney Bay |
+| | Jamaica | Montego Bay, Negril, Ocho Rios |
+| **Indian Ocean** | Mauritius | Belle Mare, Le Morne, Grand Baie |
+| | Maldives | North Malé Atoll, South Ari Atoll |
+| | Seychelles | Mahé, Praslin, La Digue |
+| **Asia-Pacific** | Thailand | Phuket, Koh Samui |
+| | Indonesia (Bali) | Uluwatu, Ubud, Seminyak |
+| **Africa** | South Africa | Cape Town, Franschhoek (Cape Winelands), the Kruger area |
+
+**Scotland is the odd one out and should read that way.** It carries no flights, no permits and no overnight premium beyond the ordinary, so its page is the one that says the published UK rates apply — on the same deliberate exception as the hub's cost FAQ linking `/pricing.html`. Ireland is the short-haul, no-permit case.
+
+## Two page shapes, not one
+
+The differentiating material is not the same across twenty-two countries, and a spec that pretends otherwise produces twenty-two pages with the same headings and different nouns.
+
+**Shape 1 — the rite spine.** Italy, Spain, Portugal, France, Malta, Croatia, Ireland, and, genuinely, **Barbados, Jamaica and St Lucia**: deep Anglican traditions in the first two and a Catholic one in the third mean an English choral consort is culturally coherent there rather than incongruous, and that is worth saying plainly. These pages are built on the rite and running order, which parts are sung in Latin and which in the vernacular, what a bilingual congregation needs, and what the buildings do to the voicing.
+
+**Shape 2 — the no-building spine.** Maldives, Bali, Thailand, Seychelles, Mauritius, Mexico, and the resort end of Greece, Cyprus and the United States. There is no rite and often no building. The page is built on what changes without one: singing outdoors with no stone acoustic and no organ, what heat and humidity do to voices and to a schedule, what a consort actually does at a civil or beach ceremony, and why the voicing recommendation moves.
+
+Greece, Cyprus, the United States and Mexico straddle both and need the split handled inside the page, not fudged.
+
+## Work permits are a content pillar, not a footnote
+
+This is the strongest trust content available on these pages and simultaneously the most useful qualifying fact, so it is specified rather than left to the writer.
+
+- **The United States is the hard case.** Paid performance requires a P-1/P-2 or O petition — months of lead time and real cost, for every singer. A US page that implies a quick booking is both wrong and commercially damaging. It says the lead time plainly.
+- **The Schengen area** for a group of twelve to twenty-four British musicians post-Brexit: A1 certificates, the 90/180 rule, ETIAS, and per-country practice that genuinely differs.
+- **Mexico, Thailand, Indonesia, the Maldives** each carry their own permit questions for paid performers.
+
+Facts must be checked at the time of writing and carry a **visible checked date**, on the pattern the `compare/` pages already use for competitor pricing. Anything uncertain is written as "ask us", never guessed. Re-check quarterly.
+
 ## Non-negotiable: these must not be doorway pages
 
-Four pages of the shape "Hire a British choir for your wedding in *[country]*", differing by a find-and-replace, are doorway pages under Google's spam policies. They are also the obvious way to build this, which is why the constraint is written down here rather than left to judgement.
+Twenty-two pages of the shape "Hire a British choir for your wedding in *[country]*", differing by a find-and-replace, are doorway pages under Google's spam policies. They are also the obvious way to build this, which is why the constraint is written down here rather than left to judgement. At twenty-two pages the risk is materially higher than it was at four.
 
-**Every destination page must carry material that appears nowhere else on this site**, and the material must be the reason a planner reads the page:
+**Ship test:** at least 60% of each destination page's body copy must be unique to that page, and a reader comparing any two pages must find country-specific answers, not synonyms. A page that fails this does not ship — it is better to launch fifteen destinations than twenty-two.
 
-- **The rite.** A Catholic nuptial Mass in Italy is not a Church of Ireland service is not a humanist ceremony in a château. What the choir sings, and when, differs by rite — the ordinary, the acclamations, whether there is a Mass at all.
-- **The language.** Which parts are sung in Latin, which in the local vernacular, what a bilingual congregation actually needs.
-- **The building.** Tuscan stone churches, château salons and marquees, castle chapels and great halls each have a different acoustic, and that changes the voicing we recommend. This connects the page to the hub's voicing selector rather than restating it.
-- **The logistics that are genuinely different.** Post-Brexit travel for a group of twelve to twenty-four British musicians into the Schengen area is not the same problem as flying to Ireland or driving to Scotland. A1 certificates, the 90/180 rule, and per-country permit practice are real buyer anxieties that nobody in this market writes about honestly.
+## Granularity: country pages, regions as sections
 
-**Ship test:** at least 60% of each destination page's body copy must be unique to that page, and a reader comparing any two pages must find country-specific answers, not synonyms. A page that fails this does not ship — it is better to launch three destinations than four.
+Region queries carry the intent ("wedding choir Lake Como"); country-level facts carry the substance (rite, sung language, work permits, invoicing). Sixty-four region pages built now would each restate the same country legal content — precisely the failure above.
+
+**The site already solves this shape.** `areas/` holds twenty city pages and `areas/london/` holds thirty-three borough pages: an established two-tier local-SEO pattern in this repo. Destinations mirror it.
+
+- **`/destinations/<country>.html`** is the substantive page. Every region in the table above gets a real anchored section within it, so "Lake Como" is indexed from day one.
+- **`/destinations/<country>/<region>.html` is a later phase**, and only where region-specific substance genuinely exists: the venue types and their acoustics, the airport and transfer, the shape of ceremonies there. **A region page that would restate its country's rite or permit content does not ship as a page — it stays a section.** A region page links up to its country page for that material rather than repeating it.
+
+Twenty-two excellent country pages that rank beat eighty-six mediocre ones that get filtered, and region pages built on top of solid country pages start from a better position than region pages alone.
+
+## Package markets: build them, let the economics qualify
+
+The destination list mixes luxury markets (Como, Amalfi, Tuscany, Côte d'Azur, Ibiza, Mallorca, Santorini, Mykonos, Franschhoek) with volume and package markets (Ayia Napa, Zante, Tenerife, Las Vegas, Orlando) where the whole wedding often costs less than flying the consort out.
+
+Both are built. Every destination page carries an honest cost-drivers section — the hub's own three, singers, distance and nights, with no prices — plain enough that an unaffordable enquiry self-selects out before it reaches the inbox. Reach, without wrecking the metric.
+
+**Consequence: the budget bands need a higher ceiling.** They currently stop at "£25,000+", which for a Maldives or Bali engagement is the floor rather than the ceiling, and so stop discriminating exactly where these engagements begin. The private register moves to:
+
+> Under £5,000 · £5,000–£10,000 · £10,000–£25,000 · £25,000–£50,000 · £50,000+ · Prefer to discuss
+
+**"Under £5,000" stays, and stays first.** That was an explicit owner decision about the bottom band and adding to the top does not disturb it. Bands are the enquirer's figures, never ours, and every form now **labels them as pounds sterling** — defensible when unlabelled on a page a UK reader lands on, wrong on a page written for someone marrying in Tulum.
 
 ## Truthfulness constraint
 
 The site must not claim engagements it has not performed. Every workstream here is written in the register of *capability and process* — what we do, how we do it, what it depends on — never invented history.
 
+- **The twenty-two-country footprint is confirmed by the owner, 2026-08-29**, including the ultra-long-haul destinations (Maldives, Seychelles, Mauritius, Bali, Thailand). These pages may assert that we travel there. **This confirmation is recorded here so a later reader does not strip the long-haul pages as over-claims** — the hub's own FAQ still named only four countries when it was written, and that is now out of date rather than a limit.
 - No "we have sung at" for a venue where we have not sung. The hub's London venue list (private-events.html:782–791) is vetted; the destination pages get no equivalent list until there is one to write.
 - No named clients, no invented case studies. The hub already commits to not naming private clients; a destination page inventing one would contradict its own hub.
-- The launch destinations are **Italy, France, Ireland, Scotland** because those are the four the hub's own FAQ already names ("Italy, France, Ireland, and Scotland come up most often", private-events.html:852). Adding Spain, Greece or the Gulf later is a documented pattern, not a launch scramble, and requires the owner to confirm the capability claim first.
+
+## The hub is now out of date and in scope
+
+`private-events.html` was written for a four-country world:
+
+- **Line 708** — "Europe, North America, and the Gulf" no longer describes the footprint.
+- **Line 852** — the "Where do you travel?" answer names only Italy, France, Ireland and Scotland.
+- **Its JSON-LD `areaServed`** carries `United Kingdom` plus a generic `International` place.
+
+All three are rewritten in the same change that ships the destinations index, so the hub and its children never contradict each other. The rewrite must not turn the FAQ answer into a list of twenty-two countries — it points at the index.
 
 ## URL and register decisions
 
 | Path | Register | Reasoning |
 |---|---|---|
-| `/private-events.html` | Private | Unchanged. Has inbound links, a sitemap entry, and a live Ads conversion. Do not move it. |
-| `/destinations/index.html` | Private | Hub for the four country pages; linked from the private-events "Where do you travel?" answer. |
-| `/destinations/{italy,france,ireland,scotland}.html` | Private | Country in the path; the keyword work happens in the title and H1. |
+| `/private-events.html` | Private | Stays. Has inbound links, a sitemap entry, and a live Ads conversion. Do not move it. |
+| `/destinations/index.html` | Private | Hub for the country pages; linked from the private-events "Where do you travel?" answer. |
+| `/destinations/<country>.html` | Private | Twenty-two pages. Country in the path; keyword work happens in the title and H1. |
+| `/destinations/<country>/<region>.html` | Private | Later phase, on the `areas/london/` precedent. |
 | `/planners-and-venues.html` | Private | **Deliberately not `for-planners-and-venues.html`.** The `for-*.html` prefix is the LCS B2B register — priced, nav-linked, VAT-reclaiming business buyers. This page is the opposite audience and must not be mistaken for one. |
 | `music-guides/destination-wedding-choir.html` | LCS | The only public-register asset here. It earns the search traffic and hands it up. |
 
-**Link direction stays one-way.** The LCS site may point into the private register; the private register does not point back out into the priced funnel. The one existing exception — the hub's cost FAQ linking `/pricing.html` — is deliberate and stays.
+**Link direction stays one-way.** The LCS site may point into the private register; the private register does not point back out into the priced funnel. The two deliberate exceptions are the hub's cost FAQ linking `/pricing.html` and the Scotland page doing the same.
 
 **No page here is linked from any `for-*.html` page or from `compare/`.**
 
 ## Nav: no change
 
-None of the new pages enter `partials/nav.html`. Two reasons: the Services dropdown is already long, and every page added to it is another priced-context neighbour for the private register. This also means **the whole change touches ~25 files rather than ~130** — no site-wide nav rebuild, a diff a human can actually read.
+No new page enters `partials/nav.html`. Two reasons: the Services dropdown is already long, and every page added to it is another priced-context neighbour for the private register. This also keeps each shipment's diff readable — no site-wide nav rebuild across ~130 files.
 
-Reachability without nav:
-- Hub → destinations index → country pages (and back).
-- Hub → planners-and-venues, and the reverse.
-- `weddings.html` and `about.html` keep their existing in-copy links to the hub.
-- The eighteen wedding guides gain one link each (Workstream C).
-- The new guide links to the hub and to the destinations index.
+Reachability without nav: hub → destinations index → country pages → region pages, and back up at every level; hub ↔ planners-and-venues; the existing `weddings.html` and `about.html` links into the hub; the eighteen wedding guides (Workstream C); and the new guide.
 
 ## Workstream A — the guide
 
 `music-guides/destination-wedding-choir.html`, in the LCS register, `weddings` category, built by the `new-page` clone-an-exemplar workflow from an existing wedding guide.
 
-It answers the question a couple actually types: **can we bring a British choir to our wedding abroad, and what does that involve?** Cost drivers honestly (singers, distance, nights — the hub's own three), lead times, what travels and what does not, what the venue needs to provide, and the rite-and-language question in outline. It hands off to `/private-events.html` and `/destinations/`.
+It answers the question a couple actually types: **can we bring a British choir to our wedding abroad, and what does that involve?** Cost drivers honestly (singers, distance, nights), lead times including the US permit reality, what travels and what does not, what the venue needs to provide, and the rite-and-language question in outline. It hands off to `/private-events.html` and `/destinations/`.
 
-Search intent currently unserved by this site or, as far as the SERP work in `MANUAL-ACTIONS-REQUIRED.md` §12 shows, well served by anyone: *uk choir destination wedding*, *hire british choir wedding abroad*, *english choir italy wedding*, *choir for wedding in tuscany*, *british singers wedding france*.
+Search intent currently unserved by this site: *uk choir destination wedding*, *hire british choir wedding abroad*, *english choir italy wedding*, *choir for wedding in tuscany*, *british singers wedding france*.
 
-**One guide, written properly, not five thin ones.** The site already has eighteen wedding guides; the marginal value of a twenty-first is in depth, and five would trip the same doorway problem as the destination pages.
+**One guide, written properly, not five thin ones.** The site already has eighteen wedding guides; the marginal value of a nineteenth is in depth.
 
 ## Workstream B — planners and venues
 
@@ -103,33 +176,33 @@ Search intent currently unserved by this site or, as far as the SERP work in `MA
 
 Content: how a standing arrangement works; what we need from a planner and by when; what we provide unprompted (insurance, risk assessments, method statements, confidentiality agreement); the running order and the day-before rehearsal; invoicing in pounds sterling, euros or US dollars; and what a venue's events team specifically needs to know — where the consort stands, what the acoustic does, what we do not need (no stage, no PA, no piano).
 
-It carries the same enquiry form as the hub, with the "Enquiring as" default set to planner.
+It carries the same enquiry form as the hub, with "Enquiring as" defaulting to planner.
 
 **Deliberately a second page rather than a longer hub.** The hub serves private principals as much as planners; a hub that opens with insurance certificates loses the principal, and a planner who has to scroll past a voicing selector to find the supplier facts loses patience. Two audiences, two entry points, one form.
 
 ## Workstream C — feeding the hub
 
-Each of the eighteen wedding music-guides gains **one** in-copy sentence linking to `/private-events.html`, placed in the existing closing CTA section (the `<h2>Let us help you plan your wedding music</h2>` block, e.g. music-guides/wedding-ceremony-music.html:2527) or the `related-guides` block below it.
+Each of the eighteen wedding music-guides gains **one** in-copy sentence linking into the private register — to `/destinations/` where the guide's subject suggests a destination, otherwise to `/private-events.html`. It sits in the existing closing CTA section (the `<h2>Let us help you plan your wedding music</h2>` block, e.g. music-guides/wedding-ceremony-music.html:2527) or the `related-guides` block below it.
 
 Constraints that make this a content edit rather than a find-and-replace:
 
 - **The sentence must fit the guide it sits in.** A hymn-choice guide and an organ-repertoire guide reach the international question by different routes. Eighteen identical sentences would read as boilerplate to a human and as a template to a crawler.
 - **It must not undercut the LCS funnel.** The guides serve UK couples on the published rates; the international line is an aside for the minority marrying abroad, not a redirect. Model it on the existing weddings.html hand-off (weddings.html:2404), which does exactly this in one sentence.
-- **Never from a funeral or Christmas guide.** Scope is the eighteen wedding guides only.
+- **Wedding guides only** — never a funeral or Christmas guide.
 
 ## Enquiry attribution
 
-Every new page's form carries a static hidden input `source_page` with the page's own path as its value. Without it, five pages feed one inbox and the metric — cost per qualified enquiry, per page — cannot be computed, which makes the whole programme unmeasurable.
+Every page's form carries a static hidden input `source_page` with the page's own path as its value. Without it, twenty-five pages feed one inbox and the metric — cost per qualified enquiry, per page — cannot be computed, which makes the whole programme unmeasurable.
 
-`js/private-events.js` needs **no change**. It is already null-guarded throughout (the voicing selector, media slot and ensemble select are all optional, js/private-events.js:56–64), so a page without a voicing selector runs it safely, and a static hidden input is submitted by `FormData` without any script. The new pages reuse the same element IDs (`pe-enquiry`, `pe-form-success`, `ensemble-size`, and the rest) so the existing handler binds unchanged.
+`js/private-events.js` needs **no change**. It is already null-guarded throughout (the voicing selector, media slot and ensemble select are all optional, js/private-events.js:56–64), so a page without a voicing selector runs it safely, and a static hidden input is submitted by `FormData` without any script. New pages reuse the same element IDs (`pe-enquiry`, `pe-form-success`, `ensemble-size`, and the rest) so the existing handler binds unchanged.
 
-The Ads conversion continues to fire on the existing generic Contact label. Segmenting it is an owner action, not a code change.
+The Ads conversion continues to fire on the existing generic Contact label. Segmenting it is an owner action.
 
 ## Structured data
 
-Each new private-register page carries one `@graph`:
+Each private-register page carries one `@graph`:
 
-- **`Service`** — `@id <page>#service`, `provider` referencing the existing `https://londonchoralservice.com/#organization` node, and `areaServed` naming the country as a `Country` node. The hub's Service node (private-events.html) is the model; nothing about the organisation is redefined.
+- **`Service`** — `@id <page>#service`, `provider` referencing the existing `https://londonchoralservice.com/#organization` node, `areaServed` naming the country as a `Country` node. Nothing about the organisation is redefined.
 - **`FAQPage`** — the page's own visible questions, text matching the rendered copy verbatim. 126 pages on this site already do this.
 - **`BreadcrumbList`** — **yes on the destination pages**, because unlike the hub they carry a *visible* trail (Private Events › Destinations › Italy). The hub's spec omits breadcrumb schema precisely because it has no visible trail; the rule was never "no breadcrumbs in this register", it was "no schema without the trail it describes".
 
@@ -137,7 +210,7 @@ The guide follows the existing music-guide schema pattern. **No `AggregateRating
 
 ## Copy rules
 
-Every visible string passes **both** the `writing-site-copy` and `stop-slop` skills before commit. UK English throughout. The house-claims validator (`validate_house_claims.py`) enforces:
+Every visible string passes **both** the `writing-site-copy` and `stop-slop` skills before commit. UK English throughout — including for the United States page. The house-claims validator (`validate_house_claims.py`) enforces:
 
 - **"five-star"** in any form — write "luxury hotels".
 - **Digit-form voicings** — sizes are words; "roster" is avoided.
@@ -146,28 +219,13 @@ Every visible string passes **both** the `writing-site-copy` and `stop-slop` ski
 
 Register-specific, carried over from the hub: **"elite" is banned outright**, and the private register never describes itself as a premium tier of LCS — both invite the reader to re-price the rest of the site downwards.
 
-**Budget bands are in pounds sterling and must say so** on any new form. The hub's bands are unlabelled, which is defensible on a page a UK reader lands on and wrong on a page written for someone marrying in Tuscany.
-
-## What else is worth doing
-
-Considered and **folded into the workstreams above**, because they are what stop the destination pages being thin:
-
-- **Post-Brexit touring logistics** — A1 certificates, the Schengen 90/180 rule, ETIAS, per-country permit practice for a group this size. A real anxiety, honestly answered nowhere in this market. Facts must be checked at time of writing and carry a visible checked date, on the pattern the `compare/` pages already use for competitor pricing; nothing here is invented, and anything uncertain is written as "ask us" rather than guessed.
-- **Multilingual repertoire** — the Latin ordinary, Italian and French motets, local hymnody. Answers "will this feel foreign to our guests?"
-- **Currency clarity** on budget bands, above.
-
-Considered and **out of scope for this change**, recorded so they are not re-derived:
-
-- **Paid search on destination terms.** The hub already carries a reserved H1 variant for wedding-targeted paid traffic (private-events.html:711–716). Pairing it with these pages is the natural next step and an owner action.
-- **Luxury planner-network and directory outreach**, and wedding-press placement. Business development, not site work — and the pages should exist before the outreach points at them.
-- **A one-page planner PDF.** Worth doing once `/planners-and-venues.html` has settled; the LCS house-document style already exists to build it from.
-- **Photography or video from an actual overseas engagement.** The single highest-value asset for this audience, and the one thing here that cannot be written. Owner action.
+Twenty-two pages is enough repetition for house-voice drift to become invisible from inside. The copy audit is run per page against a fresh reading, not per batch.
 
 ## Non-goals
 
-- **A fifth, sixth or seventh destination at launch.** Four, each genuinely differentiated, beats eight thin ones. Adding a fifth is a documented pattern for later.
-- **Prices on any private-register page.** The budget bands are the enquirer's figures, not ours. The hub's link to `/pricing.html` in the cost FAQ is the one deliberate exception and is not repeated.
-- **Nav entries for any new page.** See above.
+- **Region pages in the first shipments.** Country pages first; regions are anchored sections until a region earns its own page.
+- **Prices on any private-register page.** The budget bands are the enquirer's figures. The hub's `/pricing.html` link in its cost FAQ, and the Scotland page's equivalent, are the only exceptions.
+- **Nav entries for any new page.**
 - **Links from `compare/` or any `for-*.html` page.**
 - **Named clients, invented case studies, or venue lists we cannot vouch for.**
 - **Review or rating schema.** Prohibited site-wide.
