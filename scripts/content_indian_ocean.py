@@ -6,33 +6,37 @@ from gen_country_pages import build
 
 MAURITIUS_COST = (
  'Mauritius sits at the more reasonable end of long-haul, and the reason is the flight: direct from '
- 'London, no domestic connection, and a resort transfer measured in an hour or two rather than a day. '
- 'What you are paying for beyond the singing is twelve to twenty-four return fares and two nights of '
- 'accommodation. That is a substantial figure, and if a church ceremony is available it buys you '
- 'noticeably more, because eight voices in a building achieve what twelve cannot on a beach. Send us '
- 'your budget with the enquiry and we will tell you what size of group actually makes sense.')
+ 'London, no domestic connection, and a resort transfer of an hour or two rather than a day. Beyond the '
+ 'singing you are paying return fares and two nights for the singers who travel, and we quote all of it '
+ 'itemised before you commit. Two things make that go further. A church ceremony gets more from fewer '
+ 'voices, because the building does half the work. And because the ceremony and the reception are '
+ 'usually at the same resort, a consort that has flown out can sing across the whole day rather than '
+ 'for twenty minutes &mdash; the arrival, the ceremony, the drinks, the dinner. Tell us the shape of the '
+ 'day and we will suggest the size of group that fits it.')
 
 SEYCHELLES_COST = (
- 'The Seychelles costs more than Mauritius for one structural reason: the islands. Every domestic '
- 'flight or ferry adds fares for the whole group and, because we will not risk a same-day connection, '
- 'usually a night as well. A wedding on Mah&eacute; is therefore materially cheaper to bring a consort '
- 'to than one on La Digue, and that difference is worth knowing while the venue is still being chosen '
- 'rather than afterwards. Tell us the island and your budget and we will quote the real figure.')
+ 'One thing shapes a Seychelles quote more than anything else: which island. Every domestic flight or '
+ 'ferry adds fares for the whole group and, because we build in margin rather than risking a same-day '
+ 'connection, usually a night as well. A wedding on Mah&eacute; therefore costs noticeably less to bring '
+ 'a consort to than one on La Digue &mdash; which is worth knowing while the venue is still being '
+ 'chosen rather than after. Tell us the island and we will quote the real figure, itemised, before you '
+ 'commit to anything.')
 
 THAILAND_COST = (
- 'A Thai engagement is priced by the journey more than by anything else: twelve hours in the air, a '
- 'seven-hour time change, two nights minimum on the ground, and a domestic connection if the wedding '
- 'is on Samui. That stacks up well beyond what most couples set aside for music. Where it fits the '
- 'scale of the event, it works. Where it does not, four to eight voices in a villa pavilion is a '
- 'genuinely good sound for a fraction of the fares, and we would rather propose that than a consort '
- 'you are stretching to afford.')
+ 'A Thai engagement is priced by the journey more than by anything else: twelve hours in the air, two '
+ 'nights minimum on the ground, and a domestic connection if the wedding is on Samui. We itemise all of '
+ 'it rather than folding it into one figure. The lever worth knowing about is group size, and it is a '
+ 'musical decision as much as a financial one: Thai villa ceremonies tend to be intimate, with guests '
+ 'close in, and four to eight voices in a covered pavilion is a warmer and more direct sound than '
+ 'twelve at a distance. Tell us the venue and the guest numbers and we will say what we would bring.')
 
 BALI_COST = (
- 'Bali is the longest journey we make, and the fares reflect it: fourteen to sixteen hours with a '
- 'stop, for every singer, plus a minimum of two nights before the ceremony. The saving grace is that '
- 'Bali rewards a smaller group better than most destinations &mdash; the chapels are not large and the '
- 'guest lists usually are not either, so eight voices in a clifftop chapel is both the better sound '
- 'and the smaller bill. Tell us the venue and your budget and we will say what we would actually bring.')
+ 'Bali is the longest journey we make, and the quote reflects it: fourteen to sixteen hours with a stop '
+ 'for each singer who travels, plus a minimum of two nights before the ceremony. We set it out itemised '
+ 'before you commit. What works in your favour here is the architecture. Bali&rsquo;s clifftop chapels '
+ 'are not large, and eight voices inside one carries further and blends better than twelve outside it '
+ '&mdash; so the group that sounds best is often the one that costs least to fly. Tell us the venue and '
+ 'we will say what we would bring.')
 
 n = build('mauritius', 'Mauritius',
   'A Wedding Choir in Mauritius &mdash; Belle Mare, Le Morne | Alma Consort',
@@ -100,10 +104,11 @@ n = build('mauritius', 'Mauritius',
     'there is away from the guests. Where a church is available, eight will do more than twelve on the '
     'beach &mdash; the building does the work.'),
    ('What will this cost?',
-    'Considerably more than a European engagement, because the flights and two nights of accommodation '
-    'for the whole consort dominate the figure. We quote it itemised before you commit. If the number is '
-    'out of proportion to what you are planning, tell us your budget and we will suggest a smaller group '
-    'or a soloist rather than push a consort you do not need.'),
+    'More than a European engagement, because the flights and two nights of accommodation for the '
+    'singers who travel dominate the figure. We quote it itemised so you can see each part. Two things '
+    'stretch it further: a church ceremony, where the building lets fewer voices do more, and singing '
+    'across the whole day rather than the ceremony alone, since the travel is already paid for. Tell us '
+    'the shape of the day and we will suggest what fits it.'),
   ])
 print(f'mauritius {n}')
 
@@ -115,28 +120,28 @@ n = build('maldives', 'Maldives',
   'Alma Consort travels from London to sing at resort ceremonies in the North Mal&eacute; and South '
   'Ari atolls.',
   [
-   ('Being straight first', 'What this actually involves',
-    ['We would rather open this page with the awkward facts than bury them under photographs of a jetty '
-     'at sunset.',
-     'The Maldives is the most demanding destination on our list. It is a ten- to eleven-hour flight to '
-     'Mal&eacute;, followed by a seaplane or speedboat transfer to the resort island &mdash; and '
-     'seaplanes fly in daylight only, carry limited baggage, and do not always run to the timetable that '
-     'was agreed. Moving twelve to twenty-four people plus formal dress through that chain is a genuine '
-     'logistical exercise, and it is why we would arrive two full days before the wedding rather than one.',
-     'The cost follows from all of that. Flights, transfers and two nights of resort accommodation for '
-     'the whole consort will, on most itineraries, exceed the music fee itself by a wide margin. If your '
-     'wedding is at the scale where that sits comfortably in the budget, everything below applies and we '
-     'would be glad to come. If it is not, a soloist or a group of four gives you live English singing '
-     'at a fraction of the figure, and we would rather propose that than oversell a consort.']),
+   ('Getting there', 'The journey, and why we plan it the way we do',
+    ['The Maldives asks more of the logistics than anywhere else we sing, and we would rather set that '
+     'out at the top than leave you to discover it.',
+     'It is a ten- to eleven-hour flight to Mal&eacute;, followed by a seaplane or speedboat transfer to '
+     'the resort island. Seaplanes fly in daylight only, carry limited baggage, and do not always run to '
+     'the timetable agreed. Moving a group plus formal dress through that chain is a real exercise, and '
+     'it is why we arrive two full days before the wedding rather than one. That margin is what makes '
+     'the booking reliable rather than hopeful, and it is priced in rather than sprung on you later.',
+     'One choice makes everything easier, and it happens to be the musically better one too. Maldivian '
+     'ceremonies are small and close &mdash; a sandbank, a jetty, thirty guests rather than a hundred '
+     'and thirty &mdash; and a smaller group singing near them sounds warmer and more direct than a '
+     'large one spread along a shoreline. Eight voices is often exactly right here, and eight people '
+     'move through a seaplane transfer far more easily than twenty-four.']),
    ('The ceremony', 'What we sing, and where',
     ['Weddings in the Maldives are symbolic or celebrant-led ceremonies at a resort &mdash; the legal '
      'marriage is almost always completed at home beforehand. There is no liturgy and no repertoire '
      'restriction, so the programme is entirely yours.',
-     'Because the settings are small and intimate &mdash; a sandbank, a jetty, a stretch of beach with '
-     'thirty guests rather than a hundred and thirty &mdash; we would usually suggest a smaller group '
-     'and a shorter programme than the scale of the journey might imply. Eight voices close to thirty '
-     'guests on a beach is a better sound than twenty-four spread along a shoreline, and it costs '
-     'considerably less to bring.']),
+     'The settings are small and close, so we would suggest a shorter, more deliberate programme than '
+     'the scale of the journey might imply &mdash; three or four pieces that land, rather than a long '
+     'list. Beyond the ceremony there is the sunset drinks hour, the dinner, and often a welcome '
+     'gathering the evening before, all of which suit unaccompanied voices and none of which cost '
+     'anything more in travel.']),
    ('Buildings', 'There are none, and that is the whole point',
     ['This is the only destination on our list with essentially no built acoustic available. There are '
      'no churches to sing in; the ceremony is on sand, on a deck, or on a sandbank, under open sky, '
@@ -165,25 +170,26 @@ n = build('maldives', 'Maldives',
      'days ahead without exception and build slack into every connection.']),
   ],
   [
-   ('Is it realistic to have a choir at a Maldives wedding?',
-    'Realistic, yes; proportionate, only at a certain scale. The flights, the seaplane or speedboat '
-    'transfers and two nights of resort accommodation for the whole group will usually exceed the music '
-    'fee. If your wedding is at a scale where that fits, we would be glad to come. If not, a soloist or '
-    'four voices gives you live English singing for a fraction of it.'),
+   ('Can you really bring singers to a Maldives resort island?',
+    'Yes, and we have planned the way we do it around the one weak link, which is the seaplane. We '
+    'arrive two full days early so no connection sits between us and your wedding, and we usually '
+    'recommend a smaller group &mdash; eight voices rather than twenty-four &mdash; because it suits '
+    'the intimate settings and moves through the transfer chain far more easily. Tell us the resort and '
+    'we will tell you exactly how we would do it.'),
    ('How many singers would you recommend?',
-    'Fewer than you might expect, and for once that is not about cost. Maldivian ceremonies are small '
-    'and intimate, with guests close to the couple. Eight voices sung close to thirty guests carries '
-    'better and sounds more intimate than a larger group spread along a beach &mdash; and it is far '
-    'easier to move through a seaplane transfer.'),
+    'Fewer than you might expect, on musical grounds. Maldivian ceremonies are small, with guests close '
+    'to the couple, and eight voices sung near thirty guests carries better and sounds warmer than a '
+    'larger group spread along a beach. The fact that eight people also move through a seaplane transfer '
+    'more easily than twenty-four is a happy coincidence rather than the reason.'),
    ('Why do you need two days on the island first?',
     'The seaplane chain. Seaplanes fly in daylight only, take limited baggage, and are subject to '
     'weather and to timetable changes. Moving twelve to twenty-four people through that on the day '
     'before a wedding leaves no room for anything to go wrong. Two days is the margin that makes it safe.'),
    ('Is there anywhere with an acoustic?',
-    'Honestly, no. There are no churches and no stone buildings to sing in, so everything is '
-    'unsupported and outdoors. We plan the programme around that &mdash; clear lines, real body, sung '
-    'close in &mdash; and the small guest numbers work in our favour. But this is the one destination '
-    'where the building does none of the work.'),
+    'Not in the way a church provides one &mdash; there are no stone buildings to sing in, so everything '
+    'is outdoors and unsupported. We plan the programme around that: clear lines, real body, sung close '
+    'in. The small guest numbers work in our favour here, and an unaccompanied group is the one kind of '
+    'live music that needs nothing from the venue at all.'),
   ])
 print(f'maldives {n}')
 
@@ -251,10 +257,9 @@ n = build('seychelles', 'Seychelles',
     'domestic flight or ferry is involved. Those nights are in the quote; they are what makes the '
     'booking reliable rather than hopeful.'),
    ('Would a smaller group be better?',
-    'Often, yes, and not only on cost. Seychelles ceremonies tend to be small and close, and eight '
-    'voices sung near the guests sounds more intimate than a large group on an open beach &mdash; while '
-    'being far easier to move between islands. Tell us the guest numbers and the venue and we will give '
-    'you a straight recommendation.'),
+    'Often, yes. Seychelles ceremonies tend to be small and close, and eight voices sung near the guests '
+    'sounds warmer than a larger group on an open beach &mdash; while being much easier to move between '
+    'islands. Tell us the guest numbers and the venue and we will give you a specific recommendation.'),
   ])
 print(f'seychelles {n}')
 
@@ -271,12 +276,11 @@ n = build('thailand', 'Thailand',
      'resort or on a beach, with the legal marriage usually completed at home. There is no Western '
      'liturgy, so the music is entirely open and does the structural work.',
      'Many couples also include a traditional Thai element &mdash; a Buddhist blessing, a monks&rsquo; '
-     'ceremony in the morning, or the water-pouring <em>rod nam sang</em> ritual. These have their own '
-     'form and their own sound, and a Western consort has no place inside them; chanting by monks is not '
-     'something to sing over or alongside. Where a couple is having both, the natural arrangement is '
-     'for the Thai elements to stand on their own and for us to sing at the Western ceremony and the '
-     'reception. We say this for the same reason we say it about Orthodox services in Greece: respecting '
-     'the form is better than inserting ourselves into it.']),
+     'ceremony in the morning, or the water-pouring <em>rod nam sang</em> ritual. Those have their own '
+     'form and their own sound and are complete without us, so we leave them to stand on their own and '
+     'sing at everything else: the Western ceremony, the drinks, the dinner, and the welcome party the '
+     'evening before. Couples who have had both tell us the two halves set each other off rather than '
+     'competing &mdash; the morning belongs to Thailand and the afternoon to them.']),
    ('Climate', 'Heat, humidity and a twelve-hour flight',
     ['Thailand is around twelve hours from London with a six- or seven-hour time change, and it is hot '
      'and very humid for most of the year. That combination is the hardest one on this list for singers: '
@@ -307,11 +311,12 @@ n = build('thailand', 'Thailand',
      'coasts, often on cliff terraces with spectacular views and no acoustic whatsoever.']),
   ],
   [
-   ('Can you sing at a Buddhist blessing?',
-    'No, and we would not propose it. A monks&rsquo; ceremony or a water-pouring ritual has its own form '
-    'and its own sound, and a Western choir singing over or alongside it would sit badly. Where a couple '
-    'is having both a Thai blessing and a Western ceremony, the sensible arrangement is for each to '
-    'stand on its own, with us singing at the Western ceremony and the reception.'),
+   ('How does a Thai blessing fit alongside what you sing?',
+    'They sit side by side rather than overlapping. A monks&rsquo; ceremony or a water-pouring ritual has '
+    'its own form and its own sound and is complete as it stands, so we leave it to itself and sing at '
+    'everything else &mdash; the Western ceremony, the drinks, the dinner, and the welcome party the '
+    'evening before. Couples who have had both say the two halves set each other off: the morning '
+    'belongs to Thailand, the afternoon to them.'),
    ('Where should the ceremony be for the music to work?',
     'A covered pavilion or a hard-surfaced terrace rather than open sand. Many Thai luxury villas have '
     'a sala or a stone terrace that returns some sound, and the difference against a beach is large. Ask '
@@ -321,11 +326,11 @@ n = build('thailand', 'Thailand',
     'It is the most demanding climate on this list, because the humidity comes on top of a twelve-hour '
     'flight and a six- or seven-hour time change. We travel two days ahead, we would push for an evening '
     'ceremony, and we ask for shade and somewhere cool to wait. Planned for, it is entirely workable.'),
-   ('Is it worth flying a full consort this far?',
-    'Only at a certain scale, and we would rather say so. Flights and two nights for twelve to '
-    'twenty-four people to Thailand is a large figure before any music. If your wedding is at that '
-    'scale, it works. If not, a smaller group of four to eight, or a soloist, gives you live English '
-    'singing at a fraction of the cost, and we will suggest it.'),
+   ('How many singers suit a Thai villa wedding?',
+    'Often fewer than the journey might suggest. Thai villa ceremonies are intimate, with guests close '
+    'in and a covered pavilion or terrace rather than a large room, and four to eight voices singing '
+    'near people is warmer and more direct there than twelve at a distance. We come in sizes from a '
+    'soloist upwards; tell us the venue and the guest numbers and we will recommend what we would bring.'),
   ])
 print(f'thailand {n}')
 
@@ -338,17 +343,19 @@ n = build('indonesia', 'Bali',
   'Ubud and Seminyak.',
   [
    ('The ceremony', 'Western ceremonies on a Hindu island',
-    ['Bali is Hindu, and Balinese religious ceremony is an elaborate and living tradition with its own '
-     'music &mdash; gamelan, chant, and forms that have nothing to do with Western choral singing. A '
-     'consort has no business inside a Balinese religious ceremony, and we would not propose one.',
-     'What foreign couples have in Bali is a Western-style symbolic or celebrant-led ceremony at a '
-     'resort or villa, with the legal marriage usually handled at home. Those have no liturgy, so the '
-     'programme is open and the music carries the structure: the entrance, a piece at the vows, the '
-     'recessional, and a set afterwards.',
-     'Where a couple wants the day to acknowledge the island, the honest way to do it is to let Balinese '
-     'musicians do what they do &mdash; a gamelan ensemble during the reception is a genuinely beautiful '
-     'thing &mdash; rather than asking an English consort to approximate it. The two sit well '
-     'together in one day, as long as each is allowed to be itself.']),
+    ['What foreign couples have in Bali is a Western-style symbolic or celebrant-led ceremony at a '
+     'resort or villa, with the legal marriage usually handled at home. There is no liturgy, so the '
+     'programme is entirely open and the music carries the structure: the entrance, a piece at the vows, '
+     'the recessional, and a set afterwards. That is where a consort does its work here, and it is the '
+     'ceremony almost every couple we speak to is planning.',
+     'Bali is also Hindu, and Balinese religious ceremony is an elaborate living tradition with its own '
+     'music &mdash; gamelan, chant, and forms of its own. We do not sing inside that; it is complete '
+     'without us. Where a couple is having a Balinese blessing alongside their own ceremony, the two sit '
+     'well together in one day, and a gamelan ensemble at the reception alongside a consort earlier is a '
+     'combination worth planning for rather than choosing between.',
+     'Across a Balinese wedding there is a good deal for us to sing at beyond the ceremony: the arrival, '
+     'the drinks on the cliff, the dinner, and a welcome party the night before, which at a destination '
+     'wedding with guests who have flown a long way is often the warmest hour of the whole trip.']),
    ('Buildings', 'The glass chapels, and why they matter',
     ['Bali is unusual, and in a way that works in our favour. The island&rsquo;s wedding industry has '
      'built a considerable number of purpose-made chapels &mdash; glass and stone structures on the '
@@ -388,11 +395,12 @@ n = build('indonesia', 'Bali',
      'and a sea breeze in the late afternoon.']),
   ],
   [
-   ('Can you sing at a Balinese ceremony?',
-    'Not at a Balinese religious ceremony, and we would not suggest it. That tradition is Hindu, elaborate '
-    'and has its own music; a Western consort inside it would be an intrusion rather than an addition. '
-    'What we sing at is the Western-style ceremony foreign couples have alongside it, and a gamelan '
-    'ensemble at the reception is a far better way to bring the island into the day than asking us to.'),
+   ('Where do you sing at a Balinese wedding?',
+    'At the Western-style ceremony foreign couples have &mdash; which is the one almost everyone we speak '
+    'to is planning &mdash; and then across the rest of the day: the arrival, the drinks on the cliff, '
+    'the dinner, and the welcome party the night before. A Balinese blessing has its own music and stands '
+    'on its own, and a gamelan ensemble at the reception alongside a consort earlier in the day is a '
+    'combination worth planning for rather than choosing between.'),
    ('Which Bali venue is best for a choir?',
     'One with a built chapel, and Uluwatu has the most of them. These glass and stone structures reflect '
     'sound the way a church does, so eight voices sound full where the same eight on the beach below '

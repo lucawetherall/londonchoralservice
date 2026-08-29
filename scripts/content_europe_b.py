@@ -19,14 +19,16 @@ n = build('greece', 'Greece',
      'by a cantor or a small Byzantine ensemble in a tradition with its own repertoire, its own '
      'scale system and its own performers, and the crowning and the procession around the table are '
      'sung as part of that tradition rather than accompanied by outside music.',
-     'We would not propose inserting an English consort into an Orthodox service, and any supplier who '
-     'tells you otherwise is selling rather than advising. Where a couple is having an Orthodox ceremony '
-     'and wants us there, the honest place for the music is around it: singing as guests arrive, or at '
-     'the reception afterwards, where a consort can do a great deal.',
-     'The good news is that most British couples marrying in Greece are not having an Orthodox service '
-     'at all. They are having a symbolic or civil ceremony at a hotel, a villa or a clifftop terrace, '
-     'and that format is entirely open. There is no liturgy to respect and no repertoire restriction: '
-     'the music is whatever you want it to be, placed wherever it works.']),
+     'The rite is therefore complete without us, and we leave it to itself. What the consort does is '
+     'sing everywhere else in the day, and at a Greek wedding that is a great deal: as your guests gather and are seated beforehand, at the drinks that follow, through the '
+     'wedding breakfast, and at a welcome dinner the evening before. Couples who have had both tell us '
+     'the contrast works in their favour &mdash; the chanting belongs to the rite, and the consort '
+     'belongs to the celebration around it.',
+     'Most British couples marrying in Greece are not having an Orthodox service at all. They are '
+     'having a symbolic or civil ceremony at a hotel, a villa or a clifftop terrace, and that format is '
+     'entirely open: no liturgy to respect, no repertoire restriction, and the music placed wherever it '
+     'works best. Many couples have both &mdash; an Orthodox blessing for the family and a symbolic '
+     'ceremony of their own &mdash; and we sing at the second.']),
    ('The ceremony', 'What we do at a Greek destination wedding',
     ['For a symbolic or civil ceremony, we would usually suggest three or four pieces rather than a long '
      'programme. Something as the guests are seated and the bride arrives; something in the still moment '
@@ -74,17 +76,19 @@ n = build('greece', 'Greece',
      'in Greece and worth seeking out. Resort ceremonies on the coast are the more common format and are '
      'the standard outdoor case.']),
    ('Zakynthos', 'zakynthos',
-    ['Predominantly resort and hotel weddings at the more economical end of the Greek market. Worth '
-     'being straightforward: for a package-priced wedding here, flying a consort from London will look '
-     'out of proportion to the rest of the day. Where the wedding is a villa event at the top end, it '
-     'works as well as anywhere in Greece.']),
+    ['Resort, hotel and villa weddings on a green and unexpectedly dramatic island, with direct summer '
+     'flights from London. Ceremonies are outdoors and the standard island conditions apply. Zakynthos '
+     'is a good candidate for singing across the whole day rather than the ceremony alone: the venues '
+     'tend to keep guests in one place from the vows through to dinner, so a consort that has flown out '
+     'can sing at the ceremony, again over drinks, and once more before the meal.']),
   ],
   [
-   ('Can you sing at a Greek Orthodox wedding?',
-    'Not within the service itself, and we would advise against trying. An Orthodox wedding is chanted '
-    'by a cantor in a tradition that has no gaps for a visiting Western choir, and inserting one would '
-    'sit badly with the rite and with the priest. What works is singing around it: as guests arrive '
-    'beforehand, or at the reception afterwards, where a consort has plenty to do.'),
+   ('Where do you sing at a Greek wedding?',
+    'Everywhere except inside the Orthodox rite itself, which is chanted by a cantor in its own tradition '
+    'and is complete as it stands. Around it there is a great deal: as your guests gather and are seated, '
+    'at the drinks afterwards, through the wedding breakfast, and at a welcome dinner the evening before. '
+    'And if you are having a symbolic ceremony as well &mdash; as most British couples in Greece are '
+    '&mdash; we sing at that from start to finish.'),
    ('What if our ceremony is symbolic rather than religious?',
     'Then the music is completely open, and most British couples marrying in Greece are in exactly this '
     'position. With no liturgy to work around, we would suggest three or four deliberate moments rather '
@@ -122,17 +126,18 @@ n = build('cyprus', 'Cyprus',
      'in an Anglican church there. That service is the one most British couples would recognise, with '
      'hymns the congregation can actually sing, and it suits a consort better than any other option in '
      'Cyprus.']),
-   ('Being straight about cost', 'Whether this suits your wedding',
-    ['Cyprus deserves a franker paragraph than most destinations, because the island serves two very '
-     'different markets and we would rather say so than take an enquiry we cannot serve well.',
-     'A large part of the Cyprus wedding business is package-priced: a hotel handles the ceremony, the '
-     'flowers, the photography and the meal for a figure that, for many couples, is less than the cost '
-     'of flying twelve professional singers from London and putting them up for two nights. If that is '
-     'the shape of your day, a consort will be out of proportion to it, and a soloist or a small group '
-     'of four is the honest recommendation rather than a choir.',
-     'At the other end, villa weddings in the Paphos hills and private events on the east coast run at a '
-     'scale where a consort fits naturally. If you are in that range, everything below applies. If you '
-     'are not, tell us your budget in the form and we will say plainly whether we are the right answer.']),
+   ('Across the day', 'Where the music goes at a Cypriot wedding',
+    ['Cyprus suits singing across a whole day better than most destinations, because so many weddings '
+     'here keep everybody in one place. The ceremony, the drinks and the dinner are frequently at the '
+     'same hotel or villa, with no transfer to lose an hour to.',
+     'That opens up more than a ceremony programme. We can sing as your guests arrive and are seated, '
+     'through the ceremony itself, over the drinks that follow, and again before or during the wedding '
+     'breakfast. A welcome dinner the evening before is another natural point, and one couples often '
+     'do not think to ask about.',
+     'We come in sizes from a soloist upwards, so the shape can be built around your day rather than '
+     'the other way round: a quartet close in at a small villa ceremony reads quite differently from '
+     'twelve voices filling a church, and both are worth considering. Tell us what the day looks like '
+     'and we will suggest what we would bring.']),
    ('Buildings', 'Terraces, town halls and a good deal of stone',
     ['Municipal ceremony rooms are small, dry and unglamorous acoustically; the music tends to work '
      'better just outside them, as guests gather, than inside during a ten-minute ceremony.',
@@ -163,24 +168,27 @@ n = build('cyprus', 'Cyprus',
      'as the picturesque option. Standard outdoor conditions with a reliable sea breeze; plan voices and '
      'positions for it.']),
    ('Ayia Napa', 'ayia-napa',
-    ['Predominantly package and hotel weddings, and the part of the island where the honest cost '
-     'conversation above matters most. A soloist or a group of four often serves this format better than '
-     'a full consort, and we would rather propose that than oversell.']),
+    ['Hotel and beach weddings on the east coast, with the easiest logistics on the island and a long '
+     'season. Ceremonies here are compact and the guests are usually close in, which suits a smaller '
+     'group singing near them as well as it suits a full consort &mdash; a quartet at the ceremony and '
+     'again over drinks is a shape that works well in this part of Cyprus.']),
   ],
   [
-   ('Is a choir worth it for a Cyprus wedding?',
-    'It depends entirely which Cyprus wedding you are having. For a villa event in the Paphos hills at '
-    'the upper end of the market, yes. For a hotel package where the whole day costs less than flying a '
-    'consort out, no &mdash; and we would suggest a soloist or a group of four instead. Tell us your '
-    'budget and we will give you a straight answer rather than a quote.'),
+   ('How many singers suit a Cyprus wedding?',
+    'It depends on the room and the guest numbers rather than on a standard answer. A villa ceremony in '
+    'the Paphos hills with a hundred guests suits twelve voices; a compact hotel ceremony with forty '
+    'guests close in can be better served by four singing near them than by twelve at a distance. We '
+    'come in sizes from a soloist upwards. Tell us the venue and the numbers and we will recommend what '
+    'we would actually bring.'),
    ('Can you sing at a Cypriot civil ceremony?',
     'Yes. Civil and celebrant-led ceremonies have no liturgy, so the music is entirely open. Municipal '
     'ceremony rooms are small and acoustically flat, so we often suggest placing the singing outside as '
     'guests gather, and around the ceremony rather than inside a ten-minute formality.'),
    ('What about a Greek Orthodox ceremony in Cyprus?',
-    'The same as in Greece: the service is chanted by a cantor in a tradition with no room for a '
-    'visiting Western choir, and we would not propose singing during it. Before the service, or at the '
-    'reception afterwards, a consort works well.'),
+    'The rite itself is chanted by a cantor in its own tradition, so we do not sing during it. We sing '
+    'around it instead, which at a Cypriot wedding covers a lot of ground: as guests gather beforehand, '
+    'at the drinks afterwards, and through the wedding breakfast. Couples having an Orthodox service and '
+    'a separate symbolic ceremony often have us at the second as well.'),
    ('When is the best time of year?',
     'May and October, for the music as much as the weather. The heat is manageable for singers working '
     'outdoors, and accommodation for a group of twelve to twenty-four is markedly cheaper than in high '
