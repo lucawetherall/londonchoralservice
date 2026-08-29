@@ -261,9 +261,13 @@ weddings-category guides. Country pages follow in PRs 2 and 3.
 
 Spec: `docs/superpowers/specs/2026-08-29-international-luxury-weddings-design.md`
 
-1. **Ireland and Scotland regions.** The only two countries in the footprint with
-   no regions named. Set them before the Europe shipment (PR 2), otherwise those
-   two pages ship without the region sections every other country page carries.
+1. **Ireland and Scotland regions &mdash; confirm.** These were the only two
+   countries you did not name regions for. Rather than ship two pages structurally
+   thinner than the other twenty, they were set provisionally on 2026-08-29:
+   Ireland as Dublin, County Wicklow, the south west and the west; Scotland as
+   Edinburgh, the Highlands, Loch Lomond and Perthshire. Confirm or replace them
+   &mdash; they drive both the region sections on those pages and the cards on
+   `/destinations/`.
 2. **Verify the permit and travel facts** before each country page ships, and set
    the visible checked date on it. The index currently carries `2026-08-29`.
    Re-check quarterly alongside the `compare/` pricing check (§11).
