@@ -157,6 +157,11 @@ BODY = f'''
             all, so both usually want more voices than a stone room would. Send us
             dimensions and a photograph and we will tell you what we would recommend before you quote it
             to a client.</p>
+          <p>The other half of the question is what the singers are competing with. A ceremony is silent,
+            so the building decides the number. A drinks reception is not: unamplified voices have to
+            carry over the room, and the noise a room makes rises with the number of people in it. A
+            party that wanted eight voices for the ceremony can want twelve for the reception in the same
+            building, and it is worth pricing both rather than assuming one figure covers the day.</p>
           <p>If you keep a preferred-supplier list, we are glad to go on it and to hold whatever paperwork
             your compliance process needs on file.</p>
         </div>

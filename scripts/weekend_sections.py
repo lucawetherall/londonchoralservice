@@ -25,7 +25,9 @@ WEEKEND = {
  'the same group &mdash; and in Italy the first two usually happen in different buildings, so they '
  'genuinely do sound different.',
  'Italy&rsquo;s one geographical quirk: the church and the reception villa are often twenty to forty '
- 'minutes apart. Tell us the plan and we will work out whether we travel with the guests or go ahead.']),
+ 'minutes apart. Tell us the plan and we will work out whether we travel with the guests or go ahead. '
+ 'One sizing note: the villa set has to carry over a party in full flow, so it usually wants more '
+ 'voices than the church did, where everyone was silent and the stone was helping.']),
 
 'france': ('The weekend', 'Across a ch&acirc;teau weekend', [
  'A French ch&acirc;teau wedding is usually an exclusive-use booking for two or three nights, with '
@@ -36,7 +38,9 @@ WEEKEND = {
  'after the meal &mdash; which, with the lights down and the guests close in, tends to be the part '
  'they describe afterwards. All of it on one set of fares.',
  'France also has the mairie in the mix for couples marrying legally there, which spreads the weekend '
- 'across another day. We can sing at the celebration afterwards if the two are separated.']),
+ 'across another day. We can sing at the celebration afterwards if the two are separated. Bear in mind '
+ 'that the ch&acirc;teau dinner is a noisier room than the blessing was: singing over a party in full '
+ 'voice takes more singers than singing to one that has gone quiet.']),
 
 'spain': ('The weekend', 'Across an island or coastal weekend', [
  'Spanish destination weddings, particularly on Ibiza and Mallorca, tend to be villa takeovers: guests '
@@ -60,7 +64,9 @@ WEEKEND = {
  'and without a single additional fare. Of everywhere we travel, Portugal is where a group that has '
  'flown out earns its journey most easily.',
  'If your ceremony is in a Lisbon or Porto church with the reception up the valley, that changes; tell '
- 'us and we will plan the day around the drive.']),
+ 'us and we will plan the day around the drive. Worth flagging when you plan the day: the quinta '
+ 'terrace during drinks is a talking room, and a talking room needs more voices to carry than a quiet '
+ 'church does &mdash; the number rises with the size of the party, not with the size of the estate.']),
 
 'greece': ('The weekend', 'Across an island weekend', [
  'A Greek island wedding is a three- or four-day event by necessity: guests fly in, there is nowhere '
@@ -71,7 +77,9 @@ WEEKEND = {
  'dinner on a terrace, or indoors somewhere with stone around it, gives your guests the version of the '
  'group that the clifftop ceremony acoustically cannot.',
  'Worth planning deliberately in Greece: the best-sounding moment of the weekend is often not the '
- 'ceremony. Ask us where on the island the singing will land best and we will tell you honestly.']),
+ 'ceremony. Ask us where on the island the singing will land best and we will tell you honestly. And '
+ 'size the two differently: the clifftop ceremony is quiet, the taverna dinner is not, and voices have '
+ 'to clear the noise of however many people are talking through it.']),
 
 'cyprus': ('The weekend', 'Across a Cyprus weekend', [
  'Cypriot weddings keep everybody in one place better than almost anywhere. The hotel or villa usually '
@@ -82,7 +90,9 @@ WEEKEND = {
  'a second evening entirely of its own. All on one set of fares, since the expensive part of bringing '
  'us is the getting here.',
  'Cyprus also has the shortest transfers on this list. Whatever the plan, nothing is more than an hour '
- 'from anything else.']),
+ 'from anything else. One thing to price separately: a poolside reception with a bar running is a '
+ 'louder room than the ceremony was, and the louder the room, the more voices it takes to be heard '
+ 'across it.']),
 
 'malta': ('The weekend', 'Across a Maltese weekend', [
  'Malta is small enough that a wedding weekend has no logistics to speak of. Guests stay in Valletta or '
@@ -147,7 +157,9 @@ WEEKEND = {
  'unaccompanied singing is at its best. With the flights and visas already arranged, adding it costs '
  'very little.',
  'If your ceremony is in a New York church and the reception is elsewhere in the city, that is an easy '
- 'transfer; Florida and Nevada resorts usually keep everything on one site.']),
+ 'transfer; Florida and Nevada resorts usually keep everything on one site. Size the cocktail hour on '
+ 'its own terms rather than the ceremony&rsquo;s: a room of people with drinks in their hands makes a '
+ 'great deal of noise, and unamplified voices have to get over it.']),
 
 'mexico': ('The weekend', 'Across a Riviera Maya weekend', [
  'Mexican destination weddings are resort takeovers: guests stay on site for three or four nights, and '
@@ -248,5 +260,7 @@ WEEKEND = {
  'at least one of them.',
  'South Africa has an advantage nowhere else on this list has: the flight is long but the time change '
  'is an hour or two, so singers arrive able to work rather than needing a day to recover. A multi-part '
- 'weekend is easier to deliver well here than anywhere else at this distance.']),
+ 'weekend is easier to deliver well here than anywhere else at this distance. The cellar dinner is the '
+ 'one to size up for: hard surfaces help, but a full room in conversation still takes more voices to '
+ 'carry than a silent ceremony does.']),
 }

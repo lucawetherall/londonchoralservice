@@ -72,7 +72,10 @@ FAQS = [
      'Most destination ceremonies happen outdoors or in a room with no organ, and the consort is built for '
      'exactly that: unaccompanied singing needs no instrument, no stage and no amplification. What it does '
      'need is the right number of voices for the space, which is why an open terrace usually wants more '
-     'singers than a stone chapel does. The room decides the number, not the size of the guest list.'),
+     'singers than a stone chapel does. One caveat worth knowing: that holds for the ceremony, when '
+     'everyone is listening. For a set during drinks or dinner the singers have to clear the noise of a '
+     'talking room, and that does rise with the number of people making it &mdash; a reception often '
+     'wants more voices than the ceremony did.'),
 ]
 
 def jsonld():
@@ -145,7 +148,9 @@ BODY = f'''
           <p>A consort that has flown out for the ceremony is already paid for in the part that costs
             most: the fares and the rooms. Singing again at the welcome dinner on the Friday, or over
             drinks after the ceremony, or unaccompanied in a stone hall once the meal is over, costs a
-            fraction of what the first appearance did. Guests who have travelled to be there hear three
+            fraction of what the first appearance did. Worth knowing when you plan it: a reception set
+            usually wants more voices than the ceremony, because unamplified singing has to carry over
+            a room that is talking rather than listening. Guests who have travelled to be there hear three
             different things instead of one, and the two evenings either side of the wedding day stop
             being the parts nobody planned.</p>
           <p>Where each of those moments works best depends on the country, and the guides below say so
