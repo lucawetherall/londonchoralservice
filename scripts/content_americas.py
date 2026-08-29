@@ -19,10 +19,11 @@ n = build('united-states', 'United States',
      'visa or under the visa waiver programme. It requires a petition-based performance visa, filed in '
      'advance, for the musicians travelling. That process takes months rather than weeks, it costs real '
      'money per engagement, and it cannot be compressed because a wedding date is approaching.',
-     'The practical consequence is blunt: a couple who contacts us in March about a September wedding in '
-     'New York probably cannot have a British choir at it, however free our diary is. We would far rather '
-     'tell you that in the first email than discover it together in the fourth. If you are considering a '
-     'wedding in the States and want us there, the right time to ask is before you fix the date.',
+     'The practical consequence is simple: the visa calendar, not the flight schedule, decides when we '
+     'can come. A couple planning a New York wedding eighteen months out has no difficulty at all; one '
+     'asking about a date six months away needs us to look at the specific timings before anyone '
+     'promises anything. So raise it early &mdash; the earlier this conversation starts, the more of '
+     'the calendar is open to you.',
      'Where the timeline does work, everything else about the States is straightforward: excellent '
      'flights, no language barrier, and venues used to handling suppliers professionally.']),
    ('The rite', 'What a US wedding asks of a choir',
@@ -65,10 +66,10 @@ n = build('united-states', 'United States',
      'summer is harder still. A late-afternoon or evening slot, shade, and twelve voices rather than '
      'eight is the shape that works.']),
    ('Las Vegas', 'las-vegas',
-    ['Chapel and hotel ceremonies, often short and tightly scheduled, and a market that runs from the '
-     'very cheap to the very expensive with little in between. Worth saying plainly: for a quick chapel '
-     'wedding, flying a British consort out with visas attached is disproportionate by a wide margin. '
-     'For a large private event at a resort, it works, and the venues here are as capable as any in the world.']),
+    ['Chapel, hotel and resort ceremonies, with venues as capable as any in the world at running a large '
+     'private event and a level of production polish that is hard to find elsewhere. Ceremonies are often '
+     'tightly scheduled, so the programme wants to be precise rather than long &mdash; and the reception '
+     'that follows is usually where a consort has the most room to work.']),
   ],
   [
    ('Do British musicians need a visa to perform at a US wedding?',
@@ -78,9 +79,10 @@ n = build('united-states', 'United States',
     'American wedding, and it is why the answer depends on your timeline before it depends on our diary.'),
    ('How far ahead do we need to book?',
     'Considerably further than anywhere else we sing. Where Europe works at six to twelve months, the '
-    'States needs the visa timeline built in on top, so the honest advice is to raise it before you fix '
-    'the date rather than after. If your wedding is less than six months away, ask us anyway, but expect '
-    'us to be straight with you about whether it is achievable.'),
+    'States needs the visa timeline built in on top, so the advice is to raise it before you fix the '
+    'date rather than after. If your wedding is sooner than that, ask us anyway &mdash; the position '
+    'depends on the visa route and on how the calendar is running, and we would rather look at your '
+    'specific dates than turn you away on a general rule.'),
    ('Why is a US booking more expensive?',
     'Three things stack: transatlantic flights for the whole consort, two nights rather than one because '
     'we will not sing well the morning after an overnight flight and a large time change, and the visa '
