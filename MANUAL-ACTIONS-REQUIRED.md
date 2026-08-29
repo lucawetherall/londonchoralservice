@@ -249,3 +249,47 @@ The page is `private-events.html` (spec: `docs/superpowers/specs/2026-08-26-priv
 5. **almaconsort.com.** The ensemble section links to the homepage and the page's schema lists it as the ensemble's URL. Confirm it presents well to a planner vetting the name, and add a reciprocal link from that site back to https://londonchoralservice.com/private-events.html.
 
 **Decided 2026-08-26, no action needed:** hCaptcha is on (owner's decision, reversing the original brief); the discretion commitment in the planners section stands as written and must be honoured on every engagement, deputies and instrumentalists included; the voicing selector ships prose-only; the venue section ships the London list with international coverage stated in prose; the page carries a bespoke OG image (`assets/og-private-events.png`).
+
+---
+
+## 14. Destination weddings programme, 2026-08-29
+
+Shipped in PR 1: the private register extracted into partials, the hub brought up
+to date, `/destinations/` (index), `/planners-and-venues.html`, the guide
+`music-guides/destination-wedding-choir.html`, and cross-links from the eighteen
+weddings-category guides. Country pages follow in PRs 2 and 3.
+
+Spec: `docs/superpowers/specs/2026-08-29-international-luxury-weddings-design.md`
+
+1. **Ireland and Scotland regions &mdash; confirm.** These were the only two
+   countries you did not name regions for. Rather than ship two pages structurally
+   thinner than the other twenty, they were set provisionally on 2026-08-29:
+   Ireland as Dublin, County Wicklow, the south west and the west; Scotland as
+   Edinburgh, the Highlands, Loch Lomond and Perthshire. Confirm or replace them
+   &mdash; they drive both the region sections on those pages and the cards on
+   `/destinations/`.
+2. **Verify the permit and travel facts** before each country page ships, and set
+   the visible checked date on it. The index currently carries `2026-08-29`.
+   Re-check quarterly alongside the `compare/` pricing check (§11).
+3. **United States lead times.** Paid performance in the US needs a petition-based
+   performance visa per musician, on a months-long timeline. Confirm the real
+   working lead time before the US page is written: if a booking is impractical
+   under six months, the page must say so rather than imply otherwise.
+4. **Google Ads.** Create a dedicated conversion action for the destinations
+   funnel and paste its `send_to` label over `PE.ADS_CONVERSION` in
+   `js/private-events.js`; until then the generic Contact label fires for every
+   register page. Consider paid search on destination terms using the reserved
+   hero H1 variant (`grep -n 'Hero H1 A/B alternatives' private-events.html`).
+5. **Photography or video from an overseas engagement.** The highest-value asset
+   for this audience and the one thing here that cannot be written. All register
+   pages ship typographic-only until supplied.
+6. **A bespoke OG image** for `/destinations/` and `/planners-and-venues.html`;
+   both currently reuse `assets/og-private-events.png`.
+7. **Planner-network and luxury-directory outreach**, and wedding-press placement
+   &mdash; there are now pages to point at.
+8. **Refresh the repo graph.** `graphify-out/` is now stale: this programme added
+   twenty-five pages and edited nineteen more, and the graphify tool was not
+   available in the session that built them, so the committed graph still
+   describes the site as it was before. Run `/graphify --update` and commit
+   `graphify-out/` when convenient. Nothing depends on it at runtime; it only
+   affects agents querying the graph instead of re-reading the repo.
