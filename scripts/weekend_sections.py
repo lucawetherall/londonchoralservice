@@ -33,8 +33,8 @@ WEEKEND = {
  'nobody is driving anywhere, and the whole party is together from Friday evening to Sunday morning.',
  'It also means the ceremony is a small part of what we could do. A consort can sing at the welcome '
  'dinner, at the ceremony itself, through the drinks in the gardens, and unaccompanied in a stone hall '
- 'after the meal &mdash; which, with the lights down and forty people close in, tends to be the part '
- 'guests describe afterwards. All of it on one set of fares.',
+ 'after the meal &mdash; which, with the lights down and the guests close in, tends to be the part '
+ 'they describe afterwards. All of it on one set of fares.',
  'France also has the mairie in the mix for couples marrying legally there, which spreads the weekend '
  'across another day. We can sing at the celebration afterwards if the two are separated.']),
 
@@ -204,9 +204,9 @@ WEEKEND = {
  'to a Maldivian resort island is the whole expense; once they are there, a welcome dinner on the '
  'Thursday, the ceremony on the Saturday and a sunset performance on another evening cost only the '
  'additional nights.',
- 'Guest numbers here are usually small &mdash; thirty rather than a hundred and thirty &mdash; which '
- 'means a smaller group singing close in, several times across the stay, is both the better sound and '
- 'the better use of the journey.']),
+ 'Maldivian weddings tend to be among the smallest we sing at, which points the same way: a smaller '
+ 'group singing close in, several times across the stay, is both the better sound and the better use '
+ 'of the journey.']),
 
 'seychelles': ('The weekend', 'Across a Seychelles stay', [
  'Seychelles weddings run over a week, with guests staying at one or two resorts and the wedding day '
@@ -231,8 +231,8 @@ WEEKEND = {
 
 'indonesia': ('The weekend', 'Across a Bali wedding week', [
  'Bali weddings run long. Guests have travelled fourteen hours or more, so they stay a week, and the '
- 'wedding sits inside a stretch of villa dinners, beach days and excursions with the same forty or '
- 'eighty people throughout.',
+ 'wedding sits inside a stretch of villa dinners, beach days and excursions with the same party '
+ 'throughout.',
  'The journey is the expense, so once a consort is on the island, additional appearances are cheap by '
  'comparison. A welcome dinner in a villa, the ceremony in a clifftop chapel, and a final evening '
  'performance give your guests three different rooms and three different moods from one booking.',

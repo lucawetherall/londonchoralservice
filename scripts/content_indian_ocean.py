@@ -129,9 +129,9 @@ n = build('maldives', 'Maldives',
      'it is why we arrive two full days before the wedding rather than one. That margin is what makes '
      'the booking reliable rather than hopeful, and it is priced in rather than sprung on you later.',
      'One choice makes everything easier, and it happens to be the musically better one too. Maldivian '
-     'ceremonies are small and close &mdash; a sandbank, a jetty, thirty guests rather than a hundred '
-     'and thirty &mdash; and a smaller group singing near them sounds warmer and more direct than a '
-     'large one spread along a shoreline. Eight voices is often exactly right here, and eight people '
+     'ceremonies are small and close &mdash; a sandbank, a jetty, a stretch of beach &mdash; and a '
+     'smaller group singing near the guests sounds warmer and more direct than a large one spread '
+     'along a shoreline. Eight voices is often exactly right here, and eight people '
      'move through a seaplane transfer far more easily than twenty-four.']),
    ('The ceremony', 'What we sing, and where',
     ['Weddings in the Maldives are symbolic or celebrant-led ceremonies at a resort &mdash; the legal '
@@ -178,9 +178,9 @@ n = build('maldives', 'Maldives',
     'we will tell you exactly how we would do it.'),
    ('How many singers would you recommend?',
     'Fewer than you might expect, on musical grounds. Maldivian ceremonies are small, with guests close '
-    'to the couple, and eight voices sung near thirty guests carries better and sounds warmer than a '
-    'larger group spread along a beach. The fact that eight people also move through a seaplane transfer '
-    'more easily than twenty-four is a happy coincidence rather than the reason.'),
+    'to the couple, and eight voices sung near them carries better and sounds warmer than a larger group '
+    'spread along a beach. The fact that eight people also move through a seaplane transfer more easily '
+    'than twenty-four is a happy coincidence rather than the reason.'),
    ('Why do you need two days on the island first?',
     'The seaplane chain. Seaplanes fly in daylight only, take limited baggage, and are subject to '
     'weather and to timetable changes. Moving twelve to twenty-four people through that on the day '
