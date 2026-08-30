@@ -245,3 +245,41 @@ python3 tests/test_competitor_claims.py       # 0 failure(s)
 grep -rn 'VAT' --include='for-*.html' .       # empty
 grep -rn 'over 150\|150 auditioned' --include='*.html' --include='*.txt' .   # empty
 ```
+
+---
+
+## R12 — Testimonial pool reused across geographically mismatched pages  [P2] [DECISION-NEEDED]
+
+**Why:** A 2026-08-30 content audit found a small pool of ~16 distinct testimonials (no `AggregateRating`/`Review` schema involved — these are plain pull-quotes in body copy) reused across the 53 area/borough pages, several with the same first name but a different quote *and* a different named location depending which page they land on. E.g. "Tony, Surrey" (8 pages, all in London boroughs — none in Surrey) and "Tony, Battersea" (6 pages, none in Battersea) are two different quotes; the same pattern repeats for "Pamela" (Hampshire/Richmond) and "Helen" (Buckinghamshire/Wimbledon). Separately, the single "Margaret, Dulwich" quote is repeated verbatim, unmodified, on 17 pages. Full attribution counts: `grep -rho '<figcaption>&mdash;&ensp;[^<]*</figcaption>' areas/*.html areas/london/*.html index.html funerals.html weddings.html | sort | uniq -c | sort -rn`.
+
+This is a business-integrity question, not a copy-quality one — an agent doesn't know whether "Tony" is one real client whose quote is being redistributed to unrelated pages (which would misrepresent a real person's words as being about a place they weren't), two real clients who happen to share a first name, or a placeholder pattern. Do not let an agent guess: whether to (a) source enough distinct real per-area testimonials to stop the cross-contamination, (b) strip the specific location from the attribution wherever it doesn't match the page, or (c) leave as-is and accept the trust cost. No new testimonial text should ever be invented to fill the gap — CLAUDE.md already forbids invented testimonials.
+
+**Files & anchors:** all `<figure class="pull-quote">` blocks under `areas/*.html` and `areas/london/*.html`.
+
+**Skills:** writing-site-copy (once a direction is chosen)
+
+---
+
+## R13 — Borough page template is a rigid, visible mould across all 33 pages  [P3] [SPEC-FIRST]
+
+**Why:** The 2026-08-30 content audit found every one of the 33 `areas/london/*.html` pages follows the identical H2 sequence (funeral music / wedding choirs / ensembles / Christmas carols / FAQ) with the same 3-question FAQ topic order every time. The prose itself is genuinely localised (real named churches, crematoria, historical detail), and the price-ladder FAQ answer's repeated sentence construction was already fixed site-wide (see verify command below) — what's left is the structural sameness of the container itself, which is exactly the kind of programmatic-SEO pattern current Google quality guidance is trained to flag, independent of how good the sentence-level writing is.
+
+**Do:** This needs a template-level design decision before any agent touches it — e.g. vary section presence/order/count per borough (not every borough needs all 5 sections; the FAQ set could vary in count or topic per borough), rather than a per-page copy fix. Route through the `new-page`/`site-architecture` skills for the redesign, write a spec first.
+
+**Do not:** Reshuffle section order randomly without a template rationale — that just trades one mechanical pattern for another.
+
+**Verify (confirms the already-fixed sub-issue, not this item):**
+```sh
+python3 -c "
+import re, glob
+seen = {}
+for f in sorted(glob.glob('areas/*.html')) + sorted(glob.glob('areas/london/*.html')):
+    if f.endswith('index.html') or f.endswith('areas/london.html'): continue
+    c = open(f, encoding='utf-8').read()
+    m = re.search(r'\"acceptedAnswer\": \{\s*\"@type\": \"Answer\",\s*\"text\": \"([^\"]*£1,150[^\"]*)\"', c)
+    if m: seen.setdefault(re.sub(r'£[\d,]+', '£N', m.group(1)), []).append(f)
+dupes = {k: v for k, v in seen.items() if len(v) > 1}
+print('duplicate price-ladder constructions:', len(dupes))  # → 0
+"
+```
+**Skills:** new-page, site-architecture

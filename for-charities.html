@@ -2197,13 +2197,19 @@
     "@context": "https://schema.org",
     "@graph": [
       {
-        "@type": "ProfessionalService",
+        "@type": "Service",
         "name": "Choirs for Charity Carol Concerts",
         "serviceType": "Charity Carol Concert Music",
         "description": "Professional choirs and organists for charity carol concerts and fundraising carol services in hired churches: leading congregational carols, choir-only items, working to a running order with readers and appeal moments. Ensembles of four to twelve singers, priced the same in December as the rest of the year.",
         "url": "https://londonchoralservice.com/for-charities.html",
         "dateModified": "2026-08-19",
-        "priceRange": "£250–£3,000",
+        "offers": {
+          "@type": "AggregateOffer",
+          "lowPrice": "250",
+          "highPrice": "3000",
+          "priceCurrency": "GBP",
+          "priceValidUntil": "2027-12-31"
+        },
         "provider": {
           "@type": "LocalBusiness",
           "@id": "https://londonchoralservice.com/#organization"
