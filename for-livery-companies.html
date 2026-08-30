@@ -2197,13 +2197,19 @@
     "@context": "https://schema.org",
     "@graph": [
       {
-        "@type": "ProfessionalService",
+        "@type": "Service",
         "name": "Choirs for Livery Company Carol Services",
         "serviceType": "Christmas Carol Services",
         "description": "Professional choirs and organists for City of London livery companies: carol services in livery halls and City churches, Nine Lessons and Carols, and sung grace at Christmas court dinners and banquets. Invoiced by Alma Consort Ltd on 30-day terms, \u00a35m public liability cover.",
         "url": "https://londonchoralservice.com/for-livery-companies.html",
         "dateModified": "2026-08-19",
-        "priceRange": "\u00a3250\u2013\u00a33,000",
+        "offers": {
+          "@type": "AggregateOffer",
+          "lowPrice": "250",
+          "highPrice": "3000",
+          "priceCurrency": "GBP",
+          "priceValidUntil": "2027-12-31"
+        },
         "provider": {
           "@type": "LocalBusiness",
           "@id": "https://londonchoralservice.com/#organization"
