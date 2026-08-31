@@ -2197,13 +2197,19 @@
     "@context": "https://schema.org",
     "@graph": [
       {
-        "@type": "ProfessionalService",
+        "@type": "Service",
         "name": "Corporate Music Bookings",
         "serviceType": "Corporate Music",
         "description": "Choirs, singers, and instrumental ensembles for corporate event managers: awards dinners, product launches, charity galas, conferences, summer parties, Christmas carol services, and client entertainment. PO invoicing, 30-day terms, £5m public liability cover.",
         "url": "https://londonchoralservice.com/for-event-managers.html",
         "dateModified": "2026-08-19",
-        "priceRange": "£250–£3,000",
+        "offers": {
+          "@type": "AggregateOffer",
+          "lowPrice": "250",
+          "highPrice": "3000",
+          "priceCurrency": "GBP",
+          "priceValidUntil": "2027-12-31"
+        },
         "provider": {
           "@type": "LocalBusiness",
           "@id": "https://londonchoralservice.com/#organization"
