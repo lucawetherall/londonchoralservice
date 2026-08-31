@@ -293,3 +293,17 @@ Spec: `docs/superpowers/specs/2026-08-29-international-luxury-weddings-design.md
    describes the site as it was before. Run `/graphify --update` and commit
    `graphify-out/` when convenient. Nothing depends on it at runtime; it only
    affects agents querying the graph instead of re-reading the repo.
+
+---
+
+## 15. www subdomain serves a broken TLS certificate, 2026-08-30
+
+A full SEO audit found `https://www.londonchoralservice.com` fails the TLS handshake outright (`SSL: no alternative certificate subject name matches target host name`) rather than redirecting to the apex domain. DNS for `www` already resolves to GitHub Pages' anycast IPs, but the certificate GitHub serves only covers `*.github.io` — it doesn't cover the `www` host because the `CNAME` file in this repo only declares the apex (`londonchoralservice.com`), and GitHub Pages only provisions/serves a matching cert for whichever custom domain is configured in the repo's own Settings → Pages.
+
+Anyone who types `www.` from habit, or any inbound backlink built to the `www` host, hits a browser security interstitial instead of a clean redirect. This is a dashboard/DNS-panel action, not something fixable from the repo.
+
+What to do:
+
+1. In the repo's GitHub Settings → Pages, add `www.londonchoralservice.com` as an alternate custom domain alongside the existing apex domain. This provisions a certificate covering both hosts and makes GitHub auto-redirect `www` → apex per the `CNAME` file's value.
+2. Alternatively, if `www` was never meant to resolve at all, remove its DNS record at the registrar/DNS panel instead of leaving a broken host reachable.
+3. Once fixed, confirm with `curl -I https://www.londonchoralservice.com/` — expect a `301` to the apex, not a TLS error.
