@@ -103,7 +103,7 @@ Find the `:root {` block (it follows the four `@font-face` rules) and replace th
          --bs-navy           10.75 AAA       9.52 AAA   occasion labels, table heads
          --bs-red             6.12 AA        5.42 AA    accents, buttons, small caps — NOT long body text
          --bs-mid             5.85 AA        5.18 AA    captions, secondary text
-       Reversed: --bs-paper on --bs-red 6.54, on --bs-navy 11.48 — both fine for buttons.
+       Reversed (paper on red, paper on navy) is symmetric: 6.12 and 10.75 — both fine for buttons.
        --bs-rule is a hairline only: never text, never a focus outline. */
     :root {
       --bs-ink:    #1F1A17;
@@ -157,6 +157,19 @@ grep -c 'bs-form\|bs-voicing\|play-btn\|bs-rise\|bs-draw\|form-success' partials
 ```
 
 Expected: `0` when the deletion is complete (it is `16` before). Keep `.bs-hero__inner` and `.bs-hero__cta` themselves — the hero layout stays; only the animation that referenced the deleted keyframes goes.
+
+Delete four more carried-over groups in the same pass, for the same reason — no planned page produces their markup:
+
+- **`.bs-group`, `.bs-dests` (and children), `.bs-region`** — destination-card and country-page components. The hub uses `.bs-occasions`; the repertoire page uses `.bs-rep`. Deleting `.bs-dests` also removes the file's only hardcoded colour literal, `rgba(126, 24, 24, .045)`, which is the *old* palette's red and which no `var()` substitution in Step 5 can reach.
+- **`.bs-venues` and its `40rem` media query** — a near-duplicate of the `.bs-rep` added in Step 7, and the source of a third mobile breakpoint that serves nothing.
+
+**Keep `.bs-breadcrumb` and `.bs-crumb-sep`:** `repertoire.html` carries a three-level `BreadcrumbList` and a visible trail is a plausible addition. But repoint the separator — `.bs-crumb-sep { color: var(--bs-rule); }` uses the hairline token as text at 1.40:1, which this file's own colour law forbids. Change it to `var(--bs-mid)` (5.85:1).
+
+Delete the `html.bs-motion [data-fade]` entrance-animation rules and any paired `.bs-in` rules too. Nothing sets `html.bs-motion`: `js/private-events.js` sets `pe-motion`/`pe-in`, and no barbershop JS exists or is planned (Task 4 strips that script). The gram pages get no fade-in, deliberately. **Keep the `scroll-behavior: smooth` rule and its `prefers-reduced-motion: no-preference` wrapper** — the hub's occasion strip is all in-page anchors, so that one is live.
+
+Finally, fix three comments that the clone made false: the buttons heading says "outline only" though Step 7 adds `.bs-btn--fill`; a `background: var(--bs-navy)` rule carries a "never text" caveat that applied to the old `--candle` (2.39:1) and not to navy (10.75:1); and the breadcrumb heading plus any remaining comments name "destinations" and "country pages" that do not exist here.
+
+**Placement matters.** Append the Step 7 components **before** the "Focus & utilities" section, not at the end of the file, so the `prefers-reduced-motion: reduce` block stays the file's tail as in the precedent. Appending at the tail splits `.bs-btn--fill` from `.bs-btn` by ~224 lines and creates a live cascade trap: `.bs-occasions a` would declare its `transition` *after* the reduce block, so later adding that selector to the block would silently fail on equal specificity. While there, add `.bs-occasions a` to the reduce block's `transition: none` rule alongside `.bs-btn`.
 
 - [ ] **Step 6: Warm the type scale**
 
@@ -489,6 +502,23 @@ Expected: `0`.
   <!-- @include-end partials/barbershop-nav.html -->
 ```
 
+- [ ] **Step 2b: Strip the two inherited script tags**
+
+The exemplar ends with two `<script src="…">` tags (`private-events.html:1245-1246`) and the clone carries both. Neither belongs on a gram page:
+
+```html
+  <script src="https://web3forms.com/client/script.js" async defer></script>
+  <script src="/js/private-events.js" defer></script>
+```
+
+The Web3Forms script serves that page's embedded enquiry form; gram pages have no form and send people to WhatsApp or `contact.html`, so keeping it is a third-party request for nothing. `js/private-events.js` sets `pe-motion` and `pe-in` on the document element, which the barbershop register does not style — and Task 1 deleted the `[data-fade]` rules on exactly that basis. Delete both lines.
+
+```bash
+grep -c 'private-events.js\|web3forms.com/client' barbershop-grams/index.html
+```
+
+Expected: `0`. The GA4/Google Ads snippet in the `<head>` stays — that is site-wide and unrelated.
+
 - [ ] **Step 3: Replace the head metadata**
 
 Replace the title through `twitter:image:alt` block with exactly this. Both descriptions are the same string, 154 characters, verified below. `og-barbershop-grams.png` does not exist yet (owner action, spec Phase 0.5), so the shared `og-image.png` is used until it does.
@@ -666,30 +696,33 @@ Sections, in order. Use `bs-section`, `bs-section--light` / `bs-section--mid` al
 - [ ] **Step 2: The price table**
 
 ```html
-        <table class="bs-prices">
+The `role` attributes are deliberate. At the `39.9375rem` breakpoint the register sets `display: block` on `tr`/`td` to stack the rows, which drops the native row and cell roles from the accessibility tree in Chrome, Safari, and Firefox. Explicit roles restore them, and `pricing.html` already uses `role="table"` on its own tables, so this matches the house pattern rather than inventing one.
+
+```html
+        <table class="bs-prices" role="table">
           <thead>
-            <tr><th scope="col">What you are sending</th><th scope="col">Price</th></tr>
+            <tr role="row"><th scope="col" role="columnheader">What you are sending</th><th scope="col" role="columnheader">Price</th></tr>
           </thead>
           <tbody>
-            <tr>
-              <td><strong>Surprise Barbershop Gram</strong><br>Up to ten minutes. Four singers find the person, sing Happy Birthday in four-part harmony, then one song from the repertoire chosen for them, with their name worked in.<span class="bs-prices__flag">Our flagship</span></td>
-              <td>&pound;600</td>
+            <tr role="row">
+              <td role="cell"><strong>Surprise Barbershop Gram</strong><br>Up to ten minutes. Four singers find the person, sing Happy Birthday in four-part harmony, then one song from the repertoire chosen for them, with their name worked in.<span class="bs-prices__flag">Our flagship</span></td>
+              <td role="cell">&pound;600</td>
             </tr>
-            <tr>
-              <td><strong>Half-hour set</strong><br>Three or four songs for one occasion, or a roaming set that reaches several people across an office or a party.</td>
-              <td>From &pound;800</td>
+            <tr role="row">
+              <td role="cell"><strong>Half-hour set</strong><br>Three or four songs for one occasion, or a roaming set that reaches several people across an office or a party.</td>
+              <td role="cell">From &pound;800</td>
             </tr>
-            <tr>
-              <td><strong>One-hour set</strong><br>A programme of eight to ten songs with a break. Drinks receptions, garden parties, company summer parties.</td>
-              <td>From &pound;1,200</td>
+            <tr role="row">
+              <td role="cell"><strong>One-hour set</strong><br>A programme of eight to ten songs with a break. Drinks receptions, garden parties, company summer parties.</td>
+              <td role="cell">From &pound;1,200</td>
             </tr>
-            <tr>
-              <td><strong>Bespoke arrangement</strong><br>Your song, arranged for four voices. Allow a week. Add it to any of the above.</td>
-              <td>From &pound;200</td>
+            <tr role="row">
+              <td role="cell"><strong>Bespoke arrangement</strong><br>Your song, arranged for four voices. Allow a week. Add it to any of the above.</td>
+              <td role="cell">From &pound;200</td>
             </tr>
-            <tr>
-              <td><strong>Video recording session</strong><br>A filmed performance for someone who is not in London, or for a company video. We agree the licence with you for the use you have in mind.</td>
-              <td>From &pound;1,000</td>
+            <tr role="row">
+              <td role="cell"><strong>Video recording session</strong><br>A filmed performance for someone who is not in London, or for a company video. We agree the licence with you for the use you have in mind.</td>
+              <td role="cell">From &pound;1,000</td>
             </tr>
           </tbody>
         </table>
