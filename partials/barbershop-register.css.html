@@ -179,9 +179,9 @@
       margin-inline: auto;
       padding: 1.1rem clamp(1.25rem, 5vw, 3rem);
       display: flex;
-      justify-content: space-between;
+      flex-wrap: wrap;
       align-items: baseline;
-      gap: 1rem;
+      gap: 1.25rem;
     }
     .bs-wordmark {
       font-family: var(--font-display);
@@ -201,7 +201,6 @@
       padding-bottom: .2rem;
     }
     .bs-nav-enquire:hover { border-bottom-color: var(--bs-ink); }
-    .bs-nav { flex-wrap: wrap; gap: 1.25rem; }
     .bs-nav .bs-wordmark { margin-right: auto; }
 
     /* ── Breadcrumb (repertoire.html only; the hub has no trail) ── */
