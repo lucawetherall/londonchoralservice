@@ -58,8 +58,6 @@
   <meta name="twitter:image" content="https://londonchoralservice.com/assets/og-image.png">
   <meta name="twitter:image:alt" content="Barbershop Grams: four singers sent to surprise someone in London">
   <link rel="dns-prefetch" href="https://www.googletagmanager.com">
-  <link rel="dns-prefetch" href="https://api.web3forms.com">
-  <link rel="dns-prefetch" href="https://hcaptcha.com">
 
   <!-- @include-start partials/barbershop-register.css.html -->
   <style>
@@ -534,94 +532,117 @@
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
-    "@type": "Service",
-    "name": "Barbershop Grams",
-    "serviceType": "Singing telegram",
-    "description": "A barbershop quartet sent to surprise one person in London with Happy Birthday in four-part harmony and a song chosen for them.",
-    "url": "https://londonchoralservice.com/barbershop-grams/",
-    "provider": {
-      "@type": "LocalBusiness",
-      "name": "The London Choral Service",
-      "url": "https://londonchoralservice.com/",
-      "telephone": "+447356042468",
-      "email": "office@londonchoralservice.com",
-      "address": {
-        "@type": "PostalAddress",
-        "addressLocality": "London",
-        "addressRegion": "Greater London",
-        "addressCountry": "GB"
-      }
-    },
-    "areaServed": {
-      "@type": "AdministrativeArea",
-      "name": "Greater London"
-    },
-    "offers": {
-      "@type": "Offer",
-      "name": "Surprise Barbershop Gram",
-      "description": "Up to ten minutes. Four singers sing Happy Birthday in four-part harmony and one song from the repertoire, chosen for the recipient.",
-      "price": "600",
-      "priceCurrency": "GBP",
-      "priceValidUntil": "2027-12-31",
-      "availability": "https://schema.org/InStock",
-      "url": "https://londonchoralservice.com/barbershop-grams/#prices"
-    }
-  }
-  </script>
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "BreadcrumbList",
-    "itemListElement": [
-      { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://londonchoralservice.com/" },
-      { "@type": "ListItem", "position": 2, "name": "Barbershop Grams", "item": "https://londonchoralservice.com/barbershop-grams/" }
-    ]
-  }
-  </script>
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "FAQPage",
-    "mainEntity": [
+    "@graph": [
       {
-        "@type": "Question",
-        "name": "How much notice do you need?",
-        "acceptedAnswer": { "@type": "Answer", "text": "48 hours. Valentine's week and December book up well before that, so ask early for those." }
+        "@type": "Service",
+        "name": "Barbershop Grams",
+        "serviceType": "Singing telegram",
+        "description": "A barbershop quartet sent to surprise one person in London with Happy Birthday in four-part harmony and a song chosen for them.",
+        "url": "https://londonchoralservice.com/barbershop-grams/",
+        "provider": {
+          "@type": "LocalBusiness",
+          "@id": "https://londonchoralservice.com/#organization"
+        },
+        "areaServed": {
+          "@type": "AdministrativeArea",
+          "name": "Greater London"
+        },
+        "offers": {
+          "@type": "Offer",
+          "name": "Surprise Barbershop Gram",
+          "description": "Up to ten minutes. Four singers sing Happy Birthday in four-part harmony and one song from the repertoire, chosen for the recipient.",
+          "price": "600",
+          "priceCurrency": "GBP",
+          "priceValidUntil": "2027-12-31",
+          "availability": "https://schema.org/InStock",
+          "url": "https://londonchoralservice.com/barbershop-grams/#prices"
+        }
       },
       {
-        "@type": "Question",
-        "name": "Where will you sing?",
-        "acceptedAnswer": { "@type": "Answer", "text": "Anywhere in Greater London we can get four singers into: offices, homes, restaurants, pubs, parks, and care homes. Hospital wards need the ward's permission first, which we will ask for." }
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "https://londonchoralservice.com/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Barbershop Grams",
+            "item": "https://londonchoralservice.com/barbershop-grams/"
+          }
+        ]
       },
       {
-        "@type": "Question",
-        "name": "What happens if they are not there?",
-        "acceptedAnswer": { "@type": "Answer", "text": "Tell us before the singers set off and we rearrange once at no charge. After they have set off the fee stands, because four singers have given up the slot." }
-      },
-      {
-        "@type": "Question",
-        "name": "How do you keep it a surprise?",
-        "acceptedAnswer": { "@type": "Answer", "text": "We only ever contact the number you give us. We never ring or email the recipient, and we do not post anything about a booking before it happens." }
-      },
-      {
-        "@type": "Question",
-        "name": "Can you sing a song that is not on your repertoire list?",
-        "acceptedAnswer": { "@type": "Answer", "text": "Yes. We arrange your song for four voices from £200. Allow a week so the singers can rehearse it properly." }
-      },
-      {
-        "@type": "Question",
-        "name": "Can we film it?",
-        "acceptedAnswer": { "@type": "Answer", "text": "Yes, and we would like a copy. We ask the person who was surprised for permission before we post anything ourselves." }
-      },
-      {
-        "@type": "Question",
-        "name": "Is there a cheaper version?",
-        "acceptedAnswer": { "@type": "Answer", "text": "No. A Barbershop Gram is four voices, because four is what makes the harmony. We do hire single singers from £250, but that is a different thing and we do not sell it as a gram." }
-      },
-      {
-        "@type": "Question",
-        "name": "Who will be singing?",
-        "acceptedAnswer": { "@type": "Answer", "text": "Four singers chosen for your booking by Luca Wetherall, our Artistic Director and Tutor in Music at the University of Oxford, who auditions every musician on the team himself." }
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "How much notice do you need?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "48 hours. Valentine's week and December book up well before that, so ask early for those."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Where will you sing?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Anywhere in Greater London we can get four singers into: offices, homes, restaurants, pubs, parks, and care homes. Hospital wards need the ward's permission first, which we will ask for."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "What happens if they are not there?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Tell us before the singers set off and we rearrange once at no charge. After they have set off the fee stands, because four singers have given up the slot."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "How do you keep it a surprise?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "We only ever contact the number you give us. We never ring or email the recipient, and we do not post anything about a booking before it happens."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Can you sing a song that is not on your repertoire list?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes. We arrange your song for four voices from £200. Allow a week so the singers can rehearse it properly."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Can we film it?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes, and we would like a copy. We ask the person who was surprised for permission before we post anything ourselves."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Is there a cheaper version?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "No. A Barbershop Gram is four voices, because four is what makes the harmony. We do hire single singers from £250, but that is a different thing and we do not sell it as a gram."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Who will be singing?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Four singers chosen for your booking by Luca Wetherall, our Artistic Director and Tutor in Music at the University of Oxford, who auditions every musician on the team himself."
+            }
+          }
+        ]
       }
     ]
   }
