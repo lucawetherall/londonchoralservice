@@ -317,6 +317,25 @@ Add before the closing `</style>`. These are the components the private register
     }
 ```
 
+- [ ] **Step 7b: Give the hero CTA row a gap**
+
+The inherited `.bs-hero__cta` is `margin-top: 2.5rem` and nothing else, because the exemplar's hero carried a single button. The hub's hero has two, which would sit against each other with only a space between them and get no vertical gap when they stack. **Modify the existing rule in place** — do not append a second `.bs-hero__cta` block, which would leave one selector defined in two places:
+
+```css
+    .bs-hero__cta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: .75rem;
+      margin-top: 2.5rem;
+    }
+```
+
+```bash
+grep -c '\.bs-hero__cta {' partials/barbershop-register.css.html
+```
+
+Expected: `1`.
+
 - [ ] **Step 8: Verify Pass A cannot eat this block**
 
 ```bash
@@ -770,25 +789,33 @@ The `role` attributes are deliberate. At the `39.9375rem` breakpoint the registe
 
 The £600 is flat, not "from" — it is the matched figure and a "from" would not be a match (spec §Product).
 
-- [ ] **Step 3: Verify the FAQ strings match the schema exactly**
+- [ ] **Step 3: Verify the FAQ strings match the schema**
 
 ```bash
 python3 - <<'EOF'
 import json, re, html
 c = open('barbershop-grams/index.html', encoding='utf-8').read()
 blocks = re.findall(r'<script type="application/ld\+json">(.*?)</script>', c, re.S)
-faq = next(json.loads(b) for b in blocks if '"FAQPage"' in b)
+doc = json.loads(blocks[0])
+nodes = doc.get('@graph', [doc])
+faq = next(n for n in nodes if n.get('@type') == 'FAQPage')
 schema = [(q['name'], q['acceptedAnswer']['text']) for q in faq['mainEntity']]
 vis = re.findall(r'<summary>(.*?)</summary>\s*<p>(.*?)</p>', c, re.S)
 def norm(s):
-    return re.sub(r'\s+', ' ', html.unescape(re.sub(r'<[^>]+>', '', s))).strip()
+    s = html.unescape(re.sub(r'<[^>]+>', '', s))
+    for a, b in [('\u2019', "'"), ('\u2018', "'"), ('\u201c', '"'), ('\u201d', '"')]:
+        s = s.replace(a, b)
+    return re.sub(r'\s+', ' ', s).strip()
 assert len(schema) == len(vis) == 8, f"expected 8 each, got schema={len(schema)} visible={len(vis)}"
-bad = [(a, norm(b)) for (a, b), (c2, d) in zip(schema, vis) if a != norm(c2) or b != norm(d)]
+bad = [(q, norm(vq)) for (q, a), (vq, va) in zip(schema, vis)
+       if norm(q) != norm(vq) or norm(a) != norm(va)]
 print("MISMATCHES:", bad or "none")
 EOF
 ```
 
-Expected: `MISMATCHES: none`. A visible answer that differs from its schema answer is a rich-result risk and the site's convention forbids it.
+Two things this check gets right that a naive version does not. It reads the `FAQPage` out of the `@graph` rather than assuming a top-level object, because Task 4 puts all three nodes in one graph. And it **normalises apostrophes before comparing**, because the house convention — verified across `pricing.html`, `weddings.html`, `funerals.html`, `contact.html` and `compare/london-funeral-singers.html` — is straight apostrophes inside JSON-LD and `&rsquo;` in visible copy. Keep the visible text typographic and the schema straight; Google requires the answers to match in substance, not in glyph encoding.
+
+Expected: `MISMATCHES: none`. A visible answer that differs from its schema answer in *substance* is a rich-result risk.
 
 - [ ] **Step 4: Confirm no house-claim or price drift**
 
