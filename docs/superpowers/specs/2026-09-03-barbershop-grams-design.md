@@ -61,7 +61,7 @@ Retrieved from `https://www.barbershopogram.co.uk/` and `/prices` on 2026-09-03.
 |---|---|---|
 | Ten-minute gram | £600 | £600 |
 | Notice | Not published | 48 hours |
-| First reply | Contact form | WhatsApp, same day |
+| First reply | Contact form | WhatsApp, usually the same day |
 | Repertoire | Linked list | Published page, with the option of any song arranged from £200 |
 | Ensemble | A quartet | Four voices as standard; eight or twelve by quotation |
 | Musical leadership | Not published | Luca Wetherall, Artistic Director, Tutor in Music, University of Oxford |
@@ -222,7 +222,7 @@ Draft copy is the register to hit, not final text. Every line goes through `writ
 **10. Repertoire teaser**: six or eight titles and a link to `repertoire.html`.
 
 **11. FAQ** (visible accordion and `FAQPage`, identical strings)
-- *How much notice do you need?* 48 hours. Valentine's week and December go early.
+- *How much notice do you need?* 48 hours. Ask early for Valentine's week and December, the busiest dates in our year. (State this as a request, never as an observation about how fast grams book: the product has no trading history to support a demand claim. December is separately supportable from the existing business — `christmas.html` already says most years the December dates go by mid-September.)
 - *Where will you sing?* Anywhere within Greater London we can get four singers into: offices, homes, restaurants, parks, care homes, hospital wards with the ward's permission.
 - *What if they are not there?* We rearrange once at no charge if you tell us before the singers set off. After that the fee stands.
 - *Is it a surprise?* Only if you keep it. We contact the number you give us and no other.
@@ -276,7 +276,7 @@ Uses the barbershop register, not the site chrome, because a reader arriving fro
 1. **Opening.** Two sentences: you are comparing two quartets for a surprise; the entry product costs the same from both; this page says what each includes.
 2. **The table.** One row. Their "Up to 10 minutes (including Happy Birthdays)" at "£600", quoted verbatim, against our Surprise Barbershop Gram at £600. Beneath it: *Price as published at barbershopogram.co.uk/prices, checked 3 September 2026.*
 3. **What £600 buys from us.** The inclusions list from §Product. Facts, no adjectives.
-4. **How we work.** 48 hours' notice. WhatsApp, same-day reply. Four voices as standard, eight or twelve by quotation. A published repertoire (link). A named Artistic Director. Each stated about us; none set against them.
+4. **How we work.** 48 hours' notice. WhatsApp, usually the same day. Four voices as standard, eight or twelve by quotation. A published repertoire (link). A named Artistic Director. Each stated about us; none set against them.
 5. **Listen.** The barbershop recording, embedded. This is why the page waits.
 6. **Everything else we offer** is one sentence linking to `pricing.html#barbershop-grams`. **No other number appears on this page.** Printing our own £800 or £1,200 would need adding to `lcs_prices` and would invite the reader to line them up against a ladder this page has chosen not to discuss.
 7. **Already got a quote?** Link to `contact.html?occasion=barbershop-gram`.

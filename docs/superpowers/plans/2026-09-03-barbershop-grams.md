@@ -1480,7 +1480,7 @@ Eight sections, per spec §Page 3:
 1. Opening, two sentences. No hook.
 2. The one-row table: their `"Up to 10 minutes (including Happy Birthdays)"` at `&pound;600`, quoted verbatim, against our Surprise Barbershop Gram at `&pound;600`. Directly beneath, in body text: *Price as published at barbershopogram.co.uk/prices, checked 3 September 2026.*
 3. What £600 buys from us — the inclusions list from spec §Product. Facts, no adjectives.
-4. How we work — 48 hours' notice; WhatsApp, same-day reply; four voices as standard with eight or twelve by quotation; the published repertoire (link); the named Artistic Director. Each stated about us, none set against them.
+4. How we work — 48 hours' notice; WhatsApp, usually the same day (hedge it: `services.html` says "within 48 hours, often the same day" and `contact.html` "usually the same day", and responsiveness is this product's central claim, so it is the worst place to over-promise); four voices as standard with eight or twelve by quotation; the published repertoire (link); the named Artistic Director. Each stated about us, none set against them.
 5. Listen — the barbershop recording embedded.
 6. Everything else we offer — **one sentence** linking to `/pricing.html`, with no figure.
 7. Already got a quote? — link to `/contact.html?occasion=barbershop-gram`.
