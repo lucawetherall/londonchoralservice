@@ -364,7 +364,9 @@ The `?text=` pre-fill is gram-specific on purpose: it is how gram WhatsApp click
   </footer>
 ```
 
-That link to `/` is the **only** outbound link from the mini-site into the main site (spec §Linking). Do not add more.
+That link to `/` is the only **funnel** link from the mini-site back into the main site (spec §Linking): the main site points inward from its Services dropdown, but the mini-site does not lead a gift buyer onward into funeral and wedding content. Do not add more of those.
+
+`/privacy.html` in the same line is not a funnel link and is required: these pages carry the site-wide GA4/Google Ads snippet, the site has no cookie banner, and `privacy.html` is where every other footer points for cookie disclosure. Keep it.
 
 - [ ] **Step 3: Add the header and footer styles to the register**
 

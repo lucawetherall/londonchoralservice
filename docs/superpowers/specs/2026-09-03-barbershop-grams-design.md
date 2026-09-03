@@ -158,7 +158,8 @@ Warm and well-made, not a striped-waistcoat pastiche. No barber's-pole motif. Th
 - Never from `index.html`'s hero, `funerals.html`, any funeral guide, `private-events.html`, `destinations/`, or any `for-*.html`.
 
 **Mini-site → main site** (out):
-- The footer line only. A gram buyer may want a wedding choir next year; the door stays open one way.
+- The footer attribution line only. A gram buyer may want a wedding choir next year; the door stays open one way.
+- The privacy-policy link in the same footer line does not count against this and must stay: these pages carry the site-wide GA4/Google Ads snippet, there is no cookie banner anywhere on the site, and `privacy.html` is the single page every other footer points to for cookie disclosure. The rule is about funnel links, not legal ones.
 
 **Comparison page**: linked from the hub's FAQ and the mini-site footer only. Not from the main-site footer, where it would sit beneath `funerals.html`.
 
