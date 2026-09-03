@@ -34,7 +34,7 @@
 | `barbershop-grams/repertoire.html` | The published song list. `ItemList` + `BreadcrumbList` | 6 |
 | `validate_house_claims.py` | Extend `FILES` to cover the new directory | 3 |
 | `validate_jsonld.py` | Extend `FILES` to cover the new directory | 3 |
-| `pricing.html` | New "Barbershop Grams" section — source of truth for the five prices | 7 |
+| `pricing.html` | ~~New "Barbershop Grams" section~~ — **superseded**: gram prices are deliberately kept off this page (Task 7) | 7 |
 | `contact.html` | New `<option value="barbershop-gram">` so the enquiry pre-fill works | 8 |
 | `partials/nav.html` | Services-dropdown entry (partial edit → mandatory rebuild) | 9 |
 | `services.html` | One card in the ensemble grid + one `Offer` in the `OfferCatalog` | 9 |
@@ -910,96 +910,17 @@ git commit -m "feat(barbershop): published repertoire page"
 
 ---
 
-## Task 7: The `pricing.html` section
+## Task 7: Keep gram prices off `pricing.html`  *(superseded — no work to do)*
 
-`pricing.html` is the source of truth for every LCS price (CLAUDE.md). The five gram prices must exist here or they are unsourced everywhere else.
+**Owner decision, 2026-09-03, taken during implementation.** An earlier version of this task inserted a "Barbershop Grams" section into `pricing.html`. It shipped in `a3dad63`/`a2b96e9` and was reverted in `10abc0d`.
 
-**Files:**
-- Modify: `pricing.html` (insert after the "Christmas &amp; carol singers" section, which closes just before the `pull-quote` figure — find it with `grep -n 'Christmas &amp; carol singers' pricing.html`)
+The reason: barbershop is sold separately from the choral service, and its bookings are almost always for a quartet, so listing gram rates inside the choral price table works against the separation that the mini-site's whole architecture — its own register, nav, footer, and insulation from the CSS bundle — exists to maintain.
 
-- [ ] **Step 1: Insert the new section**
+**The end state is that `pricing.html` contains no reference to barbershop at all.** `grep -c 'barbershop' pricing.html` must return `0`.
 
-```html
-    <section class="section">
-      <div class="prose">
-        <h2>Barbershop Grams</h2>
-        <p>A <a href="/barbershop-grams/">Barbershop Gram</a> is four singers sent to surprise one person: Happy Birthday in four-part harmony and one song chosen for them. It is priced as its own thing rather than off the table above, because a ten-minute surprise and a full service are not the same booking.</p>
-        <table class="pricing-table" role="table">
-          <thead class="sr-only">
-            <tr>
-              <th scope="col">Booking</th>
-              <th scope="col">Details</th>
-              <th scope="col">Price</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td class="pricing-name"><strong>Surprise Barbershop Gram</strong><span class="pricing-sub">up to 10 minutes</span></td>
-              <td class="pricing-detail">Four singers find the person, sing Happy Birthday in four-part harmony, then one song from the <a href="/barbershop-grams/repertoire.html">repertoire</a> chosen for them, with their name worked in. Offices, homes, restaurants, and parks across Greater London. 48 hours&rsquo; notice.</td>
-              <td class="pricing-price">&pound;600</td>
-            </tr>
-            <tr>
-              <td class="pricing-name"><strong>Half-hour set</strong></td>
-              <td class="pricing-detail">Three or four songs for one occasion, or a roaming set that reaches several people across an office or a party.</td>
-              <td class="pricing-price">From &pound;800</td>
-            </tr>
-            <tr>
-              <td class="pricing-name"><strong>One-hour set</strong></td>
-              <td class="pricing-detail">A programme of eight to ten songs with a break. Drinks receptions, garden parties, company summer parties.</td>
-              <td class="pricing-price">From &pound;1,200</td>
-            </tr>
-            <tr>
-              <td class="pricing-name"><strong>Bespoke arrangement</strong></td>
-              <td class="pricing-detail">Your song, arranged for four voices. Allow a week. Add it to any booking above.</td>
-              <td class="pricing-price">From &pound;200</td>
-            </tr>
-            <tr>
-              <td class="pricing-name"><strong>Video recording session</strong></td>
-              <td class="pricing-detail">A filmed performance for someone who is not in London, or for a company video. We agree the licence with you for the use you have in mind.</td>
-              <td class="pricing-price">From &pound;1,000</td>
-            </tr>
-          </tbody>
-        </table>
-        <p>Travel within Greater London is included. Eight or twelve voices instead of four, quoted on request.</p>
-      </div>
-    </section>
-```
+`barbershop-grams/index.html` is the source of truth for the five gram prices (£600 flat; from £800, £1,200, £200, £1,000). `pricing.html` stays the source of truth for choral prices. `CLAUDE.md`'s pricing convention was rewritten to carve this out — read it before quoting any price anywhere.
 
-- [ ] **Step 2: Verify the figures agree with the hub page**
-
-```bash
-python3 - <<'EOF'
-import re
-def figs(p):
-    body = open(p, encoding='utf-8').read().split('Barbershop Gram', 1)[1]
-    return sorted(set(re.findall(r'&pound;([\d,]+)', body)))
-print('pricing.html :', figs('pricing.html'))
-print('hub          :', sorted(set(re.findall(r'&pound;([\d,]+)', open('barbershop-grams/index.html', encoding='utf-8').read()))))
-EOF
-```
-
-Expected: the gram figures on both sides are `200, 600, 800, 1,000, 1,200` (the hub also shows `250`, from the "is there a cheaper version" answer, which is the soloist price already on `pricing.html`). Any disagreement breaks the CLAUDE.md rule that prices match `pricing.html`.
-
-- [ ] **Step 3: Leave `pricing.html`'s JSON-LD alone**
-
-Its `@graph` carries an `OfferCatalog` of eight `Offer` nodes covering the choirs and accompaniment tables. The five gram tiers are deliberately **not** added to it, for three reasons:
-
-- Task 4 established that only the flat £600 carries an `Offer`, because a "from" price is not an offer. Adding four `minPrice` offers here would contradict a decision already made and reviewed.
-- That £600 `Offer` already exists on `barbershop-grams/index.html`, which is the product's own page and the right home for it. Duplicating it here would leave two nodes competing to describe one price.
-- The existing "Christmas &amp; carol singers" section is likewise a table with no `Offer` nodes, so a pricing section without them is the established pattern, not an omission.
-
-Use relative links in the section's body copy (`barbershop-grams/`, not `/barbershop-grams/`) — every other in-content link on this page is relative, and the absolute form belongs only in the partials, which are injected at varying directory depths.
-
-- [ ] **Step 4: Commit**
-
-```bash
-git add pricing.html llms-full.txt
-git commit -m "feat(pricing): Barbershop Grams pricing section"
-```
-
-`llms-full.txt` is regenerated by `build.sh` from the built pages, so it changes alongside and is committed with it. Never hand-edit it.
-
----
+The inbound links on `services.html`, `weddings.html` and `corporate.html` stay. They carry no figures, so they do not reintroduce the mixing, and with no nav entry they are the product's main discovery path.
 
 ## Task 8: Wire the enquiry pre-fill
 
@@ -1494,7 +1415,7 @@ Eight sections, per spec §Page 3:
 3. What £600 buys from us — the inclusions list from spec §Product. Facts, no adjectives.
 4. How we work — 48 hours' notice; WhatsApp, usually the same day (hedge it: `services.html` says "within 48 hours, often the same day" and `contact.html` "usually the same day", and responsiveness is this product's central claim, so it is the worst place to over-promise); four voices as standard with eight or twelve by quotation; the published repertoire (link); the named Artistic Director. Each stated about us, none set against them.
 5. Listen — the barbershop recording embedded.
-6. Everything else we offer — **one sentence** linking to `/pricing.html`, with no figure.
+6. Everything else we offer — **one sentence** linking to `/barbershop-grams/#prices`, with no figure. (Not `pricing.html`: gram prices deliberately do not appear there — see Task 7.)
 7. Already got a quote? — link to `/contact.html?occasion=barbershop-gram`.
 8. FAQ — four questions with matching `FAQPage` JSON-LD.
 
