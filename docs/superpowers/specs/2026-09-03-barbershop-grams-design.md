@@ -101,7 +101,11 @@ A one-to-one conversation with Luca about the person and the song · the singers
 
 ### Where `pricing.html` fits
 
-`pricing.html` remains the single source of truth for every LCS price, so it gains a **"Barbershop Grams"** section, the same shape as "Christmas & carol singers", carrying the table above and a link into the mini-site. The mini-site repeats the table; the CLAUDE.md rule "prices quoted anywhere must match `pricing.html`" applies.
+**It does not.** Gram prices never appear on `pricing.html` (owner decision, 2026-09-03, revised during implementation): barbershop is sold separately from the choral service, and the bookings are almost always for a quartet, so mixing its rates into the choral price list works against the separation the rest of this design maintains.
+
+A section was added there during implementation and then removed. **`barbershop-grams/index.html` is the source of truth for the five gram prices**, and `pricing.html` remains the source of truth for choral prices — singers, choirs, instrumentalists, Christmas. The CLAUDE.md convention was rewritten to carve this out rather than left to imply the old rule.
+
+The main site still links to the mini-site from `services.html`, `weddings.html` and `corporate.html`, but those links carry no figures, so they do not reintroduce the mixing.
 
 ---
 
