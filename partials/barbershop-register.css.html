@@ -47,7 +47,7 @@
          --bs-navy           10.75 AAA       9.52 AAA   occasion labels, table heads
          --bs-red             6.12 AA        5.42 AA    accents, buttons, small caps — NOT long body text
          --bs-mid             5.85 AA        5.18 AA    captions, secondary text
-       Reversed: --bs-paper on --bs-red 6.54, on --bs-navy 11.48 — both fine for buttons.
+       Reversed (paper on red, paper on navy) is symmetric: 6.12 and 10.75 — both fine for buttons.
        --bs-rule is a hairline only: never text, never a focus outline. */
     :root {
       --bs-ink:    #1F1A17;
@@ -202,7 +202,7 @@
     }
     .bs-nav-enquire:hover { border-bottom-color: var(--bs-ink); }
 
-    /* ── Breadcrumb (destination pages only; the hub has no trail) ── */
+    /* ── Breadcrumb (repertoire.html only; the hub has no trail) ── */
     .bs-breadcrumb {
       max-width: 72rem;
       margin-inline: auto;
@@ -218,68 +218,7 @@
     .bs-breadcrumb a { color: var(--bs-mid); text-decoration: none; border-bottom: 1px solid var(--bs-rule); }
     .bs-breadcrumb a:hover { color: var(--bs-ink); border-bottom-color: var(--bs-ink); }
     .bs-breadcrumb [aria-current="page"] { color: var(--bs-ink); }
-    .bs-crumb-sep { color: var(--bs-rule); padding-inline: .45rem; }
-
-    /* ── Destination groups and cards ── */
-    .bs-group + .bs-group { margin-top: 3rem; }
-    .bs-group > h3 {
-      font-family: var(--font-ui);
-      font-size: .6875rem;
-      font-weight: 600;
-      letter-spacing: .18em;
-      text-transform: uppercase;
-      color: var(--bs-red);
-      margin-bottom: .9rem;
-    }
-    .bs-dests {
-      list-style: none;
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
-      gap: 1px;
-      /* Cell rules come from each item's own ring rather than a container
-         background showing through the gap: an odd-numbered group would
-         otherwise leave the trailing empty cell as a solid block of colour. */
-    }
-    .bs-dests > li { box-shadow: 0 0 0 1px var(--bs-rule); }
-    .bs-dests a {
-      display: block;
-      padding: 1.1rem 1.25rem 1.2rem;
-      text-decoration: none;
-      color: var(--bs-ink);
-      height: 100%;
-    }
-    .bs-dests a:hover { background: rgba(126, 24, 24, .045); }
-    .bs-dests .n {
-      display: block;
-      font-family: var(--font-display);
-      font-size: 1.375rem;
-      line-height: 1.15;
-    }
-    .bs-dests .r {
-      display: block;
-      margin-top: .35rem;
-      font-family: var(--font-body);
-      font-size: .8125rem;
-      line-height: 1.45;
-      color: var(--bs-mid);
-    }
-
-    /* ── Region sections within a country page ── */
-    .bs-region { margin-top: 2.25rem; }
-    .bs-region > h3 {
-      font-family: var(--font-display);
-      font-size: 1.5rem;
-      line-height: 1.2;
-      margin-bottom: .5rem;
-    }
-    .bs-region > h3::after {
-      content: "";
-      display: block;
-      width: 2.25rem;
-      height: 1px;
-      background: var(--bs-navy);
-      margin-top: .55rem;
-    }
+    .bs-crumb-sep { color: var(--bs-mid); padding-inline: .45rem; }
 
     /* ── Checked-date stamp on time-sensitive facts ── */
     .bs-checked {
@@ -305,7 +244,7 @@
     .bs-hairline--accent {
       width: 5.5rem;
       height: 1px;
-      background: var(--bs-navy); /* decorative hairline only — never text */
+      background: var(--bs-navy);
       margin-block: 2rem;
     }
     .bs-hero__sub {
@@ -315,7 +254,7 @@
     }
     .bs-hero__cta { margin-top: 2.5rem; }
 
-    /* ── Buttons: outline only ── */
+    /* ── Buttons ── */
     .bs-btn {
       display: inline-block;
       font-family: var(--font-ui);
@@ -334,25 +273,6 @@
     .bs-btn:hover {
       background: var(--bs-ink);
       color: var(--bs-paper);
-    }
-
-    /* ── Venues list ── */
-    .bs-venues {
-      list-style: none; /* role="list" in the markup keeps AT list semantics */
-      margin-top: 1rem;
-      columns: 2;
-      column-gap: 2.5rem;
-    }
-    @media (max-width: 40rem) {
-      .bs-venues { columns: 1; }
-    }
-    .bs-venues li {
-      font-family: var(--font-display);
-      font-size: 1.375rem;
-      line-height: 1.4;
-      padding-block: .45rem;
-      border-bottom: 1px solid var(--bs-rule);
-      break-inside: avoid;
     }
 
     /* ── Process: the page's only numbered component ── */
@@ -390,41 +310,6 @@
     .bs-footer a { color: var(--bs-mid); }
     .bs-footer p + p { margin-top: .75rem; }
 
-    /* ── Focus & utilities ── */
-    :focus-visible {
-      outline: 2px solid var(--bs-red);
-      outline-offset: 3px;
-    }
-    .sr-only {
-      position: absolute;
-      width: 1px;
-      height: 1px;
-      padding: 0;
-      margin: -1px;
-      overflow: hidden;
-      clip: rect(0, 0, 0, 0);
-      white-space: nowrap;
-      border: 0;
-    }
-
-    /* ── Motion: every opacity-0/entrance rule lives here, inside the
-       no-preference query AND scoped under html.bs-motion (set by JS),
-       so reduced-motion users and no-JS visitors see the full page. ── */
-    @media (prefers-reduced-motion: no-preference) {
-      html { scroll-behavior: smooth; }
-      html.bs-motion [data-fade] {
-        opacity: 0;
-        transform: translateY(12px);
-        transition: opacity .25s ease, transform .25s ease;
-      }
-      html.bs-motion [data-fade].bs-in {
-        opacity: 1;
-        transform: none;
-      }
-    }
-    @media (prefers-reduced-motion: reduce) {
-      .bs-btn { transition: none; }
-    }
     /* ── Occasion strip ── */
     .bs-occasions {
       display: flex;
@@ -550,5 +435,32 @@
       background: var(--bs-red);
       border-color: var(--bs-red);
       color: var(--bs-paper);
+    }
+
+    /* ── Focus & utilities ── */
+    :focus-visible {
+      outline: 2px solid var(--bs-red);
+      outline-offset: 3px;
+    }
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    /* ── Motion: no JS sets html.bs-motion on this mini-site, so there are
+       no entrance-animation classes to gate here. The one live rule is
+       smooth in-page scrolling, for the hub's occasion-strip anchors. ── */
+    @media (prefers-reduced-motion: no-preference) {
+      html { scroll-behavior: smooth; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .bs-btn, .bs-occasions a { transition: none; }
     }
   </style>
