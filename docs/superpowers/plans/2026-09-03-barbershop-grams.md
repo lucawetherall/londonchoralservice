@@ -42,6 +42,7 @@
 | `sitemap.xml`, `llms.txt` | Wiring | 10 |
 | `docs/ROADMAP.md` | Record the shipped item | 11 |
 | `data/competitor-pricing.yml` | The one sourced competitor figure | 13 |
+| `validate_competitor_claims.py` | Support `price_inc_vat`; it currently crashes on any package without `price_ex_vat` | 13 |
 | `tests/test_competitor_claims.py` | Test that an unlisted competitor tier fails the build | 13 |
 | `compare/barbershopogram.html` | The one-number comparison page | 14 |
 | `barbershop-grams/listen.html` | Recordings, once they exist | 15 |
@@ -1222,9 +1223,63 @@ def test_barbershopogram_entry_price_passes():
 python3 tests/test_competitor_claims.py
 ```
 
-Expected: `test_barbershopogram_unlisted_tier_fails` **passes** (£750 is not in the YAML yet, so it correctly fails the build) and `test_barbershopogram_entry_price_passes` **fails** — £600 is not declared yet either. That failure is the one Step 3 fixes.
+Expected: `test_barbershopogram_unlisted_tier_fails` **passes** (£750 is not in the YAML yet, so it correctly fails the build) and `test_barbershopogram_entry_price_passes` **fails** — £600 is not declared yet either. That failure is the one Step 3c fixes.
 
-- [ ] **Step 3: Add the provider entry**
+- [ ] **Step 3: Teach the validator that not every provider quotes ex-VAT**
+
+**Do this before Step 3c, not after.** `allowed_figures()` reads `pkg["price_ex_vat"]` unconditionally (`validate_competitor_claims.py:30`), so a package without that key raises `KeyError: 'price_ex_vat'` and takes the whole build down — not a rejected figure, a traceback. Verified: adding a `price_inc_vat`-only provider to the unpatched validator crashes it even on figures that should pass. Land the YAML entry first and `./build.sh` stops working.
+
+Beyond the crash, the derivation is also wrong for this provider. The unconditional inc-VAT twin is right for the funeral singers, who print "+ VAT" against every figure. Barbershop-o-gram print a bare "£600" to consumers, and UK price-marking rules require consumer-facing prices to include VAT — so £600 is the buyer's cost and a derived £720 would describe nothing real.
+
+Replace the package loop inside `allowed_figures()`:
+
+```python
+    for provider in cfg.get("providers", {}).values():
+        for pkg in provider.get("packages", {}).values():
+            if "price_ex_vat" in pkg:              # provider quotes excluding VAT
+                ex = pkg["price_ex_vat"]
+                allowed.add(ex)
+                allowed.add(round(ex * (1 + vat)))  # what a family actually pays
+            if "price_inc_vat" in pkg:             # already the buyer's cost
+                allowed.add(pkg["price_inc_vat"])   # no twin: nothing to add
+```
+
+A mistyped key then allows no figure and fails the build loudly, which is the right failure direction. Funeral-singers behaviour is unchanged: every one of its packages uses `price_ex_vat`.
+
+- [ ] **Step 3b: Prove the old behaviour is gone**
+
+```bash
+python3 - <<'EOF'
+import subprocess, sys, tempfile, os, shutil
+YAML = """vat_rate: 0.20
+providers:
+  incprov:
+    name: "Inc Provider"
+    pricing_url: "https://example.com/prices"
+    checked_date: "2026-09-03"
+    packages:
+      gram:
+        price_inc_vat: 600
+        source_quote: "£600"
+lcs_prices:
+  gram: 600
+"""
+tmp = tempfile.mkdtemp()
+os.makedirs(tmp + "/data"); os.makedirs(tmp + "/compare")
+open(tmp + "/data/competitor-pricing.yml", "w").write(YAML)
+open(tmp + "/compare/x.html", "w").write("<p>Their gram is &pound;720.</p>")
+shutil.copy("validate_competitor_claims.py", tmp)
+p = subprocess.run([sys.executable, "validate_competitor_claims.py"], cwd=tmp, capture_output=True, text=True)
+print("exit:", p.returncode); print(p.stdout)
+assert p.returncode == 1 and "720" in p.stdout, "£720 must NOT be derivable from an inc-VAT price"
+print("PASS: no phantom inc-VAT twin")
+shutil.rmtree(tmp)
+EOF
+```
+
+Expected: `PASS: no phantom inc-VAT twin`. Run it before the edit too: it fails with `KeyError: 'price_ex_vat'`, which is the crash being fixed. Also confirm the funeral-singers behaviour is untouched — with the patch applied, `£275` and `£330` are still allowed and `£720` is still rejected.
+
+- [ ] **Step 3c: Add the provider entry**
 
 Append to the `providers:` map in `data/competitor-pricing.yml`, after `london-funeral-singers`:
 
@@ -1234,11 +1289,11 @@ Append to the `providers:` map in `data/competitor-pricing.yml`, after `london-f
     url: "https://www.barbershopogram.co.uk/"
     pricing_url: "https://www.barbershopogram.co.uk/prices"
     checked_date: "2026-09-03"
-    vat_treatment: "TODO — not stated anywhere on their prices page. Make no VAT claim about them until it is."
+    vat_treatment: "consumer-inclusive; no VAT statement or VAT number anywhere on their site (checked 2026-09-03). £600 is what a buyer pays, so this comparison makes no VAT argument."
     travel: "All fees include music from our standard repertoire and include travel within London zone 5 unless otherwise stated."
     packages:
       ten_minute_gram:
-        price_ex_vat: 600
+        price_inc_vat: 600
         source_quote: "Up to 10 minutes (including Happy Birthdays) £600"
         includes: "All fees include music from our standard repertoire"
     # Their other published tiers (half-hour, one-hour, bespoke, audio and video
@@ -1415,4 +1470,4 @@ git commit -m "feat(barbershop): listen page with barbershop recordings"
 
 **Deliberately not in this plan.** The OG image (`og-barbershop-grams.png`) is an owner action; pages ship with `og-image.png` until it exists. GBP re-anchoring is `MANUAL-ACTIONS-REQUIRED.md` §16. Phase 3 occasion pages need Search Console evidence that does not exist yet, and inventing their content now would be building on speculation.
 
-**Known consequence of Task 13, recorded on purpose.** `allowed_figures()` in `validate_competitor_claims.py` derives an inc-VAT twin for every competitor price, so declaring £600 also admits £720 (600 × 1.2). Nothing uses it and the claim rules forbid a VAT claim about this provider. If a third provider makes this risky, gate the derivation on `vat_treatment` starting with `"quoted excluding"`.
+**Fixed in Task 13, not tolerated.** An earlier draft of this plan accepted that `allowed_figures()` would derive a phantom £720 from the declared £600, on the grounds that nothing would use it. Dry-running the change surfaced something worse: the function reads `pkg["price_ex_vat"]` unconditionally, so a `price_inc_vat`-only package raises `KeyError` and breaks `./build.sh` outright — the build stops working, it does not merely allow a wrong figure. Task 13 Step 3 fixes both, Step 3b is the regression test, and the funeral-singers figures (£275 allowed, £330 allowed, £720 rejected) were verified unchanged under the patch.
