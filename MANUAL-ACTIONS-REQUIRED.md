@@ -325,3 +325,30 @@ Afterwards:
 1. Whatever address GBP shows (or none) is the NAP master for §2 and `docs/off-site-listings-pack.md`. Update the pack's "Postcode on record" row to match, character for character.
 2. Update the note in §1 that names Maidenhead.
 3. Check the `geo` coordinates in `index.html`'s schema still make sense for the anchor GBP now uses. Never put an address in the schema that GBP does not show.
+
+---
+
+## 17. Barbershop Grams launch — owner actions, 2026-09-03
+
+Spec: `docs/superpowers/specs/2026-09-03-barbershop-grams-design.md` §Go-to-market. Plan: `docs/superpowers/plans/2026-09-03-barbershop-grams.md`. The pages ship without these, but the product does not really launch until 17.1 and 17.2 are done.
+
+**17.1 — Record a barbershop demo. This is the critical path.** Happy Birthday in four parts plus one standard, filmed, two to three minutes. Two things depend on it and neither can proceed without it:
+
+- The **comparison page** (`compare/barbershopogram.html`, plan Task 14) is deliberately gated on it. A page whose job is to beat a competitor matched on price, whose only proof is a funeral hymn, would hurt more than no page.
+- The **hub page has no proof of sound at all** today. A quality review put this plainly: a buyer with our tab and the competitor's tab open, at the identical £600, currently has no way to hear what we sound like. The competitor has a YouTube channel and video on their homepage.
+
+Deliberately not worked around: `listen.html` is hymns and service music, so linking a gift buyer to it lands them on funeral repertoire — the register collision the whole mini-site architecture exists to prevent. There is no substitute for a genre-appropriate recording.
+
+Once it exists, add the YouTube id, upload date and duration to `data/seo-fix-discovered-urls.yml` (never invent these — see §1) and the gated tasks can run.
+
+**17.2 — Confirm the repertoire list.** `barbershop-grams/repertoire.html` publishes a song list drafted by Claude in the spec. Strike anything the singers have not actually rehearsed. Nothing on that page is a claim we can stand behind until you have been through it.
+
+**17.3 — Seed one or two grams.** Colleagues or friends. Produces real footage, the first honest client quote, and a rehearsal of the logistics against reality before a paying customer meets them.
+
+**17.4 — Consent wording for filming.** The buyer confirms on enquiry whether we may film; the recipient is asked *after* the surprise, before anything is posted. Belongs in the FAQ and the booking agreement. Short-form video of surprise reactions is the product's strongest organic channel, and it cannot run without a clean consent routine.
+
+**17.5 — `assets/og-barbershop-grams.png`**, 1200×630. Until it exists the pages use the shared `og-image.png`, which is a generic choir image and will undersell a gift product in a shared link.
+
+**17.6 — Directory listings.** Last Minute Musicians, Add to Event, Poptop, Encore, Bark. This is where "barbershop quartet hire" buyers who never reach Google's organic results go. Extend `docs/off-site-listings-pack.md` with a Barbershop Grams profile: the £600 figure, the 48-hour notice line, the repertoire link. House rules apply off-site too — no roster-scale claims, no VAT claims, no star ratings, no incentivised reviews.
+
+**17.7 — Ads.** Held until 17.1 and 17.3 are done; see the spec's §Go-to-market for the five campaigns. Before any spend, confirm the WhatsApp-click conversion actually fires — gram enquiries arrive by WhatsApp more than by form, and the gram links carry a distinct `?text=` pre-fill so they can be told apart in GA4.
