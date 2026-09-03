@@ -27,7 +27,7 @@ The line competes with Barbershop-o-gram (`barbershopogram.co.uk`), the establis
 | Repertoire | A published list. Drafted in this document; the Artistic Director confirms every title before it goes live. |
 | Video | Recordings are forthcoming and will be the product's main proof. A barbershop listen page is planned for when they exist. |
 | Cheaper non-barbershop gram | No. Four voices or it is not a Barbershop Gram. |
-| Nav prominence | Services dropdown only. Never top-level, never on funeral pages. |
+| Nav prominence | **No nav entry at all** (owner decision, 2026-09-03, revised during implementation). `partials/nav.html` expands into every page, so a Services-dropdown entry cannot be withheld from `funerals.html`, the funeral guides, the `for-*.html` pages or `compare/london-funeral-singers.html`. "Dropdown only, never on funeral pages" was not satisfiable with one shared nav, and the owner chose to drop the entry rather than show a birthday-gift product to a bereaved visitor. Reachable instead from `services.html`, `pricing.html`, `weddings.html` and `corporate.html`. |
 | Directories | Yes, as a human action (§Go-to-market). |
 | Domain | Subdirectory on the main domain, not a subdomain. Domain authority carries into the new pages; the register does the brand separation. |
 
@@ -151,7 +151,7 @@ Warm and well-made, not a striped-waistcoat pastiche. No barber's-pole motif. Th
 ### Linking, asymmetric on purpose
 
 **Main site → mini-site** (in):
-- `partials/nav.html` Services dropdown: "Barbershop Grams". Nowhere else in the nav.
+- **Not the nav.** See the Nav prominence row above: a shared nav partial reaches every page including the funeral surfaces, so there is no nav entry.
 - `services.html`: one card in the grid and one entry in its `ItemList` JSON-LD.
 - `pricing.html`: the new section links to the hub.
 - `weddings.html` and `corporate.html`: one in-copy sentence each ("a barbershop quartet for the drinks reception"), because "barbershop quartet hire London" is a head term the hub should also win.

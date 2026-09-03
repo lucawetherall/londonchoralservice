@@ -1051,15 +1051,15 @@ Inbound links only, and never from a funeral surface (spec §Linking). This task
 - Modify: `services.html` (ensemble grid at `services.html:2520`, `OfferCatalog` at `services.html:2215`)
 - Modify: `weddings.html`, `corporate.html` (one sentence each)
 
-- [ ] **Step 1: Add the Services-dropdown entry**
+- [ ] **Step 1: No nav entry — deliberately**
 
-In `partials/nav.html`, after the Private Events line and before the separator:
+**Do not edit `partials/nav.html`.** An earlier version of this plan added a Services-dropdown entry here; it was implemented, reviewed, and then removed by owner decision on 2026-09-03.
 
-```html
-            <li role="none"><a role="menuitem" href="/barbershop-grams/">Barbershop Grams</a></li>
-```
+The reason is structural. `partials/nav.html` expands into every page on the site, so a dropdown entry appears on `funerals.html`, all 40-odd funeral music guides, every `for-*.html` B2B page and `compare/london-funeral-singers.html`. The spec's original wording — "Services dropdown only, never on funeral pages" — cannot both hold with a single shared nav. Offered the choice between accepting it, dropping the entry, or maintaining a second funeral-specific nav partial across ~45 pages, the owner chose to drop it: a bereaved family arranging a service should not meet a birthday-gift product in the Services menu.
 
-Dropdown only. Not a top-level `<li>` — spec §Architecture: a birthday gram must not sit in the main nav above funeral content.
+The mini-site is reached instead from `services.html`, `pricing.html`, `weddings.html` and `corporate.html` (Steps 2–4 below), so nothing is orphaned. It loses top-level discoverability, which is the accepted trade.
+
+Note that this removes the mandatory-rebuild trigger from this task: with no partial edited, `./build.sh` still runs but produces a much smaller diff.
 
 - [ ] **Step 2: Add the services.html card**
 
