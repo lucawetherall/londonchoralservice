@@ -307,3 +307,21 @@ What to do:
 1. In the repo's GitHub Settings → Pages, add `www.londonchoralservice.com` as an alternate custom domain alongside the existing apex domain. This provisions a certificate covering both hosts and makes GitHub auto-redirect `www` → apex per the `CNAME` file's value.
 2. Alternatively, if `www` was never meant to resolve at all, remove its DNS record at the registrar/DNS panel instead of leaving a broken host reachable.
 3. Once fixed, confirm with `curl -I https://www.londonchoralservice.com/` — expect a `301` to the apex, not a TLS error.
+
+---
+
+## 16. Re-anchor the Google Business Profile to London, 2026-09-03
+
+Requested by the owner. The site's `LocalBusiness` schema in `index.html` already gives London (N1 7GU, Greater London); the Maps listing is anchored "The London Choral Service, Maidenhead" (§1). The two disagree, and the Barbershop Grams launch (`docs/superpowers/specs/2026-09-03-barbershop-grams-design.md`) needs "barbershop quartet London" local-pack visibility. This is a dashboard edit; nothing in the repo can make it.
+
+Pick the route by whether staff are present at a London address:
+
+**A. A staffed London address exists.** Business Profile → Edit profile → Location → set the address. Expect re-verification (postcard or video). Google rejects virtual offices and registered-office-only addresses; if N1 7GU is one of those, use route B, or the listing risks suspension.
+
+**B. No staffed address (service-area business).** Edit profile → Location → clear the address ("customers don't visit") → Service area: Greater London, plus whichever of the `areas/` counties you want to be found in. The listing anchors to the service area's centroid, which for Greater London is central London.
+
+Afterwards:
+
+1. Whatever address GBP shows (or none) is the NAP master for §2 and `docs/off-site-listings-pack.md`. Update the pack's "Postcode on record" row to match, character for character.
+2. Update the note in §1 that names Maidenhead.
+3. Check the `geo` coordinates in `index.html`'s schema still make sense for the anchor GBP now uses. Never put an address in the schema that GBP does not show.
