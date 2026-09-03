@@ -833,11 +833,11 @@
                 <td role="cell">&pound;600</td>
               </tr>
               <tr role="row">
-                <td role="cell"><strong>Half-hour set</strong><br>Three or four songs for one occasion, or a roaming set that reaches several people across an office or a party.</td>
+                <td role="cell"><strong>Half-hour set</strong><br>Three or four songs for one occasion, or a roaming set that reaches several people across an office, a party, or a wedding reception.</td>
                 <td role="cell">From &pound;800</td>
               </tr>
               <tr role="row">
-                <td role="cell"><strong>One-hour set</strong><br>A programme of eight to ten songs with a break. Drinks receptions, garden parties, company summer parties.</td>
+                <td role="cell"><strong>One-hour set</strong><br>A programme of eight to ten songs with a break. Wedding and drinks receptions, garden parties, company summer parties.</td>
                 <td role="cell">From &pound;1,200</td>
               </tr>
               <tr role="row">
@@ -928,7 +928,7 @@
           <h2>Send a gram</h2>
           <p>You will reach us fastest on WhatsApp, and we usually reply the same day. Send the date and the place, say who the gram is for, and we will come back on whether four singers are free.</p>
           <p><a class="bs-btn bs-btn--fill" href="https://wa.me/447356042468?text=Hello%20London%20Choral%20Service%2C%20I%27d%20like%20to%20send%20a%20Barbershop%20Gram.%20Date%3A%20%2F%20Place%3A%20%2F%20Who%20it%27s%20for%3A" target="_blank" rel="noopener" data-whatsapp>Send a gram on WhatsApp</a></p>
-          <p>You can also ring <a href="tel:+447356042468">07356 042468</a> or fill in <a href="/contact.html?occasion=barbershop-gram">the enquiry form</a>.</p>
+          <p>You can also ring <a href="tel:+447356042468">07356 042468</a> or fill in <a href="/contact.html?occasion=barbershop-gram#enquiry">the enquiry form</a>.</p>
         </div>
       </div>
     </section>
@@ -941,6 +941,28 @@
     <p>Barbershop Grams is a product of <a href="/">The London Choral Service</a>, the operating name of Alma Consort Ltd, registered in England and Wales, company no. 16785727. <a href="/privacy.html">Privacy policy</a></p>
   </footer>
   <!-- @include-end partials/barbershop-footer.html -->
+
+  <!-- Ads conversion tracking: this mini-site loads no other site JS (see js/nav.js),
+       so tel:/mailto:/WhatsApp clicks would otherwise fire no conversion at all.
+       Reuses the identifiers thank-you.html fires for phone/email/WhatsApp
+       enquiries, without thank-you.html's redirect or its main-site chrome.
+       gram_source lets gram conversions be told apart from the rest of the
+       site in GA4 (Admin > Custom definitions > Custom dimensions, scope
+       "Event", parameter "gram_source"), then used to filter or segment. -->
+  <script>
+    document.querySelectorAll('a[href^="tel:"], a[href^="mailto:"], a[href*="wa.me/"]').forEach(function (link) {
+      link.addEventListener('click', function () {
+        if (typeof gtag !== 'function') return;
+        gtag('event', 'ads_conversion_Contact_1', { gram_source: 'barbershop-grams-index' });
+        gtag('event', 'conversion', {
+          send_to: 'AW-17988388404/RjhECKGP7akcELSMxIFD',
+          value: 1.0,
+          currency: 'GBP',
+          gram_source: 'barbershop-grams-index'
+        });
+      });
+    });
+  </script>
 
 </body>
 </html>
