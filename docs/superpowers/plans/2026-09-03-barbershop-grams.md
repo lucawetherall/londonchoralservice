@@ -521,6 +521,25 @@ grep -c 'private-events.js\|web3forms.com/client' barbershop-grams/index.html
 
 Expected: `0`. The GA4/Google Ads snippet in the `<head>` stays — that is site-wide and unrelated.
 
+Stripping those scripts orphans two `<link rel="dns-prefetch">` hints in the head, since nothing on the page will contact either host any more. Delete them in the same step:
+
+```html
+  <link rel="dns-prefetch" href="https://api.web3forms.com">
+  <link rel="dns-prefetch" href="https://hcaptcha.com">
+```
+
+Keep the `googletagmanager` prefetch — the GA4 snippet still uses it.
+
+- [ ] **Step 2c: Fix the inherited relative asset paths**
+
+The exemplar sits at the site root, so its favicon and apple-touch-icon links are relative (`href="assets/favicon.ico"`). This page is one directory down, where those resolve to `/barbershop-grams/assets/…` and 404. Change them to absolute (`/assets/…`), matching `destinations/*.html`, which is the site's other subdirectory page on this pattern.
+
+```bash
+grep -n 'href="assets/' barbershop-grams/index.html
+```
+
+Expected: no output. Every asset reference in the head should be absolute or already partial-sourced.
+
 - [ ] **Step 3: Replace the head metadata**
 
 Replace the title through `twitter:image:alt` block with exactly this. Both descriptions are the same string, 154 characters, verified below. `og-barbershop-grams.png` does not exist yet (owner action, spec Phase 0.5), so the shared `og-image.png` is used until it does.
@@ -562,107 +581,125 @@ Expected: `154` — inside the required 141–161 (CLAUDE.md). Count the decoded
 
 - [ ] **Step 5: Replace the JSON-LD**
 
-Delete every `application/ld+json` block inherited from `private-events.html` and insert these three. The `Offer` carries only the £600 gram: a "from" price is not an offer, so the other four tiers get no `Offer` (spec §Page 1).
+Delete every `application/ld+json` block inherited from `private-events.html` and insert **one** block containing an `@graph` of three nodes. House convention, verified across `weddings.html`, `funerals.html`, `corporate.html`, `carol-singers.html` and `private-events.html`: one script tag, one `@context`, `Service` + `BreadcrumbList` + `FAQPage` as siblings in `@graph`. Three separate script islands would work but would diverge from every comparable page for no reason.
+
+`provider` is an `@id` reference to the canonical Organization node defined in `index.html`, **never an inlined copy** — `weddings.html:2206`, `funerals.html:2206` and `carol-singers.html:2207` all use this exact shape. An inlined duplicate creates a second unlinked representation of the same business, works against entity resolution, and would be strictly worse than the canonical node because it omits its `postalCode` and `geo`.
+
+The `Offer` carries only the £600 gram: a "from" price is not an offer, so the other four tiers get no `Offer` (spec §Page 1).
 
 ```html
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
-    "@type": "Service",
-    "name": "Barbershop Grams",
-    "serviceType": "Singing telegram",
-    "description": "A barbershop quartet sent to surprise one person in London with Happy Birthday in four-part harmony and a song chosen for them.",
-    "url": "https://londonchoralservice.com/barbershop-grams/",
-    "provider": {
-      "@type": "LocalBusiness",
-      "name": "The London Choral Service",
-      "url": "https://londonchoralservice.com/",
-      "telephone": "+447356042468",
-      "email": "office@londonchoralservice.com",
-      "address": {
-        "@type": "PostalAddress",
-        "addressLocality": "London",
-        "addressRegion": "Greater London",
-        "addressCountry": "GB"
-      }
-    },
-    "areaServed": {
-      "@type": "AdministrativeArea",
-      "name": "Greater London"
-    },
-    "offers": {
-      "@type": "Offer",
-      "name": "Surprise Barbershop Gram",
-      "description": "Up to ten minutes. Four singers sing Happy Birthday in four-part harmony and one song from the repertoire, chosen for the recipient.",
-      "price": "600",
-      "priceCurrency": "GBP",
-      "priceValidUntil": "2027-12-31",
-      "availability": "https://schema.org/InStock",
-      "url": "https://londonchoralservice.com/barbershop-grams/#prices"
-    }
-  }
-  </script>
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "BreadcrumbList",
-    "itemListElement": [
-      { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://londonchoralservice.com/" },
-      { "@type": "ListItem", "position": 2, "name": "Barbershop Grams", "item": "https://londonchoralservice.com/barbershop-grams/" }
-    ]
-  }
-  </script>
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "FAQPage",
-    "mainEntity": [
+    "@graph": [
       {
-        "@type": "Question",
-        "name": "How much notice do you need?",
-        "acceptedAnswer": { "@type": "Answer", "text": "48 hours. Valentine's week and December book up well before that, so ask early for those." }
+        "@type": "Service",
+        "name": "Barbershop Grams",
+        "serviceType": "Singing telegram",
+        "description": "A barbershop quartet sent to surprise one person in London with Happy Birthday in four-part harmony and a song chosen for them.",
+        "url": "https://londonchoralservice.com/barbershop-grams/",
+        "provider": {
+          "@type": "LocalBusiness",
+          "@id": "https://londonchoralservice.com/#organization"
+        },
+        "areaServed": {
+          "@type": "AdministrativeArea",
+          "name": "Greater London"
+        },
+        "offers": {
+          "@type": "Offer",
+          "name": "Surprise Barbershop Gram",
+          "description": "Up to ten minutes. Four singers sing Happy Birthday in four-part harmony and one song from the repertoire, chosen for the recipient.",
+          "price": "600",
+          "priceCurrency": "GBP",
+          "priceValidUntil": "2027-12-31",
+          "availability": "https://schema.org/InStock",
+          "url": "https://londonchoralservice.com/barbershop-grams/#prices"
+        }
       },
       {
-        "@type": "Question",
-        "name": "Where will you sing?",
-        "acceptedAnswer": { "@type": "Answer", "text": "Anywhere in Greater London we can get four singers into: offices, homes, restaurants, pubs, parks, and care homes. Hospital wards need the ward's permission first, which we will ask for." }
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://londonchoralservice.com/" },
+          { "@type": "ListItem", "position": 2, "name": "Barbershop Grams", "item": "https://londonchoralservice.com/barbershop-grams/" }
+        ]
       },
       {
-        "@type": "Question",
-        "name": "What happens if they are not there?",
-        "acceptedAnswer": { "@type": "Answer", "text": "Tell us before the singers set off and we rearrange once at no charge. After they have set off the fee stands, because four singers have given up the slot." }
-      },
-      {
-        "@type": "Question",
-        "name": "How do you keep it a surprise?",
-        "acceptedAnswer": { "@type": "Answer", "text": "We only ever contact the number you give us. We never ring or email the recipient, and we do not post anything about a booking before it happens." }
-      },
-      {
-        "@type": "Question",
-        "name": "Can you sing a song that is not on your repertoire list?",
-        "acceptedAnswer": { "@type": "Answer", "text": "Yes. We arrange your song for four voices from £200. Allow a week so the singers can rehearse it properly." }
-      },
-      {
-        "@type": "Question",
-        "name": "Can we film it?",
-        "acceptedAnswer": { "@type": "Answer", "text": "Yes, and we would like a copy. We ask the person who was surprised for permission before we post anything ourselves." }
-      },
-      {
-        "@type": "Question",
-        "name": "Is there a cheaper version?",
-        "acceptedAnswer": { "@type": "Answer", "text": "No. A Barbershop Gram is four voices, because four is what makes the harmony. We do hire single singers from £250, but that is a different thing and we do not sell it as a gram." }
-      },
-      {
-        "@type": "Question",
-        "name": "Who will be singing?",
-        "acceptedAnswer": { "@type": "Answer", "text": "Four singers chosen for your booking by Luca Wetherall, our Artistic Director and Tutor in Music at the University of Oxford, who auditions every musician on the team himself." }
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "How much notice do you need?",
+            "acceptedAnswer": { "@type": "Answer", "text": "48 hours. Valentine's week and December book up well before that, so ask early for those." }
+          },
+          {
+            "@type": "Question",
+            "name": "Where will you sing?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Anywhere in Greater London we can get four singers into: offices, homes, restaurants, pubs, parks, and care homes. Hospital wards need the ward's permission first, which we will ask for." }
+          },
+          {
+            "@type": "Question",
+            "name": "What happens if they are not there?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Tell us before the singers set off and we rearrange once at no charge. After they have set off the fee stands, because four singers have given up the slot." }
+          },
+          {
+            "@type": "Question",
+            "name": "How do you keep it a surprise?",
+            "acceptedAnswer": { "@type": "Answer", "text": "We only ever contact the number you give us. We never ring or email the recipient, and we do not post anything about a booking before it happens." }
+          },
+          {
+            "@type": "Question",
+            "name": "Can you sing a song that is not on your repertoire list?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Yes. We arrange your song for four voices from £200. Allow a week so the singers can rehearse it properly." }
+          },
+          {
+            "@type": "Question",
+            "name": "Can we film it?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Yes, and we would like a copy. We ask the person who was surprised for permission before we post anything ourselves." }
+          },
+          {
+            "@type": "Question",
+            "name": "Is there a cheaper version?",
+            "acceptedAnswer": { "@type": "Answer", "text": "No. A Barbershop Gram is four voices, because four is what makes the harmony. We do hire single singers from £250, but that is a different thing and we do not sell it as a gram." }
+          },
+          {
+            "@type": "Question",
+            "name": "Who will be singing?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Four singers chosen for your booking by Luca Wetherall, our Artistic Director and Tutor in Music at the University of Oxford, who auditions every musician on the team himself." }
+          }
+        ]
       }
     ]
   }
   </script>
 ```
 
-- [ ] **Step 6: Commit**
+- [ ] **Step 6: Build, then verify the page did not get the site bundle**
+
+Cloning the exemplar copies the *expanded* content sitting between its include markers — the private register's CSS and the private footer. Renaming the markers does not change that; only a build does. So build here rather than deferring it, or the commit captures a page carrying the wrong register.
+
+The build is idempotent, so with no CSS or partial source changes the diff must show only this new file:
+
+```bash
+./build.sh
+git status --short
+```
+
+Expected: only `barbershop-grams/index.html`. **Any other modified file means something upstream is wrong — stop and investigate before committing.**
+
+Then confirm Pass A did not swap in the site bundle:
+
+```bash
+grep -c 'color-bg:' barbershop-grams/index.html      # 0
+grep -c 'style.css' barbershop-grams/index.html      # 0
+grep -c 'bs-ink' barbershop-grams/index.html         # non-zero: the barbershop register
+grep -c 'choirStall' barbershop-grams/index.html     # 0: not the private one
+python3 validate_jsonld.py && python3 validate_house_claims.py
+```
+
+A non-zero `color-bg:` or `style.css` means the page received the generated bundle and the register is defeated — see Task 1 Step 8.
+
+- [ ] **Step 7: Commit**
 
 ```bash
 git add barbershop-grams/index.html
