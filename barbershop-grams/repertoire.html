@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+  <meta charset="UTF-8">
+  <!-- @include-start partials/head-extras.html -->
+<link rel="preload" href="/fonts/cormorant-garamond.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/source-serif-4.woff2" as="font" type="font/woff2" crossorigin>
+  <!-- @include-end partials/head-extras.html -->
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+
+  <!-- Google Analytics (GA4) — deferred until after load -->
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    function loadGA() {
+      if (loadGA.done) return;
+      loadGA.done = true;
+      gtag('js', new Date());
+      gtag('config', 'G-9FENN7VS0E');
+      gtag('config', 'AW-17988388404');
+      var s = document.createElement('script');
+      s.src = 'https://www.googletagmanager.com/gtag/js?id=G-9FENN7VS0E';
+      document.head.appendChild(s);
+    }
+    if ('requestIdleCallback' in window) {
+      requestIdleCallback(loadGA, { timeout: 3000 });
+    } else {
+      window.addEventListener('load', function() { setTimeout(loadGA, 100); });
+    }
+    if (/[?&](gclid|gbraid|wbraid)=/.test(location.search)) loadGA();
+    ['scroll', 'click', 'touchstart', 'keydown'].forEach(function(evt) {
+      window.addEventListener(evt, loadGA, { once: true, passive: true });
+    });
+  </script>
+
+  <title>Barbershop Gram Repertoire | Songs for a Surprise Quartet</title>
+  <meta name="description" content="The songs our barbershop quartet sings on a surprise gram in London: birthday numbers, love songs, barbershop standards, doo-wop, and Christmas.">
+  <meta name="theme-color" content="#FBF7EF">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://londonchoralservice.com/barbershop-grams/repertoire.html">
+  <link rel="alternate" hreflang="en-gb" href="https://londonchoralservice.com/barbershop-grams/repertoire.html">
+  <link rel="alternate" hreflang="x-default" href="https://londonchoralservice.com/barbershop-grams/repertoire.html">
+
+  <meta property="og:title" content="Barbershop Gram Repertoire | Songs for a Surprise Quartet">
+  <meta property="og:description" content="The songs our barbershop quartet sings on a surprise gram in London: birthday numbers, love songs, barbershop standards, doo-wop, and Christmas.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://londonchoralservice.com/barbershop-grams/repertoire.html">
+  <meta property="og:locale" content="en_GB">
+  <meta property="og:site_name" content="London Choral Service">
+  <meta property="og:image" content="https://londonchoralservice.com/assets/og-image.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Barbershop Grams: four singers sent to surprise someone in London">
+
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Barbershop Gram Repertoire | Songs for a Surprise Quartet">
+  <meta name="twitter:description" content="The songs our barbershop quartet sings on a surprise gram in London: birthday numbers, love songs, barbershop standards, doo-wop, and Christmas.">
+  <meta name="twitter:image" content="https://londonchoralservice.com/assets/og-image.png">
+  <meta name="twitter:image:alt" content="Barbershop Grams: four singers sent to surprise someone in London">
+  <link rel="dns-prefetch" href="https://www.googletagmanager.com">
+
+  <!-- @include-start partials/barbershop-register.css.html -->
+  <style>
+    /* Barbershop register — bespoke scoped styles for barbershop-grams/ and
+       compare/barbershopogram.html. NOT the generated site bundle.
+       Never replace this block with the site's generated CSS bundle: the first
+       inner line of this block being a comment is what stops build.sh Pass A
+       from converting it. A page carrying this partial must never also link the
+       generated site stylesheet: Pass B would inline the whole site bundle on top.
+       See docs/superpowers/specs/2026-09-03-barbershop-grams-design.md */
+    /* ── Self-hosted fonts (latin subset) — copied verbatim from css/base.css ── */
+    @font-face {
+      font-family: 'Cormorant Garamond';
+      font-style: normal;
+      font-weight: 300 600;
+      font-display: swap;
+      src: url('/fonts/cormorant-garamond.woff2') format('woff2');
+      unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+    }
+    @font-face {
+      font-family: 'Cormorant Garamond';
+      font-style: italic;
+      font-weight: 400;
+      font-display: swap;
+      src: url('/fonts/cormorant-garamond-italic.woff2') format('woff2');
+      unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+    }
+    @font-face {
+      font-family: 'Source Serif 4';
+      font-style: normal;
+      font-weight: 400 600;
+      font-display: swap;
+      src: url('/fonts/source-serif-4.woff2') format('woff2');
+      unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+    }
+    @font-face {
+      font-family: 'Source Serif 4';
+      font-style: italic;
+      font-weight: 400;
+      font-display: swap;
+      src: url('/fonts/source-serif-4-italic.woff2') format('woff2');
+      unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+    }
+
+    /* ── Page tokens (gift register) ──
+       COLOUR LAW (computed WCAG contrast):
+                        on --bs-paper   on --bs-cream
+         --bs-ink            16.13 AAA      14.29 AAA   body and headings
+         --bs-navy           10.75 AAA       9.52 AAA   occasion labels, table heads
+         --bs-red             6.12 AA        5.42 AA    accents, buttons, small caps — NOT long body text
+         --bs-mid             5.85 AA        5.18 AA    captions, secondary text
+       Reversed (paper on red, paper on navy) is symmetric: 6.12 and 10.75 — both fine for buttons.
+       --bs-rule is a hairline only: never text, never a focus outline. */
+    :root {
+      --bs-ink:    #1F1A17;
+      --bs-mid:    #6B5E56;
+      --bs-red:    #B3261E;
+      --bs-navy:   #1F3A5F;
+      --bs-paper:  #FBF7EF;
+      --bs-cream:  #F1E9DA;
+      --bs-rule:   #DCD2C2;
+      --font-display: 'Cormorant Garamond', 'Iowan Old Style', Georgia, serif;
+      --font-body:    'Source Serif 4', Georgia, 'Times New Roman', serif;
+      --font-ui:      'Source Serif 4', Georgia, 'Times New Roman', serif;
+    }
+
+    /* ── Reset ── */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    img { max-width: 100%; display: block; }
+
+    /* ── Base ── */
+    html { background: var(--bs-paper); }
+    body {
+      font-family: var(--font-body);
+      font-size: 1.125rem;
+      line-height: 1.65;
+      color: var(--bs-ink);
+      background: var(--bs-paper);
+    }
+
+    /* ── Sections: bays down a nave ── */
+    .bs-section {
+      padding-block: clamp(4rem, 9vw, 7.5rem);
+      border-top: 1px solid var(--bs-rule);
+    }
+    .bs-section--light { background: var(--bs-paper); }
+    .bs-section--mid { background: var(--bs-cream); }
+    .bs-hero { border-top: 0; }
+
+    /* ── Rail grid ── */
+    .bs-rail {
+      display: grid;
+      grid-template-columns: minmax(10rem, 14rem) minmax(0, 68ch);
+      column-gap: clamp(2rem, 4vw, 3.5rem);
+      row-gap: 1.5rem;
+      max-width: 72rem;
+      margin-inline: auto;
+      padding-inline: clamp(1.25rem, 5vw, 3rem);
+    }
+    .bs-rail-label {
+      font-family: var(--font-ui);
+      font-size: .6875rem;
+      font-weight: 600;
+      letter-spacing: .22em;
+      text-transform: uppercase;
+      color: var(--bs-red);
+      border-top: 1px solid var(--bs-rule);
+      padding-top: 1rem;
+    }
+    @media (max-width: 47.9375rem) {
+      .bs-rail { grid-template-columns: minmax(0, 1fr); row-gap: 1.25rem; }
+    }
+
+    /* ── Type scale ── */
+    h1 {
+      font-family: var(--font-display);
+      font-size: clamp(2.5rem, 5.5vw, 3.75rem);
+      font-weight: 500;
+      line-height: 1.15;
+    }
+    h2 {
+      font-family: var(--font-display);
+      font-size: 2.125rem;
+      font-weight: 400;
+      line-height: 1.2;
+      margin-bottom: 1.5rem;
+    }
+    h3 {
+      font-family: var(--font-display);
+      font-size: 1.5rem;
+      font-weight: 400;
+      line-height: 1.25;
+      margin-top: 2.5rem;
+      margin-bottom: .75rem;
+    }
+    @media (max-width: 47.9375rem) {
+      h2 { font-size: 1.6875rem; }
+    }
+    .bs-eyebrow {
+      font-family: var(--font-ui);
+      font-size: .6875rem;
+      font-weight: 600;
+      letter-spacing: .22em;
+      text-transform: uppercase;
+      color: var(--bs-red); /* same small-caps role as the rail labels */
+    }
+    .bs-pull {
+      font-family: var(--font-display);
+      font-size: 1.625rem;
+      font-weight: 300;
+      font-style: italic;
+      line-height: 1.35;
+      margin-top: 2.25rem;
+      border-top: 1px solid var(--bs-rule);
+      padding-top: 1.75rem;
+    }
+    .bs-caption {
+      font-size: .875rem;
+      color: var(--bs-mid);
+    }
+    .bs-body p + p { margin-top: 1.25rem; }
+    .bs-body a {
+      color: var(--bs-ink);
+      text-decoration: underline;
+      text-decoration-color: var(--bs-mid);
+      text-underline-offset: .2em;
+    }
+    .bs-body a:hover { text-decoration-color: var(--bs-ink); }
+
+    /* ── Header ── */
+    .bs-header {
+      background: var(--bs-paper);
+      border-bottom: 1px solid var(--bs-rule);
+    }
+    .bs-nav {
+      max-width: 72rem;
+      margin-inline: auto;
+      padding: 1.1rem clamp(1.25rem, 5vw, 3rem);
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      gap: 1.25rem;
+    }
+    .bs-wordmark {
+      font-family: var(--font-display);
+      font-size: 1.3125rem;
+      color: var(--bs-ink);
+      text-decoration: none;
+    }
+    .bs-nav-enquire {
+      font-family: var(--font-ui);
+      font-size: .6875rem;
+      font-weight: 600;
+      letter-spacing: .18em;
+      text-transform: uppercase;
+      color: var(--bs-ink);
+      text-decoration: none;
+      border-bottom: 1px solid var(--bs-rule);
+      padding-bottom: .2rem;
+    }
+    .bs-nav-enquire:hover { border-bottom-color: var(--bs-ink); }
+    .bs-nav .bs-wordmark { margin-right: auto; }
+
+    /* ── Breadcrumb (repertoire.html only; the hub has no trail) ── */
+    .bs-breadcrumb {
+      max-width: 72rem;
+      margin-inline: auto;
+      padding: 0 clamp(1.25rem, 5vw, 3rem) .9rem;
+    }
+    .bs-breadcrumb p {
+      font-family: var(--font-ui);
+      font-size: .75rem;
+      letter-spacing: .04em;
+      color: var(--bs-mid);
+      margin: 0;
+    }
+    .bs-breadcrumb a { color: var(--bs-mid); text-decoration: none; border-bottom: 1px solid var(--bs-rule); }
+    .bs-breadcrumb a:hover { color: var(--bs-ink); border-bottom-color: var(--bs-ink); }
+    .bs-breadcrumb [aria-current="page"] { color: var(--bs-ink); }
+    .bs-crumb-sep { color: var(--bs-mid); padding-inline: .45rem; }
+
+    /* ── Checked-date stamp on time-sensitive facts ── */
+    .bs-checked {
+      font-family: var(--font-ui);
+      font-size: .6875rem;
+      letter-spacing: .04em;
+      color: var(--bs-mid);
+      border-left: 2px solid var(--bs-rule);
+      padding-left: .75rem;
+      margin-top: 1rem;
+    }
+
+    /* ── Hero ── */
+    .bs-hero__inner {
+      max-width: 72rem;
+      margin-inline: auto;
+      padding-inline: clamp(1.25rem, 5vw, 3rem);
+    }
+    .bs-hero h1 {
+      max-width: 18ch;
+      margin-top: 1.5rem;
+    }
+    .bs-hairline--accent {
+      width: 5.5rem;
+      height: 1px;
+      background: var(--bs-navy);
+      margin-block: 2rem;
+    }
+    .bs-hero__sub {
+      max-width: 58ch;
+      font-size: 1.1875rem;
+      color: var(--bs-mid);
+    }
+    .bs-hero__cta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: .75rem;
+      margin-top: 2.5rem;
+    }
+
+    /* ── Buttons ── */
+    .bs-btn {
+      display: inline-block;
+      font-family: var(--font-ui);
+      font-size: .75rem;
+      font-weight: 600;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      color: var(--bs-ink);
+      background: transparent;
+      border: 1px solid var(--bs-ink);
+      padding: 1rem 1.75rem;
+      text-decoration: none;
+      cursor: pointer;
+      transition: background-color .2s, color .2s;
+    }
+    .bs-btn:hover {
+      background: var(--bs-ink);
+      color: var(--bs-paper);
+    }
+
+    /* ── Process: the page's only numbered component ── */
+    .bs-process {
+      list-style: none; /* role="list" in the markup keeps AT list semantics */
+      margin-top: 1.75rem;
+      display: grid;
+      gap: 2rem;
+    }
+    .bs-process li {
+      display: grid;
+      grid-template-columns: 3rem minmax(0, 1fr);
+      column-gap: 1.25rem;
+    }
+    .bs-process .n {
+      grid-row: span 2;
+      font-family: var(--font-display);
+      font-size: 2.25rem;
+      font-weight: 300;
+      line-height: 1;
+      color: var(--bs-mid);
+    }
+    .bs-process h3 { margin: 0 0 .35rem; }
+    .bs-process p { grid-column: 2; }
+
+    /* ── Footer ── */
+    .bs-footer {
+      background: var(--bs-cream);
+      border-top: 1px solid var(--bs-rule);
+      padding: 3rem clamp(1.25rem, 5vw, 3rem);
+      text-align: center;
+      font-size: .875rem;
+      color: var(--bs-mid);
+    }
+    .bs-footer a { color: var(--bs-mid); }
+    .bs-footer p + p { margin-top: .75rem; }
+
+    /* ── Occasion strip ── */
+    .bs-occasions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: .625rem;
+      list-style: none;
+      margin-top: 2rem;
+    }
+    .bs-occasions a {
+      display: inline-block;
+      font-family: var(--font-ui);
+      font-size: .8125rem;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--bs-navy);
+      text-decoration: none;
+      border: 1px solid var(--bs-rule);
+      padding: .5rem 1rem;
+      transition: border-color .2s, color .2s;
+    }
+    .bs-occasions a:hover { border-color: var(--bs-navy); }
+    .bs-occasions .bs-occasions__lead a {
+      color: var(--bs-paper);
+      background: var(--bs-navy);
+      border-color: var(--bs-navy);
+    }
+
+    /* ── Price table ── */
+    .bs-prices {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1.5rem;
+    }
+    .bs-prices th {
+      font-family: var(--font-ui);
+      font-size: .6875rem;
+      font-weight: 600;
+      letter-spacing: .18em;
+      text-transform: uppercase;
+      color: var(--bs-navy);
+      text-align: left;
+      border-bottom: 1px solid var(--bs-rule);
+      padding: 0 1rem .75rem 0;
+    }
+    .bs-prices td {
+      border-bottom: 1px solid var(--bs-rule);
+      padding: 1.125rem 1rem 1.125rem 0;
+      vertical-align: top;
+    }
+    .bs-prices td:last-child {
+      white-space: nowrap;
+      text-align: right;
+      padding-right: 0;
+      font-variant-numeric: tabular-nums;
+    }
+    .bs-prices .bs-prices__flag {
+      display: block;
+      font-family: var(--font-ui);
+      font-size: .6875rem;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: var(--bs-red);
+      margin-top: .35rem;
+    }
+    @media (max-width: 39.9375rem) {
+      .bs-prices thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+      .bs-prices tr { display: block; border-bottom: 1px solid var(--bs-rule); padding-block: 1rem; }
+      .bs-prices td { display: block; border: 0; padding: 0 0 .35rem 0; }
+      .bs-prices td:last-child { text-align: left; font-weight: 600; }
+    }
+
+    /* ── Checklist ── */
+    .bs-check { list-style: none; margin-top: 1.5rem; }
+    .bs-check li {
+      position: relative;
+      padding-left: 1.75rem;
+      margin-top: .875rem;
+    }
+    .bs-check li::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: .55em;
+      width: .5rem;
+      height: .5rem;
+      border: 1px solid var(--bs-red);
+    }
+
+    /* ── FAQ ── */
+    .bs-faq { margin-top: 1.5rem; }
+    .bs-faq details {
+      border-bottom: 1px solid var(--bs-rule);
+      padding-block: 1.125rem;
+    }
+    .bs-faq summary {
+      font-family: var(--font-display);
+      font-size: 1.3125rem;
+      cursor: pointer;
+      list-style: none;
+    }
+    .bs-faq summary::-webkit-details-marker { display: none; }
+    .bs-faq summary::after {
+      content: "+";
+      float: right;
+      color: var(--bs-red);
+      font-family: var(--font-ui);
+    }
+    .bs-faq details[open] summary::after { content: "\2013"; }
+    .bs-faq details > p { margin-top: .875rem; }
+
+    /* ── Repertoire groups ── */
+    .bs-rep { columns: 2; column-gap: 2.5rem; list-style: none; margin-top: 1rem; }
+    .bs-rep li { break-inside: avoid; padding-block: .28rem; }
+    @media (max-width: 39.9375rem) { .bs-rep { columns: 1; } }
+
+    /* ── Filled button variant, for the primary CTA ── */
+    .bs-btn--fill {
+      color: var(--bs-paper);
+      background: var(--bs-ink);
+      border-color: var(--bs-ink);
+    }
+    .bs-btn--fill:hover {
+      background: var(--bs-red);
+      border-color: var(--bs-red);
+      color: var(--bs-paper);
+    }
+
+    /* ── Focus & utilities ── */
+    :focus-visible {
+      outline: 2px solid var(--bs-red);
+      outline-offset: 3px;
+    }
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    /* ── Motion: no JS sets html.bs-motion on this mini-site, so there are
+       no entrance-animation classes to gate here. The one live rule is
+       smooth in-page scrolling, for the hub's occasion-strip anchors. ── */
+    @media (prefers-reduced-motion: no-preference) {
+      html { scroll-behavior: smooth; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .bs-btn, .bs-occasions a { transition: none; }
+    }
+  </style>
+  <!-- @include-end partials/barbershop-register.css.html -->
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "https://londonchoralservice.com/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Barbershop Grams",
+            "item": "https://londonchoralservice.com/barbershop-grams/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 3,
+            "name": "Repertoire",
+            "item": "https://londonchoralservice.com/barbershop-grams/repertoire.html"
+          }
+        ]
+      },
+      {
+        "@type": "ItemList",
+        "name": "Barbershop Gram repertoire",
+        "itemListElement": [
+          "Happy Birthday to You (four-part)",
+          "For He's a Jolly Good Fellow",
+          "When You're Smiling",
+          "Side by Side",
+          "Ain't She Sweet",
+          "Bye Bye Blackbird",
+          "Hello! Ma Baby",
+          "Let Me Call You Sweetheart",
+          "I Love You Truly",
+          "Heart of My Heart",
+          "Sweet Adeline",
+          "Down by the Old Mill Stream",
+          "Can't Help Falling in Love",
+          "L-O-V-E",
+          "Only You",
+          "Coney Island Baby",
+          "Wait 'Til the Sun Shines, Nellie",
+          "In the Good Old Summertime",
+          "Shine On, Harvest Moon",
+          "By the Light of the Silvery Moon",
+          "Daisy Bell",
+          "Bill Bailey, Won't You Please Come Home",
+          "Goodnight, Sweetheart, Goodnight",
+          "Sweet Georgia Brown",
+          "Yes Sir, That's My Baby",
+          "Five Foot Two",
+          "Mr Sandman",
+          "Lida Rose",
+          "Sh-Boom",
+          "Blue Moon",
+          "Under the Boardwalk",
+          "Stand By Me",
+          "Show Me the Way to Go Home",
+          "We'll Meet Again",
+          "Hit the Road Jack",
+          "Auld Lang Syne",
+          "Jingle Bells",
+          "Winter Wonderland",
+          "Let It Snow",
+          "White Christmas",
+          "Silent Night",
+          "Deck the Halls",
+          "Have Yourself a Merry Little Christmas"
+        ]
+      }
+    ]
+  }
+  </script>
+
+  <link rel="icon" href="/assets/favicon.ico" sizes="any">
+  <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
+</head>
+<body>
+
+  <!-- @include-start partials/barbershop-nav.html -->
+  <header class="bs-header">
+    <nav class="bs-nav" aria-label="Barbershop Grams">
+      <a class="bs-wordmark" href="/barbershop-grams/">Barbershop Grams</a>
+      <a class="bs-nav-enquire" href="/barbershop-grams/repertoire.html">Repertoire</a>
+      <a class="bs-nav-enquire" href="/barbershop-grams/#prices">Prices</a>
+      <a class="bs-nav-enquire" href="https://wa.me/447356042468?text=Hello%20London%20Choral%20Service%2C%20I%27d%20like%20to%20send%20a%20Barbershop%20Gram.%20Date%3A%20%2F%20Place%3A%20%2F%20Who%20it%27s%20for%3A" target="_blank" rel="noopener" data-whatsapp>WhatsApp</a>
+    </nav>
+  </header>
+  <!-- @include-end partials/barbershop-nav.html -->
+
+  <nav class="bs-breadcrumb" aria-label="Breadcrumb">
+    <p><a href="/">Home</a><span class="bs-crumb-sep" aria-hidden="true">/</span><a href="/barbershop-grams/">Barbershop Grams</a><span class="bs-crumb-sep" aria-hidden="true">/</span><span aria-current="page">Repertoire</span></p>
+  </nav>
+
+  <main>
+
+    <!-- §1 Intro -->
+    <section class="bs-section bs-section--light bs-hero">
+      <div class="bs-hero__inner">
+        <p class="bs-eyebrow">Repertoire &middot; Greater London</p>
+        <h1>What the quartet sings</h1>
+        <div class="bs-hairline--accent" aria-hidden="true"></div>
+        <p class="bs-hero__sub">Sorted by occasion, from birthdays to Christmas. Choose a title when you book, or leave it to Luca.</p>
+      </div>
+    </section>
+
+    <!-- §2 Birthday and celebration -->
+    <section class="bs-section bs-section--mid" id="birthday">
+      <div class="bs-rail">
+        <p class="bs-rail-label" aria-hidden="true">Birthdays</p>
+        <div class="bs-body">
+          <h2>Birthday and celebration</h2>
+          <ul class="bs-rep" role="list">
+            <li>Happy Birthday to You (four-part)</li>
+            <li>For He&rsquo;s a Jolly Good Fellow</li>
+            <li>When You&rsquo;re Smiling</li>
+            <li>Side by Side</li>
+            <li>Ain&rsquo;t She Sweet</li>
+            <li>Bye Bye Blackbird</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- §3 Love songs -->
+    <section class="bs-section bs-section--light" id="love">
+      <div class="bs-rail">
+        <p class="bs-rail-label" aria-hidden="true">Love</p>
+        <div class="bs-body">
+          <h2>Love songs</h2>
+          <ul class="bs-rep" role="list">
+            <li>Hello! Ma Baby</li>
+            <li>Let Me Call You Sweetheart</li>
+            <li>I Love You Truly</li>
+            <li>Heart of My Heart</li>
+            <li>Sweet Adeline</li>
+            <li>Down by the Old Mill Stream</li>
+            <li>Can&rsquo;t Help Falling in Love</li>
+            <li>L-O-V-E</li>
+            <li>Only You</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- §4 Barbershop classics -->
+    <section class="bs-section bs-section--mid" id="classics">
+      <div class="bs-rail">
+        <p class="bs-rail-label" aria-hidden="true">Classics</p>
+        <div class="bs-body">
+          <h2>Barbershop classics</h2>
+          <ul class="bs-rep" role="list">
+            <li>Coney Island Baby</li>
+            <li>Wait &rsquo;Til the Sun Shines, Nellie</li>
+            <li>In the Good Old Summertime</li>
+            <li>Shine On, Harvest Moon</li>
+            <li>By the Light of the Silvery Moon</li>
+            <li>Daisy Bell</li>
+            <li>Bill Bailey, Won&rsquo;t You Please Come Home</li>
+            <li>Goodnight, Sweetheart, Goodnight</li>
+            <li>Sweet Georgia Brown</li>
+            <li>Yes Sir, That&rsquo;s My Baby</li>
+            <li>Five Foot Two</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- §5 Doo-wop and later -->
+    <section class="bs-section bs-section--mid" id="doowop">
+      <div class="bs-rail">
+        <p class="bs-rail-label" aria-hidden="true">Doo-wop</p>
+        <div class="bs-body">
+          <h2>Doo-wop and later</h2>
+          <ul class="bs-rep" role="list">
+            <li>Mr Sandman</li>
+            <li>Lida Rose</li>
+            <li>Sh-Boom</li>
+            <li>Blue Moon</li>
+            <li>Under the Boardwalk</li>
+            <li>Stand By Me</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- §6 Leaving dos -->
+    <section class="bs-section bs-section--light" id="leaving-dos">
+      <div class="bs-rail">
+        <p class="bs-rail-label" aria-hidden="true">Leaving dos</p>
+        <div class="bs-body">
+          <h2>Leaving dos</h2>
+          <ul class="bs-rep" role="list">
+            <li>Show Me the Way to Go Home</li>
+            <li>We&rsquo;ll Meet Again</li>
+            <li>Hit the Road Jack</li>
+            <li>Auld Lang Syne</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- §7 Christmas -->
+    <section class="bs-section bs-section--mid" id="christmas">
+      <div class="bs-rail">
+        <p class="bs-rail-label" aria-hidden="true">Christmas</p>
+        <div class="bs-body">
+          <h2>Christmas</h2>
+          <ul class="bs-rep" role="list">
+            <li>Jingle Bells</li>
+            <li>Winter Wonderland</li>
+            <li>Let It Snow</li>
+            <li>White Christmas</li>
+            <li>Silent Night</li>
+            <li>Deck the Halls</li>
+            <li>Have Yourself a Merry Little Christmas</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- §8 Bespoke -->
+    <section class="bs-section bs-section--light">
+      <div class="bs-rail">
+        <p class="bs-rail-label" aria-hidden="true">Bespoke</p>
+        <div class="bs-body">
+          <p>Not here? We arrange any song for four voices from &pound;200. <a href="/barbershop-grams/#prices">See the full price list</a>.</p>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- @include-start partials/barbershop-footer.html -->
+  <footer class="bs-footer">
+    <p><a href="mailto:office@londonchoralservice.com">office@londonchoralservice.com</a> &middot; <a href="tel:+447356042468">07356 042468</a> &middot; London</p>
+    <p>Barbershop Grams is a product of <a href="/">The London Choral Service</a>, the operating name of Alma Consort Ltd, registered in England and Wales, company no. 16785727. <a href="/privacy.html">Privacy policy</a></p>
+  </footer>
+  <!-- @include-end partials/barbershop-footer.html -->
+
+</body>
+</html>
