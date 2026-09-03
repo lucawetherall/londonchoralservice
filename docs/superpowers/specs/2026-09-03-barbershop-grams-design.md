@@ -35,7 +35,7 @@ The line competes with Barbershop-o-gram (`barbershopogram.co.uk`), the establis
 
 - **A cheaper gram.** A £250 soloist singing Happy Birthday would undercut the product's identity. The FAQ says so.
 - **Any claim about the competitor beyond one published price and its inclusion line.** Not their other tiers, not their travel policy, not their responsiveness, not their site. The tip-off that prompted this work stays out of print; it only tells us where to lead.
-- **A VAT comparison.** Their site does not state VAT treatment. An inc-VAT figure for them would be the one unsourced claim on an otherwise sourced page.
+- **A VAT comparison.** Their prices page shows a bare "£600" to consumers, with no VAT statement or VAT number anywhere on their site. UK price-marking rules require consumer-facing prices to include VAT, so £600 is the buyer's cost either way and there is no delta to claim in either direction. An inc-VAT figure invented for them would be the one unsourced claim on an otherwise sourced page. Note that this is the opposite situation to the funeral-singers comparison, where the competitor quotes "+ VAT" and the delta is the whole argument.
 - **Online payment.** The site is static with no backend. Enquiry-to-written-quote, as everywhere else. A gift certificate PDF covers the "give it as a present" case (§Go-to-market).
 - **Per-occasion landing pages in phase 1.** They are phase 3, triggered by Search Console data, not built on speculation.
 - **Any mention on `funerals.html`, the funeral guides, `compare/london-funeral-singers.html`, or any `for-*.html` page.** A bereaved family must never meet a birthday gram.
@@ -53,7 +53,7 @@ Retrieved from `https://www.barbershopogram.co.uk/` and `/prices` on 2026-09-03.
 |---|---|
 | Entry product | "Up to 10 minutes (including Happy Birthdays)" · "£600" |
 | Inclusions line | "All fees include music from our standard repertoire and include travel within London zone 5 unless otherwise stated." |
-| VAT | Not stated anywhere on the prices page |
+| VAT | No VAT statement and no VAT number anywhere on the site — `/`, `/prices`, and no `/terms`, `/faq`, or `/about` page exists (checked 2026-09-03). Treated as consumer-inclusive: £600 is what a buyer pays. |
 
 ### Where we differ, stated as facts about us
 
@@ -167,7 +167,7 @@ Warm and well-made, not a striped-waistcoat pastiche. No barber's-pole motif. Th
 - `validate_house_claims.py`: its `FILES` list is explicit and does not include a new directory. Add `barbershop-grams/*.html`.
 - `validate_jsonld.py`: confirm its glob covers `barbershop-grams/`; extend if not (the `compare/` precedent needed this).
 - `scripts/generate_llms_full.py`: confirm the new directory is picked up.
-- `validate_competitor_claims.py`: no change; it globs `compare/`.
+- `validate_competitor_claims.py`: **must be patched** to support `price_inc_vat` before the new provider entry lands. It reads `pkg["price_ex_vat"]` unconditionally, so a package without that key raises `KeyError` and breaks the build. See §Claims integrity.
 
 ---
 
@@ -302,11 +302,11 @@ The seven rules in the 2026-08-18 spec §3 apply unchanged. Two additions for th
     url: "https://www.barbershopogram.co.uk/"
     pricing_url: "https://www.barbershopogram.co.uk/prices"
     checked_date: "2026-09-03"
-    vat_treatment: "TODO — not stated on the prices page; make no VAT claim until it is"
+    vat_treatment: "consumer-inclusive; no VAT statement or VAT number anywhere on their site (checked 2026-09-03)"
     travel: "All fees include music from our standard repertoire and include travel within London zone 5 unless otherwise stated."   # verbatim; inclusion line, not published on our pages
     packages:
       ten_minute_gram:
-        price_ex_vat: 600      # field name is the schema's; their VAT basis is unknown
+        price_inc_vat: 600
         source_quote: "Up to 10 minutes (including Happy Birthdays) £600"
         includes: "All fees include music from our standard repertoire"
     # Deliberately no other packages. The owner's instruction is that their other tiers are never
@@ -315,7 +315,25 @@ The seven rules in the 2026-08-18 spec §3 apply unchanged. Two additions for th
 
 `lcs_prices` gains `barbershop_gram: 600`. No `derived_figures` are needed: there is no saving to state.
 
-Note for the validator's author: `allowed_figures()` also admits `round(600 × 1.2) = 720` as a by-product of the VAT derivation. Nothing on the page will use it, and the claim rules forbid it. If a future provider makes this risky, gate the inc-VAT derivation on `vat_treatment` starting with "quoted excluding".
+### Why the price field is `price_inc_vat`, and the validator change it requires
+
+The funeral-singers entry uses `price_ex_vat`, correctly: that provider prints "+ VAT" against every figure, so a family pays 20% more than the number shown, and `allowed_figures()` deriving the inc-VAT twin is what let the comparison page state the real cost.
+
+Barbershop-o-gram prints a bare "£600" on a page addressed to consumers. No VAT statement and no VAT number appears anywhere on their site, and UK price-marking rules require consumer-facing prices to include VAT — so £600 is what the buyer pays whether or not part of it is VAT the provider remits. There is no VAT delta in either direction, which is why this comparison makes no VAT argument at all.
+
+Reusing `price_ex_vat` here would therefore assert something false and would make `allowed_figures()` admit `round(600 × 1.2) = 720`, a figure describing nothing real. **`validate_competitor_claims.py` must handle both keys:**
+
+```python
+for pkg in provider.get("packages", {}).values():
+    if "price_ex_vat" in pkg:                      # quoted excluding VAT
+        ex = pkg["price_ex_vat"]
+        allowed.add(ex)
+        allowed.add(round(ex * (1 + vat)))         # what a family actually pays
+    if "price_inc_vat" in pkg:                     # already the buyer's cost
+        allowed.add(pkg["price_inc_vat"])          # no twin: there is nothing to add
+```
+
+A mistyped key allows no figure and fails the build loudly, which is the right failure direction. This keeps the funeral-singers behaviour byte-for-byte unchanged.
 
 ### `tests/test_competitor_claims.py`
 
