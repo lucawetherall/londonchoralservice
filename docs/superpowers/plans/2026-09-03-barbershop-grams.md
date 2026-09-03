@@ -372,7 +372,7 @@ git commit -m "feat(barbershop): scoped register stylesheet for the grams mini-s
   </header>
 ```
 
-The `?text=` pre-fill is gram-specific on purpose: it is how gram WhatsApp clicks are told apart from site-wide ones in GA4 (spec §Measurement). `data-whatsapp` matches the attribute the site already uses on WhatsApp links.
+The `?text=` pre-fill is gram-specific so the WhatsApp draft reads correctly — it plays no part in analytics: GA4 never sees the query string of an outbound `wa.me` link, and no script on the site reads `data-whatsapp` (`js/nav.js` selects on the link's `href`, not on any data attribute). This mini-site loads no main-site JS at all, so its own inline conversion-tracking script (added to `barbershop-grams/index.html` and `barbershop-grams/repertoire.html`, just before `</body>`) is what tells gram clicks apart: it listens for clicks on `tel:`, `mailto:`, and `wa.me/` links and fires the site's existing `ads_conversion_Contact_1` / `AW-17988388404/RjhECKGP7akcELSMxIFD` conversion identifiers with an added `gram_source` event parameter (`barbershop-grams-index` or `barbershop-grams-repertoire`). Unlike the main site's `js/nav.js`, it does not redirect to `/thank-you.html` — that page carries the main site's chrome and copy, which would break the mini-site's insulation at the moment of conversion.
 
 - [ ] **Step 2: Write the footer partial**
 
