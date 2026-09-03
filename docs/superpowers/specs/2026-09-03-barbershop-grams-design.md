@@ -80,7 +80,7 @@ The right-hand column is entirely ours to state. Nothing in the left-hand column
 | Surprise Barbershop Gram | **£600** | Up to ten minutes. Four singers find the person, sing Happy Birthday (or the occasion's equivalent) in four-part harmony, then one song from the repertoire chosen for them, with their name worked in. |
 | Half-hour set | from £800 | Three or four songs for one occasion, or a roaming set that reaches several people across an office or a party. |
 | One-hour set | from £1,200 | A programme of eight to ten songs with a break. Drinks receptions, garden parties, company summer dos. |
-| Bespoke arrangement | from £200 | Their song, arranged for four voices. Allow a week. Add it to any tier. |
+| Bespoke arrangement | from £200 | Their song, arranged for four voices in 24 hours. Add it to any tier. |
 | Video recording session | from £1,000 | A filmed performance for someone who is not in London, or for a company video. Licence agreed per use. |
 
 Rules:
@@ -200,7 +200,7 @@ Draft copy is the register to hit, not final text. Every line goes through `writ
 > Fortieths, fiftieths, and eightieths get the same four voices. Tell us the age and the singers will work that in too.
 
 **4. For someone you love**
-> Valentine's Day, an anniversary, or a Tuesday. *Hello! Ma Baby*, *Let Me Call You Sweetheart*, and *I Love You Truly* are in the repertoire. If you have a song that is yours, we arrange it for four voices from £200; allow a week.
+> Valentine's Day, an anniversary, or a Tuesday. *Hello! Ma Baby*, *Let Me Call You Sweetheart*, and *I Love You Truly* are in the repertoire. If you have a song that is yours, we arrange it for four voices from £200; the singers learn it in 24 hours, inside the usual 48 hours' notice.
 
 **5. Proposals**
 > We arrive before you ask, sing while you get the ring out, and leave the room to the two of you. If it goes well, we also do weddings.
@@ -230,7 +230,7 @@ Draft copy is the register to hit, not final text. Every line goes through `writ
 - *Where will you sing?* Anywhere within Greater London we can get four singers into: offices, homes, restaurants, parks, care homes, hospital wards with the ward's permission.
 - *What if they are not there?* We rearrange once at no charge if you tell us before the singers set off. After that the fee stands.
 - *Is it a surprise?* Only if you keep it. We contact the number you give us and no other.
-- *Can you sing our song?* Yes. We arrange it for four voices from £200. Allow a week.
+- *Can you sing our song?* Yes. We arrange it for four voices from £200. The singers learn it in 24 hours, inside the usual 48 hours' notice.
 - *Can we film it?* Yes, and we would like a copy. We ask the recipient before anything is posted.
 - *Is there a cheaper version?* No. A Barbershop Gram is four voices. A soloist is a different thing and we do not sell it as a gram.
 - *Who sings?* Singers chosen for the booking by Luca Wetherall, our Artistic Director and Tutor in Music at the University of Oxford.

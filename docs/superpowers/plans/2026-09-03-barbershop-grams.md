@@ -669,7 +669,7 @@ The `Offer` carries only the £600 gram: a "from" price is not an offer, so the 
           {
             "@type": "Question",
             "name": "Can you sing a song that is not on your repertoire list?",
-            "acceptedAnswer": { "@type": "Answer", "text": "Yes. We arrange your song for four voices from £200. Allow a week so the singers can rehearse it properly." }
+            "acceptedAnswer": { "@type": "Answer", "text": "Yes. We arrange your song for four voices from £200. The singers learn it in 24 hours, inside the usual 48 hours' notice." }
           },
           {
             "@type": "Question",
@@ -775,7 +775,7 @@ The `role` attributes are deliberate. At the `39.9375rem` breakpoint the registe
               <td role="cell">From &pound;1,200</td>
             </tr>
             <tr role="row">
-              <td role="cell"><strong>Bespoke arrangement</strong><br>Your song, arranged for four voices. Allow a week. Add it to any of the above.</td>
+              <td role="cell"><strong>Bespoke arrangement</strong><br>Your song, arranged for four voices in 24 hours. Add it to any of the above.</td>
               <td role="cell">From &pound;200</td>
             </tr>
             <tr role="row">
