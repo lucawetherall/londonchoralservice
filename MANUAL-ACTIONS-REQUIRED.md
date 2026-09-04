@@ -287,12 +287,12 @@ Spec: `docs/superpowers/specs/2026-08-29-international-luxury-weddings-design.md
    both currently reuse `assets/og-private-events.png`.
 7. **Planner-network and luxury-directory outreach**, and wedding-press placement
    &mdash; there are now pages to point at.
-8. **Refresh the repo graph.** `graphify-out/` is now stale: this programme added
-   twenty-five pages and edited nineteen more, and the graphify tool was not
-   available in the session that built them, so the committed graph still
-   describes the site as it was before. Run `/graphify --update` and commit
-   `graphify-out/` when convenient. Nothing depends on it at runtime; it only
-   affects agents querying the graph instead of re-reading the repo.
+8. **Refresh the repo graph.** ~~Stale~~ **Done 2026-09-04.** Refreshed against
+   commit `378f8d8` by dispatched subagents, the same route the 2026-08-30 run
+   used (the graphify tool is not installed in these sessions; see the note in
+   `graphify-out/cost.json`). The graph went from 911 nodes / 1,490 edges to
+   1,082 / 2,169, with six new communities and three new hyperedges. If you ever
+   run the real tool locally, `/graphify --update` will reconcile it.
 
 ---
 
