@@ -55,7 +55,13 @@ STRIP = [
 def pages():
     out = []
     for dirpath, dirnames, filenames in os.walk('.'):
-        dirnames[:] = [d for d in dirnames if d not in ('.git', 'partials', 'graphify-out', 'node_modules')]
+        # Skip every dot-directory, not just .git. Tooling writes scratch HTML into
+        # .superpowers/ and .claude/, and a walk that picks those up puts fragments
+        # into the public sitemap and crashes generate_llms_full.py, which splits on
+        # </head>. The named entries below are the non-hidden directories to skip.
+        dirnames[:] = [d for d in dirnames
+                       if not d.startswith('.')
+                       and d not in ('partials', 'graphify-out', 'node_modules')]
         for fn in filenames:
             if fn.endswith('.html'):
                 out.append(os.path.normpath(os.path.join(dirpath, fn)))

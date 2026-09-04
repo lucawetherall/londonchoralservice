@@ -1,0 +1,1326 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+  <meta charset="UTF-8">
+  <!-- @include-start partials/head-extras.html -->
+<link rel="preload" href="/fonts/cormorant-garamond.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/source-serif-4.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="manifest" href="/site.webmanifest">
+  <!-- @include-end partials/head-extras.html -->
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+
+  <!-- @include-start partials/analytics.html -->
+  <!-- Google Analytics (GA4) and Google Ads — Consent Mode v2, deferred until after load.
+       Source of truth: partials/analytics.html. The consent banner lives in js/consent.js. -->
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('consent', 'default', {
+      'ad_storage': 'denied',
+      'ad_user_data': 'denied',
+      'ad_personalization': 'denied',
+      'analytics_storage': 'denied',
+      'wait_for_update': 500
+    });
+    gtag('set', 'ads_data_redaction', true);
+    try {
+      if (localStorage.getItem('lcs-consent') === 'granted') {
+        gtag('consent', 'update', {
+          'ad_storage': 'granted',
+          'ad_user_data': 'granted',
+          'ad_personalization': 'denied',
+          'analytics_storage': 'granted'
+        });
+      }
+    } catch (e) {}
+    function loadGA() {
+      if (loadGA.done) return;
+      loadGA.done = true;
+      gtag('js', new Date());
+      gtag('config', 'G-9FENN7VS0E');
+      gtag('config', 'AW-17988388404');
+      var s = document.createElement('script');
+      s.src = 'https://www.googletagmanager.com/gtag/js?id=G-9FENN7VS0E';
+      document.head.appendChild(s);
+    }
+    if ('requestIdleCallback' in window) {
+      requestIdleCallback(loadGA, { timeout: 3000 });
+    } else {
+      window.addEventListener('load', function() { setTimeout(loadGA, 100); });
+    }
+    if (/[?&](gclid|gbraid|wbraid)=/.test(location.search)) loadGA();
+    ['scroll', 'click', 'touchstart', 'keydown'].forEach(function(evt) {
+      window.addEventListener(evt, loadGA, { once: true, passive: true });
+    });
+  </script>
+  <script src="/js/consent.js" defer></script>
+  <!-- @include-end partials/analytics.html -->
+
+  <title>Barbershop Grams | Surprise Barbershop Quartet in London</title>
+  <meta name="description" content="Send a surprise barbershop quartet to someone in London: Happy Birthday in four-part harmony at their desk, door, or table. &pound;600 all in, 48 hours' notice.">
+  <meta name="theme-color" content="#FBF7EF">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://londonchoralservice.com/barbershop-grams/">
+  <link rel="alternate" hreflang="en-gb" href="https://londonchoralservice.com/barbershop-grams/">
+  <link rel="alternate" hreflang="x-default" href="https://londonchoralservice.com/barbershop-grams/">
+
+  <meta property="og:title" content="Barbershop Grams | Surprise Barbershop Quartet in London">
+  <meta property="og:description" content="Send a surprise barbershop quartet to someone in London: Happy Birthday in four-part harmony at their desk, door, or table. &pound;600 all in, 48 hours' notice.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://londonchoralservice.com/barbershop-grams/">
+  <meta property="og:locale" content="en_GB">
+  <meta property="og:site_name" content="London Choral Service">
+  <meta property="og:image" content="https://londonchoralservice.com/assets/og-barbershop-grams.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Barbershop Grams: four singers sent to surprise someone in London">
+
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Barbershop Grams | Surprise Barbershop Quartet in London">
+  <meta name="twitter:description" content="Send a surprise barbershop quartet to someone in London: Happy Birthday in four-part harmony at their desk, door, or table. &pound;600 all in, 48 hours' notice.">
+  <meta name="twitter:image" content="https://londonchoralservice.com/assets/og-barbershop-grams.png">
+  <meta name="twitter:image:alt" content="Barbershop Grams: four singers sent to surprise someone in London">
+  <link rel="dns-prefetch" href="https://www.googletagmanager.com">
+
+  <!-- @include-start partials/barbershop-register.css.html -->
+  <style>
+    /* Barbershop register — bespoke scoped styles for barbershop-grams/ and
+       compare/barbershopogram.html. NOT the generated site bundle.
+       Never replace this block with the site's generated CSS bundle: the first
+       inner line of this block being a comment is what stops build.sh Pass A
+       from converting it. A page carrying this partial must never also link the
+       generated site stylesheet: Pass B would inline the whole site bundle on top.
+       See docs/superpowers/specs/2026-09-03-barbershop-grams-design.md */
+    /* ── Self-hosted fonts (latin subset) — copied verbatim from css/base.css ── */
+    @font-face {
+      font-family: 'Cormorant Garamond';
+      font-style: normal;
+      font-weight: 300 600;
+      font-display: swap;
+      src: url('/fonts/cormorant-garamond.woff2') format('woff2');
+      unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+    }
+    @font-face {
+      font-family: 'Cormorant Garamond';
+      font-style: italic;
+      font-weight: 400;
+      font-display: swap;
+      src: url('/fonts/cormorant-garamond-italic.woff2') format('woff2');
+      unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+    }
+    @font-face {
+      font-family: 'Source Serif 4';
+      font-style: normal;
+      font-weight: 400 600;
+      font-display: swap;
+      src: url('/fonts/source-serif-4.woff2') format('woff2');
+      unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+    }
+    @font-face {
+      font-family: 'Source Serif 4';
+      font-style: italic;
+      font-weight: 400;
+      font-display: swap;
+      src: url('/fonts/source-serif-4-italic.woff2') format('woff2');
+      unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+    }
+
+    /* ── Page tokens (gift register) ──
+       COLOUR LAW (computed WCAG contrast):
+                        on --bs-paper   on --bs-cream
+         --bs-ink            16.13 AAA      14.29 AAA   body and headings
+         --bs-navy           10.75 AAA       9.52 AAA   occasion labels, table heads
+         --bs-red             6.12 AA        5.42 AA    accents, buttons, small caps — NOT long body text
+         --bs-mid             5.85 AA        5.18 AA    captions, secondary text
+       Reversed (paper on red, paper on navy) is symmetric: 6.12 and 10.75 — both fine for buttons.
+       --bs-rule is a hairline only: never text, never a focus outline. */
+    :root {
+      --bs-ink:    #1F1A17;
+      --bs-mid:    #6B5E56;
+      --bs-red:    #B3261E;
+      --bs-navy:   #1F3A5F;
+      --bs-paper:  #FBF7EF;
+      --bs-cream:  #F1E9DA;
+      --bs-rule:   #DCD2C2;
+      --font-display: 'Cormorant Garamond', 'Iowan Old Style', Georgia, serif;
+      --font-body:    'Source Serif 4', Georgia, 'Times New Roman', serif;
+      --font-ui:      'Source Serif 4', Georgia, 'Times New Roman', serif;
+    }
+
+    /* ── Reset ── */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    img { max-width: 100%; display: block; }
+
+    /* ── Base ── */
+    html { background: var(--bs-paper); }
+    body {
+      font-family: var(--font-body);
+      font-size: 1.125rem;
+      line-height: 1.65;
+      color: var(--bs-ink);
+      background: var(--bs-paper);
+    }
+
+    /* ── Sections: bays down a nave ── */
+    .bs-section {
+      padding-block: clamp(4rem, 9vw, 7.5rem);
+      border-top: 1px solid var(--bs-rule);
+    }
+    .bs-section--light { background: var(--bs-paper); }
+    .bs-section--mid { background: var(--bs-cream); }
+    .bs-hero { border-top: 0; }
+
+    /* ── Rail grid ── */
+    .bs-rail {
+      display: grid;
+      grid-template-columns: minmax(10rem, 14rem) minmax(0, 68ch);
+      column-gap: clamp(2rem, 4vw, 3.5rem);
+      row-gap: 1.5rem;
+      max-width: 72rem;
+      margin-inline: auto;
+      padding-inline: clamp(1.25rem, 5vw, 3rem);
+    }
+    .bs-rail-label {
+      font-family: var(--font-ui);
+      font-size: .6875rem;
+      font-weight: 600;
+      letter-spacing: .22em;
+      text-transform: uppercase;
+      color: var(--bs-red);
+      border-top: 1px solid var(--bs-rule);
+      padding-top: 1rem;
+    }
+    @media (max-width: 47.9375rem) {
+      .bs-rail { grid-template-columns: minmax(0, 1fr); row-gap: 1.25rem; }
+    }
+
+    /* ── Type scale ── */
+    h1 {
+      font-family: var(--font-display);
+      font-size: clamp(2.5rem, 5.5vw, 3.75rem);
+      font-weight: 500;
+      line-height: 1.15;
+    }
+    h2 {
+      font-family: var(--font-display);
+      font-size: 2.125rem;
+      font-weight: 400;
+      line-height: 1.2;
+      margin-bottom: 1.5rem;
+    }
+    h3 {
+      font-family: var(--font-display);
+      font-size: 1.5rem;
+      font-weight: 400;
+      line-height: 1.25;
+      margin-top: 2.5rem;
+      margin-bottom: .75rem;
+    }
+    @media (max-width: 47.9375rem) {
+      h2 { font-size: 1.6875rem; }
+    }
+    .bs-eyebrow {
+      font-family: var(--font-ui);
+      font-size: .6875rem;
+      font-weight: 600;
+      letter-spacing: .22em;
+      text-transform: uppercase;
+      color: var(--bs-red); /* same small-caps role as the rail labels */
+    }
+    .bs-pull {
+      font-family: var(--font-display);
+      font-size: 1.625rem;
+      font-weight: 300;
+      font-style: italic;
+      line-height: 1.35;
+      margin-top: 2.25rem;
+      border-top: 1px solid var(--bs-rule);
+      padding-top: 1.75rem;
+    }
+    .bs-caption {
+      font-size: .875rem;
+      color: var(--bs-mid);
+    }
+    .bs-body p + p { margin-top: 1.25rem; }
+    .bs-body a {
+      color: var(--bs-ink);
+      text-decoration: underline;
+      text-decoration-color: var(--bs-mid);
+      text-underline-offset: .2em;
+    }
+    .bs-body a:hover { text-decoration-color: var(--bs-ink); }
+
+    /* ── Skip link ── */
+    .bs-skip-link {
+      position: absolute;
+      top: -3rem;
+      left: 1.25rem;
+      padding: .6rem 1.1rem;
+      background: var(--bs-red);
+      color: var(--bs-paper);
+      font-family: var(--font-ui);
+      font-size: .8125rem;
+      font-weight: 600;
+      letter-spacing: .04em;
+      text-decoration: none;
+      z-index: 200;
+      transition: top .2s;
+    }
+    .bs-skip-link:focus {
+      top: 1rem;
+      outline: 2px solid var(--bs-ink);
+      outline-offset: 2px;
+    }
+    .bs-skip-link:visited { color: var(--bs-paper); }
+
+    /* ── Header ── */
+    .bs-header {
+      background: var(--bs-paper);
+      border-bottom: 1px solid var(--bs-rule);
+    }
+    .bs-nav {
+      max-width: 72rem;
+      margin-inline: auto;
+      padding: 1.1rem clamp(1.25rem, 5vw, 3rem);
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      gap: 1.25rem;
+    }
+    .bs-wordmark {
+      font-family: var(--font-display);
+      font-size: 1.3125rem;
+      font-weight: 600;
+      color: var(--bs-red);
+      text-decoration: none;
+    }
+    .bs-nav-enquire {
+      font-family: var(--font-ui);
+      font-size: .6875rem;
+      font-weight: 600;
+      letter-spacing: .18em;
+      text-transform: uppercase;
+      color: var(--bs-ink);
+      text-decoration: none;
+      border-bottom: 1px solid var(--bs-rule);
+      padding-bottom: .2rem;
+    }
+    .bs-nav-enquire:hover { border-bottom-color: var(--bs-ink); }
+    .bs-nav .bs-wordmark { margin-right: auto; }
+
+    /* ── Breadcrumb (repertoire.html only; the hub has no trail) ── */
+    .bs-breadcrumb {
+      max-width: 72rem;
+      margin-inline: auto;
+      padding: 0 clamp(1.25rem, 5vw, 3rem) .9rem;
+    }
+    .bs-breadcrumb p {
+      font-family: var(--font-ui);
+      font-size: .75rem;
+      letter-spacing: .04em;
+      color: var(--bs-mid);
+      margin: 0;
+    }
+    .bs-breadcrumb a { color: var(--bs-mid); text-decoration: none; border-bottom: 1px solid var(--bs-rule); }
+    .bs-breadcrumb a:hover { color: var(--bs-ink); border-bottom-color: var(--bs-ink); }
+    .bs-breadcrumb [aria-current="page"] { color: var(--bs-ink); }
+    .bs-crumb-sep { color: var(--bs-mid); padding-inline: .45rem; }
+
+    /* ── Checked-date stamp on time-sensitive facts ── */
+    .bs-checked {
+      font-family: var(--font-ui);
+      font-size: .6875rem;
+      letter-spacing: .04em;
+      color: var(--bs-mid);
+      border-left: 2px solid var(--bs-rule);
+      padding-left: .75rem;
+      margin-top: 1rem;
+    }
+
+    /* ── Hero ── */
+    .bs-hero__inner {
+      max-width: 72rem;
+      margin-inline: auto;
+      padding-inline: clamp(1.25rem, 5vw, 3rem);
+    }
+    .bs-hero h1 {
+      max-width: 18ch;
+      margin-top: 1.5rem;
+    }
+    .bs-hairline--accent {
+      width: 5.5rem;
+      height: 1px;
+      background: var(--bs-navy);
+      margin-block: 2rem;
+    }
+    .bs-hero__sub {
+      max-width: 58ch;
+      font-size: 1.1875rem;
+      color: var(--bs-mid);
+    }
+    .bs-hero__cta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: .75rem;
+      margin-top: 2.5rem;
+    }
+
+    /* ── Buttons ── */
+    /* Selector lists carry both weights on purpose: the bare class styles the
+       form's <button>, while `a.bs-btn` (0,1,1) is needed to beat `.bs-body a`
+       above, which otherwise repaints in-body buttons in ink and underlines
+       them — invisible text on the filled variant. */
+    .bs-btn, a.bs-btn {
+      display: inline-block;
+      font-family: var(--font-ui);
+      font-size: .75rem;
+      font-weight: 600;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      color: var(--bs-ink);
+      background: transparent;
+      border: 1px solid var(--bs-ink);
+      padding: 1rem 1.75rem;
+      text-decoration: none;
+      cursor: pointer;
+      transition: background-color .2s, color .2s;
+    }
+    .bs-btn:hover, a.bs-btn:hover {
+      background: var(--bs-ink);
+      color: var(--bs-paper);
+      text-decoration: none;
+    }
+
+    /* ── Process: the page's only numbered component ── */
+    .bs-process {
+      list-style: none; /* role="list" in the markup keeps AT list semantics */
+      margin-top: 1.75rem;
+      display: grid;
+      gap: 2rem;
+    }
+    .bs-process li {
+      display: grid;
+      grid-template-columns: 3rem minmax(0, 1fr);
+      column-gap: 1.25rem;
+    }
+    .bs-process .n {
+      grid-row: span 2;
+      font-family: var(--font-display);
+      font-size: 2.25rem;
+      font-weight: 300;
+      line-height: 1;
+      color: var(--bs-mid);
+    }
+    .bs-process h3 { margin: 0 0 .35rem; }
+    .bs-process p { grid-column: 2; }
+
+    /* ── Footer ── */
+    .bs-footer {
+      background: var(--bs-cream);
+      border-top: 1px solid var(--bs-rule);
+      padding: 3rem clamp(1.25rem, 5vw, 3rem);
+      text-align: center;
+      font-size: .875rem;
+      color: var(--bs-mid);
+    }
+    .bs-footer a { color: var(--bs-mid); }
+    .bs-footer p + p { margin-top: .75rem; }
+
+    /* ── Occasion strip ── */
+    .bs-occasions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: .625rem;
+      list-style: none;
+      margin-top: 2rem;
+    }
+    .bs-occasions a {
+      display: inline-block;
+      font-family: var(--font-ui);
+      font-size: .8125rem;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--bs-navy);
+      text-decoration: none;
+      border: 1px solid var(--bs-rule);
+      padding: .5rem 1rem;
+      transition: border-color .2s, color .2s;
+    }
+    .bs-occasions a:hover { border-color: var(--bs-navy); }
+    .bs-occasions .bs-occasions__lead a {
+      color: var(--bs-paper);
+      background: var(--bs-navy);
+      border-color: var(--bs-navy);
+    }
+
+    /* ── Price table ── */
+    .bs-prices {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1.5rem;
+    }
+    .bs-prices th {
+      font-family: var(--font-ui);
+      font-size: .6875rem;
+      font-weight: 600;
+      letter-spacing: .18em;
+      text-transform: uppercase;
+      color: var(--bs-navy);
+      text-align: left;
+      border-bottom: 1px solid var(--bs-rule);
+      padding: 0 1rem .75rem 0;
+    }
+    .bs-prices td {
+      border-bottom: 1px solid var(--bs-rule);
+      padding: 1.125rem 1rem 1.125rem 0;
+      vertical-align: top;
+    }
+    .bs-prices td:last-child {
+      white-space: nowrap;
+      text-align: right;
+      padding-right: 0;
+      font-variant-numeric: tabular-nums;
+    }
+    .bs-prices .bs-prices__flag {
+      display: block;
+      font-family: var(--font-ui);
+      font-size: .6875rem;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: var(--bs-red);
+      margin-top: .35rem;
+    }
+    @media (max-width: 39.9375rem) {
+      .bs-prices thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+      .bs-prices tr { display: block; border-bottom: 1px solid var(--bs-rule); padding-block: 1rem; }
+      .bs-prices td { display: block; border: 0; padding: 0 0 .35rem 0; }
+      .bs-prices td:last-child { text-align: left; font-weight: 600; }
+    }
+
+    /* ── Checklist ── */
+    .bs-check { list-style: none; margin-top: 1.5rem; }
+    .bs-check li {
+      position: relative;
+      padding-left: 1.75rem;
+      margin-top: .875rem;
+    }
+    .bs-check li::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: .55em;
+      width: .5rem;
+      height: .5rem;
+      border: 1px solid var(--bs-red);
+    }
+
+    /* ── FAQ ── */
+    .bs-faq { margin-top: 1.5rem; }
+    .bs-faq details {
+      border-bottom: 1px solid var(--bs-rule);
+      padding-block: 1.125rem;
+    }
+    .bs-faq summary {
+      font-family: var(--font-display);
+      font-size: 1.3125rem;
+      cursor: pointer;
+      list-style: none;
+    }
+    .bs-faq summary::-webkit-details-marker { display: none; }
+    .bs-faq summary::after {
+      content: "+";
+      float: right;
+      color: var(--bs-red);
+      font-family: var(--font-ui);
+    }
+    .bs-faq details[open] summary::after { content: "\2013"; }
+    .bs-faq details > p { margin-top: .875rem; }
+
+    /* ── Repertoire groups ── */
+    .bs-rep { columns: 2; column-gap: 2.5rem; list-style: none; margin-top: 1rem; }
+    .bs-rep li { break-inside: avoid; padding-block: .28rem; }
+    @media (max-width: 39.9375rem) { .bs-rep { columns: 1; } }
+
+    /* ── Filled button variant, for the primary CTA ── */
+    .bs-btn--fill, a.bs-btn--fill {
+      color: var(--bs-paper);
+      background: var(--bs-red);
+      border-color: var(--bs-red);
+      text-decoration: none;
+    }
+    .bs-btn--fill:hover, a.bs-btn--fill:hover {
+      background: var(--bs-ink);
+      border-color: var(--bs-ink);
+      color: var(--bs-paper);
+    }
+
+
+    /* ── Form (gift enquiry; the hub's #enquire section only) ──
+       Recovered from partials/private-register.css.html, the file this
+       register was cloned from, with the pe- prefix and the old token names
+       repointed to the barbershop tokens above. ── */
+    .bs-form { margin-top: 2.25rem; }
+    .bs-field { margin-top: 1.75rem; }
+    .bs-field > label {
+      display: block;
+      font-family: var(--font-ui);
+      font-size: .75rem;
+      font-weight: 500;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: var(--bs-mid);
+      margin-bottom: .5rem;
+    }
+    .bs-field input[type="text"],
+    .bs-field input[type="email"],
+    .bs-field input[type="tel"],
+    .bs-field input[type="date"],
+    .bs-field select,
+    .bs-field textarea {
+      display: block;
+      width: 100%;
+      font-family: var(--font-ui);
+      font-size: 1rem;
+      color: var(--bs-ink);
+      background: transparent;
+      border: 0;
+      border-bottom: 1px solid var(--bs-mid);
+      border-radius: 0;
+      padding: .55rem 0;
+    }
+    .bs-field textarea {
+      border: 1px solid var(--bs-mid);
+      padding: .75rem;
+      resize: vertical;
+    }
+    .bs-field input:focus,
+    .bs-field select:focus,
+    .bs-field textarea:focus {
+      border-color: var(--bs-ink);
+    }
+    /* Invalid state shows only after the visitor has interacted, and in the
+       site feedback red rather than the register's decorative red. */
+    .bs-field input:user-invalid,
+    .bs-field select:user-invalid,
+    .bs-field textarea:user-invalid {
+      border-color: #9B2C2C;
+    }
+    .bs-field input:disabled,
+    .bs-field select:disabled,
+    .bs-field textarea:disabled {
+      color: var(--bs-mid);
+      border-bottom-style: dotted;
+    }
+    /* Help text under a field (the note beneath the message box). */
+    .bs-field .bs-caption { margin-top: .5rem; }
+    .bs-form .bs-btn { margin-top: 2.25rem; }
+    .bs-form .bs-btn:disabled { cursor: default; opacity: .6; }
+
+    /* ── Error / success (site feedback colours) ── */
+    .bs-form-error {
+      display: none;
+      margin-top: 1.75rem;
+      padding: 1rem 1.25rem;
+      color: #9B2C2C;
+      background: #FBEBE9;
+      border: 1px solid #E0A8A8;
+    }
+    .bs-form-error[data-visible="true"] { display: block; }
+    .h-captcha { margin-top: 2rem; }
+    #bs-form-success {
+      margin-top: 2.25rem;
+      padding: 1rem 1.25rem;
+      color: #2D5016;
+      background: #E8F0E4;
+      border: 1px solid #A8C99B;
+    }
+    /* Hidden via a class, not the `hidden` attribute — the no-JS :target
+       reveal below only overrides CSS, so an element still carrying
+       `hidden` would stay removed from the accessibility tree even once
+       painted visible. */
+    .bs-hidden { display: none; }
+    /* No-JS fallback. The plain HTML POST hands Web3Forms a redirect back to
+       this anchor, and Web3Forms only redirects on a send it accepted, so the
+       confirmation shows with no script running and the buyer never leaves the
+       register for main-site chrome. The JS path removes the class instead. */
+    #bs-form-success.bs-hidden:target { display: block; }
+
+    /* ── Focus & utilities ── */
+    :focus-visible {
+      outline: 2px solid var(--bs-red);
+      outline-offset: 3px;
+    }
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    /* ── Motion: no JS sets html.bs-motion on this mini-site, so there are
+       no entrance-animation classes to gate here. The one live rule is
+       smooth in-page scrolling, for the hub's occasion-strip anchors. ── */
+    @media (prefers-reduced-motion: no-preference) {
+      html { scroll-behavior: smooth; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .bs-btn, .bs-occasions a, .bs-skip-link { transition: none; }
+    }
+  </style>
+  <!-- @include-end partials/barbershop-register.css.html -->
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Service",
+        "name": "Barbershop Grams",
+        "serviceType": "Singing telegram",
+        "description": "A barbershop quartet sent to surprise one person in London with Happy Birthday in four-part harmony and a song chosen for them.",
+        "url": "https://londonchoralservice.com/barbershop-grams/",
+        "provider": {
+          "@type": "LocalBusiness",
+          "@id": "https://londonchoralservice.com/#organization"
+        },
+        "areaServed": {
+          "@type": "AdministrativeArea",
+          "name": "Greater London"
+        },
+        "offers": {
+          "@type": "Offer",
+          "name": "Surprise Barbershop Gram",
+          "description": "Up to ten minutes. Four singers sing Happy Birthday in four-part harmony and one song from the repertoire, chosen for the recipient.",
+          "price": "600",
+          "priceCurrency": "GBP",
+          "priceValidUntil": "2027-12-31",
+          "availability": "https://schema.org/InStock",
+          "url": "https://londonchoralservice.com/barbershop-grams/#prices"
+        }
+      },
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "https://londonchoralservice.com/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Barbershop Grams",
+            "item": "https://londonchoralservice.com/barbershop-grams/"
+          }
+        ]
+      },
+      {
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "How much notice do you need?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "48 hours, and further ahead for Valentine's week. For December, ask by September."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Where will you sing?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Anywhere in Greater London we can get four singers into: offices, homes, restaurants, pubs, parks, and care homes. Hospital wards need the ward's permission first, which we will ask for. We sing outside Greater London too, with the travel costed in the written quote before you commit."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "What happens if they are not there?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Tell us before the singers set off and we rearrange once at no charge. After they have set off the fee stands, because four singers have given up the slot."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "How do you keep it a surprise?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "We only ever contact the number you give us. We never ring or email the recipient, and we do not post anything about a booking before it happens."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Can you sing a song that is not on your repertoire list?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes. We arrange your song for four voices from £200. The singers learn it in 24 hours, inside the usual 48 hours' notice."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Can we film it?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes, and we would like a copy. We ask the person who was surprised for permission before we post anything ourselves."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Is there a cheaper version?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "No. Barbershop is written in four parts. We do hire single singers from £250, but we do not sell that as a gram."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Who will be singing?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Four singers chosen for your booking by Luca Wetherall, our Artistic Director and Tutor in Music at the University of Oxford, who auditions every musician on the team himself."
+            }
+          }
+        ]
+      }
+    ]
+  }
+  </script>
+
+  <link rel="icon" href="/assets/favicon.ico" sizes="any">
+  <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
+</head>
+<body>
+
+  <!-- @include-start partials/barbershop-nav.html -->
+  <a href="#bs-main" class="bs-skip-link">Skip to main content</a>
+  <header class="bs-header">
+    <nav class="bs-nav" aria-label="Barbershop Grams">
+      <a class="bs-wordmark" href="/barbershop-grams/">Barbershop Grams</a>
+      <a class="bs-nav-enquire" href="/barbershop-grams/repertoire.html">Repertoire</a>
+      <a class="bs-nav-enquire" href="/barbershop-grams/#prices">Prices</a>
+      <a class="bs-nav-enquire" href="https://wa.me/447356042468?text=Hello%20London%20Choral%20Service%2C%20I%27d%20like%20to%20send%20a%20Barbershop%20Gram.%20Date%3A%20%2F%20Place%3A%20%2F%20Who%20it%27s%20for%3A" target="_blank" rel="noopener" data-whatsapp>WhatsApp</a>
+    </nav>
+  </header>
+  <!-- @include-end partials/barbershop-nav.html -->
+
+  <main id="bs-main">
+
+    <!-- §1 Hero -->
+    <section class="bs-section bs-section--light bs-hero">
+      <div class="bs-hero__inner">
+        <p class="bs-eyebrow">Surprise singing &middot; Greater London</p>
+        <h1>A barbershop quartet at the door, singing Happy Birthday to someone who had no idea.</h1>
+        <div class="bs-hairline--accent" aria-hidden="true"></div>
+        <p class="bs-hero__sub">Four voices in harmony, wherever the person will be. &pound;600 all in across Greater London, and we need 48 hours&rsquo; notice.</p>
+        <p class="bs-hero__cta"><a class="bs-btn bs-btn--fill" href="https://wa.me/447356042468?text=Hello%20London%20Choral%20Service%2C%20I%27d%20like%20to%20send%20a%20Barbershop%20Gram.%20Date%3A%20%2F%20Place%3A%20%2F%20Who%20it%27s%20for%3A" target="_blank" rel="noopener" data-whatsapp>Send a gram</a> <a class="bs-btn" href="/barbershop-grams/repertoire.html">See the repertoire</a></p>
+      </div>
+    </section>
+
+    <!-- §2 What a gram is, and the occasion strip -->
+    <section class="bs-section bs-section--mid">
+      <div class="bs-rail">
+        <p class="bs-rail-label" aria-hidden="true">Occasions</p>
+        <div class="bs-body">
+          <h2>What to send a gram for</h2>
+          <p>A Barbershop Gram is a singing telegram with four voices in it rather than one. Ten minutes, wherever the person happens to be. The birthday is the occasion we built it around, and everything else on this list uses the same four singers with a different song at the end.</p>
+          <ul class="bs-occasions" role="list">
+            <li class="bs-occasions__lead"><a href="#birthday">Birthday</a></li>
+            <li><a href="#love">Valentine&rsquo;s</a></li>
+            <li><a href="#proposals">Proposal</a></li>
+            <li><a href="#office">Leaving do</a></li>
+            <li><a href="#love">Anniversary</a></li>
+            <li><a href="#love">Just because</a></li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- §3 Who you are booking -->
+    <section class="bs-section bs-section--light" id="singers">
+      <div class="bs-rail">
+        <p class="bs-rail-label" aria-hidden="true">The singers</p>
+        <div class="bs-body">
+          <h2>Who turns up</h2>
+          <p>Luca Wetherall, our Artistic Director, picks the four singers for every gram himself. He is Tutor in Music at the University of Oxford, and no singer joins the team without auditioning for him first. The four who arrive come out of the same hand-picked group that sings our weddings and our carol services.</p>
+          <p>We publish the <a href="/barbershop-grams/repertoire.html">whole repertoire</a>. If your song is not on it, we will arrange it for four voices from &pound;200 on top of the gram fee.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- §4 Birthday: the flagship -->
+    <section class="bs-section bs-section--mid" id="birthday">
+      <div class="bs-rail">
+        <p class="bs-rail-label" aria-hidden="true">Birthdays</p>
+        <div class="bs-body">
+          <h2>The surprise birthday gram</h2>
+          <p>You tell us where they will be and when. Four singers walk in, find the right person, and sing Happy Birthday, then the song you chose for them. They leave when the song finishes, about ten minutes after they arrive.</p>
+          <p>An open-plan office works. So does a kitchen at half past seven in the morning, a front door on a Saturday, or a restaurant table between the main course and the pudding. We need a ten-minute window when the person will be somewhere we can reach them, and someone at that end who knows we are coming.</p>
+          <p>If the birthday falls on a Tuesday and the party is on the Saturday, consider the Tuesday. At a party we are one act among several on the running order. On the Tuesday there is nothing else booked.</p>
+          <p>Fortieths, fiftieths and eightieths get the same four singers. Tell us the age and they will work it into the song alongside the name.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- §5 Love -->
+    <section class="bs-section bs-section--light" id="love">
+      <div class="bs-rail">
+        <p class="bs-rail-label" aria-hidden="true">Love</p>
+        <div class="bs-body">
+          <h2>For someone you love</h2>
+          <p>Valentine&rsquo;s Day and anniversaries are the obvious ones, and they are also the days someone half expects flowers. Send the singers on an ordinary Thursday. Hello! Ma Baby, Let Me Call You Sweetheart and I Love You Truly are all in the repertoire. If there is a song that belongs to the two of you, we will arrange that instead.</p>
+          <p>It does not have to be romantic. The same four singers and the same ten minutes work for a friend who has had a rough month, or for your parents on a date that is not an anniversary.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- §6 Proposals -->
+    <section class="bs-section bs-section--mid" id="proposals">
+      <div class="bs-rail">
+        <p class="bs-rail-label" aria-hidden="true">Proposals</p>
+        <div class="bs-body">
+          <h2>Asking someone to marry you</h2>
+          <p>We arrive a few minutes before you ask and sing while you get the ring out of your pocket. Then we go. Send us the plan a couple of days ahead: where you will be standing, what the signal is, who else is in on it, and whether anybody is filming. The singers wait out of sight until you give the signal.</p>
+          <p>Most restaurants and hotels want a word before four strangers start singing in the middle of service. We square that with them.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- §7 Office -->
+    <section class="bs-section bs-section--light" id="office">
+      <div class="bs-rail">
+        <p class="bs-rail-label" aria-hidden="true">At work</p>
+        <div class="bs-body">
+          <h2>Leaving dos, promotions and work anniversaries</h2>
+          <p>Four singers across the desk from someone on their last day, in front of the team they are leaving. We sing where they sit, so nobody has to be manoeuvred into a meeting room on a pretext, and the whole thing takes ten minutes out of a Friday afternoon. Tell us who signs visitors into the building and we will arrange the access with them beforehand.</p>
+          <p>A trading floor, or an all-hands with two hundred people in it, needs more than four voices, and for those we send eight or twelve, quoted for the occasion. We invoice the company.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- §8 How it works -->
+    <section class="bs-section bs-section--mid">
+      <div class="bs-rail">
+        <p class="bs-rail-label" aria-hidden="true">Process</p>
+        <div class="bs-body">
+          <h2>How it works</h2>
+          <ol class="bs-process" role="list">
+            <li role="listitem">
+              <span class="n" aria-hidden="true">1</span>
+              <h3>Enquiry</h3>
+              <p>Tell us the date, where the person will be, and roughly what time. WhatsApp is quickest.</p>
+            </li>
+            <li role="listitem">
+              <span class="n" aria-hidden="true">2</span>
+              <h3>Quote</h3>
+              <p>We check that four singers are free and come back to you with a written quote covering the singing, the travel and anything we are writing from scratch for you.</p>
+            </li>
+            <li role="listitem">
+              <span class="n" aria-hidden="true">3</span>
+              <h3>Briefing</h3>
+              <p>Luca talks to you about the person and about which song will suit them, and you tell us anything the singers should know before they arrive.</p>
+            </li>
+            <li role="listitem">
+              <span class="n" aria-hidden="true">4</span>
+              <h3>On the day</h3>
+              <p>Four singers arrive, sing, and are gone inside ten minutes.</p>
+            </li>
+          </ol>
+        </div>
+      </div>
+    </section>
+
+    <!-- §9 Making sure the surprise lands -->
+    <section class="bs-section bs-section--light">
+      <div class="bs-rail">
+        <p class="bs-rail-label" aria-hidden="true">Logistics</p>
+        <div class="bs-body">
+          <h2>Making sure the surprise lands</h2>
+          <p>Luca rings whoever is on the inside the day before and walks them through it: where the singers will wait, when they will move, and what to do if the person has gone out for a coffee. The four arrive early and stay out of sight until the moment. Every call and message about the booking goes to you.</p>
+          <p>From your end:</p>
+          <ul class="bs-check" role="list">
+            <li>Someone on the inside: the receptionist, their manager, or whoever has the spare key.</li>
+            <li>A ten-minute window when the person will be in one place.</li>
+            <li>Access: building sign-in, a table booking, a gate code.</li>
+            <li>A phone number for the day that is not the recipient&rsquo;s.</li>
+            <li>Whether you want it filmed, and by whom.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- §10 Prices -->
+    <section class="bs-section bs-section--mid" id="prices">
+      <div class="bs-rail">
+        <p class="bs-rail-label" aria-hidden="true">Prices</p>
+        <div class="bs-body">
+          <h2>What it costs</h2>
+          <table class="bs-prices" role="table">
+            <thead>
+              <tr role="row"><th scope="col" role="columnheader">What you are sending</th><th scope="col" role="columnheader">Price</th></tr>
+            </thead>
+            <tbody>
+              <tr role="row">
+                <td role="cell"><strong>Surprise Barbershop Gram</strong><br>Up to ten minutes. Four singers find the person, sing Happy Birthday in four-part harmony, then one song from the repertoire chosen for them, with their name worked in.<span class="bs-prices__flag">Our flagship</span></td>
+                <td role="cell">&pound;600</td>
+              </tr>
+              <tr role="row">
+                <td role="cell"><strong>Half-hour set</strong><br>Three or four songs for one occasion, or a roaming set that reaches several people across an office, a party, or a wedding reception.</td>
+                <td role="cell">From &pound;800</td>
+              </tr>
+              <tr role="row">
+                <td role="cell"><strong>One-hour set</strong><br>A programme of eight to ten songs with a break. Wedding and drinks receptions, garden parties, company summer parties.</td>
+                <td role="cell">From &pound;1,200</td>
+              </tr>
+              <tr role="row">
+                <td role="cell"><strong>Bespoke arrangement</strong><br>Your song, arranged for four voices in 24 hours. Add it to any of the above.</td>
+                <td role="cell">From &pound;200</td>
+              </tr>
+              <tr role="row">
+                <td role="cell"><strong>Video recording session</strong><br>A filmed performance for someone who is not in London, or for a company video. We agree the licence with you for the use you have in mind.</td>
+                <td role="cell">From &pound;1,000</td>
+              </tr>
+            </tbody>
+          </table>
+          <p>The &pound;600 is the whole price. We confirm the &lsquo;from&rsquo; figures in writing, and we do not add VAT. Travel within Greater London is included; beyond it, we price the travel and show you that figure before anything is agreed. Eight or twelve voices instead of four, quoted on request.</p>
+          <p>That &pound;600 covers a conversation with Luca about the person and the song, the singers&rsquo; preparation and their music, a phone call the day before to whoever is on the inside, and the travel.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- §11 Repertoire teaser -->
+    <section class="bs-section bs-section--light">
+      <div class="bs-rail">
+        <p class="bs-rail-label" aria-hidden="true">Repertoire</p>
+        <div class="bs-body">
+          <h2>What the singers sing</h2>
+          <p>Barbershop standards, doo-wop, and a handful of songs for leaving dos and for Christmas. Six of them:</p>
+          <ul class="bs-rep" role="list">
+            <li>Happy Birthday to You, in four parts</li>
+            <li>Hello! Ma Baby</li>
+            <li>Let Me Call You Sweetheart</li>
+            <li>Mr Sandman</li>
+            <li>Bill Bailey, Won&rsquo;t You Please Come Home</li>
+            <li>Show Me the Way to Go Home</li>
+          </ul>
+          <p>The <a href="/barbershop-grams/repertoire.html">full repertoire</a> is grouped by occasion, with the birthday and love songs at the top.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- §12 FAQ -->
+    <section class="bs-section bs-section--mid" id="faq">
+      <div class="bs-rail">
+        <p class="bs-rail-label" aria-hidden="true">Questions</p>
+        <div class="bs-body">
+          <h2>Before you book</h2>
+          <div class="bs-faq">
+            <details>
+              <summary>How much notice do you need?</summary>
+              <p>48 hours, and further ahead for Valentine&rsquo;s week. For December, ask by September.</p>
+            </details>
+            <details>
+              <summary>Where will you sing?</summary>
+              <p>Anywhere in Greater London we can get four singers into: offices, homes, restaurants, pubs, parks, and care homes. Hospital wards need the ward&rsquo;s permission first, which we will ask for. We sing outside Greater London too, with the travel costed in the written quote before you commit.</p>
+            </details>
+            <details>
+              <summary>What happens if they are not there?</summary>
+              <p>Tell us before the singers set off and we rearrange once at no charge. After they have set off the fee stands, because four singers have given up the slot.</p>
+            </details>
+            <details>
+              <summary>How do you keep it a surprise?</summary>
+              <p>We only ever contact the number you give us. We never ring or email the recipient, and we do not post anything about a booking before it happens.</p>
+            </details>
+            <details>
+              <summary>Can you sing a song that is not on your repertoire list?</summary>
+              <p>Yes. We arrange your song for four voices from &pound;200. The singers learn it in 24 hours, inside the usual 48 hours&rsquo; notice.</p>
+            </details>
+            <details>
+              <summary>Can we film it?</summary>
+              <p>Yes, and we would like a copy. We ask the person who was surprised for permission before we post anything ourselves.</p>
+            </details>
+            <details>
+              <summary>Is there a cheaper version?</summary>
+              <p>No. Barbershop is written in four parts. We do hire single singers from &pound;250, but we do not sell that as a gram.</p>
+            </details>
+            <details>
+              <summary>Who will be singing?</summary>
+              <p>Four singers chosen for your booking by Luca Wetherall, our Artistic Director and Tutor in Music at the University of Oxford, who auditions every musician on the team himself.</p>
+            </details>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- §13 Enquire -->
+    <section class="bs-section bs-section--light" id="enquire">
+      <div class="bs-rail">
+        <p class="bs-rail-label" aria-hidden="true">Enquire</p>
+        <div class="bs-body">
+          <h2>Send a gram</h2>
+          <p>You will reach us fastest on WhatsApp, and we reply within one working day, usually the same day. Send the date and the place, say who the gram is for, and we will tell you whether four singers are free.</p>
+          <p><a class="bs-btn bs-btn--fill" href="https://wa.me/447356042468?text=Hello%20London%20Choral%20Service%2C%20I%27d%20like%20to%20send%20a%20Barbershop%20Gram.%20Date%3A%20%2F%20Place%3A%20%2F%20Who%20it%27s%20for%3A" target="_blank" rel="noopener" data-whatsapp>Send a gram on WhatsApp</a></p>
+          <p>You can also ring <a href="tel:+447356042468">07356 042468</a>, or fill in the form below.</p>
+
+          <p>We write back to you, never to the person the gram is for.</p>
+          <p class="bs-caption">Fields marked * are required.</p>
+
+          <form id="bs-enquiry" class="bs-form" method="post" action="https://api.web3forms.com/submit">
+            <input type="hidden" name="access_key" value="dc1af546-26ac-45b3-a85d-064a3a59886d">
+            <input type="hidden" name="subject" value="Barbershop Gram enquiry — London Choral Service">
+            <!-- Marks the enquiry in the Web3Forms inbox: grams are sold outside
+                 the choral service and are quoted from their own price list. -->
+            <input type="hidden" name="product" value="Barbershop Gram">
+            <!-- No-JS fallback only. Web3Forms redirects here after a send it
+                 accepted, and the CSS :target rule reveals the confirmation.
+                 Never point this at /thank-you.html: that page carries the main
+                 site's chrome, which this register exists to keep out. -->
+            <input type="hidden" name="redirect" value="https://londonchoralservice.com/barbershop-grams/#bs-form-success">
+            <input type="hidden" name="utm_source" value="">
+            <input type="hidden" name="utm_medium" value="">
+            <input type="hidden" name="utm_campaign" value="">
+            <input type="hidden" name="utm_term" value="">
+            <input type="hidden" name="utm_content" value="">
+            <input type="hidden" name="gclid" value="">
+            <input type="checkbox" name="botcheck" class="sr-only" tabindex="-1" aria-hidden="true" autocomplete="off">
+
+            <div class="bs-field">
+              <label for="bs-name">Your name <span aria-hidden="true">*</span></label>
+              <input type="text" id="bs-name" name="name" autocomplete="name" required>
+            </div>
+            <div class="bs-field">
+              <label for="bs-email">Email <span aria-hidden="true">*</span></label>
+              <input type="email" id="bs-email" name="email" autocomplete="email" required>
+            </div>
+            <div class="bs-field">
+              <label for="bs-phone">Telephone or WhatsApp</label>
+              <input type="tel" id="bs-phone" name="phone" autocomplete="tel">
+            </div>
+            <div class="bs-field">
+              <label for="bs-date">Date of the gram <span aria-hidden="true">*</span></label>
+              <input type="date" id="bs-date" name="date" aria-describedby="bs-date-hint" required>
+              <p class="bs-caption" id="bs-date-hint">We need 48 hours&rsquo; notice.</p>
+            </div>
+            <div class="bs-field">
+              <label for="bs-place">Where we are singing <span aria-hidden="true">*</span></label>
+              <input type="text" id="bs-place" name="place" placeholder="Office, restaurant or front door" aria-describedby="bs-place-hint" required>
+              <p class="bs-caption" id="bs-place-hint">Include the postcode.</p>
+            </div>
+            <div class="bs-field">
+              <label for="bs-recipient">Who it is for <span aria-hidden="true">*</span></label>
+              <input type="text" id="bs-recipient" name="recipient" placeholder="Their first name, and what the occasion is" required>
+            </div>
+            <div class="bs-field">
+              <label for="bs-message">Anything else</label>
+              <textarea id="bs-message" name="message" rows="4" aria-describedby="bs-message-hint"></textarea>
+              <p class="bs-caption" id="bs-message-hint">The song you want, the time of day, and who we should ask for when we arrive.</p>
+            </div>
+
+            <div class="h-captcha" data-captcha="true"></div>
+            <p class="bs-form-error" id="bs-captcha-error" data-visible="false" role="alert">Please tick the box above to confirm you&rsquo;re not a robot, then send again.</p>
+
+            <div class="bs-form-error" id="bs-error" data-visible="false" role="alert">
+              <p data-error-msg="incomplete" hidden>Please check the highlighted fields, then send again.</p>
+              <p data-error-msg="network">We could not send that. Message us on <a href="https://wa.me/447356042468" target="_blank" rel="noopener" data-whatsapp>WhatsApp</a> or email <a href="mailto:office@londonchoralservice.com">office@londonchoralservice.com</a> and we will pick it up from there.</p>
+            </div>
+
+            <button type="submit" class="bs-btn">Send enquiry</button>
+          </form>
+
+          <div id="bs-form-success" role="status" tabindex="-1" class="bs-hidden">
+            <p>Thank you. We will check whether four singers are free on your date and email you back.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- @include-start partials/barbershop-footer.html -->
+  <footer class="bs-footer">
+    <p><a href="mailto:office@londonchoralservice.com">office@londonchoralservice.com</a> &middot; <a href="tel:+447356042468">07356 042468</a> &middot; London</p>
+    <p>Barbershop Grams is a product of <a href="/">The London Choral Service</a>, the operating name of Alma Consort Ltd, registered in England and Wales, company no. 16785727. <a href="/privacy.html">Privacy policy</a></p>
+  </footer>
+  <!-- @include-end partials/barbershop-footer.html -->
+
+  <!-- Web3Forms client script: renders the hCaptcha widget the enquiry form
+       needs. The only external script this register loads. /js/nav.js is
+       never loaded here — it redirects conversions to thank-you.html, which
+       carries main-site chrome and points at hymn recordings. -->
+  <script src="https://web3forms.com/client/script.js" async defer></script>
+
+  <!-- Ads conversion tracking: this mini-site loads no other site JS (see js/nav.js),
+       so tel:/mailto:/WhatsApp clicks would otherwise fire no conversion at all.
+       Reuses the identifiers thank-you.html fires for phone/email/WhatsApp
+       enquiries, without thank-you.html's redirect or its main-site chrome.
+       gram_source lets gram conversions be told apart from the rest of the
+       site in GA4 (Admin > Custom definitions > Custom dimensions, scope
+       "Event", parameter "gram_source"), then used to filter or segment. -->
+  <script>
+    function fireGramConversion() {
+      if (typeof gtag !== 'function') return;
+      gtag('event', 'ads_conversion_Contact_1', { gram_source: 'barbershop-grams-index' });
+      gtag('event', 'conversion', {
+        send_to: 'AW-17988388404/RjhECKGP7akcELSMxIFD',
+        value: 1.0,
+        currency: 'GBP',
+        gram_source: 'barbershop-grams-index'
+      });
+    }
+    document.querySelectorAll('a[href^="tel:"], a[href^="mailto:"], a[href*="wa.me/"]').forEach(function (link) {
+      link.addEventListener('click', fireGramConversion);
+    });
+  </script>
+
+  <!-- Enquiry form. Deliberately not /js/form.js: that handler binds to the
+       main site's .contact-form markup and always finishes by redirecting to
+       /thank-you.html. This register confirms in place instead, the way
+       private-events.html does, and keeps its script inline so the mini-site
+       carries no <script src> to site JS. -->
+  <script>
+  (function () {
+    'use strict';
+    var form = document.getElementById('bs-enquiry');
+    if (!form) return;
+
+    // The markup omits novalidate so no-JS visitors keep native browser
+    // validation on the plain HTML POST fallback; with JS running, the
+    // custom flow below takes over.
+    form.setAttribute('novalidate', '');
+
+    var successBox = document.getElementById('bs-form-success');
+    var errorBox = document.getElementById('bs-error');
+    var captchaError = document.getElementById('bs-captcha-error');
+    var submitBtn = form.querySelector('[type="submit"]');
+    var btnLabel = submitBtn ? submitBtn.textContent : 'Send enquiry';
+
+    // A past date is never a real gram, so pin the picker's floor to today.
+    // Built from local date parts rather than toISOString(), which is UTC and
+    // would offer yesterday to anyone east of Greenwich late in the evening.
+    var dateField = document.getElementById('bs-date');
+    if (dateField) {
+      var now = new Date();
+      var pad2 = function (n) { return n < 10 ? '0' + n : String(n); };
+      dateField.min = now.getFullYear() + '-' + pad2(now.getMonth() + 1) + '-' + pad2(now.getDate());
+    }
+
+    // Same-named hidden inputs sit empty in the markup; fill any present in
+    // the query string so the enquiry email carries its source.
+    try {
+      var params = new URLSearchParams(window.location.search);
+      ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'gclid'].forEach(function (key) {
+        var value = params.get(key);
+        if (!value) return;
+        var input = form.querySelector('input[name="' + key + '"]');
+        if (input) input.value = value;
+      });
+    } catch (_) { /* URLSearchParams unsupported — non-fatal */ }
+
+    // The error box holds one message per failure mode; showError reveals the
+    // box with only the relevant message visible.
+    function showError(kind) {
+      if (!errorBox) return;
+      errorBox.querySelectorAll('[data-error-msg]').forEach(function (msg) {
+        msg.hidden = msg.getAttribute('data-error-msg') !== kind;
+      });
+      errorBox.setAttribute('data-visible', 'true');
+    }
+
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+
+      // Required-field guard: focus the first invalid field and name the
+      // problem (the CSS :user-invalid rule marks the fields themselves).
+      var invalid = form.querySelectorAll(':invalid');
+      if (invalid.length) {
+        showError('incomplete');
+        invalid[0].focus();
+        return;
+      }
+
+      // Honeypot: a checked botcheck means a bot filled the form — do nothing.
+      var honeypot = form.querySelector('input[name="botcheck"]');
+      if (honeypot && honeypot.checked) return;
+
+      // hCaptcha guard (mirrors js/form.js): Web3Forms rejects submissions
+      // without a token, so block early and name the reason. Only block when
+      // the widget actually rendered — if the captcha script was blocked or
+      // failed to load, let the request through so the visitor sees the
+      // generic error with the WhatsApp and email fallback rather than a
+      // message about a checkbox that is not on the page.
+      if (captchaError) captchaError.setAttribute('data-visible', 'false');
+      var captchaResponse = form.querySelector('[name=h-captcha-response]');
+      var captchaWidget = form.querySelector('.h-captcha iframe');
+      if (captchaWidget && (!captchaResponse || !captchaResponse.value)) {
+        if (captchaError) {
+          captchaError.setAttribute('data-visible', 'true');
+          captchaError.scrollIntoView({ block: 'center' });
+        }
+        return;
+      }
+
+      if (errorBox) errorBox.setAttribute('data-visible', 'false');
+
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Sending…';
+      }
+
+      var data = {};
+      new FormData(form).forEach(function (value, key) { data[key] = value; });
+
+      fetch('https://api.web3forms.com/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify(data)
+      })
+        .then(function (response) {
+          return response.json().then(function (result) {
+            return { ok: response.ok, result: result };
+          });
+        })
+        .then(function (payload) {
+          if (!payload.ok || !payload.result.success) {
+            throw new Error(payload.result.message || 'Submission failed');
+          }
+          try {
+            if (typeof loadGA === 'function') loadGA();
+            fireGramConversion();
+          } catch (_) { /* analytics must never block the enquiry */ }
+          // Inline confirmation — the page stays open, no redirect.
+          form.hidden = true;
+          if (successBox) {
+            successBox.classList.remove('bs-hidden');
+            successBox.focus();
+            successBox.scrollIntoView({ block: 'center' });
+          }
+        })
+        .catch(function () {
+          // hCaptcha tokens are single-use — reset so a retry can succeed.
+          try {
+            if (window.hcaptcha && typeof window.hcaptcha.reset === 'function') window.hcaptcha.reset();
+          } catch (_) { /* widget absent or blocked */ }
+          showError('network');
+          if (errorBox) errorBox.scrollIntoView({ block: 'center' });
+          if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.textContent = btnLabel;
+          }
+        });
+    });
+  })();
+  </script>
+
+</body>
+</html>
