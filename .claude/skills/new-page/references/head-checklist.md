@@ -7,7 +7,7 @@ Every page's `<head>` follows the same structure. When cloning an exemplar, walk
 | 1 | `<meta charset="UTF-8">` | Invariant | |
 | 2 | `@include-start/end partials/head-extras.html` markers + content | Invariant | Font preloads; build.sh refreshes the content |
 | 3 | `<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">` | Invariant | |
-| 4 | GA4/Ads deferred-load `<script>` | Invariant | IDs `G-9FENN7VS0E` and `AW-17988388404`. Never modify per-page; site-wide analytics changes are a scripted sweep (see build-and-verify skill) |
+| 4 | `partials/analytics.html` include markers | Invariant | GA4/Ads + Consent Mode; the build expands the partial. Never modify per-page; site-wide analytics changes are a scripted sweep (see build-and-verify skill) |
 | 5 | `<title>` | **Variable** | Unique. Pattern: primary keyword first, brand optional. ~50–60 chars |
 | 6 | `<meta name="description">` | **Variable** | Unique, **141–161 chars**: `python3 -c "print(len('TEXT'))"`. No rating claims. UK English |
 | 7 | `<meta name="theme-color" content="#F7F3EE">` | Invariant | |

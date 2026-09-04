@@ -307,3 +307,15 @@ What to do:
 1. In the repo's GitHub Settings → Pages, add `www.londonchoralservice.com` as an alternate custom domain alongside the existing apex domain. This provisions a certificate covering both hosts and makes GitHub auto-redirect `www` → apex per the `CNAME` file's value.
 2. Alternatively, if `www` was never meant to resolve at all, remove its DNS record at the registrar/DNS panel instead of leaving a broken host reachable.
 3. Once fixed, confirm with `curl -I https://www.londonchoralservice.com/` — expect a `301` to the apex, not a TLS error.
+
+---
+
+## 16. Follow-ups from the 2026-09-04 audit fixes
+
+1. **Consent Mode check (Google Ads and GA4).** The site now sets Consent Mode v2 defaults to "denied" and shows a cookie notice. In Google Ads → Goals → Conversions → Diagnostics, confirm the conversion actions show "Consent mode: active" and that modelled conversions appear after a fortnight. In GA4 Admin → Data collection, confirm consent signals are received. Nothing to change in the repo unless a tag reports "consent not set".
+2. **Read `terms.html`.** It publishes the fourteen Terms of Booking clauses from the booking agreement, adapted to a web page (the funeral post-service invoicing exception is stated under clause 4, and a complaints paragraph is added). Confirm the wording matches what goes out on booking confirmations, or edit the page and the agreement together.
+3. **Read `accessibility.html`** and confirm the alternative-format promise and the one-working-day reply are what you want to stand behind.
+4. **Two testimonials still say "she"** ("Pamela, Richmond" on 9 pages, "Helen, Wimbledon" on 4). See ROADMAP R12.
+5. **Reply-time promises are now: one working day (usually the same day) everywhere, and the same working day (usually within a few hours) on the funeral and funeral-director pages.** If the office cannot keep those, say which to soften.
+6. **The nav's hamburger breakpoint moved from 805px to 1080px** so the eight-item menu never clips; tablets in portrait now get the hamburger. Check on an iPad if that matters to you.
+
