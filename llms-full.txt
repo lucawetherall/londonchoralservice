@@ -19118,3 +19118,140 @@ If a singer falls ill we cover the part from within the team, with someone who a
 
 If your question isn't covered here, get in touch and we'll answer it directly.
 
+
+
+---
+
+Source: https://londonchoralservice.com/accessibility.html
+Summary: How the London Choral Service website is built to be usable by everyone, what we know still falls short, and how to ask for another format or report a problem.
+
+## Accessibility statement
+
+What this site does to be usable by everyone, where we know it falls short, and how to tell us.
+
+The London Choral Service wants every visitor to be able to read this site, hear the recordings and send an enquiry. This statement describes what the site does, what we know falls short, and how to reach us if something does not work for you.
+
+
+### What the site does
+
+Every page is hand-written HTML with one heading structure, a skip link to the main content, and landmarks for the header, navigation, main content and footer. Text and background colours were measured at a contrast ratio of 5.66:1, above the AA threshold. Menus, dropdowns, forms and video players work from the keyboard, and the navigation announces its state to screen readers. Animation stops when your device asks for reduced motion. Nothing plays automatically: recordings start only when you press play. Type sizes are set in relative units, so browser zoom and text-size settings are respected, and the site is built to work at a 320-pixel viewport without sideways scrolling.
+
+
+### What we know falls short
+
+Our recordings are hosted on YouTube. The player is YouTube’s, and the clips are music without speech, so we have not provided captions; we describe each piece in the text beside it. The enquiry form is protected by hCaptcha, which may present a visual challenge; hCaptcha offers an audio alternative and an accessibility option in the challenge itself, and you can always email us or call instead. We have not yet had the site audited by an independent accessibility specialist.
+
+
+### Alternative formats
+
+If you would like any page, a quote or a booking confirmation in large print, plain text or another format, ask and we will send it. There is no charge.
+
+
+### Tell us
+
+If you find something you cannot read, reach or use, email office@londonchoralservice.com or text us on WhatsApp . Tell us the page and what happened. We reply within one working day and fix what we can.
+
+This statement was prepared on 4 September 2026.
+
+
+
+---
+
+Source: https://londonchoralservice.com/terms.html
+Summary: Terms on which The London Choral Service accepts a booking: confirmation, deposit and balance, cancellation, postponement, substitution of musicians, liability.
+
+## Terms of booking
+
+The conditions on which Alma Consort Ltd, trading as The London Choral Service, accepts a booking. The same clauses appear in every booking confirmation.
+
+These terms apply to every booking made with The London Choral Service. Your booking confirmation sets out the musicians, the fee and the payment schedule for your engagement; where a confirmation contains a clause that differs from these terms, the confirmation governs that booking. Questions about any clause: ask us before you confirm .
+
+Effective from 4 September 2026.
+
+
+### 1. The parties
+
+These terms constitute an agreement between Alma Consort Ltd, a company registered in England and Wales (company no. 16785727) and trading as The London Choral Service (“the Provider”), and the client named in the booking confirmation (“the Client”).
+
+
+### 2. Services
+
+The Provider will furnish the musicians set out in the booking confirmation to perform music for the engagement. The repertoire shall be agreed in writing between the parties not later than three weeks before the date of the engagement. Reasonable changes may be made by mutual agreement thereafter.
+
+
+### 3. Booking confirmation
+
+The booking is confirmed only upon receipt by the Provider of (a) the booking confirmation, signed by the Client, and (b) the first instalment of the fee. Until both have been received, the date is held provisionally and may be released without notice.
+
+
+### 4. First instalment
+
+The first instalment is a non-refundable deposit, payable upon confirmation of the booking. It compensates the Provider for administrative work, holding the date, and turning down other engagements. For funeral bookings, where the Provider invoices after the service, no first instalment is taken and clauses 3, 5 and 6 apply as adapted in the booking confirmation.
+
+
+### 5. Balance
+
+The second instalment must be received in cleared funds in accordance with the payment schedule set out in the booking confirmation, and in any event not less than twenty-four (24) hours before the start of the engagement. Where the balance remains unpaid by that time, the Provider reserves the right to withdraw without further liability and to retain the first instalment.
+
+
+### 6. Cancellation by the Client
+
+In the event of cancellation by the Client, the first instalment shall be retained by the Provider as a non-refundable deposit in all circumstances, regardless of the period of notice given. Where the second instalment has already been paid at the time of cancellation, the following shall apply in respect of the balance:
+
+(a) more than thirty (30) days before the date of the engagement: the second instalment shall be refunded in full;
+
+(b) fewer than thirty (30) days before the date: the second instalment shall be retained in full and the full fee shall be payable.
+
+
+### 7. Postponement
+
+Where the Client wishes to postpone the engagement, the Provider will use reasonable endeavours, but is under no obligation, to reschedule to an alternative mutually convenient date within twelve (12) months. Rescheduling is at all times subject to the availability of the Provider and of the musicians, and may be subject to a revised fee where the original fee no longer reflects the Provider’s prevailing rates or the costs of the new date. Sums already paid will be applied against the rescheduled engagement and are not refundable. Where no mutually convenient date can be agreed within twelve (12) months, the engagement shall be treated as cancelled by the Client; the first instalment shall be retained as a non-refundable deposit, and any balance already paid shall be refunded subject to the deductions set out in clause 6.
+
+
+### 8. Substitution of musicians
+
+Whilst the Provider will endeavour to engage the specific musicians named or agreed with the Client, all bookings are made on the basis that the Provider may, in its sole discretion and without consultation, substitute any musician with a like-for-like professional of equivalent standing and experience where the original musician is unwell, unexpectedly unavailable, or otherwise prevented from performing. Such substitution shall not constitute a breach of this agreement, shall not entitle the Client to a refund or reduction in the fee, and shall not give rise to any further liability on the part of the Provider.
+
+
+### 9. Cancellation by the Provider
+
+The Provider does not cancel save in the most exceptional circumstances, and undertakes in the first instance to engage replacement musicians under clause 8 wherever possible. In the unlikely event of cancellation by the Provider, all sums paid shall be refunded in full. The Provider’s liability shall be limited to the sums paid by the Client and shall not extend to consequential losses, including but not limited to losses relating to the venue, the officiant, travel, accommodation, or other suppliers engaged by the Client.
+
+
+### 10. The Client’s obligations
+
+The Client shall ensure that:
+
+(a) the venue is available for the musicians to access not less than thirty (30) minutes before the engagement, with somewhere quiet to warm up;
+
+(b) the officiant or celebrant has been notified of the musical provision;
+
+(c) where music sourced by the Client is to be performed, scores are supplied to the Provider not later than four weeks before the date of the engagement;
+
+(d) any restrictions on music or performance imposed by the venue, the officiant, or the relevant religious authority are notified to the Provider in writing at the earliest opportunity.
+
+
+### 11. Travel
+
+The fee is inclusive of travel within Greater London. Engagements outside Greater London may attract reasonable travel expenses, agreed in writing in advance.
+
+
+### 12. Liability
+
+The Provider holds appropriate public liability insurance. The Provider’s total liability under this agreement is limited to the total fee. Nothing in this clause limits liability for death or personal injury caused by negligence, or for any other liability that cannot lawfully be limited.
+
+
+### 13. Data protection
+
+The Provider will process the Client’s personal data only for the purposes of administering the booking, in accordance with applicable data protection law and our privacy policy .
+
+
+### 14. Governing law
+
+This agreement is governed by the laws of England and Wales, and the parties submit to the exclusive jurisdiction of the courts of England and Wales.
+
+
+### Complaints
+
+If something about a booking falls short, write to office@londonchoralservice.com within 14 days of the engagement. Luca Wetherall reads every complaint personally and replies within five working days with what we found and what we propose.
+

@@ -8,10 +8,30 @@
   <!-- @include-end partials/head-extras.html -->
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
-  <!-- Google Analytics (GA4) — deferred until after load -->
+  <!-- @include-start partials/analytics.html -->
+  <!-- Google Analytics (GA4) and Google Ads — Consent Mode v2, deferred until after load.
+       Source of truth: partials/analytics.html. The consent banner lives in js/consent.js. -->
   <script>
     window.dataLayer = window.dataLayer || [];
     function gtag(){dataLayer.push(arguments);}
+    gtag('consent', 'default', {
+      'ad_storage': 'denied',
+      'ad_user_data': 'denied',
+      'ad_personalization': 'denied',
+      'analytics_storage': 'denied',
+      'wait_for_update': 500
+    });
+    gtag('set', 'ads_data_redaction', true);
+    try {
+      if (localStorage.getItem('lcs-consent') === 'granted') {
+        gtag('consent', 'update', {
+          'ad_storage': 'granted',
+          'ad_user_data': 'granted',
+          'ad_personalization': 'denied',
+          'analytics_storage': 'granted'
+        });
+      }
+    } catch (e) {}
     function loadGA() {
       if (loadGA.done) return;
       loadGA.done = true;
@@ -32,6 +52,8 @@
       window.addEventListener(evt, loadGA, { once: true, passive: true });
     });
   </script>
+  <script src="/js/consent.js" defer></script>
+  <!-- @include-end partials/analytics.html -->
 
   <title>Privacy Policy — London Choral Service</title>
   <meta name="description" content="Privacy policy for The London Choral Service (Alma Consort Ltd). How we collect, use, store, and protect your personal data under UK data protection law.">
@@ -2350,18 +2372,18 @@
 
     <section class="section">
       <div class="prose">
-        <h2>Cookies and tracking</h2>
-        <p>We use Google Analytics to understand how visitors use our website&thinsp;&mdash;&thinsp;for example, which pages are visited most and how people find us. Google Analytics uses cookies to collect anonymous usage data. It does not identify you personally. We use this information only to improve our website and services.</p>
-        <p>We also use a Google Ads conversion tag, which records that an enquiry or call followed one of our advertisements. It does not identify you personally, and we do not use remarketing. Our typefaces are served from our own website, not from a third-party font service. No personal data is shared with third parties for marketing purposes.</p>
-        <p>Our enquiry form is delivered by Web3Forms and protected by hCaptcha. When you submit the form, these services process the details you enter solely to pass your message to us and to filter out spam.</p>
-        <p>You can opt out of Google Analytics by installing the <a href="https://tools.google.com/dlpage/gaoptout" rel="noopener noreferrer">Google Analytics Opt-out Browser Add-on</a>.</p>
+        <h2 id="cookies">Cookies and tracking</h2>
+        <p>We use Google Analytics to see which pages are visited and how people find the site, and a Google Ads conversion tag that records when an enquiry, call or WhatsApp message follows one of our advertisements. Neither identifies you by name, and we do not use remarketing.</p>
+        <p>Both tools set cookies only if you allow them. When you first visit, a notice at the foot of the page asks you to choose. If you decline, or make no choice, Google&rsquo;s consent settings stay at &ldquo;denied&rdquo;: no analytics or advertising cookie is written, and only cookieless, aggregated signals reach Google. If you allow them, the cookies set are Google Analytics&rsquo; <code>_ga</code> and <code>_ga_*</code> (up to two years) and Google Ads&rsquo; <code>_gcl_au</code> (three months). Your choice is stored in your browser under the name <code>lcs-consent</code> and applies to this site only. You can change it at any time from the &ldquo;Cookie choices&rdquo; link in the footer of every page.</p>
+        <p>Our typefaces are served from our own website, not from a third-party font service. Our enquiry form is delivered by Web3Forms and protected by hCaptcha; when you submit the form, these services process the details you enter solely to pass your message to us and to filter out spam. Recordings are embedded from YouTube in privacy-enhanced mode and load only when you press play.</p>
+        <p>You can also block Google Analytics in every website with the <a href="https://tools.google.com/dlpage/gaoptout" rel="noopener noreferrer">Google Analytics opt-out browser add-on</a>.</p>
       </div>
     </section>
 
     <section class="section">
       <div class="prose">
         <h2>Changes to this policy</h2>
-        <p>We may update this policy from time to time. Changes will be posted on this page. This policy was last updated in August 2026.</p>
+        <p>We may update this policy from time to time. Changes will be posted on this page. This policy was last updated on 4 September 2026.</p>
       </div>
     </section>
 
@@ -2431,6 +2453,7 @@
             <li><a href="/terms.html">Terms of booking</a></li>
             <li><a href="/privacy.html">Privacy policy</a></li>
             <li><a href="/accessibility.html">Accessibility</a></li>
+            <li><a href="/privacy.html#cookies" data-consent-open>Cookie choices</a></li>
           </ul>
         </div>
       </div>
