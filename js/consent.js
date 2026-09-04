@@ -48,7 +48,7 @@
     '.consent__btn--allow{color:var(--color-text,var(--choirStall,#2C2420))}' +
     '.consent__btn:hover{color:var(--color-accent,var(--cassockRed,#8B3A3A))}' +
     '.consent__btn:focus-visible{outline:2px solid currentColor;outline-offset:2px}' +
-    '@media (max-width:805px){.consent{left:.75rem;right:.75rem;bottom:4.5rem;max-width:none}}' +
+    '@media (max-width:1080px){.consent{left:.75rem;right:.75rem;bottom:4.5rem;max-width:none}}' +
     '@media print{.consent{display:none}}';
 
   var banner = null;
