@@ -505,6 +505,93 @@
       color: var(--bs-paper);
     }
 
+
+    /* ── Form (gift enquiry; the hub's #enquire section only) ──
+       Recovered from partials/private-register.css.html, the file this
+       register was cloned from, with the pe- prefix and the old token names
+       repointed to the barbershop tokens above. ── */
+    .bs-form { margin-top: 2.25rem; }
+    .bs-field { margin-top: 1.75rem; }
+    .bs-field > label {
+      display: block;
+      font-family: var(--font-ui);
+      font-size: .75rem;
+      font-weight: 500;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: var(--bs-mid);
+      margin-bottom: .5rem;
+    }
+    .bs-field input[type="text"],
+    .bs-field input[type="email"],
+    .bs-field input[type="tel"],
+    .bs-field input[type="date"],
+    .bs-field select,
+    .bs-field textarea {
+      display: block;
+      width: 100%;
+      font-family: var(--font-ui);
+      font-size: 1rem;
+      color: var(--bs-ink);
+      background: transparent;
+      border: 0;
+      border-bottom: 1px solid var(--bs-mid);
+      border-radius: 0;
+      padding: .55rem 0;
+    }
+    .bs-field textarea {
+      border: 1px solid var(--bs-mid);
+      padding: .75rem;
+      resize: vertical;
+    }
+    .bs-field input:focus,
+    .bs-field select:focus,
+    .bs-field textarea:focus {
+      border-color: var(--bs-ink);
+    }
+    /* Invalid state shows only after the visitor has interacted, and in the
+       site feedback red rather than the register's decorative red. */
+    .bs-field input:user-invalid,
+    .bs-field select:user-invalid,
+    .bs-field textarea:user-invalid {
+      border-color: #9B2C2C;
+    }
+    .bs-field input:disabled,
+    .bs-field select:disabled,
+    .bs-field textarea:disabled {
+      color: var(--bs-mid);
+      border-bottom-style: dotted;
+    }
+    /* Help text under a field (the note beneath the message box). */
+    .bs-field .bs-caption { margin-top: .5rem; }
+    .bs-form .bs-btn { margin-top: 2.25rem; }
+    .bs-form .bs-btn:disabled { cursor: default; opacity: .6; }
+
+    /* ── Error / success (site feedback colours) ── */
+    .bs-form-error {
+      display: none;
+      margin-top: 1.75rem;
+      padding: 1rem 1.25rem;
+      color: #9B2C2C;
+      background: #FBEBE9;
+      border: 1px solid #E0A8A8;
+    }
+    .bs-form-error[data-visible="true"] { display: block; }
+    .h-captcha { margin-top: 2rem; }
+    #bs-form-success {
+      margin-top: 2.25rem;
+      padding: 1rem 1.25rem;
+      color: #2D5016;
+      background: #E8F0E4;
+      border: 1px solid #A8C99B;
+    }
+    #bs-form-success[hidden] { display: none; }
+    /* No-JS fallback. The plain HTML POST hands Web3Forms a redirect back to
+       this anchor, and Web3Forms only redirects on a send it accepted, so the
+       confirmation shows with no script running and the buyer never leaves the
+       register for main-site chrome. The JS path unsets [hidden] instead. */
+    #bs-form-success[hidden]:target { display: block; }
+
     /* ── Focus & utilities ── */
     :focus-visible {
       outline: 2px solid var(--bs-red);

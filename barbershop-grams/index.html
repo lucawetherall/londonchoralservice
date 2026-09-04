@@ -505,6 +505,93 @@
       color: var(--bs-paper);
     }
 
+
+    /* ── Form (gift enquiry; the hub's #enquire section only) ──
+       Recovered from partials/private-register.css.html, the file this
+       register was cloned from, with the pe- prefix and the old token names
+       repointed to the barbershop tokens above. ── */
+    .bs-form { margin-top: 2.25rem; }
+    .bs-field { margin-top: 1.75rem; }
+    .bs-field > label {
+      display: block;
+      font-family: var(--font-ui);
+      font-size: .75rem;
+      font-weight: 500;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: var(--bs-mid);
+      margin-bottom: .5rem;
+    }
+    .bs-field input[type="text"],
+    .bs-field input[type="email"],
+    .bs-field input[type="tel"],
+    .bs-field input[type="date"],
+    .bs-field select,
+    .bs-field textarea {
+      display: block;
+      width: 100%;
+      font-family: var(--font-ui);
+      font-size: 1rem;
+      color: var(--bs-ink);
+      background: transparent;
+      border: 0;
+      border-bottom: 1px solid var(--bs-mid);
+      border-radius: 0;
+      padding: .55rem 0;
+    }
+    .bs-field textarea {
+      border: 1px solid var(--bs-mid);
+      padding: .75rem;
+      resize: vertical;
+    }
+    .bs-field input:focus,
+    .bs-field select:focus,
+    .bs-field textarea:focus {
+      border-color: var(--bs-ink);
+    }
+    /* Invalid state shows only after the visitor has interacted, and in the
+       site feedback red rather than the register's decorative red. */
+    .bs-field input:user-invalid,
+    .bs-field select:user-invalid,
+    .bs-field textarea:user-invalid {
+      border-color: #9B2C2C;
+    }
+    .bs-field input:disabled,
+    .bs-field select:disabled,
+    .bs-field textarea:disabled {
+      color: var(--bs-mid);
+      border-bottom-style: dotted;
+    }
+    /* Help text under a field (the note beneath the message box). */
+    .bs-field .bs-caption { margin-top: .5rem; }
+    .bs-form .bs-btn { margin-top: 2.25rem; }
+    .bs-form .bs-btn:disabled { cursor: default; opacity: .6; }
+
+    /* ── Error / success (site feedback colours) ── */
+    .bs-form-error {
+      display: none;
+      margin-top: 1.75rem;
+      padding: 1rem 1.25rem;
+      color: #9B2C2C;
+      background: #FBEBE9;
+      border: 1px solid #E0A8A8;
+    }
+    .bs-form-error[data-visible="true"] { display: block; }
+    .h-captcha { margin-top: 2rem; }
+    #bs-form-success {
+      margin-top: 2.25rem;
+      padding: 1rem 1.25rem;
+      color: #2D5016;
+      background: #E8F0E4;
+      border: 1px solid #A8C99B;
+    }
+    #bs-form-success[hidden] { display: none; }
+    /* No-JS fallback. The plain HTML POST hands Web3Forms a redirect back to
+       this anchor, and Web3Forms only redirects on a send it accepted, so the
+       confirmation shows with no script running and the buyer never leaves the
+       register for main-site chrome. The JS path unsets [hidden] instead. */
+    #bs-form-success[hidden]:target { display: block; }
+
     /* ── Focus & utilities ── */
     :focus-visible {
       outline: 2px solid var(--bs-red);
@@ -928,7 +1015,75 @@
           <h2>Send a gram</h2>
           <p>You will reach us fastest on WhatsApp, and we usually reply the same day. Send the date and the place, say who the gram is for, and we will come back on whether four singers are free.</p>
           <p><a class="bs-btn bs-btn--fill" href="https://wa.me/447356042468?text=Hello%20London%20Choral%20Service%2C%20I%27d%20like%20to%20send%20a%20Barbershop%20Gram.%20Date%3A%20%2F%20Place%3A%20%2F%20Who%20it%27s%20for%3A" target="_blank" rel="noopener" data-whatsapp>Send a gram on WhatsApp</a></p>
-          <p>You can also ring <a href="tel:+447356042468">07356 042468</a> or fill in <a href="/contact.html?occasion=barbershop-gram#enquiry">the enquiry form</a>.</p>
+          <p>You can also ring <a href="tel:+447356042468">07356 042468</a>, or fill in the form below.</p>
+
+          <h3>Send the details</h3>
+          <p>We write back to you, never to the person the gram is for.</p>
+          <p class="bs-caption">Fields marked * are required.</p>
+
+          <form id="bs-enquiry" class="bs-form" method="post" action="https://api.web3forms.com/submit">
+            <input type="hidden" name="access_key" value="dc1af546-26ac-45b3-a85d-064a3a59886d">
+            <input type="hidden" name="subject" value="Barbershop Gram enquiry — London Choral Service">
+            <!-- Marks the enquiry in the Web3Forms inbox: grams are sold outside
+                 the choral service and are quoted from their own price list. -->
+            <input type="hidden" name="product" value="Barbershop Gram">
+            <!-- No-JS fallback only. Web3Forms redirects here after a send it
+                 accepted, and the CSS :target rule reveals the confirmation.
+                 Never point this at /thank-you.html: that page carries the main
+                 site's chrome, which this register exists to keep out. -->
+            <input type="hidden" name="redirect" value="https://londonchoralservice.com/barbershop-grams/#bs-form-success">
+            <input type="hidden" name="utm_source" value="">
+            <input type="hidden" name="utm_medium" value="">
+            <input type="hidden" name="utm_campaign" value="">
+            <input type="hidden" name="utm_term" value="">
+            <input type="hidden" name="utm_content" value="">
+            <input type="hidden" name="gclid" value="">
+            <input type="checkbox" name="botcheck" class="sr-only" tabindex="-1" aria-hidden="true" autocomplete="off">
+
+            <div class="bs-field">
+              <label for="bs-name">Your name <span aria-hidden="true">*</span></label>
+              <input type="text" id="bs-name" name="name" autocomplete="name" required>
+            </div>
+            <div class="bs-field">
+              <label for="bs-email">Email <span aria-hidden="true">*</span></label>
+              <input type="email" id="bs-email" name="email" autocomplete="email" required>
+            </div>
+            <div class="bs-field">
+              <label for="bs-phone">Telephone or WhatsApp</label>
+              <input type="tel" id="bs-phone" name="phone" autocomplete="tel">
+            </div>
+            <div class="bs-field">
+              <label for="bs-date">Date of the gram <span aria-hidden="true">*</span></label>
+              <input type="date" id="bs-date" name="date" required>
+            </div>
+            <div class="bs-field">
+              <label for="bs-place">Where we are singing <span aria-hidden="true">*</span></label>
+              <input type="text" id="bs-place" name="place" placeholder="Office, restaurant or front door, with the postcode" required>
+            </div>
+            <div class="bs-field">
+              <label for="bs-recipient">Who it is for <span aria-hidden="true">*</span></label>
+              <input type="text" id="bs-recipient" name="recipient" placeholder="Their first name, and what we are marking" required>
+            </div>
+            <div class="bs-field">
+              <label for="bs-message">Anything else</label>
+              <textarea id="bs-message" name="message" rows="4" aria-describedby="bs-message-hint"></textarea>
+              <p class="bs-caption" id="bs-message-hint">The song you want, the time of day, and who we should ask for when we arrive.</p>
+            </div>
+
+            <div class="h-captcha" data-captcha="true"></div>
+            <p class="bs-form-error" id="bs-captcha-error" data-visible="false" role="alert">Please tick the box above to confirm you&rsquo;re not a robot, then send again.</p>
+
+            <div class="bs-form-error" id="bs-error" data-visible="false" role="alert">
+              <p data-error-msg="incomplete" hidden>Please check the highlighted fields, then send again.</p>
+              <p data-error-msg="network">We could not send that. Message us on <a href="https://wa.me/447356042468" target="_blank" rel="noopener" data-whatsapp>WhatsApp</a> or email <a href="mailto:office@londonchoralservice.com">office@londonchoralservice.com</a> and we will pick it up from there.</p>
+            </div>
+
+            <button type="submit" class="bs-btn">Send enquiry</button>
+          </form>
+
+          <div id="bs-form-success" role="status" tabindex="-1" hidden>
+            <p>Thank you. We will check whether four singers are free on your date and email you back, usually the same day.</p>
+          </div>
         </div>
       </div>
     </section>
@@ -942,6 +1097,12 @@
   </footer>
   <!-- @include-end partials/barbershop-footer.html -->
 
+  <!-- Web3Forms client script: renders the hCaptcha widget the enquiry form
+       needs. The only external script this register loads. /js/nav.js is
+       never loaded here — it redirects conversions to thank-you.html, which
+       carries main-site chrome and points at hymn recordings. -->
+  <script src="https://web3forms.com/client/script.js" async defer></script>
+
   <!-- Ads conversion tracking: this mini-site loads no other site JS (see js/nav.js),
        so tel:/mailto:/WhatsApp clicks would otherwise fire no conversion at all.
        Reuses the identifiers thank-you.html fires for phone/email/WhatsApp
@@ -950,18 +1111,158 @@
        site in GA4 (Admin > Custom definitions > Custom dimensions, scope
        "Event", parameter "gram_source"), then used to filter or segment. -->
   <script>
-    document.querySelectorAll('a[href^="tel:"], a[href^="mailto:"], a[href*="wa.me/"]').forEach(function (link) {
-      link.addEventListener('click', function () {
-        if (typeof gtag !== 'function') return;
-        gtag('event', 'ads_conversion_Contact_1', { gram_source: 'barbershop-grams-index' });
-        gtag('event', 'conversion', {
-          send_to: 'AW-17988388404/RjhECKGP7akcELSMxIFD',
-          value: 1.0,
-          currency: 'GBP',
-          gram_source: 'barbershop-grams-index'
-        });
+    function fireGramConversion() {
+      if (typeof gtag !== 'function') return;
+      gtag('event', 'ads_conversion_Contact_1', { gram_source: 'barbershop-grams-index' });
+      gtag('event', 'conversion', {
+        send_to: 'AW-17988388404/RjhECKGP7akcELSMxIFD',
+        value: 1.0,
+        currency: 'GBP',
+        gram_source: 'barbershop-grams-index'
       });
+    }
+    document.querySelectorAll('a[href^="tel:"], a[href^="mailto:"], a[href*="wa.me/"]').forEach(function (link) {
+      link.addEventListener('click', fireGramConversion);
     });
+  </script>
+
+  <!-- Enquiry form. Deliberately not /js/form.js: that handler binds to the
+       main site's .contact-form markup and always finishes by redirecting to
+       /thank-you.html. This register confirms in place instead, the way
+       private-events.html does, and keeps its script inline so the mini-site
+       carries no <script src> to site JS. -->
+  <script>
+  (function () {
+    'use strict';
+    var form = document.getElementById('bs-enquiry');
+    if (!form) return;
+
+    // The markup omits novalidate so no-JS visitors keep native browser
+    // validation on the plain HTML POST fallback; with JS running, the
+    // custom flow below takes over.
+    form.setAttribute('novalidate', '');
+
+    var successBox = document.getElementById('bs-form-success');
+    var errorBox = document.getElementById('bs-error');
+    var captchaError = document.getElementById('bs-captcha-error');
+    var submitBtn = form.querySelector('[type="submit"]');
+    var btnLabel = submitBtn ? submitBtn.textContent : 'Send enquiry';
+
+    // A past date is never a real gram, so pin the picker's floor to today.
+    // Built from local date parts rather than toISOString(), which is UTC and
+    // would offer yesterday to anyone east of Greenwich late in the evening.
+    var dateField = document.getElementById('bs-date');
+    if (dateField) {
+      var now = new Date();
+      var pad2 = function (n) { return n < 10 ? '0' + n : String(n); };
+      dateField.min = now.getFullYear() + '-' + pad2(now.getMonth() + 1) + '-' + pad2(now.getDate());
+    }
+
+    // Same-named hidden inputs sit empty in the markup; fill any present in
+    // the query string so the enquiry email carries its source.
+    try {
+      var params = new URLSearchParams(window.location.search);
+      ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'gclid'].forEach(function (key) {
+        var value = params.get(key);
+        if (!value) return;
+        var input = form.querySelector('input[name="' + key + '"]');
+        if (input) input.value = value;
+      });
+    } catch (_) { /* URLSearchParams unsupported — non-fatal */ }
+
+    // The error box holds one message per failure mode; showError reveals the
+    // box with only the relevant message visible.
+    function showError(kind) {
+      if (!errorBox) return;
+      errorBox.querySelectorAll('[data-error-msg]').forEach(function (msg) {
+        msg.hidden = msg.getAttribute('data-error-msg') !== kind;
+      });
+      errorBox.setAttribute('data-visible', 'true');
+    }
+
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+
+      // Required-field guard: focus the first invalid field and name the
+      // problem (the CSS :user-invalid rule marks the fields themselves).
+      var invalid = form.querySelectorAll(':invalid');
+      if (invalid.length) {
+        showError('incomplete');
+        invalid[0].focus();
+        return;
+      }
+
+      // Honeypot: a checked botcheck means a bot filled the form — do nothing.
+      var honeypot = form.querySelector('input[name="botcheck"]');
+      if (honeypot && honeypot.checked) return;
+
+      // hCaptcha guard (mirrors js/form.js): Web3Forms rejects submissions
+      // without a token, so block early and name the reason. Only block when
+      // the widget actually rendered — if the captcha script was blocked or
+      // failed to load, let the request through so the visitor sees the
+      // generic error with the WhatsApp and email fallback rather than a
+      // message about a checkbox that is not on the page.
+      if (captchaError) captchaError.setAttribute('data-visible', 'false');
+      var captchaResponse = form.querySelector('[name=h-captcha-response]');
+      var captchaWidget = form.querySelector('.h-captcha iframe');
+      if (captchaWidget && (!captchaResponse || !captchaResponse.value)) {
+        if (captchaError) {
+          captchaError.setAttribute('data-visible', 'true');
+          captchaError.scrollIntoView({ block: 'center' });
+        }
+        return;
+      }
+
+      if (errorBox) errorBox.setAttribute('data-visible', 'false');
+
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Sending…';
+      }
+
+      var data = {};
+      new FormData(form).forEach(function (value, key) { data[key] = value; });
+
+      fetch('https://api.web3forms.com/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify(data)
+      })
+        .then(function (response) {
+          return response.json().then(function (result) {
+            return { ok: response.ok, result: result };
+          });
+        })
+        .then(function (payload) {
+          if (!payload.ok || !payload.result.success) {
+            throw new Error(payload.result.message || 'Submission failed');
+          }
+          try {
+            if (typeof loadGA === 'function') loadGA();
+            fireGramConversion();
+          } catch (_) { /* analytics must never block the enquiry */ }
+          // Inline confirmation — the page stays open, no redirect.
+          form.hidden = true;
+          if (successBox) {
+            successBox.hidden = false;
+            successBox.focus();
+            successBox.scrollIntoView({ block: 'center' });
+          }
+        })
+        .catch(function () {
+          // hCaptcha tokens are single-use — reset so a retry can succeed.
+          try {
+            if (window.hcaptcha && typeof window.hcaptcha.reset === 'function') window.hcaptcha.reset();
+          } catch (_) { /* widget absent or blocked */ }
+          showError('network');
+          if (errorBox) errorBox.scrollIntoView({ block: 'center' });
+          if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.textContent = btnLabel;
+          }
+        });
+    });
+  })();
   </script>
 
 </body>
