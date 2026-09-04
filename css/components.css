@@ -387,17 +387,6 @@ td.compare-us .compare-saving {
   margin-bottom: var(--space-md);
 }
 
-.audio-placeholder {
-  padding: var(--space-md);
-  background-color: var(--color-bg-alt);
-  border: 1px solid var(--color-rule);
-}
-
-.audio-placeholder p {
-  margin: 0;
-  color: var(--color-text-mid);
-}
-
 /* ═══════════════════════════════════
    Contact Form
    ═══════════════════════════════════ */

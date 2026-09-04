@@ -208,7 +208,7 @@ print([k for k,v in collections.Counter(q).items() if v>1] or 'unique')"   # -> 
 
 ---
 
-## R11 — Replace the "Victorian" verification grep with an allowlist  [P4] [ready] [XS]
+## R11 — Replace the "Victorian" verification grep with an allowlist  [P4] [done 2026-09-04]
 
 **Why:** The July 2026 Christmas spec set `grep -rn -i 'Victorian' --include='*.html' .` → empty as an acceptance check, enforcing the rule that Victorian costume is never offered or claimed. Three legitimate uses now exist and no regex distinguishes them from a violation, because the difference is whether the sentence *offers* the thing:
 

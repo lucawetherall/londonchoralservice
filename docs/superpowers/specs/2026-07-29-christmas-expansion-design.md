@@ -94,7 +94,7 @@ Everything in this section came from the business owner and is final. It is the 
 
 - The choir can roam throughout an event — lobbies, receptions, among guests, light switch-ons — or perform stationary sets.
 - Dress: concert dress, all black, casual, or Christmas jumpers. Santa hats available.
-- **No Victorian costumes.** Not offered, never claimed. A grep for "Victorian" is part of verification.
+- **No Victorian costumes.** Not offered, never claimed. Verification is an allowlist, not an empty grep (see ROADMAP R11): list every `Victorian` hit with `grep -rn 'Victorian' --include='*.html' .` and confirm each one either (a) sits in `music-guides/best-christmas-carol-singers.html` or `music-guides/christmas-carol-lyrics-meanings.html`, where the word is used to describe the market or the history rather than to offer costume, or (b) carries an explicit statement that we do not perform in period costume. Hits on area pages describing Victorian *buildings* are outside the rule. The rule itself is unchanged: costume is not offered.
 
 **Repertoire & accompaniment**
 
