@@ -24,7 +24,7 @@ Every page on this site is a standalone HTML file carrying ~60 lines of head boi
 ## What to change vs what to keep
 
 **Keep verbatim** (invariant across the site):
-- The GA4/Google Ads `<script>` snippet and its IDs (`G-9FENN7VS0E`, `AW-17988388404`).
+- The `partials/analytics.html` include markers (GA4/Google Ads + Consent Mode); the build expands them.
 - The `@include-start`/`@include-end` marker pairs and everything between them — stale expanded content from the cloned page is fine; `./build.sh` re-expands it.
 - The inlined `<style>` block — again, the build refreshes it.
 - `theme-color`, `robots`, `dns-prefetch` lines, favicon links, `og:image` path.
@@ -40,7 +40,7 @@ Every page on this site is a standalone HTML file carrying ~60 lines of head boi
 
 A page that exists but isn't wired in is invisible. All of these, every time:
 
-- [ ] `sitemap.xml`: add a `<url>` entry with `<lastmod>` set to today (ISO date). Keep the file's existing ordering (core pages, then areas, then guides).
+- [ ] `sitemap.xml`: nothing to do by hand. `./build.sh` adds the page with today's `lastmod` (`scripts/generate_sitemap.py`); check the new `<url>` appears. Guides and compare pages also get their visible date line and `dateModified` from the build.
 - [ ] `llms.txt`: add the page under the appropriate section.
 - [ ] Internal links from hub pages — see `references/internal-linking.md` for which hubs must link to each page type.
 - [ ] Run `./build.sh` — must exit 0 (this also validates your JSON-LD).

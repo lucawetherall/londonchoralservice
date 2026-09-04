@@ -2,7 +2,7 @@
 
 **Date:** 2026-09-04
 **Author:** Luca Wetherall (with Claude)
-**Status:** Proposed. Plan only. No page, style, partial or data file was edited for this document.
+**Status:** Proposed. The four items the owner asked for first (structural dead ends, freshness signals, trust gaps, Appendix B accuracy corrections) were implemented on 2026-09-04 in the same PR; see the commit messages and Appendix C. The programmes in Part 3 remain proposals.
 **Related:** [docs/ROADMAP.md](../../ROADMAP.md), [MANUAL-ACTIONS-REQUIRED.md](../../../MANUAL-ACTIONS-REQUIRED.md), [SEO-AUDIT-2026-05-08.md](../../../SEO-AUDIT-2026-05-08.md), [SITE-STOP-SLOP-PLAN.md](../../../SITE-STOP-SLOP-PLAN.md), [2026-08-29-international-luxury-weddings.md](2026-08-29-international-luxury-weddings.md)
 
 > **For agentic workers:** this is a strategy document, not an execution plan. Each programme in Part 3 is sized and scoped so that it can be turned into its own `YYYY-MM-DD-<name>-design.md` spec and plan. Nothing here is pre-approved; items marked **owner decision** or **human only** must not be attempted by an agent. Do not re-derive the audit numbers in Part 2; they were measured on commit `ae513f6` and are reproducible with the commands in Appendix A.
@@ -521,14 +521,14 @@ python3 validate_jsonld.py
 
 | ROADMAP | Status there | Here |
 |---|---|---|
-| R2 stretch (sitemap in build) | SPEC-FIRST | P10.2, promoted to ready |
+| R2 stretch (sitemap in build) | done 2026-09-04 | P10.2, done: `scripts/generate_sitemap.py` |
 | R3 sameAs (LinkedIn, ORCID) | BLOCKED-ON-HUMAN | unchanged |
-| R4 consent mode | SPEC-FIRST | P10.1, sequenced before Ads spend |
+| R4 consent mode | done 2026-09-04 | P10.1, done: `partials/analytics.html`, `js/consent.js` |
 | R6 CSS inlining | DECISION-NEEDED | P10.8, gated on CrUX |
 | R7.1 listen audio | ready, assets blocked | P1.2, P13.2 |
-| R7.2 FAQ hub | done, unmarked | P10.10 marks it |
+| R7.2 FAQ hub | done, marked 2026-09-04 | linked from every service FAQ block |
 | R7.3 per-page OG | partly done | P10.5 generates the rest |
 | R9 (January nav) | scheduled | P9.1 makes it data-driven |
 | R11 Victorian allowlist | ready | unchanged, do with P10.10 |
-| R12 testimonials | DECISION-NEEDED | P1.5, Appendix B.2 |
+| R12 testimonials | DECISION-NEEDED | P1.5; the Tony/Battersea quote replaced 2026-09-04, two "she" quotes remain for the owner |
 | R13 borough template | SPEC-FIRST | P13.3, after P3 tranche 1 |
