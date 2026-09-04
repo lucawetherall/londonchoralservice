@@ -65,7 +65,7 @@ python3 -c "import xml.dom.minidom; xml.dom.minidom.parse('sitemap.xml'); print(
 grep -c '<loc>' sitemap.xml    # unchanged vs before (103)
 grep -c '2026-05-14' sitemap.xml   # ≈0 (only files genuinely last touched that day)
 ```
-**Stretch (SPEC-FIRST if pursued):** generate sitemap.xml inside build.sh from the file tree + git dates, eliminating the hand-maintenance convention entirely.
+**Stretch:** [done 2026-09-04] `scripts/generate_sitemap.py` runs inside `build.sh`; `lastmod` is content-hash driven (`data/page-dates.json`), seeded from git history. `scripts/sync_dates.py` keeps article `dateModified`, OG modified time and the visible date line on the same value.
 
 **Skills:** build-and-verify
 
@@ -81,7 +81,11 @@ All seven VideoObject nodes now carry real `uploadDate` and `duration` values, v
 
 ---
 
-## R4 — Cookie consent / Google Consent Mode v2  [P4] [SPEC-FIRST] [L]
+## R4 — Cookie consent / Google Consent Mode v2  [P4] [done 2026-09-04] [L]
+
+Done in the 2026-09-04 audit follow-up: snippet extracted to `partials/analytics.html` (swept into 163 pages), Consent Mode v2 defaults denied before gtag loads, `js/consent.js` banner with Allow/Decline stored under `lcs-consent`, reopenable from the footer; `privacy.html` cookie section rewritten. Human follow-up: MANUAL §16. Original item preserved below.
+
+## R4 (original) — Cookie consent / Google Consent Mode v2  [P4] [SPEC-FIRST] [L]
 
 **Why:** GA4 + Google Ads load (deferred, but unconditionally) with no consent mechanism. For a UK-audience business this is a PECR/GDPR gap — analytics cookies require prior consent. Also a commercial concern: Google Ads conversion tracking without Consent Mode v2 loses modelling eligibility.
 
@@ -133,9 +137,9 @@ Merged into `js/form.js` (occasion pre-fill from contact.js + `data-redirect` su
 
 Three smaller content gaps, workable independently:
 
-1. **listen.html has no audio.** CSS defines `.audio-placeholder` (`grep -n 'audio-placeholder' css/components.css css/pages.css`) but no `<audio>` element exists anywhere. Either add real `<audio>` elements with self-hosted samples (assets from owner — that part BLOCKED-ON-HUMAN) or delete the dead CSS. Deleting dead CSS = css/ edit = mandatory rebuild.
-2. **No consolidated FAQ page.** FAQ content exists as per-page `FAQPage` JSON-LD + visible accordions. A `/faq.html` hub aggregating the best questions (linked from footer) captures long-tail question queries. Use the `new-page` skill; dedupe against existing per-page FAQs — don't duplicate the same Q&A schema on two pages.
-3. **Single generic og-image for all ~106 pages** (`grep -rln 'assets/og-image.png' --include='*.html' . | wc -l`). Per-service images (weddings, funerals, christmas, corporate + one per major hub) would lift social CTR. Image creation BLOCKED-ON-HUMAN; the wiring (og:image/twitter:image per page) is agent work once assets land in `assets/`.
+1. **[part done 2026-09-04]** The dead `.audio-placeholder` CSS is deleted, and `listen.html` is now split into **Recordings** (the six pieces with a player) and **Repertoire we are asked for most** (the other fourteen), so the page no longer describes sound a visitor cannot hear. What remains is BLOCKED-ON-HUMAN: real recordings from the owner, including the comparison set in the 2026-09-04 plan (P1.2 — one hymn and one anthem sung as soloist, four voices and eight voices in the same acoustic). Original text: **listen.html has no audio.** CSS defines `.audio-placeholder` but no `<audio>` element exists anywhere. Either add real `<audio>` elements with self-hosted samples or delete the dead CSS.
+2. **[done 2026-08-18]** `faq.html` exists and is linked from the footer and from every service page's FAQ block (2026-09-04). Original text: **No consolidated FAQ page.** FAQ content exists as per-page `FAQPage` JSON-LD + visible accordions. A `/faq.html` hub aggregating the best questions (linked from footer) captures long-tail question queries. Use the `new-page` skill; dedupe against existing per-page FAQs — don't duplicate the same Q&A schema on two pages.
+3. **[partly done 2026-08-18]** seven branded OG images exist and are wired on the money pages and guides; area, borough, destination and B2B pages still use the generic card (see the 2026-09-04 plan, P10.5, for generating the rest in the build). Original text: **Single generic og-image for all ~106 pages** (`grep -rln 'assets/og-image.png' --include='*.html' . | wc -l`). Per-service images (weddings, funerals, christmas, corporate + one per major hub) would lift social CTR. Image creation BLOCKED-ON-HUMAN; the wiring (og:image/twitter:image per page) is agent work once assets land in `assets/`.
 
 **Skills:** new-page, build-and-verify, writing-site-copy
 
@@ -204,7 +208,7 @@ print([k for k,v in collections.Counter(q).items() if v>1] or 'unique')"   # -> 
 
 ---
 
-## R11 — Replace the "Victorian" verification grep with an allowlist  [P4] [ready] [XS]
+## R11 — Replace the "Victorian" verification grep with an allowlist  [P4] [done 2026-09-04]
 
 **Why:** The July 2026 Christmas spec set `grep -rn -i 'Victorian' --include='*.html' .` → empty as an acceptance check, enforcing the rule that Victorian costume is never offered or claimed. Three legitimate uses now exist and no regex distinguishes them from a violation, because the difference is whether the sentence *offers* the thing:
 
@@ -217,7 +221,9 @@ print([k for k,v in collections.Counter(q).items() if v>1] or 'unique')"   # -> 
 
 ---
 
-## R9 — Competitive capture: The London Funeral Singers  [P1] [done 2026-08-18]
+## R9b — Competitive capture: The London Funeral Singers  [P1] [done 2026-08-18]
+
+(Renumbered from a duplicate R9 on 2026-09-04; the January nav item above keeps R9.)
 
 **What shipped:** a sourced, family-facing comparison page at `compare/london-funeral-singers.html`, backed by a build gate so quoted competitor figures cannot go stale or be invented.
 
@@ -258,6 +264,8 @@ This is a business-integrity question, not a copy-quality one — an agent doesn
 
 **Skills:** writing-site-copy (once a direction is chosen)
 
+
+**Update 2026-09-04:** the "Tony, Battersea" quote ("she just took the music completely off our hands") was replaced on its seven pages. Two quotes still say "she" ("Pamela, Richmond", 9 pages; "Helen, Wimbledon", 4 pages). If a colleague handles the phone, say so on `about.html` and `contact.html` and keep them; otherwise replace them too. Owner decision.
 ---
 
 ## R13 — Borough page template is a rigid, visible mould across all 33 pages  [P3] [SPEC-FIRST]
@@ -295,9 +303,9 @@ Inbound links from the main site: `services.html` gets a note after the ensemble
 **Deliberately not done, and why:**
 - **No gram prices on `pricing.html`.** A section was added there (`a3dad63`) and reverted by owner decision (`10abc0d`): barbershop is sold separately from the choral service and its bookings are almost always a quartet, so listing its rates in the choral price table works against the separation the mini-site exists to maintain. `barbershop-grams/index.html` is the source of truth for the five gram prices; `pricing.html` stays the source of truth for choral prices. The `CLAUDE.md` convention was rewritten to carve this out.
 - **No nav entry.** The original plan (and the task's own first draft) added a Services-dropdown item. It shipped in `e4ebdad`, then was **removed by owner decision** in `28e0e83`: `partials/nav.html` expands into every page via the build, so a dropdown item for a birthday-gram product appeared on `funerals.html`, every funeral music guide, all three `for-*.html` B2B pages, and `compare/london-funeral-singers.html` — a birthday-gift product surfaced to a bereaved visitor or a corporate buyer mid-funeral-enquiry. The spec's "dropdown only, never on funeral pages" constraint is unsatisfiable with one shared nav partial. The spec and plan were corrected in `c757d31` to record this rather than leave the stale intent standing.
-- Comparison page (`compare/barbershopogram.html`) and a barbershop listen page — Phase 2, gated on a barbershop recording existing (`MANUAL-ACTIONS-REQUIRED.md` §17.1).
+- Comparison page (`compare/barbershopogram.html`) and a barbershop listen page — Phase 2, gated on a barbershop recording existing (`MANUAL-ACTIONS-REQUIRED.md` §18.1).
 - Per-occasion pages — Phase 3, gated on Search Console evidence after a season live.
-- Ads, directories, partnerships, and PR — Phase 4, human-only (`MANUAL-ACTIONS-REQUIRED.md` §17).
+- Ads, directories, partnerships, and PR — Phase 4, human-only (`MANUAL-ACTIONS-REQUIRED.md` §18).
 
 **Spec:** `docs/superpowers/specs/2026-09-03-barbershop-grams-design.md`
 **Plan:** `docs/superpowers/plans/2026-09-03-barbershop-grams.md`

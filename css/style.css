@@ -472,7 +472,7 @@ table {
 }
 
 /* ── Mobile Navigation ── */
-@media (max-width: 805px) {
+@media (max-width: 1080px) {
   .nav-toggle {
     display: block;
   }
@@ -540,6 +540,48 @@ table {
 
 .site-footer a:hover {
   color: var(--color-accent);
+}
+
+/* ── Footer columns ── */
+.footer-grid {
+  display: grid;
+  grid-template-columns: 2fr repeat(4, minmax(0, 1fr));
+  gap: var(--space-xl);
+  margin-bottom: var(--space-xl);
+}
+
+.footer-col ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.footer-col li {
+  margin-bottom: var(--space-xs);
+  font-size: var(--text-sm);
+  line-height: var(--leading-normal);
+}
+
+.footer-heading {
+  font-family: var(--font-heading);
+  font-size: var(--text-md);
+  font-weight: 500;
+  margin-bottom: var(--space-sm);
+}
+
+@media (max-width: 960px) {
+  .footer-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .footer-col--brand {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 520px) {
+  .footer-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 /* ═══════════════════════════════════
    Pull Quotes (Testimonials)
@@ -930,17 +972,6 @@ td.compare-us .compare-saving {
   margin-bottom: var(--space-md);
 }
 
-.audio-placeholder {
-  padding: var(--space-md);
-  background-color: var(--color-bg-alt);
-  border: 1px solid var(--color-rule);
-}
-
-.audio-placeholder p {
-  margin: 0;
-  color: var(--color-text-mid);
-}
-
 /* ═══════════════════════════════════
    Contact Form
    ═══════════════════════════════════ */
@@ -1263,7 +1294,7 @@ td.compare-us .compare-saving {
   display: none;
 }
 
-@media (max-width: 805px) {
+@media (max-width: 1080px) {
   .mobile-cta {
     display: flex;
     position: fixed;
@@ -1728,7 +1759,7 @@ td.compare-us .compare-saving {
 }
 
 /* Mobile: dropdown becomes an inline expandable block inside the hamburger */
-@media (max-width: 805px) {
+@media (max-width: 1080px) {
   .dropdown-menu {
     display: none;
     position: static;
@@ -2043,6 +2074,16 @@ td.compare-us .compare-saving {
     grid-template-columns: 1fr 1fr;
   }
 }
+
+/* ═══════════════════════════════════
+   Guide link lists (service pages)
+   ═══════════════════════════════════ */
+.guide-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs) var(--space-lg);
+  margin-bottom: var(--space-lg);
+}
 /* ═══════════════════════════════════
    Print Styles
    ═══════════════════════════════════ */
@@ -2065,7 +2106,6 @@ td.compare-us .compare-saving {
   .site-header,
   .nav-toggle,
   .skip-link,
-  .audio-placeholder,
   .contact-form,
   .btn,
   .video-embed {

@@ -5,13 +5,34 @@
   <!-- @include-start partials/head-extras.html -->
 <link rel="preload" href="/fonts/cormorant-garamond.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/fonts/source-serif-4.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="manifest" href="/site.webmanifest">
   <!-- @include-end partials/head-extras.html -->
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
-  <!-- Google Analytics (GA4) — deferred until after load -->
+  <!-- @include-start partials/analytics.html -->
+  <!-- Google Analytics (GA4) and Google Ads — Consent Mode v2, deferred until after load.
+       Source of truth: partials/analytics.html. The consent banner lives in js/consent.js. -->
   <script>
     window.dataLayer = window.dataLayer || [];
     function gtag(){dataLayer.push(arguments);}
+    gtag('consent', 'default', {
+      'ad_storage': 'denied',
+      'ad_user_data': 'denied',
+      'ad_personalization': 'denied',
+      'analytics_storage': 'denied',
+      'wait_for_update': 500
+    });
+    gtag('set', 'ads_data_redaction', true);
+    try {
+      if (localStorage.getItem('lcs-consent') === 'granted') {
+        gtag('consent', 'update', {
+          'ad_storage': 'granted',
+          'ad_user_data': 'granted',
+          'ad_personalization': 'denied',
+          'analytics_storage': 'granted'
+        });
+      }
+    } catch (e) {}
     function loadGA() {
       if (loadGA.done) return;
       loadGA.done = true;
@@ -32,6 +53,8 @@
       window.addEventListener(evt, loadGA, { once: true, passive: true });
     });
   </script>
+  <script src="/js/consent.js" defer></script>
+  <!-- @include-end partials/analytics.html -->
 
   <title>Destination Weddings &mdash; A British Choir Abroad | Alma Consort</title>
   <meta name="description" content="Alma Consort travels from London to sing weddings abroad. Country guides to the rite, the sung language, and the travel and permit position for a British choir.">
@@ -304,6 +327,7 @@
          otherwise leave the trailing empty cell as a solid block of colour. */
     }
     .pe-dests > li { box-shadow: 0 0 0 1px var(--limestone); }
+    .pe-dests + p { margin-top: 1.75rem; }
     .pe-dests a {
       display: block;
       padding: 1.1rem 1.25rem 1.2rem;
@@ -700,6 +724,28 @@
     @media (prefers-reduced-motion: reduce) {
       .pe-btn, .play-btn { transition: none; }
     }
+    /* ── Skip link and print (parity with the main site) ── */
+    .skip-link {
+      position: absolute;
+      top: -3rem;
+      left: 1.25rem;
+      padding: .5rem 1rem;
+      background: var(--cassockRed);
+      color: var(--parchment);
+      font-family: var(--font-ui);
+      font-size: .875rem;
+      text-decoration: none;
+      z-index: 200;
+    }
+    .skip-link:focus { top: .5rem; outline: 2px solid var(--choirStall); outline-offset: 2px; }
+    @media print {
+      body { background: #fff; color: #000; }
+      .pe-nav-enquire, .pe-form, .skip-link, .video-embed { display: none !important; }
+      [data-fade] { opacity: 1 !important; transform: none !important; }
+      .pe-section { padding-block: 1.25rem; break-inside: avoid; }
+      a { color: #000; }
+      h1, h2, h3 { break-after: avoid; }
+    }
   </style>
   <!-- @include-end partials/private-register.css.html -->
 
@@ -907,6 +953,7 @@
   <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
 </head>
 <body>
+  <a href="#main" class="skip-link">Skip to main content</a>
 
   <header class="pe-header">
     <nav class="pe-nav" aria-label="Page">
@@ -922,7 +969,7 @@
     </nav>
   </header>
 
-  <main>
+  <main id="main">
 
     <!-- Hero -->
     <section class="pe-section pe-section--light pe-hero">
@@ -1244,7 +1291,8 @@
 
   <!-- @include-start partials/private-footer.html -->
   <footer class="pe-footer">
-    <p><a href="mailto:office@londonchoralservice.com">office@londonchoralservice.com</a> &middot; <a href="tel:+447356042468">+44 7356 042468</a> &middot; London &middot; <a href="/privacy.html">Privacy policy</a></p>
+    <p><a href="mailto:office@londonchoralservice.com">office@londonchoralservice.com</a> &middot; <a href="tel:+447356042468">+44 7356 042468</a> &middot; London &middot; <a href="/terms.html">Terms of booking</a> &middot; <a href="/privacy.html">Privacy policy</a> &middot; <a href="/accessibility.html">Accessibility</a> &middot; <a href="/privacy.html#cookies" data-consent-open>Cookie choices</a></p>
+    <p>The London Choral Service: <a href="/">Home</a> &middot; <a href="/weddings.html">Weddings</a> &middot; <a href="/funerals.html">Funerals</a> &middot; <a href="/pricing.html">Pricing</a> &middot; <a href="/music-guides/">Music guides</a> &middot; <a href="/destinations/">Destinations</a> &middot; <a href="/planners-and-venues.html">Planners and venues</a> &middot; <a href="/contact.html">Contact</a></p>
     <p>The London Choral Service is the operating name of Alma Consort Ltd, registered in England and Wales, company no. 16785727.</p>
   </footer>
   <!-- @include-end partials/private-footer.html -->

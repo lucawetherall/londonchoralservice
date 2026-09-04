@@ -1,22 +1,24 @@
 # CLAUDE.md
 
-The website of The London Choral Service (Alma Consort Ltd) — a choir-for-hire business selling professional singers for funerals, weddings, corporate events, and Christmas across the UK. ~106 hand-authored static HTML pages served directly by GitHub Pages. No framework, no package.json, no CI.
+The website of The London Choral Service (Alma Consort Ltd) — a choir-for-hire business selling professional singers for funerals, weddings, corporate events, and Christmas across the UK. ~165 hand-authored static HTML pages served directly by GitHub Pages. No framework, no package.json, no CI.
 
 ## Critical: the build pipeline
 
 - **Never hand-edit the inlined `<style>` block in any page** — edit `css/tokens|base|layout|components|pages.css` and run `./build.sh`. `css/style.css` is generated too.
 - **Never hand-edit content between `<!-- @include-start … -->` / `@include-end` markers** — edit `partials/*.html` and run `./build.sh`.
-- Run `./build.sh` after any `css/` or `partials/` change or new page; a ~106-file diff afterwards is normal. **Load the `build-and-verify` skill before touching styles, nav, footer, or doing any bulk edit.**
+- Run `./build.sh` after any `css/` or `partials/` change or new page; a ~165-file diff afterwards is normal. **Load the `build-and-verify` skill before touching styles, nav, footer, or doing any bulk edit.**
 - The built output is what gets committed and deployed — there is no CI build step.
 
 ## Repo map
 
-- Root `*.html` — core pages (index, services, weddings, funerals, corporate, christmas, pricing, listen, about, contact, privacy, thank-you, 404) + 3 B2B landing pages (`for-*.html`)
+- Root `*.html` — core pages (index, services, weddings, funerals, corporate, christmas, carol-singers, private-events, planners-and-venues, pricing, listen, about, luca-wetherall, faq, contact, terms, accessibility, privacy, thank-you, 404) + 7 B2B landing pages (`for-*.html`)
 - `areas/` — 20 city pages; `areas/london/` — 33 borough pages (programmatic local SEO)
-- `music-guides/` — 37 long-form SEO articles + index
-- `partials/` — nav, footer, head-extras (**sources of truth** for shared markup)
+- `music-guides/` — 60 long-form SEO articles + index
+- `destinations/` — 22 country pages + index for weddings abroad (the Alma Consort "private register": own header, `partials/private-register.css.html` and `partials/private-footer.html`, no main nav)
+- `compare/` — one competitor comparison page, price-gated by `validate_competitor_claims.py`
+- `partials/` — nav, footer, head-extras, analytics (GA4/Ads + Consent Mode), private-register css/footer (**sources of truth** for shared markup)
 - `css/` — five source files → generated `style.css` (never edit generated output)
-- `js/` — contact.js, landing-form.js (Web3Forms + hCaptcha), nav.js, music-guides.js
+- `js/` — form.js (Web3Forms + hCaptcha), nav.js, consent.js (cookie banner), music-guides.js, private-events.js
 - `data/seo-fix-discovered-urls.yml` — **single source of truth** for unresolved schema values (GBP URL, video dates); never invent these
 - `docs/ROADMAP.md` — prioritised backlog with self-contained items; `docs/superpowers/` — dated specs and plans
 - `MANUAL-ACTIONS-REQUIRED.md` — human-only dashboard tasks. **Never attempt these**
@@ -35,11 +37,12 @@ The website of The London Choral Service (Alma Consort Ltd) — a choir-for-hire
 ## Conventions
 
 - Meta descriptions: unique, 141–161 chars. Every page: canonical + hreflang (en-gb, x-default) + full OG/Twitter tags.
-- `sitemap.xml` and `llms.txt` are hand-maintained — update both (fresh `lastmod`) when adding or materially editing a page.
+- `sitemap.xml` and `data/page-dates.json` are **generated** by `build.sh` (`scripts/generate_sitemap.py`): `lastmod` moves only when a page's body content changes. Never hand-edit either. `llms.txt` is still hand-maintained — add new pages to it.
+- Article dates (`dateModified`, `article:modified_time`, the visible Published/Updated line) are set by `scripts/sync_dates.py` in the build from the same date. Never hand-edit them.
 - `llms-full.txt` is **generated** by `build.sh` (`scripts/generate_llms_full.py`) from the built pages — never hand-edit it.
 - **Never add `AggregateRating`/`Review`/star-rating schema** — self-serving review markup violates Google policy.
 - UK English everywhere. All visible copy must pass the `writing-site-copy` skill.
-- GA4/Ads IDs `G-9FENN7VS0E` / `AW-17988388404`: the snippet is duplicated per page, *not* a partial — analytics changes are scripted site-wide sweeps (see `build-and-verify`).
+- GA4/Ads IDs `G-9FENN7VS0E` / `AW-17988388404` live in `partials/analytics.html` (Consent Mode v2, defaults denied; banner in `js/consent.js`). Edit the partial and rebuild; never edit the expanded copy in a page.
 - Choral prices quoted anywhere must match `pricing.html` (singers, choirs, instrumentalists, Christmas). Barbershop Grams is a separate product sold outside the choral service: its prices live only in `barbershop-grams/index.html`, which is their source of truth, and never appear on `pricing.html`.
 - Competitor figures must match `data/competitor-pricing.yml`, quote the source verbatim, and carry a visible checked date. `build.sh` fails if a price on a `compare/` page is not derivable from that file. Re-check quarterly (`MANUAL-ACTIONS-REQUIRED.md` §11).
 - `compare/` addresses families. Never link to it from a `for-*.html` page or reuse its inc-VAT figures there — a VAT-registered business buyer reclaims VAT, so those figures do not describe their position.
