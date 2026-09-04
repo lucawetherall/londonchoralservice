@@ -585,12 +585,16 @@
       background: #E8F0E4;
       border: 1px solid #A8C99B;
     }
-    #bs-form-success[hidden] { display: none; }
+    /* Hidden via a class, not the `hidden` attribute — the no-JS :target
+       reveal below only overrides CSS, so an element still carrying
+       `hidden` would stay removed from the accessibility tree even once
+       painted visible. */
+    .bs-hidden { display: none; }
     /* No-JS fallback. The plain HTML POST hands Web3Forms a redirect back to
        this anchor, and Web3Forms only redirects on a send it accepted, so the
        confirmation shows with no script running and the buyer never leaves the
-       register for main-site chrome. The JS path unsets [hidden] instead. */
-    #bs-form-success[hidden]:target { display: block; }
+       register for main-site chrome. The JS path removes the class instead. */
+    #bs-form-success.bs-hidden:target { display: block; }
 
     /* ── Focus & utilities ── */
     :focus-visible {
@@ -1081,7 +1085,7 @@
             <button type="submit" class="bs-btn">Send enquiry</button>
           </form>
 
-          <div id="bs-form-success" role="status" tabindex="-1" hidden>
+          <div id="bs-form-success" role="status" tabindex="-1" class="bs-hidden">
             <p>Thank you. We will check whether four singers are free on your date and email you back, usually the same day.</p>
           </div>
         </div>
@@ -1244,7 +1248,7 @@
           // Inline confirmation — the page stays open, no redirect.
           form.hidden = true;
           if (successBox) {
-            successBox.hidden = false;
+            successBox.classList.remove('bs-hidden');
             successBox.focus();
             successBox.scrollIntoView({ block: 'center' });
           }
