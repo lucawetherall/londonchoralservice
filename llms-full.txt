@@ -1468,7 +1468,7 @@ Yes, with light amplification if needed. Singers project well outdoors but a str
 
 #### Can you invoice the planner instead of the couple?
 
-The couple normally pays us directly, with a 30 per cent deposit at booking and the balance due 14 days before the wedding, though we can send the invoice to whomever you nominate. We can invoice the planner if you prefer to absorb the music into your overall package — just tell us at the booking.
+The couple normally pays us directly: fifty per cent of the fee secures the date and the balance is due before the ceremony, in one payment or two equal instalments as they prefer. We can send the invoice to whomever you nominate. We can invoice the planner if you prefer to absorb the music into your overall package — just tell us at the booking.
 
 
 ### Refer a couple to us
@@ -5544,7 +5544,7 @@ Positioning matters more than volume in a working lobby. We look for a hard surf
 
 The legal entity on every invoice is Alma Consort Ltd, the operating company behind the London Choral Service. Standard payment terms are 30 days net from the invoice date. We invoice against your PO and put the buyer reference, project code, or cost-centre number on the invoice if you tell us at the booking stage — this is what your accounts team needs to clear it without coming back to you. BACS to a UK business account is the usual route.
 
-If a December event sits awkwardly across your financial year, we can issue an advance deposit invoice (typically 30 percent) at confirmation and invoice the balance afterwards. If your finance team prefers a single invoice, we send it the working day after the last performance.
+If a December event sits awkwardly across your financial year, invoicing after the event against a purchase order is available by discussion, agreed in writing before we confirm. If your finance team prefers a single invoice, we send it the working day after the last performance.
 
 Alma Consort Ltd carries £5m public liability cover, and we email the certificate the same day you ask. PAT certificates for any equipment we bring come on the same basis. For hotels that rebook the same December slot each year, we can put a master service agreement on file once and invoice against it in later years without repeating the paperwork.
 
@@ -5647,7 +5647,7 @@ Prices are the same in December as in any other month. Carol bookings start at �
 
 The legal entity on every invoice is Alma Consort Ltd, the operating company behind the London Choral Service. Standard payment terms are 30 days net from the invoice date. We invoice whichever company you nominate — the managing agent, the resident management company, or the developer — and we put your purchase order number, cost-centre code, or scheme reference on the invoice if you tell us at the booking stage. That is what an accounts team needs to clear it without coming back to you. BACS to a UK business account is the usual route.
 
-Budget periods rarely line up with December. If the cost needs to land early, we can issue an advance deposit invoice (typically 30 percent) at confirmation and invoice the balance after the event. If a single invoice suits you better, we send it the working day after. Either pattern is fine.
+Budget periods rarely line up with December. If the cost needs to land in a different budget period, invoicing after the event against a purchase order is available by discussion, agreed in writing before we confirm. If a single invoice suits you better, we send it the working day after. Either pattern is fine.
 
 For a building that runs the same event every year, we can put a master service agreement on file once and invoice against it each December without further paperwork. Rebooking then takes one email.
 
@@ -5748,7 +5748,7 @@ Dress is concert dress or all black, and the choir arrives changed. Christmas ju
 
 The legal entity on the invoice is Alma Consort Ltd, the operating company behind the London Choral Service. Standard payment terms are 30 days net from the invoice date. Tell us at the booking stage if the invoice needs a purchase order number, a cost code, or the Clerk’s own reference, and it goes on the document so your accounts team can clear it without coming back to you. BACS to a UK business account is the usual route.
 
-If a December booking sits awkwardly across your financial year, we can issue an advance deposit invoice at confirmation, typically 30 percent, and invoice the balance after the event. A single invoice sent the working day after the event is equally fine. Alma Consort Ltd carries £5m public liability cover; halls and churches often want the certificate before they confirm access, and we email it the same day you ask.
+If a December booking sits awkwardly across your financial year, invoicing after the event against a purchase order is available by discussion, agreed in writing before we confirm. A single invoice sent the working day after the event is equally fine. Alma Consort Ltd carries £5m public liability cover; halls and churches often want the certificate before they confirm access, and we email it the same day you ask.
 
 Prices are the standard ones published on our pricing page . Carol bookings start with a Small Choir (4) from £1,150, Quintet from £1,400, Sextet from £1,600, Full Choir (8) from £2,000, and Chorus (12) from £3,000. They include all taxes, fees, and travel within Greater London, and we do not charge more at Christmas. The exceptions are bookings on 24 or 25 December, which carry a premium confirmed in the quote.
 
@@ -5854,7 +5854,7 @@ The legal entity on every invoice is Alma Consort Ltd, the operating company beh
 
 For a charity, the useful part is that the number does not move. Quoted prices include all taxes, fees, and travel within Greater London, and we charge the same in December as in June. The only Christmas premium applies to 24 and 25 December, and it is confirmed in the written quote before you commit. A standard Christmas booking runs up to an hour and a half including breaks, or the length of a church service; if you want the choir for longer than that, the additional fee is quoted upfront rather than appearing later.
 
-If cash flow needs the cost split across two financial periods, we can issue a deposit invoice (typically 30 percent) at confirmation with the balance invoiced after the concert. A single invoice the working day after the event is equally fine. Where the carol concert is an annual fixture, a master service agreement goes on file once and each subsequent year is booked against it without further paperwork.
+If cash flow needs the cost to fall after the concert, invoicing after the event against a purchase order is available by discussion, agreed in writing before we confirm. A single invoice the working day after the event is equally fine. Where the carol concert is an annual fixture, a master service agreement goes on file once and each subsequent year is booked against it without further paperwork.
 
 
 ### Useful resources for charity event teams
@@ -15642,7 +15642,7 @@ Mic and monitor logistics for hotels and conference centres: most ballrooms over
 
 The legal entity on every invoice is Alma Consort Ltd, the operating company behind the London Choral Service. Standard payment terms are 30 days net from the invoice date. We invoice against your PO and put the buyer reference, project code, or cost-centre number on the invoice if you tell us at the booking stage — this is what your AP team needs to clear it without coming back to you. BACS to a UK business account is the usual route.
 
-Late invoicing matters when an event sits awkwardly across a financial quarter. If you need to invoice in advance for budget reasons, we are happy to issue an advance deposit invoice (typically 30 percent) at confirmation, with the balance invoiced after the event. If you want a single invoice, we send it the working day after the event. Either pattern is fine.
+Late invoicing matters when an event sits awkwardly across a financial quarter. If your budget period needs the cost to fall elsewhere, invoicing after the event against a purchase order is available by discussion, agreed in writing before we confirm. If you want a single invoice, we send it the working day after the event. Either pattern is fine.
 
 For repeat bookings — an annual carol service or a regular awards dinner — we can put a master service agreement on file once and invoice each subsequent year against it without further paperwork. Several of our City clients have been doing this for years; the December booking takes one email from start to confirmation.
 
@@ -19065,7 +19065,7 @@ Yes. Alongside our singers, we provide organists, pianists, harpists, and string
 
 ### How does payment work, and do you need a deposit?
 
-It depends on the occasion. For weddings, we ask for a 30 per cent deposit at booking, with the balance due 14 days before the day. For funerals, given the short notice most families are working with, we invoice after the service instead, on 14-day terms. Corporate and business bookings are usually invoiced against a purchase order on standard 30-day terms, though we can issue an advance deposit invoice if your budget needs it that way. Ask when you enquire and we will confirm exactly how it works for your booking.
+Fifty per cent of the fee secures the date and is non-refundable; the rest is due before we sing. You can pay in one go or in two equal instalments, and the instalment option is open on every booking unless the service is ten days or fewer away, when we ask for a single payment. Corporate and business bookings are usually invoiced against a purchase order on standard 30-day terms. Your booking confirmation sets out the exact schedule, and the full terms of booking are on this site.
 
 
 ### How much space does the choir need?
@@ -19135,94 +19135,103 @@ Summary: Terms on which The London Choral Service accepts a booking: confirmatio
 
 The conditions on which Alma Consort Ltd, trading as The London Choral Service, accepts a booking. The same clauses appear in every booking confirmation.
 
-These terms apply to every booking made with The London Choral Service. Your booking confirmation sets out the musicians, the fee and the payment schedule for your engagement; where a confirmation contains a clause that differs from these terms, the confirmation governs that booking. Questions about any clause: ask us before you confirm .
+These terms apply to every booking made with The London Choral Service, and are the same terms that appear in the booking confirmation we send you to sign. Your confirmation also sets out the musicians, the fee and the payment schedule for your engagement; where a confirmation differs from this page, the confirmation governs that booking. Questions about any clause: ask us before you confirm .
 
 Effective from 4 September 2026.
 
 
 ### 1. The parties
 
-These terms constitute an agreement between Alma Consort Ltd, a company registered in England and Wales (company no. 16785727) and trading as The London Choral Service (“the Provider”), and the client named in the booking confirmation (“the Client”).
+These terms constitute an agreement between Alma Consort Ltd, a company registered in England and Wales (company no. 16785727) and trading as London Choral Service (“the Provider”), and the client named in the booking confirmation (“the Client”).
 
 
 ### 2. Services
 
-The Provider will furnish the musicians set out in the booking confirmation to perform music for the engagement. The repertoire shall be agreed in writing between the parties not later than three weeks before the date of the engagement. Reasonable changes may be made by mutual agreement thereafter.
+The Provider will furnish the musicians set out in the booking details to perform music for the service. The repertoire shall be agreed in writing between the parties not later than seven (7) days before the date of the service. Reasonable changes may be made by mutual agreement thereafter.
 
 
 ### 3. Booking confirmation
 
-The booking is confirmed only upon receipt by the Provider of (a) the booking confirmation, signed by the Client, and (b) the first instalment of the fee. Until both have been received, the date is held provisionally and may be released without notice.
+The booking is confirmed only upon receipt by the Provider of (a) the booking confirmation, signed by the Client, and (b) the first payment due under clause 4. Until both have been received, the date is held provisionally and may be released without notice.
 
 
-### 4. First instalment
+### 4. Payment
 
-The first instalment is a non-refundable deposit, payable upon confirmation of the booking. It compensates the Provider for administrative work, holding the date, and turning down other engagements. For funeral bookings, where the Provider invoices after the service, no first instalment is taken and clauses 3, 5 and 6 apply as adapted in the booking confirmation.
+The fee may be settled either (a) in a single payment of the full fee, or (b) in two equal instalments, in each case in accordance with the payment schedule set out in the booking confirmation. The following apply:
 
+(a) The instalment option is offered on every booking, save where ten (10) days or fewer separate the date of the confirmation and the date of the service. For those bookings the fee is payable in a single payment.
 
-### 5. Balance
+(b) The first payment must be received in cleared funds within seven (7) days of the date of the confirmation; where it is not, the date is not secured and may be released without notice. Where the service itself falls within that period, the fee is due on confirmation.
 
-The second instalment must be received in cleared funds in accordance with the payment schedule set out in the booking confirmation, and in any event not less than twenty-four (24) hours before the start of the engagement. Where the balance remains unpaid by that time, the Provider reserves the right to withdraw without further liability and to retain the first instalment.
+(c) Where the Client elects to pay by instalments, the second instalment must be received in cleared funds not less than forty-eight (48) hours before the start of the service.
 
+(d) The fee is payable in full before the musicians perform, and no part of it falls due after the service. The exception is a business or institutional booking invoiced against a purchase order under the final paragraph of this clause, where invoicing after the engagement is available by prior arrangement.
 
-### 6. Cancellation by the Client
+(e) Fifty per cent (50%) of the total fee is a non-refundable deposit which secures the date, and which compensates the Provider for administrative work, holding the date, and turning down other engagements.
 
-In the event of cancellation by the Client, the first instalment shall be retained by the Provider as a non-refundable deposit in all circumstances, regardless of the period of notice given. Where the second instalment has already been paid at the time of cancellation, the following shall apply in respect of the balance:
+(f) Where any sum remains unpaid by the time it falls due, the Provider reserves the right to withdraw without further liability.
 
-(a) more than thirty (30) days before the date of the engagement: the second instalment shall be refunded in full;
-
-(b) fewer than thirty (30) days before the date: the second instalment shall be retained in full and the full fee shall be payable.
-
-
-### 7. Postponement
-
-Where the Client wishes to postpone the engagement, the Provider will use reasonable endeavours, but is under no obligation, to reschedule to an alternative mutually convenient date within twelve (12) months. Rescheduling is at all times subject to the availability of the Provider and of the musicians, and may be subject to a revised fee where the original fee no longer reflects the Provider’s prevailing rates or the costs of the new date. Sums already paid will be applied against the rescheduled engagement and are not refundable. Where no mutually convenient date can be agreed within twelve (12) months, the engagement shall be treated as cancelled by the Client; the first instalment shall be retained as a non-refundable deposit, and any balance already paid shall be refunded subject to the deductions set out in clause 6.
+Business and institutional bookings may instead be invoiced against a purchase order, on the terms recorded in the booking confirmation. Invoicing after the engagement is available on those bookings by discussion, and is agreed in writing before the booking is confirmed.
 
 
-### 8. Substitution of musicians
+### 5. Cancellation by the Client
+
+In the event of cancellation by the Client, fifty per cent (50%) of the total fee shall be retained by the Provider as a non-refundable deposit in all circumstances, irrespective of the payment arrangement elected and regardless of the period of notice given. No cancellation window applies to that sum. In respect of the balance, the following shall apply:
+
+(a) more than seven (7) days before the date of the service: any sum paid in excess of the non-refundable deposit shall be refunded, and no further sum shall be payable;
+
+(b) fewer than seven (7) days before the date: the full fee shall be payable, and any sums already paid shall be retained.
+
+
+### 6. Postponement
+
+Where the Client wishes to postpone the engagement, the Provider will use reasonable endeavours, but is under no obligation, to reschedule to an alternative mutually convenient date within twelve (12) months. Rescheduling is at all times subject to the availability of the Provider and of the musicians, and may be subject to a revised fee where the original fee no longer reflects the Provider’s prevailing rates or the costs of the new date. Sums already paid will be applied against the rescheduled engagement. Where no mutually convenient date can be agreed within twelve (12) months, the engagement shall be treated as cancelled by the Client and clause 5 shall apply.
+
+
+### 7. Substitution of musicians
 
 Whilst the Provider will endeavour to engage the specific musicians named or agreed with the Client, all bookings are made on the basis that the Provider may, in its sole discretion and without consultation, substitute any musician with a like-for-like professional of equivalent standing and experience where the original musician is unwell, unexpectedly unavailable, or otherwise prevented from performing. Such substitution shall not constitute a breach of this agreement, shall not entitle the Client to a refund or reduction in the fee, and shall not give rise to any further liability on the part of the Provider.
 
 
-### 9. Cancellation by the Provider
+### 8. Cancellation by the Provider
 
-The Provider does not cancel save in the most exceptional circumstances, and undertakes in the first instance to engage replacement musicians under clause 8 wherever possible. In the unlikely event of cancellation by the Provider, all sums paid shall be refunded in full. The Provider’s liability shall be limited to the sums paid by the Client and shall not extend to consequential losses, including but not limited to losses relating to the venue, the officiant, travel, accommodation, or other suppliers engaged by the Client.
+The Provider does not cancel save in the most exceptional circumstances, and undertakes in the first instance to engage replacement musicians under clause 7 wherever possible. In the unlikely event of cancellation by the Provider, all sums paid shall be refunded in full. The Provider’s liability shall be limited to the sums paid by the Client and shall not extend to consequential losses, including but not limited to losses relating to the venue, the officiant, travel, accommodation, or other suppliers engaged by the Client.
 
 
-### 10. The Client’s obligations
+### 9. The Client’s obligations
 
 The Client shall ensure that:
 
-(a) the venue is available for the musicians to access not less than thirty (30) minutes before the engagement, with somewhere quiet to warm up;
+(a) the venue is available for the musicians to access not less than thirty (30) minutes before the service, with somewhere quiet to warm up;
 
 (b) the officiant or celebrant has been notified of the musical provision;
 
-(c) where music sourced by the Client is to be performed, scores are supplied to the Provider not later than four weeks before the date of the engagement;
+(c) where music sourced by the Client is to be performed, scores are supplied to the Provider not later than seven (7) days before the date of the service;
 
 (d) any restrictions on music or performance imposed by the venue, the officiant, or the relevant religious authority are notified to the Provider in writing at the earliest opportunity.
 
 
-### 11. Travel
+### 10. Travel
 
 The fee is inclusive of travel within Greater London. Engagements outside Greater London may attract reasonable travel expenses, agreed in writing in advance.
 
 
-### 12. Liability
+### 11. Liability
 
 The Provider holds appropriate public liability insurance. The Provider’s total liability under this agreement is limited to the total fee. Nothing in this clause limits liability for death or personal injury caused by negligence, or for any other liability that cannot lawfully be limited.
 
 
-### 13. Data protection
+### 12. Data protection
 
-The Provider will process the Client’s personal data only for the purposes of administering the booking, in accordance with applicable data protection law and our privacy policy .
+The Provider will process the Client’s personal data only for the purposes of administering this booking, in accordance with applicable data protection law and our privacy policy .
 
 
-### 14. Governing law
+### 13. Governing law
 
 This agreement is governed by the laws of England and Wales, and the parties submit to the exclusive jurisdiction of the courts of England and Wales.
 
 
 ### Complaints
 
-If something about a booking falls short, write to office@londonchoralservice.com within 14 days of the engagement. Luca Wetherall reads every complaint personally and replies within five working days with what we found and what we propose.
+If something about a booking falls short, write to office@londonchoralservice.com within 14 days of the engagement. Luca Wetherall reads every complaint personally and replies within five working days with what we found and what we propose. This section is not part of the numbered terms above.
 
