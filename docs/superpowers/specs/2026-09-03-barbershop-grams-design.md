@@ -156,8 +156,8 @@ Warm and well-made, not a striped-waistcoat pastiche. No barber's-pole motif. Th
 
 **Main site → mini-site** (in):
 - **Not the nav.** See the Nav prominence row above: a shared nav partial reaches every page including the funeral surfaces, so there is no nav entry.
-- `services.html`: one card in the grid and one entry in its `ItemList` JSON-LD.
-- `pricing.html`: the new section links to the hub.
+- `services.html`: a short note **after** the ensemble grid (not a card inside it — the grid is a size ladder from soloist to twelve-voice chorus, and a gram is not a point on that scale), plus a `Gifts & Surprises` `OfferCatalog` in the page's JSON-LD, sibling to `Choirs & Singers` and `Instrumentalists`.
+- `pricing.html`: **nothing.** Gram prices are deliberately kept off it — see the Product section. It is not an inbound link either.
 - `weddings.html` and `corporate.html`: one in-copy sentence each ("a barbershop quartet for the drinks reception"), because "barbershop quartet hire London" is a head term the hub should also win.
 - Never from `index.html`'s hero, `funerals.html`, any funeral guide, `private-events.html`, `destinations/`, or any `for-*.html`.
 
@@ -451,7 +451,7 @@ Gift-guide outreach twice a year: "experience gifts" round-ups for Valentine's a
 | **3** | Occasion pages | Search Console evidence after phase 1 has been live a season |
 | **4** | Ads · directories · partnerships · PR · seasonal calendar | Phase 1 live; ads also on 0.1 and 0.3 |
 
-Phase 1 can ship before the recording exists, with the hero's proof slot reserved. Phase 2 cannot.
+Phase 1 can ship before the recording exists; Phase 2 cannot. Note that no proof slot was designed into the hero, so landing 0.1 means finding a home for the recording as well as making it — the hero's two-CTA row is the obvious place.
 
 ---
 
