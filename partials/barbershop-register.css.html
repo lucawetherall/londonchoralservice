@@ -209,7 +209,8 @@
     .bs-wordmark {
       font-family: var(--font-display);
       font-size: 1.3125rem;
-      color: var(--bs-ink);
+      font-weight: 600;
+      color: var(--bs-red);
       text-decoration: none;
     }
     .bs-nav-enquire {
@@ -284,7 +285,11 @@
     }
 
     /* ── Buttons ── */
-    .bs-btn {
+    /* Selector lists carry both weights on purpose: the bare class styles the
+       form's <button>, while `a.bs-btn` (0,1,1) is needed to beat `.bs-body a`
+       above, which otherwise repaints in-body buttons in ink and underlines
+       them — invisible text on the filled variant. */
+    .bs-btn, a.bs-btn {
       display: inline-block;
       font-family: var(--font-ui);
       font-size: .75rem;
@@ -299,9 +304,10 @@
       cursor: pointer;
       transition: background-color .2s, color .2s;
     }
-    .bs-btn:hover {
+    .bs-btn:hover, a.bs-btn:hover {
       background: var(--bs-ink);
       color: var(--bs-paper);
+      text-decoration: none;
     }
 
     /* ── Process: the page's only numbered component ── */
@@ -455,14 +461,15 @@
     @media (max-width: 39.9375rem) { .bs-rep { columns: 1; } }
 
     /* ── Filled button variant, for the primary CTA ── */
-    .bs-btn--fill {
+    .bs-btn--fill, a.bs-btn--fill {
       color: var(--bs-paper);
-      background: var(--bs-ink);
-      border-color: var(--bs-ink);
-    }
-    .bs-btn--fill:hover {
       background: var(--bs-red);
       border-color: var(--bs-red);
+      text-decoration: none;
+    }
+    .bs-btn--fill:hover, a.bs-btn--fill:hover {
+      background: var(--bs-ink);
+      border-color: var(--bs-ink);
       color: var(--bs-paper);
     }
 
