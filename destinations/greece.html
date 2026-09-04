@@ -5,13 +5,34 @@
   <!-- @include-start partials/head-extras.html -->
 <link rel="preload" href="/fonts/cormorant-garamond.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/fonts/source-serif-4.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="manifest" href="/site.webmanifest">
   <!-- @include-end partials/head-extras.html -->
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
-  <!-- Google Analytics (GA4) — deferred until after load -->
+  <!-- @include-start partials/analytics.html -->
+  <!-- Google Analytics (GA4) and Google Ads — Consent Mode v2, deferred until after load.
+       Source of truth: partials/analytics.html. The consent banner lives in js/consent.js. -->
   <script>
     window.dataLayer = window.dataLayer || [];
     function gtag(){dataLayer.push(arguments);}
+    gtag('consent', 'default', {
+      'ad_storage': 'denied',
+      'ad_user_data': 'denied',
+      'ad_personalization': 'denied',
+      'analytics_storage': 'denied',
+      'wait_for_update': 500
+    });
+    gtag('set', 'ads_data_redaction', true);
+    try {
+      if (localStorage.getItem('lcs-consent') === 'granted') {
+        gtag('consent', 'update', {
+          'ad_storage': 'granted',
+          'ad_user_data': 'granted',
+          'ad_personalization': 'denied',
+          'analytics_storage': 'granted'
+        });
+      }
+    } catch (e) {}
     function loadGA() {
       if (loadGA.done) return;
       loadGA.done = true;
@@ -32,6 +53,8 @@
       window.addEventListener(evt, loadGA, { once: true, passive: true });
     });
   </script>
+  <script src="/js/consent.js" defer></script>
+  <!-- @include-end partials/analytics.html -->
 
   <title>A Wedding Choir in Greece &mdash; Santorini, Crete, Mykonos</title>
   <meta name="description" content="A British consort at Greek weddings: why an Orthodox service works differently, and how music is placed at a clifftop ceremony in Santorini or Mykonos.">
@@ -304,6 +327,7 @@
          otherwise leave the trailing empty cell as a solid block of colour. */
     }
     .pe-dests > li { box-shadow: 0 0 0 1px var(--limestone); }
+    .pe-dests + p { margin-top: 1.75rem; }
     .pe-dests a {
       display: block;
       padding: 1.1rem 1.25rem 1.2rem;
@@ -700,6 +724,28 @@
     @media (prefers-reduced-motion: reduce) {
       .pe-btn, .play-btn { transition: none; }
     }
+    /* ── Skip link and print (parity with the main site) ── */
+    .skip-link {
+      position: absolute;
+      top: -3rem;
+      left: 1.25rem;
+      padding: .5rem 1rem;
+      background: var(--cassockRed);
+      color: var(--parchment);
+      font-family: var(--font-ui);
+      font-size: .875rem;
+      text-decoration: none;
+      z-index: 200;
+    }
+    .skip-link:focus { top: .5rem; outline: 2px solid var(--choirStall); outline-offset: 2px; }
+    @media print {
+      body { background: #fff; color: #000; }
+      .pe-nav-enquire, .pe-form, .skip-link, .video-embed { display: none !important; }
+      [data-fade] { opacity: 1 !important; transform: none !important; }
+      .pe-section { padding-block: 1.25rem; break-inside: avoid; }
+      a { color: #000; }
+      h1, h2, h3 { break-after: avoid; }
+    }
   </style>
   <!-- @include-end partials/private-register.css.html -->
 
@@ -795,6 +841,7 @@
   <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
 </head>
 <body>
+  <a href="#main" class="skip-link">Skip to main content</a>
 
   <header class="pe-header">
     <nav class="pe-nav" aria-label="Page">
@@ -812,7 +859,7 @@
     </nav>
   </header>
 
-  <main>
+  <main id="main">
 
     <section class="pe-section pe-section--light pe-hero">
       <div class="pe-hero__inner">
@@ -948,6 +995,29 @@
           <p class="pe-checked">Travel and permit information on this page last checked 29 August 2026.
             Requirements change and vary by venue, diocese and celebrant; confirm the current position
             with us before you fix a date. Other <a href="/destinations/">country guides</a>.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Nearby -->
+    <section class="pe-section pe-section--mid">
+      <div class="pe-rail">
+        <p class="pe-rail-label" aria-hidden="true">Nearby</p>
+        <div class="pe-body" data-fade>
+          <h2>Other destinations: Europe and the Mediterranean</h2>
+          <ul class="pe-dests" role="list">
+            <li><a href="/destinations/italy.html"><span class="n">Italy</span><span class="r">Tuscany, the Amalfi Coast, Lake Como, Puglia and Florence</span></a></li>
+            <li><a href="/destinations/france.html"><span class="n">France</span><span class="r">the Dordogne, the Loire Valley, the French Riviera and Provence</span></a></li>
+            <li><a href="/destinations/spain.html"><span class="n">Spain</span><span class="r">Ibiza, Mallorca, Marbella and Tenerife</span></a></li>
+            <li><a href="/destinations/portugal.html"><span class="n">Portugal</span><span class="r">the Algarve, Sintra, Porto and Lisbon</span></a></li>
+            <li><a href="/destinations/cyprus.html"><span class="n">Cyprus</span><span class="r">Paphos, Ayia Napa and Protaras</span></a></li>
+            <li><a href="/destinations/malta.html"><span class="n">Malta</span><span class="r">Valletta, Mdina and Gozo</span></a></li>
+            <li><a href="/destinations/croatia.html"><span class="n">Croatia</span><span class="r">Dubrovnik, Hvar, Split and Istria</span></a></li>
+            <li><a href="/destinations/gibraltar.html"><span class="n">Gibraltar</span><span class="r">the Rock and the Botanic Gardens</span></a></li>
+            <li><a href="/destinations/ireland.html"><span class="n">Ireland</span><span class="r">Dublin, County Wicklow, the south west and the west</span></a></li>
+            <li><a href="/destinations/scotland.html"><span class="n">Scotland</span><span class="r">Edinburgh, the Highlands, Loch Lomond and Perthshire</span></a></li>
+          </ul>
+          <p>Reading: <a href="/music-guides/destination-wedding-choir.html">hiring a UK choir for a destination wedding</a>, <a href="/music-guides/wedding-ceremony-music.html">a complete guide to wedding ceremony music</a>, and <a href="/music-guides/wedding-music-costs.html">what wedding music costs</a>. For a ceremony at home, see <a href="/weddings.html">wedding choirs in the United Kingdom</a>; planners, venues and estates have <a href="/planners-and-venues.html">a page of their own</a>.</p>
         </div>
       </div>
     </section>
@@ -1092,7 +1162,8 @@
 
   <!-- @include-start partials/private-footer.html -->
   <footer class="pe-footer">
-    <p><a href="mailto:office@londonchoralservice.com">office@londonchoralservice.com</a> &middot; <a href="tel:+447356042468">+44 7356 042468</a> &middot; London &middot; <a href="/privacy.html">Privacy policy</a></p>
+    <p><a href="mailto:office@londonchoralservice.com">office@londonchoralservice.com</a> &middot; <a href="tel:+447356042468">+44 7356 042468</a> &middot; London &middot; <a href="/terms.html">Terms of booking</a> &middot; <a href="/privacy.html">Privacy policy</a> &middot; <a href="/accessibility.html">Accessibility</a> &middot; <a href="/privacy.html#cookies" data-consent-open>Cookie choices</a></p>
+    <p>The London Choral Service: <a href="/">Home</a> &middot; <a href="/weddings.html">Weddings</a> &middot; <a href="/funerals.html">Funerals</a> &middot; <a href="/pricing.html">Pricing</a> &middot; <a href="/music-guides/">Music guides</a> &middot; <a href="/destinations/">Destinations</a> &middot; <a href="/planners-and-venues.html">Planners and venues</a> &middot; <a href="/contact.html">Contact</a></p>
     <p>The London Choral Service is the operating name of Alma Consort Ltd, registered in England and Wales, company no. 16785727.</p>
   </footer>
   <!-- @include-end partials/private-footer.html -->

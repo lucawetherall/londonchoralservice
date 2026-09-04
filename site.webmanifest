@@ -1,0 +1,18 @@
+{
+  "name": "The London Choral Service",
+  "short_name": "London Choral Service",
+  "description": "Professional singers, choirs, and instrumentalists for funerals, weddings, memorials, Christmas, and corporate events across the United Kingdom.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "browser",
+  "lang": "en-GB",
+  "background_color": "#F7F3EE",
+  "theme_color": "#F7F3EE",
+  "icons": [
+    { "src": "/assets/favicon.svg", "type": "image/svg+xml", "sizes": "any", "purpose": "any" },
+    { "src": "/assets/favicon-32.png", "type": "image/png", "sizes": "32x32" },
+    { "src": "/assets/favicon-48.png", "type": "image/png", "sizes": "48x48" },
+    { "src": "/assets/favicon-192.png", "type": "image/png", "sizes": "192x192" },
+    { "src": "/assets/apple-touch-icon.png", "type": "image/png", "sizes": "180x180" }
+  ]
+}

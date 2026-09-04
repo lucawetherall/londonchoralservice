@@ -5,13 +5,34 @@
   <!-- @include-start partials/head-extras.html -->
 <link rel="preload" href="/fonts/cormorant-garamond.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/fonts/source-serif-4.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="manifest" href="/site.webmanifest">
   <!-- @include-end partials/head-extras.html -->
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
-  <!-- Google Analytics (GA4) — deferred until after load -->
+  <!-- @include-start partials/analytics.html -->
+  <!-- Google Analytics (GA4) and Google Ads — Consent Mode v2, deferred until after load.
+       Source of truth: partials/analytics.html. The consent banner lives in js/consent.js. -->
   <script>
     window.dataLayer = window.dataLayer || [];
     function gtag(){dataLayer.push(arguments);}
+    gtag('consent', 'default', {
+      'ad_storage': 'denied',
+      'ad_user_data': 'denied',
+      'ad_personalization': 'denied',
+      'analytics_storage': 'denied',
+      'wait_for_update': 500
+    });
+    gtag('set', 'ads_data_redaction', true);
+    try {
+      if (localStorage.getItem('lcs-consent') === 'granted') {
+        gtag('consent', 'update', {
+          'ad_storage': 'granted',
+          'ad_user_data': 'granted',
+          'ad_personalization': 'denied',
+          'analytics_storage': 'granted'
+        });
+      }
+    } catch (e) {}
     function loadGA() {
       if (loadGA.done) return;
       loadGA.done = true;
@@ -31,9 +52,10 @@
     ['scroll', 'click', 'touchstart', 'keydown'].forEach(function(evt) {
       window.addEventListener(evt, loadGA, { once: true, passive: true });
     });
-    // Ensure Ads conversion fires immediately on this success page
-    loadGA();
   </script>
+  <script src="/js/consent.js" defer></script>
+  <!-- @include-end partials/analytics.html -->
+  <script>loadGA();</script>
 
   <!-- Google Ads conversion events -->
   <script>
@@ -59,16 +81,16 @@
     })();
   </script>
 
-  <title>Thank You — London Choral Service</title>
-  <meta name="description" content="Thank you for your enquiry. We'll be in touch within 48 hours.">
+  <title>Thank You | LCS</title>
+  <meta name="description" content="Thank you for your enquiry. We reply within one working day.">
   <meta name="theme-color" content="#F7F3EE">
   <meta name="robots" content="noindex, nofollow">
   <link rel="canonical" href="https://londonchoralservice.com/thank-you.html">
   <link rel="alternate" hreflang="en-gb" href="https://londonchoralservice.com/thank-you.html">
   <link rel="alternate" hreflang="x-default" href="https://londonchoralservice.com/thank-you.html">
 
-  <meta property="og:title" content="Thank You &mdash; London Choral Service">
-  <meta property="og:description" content="Thank you for your enquiry. We'll be in touch within 48 hours.">
+  <meta property="og:title" content="Thank You | LCS">
+  <meta property="og:description" content="Thank you for your enquiry. We reply within one working day.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://londonchoralservice.com/thank-you.html">
   <meta property="og:locale" content="en_GB">
@@ -79,8 +101,8 @@
   <meta property="og:image:alt" content="The London Choral Service: professional choirs and singers for funerals, weddings, and ceremonies">
 
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Thank You &mdash; London Choral Service">
-  <meta name="twitter:description" content="Thank you for your enquiry. We'll be in touch within 48 hours.">
+  <meta name="twitter:title" content="Thank You | LCS">
+  <meta name="twitter:description" content="Thank you for your enquiry. We reply within one working day.">
   <meta name="twitter:image" content="https://londonchoralservice.com/assets/og-image.png">
   <meta name="twitter:image:alt" content="The London Choral Service: professional choirs and singers for funerals, weddings, and ceremonies">
   <link rel="dns-prefetch" href="https://www.googletagmanager.com">
@@ -561,7 +583,7 @@
     }
     
     /* ── Mobile Navigation ── */
-    @media (max-width: 805px) {
+    @media (max-width: 1080px) {
       .nav-toggle {
         display: block;
       }
@@ -629,6 +651,48 @@
     
     .site-footer a:hover {
       color: var(--color-accent);
+    }
+    
+    /* ── Footer columns ── */
+    .footer-grid {
+      display: grid;
+      grid-template-columns: 2fr repeat(4, minmax(0, 1fr));
+      gap: var(--space-xl);
+      margin-bottom: var(--space-xl);
+    }
+    
+    .footer-col ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    
+    .footer-col li {
+      margin-bottom: var(--space-xs);
+      font-size: var(--text-sm);
+      line-height: var(--leading-normal);
+    }
+    
+    .footer-heading {
+      font-family: var(--font-heading);
+      font-size: var(--text-md);
+      font-weight: 500;
+      margin-bottom: var(--space-sm);
+    }
+    
+    @media (max-width: 960px) {
+      .footer-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .footer-col--brand {
+        grid-column: 1 / -1;
+      }
+    }
+    
+    @media (max-width: 520px) {
+      .footer-grid {
+        grid-template-columns: minmax(0, 1fr);
+      }
     }
     /* ═══════════════════════════════════
        Pull Quotes (Testimonials)
@@ -1019,17 +1083,6 @@
       margin-bottom: var(--space-md);
     }
     
-    .audio-placeholder {
-      padding: var(--space-md);
-      background-color: var(--color-bg-alt);
-      border: 1px solid var(--color-rule);
-    }
-    
-    .audio-placeholder p {
-      margin: 0;
-      color: var(--color-text-mid);
-    }
-    
     /* ═══════════════════════════════════
        Contact Form
        ═══════════════════════════════════ */
@@ -1352,7 +1405,7 @@
       display: none;
     }
     
-    @media (max-width: 805px) {
+    @media (max-width: 1080px) {
       .mobile-cta {
         display: flex;
         position: fixed;
@@ -1817,7 +1870,7 @@
     }
     
     /* Mobile: dropdown becomes an inline expandable block inside the hamburger */
-    @media (max-width: 805px) {
+    @media (max-width: 1080px) {
       .dropdown-menu {
         display: none;
         position: static;
@@ -2132,6 +2185,16 @@
         grid-template-columns: 1fr 1fr;
       }
     }
+    
+    /* ═══════════════════════════════════
+       Guide link lists (service pages)
+       ═══════════════════════════════════ */
+    .guide-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-xs) var(--space-lg);
+      margin-bottom: var(--space-lg);
+    }
     /* ═══════════════════════════════════
        Print Styles
        ═══════════════════════════════════ */
@@ -2154,7 +2217,6 @@
       .site-header,
       .nav-toggle,
       .skip-link,
-      .audio-placeholder,
       .contact-form,
       .btn,
       .video-embed {
@@ -2240,8 +2302,23 @@
             <li role="none"><a role="menuitem" href="/christmas.html">Christmas</a></li>
             <li role="none"><a role="menuitem" href="/carol-singers.html">Carol Singers</a></li>
             <li role="none"><a role="menuitem" href="/private-events.html">Private Events</a></li>
+            <li role="none"><a role="menuitem" href="/destinations/">Weddings Abroad</a></li>
             <li role="separator" class="dropdown-separator"></li>
             <li role="none"><a role="menuitem" href="/services.html">All services</a></li>
+          </ul>
+        </li>
+        <li class="has-dropdown">
+          <a href="/planners-and-venues.html" aria-haspopup="true" aria-expanded="false" class="dropdown-trigger">Professionals<span class="dropdown-caret" aria-hidden="true">&#9662;</span></a>
+          <ul class="dropdown-menu" role="menu">
+            <li role="none"><a role="menuitem" href="/for-funeral-directors.html">Funeral Directors</a></li>
+            <li role="none"><a role="menuitem" href="/for-wedding-planners.html">Wedding Planners</a></li>
+            <li role="none"><a role="menuitem" href="/for-event-managers.html">Event Managers</a></li>
+            <li role="none"><a role="menuitem" href="/for-hotels.html">Hotels &amp; Venues</a></li>
+            <li role="none"><a role="menuitem" href="/for-property-managers.html">Property Managers</a></li>
+            <li role="none"><a role="menuitem" href="/for-livery-companies.html">Livery Companies</a></li>
+            <li role="none"><a role="menuitem" href="/for-charities.html">Charities</a></li>
+            <li role="separator" class="dropdown-separator"></li>
+            <li role="none"><a role="menuitem" href="/planners-and-venues.html">Planners, Venues &amp; Estates</a></li>
           </ul>
         </li>
         <li><a href="/listen.html">Listen</a></li>
@@ -2267,8 +2344,19 @@
     <section class="section" style="padding-block-end: var(--space-2xl)">
       <div class="prose">
         <h1 id="ty-heading">Thank you for your enquiry</h1>
-        <p class="lede" id="ty-lede">We&rsquo;ll be in touch within 48 hours, usually much sooner.</p>
+        <p class="lede" id="ty-lede">We reply within one working day, usually much sooner.</p>
         <hr class="rule">
+      </div>
+    </section>
+
+    <section class="section" style="padding-block-start: var(--space-2xl); padding-block-end: var(--space-lg)">
+      <div class="prose">
+        <h2>What happens next</h2>
+        <ol>
+          <li>We read your enquiry and check the diary for your date.</li>
+          <li>You get a written reply with ensemble options, two or three programme suggestions, and a quote.</li>
+          <li>Nothing is booked until you say so. We hold the date provisionally while you decide, and take no payment until you confirm. The <a href="terms.html">terms of booking</a> set out the rest.</li>
+        </ol>
       </div>
     </section>
 
@@ -2288,29 +2376,76 @@
 
     <!-- @include-start partials/footer.html -->
   <footer class="site-footer">
-    <div class="prose">
+    <div class="page-wrap">
       <hr>
-      <p class="footer-name">The London Choral Service</p>
-      <p class="text-sm text-mid">Exceptional singers, choirs, and instrumentalists for funerals, weddings, memorials, Christmas, and corporate events across the United Kingdom.</p>
-      <p class="text-sm text-mid">
-        Text us on <a href="https://wa.me/447356042468" target="_blank" rel="noopener" data-whatsapp>WhatsApp</a> (fastest reply)
-        &ensp;|&ensp;
-        <a href="tel:+447356042468">07356 042468</a>
-        &ensp;|&ensp;
-        <a href="mailto:office@londonchoralservice.com">office@londonchoralservice.com</a>
-      </p>
+      <div class="footer-grid">
+        <div class="footer-col footer-col--brand">
+          <p class="footer-name">The London Choral Service</p>
+          <p class="text-sm text-mid">Exceptional singers, choirs, and instrumentalists for funerals, weddings, memorials, Christmas, and corporate events across the United Kingdom.</p>
+          <p class="text-sm text-mid">
+            Text us on <a href="https://wa.me/447356042468" target="_blank" rel="noopener" data-whatsapp>WhatsApp</a> (fastest reply)
+            &ensp;|&ensp;
+            <a href="tel:+447356042468">07356 042468</a>
+            &ensp;|&ensp;
+            <a href="mailto:office@londonchoralservice.com">office@londonchoralservice.com</a>
+          </p>
+        </div>
+        <div class="footer-col">
+          <p class="footer-heading">Services</p>
+          <ul role="list">
+            <li><a href="/weddings.html">Weddings</a></li>
+            <li><a href="/funerals.html">Funerals</a></li>
+            <li><a href="/corporate.html">Corporate events</a></li>
+            <li><a href="/christmas.html">Christmas carol services</a></li>
+            <li><a href="/carol-singers.html">Hire carol singers</a></li>
+            <li><a href="/private-events.html">Private events</a></li>
+            <li><a href="/destinations/">Weddings abroad</a></li>
+            <li><a href="/pricing.html">Pricing</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <p class="footer-heading">For professionals</p>
+          <ul role="list">
+            <li><a href="/for-funeral-directors.html">Funeral directors</a></li>
+            <li><a href="/for-wedding-planners.html">Wedding planners</a></li>
+            <li><a href="/for-event-managers.html">Event managers</a></li>
+            <li><a href="/for-hotels.html">Hotels and venues</a></li>
+            <li><a href="/for-property-managers.html">Property managers</a></li>
+            <li><a href="/for-livery-companies.html">Livery companies</a></li>
+            <li><a href="/for-charities.html">Charities</a></li>
+            <li><a href="/planners-and-venues.html">Planners, venues and estates</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <p class="footer-heading">Guides and areas</p>
+          <ul role="list">
+            <li><a href="/music-guides/">All music guides</a></li>
+            <li><a href="/music-guides/?category=weddings">Wedding music</a></li>
+            <li><a href="/music-guides/?category=funerals">Funeral music</a></li>
+            <li><a href="/music-guides/?category=christmas">Christmas music</a></li>
+            <li><a href="/listen.html">Listen</a></li>
+            <li><a href="/areas/london.html">London and its boroughs</a></li>
+            <li><a href="/areas/">All areas we serve</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <p class="footer-heading">Company</p>
+          <ul role="list">
+            <li><a href="/about.html">About us</a></li>
+            <li><a href="/luca-wetherall.html">Luca Wetherall</a></li>
+            <li><a href="/faq.html">FAQ</a></li>
+            <li><a href="/contact.html">Contact</a></li>
+            <li><a href="/terms.html">Terms of booking</a></li>
+            <li><a href="/privacy.html">Privacy policy</a></li>
+            <li><a href="/accessibility.html">Accessibility</a></li>
+            <li><a href="/privacy.html#cookies" data-consent-open>Cookie choices</a></li>
+          </ul>
+        </div>
+      </div>
       <p class="text-xs text-mid">
         Areas we serve: <a href="/areas/london.html">London</a> &middot; <a href="/areas/birmingham.html">Birmingham</a> &middot; <a href="/areas/manchester.html">Manchester</a> &middot; <a href="/areas/liverpool.html">Liverpool</a> &middot; <a href="/areas/oxford.html">Oxford</a> &middot; <a href="/areas/cambridge.html">Cambridge</a> &middot; <a href="/areas/reading.html">Reading</a> &middot; <a href="/areas/slough-maidenhead.html">Slough &amp; Maidenhead</a> &middot; <a href="/areas/guildford.html">Guildford</a> &middot; <a href="/areas/brighton.html">Brighton</a> &middot; <a href="/areas/chester.html">Chester</a> &middot; <a href="/areas/st-albans.html">St Albans</a> &middot; <a href="/areas/canterbury.html">Canterbury</a> &middot; <a href="/areas/windsor.html">Windsor</a> &middot; <a href="/areas/winchester.html">Winchester</a> &middot; <a href="/areas/salisbury.html">Salisbury</a> &middot; <a href="/areas/bath.html">Bath</a> &middot; <a href="/areas/chelmsford.html">Chelmsford</a> &middot; <a href="/areas/rochester.html">Rochester</a> &middot; <a href="/areas/">All areas</a>
       </p>
-      <p class="text-xs text-mid">
-        Christmas: <a href="/christmas.html">Carol services</a> &middot; <a href="/carol-singers.html">Hire carol singers</a>
-      </p>
-      <p class="text-xs text-mid">
-        <a href="/faq.html">FAQ</a>
-        &ensp;|&ensp;
-        <a href="/privacy.html">Privacy policy</a>
-      </p>
-      <p class="text-xs text-mid">The London Choral Service is the operating name of Alma Consort Ltd. Based in London, serving the whole of the United Kingdom.</p>
+      <p class="text-xs text-mid">The London Choral Service is the operating name of Alma Consort Ltd, registered in England and Wales, company no. 16785727. Based in London, serving the whole of the United Kingdom. Public liability insurance held.</p>
       <p class="text-xs text-mid">&copy; <span data-year>2026</span> The London Choral Service. All rights reserved.</p>
     </div>
   </footer>
@@ -2343,7 +2478,7 @@
       if (detail) detail.innerHTML = 'Luca or a member of our team will read your message and come back to you with a proposal for your event. In the meantime, you might find these useful:';
     } else if (from === 'corporate') {
       if (h1) h1.textContent = 'Thank you for your enquiry';
-      if (detail) detail.innerHTML = 'Luca or a member of our team will read your message and come back to you with a proposal within 48 hours. In the meantime, you might find these useful:';
+      if (detail) detail.innerHTML = 'Luca or a member of our team will read your message and come back to you with a proposal within one working day. In the meantime, you might find these useful:';
     }
   })();
   </script>

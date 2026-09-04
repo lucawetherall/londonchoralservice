@@ -5,13 +5,34 @@
   <!-- @include-start partials/head-extras.html -->
 <link rel="preload" href="/fonts/cormorant-garamond.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/fonts/source-serif-4.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="manifest" href="/site.webmanifest">
   <!-- @include-end partials/head-extras.html -->
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
-  <!-- Google Analytics (GA4) — deferred until after load -->
+  <!-- @include-start partials/analytics.html -->
+  <!-- Google Analytics (GA4) and Google Ads — Consent Mode v2, deferred until after load.
+       Source of truth: partials/analytics.html. The consent banner lives in js/consent.js. -->
   <script>
     window.dataLayer = window.dataLayer || [];
     function gtag(){dataLayer.push(arguments);}
+    gtag('consent', 'default', {
+      'ad_storage': 'denied',
+      'ad_user_data': 'denied',
+      'ad_personalization': 'denied',
+      'analytics_storage': 'denied',
+      'wait_for_update': 500
+    });
+    gtag('set', 'ads_data_redaction', true);
+    try {
+      if (localStorage.getItem('lcs-consent') === 'granted') {
+        gtag('consent', 'update', {
+          'ad_storage': 'granted',
+          'ad_user_data': 'granted',
+          'ad_personalization': 'denied',
+          'analytics_storage': 'granted'
+        });
+      }
+    } catch (e) {}
     function loadGA() {
       if (loadGA.done) return;
       loadGA.done = true;
@@ -32,8 +53,10 @@
       window.addEventListener(evt, loadGA, { once: true, passive: true });
     });
   </script>
+  <script src="/js/consent.js" defer></script>
+  <!-- @include-end partials/analytics.html -->
 
-  <title>Privacy Policy — London Choral Service</title>
+  <title>Privacy Policy | LCS</title>
   <meta name="description" content="Privacy policy for The London Choral Service (Alma Consort Ltd). How we collect, use, store, and protect your personal data under UK data protection law.">
   <meta name="theme-color" content="#F7F3EE">
   <meta name="robots" content="noindex, nofollow">
@@ -41,7 +64,7 @@
   <link rel="alternate" hreflang="en-gb" href="https://londonchoralservice.com/privacy.html">
   <link rel="alternate" hreflang="x-default" href="https://londonchoralservice.com/privacy.html">
 
-  <meta property="og:title" content="Privacy Policy &mdash; London Choral Service">
+  <meta property="og:title" content="Privacy Policy | LCS">
   <meta property="og:description" content="Privacy policy for The London Choral Service (Alma Consort Ltd). How we collect, use, store, and protect your personal data under UK data protection law.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://londonchoralservice.com/privacy.html">
@@ -53,7 +76,7 @@
   <meta property="og:image:alt" content="The London Choral Service: professional choirs and singers for funerals, weddings, and ceremonies">
 
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Privacy Policy &mdash; London Choral Service">
+  <meta name="twitter:title" content="Privacy Policy | LCS">
   <meta name="twitter:description" content="Privacy policy for The London Choral Service (Alma Consort Ltd). How we collect, use, store, and protect your personal data under UK data protection law.">
   <meta name="twitter:image" content="https://londonchoralservice.com/assets/og-image.png">
   <meta name="twitter:image:alt" content="The London Choral Service: professional choirs and singers for funerals, weddings, and ceremonies">
@@ -535,7 +558,7 @@
     }
     
     /* ── Mobile Navigation ── */
-    @media (max-width: 805px) {
+    @media (max-width: 1080px) {
       .nav-toggle {
         display: block;
       }
@@ -603,6 +626,48 @@
     
     .site-footer a:hover {
       color: var(--color-accent);
+    }
+    
+    /* ── Footer columns ── */
+    .footer-grid {
+      display: grid;
+      grid-template-columns: 2fr repeat(4, minmax(0, 1fr));
+      gap: var(--space-xl);
+      margin-bottom: var(--space-xl);
+    }
+    
+    .footer-col ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    
+    .footer-col li {
+      margin-bottom: var(--space-xs);
+      font-size: var(--text-sm);
+      line-height: var(--leading-normal);
+    }
+    
+    .footer-heading {
+      font-family: var(--font-heading);
+      font-size: var(--text-md);
+      font-weight: 500;
+      margin-bottom: var(--space-sm);
+    }
+    
+    @media (max-width: 960px) {
+      .footer-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .footer-col--brand {
+        grid-column: 1 / -1;
+      }
+    }
+    
+    @media (max-width: 520px) {
+      .footer-grid {
+        grid-template-columns: minmax(0, 1fr);
+      }
     }
     /* ═══════════════════════════════════
        Pull Quotes (Testimonials)
@@ -993,17 +1058,6 @@
       margin-bottom: var(--space-md);
     }
     
-    .audio-placeholder {
-      padding: var(--space-md);
-      background-color: var(--color-bg-alt);
-      border: 1px solid var(--color-rule);
-    }
-    
-    .audio-placeholder p {
-      margin: 0;
-      color: var(--color-text-mid);
-    }
-    
     /* ═══════════════════════════════════
        Contact Form
        ═══════════════════════════════════ */
@@ -1326,7 +1380,7 @@
       display: none;
     }
     
-    @media (max-width: 805px) {
+    @media (max-width: 1080px) {
       .mobile-cta {
         display: flex;
         position: fixed;
@@ -1791,7 +1845,7 @@
     }
     
     /* Mobile: dropdown becomes an inline expandable block inside the hamburger */
-    @media (max-width: 805px) {
+    @media (max-width: 1080px) {
       .dropdown-menu {
         display: none;
         position: static;
@@ -2106,6 +2160,16 @@
         grid-template-columns: 1fr 1fr;
       }
     }
+    
+    /* ═══════════════════════════════════
+       Guide link lists (service pages)
+       ═══════════════════════════════════ */
+    .guide-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-xs) var(--space-lg);
+      margin-bottom: var(--space-lg);
+    }
     /* ═══════════════════════════════════
        Print Styles
        ═══════════════════════════════════ */
@@ -2128,7 +2192,6 @@
       .site-header,
       .nav-toggle,
       .skip-link,
-      .audio-placeholder,
       .contact-form,
       .btn,
       .video-embed {
@@ -2214,8 +2277,23 @@
             <li role="none"><a role="menuitem" href="/christmas.html">Christmas</a></li>
             <li role="none"><a role="menuitem" href="/carol-singers.html">Carol Singers</a></li>
             <li role="none"><a role="menuitem" href="/private-events.html">Private Events</a></li>
+            <li role="none"><a role="menuitem" href="/destinations/">Weddings Abroad</a></li>
             <li role="separator" class="dropdown-separator"></li>
             <li role="none"><a role="menuitem" href="/services.html">All services</a></li>
+          </ul>
+        </li>
+        <li class="has-dropdown">
+          <a href="/planners-and-venues.html" aria-haspopup="true" aria-expanded="false" class="dropdown-trigger">Professionals<span class="dropdown-caret" aria-hidden="true">&#9662;</span></a>
+          <ul class="dropdown-menu" role="menu">
+            <li role="none"><a role="menuitem" href="/for-funeral-directors.html">Funeral Directors</a></li>
+            <li role="none"><a role="menuitem" href="/for-wedding-planners.html">Wedding Planners</a></li>
+            <li role="none"><a role="menuitem" href="/for-event-managers.html">Event Managers</a></li>
+            <li role="none"><a role="menuitem" href="/for-hotels.html">Hotels &amp; Venues</a></li>
+            <li role="none"><a role="menuitem" href="/for-property-managers.html">Property Managers</a></li>
+            <li role="none"><a role="menuitem" href="/for-livery-companies.html">Livery Companies</a></li>
+            <li role="none"><a role="menuitem" href="/for-charities.html">Charities</a></li>
+            <li role="separator" class="dropdown-separator"></li>
+            <li role="none"><a role="menuitem" href="/planners-and-venues.html">Planners, Venues &amp; Estates</a></li>
           </ul>
         </li>
         <li><a href="/listen.html">Listen</a></li>
@@ -2283,18 +2361,18 @@
 
     <section class="section">
       <div class="prose">
-        <h2>Cookies and tracking</h2>
-        <p>We use Google Analytics to understand how visitors use our website&thinsp;&mdash;&thinsp;for example, which pages are visited most and how people find us. Google Analytics uses cookies to collect anonymous usage data. It does not identify you personally. We use this information only to improve our website and services.</p>
-        <p>We also use a Google Ads conversion tag, which records that an enquiry or call followed one of our advertisements. It does not identify you personally, and we do not use remarketing. Our typefaces are served from our own website, not from a third-party font service. No personal data is shared with third parties for marketing purposes.</p>
-        <p>Our enquiry form is delivered by Web3Forms and protected by hCaptcha. When you submit the form, these services process the details you enter solely to pass your message to us and to filter out spam.</p>
-        <p>You can opt out of Google Analytics by installing the <a href="https://tools.google.com/dlpage/gaoptout" rel="noopener noreferrer">Google Analytics Opt-out Browser Add-on</a>.</p>
+        <h2 id="cookies">Cookies and tracking</h2>
+        <p>We use Google Analytics to see which pages are visited and how people find the site, and a Google Ads conversion tag that records when an enquiry, call or WhatsApp message follows one of our advertisements. Neither identifies you by name, and we do not use remarketing.</p>
+        <p>Both tools set cookies only if you allow them. When you first visit, a notice at the foot of the page asks you to choose. If you decline, or make no choice, Google&rsquo;s consent settings stay at &ldquo;denied&rdquo;: no analytics or advertising cookie is written, and only cookieless, aggregated signals reach Google. If you allow them, the cookies set are Google Analytics&rsquo; <code>_ga</code> and <code>_ga_*</code> (up to two years) and Google Ads&rsquo; <code>_gcl_au</code> (three months). Your choice is stored in your browser under the name <code>lcs-consent</code> and applies to this site only. You can change it at any time from the &ldquo;Cookie choices&rdquo; link in the footer of every page.</p>
+        <p>Our typefaces are served from our own website, not from a third-party font service. Our enquiry form is delivered by Web3Forms and protected by hCaptcha; when you submit the form, these services process the details you enter solely to pass your message to us and to filter out spam. Recordings are embedded from YouTube in privacy-enhanced mode and load only when you press play.</p>
+        <p>You can also block Google Analytics in every website with the <a href="https://tools.google.com/dlpage/gaoptout" rel="noopener noreferrer">Google Analytics opt-out browser add-on</a>.</p>
       </div>
     </section>
 
     <section class="section">
       <div class="prose">
         <h2>Changes to this policy</h2>
-        <p>We may update this policy from time to time. Changes will be posted on this page. This policy was last updated in August 2026.</p>
+        <p>We may update this policy from time to time. Changes will be posted on this page. This policy was last updated on 4 September 2026.</p>
       </div>
     </section>
 
@@ -2302,29 +2380,76 @@
 
   <!-- @include-start partials/footer.html -->
   <footer class="site-footer">
-    <div class="prose">
+    <div class="page-wrap">
       <hr>
-      <p class="footer-name">The London Choral Service</p>
-      <p class="text-sm text-mid">Exceptional singers, choirs, and instrumentalists for funerals, weddings, memorials, Christmas, and corporate events across the United Kingdom.</p>
-      <p class="text-sm text-mid">
-        Text us on <a href="https://wa.me/447356042468" target="_blank" rel="noopener" data-whatsapp>WhatsApp</a> (fastest reply)
-        &ensp;|&ensp;
-        <a href="tel:+447356042468">07356 042468</a>
-        &ensp;|&ensp;
-        <a href="mailto:office@londonchoralservice.com">office@londonchoralservice.com</a>
-      </p>
+      <div class="footer-grid">
+        <div class="footer-col footer-col--brand">
+          <p class="footer-name">The London Choral Service</p>
+          <p class="text-sm text-mid">Exceptional singers, choirs, and instrumentalists for funerals, weddings, memorials, Christmas, and corporate events across the United Kingdom.</p>
+          <p class="text-sm text-mid">
+            Text us on <a href="https://wa.me/447356042468" target="_blank" rel="noopener" data-whatsapp>WhatsApp</a> (fastest reply)
+            &ensp;|&ensp;
+            <a href="tel:+447356042468">07356 042468</a>
+            &ensp;|&ensp;
+            <a href="mailto:office@londonchoralservice.com">office@londonchoralservice.com</a>
+          </p>
+        </div>
+        <div class="footer-col">
+          <p class="footer-heading">Services</p>
+          <ul role="list">
+            <li><a href="/weddings.html">Weddings</a></li>
+            <li><a href="/funerals.html">Funerals</a></li>
+            <li><a href="/corporate.html">Corporate events</a></li>
+            <li><a href="/christmas.html">Christmas carol services</a></li>
+            <li><a href="/carol-singers.html">Hire carol singers</a></li>
+            <li><a href="/private-events.html">Private events</a></li>
+            <li><a href="/destinations/">Weddings abroad</a></li>
+            <li><a href="/pricing.html">Pricing</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <p class="footer-heading">For professionals</p>
+          <ul role="list">
+            <li><a href="/for-funeral-directors.html">Funeral directors</a></li>
+            <li><a href="/for-wedding-planners.html">Wedding planners</a></li>
+            <li><a href="/for-event-managers.html">Event managers</a></li>
+            <li><a href="/for-hotels.html">Hotels and venues</a></li>
+            <li><a href="/for-property-managers.html">Property managers</a></li>
+            <li><a href="/for-livery-companies.html">Livery companies</a></li>
+            <li><a href="/for-charities.html">Charities</a></li>
+            <li><a href="/planners-and-venues.html">Planners, venues and estates</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <p class="footer-heading">Guides and areas</p>
+          <ul role="list">
+            <li><a href="/music-guides/">All music guides</a></li>
+            <li><a href="/music-guides/?category=weddings">Wedding music</a></li>
+            <li><a href="/music-guides/?category=funerals">Funeral music</a></li>
+            <li><a href="/music-guides/?category=christmas">Christmas music</a></li>
+            <li><a href="/listen.html">Listen</a></li>
+            <li><a href="/areas/london.html">London and its boroughs</a></li>
+            <li><a href="/areas/">All areas we serve</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <p class="footer-heading">Company</p>
+          <ul role="list">
+            <li><a href="/about.html">About us</a></li>
+            <li><a href="/luca-wetherall.html">Luca Wetherall</a></li>
+            <li><a href="/faq.html">FAQ</a></li>
+            <li><a href="/contact.html">Contact</a></li>
+            <li><a href="/terms.html">Terms of booking</a></li>
+            <li><a href="/privacy.html">Privacy policy</a></li>
+            <li><a href="/accessibility.html">Accessibility</a></li>
+            <li><a href="/privacy.html#cookies" data-consent-open>Cookie choices</a></li>
+          </ul>
+        </div>
+      </div>
       <p class="text-xs text-mid">
         Areas we serve: <a href="/areas/london.html">London</a> &middot; <a href="/areas/birmingham.html">Birmingham</a> &middot; <a href="/areas/manchester.html">Manchester</a> &middot; <a href="/areas/liverpool.html">Liverpool</a> &middot; <a href="/areas/oxford.html">Oxford</a> &middot; <a href="/areas/cambridge.html">Cambridge</a> &middot; <a href="/areas/reading.html">Reading</a> &middot; <a href="/areas/slough-maidenhead.html">Slough &amp; Maidenhead</a> &middot; <a href="/areas/guildford.html">Guildford</a> &middot; <a href="/areas/brighton.html">Brighton</a> &middot; <a href="/areas/chester.html">Chester</a> &middot; <a href="/areas/st-albans.html">St Albans</a> &middot; <a href="/areas/canterbury.html">Canterbury</a> &middot; <a href="/areas/windsor.html">Windsor</a> &middot; <a href="/areas/winchester.html">Winchester</a> &middot; <a href="/areas/salisbury.html">Salisbury</a> &middot; <a href="/areas/bath.html">Bath</a> &middot; <a href="/areas/chelmsford.html">Chelmsford</a> &middot; <a href="/areas/rochester.html">Rochester</a> &middot; <a href="/areas/">All areas</a>
       </p>
-      <p class="text-xs text-mid">
-        Christmas: <a href="/christmas.html">Carol services</a> &middot; <a href="/carol-singers.html">Hire carol singers</a>
-      </p>
-      <p class="text-xs text-mid">
-        <a href="/faq.html">FAQ</a>
-        &ensp;|&ensp;
-        <a href="/privacy.html">Privacy policy</a>
-      </p>
-      <p class="text-xs text-mid">The London Choral Service is the operating name of Alma Consort Ltd. Based in London, serving the whole of the United Kingdom.</p>
+      <p class="text-xs text-mid">The London Choral Service is the operating name of Alma Consort Ltd, registered in England and Wales, company no. 16785727. Based in London, serving the whole of the United Kingdom. Public liability insurance held.</p>
       <p class="text-xs text-mid">&copy; <span data-year>2026</span> The London Choral Service. All rights reserved.</p>
     </div>
   </footer>
