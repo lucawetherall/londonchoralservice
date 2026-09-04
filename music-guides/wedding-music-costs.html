@@ -8,10 +8,30 @@
   <!-- @include-end partials/head-extras.html -->
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
-  <!-- Google Analytics (GA4) — deferred until after load -->
+  <!-- @include-start partials/analytics.html -->
+  <!-- Google Analytics (GA4) and Google Ads — Consent Mode v2, deferred until after load.
+       Source of truth: partials/analytics.html. The consent banner lives in js/consent.js. -->
   <script>
     window.dataLayer = window.dataLayer || [];
     function gtag(){dataLayer.push(arguments);}
+    gtag('consent', 'default', {
+      'ad_storage': 'denied',
+      'ad_user_data': 'denied',
+      'ad_personalization': 'denied',
+      'analytics_storage': 'denied',
+      'wait_for_update': 500
+    });
+    gtag('set', 'ads_data_redaction', true);
+    try {
+      if (localStorage.getItem('lcs-consent') === 'granted') {
+        gtag('consent', 'update', {
+          'ad_storage': 'granted',
+          'ad_user_data': 'granted',
+          'ad_personalization': 'denied',
+          'analytics_storage': 'granted'
+        });
+      }
+    } catch (e) {}
     function loadGA() {
       if (loadGA.done) return;
       loadGA.done = true;
@@ -32,6 +52,8 @@
       window.addEventListener(evt, loadGA, { once: true, passive: true });
     });
   </script>
+  <script src="/js/consent.js" defer></script>
+  <!-- @include-end partials/analytics.html -->
 
   <title>How Much Does Wedding Music Cost?</title>
   <meta name="description" content="A clear breakdown of what wedding musicians cost in 2026: soloists, choirs, organists, and string quartets. Honest UK pricing with no hidden fees.">
@@ -2664,6 +2686,7 @@
             <li><a href="/terms.html">Terms of booking</a></li>
             <li><a href="/privacy.html">Privacy policy</a></li>
             <li><a href="/accessibility.html">Accessibility</a></li>
+            <li><a href="/privacy.html#cookies" data-consent-open>Cookie choices</a></li>
           </ul>
         </div>
       </div>

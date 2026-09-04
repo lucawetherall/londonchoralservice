@@ -8,10 +8,30 @@
   <!-- @include-end partials/head-extras.html -->
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
-  <!-- Google Analytics (GA4) — deferred until after load -->
+  <!-- @include-start partials/analytics.html -->
+  <!-- Google Analytics (GA4) and Google Ads — Consent Mode v2, deferred until after load.
+       Source of truth: partials/analytics.html. The consent banner lives in js/consent.js. -->
   <script>
     window.dataLayer = window.dataLayer || [];
     function gtag(){dataLayer.push(arguments);}
+    gtag('consent', 'default', {
+      'ad_storage': 'denied',
+      'ad_user_data': 'denied',
+      'ad_personalization': 'denied',
+      'analytics_storage': 'denied',
+      'wait_for_update': 500
+    });
+    gtag('set', 'ads_data_redaction', true);
+    try {
+      if (localStorage.getItem('lcs-consent') === 'granted') {
+        gtag('consent', 'update', {
+          'ad_storage': 'granted',
+          'ad_user_data': 'granted',
+          'ad_personalization': 'denied',
+          'analytics_storage': 'granted'
+        });
+      }
+    } catch (e) {}
     function loadGA() {
       if (loadGA.done) return;
       loadGA.done = true;
@@ -32,6 +52,8 @@
       window.addEventListener(evt, loadGA, { once: true, passive: true });
     });
   </script>
+  <script src="/js/consent.js" defer></script>
+  <!-- @include-end partials/analytics.html -->
 
   <title>A Wedding Choir in Greece &mdash; Santorini, Crete, Mykonos</title>
   <meta name="description" content="A British consort at Greek weddings: why an Orthodox service works differently, and how music is placed at a clifftop ceremony in Santorini or Mykonos.">
@@ -1139,7 +1161,7 @@
 
   <!-- @include-start partials/private-footer.html -->
   <footer class="pe-footer">
-    <p><a href="mailto:office@londonchoralservice.com">office@londonchoralservice.com</a> &middot; <a href="tel:+447356042468">+44 7356 042468</a> &middot; London &middot; <a href="/terms.html">Terms of booking</a> &middot; <a href="/privacy.html">Privacy policy</a> &middot; <a href="/accessibility.html">Accessibility</a></p>
+    <p><a href="mailto:office@londonchoralservice.com">office@londonchoralservice.com</a> &middot; <a href="tel:+447356042468">+44 7356 042468</a> &middot; London &middot; <a href="/terms.html">Terms of booking</a> &middot; <a href="/privacy.html">Privacy policy</a> &middot; <a href="/accessibility.html">Accessibility</a> &middot; <a href="/privacy.html#cookies" data-consent-open>Cookie choices</a></p>
     <p>The London Choral Service: <a href="/">Home</a> &middot; <a href="/weddings.html">Weddings</a> &middot; <a href="/funerals.html">Funerals</a> &middot; <a href="/pricing.html">Pricing</a> &middot; <a href="/music-guides/">Music guides</a> &middot; <a href="/destinations/">Destinations</a> &middot; <a href="/planners-and-venues.html">Planners and venues</a> &middot; <a href="/contact.html">Contact</a></p>
     <p>The London Choral Service is the operating name of Alma Consort Ltd, registered in England and Wales, company no. 16785727.</p>
   </footer>
