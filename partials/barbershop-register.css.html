@@ -169,6 +169,29 @@
     }
     .bs-body a:hover { text-decoration-color: var(--bs-ink); }
 
+    /* ── Skip link ── */
+    .bs-skip-link {
+      position: absolute;
+      top: -3rem;
+      left: 1.25rem;
+      padding: .6rem 1.1rem;
+      background: var(--bs-red);
+      color: var(--bs-paper);
+      font-family: var(--font-ui);
+      font-size: .8125rem;
+      font-weight: 600;
+      letter-spacing: .04em;
+      text-decoration: none;
+      z-index: 200;
+      transition: top .2s;
+    }
+    .bs-skip-link:focus {
+      top: 1rem;
+      outline: 2px solid var(--bs-ink);
+      outline-offset: 2px;
+    }
+    .bs-skip-link:visited { color: var(--bs-paper); }
+
     /* ── Header ── */
     .bs-header {
       background: var(--bs-paper);
@@ -558,6 +581,6 @@
       html { scroll-behavior: smooth; }
     }
     @media (prefers-reduced-motion: reduce) {
-      .bs-btn, .bs-occasions a { transition: none; }
+      .bs-btn, .bs-occasions a, .bs-skip-link { transition: none; }
     }
   </style>
