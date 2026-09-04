@@ -34,19 +34,21 @@
   }
 
   var CSS = '' +
-    '.consent{position:fixed;left:0;right:0;bottom:0;z-index:1000;' +
-    'background:var(--color-bg,var(--parchment,#F7F3EE));color:var(--color-text,var(--choirStall,#2C2420));' +
-    'border-top:1px solid var(--color-rule,var(--limestone,#D6CEC6));' +
-    'font-family:var(--font-body,"Source Serif 4",Georgia,serif);font-size:.9375rem;line-height:1.5;' +
-    'box-shadow:0 -6px 24px rgba(44,36,32,.08)}' +
-    '.consent__inner{max-width:72rem;margin:0 auto;padding:1rem 1.25rem;display:flex;flex-wrap:wrap;gap:.75rem 1.5rem;align-items:center;justify-content:space-between}' +
-    '.consent__text{flex:1 1 28rem;margin:0}' +
+    '.consent{position:fixed;left:1rem;bottom:1rem;z-index:1000;max-width:21rem;' +
+    'background:var(--color-bg,var(--parchment,#F7F3EE));color:var(--color-text-mid,var(--organPipe,#6B5E56));' +
+    'border:1px solid var(--color-rule,var(--limestone,#D6CEC6));border-radius:3px;' +
+    'font-family:var(--font-body,"Source Serif 4",Georgia,serif);font-size:.8125rem;line-height:1.45;' +
+    'box-shadow:0 2px 12px rgba(44,36,32,.08)}' +
+    '.consent__inner{padding:.7rem .85rem;display:flex;flex-wrap:wrap;gap:.5rem .75rem;align-items:center}' +
+    '.consent__text{flex:1 1 12rem;margin:0}' +
     '.consent__text a{color:inherit}' +
-    '.consent__actions{display:flex;gap:.75rem;flex-wrap:wrap}' +
-    '.consent__btn{font:inherit;font-size:.875rem;letter-spacing:.04em;text-transform:uppercase;' +
-    'padding:.6rem 1.1rem;border:1px solid currentColor;background:transparent;color:inherit;cursor:pointer;border-radius:2px}' +
-    '.consent__btn--allow{background:var(--color-accent,var(--cassockRed,#8B3A3A));border-color:var(--color-accent,var(--cassockRed,#8B3A3A));color:#fff}' +
+    '.consent__actions{display:flex;gap:.4rem}' +
+    '.consent__btn{font:inherit;font-size:.75rem;letter-spacing:.04em;text-transform:uppercase;' +
+    'padding:.35rem .7rem;border:1px solid currentColor;background:transparent;color:inherit;cursor:pointer;border-radius:2px}' +
+    '.consent__btn--allow{color:var(--color-text,var(--choirStall,#2C2420))}' +
+    '.consent__btn:hover{color:var(--color-accent,var(--cassockRed,#8B3A3A))}' +
     '.consent__btn:focus-visible{outline:2px solid currentColor;outline-offset:2px}' +
+    '@media (max-width:805px){.consent{left:.75rem;right:.75rem;bottom:4.5rem;max-width:none}}' +
     '@media print{.consent{display:none}}';
 
   var banner = null;
@@ -63,8 +65,8 @@
     banner.hidden = true;
     banner.innerHTML =
       '<div class="consent__inner">' +
-        '<p class="consent__text">We use Google Analytics and a Google Ads conversion tag to see which pages lead to enquiries. ' +
-        'No cookies are set until you choose. <a href="/privacy.html#cookies">How we use cookies</a>.</p>' +
+        '<p class="consent__text">Analytics and ad-measurement cookies, none set until you choose. ' +
+        '<a href="/privacy.html#cookies">Details</a>.</p>' +
         '<div class="consent__actions">' +
           '<button type="button" class="consent__btn consent__btn--allow" data-consent="granted">Allow</button>' +
           '<button type="button" class="consent__btn" data-consent="denied">Decline</button>' +
@@ -85,8 +87,6 @@
   function show() {
     var b = build();
     b.hidden = false;
-    var first = b.querySelector('.consent__btn--allow');
-    if (first) first.focus({ preventScroll: true });
   }
 
   function init() {
