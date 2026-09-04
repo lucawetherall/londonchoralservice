@@ -3,6 +3,8 @@
 # 1) Concatenates CSS source files
 # 2) Populates HTML partials between @include-start / @include-end markers
 # 3) Inlines the concatenated CSS into HTML files
+# 4) Generates sitemap.xml + data/page-dates.json and syncs article dates
+# 5) Generates llms-full.txt and runs the validators
 
 set -euo pipefail
 
@@ -132,6 +134,12 @@ for file in $(find "$SCRIPT_DIR" -name '*.html' -not -path '*/.git/*' -not -path
 done
 
 echo "Inlined CSS into $count HTML files"
+
+echo "Generating sitemap.xml from page content..."
+python3 scripts/generate_sitemap.py
+
+echo "Synchronising article dates..."
+python3 scripts/sync_dates.py
 
 echo "Generating llms-full.txt..."
 python3 scripts/generate_llms_full.py
