@@ -304,6 +304,7 @@
          otherwise leave the trailing empty cell as a solid block of colour. */
     }
     .pe-dests > li { box-shadow: 0 0 0 1px var(--limestone); }
+    .pe-dests + p { margin-top: 1.75rem; }
     .pe-dests a {
       display: block;
       padding: 1.1rem 1.25rem 1.2rem;
@@ -700,6 +701,28 @@
     @media (prefers-reduced-motion: reduce) {
       .pe-btn, .play-btn { transition: none; }
     }
+    /* ── Skip link and print (parity with the main site) ── */
+    .skip-link {
+      position: absolute;
+      top: -3rem;
+      left: 1.25rem;
+      padding: .5rem 1rem;
+      background: var(--cassockRed);
+      color: var(--parchment);
+      font-family: var(--font-ui);
+      font-size: .875rem;
+      text-decoration: none;
+      z-index: 200;
+    }
+    .skip-link:focus { top: .5rem; outline: 2px solid var(--choirStall); outline-offset: 2px; }
+    @media print {
+      body { background: #fff; color: #000; }
+      .pe-nav-enquire, .pe-form, .skip-link, .video-embed { display: none !important; }
+      [data-fade] { opacity: 1 !important; transform: none !important; }
+      .pe-section { padding-block: 1.25rem; break-inside: avoid; }
+      a { color: #000; }
+      h1, h2, h3 { break-after: avoid; }
+    }
   </style>
   <!-- @include-end partials/private-register.css.html -->
 
@@ -805,6 +828,7 @@
   <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
 </head>
 <body>
+  <a href="#main" class="skip-link">Skip to main content</a>
 
   <header class="pe-header">
     <nav class="pe-nav" aria-label="Page">
@@ -820,7 +844,7 @@
     </nav>
   </header>
 
-  <main>
+  <main id="main">
 
     <!-- Hero -->
     <section class="pe-section pe-section--light pe-hero">
@@ -1103,7 +1127,8 @@
 
   <!-- @include-start partials/private-footer.html -->
   <footer class="pe-footer">
-    <p><a href="mailto:office@londonchoralservice.com">office@londonchoralservice.com</a> &middot; <a href="tel:+447356042468">+44 7356 042468</a> &middot; London &middot; <a href="/privacy.html">Privacy policy</a></p>
+    <p><a href="mailto:office@londonchoralservice.com">office@londonchoralservice.com</a> &middot; <a href="tel:+447356042468">+44 7356 042468</a> &middot; London &middot; <a href="/terms.html">Terms of booking</a> &middot; <a href="/privacy.html">Privacy policy</a> &middot; <a href="/accessibility.html">Accessibility</a></p>
+    <p>The London Choral Service: <a href="/">Home</a> &middot; <a href="/weddings.html">Weddings</a> &middot; <a href="/funerals.html">Funerals</a> &middot; <a href="/pricing.html">Pricing</a> &middot; <a href="/music-guides/">Music guides</a> &middot; <a href="/destinations/">Destinations</a> &middot; <a href="/planners-and-venues.html">Planners and venues</a> &middot; <a href="/contact.html">Contact</a></p>
     <p>The London Choral Service is the operating name of Alma Consort Ltd, registered in England and Wales, company no. 16785727.</p>
   </footer>
   <!-- @include-end partials/private-footer.html -->
