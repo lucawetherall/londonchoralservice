@@ -4,7 +4,7 @@
 
 > Professional singers, choirs, and instrumentalists for funerals, weddings, memorials, and ceremonies across the United Kingdom. A small, hand-picked team of conservatoire-trained musicians based in London.
 
-> Content last updated: August 2026. 60 music guides available.
+> Content last updated: September 2026. 60 music guides available.
 
 The London Choral Service provides live music for life's most important occasions. Founded and led by Artistic Director Luca Wetherall, a Clarendon Scholar and Tutor in Music at the University of Oxford, the ensemble comprises prize-winning graduates of the Royal Academy of Music, the Royal College of Music, and Britain's leading music colleges. Their credits include the coronation of King Charles III, the Royal Albert Hall, Westminster Abbey, and the BBC Proms. The London Choral Service is the operating name of Alma Consort Ltd.
 
@@ -20,6 +20,8 @@ The London Choral Service provides live music for life's most important occasion
 - [Funerals](https://londonchoralservice.com/funerals.html): Funeral singers and choirs — hymns, solos, and instrumental music for funeral and memorial services
 - [Contact](https://londonchoralservice.com/contact.html): Enquiry form and direct contact — email office@londonchoralservice.com or call 07356 042468
 - [FAQ](https://londonchoralservice.com/faq.html): Common questions on travel beyond London, payment and deposits, choosing repertoire, instruments, outdoor performances, and what happens if a singer falls ill
+- [Terms of Booking](https://londonchoralservice.com/terms.html): The fourteen clauses that govern every booking: confirmation, deposit and balance, cancellation tiers, postponement, substitution of musicians, travel, liability
+- [Accessibility Statement](https://londonchoralservice.com/accessibility.html): What the site does for accessibility, known limitations (YouTube player, hCaptcha), alternative formats on request
 - [For Event Managers](https://londonchoralservice.com/for-event-managers.html): How we work with corporate event managers — booking lead times, public-liability cover, formal hire process, capacity for large-format venues
 - [For Funeral Directors](https://londonchoralservice.com/for-funeral-directors.html): How we work with funeral directors arranging music on behalf of bereaved families — booking timelines, last-minute capability, on-the-day coordination, invoicing
 - [For Wedding Planners](https://londonchoralservice.com/for-wedding-planners.html): How we work with wedding planners and venue coordinators — lead times, custom arrangements, technical setup, on-the-day coordination, invoicing options

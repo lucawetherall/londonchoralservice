@@ -1,0 +1,44 @@
+  <!-- Google Analytics (GA4) and Google Ads — Consent Mode v2, deferred until after load.
+       Source of truth: partials/analytics.html. The consent banner lives in js/consent.js. -->
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('consent', 'default', {
+      'ad_storage': 'denied',
+      'ad_user_data': 'denied',
+      'ad_personalization': 'denied',
+      'analytics_storage': 'denied',
+      'wait_for_update': 500
+    });
+    gtag('set', 'ads_data_redaction', true);
+    try {
+      if (localStorage.getItem('lcs-consent') === 'granted') {
+        gtag('consent', 'update', {
+          'ad_storage': 'granted',
+          'ad_user_data': 'granted',
+          'ad_personalization': 'denied',
+          'analytics_storage': 'granted'
+        });
+      }
+    } catch (e) {}
+    function loadGA() {
+      if (loadGA.done) return;
+      loadGA.done = true;
+      gtag('js', new Date());
+      gtag('config', 'G-9FENN7VS0E');
+      gtag('config', 'AW-17988388404');
+      var s = document.createElement('script');
+      s.src = 'https://www.googletagmanager.com/gtag/js?id=G-9FENN7VS0E';
+      document.head.appendChild(s);
+    }
+    if ('requestIdleCallback' in window) {
+      requestIdleCallback(loadGA, { timeout: 3000 });
+    } else {
+      window.addEventListener('load', function() { setTimeout(loadGA, 100); });
+    }
+    if (/[?&](gclid|gbraid|wbraid)=/.test(location.search)) loadGA();
+    ['scroll', 'click', 'touchstart', 'keydown'].forEach(function(evt) {
+      window.addEventListener(evt, loadGA, { once: true, passive: true });
+    });
+  </script>
+  <script src="/js/consent.js" defer></script>

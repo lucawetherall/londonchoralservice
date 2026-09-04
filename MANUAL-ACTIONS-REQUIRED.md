@@ -287,12 +287,12 @@ Spec: `docs/superpowers/specs/2026-08-29-international-luxury-weddings-design.md
    both currently reuse `assets/og-private-events.png`.
 7. **Planner-network and luxury-directory outreach**, and wedding-press placement
    &mdash; there are now pages to point at.
-8. **Refresh the repo graph.** `graphify-out/` is now stale: this programme added
-   twenty-five pages and edited nineteen more, and the graphify tool was not
-   available in the session that built them, so the committed graph still
-   describes the site as it was before. Run `/graphify --update` and commit
-   `graphify-out/` when convenient. Nothing depends on it at runtime; it only
-   affects agents querying the graph instead of re-reading the repo.
+8. **Refresh the repo graph.** ~~Stale~~ **Done 2026-09-04.** Refreshed against
+   commit `378f8d8` by dispatched subagents, the same route the 2026-08-30 run
+   used (the graphify tool is not installed in these sessions; see the note in
+   `graphify-out/cost.json`). The graph went from 911 nodes / 1,490 edges to
+   1,082 / 2,169, with six new communities and three new hyperedges. If you ever
+   run the real tool locally, `/graphify --update` will reconcile it.
 
 ---
 
@@ -310,7 +310,18 @@ What to do:
 
 ---
 
-## 16. Re-anchor the Google Business Profile to London, 2026-09-03
+## 16. Follow-ups from the 2026-09-04 audit fixes
+
+1. **Consent Mode check (Google Ads and GA4).** The site now sets Consent Mode v2 defaults to "denied" and shows a cookie notice. In Google Ads → Goals → Conversions → Diagnostics, confirm the conversion actions show "Consent mode: active" and that modelled conversions appear after a fortnight. In GA4 Admin → Data collection, confirm consent signals are received. Nothing to change in the repo unless a tag reports "consent not set".
+2. **Read `terms.html`.** It publishes the fourteen Terms of Booking clauses from the booking agreement, adapted to a web page (the funeral post-service invoicing exception is stated under clause 4, and a complaints paragraph is added). Confirm the wording matches what goes out on booking confirmations, or edit the page and the agreement together.
+3. **Read `accessibility.html`** and confirm the alternative-format promise and the one-working-day reply are what you want to stand behind.
+4. **Two testimonials still say "she"** ("Pamela, Richmond" on 9 pages, "Helen, Wimbledon" on 4). See ROADMAP R12.
+5. **Reply-time promises are now: one working day (usually the same day) everywhere, and the same working day (usually within a few hours) on the funeral and funeral-director pages.** If the office cannot keep those, say which to soften.
+6. **The nav's hamburger breakpoint moved from 805px to 1080px** so the eight-item menu never clips; tablets in portrait now get the hamburger. Check on an iPad if that matters to you.
+
+---
+
+## 17. Re-anchor the Google Business Profile to London, 2026-09-03
 
 Requested by the owner. The site's `LocalBusiness` schema in `index.html` already gives London (N1 7GU, Greater London); the Maps listing is anchored "The London Choral Service, Maidenhead" (§1). The two disagree, and the Barbershop Grams launch (`docs/superpowers/specs/2026-09-03-barbershop-grams-design.md`) needs "barbershop quartet London" local-pack visibility. This is a dashboard edit; nothing in the repo can make it.
 
@@ -328,11 +339,11 @@ Afterwards:
 
 ---
 
-## 17. Barbershop Grams launch — owner actions, 2026-09-03
+## 18. Barbershop Grams launch — owner actions, 2026-09-03
 
-Spec: `docs/superpowers/specs/2026-09-03-barbershop-grams-design.md` §Go-to-market. Plan: `docs/superpowers/plans/2026-09-03-barbershop-grams.md`. The pages ship without these, but the product does not really launch until 17.1 and 17.2 are done.
+Spec: `docs/superpowers/specs/2026-09-03-barbershop-grams-design.md` §Go-to-market. Plan: `docs/superpowers/plans/2026-09-03-barbershop-grams.md`. The pages ship without these, but the product does not really launch until 18.1 and 18.2 are done.
 
-**17.1 — Record a barbershop demo. This is the critical path.** Happy Birthday in four parts plus one standard, filmed, two to three minutes. Two things depend on it and neither can proceed without it:
+**18.1 — Record a barbershop demo. This is the critical path.** Happy Birthday in four parts plus one standard, filmed, two to three minutes. Two things depend on it and neither can proceed without it:
 
 - The **comparison page** (`compare/barbershopogram.html`, plan Task 14) is deliberately gated on it. A page whose job is to beat a competitor matched on price, whose only proof is a funeral hymn, would hurt more than no page.
 - The **hub page has no proof of sound at all** today. A quality review put this plainly: a buyer with our tab and the competitor's tab open, at the identical £600, currently has no way to hear what we sound like. The competitor has a YouTube channel and video on their homepage.
@@ -341,16 +352,16 @@ Deliberately not worked around: `listen.html` is hymns and service music, so lin
 
 Once it exists, add the YouTube id, upload date and duration to `data/seo-fix-discovered-urls.yml` (never invent these — see §1) and the gated tasks can run.
 
-**17.2 — Confirm the repertoire list. DONE 2026-09-04.** The owner confirmed the drafted 43-title list on `barbershop-grams/repertoire.html` is accurate for what the quartet sings, so the page ships indexed and in the sitemap. Re-check it if the line-up or the arrangements change.
+**18.2 — Confirm the repertoire list. DONE 2026-09-04.** The owner confirmed the drafted 43-title list on `barbershop-grams/repertoire.html` is accurate for what the quartet sings, so the page ships indexed and in the sitemap. Re-check it if the line-up or the arrangements change.
 
 Arrangement rights for the in-copyright titles on that list, and for the "any song from £200" offer, were raised and the owner confirmed they are already handled. No action outstanding.
 
-**17.3 — Seed one or two grams.** Colleagues or friends. Produces real footage, the first honest client quote, and a rehearsal of the logistics against reality before a paying customer meets them.
+**18.3 — Seed one or two grams.** Colleagues or friends. Produces real footage, the first honest client quote, and a rehearsal of the logistics against reality before a paying customer meets them.
 
-**17.4 — Consent wording for filming.** The buyer confirms on enquiry whether we may film; the recipient is asked *after* the surprise, before anything is posted. Belongs in the FAQ and the booking agreement. Short-form video of surprise reactions is the product's strongest organic channel, and it cannot run without a clean consent routine.
+**18.4 — Consent wording for filming.** The buyer confirms on enquiry whether we may film; the recipient is asked *after* the surprise, before anything is posted. Belongs in the FAQ and the booking agreement. Short-form video of surprise reactions is the product's strongest organic channel, and it cannot run without a clean consent routine.
 
-**17.5 — `assets/og-barbershop-grams.png`. DONE 2026-09-04.** Made as a typographic card in the barbershop register — the site's own Cormorant Garamond and Source Serif 4, the mini-site palette, carrying the product name, the one-line description, and £600 / Greater London / 48 hours' notice. Both gram pages point at it. Replace it if you get a photograph or a still from the recording (17.1); a real image of four singers mid-surprise would outperform a typographic card, particularly on WhatsApp, where grams get shared person to person.
+**18.5 — `assets/og-barbershop-grams.png`. DONE 2026-09-04.** Made as a typographic card in the barbershop register — the site's own Cormorant Garamond and Source Serif 4, the mini-site palette, carrying the product name, the one-line description, and £600 / Greater London / 48 hours' notice. Both gram pages point at it. Replace it if you get a photograph or a still from the recording (18.1); a real image of four singers mid-surprise would outperform a typographic card, particularly on WhatsApp, where grams get shared person to person.
 
-**17.6 — Directory listings.** Last Minute Musicians, Add to Event, Poptop, Encore, Bark. This is where "barbershop quartet hire" buyers who never reach Google's organic results go. Extend `docs/off-site-listings-pack.md` with a Barbershop Grams profile: the £600 figure, the 48-hour notice line, the repertoire link. House rules apply off-site too — no roster-scale claims, no VAT claims, no star ratings, no incentivised reviews.
+**18.6 — Directory listings.** Last Minute Musicians, Add to Event, Poptop, Encore, Bark. This is where "barbershop quartet hire" buyers who never reach Google's organic results go. Extend `docs/off-site-listings-pack.md` with a Barbershop Grams profile: the £600 figure, the 48-hour notice line, the repertoire link. House rules apply off-site too — no roster-scale claims, no VAT claims, no star ratings, no incentivised reviews.
 
-**17.7 — Ads.** Held until 17.1 and 17.3 are done; see the spec's §Go-to-market for the five campaigns. Before any spend, confirm the WhatsApp-click conversion actually fires — gram enquiries arrive by WhatsApp more than by form, and the gram links carry a distinct `?text=` pre-fill so they can be told apart in GA4.
+**18.7 — Ads.** Held until 18.1 and 18.3 are done; see the spec's §Go-to-market for the five campaigns. Before any spend, confirm the WhatsApp-click conversion actually fires — gram enquiries arrive by WhatsApp more than by form, and the gram links carry a distinct `?text=` pre-fill so they can be told apart in GA4.

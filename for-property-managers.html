@@ -5,13 +5,34 @@
   <!-- @include-start partials/head-extras.html -->
 <link rel="preload" href="/fonts/cormorant-garamond.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/fonts/source-serif-4.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="manifest" href="/site.webmanifest">
   <!-- @include-end partials/head-extras.html -->
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
-  <!-- Google Analytics (GA4) — deferred until after load -->
+  <!-- @include-start partials/analytics.html -->
+  <!-- Google Analytics (GA4) and Google Ads — Consent Mode v2, deferred until after load.
+       Source of truth: partials/analytics.html. The consent banner lives in js/consent.js. -->
   <script>
     window.dataLayer = window.dataLayer || [];
     function gtag(){dataLayer.push(arguments);}
+    gtag('consent', 'default', {
+      'ad_storage': 'denied',
+      'ad_user_data': 'denied',
+      'ad_personalization': 'denied',
+      'analytics_storage': 'denied',
+      'wait_for_update': 500
+    });
+    gtag('set', 'ads_data_redaction', true);
+    try {
+      if (localStorage.getItem('lcs-consent') === 'granted') {
+        gtag('consent', 'update', {
+          'ad_storage': 'granted',
+          'ad_user_data': 'granted',
+          'ad_personalization': 'denied',
+          'analytics_storage': 'granted'
+        });
+      }
+    } catch (e) {}
     function loadGA() {
       if (loadGA.done) return;
       loadGA.done = true;
@@ -32,6 +53,8 @@
       window.addEventListener(evt, loadGA, { once: true, passive: true });
     });
   </script>
+  <script src="/js/consent.js" defer></script>
+  <!-- @include-end partials/analytics.html -->
 
   <title>Residents&rsquo; Carol Events for Property Managers | LCS</title>
   <meta name="description" content="Residents&rsquo; carol events for property managers: carol singers for apartment lobbies, courtyards, and estate Christmas light switch-ons. Choirs from &pound;1,150.">
@@ -535,7 +558,7 @@
     }
     
     /* ── Mobile Navigation ── */
-    @media (max-width: 805px) {
+    @media (max-width: 1080px) {
       .nav-toggle {
         display: block;
       }
@@ -603,6 +626,48 @@
     
     .site-footer a:hover {
       color: var(--color-accent);
+    }
+    
+    /* ── Footer columns ── */
+    .footer-grid {
+      display: grid;
+      grid-template-columns: 2fr repeat(4, minmax(0, 1fr));
+      gap: var(--space-xl);
+      margin-bottom: var(--space-xl);
+    }
+    
+    .footer-col ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    
+    .footer-col li {
+      margin-bottom: var(--space-xs);
+      font-size: var(--text-sm);
+      line-height: var(--leading-normal);
+    }
+    
+    .footer-heading {
+      font-family: var(--font-heading);
+      font-size: var(--text-md);
+      font-weight: 500;
+      margin-bottom: var(--space-sm);
+    }
+    
+    @media (max-width: 960px) {
+      .footer-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .footer-col--brand {
+        grid-column: 1 / -1;
+      }
+    }
+    
+    @media (max-width: 520px) {
+      .footer-grid {
+        grid-template-columns: minmax(0, 1fr);
+      }
     }
     /* ═══════════════════════════════════
        Pull Quotes (Testimonials)
@@ -993,17 +1058,6 @@
       margin-bottom: var(--space-md);
     }
     
-    .audio-placeholder {
-      padding: var(--space-md);
-      background-color: var(--color-bg-alt);
-      border: 1px solid var(--color-rule);
-    }
-    
-    .audio-placeholder p {
-      margin: 0;
-      color: var(--color-text-mid);
-    }
-    
     /* ═══════════════════════════════════
        Contact Form
        ═══════════════════════════════════ */
@@ -1326,7 +1380,7 @@
       display: none;
     }
     
-    @media (max-width: 805px) {
+    @media (max-width: 1080px) {
       .mobile-cta {
         display: flex;
         position: fixed;
@@ -1791,7 +1845,7 @@
     }
     
     /* Mobile: dropdown becomes an inline expandable block inside the hamburger */
-    @media (max-width: 805px) {
+    @media (max-width: 1080px) {
       .dropdown-menu {
         display: none;
         position: static;
@@ -2106,6 +2160,16 @@
         grid-template-columns: 1fr 1fr;
       }
     }
+    
+    /* ═══════════════════════════════════
+       Guide link lists (service pages)
+       ═══════════════════════════════════ */
+    .guide-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-xs) var(--space-lg);
+      margin-bottom: var(--space-lg);
+    }
     /* ═══════════════════════════════════
        Print Styles
        ═══════════════════════════════════ */
@@ -2128,7 +2192,6 @@
       .site-header,
       .nav-toggle,
       .skip-link,
-      .audio-placeholder,
       .contact-form,
       .btn,
       .video-embed {
@@ -2315,8 +2378,23 @@
             <li role="none"><a role="menuitem" href="/christmas.html">Christmas</a></li>
             <li role="none"><a role="menuitem" href="/carol-singers.html">Carol Singers</a></li>
             <li role="none"><a role="menuitem" href="/private-events.html">Private Events</a></li>
+            <li role="none"><a role="menuitem" href="/destinations/">Weddings Abroad</a></li>
             <li role="separator" class="dropdown-separator"></li>
             <li role="none"><a role="menuitem" href="/services.html">All services</a></li>
+          </ul>
+        </li>
+        <li class="has-dropdown">
+          <a href="/planners-and-venues.html" aria-haspopup="true" aria-expanded="false" class="dropdown-trigger">Professionals<span class="dropdown-caret" aria-hidden="true">&#9662;</span></a>
+          <ul class="dropdown-menu" role="menu">
+            <li role="none"><a role="menuitem" href="/for-funeral-directors.html">Funeral Directors</a></li>
+            <li role="none"><a role="menuitem" href="/for-wedding-planners.html">Wedding Planners</a></li>
+            <li role="none"><a role="menuitem" href="/for-event-managers.html">Event Managers</a></li>
+            <li role="none"><a role="menuitem" href="/for-hotels.html">Hotels &amp; Venues</a></li>
+            <li role="none"><a role="menuitem" href="/for-property-managers.html">Property Managers</a></li>
+            <li role="none"><a role="menuitem" href="/for-livery-companies.html">Livery Companies</a></li>
+            <li role="none"><a role="menuitem" href="/for-charities.html">Charities</a></li>
+            <li role="separator" class="dropdown-separator"></li>
+            <li role="none"><a role="menuitem" href="/planners-and-venues.html">Planners, Venues &amp; Estates</a></li>
           </ul>
         </li>
         <li><a href="/listen.html">Listen</a></li>
@@ -2374,7 +2452,7 @@
     <section class="section">
       <div class="prose">
         <h2>How we work with property managers</h2>
-        <p>Send us the date, the building, and a rough headcount, and we come back within 48 hours with a written quote and two or three programme options. Most residents&rsquo; evenings are booked as a Small Choir (4) or a Quintet. Schemes with a double-height atrium, or an estate gathering everyone in a courtyard, tend to want a Sextet or the Full Choir (8).</p>
+        <p>Send us the date, the building, and a rough headcount, and we come back within one working day with a written quote and two or three programme options. Most residents&rsquo; evenings are booked as a Small Choir (4) or a Quintet. Schemes with a double-height atrium, or an estate gathering everyone in a courtyard, tend to want a Sextet or the Full Choir (8).</p>
         <p>The singers can roam &mdash; moving through a lobby, along a colonnade, up through the podium levels as residents arrive &mdash; or stand in one place and sing set pieces. Roaming suits a drinks reception where people trickle in across an hour. A stationary set suits a switch-on where everyone is already gathered and looking at the tree.</p>
         <p>We sing a cappella, which means the building supplies nothing: no power, no stage, no amplification, no risers. Trained voices fill a stone-floored lobby without a microphone, so the concierge desk keeps working and the lift lobby stays clear. Where there is a piano in a residents&rsquo; lounge or club room, we can bring a pianist, including a package where the choir sings sets and the piano plays quietly in between. If your building has no piano and you want one, we bring a keyboard and speaker for an extra charge, quoted upfront in the written quote.</p>
         <p>Dress is your call at the booking stage: concert dress, all black, casual, or Christmas jumpers. Santa hats are available if the evening is aimed at families. You tell us which, and the singers arrive already changed.</p>
@@ -2397,7 +2475,7 @@
         <h2>Booking and invoicing</h2>
         <p>Prices are the same in December as in any other month. Carol bookings start at &pound;1,150 for a Small Choir (4), &pound;1,400 for a Quintet, &pound;1,600 for a Sextet, &pound;2,000 for a Full Choir (8), and &pound;3,000 for a Chorus (12). They include all taxes, fees, and travel within Greater London. A premium applies only to Christmas Eve and Christmas Day, and to bookings that run longer than the standard hour and a half; both are confirmed in the written quote before you commit anything. Full figures are on the <a href="pricing.html">pricing page</a>.</p>
         <p>The legal entity on every invoice is Alma Consort Ltd, the operating company behind the London Choral Service. Standard payment terms are 30 days net from the invoice date. We invoice whichever company you nominate &mdash; the managing agent, the resident management company, or the developer &mdash; and we put your purchase order number, cost-centre code, or scheme reference on the invoice if you tell us at the booking stage. That is what an accounts team needs to clear it without coming back to you. BACS to a UK business account is the usual route.</p>
-        <p>Budget periods rarely line up with December. If the cost needs to land early, we can issue an advance deposit invoice (typically 30 percent) at confirmation and invoice the balance after the event. If a single invoice suits you better, we send it the working day after. Either pattern is fine.</p>
+        <p>Budget periods rarely line up with December. If the cost needs to land in a different budget period, invoicing after the event against a purchase order is available by discussion, agreed in writing before we confirm. If a single invoice suits you better, we send it the working day after. Either pattern is fine.</p>
         <p>For a building that runs the same event every year, we can put a master service agreement on file once and invoice against it each December without further paperwork. Rebooking then takes one email.</p>
       </div>
     </section>
@@ -2449,7 +2527,7 @@
     <section class="section" id="enquiry">
       <div class="prose">
         <h2>Enquire about a date</h2>
-        <p>Tell us the building and the date and we&rsquo;ll come back within 48 hours. For a quicker conversation, head to the <a href="contact.html">contact page</a> or call Luca on <a href="tel:+447356042468">07356 042468</a>.</p>
+        <p>Tell us the building and the date and we&rsquo;ll come back within one working day. For a quicker conversation, head to the <a href="contact.html">contact page</a> or call Luca on <a href="tel:+447356042468">07356 042468</a>.</p>
 
         <div class="form-status form-status--success" data-visible="false" role="alert">
           <p>Thank you &mdash; we&rsquo;ll be in touch shortly.</p>
@@ -2514,29 +2592,76 @@
 
     <!-- @include-start partials/footer.html -->
   <footer class="site-footer">
-    <div class="prose">
+    <div class="page-wrap">
       <hr>
-      <p class="footer-name">The London Choral Service</p>
-      <p class="text-sm text-mid">Exceptional singers, choirs, and instrumentalists for funerals, weddings, memorials, Christmas, and corporate events across the United Kingdom.</p>
-      <p class="text-sm text-mid">
-        Text us on <a href="https://wa.me/447356042468" target="_blank" rel="noopener" data-whatsapp>WhatsApp</a> (fastest reply)
-        &ensp;|&ensp;
-        <a href="tel:+447356042468">07356 042468</a>
-        &ensp;|&ensp;
-        <a href="mailto:office@londonchoralservice.com">office@londonchoralservice.com</a>
-      </p>
+      <div class="footer-grid">
+        <div class="footer-col footer-col--brand">
+          <p class="footer-name">The London Choral Service</p>
+          <p class="text-sm text-mid">Exceptional singers, choirs, and instrumentalists for funerals, weddings, memorials, Christmas, and corporate events across the United Kingdom.</p>
+          <p class="text-sm text-mid">
+            Text us on <a href="https://wa.me/447356042468" target="_blank" rel="noopener" data-whatsapp>WhatsApp</a> (fastest reply)
+            &ensp;|&ensp;
+            <a href="tel:+447356042468">07356 042468</a>
+            &ensp;|&ensp;
+            <a href="mailto:office@londonchoralservice.com">office@londonchoralservice.com</a>
+          </p>
+        </div>
+        <div class="footer-col">
+          <p class="footer-heading">Services</p>
+          <ul role="list">
+            <li><a href="/weddings.html">Weddings</a></li>
+            <li><a href="/funerals.html">Funerals</a></li>
+            <li><a href="/corporate.html">Corporate events</a></li>
+            <li><a href="/christmas.html">Christmas carol services</a></li>
+            <li><a href="/carol-singers.html">Hire carol singers</a></li>
+            <li><a href="/private-events.html">Private events</a></li>
+            <li><a href="/destinations/">Weddings abroad</a></li>
+            <li><a href="/pricing.html">Pricing</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <p class="footer-heading">For professionals</p>
+          <ul role="list">
+            <li><a href="/for-funeral-directors.html">Funeral directors</a></li>
+            <li><a href="/for-wedding-planners.html">Wedding planners</a></li>
+            <li><a href="/for-event-managers.html">Event managers</a></li>
+            <li><a href="/for-hotels.html">Hotels and venues</a></li>
+            <li><a href="/for-property-managers.html">Property managers</a></li>
+            <li><a href="/for-livery-companies.html">Livery companies</a></li>
+            <li><a href="/for-charities.html">Charities</a></li>
+            <li><a href="/planners-and-venues.html">Planners, venues and estates</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <p class="footer-heading">Guides and areas</p>
+          <ul role="list">
+            <li><a href="/music-guides/">All music guides</a></li>
+            <li><a href="/music-guides/?category=weddings">Wedding music</a></li>
+            <li><a href="/music-guides/?category=funerals">Funeral music</a></li>
+            <li><a href="/music-guides/?category=christmas">Christmas music</a></li>
+            <li><a href="/listen.html">Listen</a></li>
+            <li><a href="/areas/london.html">London and its boroughs</a></li>
+            <li><a href="/areas/">All areas we serve</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <p class="footer-heading">Company</p>
+          <ul role="list">
+            <li><a href="/about.html">About us</a></li>
+            <li><a href="/luca-wetherall.html">Luca Wetherall</a></li>
+            <li><a href="/faq.html">FAQ</a></li>
+            <li><a href="/contact.html">Contact</a></li>
+            <li><a href="/terms.html">Terms of booking</a></li>
+            <li><a href="/privacy.html">Privacy policy</a></li>
+            <li><a href="/accessibility.html">Accessibility</a></li>
+            <li><a href="/privacy.html#cookies" data-consent-open>Cookie choices</a></li>
+          </ul>
+        </div>
+      </div>
       <p class="text-xs text-mid">
         Areas we serve: <a href="/areas/london.html">London</a> &middot; <a href="/areas/birmingham.html">Birmingham</a> &middot; <a href="/areas/manchester.html">Manchester</a> &middot; <a href="/areas/liverpool.html">Liverpool</a> &middot; <a href="/areas/oxford.html">Oxford</a> &middot; <a href="/areas/cambridge.html">Cambridge</a> &middot; <a href="/areas/reading.html">Reading</a> &middot; <a href="/areas/slough-maidenhead.html">Slough &amp; Maidenhead</a> &middot; <a href="/areas/guildford.html">Guildford</a> &middot; <a href="/areas/brighton.html">Brighton</a> &middot; <a href="/areas/chester.html">Chester</a> &middot; <a href="/areas/st-albans.html">St Albans</a> &middot; <a href="/areas/canterbury.html">Canterbury</a> &middot; <a href="/areas/windsor.html">Windsor</a> &middot; <a href="/areas/winchester.html">Winchester</a> &middot; <a href="/areas/salisbury.html">Salisbury</a> &middot; <a href="/areas/bath.html">Bath</a> &middot; <a href="/areas/chelmsford.html">Chelmsford</a> &middot; <a href="/areas/rochester.html">Rochester</a> &middot; <a href="/areas/">All areas</a>
       </p>
-      <p class="text-xs text-mid">
-        Christmas: <a href="/christmas.html">Carol services</a> &middot; <a href="/carol-singers.html">Hire carol singers</a>
-      </p>
-      <p class="text-xs text-mid">
-        <a href="/faq.html">FAQ</a>
-        &ensp;|&ensp;
-        <a href="/privacy.html">Privacy policy</a>
-      </p>
-      <p class="text-xs text-mid">The London Choral Service is the operating name of Alma Consort Ltd. Based in London, serving the whole of the United Kingdom.</p>
+      <p class="text-xs text-mid">The London Choral Service is the operating name of Alma Consort Ltd, registered in England and Wales, company no. 16785727. Based in London, serving the whole of the United Kingdom. Public liability insurance held.</p>
       <p class="text-xs text-mid">&copy; <span data-year>2026</span> The London Choral Service. All rights reserved.</p>
     </div>
   </footer>

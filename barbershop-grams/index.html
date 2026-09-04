@@ -5,13 +5,34 @@
   <!-- @include-start partials/head-extras.html -->
 <link rel="preload" href="/fonts/cormorant-garamond.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/fonts/source-serif-4.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="manifest" href="/site.webmanifest">
   <!-- @include-end partials/head-extras.html -->
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
-  <!-- Google Analytics (GA4) — deferred until after load -->
+  <!-- @include-start partials/analytics.html -->
+  <!-- Google Analytics (GA4) and Google Ads — Consent Mode v2, deferred until after load.
+       Source of truth: partials/analytics.html. The consent banner lives in js/consent.js. -->
   <script>
     window.dataLayer = window.dataLayer || [];
     function gtag(){dataLayer.push(arguments);}
+    gtag('consent', 'default', {
+      'ad_storage': 'denied',
+      'ad_user_data': 'denied',
+      'ad_personalization': 'denied',
+      'analytics_storage': 'denied',
+      'wait_for_update': 500
+    });
+    gtag('set', 'ads_data_redaction', true);
+    try {
+      if (localStorage.getItem('lcs-consent') === 'granted') {
+        gtag('consent', 'update', {
+          'ad_storage': 'granted',
+          'ad_user_data': 'granted',
+          'ad_personalization': 'denied',
+          'analytics_storage': 'granted'
+        });
+      }
+    } catch (e) {}
     function loadGA() {
       if (loadGA.done) return;
       loadGA.done = true;
@@ -32,6 +53,8 @@
       window.addEventListener(evt, loadGA, { once: true, passive: true });
     });
   </script>
+  <script src="/js/consent.js" defer></script>
+  <!-- @include-end partials/analytics.html -->
 
   <title>Barbershop Grams | Surprise Barbershop Quartet in London</title>
   <meta name="description" content="Send a surprise barbershop quartet to someone in London: Happy Birthday in four-part harmony at their desk, door, or table. &pound;600 all in, 48 hours' notice.">
@@ -1046,7 +1069,7 @@
         <p class="bs-rail-label" aria-hidden="true">Enquire</p>
         <div class="bs-body">
           <h2>Send a gram</h2>
-          <p>You will reach us fastest on WhatsApp, and we usually reply the same day. Send the date and the place, say who the gram is for, and we will tell you whether four singers are free.</p>
+          <p>You will reach us fastest on WhatsApp, and we reply within one working day, usually the same day. Send the date and the place, say who the gram is for, and we will tell you whether four singers are free.</p>
           <p><a class="bs-btn bs-btn--fill" href="https://wa.me/447356042468?text=Hello%20London%20Choral%20Service%2C%20I%27d%20like%20to%20send%20a%20Barbershop%20Gram.%20Date%3A%20%2F%20Place%3A%20%2F%20Who%20it%27s%20for%3A" target="_blank" rel="noopener" data-whatsapp>Send a gram on WhatsApp</a></p>
           <p>You can also ring <a href="tel:+447356042468">07356 042468</a>, or fill in the form below.</p>
 
