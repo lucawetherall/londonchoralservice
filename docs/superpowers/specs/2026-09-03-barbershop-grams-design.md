@@ -235,11 +235,17 @@ Draft copy is the register to hit, not final text. Every line goes through `writ
 - *Is there a cheaper version?* No. A Barbershop Gram is four voices. A soloist is a different thing and we do not sell it as a gram.
 - *Who sings?* Singers chosen for the booking by Luca Wetherall, our Artistic Director and Tutor in Music at the University of Oxford.
 
-**12. Enquire**: WhatsApp button with a gram-specific pre-fill (`?text=Hello, I'd like to send a Barbershop Gram. Date: / Place: / Who it's for:`), phone, and a link to `contact.html?occasion=barbershop-gram`. The pre-fill text is distinct from the site-wide one so gram WhatsApp clicks are distinguishable in analytics.
+**12. Enquire**: WhatsApp button with a gram-specific pre-fill (`?text=Hello, I'd like to send a Barbershop Gram. Date: / Place: / Who it's for:`), phone, and the register's own enquiry form. The pre-fill text is distinct from the site-wide one so gram WhatsApp clicks are distinguishable in analytics. WhatsApp stays the primary route; the form is there for the buyer who would rather write it down.
 
-### Wiring for the enquiry link
+### The enquiry form
 
-`contact.html`'s occasion select needs `<option value="barbershop-gram">Barbershop Gram / surprise</option>`. `js/form.js` only pre-fills when a matching option exists; the `compare/` precedent's `?occasion=quote-check` link was never given one and silently does nothing today. Ours gets its option in the same commit as the page.
+The register hosts its own Web3Forms form, the way `private-events.html` and `destinations/` do, and links to `contact.html` from nowhere. Sending a gift buyer to the main contact page put them on a form that opens on "your occasion" and lists Funeral first, which is the wrong room for a birthday present.
+
+Fields: name, email, telephone, date, place, who it is for, and a free-text note. A hidden `product` field marks the enquiry as a Barbershop Gram in the Web3Forms inbox, since grams are quoted from their own price list. The honeypot and the `h-captcha-response` guard stay, as they must on every form on this site.
+
+The handler is inline, not `/js/form.js`. `form.js` binds to the main site's `.contact-form` markup and finishes by redirecting to `/thank-you.html`, which carries main-site chrome; the register confirms in place instead, as `private-events.js` does. `/js/nav.js` is never loaded here for the same reason. The only external script the register loads is the Web3Forms client, which renders the hCaptcha widget. Without JavaScript the plain POST redirects back to `#bs-form-success` on the hub and a `:target` rule reveals the confirmation, so even the fallback keeps the buyer inside the register.
+
+`contact.html` keeps its `<option value="barbershop-gram">Barbershop Gram / surprise</option>`: someone who reaches the main form by another route still needs a way to say what they want.
 
 ---
 
@@ -283,7 +289,7 @@ Uses the barbershop register, not the site chrome, because a reader arriving fro
 4. **How we work.** 48 hours' notice. WhatsApp, usually the same day. Four voices as standard, eight or twelve by quotation. A published repertoire (link). A named Artistic Director. Each stated about us; none set against them.
 5. **Listen.** The barbershop recording, embedded. This is why the page waits.
 6. **Everything else we offer** is one sentence linking to `pricing.html#barbershop-grams`. **No other number appears on this page.** Printing our own £800 or £1,200 would need adding to `lcs_prices` and would invite the reader to line them up against a ladder this page has chosen not to discuss.
-7. **Already got a quote?** Link to `contact.html?occasion=barbershop-gram`.
+7. **Already got a quote?** Point at the hub's own enquiry form (`/barbershop-grams/#enquire`), not `contact.html`. This page carries the gift register's styles, and the register never hands a buyer to main-site chrome.
 8. **FAQ.** Four questions, `FAQPage`.
 
 **Schema:** `BreadcrumbList` + `Article` + `FAQPage`. No `Offer` for the competitor's figure.
