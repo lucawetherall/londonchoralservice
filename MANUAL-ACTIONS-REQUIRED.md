@@ -349,7 +349,7 @@ Arrangement rights for the in-copyright titles on that list, and for the "any so
 
 **17.4 — Consent wording for filming.** The buyer confirms on enquiry whether we may film; the recipient is asked *after* the surprise, before anything is posted. Belongs in the FAQ and the booking agreement. Short-form video of surprise reactions is the product's strongest organic channel, and it cannot run without a clean consent routine.
 
-**17.5 — `assets/og-barbershop-grams.png`**, 1200×630. Until it exists the pages use the shared `og-image.png`, which is a generic choir image and will undersell a gift product in a shared link.
+**17.5 — `assets/og-barbershop-grams.png`. DONE 2026-09-04.** Made as a typographic card in the barbershop register — the site's own Cormorant Garamond and Source Serif 4, the mini-site palette, carrying the product name, the one-line description, and £600 / Greater London / 48 hours' notice. Both gram pages point at it. Replace it if you get a photograph or a still from the recording (17.1); a real image of four singers mid-surprise would outperform a typographic card, particularly on WhatsApp, where grams get shared person to person.
 
 **17.6 — Directory listings.** Last Minute Musicians, Add to Event, Poptop, Encore, Bark. This is where "barbershop quartet hire" buyers who never reach Google's organic results go. Extend `docs/off-site-listings-pack.md` with a Barbershop Grams profile: the £600 figure, the 48-hour notice line, the repertoire link. House rules apply off-site too — no roster-scale claims, no VAT claims, no star ratings, no incentivised reviews.
 
