@@ -5544,7 +5544,7 @@ Positioning matters more than volume in a working lobby. We look for a hard surf
 
 The legal entity on every invoice is Alma Consort Ltd, the operating company behind the London Choral Service. Standard payment terms are 30 days net from the invoice date. We invoice against your PO and put the buyer reference, project code, or cost-centre number on the invoice if you tell us at the booking stage — this is what your accounts team needs to clear it without coming back to you. BACS to a UK business account is the usual route.
 
-If a December event sits awkwardly across your financial year, we can issue an advance deposit invoice (typically 30 percent) at confirmation and invoice the balance afterwards. If your finance team prefers a single invoice, we send it the working day after the last performance.
+If a December event sits awkwardly across your financial year, invoicing after the event against a purchase order is available by discussion, agreed in writing before we confirm. If your finance team prefers a single invoice, we send it the working day after the last performance.
 
 Alma Consort Ltd carries £5m public liability cover, and we email the certificate the same day you ask. PAT certificates for any equipment we bring come on the same basis. For hotels that rebook the same December slot each year, we can put a master service agreement on file once and invoice against it in later years without repeating the paperwork.
 
@@ -5647,7 +5647,7 @@ Prices are the same in December as in any other month. Carol bookings start at �
 
 The legal entity on every invoice is Alma Consort Ltd, the operating company behind the London Choral Service. Standard payment terms are 30 days net from the invoice date. We invoice whichever company you nominate — the managing agent, the resident management company, or the developer — and we put your purchase order number, cost-centre code, or scheme reference on the invoice if you tell us at the booking stage. That is what an accounts team needs to clear it without coming back to you. BACS to a UK business account is the usual route.
 
-Budget periods rarely line up with December. If the cost needs to land early, we can issue an advance deposit invoice (typically 30 percent) at confirmation and invoice the balance after the event. If a single invoice suits you better, we send it the working day after. Either pattern is fine.
+Budget periods rarely line up with December. If the cost needs to land in a different budget period, invoicing after the event against a purchase order is available by discussion, agreed in writing before we confirm. If a single invoice suits you better, we send it the working day after. Either pattern is fine.
 
 For a building that runs the same event every year, we can put a master service agreement on file once and invoice against it each December without further paperwork. Rebooking then takes one email.
 
@@ -5748,7 +5748,7 @@ Dress is concert dress or all black, and the choir arrives changed. Christmas ju
 
 The legal entity on the invoice is Alma Consort Ltd, the operating company behind the London Choral Service. Standard payment terms are 30 days net from the invoice date. Tell us at the booking stage if the invoice needs a purchase order number, a cost code, or the Clerk’s own reference, and it goes on the document so your accounts team can clear it without coming back to you. BACS to a UK business account is the usual route.
 
-If a December booking sits awkwardly across your financial year, we can issue an advance deposit invoice at confirmation, typically 30 percent, and invoice the balance after the event. A single invoice sent the working day after the event is equally fine. Alma Consort Ltd carries £5m public liability cover; halls and churches often want the certificate before they confirm access, and we email it the same day you ask.
+If a December booking sits awkwardly across your financial year, invoicing after the event against a purchase order is available by discussion, agreed in writing before we confirm. A single invoice sent the working day after the event is equally fine. Alma Consort Ltd carries £5m public liability cover; halls and churches often want the certificate before they confirm access, and we email it the same day you ask.
 
 Prices are the standard ones published on our pricing page . Carol bookings start with a Small Choir (4) from £1,150, Quintet from £1,400, Sextet from £1,600, Full Choir (8) from £2,000, and Chorus (12) from £3,000. They include all taxes, fees, and travel within Greater London, and we do not charge more at Christmas. The exceptions are bookings on 24 or 25 December, which carry a premium confirmed in the quote.
 
@@ -5854,7 +5854,7 @@ The legal entity on every invoice is Alma Consort Ltd, the operating company beh
 
 For a charity, the useful part is that the number does not move. Quoted prices include all taxes, fees, and travel within Greater London, and we charge the same in December as in June. The only Christmas premium applies to 24 and 25 December, and it is confirmed in the written quote before you commit. A standard Christmas booking runs up to an hour and a half including breaks, or the length of a church service; if you want the choir for longer than that, the additional fee is quoted upfront rather than appearing later.
 
-If cash flow needs the cost split across two financial periods, we can issue a deposit invoice (typically 30 percent) at confirmation with the balance invoiced after the concert. A single invoice the working day after the event is equally fine. Where the carol concert is an annual fixture, a master service agreement goes on file once and each subsequent year is booked against it without further paperwork.
+If cash flow needs the cost to fall after the concert, invoicing after the event against a purchase order is available by discussion, agreed in writing before we confirm. A single invoice the working day after the event is equally fine. Where the carol concert is an annual fixture, a master service agreement goes on file once and each subsequent year is booked against it without further paperwork.
 
 
 ### Useful resources for charity event teams
@@ -15642,7 +15642,7 @@ Mic and monitor logistics for hotels and conference centres: most ballrooms over
 
 The legal entity on every invoice is Alma Consort Ltd, the operating company behind the London Choral Service. Standard payment terms are 30 days net from the invoice date. We invoice against your PO and put the buyer reference, project code, or cost-centre number on the invoice if you tell us at the booking stage — this is what your AP team needs to clear it without coming back to you. BACS to a UK business account is the usual route.
 
-Late invoicing matters when an event sits awkwardly across a financial quarter. If you need to invoice in advance for budget reasons, we are happy to issue an advance deposit invoice (typically 30 percent) at confirmation, with the balance invoiced after the event. If you want a single invoice, we send it the working day after the event. Either pattern is fine.
+Late invoicing matters when an event sits awkwardly across a financial quarter. If your budget period needs the cost to fall elsewhere, invoicing after the event against a purchase order is available by discussion, agreed in writing before we confirm. If you want a single invoice, we send it the working day after the event. Either pattern is fine.
 
 For repeat bookings — an annual carol service or a regular awards dinner — we can put a master service agreement on file once and invoice each subsequent year against it without further paperwork. Several of our City clients have been doing this for years; the December booking takes one email from start to confirmation.
 
@@ -19165,13 +19165,13 @@ The fee may be settled either (a) in a single payment of the full fee, or (b) in
 
 (c) Where the Client elects to pay by instalments, the second instalment must be received in cleared funds not less than forty-eight (48) hours before the start of the service.
 
-(d) The fee is payable in full before the musicians perform. No part of it falls due after the service.
+(d) The fee is payable in full before the musicians perform, and no part of it falls due after the service. The exception is a business or institutional booking invoiced against a purchase order under the final paragraph of this clause, where invoicing after the engagement is available by prior arrangement.
 
 (e) Fifty per cent (50%) of the total fee is a non-refundable deposit which secures the date, and which compensates the Provider for administrative work, holding the date, and turning down other engagements.
 
 (f) Where any sum remains unpaid by the time it falls due, the Provider reserves the right to withdraw without further liability.
 
-Business and institutional bookings may instead be invoiced against a purchase order, on the terms recorded in the booking confirmation.
+Business and institutional bookings may instead be invoiced against a purchase order, on the terms recorded in the booking confirmation. Invoicing after the engagement is available on those bookings by discussion, and is agreed in writing before the booking is confirmed.
 
 
 ### 5. Cancellation by the Client
