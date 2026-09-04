@@ -535,7 +535,7 @@
     }
     
     /* ── Mobile Navigation ── */
-    @media (max-width: 805px) {
+    @media (max-width: 1080px) {
       .nav-toggle {
         display: block;
       }
@@ -603,6 +603,48 @@
     
     .site-footer a:hover {
       color: var(--color-accent);
+    }
+    
+    /* ── Footer columns ── */
+    .footer-grid {
+      display: grid;
+      grid-template-columns: 2fr repeat(4, minmax(0, 1fr));
+      gap: var(--space-xl);
+      margin-bottom: var(--space-xl);
+    }
+    
+    .footer-col ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    
+    .footer-col li {
+      margin-bottom: var(--space-xs);
+      font-size: var(--text-sm);
+      line-height: var(--leading-normal);
+    }
+    
+    .footer-heading {
+      font-family: var(--font-heading);
+      font-size: var(--text-md);
+      font-weight: 500;
+      margin-bottom: var(--space-sm);
+    }
+    
+    @media (max-width: 960px) {
+      .footer-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .footer-col--brand {
+        grid-column: 1 / -1;
+      }
+    }
+    
+    @media (max-width: 520px) {
+      .footer-grid {
+        grid-template-columns: minmax(0, 1fr);
+      }
     }
     /* ═══════════════════════════════════
        Pull Quotes (Testimonials)
@@ -1791,7 +1833,7 @@
     }
     
     /* Mobile: dropdown becomes an inline expandable block inside the hamburger */
-    @media (max-width: 805px) {
+    @media (max-width: 1080px) {
       .dropdown-menu {
         display: none;
         position: static;
@@ -2106,6 +2148,16 @@
         grid-template-columns: 1fr 1fr;
       }
     }
+    
+    /* ═══════════════════════════════════
+       Guide link lists (service pages)
+       ═══════════════════════════════════ */
+    .guide-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-xs) var(--space-lg);
+      margin-bottom: var(--space-lg);
+    }
     /* ═══════════════════════════════════
        Print Styles
        ═══════════════════════════════════ */
@@ -2276,8 +2328,23 @@
             <li role="none"><a role="menuitem" href="/christmas.html">Christmas</a></li>
             <li role="none"><a role="menuitem" href="/carol-singers.html">Carol Singers</a></li>
             <li role="none"><a role="menuitem" href="/private-events.html">Private Events</a></li>
+            <li role="none"><a role="menuitem" href="/destinations/">Weddings Abroad</a></li>
             <li role="separator" class="dropdown-separator"></li>
             <li role="none"><a role="menuitem" href="/services.html">All services</a></li>
+          </ul>
+        </li>
+        <li class="has-dropdown">
+          <a href="/planners-and-venues.html" aria-haspopup="true" aria-expanded="false" class="dropdown-trigger">Professionals<span class="dropdown-caret" aria-hidden="true">&#9662;</span></a>
+          <ul class="dropdown-menu" role="menu">
+            <li role="none"><a role="menuitem" href="/for-funeral-directors.html">Funeral Directors</a></li>
+            <li role="none"><a role="menuitem" href="/for-wedding-planners.html">Wedding Planners</a></li>
+            <li role="none"><a role="menuitem" href="/for-event-managers.html">Event Managers</a></li>
+            <li role="none"><a role="menuitem" href="/for-hotels.html">Hotels &amp; Venues</a></li>
+            <li role="none"><a role="menuitem" href="/for-property-managers.html">Property Managers</a></li>
+            <li role="none"><a role="menuitem" href="/for-livery-companies.html">Livery Companies</a></li>
+            <li role="none"><a role="menuitem" href="/for-charities.html">Charities</a></li>
+            <li role="separator" class="dropdown-separator"></li>
+            <li role="none"><a role="menuitem" href="/planners-and-venues.html">Planners, Venues &amp; Estates</a></li>
           </ul>
         </li>
         <li><a href="/listen.html">Listen</a></li>
@@ -2369,29 +2436,75 @@
 
     <!-- @include-start partials/footer.html -->
   <footer class="site-footer">
-    <div class="prose">
+    <div class="page-wrap">
       <hr>
-      <p class="footer-name">The London Choral Service</p>
-      <p class="text-sm text-mid">Exceptional singers, choirs, and instrumentalists for funerals, weddings, memorials, Christmas, and corporate events across the United Kingdom.</p>
-      <p class="text-sm text-mid">
-        Text us on <a href="https://wa.me/447356042468" target="_blank" rel="noopener" data-whatsapp>WhatsApp</a> (fastest reply)
-        &ensp;|&ensp;
-        <a href="tel:+447356042468">07356 042468</a>
-        &ensp;|&ensp;
-        <a href="mailto:office@londonchoralservice.com">office@londonchoralservice.com</a>
-      </p>
+      <div class="footer-grid">
+        <div class="footer-col footer-col--brand">
+          <p class="footer-name">The London Choral Service</p>
+          <p class="text-sm text-mid">Exceptional singers, choirs, and instrumentalists for funerals, weddings, memorials, Christmas, and corporate events across the United Kingdom.</p>
+          <p class="text-sm text-mid">
+            Text us on <a href="https://wa.me/447356042468" target="_blank" rel="noopener" data-whatsapp>WhatsApp</a> (fastest reply)
+            &ensp;|&ensp;
+            <a href="tel:+447356042468">07356 042468</a>
+            &ensp;|&ensp;
+            <a href="mailto:office@londonchoralservice.com">office@londonchoralservice.com</a>
+          </p>
+        </div>
+        <div class="footer-col">
+          <p class="footer-heading">Services</p>
+          <ul role="list">
+            <li><a href="/weddings.html">Weddings</a></li>
+            <li><a href="/funerals.html">Funerals</a></li>
+            <li><a href="/corporate.html">Corporate events</a></li>
+            <li><a href="/christmas.html">Christmas carol services</a></li>
+            <li><a href="/carol-singers.html">Hire carol singers</a></li>
+            <li><a href="/private-events.html">Private events</a></li>
+            <li><a href="/destinations/">Weddings abroad</a></li>
+            <li><a href="/pricing.html">Pricing</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <p class="footer-heading">For professionals</p>
+          <ul role="list">
+            <li><a href="/for-funeral-directors.html">Funeral directors</a></li>
+            <li><a href="/for-wedding-planners.html">Wedding planners</a></li>
+            <li><a href="/for-event-managers.html">Event managers</a></li>
+            <li><a href="/for-hotels.html">Hotels and venues</a></li>
+            <li><a href="/for-property-managers.html">Property managers</a></li>
+            <li><a href="/for-livery-companies.html">Livery companies</a></li>
+            <li><a href="/for-charities.html">Charities</a></li>
+            <li><a href="/planners-and-venues.html">Planners, venues and estates</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <p class="footer-heading">Guides and areas</p>
+          <ul role="list">
+            <li><a href="/music-guides/">All music guides</a></li>
+            <li><a href="/music-guides/?category=weddings">Wedding music</a></li>
+            <li><a href="/music-guides/?category=funerals">Funeral music</a></li>
+            <li><a href="/music-guides/?category=christmas">Christmas music</a></li>
+            <li><a href="/listen.html">Listen</a></li>
+            <li><a href="/areas/london.html">London and its boroughs</a></li>
+            <li><a href="/areas/">All areas we serve</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <p class="footer-heading">Company</p>
+          <ul role="list">
+            <li><a href="/about.html">About us</a></li>
+            <li><a href="/luca-wetherall.html">Luca Wetherall</a></li>
+            <li><a href="/faq.html">FAQ</a></li>
+            <li><a href="/contact.html">Contact</a></li>
+            <li><a href="/terms.html">Terms of booking</a></li>
+            <li><a href="/privacy.html">Privacy policy</a></li>
+            <li><a href="/accessibility.html">Accessibility</a></li>
+          </ul>
+        </div>
+      </div>
       <p class="text-xs text-mid">
         Areas we serve: <a href="/areas/london.html">London</a> &middot; <a href="/areas/birmingham.html">Birmingham</a> &middot; <a href="/areas/manchester.html">Manchester</a> &middot; <a href="/areas/liverpool.html">Liverpool</a> &middot; <a href="/areas/oxford.html">Oxford</a> &middot; <a href="/areas/cambridge.html">Cambridge</a> &middot; <a href="/areas/reading.html">Reading</a> &middot; <a href="/areas/slough-maidenhead.html">Slough &amp; Maidenhead</a> &middot; <a href="/areas/guildford.html">Guildford</a> &middot; <a href="/areas/brighton.html">Brighton</a> &middot; <a href="/areas/chester.html">Chester</a> &middot; <a href="/areas/st-albans.html">St Albans</a> &middot; <a href="/areas/canterbury.html">Canterbury</a> &middot; <a href="/areas/windsor.html">Windsor</a> &middot; <a href="/areas/winchester.html">Winchester</a> &middot; <a href="/areas/salisbury.html">Salisbury</a> &middot; <a href="/areas/bath.html">Bath</a> &middot; <a href="/areas/chelmsford.html">Chelmsford</a> &middot; <a href="/areas/rochester.html">Rochester</a> &middot; <a href="/areas/">All areas</a>
       </p>
-      <p class="text-xs text-mid">
-        Christmas: <a href="/christmas.html">Carol services</a> &middot; <a href="/carol-singers.html">Hire carol singers</a>
-      </p>
-      <p class="text-xs text-mid">
-        <a href="/faq.html">FAQ</a>
-        &ensp;|&ensp;
-        <a href="/privacy.html">Privacy policy</a>
-      </p>
-      <p class="text-xs text-mid">The London Choral Service is the operating name of Alma Consort Ltd. Based in London, serving the whole of the United Kingdom.</p>
+      <p class="text-xs text-mid">The London Choral Service is the operating name of Alma Consort Ltd, registered in England and Wales, company no. 16785727. Based in London, serving the whole of the United Kingdom. Public liability insurance held.</p>
       <p class="text-xs text-mid">&copy; <span data-year>2026</span> The London Choral Service. All rights reserved.</p>
     </div>
   </footer>

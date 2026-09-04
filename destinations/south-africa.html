@@ -304,6 +304,7 @@
          otherwise leave the trailing empty cell as a solid block of colour. */
     }
     .pe-dests > li { box-shadow: 0 0 0 1px var(--limestone); }
+    .pe-dests + p { margin-top: 1.75rem; }
     .pe-dests a {
       display: block;
       padding: 1.1rem 1.25rem 1.2rem;
@@ -700,6 +701,28 @@
     @media (prefers-reduced-motion: reduce) {
       .pe-btn, .play-btn { transition: none; }
     }
+    /* ── Skip link and print (parity with the main site) ── */
+    .skip-link {
+      position: absolute;
+      top: -3rem;
+      left: 1.25rem;
+      padding: .5rem 1rem;
+      background: var(--cassockRed);
+      color: var(--parchment);
+      font-family: var(--font-ui);
+      font-size: .875rem;
+      text-decoration: none;
+      z-index: 200;
+    }
+    .skip-link:focus { top: .5rem; outline: 2px solid var(--choirStall); outline-offset: 2px; }
+    @media print {
+      body { background: #fff; color: #000; }
+      .pe-nav-enquire, .pe-form, .skip-link, .video-embed { display: none !important; }
+      [data-fade] { opacity: 1 !important; transform: none !important; }
+      .pe-section { padding-block: 1.25rem; break-inside: avoid; }
+      a { color: #000; }
+      h1, h2, h3 { break-after: avoid; }
+    }
   </style>
   <!-- @include-end partials/private-register.css.html -->
 
@@ -795,6 +818,7 @@
   <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
 </head>
 <body>
+  <a href="#main" class="skip-link">Skip to main content</a>
 
   <header class="pe-header">
     <nav class="pe-nav" aria-label="Page">
@@ -812,7 +836,7 @@
     </nav>
   </header>
 
-  <main>
+  <main id="main">
 
     <section class="pe-section pe-section--light pe-hero">
       <div class="pe-hero__inner">
@@ -937,6 +961,24 @@
           <p class="pe-checked">Travel and permit information on this page last checked 29 August 2026.
             Requirements change and vary by venue, diocese and celebrant; confirm the current position
             with us before you fix a date. Other <a href="/destinations/">country guides</a>.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Nearby -->
+    <section class="pe-section pe-section--mid">
+      <div class="pe-rail">
+        <p class="pe-rail-label" aria-hidden="true">Nearby</p>
+        <div class="pe-body" data-fade>
+          <h2>Other destinations: the Indian Ocean, Asia and Africa</h2>
+          <ul class="pe-dests" role="list">
+            <li><a href="/destinations/mauritius.html"><span class="n">Mauritius</span><span class="r">Belle Mare, Le Morne and Grand Baie</span></a></li>
+            <li><a href="/destinations/maldives.html"><span class="n">Maldives</span><span class="r">North Malé Atoll and South Ari Atoll</span></a></li>
+            <li><a href="/destinations/seychelles.html"><span class="n">Seychelles</span><span class="r">Mahé, Praslin and La Digue</span></a></li>
+            <li><a href="/destinations/thailand.html"><span class="n">Thailand</span><span class="r">Phuket and Koh Samui</span></a></li>
+            <li><a href="/destinations/indonesia.html"><span class="n">Bali</span><span class="r">Uluwatu, Ubud and Seminyak</span></a></li>
+          </ul>
+          <p>Reading: <a href="/music-guides/destination-wedding-choir.html">hiring a UK choir for a destination wedding</a>, <a href="/music-guides/wedding-ceremony-music.html">a complete guide to wedding ceremony music</a>, and <a href="/music-guides/wedding-music-costs.html">what wedding music costs</a>. For a ceremony at home, see <a href="/weddings.html">wedding choirs in the United Kingdom</a>; planners, venues and estates have <a href="/planners-and-venues.html">a page of their own</a>.</p>
         </div>
       </div>
     </section>
@@ -1081,7 +1123,8 @@
 
   <!-- @include-start partials/private-footer.html -->
   <footer class="pe-footer">
-    <p><a href="mailto:office@londonchoralservice.com">office@londonchoralservice.com</a> &middot; <a href="tel:+447356042468">+44 7356 042468</a> &middot; London &middot; <a href="/privacy.html">Privacy policy</a></p>
+    <p><a href="mailto:office@londonchoralservice.com">office@londonchoralservice.com</a> &middot; <a href="tel:+447356042468">+44 7356 042468</a> &middot; London &middot; <a href="/terms.html">Terms of booking</a> &middot; <a href="/privacy.html">Privacy policy</a> &middot; <a href="/accessibility.html">Accessibility</a></p>
+    <p>The London Choral Service: <a href="/">Home</a> &middot; <a href="/weddings.html">Weddings</a> &middot; <a href="/funerals.html">Funerals</a> &middot; <a href="/pricing.html">Pricing</a> &middot; <a href="/music-guides/">Music guides</a> &middot; <a href="/destinations/">Destinations</a> &middot; <a href="/planners-and-venues.html">Planners and venues</a> &middot; <a href="/contact.html">Contact</a></p>
     <p>The London Choral Service is the operating name of Alma Consort Ltd, registered in England and Wales, company no. 16785727.</p>
   </footer>
   <!-- @include-end partials/private-footer.html -->

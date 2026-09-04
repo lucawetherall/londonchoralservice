@@ -36,7 +36,7 @@
     // hits the trigger AND the menu is currently closed as "open
     // first, navigate next time".
     trigger.addEventListener('click', function (e) {
-      var isMobile = window.matchMedia('(max-width: 805px)').matches;
+      var isMobile = window.matchMedia('(max-width: 1080px)').matches;
       if (!isMobile) return; // desktop: hover handles it
       var isOpen = item.getAttribute('data-open') === 'true';
       if (!isOpen) {
@@ -49,10 +49,10 @@
     // Desktop: CSS :hover opens the menu — keep aria-expanded in sync
     // for assistive tech, since the click handler above only runs on mobile.
     item.addEventListener('mouseenter', function () {
-      if (!window.matchMedia('(max-width: 805px)').matches) setOpen(true);
+      if (!window.matchMedia('(max-width: 1080px)').matches) setOpen(true);
     });
     item.addEventListener('mouseleave', function () {
-      if (!window.matchMedia('(max-width: 805px)').matches) setOpen(false);
+      if (!window.matchMedia('(max-width: 1080px)').matches) setOpen(false);
     });
 
     // Keyboard: ESC closes the dropdown and returns focus to the trigger.
