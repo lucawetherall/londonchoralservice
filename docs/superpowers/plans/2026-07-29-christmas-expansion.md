@@ -192,7 +192,7 @@ Four `sitemap.xml` entries at priority 0.7 with today's `lastmod`; four `llms.tx
 ./build.sh && python3 validate_jsonld.py
 grep -c '<loc>' sitemap.xml                          # 108
 grep -c 'BusinessAudience' for-hotels.html for-property-managers.html for-livery-companies.html for-charities.html
-grep -rn 'Victorian' --include='*.html' .            # empty
+grep -rn 'Victorian' --include='*.html' .            # allowlist check, see spec + ROADMAP R11
 # duplicate-FAQ check: extract all FAQPage "name" strings site-wide, sort | uniq -d → empty
 # meta description 141–161 on all four (loop the python len check from Task 1 Step 10)
 ```
@@ -443,7 +443,7 @@ ls music-guides/*.html | grep -v index | wc -l       # 43, matches llms.txt coun
 grep -rn '2026-12-31' --include='*.html' .           # empty (priceValidUntil bumped)
 grep -rn 'Quartet' --include='*.html' .              # empty (label standardised — see Task 6 Step 4)
 grep -rn '£1,150\|£1,400\|£1,600\|£2,000\|£3,000\|£215' <new files>  # figures match pricing.html exactly
-grep -rn 'Victorian' --include='*.html' .            # no costume claims introduced
+grep -rn 'Victorian' --include='*.html' .            # allowlist check: no costume offered
 grep -rl 'carol-singers.html' --include='*.html' . | wc -l   # reachability from hubs
 # duplicate-FAQ check: extract all FAQPage "name" strings, sort | uniq -d → empty
 python3 -m http.server 8000                          # manual: 375px, forms/hCaptcha, nav/footer
