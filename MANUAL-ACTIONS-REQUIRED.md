@@ -341,7 +341,9 @@ Deliberately not worked around: `listen.html` is hymns and service music, so lin
 
 Once it exists, add the YouTube id, upload date and duration to `data/seo-fix-discovered-urls.yml` (never invent these — see §1) and the gated tasks can run.
 
-**17.2 — Confirm the repertoire list.** `barbershop-grams/repertoire.html` publishes a song list drafted by Claude in the spec. Strike anything the singers have not actually rehearsed. Nothing on that page is a claim we can stand behind until you have been through it.
+**17.2 — Confirm the repertoire list. DONE 2026-09-04.** The owner confirmed the drafted 43-title list on `barbershop-grams/repertoire.html` is accurate for what the quartet sings, so the page ships indexed and in the sitemap. Re-check it if the line-up or the arrangements change.
+
+Arrangement rights for the in-copyright titles on that list, and for the "any song from £200" offer, were raised and the owner confirmed they are already handled. No action outstanding.
 
 **17.3 — Seed one or two grams.** Colleagues or friends. Produces real footage, the first honest client quote, and a rehearsal of the logistics against reality before a paying customer meets them.
 
