@@ -26,7 +26,8 @@ echo "Created css/style.css ($(wc -c < "$CSS_DIR/style.css") bytes)"
 echo "Populating HTML partials..."
 
 include_count=0
-for file in $(find "$SCRIPT_DIR" -name '*.html' -not -path '*/.git/*' -not -path '*/partials/*'); do
+# Hidden top-level dirs (.git, .venv, .claude/worktrees, .superpowers) are never site content.
+for file in $(find "$SCRIPT_DIR" -name '*.html' -not -path "$SCRIPT_DIR/.*" -not -path '*/partials/*'); do
   if grep -q '@include-start' "$file"; then
     # Validate that every referenced partial exists; fail loudly if not.
     # Done in shell (not awk) so set -euo pipefail catches the failure cleanly.
@@ -74,7 +75,7 @@ echo "Inlining CSS into HTML files..."
 # contains ":root {" (the start of tokens.css, which is the first file
 # concatenated into style.css).
 restore_count=0
-for file in $(find "$SCRIPT_DIR" -name '*.html' -not -path '*/.git/*' -not -path '*/partials/*'); do
+for file in $(find "$SCRIPT_DIR" -name '*.html' -not -path "$SCRIPT_DIR/.*" -not -path '*/partials/*'); do
   # Skip files that already have a link tag (not yet inlined).
   if grep -q '<link rel="stylesheet" href=.*style\.css">' "$file"; then
     continue
@@ -117,7 +118,7 @@ echo "Restored $restore_count inlined CSS blocks to link tags"
 
 # Pass B: existing inlining pass — operates on link tags.
 count=0
-for file in $(find "$SCRIPT_DIR" -name '*.html' -not -path '*/.git/*' -not -path '*/partials/*'); do
+for file in $(find "$SCRIPT_DIR" -name '*.html' -not -path "$SCRIPT_DIR/.*" -not -path '*/partials/*'); do
   if grep -q '<link rel="stylesheet" href=.*style\.css">' "$file"; then
     awk -v css="$CSS_DIR/style.css" '
       /<link rel="stylesheet" href=.*style\.css">/ {
