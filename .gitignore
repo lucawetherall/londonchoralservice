@@ -5,3 +5,9 @@
 __pycache__/
 graphify-out/.graphify_python
 graphify-out/.graphify_root
+
+# Google Ads / GA4 workspace — never commit credentials
+.venv/
+client_secret*.json
+google-ads.yaml
+*.local.*

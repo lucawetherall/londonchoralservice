@@ -55,7 +55,8 @@ STRIP = [
 def pages():
     out = []
     for dirpath, dirnames, filenames in os.walk('.'):
-        dirnames[:] = [d for d in dirnames if d not in ('.git', 'partials', 'graphify-out', 'node_modules')]
+        # Hidden dirs (.git, .venv, .claude, .superpowers…) are never site content.
+        dirnames[:] = [d for d in dirnames if not d.startswith('.') and d not in ('partials', 'graphify-out', 'node_modules')]
         for fn in filenames:
             if fn.endswith('.html'):
                 out.append(os.path.normpath(os.path.join(dirpath, fn)))
