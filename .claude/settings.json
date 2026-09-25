@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__google-ads",
+      "mcp__analytics-mcp"
+    ]
+  }
+}
