@@ -51,7 +51,7 @@ providers:
 lcs_prices:
   soloist: 250
   organist_standalone: 250
-  organist_added_to_choir: 225
+  organist_added_to_choir: 250
   soloist_with_organist: 450
   small_choir: 1150
   quintet: 1400
@@ -69,10 +69,10 @@ derived_figures:
   660:  "LFS soloist + organist, inc VAT (330 + 330)"
   1675: "LFS small choir + organist, ex VAT (1400 + 275)"
   2010: "LFS small choir + organist, inc VAT (1680 + 330)"
-  1375: "LCS small choir + organist (1150 + 225)"
+  1400: "LCS small choir + organist (1150 + 250)"
   80:   "Saving on a soloist (330 - 250)"
   210:  "Saving on soloist with organist (660 - 450)"
   530:  "Saving on a small choir (1680 - 1150)"
-  635:  "Saving on small choir with organist (2010 - 1375)"
+  610:  "Saving on small choir with organist (2010 - 1400)"
   880:  "Saving on a full choir (2880 - 2000)"
   1800: "Saving on a chorus (4800 - 3000)"
