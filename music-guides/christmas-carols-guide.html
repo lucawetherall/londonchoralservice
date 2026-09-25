@@ -55,12 +55,12 @@
     // Conversion tracking. A lead is one "Submit lead form" conversion, fired by
     // js/form.js and js/private-events.js only after Web3Forms accepts the
     // enquiry. Phone, email and WhatsApp taps are contact_click events (their
-    // own secondary Ads actions), never leads. Labels come from Google Ads;
-    // null = not created yet, so only the GA4 event fires.
+    // own secondary Ads actions "Call click" and "WhatsApp or email click"),
+    // never leads. Labels come from Google Ads (conversion action tag snippets).
     var LCS_ADS = {
       lead: 'AW-17988388404/RjhECKGP7akcELSMxIFD',
-      call: null,
-      message: null
+      call: 'AW-17988388404/HHu8CJq1x4UdELSMxIFD',
+      message: 'AW-17988388404/5H_QCJ21x4UdELSMxIFD'
     };
     function lcsLead(detail, done) {
       var finished = false;
