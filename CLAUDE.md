@@ -66,7 +66,7 @@ The website of The London Choral Service (Alma Consort Ltd) — a choir-for-hire
 
 ## Google Ads & GA4
 
-- Google Ads customer ID: `8733881378` (account "Luca Wetherall", not a manager, so no `login_customer_id`). GA4 property ID: `[GA4_PROPERTY_ID]`.
+- Google Ads customer ID: `8733881378` (account "Luca Wetherall", not a manager, so no `login_customer_id`). GA4 property ID: `527915578` (property "London Choral Service", web stream `G-9FENN7VS0E`).
 - Currency **GBP**, time zone **Europe/London**. Report dates and money in those.
 - Google Cloud project: `lcs-marketing` (ID `project-2dc388e4-c2d8-40c3-803`).
 - **Reads** go through the MCP tools (`mcp__google-ads__*`, `mcp__analytics-mcp__*`). Reusable report scripts live in `scripts/reports/`.
