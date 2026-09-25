@@ -16,10 +16,6 @@
       'sixteen': null,
       'twenty-four': null
     },
-    // The site's existing generic Contact conversion label (as fired on
-    // thank-you.html). Swap for the dedicated "Private events enquiry"
-    // label once it exists in Google Ads — see MANUAL-ACTIONS-REQUIRED.md.
-    ADS_CONVERSION: 'AW-17988388404/RjhECKGP7akcELSMxIFD',
     MIN_SECONDS: 5
   };
 
@@ -120,12 +116,14 @@
   });
 
   // ── UTM / click-ID capture ──
-  // Same-named hidden inputs exist empty in the markup; fill any present
-  // in the query string so the enquiry email carries its source.
+  // Same-named hidden inputs exist empty in the markup; fill them from the
+  // landing URL (kept for the tab by the analytics snippet) so the enquiry
+  // email carries its source.
   try {
     var params = new URLSearchParams(window.location.search);
+    var kept = typeof window.lcsAttribution === 'function' ? window.lcsAttribution() : {};
     ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'gclid'].forEach(function (key) {
-      var value = params.get(key);
+      var value = params.get(key) || kept[key];
       if (!value) return;
       var input = document.querySelector('input[name="' + key + '"]');
       if (input) input.value = value;
@@ -194,16 +192,30 @@
   window.addEventListener('pageshow', runSyncs);
 
   // ── Conversion tracking ──
-  // The GA head snippet defines global gtag() (a dataLayer queue, live
-  // before the gtag.js library loads) and global loadGA() (idempotent lazy
-  // loader). Both are typeof-guarded so a blocked or stripped analytics
-  // snippet can never break the submission flow.
+  // The GA head snippet defines global lcsLead() (one "Submit lead form"
+  // conversion plus a GA4 generate_lead) and gtag(). Both are typeof-guarded
+  // so a blocked or stripped analytics snippet can never break the
+  // submission flow.
   function fireConversion() {
     try {
-      if (typeof window.loadGA === 'function') window.loadGA();
+      if (typeof window.lcsLead === 'function') {
+        var occasion = form && form.querySelector('[name="occasion"]');
+        var email = form && form.querySelector('[name="email"]');
+        var phone = form && form.querySelector('[name="phone"]');
+        window.lcsLead({
+          email: email ? email.value : '',
+          phone: phone ? phone.value : '',
+          source: window.location.pathname,
+          occasion: occasion && occasion.value ? occasion.value.toLowerCase() : 'private-event'
+        });
+      }
+    } catch (_) { /* analytics must never block the enquiry */ }
+  }
+
+  function trackError(type) {
+    try {
       if (typeof window.gtag === 'function') {
-        window.gtag('event', 'conversion', { send_to: PE.ADS_CONVERSION });
-        window.gtag('event', 'ads_conversion_PrivateEvents_1', {});
+        window.gtag('event', 'form_error', { error_type: type, lead_source: window.location.pathname });
       }
     } catch (_) { /* analytics must never block the enquiry */ }
   }
@@ -224,6 +236,7 @@
     // The error box holds one message per failure mode; showError reveals
     // the box with only the relevant message visible.
     function showError(kind, scroll) {
+      trackError(kind);
       if (!errorBox) return;
       errorBox.querySelectorAll('[data-error-msg]').forEach(function (msg) {
         msg.hidden = msg.getAttribute('data-error-msg') !== kind;
@@ -259,6 +272,7 @@
       var captchaResponse = form.querySelector('[name=h-captcha-response]');
       var captchaWidget = form.querySelector('.h-captcha iframe');
       if (captchaWidget && (!captchaResponse || !captchaResponse.value)) {
+        trackError('captcha');
         if (captchaError) {
           captchaError.setAttribute('data-visible', 'true');
           captchaError.scrollIntoView({ block: 'center' });

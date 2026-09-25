@@ -31,6 +31,7 @@
       window.gtag('consent', 'update', choice === 'granted' ? GRANTED : DENIED);
     }
     if (choice === 'granted' && typeof window.loadGA === 'function') window.loadGA();
+    if (choice === 'granted' && typeof window.lcsKeepAttribution === 'function') window.lcsKeepAttribution();
   }
 
   var CSS = '' +
