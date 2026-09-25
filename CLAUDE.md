@@ -63,3 +63,16 @@ The website of The London Choral Service (Alma Consort Ltd) — a choir-for-hire
 - `writing-site-copy` — house anti-slop copy rules. Load before writing any visible text.
 
 (Generic skills also installed: copy-editing, seo-audit, site-architecture.)
+
+## Google Ads & GA4
+
+- Google Ads customer ID: `8733881378` (account "Luca Wetherall", not a manager, so no `login_customer_id`). GA4 property ID: `[GA4_PROPERTY_ID]`.
+- Currency **GBP**, time zone **Europe/London**. Report dates and money in those.
+- Google Cloud project: `lcs-marketing` (ID `project-2dc388e4-c2d8-40c3-803`).
+- **Reads** go through the MCP tools (`mcp__google-ads__*`, `mcp__analytics-mcp__*`). Reusable report scripts live in `scripts/reports/`.
+- **Changes** go only through scripts in `scripts/ads/` using the `google-ads` Python library (`source .venv/bin/activate`, which sets `GOOGLE_ADS_CONFIGURATION_FILE_PATH`). Never change the account through MCP tools or any other route.
+- Every change runs first with `validate_only=True`. Show it to me as **current value → new value + reason**, and apply it only after my explicit approval of that change. Approval covers one change set, not later ones.
+- Never delete anything (campaigns, ad groups, ads, keywords, budgets, assets). Pause instead.
+- Never set a daily budget above **£5** (`amount_micros` 5_000_000). The script must refuse a higher value before calling the API.
+- Log every applied change in `logs/ads-changes.md` (date, resource, field, current → new, reason, script), newest first.
+- Never print, echo, read or commit credentials: `~/.config/lcs/*` (client secret, `google-ads.yaml`) and `~/.config/gcloud/application_default_credentials.json`. `ls` to check existence is fine.
