@@ -36,9 +36,12 @@
     function loadGA() {
       if (loadGA.done) return;
       loadGA.done = true;
+      // Only the live site reports: local previews and test copies queue events
+      // in dataLayer but never load gtag.js, so tests can't reach GA4 or Ads.
+      if (!/(^|\.)londonchoralservice\.com$/.test(location.hostname)) return;
       gtag('js', new Date());
       gtag('config', 'G-9FENN7VS0E');
-      gtag('config', 'AW-17988388404');
+      gtag('config', 'AW-17988388404', { 'allow_enhanced_conversions': true });
       var s = document.createElement('script');
       s.src = 'https://www.googletagmanager.com/gtag/js?id=G-9FENN7VS0E';
       document.head.appendChild(s);
@@ -52,6 +55,81 @@
     ['scroll', 'click', 'touchstart', 'keydown'].forEach(function(evt) {
       window.addEventListener(evt, loadGA, { once: true, passive: true });
     });
+
+    // Conversion tracking. A lead is one "Submit lead form" conversion, fired by
+    // js/form.js and js/private-events.js only after Web3Forms accepts the
+    // enquiry. Phone, email and WhatsApp taps are contact_click events (their
+    // own secondary Ads actions "Call click" and "WhatsApp or email click"),
+    // never leads. Labels come from Google Ads (conversion action tag snippets).
+    var LCS_ADS = {
+      lead: 'AW-17988388404/RjhECKGP7akcELSMxIFD',
+      call: 'AW-17988388404/HHu8CJq1x4UdELSMxIFD',
+      message: 'AW-17988388404/5H_QCJ21x4UdELSMxIFD'
+    };
+    function lcsLead(detail, done) {
+      var finished = false;
+      function finish() { if (!finished) { finished = true; if (done) done(); } }
+      loadGA();
+      // Enhanced conversions: gtag hashes these (SHA-256) before sending, and
+      // sends nothing at all unless the visitor allowed ad measurement.
+      var ud = {};
+      var email = (detail.email || '').trim().toLowerCase();
+      if (/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) ud.email = email;
+      var phone = (detail.phone || '').replace(/[^\d+]/g, '');
+      if (/^0\d{9,10}$/.test(phone)) phone = '+44' + phone.slice(1);
+      else if (/^44\d{9,10}$/.test(phone)) phone = '+' + phone;
+      if (/^\+\d{10,15}$/.test(phone)) ud.phone_number = phone;
+      if (ud.email || ud.phone_number) gtag('set', 'user_data', ud);
+      gtag('event', 'generate_lead', {
+        'currency': 'GBP',
+        'value': 1,
+        'lead_source': detail.source,
+        'occasion': detail.occasion || 'unspecified'
+      });
+      gtag('event', 'conversion', {
+        'send_to': LCS_ADS.lead,
+        'value': 1,
+        'currency': 'GBP',
+        'transaction_id': 'lead-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7),
+        'event_callback': finish
+      });
+      // Never hold the visitor up if gtag.js is blocked or slow.
+      setTimeout(finish, 1500);
+    }
+    document.addEventListener('click', function(e) {
+      var a = e.target.closest && e.target.closest('a[href^="tel:"], a[href^="mailto:"], a[href*="wa.me/"]');
+      if (!a) return;
+      var href = a.getAttribute('href');
+      var method = href.indexOf('tel:') === 0 ? 'call' : href.indexOf('mailto:') === 0 ? 'email' : 'whatsapp';
+      var where = a.closest('.mobile-cta') ? 'mobile_bar' : a.closest('.site-footer') ? 'footer' :
+        a.closest('.site-header') ? 'header' : 'body';
+      loadGA();
+      gtag('event', 'contact_click', { 'method': method, 'link_location': where });
+      var label = method === 'call' ? LCS_ADS.call : LCS_ADS.message;
+      if (label) gtag('event', 'conversion', { 'send_to': label, 'value': 1, 'currency': 'GBP' });
+    });
+
+    // Ad click ID and UTM tags from the landing URL, kept for this tab (only once
+    // the visitor has allowed cookies) so an enquiry sent from a later page still
+    // carries its source for offline conversion import.
+    var LCS_ATTR_KEYS = ['gclid', 'gbraid', 'wbraid', 'utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content'];
+    function lcsAttribution() {
+      var out = {};
+      try {
+        var saved = JSON.parse(sessionStorage.getItem('lcs-attr') || '{}');
+        var q = new URLSearchParams(location.search);
+        LCS_ATTR_KEYS.forEach(function(k) { var v = q.get(k) || saved[k]; if (v) out[k] = v; });
+      } catch (e) {}
+      return out;
+    }
+    function lcsKeepAttribution() {
+      try {
+        if (localStorage.getItem('lcs-consent') !== 'granted') return;
+        var a = lcsAttribution();
+        if (Object.keys(a).length) sessionStorage.setItem('lcs-attr', JSON.stringify(a));
+      } catch (e) {}
+    }
+    lcsKeepAttribution();
   </script>
   <script src="/js/consent.js" defer></script>
   <!-- @include-end partials/analytics.html -->
@@ -2447,7 +2525,7 @@
             "name": "How long does a Christmas carol booking last?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "A standard Christmas booking covers up to an hour and a half including breaks, or the length of a church carol service. Longer programmes are possible for a premium fee, quoted upfront. Between sets we can provide background piano if your venue has an instrument."
+              "text": "A standard Christmas booking covers up to two hours including breaks, or the length of a church carol service. Longer programmes are possible for a premium fee, quoted upfront. Between sets we can provide background piano if your venue has an instrument."
             }
           },
           {
@@ -2665,6 +2743,7 @@
           </tbody>
         </table>
 
+        <p>Every price covers a standard booking of up to two hours including breaks, or the length of the ceremony or service. Longer programmes carry a premium fee, quoted upfront.</p>
         <p>Book a soloist together with an organist or pianist and the accompaniment costs less than booking it separately.</p>
         <ul>
           <li>Soloist with an organist or pianist: &pound;450, instead of &pound;500 booked apart.</li>
@@ -2740,7 +2819,7 @@
       <div class="prose">
         <h2>Christmas &amp; carol singers</h2>
         <p>Christmas bookings are charged at the table rates above, and carol bookings start with a Small Choir of four, since the singing is normally unaccompanied. A soloist is available for a sung grace or a single set piece at a dinner. A <a href="christmas.html">carol service</a> in an office, livery hall, or hired church, or <a href="carol-singers.html">carol singers</a> roaming a party or singing sets in a lobby, costs the same as the equivalent ensemble at any other time of year. Prices include all taxes, fees, and travel within Greater London.</p>
-        <p>A standard Christmas booking covers up to an hour and a half including breaks, or the length of a church service. The choir sings entirely a cappella where there is no instrument, and we can also provide an organist or pianist, or background piano between sets. Bringing a keyboard and speaker to a venue without a piano carries an extra charge, quoted upfront. Christmas Eve and Christmas Day dates carry a premium of around 25%, and December diaries usually close by mid-September. Our <a href="music-guides/carol-singers-cost.html">carol singers cost guide</a> breaks down the options.</p>
+        <p>A standard Christmas booking covers up to two hours including breaks, or the length of a church service. The choir sings entirely a cappella where there is no instrument, and we can also provide an organist or pianist, or background piano between sets. Bringing a keyboard and speaker to a venue without a piano carries an extra charge, quoted upfront. Christmas Eve and Christmas Day dates carry a premium of around 25%. Our <a href="christmas-pricing.html">Christmas prices page</a> sets out what each ensemble costs for a two-hour booking, and the <a href="music-guides/carol-singers-cost.html">carol singers cost guide</a> breaks down the options.</p>
       </div>
     </section>
 
@@ -2815,7 +2894,7 @@
         <p>No. December bookings are charged at the same rates as the rest of the year, inclusive of taxes, fees, and travel within Greater London. The exceptions are Christmas Eve and Christmas Day, which carry a premium of around 25%, confirmed in your written quote before you book.</p>
 
         <h3>How long does a Christmas carol booking last?</h3>
-        <p>A standard Christmas booking covers up to an hour and a half including breaks, or the length of a church carol service. Longer programmes are possible for a premium fee, quoted upfront. Between sets we can provide background piano if your venue has an instrument.</p>
+        <p>A standard Christmas booking covers up to two hours including breaks, or the length of a church carol service. Longer programmes are possible for a premium fee, quoted upfront. Between sets we can provide background piano if your venue has an instrument.</p>
 
         <h3>Who will I be booking with?</h3>
         <p>The London Choral Service is the trading name of Alma Consort Ltd, and that is the company name you will see on your booking confirmation and invoice.</p>
