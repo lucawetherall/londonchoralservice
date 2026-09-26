@@ -1,110 +1,156 @@
-# Graph Report - londonchoralservice  (2026-09-04)
+# Graph Report - site-audit-improvements-47d735  (2026-09-26)
 
 ## Corpus Check
-- 267 files · ~1,594,288 words
+- 58 files · ~1,683,895 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 1082 nodes · 2169 edges · 97 communities (57 shown, 40 thin omitted)
-- Extraction: 92% EXTRACTED · 8% INFERRED · 0% AMBIGUOUS · INFERRED: 173 edges (avg confidence: 0.86)
-- Token cost: 0 input · 0 output
+- 1086 nodes · 2069 edges · 111 communities (73 shown, 38 thin omitted)
+- Extraction: 91% EXTRACTED · 9% INFERRED · 0% AMBIGUOUS · INFERRED: 193 edges (avg confidence: 0.86)
+- Token cost: 239,224 input · 0 output
 
 ## Community Hubs (Navigation)
-- Programmatic Area & City Landing Pages
-- Build Pipeline & Repo Tooling
-- Manual Actions & SEO Roadmap Rationale
-- International Destination Wedding Regions
-- Wedding & Christmas Guide Hub Pages
-- Claude Skills & Copy-Editing Framework
-- Whole-Site Audit & Growth Plan
-- Destination Page Generator Scripts
-- Wedding & Funeral Hymn Repertoire
-- London Borough Pages & Venues
-- English Cathedral City Area Pages
-- Celebration-of-Life Song Repertoire
-- House-Claims Validator Test Suite
-- Ave / You / Maria (19 items)
-- Bach / Wedding / Music (19 items)
-- London / Cemetery / Borough (18 items)
-- London / Borough / Lambeth (18 items)
-- destination / fact / Bali (17 items)
-- Meaning / Christmas / Come (17 items)
-- Barbados / destination / wedding (15 items)
-- Christmas / Carol / You (15 items)
-- Come / Carols / Bleak (15 items)
-- London / Fulham / Borough (14 items)
-- Carol / Christmas / Singers (14 items)
-- Funeral / How / Music (14 items)
-- London / Borough / Crematorium (13 items)
-- Chelsea / Royal / Borough (12 items)
-- Kingston / Borough / Crematorium (12 items)
-- ceremony / destination / wedding (12 items)
-- destination / wedding / ceremony (12 items)
-- destination / wedding / fact (12 items)
-- Services / Plan / Initiative (12 items)
-- from / singers / Choir (12 items)
-- Navigation & Footer Restructure
-- Ireland / Gibraltar / destination (11 items)
-- SEO / Improvements / Plan (11 items)
-- Gaudete & Let It Snow
-- Cemetery / Islington / London (10 items)
-- test / figure / run (10 items)
-- Wedding Legal & Regulatory Facts
-- Oxford / Manchester / area (9 items)
-- Reading / Rochester / area (9 items)
-- Thou / Vision / Abide (9 items)
-- Bexley / borough / London (8 items)
-- Bromley / borough / London (8 items)
-- London / Croydon / City (8 items)
-- Croatia destination wedding pa & Dubrovnik
-- Wedding / Ubi / Caritas (5 items)
-- Jerusalem (5 items)
-- Hark / Herald / Angels (4 items)
-- Anima / Christi / setting (4 items)
-- validate_competitor_claims.py & allowed_figures()
-- claim / site / never (3 items)
-- Christmas / Expansion (3 items)
-- Ding / Dong / Merrily (3 items)
-- White (3 items)
-- indexnow-ping.py & find_key()
+- Christmas Pages & Pricing
+- Nav, Footer & Layout CSS
+- Outer London Boroughs (North/East)
+- Project Skills & Build Rules
+- Europe Destination Weddings
+- Site Audit Findings
+- Build Script & Date Sync
+- Asia & Indian Ocean Destinations
+- Private Register Page Generator
+- Cathedral City Area Pages
+- Catholic Funeral Music
+- Caribbean Destination Weddings
+- Celebration of Life Songs
+- House Claims Validator Tests
+- Private Events Page & JS
+- Ads & GA4 Conversion Tracking
+- Choral Wedding Repertoire
+- Wedding Organ Music
+- East London Boroughs
+- Lambeth & South London
+- Scotland & Spain Regions
+- Charity Carol Concerts
+- Hymn-Leading & West Country
+- Carol Singer Cost & Sizing
+- Carol Lyrics & History
+- London & Manchester Hubs
+- Hammersmith & Fulham
+- Project Instructions (CLAUDE.md)
+- Outer London Boroughs (West/East)
+- Funeral Music Guides
+- Roadmap & Manual Actions
+- Kensington & Chelsea
+- Kingston & Merton
+- Advent Carols
+- Corporate & Law Firm Carols
+- SEO & Conversion Plans
+- Private Events Design Decisions
+- Haringey & Islington
+- Cookie Consent Banner
+- Classic Funeral Hymns
+- Competitor Claims Validator Tests
+- Oxford & Reading Area Pages
+- Nav & Services Redesign Plans
+- A Cappella Christmas Songs
+- Carols for Four Voices
+- How to Organise an Office Carol Service
+- Westminster borough page
+- Greece destination wedding page
+- Italy destination wedding page
+- P10 Technical Platform and Freshness
+- music-guides.js
+- Christmas Entertainment for Hotels
+- accessibility.html
+- Jerusalem
+- create_christmas_carol_campaign_2026.py
+- Anima Christi at a Catholic funeral
+- conversion_actions_2026_09.py
+- allowed_figures()
+- Christmas Expansion Plan
+- Competitive Capture Spec
+- Hark! The Herald Angels Sing
+- Ding Dong! Merrily on High
+- No December/seasonal surcharge policy
+- indexnow-ping.py
+- House claim rules applied off-site: neve
+- Head Extras Partial
+- 404 Page Not Found
+- Apple Touch Icon
+- Favicon: Serif L Monogram
+- LCS Favicon - Serif 'L' Monogram
+- Favicon: Serif 'L' Monogram
+- Favicon Brand Mark
+- Christmas OG Social Share Image
+- Corporate Events OG Share Image
+- Funerals OG Social-Share Image
+- Default Open Graph Social Share Image
+- Pricing Page OG Image
+- Services Page OG Social Share Image
+- Weddings OG Social Preview Image
+- Cross-sell from destination pages to UK 
+- Alma Consort Ltd Companies House record
+- GBP canonical Google Maps URL for The Lo
+- geo_cities coordinates registry
+- Luca Wetherall LinkedIn URL
+- Luca Wetherall Oxford Music Faculty page
+- Destination page dead-end fix
+- IndexNow Verification Key File
+- Haul-group sibling linking
+- Nearby destinations section
+- services.html
+- Stop-Slop Pattern: Adverb Crutches
+- Stop-Slop Pattern: Binary Contrasts
+- Stop-Slop Pattern: Em-Dash Fragmentation
+- Stop-Slop Pattern: "Here's what / here's
+- Stop-Slop Pattern: Inanimate-Object-As-H
+- Stop-Slop Pattern: Lazy Extremes
+- Stop-Slop Pattern: Narrator-From-A-Dista
+- Stop-Slop Pattern: Punchy One-Liner Clos
+- Stop-Slop Pattern: Triadic Rhythm As Def
+- Stop-Slop Pattern: Vague Declaratives
+- Three haul-group taxonomy
 
 ## God Nodes (most connected - your core abstractions)
-1. `A Complete Guide to Wedding Ceremony Music` - 45 edges
-2. `How Much Does Wedding Music Cost?` - 44 edges
-3. `Whole-Site Audit and Growth Plan` - 43 edges
-4. `For Planners, Venues & Estates (page)` - 35 edges
-5. `pricing.html` - 33 edges
-6. `Weddings service page (weddings.html)` - 31 edges
-7. `How to Hire a Choir for Your Wedding` - 29 edges
-8. `Hiring a UK Choir for a Destination Wedding guide` - 27 edges
-9. `Funeral Singers & Choirs Page` - 26 edges
-10. `Luca Wetherall, Artistic Director (Tutor in Music, University of Oxford)` - 26 edges
+1. `Pricing page` - 46 edges
+2. `A Complete Guide to Wedding Ceremony Music` - 46 edges
+3. `How Much Does Wedding Music Cost?` - 43 edges
+4. `Whole-Site Audit and Growth Plan` - 42 edges
+5. `Christmas Carol Services page` - 35 edges
+6. `For Planners, Venues & Estates (page)` - 31 edges
+7. `How to Hire a Choir for Your Wedding` - 30 edges
+8. `Weddings service page (weddings.html)` - 30 edges
+9. `London area page` - 27 edges
+10. `Hiring a UK Choir for a Destination Wedding guide` - 26 edges
 
 ## Surprising Connections (you probably didn't know these)
+- `Dead .audio-placeholder rules removed (12 lines off every page)` --conceptually_related_to--> `data/page-dates.json (generated lastmod store)`  [INFERRED]
+  css/components.css → data/page-dates.json
 - `OG image: Private & International Choral Engagements` --conceptually_related_to--> `Destinations hub page (destination weddings index)`  [INFERRED]
   assets/og-private-events.png → destinations/index.html
-- `For Livery Companies Page` --semantically_similar_to--> `For Charities Page`  [INFERRED] [semantically similar]
-  for-livery-companies.html → for-charities.html
-- `For Hotels & Venues Page` --semantically_similar_to--> `For Property Managers Page`  [INFERRED] [semantically similar]
-  for-hotels.html → for-property-managers.html
-- `Stop-Slop Before/After Example 1 (About Page)` --references--> `About Our Musicians Page`  [EXTRACTED]
-  SITE-STOP-SLOP-PLAN.md → about.html
-- `IndexNow ping GitHub Actions workflow` --conceptually_related_to--> `llms.txt (LLM site index)`  [INFERRED]
-  .github/workflows/indexnow.yml → llms.txt
+- `1080px nav breakpoint` --conceptually_related_to--> `Split breakpoint: nav 1080px vs sticky-CTA/hero 805px`  [EXTRACTED]
+  js/nav.js → css/components.css
+- `.dropdown-menu mobile breakpoint (max-width: 1080px)` --implements--> `1080px nav breakpoint`  [EXTRACTED]
+  css/components.css → js/nav.js
+- `.nav-links mobile breakpoint (max-width: 1080px)` --implements--> `1080px nav breakpoint`  [EXTRACTED]
+  css/layout.css → js/nav.js
 
 ## Import Cycles
 - None detected.
 
 ## Hyperedges (group relationships)
+- **Competitor price-claim gate (YAML source + compare page + quarterly re-check)** — data_competitor_pricing, compare_london_funeral_singers, data_competitor_pricing_derived_figures, manual_actions_required_quarterly_competitor_check, the_london_funeral_singers [EXTRACTED 1.00]
+- **Lead and contact conversion tracking (site tag, Ads actions, GA4 key events)** — partials_analytics_lcslead, partials_analytics_contact_click, partials_analytics_lcs_ads, logs_ads_changes_conversion_rebuild, logs_ga4_changes_generate_lead_key_event, partials_analytics_consent_mode_defaults [INFERRED 0.85]
+- **B2B for-* landing pages feeding Christmas bookings** — for_charities, for_event_managers, for_hotels, for_livery_companies, for_property_managers, christmas, carol_singers [INFERRED 0.85]
+- **Ensemble sizing by acoustics and venue across carol guides** — music_guides_how_many_carol_singers_room_acoustics_first, music_guides_outdoor_carol_singing_add_two_voices_outdoors, music_guides_carol_singers_cost_venue_size_matching, music_guides_church_carol_service_choir_hire_four_voices_lead_150, music_guides_how_many_carol_singers_four_smallest_unaccompanied [INFERRED 0.85]
+- **Guides quoting the pricing.html ladder verbatim** — music_guides_carol_singers_cost_article, music_guides_wedding_music_costs_article, music_guides_last_minute_funeral_singers, music_guides_charity_carol_concert_article, music_guides_christmas_choir_hire_article, music_guides_church_carol_service_choir_hire_article, pricing_pricingpage [INFERRED 0.95]
+- **Corporate Christmas event guide cluster** — music_guides_carol_singers_law_firms_article, music_guides_christmas_drinks_reception_music_article, music_guides_christmas_gala_dinner_music_article, music_guides_company_christmas_party_entertainment_article, music_guides_office_carol_service_planning, music_guides_corporate_carol_service_article, for_event_managers [INFERRED 0.85]
 - **Harrow and Hillingdon sharing Breakspear Crematorium** — areas_london_harrow_borough, areas_london_hillingdon_borough, areas_london_harrow_breakspearcrematorium [EXTRACTED 1.00]
 - **Commercial Pillar Pages (Christmas, Corporate, Funerals + Weddings)** — christmas, corporate, funerals [EXTRACTED 1.00]
-- **Competitor Pricing Comparison Dataset (LFS vs LCS)** — data_competitor_pricing_lfs_provider, data_competitor_pricing_lcs_prices, data_competitor_pricing_derived_figures [EXTRACTED 1.00]
-- **Shared choir ensemble-size pricing ladder (solo through twelve-voice chorus), restated verbatim across guides** — music_guides_wedding_choir_guide_soloensemble, music_guides_wedding_choir_guide_quartetensemble, music_guides_wedding_choir_guide_quintetensemble, music_guides_wedding_choir_guide_sextetensemble, music_guides_wedding_choir_guide_octetensemble, music_guides_wedding_choir_guide_twelvevoicechorus, music_guides_wedding_choir_guide_article, music_guides_wedding_music_costs_article, music_guides_when_to_book_christmas_entertainment_article [EXTRACTED 1.00]
-- **Carols that suit four voices (one voice per part)** — music_guides_best_carols_for_four_voices_ding_dong_merrily_on_high, music_guides_best_carols_for_four_voices_the_sussex_carol, music_guides_best_carols_for_four_voices_adam_lay_ybounden, music_guides_best_carols_for_four_voices_in_the_bleak_midwinter, music_guides_best_carols_for_four_voices_coventry_carol, music_guides_a_cappella_christmas_songs_gaudete [EXTRACTED 1.00]
 - **Hawksmoor churches of Tower Hamlets** — areas_london_tower_hamlets_christchurchspitalfields, areas_london_tower_hamlets_stanneslimehouse, areas_london_tower_hamlets_hawksmoorchurches, areas_london_tower_hamlets_borough [EXTRACTED 1.00]
 - **Creation history of the hymn Jerusalem (text, music, orchestration, commission)** — music_guides_jerusalem_williamblake, music_guides_jerusalem_hubertparry, music_guides_jerusalem_edwardelgar, music_guides_jerusalem_robertbridges [EXTRACTED 1.00]
 - **Most Popular UK Funeral Hymns (per FAQ list)** — music_guides_popular_funeral_hymns_abide_with_me, music_guides_popular_funeral_hymns_the_lords_my_shepherd_crimond, music_guides_popular_funeral_hymns_how_great_thou_art, music_guides_popular_funeral_hymns_amazing_grace, music_guides_popular_funeral_hymns_jerusalem, music_guides_popular_funeral_hymns_guide_me_o_thou_great_redeemer, music_guides_popular_funeral_hymns_dear_lord_and_father_of_mankind, music_guides_popular_funeral_hymns_all_things_bright_and_beautiful [EXTRACTED 1.00]
-- **Shared Nav/Footer Partial Include System** — partials_nav, partials_footer, index, about, contact [EXTRACTED 1.00]
 - **New Page Creation Workflow (head, internal linking, JSON-LD)** — _claude_skills_new_page_skill, _claude_skills_new_page_references_head_checklist, _claude_skills_new_page_references_internal_linking, _claude_skills_new_page_references_jsonld_by_page_type [EXTRACTED 1.00]
 - **Popular Catholic Funeral Hymns (per FAQ list)** — music_guides_catholic_funeral_hymns_be_not_afraid, music_guides_catholic_funeral_hymns_here_i_am_lord, music_guides_catholic_funeral_hymns_ave_maria, music_guides_catholic_funeral_hymns_panis_angelicus, music_guides_popular_funeral_hymns_how_great_thou_art, music_guides_popular_funeral_hymns_the_lords_my_shepherd_crimond, music_guides_popular_funeral_hymns_make_me_a_channel_of_your_peace, music_guides_catholic_funeral_hymns_on_eagles_wings, music_guides_catholic_funeral_hymns_soul_of_my_saviour, music_guides_popular_funeral_hymns_abide_with_me [EXTRACTED 1.00]
 - **Private-register bespoke design system (parchment/choirStall/cassockRed theme, shared private-register.css.html and private-events.js, distinct from the main site nav/footer partials)** — js_private_events, planners_and_venues, alma_consort, partials_private_footer [EXTRACTED 1.00]
@@ -117,267 +163,299 @@
 - **Copy Quality Toolkit (house rules, generic editing, plain English)** — _claude_skills_writing_site_copy_skill, _claude_skills_copy_editing_skill, _claude_skills_copy_editing_references_plain_english_alternatives [INFERRED 0.65]
 - **Destinations addressing Catholic nuptial Mass permissions (Italy, France, Croatia)** — destinations_italy_nuptial_mass, destinations_france_two_ceremonies, destinations_croatia [INFERRED 0.65]
 - **Small-Team Positioning Correction Cluster** — docs_superpowers_plans_2026_08_18_competitive_capture_competitive_capture, docs_superpowers_plans_2026_08_18_value_care_and_onpage_seo_value_care_onpage_seo, docs_superpowers_plans_2026_08_18_competitive_capture, docs_superpowers_plans_2026_08_18_value_care_and_onpage_seo [INFERRED 0.65]
-- **Carol-singing logistics guides across venues (sizing, outdoor, hotel, office, residential)** — music_guides_how_many_carol_singers, music_guides_outdoor_carol_singing, music_guides_hotel_christmas_entertainment, music_guides_office_carol_service_planning, music_guides_residents_christmas_carol_event [INFERRED 0.75]
 - **Destinations sharing a pre-existing Anglican/Baptist choral tradition (Barbados, Jamaica, Ireland)** — destinations_barbados_anglican_tradition, destinations_jamaica_anglican_baptist_tradition, destinations_ireland_no_permits [INFERRED 0.75]
 - **Long-haul destinations requiring extended travel/acclimatisation logistics (Bali, Maldives, Mauritius)** — destinations_indonesia_longest_journey, destinations_maldives_seaplane_logistics, destinations_mauritius_colonial_churches [INFERRED 0.75]
 - **Funeral repertoire guides (hymns, songs, non-religious music) cross-reference each other** — music_guides_funeral_songs, music_guides_non_religious_funeral_music [INFERRED 0.75]
-- **Luca Wetherall's Oxford academic role used as a distinctive local credibility hook** — pricing_luca_wetherall, areas_oxford, areas_london [INFERRED 0.75]
+- **Luca Wetherall's Oxford academic role used as a distinctive local credibility hook** — areas_oxford, areas_london [INFERRED 0.75]
 - **Nav Dropdown & Services Hub Redesign Cluster** — docs_superpowers_plans_2026_05_09_nav_services_dropdown, docs_superpowers_specs_2026_05_09_nav_services_dropdown_design, docs_superpowers_plans_2026_05_09_services_page_redesign, docs_superpowers_specs_2026_05_09_services_page_redesign_design, docs_superpowers_plans_2026_05_09_nav_services_dropdown_nav_services_dropdown, docs_superpowers_plans_2026_05_09_services_page_redesign_services_page_redesign [INFERRED 0.75]
 - **Pre-Commit Quality Gates (build, copy, wiring)** — _claude_skills_build_and_verify_skill, _claude_skills_writing_site_copy_skill, _claude_skills_new_page_skill [INFERRED 0.75]
 - **The private-register partial architecture (shared CSS/footer partials) forms the technical basis shared by the private-events plan and the destination pages built on it** — docs_superpowers_specs_2026_08_29_international_luxury_weddings_design_registerbecomespartial, destinations_scotland_scotland, destinations_united_states_unitedstates, docs_superpowers_plans_2026_08_26_private_events_plan [INFERRED 0.75]
 - **Anima Christi covered for two audiences (Catholic funeral and Catholic wedding) from a shared prayer identity** — music_guides_anima_christi_catholic_funeral_page, music_guides_anima_christi_catholic_wedding_page, music_guides_anima_christi_catholic_funeral_prayer [INFERRED 0.85]
-- **B2B Landing Page Template Pattern (hero + how-we-work + booking/invoicing + FAQ + brief form)** — for_hotels, for_property_managers, for_livery_companies, for_charities, for_event_managers, for_funeral_directors, for_wedding_planners [INFERRED 0.85]
 - **Be Thou My Vision covered for two audiences (funeral and wedding) from a shared hymn identity** — music_guides_be_thou_my_vision_funeral_hymn_page, music_guides_be_thou_my_vision_wedding_hymn_page, music_guides_be_thou_my_vision_funeral_hymn_hymn [INFERRED 0.85]
-- **Corporate Christmas Event Guide Cluster** — music_guides_christmas_drinks_reception_music_article, music_guides_christmas_gala_dinner_music_article, music_guides_carol_singers_law_firms_article, music_guides_corporate_carol_service_article, music_guides_company_christmas_party_entertainment_article [INFERRED 0.85]
 - **Programmatic local-SEO area-page template (shared head/nav/footer partials, Service+LocalBusiness+BreadcrumbList+FAQPage JSON-LD, and FAQ/pricing prose pattern)** — areas_bath, areas_birmingham, areas_brighton, areas_cambridge, areas_canterbury, areas_chelmsford, areas_chester, areas_guildford, areas_liverpool, areas_index [INFERRED 0.85]
 - **Shared UK city/town area-page template (hero, funeral/wedding sections, venues, ensembles & pricing, pull-quote, Christmas, FAQ)** — areas_london, areas_manchester, areas_oxford, areas_reading, areas_rochester, areas_salisbury, areas_slough_maidenhead, areas_st_albans, areas_winchester, areas_windsor [INFERRED 0.90]
 - **Shared London-borough page template (breadcrumb to London hub, venue paragraphs, ensembles, pull-quote, FAQ)** — areas_london_barking_dagenham, areas_london_barnet, areas_london_bexley, areas_london_brent, areas_london_bromley, areas_london_camden, areas_london_city_of_london, areas_london_croydon, areas_london_ealing, areas_london_enfield, areas_london_greenwich [INFERRED 0.90]
-- **Shared LCS Pricing Ladder Reused Across Christmas/Wedding Guides** — music_guides_carol_singers_cost_pricingladder, music_guides_carol_singers_cost_article, music_guides_booking_carol_singers_agency_vs_direct_article, music_guides_christmas_choir_hire_article, music_guides_company_christmas_party_entertainment_article, music_guides_carol_singers_law_firms_article, music_guides_christmas_drinks_reception_music_article, music_guides_christmas_gala_dinner_music_article, music_guides_church_carol_service_choir_hire_article, music_guides_charity_carol_concert_article, music_guides_carols_by_candlelight_article, music_guides_corporate_carol_service_article, music_guides_destination_wedding_choir_article [INFERRED 0.95]
-- **The Ensemble Pricing Ladder (Soloist to Chorus)** — pricing_soloist_250, pricing_small_choir_1150, pricing_quintet_1400, pricing_sextet_1600, pricing_full_choir_2000, pricing_chorus_3000 [INFERRED 0.95]
 - **Trust and compliance pages (terms, accessibility, cookie consent)** — terms, accessibility, privacy, js_consent, partials_analytics [EXTRACTED 1.00]
 - **Professionals nav dropdown (seven trade pages plus the planners page)** — for_funeral_directors, for_wedding_planners, for_event_managers, for_hotels, for_property_managers, for_livery_companies, for_charities, planners_and_venues [EXTRACTED 1.00]
-- **Generated freshness signals (sitemap.xml, page-dates.json, article dates)** — scripts_generate_sitemap_py, scripts_sync_dates_py, data_page_dates_json, concept_generated_sitemap_never_hand_edit, build_sh__entry [EXTRACTED 1.00]
+- **Generated freshness signals (sitemap.xml, page-dates.json, article dates)** — scripts_sync_dates_py, data_page_dates_json, concept_generated_sitemap_never_hand_edit, build_sh__entry [EXTRACTED 1.00]
 
-## Communities (97 total, 40 thin omitted)
+## Communities (111 total, 38 thin omitted)
 
-### Community 0 - "Programmatic Area & City Landing Pages"
-Cohesion: 0.09
-Nodes (86): 404 Page Not Found, About Our Musicians Page, AggregateRating Sitewide Policy Violation Finding, Alma Consort (performing ensemble, 8-24 voices), Areas We Serve (hub page), Areas We Serve — City Hub (areas/), B2B Landing Pages Low Inbound Links Finding, Bath area page (+78 more)
+### Community 0 - "Christmas Pages & Pricing"
+Cohesion: 0.07
+Nodes (80): About Our Musicians Page, Areas We Serve — City Hub (areas/), B2B booking & invoicing (PO, £5m PLI), Hire Carol Singers page, Carol singers hire intent (vs carol service intent), Christmas Carol Services page, Christmas Carol Singer Prices page, Two-hour standard Christmas booking (+72 more)
 
-### Community 4 - "Build Pipeline & Repo Tooling"
-Cohesion: 0.03
-Nodes (85): .dropdown-menu mobile breakpoint (max-width: 1080px), .footer-grid rule (five-column footer), .guide-links flex link list component, .guide-links rule (service/guide link lists), .nav-links mobile breakpoint (max-width: 1080px), 1080px nav breakpoint, Build-noise does not bump lastmod, Byline · Published date-line migration (BYLINE_PUB_RX) (+77 more)
+### Community 1 - "Nav, Footer & Layout CSS"
+Cohesion: 0.07
+Nodes (64): Hire Carol Singers page (carol-singers.html), Christmas carol services page (christmas.html), 1080px nav breakpoint, Five-column footer grid, Split breakpoint: nav 1080px vs sticky-CTA/hero 805px, .dropdown-menu mobile breakpoint (max-width: 1080px), .footer-grid rule (five-column footer), .nav-links mobile breakpoint (max-width: 1080px) (+56 more)
 
-### Community 5 - "Manual Actions & SEO Roadmap Rationale"
-Cohesion: 0.03
-Nodes (64): Alternative formats on request (large print, plain text), Clause 10: The Client's obligations, Clause 11: Travel inclusive within Greater London, Clause 12: Liability capped at total fee, Clause 13: Data protection, Clause 14: Governing law (England and Wales), Clause 1: The parties, Clause 2: Services (+56 more)
-
-### Community 3 - "International Destination Wedding Regions"
+### Community 2 - "Outer London Boroughs (North/East)"
 Cohesion: 0.05
-Nodes (55): Cape Town (South Africa region), Cross-sell from destination pages to UK weddings and planners, Destination page dead-end fix, Doorway-page ship gate: at least 60% of each destination page's body copy must be unique; the test caught a real failure in PR3 where a reused cost paragraph pushed the Thailand/Bali pair to 42.3% shared vocabulary, fixed by rewriting per country down to 35.7%, Edinburgh and the Lothians (Scotland region), Fife and Perthshire (Scotland region), Five-lens parallel review (code, copy/slop, accessibility+design, SEO/head/schema, visual) required before shipping private-events.html, Florida (US region) (+47 more)
+Nodes (45): Barking and Dagenham borough page, Eastbrookend Cemetery, London Borough of Barking and Dagenham, St Margaret's Church, Barking, Barnet borough page, Golders Green Crematorium, Hendon Crematorium, London Borough of Barnet (+37 more)
 
-### Community 2 - "Wedding & Christmas Guide Hub Pages"
-Cohesion: 0.10
-Nodes (54): A Complete Guide to Wedding Ceremony Music, Alma Consort (touring performance ensemble), Alma Consort Ltd (legal entity, company no. 16785727), Best Wedding Choirs in London guide, Care Process Strip partial ("We take the whole thing off your hands" 4-step CTA), Ceremony moment: signing the register, Ceremony moment: the prelude, Ceremony moment: the processional (+46 more)
+### Community 3 - "Project Skills & Build Rules"
+Cohesion: 0.07
+Nodes (38): ab-test-setup Skill, ai-seo Skill, analytics-tracking Skill, build-and-verify Skill, CSS Inlining Build Pipeline (build.sh 4 steps), Site-Wide Sweep Procedure (scripted bulk edits outside partials), Two Cardinal Rules (never hand-edit generated style block or partial markers), competitor-alternatives Skill (+30 more)
 
-### Community 1 - "Claude Skills & Copy-Editing Framework"
-Cohesion: 0.05
-Nodes (52): 3-Click Rule (important pages reachable within 3 clicks of homepage), AI Writing Detection Reference, Alma Consort Ltd Companies House record, Audit Priority Order (Crawlability > Technical > On-Page > Content > Authority), CSS Inlining Build Pipeline (build.sh 4 steps), Clone-an-Exemplar Workflow (never write a page from scratch), GBP canonical Google Maps URL for The London Choral Service, Maidenhead, Guards' Chapel, Wellington Barracks (venue) (+44 more)
-
-### Community 92 - "Whole-Site Audit & Growth Plan"
-Cohesion: 0.10
-Nodes (38): Appendix B: 13 Accuracy Corrections, Appendix C: ROADMAP Item Mapping, Finding: 139 of 160 Sitemap Lastmods Are Stale, Finding: 14 of 20 Listen Page Titles Have No Recording, Finding: ?occasion=quote-check Never Pre-Fills, Finding: Destination Pages Have One Inbound Link Each, Finding: Five Different Response-Time Promises, Finding: No Singer Named but the Director (+30 more)
-
-### Community 6 - "Destination Page Generator Scripts"
-Cohesion: 0.10
-Nodes (29): The register's shared enquiry form. source_page is the attribution value:…, Tuscany, the Amalfi Coast, Lake Como, Puglia and Florence, build(), build_register_page.py, by_slug(), ceremony_sections.py, content_americas.py, content_europe_a.py (+21 more)
-
-### Community 9 - "Wedding & Funeral Hymn Repertoire"
-Cohesion: 0.09
-Nodes (28): Abide with Me (Eventide), All Things Bright and Beautiful, All Things Bright and Beautiful (Royal Oak), Anima Christi (Frisina), Be Not Afraid, Be Thou My Vision, Be Thou My Vision (Slane), Best Hymns for a Catholic Funeral (guide) (+20 more)
-
-### Community 7 - "London Borough Pages & Venues"
-Cohesion: 0.11
-Nodes (24): Barking and Dagenham borough page, Barnet borough page, Ealing borough page, Eastbrookend Cemetery, Eltham Crematorium (Greenwich area), Enfield Crematorium, Great Cambridge Road, Enfield borough page, Golders Green Crematorium (+16 more)
-
-### Community 8 - "English Cathedral City Area Pages"
-Cohesion: 0.11
-Nodes (22): All Saints Maidenhead, Luca Wetherall, Artistic Director (Tutor in Music, University of Oxford), Salisbury (city), Salisbury Cathedral (tallest spire in Britain, holds a Magna Carta copy), Salisbury Crematorium, Salisbury area page, Slough & Maidenhead (area), Slough & Maidenhead area page (+14 more)
-
-### Community 10 - "Celebration-of-Life Song Repertoire"
-Cohesion: 0.10
-Nodes (21): Amazing Grace, Blackbird (The Beatles), Bridge Over Troubled Water (Simon & Garfunkel), Bring Him Home (Les Misérables), Danny Boy, Fields of Gold, Fly Me to the Moon, Heroes (David Bowie) (+13 more)
-
-### Community 11 - "House-Claims Validator Test Suite"
-Cohesion: 0.16
-Nodes (21): Drop `html` into a temp repo as index.html, run the validator, return (exit,…, The true statement must not trip the VAT pattern., carol-singers.html legitimately says a room holds up to 150 guests., for-funeral-directors.html deliberately says 'one person, not a roster'., run_on(), test_150_plus_fails(), test_aggregate_rating_fails(), test_css_values_pass() (+13 more)
-
-### Community 12 - "Ave / You / Maria (19 items)"
-Cohesion: 0.11
-Nodes (19): A Gaelic Blessing (Rutter), Ave Maria (Bach/Gounod), Ave Maria (Schubert), Ave Verum Corpus (Mozart), Brother James's Air, Irish Blessing (traditional), Laudate Dominum (Mozart), Locus Iste (Bruckner) (+11 more)
-
-### Community 13 - "Bach / Wedding / Music (19 items)"
-Cohesion: 0.11
-Nodes (19): A Thousand Years (Christina Perri, choral arr.), A Thousand Years (Christina Perri, organ arr.), Air on the G String (Bach), All You Need Is Love (The Beatles), Arrival of the Queen of Sheba (Handel), Bridal Chorus (Wagner), Can't Help Falling in Love (Elvis Presley), Canon in D (Pachelbel) (+11 more)
-
-### Community 14 - "London / Cemetery / Borough (18 items)"
-Cohesion: 0.16
-Nodes (18): Abney Park Cemetery, Chapel Royal of St Peter ad Vincula, Chingford Mount Cemetery, Christ Church, Spitalfields, City of London Cemetery and Crematorium (Manor Park), East London Crematorium (Plaistow), Hackney (London Borough), Hawksmoor Churches of Tower Hamlets (+10 more)
-
-### Community 15 - "London / Borough / Lambeth (18 items)"
-Cohesion: 0.12
-Nodes (18): Camberwell Old Cemetery Chapel, Dickens's Little Dorrit — St George the Martyr Connection, Grove Park Cemetery, Hither Green Crematorium, Honor Oak Crematorium, Lambeth (London Borough), Lambeth Palace Chapel, Lewisham (London Borough) (+10 more)
-
-### Community 16 - "destination / fact / Bali (17 items)"
-Cohesion: 0.15
-Nodes (17): Bali (Indonesia) destination wedding page, Bali as longest-haul destination (travel logistics fact), Bali glass chapels (venue fact), Belle Mare, Destinations hub page (destination weddings index), Grand Baie, Le Morne, Maldives destination wedding page (+9 more)
-
-### Community 17 - "Meaning / Christmas / Come (17 items)"
-Cohesion: 0.12
-Nodes (17): Christmas Carol Lyrics and What They Mean, Dates run Christmas Day to Epiphany; the Catholic-catechism gift theory is a debunked 1990s invention, God Rest Ye Merry, Gentlemen, Good King Wenceslas (Neale), In the Bleak Midwinter (Rossetti), Meaning of 'God rest ye merry, gentlemen' (rest=keep/make, merry=strong; comma misplacement), Meaning of 'round yon Virgin Mother and Child'; 1818 origin and translation history, Meaning of 'very God, begotten not created' and its Nicene Creed origin (+9 more)
-
-### Community 18 - "Barbados / destination / wedding (15 items)"
-Cohesion: 0.15
-Nodes (15): Barbados Anglican choral tradition (three centuries), Barbados destination wedding page, Cancún, Christ Church parish (Barbados), Jamaica destination wedding page, Jamaican Anglican and Baptist choral tradition, Mexico cenote ceremony music logistics, Mexico destination wedding page (+7 more)
-
-### Community 19 - "Christmas / Carol / You (15 items)"
-Cohesion: 0.13
-Nodes (15): A Cappella Christmas Songs for a Choir (guide), All I Want for Christmas Is You, Do You Hear What I Hear, Down in Yon Forest, Fairytale of New York, Have Yourself a Merry Little Christmas, I Wonder as I Wander, Last Christmas (+7 more)
-
-### Community 20 - "Come / Carols / Bleak (15 items)"
-Cohesion: 0.14
-Nodes (15): Adam Lay Ybounden (Boris Ord), Advent Carols vs Christmas Carols, Away in a Manger, Come, Thou Long Expected Jesus (Wesley), Coventry Carol, Hills of the North, Rejoice, In the Bleak Midwinter, In the Bleak Midwinter (Holst) (+7 more)
-
-### Community 21 - "London / Fulham / Borough (14 items)"
-Cohesion: 0.18
-Nodes (14): All Saints Fulham, Fulham Palace Chapel, Hammersmith & Fulham (London Borough), Hampton Court Chapel, Hounslow (London Borough), Margravine Cemetery, Mortlake Crematorium, Richmond upon Thames (London Borough) (+6 more)
-
-### Community 22 - "Carol / Christmas / Singers (14 items)"
-Cohesion: 0.38
-Nodes (14): Best Christmas Carol Singers guide, Booking Carol Singers: Agency vs Direct guide, Carol Singers for Law Firms and Professional Services guide, Carols by Candlelight guide, Hiring a Choir for Your Christmas Event guide, Hiring a Choir for a Church Carol Service guide, How Much Does It Cost to Hire Carol Singers guide, LCS Ensemble Pricing Ladder (Soloist £250 to 12-voice Chorus £3000) (+6 more)
-
-### Community 23 - "Funeral / How / Music (14 items)"
-Cohesion: 0.41
-Nodes (14): Booking Funeral Singers at Short Notice, Christmas Entertainment for Hotels, Hosting a Residents' Carol Event, How Many Carol Singers Do You Need?, How Much Does Funeral Music Cost?, How to Choose Music for a Funeral, How to Organise an Office Carol Service, How to Plan a Memorial Service (+6 more)
-
-### Community 24 - "London / Borough / Crematorium (13 items)"
-Cohesion: 0.18
-Nodes (13): Breakspear Crematorium, Forest Park Crematorium (Hainault), Harrow (London Borough), Havering (London Borough), Hillingdon (London Borough), Hillingdon Cemetery, Redbridge (London Borough), South Essex Crematorium (Corbets Tey) (+5 more)
-
-### Community 25 - "Chelsea / Royal / Borough (12 items)"
-Cohesion: 0.18
-Nodes (12): All Saints Church, Wandsworth, Brompton Oratory, Chelsea Old Church, Holy Trinity Sloane Square, Putney Vale Crematorium, Royal Borough of Kensington and Chelsea, Royal Hospital Chelsea Chapel, St Luke's Chelsea (+4 more)
-
-### Community 26 - "Kingston / Borough / Crematorium (12 items)"
-Cohesion: 0.18
-Nodes (12): All Saints Church, Carshalton, All Saints Kingston, Kingston Crematorium, Merton (London Borough), Morden Cemetery, North East Surrey Crematorium, Royal Borough of Kingston upon Thames, South London Crematorium (Mitcham) (+4 more)
-
-### Community 27 - "ceremony / destination / wedding (12 items)"
-Cohesion: 0.18
-Nodes (12): Ayia Napa, Crete, Cypriot civil ceremony / Greek Orthodox ceremony music logistics, Cyprus destination wedding page, Greece destination wedding page, Greek Orthodox ceremony music logistics, Mykonos, Paphos (+4 more)
-
-### Community 28 - "destination / wedding / ceremony (12 items)"
-Cohesion: 0.17
-Nodes (12): France destination wedding page, French dual civil/religious ceremony (mairie + church) fact, Lisbon, Porto, Portugal destination wedding page, Provence, Quinta ceremony (Algarve) music logistics, Sintra (+4 more)
-
-### Community 29 - "destination / wedding / fact (12 items)"
-Cohesion: 0.18
-Nodes (12): Florence, Gozo, Italy destination wedding page, Lake Como, Malta destination wedding page, Malta: shortest paperwork in the Mediterranean, English official language (fact), Mdina, Nuptial Mass in Italian Catholic parishes (permit/permission fact) (+4 more)
-
-### Community 30 - "Services / Plan / Initiative (12 items)"
-Cohesion: 0.23
-Nodes (12): Competitive Capture Plan, Competitive Capture Programme Initiative, Competitive Capture Spec, Nav Services Dropdown Initiative, Nav Services Dropdown Plan, Nav Services Dropdown Spec, Services Page Hub Redesign Initiative, Services Page Redesign Plan (+4 more)
-
-### Community 31 - "from / singers / Choir (12 items)"
-Cohesion: 0.17
-Nodes (12): Choir and Singer Pricing (pricing.html), Chorus — 12 singers (from £3,000), Christmas Eve / Christmas Day premium (~25%), Full Choir — 8 singers (from £2,000), Instrumentalists — pianists, harpists, strings (from £250), Organist / Pianist (from £250; £225 added to a choir), Quintet — 5 singers (from £1,400), Sextet — 6 singers (from £1,600) (+4 more)
-
-### Community 93 - "Navigation & Footer Restructure"
+### Community 4 - "Europe Destination Weddings"
 Cohesion: 0.08
-Nodes (12): Five-Column Site Footer, Footer Company Registration Line, Footer For Professionals Column, Footer Guides and Areas Column, Footer Legal Links Cluster, Footer Services Column, Funeral Director Callout (Funerals Page), Private Register Return to Main Site (+4 more)
+Nodes (38): OG image: Private & International Choral Engagements, Croatia destination wedding page, Dubrovnik, Hvar (island logistics), Istria, Split, Cyprus destination wedding page, Ayia Napa (+30 more)
 
-### Community 32 - "Ireland / Gibraltar / destination (11 items)"
-Cohesion: 0.20
-Nodes (11): County Wicklow, Dublin and the east, Gibraltar destination wedding page, Ireland destination wedding page, Ireland: no permits or long-haul cost (logistics fact), Irish castle and country house ceremonies, No work permit needed for visiting British musicians in Gibraltar (fact), The Botanic Gardens (Gibraltar) (+3 more)
+### Community 5 - "Site Audit Findings"
+Cohesion: 0.12
+Nodes (32): Finding: Destination Pages Have One Inbound Link Each, Finding: Five Different Response-Time Promises, Finding: 14 of 20 Listen Page Titles Have No Recording, Finding: No Singer Named but the Director, Finding: No Terms of Booking or Accessibility Statement, Finding: ?occasion=quote-check Never Pre-Fills, Finding: Testimonials Recycled Across Mismatched Geography, Finding: thank-you.html Has No Next Steps (+24 more)
 
-### Community 33 - "SEO / Improvements / Plan (11 items)"
-Cohesion: 0.24
-Nodes (11): Music Guides Index Redesign Initiative, Music Guides Redesign Plan, Music Guides Redesign Spec, SEO & Conversion Improvements Initiative, SEO & Conversion Improvements Plan, SEO & Conversion Improvements Spec, SEO Audit Fixes Initiative, SEO Audit Fixes Plan (+3 more)
+### Community 6 - "Build Script & Date Sync"
+Cohesion: 0.10
+Nodes (29): build.sh script, dateModified JSON-LD sync, article:modified_time meta sync, Build-noise does not bump lastmod, sitemap+date-sync step order (after CSS inline, before llms-full), Byline · Published date-line migration (BYLINE_PUB_RX), changefreq/priority carried from existing sitemap, Content-hash lastmod (+21 more)
 
-### Community 34 - "Gaudete & Let It Snow"
+### Community 7 - "Asia & Indian Ocean Destinations"
+Cohesion: 0.12
+Nodes (31): Bali (Indonesia) destination wedding page, Bali glass chapels (venue fact), Bali as longest-haul destination (travel logistics fact), Seminyak, Ubud, Uluwatu, Maldives destination wedding page, North Malé Atoll (+23 more)
+
+### Community 8 - "Private Register Page Generator"
+Cohesion: 0.10
+Nodes (13): enquiry_form(), head(), head_close(), header(), page(), crumbs: list of (label, href) with href None for the current page., The register's shared enquiry form. source_page is the attribution value:…, path is site-relative with no leading slash, e.g. 'destinations/italy.html'. (+5 more)
+
+### Community 9 - "Cathedral City Area Pages"
+Cohesion: 0.08
+Nodes (26): Rochester area page, Rochester Cathedral (founded 604 AD, second oldest in England), Rochester (city), Medway Crematorium, St Nicholas Church, Rochester, Salisbury area page, Salisbury Cathedral (tallest spire in Britain, holds a Magna Carta copy), Salisbury Crematorium (+18 more)
+
+### Community 10 - "Catholic Funeral Music"
+Cohesion: 0.11
+Nodes (25): Anima Christi (Frisina), Ave Maria (Schubert), Be Not Afraid, Best Hymns for a Catholic Funeral (guide), Here I Am, Lord, On Eagle's Wings, Panis Angelicus (Franck), Soul of My Saviour (+17 more)
+
+### Community 11 - "Caribbean Destination Weddings"
+Cohesion: 0.13
+Nodes (23): Barbados destination wedding page, Barbados Anglican choral tradition (three centuries), Christ Church parish (Barbados), St James parish (Barbados), St Peter parish (Barbados), Jamaica destination wedding page, Jamaican Anglican and Baptist choral tradition, Montego Bay (+15 more)
+
+### Community 12 - "Celebration of Life Songs"
+Cohesion: 0.09
+Nodes (22): Music for a Celebration of Life, Blackbird (The Beatles), Bridge Over Troubled Water (Simon & Garfunkel), Bring Him Home (Les Misérables), Danny Boy, Fields of Gold, Fly Me to the Moon, Heroes (David Bowie) (+14 more)
+
+### Community 13 - "House Claims Validator Tests"
+Cohesion: 0.16
+Nodes (20): Drop `html` into a temp repo as index.html, run the validator, return (exit,…, The true statement must not trip the VAT pattern., carol-singers.html legitimately says a room holds up to 150 guests., z-index: 150 and 150ms transitions must not trip the roster pattern., for-funeral-directors.html deliberately says 'one person, not a roster'., run_on(), test_150_plus_fails(), test_aggregate_rating_fails() (+12 more)
+
+### Community 14 - "Private Events Page & JS"
+Cohesion: 0.14
+Nodes (16): Accessibility Statement Page, Alma Consort (performing ensemble, 8-24 voices), Five-Column Site Footer, applyVoicing(), renderVoicingMedia(), showError(), trackError(), The London Choral Service / Alma Consort Ltd (organization) (+8 more)
+
+### Community 15 - "Ads & GA4 Conversion Tracking"
+Cohesion: 0.16
+Nodes (20): Alma Consort Ltd (operating company), R4 Cookie consent / Consent Mode v2, GA4 property 527915578 (G-9FENN7VS0E), Conversion action rebuild 2026-09-26 (Call click, WhatsApp/email click, Contact demoted), GA4 change log, Removal of ads_conversion_Contact_1 double count, generate_lead key event + custom dimensions, Google Ads campaigns for competitive capture (§11) (+12 more)
+
+### Community 16 - "Choral Wedding Repertoire"
+Cohesion: 0.12
+Nodes (19): Lesser-Known Choral Pieces for a Wedding, Ubi Caritas at a Wedding — Ola Gjeilo's Setting, Maurice Duruflé (composer, 1960 Ubi Caritas setting), Ola Gjeilo (composer, 2001 Ubi Caritas setting), The Best Choral Pieces for a Wedding, A Gaelic Blessing (Rutter), Ave Maria (Bach/Gounod), Ave Verum Corpus (Mozart) (+11 more)
+
+### Community 17 - "Wedding Organ Music"
+Cohesion: 0.11
+Nodes (19): Popular Wedding Organ Music, A Thousand Years (Christina Perri, organ arr.), Air on the G String (Bach), All You Need Is Love (The Beatles), Arrival of the Queen of Sheba (Handel), Bridal Chorus (Wagner), Canon in D (Pachelbel), Can't Help Falling in Love (Elvis Presley) (+11 more)
+
+### Community 18 - "East London Boroughs"
+Cohesion: 0.16
+Nodes (18): Abney Park Cemetery, Hackney (London Borough), City of London Cemetery and Crematorium (Manor Park), St John at Hackney, St Mary of Eton, Newham (London Borough), East London Crematorium (Plaistow), St Mary Magdalene, East Ham (+10 more)
+
+### Community 19 - "Lambeth & South London"
+Cohesion: 0.12
+Nodes (18): Lambeth (London Borough), Honor Oak Crematorium, Lambeth Palace Chapel, Magnificent Seven Victorian Cemeteries of London, St John's Waterloo, St Mary's Lambeth (Garden Museum), West Norwood Cemetery, Lewisham (London Borough) (+10 more)
+
+### Community 20 - "Scotland & Spain Regions"
+Cohesion: 0.14
+Nodes (18): Edinburgh and the Lothians (Scotland region), Fife and Perthshire (Scotland region), The Highlands (Scotland region), Loch Lomond and the Trossachs (Scotland region), Scotland (destination wedding page), Ibiza (Spain region), Mallorca (Spain region), Marbella (Spain region) (+10 more)
+
+### Community 21 - "Charity Carol Concerts"
+Cohesion: 0.16
+Nodes (18): Carols by Candlelight guide, Congregational carols chosen for singing from memory, Singers reading music by candlelight, Real candles and venue fire rules, Placing the fundraising appeal in the running order, Planning a Charity Carol Concert guide, Fill the church to about four-fifths capacity rule, Church copyright licence coverage for ticketed concerts (+10 more)
+
+### Community 22 - "Hymn-Leading & West Country"
+Cohesion: 0.21
+Nodes (17): Live choir leads an unfamiliar hymn (value proposition), Hymn-leading wording: "make the hymns sound intended rather than endured", Hymn-leading wording: "give the hymns a lead the congregation can follow without embarrassment", Hymn-leading wording: "keep a nervous congregation in tune and in time through the hymns", Hymn-leading wording: "carry the hymns for guests who have not sung since school", Hymn-leading wording: "hold the hymns together for a congregation that is unsure of the tune", Bath area page, Brighton area page (+9 more)
+
+### Community 23 - "Carol Singer Cost & Sizing"
+Cohesion: 0.21
+Nodes (17): Birmingham area page, Cambridge area page, Best Christmas Carol Singers guide, Booking Carol Singers: Agency vs Direct guide, How Much Does It Cost to Hire Carol Singers guide, LCS Ensemble Pricing Ladder (Soloist £250 to 12-voice Chorus £3000), Ensemble size by room (lobby 4, party 6, church 8, cathedral 12), Hiring a Choir for Your Christmas Event guide (+9 more)
+
+### Community 24 - "Carol Lyrics & History"
+Cohesion: 0.13
+Nodes (15): Christmas Carol Lyrics and What They Mean, God Rest Ye Merry, Gentlemen, Meaning of 'God rest ye merry, gentlemen' (rest=keep/make, merry=strong; comma misplacement), Good King Wenceslas (Neale), Real tenth-century Duke of Bohemia; Feast of Stephen dating; thirteenth-century spring-carol tune repurposed in 1853, In the Bleak Midwinter (Rossetti), Poem's history, invented midwinter setting, and closing question about the singer, O Come, All Ye Faithful (Adeste Fideles; Wade/Oakeley) (+7 more)
+
+### Community 25 - "London & Manchester Hubs"
+Cohesion: 0.15
+Nodes (14): London area page, St Martin-in-the-Fields, Temple Church (London hub page), Manchester area page, Manchester Cathedral, Manchester Crematorium, Manchester (city), Choral Music for a Humanist Wedding (+6 more)
+
+### Community 26 - "Hammersmith & Fulham"
 Cohesion: 0.18
-Nodes (11): A Spotless Rose (Howells), Es ist ein Ros entsprungen (Praetorius), Gaudete, Let It Snow, O Holy Night, Personent Hodie, The Best Carols for Four Voices, The Christmas Song (+3 more)
+Nodes (14): All Saints Fulham, Hammersmith & Fulham (London Borough), Fulham Palace Chapel, Margravine Cemetery, Mortlake Crematorium, St Paul's Hammersmith, West London Crematorium (Kensal Green), Hounslow (London Borough) (+6 more)
 
-### Community 35 - "Cemetery / Islington / London (10 items)"
-Cohesion: 0.20
-Nodes (10): Haringey (London Borough), Islington (London Borough), Islington Cemetery (East Finchley), New Southgate Cemetery, St Augustine's Highgate, St James Church, Clerkenwell, St Mary's Islington, Tottenham Cemetery (+2 more)
+### Community 27 - "Project Instructions (CLAUDE.md)"
+Cohesion: 0.19
+Nodes (14): CLAUDE.md (project instructions), Google Ads change protocol (validate_only, approval, £5/day cap, no deletes), Build pipeline (CSS inlining + partial expansion via build.sh), Generated files: sitemap.xml, page-dates.json, llms-full.txt, style.css, graphify-out knowledge graph, @include-start / @include-end partial markers, Meta description 141-161 chars + canonical/hreflang/OG convention, No AggregateRating/Review schema rule (+6 more)
 
-### Community 36 - "test / figure / run (10 items)"
-Cohesion: 0.31
-Nodes (10): Copy the validator into a temp repo, run it, return (exit_code, output)., run_in_sandbox(), test_competitor_claims.py, test_declared_derived_figure_passes(), test_no_compare_pages_is_fine(), test_sourced_figures_pass(), test_stale_data_warns_but_passes(), test_undeclared_sum_fails() (+2 more)
+### Community 28 - "Outer London Boroughs (West/East)"
+Cohesion: 0.18
+Nodes (13): Harrow (London Borough), Breakspear Crematorium, St Mary's Harrow-on-the-Hill, Havering (London Borough), South Essex Crematorium (Corbets Tey), St Andrew's Church, Hornchurch, Hillingdon (London Borough), Hillingdon Cemetery (+5 more)
 
-### Community 91 - "Wedding Legal & Regulatory Facts"
-Cohesion: 0.31
-Nodes (10): Advice to check a chosen piece with the registration service when booking, Corrected civil-ceremony legal position (2026), GRO guidance permits incidental religious references in ceremony music, LCS provides choirs for civil ceremonies at stately homes, hotels and licensed venues, Marriages and Civil Partnerships (Approved Premises) Regulations 2005, Music before the proceedings and after the register is signed is unrestricted, Rationale: replace over-broad 'no religious content of any kind' claim with the accurate regulation-based position, Restriction attaches to the ceremony proceedings, not the building or the day (+2 more)
-
-### Community 37 - "Oxford / Manchester / area (9 items)"
-Cohesion: 0.22
-Nodes (9): Christ Church Cathedral, Oxford, Manchester (city), Manchester Cathedral, Manchester Crematorium, Manchester area page, New College Chapel, Oxford, Oxford (city), Oxford area page (+1 more)
-
-### Community 38 - "Reading / Rochester / area (9 items)"
-Cohesion: 0.22
-Nodes (9): Medway Crematorium, Reading (city), Reading Crematorium, Henley Road, Caversham, Reading Minster (St Mary's), Reading area page, Rochester (city), Rochester Cathedral (founded 604 AD, second oldest in England), Rochester area page (+1 more)
-
-### Community 39 - "Thou / Vision / Abide (9 items)"
-Cohesion: 0.25
-Nodes (9): Abide With Me (hymn), Abide With Me — the most-requested funeral hymn (guide), Be Thou My Vision (hymn), Dallan Forgaill — sixth-century Irish monk traditionally credited with the text of Be Thou My Vision, Eventide — tune by William Henry Monk, 1861, Henry Francis Lyte — wrote Abide With Me in 1847 in his final weeks of life as a dying curate in Brixham, Devon, Slane — Irish folk tune named after the Hill of Slane, County Meath, to which Be Thou My Vision is sung, Why Be Thou My Vision Is the Best Funeral Hymn (guide) (+1 more)
-
-### Community 40 - "Bexley / borough / London (8 items)"
-Cohesion: 0.25
-Nodes (8): Bexley borough page, Brent borough page, Eltham Crematorium (Bexley area), London Borough of Bexley, London Borough of Brent, St Mary the Virgin, Bexley, St Mary's Willesden, Willesden New Cemetery
-
-### Community 41 - "Bromley / borough / London (8 items)"
-Cohesion: 0.25
-Nodes (8): Beckenham Crematorium, Bromley borough page, Camden borough page, Highgate Cemetery, London Borough of Bromley, London Borough of Camden, St Pancras Old Church, St Peter & St Paul Bromley Parish Church
-
-### Community 42 - "London / Croydon / City (8 items)"
-Cohesion: 0.25
-Nodes (8): City of London, City of London borough page, Croydon Crematorium, Croydon Minster, Croydon borough page, London Borough of Croydon, St Paul's Cathedral, Temple Church, City of London
-
-### Community 43 - "Croatia destination wedding pa & Dubrovnik"
+### Community 29 - "Funeral Music Guides"
 Cohesion: 0.40
-Nodes (5): Croatia destination wedding page, Dubrovnik, Hvar (island logistics), Istria, Split
+Nodes (13): Video entry: Abide With Me (Eventide), G9-R6k5n7Io, What to Expect from a Funeral Choir, How Much Does Funeral Music Cost?, How to Choose Music for a Funeral, The Most Popular Funeral Songs, What to Expect When You Hire a Choir, Music Guides (hub index), Booking Funeral Singers at Short Notice (+5 more)
 
-### Community 44 - "Wedding / Ubi / Caritas (5 items)"
-Cohesion: 0.60
-Nodes (5): Choral Music for a Humanist Wedding, Lesser-Known Choral Pieces for a Wedding, Maurice Duruflé (composer, 1960 Ubi Caritas setting), Ola Gjeilo (composer, 2001 Ubi Caritas setting), Ubi Caritas at a Wedding — Ola Gjeilo's Setting
+### Community 30 - "Roadmap & Manual Actions"
+Cohesion: 0.19
+Nodes (12): Site improvement roadmap, R12 Testimonial pool reused across mismatched pages, R13 Rigid borough page template, R5 Merge duplicate form scripts into js/form.js, R6 CSS inlining vs cached stylesheet (decision needed), Roadmap status labels (BLOCKED-ON-HUMAN, SPEC-FIRST, DECISION-NEEDED), Third-party citation building and NAP consistency (§2), CSS extraction deferred until CrUX data (§8) (+4 more)
 
-### Community 45 - "Jerusalem (5 items)"
+### Community 31 - "Kensington & Chelsea"
+Cohesion: 0.18
+Nodes (12): Royal Borough of Kensington and Chelsea, Brompton Oratory, Chelsea Old Church, Holy Trinity Sloane Square, Royal Hospital Chelsea Chapel, St Luke's Chelsea, St Mary Abbots, St Mary Abbots' 278-foot Spire (Tallest in London) (+4 more)
+
+### Community 32 - "Kingston & Merton"
+Cohesion: 0.18
+Nodes (12): All Saints Kingston, Royal Borough of Kingston upon Thames, Kingston Crematorium, St Raphael's Surbiton, Merton (London Borough), Morden Cemetery, South London Crematorium (Mitcham), St Mary's Wimbledon (Wimbledon Parish Church) (+4 more)
+
+### Community 33 - "Advent Carols"
+Cohesion: 0.18
+Nodes (12): Advent Carols vs Christmas Carols, Away in a Manger, Come, Thou Long Expected Jesus (Wesley), Hills of the North, Rejoice, In the Bleak Midwinter, Lo, He Comes with Clouds Descending (tune: Helmsley), O Come, O Come, Emmanuel, O Little Town of Bethlehem (+4 more)
+
+### Community 34 - "Corporate & Law Firm Carols"
+Cohesion: 0.18
+Nodes (12): Carol Singers for Law Firms and Professional Services guide, Carol singing as client-entertaining differentiator, Separate client and staff Christmas events, Ambient, formal performance and audience participation modes, Music for a Christmas Drinks Reception guide, Roaming vs stationary singers, Start singing before the first guest arrives, Music for a Christmas Gala or Awards Dinner guide (+4 more)
+
+### Community 35 - "SEO & Conversion Plans"
+Cohesion: 0.24
+Nodes (11): SEO & Conversion Improvements Plan, SEO & Conversion Improvements Initiative, Site Improvements Plan (v2), Site Improvements Programme (v2), Music Guides Redesign Plan, Music Guides Index Redesign Initiative, SEO Audit Fixes Plan, SEO Audit Fixes Initiative (+3 more)
+
+### Community 36 - "Private Events Design Decisions"
+Cohesion: 0.20
+Nodes (11): Five-lens parallel review (code, copy/slop, accessibility+design, SEO/head/schema, visual) required before shipping private-events.html, Idempotency check: run build.sh twice, git diff private-events.html must be empty the second time — the tripwire for a broken Pass A defence, Private Events Page Implementation Plan, Positioning: LCS is the booking office of Alma Consort, functional not hierarchical; 'elite' and 'premium tier' framings are banned outright because they invite re-pricing the rest of the site downwards, hCaptcha decision reversed on 2026-08-26: originally specified without one to protect conversion rate, but a form that silently fails against the shared Web3Forms access key is judged worse than added friction, Full insulation from site chrome: no shared nav/footer partials, to avoid tier-mixing (funeral pricing bleeding into a luxury planner's view) and to keep the page's bespoke CSS register out of the site-wide inlined bundle, No AggregateRating or Review schema, ever — prohibited site-wide, The Pass A defence: the page's hand-authored <style> block opens with a comment line so build.sh Pass A never mistakes it for the generated CSS bundle and deletes it — the most expensive mistake available on the page (+3 more)
+
+### Community 37 - "Haringey & Islington"
+Cohesion: 0.20
+Nodes (10): Haringey (London Borough), New Southgate Cemetery, St Augustine's Highgate, Tottenham Cemetery, Islington (London Borough), Islington Cemetery (East Finchley), St James Church, Clerkenwell, St Mary's Islington (+2 more)
+
+### Community 38 - "Cookie Consent Banner"
+Cohesion: 0.31
+Nodes (9): apply(), Cookie choices banner (Allow/Decline), build(), data-consent-open attribute reopens banner from footer link, init(), lcs-consent localStorage key, read(), show() (+1 more)
+
+### Community 39 - "Classic Funeral Hymns"
+Cohesion: 0.27
+Nodes (10): Eventide — tune by William Henry Monk, 1861, Henry Francis Lyte — wrote Abide With Me in 1847 in his final weeks of life as a dying curate in Brixham, Devon, Abide With Me (hymn), Abide With Me — the most-requested funeral hymn (guide), Dallan Forgaill — sixth-century Irish monk traditionally credited with the text of Be Thou My Vision, Be Thou My Vision (hymn), Why Be Thou My Vision Is the Best Funeral Hymn (guide), Slane — Irish folk tune named after the Hill of Slane, County Meath, to which Be Thou My Vision is sung (+2 more)
+
+### Community 40 - "Competitor Claims Validator Tests"
+Cohesion: 0.31
+Nodes (8): Copy the validator into a temp repo, run it, return (exit_code, output)., £550 is 275+275, but arithmetic alone must not make a figure acceptable., run_in_sandbox(), test_declared_derived_figure_passes(), test_sourced_figures_pass(), test_stale_data_warns_but_passes(), test_undeclared_sum_fails(), test_unsourced_figure_fails()
+
+### Community 41 - "Oxford & Reading Area Pages"
+Cohesion: 0.22
+Nodes (9): Oxford area page, Christ Church Cathedral, Oxford, Oxford (city), New College Chapel, Oxford, University Church of St Mary the Virgin, Oxford, Reading area page, Reading Crematorium, Henley Road, Caversham, Reading (city) (+1 more)
+
+### Community 42 - "Nav & Services Redesign Plans"
+Cohesion: 0.31
+Nodes (9): Nav Services Dropdown Plan, Nav Services Dropdown Initiative, Services Page Redesign Plan, Services Page Hub Redesign Initiative, Value, Care & On-Page SEO Plan, Value, Bespoke Care & On-Page SEO Initiative, Nav Services Dropdown Spec, Services Page Redesign Spec (+1 more)
+
+### Community 43 - "A Cappella Christmas Songs"
+Cohesion: 0.22
+Nodes (9): A Cappella Christmas Songs for a Choir (guide), Have Yourself a Merry Little Christmas, Let It Snow, Santa Claus Is Comin' to Town, Christmas songs vs carols distinction, The Christmas Song (Chestnuts Roasting), White Christmas, Winter Wonderland (+1 more)
+
+### Community 44 - "Carols for Four Voices"
+Cohesion: 0.22
+Nodes (9): The Best Carols for Four Voices, Coventry Carol, Es ist ein Ros entsprungen (Praetorius), Gaudete, In the Bleak Midwinter (Holst), Personent Hodie, The Holly and the Ivy, The Sussex Carol (+1 more)
+
+### Community 45 - "How to Organise an Office Carol Service"
+Cohesion: 0.25
+Nodes (9): Live Choral Music for Company Christmas Parties guide, Featured performance slot, Choosing Music for a Crematorium Service guide, What to Expect When You Hire a Choir (guide, referenced), Secular English part-song repertoire for humanist weddings, How to Organise an Office Carol Service, Keeping an office carol service inclusive, Sample office carol service running order (+1 more)
+
+### Community 46 - "Westminster borough page"
+Cohesion: 0.25
+Nodes (8): Westminster borough page, Westminster Abbey (venue), Westminster Cathedral (venue), Westminster page FAQPage schema, Guards' Chapel, Wellington Barracks (venue), Westminster funeral singer pricing FAQ answer (£250 solo, £2,000 full choir), St Margaret's Westminster (venue), geo_areas.westminster coordinates [51.49594, -0.13495]
+
+### Community 47 - "Greece destination wedding page"
+Cohesion: 0.25
+Nodes (8): Cypriot civil ceremony / Greek Orthodox ceremony music logistics, Greece destination wedding page, Crete, Mykonos, Greek Orthodox ceremony music logistics, Rhodes, Santorini, Zakynthos
+
+### Community 48 - "Italy destination wedding page"
+Cohesion: 0.25
+Nodes (8): Italy destination wedding page, The Amalfi Coast, Florence, Lake Como, Nuptial Mass in Italian Catholic parishes (permit/permission fact), Puglia, Tuscany, Malta: shortest paperwork in the Mediterranean, English official language (fact)
+
+### Community 49 - "P10 Technical Platform and Freshness"
+Cohesion: 0.33
+Nodes (4): Finding: README and CLAUDE.md Page Counts Were Stale, Finding: 139 of 160 Sitemap Lastmods Are Stale, Dead .audio-placeholder rules removed (12 lines off every page), P10 Technical Platform and Freshness
+
+### Community 50 - "music-guides.js"
+Cohesion: 0.80
+Nodes (5): applyFilter(), getCategoryFromURL(), init(), onChipClick(), onPopState()
+
+### Community 51 - "Christmas Entertainment for Hotels"
+Cohesion: 0.33
+Nodes (6): Working with office building management, Christmas Entertainment for Hotels, Hotel formats by space (lobby, afternoon tea, ballroom, frontage), Unaccompanied choir needs no stage, power or sound check, Scheduling singers across several December dates, Carol evening as lowest-effort residents' event
+
+### Community 52 - "accessibility.html"
+Cohesion: 0.40
+Nodes (3): Alternative formats on request (large print, plain text), Text/background contrast ratio of 5.66:1 (above AA), Known accessibility shortfalls (YouTube captions, hCaptcha challenge)
+
+### Community 53 - "Jerusalem"
 Cohesion: 0.70
-Nodes (5): Edward Elgar (orchestrated Jerusalem in 1922), Hubert Parry (composer, set the hymn to music in 1916), Jerusalem — the Most British of Wedding Hymns, Robert Bridges (Poet Laureate, commissioned Parry's setting), William Blake (wrote the text, c.1804)
+Nodes (5): Jerusalem — the Most British of Wedding Hymns, Edward Elgar (orchestrated Jerusalem in 1922), Hubert Parry (composer, set the hymn to music in 1916), Robert Bridges (Poet Laureate, commissioned Parry's setting), William Blake (wrote the text, c.1804)
 
-### Community 46 - "Hark / Herald / Angels (4 items)"
-Cohesion: 0.67
-Nodes (4): Hark! The Herald Angels Sing, Hark! The Herald Angels Sing (Wesley/Mendelssohn), Hark! The Herald Angels Sing (Willcocks descant), Meaning of 'veiled in flesh the Godhead see' and the tune's non-Christmas origin
+### Community 54 - "create_christmas_carol_campaign_2026.py"
+Cohesion: 0.70
+Nodes (4): build(), check_limits(), main(), summary()
 
-### Community 47 - "Anima / Christi / setting (4 items)"
+### Community 55 - "Anima Christi at a Catholic funeral"
 Cohesion: 0.83
-Nodes (4): Anima Christi (Latin prayer, anonymous c.1300, placed at the opening of St Ignatius of Loyola's Spiritual Exercises), Anima Christi at a Catholic funeral — Frisina's setting (guide), Anima Christi at a Catholic wedding — Frisina's setting (guide), Marco Frisina — Monsignor, priest of the Diocese of Rome, composer of the widely-used Anima Christi setting
+Nodes (4): Marco Frisina — Monsignor, priest of the Diocese of Rome, composer of the widely-used Anima Christi setting, Anima Christi at a Catholic funeral — Frisina's setting (guide), Anima Christi (Latin prayer, anonymous c.1300, placed at the opening of St Ignatius of Loyola's Spiritual Exercises), Anima Christi at a Catholic wedding — Frisina's setting (guide)
 
-### Community 48 - "validate_competitor_claims.py & allowed_figures()"
+### Community 56 - "conversion_actions_2026_09.py"
+Cohesion: 0.83
+Nodes (3): build_operations(), current_actions(), main()
+
+### Community 57 - "allowed_figures()"
 Cohesion: 0.67
-Nodes (4): Every figure a compare/ page may legitimately print. Explicit only. Deriving…, allowed_figures(), main(), validate_competitor_claims.py
+Nodes (3): allowed_figures(), main(), Every figure a compare/ page may legitimately print. Explicit only. Deriving…
 
-### Community 49 - "claim / site / never (3 items)"
-Cohesion: 0.67
-Nodes (3): House claim rules applied off-site: never state a roster size, never claim VAT registration in either direction, no star-rating or '5-star' claims, quote only figures on pricing.html, no incentivised reviews, Off-site listings pack: ready-to-paste copy for GBP, Encore Musicians, Poptop, Bark, Hitched, Bridebook, FuneralGuide, Yell listings and a review-request email cadence, R9 (competitive capture): The London Funeral Singers — a sourced comparison page backed by a build gate so quoted competitor figures cannot go stale or be invented; surfaced two site-wide corrections, a false VAT-registration claim in 13 places and a false 'over 150 singers' roster claim in 13 places
-
-### Community 50 - "Christmas / Expansion (3 items)"
+### Community 58 - "Christmas Expansion Plan"
 Cohesion: 1.00
-Nodes (3): Christmas Expansion & Seasonal SEO Initiative, Christmas Expansion Plan, Christmas Expansion Spec
+Nodes (3): Christmas Expansion Plan, Christmas Expansion & Seasonal SEO Initiative, Christmas Expansion Spec
 
-### Community 51 - "Ding / Dong / Merrily (3 items)"
+### Community 59 - "Competitive Capture Spec"
+Cohesion: 1.00
+Nodes (3): Competitive Capture Plan, Competitive Capture Programme Initiative, Competitive Capture Spec
+
+### Community 61 - "Hark! The Herald Angels Sing"
+Cohesion: 0.67
+Nodes (3): Hark! The Herald Angels Sing, Hark! The Herald Angels Sing (Wesley/Mendelssohn), Meaning of 'veiled in flesh the Godhead see' and the tune's non-Christmas origin
+
+### Community 62 - "Ding Dong! Merrily on High"
 Cohesion: 0.67
 Nodes (3): Ding Dong! Merrily on High, Ding Dong! Merrily on High (Woodward), Sixteenth-century French dance tune with 1924 mock-archaic Woodward lyrics; meaning of 'Hosanna in excelsis'
 
-### Community 52 - "White (3 items)"
-Cohesion: 1.00
-Nodes (3): Edward White Benson (Bishop of Truro, compiled the 1880 original), Eric Milner-White (Dean of King's, devised the 1918 order), Nine Lessons and Carols: How to Plan the Service
+### Community 63 - "No December/seasonal surcharge policy"
+Cohesion: 0.67
+Nodes (3): No December/seasonal surcharge policy, No short-notice surcharge, Transparent all-inclusive pricing (no admin fees or surcharges)
 
-### Community 53 - "indexnow-ping.py & find_key()"
-Cohesion: 1.00
-Nodes (3): find_key(), indexnow-ping.py, main()
+## Ambiguous Edges - Review These
+- `Ceremony moment: the processional` → `Musical piece: Can't Help Falling in Love (Elvis Presley) - organ arrangement`  [AMBIGUOUS]
+  music-guides/wedding-organ-pop-songs.html · relation: conceptually_related_to
 
-## Questions This Graph Raises
-- **Why does `A Complete Guide to Wedding Ceremony Music` connect `Wedding & Christmas Guide Hub Pages` to `Barbados / destination / wedding (15 items)`, `Croatia destination wedding pa & Dubrovnik`, `International Destination Wedding Regions`, `Ireland / Gibraltar / destination (11 items)`, `ceremony / destination / wedding (12 items)`, `destination / fact / Bali (17 items)`, `destination / wedding / ceremony (12 items)`, `destination / wedding / fact (12 items)`?**
-  _Hub node: 45 edges across 8 other communities._
-- **Why does `How Much Does Wedding Music Cost?` connect `Wedding & Christmas Guide Hub Pages` to `Barbados / destination / wedding (15 items)`, `Croatia destination wedding pa & Dubrovnik`, `International Destination Wedding Regions`, `Ireland / Gibraltar / destination (11 items)`, `ceremony / destination / wedding (12 items)`, `destination / fact / Bali (17 items)`, `destination / wedding / ceremony (12 items)`, `destination / wedding / fact (12 items)`?**
-  _Hub node: 44 edges across 8 other communities._
-- **Why does `Whole-Site Audit and Growth Plan` connect `Whole-Site Audit & Growth Plan` to `Build Pipeline & Repo Tooling`, `International Destination Wedding Regions`, `Manual Actions & SEO Roadmap Rationale`, `Services / Plan / Initiative (12 items)`?**
-  _Hub node: 43 edges across 4 other communities._
-- **What connects the weakly-linked nodes to the rest of the system?**
-  _480 weakly-connected nodes found - possible documentation gaps or missing edges._
-- **Should `Programmatic Area & City Landing Pages` be split into smaller, more focused modules?**
-  _Cohesion score 0.0856 - nodes in this community are weakly interconnected._
-- **Should `Build Pipeline & Repo Tooling` be split into smaller, more focused modules?**
-  _Cohesion score 0.0319 - nodes in this community are weakly interconnected._
+## Knowledge Gaps
+- **427 isolated node(s):** `404 Page Not Found`, `partials/care-strip.html`, `contact.html No Quotable Opening / No FAQPage Schema Finding`, `VideoObject: He Shall Feed His Flock — Soloist (nasqXWlbf1g)`, `VideoObject: Ubi Caritas — Full Choir, Ola Gjeilo (-GQaQEGhYEs)` (+422 more)
+  These have ≤1 connection - possible missing edges or undocumented components.
+- **38 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+
+## Suggested Questions
+_Questions this graph is uniquely positioned to answer:_
+
+- **What is the exact relationship between `Ceremony moment: the processional` and `Musical piece: Can't Help Falling in Love (Elvis Presley) - organ arrangement`?**
+  _Edge tagged AMBIGUOUS (relation: conceptually_related_to) - confidence is low._
+- **Why does `Pricing page` connect `Christmas Pages & Pricing` to `Project Skills & Build Rules`, `Asia & Indian Ocean Destinations`, `How to Organise an Office Carol Service`, `Private Events Page & JS`, `Christmas Entertainment for Hotels`, `Charity Carol Concerts`, `Hymn-Leading & West Country`, `Carol Singer Cost & Sizing`, `London & Manchester Hubs`, `Project Instructions (CLAUDE.md)`?**
+  _High betweenness centrality (0.142) - this node is a cross-community bridge._
+- **Why does `How Much Does Wedding Music Cost?` connect `Asia & Indian Ocean Destinations` to `Christmas Pages & Pricing`, `Nav, Footer & Layout CSS`, `Europe Destination Weddings`, `Oxford & Reading Area Pages`, `Catholic Funeral Music`, `Caribbean Destination Weddings`, `How to Organise an Office Carol Service`, `Greece destination wedding page`, `Italy destination wedding page`, `Scotland & Spain Regions`, `Hymn-Leading & West Country`, `Carol Singer Cost & Sizing`, `London & Manchester Hubs`, `No December/seasonal surcharge policy`?**
+  _High betweenness centrality (0.125) - this node is a cross-community bridge._
+- **Why does `London area page` connect `London & Manchester Hubs` to `Outer London Boroughs (North/East)`, `Asia & Indian Ocean Destinations`, `How to Organise an Office Carol Service`, `Private Events Page & JS`, `Lambeth & South London`, `Christmas Entertainment for Hotels`, `Charity Carol Concerts`, `Carol Singer Cost & Sizing`, `Funeral Music Guides`?**
+  _High betweenness centrality (0.114) - this node is a cross-community bridge._
+- **Are the 2 inferred relationships involving `Christmas Carol Services page` (e.g. with `Ensemble price ladder (£250 soloist to £3,000 chorus)` and `llms-full.txt — Generated Full-Site Text Export`) actually correct?**
+  _`Christmas Carol Services page` has 2 INFERRED edges - model-reasoned connections that need verification._
+- **What connects `404 Page Not Found`, `partials/care-strip.html`, `contact.html No Quotable Opening / No FAQPage Schema Finding` to the rest of the system?**
+  _427 weakly-connected nodes found - possible documentation gaps or missing edges._
+- **Should `Christmas Pages & Pricing` be split into smaller, more focused modules?**
+  _Cohesion score 0.07098765432098765 - nodes in this community are weakly interconnected._

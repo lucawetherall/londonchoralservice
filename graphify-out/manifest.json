@@ -1,13 +1,13 @@
 {
   ".claude/launch.json": {
-    "mtime": 1775076345.7187784,
-    "seen": 1788510430.789646,
+    "mtime": 1787064426.7089727,
+    "seen": 1790384546.271613,
     "ast_hash": "2bef74bac9d01254ef8c15dfde088971",
     "semantic_hash": "2bef74bac9d01254ef8c15dfde088971"
   },
   ".claude/settings.local.json": {
-    "mtime": 1788053214.9415689,
-    "seen": 1788510430.789646,
+    "mtime": 1786814394.9732935,
+    "seen": 1790384546.271617,
     "ast_hash": "a7c0fc1455c4c83f24f67ad13049c7eb",
     "semantic_hash": "a7c0fc1455c4c83f24f67ad13049c7eb"
   },
@@ -102,10 +102,10 @@
     "semantic_hash": "d385fe0965bc16795fe9db5c752c1ec3"
   },
   "404.html": {
-    "mtime": 1788510277.2118492,
-    "seen": 1788510430.789646,
-    "ast_hash": "8d8677f3eda8bc33fd9641f7c74acdab",
-    "semantic_hash": "8d8677f3eda8bc33fd9641f7c74acdab"
+    "mtime": 1790383720.7183006,
+    "seen": 1790384546.271639,
+    "ast_hash": "e237a16af9fe86dfbcae0a4378d90ffc",
+    "semantic_hash": "e237a16af9fe86dfbcae0a4378d90ffc"
   },
   "4751d098385ed7e02df93e8b2f957673.txt": {
     "mtime": 1788053214.944106,
@@ -114,16 +114,16 @@
     "semantic_hash": "ce58354a49955683a3f6947cbce2c41e"
   },
   "CLAUDE.md": {
-    "mtime": 1788500132.6764197,
-    "seen": 1788510430.789646,
-    "ast_hash": "03879c25522fe111a71466cb86b8b543",
-    "semantic_hash": "03879c25522fe111a71466cb86b8b543"
+    "mtime": 1790378825.1550796,
+    "seen": 1790384546.27164,
+    "ast_hash": "405a6370b23389db0d26ac897d544586",
+    "semantic_hash": "405a6370b23389db0d26ac897d544586"
   },
   "MANUAL-ACTIONS-REQUIRED.md": {
-    "mtime": 1788500132.6786063,
-    "seen": 1788510430.789646,
-    "ast_hash": "bb0413693abc204f8e3b230605217716",
-    "semantic_hash": "bb0413693abc204f8e3b230605217716"
+    "mtime": 1790379933.5343466,
+    "seen": 1790384546.27164,
+    "ast_hash": "c25f43042ba758e45c954a454bd8d994",
+    "semantic_hash": "c25f43042ba758e45c954a454bd8d994"
   },
   "README.md": {
     "mtime": 1788500132.6765997,
@@ -144,334 +144,334 @@
     "semantic_hash": "f5151c99588f920b0bc73d7aaed8d18e"
   },
   "about.html": {
-    "mtime": 1788510277.196882,
-    "seen": 1788510430.789646,
-    "ast_hash": "5657ec71fd9df0afb923613cf00f9578",
-    "semantic_hash": "5657ec71fd9df0afb923613cf00f9578"
+    "mtime": 1790383719.1958885,
+    "seen": 1790384546.271641,
+    "ast_hash": "1d911f185c3db4e630f8a2529ab9d102",
+    "semantic_hash": "1d911f185c3db4e630f8a2529ab9d102"
   },
   "accessibility.html": {
-    "mtime": 1788510277.1922414,
-    "seen": 1788510430.789646,
-    "ast_hash": "1ebd024e899ced1c6a5fc4c513c5f257",
-    "semantic_hash": "1ebd024e899ced1c6a5fc4c513c5f257"
+    "mtime": 1790383719.1588745,
+    "seen": 1790384546.271641,
+    "ast_hash": "72ae1eef63364f73691afc2988e3a89d",
+    "semantic_hash": "72ae1eef63364f73691afc2988e3a89d"
   },
   "areas/bath.html": {
-    "mtime": 1788510277.5088882,
-    "seen": 1788510430.789646,
-    "ast_hash": "ef68f20f9f94b6587c40fc3aa0334668",
-    "semantic_hash": "ef68f20f9f94b6587c40fc3aa0334668"
+    "mtime": 1790383719.3463962,
+    "seen": 1790384546.2716422,
+    "ast_hash": "f5f0f7214604a5fa1b9eaa7d5e091f07",
+    "semantic_hash": "f5f0f7214604a5fa1b9eaa7d5e091f07"
   },
   "areas/birmingham.html": {
-    "mtime": 1788510277.4820595,
-    "seen": 1788510430.789646,
-    "ast_hash": "7b4537fd94919a6bc356242786b0dd13",
-    "semantic_hash": "7b4537fd94919a6bc356242786b0dd13"
+    "mtime": 1790383719.8518238,
+    "seen": 1790384546.2716422,
+    "ast_hash": "0336a78378d9f260a4cd79fa2a2c1671",
+    "semantic_hash": "0336a78378d9f260a4cd79fa2a2c1671"
   },
   "areas/brighton.html": {
-    "mtime": 1788510277.5189347,
-    "seen": 1788510430.789646,
-    "ast_hash": "5e33ee1c6f413d4e71d77fbc0c751b59",
-    "semantic_hash": "5e33ee1c6f413d4e71d77fbc0c751b59"
+    "mtime": 1790383719.3187902,
+    "seen": 1790384546.271643,
+    "ast_hash": "bd8dd82991542a00d74f303e0c71f6a7",
+    "semantic_hash": "bd8dd82991542a00d74f303e0c71f6a7"
   },
   "areas/cambridge.html": {
-    "mtime": 1788510277.528736,
-    "seen": 1788510430.789646,
-    "ast_hash": "04eee2f5152fef08e24fd516b6d545b6",
-    "semantic_hash": "04eee2f5152fef08e24fd516b6d545b6"
+    "mtime": 1790383719.3707383,
+    "seen": 1790384546.271643,
+    "ast_hash": "f9634309df9004257d4d346bad5c9a34",
+    "semantic_hash": "f9634309df9004257d4d346bad5c9a34"
   },
   "areas/canterbury.html": {
-    "mtime": 1788510277.523902,
-    "seen": 1788510430.789646,
-    "ast_hash": "4ee9dbb8c052e56435d0e8d87597399a",
-    "semantic_hash": "4ee9dbb8c052e56435d0e8d87597399a"
+    "mtime": 1790383719.4303024,
+    "seen": 1790384546.2716439,
+    "ast_hash": "dec45210db439e3456c161dc809e5749",
+    "semantic_hash": "dec45210db439e3456c161dc809e5749"
   },
   "areas/chelmsford.html": {
-    "mtime": 1788510277.5474129,
-    "seen": 1788510430.789646,
-    "ast_hash": "50709316e37c2038de070aee0300800c",
-    "semantic_hash": "50709316e37c2038de070aee0300800c"
+    "mtime": 1790383719.3948164,
+    "seen": 1790384546.2716439,
+    "ast_hash": "589a5800c144831a86c0b8773895809e",
+    "semantic_hash": "589a5800c144831a86c0b8773895809e"
   },
   "areas/chester.html": {
-    "mtime": 1788510277.4715939,
-    "seen": 1788510430.789646,
-    "ast_hash": "901d38c46c8f320fd68e492aaa82acd8",
-    "semantic_hash": "901d38c46c8f320fd68e492aaa82acd8"
+    "mtime": 1790383719.294451,
+    "seen": 1790384546.2716448,
+    "ast_hash": "1664da7a97955664db2a140b4269e48e",
+    "semantic_hash": "1664da7a97955664db2a140b4269e48e"
   },
   "areas/guildford.html": {
-    "mtime": 1788510277.306432,
-    "seen": 1788510430.789646,
-    "ast_hash": "acc19d25347dab83227e562fbaa68efe",
-    "semantic_hash": "acc19d25347dab83227e562fbaa68efe"
+    "mtime": 1790383719.257142,
+    "seen": 1790384546.2716448,
+    "ast_hash": "a4227fee2577dad9b82127d6646e14c8",
+    "semantic_hash": "a4227fee2577dad9b82127d6646e14c8"
   },
   "areas/index.html": {
-    "mtime": 1788510277.4769773,
-    "seen": 1788510430.789646,
-    "ast_hash": "dbfa366c3450f4a333477af746fb33f3",
-    "semantic_hash": "dbfa366c3450f4a333477af746fb33f3"
+    "mtime": 1790383719.2824283,
+    "seen": 1790384546.271646,
+    "ast_hash": "bc57f0c977210398a7dccae0789fd1fe",
+    "semantic_hash": "bc57f0c977210398a7dccae0789fd1fe"
   },
   "areas/liverpool.html": {
-    "mtime": 1788510277.4865556,
-    "seen": 1788510430.789646,
-    "ast_hash": "bfed19d22c9304dc39cd74e269b68b03",
-    "semantic_hash": "bfed19d22c9304dc39cd74e269b68b03"
+    "mtime": 1790383719.3062344,
+    "seen": 1790384546.271646,
+    "ast_hash": "e9096df6bf166db512f9856f4ce87970",
+    "semantic_hash": "e9096df6bf166db512f9856f4ce87970"
   },
   "areas/london.html": {
-    "mtime": 1788510277.503872,
-    "seen": 1788510430.789646,
-    "ast_hash": "d03e213c9bee7c2467f9dc67f17d77bc",
-    "semantic_hash": "d03e213c9bee7c2467f9dc67f17d77bc"
+    "mtime": 1790383719.4067733,
+    "seen": 1790384546.271647,
+    "ast_hash": "e8486fc9ea44ab0caee32a88cdb360d8",
+    "semantic_hash": "e8486fc9ea44ab0caee32a88cdb360d8"
   },
   "areas/london/barking-dagenham.html": {
-    "mtime": 1788510277.3981335,
-    "seen": 1788510430.789646,
-    "ast_hash": "e37e403cfb8db046b4f82d4f878732d5",
-    "semantic_hash": "e37e403cfb8db046b4f82d4f878732d5"
+    "mtime": 1790383719.5152783,
+    "seen": 1790384546.271648,
+    "ast_hash": "1ca457e526c8ae19b85a60d0508c449e",
+    "semantic_hash": "1ca457e526c8ae19b85a60d0508c449e"
   },
   "areas/london/barnet.html": {
-    "mtime": 1788510277.3697417,
-    "seen": 1788510430.789646,
-    "ast_hash": "14fccd59d524f77ed8503d8ec62ac09f",
-    "semantic_hash": "14fccd59d524f77ed8503d8ec62ac09f"
+    "mtime": 1790383719.8158455,
+    "seen": 1790384546.271648,
+    "ast_hash": "315c7e44862c50065d6ecf4c2ac644dd",
+    "semantic_hash": "315c7e44862c50065d6ecf4c2ac644dd"
   },
   "areas/london/bexley.html": {
-    "mtime": 1788510277.321006,
-    "seen": 1788510430.789646,
-    "ast_hash": "bac2e9e6066479d0e3abd1d48b95e8dc",
-    "semantic_hash": "bac2e9e6066479d0e3abd1d48b95e8dc"
+    "mtime": 1790383719.6118047,
+    "seen": 1790384546.2716491,
+    "ast_hash": "9acbdb4b3359b6df31f8e2560fa39106",
+    "semantic_hash": "9acbdb4b3359b6df31f8e2560fa39106"
   },
   "areas/london/brent.html": {
-    "mtime": 1788510277.3885207,
-    "seen": 1788510430.789646,
-    "ast_hash": "6facb085dc96a57f9e85c24f6aebda97",
-    "semantic_hash": "6facb085dc96a57f9e85c24f6aebda97"
+    "mtime": 1790383719.4787629,
+    "seen": 1790384546.2716491,
+    "ast_hash": "809dd2ca2c2c99e34bb7bf3e3475e062",
+    "semantic_hash": "809dd2ca2c2c99e34bb7bf3e3475e062"
   },
   "areas/london/bromley.html": {
-    "mtime": 1788510277.3305566,
-    "seen": 1788510430.789646,
-    "ast_hash": "a9b87887b8b1c5c97e309c7981f2c58a",
-    "semantic_hash": "a9b87887b8b1c5c97e309c7981f2c58a"
+    "mtime": 1790383719.4666688,
+    "seen": 1790384546.27165,
+    "ast_hash": "8548a3da6b8963010689b88a28541c74",
+    "semantic_hash": "8548a3da6b8963010689b88a28541c74"
   },
   "areas/london/camden.html": {
-    "mtime": 1788510277.3647025,
-    "seen": 1788510430.789646,
-    "ast_hash": "e2a8064f87824c6a6f8dc796db15feef",
-    "semantic_hash": "e2a8064f87824c6a6f8dc796db15feef"
+    "mtime": 1790383719.5994613,
+    "seen": 1790384546.27165,
+    "ast_hash": "630e0d93aa0f863826c73eceb4b8e03e",
+    "semantic_hash": "630e0d93aa0f863826c73eceb4b8e03e"
   },
   "areas/london/city-of-london.html": {
-    "mtime": 1788510277.3790257,
-    "seen": 1788510430.789646,
-    "ast_hash": "536335149c918675da8038fb6a4f3208",
-    "semantic_hash": "536335149c918675da8038fb6a4f3208"
+    "mtime": 1790383719.503278,
+    "seen": 1790384546.271651,
+    "ast_hash": "dd23e48c74c6170828dce303a40e5b44",
+    "semantic_hash": "dd23e48c74c6170828dce303a40e5b44"
   },
   "areas/london/croydon.html": {
-    "mtime": 1788510277.4030066,
-    "seen": 1788510430.789646,
-    "ast_hash": "64403c627ce7ad253f855c23232d731d",
-    "semantic_hash": "64403c627ce7ad253f855c23232d731d"
+    "mtime": 1790383719.840146,
+    "seen": 1790384546.271651,
+    "ast_hash": "135dc80911bae46c3906d085ee34975a",
+    "semantic_hash": "135dc80911bae46c3906d085ee34975a"
   },
   "areas/london/ealing.html": {
-    "mtime": 1788510277.3452437,
-    "seen": 1788510430.789646,
-    "ast_hash": "7ac409954ff4a18c0ffbadbff4349467",
-    "semantic_hash": "7ac409954ff4a18c0ffbadbff4349467"
+    "mtime": 1790383719.8040485,
+    "seen": 1790384546.271652,
+    "ast_hash": "b11daf1a8225eb02aaaf72768fe9c0e2",
+    "semantic_hash": "b11daf1a8225eb02aaaf72768fe9c0e2"
   },
   "areas/london/enfield.html": {
-    "mtime": 1788510277.3161771,
-    "seen": 1788510430.789646,
-    "ast_hash": "d649d6ed5fa4de6a3a70bd6d35cdb1e6",
-    "semantic_hash": "d649d6ed5fa4de6a3a70bd6d35cdb1e6"
+    "mtime": 1790383719.5751595,
+    "seen": 1790384546.271652,
+    "ast_hash": "97637681ad2a13b38eaa61267f586110",
+    "semantic_hash": "97637681ad2a13b38eaa61267f586110"
   },
   "areas/london/greenwich.html": {
-    "mtime": 1788510277.3932247,
-    "seen": 1788510430.789646,
-    "ast_hash": "80a9e9ba7a1b5f4c2786b215d1448a30",
-    "semantic_hash": "80a9e9ba7a1b5f4c2786b215d1448a30"
+    "mtime": 1790383719.6957216,
+    "seen": 1790384546.2716532,
+    "ast_hash": "1e2e3b2bf7f5e39212181215b3cbaf68",
+    "semantic_hash": "1e2e3b2bf7f5e39212181215b3cbaf68"
   },
   "areas/london/hackney.html": {
-    "mtime": 1788510277.4079819,
-    "seen": 1788510430.789646,
-    "ast_hash": "0a6c55c633eb142697cddf8aea0157f9",
-    "semantic_hash": "0a6c55c633eb142697cddf8aea0157f9"
+    "mtime": 1790383719.7311962,
+    "seen": 1790384546.2716532,
+    "ast_hash": "65062c3215e74a2baa99cf3903575137",
+    "semantic_hash": "65062c3215e74a2baa99cf3903575137"
   },
   "areas/london/hammersmith-fulham.html": {
-    "mtime": 1788510277.4271345,
-    "seen": 1788510430.789646,
-    "ast_hash": "6e8b4dc49b05a60bf242e8677ed66bbb",
-    "semantic_hash": "6e8b4dc49b05a60bf242e8677ed66bbb"
+    "mtime": 1790383719.5391285,
+    "seen": 1790384546.271654,
+    "ast_hash": "d7723c37129a3773b4a06e7e334c348c",
+    "semantic_hash": "d7723c37129a3773b4a06e7e334c348c"
   },
   "areas/london/haringey.html": {
-    "mtime": 1788510277.45686,
-    "seen": 1788510430.789646,
-    "ast_hash": "2747f513a5eff89db0254b7ed80ea96a",
-    "semantic_hash": "2747f513a5eff89db0254b7ed80ea96a"
+    "mtime": 1790383719.5634418,
+    "seen": 1790384546.271654,
+    "ast_hash": "cc6fb5712e9f47c4edb33c0674d1a4ab",
+    "semantic_hash": "cc6fb5712e9f47c4edb33c0674d1a4ab"
   },
   "areas/london/harrow.html": {
-    "mtime": 1788510277.3547587,
-    "seen": 1788510430.789646,
-    "ast_hash": "240175848970e80567ffa06fb279efac",
-    "semantic_hash": "240175848970e80567ffa06fb279efac"
+    "mtime": 1790383719.7919786,
+    "seen": 1790384546.2716548,
+    "ast_hash": "09696720c050ac12e7efb2116a0ff393",
+    "semantic_hash": "09696720c050ac12e7efb2116a0ff393"
   },
   "areas/london/havering.html": {
-    "mtime": 1788510277.4666433,
-    "seen": 1788510430.789646,
-    "ast_hash": "49ed6f4dd435d6a78a19e5181ca03aea",
-    "semantic_hash": "49ed6f4dd435d6a78a19e5181ca03aea"
+    "mtime": 1790383719.5874424,
+    "seen": 1790384546.2716548,
+    "ast_hash": "57c0cc46651512bad8615e8ff8036f05",
+    "semantic_hash": "57c0cc46651512bad8615e8ff8036f05"
   },
   "areas/london/hillingdon.html": {
-    "mtime": 1788510277.311332,
-    "seen": 1788510430.789646,
-    "ast_hash": "8b3b76188d6f473c9f148961a74c1033",
-    "semantic_hash": "8b3b76188d6f473c9f148961a74c1033"
+    "mtime": 1790383719.6834364,
+    "seen": 1790384546.271656,
+    "ast_hash": "05469d2e273fefe651c6a4e2e8fcfe51",
+    "semantic_hash": "05469d2e273fefe651c6a4e2e8fcfe51"
   },
   "areas/london/hounslow.html": {
-    "mtime": 1788510277.447287,
-    "seen": 1788510430.789646,
-    "ast_hash": "3b98dd49ea4cbe07458da1536c650d41",
-    "semantic_hash": "3b98dd49ea4cbe07458da1536c650d41"
+    "mtime": 1790383719.527276,
+    "seen": 1790384546.271656,
+    "ast_hash": "b32b04559d494634c74d2737edef76f7",
+    "semantic_hash": "b32b04559d494634c74d2737edef76f7"
   },
   "areas/london/islington.html": {
-    "mtime": 1788510277.431897,
-    "seen": 1788510430.789646,
-    "ast_hash": "5a3be7a58a128fa2a3fb4d8a4a5d8038",
-    "semantic_hash": "5a3be7a58a128fa2a3fb4d8a4a5d8038"
+    "mtime": 1790383719.7552934,
+    "seen": 1790384546.271657,
+    "ast_hash": "709d2eabbac1aa34ea20192fe64288af",
+    "semantic_hash": "709d2eabbac1aa34ea20192fe64288af"
   },
   "areas/london/kensington-chelsea.html": {
-    "mtime": 1788510277.452217,
-    "seen": 1788510430.789646,
-    "ast_hash": "5e0d531a7d0b1a6a103946eda7adb20e",
-    "semantic_hash": "5e0d531a7d0b1a6a103946eda7adb20e"
+    "mtime": 1790383719.6241322,
+    "seen": 1790384546.271657,
+    "ast_hash": "f3141fa00840ea3e8027c8687add7b7c",
+    "semantic_hash": "f3141fa00840ea3e8027c8687add7b7c"
   },
   "areas/london/kingston.html": {
-    "mtime": 1788510277.3354013,
-    "seen": 1788510430.789646,
-    "ast_hash": "d92660399d72941a23ee0a0d7c8f2a94",
-    "semantic_hash": "d92660399d72941a23ee0a0d7c8f2a94"
+    "mtime": 1790383719.6594803,
+    "seen": 1790384546.271658,
+    "ast_hash": "4472532869738bfdbe451db46df2596c",
+    "semantic_hash": "4472532869738bfdbe451db46df2596c"
   },
   "areas/london/lambeth.html": {
-    "mtime": 1788510277.4128487,
-    "seen": 1788510430.789646,
-    "ast_hash": "08894971097b21854ee71812bab02de6",
-    "semantic_hash": "08894971097b21854ee71812bab02de6"
+    "mtime": 1790383719.6477492,
+    "seen": 1790384546.271658,
+    "ast_hash": "5fe0086a8ec8aae1d06358fda078f6d4",
+    "semantic_hash": "5fe0086a8ec8aae1d06358fda078f6d4"
   },
   "areas/london/lewisham.html": {
-    "mtime": 1788510277.417469,
-    "seen": 1788510430.789646,
-    "ast_hash": "3d4237291cb1353d21df0ab0cf93ffe1",
-    "semantic_hash": "3d4237291cb1353d21df0ab0cf93ffe1"
+    "mtime": 1790383719.4911463,
+    "seen": 1790384546.271659,
+    "ast_hash": "b865ec83e640bb11900b4ecc69aa52dd",
+    "semantic_hash": "b865ec83e640bb11900b4ecc69aa52dd"
   },
   "areas/london/merton.html": {
-    "mtime": 1788510277.4619353,
-    "seen": 1788510430.789646,
-    "ast_hash": "9508843b2f1d3f482bc3e581c8b94460",
-    "semantic_hash": "9508843b2f1d3f482bc3e581c8b94460"
+    "mtime": 1790383719.7072966,
+    "seen": 1790384546.271659,
+    "ast_hash": "57d18912a75d43f3697e25572d30bf21",
+    "semantic_hash": "57d18912a75d43f3697e25572d30bf21"
   },
   "areas/london/newham.html": {
-    "mtime": 1788510277.340335,
-    "seen": 1788510430.789646,
-    "ast_hash": "8fe25e7104646775ddddd48dda36a2f0",
-    "semantic_hash": "8fe25e7104646775ddddd48dda36a2f0"
+    "mtime": 1790383719.8283315,
+    "seen": 1790384546.27166,
+    "ast_hash": "cefb1dd8a62724efe180a0bb3d98ec53",
+    "semantic_hash": "cefb1dd8a62724efe180a0bb3d98ec53"
   },
   "areas/london/redbridge.html": {
-    "mtime": 1788510277.4424803,
-    "seen": 1788510430.789646,
-    "ast_hash": "a3c7bd9935585ae9c24cce405af77f7c",
-    "semantic_hash": "a3c7bd9935585ae9c24cce405af77f7c"
+    "mtime": 1790383719.7796562,
+    "seen": 1790384546.27166,
+    "ast_hash": "461d563335f839c529c918f8e9985dac",
+    "semantic_hash": "461d563335f839c529c918f8e9985dac"
   },
   "areas/london/richmond.html": {
-    "mtime": 1788510277.3498805,
-    "seen": 1788510430.789646,
-    "ast_hash": "2117f4161a97f617d660b2a26bc1eb20",
-    "semantic_hash": "2117f4161a97f617d660b2a26bc1eb20"
+    "mtime": 1790383719.7673447,
+    "seen": 1790384546.271661,
+    "ast_hash": "394083835f0d356fe6b08c76d37448bf",
+    "semantic_hash": "394083835f0d356fe6b08c76d37448bf"
   },
   "areas/london/southwark.html": {
-    "mtime": 1788510277.374466,
-    "seen": 1788510430.789646,
-    "ast_hash": "f90e79d90b9412b7258bd0be6f1d08d3",
-    "semantic_hash": "f90e79d90b9412b7258bd0be6f1d08d3"
+    "mtime": 1790383719.550956,
+    "seen": 1790384546.271661,
+    "ast_hash": "629d17cac022a4b206ee30ca387d7dc9",
+    "semantic_hash": "629d17cac022a4b206ee30ca387d7dc9"
   },
   "areas/london/sutton.html": {
-    "mtime": 1788510277.3257406,
-    "seen": 1788510430.789646,
-    "ast_hash": "0dfdba113c98eba8d301cc1541df4748",
-    "semantic_hash": "0dfdba113c98eba8d301cc1541df4748"
+    "mtime": 1790383719.74308,
+    "seen": 1790384546.271662,
+    "ast_hash": "7236324b329d635512e2e90f13584b3a",
+    "semantic_hash": "7236324b329d635512e2e90f13584b3a"
   },
   "areas/london/tower-hamlets.html": {
-    "mtime": 1788510277.3838937,
-    "seen": 1788510430.789646,
-    "ast_hash": "f5996ecfd30c641629b619e23315c5ba",
-    "semantic_hash": "f5996ecfd30c641629b619e23315c5ba"
+    "mtime": 1790383719.671453,
+    "seen": 1790384546.271662,
+    "ast_hash": "9854046ec316181a1c4c0049f878ec98",
+    "semantic_hash": "9854046ec316181a1c4c0049f878ec98"
   },
   "areas/london/waltham-forest.html": {
-    "mtime": 1788510277.4374256,
-    "seen": 1788510430.789646,
-    "ast_hash": "ab70e918c10d279fbada56967d2d86b3",
-    "semantic_hash": "ab70e918c10d279fbada56967d2d86b3"
+    "mtime": 1790383719.635536,
+    "seen": 1790384546.271662,
+    "ast_hash": "476c0ecc4d28a6dafc3a65de33145c7f",
+    "semantic_hash": "476c0ecc4d28a6dafc3a65de33145c7f"
   },
   "areas/london/wandsworth.html": {
-    "mtime": 1788510277.4224904,
-    "seen": 1788510430.789646,
-    "ast_hash": "acf9c4545a6d1942d2947839a86abcc0",
-    "semantic_hash": "acf9c4545a6d1942d2947839a86abcc0"
+    "mtime": 1790383719.4543817,
+    "seen": 1790384546.2716632,
+    "ast_hash": "2adebd2dd8d35db22aa8819fc43f82d4",
+    "semantic_hash": "2adebd2dd8d35db22aa8819fc43f82d4"
   },
   "areas/london/westminster.html": {
-    "mtime": 1788510277.359637,
-    "seen": 1788510430.789646,
-    "ast_hash": "8eafd7206ad4f19572ef000e0fca058f",
-    "semantic_hash": "8eafd7206ad4f19572ef000e0fca058f"
+    "mtime": 1790383719.7187805,
+    "seen": 1790384546.2716641,
+    "ast_hash": "1e98daa8e1c067bf8db3c4fb0bbc1484",
+    "semantic_hash": "1e98daa8e1c067bf8db3c4fb0bbc1484"
   },
   "areas/manchester.html": {
-    "mtime": 1788510277.5427449,
-    "seen": 1788510430.789646,
-    "ast_hash": "872f87723fd719dcf387319f0497e37e",
-    "semantic_hash": "872f87723fd719dcf387319f0497e37e"
+    "mtime": 1790383719.2440665,
+    "seen": 1790384546.2716641,
+    "ast_hash": "2eb1d1f8794042332c464646b7c6737e",
+    "semantic_hash": "2eb1d1f8794042332c464646b7c6737e"
   },
   "areas/oxford.html": {
-    "mtime": 1788510277.53808,
-    "seen": 1788510430.789646,
-    "ast_hash": "e3c183fbe9a3b9bda9c5db693d5ef3f9",
-    "semantic_hash": "e3c183fbe9a3b9bda9c5db693d5ef3f9"
+    "mtime": 1790383719.333822,
+    "seen": 1790384546.2716641,
+    "ast_hash": "0b981eedbd90889680482d5ceca5b059",
+    "semantic_hash": "0b981eedbd90889680482d5ceca5b059"
   },
   "areas/reading.html": {
-    "mtime": 1788510277.5522404,
-    "seen": 1788510430.789646,
-    "ast_hash": "b6cebdd369715d7419dc141baba2a440",
-    "semantic_hash": "b6cebdd369715d7419dc141baba2a440"
+    "mtime": 1790383719.4185116,
+    "seen": 1790384546.2716649,
+    "ast_hash": "bc32ae27fb94eb8a40de8755a23f7af6",
+    "semantic_hash": "bc32ae27fb94eb8a40de8755a23f7af6"
   },
   "areas/rochester.html": {
-    "mtime": 1788510277.498953,
-    "seen": 1788510430.789646,
-    "ast_hash": "61e20fc5b6aa775265e4ee3cb83e803d",
-    "semantic_hash": "61e20fc5b6aa775265e4ee3cb83e803d"
+    "mtime": 1790383719.269169,
+    "seen": 1790384546.2716649,
+    "ast_hash": "6849b45f443e41d3542966f638a247cc",
+    "semantic_hash": "6849b45f443e41d3542966f638a247cc"
   },
   "areas/salisbury.html": {
-    "mtime": 1788510277.301434,
-    "seen": 1788510430.789646,
-    "ast_hash": "54abb16630b02643ca5ffb7d22061b62",
-    "semantic_hash": "54abb16630b02643ca5ffb7d22061b62"
+    "mtime": 1790383719.4419706,
+    "seen": 1790384546.2716658,
+    "ast_hash": "2ab7e3fe77239d37610a7c4c480a3a5f",
+    "semantic_hash": "2ab7e3fe77239d37610a7c4c480a3a5f"
   },
   "areas/slough-maidenhead.html": {
-    "mtime": 1788510277.5334113,
-    "seen": 1788510430.789646,
-    "ast_hash": "af7e2bdb14da8ad7c41f154471d788df",
-    "semantic_hash": "af7e2bdb14da8ad7c41f154471d788df"
+    "mtime": 1790383719.2320936,
+    "seen": 1790384546.2716658,
+    "ast_hash": "44192667e530ca9aaa5fda36bbebe0ce",
+    "semantic_hash": "44192667e530ca9aaa5fda36bbebe0ce"
   },
   "areas/st-albans.html": {
-    "mtime": 1788510277.2931023,
-    "seen": 1788510430.789646,
-    "ast_hash": "5d658af8fd924e16060d84ac672b4ce7",
-    "semantic_hash": "5d658af8fd924e16060d84ac672b4ce7"
+    "mtime": 1790383719.3826761,
+    "seen": 1790384546.271667,
+    "ast_hash": "cf4174eac0b241f51804321c4f4c05f3",
+    "semantic_hash": "cf4174eac0b241f51804321c4f4c05f3"
   },
   "areas/winchester.html": {
-    "mtime": 1788510277.4914834,
-    "seen": 1788510430.789646,
-    "ast_hash": "8cde72f2bd1cab8c26adac67d2068b94",
-    "semantic_hash": "8cde72f2bd1cab8c26adac67d2068b94"
+    "mtime": 1790383719.2201602,
+    "seen": 1790384546.271667,
+    "ast_hash": "15ab637a5ac6432215dfd122b9eb678d",
+    "semantic_hash": "15ab637a5ac6432215dfd122b9eb678d"
   },
   "areas/windsor.html": {
-    "mtime": 1788510277.5137978,
-    "seen": 1788510430.789646,
-    "ast_hash": "267661450433663d6cc5c029844876fa",
-    "semantic_hash": "267661450433663d6cc5c029844876fa"
+    "mtime": 1790383719.358876,
+    "seen": 1790384546.271668,
+    "ast_hash": "f0f6b43982941cdd11b144b8745cec40",
+    "semantic_hash": "f0f6b43982941cdd11b144b8745cec40"
   },
   "assets/apple-touch-icon.png": {
     "mtime": 1786814395.0646627,
@@ -552,52 +552,52 @@
     "semantic_hash": "bc8be0f3f49e543c29bba8b71af6039c"
   },
   "build.sh": {
-    "mtime": 1788499752.8492138,
-    "seen": 1788510430.789646,
-    "ast_hash": "ddbf2d85c709c90d5ca2abcaa0d0bb76",
-    "semantic_hash": "ddbf2d85c709c90d5ca2abcaa0d0bb76"
+    "mtime": 1790379040.6827135,
+    "seen": 1790384546.2716181,
+    "ast_hash": "416047233b3bc910ae0328b2233cd2ae",
+    "semantic_hash": "416047233b3bc910ae0328b2233cd2ae"
   },
   "carol-singers.html": {
-    "mtime": 1788510277.2068307,
-    "seen": 1788510430.789646,
-    "ast_hash": "13db5061503a58a960d57085fce89ab7",
-    "semantic_hash": "13db5061503a58a960d57085fce89ab7"
+    "mtime": 1790383719.183368,
+    "seen": 1790384546.271668,
+    "ast_hash": "a5e12559aec869a4a2cc68b508e40e52",
+    "semantic_hash": "a5e12559aec869a4a2cc68b508e40e52"
   },
   "christmas.html": {
-    "mtime": 1788510277.2586522,
-    "seen": 1788510430.789646,
-    "ast_hash": "7d046523fae19394c8ce88170a80b138",
-    "semantic_hash": "7d046523fae19394c8ce88170a80b138"
+    "mtime": 1790383720.9402266,
+    "seen": 1790384546.271669,
+    "ast_hash": "16dd6e81db66630f4c510bebf775e3e6",
+    "semantic_hash": "16dd6e81db66630f4c510bebf775e3e6"
   },
   "compare/london-funeral-singers.html": {
-    "mtime": 1788510277.2369022,
-    "seen": 1788510430.789646,
-    "ast_hash": "c3eaaa69b01c4f4bfe7f70130a637296",
-    "semantic_hash": "c3eaaa69b01c4f4bfe7f70130a637296"
+    "mtime": 1790383720.7976704,
+    "seen": 1790384546.27167,
+    "ast_hash": "86896c05a74e1ef0164d96a60ea88483",
+    "semantic_hash": "86896c05a74e1ef0164d96a60ea88483"
   },
   "contact.html": {
-    "mtime": 1788510277.2016304,
-    "seen": 1788510430.789646,
-    "ast_hash": "6f2a56116d2bf852b3b73ad4689b846a",
-    "semantic_hash": "6f2a56116d2bf852b3b73ad4689b846a"
+    "mtime": 1790383719.2075446,
+    "seen": 1790384546.27167,
+    "ast_hash": "44bb79f42059c4a14e481f73a09887fd",
+    "semantic_hash": "44bb79f42059c4a14e481f73a09887fd"
   },
   "corporate.html": {
-    "mtime": 1788510277.5682569,
-    "seen": 1788510430.789646,
-    "ast_hash": "705b182d38741bede08505eb6271b904",
-    "semantic_hash": "705b182d38741bede08505eb6271b904"
+    "mtime": 1790384516.7995377,
+    "seen": 1790384546.271671,
+    "ast_hash": "4d4db712f24a28e6c584ea718fd10c9d",
+    "semantic_hash": "4d4db712f24a28e6c584ea718fd10c9d"
   },
   "data/competitor-pricing.yml": {
-    "mtime": 1787075036.971612,
-    "seen": 1788510430.789646,
-    "ast_hash": "42737b2572c2b97b964a917e02980737",
-    "semantic_hash": "42737b2572c2b97b964a917e02980737"
+    "mtime": 1790377512.429227,
+    "seen": 1790384546.271671,
+    "ast_hash": "5eb1d3db930cd2f2a01dab47fc3fb346",
+    "semantic_hash": "5eb1d3db930cd2f2a01dab47fc3fb346"
   },
   "data/page-dates.json": {
-    "mtime": 1788510277.760122,
-    "seen": 1788510430.789646,
-    "ast_hash": "6c2b38dfa8699830ac36a32913f15e63",
-    "semantic_hash": "6c2b38dfa8699830ac36a32913f15e63"
+    "mtime": 1790383721.155975,
+    "seen": 1790384546.2716181,
+    "ast_hash": "dd0fe00241b7f887fc9394cba9626811",
+    "semantic_hash": "dd0fe00241b7f887fc9394cba9626811"
   },
   "data/seo-fix-discovered-urls.yml": {
     "mtime": 1788053214.9719846,
@@ -606,148 +606,148 @@
     "semantic_hash": "a23150579473ef85015a578d497f4094"
   },
   "destinations/barbados.html": {
-    "mtime": 1788510276.323518,
-    "seen": 1788510430.789646,
-    "ast_hash": "fe5fbc2d733ebf82ba96006124981fcb",
-    "semantic_hash": "fe5fbc2d733ebf82ba96006124981fcb"
+    "mtime": 1790383718.7342815,
+    "seen": 1790384546.271671,
+    "ast_hash": "ac0bc1025730218bbf9e3d3f013e00f2",
+    "semantic_hash": "ac0bc1025730218bbf9e3d3f013e00f2"
   },
   "destinations/croatia.html": {
-    "mtime": 1788510276.4072356,
-    "seen": 1788510430.789646,
-    "ast_hash": "54c757ca0733adf2677dbfcbbace89f8",
-    "semantic_hash": "54c757ca0733adf2677dbfcbbace89f8"
+    "mtime": 1790383718.7141845,
+    "seen": 1790384546.271672,
+    "ast_hash": "161620368aeff90cc3f9890cd62ad2c4",
+    "semantic_hash": "161620368aeff90cc3f9890cd62ad2c4"
   },
   "destinations/cyprus.html": {
-    "mtime": 1788510276.3358836,
-    "seen": 1788510430.789646,
-    "ast_hash": "75256df085152e347a7755e2d39571a0",
-    "semantic_hash": "75256df085152e347a7755e2d39571a0"
+    "mtime": 1790383718.603638,
+    "seen": 1790384546.2716732,
+    "ast_hash": "4d7f7e0028e78f05412ff5fdddd0f7d6",
+    "semantic_hash": "4d7f7e0028e78f05412ff5fdddd0f7d6"
   },
   "destinations/france.html": {
-    "mtime": 1788510276.401546,
-    "seen": 1788510430.789646,
-    "ast_hash": "79f6331edfa7331089c7a661d89c594a",
-    "semantic_hash": "79f6331edfa7331089c7a661d89c594a"
+    "mtime": 1790383718.6142116,
+    "seen": 1790384546.2716732,
+    "ast_hash": "812a4c7a6a3dc698f63bcd8546a3b4c3",
+    "semantic_hash": "812a4c7a6a3dc698f63bcd8546a3b4c3"
   },
   "destinations/gibraltar.html": {
-    "mtime": 1788510276.329582,
-    "seen": 1788510430.789646,
-    "ast_hash": "ffa21fb9e218fe12e2399e8bf5276eb3",
-    "semantic_hash": "ffa21fb9e218fe12e2399e8bf5276eb3"
+    "mtime": 1790383718.7245665,
+    "seen": 1790384546.2716742,
+    "ast_hash": "75e52fa9741c836c9b6220877dd981a5",
+    "semantic_hash": "75e52fa9741c836c9b6220877dd981a5"
   },
   "destinations/greece.html": {
-    "mtime": 1788510276.4199488,
-    "seen": 1788510430.789646,
-    "ast_hash": "c4ebcc7ac9d61ff18449d1a9c071dc5d",
-    "semantic_hash": "c4ebcc7ac9d61ff18449d1a9c071dc5d"
+    "mtime": 1790383718.6551929,
+    "seen": 1790384546.2716742,
+    "ast_hash": "179b0775793727c134bbe03ce99cf671",
+    "semantic_hash": "179b0775793727c134bbe03ce99cf671"
   },
   "destinations/index.html": {
-    "mtime": 1788510276.3551152,
-    "seen": 1788510430.789646,
-    "ast_hash": "f0ca799429eb20504d106e24b40dd04b",
-    "semantic_hash": "f0ca799429eb20504d106e24b40dd04b"
+    "mtime": 1790383718.6250296,
+    "seen": 1790384546.2716749,
+    "ast_hash": "4d2817ef640825852464959100ce58a5",
+    "semantic_hash": "4d2817ef640825852464959100ce58a5"
   },
   "destinations/indonesia.html": {
-    "mtime": 1788510276.365102,
-    "seen": 1788510430.789646,
-    "ast_hash": "f84ca07a5a8661d239c9e88e77c75bf0",
-    "semantic_hash": "f84ca07a5a8661d239c9e88e77c75bf0"
+    "mtime": 1790383718.6942482,
+    "seen": 1790384546.2716749,
+    "ast_hash": "a5a9cf00db70d5495eefaf722d25690a",
+    "semantic_hash": "a5a9cf00db70d5495eefaf722d25690a"
   },
   "destinations/ireland.html": {
-    "mtime": 1788510276.345102,
-    "seen": 1788510430.789646,
-    "ast_hash": "90cd2299455e71eb09383dff7d548227",
-    "semantic_hash": "90cd2299455e71eb09383dff7d548227"
+    "mtime": 1790383718.684361,
+    "seen": 1790384546.2716749,
+    "ast_hash": "8bbd1ae057fb65f9f96c492b9b463ad0",
+    "semantic_hash": "8bbd1ae057fb65f9f96c492b9b463ad0"
   },
   "destinations/italy.html": {
-    "mtime": 1788510276.4259923,
-    "seen": 1788510430.789646,
-    "ast_hash": "fbb435e432468241d1188625ce8f06b8",
-    "semantic_hash": "fbb435e432468241d1188625ce8f06b8"
+    "mtime": 1790383718.773609,
+    "seen": 1790384546.2716758,
+    "ast_hash": "caee1ae56126b370cc6c606e16784dfc",
+    "semantic_hash": "caee1ae56126b370cc6c606e16784dfc"
   },
   "destinations/jamaica.html": {
-    "mtime": 1788510276.3952203,
-    "seen": 1788510430.789646,
-    "ast_hash": "0ab8e95c97cad6cd189f8f71927071ea",
-    "semantic_hash": "0ab8e95c97cad6cd189f8f71927071ea"
+    "mtime": 1790383718.763836,
+    "seen": 1790384546.2716758,
+    "ast_hash": "d5c03db6a4c7db4cc7350b987eab5c71",
+    "semantic_hash": "d5c03db6a4c7db4cc7350b987eab5c71"
   },
   "destinations/maldives.html": {
-    "mtime": 1788510276.4572272,
-    "seen": 1788510430.789646,
-    "ast_hash": "e0cbffa4bc0197ea7c6866abefcc0094",
-    "semantic_hash": "e0cbffa4bc0197ea7c6866abefcc0094"
+    "mtime": 1790383718.594322,
+    "seen": 1790384546.271677,
+    "ast_hash": "2f9329a1be0435fa4ad1ee43bfd0f189",
+    "semantic_hash": "2f9329a1be0435fa4ad1ee43bfd0f189"
   },
   "destinations/malta.html": {
-    "mtime": 1788510276.4317434,
-    "seen": 1788510430.789646,
-    "ast_hash": "58bceb5e7b0aba74a54b0cdc40cf4473",
-    "semantic_hash": "58bceb5e7b0aba74a54b0cdc40cf4473"
+    "mtime": 1790383718.8131735,
+    "seen": 1790384546.271677,
+    "ast_hash": "f3a3f275cceec266d28b0e72789e6458",
+    "semantic_hash": "f3a3f275cceec266d28b0e72789e6458"
   },
   "destinations/mauritius.html": {
-    "mtime": 1788510276.3820388,
-    "seen": 1788510430.789646,
-    "ast_hash": "064bf4a0f6df5f42d7ce18471fbe2439",
-    "semantic_hash": "064bf4a0f6df5f42d7ce18471fbe2439"
+    "mtime": 1790383718.7836075,
+    "seen": 1790384546.271678,
+    "ast_hash": "dee87209a0029149707b87a8d8f2af32",
+    "semantic_hash": "dee87209a0029149707b87a8d8f2af32"
   },
   "destinations/mexico.html": {
-    "mtime": 1788510276.37575,
-    "seen": 1788510430.789646,
-    "ast_hash": "38a778a887d8b295eacfdf9d56cc3efa",
-    "semantic_hash": "38a778a887d8b295eacfdf9d56cc3efa"
+    "mtime": 1790383718.793387,
+    "seen": 1790384546.271678,
+    "ast_hash": "a8168dd4d1cedf3b24f24cda39509bd3",
+    "semantic_hash": "a8168dd4d1cedf3b24f24cda39509bd3"
   },
   "destinations/portugal.html": {
-    "mtime": 1788510276.313102,
-    "seen": 1788510430.789646,
-    "ast_hash": "0b9841c09a0acbbd1205af70cbf26bc9",
-    "semantic_hash": "0b9841c09a0acbbd1205af70cbf26bc9"
+    "mtime": 1790383718.67408,
+    "seen": 1790384546.271679,
+    "ast_hash": "14eddda1676d72e2aa4458867c6ca89d",
+    "semantic_hash": "14eddda1676d72e2aa4458867c6ca89d"
   },
   "destinations/scotland.html": {
-    "mtime": 1788510276.441102,
-    "seen": 1788510430.789646,
-    "ast_hash": "47c52d48a83e072d14328cb9d76ea503",
-    "semantic_hash": "47c52d48a83e072d14328cb9d76ea503"
+    "mtime": 1790383718.8032904,
+    "seen": 1790384546.271679,
+    "ast_hash": "7d083d298e73b2ba5d1c9cae595c9a84",
+    "semantic_hash": "7d083d298e73b2ba5d1c9cae595c9a84"
   },
   "destinations/seychelles.html": {
-    "mtime": 1788510276.4136207,
-    "seen": 1788510430.789646,
-    "ast_hash": "83373390d0aca1c7429995371bf09342",
-    "semantic_hash": "83373390d0aca1c7429995371bf09342"
+    "mtime": 1790383718.7044446,
+    "seen": 1790384546.27168,
+    "ast_hash": "02bc7d6a107d91bbcc515e55e7bdf1dc",
+    "semantic_hash": "02bc7d6a107d91bbcc515e55e7bdf1dc"
   },
   "destinations/south-africa.html": {
-    "mtime": 1788510276.4509966,
-    "seen": 1788510430.789646,
-    "ast_hash": "4adf46dd1b04bb61ffdd2209c547f7af",
-    "semantic_hash": "4adf46dd1b04bb61ffdd2209c547f7af"
+    "mtime": 1790383718.6643584,
+    "seen": 1790384546.27168,
+    "ast_hash": "05d0bc42448876c04ea0344dea7ee323",
+    "semantic_hash": "05d0bc42448876c04ea0344dea7ee323"
   },
   "destinations/spain.html": {
-    "mtime": 1788510276.3622303,
-    "seen": 1788510430.789646,
-    "ast_hash": "51781ee9782b5616363862bfc83ae7bc",
-    "semantic_hash": "51781ee9782b5616363862bfc83ae7bc"
+    "mtime": 1790383718.6455314,
+    "seen": 1790384546.271681,
+    "ast_hash": "e82a99cc89e8f38e7886d5479ea47851",
+    "semantic_hash": "e82a99cc89e8f38e7886d5479ea47851"
   },
   "destinations/st-lucia.html": {
-    "mtime": 1788510276.4381812,
-    "seen": 1788510430.789646,
-    "ast_hash": "0df521ef457a55f0063e713a9a9fa5de",
-    "semantic_hash": "0df521ef457a55f0063e713a9a9fa5de"
+    "mtime": 1790383718.6348388,
+    "seen": 1790384546.271681,
+    "ast_hash": "f4b2794a3046bedf02a8e2fb31e7dbf9",
+    "semantic_hash": "f4b2794a3046bedf02a8e2fb31e7dbf9"
   },
   "destinations/thailand.html": {
-    "mtime": 1788510276.3422782,
-    "seen": 1788510430.789646,
-    "ast_hash": "ffeddf5d25bcabd0335ba1a1c4d81e1c",
-    "semantic_hash": "ffeddf5d25bcabd0335ba1a1c4d81e1c"
+    "mtime": 1790383718.7541199,
+    "seen": 1790384546.271682,
+    "ast_hash": "bba154e7051e87bd4aa8ea7b28c27100",
+    "semantic_hash": "bba154e7051e87bd4aa8ea7b28c27100"
   },
   "destinations/united-states.html": {
-    "mtime": 1788510276.385102,
-    "seen": 1788510430.789646,
-    "ast_hash": "e1b6c3822f971bf4bf70d8735d3c4239",
-    "semantic_hash": "e1b6c3822f971bf4bf70d8735d3c4239"
+    "mtime": 1790383718.743954,
+    "seen": 1790384546.271682,
+    "ast_hash": "1e1065b07419be90f69a707ebe70293c",
+    "semantic_hash": "1e1065b07419be90f69a707ebe70293c"
   },
   "docs/ROADMAP.md": {
-    "mtime": 1788504922.891232,
-    "seen": 1788510430.789646,
-    "ast_hash": "6b1ea5e855dcdb38909104def0386c6c",
-    "semantic_hash": "6b1ea5e855dcdb38909104def0386c6c"
+    "mtime": 1790377512.4302218,
+    "seen": 1790384546.271683,
+    "ast_hash": "165a82b71075c1dd15b849ab387ccd91",
+    "semantic_hash": "165a82b71075c1dd15b849ab387ccd91"
   },
   "docs/off-site-listings-pack.md": {
     "mtime": 1788053214.9783416,
@@ -888,484 +888,484 @@
     "semantic_hash": "6e8aac054c16eab3a5c2967eb3706b67"
   },
   "faq.html": {
-    "mtime": 1788510277.1816444,
-    "seen": 1788510430.789646,
-    "ast_hash": "a4812851332cf8839ebd06844f822326",
-    "semantic_hash": "a4812851332cf8839ebd06844f822326"
+    "mtime": 1790383720.901492,
+    "seen": 1790384546.271683,
+    "ast_hash": "1045f16efc587f42ed8232178f68c16a",
+    "semantic_hash": "1045f16efc587f42ed8232178f68c16a"
   },
   "for-charities.html": {
-    "mtime": 1788510277.5780845,
-    "seen": 1788510430.789646,
-    "ast_hash": "7d9b804f34cbd8575852e2ceb17f6ff8",
-    "semantic_hash": "7d9b804f34cbd8575852e2ceb17f6ff8"
+    "mtime": 1790383720.8220408,
+    "seen": 1790384546.2716842,
+    "ast_hash": "1aa0c449627a4ee97966244536f06ffa",
+    "semantic_hash": "1aa0c449627a4ee97966244536f06ffa"
   },
   "for-event-managers.html": {
-    "mtime": 1788510276.8676813,
-    "seen": 1788510430.789646,
-    "ast_hash": "ef24be73a0fe5264139748ada7c5f8a7",
-    "semantic_hash": "ef24be73a0fe5264139748ada7c5f8a7"
+    "mtime": 1790383720.8092544,
+    "seen": 1790384546.2716842,
+    "ast_hash": "4e857a7fd33f01cc99d61e1efbaa2f10",
+    "semantic_hash": "4e857a7fd33f01cc99d61e1efbaa2f10"
   },
   "for-funeral-directors.html": {
-    "mtime": 1788510277.1874835,
-    "seen": 1788510430.789646,
-    "ast_hash": "edf14294135c680215d5f5cdf4fd9fee",
-    "semantic_hash": "edf14294135c680215d5f5cdf4fd9fee"
+    "mtime": 1790383720.8348043,
+    "seen": 1790384546.2716851,
+    "ast_hash": "0edd336ac3c937b14a7010503b2fe6a6",
+    "semantic_hash": "0edd336ac3c937b14a7010503b2fe6a6"
   },
   "for-hotels.html": {
-    "mtime": 1788510277.2268658,
-    "seen": 1788510430.789646,
-    "ast_hash": "a66b500e99cd704e5ac5ecf06ebf1f15",
-    "semantic_hash": "a66b500e99cd704e5ac5ecf06ebf1f15"
+    "mtime": 1790383720.7556,
+    "seen": 1790384546.2716851,
+    "ast_hash": "79310ee90fb272734219b3842471fa89",
+    "semantic_hash": "79310ee90fb272734219b3842471fa89"
   },
   "for-livery-companies.html": {
-    "mtime": 1788510276.8625112,
-    "seen": 1788510430.789646,
-    "ast_hash": "b40d0b59c1f95e9ee24587620ac59e08",
-    "semantic_hash": "b40d0b59c1f95e9ee24587620ac59e08"
+    "mtime": 1790383720.8895874,
+    "seen": 1790384546.2716858,
+    "ast_hash": "d0b9dda9cef65982e53d95174cf9940c",
+    "semantic_hash": "d0b9dda9cef65982e53d95174cf9940c"
   },
   "for-property-managers.html": {
-    "mtime": 1788510277.2418885,
-    "seen": 1788510430.789646,
-    "ast_hash": "daa48b54e78a74e593cb1ddbc74f0d88",
-    "semantic_hash": "daa48b54e78a74e593cb1ddbc74f0d88"
+    "mtime": 1790383720.730874,
+    "seen": 1790384546.2716858,
+    "ast_hash": "e90bbf511408978db152ad451e636d1b",
+    "semantic_hash": "e90bbf511408978db152ad451e636d1b"
   },
   "for-wedding-planners.html": {
-    "mtime": 1788510277.573255,
-    "seen": 1788510430.789646,
-    "ast_hash": "6a247c4f89c7995a2b410ee74a17fcd0",
-    "semantic_hash": "6a247c4f89c7995a2b410ee74a17fcd0"
+    "mtime": 1790383720.70701,
+    "seen": 1790384546.271687,
+    "ast_hash": "65b1d124e54fa71244c2755cbfa4a268",
+    "semantic_hash": "65b1d124e54fa71244c2755cbfa4a268"
   },
   "funerals.html": {
-    "mtime": 1788510277.5631132,
-    "seen": 1788510430.789646,
-    "ast_hash": "dcf9cacbf96df8141435b9c68d7bdd33",
-    "semantic_hash": "dcf9cacbf96df8141435b9c68d7bdd33"
+    "mtime": 1790383720.7803102,
+    "seen": 1790384546.271687,
+    "ast_hash": "e6806fd1dd4d022e56a2fcc09781dc7a",
+    "semantic_hash": "e6806fd1dd4d022e56a2fcc09781dc7a"
   },
   "index.html": {
-    "mtime": 1788510277.216845,
-    "seen": 1788510430.789646,
-    "ast_hash": "57e621aed6e57252a93089ba1ac41796",
-    "semantic_hash": "57e621aed6e57252a93089ba1ac41796"
+    "mtime": 1790383719.1713088,
+    "seen": 1790384546.271688,
+    "ast_hash": "38c8d83714443829bc2dfce0fe83e5d8",
+    "semantic_hash": "38c8d83714443829bc2dfce0fe83e5d8"
   },
   "js/consent.js": {
-    "mtime": 1788502793.0191646,
-    "seen": 1788510430.789646,
-    "ast_hash": "9b71ee3938f10b896028789ae858be0e",
-    "semantic_hash": "9b71ee3938f10b896028789ae858be0e"
+    "mtime": 1790379606.2449434,
+    "seen": 1790384546.271619,
+    "ast_hash": "f05c8a336cc25a3aa3b2a899ff30120c",
+    "semantic_hash": "f05c8a336cc25a3aa3b2a899ff30120c"
   },
   "js/form.js": {
-    "mtime": 1788053215.0168576,
-    "seen": 1788510430.789646,
-    "ast_hash": "431871947aaa5506947b3adbbaa3730c",
-    "semantic_hash": "431871947aaa5506947b3adbbaa3730c"
+    "mtime": 1790379722.6435285,
+    "seen": 1790384546.27162,
+    "ast_hash": "d9135a2ba95c5c3f6668688fbf9e7389",
+    "semantic_hash": "d9135a2ba95c5c3f6668688fbf9e7389"
   },
   "js/music-guides.js": {
-    "mtime": 1788053215.0173774,
-    "seen": 1788510430.789646,
+    "mtime": 1786814395.0931835,
+    "seen": 1790384546.27162,
     "ast_hash": "e372189794480503c9ae1a937d7aa9e1",
     "semantic_hash": "e372189794480503c9ae1a937d7aa9e1"
   },
   "js/nav.js": {
-    "mtime": 1788499627.3851845,
-    "seen": 1788510430.789646,
-    "ast_hash": "978f3f685d29e3199832b2c917972908",
-    "semantic_hash": "978f3f685d29e3199832b2c917972908"
+    "mtime": 1790379649.7755425,
+    "seen": 1790384546.2716212,
+    "ast_hash": "ef637150b7c9de1e863cc1c87167cfd9",
+    "semantic_hash": "ef637150b7c9de1e863cc1c87167cfd9"
   },
   "js/private-events.js": {
-    "mtime": 1788053215.0181618,
-    "seen": 1788510430.789646,
-    "ast_hash": "3646715446d3848fbbcfcf8d89a6c0b5",
-    "semantic_hash": "3646715446d3848fbbcfcf8d89a6c0b5"
+    "mtime": 1790379722.64374,
+    "seen": 1790384546.2716212,
+    "ast_hash": "014d70dfd9c5dd6f7a3e5f2197ed0230",
+    "semantic_hash": "014d70dfd9c5dd6f7a3e5f2197ed0230"
   },
   "listen.html": {
-    "mtime": 1788510277.592527,
-    "seen": 1788510430.789646,
-    "ast_hash": "5c727e5ffdad3c59000a633ce2c49e6a",
-    "semantic_hash": "5c727e5ffdad3c59000a633ce2c49e6a"
+    "mtime": 1790383720.7676234,
+    "seen": 1790384546.271688,
+    "ast_hash": "559aed376ec4f3118328ec0e2e8c61a5",
+    "semantic_hash": "559aed376ec4f3118328ec0e2e8c61a5"
   },
   "llms-full.txt": {
-    "mtime": 1788510277.9931023,
-    "seen": 1788510430.789646,
-    "ast_hash": "fa7cad505fc9f58bdc9db2cfef630ff3",
-    "semantic_hash": "fa7cad505fc9f58bdc9db2cfef630ff3"
+    "mtime": 1790383721.3384597,
+    "seen": 1790384546.271689,
+    "ast_hash": "2b5843398639f8e451ffc80326e29013",
+    "semantic_hash": "2b5843398639f8e451ffc80326e29013"
   },
   "llms.txt": {
-    "mtime": 1788500021.070974,
-    "seen": 1788510430.789646,
-    "ast_hash": "3a8940209d5dce11b0e9c9499e8ad14e",
-    "semantic_hash": "3a8940209d5dce11b0e9c9499e8ad14e"
+    "mtime": 1790382382.5948226,
+    "seen": 1790384546.271689,
+    "ast_hash": "5706c190a6d6b18337d0028e7087485a",
+    "semantic_hash": "5706c190a6d6b18337d0028e7087485a"
   },
   "music-guides/a-cappella-christmas-songs.html": {
-    "mtime": 1788510276.9078662,
-    "seen": 1788510430.789646,
-    "ast_hash": "b8a5b07f321b70490ff3a83771c47022",
-    "semantic_hash": "b8a5b07f321b70490ff3a83771c47022"
+    "mtime": 1790383719.9284163,
+    "seen": 1790384546.271691,
+    "ast_hash": "37a1588a01cab5c4c86375588335469c",
+    "semantic_hash": "37a1588a01cab5c4c86375588335469c"
   },
   "music-guides/abide-with-me.html": {
-    "mtime": 1788510277.0976245,
-    "seen": 1788510430.789646,
-    "ast_hash": "b1bf78ff18603abb6d5e45b05f1b48ca",
-    "semantic_hash": "b1bf78ff18603abb6d5e45b05f1b48ca"
+    "mtime": 1790383720.559767,
+    "seen": 1790384546.271692,
+    "ast_hash": "bd4938ccbbc27de57043b18faf0fdadc",
+    "semantic_hash": "bd4938ccbbc27de57043b18faf0fdadc"
   },
   "music-guides/advent-carols-vs-christmas-carols.html": {
-    "mtime": 1788510277.082146,
-    "seen": 1788510430.789646,
-    "ast_hash": "69c6c890574a5cd5a69973311144eeb0",
-    "semantic_hash": "69c6c890574a5cd5a69973311144eeb0"
+    "mtime": 1790383719.8907597,
+    "seen": 1790384546.271692,
+    "ast_hash": "3d05b8704c901406ac37caced73b7886",
+    "semantic_hash": "3d05b8704c901406ac37caced73b7886"
   },
   "music-guides/anima-christi-catholic-funeral.html": {
-    "mtime": 1788510276.8726578,
-    "seen": 1788510430.789646,
-    "ast_hash": "2b5cc1d09d74a66e58d669880a32a1e9",
-    "semantic_hash": "2b5cc1d09d74a66e58d669880a32a1e9"
+    "mtime": 1790383720.1990328,
+    "seen": 1790384546.271693,
+    "ast_hash": "ae02749ded8cca5936aa056f756afc0b",
+    "semantic_hash": "ae02749ded8cca5936aa056f756afc0b"
   },
   "music-guides/anima-christi-catholic-wedding.html": {
-    "mtime": 1788510276.969957,
-    "seen": 1788510430.789646,
-    "ast_hash": "759301da2e04721df862f075ca39ceda",
-    "semantic_hash": "759301da2e04721df862f075ca39ceda"
+    "mtime": 1790383720.3199785,
+    "seen": 1790384546.271693,
+    "ast_hash": "f99ad189705334111e0f829c0bd409f4",
+    "semantic_hash": "f99ad189705334111e0f829c0bd409f4"
   },
   "music-guides/be-thou-my-vision-funeral-hymn.html": {
-    "mtime": 1788510276.921102,
-    "seen": 1788510430.789646,
-    "ast_hash": "f131cd8c64e6b3c49a1b8f527b3de4be",
-    "semantic_hash": "f131cd8c64e6b3c49a1b8f527b3de4be"
+    "mtime": 1790383720.6093893,
+    "seen": 1790384546.2716942,
+    "ast_hash": "5c8d391e7a5d6d1ded8cefe9a937634b",
+    "semantic_hash": "5c8d391e7a5d6d1ded8cefe9a937634b"
   },
   "music-guides/be-thou-my-vision-wedding-hymn.html": {
-    "mtime": 1788510277.1023514,
-    "seen": 1788510430.789646,
-    "ast_hash": "0ca89bdcf62c4396c9df619150784fc6",
-    "semantic_hash": "0ca89bdcf62c4396c9df619150784fc6"
+    "mtime": 1790383720.2600293,
+    "seen": 1790384546.2716942,
+    "ast_hash": "738e5a85965f53f6d87075f0b5aa4ead",
+    "semantic_hash": "738e5a85965f53f6d87075f0b5aa4ead"
   },
   "music-guides/best-carols-for-four-voices.html": {
-    "mtime": 1788510277.0052245,
-    "seen": 1788510430.789646,
-    "ast_hash": "e2cd5182dea01acea192db60dea3a844",
-    "semantic_hash": "e2cd5182dea01acea192db60dea3a844"
+    "mtime": 1790383720.0392017,
+    "seen": 1790384546.2716951,
+    "ast_hash": "cc4aeeca57283fe50205f2fbf8c0d016",
+    "semantic_hash": "cc4aeeca57283fe50205f2fbf8c0d016"
   },
   "music-guides/best-christmas-carol-singers.html": {
-    "mtime": 1788510276.8927093,
-    "seen": 1788510430.789646,
-    "ast_hash": "14ef9ea6d7beaab96189cd3aad9404c4",
-    "semantic_hash": "14ef9ea6d7beaab96189cd3aad9404c4"
+    "mtime": 1790383720.2961369,
+    "seen": 1790384546.2716951,
+    "ast_hash": "4f0d9d7ff9dfadd71ec5e6ec02a64191",
+    "semantic_hash": "4f0d9d7ff9dfadd71ec5e6ec02a64191"
   },
   "music-guides/best-funeral-singers-london.html": {
-    "mtime": 1788510277.1429222,
-    "seen": 1788510430.789646,
-    "ast_hash": "39ec58bb338fc1556c87c1f832442c7d",
-    "semantic_hash": "39ec58bb338fc1556c87c1f832442c7d"
+    "mtime": 1790383720.382742,
+    "seen": 1790384546.2716951,
+    "ast_hash": "0359883f9ec2290cdd2792cfe7fdff1f",
+    "semantic_hash": "0359883f9ec2290cdd2792cfe7fdff1f"
   },
   "music-guides/best-wedding-choirs-london.html": {
-    "mtime": 1788510277.0331023,
-    "seen": 1788510430.789646,
-    "ast_hash": "efacb265e7f7257a741083e9beabd424",
-    "semantic_hash": "efacb265e7f7257a741083e9beabd424"
+    "mtime": 1790383720.2837827,
+    "seen": 1790384546.2716959,
+    "ast_hash": "cf31800e8603e850a1d591604498dcea",
+    "semantic_hash": "cf31800e8603e850a1d591604498dcea"
   },
   "music-guides/booking-carol-singers-agency-vs-direct.html": {
-    "mtime": 1788510276.902913,
-    "seen": 1788510430.789646,
-    "ast_hash": "29924740f1ce085eae706dacdecf799a",
-    "semantic_hash": "29924740f1ce085eae706dacdecf799a"
+    "mtime": 1790383720.0874028,
+    "seen": 1790384546.2716959,
+    "ast_hash": "6d7c117d7c7d79314fd30e0e316583c1",
+    "semantic_hash": "6d7c117d7c7d79314fd30e0e316583c1"
   },
   "music-guides/carol-singers-cost.html": {
-    "mtime": 1788510276.8979163,
-    "seen": 1788510430.789646,
-    "ast_hash": "3913ca9c24e961cf0fccc64316f29227",
-    "semantic_hash": "3913ca9c24e961cf0fccc64316f29227"
+    "mtime": 1790383720.3322952,
+    "seen": 1790384546.2716968,
+    "ast_hash": "71d9218b064da2b592621ea11ec9c8a2",
+    "semantic_hash": "71d9218b064da2b592621ea11ec9c8a2"
   },
   "music-guides/carol-singers-law-firms.html": {
-    "mtime": 1788510277.1475277,
-    "seen": 1788510430.789646,
-    "ast_hash": "969a28343ce7da61762c361b8e7dc8fd",
-    "semantic_hash": "969a28343ce7da61762c361b8e7dc8fd"
+    "mtime": 1790383720.1120598,
+    "seen": 1790384546.2716968,
+    "ast_hash": "1e643c1cbb87eddbd5a550943726dc01",
+    "semantic_hash": "1e643c1cbb87eddbd5a550943726dc01"
   },
   "music-guides/carols-by-candlelight.html": {
-    "mtime": 1788510277.049102,
-    "seen": 1788510430.789646,
-    "ast_hash": "7669e7fcdc0ca58b8efc95abde32a5c9",
-    "semantic_hash": "7669e7fcdc0ca58b8efc95abde32a5c9"
+    "mtime": 1790383720.1370406,
+    "seen": 1790384546.271698,
+    "ast_hash": "07994a0af423a0f6ca0c3fd1cf950160",
+    "semantic_hash": "07994a0af423a0f6ca0c3fd1cf950160"
   },
   "music-guides/catholic-funeral-hymns.html": {
-    "mtime": 1788510277.0100002,
-    "seen": 1788510430.789646,
-    "ast_hash": "fa0d76be1745308415957a9103c4b9a8",
-    "semantic_hash": "fa0d76be1745308415957a9103c4b9a8"
+    "mtime": 1790383720.4994762,
+    "seen": 1790384546.271698,
+    "ast_hash": "7e9e63f0460829731785486499bcda0f",
+    "semantic_hash": "7e9e63f0460829731785486499bcda0f"
   },
   "music-guides/celebration-of-life-music.html": {
-    "mtime": 1788510277.0573921,
-    "seen": 1788510430.789646,
-    "ast_hash": "9459f0ffe4e935beb24859db01db5fea",
-    "semantic_hash": "9459f0ffe4e935beb24859db01db5fea"
+    "mtime": 1790383719.9646955,
+    "seen": 1790384546.271699,
+    "ast_hash": "09567061f9d9950df6e98b7fcea29708",
+    "semantic_hash": "09567061f9d9950df6e98b7fcea29708"
   },
   "music-guides/charity-carol-concert.html": {
-    "mtime": 1788510277.0252733,
-    "seen": 1788510430.789646,
-    "ast_hash": "68b63ea39f87c3f06b803d96d26af1a9",
-    "semantic_hash": "68b63ea39f87c3f06b803d96d26af1a9"
+    "mtime": 1790383719.8776927,
+    "seen": 1790384546.2717,
+    "ast_hash": "7794e151acbd55c2d23e51c0dff564d9",
+    "semantic_hash": "7794e151acbd55c2d23e51c0dff564d9"
   },
   "music-guides/choosing-wedding-hymns.html": {
-    "mtime": 1788510276.8824887,
-    "seen": 1788510430.789646,
-    "ast_hash": "f959d5ddb04dbdc891b5914d1f9233f8",
-    "semantic_hash": "f959d5ddb04dbdc891b5914d1f9233f8"
+    "mtime": 1790383720.0508854,
+    "seen": 1790384546.2717,
+    "ast_hash": "875bbaa13a5b706e94ccc7e2683267a4",
+    "semantic_hash": "875bbaa13a5b706e94ccc7e2683267a4"
   },
   "music-guides/christmas-carol-lyrics-meanings.html": {
-    "mtime": 1788510277.1091022,
-    "seen": 1788510430.789646,
-    "ast_hash": "eb99ecaefba4e736cd05d1b0a7a637a2",
-    "semantic_hash": "eb99ecaefba4e736cd05d1b0a7a637a2"
+    "mtime": 1790383720.1616616,
+    "seen": 1790384546.271701,
+    "ast_hash": "6f407583f4a30021f2b0adc9e83b58dd",
+    "semantic_hash": "6f407583f4a30021f2b0adc9e83b58dd"
   },
   "music-guides/christmas-carols-guide.html": {
-    "mtime": 1788510276.887528,
-    "seen": 1788510430.789646,
-    "ast_hash": "34743779b23682ff515466fd1796b53a",
-    "semantic_hash": "34743779b23682ff515466fd1796b53a"
+    "mtime": 1790383720.5359197,
+    "seen": 1790384546.271701,
+    "ast_hash": "d7cdb1d2eb3153e9be898470b71808b5",
+    "semantic_hash": "d7cdb1d2eb3153e9be898470b71808b5"
   },
   "music-guides/christmas-choir-hire.html": {
-    "mtime": 1788510277.077219,
-    "seen": 1788510430.789646,
-    "ast_hash": "342cd5903c3d3fdd1181f404db84b6bd",
-    "semantic_hash": "342cd5903c3d3fdd1181f404db84b6bd"
+    "mtime": 1790383720.3957908,
+    "seen": 1790384546.271702,
+    "ast_hash": "b344917ac9e13e3a6c7a0dd6debb028d",
+    "semantic_hash": "b344917ac9e13e3a6c7a0dd6debb028d"
   },
   "music-guides/christmas-drinks-reception-music.html": {
-    "mtime": 1788510276.8776636,
-    "seen": 1788510430.789646,
-    "ast_hash": "3e2b1061cd9b309b6ad77adcae2736f5",
-    "semantic_hash": "3e2b1061cd9b309b6ad77adcae2736f5"
+    "mtime": 1790383720.0140188,
+    "seen": 1790384546.271702,
+    "ast_hash": "88226a13bd190fda1c102d29d91d861c",
+    "semantic_hash": "88226a13bd190fda1c102d29d91d861c"
   },
   "music-guides/christmas-gala-dinner-music.html": {
-    "mtime": 1788510277.1577432,
-    "seen": 1788510430.789646,
-    "ast_hash": "c81f0c226e6344b1f6c6451085f64995",
-    "semantic_hash": "c81f0c226e6344b1f6c6451085f64995"
+    "mtime": 1790383720.4874885,
+    "seen": 1790384546.271703,
+    "ast_hash": "6bb9267bf52ede92ef4d7eb232a06b87",
+    "semantic_hash": "6bb9267bf52ede92ef4d7eb232a06b87"
   },
   "music-guides/church-carol-service-choir-hire.html": {
-    "mtime": 1788510276.9495177,
-    "seen": 1788510430.789646,
-    "ast_hash": "00cf4e1d7dd672a5130cf638419d2353",
-    "semantic_hash": "00cf4e1d7dd672a5130cf638419d2353"
+    "mtime": 1790383720.4190814,
+    "seen": 1790384546.271703,
+    "ast_hash": "379aa9d3da93dd868532545cd27edbec",
+    "semantic_hash": "379aa9d3da93dd868532545cd27edbec"
   },
   "music-guides/company-christmas-party-entertainment.html": {
-    "mtime": 1788510277.019836,
-    "seen": 1788510430.789646,
-    "ast_hash": "1150394817d31291d619948deb9f7da4",
-    "semantic_hash": "1150394817d31291d619948deb9f7da4"
+    "mtime": 1790383720.1869633,
+    "seen": 1790384546.271704,
+    "ast_hash": "0c90f771eb7e2deef679f1dd88b0e15e",
+    "semantic_hash": "0c90f771eb7e2deef679f1dd88b0e15e"
   },
   "music-guides/corporate-carol-service.html": {
-    "mtime": 1788510277.1674016,
-    "seen": 1788510430.789646,
-    "ast_hash": "8e25082ff80832daccf98c0a47b7ad89",
-    "semantic_hash": "8e25082ff80832daccf98c0a47b7ad89"
+    "mtime": 1790383720.4315717,
+    "seen": 1790384546.271704,
+    "ast_hash": "ab0edf3d3f41b9d2b9e64764bc91e9b1",
+    "semantic_hash": "ab0edf3d3f41b9d2b9e64764bc91e9b1"
   },
   "music-guides/crematorium-music.html": {
-    "mtime": 1788510276.9953268,
-    "seen": 1788510430.789646,
-    "ast_hash": "f4fa33be3754abcf2cd82491e4f60da6",
-    "semantic_hash": "f4fa33be3754abcf2cd82491e4f60da6"
+    "mtime": 1790383720.0631542,
+    "seen": 1790384546.2717052,
+    "ast_hash": "6e37a7d74e4caa756312184a85831291",
+    "semantic_hash": "6e37a7d74e4caa756312184a85831291"
   },
   "music-guides/destination-wedding-choir.html": {
-    "mtime": 1788510277.1179063,
-    "seen": 1788510430.789646,
-    "ast_hash": "7eed18d80e17f52cd87484aa3cb59b9a",
-    "semantic_hash": "7eed18d80e17f52cd87484aa3cb59b9a"
+    "mtime": 1790383719.9524274,
+    "seen": 1790384546.2717052,
+    "ast_hash": "80921af08deb5b234b390acc02d58c69",
+    "semantic_hash": "80921af08deb5b234b390acc02d58c69"
   },
   "music-guides/funeral-choir-guide.html": {
-    "mtime": 1788510277.092447,
-    "seen": 1788510430.789646,
-    "ast_hash": "76e1ad1ca1faaf1cd5fbc8dbbc558df4",
-    "semantic_hash": "76e1ad1ca1faaf1cd5fbc8dbbc558df4"
+    "mtime": 1790383720.173986,
+    "seen": 1790384546.271706,
+    "ast_hash": "4b93deda77d1618748ee84437209fb55",
+    "semantic_hash": "4b93deda77d1618748ee84437209fb55"
   },
   "music-guides/funeral-music-costs.html": {
-    "mtime": 1788510277.0872211,
-    "seen": 1788510430.789646,
-    "ast_hash": "159ff2e4ba6b2818ac4dafb1a7c04683",
-    "semantic_hash": "159ff2e4ba6b2818ac4dafb1a7c04683"
+    "mtime": 1790383720.1492753,
+    "seen": 1790384546.271706,
+    "ast_hash": "4027e2fb8dc98bdb4d1f127f8b7b428c",
+    "semantic_hash": "4027e2fb8dc98bdb4d1f127f8b7b428c"
   },
   "music-guides/funeral-music-guide.html": {
-    "mtime": 1788510277.1723166,
-    "seen": 1788510430.789646,
-    "ast_hash": "23ec9254b85630c0f5cec46ce469bf30",
-    "semantic_hash": "23ec9254b85630c0f5cec46ce469bf30"
+    "mtime": 1790383720.2475076,
+    "seen": 1790384546.2717068,
+    "ast_hash": "0e24492a8bf7ceead9cdaad3a4842d9d",
+    "semantic_hash": "0e24492a8bf7ceead9cdaad3a4842d9d"
   },
   "music-guides/funeral-songs.html": {
-    "mtime": 1788510276.9545255,
-    "seen": 1788510430.789646,
-    "ast_hash": "4e4f46d08a22be377ac7b9c7c7c05d4f",
-    "semantic_hash": "4e4f46d08a22be377ac7b9c7c7c05d4f"
+    "mtime": 1790383720.2233546,
+    "seen": 1790384546.2717068,
+    "ast_hash": "b2d9dcdf463ed04f4fbfa5c5f8431460",
+    "semantic_hash": "b2d9dcdf463ed04f4fbfa5c5f8431460"
   },
   "music-guides/hiring-a-choir.html": {
-    "mtime": 1788510276.9130404,
-    "seen": 1788510430.789646,
-    "ast_hash": "87a5729040fbb6e0664f26c5cea765e8",
-    "semantic_hash": "87a5729040fbb6e0664f26c5cea765e8"
+    "mtime": 1790383720.2109032,
+    "seen": 1790384546.271708,
+    "ast_hash": "b707cf4a994a81efc7e1ebb07b7817b2",
+    "semantic_hash": "b707cf4a994a81efc7e1ebb07b7817b2"
   },
   "music-guides/hotel-christmas-entertainment.html": {
-    "mtime": 1788510276.9345794,
-    "seen": 1788510430.789646,
-    "ast_hash": "fbe7811e090b865ae26c62684bb9523a",
-    "semantic_hash": "fbe7811e090b865ae26c62684bb9523a"
+    "mtime": 1790383720.6221533,
+    "seen": 1790384546.271708,
+    "ast_hash": "5f14167d6b6e71e510af4407cd4f4edf",
+    "semantic_hash": "5f14167d6b6e71e510af4407cd4f4edf"
   },
   "music-guides/how-many-carol-singers.html": {
-    "mtime": 1788510276.9905243,
-    "seen": 1788510430.789646,
-    "ast_hash": "a97b26abfe1599901a32771303016db0",
-    "semantic_hash": "a97b26abfe1599901a32771303016db0"
+    "mtime": 1790383719.9897923,
+    "seen": 1790384546.271709,
+    "ast_hash": "75473444a0f0b39fa846eed03efd923c",
+    "semantic_hash": "75473444a0f0b39fa846eed03efd923c"
   },
   "music-guides/humanist-wedding-music.html": {
-    "mtime": 1788510277.0416877,
-    "seen": 1788510430.789646,
-    "ast_hash": "bdeac123ba17e7187c8931e8f641e234",
-    "semantic_hash": "bdeac123ba17e7187c8931e8f641e234"
+    "mtime": 1790383719.976843,
+    "seen": 1790384546.271709,
+    "ast_hash": "56166e2de9c1bcb5b9a60a179fb904be",
+    "semantic_hash": "56166e2de9c1bcb5b9a60a179fb904be"
   },
   "music-guides/index.html": {
-    "mtime": 1788510276.9756129,
-    "seen": 1788510430.789646,
-    "ast_hash": "e33745f041061364472d8b60c01f6293",
-    "semantic_hash": "e33745f041061364472d8b60c01f6293"
+    "mtime": 1790383720.0270176,
+    "seen": 1790384546.27171,
+    "ast_hash": "2dbd21154772fac15c04b622dfe4190a",
+    "semantic_hash": "2dbd21154772fac15c04b622dfe4190a"
   },
   "music-guides/jerusalem.html": {
-    "mtime": 1788510276.9806483,
-    "seen": 1788510430.789646,
-    "ast_hash": "ced3c71d55c24c8efe4b5d297922d6bf",
-    "semantic_hash": "ced3c71d55c24c8efe4b5d297922d6bf"
+    "mtime": 1790383720.4074025,
+    "seen": 1790384546.27171,
+    "ast_hash": "b3e373e04cdfc783c242b360e963af04",
+    "semantic_hash": "b3e373e04cdfc783c242b360e963af04"
   },
   "music-guides/last-minute-funeral-singers.html": {
-    "mtime": 1788510277.1380253,
-    "seen": 1788510430.789646,
-    "ast_hash": "1e45985bde0baba865e4f048abf066b2",
-    "semantic_hash": "1e45985bde0baba865e4f048abf066b2"
+    "mtime": 1790383719.9161487,
+    "seen": 1790384546.2717109,
+    "ast_hash": "31163fc29e2179127da14f48d11dbd02",
+    "semantic_hash": "31163fc29e2179127da14f48d11dbd02"
   },
   "music-guides/lesser-known-wedding-choral-pieces.html": {
-    "mtime": 1788510277.176987,
-    "seen": 1788510430.789646,
-    "ast_hash": "9902ce2e55032250b38d3bf0854db2e3",
-    "semantic_hash": "9902ce2e55032250b38d3bf0854db2e3"
+    "mtime": 1790383720.3077679,
+    "seen": 1790384546.2717109,
+    "ast_hash": "35181aa6d89b4eb2196a71e34d969b92",
+    "semantic_hash": "35181aa6d89b4eb2196a71e34d969b92"
   },
   "music-guides/memorial-service-planning.html": {
-    "mtime": 1788510277.072467,
-    "seen": 1788510430.789646,
-    "ast_hash": "2c8d8a545848117bc10a0a1183a38476",
-    "semantic_hash": "2c8d8a545848117bc10a0a1183a38476"
+    "mtime": 1790383719.9405322,
+    "seen": 1790384546.271712,
+    "ast_hash": "80c82b26225a5f74f0f4e7799935aa06",
+    "semantic_hash": "80c82b26225a5f74f0f4e7799935aa06"
   },
   "music-guides/nine-lessons-and-carols.html": {
-    "mtime": 1788510277.1328738,
-    "seen": 1788510430.789646,
-    "ast_hash": "1c0f646cbf8c7ea2e580d6baf107a4a4",
-    "semantic_hash": "1c0f646cbf8c7ea2e580d6baf107a4a4"
+    "mtime": 1790383720.0750735,
+    "seen": 1790384546.271712,
+    "ast_hash": "472c99ee405045aeae598fd89f771d09",
+    "semantic_hash": "472c99ee405045aeae598fd89f771d09"
   },
   "music-guides/non-religious-funeral-music.html": {
-    "mtime": 1788510277.1625319,
-    "seen": 1788510430.789646,
-    "ast_hash": "ff66880d7cd97a1f7a0ad14b0e5426d8",
-    "semantic_hash": "ff66880d7cd97a1f7a0ad14b0e5426d8"
+    "mtime": 1790383720.5479825,
+    "seen": 1790384546.271713,
+    "ast_hash": "df3f73207f7c24d14adbfa327be65e1a",
+    "semantic_hash": "df3f73207f7c24d14adbfa327be65e1a"
   },
   "music-guides/office-carol-service-planning.html": {
-    "mtime": 1788510277.0674067,
-    "seen": 1788510430.789646,
-    "ast_hash": "3236b9f786acb05b738bf489e259f63f",
-    "semantic_hash": "3236b9f786acb05b738bf489e259f63f"
+    "mtime": 1790383720.4633625,
+    "seen": 1790384546.271713,
+    "ast_hash": "017b1c8df2a78ef506a4bdfe971339d4",
+    "semantic_hash": "017b1c8df2a78ef506a4bdfe971339d4"
   },
   "music-guides/outdoor-carol-singing.html": {
-    "mtime": 1788510276.9593475,
-    "seen": 1788510430.789646,
-    "ast_hash": "f3ae483b5087f472cf60fb0bfa2d7585",
-    "semantic_hash": "f3ae483b5087f472cf60fb0bfa2d7585"
+    "mtime": 1790383720.3700016,
+    "seen": 1790384546.271714,
+    "ast_hash": "6429f430607b47e38f311ec5a49a7925",
+    "semantic_hash": "6429f430607b47e38f311ec5a49a7925"
   },
   "music-guides/popular-funeral-hymns.html": {
-    "mtime": 1788510276.9395359,
-    "seen": 1788510430.789646,
-    "ast_hash": "fa890a30fb39a5fe134ccc2a4d862461",
-    "semantic_hash": "fa890a30fb39a5fe134ccc2a4d862461"
+    "mtime": 1790383720.001401,
+    "seen": 1790384546.271714,
+    "ast_hash": "f40feb0faf8f27a46f0e1127601b8610",
+    "semantic_hash": "f40feb0faf8f27a46f0e1127601b8610"
   },
   "music-guides/popular-wedding-organ-music.html": {
-    "mtime": 1788510276.9294653,
-    "seen": 1788510430.789646,
-    "ast_hash": "b4343499e1abde98aaf6ec90648c4988",
-    "semantic_hash": "b4343499e1abde98aaf6ec90648c4988"
+    "mtime": 1790383719.902998,
+    "seen": 1790384546.2717152,
+    "ast_hash": "7864a22c534ac67d2c7cf7790da5b3fe",
+    "semantic_hash": "7864a22c534ac67d2c7cf7790da5b3fe"
   },
   "music-guides/residents-christmas-carol-event.html": {
-    "mtime": 1788510276.9183104,
-    "seen": 1788510430.789646,
-    "ast_hash": "5c235ed8f80992936410976c9fc86b75",
-    "semantic_hash": "5c235ed8f80992936410976c9fc86b75"
+    "mtime": 1790383720.5975835,
+    "seen": 1790384546.2717152,
+    "ast_hash": "7e4456eb7491735328ba80fbbe8c966d",
+    "semantic_hash": "7e4456eb7491735328ba80fbbe8c966d"
   },
   "music-guides/ubi-caritas-wedding.html": {
-    "mtime": 1788510276.9647965,
-    "seen": 1788510430.789646,
-    "ast_hash": "50f9f36b724328e62a0fe1193f81d008",
-    "semantic_hash": "50f9f36b724328e62a0fe1193f81d008"
+    "mtime": 1790383720.1243546,
+    "seen": 1790384546.271716,
+    "ast_hash": "65b311cb067cff09193784df7505fe55",
+    "semantic_hash": "65b311cb067cff09193784df7505fe55"
   },
   "music-guides/wedding-ceremony-music.html": {
-    "mtime": 1788510276.9855978,
-    "seen": 1788510430.789646,
-    "ast_hash": "f237ceaaf11f473157c0810c6794c31f",
-    "semantic_hash": "f237ceaaf11f473157c0810c6794c31f"
+    "mtime": 1790383720.3569112,
+    "seen": 1790384546.271717,
+    "ast_hash": "c2c132646c5ae03291006f080a7345b6",
+    "semantic_hash": "c2c132646c5ae03291006f080a7345b6"
   },
   "music-guides/wedding-choir-guide.html": {
-    "mtime": 1788510277.0469604,
-    "seen": 1788510430.789646,
-    "ast_hash": "0729f90bd426b066418ab3318b79bd20",
-    "semantic_hash": "0729f90bd426b066418ab3318b79bd20"
+    "mtime": 1790383720.2719634,
+    "seen": 1790384546.271717,
+    "ast_hash": "64506dc96c99f6a58452df3246ffd23d",
+    "semantic_hash": "64506dc96c99f6a58452df3246ffd23d"
   },
   "music-guides/wedding-choral-repertoire.html": {
-    "mtime": 1788510277.1229618,
-    "seen": 1788510430.789646,
-    "ast_hash": "63ecac553ff413f524b90da71baffb29",
-    "semantic_hash": "63ecac553ff413f524b90da71baffb29"
+    "mtime": 1790383720.5851378,
+    "seen": 1790384546.2717178,
+    "ast_hash": "7ac76022d701c41630d09af6bcd40994",
+    "semantic_hash": "7ac76022d701c41630d09af6bcd40994"
   },
   "music-guides/wedding-music-costs.html": {
-    "mtime": 1788510277.0624018,
-    "seen": 1788510430.789646,
-    "ast_hash": "dc67c00b38a7fdf86f0b2cb73fbc671d",
-    "semantic_hash": "dc67c00b38a7fdf86f0b2cb73fbc671d"
+    "mtime": 1790383720.0998826,
+    "seen": 1790384546.2717178,
+    "ast_hash": "864cf404f5915be0e5d3968d1f7ebf3a",
+    "semantic_hash": "864cf404f5915be0e5d3968d1f7ebf3a"
   },
   "music-guides/wedding-music-ideas.html": {
-    "mtime": 1788510277.1525939,
-    "seen": 1788510430.789646,
-    "ast_hash": "0cb95fe3dc9929ac564ecbff0afcd6a9",
-    "semantic_hash": "0cb95fe3dc9929ac564ecbff0afcd6a9"
+    "mtime": 1790383720.572432,
+    "seen": 1790384546.271719,
+    "ast_hash": "25c31e655b9fbaa057efc6cb32c1524d",
+    "semantic_hash": "25c31e655b9fbaa057efc6cb32c1524d"
   },
   "music-guides/wedding-organ-pop-songs.html": {
-    "mtime": 1788510277.0148897,
-    "seen": 1788510430.789646,
-    "ast_hash": "a2520da77b57684d0008feb753d36f33",
-    "semantic_hash": "a2520da77b57684d0008feb753d36f33"
+    "mtime": 1790383720.511767,
+    "seen": 1790384546.271719,
+    "ast_hash": "eaf3a64b0c3a73151413ad81d6294fc9",
+    "semantic_hash": "eaf3a64b0c3a73151413ad81d6294fc9"
   },
   "music-guides/wedding-organ-repertoire.html": {
-    "mtime": 1788510277.0004046,
-    "seen": 1788510430.789646,
-    "ast_hash": "f39b6b8f8378270072498dec86669372",
-    "semantic_hash": "f39b6b8f8378270072498dec86669372"
+    "mtime": 1790383720.475134,
+    "seen": 1790384546.27172,
+    "ast_hash": "2333b461d9ac1a49d5a09f9e40abb5f0",
+    "semantic_hash": "2333b461d9ac1a49d5a09f9e40abb5f0"
   },
   "music-guides/wedding-organist-guide.html": {
-    "mtime": 1788510277.1278918,
-    "seen": 1788510430.789646,
-    "ast_hash": "88d3ed12a152829a9ff0abf8d6dd006b",
-    "semantic_hash": "88d3ed12a152829a9ff0abf8d6dd006b"
+    "mtime": 1790383720.5242229,
+    "seen": 1790384546.27172,
+    "ast_hash": "f47e2b244a89c348a9b434b5586f6315",
+    "semantic_hash": "f47e2b244a89c348a9b434b5586f6315"
   },
   "music-guides/wedding-pop-songs-choir.html": {
-    "mtime": 1788510277.0306616,
-    "seen": 1788510430.789646,
-    "ast_hash": "9bd1851d3ff9a2268c686a1dd561aaf9",
-    "semantic_hash": "9bd1851d3ff9a2268c686a1dd561aaf9"
+    "mtime": 1790383720.3442786,
+    "seen": 1790384546.271721,
+    "ast_hash": "465eec8a1b26a7e06a0aa467f3f10ffd",
+    "semantic_hash": "465eec8a1b26a7e06a0aa467f3f10ffd"
   },
   "music-guides/wedding-readings-and-music.html": {
-    "mtime": 1788510277.1071718,
-    "seen": 1788510430.789646,
-    "ast_hash": "588ec493e3329ad30e045d6343fd6900",
-    "semantic_hash": "588ec493e3329ad30e045d6343fd6900"
+    "mtime": 1790383720.450596,
+    "seen": 1790384546.271721,
+    "ast_hash": "a4e631cd7151ee430d03a4d069c6a725",
+    "semantic_hash": "a4e631cd7151ee430d03a4d069c6a725"
   },
   "music-guides/when-to-book-christmas-entertainment.html": {
-    "mtime": 1788510276.944684,
-    "seen": 1788510430.789646,
-    "ast_hash": "400c728be5ac67ab6165261230d857b7",
-    "semantic_hash": "400c728be5ac67ab6165261230d857b7"
+    "mtime": 1790383720.2352724,
+    "seen": 1790384546.271722,
+    "ast_hash": "8c32121079c86831658f48588cb37b32",
+    "semantic_hash": "8c32121079c86831658f48588cb37b32"
   },
   "partials/analytics.html": {
-    "mtime": 1788499895.910499,
-    "seen": 1788510430.789646,
-    "ast_hash": "d3d68b3e4310d52a9ee345b905ea382d",
-    "semantic_hash": "d3d68b3e4310d52a9ee345b905ea382d"
+    "mtime": 1790383713.1294625,
+    "seen": 1790384546.271722,
+    "ast_hash": "a20a3d06e7effeee83ac43287920edf0",
+    "semantic_hash": "a20a3d06e7effeee83ac43287920edf0"
   },
   "partials/care-strip.html": {
     "mtime": 1788053215.0395966,
@@ -1404,28 +1404,28 @@
     "semantic_hash": "72624b9f2cc68036a02623f4c1d940e8"
   },
   "planners-and-venues.html": {
-    "mtime": 1788510276.7971022,
-    "seen": 1788510430.789646,
-    "ast_hash": "362d5797d22e1a31853b3d71fddaa9c6",
-    "semantic_hash": "362d5797d22e1a31853b3d71fddaa9c6"
+    "mtime": 1790383718.9217963,
+    "seen": 1790384546.271722,
+    "ast_hash": "f71443942a2441d1cda939db209d4cdd",
+    "semantic_hash": "f71443942a2441d1cda939db209d4cdd"
   },
   "pricing.html": {
-    "mtime": 1788510277.231842,
-    "seen": 1788510430.789646,
-    "ast_hash": "0b56b799c16739867da71db8567f4d9c",
-    "semantic_hash": "0b56b799c16739867da71db8567f4d9c"
+    "mtime": 1790384516.7999806,
+    "seen": 1790384546.271723,
+    "ast_hash": "ea0cfebba59e495e38b4f0da9d1f21bc",
+    "semantic_hash": "ea0cfebba59e495e38b4f0da9d1f21bc"
   },
   "privacy.html": {
-    "mtime": 1788510277.2537384,
-    "seen": 1788510430.789646,
-    "ast_hash": "f45dd0fe91f396b50b30166e5b1d41bb",
-    "semantic_hash": "f45dd0fe91f396b50b30166e5b1d41bb"
+    "mtime": 1790383720.9271195,
+    "seen": 1790384546.271723,
+    "ast_hash": "80b77cf55d3bc0919f2667a829d33d1c",
+    "semantic_hash": "80b77cf55d3bc0919f2667a829d33d1c"
   },
   "private-events.html": {
-    "mtime": 1788510276.211403,
-    "seen": 1788510430.789646,
-    "ast_hash": "4d2a1b9e4c06d2485202961709587de8",
-    "semantic_hash": "4d2a1b9e4c06d2485202961709587de8"
+    "mtime": 1790383719.0306962,
+    "seen": 1790384546.271724,
+    "ast_hash": "06d1c9410ca2463c0f2e3f7abe6fb0ef",
+    "semantic_hash": "06d1c9410ca2463c0f2e3f7abe6fb0ef"
   },
   "robots.txt": {
     "mtime": 1788056308.886259,
@@ -1434,171 +1434,231 @@
     "semantic_hash": "511c9435999a65e55802324a3a80d121"
   },
   "scripts/add_destination_crosslinks.py": {
-    "mtime": 1788053215.0422192,
-    "seen": 1788510430.789646,
+    "mtime": 1788446983.2578118,
+    "seen": 1790384546.271623,
     "ast_hash": "b8f02cc2f60bff21e0241f767a9e54d1",
     "semantic_hash": "b8f02cc2f60bff21e0241f767a9e54d1"
   },
   "scripts/build_register_page.py": {
-    "mtime": 1788053215.0423942,
-    "seen": 1788510430.789646,
+    "mtime": 1788446983.2579534,
+    "seen": 1790384546.271625,
     "ast_hash": "e108936b33093087877012a91a256b60",
     "semantic_hash": "e108936b33093087877012a91a256b60"
   },
   "scripts/ceremony_sections.py": {
-    "mtime": 1788053215.0425904,
-    "seen": 1788510430.789646,
+    "mtime": 1788446983.2580595,
+    "seen": 1790384546.271626,
     "ast_hash": "e4503b7474bdcaa7acbad2120f8323da",
     "semantic_hash": "e4503b7474bdcaa7acbad2120f8323da"
   },
   "scripts/content_americas.py": {
-    "mtime": 1788053215.0427532,
-    "seen": 1788510430.789646,
+    "mtime": 1788446983.258273,
+    "seen": 1790384546.271627,
     "ast_hash": "a78505ea5af5cd2d44dc666403fd0ee6",
     "semantic_hash": "a78505ea5af5cd2d44dc666403fd0ee6"
   },
   "scripts/content_europe_a.py": {
-    "mtime": 1788053215.0429142,
-    "seen": 1788510430.789646,
+    "mtime": 1788446983.2590094,
+    "seen": 1790384546.271627,
     "ast_hash": "65dc8c77341d53019522cae01f95ab9c",
     "semantic_hash": "65dc8c77341d53019522cae01f95ab9c"
   },
   "scripts/content_europe_b.py": {
-    "mtime": 1788053215.0430634,
-    "seen": 1788510430.789646,
+    "mtime": 1788446983.2592335,
+    "seen": 1790384546.2716281,
     "ast_hash": "2a938c410c4a0475aae7be01cc61419c",
     "semantic_hash": "2a938c410c4a0475aae7be01cc61419c"
   },
   "scripts/content_europe_c.py": {
-    "mtime": 1788053215.0431957,
-    "seen": 1788510430.789646,
+    "mtime": 1788446983.2607827,
+    "seen": 1790384546.2716281,
     "ast_hash": "687c4fa8949973b8c12fa8d9fc806cc4",
     "semantic_hash": "687c4fa8949973b8c12fa8d9fc806cc4"
   },
   "scripts/content_indian_ocean.py": {
-    "mtime": 1788053215.0433638,
-    "seen": 1788510430.789646,
+    "mtime": 1788446983.260935,
+    "seen": 1790384546.271629,
     "ast_hash": "4900b606de1051cec66bd193ac141b17",
     "semantic_hash": "4900b606de1051cec66bd193ac141b17"
   },
   "scripts/destinations_data.py": {
-    "mtime": 1788053215.0434792,
-    "seen": 1788510430.789646,
+    "mtime": 1788446983.2610435,
+    "seen": 1790384546.27163,
     "ast_hash": "5987a7402a993600209c674fb2f0de51",
     "semantic_hash": "5987a7402a993600209c674fb2f0de51"
   },
   "scripts/gen_country_pages.py": {
-    "mtime": 1788053215.0436099,
-    "seen": 1788510430.789646,
+    "mtime": 1788446983.2611928,
+    "seen": 1790384546.271631,
     "ast_hash": "13f1098bb5b943da69d2f368952d0ddf",
     "semantic_hash": "13f1098bb5b943da69d2f368952d0ddf"
   },
   "scripts/gen_destination_guide.py": {
-    "mtime": 1788053215.0439029,
-    "seen": 1788510430.789646,
+    "mtime": 1788446983.2615278,
+    "seen": 1790384546.271631,
     "ast_hash": "c93df4296a6e9eff45b60e23d8ff71b6",
     "semantic_hash": "c93df4296a6e9eff45b60e23d8ff71b6"
   },
   "scripts/gen_destinations_index.py": {
-    "mtime": 1788053215.044162,
-    "seen": 1788510430.789646,
+    "mtime": 1788446983.2616653,
+    "seen": 1790384546.271632,
     "ast_hash": "f356ac56341a9d684e1c2c9696d5b809",
     "semantic_hash": "f356ac56341a9d684e1c2c9696d5b809"
   },
   "scripts/gen_planners_page.py": {
-    "mtime": 1788053215.0442996,
-    "seen": 1788510430.789646,
+    "mtime": 1788446983.2619069,
+    "seen": 1790384546.271632,
     "ast_hash": "b3737e9f6ddb9fa0842639cb9994c4da",
     "semantic_hash": "b3737e9f6ddb9fa0842639cb9994c4da"
   },
   "scripts/generate_llms_full.py": {
-    "mtime": 1788053215.0444038,
-    "seen": 1788510430.789646,
+    "mtime": 1788446983.262176,
+    "seen": 1790384546.271633,
     "ast_hash": "39b5b8d32862e6139fb913f9b11706ec",
     "semantic_hash": "39b5b8d32862e6139fb913f9b11706ec"
   },
   "scripts/generate_sitemap.py": {
-    "mtime": 1788499752.8328295,
-    "seen": 1788510430.789646,
-    "ast_hash": "4a01c0d2127e409433d143c3f7bb8a0b",
-    "semantic_hash": "4a01c0d2127e409433d143c3f7bb8a0b"
+    "mtime": 1790379039.3437173,
+    "seen": 1790384546.271633,
+    "ast_hash": "e6d125380a133db0463c49011ec121c3",
+    "semantic_hash": "e6d125380a133db0463c49011ec121c3"
   },
   "scripts/indexnow-ping.py": {
-    "mtime": 1788053215.044504,
-    "seen": 1788510430.789646,
+    "mtime": 1788446983.2622807,
+    "seen": 1790384546.2716339,
     "ast_hash": "532dd7219a3ea84e4de6b0702e4e9257",
     "semantic_hash": "532dd7219a3ea84e4de6b0702e4e9257"
   },
   "scripts/sync_dates.py": {
-    "mtime": 1788499731.5505028,
-    "seen": 1788510430.789646,
+    "mtime": 1788525399.8148482,
+    "seen": 1790384546.271636,
     "ast_hash": "d5633fc007eb3b4d040faf8bd0dd6715",
     "semantic_hash": "d5633fc007eb3b4d040faf8bd0dd6715"
   },
   "scripts/weekend_sections.py": {
-    "mtime": 1788053215.0446277,
-    "seen": 1788510430.789646,
+    "mtime": 1788446983.2623892,
+    "seen": 1790384546.271636,
     "ast_hash": "6116d26d7cf7f3526b1d9018d447f779",
     "semantic_hash": "6116d26d7cf7f3526b1d9018d447f779"
   },
   "services.html": {
-    "mtime": 1788510277.2468438,
-    "seen": 1788510430.789646,
-    "ast_hash": "424416066d7fe3a42d6ff51f4c7f134d",
-    "semantic_hash": "424416066d7fe3a42d6ff51f4c7f134d"
-  },
-  "site.webmanifest": {
-    "mtime": 1788504879.0096393,
-    "seen": 1788510430.789646,
-    "ast_hash": "1d9c5661203f2144e1de0a017c3cde83",
-    "semantic_hash": "1d9c5661203f2144e1de0a017c3cde83"
+    "mtime": 1790383720.8618476,
+    "seen": 1790384546.271724,
+    "ast_hash": "6e7251d13c7937132bec3a182045c503",
+    "semantic_hash": "6e7251d13c7937132bec3a182045c503"
   },
   "terms.html": {
-    "mtime": 1788510277.5583456,
-    "seen": 1788510430.789646,
-    "ast_hash": "42057a12de5a9f75870d510f973e8be8",
-    "semantic_hash": "42057a12de5a9f75870d510f973e8be8"
+    "mtime": 1790383720.6947622,
+    "seen": 1790384546.271725,
+    "ast_hash": "9d8e583916aecdc334cc7929dedf5f53",
+    "semantic_hash": "9d8e583916aecdc334cc7929dedf5f53"
   },
   "tests/test_competitor_claims.py": {
-    "mtime": 1788053215.045177,
-    "seen": 1788510430.789646,
+    "mtime": 1787075036.9904015,
+    "seen": 1790384546.271637,
     "ast_hash": "f3ef506ac4d2478723d2dbd47286f5c1",
     "semantic_hash": "f3ef506ac4d2478723d2dbd47286f5c1"
   },
   "tests/test_house_claims.py": {
-    "mtime": 1788053215.0452702,
-    "seen": 1788510430.789646,
+    "mtime": 1787075036.9905999,
+    "seen": 1790384546.271637,
     "ast_hash": "4e36c37f71e24b0fd9651495326dae3c",
     "semantic_hash": "4e36c37f71e24b0fd9651495326dae3c"
   },
   "thank-you.html": {
-    "mtime": 1788510277.5828946,
-    "seen": 1788510430.789646,
-    "ast_hash": "bf91bd2328d75352a0a9974dbd86b33b",
-    "semantic_hash": "bf91bd2328d75352a0a9974dbd86b33b"
+    "mtime": 1790383720.9158182,
+    "seen": 1790384546.2717261,
+    "ast_hash": "0bac6d35ae075870bf8e72a44e03c52e",
+    "semantic_hash": "0bac6d35ae075870bf8e72a44e03c52e"
   },
   "validate_competitor_claims.py": {
-    "mtime": 1788053215.0455878,
-    "seen": 1788510430.789646,
+    "mtime": 1787075036.990856,
+    "seen": 1790384546.271638,
     "ast_hash": "47a7c9bbb13c07f9eeef52b9d978a7a5",
     "semantic_hash": "47a7c9bbb13c07f9eeef52b9d978a7a5"
   },
   "validate_house_claims.py": {
-    "mtime": 1788053215.0456922,
-    "seen": 1788510430.789646,
+    "mtime": 1790377512.461947,
+    "seen": 1790384546.271638,
     "ast_hash": "31450b24d86fa71e5a69935c1fae0b6e",
     "semantic_hash": "31450b24d86fa71e5a69935c1fae0b6e"
   },
   "validate_jsonld.py": {
-    "mtime": 1788053215.045789,
-    "seen": 1788510430.789646,
+    "mtime": 1790377512.4621632,
+    "seen": 1790384546.271639,
     "ast_hash": "178acc9aea9bd74223376b6ad508d2d9",
     "semantic_hash": "178acc9aea9bd74223376b6ad508d2d9"
   },
   "weddings.html": {
-    "mtime": 1788510277.2219357,
-    "seen": 1788510430.789646,
-    "ast_hash": "c14b0d109006de67690783e43412ca9e",
-    "semantic_hash": "c14b0d109006de67690783e43412ca9e"
+    "mtime": 1790383720.6343296,
+    "seen": 1790384546.2717261,
+    "ast_hash": "cd3e3e96ba14d0969cd85551285c40cc",
+    "semantic_hash": "cd3e3e96ba14d0969cd85551285c40cc"
+  },
+  ".claude/settings.json": {
+    "mtime": 1790378736.242909,
+    "seen": 1790384546.271615,
+    "ast_hash": "bac4283bcd3f44ba6ca5242121909b1d",
+    "semantic_hash": "bac4283bcd3f44ba6ca5242121909b1d"
+  },
+  "scripts/ads/add_negatives_2026_09.py": {
+    "mtime": 1790383698.7531013,
+    "seen": 1790384546.271623,
+    "ast_hash": "cb8dffc5311083f9808ccbf621cee3fa",
+    "semantic_hash": "cb8dffc5311083f9808ccbf621cee3fa"
+  },
+  "scripts/ads/conversion_actions_2026_09.py": {
+    "mtime": 1790379986.5120988,
+    "seen": 1790384546.2716238,
+    "ast_hash": "969f46db77b65de1949ebbbe50b65d18",
+    "semantic_hash": "969f46db77b65de1949ebbbe50b65d18"
+  },
+  "scripts/ads/create_christmas_carol_campaign_2026.py": {
+    "mtime": 1790382594.5275693,
+    "seen": 1790384546.2716238,
+    "ast_hash": "ad99f9244328b6c356f4296000dd39d6",
+    "semantic_hash": "ad99f9244328b6c356f4296000dd39d6"
+  },
+  "scripts/ads/set_conversion_primary.py": {
+    "mtime": 1790380220.6990073,
+    "seen": 1790384546.271625,
+    "ast_hash": "ae7b0f87160dc41ad4f103c2abd3dafa",
+    "semantic_hash": "ae7b0f87160dc41ad4f103c2abd3dafa"
+  },
+  "scripts/ga4/setup_tracking_2026_09.py": {
+    "mtime": 1790380699.7320945,
+    "seen": 1790384546.27163,
+    "ast_hash": "88249f3159cae626ffb0f5d8509022a8",
+    "semantic_hash": "88249f3159cae626ffb0f5d8509022a8"
+  },
+  "scripts/setup/make_ads_config.py": {
+    "mtime": 1790378208.8928132,
+    "seen": 1790384546.271635,
+    "ast_hash": "0dcfb3faf488e44d87763cf1d20ea354",
+    "semantic_hash": "0dcfb3faf488e44d87763cf1d20ea354"
+  },
+  "christmas-pricing.html": {
+    "mtime": 1790383720.8758018,
+    "seen": 1790384546.271669,
+    "ast_hash": "4a37b55095e3f89ab63d014500149f83",
+    "semantic_hash": "4a37b55095e3f89ab63d014500149f83"
+  },
+  "logs/ads-changes.md": {
+    "mtime": 1790384496.7068844,
+    "seen": 1790384546.27169,
+    "ast_hash": "2ee0943679b3ec7e7f95bf2d26d09f8d",
+    "semantic_hash": "2ee0943679b3ec7e7f95bf2d26d09f8d"
+  },
+  "logs/ga4-changes.md": {
+    "mtime": 1790380727.955896,
+    "seen": 1790384546.27169,
+    "ast_hash": "cd777b4a8a45c37985ffe4d97ce0b1aa",
+    "semantic_hash": "cd777b4a8a45c37985ffe4d97ce0b1aa"
+  },
+  "luca-wetherall.html": {
+    "mtime": 1790383720.846709,
+    "seen": 1790384546.271691,
+    "ast_hash": "95b93e96f5bfd4f94ca40d781eab7f44",
+    "semantic_hash": "95b93e96f5bfd4f94ca40d781eab7f44"
   }
 }
