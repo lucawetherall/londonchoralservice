@@ -223,6 +223,14 @@
   "hash": "61fa5c37968719cf",
   "lastmod": "2026-09-04"
  },
+ "/barbershop-grams/": {
+  "hash": "a6c214c09b8c4726",
+  "lastmod": "2026-09-04"
+ },
+ "/barbershop-grams/repertoire.html": {
+  "hash": "211e4b79264990ce",
+  "lastmod": "2026-09-04"
+ },
  "/carol-singers.html": {
   "hash": "1588695d3d4c9286",
   "lastmod": "2026-09-26"
@@ -240,11 +248,11 @@
   "lastmod": "2026-09-23"
  },
  "/contact.html": {
-  "hash": "2f7065561dfcc3be",
-  "lastmod": "2026-09-04"
+  "hash": "0b44818e7b5df12a",
+  "lastmod": "2026-09-26"
  },
  "/corporate.html": {
-  "hash": "b35d203517429b4a",
+  "hash": "81ad7e6a3e92b8b0",
   "lastmod": "2026-09-26"
  },
  "/destinations/": {
@@ -640,15 +648,15 @@
   "lastmod": "2026-09-04"
  },
  "/services.html": {
-  "hash": "ecba05d4b1ebe320",
-  "lastmod": "2026-09-04"
+  "hash": "cf331f37300ba0ca",
+  "lastmod": "2026-09-26"
  },
  "/terms.html": {
   "hash": "676d1899656b79ab",
   "lastmod": "2026-09-04"
  },
  "/weddings.html": {
-  "hash": "46ac6ba7381683f8",
-  "lastmod": "2026-09-23"
+  "hash": "811e40b82e0a232e",
+  "lastmod": "2026-09-26"
  }
 }

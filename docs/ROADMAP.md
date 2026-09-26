@@ -291,3 +291,32 @@ print('duplicate price-ladder constructions:', len(dupes))  # → 0
 "
 ```
 **Skills:** new-page, site-architecture
+
+---
+
+## R14 — Barbershop Grams product line  [P1] [done 2026-09-03]
+
+**What shipped:** a second product line at `/barbershop-grams/` (hub + repertoire page), a self-contained mini-site in its own visual register — a scoped `bs-` stylesheet plus its own nav and footer partials, insulated from the main site's CSS bundle and never including `partials/nav.html` or `partials/footer.html`. A `barbershop-gram` `<option>` on `contact.html` wiring the enquiry pre-fill, and `barbershop-grams/*.html` added to both claim validators (`validate_jsonld.py`, `validate_house_claims.py`), which previously could not see the directory at all. Sitemap and `llms.txt` entries for both pages.
+
+Inbound links from the main site: `services.html` gets a note after the ensemble grid plus a "Gifts & Surprises" `Offer` inside its `OfferCatalog` JSON-LD; `weddings.html` and `corporate.html` each get one contextual paragraph link. `sitemap.xml` now lists 162 URLs.
+
+**Deliberately not done, and why:**
+- **No gram prices on `pricing.html`.** A section was added there (`a3dad63`) and reverted by owner decision (`10abc0d`): barbershop is sold separately from the choral service and its bookings are almost always a quartet, so listing its rates in the choral price table works against the separation the mini-site exists to maintain. `barbershop-grams/index.html` is the source of truth for the five gram prices; `pricing.html` stays the source of truth for choral prices. The `CLAUDE.md` convention was rewritten to carve this out.
+- **No nav entry.** The original plan (and the task's own first draft) added a Services-dropdown item. It shipped in `e4ebdad`, then was **removed by owner decision** in `28e0e83`: `partials/nav.html` expands into every page via the build, so a dropdown item for a birthday-gram product appeared on `funerals.html`, every funeral music guide, all three `for-*.html` B2B pages, and `compare/london-funeral-singers.html` — a birthday-gift product surfaced to a bereaved visitor or a corporate buyer mid-funeral-enquiry. The spec's "dropdown only, never on funeral pages" constraint is unsatisfiable with one shared nav partial. The spec and plan were corrected in `c757d31` to record this rather than leave the stale intent standing.
+- Comparison page (`compare/barbershopogram.html`) and a barbershop listen page — Phase 2, gated on a barbershop recording existing (`MANUAL-ACTIONS-REQUIRED.md` §18.1).
+- Per-occasion pages — Phase 3, gated on Search Console evidence after a season live.
+- Ads, directories, partnerships, and PR — Phase 4, human-only (`MANUAL-ACTIONS-REQUIRED.md` §18).
+
+**Spec:** `docs/superpowers/specs/2026-09-03-barbershop-grams-design.md`
+**Plan:** `docs/superpowers/plans/2026-09-03-barbershop-grams.md`
+
+**Verify:**
+```sh
+./build.sh                                 # ends "Done." — House claims clean across 166 files checked.
+python3 tests/test_competitor_claims.py    # 0 failure(s)
+grep -c '<loc>' sitemap.xml                # 162
+grep -n 'barbershop' validate_jsonld.py validate_house_claims.py   # both glob barbershop-grams/*.html
+ls barbershop-grams/                       # index.html  repertoire.html
+grep -rln 'barbershop-grams/' services.html weddings.html corporate.html   # all three
+grep -n 'partials/nav.html\|partials/footer.html' barbershop-grams/*.html  # empty — mini-site never includes the main-site partials
+```
