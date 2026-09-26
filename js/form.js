@@ -8,6 +8,23 @@
   var btnLabel   = submitBtn ? submitBtn.textContent : 'Send enquiry';
   var redirectUrl = form.getAttribute('data-redirect') || '/thank-you.html';
 
+  // The visitor's own occasion choice beats the page's default (?from= on the
+  // redirect), so a hotel enquiry about a switch-on isn't logged as "christmas".
+  function leadOccasion() {
+    var select = form.querySelector('[name="occasion"]');
+    if (select && select.value) return select.value;
+    var m = /[?&]from=([^&]+)/.exec(redirectUrl);
+    return m ? m[1] : 'general';
+  }
+
+  function trackError(type) {
+    try {
+      if (typeof window.gtag === 'function') {
+        window.gtag('event', 'form_error', { error_type: type, lead_source: window.location.pathname });
+      }
+    } catch (_) { /* analytics must never block the enquiry */ }
+  }
+
   // Pre-fill the occasion select from a ?occasion= URL parameter so traffic
   // arriving from /weddings.html, /funerals.html, etc. lands with the right
   // option already chosen. No-op on forms without an #occasion select.
@@ -47,6 +64,7 @@
     var captchaResponse = form.querySelector('[name=h-captcha-response]');
     var captchaWidget = form.querySelector('.h-captcha iframe');
     if (captchaWidget && (!captchaResponse || !captchaResponse.value)) {
+      trackError('captcha');
       if (captchaError) {
         captchaError.setAttribute('data-visible', 'true');
         captchaError.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -70,6 +88,12 @@
     fd.forEach(function (value, key) {
       data[key] = value;
     });
+    // Ad click ID and UTM tags ride along in the enquiry email, so a booking
+    // can later be reported back to Google Ads against the click that won it.
+    if (typeof window.lcsAttribution === 'function') {
+      var attr = window.lcsAttribution();
+      Object.keys(attr).forEach(function (k) { if (!data[k]) data[k] = attr[k]; });
+    }
 
     fetch('https://api.web3forms.com/submit', {
       method: 'POST',
@@ -86,13 +110,20 @@
       })
       .then(function (payload) {
         if (payload.ok && payload.result.success) {
-          window.location.href = redirectUrl;
+          var go = function () { window.location.href = redirectUrl; };
+          if (typeof window.lcsLead === 'function') {
+            try { window.lcsLead({ source: window.location.pathname, occasion: leadOccasion(), email: data.email, phone: data.phone }, go); }
+            catch (_) { go(); }
+          } else {
+            go();
+          }
         } else {
           throw new Error(payload.result.message || 'Submission failed');
         }
       })
       .catch(function (err) {
         console.error('Form submission error:', err);
+        trackError('submit');
         if (errorBox) {
           errorBox.setAttribute('data-visible', 'true');
           errorBox.scrollIntoView({ behavior: 'smooth', block: 'center' });

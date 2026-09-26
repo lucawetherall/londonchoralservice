@@ -36,9 +36,12 @@
     function loadGA() {
       if (loadGA.done) return;
       loadGA.done = true;
+      // Only the live site reports: local previews and test copies queue events
+      // in dataLayer but never load gtag.js, so tests can't reach GA4 or Ads.
+      if (!/(^|\.)londonchoralservice\.com$/.test(location.hostname)) return;
       gtag('js', new Date());
       gtag('config', 'G-9FENN7VS0E');
-      gtag('config', 'AW-17988388404');
+      gtag('config', 'AW-17988388404', { 'allow_enhanced_conversions': true });
       var s = document.createElement('script');
       s.src = 'https://www.googletagmanager.com/gtag/js?id=G-9FENN7VS0E';
       document.head.appendChild(s);
@@ -52,6 +55,81 @@
     ['scroll', 'click', 'touchstart', 'keydown'].forEach(function(evt) {
       window.addEventListener(evt, loadGA, { once: true, passive: true });
     });
+
+    // Conversion tracking. A lead is one "Submit lead form" conversion, fired by
+    // js/form.js and js/private-events.js only after Web3Forms accepts the
+    // enquiry. Phone, email and WhatsApp taps are contact_click events (their
+    // own secondary Ads actions "Call click" and "WhatsApp or email click"),
+    // never leads. Labels come from Google Ads (conversion action tag snippets).
+    var LCS_ADS = {
+      lead: 'AW-17988388404/RjhECKGP7akcELSMxIFD',
+      call: 'AW-17988388404/HHu8CJq1x4UdELSMxIFD',
+      message: 'AW-17988388404/5H_QCJ21x4UdELSMxIFD'
+    };
+    function lcsLead(detail, done) {
+      var finished = false;
+      function finish() { if (!finished) { finished = true; if (done) done(); } }
+      loadGA();
+      // Enhanced conversions: gtag hashes these (SHA-256) before sending, and
+      // sends nothing at all unless the visitor allowed ad measurement.
+      var ud = {};
+      var email = (detail.email || '').trim().toLowerCase();
+      if (/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) ud.email = email;
+      var phone = (detail.phone || '').replace(/[^\d+]/g, '');
+      if (/^0\d{9,10}$/.test(phone)) phone = '+44' + phone.slice(1);
+      else if (/^44\d{9,10}$/.test(phone)) phone = '+' + phone;
+      if (/^\+\d{10,15}$/.test(phone)) ud.phone_number = phone;
+      if (ud.email || ud.phone_number) gtag('set', 'user_data', ud);
+      gtag('event', 'generate_lead', {
+        'currency': 'GBP',
+        'value': 1,
+        'lead_source': detail.source,
+        'occasion': detail.occasion || 'unspecified'
+      });
+      gtag('event', 'conversion', {
+        'send_to': LCS_ADS.lead,
+        'value': 1,
+        'currency': 'GBP',
+        'transaction_id': 'lead-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7),
+        'event_callback': finish
+      });
+      // Never hold the visitor up if gtag.js is blocked or slow.
+      setTimeout(finish, 1500);
+    }
+    document.addEventListener('click', function(e) {
+      var a = e.target.closest && e.target.closest('a[href^="tel:"], a[href^="mailto:"], a[href*="wa.me/"]');
+      if (!a) return;
+      var href = a.getAttribute('href');
+      var method = href.indexOf('tel:') === 0 ? 'call' : href.indexOf('mailto:') === 0 ? 'email' : 'whatsapp';
+      var where = a.closest('.mobile-cta') ? 'mobile_bar' : a.closest('.site-footer') ? 'footer' :
+        a.closest('.site-header') ? 'header' : 'body';
+      loadGA();
+      gtag('event', 'contact_click', { 'method': method, 'link_location': where });
+      var label = method === 'call' ? LCS_ADS.call : LCS_ADS.message;
+      if (label) gtag('event', 'conversion', { 'send_to': label, 'value': 1, 'currency': 'GBP' });
+    });
+
+    // Ad click ID and UTM tags from the landing URL, kept for this tab (only once
+    // the visitor has allowed cookies) so an enquiry sent from a later page still
+    // carries its source for offline conversion import.
+    var LCS_ATTR_KEYS = ['gclid', 'gbraid', 'wbraid', 'utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content'];
+    function lcsAttribution() {
+      var out = {};
+      try {
+        var saved = JSON.parse(sessionStorage.getItem('lcs-attr') || '{}');
+        var q = new URLSearchParams(location.search);
+        LCS_ATTR_KEYS.forEach(function(k) { var v = q.get(k) || saved[k]; if (v) out[k] = v; });
+      } catch (e) {}
+      return out;
+    }
+    function lcsKeepAttribution() {
+      try {
+        if (localStorage.getItem('lcs-consent') !== 'granted') return;
+        var a = lcsAttribution();
+        if (Object.keys(a).length) sessionStorage.setItem('lcs-attr', JSON.stringify(a));
+      } catch (e) {}
+    }
+    lcsKeepAttribution();
   </script>
   <script src="/js/consent.js" defer></script>
   <!-- @include-end partials/analytics.html -->
@@ -75,7 +153,7 @@
   <meta property="og:image:height" content="630">
   <meta property="og:image:alt" content="The London Choral Service: carol singers and Christmas choirs">
   <meta property="article:published_time" content="2026-07-31">
-  <meta property="article:modified_time" content="2026-09-23">
+  <meta property="article:modified_time" content="2026-09-26">
 
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="A Cappella Christmas Songs for a Choir | Repertoire | LCS">
@@ -2267,7 +2345,7 @@
         "url": "https://londonchoralservice.com/music-guides/a-cappella-christmas-songs.html",
         "inLanguage": "en-GB",
         "datePublished": "2026-07-31",
-        "dateModified": "2026-09-23",
+        "dateModified": "2026-09-26",
         "description": "The Christmas songs that work unaccompanied: close-harmony standards, what suits four voices, and how to mix songs with carols at a party or reception.",
         "author": [
           {
@@ -2450,7 +2528,7 @@
           </ol></nav>
           <h1>A cappella Christmas songs for a choir</h1>
           <p class="guide-meta">By Luca Wetherall, Artistic Director &amp; Tutor in Music, University of Oxford</p>
-          <p class="guide-meta">Published <time datetime="2026-07-31">31 July 2026</time> &middot; Updated <time datetime="2026-09-23">23 September 2026</time></p>
+          <p class="guide-meta">Published <time datetime="2026-07-31">31 July 2026</time> &middot; Updated <time datetime="2026-09-26">26 September 2026</time></p>
           <hr class="rule">
         </div>
       </section>
@@ -2536,7 +2614,7 @@
       <section class="section">
         <div class="prose">
           <h2>Sets, breaks and how long a group can sing</h2>
-          <p>A standard Christmas booking runs up to an hour and a half including breaks, which in practice is three sets of about twenty minutes. Unaccompanied singing is more tiring than singing with an instrument, because there is nothing to rest against and the group is holding its own pitch throughout.</p>
+          <p>A standard Christmas booking runs up to two hours including breaks, which in practice is three or four sets of about twenty-five minutes. Unaccompanied singing is more tiring than singing with an instrument, because there is nothing to rest against and the group is holding its own pitch throughout.</p>
           <p>Where a venue has a piano, booking a pianist to cover the gaps keeps the room from falling silent between sets and gives the singers a genuine rest. The pianist plays through the break and drops out as the voices come back in. That is &pound;250.</p>
           <p>If the venue has no piano at all we can bring a keyboard and speaker for an extra charge, quoted upfront in your written quote. For a booking that is mostly songs rather than carols, it is usually worth it.</p>
         </div>

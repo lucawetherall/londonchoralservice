@@ -127,38 +127,6 @@
     footerObserver.observe(footer);
   }
 
-  // ── Conversion tracking: redirect to thank-you after tel:/mailto: clicks ──
-  if (!/thank-you\.html/.test(window.location.pathname)) {
-    var thankYouBase = '/thank-you.html';
-
-    var isMobile = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-    if (isMobile) {
-      var telLinks = document.querySelectorAll('a[href^="tel:"]');
-      for (var i = 0; i < telLinks.length; i++) {
-        telLinks[i].addEventListener('click', function () {
-          setTimeout(function () {
-            window.location.href = thankYouBase + '?from=call';
-          }, 300);
-        });
-      }
-    }
-
-    var mailLinks = document.querySelectorAll('a[href^="mailto:"]');
-    for (var j = 0; j < mailLinks.length; j++) {
-      mailLinks[j].addEventListener('click', function () {
-        setTimeout(function () {
-          window.location.href = thankYouBase + '?from=email';
-        }, 300);
-      });
-    }
-
-    var waLinks = document.querySelectorAll('a[href*="wa.me/"]');
-    for (var k = 0; k < waLinks.length; k++) {
-      waLinks[k].addEventListener('click', function () {
-        setTimeout(function () {
-          window.location.href = thankYouBase + '?from=whatsapp';
-        }, 300);
-      });
-    }
-  }
+  // Phone, email and WhatsApp taps are tracked as contact_click events by the
+  // analytics snippet (partials/analytics.html); the visitor stays on the page.
 })();
