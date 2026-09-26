@@ -35,6 +35,9 @@
     function loadGA() {
       if (loadGA.done) return;
       loadGA.done = true;
+      // Only the live site reports: local previews and test copies queue events
+      // in dataLayer but never load gtag.js, so tests can't reach GA4 or Ads.
+      if (!/(^|\.)londonchoralservice\.com$/.test(location.hostname)) return;
       gtag('js', new Date());
       gtag('config', 'G-9FENN7VS0E');
       gtag('config', 'AW-17988388404', { 'allow_enhanced_conversions': true });
