@@ -90,7 +90,10 @@
     });
     // Ad click ID and UTM tags ride along in the enquiry email, so a booking
     // can later be reported back to Google Ads against the click that won it.
-    if (typeof window.lcsAttribution === 'function') {
+    // Only for visitors who allowed cookies, as the privacy policy says.
+    var consented = false;
+    try { consented = localStorage.getItem('lcs-consent') === 'granted'; } catch (_) {}
+    if (consented && typeof window.lcsAttribution === 'function') {
       var attr = window.lcsAttribution();
       Object.keys(attr).forEach(function (k) { if (!data[k]) data[k] = attr[k]; });
     }

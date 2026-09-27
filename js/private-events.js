@@ -289,6 +289,17 @@
         return;
       }
 
+      // The ad click ID and UTM tags travel only for visitors who allowed
+      // cookies, as the privacy policy says.
+      var consented = false;
+      try { consented = localStorage.getItem('lcs-consent') === 'granted'; } catch (_) {}
+      if (!consented) {
+        ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'gclid'].forEach(function (key) {
+          var input = form.querySelector('input[name="' + key + '"]');
+          if (input) input.value = '';
+        });
+      }
+
       var timeOnPage = form.querySelector('input[name="time_on_page"]');
       if (timeOnPage) timeOnPage.value = String(Math.round(elapsed));
 
