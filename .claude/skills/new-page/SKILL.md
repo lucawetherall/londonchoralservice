@@ -27,7 +27,8 @@ Every page on this site is a standalone HTML file carrying ~60 lines of head boi
 - The `partials/analytics.html` include markers (GA4/Google Ads + Consent Mode); the build expands them.
 - The `@include-start`/`@include-end` marker pairs and everything between them — stale expanded content from the cloned page is fine; `./build.sh` re-expands it.
 - The inlined `<style>` block — again, the build refreshes it.
-- `theme-color`, `robots`, `dns-prefetch` lines, favicon links, `og:image` path.
+- `theme-color`, `robots`, `dns-prefetch` lines, favicon links.
+- `og:image` / `twitter:image`: area, borough, destination, `for-*` and hub pages each have their own card in `assets/og/`. After creating one of those pages, run `node scripts/og/generate_og_images.mjs --wire` (needs Playwright + Chromium) to render its card and point the tags at it; guides keep their category card (`og-weddings.png`, `og-funerals.png`, `og-christmas.png`, …).
 
 **Change for the new page** (full element-by-element list in `references/head-checklist.md`):
 - `<title>`, meta description (**141–161 characters** — check with `python3 -c "print(len('...'))"`)

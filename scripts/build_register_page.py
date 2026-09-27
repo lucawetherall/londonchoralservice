@@ -13,6 +13,8 @@ absolute asset paths get dropped from one page in twenty and the form fails
 silently on it. See docs/superpowers/specs/2026-08-29-international-luxury-weddings-design.md
 """
 
+import os
+
 SITE = 'https://londonchoralservice.com'
 ACCESS_KEY = 'dc1af546-26ac-45b3-a85d-064a3a59886d'
 OG_IMAGE = f'{SITE}/assets/og-private-events.png'
@@ -45,9 +47,18 @@ GA_SNIPPET = '''  <!-- Google Analytics (GA4) — deferred until after load -->
   </script>'''
 
 
+def og_image(path):
+    """The page's own share card from scripts/og/generate_og_images.mjs, if rendered;
+    otherwise the register's shared card."""
+    card = 'assets/og/' + path[:-len('.html')].replace('/index', '-index').replace('/', '-') + '.png'
+    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    return f'{SITE}/{card}' if os.path.exists(os.path.join(root, card)) else OG_IMAGE
+
+
 def head(title, description, path):
     """path is site-relative with no leading slash, e.g. 'destinations/italy.html'."""
     url = f'{SITE}/{path}'
+    image = og_image(path)
     if len(description) < 141 or len(description) > 161:
         raise ValueError(f'meta description for {path} is {len(description)} chars, need 141-161')
     return f'''<!DOCTYPE html>
@@ -74,7 +85,7 @@ def head(title, description, path):
   <meta property="og:url" content="{url}">
   <meta property="og:locale" content="en_GB">
   <meta property="og:site_name" content="London Choral Service">
-  <meta property="og:image" content="{OG_IMAGE}">
+  <meta property="og:image" content="{image}">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
   <meta property="og:image:alt" content="{OG_ALT}">
@@ -82,7 +93,7 @@ def head(title, description, path):
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="{title}">
   <meta name="twitter:description" content="{description}">
-  <meta name="twitter:image" content="{OG_IMAGE}">
+  <meta name="twitter:image" content="{image}">
   <meta name="twitter:image:alt" content="{OG_ALT}">
   <link rel="dns-prefetch" href="https://www.googletagmanager.com">
   <link rel="dns-prefetch" href="https://api.web3forms.com">

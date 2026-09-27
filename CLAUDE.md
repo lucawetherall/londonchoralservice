@@ -32,6 +32,7 @@ The website of The London Choral Service (Alma Consort Ltd) — a choir-for-hire
 - Competitor claim check alone: `python3 validate_competitor_claims.py`
 - Validator tests: `python3 tests/test_competitor_claims.py`
 - Local preview: `python3 -m http.server 8000`
+- Social share cards: `node scripts/og/generate_og_images.mjs --wire` renders `assets/og/*.png` (1200×630, from each page's h1) and rewires `og:image`/`twitter:image`. Needs Playwright + Chromium; rerun after adding an area, borough, destination or `for-*` page.
 - Query the repo graph: `/graphify query "<question>"` (reads the committed `graphify-out/graph.json` — do not rebuild unless files have changed since the last graph commit). Refresh after a large content sweep with `/graphify --update`.
 
 ## Conventions
