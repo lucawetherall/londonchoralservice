@@ -236,6 +236,8 @@ What this means, in priority order:
 
 The competitor everyone outranks us with — The London Funeral Singers — is the one `compare/london-funeral-singers.html` already addresses. Once citations and GBP exist, that page and the two "best X in London" guides are positioned to capture comparison-shopping and AI-recommendation queries; they were de-orphaned and internally linked on 2026-08-19.
 
+**Weekly review, 2026-09-27 (Search Console, 18–24 Sep vs 11–17 Sep):** 61 clicks (was 43), 2,419 impressions (was 1,954), average position 6.8 (was 7.0). Music guides carry the clicks (nine-lessons-and-carols 9, the guides hub 6, be-thou-my-vision 5); the homepage has 5. Hiring queries still sit off page one: "christmas carol singers london" 18 (first seen), "carol singers for hire london" 26, "hire a choir" 24, "how to book a choir" 12.9, "funeral singers near me" 15; "choir for funeral" rose to 1.5 on 2 impressions. "wedding choir" fell from 13.5 to 29.5.
+
 ---
 
 ## 13. Private events page launch follow-ups, 2026-08-26

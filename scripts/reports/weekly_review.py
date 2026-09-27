@@ -19,12 +19,16 @@ analytics.readonly and webmasters.readonly scopes) for GA4 and Search Console.
 
 import argparse
 import datetime
+import os
 import re
 from collections import defaultdict
 
 import google.auth
 from google.ads.googleads.client import GoogleAdsClient
 from google.auth.transport.requests import AuthorizedSession
+
+# .venv/bin/activate sets this; default it so a bare `.venv/bin/python` run works too.
+os.environ.setdefault("GOOGLE_ADS_CONFIGURATION_FILE_PATH", os.path.expanduser("~/.config/lcs/google-ads.yaml"))
 
 CUSTOMER_ID = "8733881378"
 GA4_PROPERTY = "properties/527915578"
