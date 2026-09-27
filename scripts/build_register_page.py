@@ -3,8 +3,9 @@
 
 The register's look comes from partials/private-register.css.html; this module
 only assembles the parts every register page must carry identically — the head,
-the GA4/Ads snippet, the bespoke header and breadcrumb, the enquiry form, and
-the closing scripts. Page prose is hand-authored and passed in, never generated.
+the analytics partial markers (GA4/Ads with Consent Mode, expanded by
+build.sh), the bespoke header and breadcrumb, the enquiry form, and the
+closing scripts. Page prose is hand-authored and passed in, never generated.
 
 Why this exists: the register is insulated from the site nav/footer partials and
 from css/style.css, so a register page cannot be cloned from an ordinary page.
@@ -21,30 +22,6 @@ OG_IMAGE = f'{SITE}/assets/og-private-events.png'
 OG_ALT = ('Alma Consort, London: the sound of an English cathedral, wherever you are '
           '&mdash; private and international choral engagements')
 
-GA_SNIPPET = '''  <!-- Google Analytics (GA4) — deferred until after load -->
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    function loadGA() {
-      if (loadGA.done) return;
-      loadGA.done = true;
-      gtag('js', new Date());
-      gtag('config', 'G-9FENN7VS0E');
-      gtag('config', 'AW-17988388404');
-      var s = document.createElement('script');
-      s.src = 'https://www.googletagmanager.com/gtag/js?id=G-9FENN7VS0E';
-      document.head.appendChild(s);
-    }
-    if ('requestIdleCallback' in window) {
-      requestIdleCallback(loadGA, { timeout: 3000 });
-    } else {
-      window.addEventListener('load', function() { setTimeout(loadGA, 100); });
-    }
-    if (/[?&](gclid|gbraid|wbraid)=/.test(location.search)) loadGA();
-    ['scroll', 'click', 'touchstart', 'keydown'].forEach(function(evt) {
-      window.addEventListener(evt, loadGA, { once: true, passive: true });
-    });
-  </script>'''
 
 
 def og_image(path):
@@ -69,7 +46,8 @@ def head(title, description, path):
   <!-- @include-end partials/head-extras.html -->
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
-{GA_SNIPPET}
+  <!-- @include-start partials/analytics.html -->
+  <!-- @include-end partials/analytics.html -->
 
   <title>{title}</title>
   <meta name="description" content="{description}">
