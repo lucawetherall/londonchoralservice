@@ -19,9 +19,10 @@ permissions:
   contents: read
 
 concurrency:
-  # Runs on main deploy: they queue one at a time, in order, and are never
-  # cancelled part-way. Any other run is only a check, and a newer run for the
-  # same pull request or branch replaces it.
+  # Deploys (runs on main) never overlap and are never cancelled part-way. If
+  # several are waiting, only the newest runs; it carries the earlier changes.
+  # Any other run is only a check, and a newer run for the same pull request
+  # or branch replaces it.
   group: ${{ github.ref == 'refs/heads/main' && 'pages-deploy' || format('pages-check-{0}', github.ref) }}
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
@@ -37,11 +38,11 @@ jobs:
       - name: Test the staging script
         run: python3 tests/test_stage_site.py
       - name: Check the allowlist and stage the site
-        run: python3 scripts/stage_site.py --out _site
+        run: python3 scripts/stage_site.py --out "$RUNNER_TEMP/site"
       - name: Upload the Pages artifact
         uses: actions/upload-pages-artifact@v5
         with:
-          path: _site
+          path: ${{ runner.temp }}/site
 
   deploy:
     name: Deploy to GitHub Pages
@@ -56,6 +57,17 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
+      # In branch mode Pages also builds the whole repo on every push, and the
+      # two deploys would race. Refuse, so a switch back shows up as a failure.
+      - name: Check that Pages deploys from GitHub Actions
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mode=$(gh api "repos/$GITHUB_REPOSITORY/pages" --jq .build_type)
+          if [ "$mode" != workflow ]; then
+            echo "::error::Settings → Pages → Source is '$mode' (Deploy from a branch), which serves every file in the repo. Set it to GitHub Actions, then re-run this workflow."
+            exit 1
+          fi
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v5
