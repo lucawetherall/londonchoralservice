@@ -12,7 +12,7 @@
 - **Variant B H1:** approved. The nine wedding-led pages read "Wedding and funeral choirs in X" in the H1, title, og:title, twitter:title and share card.
 - **Richmond:** the Chapel Royal at Hampton Court Palace takes weddings with us only with the chapel clergy's permission. The page says so, and no heading names Hampton Court.
 - **Lewisham:** Hither Green Crematorium and Lewisham Crematorium are one venue (Verdant Lane). The page now says so.
-- **Southwark:** we do not add voices to the Cathedral choir; we sing at the Cathedral with its permission.
+- **Southwark:** we sing at the Cathedral only with its permission, as a separate ensemble.
 - **Westminster:** the claim that several of our singers hold posts in the Abbey's choral foundation is confirmed.
 
 ## Problem
