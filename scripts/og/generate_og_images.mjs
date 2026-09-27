@@ -82,8 +82,9 @@ function cards() {
     ...fs.readdirSync('areas/london').filter(n => n.endsWith('.html')).map(n => 'areas/london/' + n)].sort();
   for (const f of areas) {
     const [main] = h1Parts(read(f));
-    const place = main.split(' in ').slice(1).join(' in ');
-    out.push({ f, style: 'lcs', title: 'Funeral & Wedding Choirs', title2: 'in ' + place,
+    const [what, ...rest] = main.split(' in ');
+    const place = rest.join(' in ');  // "Funeral and wedding choirs" or, on wedding-led pages, "Wedding and funeral choirs"
+    out.push({ f, style: 'lcs', title: titleCase(what.replace(' and ', ' & ')), title2: 'in ' + place,
       sub: 'Live singers for churches, crematoria and carol services' });
   }
   for (const n of fs.readdirSync('destinations').filter(n => n.endsWith('.html')).sort()) {

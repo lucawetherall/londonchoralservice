@@ -1,0 +1,1171 @@
+{
+  "spec": "docs/superpowers/specs/2026-09-27-borough-template-variants-design.md",
+  "generated": "2026-09-27",
+  "pages": [
+    {
+      "file": "areas/london/barking-dagenham.html",
+      "variant": "C",
+      "section_order": [
+        "funeral",
+        "wedding",
+        "ensembles",
+        "quote",
+        "faq",
+        "guides",
+        "christmas",
+        "cta"
+      ],
+      "heading_rewrites": {
+        "Funeral music in Barking and Dagenham": "Funerals at St Margaret’s Barking and the borough’s cemeteries",
+        "Wedding choirs in Barking and Dagenham": "Weddings at St Margaret’s Church",
+        "Ensembles for weddings, funerals, and memorials": "How many singers for Barking and Dagenham venues",
+        "Christmas carol singers in Barking and Dagenham": "Carols in Barking, Dagenham and Chadwell Heath",
+        "Frequently asked questions": "Questions about Barking and Dagenham services"
+      },
+      "drop_blocks": [],
+      "faq_keep": [
+        "How much does a funeral singer cost in Barking and Dagenham?",
+        "NEW",
+        "What types of music can you perform at a funeral in Barking and Dagenham?"
+      ],
+      "new_faq": {
+        "question": "Can the same singers cover the chapel and the graveside at Eastbrookend or Rippleside?",
+        "answer": "Yes. A soloist is usually enough for a graveside or a short committal, but if you want the same singers in the chapel beforehand, book a quartet (from £1,150). Eastbrookend and Rippleside cemeteries both have chapels.",
+        "source_quote": "For a graveside or a short committal, a soloist is usually plenty; a quartet is ideal if you want the same singers for the chapel service. … Eastbrookend Cemetery and Rippleside Cemetery both serve families across the borough with well-maintained chapels"
+      },
+      "quote_attribution": "Helen, Buckinghamshire",
+      "quote_place_matches": false
+    },
+    {
+      "file": "areas/london/barnet.html",
+      "variant": "A",
+      "section_order": [
+        "funeral",
+        "ensembles",
+        "faq",
+        "guides",
+        "wedding",
+        "quote",
+        "christmas",
+        "cta"
+      ],
+      "heading_rewrites": {
+        "Funeral music in Barnet": "Funeral singers at Hendon and Golders Green crematoria",
+        "Wedding choirs in Barnet": "Weddings in Chipping Barnet and Finchley",
+        "Ensembles for weddings, funerals, and memorials": "Choir sizes from Hendon to Chipping Barnet",
+        "Christmas carol singers in Barnet": "December carols around Finchley",
+        "Frequently asked questions": "Barnet funeral questions"
+      },
+      "drop_blocks": [],
+      "faq_keep": [
+        "How much does a funeral singer cost in Barnet?",
+        "Do you cover crematorium services in Barnet?",
+        "NEW"
+      ],
+      "new_faq": {
+        "question": "How long is a service at Hendon or Golders Green Crematorium?",
+        "answer": "Services at both crematoria run to a fixed length, often around 30 minutes. A quartet (from £1,150) usually fits that slot: enough voices to carry a hymn, and few enough to fit the chapel without crowding the family.",
+        "source_quote": "Crematorium services at Hendon or Golders Green run to a fixed length, often around 30 minutes, so a quartet is usually the right call — large enough to carry a hymn, small enough to fit the chapel without crowding the family."
+      },
+      "quote_attribution": "Tony, Surrey",
+      "quote_place_matches": false
+    },
+    {
+      "file": "areas/london/bexley.html",
+      "variant": "C",
+      "section_order": [
+        "funeral",
+        "wedding",
+        "ensembles",
+        "quote",
+        "faq",
+        "guides",
+        "christmas",
+        "cta"
+      ],
+      "heading_rewrites": {
+        "Funeral music in Bexley": "Funerals at St Mary the Virgin and Eltham Crematorium",
+        "Wedding choirs in Bexley": "Weddings in Bexley village, Bexleyheath and Sidcup",
+        "Ensembles for weddings, funerals, and memorials": "Choosing a choir size for Bexley’s parish churches",
+        "Christmas carol singers in Bexley": "Carol singers in Bexleyheath, Sidcup and Crayford",
+        "Frequently asked questions": "Questions from Bexley families"
+      },
+      "drop_blocks": [],
+      "faq_keep": [
+        "NEW",
+        "How much does a funeral singer cost in Bexley?",
+        "Do you cover crematorium services in Bexley?"
+      ],
+      "new_faq": {
+        "question": "What size of choir suits St Mary the Virgin, Bexley?",
+        "answer": "A quartet (from £1,150) usually fits the room for weddings and funerals alike. St Mary the Virgin is a village-scale church, and four voices can lead a hymn without overwhelming the building.",
+        "source_quote": "St Mary the Virgin Bexley is a village-scale church, and a quartet usually fits the room well for both weddings and funerals — large enough to lead a hymn, small enough not to overwhelm the building."
+      },
+      "quote_attribution": "Pamela, Hampshire",
+      "quote_place_matches": false
+    },
+    {
+      "file": "areas/london/brent.html",
+      "variant": "C",
+      "section_order": [
+        "funeral",
+        "wedding",
+        "ensembles",
+        "quote",
+        "faq",
+        "guides",
+        "christmas",
+        "cta"
+      ],
+      "heading_rewrites": {
+        "Funeral music in Brent": "Funerals at St Mary’s Willesden and Willesden New Cemetery",
+        "Wedding choirs in Brent": "Weddings from Willesden to Wembley",
+        "Ensembles for weddings, funerals, and memorials": "How many singers for Brent’s churches and cemetery chapels",
+        "Christmas carol singers in Brent": "Carol singers in Wembley, Willesden and Kilburn",
+        "Frequently asked questions": "Common questions in Brent"
+      },
+      "drop_blocks": [],
+      "faq_keep": [
+        "How much does a funeral singer cost in Brent?",
+        "NEW",
+        "What types of music can you perform at a funeral in Brent?"
+      ],
+      "new_faq": {
+        "question": "Which size of choir suits a cemetery chapel in Brent?",
+        "answer": "Willesden New Cemetery’s chapel runs to a tighter timing, so a quartet (from £1,150) is usually right there. Alperton Cemetery is more intimate, and a soloist (from £250) often suits it better.",
+        "source_quote": "Willesden New Cemetery's chapel runs to a tighter timing, so a quartet tends to be the right call: enough for a hymn, compact enough to fit the room. … At Alperton Cemetery a soloist often suits the more intimate setting better."
+      },
+      "quote_attribution": "Helen, Buckinghamshire",
+      "quote_place_matches": false
+    },
+    {
+      "file": "areas/london/bromley.html",
+      "variant": "A",
+      "section_order": [
+        "funeral",
+        "ensembles",
+        "quote",
+        "faq",
+        "guides",
+        "wedding",
+        "christmas",
+        "cta"
+      ],
+      "heading_rewrites": {
+        "Funeral music in Bromley": "Funeral music at Beckenham Crematorium and Bromley’s churches",
+        "Wedding choirs in Bromley": "Weddings at St Peter & St Paul and in Chislehurst",
+        "Ensembles for weddings, funerals, and memorials": "Choir sizes from Bromley Parish Church to Biggin Hill",
+        "Christmas carol singers in Bromley": "Carols in Beckenham, Chislehurst and Orpington",
+        "Frequently asked questions": "Funeral questions in Bromley"
+      },
+      "drop_blocks": [],
+      "faq_keep": [
+        "How much does a funeral singer cost in Bromley?",
+        "Do you cover crematorium services in Bromley?",
+        "NEW"
+      ],
+      "new_faq": {
+        "question": "Do you cover the whole of Bromley, including Biggin Hill?",
+        "answer": "Yes. Bromley is London’s largest borough by area, and we sing at churches and chapels across it, from Beckenham to Chislehurst and Biggin Hill. Our prices include travel within Greater London, which covers the whole borough.",
+        "source_quote": "The London Borough of Bromley is the largest borough in London by area, stretching from the suburban streets of Beckenham and Penge to the green hills of Biggin Hill and the Kentish borders. … We also provide singers for services in Biggin Hill, Chislehurst, and the many other parish churches and chapels throughout Bromley. … Prices include travel within Greater London."
+      },
+      "quote_attribution": "Helen, Buckinghamshire",
+      "quote_place_matches": false
+    },
+    {
+      "file": "areas/london/camden.html",
+      "variant": "C",
+      "section_order": [
+        "funeral",
+        "neighbours",
+        "quote",
+        "memorial",
+        "wedding",
+        "ensembles",
+        "faq",
+        "christmas",
+        "cta"
+      ],
+      "heading_rewrites": {
+        "Funeral music in Camden": "Funerals from St Pancras Old Church to Hampstead",
+        "Camden’s neighbours": "Golders Green and the boroughs around Camden",
+        "Memorial services and celebrations of life": "Memorial services at Hampstead Parish Church and St Pancras New Church",
+        "Wedding choirs in Camden": "Weddings at St John-at-Hampstead",
+        "Ensemble sizes and pricing": "Matching the choir to Camden’s churches",
+        "Christmas carol singers in Camden": "Carols from King’s Cross to Hampstead"
+      },
+      "drop_blocks": [],
+      "faq_keep": [
+        "How much does a funeral singer cost in Camden?",
+        "Can you sing at Golders Green Crematorium?",
+        "NEW",
+        "Do you provide wedding choirs at St John-at-Hampstead?"
+      ],
+      "new_faq": {
+        "question": "Do you sing at non-religious and humanist funerals in Camden?",
+        "answer": "Yes. Many Camden residents choose a non-religious or humanist funeral, and our repertoire for these services includes classical art songs, folk melodies and popular music arranged for unaccompanied voices.",
+        "source_quote": "Camden also has a large population of residents who prefer non-religious or humanist funerals. … Our repertoire for non-religious funerals includes classical art songs, folk melodies, and popular music arranged for unaccompanied voices."
+      },
+      "quote_attribution": "David, Hampstead",
+      "quote_place_matches": true
+    },
+    {
+      "file": "areas/london/city-of-london.html",
+      "variant": "D",
+      "section_order": [
+        "funeral",
+        "christmas",
+        "wedding",
+        "quote",
+        "faq",
+        "guides",
+        "cta"
+      ],
+      "heading_rewrites": {
+        "Funeral music in the City of London": "Funerals at St Paul’s, Temple Church and the City’s parish churches",
+        "Christmas carol singers in the City of London": "Livery halls and City carol services",
+        "Wedding choirs in the City of London": "Weddings at Temple Church and St Bartholomew-the-Great",
+        "Frequently asked questions": "Questions about the Square Mile"
+      },
+      "drop_blocks": [
+        "ensembles"
+      ],
+      "faq_keep": [
+        "How much does a funeral singer cost in City of London?",
+        "NEW",
+        "Do you cover crematorium services in City of London?"
+      ],
+      "new_faq": {
+        "question": "Can the choir sing a carol service in a church and then at a livery hall reception?",
+        "answer": "Yes. Livery companies often pair a carol service in a Square Mile church with a reception in their hall, and our singers can hold a formal programme in the nave and then process through the hall between courses. Livery dates book early, so enquiries are best made in the summer.",
+        "source_quote": "Livery companies and City institutions book carol singers every December, often pairing a Christmas carol service in a Square Mile church with a reception in a livery hall afterwards. … Our singers are equally at home processing through a hall between courses or holding a formal programme in the nave. … Bookings for livery company events are especially early, and dates usually start to fill by mid-September, so enquiries are best made in the summer."
+      },
+      "quote_attribution": "Tony, Surrey",
+      "quote_place_matches": false
+    },
+    {
+      "file": "areas/london/croydon.html",
+      "variant": "C",
+      "section_order": [
+        "funeral",
+        "quote",
+        "wedding",
+        "ensembles",
+        "faq",
+        "guides",
+        "christmas",
+        "cta"
+      ],
+      "heading_rewrites": {
+        "Funeral music in Croydon": "Funerals at Croydon Minster and Croydon Crematorium",
+        "Wedding choirs in Croydon": "Weddings from the Minster to Sanderstead and Purley",
+        "Ensembles for weddings, funerals, and memorials": "How many voices for the Minster, Old Town and Mitcham Road",
+        "Christmas carol singers in Croydon": "Carols in Croydon town centre, Purley and Sanderstead",
+        "Frequently asked questions": "Questions about Croydon Minster and Mitcham Road"
+      },
+      "drop_blocks": [],
+      "faq_keep": [
+        "NEW",
+        "How much does a funeral singer cost in Croydon?",
+        "Do you cover crematorium services in Croydon?",
+        "What types of music can you perform at a funeral in Croydon?"
+      ],
+      "new_faq": {
+        "question": "What size of choir suits Croydon Minster?",
+        "answer": "Croydon Minster is a large church with a generous acoustic, so a sextet (from £1,600) or a full choir of eight (from £2,000) is usually right. Processional hymns sit better there with the fuller sound.",
+        "source_quote": "Croydon Minster is a large church with a generous acoustic, and a sextet or full eight-voice choir is usually the right call there — the volume of the building rewards more voices, and processional hymns sit better with a fuller sound."
+      },
+      "quote_attribution": "Margaret, Dulwich",
+      "quote_place_matches": false
+    },
+    {
+      "file": "areas/london/ealing.html",
+      "variant": "B",
+      "section_order": [
+        "wedding",
+        "ensembles",
+        "funeral",
+        "quote",
+        "christmas",
+        "faq",
+        "cta"
+      ],
+      "heading_rewrites": {
+        "Funeral music in Ealing": "Funeral music in Ealing and at South West Middlesex Crematorium",
+        "Wedding choirs in Ealing": "Weddings at St Mary’s Ealing and Pitzhanger Manor",
+        "Ensembles for weddings, funerals, and memorials": "How many singers, from St Mary’s to Greenford Park",
+        "Christmas carol singers in Ealing": "Carol evenings across Ealing",
+        "Frequently asked questions": "Ealing questions"
+      },
+      "drop_blocks": [
+        "guides",
+        "crem_link"
+      ],
+      "faq_keep": [
+        "NEW",
+        "Can you provide a choir for a wedding in Ealing?",
+        "Do you cover crematorium services in Ealing?"
+      ],
+      "new_faq": {
+        "question": "What size of choir suits a wedding at Pitzhanger Manor?",
+        "answer": "Pitzhanger Manor’s rooms are more intimate than a parish church, so a quartet (from £1,150) usually suits the scale of the building. For a wedding at St Mary’s Ealing, a sextet (from £1,600) is the usual choice.",
+        "source_quote": "For a wedding at Pitzhanger Manor, where the rooms are more intimate, a quartet can feel more in keeping with the scale of the building. … St Mary's Ealing is a substantial parish church with a fine resonance, and for a wedding there a sextet usually feels right"
+      },
+      "quote_attribution": "Margaret, Dulwich",
+      "quote_place_matches": false
+    },
+    {
+      "file": "areas/london/enfield.html",
+      "variant": "A",
+      "section_order": [
+        "funeral",
+        "ensembles",
+        "quote",
+        "faq",
+        "guides",
+        "wedding",
+        "christmas",
+        "cta"
+      ],
+      "heading_rewrites": {
+        "Funeral music in Enfield": "Funerals at Enfield Crematorium and Edmonton Cemetery",
+        "Wedding choirs in Enfield": "Weddings at St Andrew’s Enfield and Christ Church Southgate",
+        "Ensembles for weddings, funerals, and memorials": "Choir sizes from Great Cambridge Road to Southgate",
+        "Christmas carol singers in Enfield": "Carol evenings in Enfield and Southgate",
+        "Frequently asked questions": "What Enfield families ask"
+      },
+      "drop_blocks": [],
+      "faq_keep": [
+        "How much does a funeral singer cost in Enfield?",
+        "NEW",
+        "Do you cover crematorium services in Enfield?"
+      ],
+      "new_faq": {
+        "question": "Can a singer perform at a graveside at Edmonton Cemetery?",
+        "answer": "Yes. For a graveside at Edmonton Cemetery an unaccompanied soloist (from £250) is often more fitting than a full ensemble, because one clear voice carries outdoors in a way a larger group sometimes does not.",
+        "source_quote": "We also perform regularly at Edmonton Cemetery … For graveside services at Edmonton Cemetery, an unaccompanied soloist is often more fitting than a full ensemble — a clear voice carries outdoors in a way a larger group sometimes doesn't."
+      },
+      "quote_attribution": "Pamela, Hampshire",
+      "quote_place_matches": false
+    },
+    {
+      "file": "areas/london/greenwich.html",
+      "variant": "B",
+      "section_order": [
+        "wedding",
+        "quote",
+        "ensembles",
+        "funeral",
+        "christmas",
+        "faq",
+        "cta"
+      ],
+      "heading_rewrites": {
+        "Funeral music in Greenwich": "Funerals in Greenwich, Eltham and Woolwich",
+        "Wedding choirs in Greenwich": "Weddings at St Alfege and the Old Royal Naval College",
+        "Ensembles for weddings, funerals, and memorials": "How many singers, from St Alfege to Charlton Cemetery",
+        "Christmas carol singers in Greenwich": "Carols near the Old Royal Naval College",
+        "Frequently asked questions": "Questions about Greenwich weddings and funerals"
+      },
+      "drop_blocks": [
+        "guides",
+        "crem_link"
+      ],
+      "faq_keep": [
+        "Can you provide a choir for a wedding in Greenwich?",
+        "NEW",
+        "Do you cover crematorium services in Greenwich?"
+      ],
+      "new_faq": {
+        "question": "How big a choir does a wedding at the Old Royal Naval College need?",
+        "answer": "For a wedding at St Alfege or one of the Old Royal Naval College chapels we usually suggest a sextet (from £1,600) or larger, because those buildings reward more voices. A full choir of eight (from £2,000) is worth considering for a Naval College chapel ceremony with a large congregation.",
+        "source_quote": "For a wedding at St Alfege Greenwich or one of the chapels at the Old Royal Naval College, we'd typically suggest a sextet or larger — the volume of those buildings rewards more voices … A full eight-voice choir is worth considering for a Naval College chapel ceremony with a substantial congregation."
+      },
+      "quote_attribution": "Tony, Surrey",
+      "quote_place_matches": false
+    },
+    {
+      "file": "areas/london/hackney.html",
+      "variant": "B",
+      "section_order": [
+        "wedding",
+        "ensembles",
+        "funeral",
+        "quote",
+        "christmas",
+        "faq",
+        "cta"
+      ],
+      "heading_rewrites": {
+        "Funeral music in Hackney": "Funerals at St John at Hackney and Abney Park Cemetery",
+        "Wedding choirs in Hackney": "Weddings at St John at Hackney and in converted warehouses",
+        "Ensembles for weddings, funerals, and memorials": "Choir sizes for Mare Street, the Marshes and warehouse venues",
+        "Christmas carol singers in Hackney": "Carol programmes for Hackney offices and residents",
+        "Frequently asked questions": "Before you book in Hackney"
+      },
+      "drop_blocks": [
+        "guides"
+      ],
+      "faq_keep": [
+        "Can you provide a choir for a wedding in Hackney?",
+        "NEW",
+        "What types of music can you perform at a funeral in Hackney?",
+        "Do you cover crematorium services in Hackney?"
+      ],
+      "new_faq": {
+        "question": "Is a quartet enough for a wedding at St John at Hackney?",
+        "answer": "It can be: the acoustic makes four singers sound bigger than the number suggests. Most weddings there suit a sextet (from £1,600) or a full choir of eight (from £2,000), because the Georgian interior rewards more voices.",
+        "source_quote": "St John at Hackney has the kind of soaring Georgian interior that rewards more voices — for a wedding there a sextet or full eight-voice choir suits the building, and the acoustic makes even four singers sound bigger than the number suggests."
+      },
+      "quote_attribution": "Margaret, Dulwich",
+      "quote_place_matches": false
+    },
+    {
+      "file": "areas/london/hammersmith-fulham.html",
+      "variant": "B",
+      "section_order": [
+        "wedding",
+        "ensembles",
+        "quote",
+        "funeral",
+        "christmas",
+        "faq",
+        "cta"
+      ],
+      "heading_rewrites": {
+        "Funeral music in Hammersmith & Fulham": "Funerals at All Saints Fulham, St Paul’s and Margravine Cemetery",
+        "Wedding choirs in Hammersmith & Fulham": "Weddings at St Paul’s Hammersmith and Fulham Palace",
+        "Ensembles for weddings, funerals, and memorials": "Choir sizes from St Paul’s to Margravine Cemetery",
+        "Christmas carol singers in Hammersmith & Fulham": "Riverside carol evenings",
+        "Frequently asked questions": "Questions about Hammersmith and Fulham"
+      },
+      "drop_blocks": [
+        "guides"
+      ],
+      "faq_keep": [
+        "NEW",
+        "Do you cover crematorium services in Hammersmith and Fulham?"
+      ],
+      "new_faq": {
+        "question": "Is Fulham Palace Chapel big enough for a choir?",
+        "answer": "Fulham Palace Chapel is small and intimate, so a quartet (from £1,150), or a soloist (from £250) for a quieter service, sits better there than a larger group. For a bigger congregation, St Paul’s Hammersmith takes a sextet or a full choir of eight.",
+        "source_quote": "Fulham Palace Chapel is the opposite: a small, intimate space where a quartet, or a soloist for a quieter service, sits better than a larger group. … St Paul's Hammersmith is a sizeable church, and for a wedding there a sextet usually feels right … A full eight-voice choir suits ceremonies with a substantial congregation."
+      },
+      "quote_attribution": "Helen, Buckinghamshire",
+      "quote_place_matches": false
+    },
+    {
+      "file": "areas/london/haringey.html",
+      "variant": "C",
+      "section_order": [
+        "funeral",
+        "wedding",
+        "ensembles",
+        "quote",
+        "faq",
+        "guides",
+        "christmas",
+        "cta"
+      ],
+      "heading_rewrites": {
+        "Funeral music in Haringey": "Funerals at St Augustine’s Highgate and Tottenham Cemetery",
+        "Wedding choirs in Haringey": "Weddings from Highgate to Crouch End",
+        "Ensembles for weddings, funerals, and memorials": "Choir sizes for Highgate, Muswell Hill and the cemetery chapels",
+        "Christmas carol singers in Haringey": "Carols around Muswell Hill"
+      },
+      "drop_blocks": [],
+      "faq_keep": [
+        "How much does a funeral singer cost in Haringey?",
+        "What types of music can you perform at a funeral in Haringey?",
+        "NEW",
+        "Do you cover crematorium services in Haringey?"
+      ],
+      "new_faq": {
+        "question": "Do you sing at Tottenham Cemetery?",
+        "answer": "Yes. We have sung at Tottenham Cemetery on Church Lane for many families, often with a soloist at the graveside or a quartet in the cemetery chapel.",
+        "source_quote": "Tottenham Cemetery on Church Lane serves the eastern half of the borough and is a venue where we have sung for many families, often providing a soloist at the graveside, or a quartet in the cemetery chapel."
+      },
+      "quote_attribution": "Helen, Buckinghamshire",
+      "quote_place_matches": false
+    },
+    {
+      "file": "areas/london/harrow.html",
+      "variant": "B",
+      "section_order": [
+        "wedding",
+        "quote",
+        "ensembles",
+        "funeral",
+        "christmas",
+        "faq",
+        "cta"
+      ],
+      "heading_rewrites": {
+        "Funeral music in Harrow": "Funerals in Harrow, Pinner and Stanmore",
+        "Wedding choirs in Harrow": "Weddings at St Mary’s Harrow-on-the-Hill",
+        "Ensembles for weddings, funerals, and memorials": "Choir sizes from the Hill to Breakspear Crematorium",
+        "Christmas carol singers in Harrow": "Carol evenings near Harrow-on-the-Hill",
+        "Frequently asked questions": "Questions about Harrow-on-the-Hill and Breakspear"
+      },
+      "drop_blocks": [
+        "guides"
+      ],
+      "faq_keep": [
+        "NEW",
+        "Do you cover crematorium services in Harrow?",
+        "What types of music can you perform at a funeral in Harrow?"
+      ],
+      "new_faq": {
+        "question": "How many singers suit a wedding at St Mary’s Harrow-on-the-Hill?",
+        "answer": "A sextet (from £1,600) usually feels right, because the church’s fine acoustic rewards more voices. When the congregation is large, a full choir of eight (from £2,000) is a strong choice.",
+        "source_quote": "St Mary's Harrow-on-the-Hill has a fine acoustic that rewards more voices — for a wedding there a sextet usually feels right, with a full eight-voice choir a strong choice when the congregation is large."
+      },
+      "quote_attribution": "Tony, Surrey",
+      "quote_place_matches": false
+    },
+    {
+      "file": "areas/london/havering.html",
+      "variant": "A",
+      "section_order": [
+        "funeral",
+        "ensembles",
+        "quote",
+        "faq",
+        "guides",
+        "wedding",
+        "christmas",
+        "cta"
+      ],
+      "heading_rewrites": {
+        "Funeral music in Havering": "Funerals at South Essex Crematorium and St Andrew’s Hornchurch",
+        "Wedding choirs in Havering": "Weddings at St Andrew’s Hornchurch",
+        "Ensembles for weddings, funerals, and memorials": "Choir sizes for Hornchurch, Upminster and Romford",
+        "Christmas carol singers in Havering": "Carols in Romford and Upminster",
+        "Frequently asked questions": "Havering funeral questions"
+      },
+      "drop_blocks": [],
+      "faq_keep": [
+        "Do you cover crematorium services in Havering?",
+        "How much does a funeral singer cost in Havering?",
+        "NEW",
+        "What types of music can you perform at a funeral in Havering?"
+      ],
+      "new_faq": {
+        "question": "What size of choir suits a family-only funeral in Havering?",
+        "answer": "For a smaller funeral with only family present, a quartet (from £1,150) usually suits better than a larger ensemble. At a graveside or short committal, a soloist (from £250) is usually plenty.",
+        "source_quote": "For a smaller funeral with family-only present, a quartet generally suits better than a larger ensemble. … For a graveside or short committal, a soloist is usually plenty."
+      },
+      "quote_attribution": "Pamela, Hampshire",
+      "quote_place_matches": false
+    },
+    {
+      "file": "areas/london/hillingdon.html",
+      "variant": "A",
+      "section_order": [
+        "funeral",
+        "ensembles",
+        "quote",
+        "faq",
+        "guides",
+        "wedding",
+        "christmas",
+        "cta"
+      ],
+      "heading_rewrites": {
+        "Funeral music in Hillingdon": "Funerals at Breakspear Crematorium and St John’s Hillingdon",
+        "Wedding choirs in Hillingdon": "Weddings at St John’s Hillingdon and in Uxbridge",
+        "Ensembles for weddings, funerals, and memorials": "Choir sizes from Breakspear to Ruislip",
+        "Christmas carol singers in Hillingdon": "A cappella carols in Uxbridge",
+        "Frequently asked questions": "Questions about funerals in Hillingdon"
+      },
+      "drop_blocks": [],
+      "faq_keep": [
+        "NEW",
+        "How much does a funeral singer cost in Hillingdon?",
+        "Do you cover crematorium services in Hillingdon?"
+      ],
+      "new_faq": {
+        "question": "Is a quartet the right size for Breakspear Crematorium?",
+        "answer": "Usually, yes. Breakspear runs to a fixed service length, often around 30 minutes, and a quartet (from £1,150) can lead a hymn without crowding the family in the chapel.",
+        "source_quote": "Breakspear Crematorium runs to a fixed service length, often around 30 minutes, so a quartet is usually the right call — large enough to lead a hymn confidently, small enough to fit the chapel without crowding the family."
+      },
+      "quote_attribution": "Pamela, Hampshire",
+      "quote_place_matches": false
+    },
+    {
+      "file": "areas/london/hounslow.html",
+      "variant": "A",
+      "section_order": [
+        "funeral",
+        "ensembles",
+        "faq",
+        "guides",
+        "wedding",
+        "quote",
+        "christmas",
+        "cta"
+      ],
+      "heading_rewrites": {
+        "Funeral music in Hounslow": "Funerals at South West Middlesex Crematorium and St Mary’s Hounslow",
+        "Wedding choirs in Hounslow": "Weddings in Chiswick and Isleworth",
+        "Ensembles for weddings, funerals, and memorials": "Choir sizes from Hanworth to Chiswick and Isleworth",
+        "Christmas carol singers in Hounslow": "Carols near Hounslow high street",
+        "Frequently asked questions": "Planning a funeral in Hounslow"
+      },
+      "drop_blocks": [],
+      "faq_keep": [
+        "How much does a funeral singer cost in Hounslow?",
+        "Do you cover crematorium services in Hounslow?",
+        "What types of music can you perform at a funeral in Hounslow?",
+        "NEW"
+      ],
+      "new_faq": {
+        "question": "Would a single singer suit a quiet funeral in Hounslow?",
+        "answer": "Yes. For a quiet funeral or a graveside committal, a soloist (from £250) singing something simple often sits better than a larger group. At South West Middlesex Crematorium a quartet (from £1,150) is usually the right size: large enough for a hymn and compact enough for the chapel.",
+        "source_quote": "For a quiet funeral or a small civil ceremony, a soloist singing something simple often sits better than a larger group. … For a graveside committal, one voice is usually plenty. … South West Middlesex Crematorium in Hanworth runs to a fixed service length, so a quartet is usually the right call — large enough for a hymn, compact enough for the chapel."
+      },
+      "quote_attribution": "Tony, Surrey",
+      "quote_place_matches": false
+    },
+    {
+      "file": "areas/london/islington.html",
+      "variant": "B",
+      "section_order": [
+        "wedding",
+        "funeral",
+        "quote",
+        "christmas",
+        "faq",
+        "cta"
+      ],
+      "heading_rewrites": {
+        "Wedding choirs in Islington": "Weddings at Union Chapel and St Mary’s Upper Street",
+        "Funeral music in Islington": "Funerals at Union Chapel, St Mary’s and St James Clerkenwell",
+        "Christmas carol singers in Islington": "Carols around Angel and Upper Street",
+        "Frequently asked questions": "Questions from couples and families in Islington"
+      },
+      "drop_blocks": [
+        "ensembles",
+        "guides"
+      ],
+      "faq_keep": [
+        "Can you provide a choir for a wedding in Islington?",
+        "NEW",
+        "How much does a funeral singer cost in Islington?",
+        "Do you cover crematorium services in Islington?"
+      ],
+      "new_faq": {
+        "question": "Can you sing at a funeral at Union Chapel?",
+        "answer": "Yes. Union Chapel is best known today as a music venue, but it remains a working Congregational church, and we provide music for services there. Its octagonal interior has a rich acoustic that suits choral pieces.",
+        "source_quote": "Union Chapel on Compton Terrace is one of north London's most striking buildings — a soaring Gothic chapel with an extraordinary octagonal interior and a rich, enveloping acoustic. … Although best known today as a music venue, it remains a working Congregational church, and our singers are experienced in providing music for services held within its remarkable space. … Union Chapel's rich acoustic is particularly well suited to choral pieces"
+      },
+      "quote_attribution": "Margaret, Dulwich",
+      "quote_place_matches": false
+    },
+    {
+      "file": "areas/london/kensington-chelsea.html",
+      "variant": "D",
+      "section_order": [
+        "funeral",
+        "quote",
+        "logistics",
+        "wedding",
+        "memorial",
+        "christmas",
+        "ensembles",
+        "faq",
+        "cta"
+      ],
+      "heading_rewrites": {
+        "Funeral music in Kensington & Chelsea": "Funerals at Brompton Oratory, Holy Trinity and St Mary Abbots",
+        "Access and logistics": "Getting singers to Kensington and Chelsea churches",
+        "Wedding choirs in Kensington & Chelsea": "Weddings at Brompton Oratory and Sloane Square",
+        "Memorial services and private events": "Memorials in private clubs and hotels",
+        "Christmas carol singers in Kensington & Chelsea": "Carols for hotels, clubs and garden squares",
+        "Ensemble sizes and pricing": "Choir sizes from the Oratory to Chelsea Old Church",
+        "Frequently asked questions": "Questions about the Oratory and Chelsea churches"
+      },
+      "drop_blocks": [],
+      "faq_keep": [
+        "How much does a funeral singer cost in Kensington and Chelsea?",
+        "What types of music can you perform at a funeral in Kensington and Chelsea?",
+        "NEW",
+        "Do you cover crematorium services near Kensington and Chelsea?"
+      ],
+      "new_faq": {
+        "question": "Can you sing at the Royal Hospital Chelsea Chapel?",
+        "answer": "Yes, by arrangement with the Hospital’s chaplain. The chapel hosts occasional memorial services for residents and their families, and a quartet (from £1,150) suits it best.",
+        "source_quote": "The Royal Hospital Chelsea Chapel, part of the home of the Chelsea Pensioners, hosts occasional memorial services for residents and their families. … We have provided singers there by arrangement with the Hospital's chaplain. … Chelsea Old Church and the Royal Hospital Chelsea Chapel work best with a quartet."
+      },
+      "quote_attribution": "Caroline, Chelsea",
+      "quote_place_matches": true
+    },
+    {
+      "file": "areas/london/kingston.html",
+      "variant": "C",
+      "section_order": [
+        "funeral",
+        "quote",
+        "wedding",
+        "ensembles",
+        "faq",
+        "guides",
+        "christmas",
+        "cta"
+      ],
+      "heading_rewrites": {
+        "Funeral music in Kingston upon Thames": "Funerals at All Saints Kingston and Kingston Crematorium",
+        "Wedding choirs in Kingston upon Thames": "Weddings at All Saints and St Raphael’s Surbiton",
+        "Ensembles for weddings, funerals, and memorials": "Choir sizes for the Royal Borough’s churches",
+        "Christmas carol singers in Kingston upon Thames": "Carols by Kingston market"
+      },
+      "drop_blocks": [],
+      "faq_keep": [
+        "How much does a funeral singer cost in Kingston?",
+        "Do you cover crematorium services in Kingston?",
+        "NEW"
+      ],
+      "new_faq": {
+        "question": "Which suits a smaller wedding, All Saints or St Raphael’s Surbiton?",
+        "answer": "St Raphael’s Surbiton is the more intimate church, and a quartet (from £1,150) sits comfortably there. All Saints Kingston is a substantial medieval church where a sextet (from £1,600) usually feels right.",
+        "source_quote": "St Raphael's Surbiton offers an equally beautiful space for a more intimate ceremony. … St Raphael's Surbiton is more intimate, and a quartet sits comfortably in the room. … All Saints Kingston is a substantial medieval church with a fine acoustic, and a sextet usually feels right for a wedding there"
+      },
+      "quote_attribution": "Margaret, Dulwich",
+      "quote_place_matches": false
+    },
+    {
+      "file": "areas/london/lambeth.html",
+      "variant": "C",
+      "section_order": [
+        "funeral",
+        "crematoria",
+        "quote",
+        "memorial",
+        "wedding",
+        "ensembles",
+        "faq",
+        "christmas",
+        "neighbours",
+        "cta"
+      ],
+      "heading_rewrites": {
+        "Funeral music in Lambeth": "Funerals from St John’s Waterloo to West Norwood",
+        "Crematorium services near Lambeth": "West Norwood, Honor Oak and Streatham Park",
+        "Memorial services and celebrations of life": "Memorial services at St John’s Waterloo",
+        "Wedding choirs in Lambeth": "Weddings at St John’s Waterloo, Brixton and Streatham",
+        "Ensemble sizes and pricing": "Choir sizes for Waterloo, Norwood and Streatham",
+        "Christmas carol singers in Lambeth": "Unaccompanied carols in Waterloo and Clapham",
+        "Lambeth’s neighbours": "Across the Lambeth boundary",
+        "Frequently asked questions": "Questions about Waterloo and West Norwood"
+      },
+      "drop_blocks": [],
+      "faq_keep": [
+        "How much does a funeral singer cost in Lambeth?",
+        "Can you sing at West Norwood Cemetery?",
+        "NEW",
+        "Can you provide a choir for a wedding at St John’s Waterloo?"
+      ],
+      "new_faq": {
+        "question": "Can St John’s Waterloo take a large memorial service?",
+        "answer": "Yes. Its nave seats several hundred, and the acoustic carries a choir of eight to twelve voices to every corner. A full choir of eight is from £2,000 and a twelve-voice chorus from £3,000.",
+        "source_quote": "St John's Waterloo is a natural choice for larger memorial services held weeks or months after a funeral. … Its generous nave seats several hundred, and the acoustic carries a choir of eight to twelve voices to every corner."
+      },
+      "quote_attribution": "Susan, Streatham",
+      "quote_place_matches": true
+    },
+    {
+      "file": "areas/london/lewisham.html",
+      "variant": "A",
+      "section_order": [
+        "funeral",
+        "ensembles",
+        "quote",
+        "faq",
+        "guides",
+        "wedding",
+        "christmas",
+        "cta"
+      ],
+      "heading_rewrites": {
+        "Funeral music in Lewisham": "Funerals at Hither Green and St Mary’s Lewisham",
+        "Wedding choirs in Lewisham": "Weddings in Blackheath and Lee",
+        "Ensembles for weddings, funerals, and memorials": "Choir sizes from Grove Park to Blackheath",
+        "Christmas carol singers in Lewisham": "Carols in Catford and Grove Park",
+        "Frequently asked questions": "Questions from Lewisham families"
+      },
+      "drop_blocks": [],
+      "faq_keep": [
+        "How much does a funeral singer cost in Lewisham?",
+        "Do you cover crematorium services in Lewisham?",
+        "NEW"
+      ],
+      "new_faq": {
+        "question": "What size of choir suits a wedding in Blackheath or Lee?",
+        "answer": "The churches around Blackheath and Lee have fine acoustics that reward a sextet (from £1,600) for a wedding. For a smaller service there, a quartet (from £1,150) works well.",
+        "source_quote": "The churches around Blackheath and Lee tend to have fine acoustics that reward a sextet for weddings, while a quartet works well for smaller services."
+      },
+      "quote_attribution": "Pamela, Hampshire",
+      "quote_place_matches": false
+    },
+    {
+      "file": "areas/london/merton.html",
+      "variant": "A",
+      "section_order": [
+        "funeral",
+        "ensembles",
+        "faq",
+        "guides",
+        "wedding",
+        "quote",
+        "christmas",
+        "cta"
+      ],
+      "heading_rewrites": {
+        "Funeral music in Merton": "Funerals at South London Crematorium and Morden Cemetery",
+        "Wedding choirs in Merton": "Weddings at St Mary’s Wimbledon",
+        "Ensembles for weddings, funerals, and memorials": "Choir sizes from Mitcham to St Mary’s Wimbledon",
+        "Christmas carol singers in Merton": "Carols in Wimbledon, Colliers Wood and Morden",
+        "Frequently asked questions": "Merton funeral questions"
+      },
+      "drop_blocks": [],
+      "faq_keep": [
+        "How much does a funeral singer cost in Merton?",
+        "NEW",
+        "Do you cover crematorium services in Merton?"
+      ],
+      "new_faq": {
+        "question": "Can you sing at a funeral at St Mary’s, Wimbledon Parish Church?",
+        "answer": "Yes. St Mary’s stands on its hilltop above Wimbledon village, and its fine acoustic suits a funeral with choral music. For a smaller, family-only funeral, a quartet (from £1,150) generally works better than a larger group.",
+        "source_quote": "Wimbledon Parish Church — St Mary's — stands on a hilltop site overlooking the village, and its fine acoustic and handsome interior make it an ideal venue for services with choral music. … For a smaller funeral with family-only present, a quartet generally works better than a larger group."
+      },
+      "quote_attribution": "Tony, Surrey",
+      "quote_place_matches": false
+    },
+    {
+      "file": "areas/london/newham.html",
+      "variant": "A",
+      "section_order": [
+        "funeral",
+        "ensembles",
+        "quote",
+        "faq",
+        "guides",
+        "wedding",
+        "christmas",
+        "cta"
+      ],
+      "heading_rewrites": {
+        "Funeral music in Newham": "Funerals at East London Crematorium and the City of London Cemetery",
+        "Wedding choirs in Newham": "Weddings at St Mary Magdalene and in Stratford",
+        "Ensembles for weddings, funerals, and memorials": "Choir sizes from East Ham to Stratford",
+        "Christmas carol singers in Newham": "Carols near the Olympic Park and in West Ham",
+        "Frequently asked questions": "Questions from Newham families and couples"
+      },
+      "drop_blocks": [],
+      "faq_keep": [
+        "Do you cover crematorium services in Newham?",
+        "How much does a funeral singer cost in Newham?",
+        "NEW"
+      ],
+      "new_faq": {
+        "question": "Can you provide a small group for a civil ceremony in Stratford?",
+        "answer": "Yes. In Stratford’s modern event spaces the right size depends on the room: a quartet (from £1,150) generally sits well, and a soloist (from £250) suits the more intimate venues.",
+        "source_quote": "For a contemporary civil ceremony in one of Stratford's modern event spaces, the right size depends on the room: a quartet generally sits well, while a soloist suits the more intimate venues."
+      },
+      "quote_attribution": "Margaret, Dulwich",
+      "quote_place_matches": false
+    },
+    {
+      "file": "areas/london/redbridge.html",
+      "variant": "B",
+      "section_order": [
+        "wedding",
+        "quote",
+        "ensembles",
+        "funeral",
+        "christmas",
+        "faq",
+        "cta"
+      ],
+      "heading_rewrites": {
+        "Funeral music in Redbridge": "Funerals at Forest Park Crematorium and St Mary’s Ilford",
+        "Wedding choirs in Redbridge": "Weddings at St Mary the Virgin, Wanstead",
+        "Ensembles for weddings, funerals, and memorials": "Choir sizes from Wanstead to Barkingside",
+        "Christmas carol singers in Redbridge": "Carols from Wanstead green to Ilford",
+        "Frequently asked questions": "Questions about Wanstead and Forest Park"
+      },
+      "drop_blocks": [
+        "guides",
+        "crem_link"
+      ],
+      "faq_keep": [
+        "NEW",
+        "Do you cover crematorium services in Redbridge?",
+        "What types of music can you perform at a funeral in Redbridge?"
+      ],
+      "new_faq": {
+        "question": "How many singers suit a wedding at St Mary the Virgin, Wanstead?",
+        "answer": "Usually six. A sextet (from £1,600) can lead processional hymns in this Georgian church, and a full choir of eight (from £2,000) is a strong choice for a sizeable congregation.",
+        "source_quote": "St Mary the Virgin Wanstead is a handsome Georgian church with a fine acoustic, and for a wedding there a sextet usually feels right — large enough to lead processional hymns confidently, with a full eight-voice choir a strong choice when the congregation is sizeable."
+      },
+      "quote_attribution": "Tony, Surrey",
+      "quote_place_matches": false
+    },
+    {
+      "file": "areas/london/richmond.html",
+      "variant": "B",
+      "section_order": [
+        "wedding",
+        "ensembles",
+        "quote",
+        "funeral",
+        "christmas",
+        "faq",
+        "cta"
+      ],
+      "heading_rewrites": {
+        "Funeral music in Richmond upon Thames": "Funerals at Mortlake Crematorium and St Mary Magdalene",
+        "Wedding choirs in Richmond upon Thames": "Weddings at St Mary Magdalene and in Kew",
+        "Ensembles for weddings, funerals, and memorials": "Choir sizes from St Mary Magdalene to St Anne’s Kew",
+        "Christmas carol singers in Richmond upon Thames": "Carols from Richmond’s riverside to Twickenham",
+        "Frequently asked questions": "Questions about Kew, Richmond and Mortlake"
+      },
+      "drop_blocks": [
+        "guides",
+        "crem_link"
+      ],
+      "faq_keep": [
+        "NEW",
+        "Do you cover crematorium services in Richmond?"
+      ],
+      "new_faq": {
+        "question": "What size of choir suits St Anne’s Kew?",
+        "answer": "St Anne’s Kew is more intimate than St Mary Magdalene, and a quartet (from £1,150) or a sextet (from £1,600) sits comfortably there, depending on the size of the congregation.",
+        "source_quote": "For a wedding at St Mary Magdalene Richmond, we'd typically suggest a sextet or larger … St Anne's Kew is more intimate; a quartet or sextet sits comfortably there depending on the size of the congregation."
+      },
+      "quote_attribution": "Helen, Buckinghamshire",
+      "quote_place_matches": false
+    },
+    {
+      "file": "areas/london/southwark.html",
+      "variant": "C",
+      "section_order": [
+        "funeral",
+        "quote",
+        "memorial",
+        "wedding",
+        "ensembles",
+        "faq",
+        "christmas",
+        "neighbours",
+        "cta"
+      ],
+      "heading_rewrites": {
+        "Funeral music in Southwark": "Funerals at Southwark Cathedral and Honor Oak",
+        "Memorial services and celebrations of life": "Memorial services at the Cathedral and in Dulwich",
+        "Wedding choirs in Southwark": "Weddings at Southwark Cathedral, Dulwich and Camberwell",
+        "Ensemble sizes and pricing": "Choir sizes from the Cathedral nave to Honor Oak’s chapels",
+        "Christmas carol singers in Southwark": "Carols from Borough to Dulwich",
+        "Southwark’s neighbours": "Honor Oak and the boroughs around Southwark",
+        "Frequently asked questions": "Questions about the Cathedral and Honor Oak"
+      },
+      "drop_blocks": [],
+      "faq_keep": [
+        "How much does a funeral singer cost in Southwark?",
+        "NEW",
+        "Do you cover crematorium services in Southwark?",
+        "Can you provide a choir for a wedding in Southwark?"
+      ],
+      "new_faq": {
+        "question": "Can you add singers to the Southwark Cathedral choir?",
+        "answer": "Yes. The Cathedral has its own professional choir, and we supplement it with extra voices when a family wants a larger ensemble for a funeral or memorial service.",
+        "source_quote": "The Cathedral has its own professional choir, and we supplement it with additional voices when families request a larger ensemble for a funeral or memorial service."
+      },
+      "quote_attribution": "Margaret, Dulwich",
+      "quote_place_matches": true
+    },
+    {
+      "file": "areas/london/sutton.html",
+      "variant": "A",
+      "section_order": [
+        "funeral",
+        "ensembles",
+        "quote",
+        "faq",
+        "guides",
+        "wedding",
+        "christmas",
+        "cta"
+      ],
+      "heading_rewrites": {
+        "Funeral music in Sutton": "Funerals at North East Surrey Crematorium and All Saints Carshalton",
+        "Wedding choirs in Sutton": "Weddings at All Saints Carshalton",
+        "Ensembles for weddings, funerals, and memorials": "Choir sizes for Carshalton, Cheam and the crematorium chapel",
+        "Christmas carol singers in Sutton": "Carols in Sutton, Carshalton and Cheam"
+      },
+      "drop_blocks": [],
+      "faq_keep": [
+        "How much does a funeral singer cost in Sutton?",
+        "Do you cover crematorium services in Sutton?",
+        "NEW",
+        "What types of music can you perform at a funeral in Sutton?"
+      ],
+      "new_faq": {
+        "question": "Can you sing at a funeral at All Saints Carshalton?",
+        "answer": "Yes. All Saints stands beside the historic ponds in Carshalton village, and its generous acoustic suits funeral and memorial services with choral music.",
+        "source_quote": "All Saints Church in Carshalton is one of the borough's finest churches, standing beside the historic ponds in the heart of the village. … Its generous acoustic and beautiful interior make it an ideal venue for funeral and memorial services with choral music."
+      },
+      "quote_attribution": "Pamela, Hampshire",
+      "quote_place_matches": false
+    },
+    {
+      "file": "areas/london/tower-hamlets.html",
+      "variant": "C",
+      "section_order": [
+        "funeral",
+        "wedding",
+        "quote",
+        "ensembles",
+        "faq",
+        "guides",
+        "christmas",
+        "cta"
+      ],
+      "heading_rewrites": {
+        "Funeral music in Tower Hamlets": "Funerals at St Dunstan’s, Christ Church Spitalfields and St Anne’s Limehouse",
+        "Wedding choirs in Tower Hamlets": "Weddings in Hawksmoor churches and East End warehouses",
+        "Ensembles for weddings, funerals, and memorials": "Choir sizes for Spitalfields, Limehouse and Stepney",
+        "Christmas carol singers in Tower Hamlets": "Carols from Spitalfields to the Isle of Dogs",
+        "Frequently asked questions": "Questions about the East End churches"
+      },
+      "drop_blocks": [],
+      "faq_keep": [
+        "Can you provide a choir for a wedding in Tower Hamlets?",
+        "NEW",
+        "How much does a funeral singer cost in Tower Hamlets?",
+        "Do you cover crematorium services in Tower Hamlets?"
+      ],
+      "new_faq": {
+        "question": "How many singers does Christ Church Spitalfields need?",
+        "answer": "A full choir of eight (from £2,000) earns its place in the vast Baroque interior, where processional hymns benefit from the extra weight. For a smaller wedding or funeral, a sextet (from £1,600) works well.",
+        "source_quote": "Christ Church Spitalfields has a vast Baroque interior, and a full eight-voice choir earns its place there — the acoustic carries voices with great clarity, and processional hymns benefit from the additional weight. … A sextet works well for smaller weddings or funerals in the same building."
+      },
+      "quote_attribution": "Tony, Surrey",
+      "quote_place_matches": false
+    },
+    {
+      "file": "areas/london/waltham-forest.html",
+      "variant": "A",
+      "section_order": [
+        "funeral",
+        "ensembles",
+        "quote",
+        "faq",
+        "guides",
+        "wedding",
+        "christmas",
+        "cta"
+      ],
+      "heading_rewrites": {
+        "Funeral music in Waltham Forest": "Funerals at Chingford Mount, Queens Road and St Mary’s Walthamstow",
+        "Wedding choirs in Waltham Forest": "Weddings at St Mary’s Walthamstow and the William Morris Gallery",
+        "Ensembles for weddings, funerals, and memorials": "Choir sizes for cemetery chapels and Walthamstow Village",
+        "Christmas carol singers in Waltham Forest": "Carols from Walthamstow Village to Chingford",
+        "Frequently asked questions": "Waltham Forest funeral questions"
+      },
+      "drop_blocks": [],
+      "faq_keep": [
+        "NEW",
+        "How much does a funeral singer cost in Waltham Forest?",
+        "What types of music can you perform at a funeral in Waltham Forest?",
+        "Do you cover crematorium services in Waltham Forest?"
+      ],
+      "new_faq": {
+        "question": "What size of choir suits the chapels at Chingford Mount and Queens Road?",
+        "answer": "The chapels are small and the timing tight, so a quartet (from £1,150) is generally right: enough to lead a hymn and compact enough to sit comfortably in the space. At the graveside, a soloist (from £250) carries better across open ground.",
+        "source_quote": "For chapel services at Chingford Mount Cemetery or Queens Road Cemetery in Walthamstow, the timing is tighter and the room smaller, so a quartet is generally the right call: enough to lead a hymn, compact enough to sit comfortably in the space. … For a graveside committal at either cemetery, a soloist carries outdoors better than a full ensemble, and one voice is easier to hear across open ground."
+      },
+      "quote_attribution": "Pamela, Hampshire",
+      "quote_place_matches": false
+    },
+    {
+      "file": "areas/london/wandsworth.html",
+      "variant": "B",
+      "section_order": [
+        "wedding",
+        "ensembles",
+        "funeral",
+        "quote",
+        "christmas",
+        "faq",
+        "cta"
+      ],
+      "heading_rewrites": {
+        "Funeral music in Wandsworth": "Funerals at Putney Vale Crematorium and All Saints Wandsworth",
+        "Wedding choirs in Wandsworth": "Weddings at St Mary’s Battersea, where William Blake married",
+        "Ensembles for weddings, funerals, and memorials": "Choir sizes from Battersea to Putney Vale",
+        "Christmas carol singers in Wandsworth": "Carols from Putney to Wandsworth Common",
+        "Frequently asked questions": "Questions about Battersea and Putney Vale"
+      },
+      "drop_blocks": [
+        "guides",
+        "crem_link"
+      ],
+      "faq_keep": [
+        "Can you provide a choir for a wedding in Wandsworth?",
+        "NEW",
+        "Do you cover crematorium services in Wandsworth?"
+      ],
+      "new_faq": {
+        "question": "Does St Mary’s Battersea need a large choir?",
+        "answer": "No. St Mary’s is an intimate riverside church where a quartet (from £1,150) usually sits well, and a sextet (from £1,600) covers a wedding with a larger congregation. The building does not need a bigger sound to fill it.",
+        "source_quote": "St Mary's Battersea is an intimate riverside church — a quartet usually sits well in the room, and a sextet works for a wedding with a larger congregation, but the building doesn't demand a bigger sound to fill it."
+      },
+      "quote_attribution": "Margaret, Dulwich",
+      "quote_place_matches": false
+    },
+    {
+      "file": "areas/london/westminster.html",
+      "variant": "D",
+      "section_order": [
+        "funeral",
+        "quote",
+        "logistics",
+        "memorial",
+        "christmas",
+        "wedding",
+        "ensembles",
+        "faq",
+        "cta"
+      ],
+      "heading_rewrites": {
+        "Funeral music in Westminster": "Funerals at the Abbey, St Margaret’s and the Guards’ Chapel",
+        "Logistics in central Westminster": "Parking, security and arrival times",
+        "Memorial services and celebrations of life": "Memorial services at St Martin-in-the-Fields and St James’s Piccadilly",
+        "Christmas carol singers in Westminster": "Carols for Mayfair hotels and West End offices",
+        "Wedding choirs in Westminster": "Weddings at St Margaret’s Westminster",
+        "Ensemble sizes and pricing": "Choir sizes from the Abbey to the Savoy Chapel"
+      },
+      "drop_blocks": [],
+      "faq_keep": [
+        "How much does a funeral singer cost in Westminster?",
+        "NEW",
+        "Can you provide a choir for a wedding at St Margaret’s Westminster?",
+        "Do you sing at crematoriums near Westminster?"
+      ],
+      "new_faq": {
+        "question": "How do your singers get to a service in Westminster?",
+        "answer": "Parking near Westminster’s churches is limited and expensive, so our singers travel by public transport whenever possible, and we ask funeral directors to arrange a drop-off point. We arrive at least 45 minutes before every service.",
+        "source_quote": "Parking near Westminster's churches is limited and expensive. … We advise funeral directors to arrange drop-off points for musicians rather than relying on on-street parking. … Our singers travel by public transport whenever possible. … We arrive at least 45 minutes before every service to warm up and coordinate with clergy and venue staff."
+      },
+      "quote_attribution": "Richard, Westminster",
+      "quote_place_matches": true
+    }
+  ],
+  "owner_decisions": {
+    "testimonials": "keep all (R12 still open); figures only move within their page",
+    "variant_B_h1": "approved 2026-09-27: Wedding and funeral choirs in X",
+    "hampton_court": "weddings at the Chapel Royal only with the chapel clergy permission; heading no longer names it",
+    "lewisham": "Hither Green and Lewisham Crematorium are one venue (Verdant Lane)"
+  }
+}
