@@ -116,12 +116,21 @@
         var attr = lcsAttribution();
         var ad = attr.gclid || attr.gbraid || attr.wbraid || attr.utm_medium === 'cpc' ? ', via a Google ad' : '';
         var source = 'your \u201c' + page + '\u201d page' + ad;
+        // With cookie consent, the ad click reference rides along too, so a
+        // booking that starts on WhatsApp or email can be reported to Google Ads.
+        var ref = '';
+        try {
+          if (localStorage.getItem('lcs-consent') === 'granted') {
+            ref = attr.gclid || (attr.gbraid ? 'gbraid:' + attr.gbraid : '') || (attr.wbraid ? 'wbraid:' + attr.wbraid : '');
+          }
+        } catch (e) {}
         if (method === 'whatsapp') {
           var url = new URL(original);
           var text = url.searchParams.get('text') || 'Hello, I\u2019d like to ask about a booking.';
-          a.setAttribute('href', original.split('?')[0] + '?text=' + encodeURIComponent(text + ' (Sent from ' + source + '.)'));
+          a.setAttribute('href', original.split('?')[0] + '?text=' + encodeURIComponent(text + ' (Sent from ' + source + '.' + (ref ? ' Ad ref: ' + ref : '') + ')'));
         } else if (original.indexOf('?') === -1) {
-          a.setAttribute('href', original + '?subject=' + encodeURIComponent('Enquiry from ' + source));
+          a.setAttribute('href', original + '?subject=' + encodeURIComponent('Enquiry from ' + source) +
+            (ref ? '&body=' + encodeURIComponent('\r\n\r\n\r\nAd ref: ' + ref) : ''));
         }
       } catch (e) {}
     }
