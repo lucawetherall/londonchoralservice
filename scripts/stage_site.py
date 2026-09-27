@@ -135,17 +135,30 @@ def _show(path):
     return path if path.isprintable() else repr(path)
 
 
+def _git(*args):
+    return subprocess.run(['git', *args], cwd=ROOT, capture_output=True, check=True).stdout
+
+
 def repo_files():
     """Tracked files plus new files not yet added, so a page made before
     `git add` is checked too. CI checks out a clean tree, where this is
-    exactly the committed files."""
+    exactly the committed files. A copy of the repo without its .git (as
+    tests/test_register_generators.py makes) is checked file by file on disk,
+    never against the file list of some enclosing repo."""
     try:
-        out = subprocess.run(
-            ['git', 'ls-files', '-z', '--cached', '--others', '--exclude-standard'],
-            cwd=ROOT, capture_output=True, check=True).stdout
-    except (OSError, subprocess.CalledProcessError) as e:
-        sys.exit(f'stage_site.py: git ls-files failed ({e}); run this inside the repo checkout.')
-    paths = {p for p in out.decode('utf-8', errors='surrogateescape').split('\0') if p}
+        top = _git('rev-parse', '--show-toplevel').decode().strip()
+        in_git = os.path.realpath(top) == os.path.realpath(ROOT)
+    except (OSError, subprocess.CalledProcessError):
+        in_git = False
+    if in_git:
+        out = _git('ls-files', '-z', '--cached', '--others', '--exclude-standard')
+        paths = {p for p in out.decode('utf-8', errors='surrogateescape').split('\0') if p}
+    else:
+        paths = set()
+        for folder, dirs, names in os.walk(ROOT):
+            dirs[:] = [d for d in dirs if not d.startswith('.') and d not in ('__pycache__', 'node_modules')]
+            rel = os.path.relpath(folder, ROOT).replace(os.sep, '/')
+            paths.update(n if rel == '.' else f'{rel}/{n}' for n in names if not n.startswith('.'))
     return sorted(p for p in paths if os.path.lexists(os.path.join(ROOT, p)))
 
 

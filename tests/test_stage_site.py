@@ -62,10 +62,10 @@ PUBLISHED = {
 }
 
 
-def make_repo(changes=None, extra='', public_prefix=''):
+def make_repo(changes=None, extra='', public_prefix='', git=True, tmp=None):
     """Build a temp repo from SITE (plus `changes`; a value of None deletes the
     file), install stage_site.py, and return its path."""
-    tmp = tempfile.mkdtemp()
+    tmp = tmp or tempfile.mkdtemp()
     files = dict(SITE, **(changes or {}))
     files['index.html'] = files['index.html'].replace('{extra}', extra)
     for path, content in files.items():
@@ -81,7 +81,8 @@ def make_repo(changes=None, extra='', public_prefix=''):
     os.makedirs(os.path.join(tmp, 'scripts'), exist_ok=True)
     with open(os.path.join(tmp, 'scripts', 'stage_site.py'), 'w', encoding='utf-8') as f:
         f.write(script)
-    subprocess.run(['git', 'init', '-q'], cwd=tmp, check=True)
+    if git:
+        subprocess.run(['git', 'init', '-q'], cwd=tmp, check=True)
     return tmp
 
 
@@ -123,6 +124,30 @@ def test_out_copies_only_published_files_byte_for_byte():
     finally:
         shutil.rmtree(repo)
         shutil.rmtree(out_dir)
+
+def test_copy_without_git_is_checked_on_disk():
+    """tests/test_register_generators.py runs build.sh in a copy that has no .git."""
+    repo = make_repo(git=False)
+    try:
+        code, out = run(repo)
+        assert code == 0, out
+        assert f'Deploy allowlist OK: {len(PUBLISHED)} of' in out, out
+    finally:
+        shutil.rmtree(repo)
+
+def test_copy_inside_another_repo_ignores_that_repo():
+    """A copy nested in some other checkout must not inherit its file list or ignore rules."""
+    parent = tempfile.mkdtemp()
+    try:
+        subprocess.run(['git', 'init', '-q'], cwd=parent, check=True)
+        with open(os.path.join(parent, '.gitignore'), 'w', encoding='utf-8') as f:
+            f.write('*.html\n')
+        site = make_repo(git=False, tmp=os.path.join(parent, 'site'))
+        code, out = run(site)
+        assert code == 0, out
+        assert f'Deploy allowlist OK: {len(PUBLISHED)} of' in out, out
+    finally:
+        shutil.rmtree(parent)
 
 def test_repo_checkout_passes():
     """The committed site itself must pass (this is what CI deploys)."""

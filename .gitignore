@@ -3,8 +3,6 @@
 .DS_Store
 .claude/.DS_Store
 __pycache__/
-# Local copy of the deployed site (python3 scripts/stage_site.py --out _site)
-_site/
 graphify-out/.graphify_python
 graphify-out/.graphify_root
 
