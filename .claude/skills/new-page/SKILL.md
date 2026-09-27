@@ -13,7 +13,7 @@ Every page on this site is a standalone HTML file carrying ~60 lines of head boi
 
 1. Pick the **most recently added** page of the same type (check `git log --diff-filter=A --name-only`). Fallback exemplars:
    - City/area page → `areas/manchester.html`
-   - London borough page → `areas/london/camden.html`
+   - London borough page → `areas/london/camden.html`. Borough pages no longer share one outline (R13): pick the variant that fits the borough's own strongest venue (A crematorium first, B wedding church first, C landmark church first, D central ceremonial), write local H2s rather than "Funeral music in X", give it 2–4 FAQs with one borough-specific question, and make sure its H2 sequence differs from every other borough (the check is in `docs/superpowers/specs/2026-09-27-borough-template-variants-design.md`).
    - Music guide article → any recent `music-guides/*.html` (e.g. `music-guides/wedding-pop-songs-choir.html`)
    - Service page → `weddings.html` or `christmas.html`
    - B2B landing page → `for-event-managers.html`
@@ -27,7 +27,8 @@ Every page on this site is a standalone HTML file carrying ~60 lines of head boi
 - The `partials/analytics.html` include markers (GA4/Google Ads + Consent Mode); the build expands them.
 - The `@include-start`/`@include-end` marker pairs and everything between them — stale expanded content from the cloned page is fine; `./build.sh` re-expands it.
 - The inlined `<style>` block — again, the build refreshes it.
-- `theme-color`, `robots`, `dns-prefetch` lines, favicon links, `og:image` path.
+- `theme-color`, `robots`, `dns-prefetch` lines, favicon links.
+- `og:image` / `twitter:image`: area, borough, destination, `for-*` and hub pages each have their own card in `assets/og/`. After creating one of those pages, run `node scripts/og/generate_og_images.mjs --wire` (needs Playwright + Chromium) to render its card and point the tags at it; guides keep their category card (`og-weddings.png`, `og-funerals.png`, `og-christmas.png`, …).
 
 **Change for the new page** (full element-by-element list in `references/head-checklist.md`):
 - `<title>`, meta description (**141–161 characters** — check with `python3 -c "print(len('...'))"`)

@@ -42,15 +42,59 @@
     }
   } catch (_) { /* URLSearchParams unsupported — non-fatal */ }
 
+  // Show or clear a field's own message (the <p class="form-error"> named by
+  // aria-describedby) so a blocked submit says what is missing.
+  function setFieldError(el, on) {
+    if (on) el.setAttribute('aria-invalid', 'true');
+    else el.removeAttribute('aria-invalid');
+    var ids = (el.getAttribute('aria-describedby') || '').split(/\s+/);
+    ids.forEach(function (id) {
+      var msg = id && document.getElementById(id);
+      if (msg && msg.classList.contains('form-error')) msg.setAttribute('data-visible', on ? 'true' : 'false');
+    });
+  }
+
+  form.addEventListener('input', function (e) {
+    var el = e.target;
+    if (el.getAttribute('aria-invalid') === 'true' && el.validity && el.validity.valid) setFieldError(el, false);
+  });
+  form.addEventListener('change', function (e) {
+    var el = e.target;
+    if (el.getAttribute('aria-invalid') === 'true' && el.validity && el.validity.valid) setFieldError(el, false);
+  });
+
+  // Back from /thank-you.html restores this page from the back/forward cache
+  // with the button still disabled on "Sending…" and a spent captcha token.
+  window.addEventListener('pageshow', function (e) {
+    if (!e.persisted) return;
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.textContent = btnLabel;
+    }
+    if (window.hcaptcha) {
+      try { window.hcaptcha.reset(); } catch (_) { /* non-fatal */ }
+    }
+  });
+
   form.addEventListener('submit', function (e) {
     e.preventDefault();
 
-    // Basic required-field guard (CSS :user-invalid handles visual state)
-    var invalid = form.querySelectorAll(':invalid');
+    // Required-field guard. Filter form.elements rather than querying
+    // :invalid, which also matches a <fieldset> holding an invalid field
+    // (contact.html) — and a fieldset cannot take focus.
+    var invalid = Array.prototype.filter.call(form.elements, function (el) {
+      return el.willValidate && !el.validity.valid;
+    });
     if (invalid.length) {
+      invalid.forEach(function (el) { setFieldError(el, true); });
+      trackError('incomplete');
       invalid[0].focus();
       return;
     }
+
+    // Reset previous status
+    if (successBox) successBox.setAttribute('data-visible', 'false');
+    if (errorBox)   errorBox.setAttribute('data-visible', 'false');
 
     // hCaptcha guard — Web3Forms rejects submissions without a token,
     // so block early and surface a specific inline message instead of
@@ -67,14 +111,10 @@
       trackError('captcha');
       if (captchaError) {
         captchaError.setAttribute('data-visible', 'true');
-        captchaError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        captchaError.scrollIntoView({ block: 'center' });
       }
       return;
     }
-
-    // Reset previous status
-    if (successBox) successBox.setAttribute('data-visible', 'false');
-    if (errorBox)   errorBox.setAttribute('data-visible', 'false');
 
     // Loading state
     if (submitBtn) {
@@ -129,7 +169,7 @@
         trackError('submit');
         if (errorBox) {
           errorBox.setAttribute('data-visible', 'true');
-          errorBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          errorBox.scrollIntoView({ block: 'center' });
         }
         if (submitBtn) {
           submitBtn.disabled = false;

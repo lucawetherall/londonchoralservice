@@ -178,6 +178,7 @@
 @media (max-width: 1080px) {
   .nav-toggle {
     display: block;
+    flex-shrink: 0;
   }
 
   .nav-links {
@@ -217,6 +218,18 @@
     position: relative;
   }
 
+}
+
+/* The nowrap site name at --text-lg plus the toggle is ~377px wide:
+   scale the name with the viewport on small phones so the header fits at 320px. */
+@media (max-width: 420px) {
+  .site-name {
+    font-size: clamp(1.125rem, 6vw, var(--text-lg));
+  }
+
+  .site-nav {
+    gap: var(--space-md);
+  }
 }
 
 /* ═══════════════════════════════════
@@ -278,6 +291,14 @@
   }
   .footer-col--brand {
     grid-column: 1 / -1;
+  }
+  /* Touch screens: pad the link lists to a ~40px tap target */
+  .footer-col li {
+    margin-bottom: 0;
+  }
+  .footer-col li a {
+    display: inline-block;
+    padding-block: var(--space-sm);
   }
 }
 

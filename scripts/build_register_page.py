@@ -3,8 +3,9 @@
 
 The register's look comes from partials/private-register.css.html; this module
 only assembles the parts every register page must carry identically — the head,
-the GA4/Ads snippet, the bespoke header and breadcrumb, the enquiry form, and
-the closing scripts. Page prose is hand-authored and passed in, never generated.
+the analytics partial markers (GA4/Ads with Consent Mode, expanded by
+build.sh), the bespoke header and breadcrumb, the enquiry form, and the
+closing scripts. Page prose is hand-authored and passed in, never generated.
 
 Why this exists: the register is insulated from the site nav/footer partials and
 from css/style.css, so a register page cannot be cloned from an ordinary page.
@@ -13,41 +14,28 @@ absolute asset paths get dropped from one page in twenty and the form fails
 silently on it. See docs/superpowers/specs/2026-08-29-international-luxury-weddings-design.md
 """
 
+import os
+
 SITE = 'https://londonchoralservice.com'
 ACCESS_KEY = 'dc1af546-26ac-45b3-a85d-064a3a59886d'
 OG_IMAGE = f'{SITE}/assets/og-private-events.png'
 OG_ALT = ('Alma Consort, London: the sound of an English cathedral, wherever you are '
           '&mdash; private and international choral engagements')
 
-GA_SNIPPET = '''  <!-- Google Analytics (GA4) — deferred until after load -->
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    function loadGA() {
-      if (loadGA.done) return;
-      loadGA.done = true;
-      gtag('js', new Date());
-      gtag('config', 'G-9FENN7VS0E');
-      gtag('config', 'AW-17988388404');
-      var s = document.createElement('script');
-      s.src = 'https://www.googletagmanager.com/gtag/js?id=G-9FENN7VS0E';
-      document.head.appendChild(s);
-    }
-    if ('requestIdleCallback' in window) {
-      requestIdleCallback(loadGA, { timeout: 3000 });
-    } else {
-      window.addEventListener('load', function() { setTimeout(loadGA, 100); });
-    }
-    if (/[?&](gclid|gbraid|wbraid)=/.test(location.search)) loadGA();
-    ['scroll', 'click', 'touchstart', 'keydown'].forEach(function(evt) {
-      window.addEventListener(evt, loadGA, { once: true, passive: true });
-    });
-  </script>'''
+
+
+def og_image(path):
+    """The page's own share card from scripts/og/generate_og_images.mjs, if rendered;
+    otherwise the register's shared card."""
+    card = 'assets/og/' + path[:-len('.html')].replace('/index', '-index').replace('/', '-') + '.png'
+    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    return f'{SITE}/{card}' if os.path.exists(os.path.join(root, card)) else OG_IMAGE
 
 
 def head(title, description, path):
     """path is site-relative with no leading slash, e.g. 'destinations/italy.html'."""
     url = f'{SITE}/{path}'
+    image = og_image(path)
     if len(description) < 141 or len(description) > 161:
         raise ValueError(f'meta description for {path} is {len(description)} chars, need 141-161')
     return f'''<!DOCTYPE html>
@@ -58,7 +46,8 @@ def head(title, description, path):
   <!-- @include-end partials/head-extras.html -->
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
-{GA_SNIPPET}
+  <!-- @include-start partials/analytics.html -->
+  <!-- @include-end partials/analytics.html -->
 
   <title>{title}</title>
   <meta name="description" content="{description}">
@@ -74,7 +63,7 @@ def head(title, description, path):
   <meta property="og:url" content="{url}">
   <meta property="og:locale" content="en_GB">
   <meta property="og:site_name" content="London Choral Service">
-  <meta property="og:image" content="{OG_IMAGE}">
+  <meta property="og:image" content="{image}">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
   <meta property="og:image:alt" content="{OG_ALT}">
@@ -82,7 +71,7 @@ def head(title, description, path):
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="{title}">
   <meta name="twitter:description" content="{description}">
-  <meta name="twitter:image" content="{OG_IMAGE}">
+  <meta name="twitter:image" content="{image}">
   <meta name="twitter:image:alt" content="{OG_ALT}">
   <link rel="dns-prefetch" href="https://www.googletagmanager.com">
   <link rel="dns-prefetch" href="https://api.web3forms.com">

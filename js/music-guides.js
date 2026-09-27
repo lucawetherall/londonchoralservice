@@ -24,14 +24,20 @@
     var chips = document.querySelectorAll('.filter-chip[data-category]');
     chips.forEach(function (chip) {
       var chipCat = chip.getAttribute('data-category');
-      chip.setAttribute('aria-pressed', chipCat === category ? 'true' : 'false');
+      // Chips are links to filtered URLs, so mark the active one as the
+      // current page (aria-pressed is not valid on links).
+      if (chipCat === category) chip.setAttribute('aria-current', 'page');
+      else chip.removeAttribute('aria-current');
     });
   }
 
   function onChipClick(e) {
+    // Let modified clicks (new tab/window) follow the link as normal.
+    if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
     e.preventDefault();
     var chip = e.currentTarget;
     var category = chip.getAttribute('data-category');
+    if (category === getCategoryFromURL()) return;
     var newURL;
     if (category === 'all') {
       newURL = window.location.pathname;
