@@ -1,242 +1,242 @@
 {
  "/": {
-  "hash": "7e067e1d66d18024",
+  "hash": "8bbcf8e358ae7d94",
   "lastmod": "2026-09-27"
  },
  "/about.html": {
-  "hash": "f82de5badbe4ebda",
+  "hash": "5b94de6bbacf2d72",
   "lastmod": "2026-09-04"
  },
  "/accessibility.html": {
-  "hash": "6a7f393b9c1c41d3",
+  "hash": "9f986be1c5456925",
   "lastmod": "2026-09-04"
  },
  "/areas/": {
-  "hash": "23bbba00c3ed373d",
+  "hash": "7e24b0ef595d6227",
   "lastmod": "2026-09-04"
  },
  "/areas/bath.html": {
-  "hash": "c760ac0f196d30cf",
+  "hash": "1c86f7fb5623d99a",
   "lastmod": "2026-09-27"
  },
  "/areas/birmingham.html": {
-  "hash": "e9163db59f88b8b1",
+  "hash": "6e0671c4f8a44076",
   "lastmod": "2026-09-27"
  },
  "/areas/brighton.html": {
-  "hash": "34c4702c67cd621d",
+  "hash": "f663a1c42a748412",
   "lastmod": "2026-09-27"
  },
  "/areas/cambridge.html": {
-  "hash": "f582f4a0dc14f17c",
+  "hash": "19d269c1da1b4b36",
   "lastmod": "2026-09-27"
  },
  "/areas/canterbury.html": {
-  "hash": "48a4ff6db654f8d3",
+  "hash": "173b22bd93884c3f",
   "lastmod": "2026-09-27"
  },
  "/areas/chelmsford.html": {
-  "hash": "423ec7e5eb56e529",
+  "hash": "ac1a87d09e1cba8a",
   "lastmod": "2026-09-27"
  },
  "/areas/chester.html": {
-  "hash": "433f3ede2995bfda",
+  "hash": "e596bc990ea0b279",
   "lastmod": "2026-09-04"
  },
  "/areas/guildford.html": {
-  "hash": "fdc5cdb431f017df",
+  "hash": "59c11d13073af3e8",
   "lastmod": "2026-09-27"
  },
  "/areas/liverpool.html": {
-  "hash": "b8145499de1b1325",
+  "hash": "890ade73a8e2ca55",
   "lastmod": "2026-09-27"
  },
  "/areas/london.html": {
-  "hash": "5b96d59984b5fce1",
+  "hash": "65c187505e6a81a1",
   "lastmod": "2026-09-27"
  },
  "/areas/london/barking-dagenham.html": {
-  "hash": "6595015dfc0e7e81",
+  "hash": "1212071dd1a1fa62",
   "lastmod": "2026-09-27"
  },
  "/areas/london/barnet.html": {
-  "hash": "9fa87b0ce029b3b8",
+  "hash": "186335563af162bc",
   "lastmod": "2026-09-27"
  },
  "/areas/london/bexley.html": {
-  "hash": "555503c443449d29",
+  "hash": "b5a8b0cf94563170",
   "lastmod": "2026-09-27"
  },
  "/areas/london/brent.html": {
-  "hash": "7bf4c8c22585ff0d",
+  "hash": "54031e256774e483",
   "lastmod": "2026-09-27"
  },
  "/areas/london/bromley.html": {
-  "hash": "0a17d7c7ef23a326",
+  "hash": "a692610568f8c365",
   "lastmod": "2026-09-27"
  },
  "/areas/london/camden.html": {
-  "hash": "e31da1a95918ca7f",
+  "hash": "39dcf5491907888b",
   "lastmod": "2026-09-27"
  },
  "/areas/london/city-of-london.html": {
-  "hash": "f4b3ff656be6114e",
+  "hash": "45071821c3c968a2",
   "lastmod": "2026-09-27"
  },
  "/areas/london/croydon.html": {
-  "hash": "d8cfef215c5e0d3f",
+  "hash": "f85050d2533b90fd",
   "lastmod": "2026-09-27"
  },
  "/areas/london/ealing.html": {
-  "hash": "f364eae50af90217",
+  "hash": "19e86018e3937061",
   "lastmod": "2026-09-27"
  },
  "/areas/london/enfield.html": {
-  "hash": "b2b5ae666bb0bd78",
+  "hash": "4039b83c760fcf98",
   "lastmod": "2026-09-27"
  },
  "/areas/london/greenwich.html": {
-  "hash": "3fe2152865389b21",
+  "hash": "71a91f40a2ef09c9",
   "lastmod": "2026-09-27"
  },
  "/areas/london/hackney.html": {
-  "hash": "930fe8a36339b331",
+  "hash": "2b0360cf20c643b4",
   "lastmod": "2026-09-27"
  },
  "/areas/london/hammersmith-fulham.html": {
-  "hash": "4808cccdf71cb564",
+  "hash": "427ea5f552246a7a",
   "lastmod": "2026-09-27"
  },
  "/areas/london/haringey.html": {
-  "hash": "b1de70e42f93196a",
+  "hash": "f76889cce7e7b1e5",
   "lastmod": "2026-09-27"
  },
  "/areas/london/harrow.html": {
-  "hash": "bf7ea4132bbd6ad0",
+  "hash": "ad162276d18b4f3c",
   "lastmod": "2026-09-27"
  },
  "/areas/london/havering.html": {
-  "hash": "6cd37538d8236a4d",
+  "hash": "47fd3f683f42214b",
   "lastmod": "2026-09-27"
  },
  "/areas/london/hillingdon.html": {
-  "hash": "d7cb25abf282674b",
+  "hash": "64bfb841ea8b071e",
   "lastmod": "2026-09-27"
  },
  "/areas/london/hounslow.html": {
-  "hash": "d5d0ca67a34994e0",
+  "hash": "733a084ba6723cc5",
   "lastmod": "2026-09-27"
  },
  "/areas/london/islington.html": {
-  "hash": "14b592472a1129d9",
+  "hash": "1a65e5e7b8a0231e",
   "lastmod": "2026-09-27"
  },
  "/areas/london/kensington-chelsea.html": {
-  "hash": "f9325ca8dbe8f629",
+  "hash": "6c02013efbe5d5de",
   "lastmod": "2026-09-27"
  },
  "/areas/london/kingston.html": {
-  "hash": "510aa4165fc26686",
+  "hash": "506b5b1a98750685",
   "lastmod": "2026-09-27"
  },
  "/areas/london/lambeth.html": {
-  "hash": "3c6476ee3e5748bb",
+  "hash": "2f19e6c0f510cb33",
   "lastmod": "2026-09-27"
  },
  "/areas/london/lewisham.html": {
-  "hash": "cd616afeca698f5b",
+  "hash": "f0e6981dd1e3f9bc",
   "lastmod": "2026-09-27"
  },
  "/areas/london/merton.html": {
-  "hash": "1bc1db980acc51f0",
+  "hash": "9da1962139ee3e47",
   "lastmod": "2026-09-27"
  },
  "/areas/london/newham.html": {
-  "hash": "3d0bbd90fcf5cd45",
+  "hash": "1c99ad9cfe9784e2",
   "lastmod": "2026-09-27"
  },
  "/areas/london/redbridge.html": {
-  "hash": "83a981852cee9b3c",
+  "hash": "79b90febf3644fce",
   "lastmod": "2026-09-27"
  },
  "/areas/london/richmond.html": {
-  "hash": "fdcb8089a3530b17",
+  "hash": "0a4f02bd83e86cd5",
   "lastmod": "2026-09-27"
  },
  "/areas/london/southwark.html": {
-  "hash": "1efd319add0584a1",
+  "hash": "ea764ac0e4063af9",
   "lastmod": "2026-09-27"
  },
  "/areas/london/sutton.html": {
-  "hash": "6748ee1a5ffc092e",
+  "hash": "66d999004685f16d",
   "lastmod": "2026-09-27"
  },
  "/areas/london/tower-hamlets.html": {
-  "hash": "49dd08ec4adf6bdb",
+  "hash": "758ba657754495bd",
   "lastmod": "2026-09-27"
  },
  "/areas/london/waltham-forest.html": {
-  "hash": "369b22710e4f145d",
+  "hash": "9c31b707e587aff7",
   "lastmod": "2026-09-27"
  },
  "/areas/london/wandsworth.html": {
-  "hash": "2f8496c36ee1a1df",
+  "hash": "d4abac173b28a26c",
   "lastmod": "2026-09-27"
  },
  "/areas/london/westminster.html": {
-  "hash": "5ef5fb8bb4c286d7",
+  "hash": "d211c9bf61d902b8",
   "lastmod": "2026-09-27"
  },
  "/areas/manchester.html": {
-  "hash": "ebc64a4b9271e371",
+  "hash": "32c6bf86b718e367",
   "lastmod": "2026-09-27"
  },
  "/areas/oxford.html": {
-  "hash": "d4546926a405bd4e",
+  "hash": "b06af1fafb189d88",
   "lastmod": "2026-09-27"
  },
  "/areas/reading.html": {
-  "hash": "7862375e128cc5f9",
+  "hash": "ef1c5dfd538ce585",
   "lastmod": "2026-09-27"
  },
  "/areas/rochester.html": {
-  "hash": "8b7cd88fa5a988c2",
+  "hash": "af28d4f10e74c2a5",
   "lastmod": "2026-09-27"
  },
  "/areas/salisbury.html": {
-  "hash": "b02d036427cb11a0",
+  "hash": "368bd822ed66a885",
   "lastmod": "2026-09-27"
  },
  "/areas/slough-maidenhead.html": {
-  "hash": "0793a460b7d90a2f",
+  "hash": "ed6182931e63917d",
   "lastmod": "2026-09-27"
  },
  "/areas/st-albans.html": {
-  "hash": "57106a9927acb1ab",
+  "hash": "1689559776e95764",
   "lastmod": "2026-09-27"
  },
  "/areas/winchester.html": {
-  "hash": "867378a008a936dd",
+  "hash": "cc745b435dfb20df",
   "lastmod": "2026-09-27"
  },
  "/areas/windsor.html": {
-  "hash": "7869911d614a7d09",
+  "hash": "3847f0c5362f32ef",
   "lastmod": "2026-09-27"
  },
  "/carol-singers.html": {
-  "hash": "6976222fee0b1fc4",
+  "hash": "afdc2cbde71b7e51",
   "lastmod": "2026-09-27"
  },
  "/christmas-pricing.html": {
-  "hash": "eb8cfe4b9ad6b511",
+  "hash": "eb0d5095f7eac266",
   "lastmod": "2026-09-27"
  },
  "/christmas.html": {
-  "hash": "2105529d04805472",
+  "hash": "c8fc0ef2f338054e",
   "lastmod": "2026-09-27"
  },
  "/compare/london-funeral-singers.html": {
-  "hash": "86eabb876f8565fb",
+  "hash": "6ac04a459228be9c",
   "lastmod": "2026-09-23"
  },
  "/contact.html": {
@@ -244,7 +244,7 @@
   "lastmod": "2026-09-27"
  },
  "/corporate.html": {
-  "hash": "d1bc88ed1c66430a",
+  "hash": "dc593bedbaa6c952",
   "lastmod": "2026-09-27"
  },
  "/destinations/": {
@@ -340,291 +340,291 @@
   "lastmod": "2026-09-04"
  },
  "/faq.html": {
-  "hash": "2076e392b5898952",
+  "hash": "33a73b76ec5005c4",
   "lastmod": "2026-09-23"
  },
  "/for-charities.html": {
-  "hash": "25a2925869d337c6",
+  "hash": "696919354fd56ce7",
   "lastmod": "2026-09-27"
  },
  "/for-event-managers.html": {
-  "hash": "4f6a90a1694fda35",
+  "hash": "968ac3636ebcbb18",
   "lastmod": "2026-09-27"
  },
  "/for-funeral-directors.html": {
-  "hash": "3b97aeda609a4a6c",
+  "hash": "2358747356aa2de9",
   "lastmod": "2026-09-27"
  },
  "/for-hotels.html": {
-  "hash": "7062b423f35d15cf",
+  "hash": "8e5e0bfecf41df42",
   "lastmod": "2026-09-27"
  },
  "/for-livery-companies.html": {
-  "hash": "7771935b4c0cea5f",
+  "hash": "c23c0e0c3aa3a87e",
   "lastmod": "2026-09-27"
  },
  "/for-property-managers.html": {
-  "hash": "885ec8cd7e31aadd",
+  "hash": "b528dd5ca104ac48",
   "lastmod": "2026-09-27"
  },
  "/for-wedding-planners.html": {
-  "hash": "9b79c822369b7fe2",
+  "hash": "ff4e8f4fd43f2448",
   "lastmod": "2026-09-27"
  },
  "/funerals.html": {
-  "hash": "54af7f86d26f0400",
+  "hash": "29bea0e08d07e05e",
   "lastmod": "2026-09-27"
  },
  "/listen.html": {
-  "hash": "fe03b234bfb082eb",
+  "hash": "0d6a3469760a9c81",
   "lastmod": "2026-09-27"
  },
  "/luca-wetherall.html": {
-  "hash": "5ab77d03d928e1dc",
+  "hash": "b719ace2486d9d1f",
   "lastmod": "2026-09-04"
  },
  "/music-guides/": {
-  "hash": "2ffb1b1c2773af89",
+  "hash": "9775124d17642b72",
   "lastmod": "2026-09-27"
  },
  "/music-guides/a-cappella-christmas-songs.html": {
-  "hash": "0e82bb682c394b70",
+  "hash": "111526ede90b2380",
   "lastmod": "2026-09-26"
  },
  "/music-guides/abide-with-me.html": {
-  "hash": "01a00bd9a791b638",
+  "hash": "a026985a879e63e2",
   "lastmod": "2026-09-27"
  },
  "/music-guides/advent-carols-vs-christmas-carols.html": {
-  "hash": "d918bc60f2fe7bc3",
+  "hash": "3597c64af0562fe3",
   "lastmod": "2026-08-22"
  },
  "/music-guides/anima-christi-catholic-funeral.html": {
-  "hash": "aa2b708560a862fe",
+  "hash": "c30cde6fa1f41926",
   "lastmod": "2026-08-22"
  },
  "/music-guides/anima-christi-catholic-wedding.html": {
-  "hash": "39e8fdbf7012fdae",
+  "hash": "975539e3463c9ef5",
   "lastmod": "2026-08-29"
  },
  "/music-guides/be-thou-my-vision-funeral-hymn.html": {
-  "hash": "bf9b6951befd6178",
+  "hash": "3dd1cf49245f5159",
   "lastmod": "2026-09-27"
  },
  "/music-guides/be-thou-my-vision-wedding-hymn.html": {
-  "hash": "6e8d506e6fb9eede",
+  "hash": "9aab728ceecd8b20",
   "lastmod": "2026-08-30"
  },
  "/music-guides/best-carols-for-four-voices.html": {
-  "hash": "5ac89240a29e6b8f",
+  "hash": "967fc89853307978",
   "lastmod": "2026-09-27"
  },
  "/music-guides/best-christmas-carol-singers.html": {
-  "hash": "6c6ff9ec89527e63",
+  "hash": "0af681387b3ac9f4",
   "lastmod": "2026-09-27"
  },
  "/music-guides/best-funeral-singers-london.html": {
-  "hash": "65aa4ea9a1bf2737",
+  "hash": "c4c2686c89ad1cab",
   "lastmod": "2026-09-27"
  },
  "/music-guides/best-wedding-choirs-london.html": {
-  "hash": "986f3c081582c3d2",
-  "lastmod": "2026-09-04"
+  "hash": "6e763a03430d483c",
+  "lastmod": "2026-09-27"
  },
  "/music-guides/booking-carol-singers-agency-vs-direct.html": {
-  "hash": "a492fa6378e15157",
+  "hash": "009111c807035e1c",
   "lastmod": "2026-09-27"
  },
  "/music-guides/carol-singers-cost.html": {
-  "hash": "f50d0376031f2a0b",
+  "hash": "d2df9a43891ffb24",
   "lastmod": "2026-09-26"
  },
  "/music-guides/carol-singers-law-firms.html": {
-  "hash": "01183146ff597ffb",
+  "hash": "a5560b8f3d0a5310",
   "lastmod": "2026-09-27"
  },
  "/music-guides/carols-by-candlelight.html": {
-  "hash": "3bca5e7c58eee5bf",
+  "hash": "1acbd73230f1185d",
   "lastmod": "2026-09-23"
  },
  "/music-guides/catholic-funeral-hymns.html": {
-  "hash": "cc29ee491a8831f7",
-  "lastmod": "2026-08-22"
+  "hash": "7a609c25973b62f7",
+  "lastmod": "2026-09-27"
  },
  "/music-guides/celebration-of-life-music.html": {
-  "hash": "a16d4055c7eeb7de",
+  "hash": "d5a4f0923df59ed5",
   "lastmod": "2026-08-22"
  },
  "/music-guides/charity-carol-concert.html": {
-  "hash": "fd0a064dc7698e38",
+  "hash": "64af9acc537b8fe6",
   "lastmod": "2026-09-27"
  },
  "/music-guides/choosing-wedding-hymns.html": {
-  "hash": "6e12741faf7b3425",
+  "hash": "765c0d0d9af7b9d1",
   "lastmod": "2026-09-27"
  },
  "/music-guides/christmas-carol-lyrics-meanings.html": {
-  "hash": "bdde685a68f408dd",
+  "hash": "393c52da3a282172",
   "lastmod": "2026-09-27"
  },
  "/music-guides/christmas-carols-guide.html": {
-  "hash": "7d1e32dcd92b76db",
+  "hash": "e3ba23de203b317b",
   "lastmod": "2026-08-22"
  },
  "/music-guides/christmas-choir-hire.html": {
-  "hash": "15276204996fd0b9",
+  "hash": "5f703aad50645909",
   "lastmod": "2026-09-27"
  },
  "/music-guides/christmas-drinks-reception-music.html": {
-  "hash": "c636446682954e3b",
+  "hash": "bda5d034e93db9e3",
   "lastmod": "2026-09-27"
  },
  "/music-guides/christmas-gala-dinner-music.html": {
-  "hash": "a47ebd94e6c56e1c",
+  "hash": "5fa68c8ca9004926",
   "lastmod": "2026-09-27"
  },
  "/music-guides/church-carol-service-choir-hire.html": {
-  "hash": "2aa4dd164ebee33c",
+  "hash": "174e34d97e9e7f6b",
   "lastmod": "2026-09-27"
  },
  "/music-guides/company-christmas-party-entertainment.html": {
-  "hash": "ddd25c95027edd41",
+  "hash": "4ca907e83c35e349",
   "lastmod": "2026-09-27"
  },
  "/music-guides/corporate-carol-service.html": {
-  "hash": "60f18a127bedeee6",
+  "hash": "22c6a7517a7d0dfe",
   "lastmod": "2026-09-27"
  },
  "/music-guides/crematorium-music.html": {
-  "hash": "3e60a34d26a8846d",
+  "hash": "f694d3b6ed373376",
   "lastmod": "2026-09-27"
  },
  "/music-guides/destination-wedding-choir.html": {
-  "hash": "d818889a71bfa1df",
+  "hash": "c88a7226d4ce1a63",
   "lastmod": "2026-08-29"
  },
  "/music-guides/funeral-choir-guide.html": {
-  "hash": "4e99645d72221c77",
+  "hash": "b0f71244cd63fcfb",
   "lastmod": "2026-08-22"
  },
  "/music-guides/funeral-music-costs.html": {
-  "hash": "ea372b738fbd0a42",
+  "hash": "089274a38bd61501",
   "lastmod": "2026-08-22"
  },
  "/music-guides/funeral-music-guide.html": {
-  "hash": "3febc0fbad288983",
+  "hash": "02e42fcf0f3e17ea",
   "lastmod": "2026-08-22"
  },
  "/music-guides/funeral-songs.html": {
-  "hash": "bb2e3e57e0f3e7bb",
+  "hash": "b15c095a24498906",
   "lastmod": "2026-08-22"
  },
  "/music-guides/hiring-a-choir.html": {
-  "hash": "0cc6730f269c920a",
+  "hash": "6056d14adcd52f5f",
   "lastmod": "2026-09-27"
  },
  "/music-guides/hotel-christmas-entertainment.html": {
-  "hash": "00eed9cd36bbd7e3",
+  "hash": "a01b09ba83c33ec5",
   "lastmod": "2026-09-27"
  },
  "/music-guides/how-many-carol-singers.html": {
-  "hash": "b59c58989a3e4daa",
+  "hash": "8a0df51249961931",
   "lastmod": "2026-09-23"
  },
  "/music-guides/humanist-wedding-music.html": {
-  "hash": "0b3a56dc04f1d64b",
+  "hash": "1cd3f47f68968720",
   "lastmod": "2026-09-27"
  },
  "/music-guides/jerusalem.html": {
-  "hash": "1a4dc6493c1789a0",
+  "hash": "479004674bc38f4a",
   "lastmod": "2026-09-27"
  },
  "/music-guides/last-minute-funeral-singers.html": {
-  "hash": "2953e32a32fb69ba",
-  "lastmod": "2026-09-23"
+  "hash": "bf946287ddedb06a",
+  "lastmod": "2026-09-27"
  },
  "/music-guides/lesser-known-wedding-choral-pieces.html": {
-  "hash": "9eb00d01630e053e",
+  "hash": "d56fa2f788f4effc",
   "lastmod": "2026-09-27"
  },
  "/music-guides/memorial-service-planning.html": {
-  "hash": "3b8038da6e3f6a51",
+  "hash": "a93e1a5593afaf1f",
   "lastmod": "2026-08-22"
  },
  "/music-guides/nine-lessons-and-carols.html": {
-  "hash": "a301b34766fe5b77",
+  "hash": "d39f744cad95198f",
   "lastmod": "2026-08-22"
  },
  "/music-guides/non-religious-funeral-music.html": {
-  "hash": "f5caba4b7d5003d5",
+  "hash": "220dcfe296907455",
   "lastmod": "2026-08-29"
  },
  "/music-guides/office-carol-service-planning.html": {
-  "hash": "98b8c46b558faa83",
+  "hash": "c95e13b78cc2895d",
   "lastmod": "2026-09-27"
  },
  "/music-guides/outdoor-carol-singing.html": {
-  "hash": "61f04e806776fa0b",
+  "hash": "1129e8d88930439c",
   "lastmod": "2026-09-26"
  },
  "/music-guides/popular-funeral-hymns.html": {
-  "hash": "a4433d7d32004e9b",
-  "lastmod": "2026-08-22"
+  "hash": "383263cba72ed088",
+  "lastmod": "2026-09-27"
  },
  "/music-guides/popular-wedding-organ-music.html": {
-  "hash": "0ad94d1d3aed983e",
+  "hash": "aeb6316c94dc6197",
   "lastmod": "2026-09-27"
  },
  "/music-guides/residents-christmas-carol-event.html": {
-  "hash": "384079228c55510b",
+  "hash": "25aa6ed9a2eac1bc",
   "lastmod": "2026-09-27"
  },
  "/music-guides/ubi-caritas-wedding.html": {
-  "hash": "bdd57246b3fa63a5",
+  "hash": "a93d91d21a999045",
   "lastmod": "2026-09-27"
  },
  "/music-guides/wedding-ceremony-music.html": {
-  "hash": "3b254f6e21ac6132",
+  "hash": "c0ee773cb8f67a4c",
   "lastmod": "2026-08-30"
  },
  "/music-guides/wedding-choir-guide.html": {
-  "hash": "702479b556c3f18e",
-  "lastmod": "2026-09-04"
+  "hash": "42006a166441dbf2",
+  "lastmod": "2026-09-27"
  },
  "/music-guides/wedding-choral-repertoire.html": {
-  "hash": "4b7f0b6d2548ff35",
+  "hash": "e768d51fdf1a5293",
   "lastmod": "2026-09-27"
  },
  "/music-guides/wedding-music-costs.html": {
-  "hash": "6cd3d536ffec7d69",
+  "hash": "048aa756fde4a988",
   "lastmod": "2026-09-23"
  },
  "/music-guides/wedding-music-ideas.html": {
-  "hash": "dc64f5a809807e30",
+  "hash": "8a2c99cd74e205d2",
   "lastmod": "2026-08-29"
  },
  "/music-guides/wedding-organ-pop-songs.html": {
-  "hash": "e0fdcde386c10065",
+  "hash": "0710aed44c3983ab",
   "lastmod": "2026-09-27"
  },
  "/music-guides/wedding-organ-repertoire.html": {
-  "hash": "00f4ffe2d9f6f966",
+  "hash": "4aa2b3b571efdbc6",
   "lastmod": "2026-08-29"
  },
  "/music-guides/wedding-organist-guide.html": {
-  "hash": "8c9a1689490e8e38",
+  "hash": "f547af97672b213f",
   "lastmod": "2026-08-29"
  },
  "/music-guides/wedding-pop-songs-choir.html": {
-  "hash": "c262723f259999ad",
+  "hash": "072bba292d77dd31",
   "lastmod": "2026-09-27"
  },
  "/music-guides/wedding-readings-and-music.html": {
-  "hash": "b32335c3dab70bab",
+  "hash": "c9c0a24eced6ced5",
   "lastmod": "2026-08-29"
  },
  "/music-guides/when-to-book-christmas-entertainment.html": {
-  "hash": "898e273630e6c4c1",
+  "hash": "0d2da1838f9beccd",
   "lastmod": "2026-09-27"
  },
  "/planners-and-venues.html": {
@@ -632,7 +632,7 @@
   "lastmod": "2026-09-04"
  },
  "/pricing.html": {
-  "hash": "91d34d019fd8d3c9",
+  "hash": "838cca3682f39961",
   "lastmod": "2026-09-27"
  },
  "/private-events.html": {
@@ -640,15 +640,15 @@
   "lastmod": "2026-09-04"
  },
  "/services.html": {
-  "hash": "ecba05d4b1ebe320",
-  "lastmod": "2026-09-04"
+  "hash": "200dfa43975d1e3b",
+  "lastmod": "2026-09-27"
  },
  "/terms.html": {
-  "hash": "676d1899656b79ab",
+  "hash": "134f6ae1b2bb37e4",
   "lastmod": "2026-09-04"
  },
  "/weddings.html": {
-  "hash": "79cc5db99836e610",
+  "hash": "f191d6967cc1a924",
   "lastmod": "2026-09-27"
  }
 }

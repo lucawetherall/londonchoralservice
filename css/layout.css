@@ -292,6 +292,14 @@
   .footer-col--brand {
     grid-column: 1 / -1;
   }
+  /* Touch screens: pad the link lists to a ~40px tap target */
+  .footer-col li {
+    margin-bottom: 0;
+  }
+  .footer-col li a {
+    display: inline-block;
+    padding-block: var(--space-sm);
+  }
 }
 
 @media (max-width: 520px) {
