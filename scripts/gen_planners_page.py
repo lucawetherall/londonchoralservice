@@ -23,7 +23,7 @@ FAQS = [
      'or the west end. No stage, no PA, no piano. For a ballroom, a terrace or a marquee, send us the '
      'dimensions and tell us whether the floor is carpeted: a soft room absorbs sound a chapel would carry, '
      'and that changes the number of singers we recommend.'),
-    ('How do you invoice?',
+    ('Who do you invoice — the couple, the agency, or the venue?',
      'In pounds sterling, euros or US dollars, to whichever entity you nominate: the couple, your agency, or the venue. Deposit and balance terms are set out in the booking agreement before anything is '
      'confirmed. Alma Consort Ltd is not registered for VAT, so no VAT is added to our invoices.'),
     ('Can we set up a standing arrangement?',

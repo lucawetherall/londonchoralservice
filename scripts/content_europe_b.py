@@ -5,7 +5,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from gen_country_pages import build
 
 n = build('greece', 'Greece',
-  'A Wedding Choir in Greece &mdash; Santorini, Crete, Mykonos | Alma Consort',
+  'A Wedding Choir in Greece &mdash; Santorini, Crete, Mykonos',
   'A British consort at Greek weddings: why an Orthodox service works differently, and how music '
   'is placed at a clifftop ceremony in Santorini or Mykonos.',
   'Greece needs a straight answer about the Orthodox service.',
@@ -100,7 +100,7 @@ n = build('greece', 'Greece',
 print(f'greece {n}')
 
 n = build('cyprus', 'Cyprus',
-  'A Wedding Choir in Cyprus &mdash; Paphos, Protaras, Ayia Napa | Alma Consort',
+  'A Wedding Choir in Cyprus &mdash; Paphos, Protaras, Ayia Napa',
   'A British consort at Cypriot weddings: town hall ceremonies, hotel and villa weddings, and an '
   'honest word about which end of the Cyprus market this suits.',
   'Cyprus is easy to marry in and easy to misjudge musically.',
@@ -186,7 +186,7 @@ n = build('cyprus', 'Cyprus',
 print(f'cyprus {n}')
 
 n = build('malta', 'Malta',
-  'A Wedding Choir in Malta &mdash; Valletta, Mdina, Gozo | Alma Consort',
+  'A Wedding Choir in Malta &mdash; Valletta, Mdina, Gozo',
   'A British consort at Maltese weddings: baroque churches built for singing, English as an official '
   'language, and the shortest paperwork in the Mediterranean.',
   'Of everywhere we travel, Malta suits a choir best.',
@@ -270,7 +270,7 @@ n = build('malta', 'Malta',
 print(f'malta {n}')
 
 n = build('croatia', 'Croatia',
-  'A Wedding Choir in Croatia &mdash; Dubrovnik, Hvar, Split | Alma Consort',
+  'A Wedding Choir in Croatia &mdash; Dubrovnik, Hvar, Split',
   'A British consort at Croatian weddings: Adriatic stone churches, old-town cloisters, and what an '
   'island ceremony asks of a group of twelve singers.',
   'Croatia has the stone; the difficulty is getting to it.',
@@ -343,7 +343,7 @@ n = build('croatia', 'Croatia',
     'Yes. The nuptial Mass is the usual form and parishes in the old towns are used to weddings and to '
     'visiting musicians. We sing the ordinary in Latin; the spoken service will be in Croatian. Confirm '
     'with the parish that a visiting choir is welcome and whether their own organist expects to play.'),
-   ('When is the best time of year?',
+   ('When is the best time of year to marry in Croatia?',
     'May, June and September. July and August bring cruise-ship crowds to Dubrovnik and Split, higher '
     'accommodation costs for a group of this size, and heat that is hard on singers working outdoors. '
     'The shoulder months are better in every respect, including the quote.'),

@@ -5,7 +5,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from gen_country_pages import build
 
 n = build('united-states', 'United States',
-  'A British Wedding Choir in the USA &mdash; The Visa Problem | Alma Consort',
+  'A British Wedding Choir in the USA &mdash; The Visa Problem',
   'A British consort at American weddings: the performance visa that governs the timeline, what it '
   'means for your date, and where the music goes at a US ceremony.',
   'Start with the visa. Everything else follows from it.',
@@ -86,7 +86,7 @@ n = build('united-states', 'United States',
 print(f'united-states {n}')
 
 n = build('mexico', 'Mexico',
-  'A Wedding Choir in Mexico &mdash; Riviera Maya, Tulum, Canc&uacute;n | Alma Consort',
+  'A Wedding Choir in Mexico &mdash; Riviera Maya, Tulum, Canc&uacute;n',
   'A British consort at Mexican weddings: beach and cenote ceremonies, colonial stone churches, and '
   'what tropical heat asks of singers who have flown overnight.',
   'Two Mexicos: the beach at sunset and the colonial church.',
@@ -169,7 +169,7 @@ n = build('mexico', 'Mexico',
 print(f'mexico {n}')
 
 n = build('barbados', 'Barbados',
-  'A Wedding Choir in Barbados &mdash; Anglican Parish Churches | Alma Consort',
+  'A Wedding Choir in Barbados &mdash; Anglican Parish Churches',
   'A British consort at Barbadian weddings: an Anglican tradition three centuries deep, coral stone '
   'parish churches, and a service British guests will recognise.',
   'The one long-haul destination where the tradition is already ours.',
@@ -243,7 +243,7 @@ n = build('barbados', 'Barbados',
 print(f'barbados {n}')
 
 n = build('st-lucia', 'St Lucia',
-  'A Wedding Choir in St Lucia &mdash; Souffri&egrave;re and Rodney Bay | Alma Consort',
+  'A Wedding Choir in St Lucia &mdash; Souffri&egrave;re and Rodney Bay',
   'A British consort at St Lucian weddings: a Catholic island with real churches, resort ceremonies '
   'under the Pitons, and what the terrain asks of twelve singers.',
   'A Catholic island with mountains, and both matter to the music.',
@@ -307,7 +307,7 @@ n = build('st-lucia', 'St Lucia',
    ('Church or resort?',
     'The church sounds better; the resort looks better. If the day can accommodate both, a church ceremony and a resort reception, that is what we would suggest, and it is a common shape here. '
     'If it has to be one, and the music matters most to you, choose the church.'),
-   ('How far ahead should we book?',
+   ('How far ahead should a St Lucia wedding be booked?',
     'Nine to twelve months. The flight is direct but runs only a few times a week, which makes the travel '
     'less flexible than it looks, and accommodation for twelve to twenty-four people at the smaller '
     'resorts needs arranging well ahead. Tell us the date as soon as it is fixed.'),
@@ -315,7 +315,7 @@ n = build('st-lucia', 'St Lucia',
 print(f'st-lucia {n}')
 
 n = build('jamaica', 'Jamaica',
-  'A Wedding Choir in Jamaica &mdash; Montego Bay, Ocho Rios | Alma Consort',
+  'A Wedding Choir in Jamaica &mdash; Montego Bay, Ocho Rios',
   'A British consort at Jamaican weddings: an Anglican and Baptist choral tradition, great house '
   'ceremonies, and resort weddings on the north coast.',
   'An island that already knows what a choir is for.',
