@@ -1994,16 +1994,21 @@
       align-items: start;
     }
     
+    .services-hero .pull-quote--marquee {
+      margin-block: 0;
+    }
+    
+    /* Two columns: the quote rides alongside the text. In the single-column
+       layout it must stay static, or it sticks over the text scrolling up. */
     @media (min-width: 52rem) {
       .services-hero {
         grid-template-columns: 1fr 1.4fr;
       }
-    }
     
-    .services-hero .pull-quote--marquee {
-      margin-block: 0;
-      position: sticky;
-      top: var(--space-2xl);
+      .services-hero .pull-quote--marquee {
+        position: sticky;
+        top: var(--space-2xl);
+      }
     }
     
     /* ═══════════════════════════════════
@@ -2448,7 +2453,7 @@
             "name": "When do we need to book carol singers for a December residents’ event?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "December closes out by mid-September, and the second and third weeks go first. If your building runs a residents’ evening every year, the safest approach is to fix next December’s date as soon as this one is over. Standard prices apply throughout December, with a premium only on Christmas Eve and Christmas Day."
+              "text": "December starts to fill by mid-September, and the second and third weeks go first. If your building runs a residents’ evening every year, the safest approach is to fix next December’s date as soon as this one is over. Standard prices apply throughout December, with a premium only on Christmas Eve and Christmas Day."
             }
           }
         ]
@@ -2617,7 +2622,7 @@
         <p>A standard Christmas booking runs up to two hours including the singers&rsquo; breaks, which covers most residents&rsquo; evenings: long enough for people to drift down over half an hour and still hear a full programme. Longer bookings are possible at a premium, quoted upfront in the written quote so nothing arrives on the invoice you have not already seen.</p>
 
         <h3>When do we need to book carol singers for a December residents&rsquo; event?</h3>
-        <p>December closes out by mid&#8209;September, and the second and third weeks go first. If your building runs a residents&rsquo; evening every year, the safest approach is to fix next December&rsquo;s date as soon as this one is over. Standard prices apply throughout December, with a premium only on Christmas Eve and Christmas Day.</p>
+        <p>December starts to fill by mid&#8209;September, and the second and third weeks go first. If your building runs a residents&rsquo; evening every year, the safest approach is to fix next December&rsquo;s date as soon as this one is over. Standard prices apply throughout December, with a premium only on Christmas Eve and Christmas Day.</p>
       </div>
     </section>
 

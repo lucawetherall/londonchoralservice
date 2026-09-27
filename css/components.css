@@ -1229,16 +1229,21 @@ td.compare-us .compare-saving {
   align-items: start;
 }
 
+.services-hero .pull-quote--marquee {
+  margin-block: 0;
+}
+
+/* Two columns: the quote rides alongside the text. In the single-column
+   layout it must stay static, or it sticks over the text scrolling up. */
 @media (min-width: 52rem) {
   .services-hero {
     grid-template-columns: 1fr 1.4fr;
   }
-}
 
-.services-hero .pull-quote--marquee {
-  margin-block: 0;
-  position: sticky;
-  top: var(--space-2xl);
+  .services-hero .pull-quote--marquee {
+    position: sticky;
+    top: var(--space-2xl);
+  }
 }
 
 /* ═══════════════════════════════════

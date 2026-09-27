@@ -1993,16 +1993,21 @@
       align-items: start;
     }
     
+    .services-hero .pull-quote--marquee {
+      margin-block: 0;
+    }
+    
+    /* Two columns: the quote rides alongside the text. In the single-column
+       layout it must stay static, or it sticks over the text scrolling up. */
     @media (min-width: 52rem) {
       .services-hero {
         grid-template-columns: 1fr 1.4fr;
       }
-    }
     
-    .services-hero .pull-quote--marquee {
-      margin-block: 0;
-      position: sticky;
-      top: var(--space-2xl);
+      .services-hero .pull-quote--marquee {
+        position: sticky;
+        top: var(--space-2xl);
+      }
     }
     
     /* ═══════════════════════════════════
@@ -2468,7 +2473,7 @@
             "name": "Do you offer carol singers for Christmas events in Southwark?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Yes. We provide carol services and roaming carol singers for offices, hotels, and residents' events across Southwark in December. The choir sings unaccompanied, either performing a fixed programme or moving between groups of guests as the evening unfolds. December dates are in high demand and usually booked out by mid-September, so early enquiries help. See our Christmas page for details."
+              "text": "Yes. We provide carol services and roaming carol singers for offices, hotels, and residents' events across Southwark in December. The choir sings unaccompanied, either performing a fixed programme or moving between groups of guests as the evening unfolds. December dates are in high demand and usually start to fill by mid-September, so early enquiries help. See our Christmas page for details."
             }
           }
         ]
@@ -2607,7 +2612,7 @@
         <p>Yes, we sing at Honor Oak Crematorium on Brenchley Gardens regularly. The chapels run to fixed time slots, so we plan the programme carefully to fit. A soloist is the most common choice there, though we can provide larger ensembles when the family wishes.</p>
 
         <h3>Do you offer carol singers for Christmas events in Southwark?</h3>
-        <p>Yes. We provide carol services and roaming carol singers for offices, hotels, and residents&rsquo; events across Southwark in December. The choir sings unaccompanied, either performing a fixed programme or moving between groups of guests as the evening unfolds. December dates are in high demand and usually booked out by mid-September, so early enquiries help. See our <a href="../../christmas.html">Christmas page</a> for details.</p>
+        <p>Yes. We provide carol services and roaming carol singers for offices, hotels, and residents&rsquo; events across Southwark in December. The choir sings unaccompanied, either performing a fixed programme or moving between groups of guests as the evening unfolds. December dates are in high demand and usually start to fill by mid-September, so early enquiries help. See our <a href="../../christmas.html">Christmas page</a> for details.</p>
 
         <p><a href="../../contact.html" class="btn-link">Get in touch about your occasion in Southwark</a></p>
       </div>

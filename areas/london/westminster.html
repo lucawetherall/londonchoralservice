@@ -1993,16 +1993,21 @@
       align-items: start;
     }
     
+    .services-hero .pull-quote--marquee {
+      margin-block: 0;
+    }
+    
+    /* Two columns: the quote rides alongside the text. In the single-column
+       layout it must stay static, or it sticks over the text scrolling up. */
     @media (min-width: 52rem) {
       .services-hero {
         grid-template-columns: 1fr 1.4fr;
       }
-    }
     
-    .services-hero .pull-quote--marquee {
-      margin-block: 0;
-      position: sticky;
-      top: var(--space-2xl);
+      .services-hero .pull-quote--marquee {
+        position: sticky;
+        top: var(--space-2xl);
+      }
     }
     
     /* ═══════════════════════════════════
@@ -2468,7 +2473,7 @@
             "name": "Do you provide carol singers for Christmas events in Westminster?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Yes. We provide carol services and roaming carol singers for offices, hotels, and residents' events across Westminster throughout December. The choir performs entirely a cappella, singing a set programme or circulating among guests as the occasion requires. December dates are in especially high demand and usually booked out by mid-September, so early enquiries are essential. See our Christmas page."
+              "text": "Yes. We provide carol services and roaming carol singers for offices, hotels, and residents' events across Westminster throughout December. The choir performs entirely a cappella, singing a set programme or circulating among guests as the occasion requires. December dates are in especially high demand and usually start to fill by mid-September, so early enquiries are essential. See our Christmas page."
             }
           }
         ]
@@ -2607,7 +2612,7 @@
         <p>Westminster itself has no crematorium, but we regularly sing at Mortlake Crematorium in Richmond and at Putney Vale. Both are accessible from central London. Our singers adapt to the tighter timings of crematorium services. For guidance on music choices for these venues, see our <a href="../../music-guides/crematorium-music.html">crematorium music guide</a>.</p>
 
         <h3>Do you provide carol singers for Christmas events in Westminster?</h3>
-        <p>Yes. We provide carol services and roaming carol singers for offices, hotels, and residents&rsquo; events across Westminster throughout December. The choir performs entirely a cappella, singing a set programme or circulating among guests as the occasion requires. December dates are in especially high demand and usually booked out by mid-September, so early enquiries are essential. See our <a href="../../christmas.html">Christmas page</a>.</p>
+        <p>Yes. We provide carol services and roaming carol singers for offices, hotels, and residents&rsquo; events across Westminster throughout December. The choir performs entirely a cappella, singing a set programme or circulating among guests as the occasion requires. December dates are in especially high demand and usually start to fill by mid-September, so early enquiries are essential. See our <a href="../../christmas.html">Christmas page</a>.</p>
 
         <p><a href="../../contact.html" class="btn-link">Get in touch about your occasion in Westminster</a></p>
       </div>

@@ -1993,16 +1993,21 @@
       align-items: start;
     }
     
+    .services-hero .pull-quote--marquee {
+      margin-block: 0;
+    }
+    
+    /* Two columns: the quote rides alongside the text. In the single-column
+       layout it must stay static, or it sticks over the text scrolling up. */
     @media (min-width: 52rem) {
       .services-hero {
         grid-template-columns: 1fr 1.4fr;
       }
-    }
     
-    .services-hero .pull-quote--marquee {
-      margin-block: 0;
-      position: sticky;
-      top: var(--space-2xl);
+      .services-hero .pull-quote--marquee {
+        position: sticky;
+        top: var(--space-2xl);
+      }
     }
     
     /* ═══════════════════════════════════
@@ -2468,7 +2473,7 @@
             "name": "Can we book a choir for a Christmas event in Camden?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Yes. We provide Christmas carol services and roaming carol singers for offices, hotels, and residents' events across Camden, from King's Cross to Hampstead. December is heavily booked, and dates are usually gone by mid-September, so an early enquiry is the best way to secure one."
+              "text": "Yes. We provide Christmas carol services and roaming carol singers for offices, hotels, and residents' events across Camden, from King's Cross to Hampstead. December is heavily booked, and dates usually start to fill by mid-September, so an early enquiry is the best way to secure one."
             }
           }
         ]
@@ -2605,7 +2610,7 @@
         <p>Yes. We provide choirs of four to twelve voices at St&nbsp;John-at-Hampstead and coordinate with the church&rsquo;s director of music. We also cover nearby venues in <a href="barnet.html">Barnet</a> and <a href="haringey.html">Haringey</a>.</p>
 
         <h3>Can we book a choir for a Christmas event in Camden?</h3>
-        <p>Yes. We provide <a href="../../christmas.html">Christmas carol services</a> and roaming carol singers for offices, hotels, and residents&rsquo; events across Camden, from King&rsquo;s Cross to Hampstead. December is heavily booked, and dates are usually gone by mid-September, so an early enquiry is the best way to secure one.</p>
+        <p>Yes. We provide <a href="../../christmas.html">Christmas carol services</a> and roaming carol singers for offices, hotels, and residents&rsquo; events across Camden, from King&rsquo;s Cross to Hampstead. December is heavily booked, and dates usually start to fill by mid-September, so an early enquiry is the best way to secure one.</p>
 
         <p><a href="../../contact.html" class="btn-link">Get in touch about your occasion in Camden</a></p>
       </div>

@@ -1993,16 +1993,21 @@
       align-items: start;
     }
     
+    .services-hero .pull-quote--marquee {
+      margin-block: 0;
+    }
+    
+    /* Two columns: the quote rides alongside the text. In the single-column
+       layout it must stay static, or it sticks over the text scrolling up. */
     @media (min-width: 52rem) {
       .services-hero {
         grid-template-columns: 1fr 1.4fr;
       }
-    }
     
-    .services-hero .pull-quote--marquee {
-      margin-block: 0;
-      position: sticky;
-      top: var(--space-2xl);
+      .services-hero .pull-quote--marquee {
+        position: sticky;
+        top: var(--space-2xl);
+      }
     }
     
     /* ═══════════════════════════════════
@@ -2468,7 +2473,7 @@
             "name": "Are carol singers available for hire in Harrow during December?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Yes. Alongside seated Christmas carol services, we send carol singers to circulate at offices, hotels, and residents' Christmas evenings across Harrow. December is the month we book up fastest, and dates are usually gone by mid-September, so an early enquiry is the safest bet."
+              "text": "Yes. Alongside seated Christmas carol services, we send carol singers to circulate at offices, hotels, and residents' Christmas evenings across Harrow. December is the month we book up fastest, and dates usually start to fill by mid-September, so an early enquiry is the safest bet."
             }
           }
         ]
@@ -2589,7 +2594,7 @@
         <p>Yes. Breakspear Crematorium is the principal crematorium serving Harrow and north-west London, and our singers know its chapel well. We liaise directly with crematorium staff and your funeral director to ensure the music is timed carefully and delivered with sensitivity.</p>
 
         <h3>Are carol singers available for hire in Harrow during December?</h3>
-        <p>Yes. Alongside seated <a href="../../christmas.html">Christmas carol services</a>, we send carol singers to circulate at offices, hotels, and residents&rsquo; Christmas evenings across Harrow. December is the month we book up fastest, and dates are usually gone by mid-September, so an early enquiry is the safest bet.</p>
+        <p>Yes. Alongside seated <a href="../../christmas.html">Christmas carol services</a>, we send carol singers to circulate at offices, hotels, and residents&rsquo; Christmas evenings across Harrow. December is the month we book up fastest, and dates usually start to fill by mid-September, so an early enquiry is the safest bet.</p>
 
         <p>For more guidance, explore our <a href="../../music-guides/funeral-music-guide.html">funeral music guide</a>, <a href="../../music-guides/popular-funeral-hymns.html">popular funeral hymns</a>, <a href="../../music-guides/choosing-wedding-hymns.html">wedding hymns guide</a>, or <a href="../../music-guides/funeral-music-costs.html">funeral music costs guide</a>.</p>
 

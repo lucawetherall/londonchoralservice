@@ -1993,16 +1993,21 @@
       align-items: start;
     }
     
+    .services-hero .pull-quote--marquee {
+      margin-block: 0;
+    }
+    
+    /* Two columns: the quote rides alongside the text. In the single-column
+       layout it must stay static, or it sticks over the text scrolling up. */
     @media (min-width: 52rem) {
       .services-hero {
         grid-template-columns: 1fr 1.4fr;
       }
-    }
     
-    .services-hero .pull-quote--marquee {
-      margin-block: 0;
-      position: sticky;
-      top: var(--space-2xl);
+      .services-hero .pull-quote--marquee {
+        position: sticky;
+        top: var(--space-2xl);
+      }
     }
     
     /* ═══════════════════════════════════
@@ -2468,7 +2473,7 @@
             "name": "Do you provide carol singers for offices and residents' events in Lambeth?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Yes. We provide carol services for churches and roaming carol singers for offices, hotels, and residents' events across the borough each December. Our Christmas carol singers book up quickly, and dates are usually taken by mid-September, so it's worth getting in touch as early as possible."
+              "text": "Yes. We provide carol services for churches and roaming carol singers for offices, hotels, and residents' events across the borough each December. Our Christmas carol singers book up quickly, and dates usually start to fill by mid-September, so it's worth getting in touch as early as possible."
             }
           }
         ]
@@ -2608,7 +2613,7 @@
         <p>Yes. We provide wedding choirs of four to twelve voices at St&nbsp;John&rsquo;s Waterloo and coordinate with the church&rsquo;s own organist. We also cover nearby venues in <a href="southwark.html">Southwark</a> and <a href="wandsworth.html">Wandsworth</a>.</p>
 
         <h3>Do you provide carol singers for offices and residents&rsquo; events in Lambeth?</h3>
-        <p>Yes. We provide carol services for churches and roaming carol singers for offices, hotels, and residents&rsquo; events across the borough each December. Our <a href="../../carol-singers.html">Christmas carol singers</a> book up quickly, and dates are usually taken by mid-September, so it&rsquo;s worth getting in touch as early as possible.</p>
+        <p>Yes. We provide carol services for churches and roaming carol singers for offices, hotels, and residents&rsquo; events across the borough each December. Our <a href="../../carol-singers.html">Christmas carol singers</a> book up quickly, and dates usually start to fill by mid-September, so it&rsquo;s worth getting in touch as early as possible.</p>
 
         <p><a href="../../contact.html" class="btn-link">Get in touch about your occasion in Lambeth</a></p>
       </div>

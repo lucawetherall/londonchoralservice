@@ -1993,16 +1993,21 @@
       align-items: start;
     }
     
+    .services-hero .pull-quote--marquee {
+      margin-block: 0;
+    }
+    
+    /* Two columns: the quote rides alongside the text. In the single-column
+       layout it must stay static, or it sticks over the text scrolling up. */
     @media (min-width: 52rem) {
       .services-hero {
         grid-template-columns: 1fr 1.4fr;
       }
-    }
     
-    .services-hero .pull-quote--marquee {
-      margin-block: 0;
-      position: sticky;
-      top: var(--space-2xl);
+      .services-hero .pull-quote--marquee {
+        position: sticky;
+        top: var(--space-2xl);
+      }
     }
     
     /* ═══════════════════════════════════
@@ -2468,7 +2473,7 @@
             "name": "Do you provide carol singers for hotels and residents' events in Kensington and Chelsea?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Yes. We provide carol services for churches and roaming carol singers for hotels, private clubs, and residents' events throughout the borough each December. Our Christmas carol singers are heavily booked, and dates are usually taken by mid-September, so hotels and managing agents tend to enquire well ahead of the season."
+              "text": "Yes. We provide carol services for churches and roaming carol singers for hotels, private clubs, and residents' events throughout the borough each December. Our Christmas carol singers are heavily booked, and dates usually start to fill by mid-September, so hotels and managing agents tend to enquire well ahead of the season."
             }
           }
         ]
@@ -2607,7 +2612,7 @@
         <p>Kensington and Chelsea has no crematorium within its boundaries. Families in the borough most often use Mortlake Crematorium in <a href="richmond.html">Richmond</a> or Putney Vale Crematorium in <a href="wandsworth.html">Wandsworth</a>. We sing at both regularly and can advise on <a href="../../music-guides/crematorium-music.html">music for crematorium services</a>.</p>
 
         <h3>Do you provide carol singers for hotels and residents&rsquo; events in Kensington and Chelsea?</h3>
-        <p>Yes. We provide carol services for churches and roaming carol singers for hotels, private clubs, and residents&rsquo; events throughout the borough each December. Our <a href="../../carol-singers.html">Christmas carol singers</a> are heavily booked, and dates are usually taken by mid-September, so hotels and managing agents tend to enquire well ahead of the season.</p>
+        <p>Yes. We provide carol services for churches and roaming carol singers for hotels, private clubs, and residents&rsquo; events throughout the borough each December. Our <a href="../../carol-singers.html">Christmas carol singers</a> are heavily booked, and dates usually start to fill by mid-September, so hotels and managing agents tend to enquire well ahead of the season.</p>
 
         <p><a href="../../contact.html" class="btn-link">Get in touch about your occasion in Kensington &amp; Chelsea</a></p>
       </div>

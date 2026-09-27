@@ -1993,16 +1993,21 @@
       align-items: start;
     }
     
+    .services-hero .pull-quote--marquee {
+      margin-block: 0;
+    }
+    
+    /* Two columns: the quote rides alongside the text. In the single-column
+       layout it must stay static, or it sticks over the text scrolling up. */
     @media (min-width: 52rem) {
       .services-hero {
         grid-template-columns: 1fr 1.4fr;
       }
-    }
     
-    .services-hero .pull-quote--marquee {
-      margin-block: 0;
-      position: sticky;
-      top: var(--space-2xl);
+      .services-hero .pull-quote--marquee {
+        position: sticky;
+        top: var(--space-2xl);
+      }
     }
     
     /* ═══════════════════════════════════
@@ -2468,7 +2473,7 @@
             "name": "Can you provide carol singers for a Christmas event in Brent?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Yes. We offer carol services and roaming carol singers for offices, hotels, and residents' events across Brent, including Wembley, Willesden, and Kilburn. December bookings fill quickly, and dates are usually taken by mid-September, so an early enquiry secures the date you want."
+              "text": "Yes. We offer carol services and roaming carol singers for offices, hotels, and residents' events across Brent, including Wembley, Willesden, and Kilburn. December is our busiest month, and dates usually start to fill by mid-September, so an early enquiry secures the date you want."
             }
           }
         ]
@@ -2592,7 +2597,7 @@
         <p>Yes. Brent is well served by crematoriums in neighbouring boroughs, and we sing at all of them regularly. Our singers know the timing and layout requirements at each venue and coordinate directly with crematorium staff to keep everything running smoothly.</p>
 
         <h3>Can you provide carol singers for a Christmas event in Brent?</h3>
-        <p>Yes. We offer <a href="../../christmas.html">carol services</a> and roaming carol singers for offices, hotels, and residents&rsquo; events across Brent, including Wembley, Willesden, and Kilburn. December bookings fill quickly, and dates are usually taken by mid-September, so an early enquiry secures the date you want.</p>
+        <p>Yes. We offer <a href="../../christmas.html">carol services</a> and roaming carol singers for offices, hotels, and residents&rsquo; events across Brent, including Wembley, Willesden, and Kilburn. December is our busiest month, and dates usually start to fill by mid-September, so an early enquiry secures the date you want.</p>
 
         <p>For more guidance, explore our <a href="../../music-guides/funeral-music-guide.html">funeral music guide</a>, <a href="../../music-guides/popular-funeral-hymns.html">popular funeral hymns</a>, <a href="../../music-guides/choosing-wedding-hymns.html">wedding hymns guide</a>, or <a href="../../music-guides/funeral-music-costs.html">funeral music costs guide</a>.</p>
 

@@ -1993,16 +1993,21 @@
       align-items: start;
     }
     
+    .services-hero .pull-quote--marquee {
+      margin-block: 0;
+    }
+    
+    /* Two columns: the quote rides alongside the text. In the single-column
+       layout it must stay static, or it sticks over the text scrolling up. */
     @media (min-width: 52rem) {
       .services-hero {
         grid-template-columns: 1fr 1.4fr;
       }
-    }
     
-    .services-hero .pull-quote--marquee {
-      margin-block: 0;
-      position: sticky;
-      top: var(--space-2xl);
+      .services-hero .pull-quote--marquee {
+        position: sticky;
+        top: var(--space-2xl);
+      }
     }
     
     /* ═══════════════════════════════════
@@ -2459,7 +2464,7 @@
             "name": "Do you provide carol singers in Manchester in December?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Yes. We offer carol services and carol singers who move through offices, hotels, and residents' Christmas events across Manchester and Greater Manchester. December is our most in-demand month, and dates are typically booked out by mid-September, so it's worth enquiring early. See our Christmas page for more."
+              "text": "Yes. We offer carol services and carol singers who move through offices, hotels, and residents' Christmas events across Manchester and Greater Manchester. December is our most in-demand month, and dates typically start to fill by mid-September, so it's worth enquiring early. See our Christmas page for more."
             }
           }
         ]
@@ -2607,7 +2612,7 @@
         <p>Yes, we regularly sing at Manchester Crematorium, Agecroft Crematorium, and Blackley Crematorium, as well as other chapels across Greater Manchester. Our musicians know these venues well and are experienced in working within their specific timings and acoustics.</p>
 
         <h3>Do you provide carol singers in Manchester in December?</h3>
-        <p>Yes. We offer carol services and carol singers who move through offices, hotels, and residents&rsquo; Christmas events across Manchester and Greater Manchester. December is our most in-demand month, and dates are typically booked out by mid-September, so it&rsquo;s worth enquiring early. See our <a href="../christmas.html">Christmas page</a> for more.</p>
+        <p>Yes. We offer carol services and carol singers who move through offices, hotels, and residents&rsquo; Christmas events across Manchester and Greater Manchester. December is our most in-demand month, and dates typically start to fill by mid-September, so it&rsquo;s worth enquiring early. See our <a href="../christmas.html">Christmas page</a> for more.</p>
 
         <p>For more guidance, explore our <a href="../music-guides/funeral-music-guide.html">funeral music guide</a>, <a href="../music-guides/popular-funeral-hymns.html">popular funeral hymns</a>, <a href="../music-guides/choosing-wedding-hymns.html">wedding hymns guide</a>, or <a href="../music-guides/funeral-music-costs.html">funeral music costs guide</a>.</p>
 

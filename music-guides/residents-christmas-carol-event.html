@@ -1995,16 +1995,21 @@
       align-items: start;
     }
     
+    .services-hero .pull-quote--marquee {
+      margin-block: 0;
+    }
+    
+    /* Two columns: the quote rides alongside the text. In the single-column
+       layout it must stay static, or it sticks over the text scrolling up. */
     @media (min-width: 52rem) {
       .services-hero {
         grid-template-columns: 1fr 1.4fr;
       }
-    }
     
-    .services-hero .pull-quote--marquee {
-      margin-block: 0;
-      position: sticky;
-      top: var(--space-2xl);
+      .services-hero .pull-quote--marquee {
+        position: sticky;
+        top: var(--space-2xl);
+      }
     }
     
     /* ═══════════════════════════════════
@@ -2646,7 +2651,7 @@
       <section class="section">
         <div class="prose">
           <h2>Book by early autumn</h2>
-          <p>December dates go by the middle of September most years, and the first three weeks of the month are the tightest in the choral calendar. Residents&rsquo; events have one advantage over corporate ones: a Tuesday or Wednesday evening in early December is far easier to fill than a Friday, and it is the same choir either way. If your committee or your client meets quarterly, put the carol evening on the summer agenda rather than the autumn one.</p>
+          <p>December dates start to fill by the middle of September most years, and the first three weeks of the month are the tightest in the choral calendar. Residents&rsquo; events have one advantage over corporate ones: a Tuesday or Wednesday evening in early December is far easier to fill than a Friday, and it is the same choir either way. If your committee or your client meets quarterly, put the carol evening on the summer agenda rather than the autumn one.</p>
           <p>The London Choral Service sings at residents&rsquo; evenings across London and the rest of the UK. For how we work with managing agents and estate teams, see our <a href="../for-property-managers.html">information for property managers</a>; for ensemble sizes and the formats the singers work in, see <a href="../carol-singers.html">hire carol singers</a>.</p>
         </div>
       </section>

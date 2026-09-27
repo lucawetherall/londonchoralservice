@@ -1994,16 +1994,21 @@
       align-items: start;
     }
     
+    .services-hero .pull-quote--marquee {
+      margin-block: 0;
+    }
+    
+    /* Two columns: the quote rides alongside the text. In the single-column
+       layout it must stay static, or it sticks over the text scrolling up. */
     @media (min-width: 52rem) {
       .services-hero {
         grid-template-columns: 1fr 1.4fr;
       }
-    }
     
-    .services-hero .pull-quote--marquee {
-      margin-block: 0;
-      position: sticky;
-      top: var(--space-2xl);
+      .services-hero .pull-quote--marquee {
+        position: sticky;
+        top: var(--space-2xl);
+      }
     }
     
     /* ═══════════════════════════════════
@@ -2554,7 +2559,7 @@
     <section class="section">
       <div class="prose">
         <h2>Christmas 2026</h2>
-        <p>In December our choirs sing carol services in offices, livery halls, and churches, and our carol singers work hotel lobbies, drinks receptions, and residents&rsquo; evenings&thinsp;&mdash;&thinsp;roaming among guests or singing sets, entirely a cappella if the space has no piano. We charge the same rates in December as the rest of the year, except on Christmas Eve and Christmas Day, and the popular dates are usually gone by mid-September.</p>
+        <p>In December our choirs sing carol services in offices, livery halls, and churches, and our carol singers work hotel lobbies, drinks receptions, and residents&rsquo; evenings&thinsp;&mdash;&thinsp;roaming among guests or singing sets, entirely a cappella if the space has no piano. We charge the same rates in December as the rest of the year, except on Christmas Eve and Christmas Day, and the popular dates usually start to fill by mid-September.</p>
         <p><a href="christmas.html">Christmas carol services</a> &ensp;&middot;&ensp; <a href="carol-singers.html">Hire carol singers</a></p>
       </div>
     </section>

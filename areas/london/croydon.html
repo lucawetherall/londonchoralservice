@@ -1993,16 +1993,21 @@
       align-items: start;
     }
     
+    .services-hero .pull-quote--marquee {
+      margin-block: 0;
+    }
+    
+    /* Two columns: the quote rides alongside the text. In the single-column
+       layout it must stay static, or it sticks over the text scrolling up. */
     @media (min-width: 52rem) {
       .services-hero {
         grid-template-columns: 1fr 1.4fr;
       }
-    }
     
-    .services-hero .pull-quote--marquee {
-      margin-block: 0;
-      position: sticky;
-      top: var(--space-2xl);
+      .services-hero .pull-quote--marquee {
+        position: sticky;
+        top: var(--space-2xl);
+      }
     }
     
     /* ═══════════════════════════════════
@@ -2468,7 +2473,7 @@
             "name": "Is it possible to book Christmas carol singers in Croydon?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Yes. We provide Christmas carol services and roaming carol singers for offices, hotels, and residents' events across Croydon, Purley, and Sanderstead. December is our busiest month, and dates are usually booked out by mid-September, so it's best to enquire in good time."
+              "text": "Yes. We provide Christmas carol services and roaming carol singers for offices, hotels, and residents' events across Croydon, Purley, and Sanderstead. December is our busiest month, and dates usually start to fill by mid-September, so it's best to enquire in good time."
             }
           }
         ]
@@ -2593,7 +2598,7 @@
         <p>Yes. We sing at Croydon Crematorium on Mitcham Road regularly and are familiar with its chapel layout and timing requirements. Our singers arrive early, liaise with crematorium staff, and ensure the music fits precisely within the allotted service time.</p>
 
         <h3>Is it possible to book Christmas carol singers in Croydon?</h3>
-        <p>Yes. We provide <a href="../../christmas.html">Christmas carol services</a> and roaming carol singers for offices, hotels, and residents&rsquo; events across Croydon, Purley, and Sanderstead. December is our busiest month, and dates are usually booked out by mid-September, so it&rsquo;s best to enquire in good time.</p>
+        <p>Yes. We provide <a href="../../christmas.html">Christmas carol services</a> and roaming carol singers for offices, hotels, and residents&rsquo; events across Croydon, Purley, and Sanderstead. December is our busiest month, and dates usually start to fill by mid-September, so it&rsquo;s best to enquire in good time.</p>
 
         <p>For more guidance, explore our <a href="../../music-guides/funeral-music-guide.html">funeral music guide</a>, <a href="../../music-guides/popular-funeral-hymns.html">popular funeral hymns</a>, <a href="../../music-guides/choosing-wedding-hymns.html">wedding hymns guide</a>, or <a href="../../music-guides/funeral-music-costs.html">funeral music costs guide</a>.</p>
 

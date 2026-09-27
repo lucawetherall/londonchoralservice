@@ -1993,16 +1993,21 @@
       align-items: start;
     }
     
+    .services-hero .pull-quote--marquee {
+      margin-block: 0;
+    }
+    
+    /* Two columns: the quote rides alongside the text. In the single-column
+       layout it must stay static, or it sticks over the text scrolling up. */
     @media (min-width: 52rem) {
       .services-hero {
         grid-template-columns: 1fr 1.4fr;
       }
-    }
     
-    .services-hero .pull-quote--marquee {
-      margin-block: 0;
-      position: sticky;
-      top: var(--space-2xl);
+      .services-hero .pull-quote--marquee {
+        position: sticky;
+        top: var(--space-2xl);
+      }
     }
     
     /* ═══════════════════════════════════
@@ -2468,7 +2473,7 @@
             "name": "Do you provide carol singers in the City of London in December?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Yes. We provide carol services and roaming carol singers for livery halls, offices, and City venues throughout December. Bookings for livery company events are especially early, and dates are usually gone by mid-September, so enquiries are best made in the summer."
+              "text": "Yes. We provide carol services and roaming carol singers for livery halls, offices, and City venues throughout December. Bookings for livery company events are especially early, and dates usually start to fill by mid-September, so enquiries are best made in the summer."
             }
           }
         ]
@@ -2597,7 +2602,7 @@
         <p>Yes. The City of London Crematorium in Manor Park is the nearest crematorium, and we sing there regularly. Our singers are practised at working within fixed crematorium time slots and coordinate directly with staff to ensure the music is timed perfectly.</p>
 
         <h3>Do you provide carol singers in the City of London in December?</h3>
-        <p>Yes. We provide <a href="../../christmas.html">carol services</a> and roaming carol singers for livery halls, offices, and City venues throughout December. Bookings for livery company events are especially early, and dates are usually gone by mid-September, so enquiries are best made in the summer.</p>
+        <p>Yes. We provide <a href="../../christmas.html">carol services</a> and roaming carol singers for livery halls, offices, and City venues throughout December. Bookings for livery company events are especially early, and dates usually start to fill by mid-September, so enquiries are best made in the summer.</p>
 
         <p>For more guidance, explore our <a href="../../music-guides/funeral-music-guide.html">funeral music guide</a>, <a href="../../music-guides/popular-funeral-hymns.html">popular funeral hymns</a>, <a href="../../music-guides/choosing-wedding-hymns.html">wedding hymns guide</a>, or <a href="../../music-guides/funeral-music-costs.html">funeral music costs guide</a>.</p>
 
