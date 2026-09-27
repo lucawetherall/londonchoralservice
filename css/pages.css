@@ -22,7 +22,8 @@
   .skip-link,
   .contact-form,
   .btn,
-  .video-embed {
+  .video-embed,
+  .mobile-cta {
     display: none !important;
   }
 

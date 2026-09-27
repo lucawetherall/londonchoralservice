@@ -179,16 +179,16 @@
   <meta property="og:url" content="https://londonchoralservice.com/areas/london/hillingdon.html">
   <meta property="og:locale" content="en_GB">
   <meta property="og:site_name" content="London Choral Service">
-  <meta property="og:image" content="https://londonchoralservice.com/assets/og-image.png">
+  <meta property="og:image" content="https://londonchoralservice.com/assets/og/areas-london-hillingdon.png">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
-  <meta property="og:image:alt" content="The London Choral Service: professional choirs and singers for funerals, weddings, and ceremonies">
+  <meta property="og:image:alt" content="The London Choral Service: Funeral &amp; Wedding Choirs in Hillingdon. Live singers for churches, crematoria and carol services">
 
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Funeral and wedding choirs in Hillingdon | LCS">
   <meta name="twitter:description" content="Professional funeral singers and wedding choirs in Hillingdon, London. Conservatoire-trained musicians for funerals, weddings, memorials, and ceremonies.">
-  <meta name="twitter:image" content="https://londonchoralservice.com/assets/og-image.png">
-  <meta name="twitter:image:alt" content="The London Choral Service: professional choirs and singers for funerals, weddings, and ceremonies">
+  <meta name="twitter:image" content="https://londonchoralservice.com/assets/og/areas-london-hillingdon.png">
+  <meta name="twitter:image:alt" content="The London Choral Service: Funeral &amp; Wedding Choirs in Hillingdon. Live singers for churches, crematoria and carol services">
   <link rel="dns-prefetch" href="https://www.googletagmanager.com">
   <link rel="dns-prefetch" href="https://api.web3forms.com">
 
@@ -200,8 +200,9 @@
       --color-text:       #2C2420;
       --color-text-mid:   #6B5E56;
       --color-accent:     #8B3A3A;
-      --color-accent-hover: #A85454;
+      --color-accent-hover: #9E4A4A; /* 4.9:1 on --color-bg-alt (link hover in tinted boxes) */
       --color-rule:       #D6CEC6;
+      --color-field-rule: #8F827A;   /* form-field edges: 3:1+ on both backgrounds (WCAG 1.4.11) */
     
       /* ── Feedback Colours ── */
       --color-error:      #9B2C2C;
@@ -670,6 +671,7 @@
     @media (max-width: 1080px) {
       .nav-toggle {
         display: block;
+        flex-shrink: 0;
       }
     
       .nav-links {
@@ -709,6 +711,18 @@
         position: relative;
       }
     
+    }
+    
+    /* The nowrap site name at --text-lg plus the toggle is ~377px wide:
+       scale the name with the viewport on small phones so the header fits at 320px. */
+    @media (max-width: 420px) {
+      .site-name {
+        font-size: clamp(1.125rem, 6vw, var(--text-lg));
+      }
+    
+      .site-nav {
+        gap: var(--space-md);
+      }
     }
     
     /* ═══════════════════════════════════
@@ -770,6 +784,14 @@
       }
       .footer-col--brand {
         grid-column: 1 / -1;
+      }
+      /* Touch screens: pad the link lists to a ~40px tap target */
+      .footer-col li {
+        margin-bottom: 0;
+      }
+      .footer-col li a {
+        display: inline-block;
+        padding-block: var(--space-sm);
       }
     }
     
@@ -872,14 +894,6 @@
       font-weight: 600;
       text-align: right;
       white-space: nowrap;
-    }
-    
-    .pricing-price .vat {
-      font-family: var(--font-body);
-      font-size: var(--text-sm);
-      font-weight: 400;
-      color: var(--color-text-mid);
-      margin-left: var(--space-xs);
     }
     
     @media (max-width: 599px) {
@@ -1106,37 +1120,6 @@
     }
     
     /* ═══════════════════════════════════
-       Ensemble Definition List
-       ═══════════════════════════════════ */
-    .ensemble-list dt {
-      font-family: var(--font-heading);
-      font-size: var(--text-lg);
-      font-weight: 500;
-      margin-top: var(--space-xl);
-      padding-top: var(--space-xl);
-      border-top: 1px solid var(--color-rule);
-    }
-    
-    .ensemble-list dt:first-child {
-      border-top: none;
-      padding-top: 0;
-      margin-top: 0;
-    }
-    
-    .ensemble-list .aside {
-      font-family: var(--font-body);
-      font-size: var(--text-sm);
-      font-weight: 400;
-      color: var(--color-text-mid);
-    }
-    
-    .ensemble-list dd {
-      margin-top: var(--space-sm);
-      margin-left: 0;
-      color: var(--color-text-mid);
-    }
-    
-    /* ═══════════════════════════════════
        Track Listing (Listen Page)
        ═══════════════════════════════════ */
     .track {
@@ -1201,7 +1184,7 @@
       font-size: var(--text-base);
       padding: var(--space-sm) 0;
       border: none;
-      border-bottom: 1px solid var(--color-rule);
+      border-bottom: 1px solid var(--color-field-rule);
       background: transparent;
       color: var(--color-text);
       border-radius: 0;
@@ -1214,7 +1197,7 @@
       font-family: var(--font-body);
       font-size: var(--text-base);
       padding: var(--space-sm);
-      border: 1px solid var(--color-rule);
+      border: 1px solid var(--color-field-rule);
       background: transparent;
       color: var(--color-text);
       border-radius: 0;
@@ -1233,6 +1216,13 @@
       box-shadow: 0 0 0 1px var(--color-accent);
     }
     
+    /* A colour change alone on a 1px underline is too faint a focus cue:
+       thicken the underline to 2px in the accent colour. */
+    .form-field input:focus,
+    .form-field select:focus {
+      box-shadow: 0 1px 0 0 var(--color-accent);
+    }
+    
     .form-field select {
       cursor: pointer;
       background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%236B5E56' d='M1.41 0L6 4.58 10.59 0 12 1.41l-6 6-6-6z'/%3E%3C/svg%3E");
@@ -1244,7 +1234,8 @@
     /* ── Validation States ── */
     .form-field input:user-invalid,
     .form-field select:user-invalid,
-    .form-field textarea:user-invalid {
+    .form-field textarea:user-invalid,
+    .form-field [aria-invalid="true"] {
       border-color: var(--color-error);
     }
     
@@ -1329,13 +1320,6 @@
       margin-bottom: 0;
       font-size: var(--text-sm);
       color: var(--color-text-mid);
-    }
-    
-    .hero-trust__stars {
-      color: var(--color-accent);
-      letter-spacing: 0.08em;
-      font-size: var(--text-base);
-      line-height: 1;
     }
     
     /* ═══════════════════════════════════
@@ -1644,6 +1628,14 @@
       opacity: 0.85;
     }
     
+    /* .video-embed clips overflow, so the global outline (drawn outside) is
+       invisible here: draw the focus ring inside the thumbnail instead. */
+    .video-thumb:focus-visible {
+      outline: 3px solid #fff;
+      outline-offset: -6px;
+      box-shadow: inset 0 0 0 3px var(--color-accent);
+    }
+    
     @media (max-width: 805px) {
       .hero {
         flex-direction: column;
@@ -1708,13 +1700,13 @@
       color: var(--color-accent);
     }
     
-    .filter-chip[aria-pressed="true"] {
+    .filter-chip[aria-current="page"] {
       background-color: var(--color-accent);
       color: var(--color-bg);
       border-color: var(--color-accent);
     }
     
-    .filter-chip[aria-pressed="true"]:hover {
+    .filter-chip[aria-current="page"]:hover {
       background-color: var(--color-accent-hover);
       border-color: var(--color-accent-hover);
       color: var(--color-bg);
@@ -1934,6 +1926,11 @@
       outline: none;
     }
     
+    .dropdown-menu a:focus-visible {
+      outline: 2px solid var(--color-accent);
+      outline-offset: -2px;
+    }
+    
     .dropdown-separator {
       height: 1px;
       background-color: var(--color-rule);
@@ -1951,6 +1948,15 @@
     .has-dropdown:focus-within > .dropdown-trigger .dropdown-caret,
     .has-dropdown[data-open="true"] > .dropdown-trigger .dropdown-caret {
       transform: rotate(180deg);
+    }
+    
+    /* ESC dismisses a desktop dropdown even while hover/focus is still inside (nav.js) */
+    .has-dropdown[data-dismissed] > .dropdown-menu {
+      display: none;
+    }
+    
+    .has-dropdown[data-dismissed] > .dropdown-trigger .dropdown-caret {
+      transform: none;
     }
     
     /* Mobile: dropdown becomes an inline expandable block inside the hamburger */
@@ -2025,16 +2031,21 @@
       align-items: start;
     }
     
+    .services-hero .pull-quote--marquee {
+      margin-block: 0;
+    }
+    
+    /* Two columns: the quote rides alongside the text. In the single-column
+       layout it must stay static, or it sticks over the text scrolling up. */
     @media (min-width: 52rem) {
       .services-hero {
         grid-template-columns: 1fr 1.4fr;
       }
-    }
     
-    .services-hero .pull-quote--marquee {
-      margin-block: 0;
-      position: sticky;
-      top: var(--space-2xl);
+      .services-hero .pull-quote--marquee {
+        position: sticky;
+        top: var(--space-2xl);
+      }
     }
     
     /* ═══════════════════════════════════
@@ -2239,6 +2250,32 @@
       color: var(--color-accent);
     }
     
+    /* ── "How it works" numbered steps (service pages) ── */
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+      gap: var(--space-lg);
+      margin-block: var(--space-lg);
+    }
+    .step-num {
+      display: block;
+      font-family: var(--font-heading);
+      font-weight: 600;
+      font-size: 2rem;
+      font-variant-numeric: lining-nums; /* Cormorant's old-style 1 reads as a roman I */
+      line-height: 1;
+      color: var(--color-accent);
+    }
+    .step h3 {
+      font-size: var(--text-md);
+      font-weight: 600;
+      margin-block: var(--space-xs);
+    }
+    .step p {
+      margin: 0;
+      color: var(--color-text-mid);
+    }
+    
     /* ── Care strip: "We take the whole thing off your hands" ──────────── */
     .care-steps {
       list-style: none;
@@ -2253,6 +2290,7 @@
       font-family: var(--font-heading);
       font-weight: 600;
       font-size: 2rem;
+      font-variant-numeric: lining-nums;
       line-height: 1;
       color: var(--color-accent);
     }
@@ -2303,7 +2341,8 @@
       .skip-link,
       .contact-form,
       .btn,
-      .video-embed {
+      .video-embed,
+      .mobile-cta {
         display: none !important;
       }
     
@@ -2437,42 +2476,26 @@
         "mainEntity": [
           {
             "@type": "Question",
-            "name": "How much does a funeral singer cost in Hillingdon?",
+            "name": "Is a quartet the right size for Breakspear Crematorium?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "For services at Breakspear Crematorium, Hillingdon Cemetery, St John's Hillingdon, or churches in Uxbridge and Ruislip, a soloist starts from £250. Four singers cost £1,150, five (a quintet) £1,400, six (a sextet) £1,600, and a full choir of eight £2,000. All prices include travel within Greater London."
+              "text": "Usually, yes. Breakspear runs to a fixed service length, often around 30 minutes, and a quartet (from £1,150) can lead a hymn without crowding the family in the chapel."
             }
           },
           {
             "@type": "Question",
-            "name": "Can you provide a choir for a wedding in Hillingdon?",
+            "name": "What should I budget for funeral singers at Breakspear or St John’s Hillingdon?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Yes. St John's Hillingdon is a popular choice for a traditional church wedding with full choral music, and Uxbridge has a range of licensed venues suited to civil ceremonies. We provide ensembles from a solo vocalist to a twelve-voice chorus, and we handle all the musical planning from first enquiry to the day itself."
+              "text": "For services at Breakspear Crematorium, Hillingdon Cemetery, St John's Hillingdon, or churches in Uxbridge and Ruislip, a soloist starts from £250. Four singers cost £1,150, five (a quintet) £1,400, six (a sextet) £1,600, and a full choir of eight £2,000. Hillingdon is the westernmost London borough but still inside Greater London, so travel to Uxbridge or Ruislip is included."
             }
           },
           {
             "@type": "Question",
-            "name": "What types of music can you perform at a funeral in Hillingdon?",
-            "acceptedAnswer": {
-              "@type": "Answer",
-              "text": "At St John's Hillingdon or the parish churches of Ruislip and Hayes, traditional hymns, psalms, and sacred choral works sound magnificent. At Breakspear Crematorium or Hillingdon Cemetery, we often sing more reflective pieces — contemporary songs, classical solos, or bespoke arrangements tailored to the family's wishes."
-            }
-          },
-          {
-            "@type": "Question",
-            "name": "Do you cover crematorium services in Hillingdon?",
+            "name": "Does live music suit the chapel at Breakspear Crematorium?",
             "acceptedAnswer": {
               "@type": "Answer",
               "text": "Yes. Breakspear Crematorium is one of north-west London's busiest crematoria, and our singers know its chapel well. Live music changes the atmosphere there in a way recorded music does not. We liaise with crematorium staff and funeral directors so the timing holds throughout."
-            }
-          },
-          {
-            "@type": "Question",
-            "name": "Do you provide carol singers for Christmas events in Hillingdon?",
-            "acceptedAnswer": {
-              "@type": "Answer",
-              "text": "Yes. We provide carol services for churches and roaming carol singers for offices, hotels, and residents' events throughout the borough in December. Our Christmas carol singers are in demand, and December dates are usually booked out by mid-September, so it's worth enquiring early if you have a date in mind."
             }
           }
         ]
@@ -2489,48 +2512,48 @@
   <header class="site-header">
     <nav class="site-nav page-wrap" aria-label="Main navigation">
       <a href="/" class="site-name">The London Choral Service</a>
-      <button class="nav-toggle" aria-expanded="false" aria-controls="nav-menu" aria-label="Menu">
+      <button type="button" class="nav-toggle" aria-expanded="false" aria-controls="nav-menu" aria-label="Menu">
         <span class="nav-toggle-bar"></span>
       </button>
       <ul id="nav-menu" class="nav-links" role="list">
         <li><a href="/about.html">About</a></li>
         <li class="has-dropdown">
-          <a href="/services.html" aria-haspopup="true" aria-expanded="false" class="dropdown-trigger">Services<span class="dropdown-caret" aria-hidden="true">&#9662;</span></a>
-          <ul class="dropdown-menu" role="menu">
-            <li role="none"><a role="menuitem" href="/weddings.html">Weddings</a></li>
-            <li role="none"><a role="menuitem" href="/funerals.html">Funerals</a></li>
-            <li role="none"><a role="menuitem" href="/corporate.html">Corporate</a></li>
-            <li role="none"><a role="menuitem" href="/christmas.html">Christmas</a></li>
-            <li role="none"><a role="menuitem" href="/carol-singers.html">Carol Singers</a></li>
-            <li role="none"><a role="menuitem" href="/private-events.html">Private Events</a></li>
-            <li role="none"><a role="menuitem" href="/destinations/">Weddings Abroad</a></li>
-            <li role="separator" class="dropdown-separator"></li>
-            <li role="none"><a role="menuitem" href="/services.html">All services</a></li>
+          <a href="/services.html" aria-expanded="false" class="dropdown-trigger">Services<span class="dropdown-caret" aria-hidden="true">&#9662;</span></a>
+          <ul class="dropdown-menu">
+            <li><a href="/weddings.html">Weddings</a></li>
+            <li><a href="/funerals.html">Funerals</a></li>
+            <li><a href="/corporate.html">Corporate</a></li>
+            <li><a href="/christmas.html">Christmas</a></li>
+            <li><a href="/carol-singers.html">Carol Singers</a></li>
+            <li><a href="/private-events.html">Private Events</a></li>
+            <li><a href="/destinations/">Weddings Abroad</a></li>
+            <li class="dropdown-separator" aria-hidden="true"></li>
+            <li><a href="/services.html">All services</a></li>
           </ul>
         </li>
         <li class="has-dropdown">
-          <a href="/planners-and-venues.html" aria-haspopup="true" aria-expanded="false" class="dropdown-trigger">Professionals<span class="dropdown-caret" aria-hidden="true">&#9662;</span></a>
-          <ul class="dropdown-menu" role="menu">
-            <li role="none"><a role="menuitem" href="/for-funeral-directors.html">Funeral Directors</a></li>
-            <li role="none"><a role="menuitem" href="/for-wedding-planners.html">Wedding Planners</a></li>
-            <li role="none"><a role="menuitem" href="/for-event-managers.html">Event Managers</a></li>
-            <li role="none"><a role="menuitem" href="/for-hotels.html">Hotels &amp; Venues</a></li>
-            <li role="none"><a role="menuitem" href="/for-property-managers.html">Property Managers</a></li>
-            <li role="none"><a role="menuitem" href="/for-livery-companies.html">Livery Companies</a></li>
-            <li role="none"><a role="menuitem" href="/for-charities.html">Charities</a></li>
-            <li role="separator" class="dropdown-separator"></li>
-            <li role="none"><a role="menuitem" href="/planners-and-venues.html">Planners, Venues &amp; Estates</a></li>
+          <a href="/planners-and-venues.html" aria-expanded="false" class="dropdown-trigger">Professionals<span class="dropdown-caret" aria-hidden="true">&#9662;</span></a>
+          <ul class="dropdown-menu">
+            <li><a href="/for-funeral-directors.html">Funeral Directors</a></li>
+            <li><a href="/for-wedding-planners.html">Wedding Planners</a></li>
+            <li><a href="/for-event-managers.html">Event Managers</a></li>
+            <li><a href="/for-hotels.html">Hotels &amp; Venues</a></li>
+            <li><a href="/for-property-managers.html">Property Managers</a></li>
+            <li><a href="/for-livery-companies.html">Livery Companies</a></li>
+            <li><a href="/for-charities.html">Charities</a></li>
+            <li class="dropdown-separator" aria-hidden="true"></li>
+            <li><a href="/planners-and-venues.html">Planners, Venues &amp; Estates</a></li>
           </ul>
         </li>
         <li><a href="/listen.html">Listen</a></li>
         <li class="has-dropdown">
-          <a href="/music-guides/" aria-haspopup="true" aria-expanded="false" class="dropdown-trigger">Music Guides<span class="dropdown-caret" aria-hidden="true">&#9662;</span></a>
-          <ul class="dropdown-menu" role="menu">
-            <li role="none"><a role="menuitem" href="/music-guides/?category=weddings">Weddings</a></li>
-            <li role="none"><a role="menuitem" href="/music-guides/?category=funerals">Funerals</a></li>
-            <li role="none"><a role="menuitem" href="/music-guides/?category=christmas">Christmas</a></li>
-            <li role="separator" class="dropdown-separator"></li>
-            <li role="none"><a role="menuitem" href="/music-guides/">Browse all</a></li>
+          <a href="/music-guides/" aria-expanded="false" class="dropdown-trigger">Music Guides<span class="dropdown-caret" aria-hidden="true">&#9662;</span></a>
+          <ul class="dropdown-menu">
+            <li><a href="/music-guides/?category=weddings">Weddings</a></li>
+            <li><a href="/music-guides/?category=funerals">Funerals</a></li>
+            <li><a href="/music-guides/?category=christmas">Christmas</a></li>
+            <li class="dropdown-separator" aria-hidden="true"></li>
+            <li><a href="/music-guides/">Browse all</a></li>
           </ul>
         </li>
         <li><a href="/christmas.html">Christmas</a></li>
@@ -2560,42 +2583,36 @@
 
     <section class="section">
       <div class="prose">
-        <h2>Funeral music in Hillingdon</h2>
+        <h2>Funerals at Breakspear Crematorium and St&nbsp;John&rsquo;s Hillingdon</h2>
         <p>We perform at venues throughout Hillingdon, including Breakspear Crematorium&thinsp;&mdash;&thinsp;one of north-west London&rsquo;s busiest crematoria&thinsp;&mdash;&thinsp;Hillingdon Cemetery, and St&nbsp;John&rsquo;s Hillingdon. Our singers also work at churches and chapels in Uxbridge, Ruislip, Hayes, and West Drayton. A traditional Church of England funeral, a Catholic requiem, or a non-religious celebration of life&thinsp;&mdash;&thinsp;we adapt our repertoire and our approach to suit the family&rsquo;s wishes. Our <a href="../../music-guides/funeral-music-guide.html">funeral music guide</a> is a useful starting point, and you are welcome to <a href="../../contact.html">contact us</a> at any stage of your planning.</p>
         <p>Breakspear Crematorium&rsquo;s chapel can feel sparse without live music. A well-chosen hymn or a well-sung solo lifts a service in a way that recorded music rarely can. We coordinate with funeral directors and celebrants on timing, and confirm the running order with everyone involved before the day. For a full description of how we work, please visit our <a href="../../services.html">services page</a>.</p>
 
-        <h2>Wedding choirs in Hillingdon</h2>
-        <p>Hillingdon&rsquo;s mix of historic churches and modern venues gives couples plenty of choice. St&nbsp;John&rsquo;s Hillingdon is a popular choice for a traditional church wedding with full choral music, while Uxbridge offers a range of licensed venues for civil ceremonies. From a rousing rendition of <em>Jerusalem</em> to a gentle a&nbsp;cappella anthem during the signing of the register, our singers will shape the music to fit your day. Take a look at our <a href="../../music-guides/choosing-wedding-hymns.html">guide to choosing wedding hymns</a> for practical ideas and inspiration.</p>
-
-        <h2>Ensembles for weddings, funerals, and memorials</h2>
-        <p>Breakspear Crematorium runs to a fixed service length, often around 30 minutes, so a quartet is usually the right call &mdash; large enough to lead a hymn confidently, small enough to fit the chapel without crowding the family. St&nbsp;John&rsquo;s Hillingdon is a more substantial parish church, and for a wedding there a sextet works well, with a full eight-voice choir worth considering when the congregation is large. The parish churches around Uxbridge, Ruislip, Hayes, and West Drayton vary in scale; most sit comfortably with a quartet, and a sextet adds weight to processional hymns at the larger ones. For a graveside service at Hillingdon Cemetery, a single clear voice carries outdoors better than a full ensemble. Our <a href="../../pricing.html">pricing page</a> sets out the costs.</p>
+        <h2>Choir sizes from Breakspear to Ruislip</h2>
+        <p>Breakspear Crematorium runs to a fixed service length, often around 30 minutes, so a quartet is usually the right call &mdash; large enough to lead a hymn confidently, small enough to fit the chapel without crowding the family. St&nbsp;John&rsquo;s Hillingdon is a more substantial parish church, and for a wedding there a sextet works well, with a full eight-voice choir worth considering when the congregation is large. The parish churches around Uxbridge, Ruislip, Hayes, and West Drayton vary in scale; most sit comfortably with a quartet, and a sextet adds weight to processional hymns at the larger ones. For a graveside service at Hillingdon Cemetery, a single clear voice carries outdoors better than a full ensemble. The quartet we suggest for Breakspear, and every other size, is priced on our <a href="../../pricing.html">pricing page</a>.</p>
 
         <figure class="pull-quote">
           <blockquote><p>&ldquo;Thank you for making the day so special. The music was exquisite and everyone commented on how beautiful it was.&rdquo;</p></blockquote>
           <figcaption>&mdash;&ensp;Pamela, Hampshire</figcaption>
         </figure>
 
-        <h2>Christmas carol singers in Hillingdon</h2>
-        <p>Near St&nbsp;John&rsquo;s Hillingdon and the shops of Uxbridge, our December bookings look different from a wedding or a funeral: <a href="../../christmas.html">a company carol service</a> for a local office, or roaming <a href="../../carol-singers.html">carol singers for hire</a> at a residents&rsquo; evening or private party. We sing a cappella throughout, so a foyer, a marquee, or a parade of shops all work without any equipment to bring in.</p>
+        <h2>Questions about funerals in Hillingdon</h2>
 
-        <h2>Frequently asked questions</h2>
+        <h3>Is a quartet the right size for Breakspear Crematorium?</h3>
+        <p>Usually, yes. Breakspear runs to a fixed service length, often around 30 minutes, and a quartet (from &pound;1,150) can lead a hymn without crowding the family in the chapel.</p>
 
-        <h3>How much does a funeral singer cost in Hillingdon?</h3>
-        <p>For services at Breakspear Crematorium, Hillingdon Cemetery, St&nbsp;John&rsquo;s Hillingdon, or churches in Uxbridge and Ruislip, a soloist starts from &pound;250. Four singers cost &pound;1,150, five (a quintet) &pound;1,400, six (a sextet) &pound;1,600, and a full choir of eight &pound;2,000. All prices include travel within Greater London.</p>
+        <h3>What should I budget for funeral singers at Breakspear or St&nbsp;John&rsquo;s Hillingdon?</h3>
+        <p>For services at Breakspear Crematorium, Hillingdon Cemetery, St&nbsp;John&rsquo;s Hillingdon, or churches in Uxbridge and Ruislip, a soloist starts from &pound;250. Four singers cost &pound;1,150, five (a quintet) &pound;1,400, six (a sextet) &pound;1,600, and a full choir of eight &pound;2,000. Hillingdon is the westernmost London borough but still inside Greater London, so travel to Uxbridge or Ruislip is included.</p>
 
-        <h3>Can you provide a choir for a wedding in Hillingdon?</h3>
-        <p>Yes. St&nbsp;John&rsquo;s Hillingdon is a popular choice for a traditional church wedding with full choral music, and Uxbridge has a range of licensed venues suited to civil ceremonies. We provide ensembles from a solo vocalist to a twelve-voice chorus, and we handle all the musical planning from first enquiry to the day itself.</p>
-
-        <h3>What types of music can you perform at a funeral in Hillingdon?</h3>
-        <p>At St&nbsp;John&rsquo;s Hillingdon or the parish churches of Ruislip and Hayes, traditional hymns, psalms, and sacred choral works sound magnificent. At Breakspear Crematorium or Hillingdon Cemetery, we often sing more reflective pieces &mdash; contemporary songs, classical solos, or bespoke arrangements tailored to the family&rsquo;s wishes.</p>
-
-        <h3>Do you cover crematorium services in Hillingdon?</h3>
+        <h3>Does live music suit the chapel at Breakspear Crematorium?</h3>
         <p>Yes. Breakspear Crematorium is one of north-west London&rsquo;s busiest crematoria, and our singers know its chapel well. Live music changes the atmosphere there in a way recorded music does not. We liaise with crematorium staff and funeral directors so the timing holds throughout.</p>
 
-        <h3>Do you provide carol singers for Christmas events in Hillingdon?</h3>
-        <p>Yes. We provide carol services for churches and roaming carol singers for offices, hotels, and residents&rsquo; events throughout the borough in December. Our <a href="../../carol-singers.html">Christmas carol singers</a> are in demand, and December dates are usually booked out by mid-September, so it&rsquo;s worth enquiring early if you have a date in mind.</p>
+        <p>If the funeral is at Breakspear or Hillingdon Cemetery, read the <a href="../../music-guides/funeral-music-guide.html">funeral music guide</a> alongside <a href="../../music-guides/popular-funeral-hymns.html">popular funeral hymns</a> and check the <a href="../../music-guides/funeral-music-costs.html">funeral music costs guide</a> for fees; for a wedding at St&nbsp;John&rsquo;s Hillingdon, see the <a href="../../music-guides/choosing-wedding-hymns.html">wedding hymns guide</a>.</p>
 
-        <p>For more guidance, explore our <a href="../../music-guides/funeral-music-guide.html">funeral music guide</a>, <a href="../../music-guides/popular-funeral-hymns.html">popular funeral hymns</a>, <a href="../../music-guides/choosing-wedding-hymns.html">wedding hymns guide</a>, or <a href="../../music-guides/funeral-music-costs.html">funeral music costs guide</a>.</p>
+        <h2>Weddings at St&nbsp;John&rsquo;s Hillingdon and in Uxbridge</h2>
+        <p>Hillingdon&rsquo;s mix of historic churches and modern venues gives couples plenty of choice. St&nbsp;John&rsquo;s Hillingdon is a popular choice for a traditional church wedding with full choral music, while Uxbridge offers a range of licensed venues for civil ceremonies. From a rousing rendition of <em>Jerusalem</em> to a gentle a&nbsp;cappella anthem during the signing of the register, our singers will shape the music to fit your day. Take a look at our <a href="../../music-guides/choosing-wedding-hymns.html">guide to choosing wedding hymns</a> for practical ideas and inspiration.</p>
+
+        <h2>A cappella carols in Uxbridge</h2>
+        <p>Near St&nbsp;John&rsquo;s Hillingdon and the shops of Uxbridge, our December bookings look different from a wedding or a funeral: <a href="../../christmas.html">a company carol service</a> for a local office, or roaming <a href="../../carol-singers.html">carol singers for hire</a> at a residents&rsquo; evening or private party. We sing a cappella throughout, so a foyer, a marquee, or a parade of shops all work without any equipment to bring in.</p>
 
         <p><a href="../../contact.html" class="btn-link">Get in touch about your occasion in Hillingdon</a></p>
       </div>
@@ -2686,7 +2703,7 @@
   </footer>
   <!-- @include-end partials/footer.html -->
 
-  <div class="mobile-cta" aria-label="Quick contact">
+  <div class="mobile-cta" role="group" aria-label="Quick contact">
     <a href="https://wa.me/447356042468" target="_blank" rel="noopener" class="mobile-cta-whatsapp" data-whatsapp><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" aria-hidden="true" focusable="false"><path fill="currentColor" d="M16 .395a15.6 15.6 0 0 0-13.534 23.36L0 32l8.43-2.42A15.6 15.6 0 0 0 31.6 16.005 15.6 15.6 0 0 0 16 .395Zm0 28.41a12.78 12.78 0 0 1-6.523-1.79l-.467-.28-4.846 1.39 1.42-4.738-.305-.486A12.78 12.78 0 0 1 16 3.214a12.81 12.81 0 0 1 12.81 12.81A12.81 12.81 0 0 1 16 28.805Zm7.025-9.575c-.385-.193-2.275-1.122-2.628-1.25-.353-.13-.609-.193-.866.193s-.994 1.25-1.218 1.508c-.225.257-.45.29-.834.097-.385-.193-1.626-.6-3.097-1.911-1.144-1.02-1.916-2.28-2.14-2.665-.225-.385-.024-.594.169-.787.174-.173.385-.45.578-.674.193-.225.257-.385.385-.642.13-.257.064-.482-.032-.674-.097-.193-.866-2.087-1.187-2.857-.312-.75-.628-.65-.866-.66l-.738-.013a1.42 1.42 0 0 0-1.027.482c-.353.385-1.347 1.315-1.347 3.207s1.379 3.72 1.572 3.977c.193.257 2.715 4.146 6.578 5.815.92.397 1.637.633 2.196.81.923.293 1.762.252 2.426.153.74-.11 2.275-.93 2.595-1.829.32-.898.32-1.668.225-1.829-.097-.16-.353-.257-.738-.45Z"/></svg>WhatsApp</a>
     <a href="/contact.html" class="mobile-cta-enquire">Enquire</a>
   </div>

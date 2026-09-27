@@ -165,7 +165,7 @@
   <script src="/js/consent.js" defer></script>
   <!-- @include-end partials/analytics.html -->
 
-  <title>Funeral and wedding choirs in Hackney | LCS</title>
+  <title>Wedding and funeral choirs in Hackney | LCS</title>
   <meta name="description" content="Professional funeral singers and wedding choirs in Hackney. Conservatoire-trained musicians for funerals, weddings, memorials, and ceremonies.">
   <meta name="theme-color" content="#F7F3EE">
   <meta name="robots" content="index, follow">
@@ -173,22 +173,22 @@
   <link rel="alternate" hreflang="en-gb" href="https://londonchoralservice.com/areas/london/hackney.html">
   <link rel="alternate" hreflang="x-default" href="https://londonchoralservice.com/areas/london/hackney.html">
 
-  <meta property="og:title" content="Funeral and wedding choirs in Hackney | LCS">
+  <meta property="og:title" content="Wedding and funeral choirs in Hackney | LCS">
   <meta property="og:description" content="Professional funeral singers and wedding choirs in Hackney. Conservatoire-trained musicians for funerals, weddings, memorials, and ceremonies.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://londonchoralservice.com/areas/london/hackney.html">
   <meta property="og:locale" content="en_GB">
   <meta property="og:site_name" content="London Choral Service">
-  <meta property="og:image" content="https://londonchoralservice.com/assets/og-image.png">
+  <meta property="og:image" content="https://londonchoralservice.com/assets/og/areas-london-hackney.png">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
-  <meta property="og:image:alt" content="The London Choral Service: professional choirs and singers for funerals, weddings, and ceremonies">
+  <meta property="og:image:alt" content="The London Choral Service: Wedding &amp; Funeral Choirs in Hackney. Live singers for churches, crematoria and carol services">
 
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Funeral and wedding choirs in Hackney | LCS">
+  <meta name="twitter:title" content="Wedding and funeral choirs in Hackney | LCS">
   <meta name="twitter:description" content="Professional funeral singers and wedding choirs in Hackney. Conservatoire-trained musicians for funerals, weddings, memorials, and ceremonies.">
-  <meta name="twitter:image" content="https://londonchoralservice.com/assets/og-image.png">
-  <meta name="twitter:image:alt" content="The London Choral Service: professional choirs and singers for funerals, weddings, and ceremonies">
+  <meta name="twitter:image" content="https://londonchoralservice.com/assets/og/areas-london-hackney.png">
+  <meta name="twitter:image:alt" content="The London Choral Service: Wedding &amp; Funeral Choirs in Hackney. Live singers for churches, crematoria and carol services">
   <link rel="dns-prefetch" href="https://www.googletagmanager.com">
   <link rel="dns-prefetch" href="https://api.web3forms.com">
 
@@ -200,8 +200,9 @@
       --color-text:       #2C2420;
       --color-text-mid:   #6B5E56;
       --color-accent:     #8B3A3A;
-      --color-accent-hover: #A85454;
+      --color-accent-hover: #9E4A4A; /* 4.9:1 on --color-bg-alt (link hover in tinted boxes) */
       --color-rule:       #D6CEC6;
+      --color-field-rule: #8F827A;   /* form-field edges: 3:1+ on both backgrounds (WCAG 1.4.11) */
     
       /* ── Feedback Colours ── */
       --color-error:      #9B2C2C;
@@ -670,6 +671,7 @@
     @media (max-width: 1080px) {
       .nav-toggle {
         display: block;
+        flex-shrink: 0;
       }
     
       .nav-links {
@@ -709,6 +711,18 @@
         position: relative;
       }
     
+    }
+    
+    /* The nowrap site name at --text-lg plus the toggle is ~377px wide:
+       scale the name with the viewport on small phones so the header fits at 320px. */
+    @media (max-width: 420px) {
+      .site-name {
+        font-size: clamp(1.125rem, 6vw, var(--text-lg));
+      }
+    
+      .site-nav {
+        gap: var(--space-md);
+      }
     }
     
     /* ═══════════════════════════════════
@@ -770,6 +784,14 @@
       }
       .footer-col--brand {
         grid-column: 1 / -1;
+      }
+      /* Touch screens: pad the link lists to a ~40px tap target */
+      .footer-col li {
+        margin-bottom: 0;
+      }
+      .footer-col li a {
+        display: inline-block;
+        padding-block: var(--space-sm);
       }
     }
     
@@ -872,14 +894,6 @@
       font-weight: 600;
       text-align: right;
       white-space: nowrap;
-    }
-    
-    .pricing-price .vat {
-      font-family: var(--font-body);
-      font-size: var(--text-sm);
-      font-weight: 400;
-      color: var(--color-text-mid);
-      margin-left: var(--space-xs);
     }
     
     @media (max-width: 599px) {
@@ -1106,37 +1120,6 @@
     }
     
     /* ═══════════════════════════════════
-       Ensemble Definition List
-       ═══════════════════════════════════ */
-    .ensemble-list dt {
-      font-family: var(--font-heading);
-      font-size: var(--text-lg);
-      font-weight: 500;
-      margin-top: var(--space-xl);
-      padding-top: var(--space-xl);
-      border-top: 1px solid var(--color-rule);
-    }
-    
-    .ensemble-list dt:first-child {
-      border-top: none;
-      padding-top: 0;
-      margin-top: 0;
-    }
-    
-    .ensemble-list .aside {
-      font-family: var(--font-body);
-      font-size: var(--text-sm);
-      font-weight: 400;
-      color: var(--color-text-mid);
-    }
-    
-    .ensemble-list dd {
-      margin-top: var(--space-sm);
-      margin-left: 0;
-      color: var(--color-text-mid);
-    }
-    
-    /* ═══════════════════════════════════
        Track Listing (Listen Page)
        ═══════════════════════════════════ */
     .track {
@@ -1201,7 +1184,7 @@
       font-size: var(--text-base);
       padding: var(--space-sm) 0;
       border: none;
-      border-bottom: 1px solid var(--color-rule);
+      border-bottom: 1px solid var(--color-field-rule);
       background: transparent;
       color: var(--color-text);
       border-radius: 0;
@@ -1214,7 +1197,7 @@
       font-family: var(--font-body);
       font-size: var(--text-base);
       padding: var(--space-sm);
-      border: 1px solid var(--color-rule);
+      border: 1px solid var(--color-field-rule);
       background: transparent;
       color: var(--color-text);
       border-radius: 0;
@@ -1233,6 +1216,13 @@
       box-shadow: 0 0 0 1px var(--color-accent);
     }
     
+    /* A colour change alone on a 1px underline is too faint a focus cue:
+       thicken the underline to 2px in the accent colour. */
+    .form-field input:focus,
+    .form-field select:focus {
+      box-shadow: 0 1px 0 0 var(--color-accent);
+    }
+    
     .form-field select {
       cursor: pointer;
       background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%236B5E56' d='M1.41 0L6 4.58 10.59 0 12 1.41l-6 6-6-6z'/%3E%3C/svg%3E");
@@ -1244,7 +1234,8 @@
     /* ── Validation States ── */
     .form-field input:user-invalid,
     .form-field select:user-invalid,
-    .form-field textarea:user-invalid {
+    .form-field textarea:user-invalid,
+    .form-field [aria-invalid="true"] {
       border-color: var(--color-error);
     }
     
@@ -1329,13 +1320,6 @@
       margin-bottom: 0;
       font-size: var(--text-sm);
       color: var(--color-text-mid);
-    }
-    
-    .hero-trust__stars {
-      color: var(--color-accent);
-      letter-spacing: 0.08em;
-      font-size: var(--text-base);
-      line-height: 1;
     }
     
     /* ═══════════════════════════════════
@@ -1644,6 +1628,14 @@
       opacity: 0.85;
     }
     
+    /* .video-embed clips overflow, so the global outline (drawn outside) is
+       invisible here: draw the focus ring inside the thumbnail instead. */
+    .video-thumb:focus-visible {
+      outline: 3px solid #fff;
+      outline-offset: -6px;
+      box-shadow: inset 0 0 0 3px var(--color-accent);
+    }
+    
     @media (max-width: 805px) {
       .hero {
         flex-direction: column;
@@ -1708,13 +1700,13 @@
       color: var(--color-accent);
     }
     
-    .filter-chip[aria-pressed="true"] {
+    .filter-chip[aria-current="page"] {
       background-color: var(--color-accent);
       color: var(--color-bg);
       border-color: var(--color-accent);
     }
     
-    .filter-chip[aria-pressed="true"]:hover {
+    .filter-chip[aria-current="page"]:hover {
       background-color: var(--color-accent-hover);
       border-color: var(--color-accent-hover);
       color: var(--color-bg);
@@ -1934,6 +1926,11 @@
       outline: none;
     }
     
+    .dropdown-menu a:focus-visible {
+      outline: 2px solid var(--color-accent);
+      outline-offset: -2px;
+    }
+    
     .dropdown-separator {
       height: 1px;
       background-color: var(--color-rule);
@@ -1951,6 +1948,15 @@
     .has-dropdown:focus-within > .dropdown-trigger .dropdown-caret,
     .has-dropdown[data-open="true"] > .dropdown-trigger .dropdown-caret {
       transform: rotate(180deg);
+    }
+    
+    /* ESC dismisses a desktop dropdown even while hover/focus is still inside (nav.js) */
+    .has-dropdown[data-dismissed] > .dropdown-menu {
+      display: none;
+    }
+    
+    .has-dropdown[data-dismissed] > .dropdown-trigger .dropdown-caret {
+      transform: none;
     }
     
     /* Mobile: dropdown becomes an inline expandable block inside the hamburger */
@@ -2025,16 +2031,21 @@
       align-items: start;
     }
     
+    .services-hero .pull-quote--marquee {
+      margin-block: 0;
+    }
+    
+    /* Two columns: the quote rides alongside the text. In the single-column
+       layout it must stay static, or it sticks over the text scrolling up. */
     @media (min-width: 52rem) {
       .services-hero {
         grid-template-columns: 1fr 1.4fr;
       }
-    }
     
-    .services-hero .pull-quote--marquee {
-      margin-block: 0;
-      position: sticky;
-      top: var(--space-2xl);
+      .services-hero .pull-quote--marquee {
+        position: sticky;
+        top: var(--space-2xl);
+      }
     }
     
     /* ═══════════════════════════════════
@@ -2239,6 +2250,32 @@
       color: var(--color-accent);
     }
     
+    /* ── "How it works" numbered steps (service pages) ── */
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+      gap: var(--space-lg);
+      margin-block: var(--space-lg);
+    }
+    .step-num {
+      display: block;
+      font-family: var(--font-heading);
+      font-weight: 600;
+      font-size: 2rem;
+      font-variant-numeric: lining-nums; /* Cormorant's old-style 1 reads as a roman I */
+      line-height: 1;
+      color: var(--color-accent);
+    }
+    .step h3 {
+      font-size: var(--text-md);
+      font-weight: 600;
+      margin-block: var(--space-xs);
+    }
+    .step p {
+      margin: 0;
+      color: var(--color-text-mid);
+    }
+    
     /* ── Care strip: "We take the whole thing off your hands" ──────────── */
     .care-steps {
       list-style: none;
@@ -2253,6 +2290,7 @@
       font-family: var(--font-heading);
       font-weight: 600;
       font-size: 2rem;
+      font-variant-numeric: lining-nums;
       line-height: 1;
       color: var(--color-accent);
     }
@@ -2303,7 +2341,8 @@
       .skip-link,
       .contact-form,
       .btn,
-      .video-embed {
+      .video-embed,
+      .mobile-cta {
         display: none !important;
       }
     
@@ -2437,14 +2476,6 @@
         "mainEntity": [
           {
             "@type": "Question",
-            "name": "How much does a funeral singer cost in Hackney?",
-            "acceptedAnswer": {
-              "@type": "Answer",
-              "text": "For services at St John at Hackney, Abney Park Cemetery, St Mary of Eton, or any other venue in the borough, a soloist starts from £250. A choir of four is £1,150, a choir of five £1,400, a choir of six £1,600, and a full choir of eight £2,000. All prices include travel within Greater London."
-            }
-          },
-          {
-            "@type": "Question",
             "name": "Can you provide a choir for a wedding in Hackney?",
             "acceptedAnswer": {
               "@type": "Answer",
@@ -2453,7 +2484,15 @@
           },
           {
             "@type": "Question",
-            "name": "What types of music can you perform at a funeral in Hackney?",
+            "name": "Is a quartet enough for a wedding at St John at Hackney?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "It can be: the acoustic makes four singers sound bigger than the number suggests. Most weddings there suit a sextet (from £1,600) or a full choir of eight (from £2,000), because the Georgian interior rewards more voices."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Does the music change between St John at Hackney and Abney Park Cemetery?",
             "acceptedAnswer": {
               "@type": "Answer",
               "text": "At St John at Hackney, the soaring Georgian interior suits traditional hymns, psalms, and choral anthems particularly well. At Abney Park Cemetery or St Mary of Eton, we often perform more intimate, reflective pieces — contemporary songs, classical arias, or bespoke arrangements of something personally meaningful to the family."
@@ -2461,18 +2500,10 @@
           },
           {
             "@type": "Question",
-            "name": "Do you cover crematorium services in Hackney?",
+            "name": "Can you sing at a cremation for a Hackney family, given the borough has no crematorium?",
             "acceptedAnswer": {
               "@type": "Answer",
               "text": "Hackney does not have its own crematorium, but we regularly sing at nearby crematoria including the City of London Cemetery and Crematorium at Manor Park. Our singers handle the logistics and liaise with funeral directors to ensure everything is coordinated smoothly on the day."
-            }
-          },
-          {
-            "@type": "Question",
-            "name": "Do you do carol singing for offices and residents' events in Hackney?",
-            "acceptedAnswer": {
-              "@type": "Answer",
-              "text": "Yes. We provide Christmas carol services for a seated evening and carol singers who move through the room for offices, hotels, and residents' Christmas parties across Hackney. December dates are usually taken by mid-September, so we would encourage you to get in touch well ahead of the season."
             }
           }
         ]
@@ -2489,48 +2520,48 @@
   <header class="site-header">
     <nav class="site-nav page-wrap" aria-label="Main navigation">
       <a href="/" class="site-name">The London Choral Service</a>
-      <button class="nav-toggle" aria-expanded="false" aria-controls="nav-menu" aria-label="Menu">
+      <button type="button" class="nav-toggle" aria-expanded="false" aria-controls="nav-menu" aria-label="Menu">
         <span class="nav-toggle-bar"></span>
       </button>
       <ul id="nav-menu" class="nav-links" role="list">
         <li><a href="/about.html">About</a></li>
         <li class="has-dropdown">
-          <a href="/services.html" aria-haspopup="true" aria-expanded="false" class="dropdown-trigger">Services<span class="dropdown-caret" aria-hidden="true">&#9662;</span></a>
-          <ul class="dropdown-menu" role="menu">
-            <li role="none"><a role="menuitem" href="/weddings.html">Weddings</a></li>
-            <li role="none"><a role="menuitem" href="/funerals.html">Funerals</a></li>
-            <li role="none"><a role="menuitem" href="/corporate.html">Corporate</a></li>
-            <li role="none"><a role="menuitem" href="/christmas.html">Christmas</a></li>
-            <li role="none"><a role="menuitem" href="/carol-singers.html">Carol Singers</a></li>
-            <li role="none"><a role="menuitem" href="/private-events.html">Private Events</a></li>
-            <li role="none"><a role="menuitem" href="/destinations/">Weddings Abroad</a></li>
-            <li role="separator" class="dropdown-separator"></li>
-            <li role="none"><a role="menuitem" href="/services.html">All services</a></li>
+          <a href="/services.html" aria-expanded="false" class="dropdown-trigger">Services<span class="dropdown-caret" aria-hidden="true">&#9662;</span></a>
+          <ul class="dropdown-menu">
+            <li><a href="/weddings.html">Weddings</a></li>
+            <li><a href="/funerals.html">Funerals</a></li>
+            <li><a href="/corporate.html">Corporate</a></li>
+            <li><a href="/christmas.html">Christmas</a></li>
+            <li><a href="/carol-singers.html">Carol Singers</a></li>
+            <li><a href="/private-events.html">Private Events</a></li>
+            <li><a href="/destinations/">Weddings Abroad</a></li>
+            <li class="dropdown-separator" aria-hidden="true"></li>
+            <li><a href="/services.html">All services</a></li>
           </ul>
         </li>
         <li class="has-dropdown">
-          <a href="/planners-and-venues.html" aria-haspopup="true" aria-expanded="false" class="dropdown-trigger">Professionals<span class="dropdown-caret" aria-hidden="true">&#9662;</span></a>
-          <ul class="dropdown-menu" role="menu">
-            <li role="none"><a role="menuitem" href="/for-funeral-directors.html">Funeral Directors</a></li>
-            <li role="none"><a role="menuitem" href="/for-wedding-planners.html">Wedding Planners</a></li>
-            <li role="none"><a role="menuitem" href="/for-event-managers.html">Event Managers</a></li>
-            <li role="none"><a role="menuitem" href="/for-hotels.html">Hotels &amp; Venues</a></li>
-            <li role="none"><a role="menuitem" href="/for-property-managers.html">Property Managers</a></li>
-            <li role="none"><a role="menuitem" href="/for-livery-companies.html">Livery Companies</a></li>
-            <li role="none"><a role="menuitem" href="/for-charities.html">Charities</a></li>
-            <li role="separator" class="dropdown-separator"></li>
-            <li role="none"><a role="menuitem" href="/planners-and-venues.html">Planners, Venues &amp; Estates</a></li>
+          <a href="/planners-and-venues.html" aria-expanded="false" class="dropdown-trigger">Professionals<span class="dropdown-caret" aria-hidden="true">&#9662;</span></a>
+          <ul class="dropdown-menu">
+            <li><a href="/for-funeral-directors.html">Funeral Directors</a></li>
+            <li><a href="/for-wedding-planners.html">Wedding Planners</a></li>
+            <li><a href="/for-event-managers.html">Event Managers</a></li>
+            <li><a href="/for-hotels.html">Hotels &amp; Venues</a></li>
+            <li><a href="/for-property-managers.html">Property Managers</a></li>
+            <li><a href="/for-livery-companies.html">Livery Companies</a></li>
+            <li><a href="/for-charities.html">Charities</a></li>
+            <li class="dropdown-separator" aria-hidden="true"></li>
+            <li><a href="/planners-and-venues.html">Planners, Venues &amp; Estates</a></li>
           </ul>
         </li>
         <li><a href="/listen.html">Listen</a></li>
         <li class="has-dropdown">
-          <a href="/music-guides/" aria-haspopup="true" aria-expanded="false" class="dropdown-trigger">Music Guides<span class="dropdown-caret" aria-hidden="true">&#9662;</span></a>
-          <ul class="dropdown-menu" role="menu">
-            <li role="none"><a role="menuitem" href="/music-guides/?category=weddings">Weddings</a></li>
-            <li role="none"><a role="menuitem" href="/music-guides/?category=funerals">Funerals</a></li>
-            <li role="none"><a role="menuitem" href="/music-guides/?category=christmas">Christmas</a></li>
-            <li role="separator" class="dropdown-separator"></li>
-            <li role="none"><a role="menuitem" href="/music-guides/">Browse all</a></li>
+          <a href="/music-guides/" aria-expanded="false" class="dropdown-trigger">Music Guides<span class="dropdown-caret" aria-hidden="true">&#9662;</span></a>
+          <ul class="dropdown-menu">
+            <li><a href="/music-guides/?category=weddings">Weddings</a></li>
+            <li><a href="/music-guides/?category=funerals">Funerals</a></li>
+            <li><a href="/music-guides/?category=christmas">Christmas</a></li>
+            <li class="dropdown-separator" aria-hidden="true"></li>
+            <li><a href="/music-guides/">Browse all</a></li>
           </ul>
         </li>
         <li><a href="/christmas.html">Christmas</a></li>
@@ -2552,24 +2583,24 @@
             <li>Hackney</li>
           </ol>
         </nav>
-        <h1>Funeral and wedding choirs in Hackney</h1>
+        <h1>Wedding and funeral choirs in Hackney</h1>
         <p class="guide-meta">Musicians selected by Luca Wetherall, Artistic Director &amp; Tutor in Music, University of Oxford &mdash; <a href="/luca-wetherall.html">read more about our team</a>.</p>
-        <p class="lede">The London Borough of Hackney is one of east London&rsquo;s most culturally rich boroughs, home to communities in Stoke Newington, Dalston, Clapton, and Shoreditch. Our conservatoire-trained singers provide thoughtful, beautifully delivered music for funerals, weddings, and memorial services at churches, cemeteries, and ceremony venues throughout Hackney.</p>
+        <p class="lede">The London Borough of Hackney is one of east London&rsquo;s most culturally rich boroughs, home to communities in Stoke Newington, Dalston, Clapton, and Shoreditch. Our conservatoire-trained singers provide thoughtful, well-prepared music for funerals, weddings, and memorial services at churches, cemeteries, and ceremony venues throughout Hackney.</p>
         <hr class="rule">
       </div>
     </section>
 
     <section class="section">
       <div class="prose">
-        <h2>Funeral music in Hackney</h2>
-        <p>Hackney&rsquo;s churches and cemeteries span centuries of London history, and each brings its own character to a funeral or memorial service. St&nbsp;John at Hackney, the magnificent Georgian church on Mare Street, has a soaring interior and a superb acoustic that can make even a small choir sound majestic. It is one of our favourite venues in east London to sing in. Abney Park Cemetery in Stoke Newington&thinsp;&mdash;&thinsp;a historic garden cemetery and nature reserve&thinsp;&mdash;&thinsp;offers a unique and atmospheric setting for farewell services, and our singers have performed there for families seeking something reflective and personal. St&nbsp;Mary of Eton, tucked beside the Hackney Marshes, provides a quieter, more intimate space, while the churches of Stoke Newington offer a range of settings suited to both traditional and contemporary services.</p>
-        <p>Whatever the style of the service, our singers can bring the right music to the occasion. We perform hymns, choral anthems, classical arias, and songs from other traditions, and we are always willing to learn unfamiliar pieces. Our <a href="../../music-guides/funeral-music-guide.html">funeral music guide</a> is a useful resource if you are beginning to think about repertoire. You can learn more about what we offer on our <a href="../../services.html">services page</a>, or simply <a href="../../contact.html">contact us</a> to start a conversation.</p>
-
-        <h2>Wedding choirs in Hackney</h2>
+        <h2>Weddings at St&nbsp;John at Hackney and in converted warehouses</h2>
         <p>Hackney has become one of London&rsquo;s most sought-after boroughs for weddings, and its venues reflect the area&rsquo;s creative, independent spirit. St&nbsp;John at Hackney is a magnificent church for a wedding ceremony, and its acoustic makes congregational singing feel effortless and uplifting. For couples choosing civil ceremonies, Hackney&rsquo;s many licensed venues&thinsp;&mdash;&thinsp;from restored warehouses to elegant town halls&thinsp;&mdash;&thinsp;offer settings where a vocal soloist or small ensemble can create a moment guests will remember. We help couples plan their music from the first enquiry through to the day itself. Our <a href="../../music-guides/choosing-wedding-hymns.html">guide to choosing wedding hymns</a> offers practical advice for getting started.</p>
 
-        <h2>Ensembles for weddings, funerals, and memorials</h2>
-        <p>St&nbsp;John at Hackney has the kind of soaring Georgian interior that rewards more voices &mdash; for a wedding there a sextet or full eight-voice choir suits the building, and the acoustic makes even four singers sound bigger than the number suggests. St&nbsp;Mary of Eton, beside the Hackney Marshes, is more intimate, and a quartet generally fits the room better. For a graveside service at Abney Park Cemetery, a soloist is usually more fitting than a full ensemble: a clear unaccompanied voice carries well outdoors and suits the reflective character of the place. For civil ceremonies in Hackney&rsquo;s converted warehouses and town halls, the right size depends on the room &mdash; a quartet generally sits well in those spaces. Our <a href="../../pricing.html">pricing page</a> sets out the costs.</p>
+        <h2>Choir sizes for Mare Street, the Marshes and warehouse venues</h2>
+        <p>St&nbsp;John at Hackney has the kind of soaring Georgian interior that rewards more voices &mdash; for a wedding there a sextet or full eight-voice choir suits the building, and the acoustic makes even four singers sound bigger than the number suggests. St&nbsp;Mary of Eton, beside the Hackney Marshes, is more intimate, and a quartet generally fits the room better. For a graveside service at Abney Park Cemetery, a soloist is usually more fitting than a full ensemble: a clear unaccompanied voice carries well outdoors and suits the reflective character of the place. For civil ceremonies in Hackney&rsquo;s converted warehouses and town halls, the right size depends on the room &mdash; a quartet generally sits well in those spaces. Our <a href="../../pricing.html">pricing page</a> lists the fee for a quartet in a warehouse venue, a sextet on Mare Street and the sizes in between.</p>
+
+        <h2>Funerals at St&nbsp;John at Hackney and Abney Park Cemetery</h2>
+        <p>Hackney&rsquo;s churches and cemeteries span centuries of London history, and each brings its own character to a funeral or memorial service. St&nbsp;John at Hackney, the magnificent Georgian church on Mare Street, has a soaring interior and a superb acoustic that can make even a small choir sound majestic. It is one of our favourite venues in east London to sing in. Abney Park Cemetery in Stoke Newington&thinsp;&mdash;&thinsp;a historic garden cemetery and nature reserve&thinsp;&mdash;&thinsp;offers a unique and atmospheric setting for farewell services, and our singers have performed there for families seeking something reflective and personal. St&nbsp;Mary of Eton, tucked beside the Hackney Marshes, provides a quieter, more intimate space, while the churches of Stoke Newington offer a range of settings suited to both traditional and contemporary services.</p>
+        <p>Whatever the style of the service, our singers can bring the right music to the occasion. We perform hymns, choral anthems, classical arias, and songs from other traditions, and we are always willing to learn unfamiliar pieces. Our <a href="../../music-guides/funeral-music-guide.html">funeral music guide</a> is a useful resource if you are beginning to think about repertoire. You can learn more about what we offer on our <a href="../../services.html">services page</a>, or simply <a href="../../contact.html">contact us</a> to start a conversation.</p>
 
         <figure class="pull-quote">
           <blockquote>
@@ -2578,27 +2609,22 @@
           <figcaption>&mdash;&ensp;Margaret, Dulwich</figcaption>
         </figure>
 
-        <h2>Christmas carol singers in Hackney</h2>
+        <h2>Carol programmes for Hackney offices and residents</h2>
         <p>Hackney&rsquo;s warehouse offices near St&nbsp;John at Hackney tend to want a full carol programme, while residents&rsquo; evenings and venue parties across the borough often prefer singers threading through the crowd instead. Book <a href="../../christmas.html">a carol service for your team</a> for the seated version, or <a href="../../carol-singers.html">hire carol singers</a> for the roaming one.</p>
 
-        <h2>Frequently asked questions</h2>
-
-        <h3>How much does a funeral singer cost in Hackney?</h3>
-        <p>For services at St&nbsp;John at Hackney, Abney Park Cemetery, St&nbsp;Mary of Eton, or any other venue in the borough, a soloist starts from &pound;250. A choir of four is &pound;1,150, a choir of five &pound;1,400, a choir of six &pound;1,600, and a full choir of eight &pound;2,000. All prices include travel within Greater London.</p>
+        <h2>Before you book in Hackney</h2>
 
         <h3>Can you provide a choir for a wedding in Hackney?</h3>
         <p>We do. St&nbsp;John at Hackney on Mare Street is a magnificent church for a wedding choir, and its acoustic makes congregational singing feel effortless. We also perform at Hackney&rsquo;s many licensed venues &mdash; from restored warehouses to elegant town halls &mdash; with ensembles ranging from a solo vocalist to a full twelve-voice chorus.</p>
 
-        <h3>What types of music can you perform at a funeral in Hackney?</h3>
+        <h3>Is a quartet enough for a wedding at St&nbsp;John at Hackney?</h3>
+        <p>It can be: the acoustic makes four singers sound bigger than the number suggests. Most weddings there suit a sextet (from &pound;1,600) or a full choir of eight (from &pound;2,000), because the Georgian interior rewards more voices.</p>
+
+        <h3>Does the music change between St&nbsp;John at Hackney and Abney Park Cemetery?</h3>
         <p>At St&nbsp;John at Hackney, the soaring Georgian interior suits traditional hymns, psalms, and choral anthems particularly well. At Abney Park Cemetery or St&nbsp;Mary of Eton, we often perform more intimate, reflective pieces &mdash; contemporary songs, classical arias, or bespoke arrangements of something personally meaningful to the family.</p>
 
-        <h3>Do you cover crematorium services in Hackney?</h3>
+        <h3>Can you sing at a cremation for a Hackney family, given the borough has no crematorium?</h3>
         <p>Hackney does not have its own crematorium, but we regularly sing at nearby crematoria including the City of London Cemetery and Crematorium at Manor Park. Our singers handle the logistics and liaise with funeral directors to ensure everything is coordinated smoothly on the day.</p>
-
-        <h3>Do you do carol singing for offices and residents&rsquo; events in Hackney?</h3>
-        <p>Yes. We provide <a href="../../christmas.html">Christmas carol services</a> for a seated evening and carol singers who move through the room for offices, hotels, and residents&rsquo; Christmas parties across Hackney. December dates are usually taken by mid-September, so we would encourage you to get in touch well ahead of the season.</p>
-
-        <p>For more guidance, explore our <a href="../../music-guides/funeral-music-guide.html">funeral music guide</a>, <a href="../../music-guides/popular-funeral-hymns.html">popular funeral hymns</a>, <a href="../../music-guides/choosing-wedding-hymns.html">wedding hymns guide</a>, or <a href="../../music-guides/funeral-music-costs.html">funeral music costs guide</a>.</p>
 
         <p><a href="../../contact.html" class="btn-link">Get in touch about your occasion in Hackney</a></p>
       </div>
@@ -2689,7 +2715,7 @@
   </footer>
   <!-- @include-end partials/footer.html -->
 
-  <div class="mobile-cta" aria-label="Quick contact">
+  <div class="mobile-cta" role="group" aria-label="Quick contact">
     <a href="https://wa.me/447356042468" target="_blank" rel="noopener" class="mobile-cta-whatsapp" data-whatsapp><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" aria-hidden="true" focusable="false"><path fill="currentColor" d="M16 .395a15.6 15.6 0 0 0-13.534 23.36L0 32l8.43-2.42A15.6 15.6 0 0 0 31.6 16.005 15.6 15.6 0 0 0 16 .395Zm0 28.41a12.78 12.78 0 0 1-6.523-1.79l-.467-.28-4.846 1.39 1.42-4.738-.305-.486A12.78 12.78 0 0 1 16 3.214a12.81 12.81 0 0 1 12.81 12.81A12.81 12.81 0 0 1 16 28.805Zm7.025-9.575c-.385-.193-2.275-1.122-2.628-1.25-.353-.13-.609-.193-.866.193s-.994 1.25-1.218 1.508c-.225.257-.45.29-.834.097-.385-.193-1.626-.6-3.097-1.911-1.144-1.02-1.916-2.28-2.14-2.665-.225-.385-.024-.594.169-.787.174-.173.385-.45.578-.674.193-.225.257-.385.385-.642.13-.257.064-.482-.032-.674-.097-.193-.866-2.087-1.187-2.857-.312-.75-.628-.65-.866-.66l-.738-.013a1.42 1.42 0 0 0-1.027.482c-.353.385-1.347 1.315-1.347 3.207s1.379 3.72 1.572 3.977c.193.257 2.715 4.146 6.578 5.815.92.397 1.637.633 2.196.81.923.293 1.762.252 2.426.153.74-.11 2.275-.93 2.595-1.829.32-.898.32-1.668.225-1.829-.097-.16-.353-.257-.738-.45Z"/></svg>WhatsApp</a>
     <a href="/contact.html" class="mobile-cta-enquire">Enquire</a>
   </div>

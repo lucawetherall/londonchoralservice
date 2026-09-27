@@ -32,6 +32,22 @@
     }
     if (choice === 'granted' && typeof window.loadGA === 'function') window.loadGA();
     if (choice === 'granted' && typeof window.lcsKeepAttribution === 'function') window.lcsKeepAttribution();
+    if (choice === 'denied') forget();
+  }
+
+  // Withdrawing consent removes what an earlier Allow left behind: the kept ad
+  // click reference and the Google Analytics / Ads cookies (set on the bare
+  // host or on the parent domain, so clear both).
+  function forget() {
+    try { sessionStorage.removeItem('lcs-attr'); } catch (e) {}
+    var host = location.hostname.replace(/^www\./, '');
+    document.cookie.split(';').forEach(function (c) {
+      var name = c.split('=')[0].trim();
+      if (!/^(_ga|_gid|_gcl_)/.test(name)) return;
+      ['', '; domain=' + host, '; domain=.' + host].forEach(function (d) {
+        document.cookie = name + '=; Max-Age=0; path=/' + d;
+      });
+    });
   }
 
   var CSS = '' +
@@ -47,12 +63,14 @@
     '.consent__btn{font:inherit;font-size:.75rem;letter-spacing:.04em;text-transform:uppercase;' +
     'padding:.35rem .7rem;border:1px solid currentColor;background:transparent;color:inherit;cursor:pointer;border-radius:2px}' +
     '.consent__btn--allow{color:var(--color-text,var(--choirStall,#2C2420))}' +
+    '.consent__btn[aria-pressed="true"]{text-decoration:underline;text-underline-offset:.2em}' +
     '.consent__btn:hover{color:var(--color-accent,var(--cassockRed,#8B3A3A))}' +
     '.consent__btn:focus-visible{outline:2px solid currentColor;outline-offset:2px}' +
     '@media (max-width:1080px){.consent{left:.75rem;right:.75rem;bottom:4.5rem;max-width:none}}' +
     '@media print{.consent{display:none}}';
 
   var banner = null;
+  var returnFocus = null;
 
   function build() {
     if (banner) return banner;
@@ -80,6 +98,10 @@
       write(choice);
       apply(choice);
       banner.hidden = true;
+      // The focused button just disappeared: hand focus back to whatever
+      // reopened the banner, so keyboard users are not dropped on <body>.
+      if (returnFocus && document.contains(returnFocus)) returnFocus.focus();
+      returnFocus = null;
     });
     document.body.appendChild(banner);
     return banner;
@@ -98,7 +120,15 @@
       var opener = e.target.closest('[data-consent-open]');
       if (!opener) return;
       e.preventDefault();
+      returnFocus = opener;
       show();
+      // Reopened from the footer link at the end of the page: move focus into
+      // the banner and mark the current choice.
+      var current = read();
+      Array.prototype.forEach.call(banner.querySelectorAll('[data-consent]'), function (b) {
+        b.setAttribute('aria-pressed', String(b.getAttribute('data-consent') === current));
+      });
+      banner.querySelector('[data-consent]').focus();
     });
   }
 
