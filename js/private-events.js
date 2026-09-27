@@ -117,12 +117,13 @@
 
   // ── UTM / click-ID capture ──
   // Same-named hidden inputs exist empty in the markup; fill them at submit
-  // from lcsAttribution() (analytics snippet), which returns nothing unless the
-  // visitor has allowed cookies, as privacy.html promises. Filling at submit
-  // rather than on load picks up an Allow given after the page opened.
+  // from lcsAttribution() (analytics snippet), and only for visitors who
+  // allowed cookies, as privacy.html promises. Filling at submit rather than
+  // on load picks up an Allow given after the page opened.
   function fillAttribution() {
     try {
-      var kept = typeof window.lcsAttribution === 'function' ? window.lcsAttribution() : {};
+      var consented = localStorage.getItem('lcs-consent') === 'granted';
+      var kept = consented && typeof window.lcsAttribution === 'function' ? window.lcsAttribution() : {};
       ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'gclid'].forEach(function (key) {
         var input = document.querySelector('input[name="' + key + '"]');
         if (input) input.value = kept[key] || '';
@@ -291,6 +292,17 @@
       if (elapsed < PE.MIN_SECONDS) {
         showError('timing', true);
         return;
+      }
+
+      // The ad click ID and UTM tags travel only for visitors who allowed
+      // cookies, as the privacy policy says.
+      var consented = false;
+      try { consented = localStorage.getItem('lcs-consent') === 'granted'; } catch (_) {}
+      if (!consented) {
+        ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'gclid'].forEach(function (key) {
+          var input = form.querySelector('input[name="' + key + '"]');
+          if (input) input.value = '';
+        });
       }
 
       var timeOnPage = form.querySelector('input[name="time_on_page"]');
