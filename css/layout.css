@@ -178,6 +178,7 @@
 @media (max-width: 1080px) {
   .nav-toggle {
     display: block;
+    flex-shrink: 0;
   }
 
   .nav-links {
@@ -217,6 +218,18 @@
     position: relative;
   }
 
+}
+
+/* The nowrap site name at --text-lg plus the toggle is ~377px wide:
+   scale the name with the viewport on small phones so the header fits at 320px. */
+@media (max-width: 420px) {
+  .site-name {
+    font-size: clamp(1.125rem, 6vw, var(--text-lg));
+  }
+
+  .site-nav {
+    gap: var(--space-md);
+  }
 }
 
 /* ═══════════════════════════════════

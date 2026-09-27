@@ -97,13 +97,14 @@
       if (label) gtag('event', 'conversion', { 'send_to': label, 'value': 1, 'currency': 'GBP' });
     });
 
-    // Ad click ID and UTM tags from the landing URL, kept for this tab (only once
-    // the visitor has allowed cookies) so an enquiry sent from a later page still
-    // carries its source for offline conversion import.
+    // Ad click ID and UTM tags from the landing URL, kept for this tab and sent
+    // with an enquiry only once the visitor has allowed cookies (privacy.html
+    // #cookies says so), for offline conversion import.
     var LCS_ATTR_KEYS = ['gclid', 'gbraid', 'wbraid', 'utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content'];
     function lcsAttribution() {
       var out = {};
       try {
+        if (localStorage.getItem('lcs-consent') !== 'granted') return out;
         var saved = JSON.parse(sessionStorage.getItem('lcs-attr') || '{}');
         var q = new URLSearchParams(location.search);
         LCS_ATTR_KEYS.forEach(function(k) { var v = q.get(k) || saved[k]; if (v) out[k] = v; });

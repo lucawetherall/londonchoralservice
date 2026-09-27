@@ -109,13 +109,14 @@
       if (label) gtag('event', 'conversion', { 'send_to': label, 'value': 1, 'currency': 'GBP' });
     });
 
-    // Ad click ID and UTM tags from the landing URL, kept for this tab (only once
-    // the visitor has allowed cookies) so an enquiry sent from a later page still
-    // carries its source for offline conversion import.
+    // Ad click ID and UTM tags from the landing URL, kept for this tab and sent
+    // with an enquiry only once the visitor has allowed cookies (privacy.html
+    // #cookies says so), for offline conversion import.
     var LCS_ATTR_KEYS = ['gclid', 'gbraid', 'wbraid', 'utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content'];
     function lcsAttribution() {
       var out = {};
       try {
+        if (localStorage.getItem('lcs-consent') !== 'granted') return out;
         var saved = JSON.parse(sessionStorage.getItem('lcs-attr') || '{}');
         var q = new URLSearchParams(location.search);
         LCS_ATTR_KEYS.forEach(function(k) { var v = q.get(k) || saved[k]; if (v) out[k] = v; });
@@ -169,8 +170,9 @@
       --color-text:       #2C2420;
       --color-text-mid:   #6B5E56;
       --color-accent:     #8B3A3A;
-      --color-accent-hover: #A85454;
+      --color-accent-hover: #9E4A4A; /* 4.9:1 on --color-bg-alt (link hover in tinted boxes) */
       --color-rule:       #D6CEC6;
+      --color-field-rule: #8F827A;   /* form-field edges: 3:1+ on both backgrounds (WCAG 1.4.11) */
     
       /* ── Feedback Colours ── */
       --color-error:      #9B2C2C;
@@ -639,6 +641,7 @@
     @media (max-width: 1080px) {
       .nav-toggle {
         display: block;
+        flex-shrink: 0;
       }
     
       .nav-links {
@@ -678,6 +681,18 @@
         position: relative;
       }
     
+    }
+    
+    /* The nowrap site name at --text-lg plus the toggle is ~377px wide:
+       scale the name with the viewport on small phones so the header fits at 320px. */
+    @media (max-width: 420px) {
+      .site-name {
+        font-size: clamp(1.125rem, 6vw, var(--text-lg));
+      }
+    
+      .site-nav {
+        gap: var(--space-md);
+      }
     }
     
     /* ═══════════════════════════════════
@@ -841,14 +856,6 @@
       font-weight: 600;
       text-align: right;
       white-space: nowrap;
-    }
-    
-    .pricing-price .vat {
-      font-family: var(--font-body);
-      font-size: var(--text-sm);
-      font-weight: 400;
-      color: var(--color-text-mid);
-      margin-left: var(--space-xs);
     }
     
     @media (max-width: 599px) {
@@ -1075,37 +1082,6 @@
     }
     
     /* ═══════════════════════════════════
-       Ensemble Definition List
-       ═══════════════════════════════════ */
-    .ensemble-list dt {
-      font-family: var(--font-heading);
-      font-size: var(--text-lg);
-      font-weight: 500;
-      margin-top: var(--space-xl);
-      padding-top: var(--space-xl);
-      border-top: 1px solid var(--color-rule);
-    }
-    
-    .ensemble-list dt:first-child {
-      border-top: none;
-      padding-top: 0;
-      margin-top: 0;
-    }
-    
-    .ensemble-list .aside {
-      font-family: var(--font-body);
-      font-size: var(--text-sm);
-      font-weight: 400;
-      color: var(--color-text-mid);
-    }
-    
-    .ensemble-list dd {
-      margin-top: var(--space-sm);
-      margin-left: 0;
-      color: var(--color-text-mid);
-    }
-    
-    /* ═══════════════════════════════════
        Track Listing (Listen Page)
        ═══════════════════════════════════ */
     .track {
@@ -1170,7 +1146,7 @@
       font-size: var(--text-base);
       padding: var(--space-sm) 0;
       border: none;
-      border-bottom: 1px solid var(--color-rule);
+      border-bottom: 1px solid var(--color-field-rule);
       background: transparent;
       color: var(--color-text);
       border-radius: 0;
@@ -1183,7 +1159,7 @@
       font-family: var(--font-body);
       font-size: var(--text-base);
       padding: var(--space-sm);
-      border: 1px solid var(--color-rule);
+      border: 1px solid var(--color-field-rule);
       background: transparent;
       color: var(--color-text);
       border-radius: 0;
@@ -1202,6 +1178,13 @@
       box-shadow: 0 0 0 1px var(--color-accent);
     }
     
+    /* A colour change alone on a 1px underline is too faint a focus cue:
+       thicken the underline to 2px in the accent colour. */
+    .form-field input:focus,
+    .form-field select:focus {
+      box-shadow: 0 1px 0 0 var(--color-accent);
+    }
+    
     .form-field select {
       cursor: pointer;
       background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%236B5E56' d='M1.41 0L6 4.58 10.59 0 12 1.41l-6 6-6-6z'/%3E%3C/svg%3E");
@@ -1213,7 +1196,8 @@
     /* ── Validation States ── */
     .form-field input:user-invalid,
     .form-field select:user-invalid,
-    .form-field textarea:user-invalid {
+    .form-field textarea:user-invalid,
+    .form-field [aria-invalid="true"] {
       border-color: var(--color-error);
     }
     
@@ -1298,13 +1282,6 @@
       margin-bottom: 0;
       font-size: var(--text-sm);
       color: var(--color-text-mid);
-    }
-    
-    .hero-trust__stars {
-      color: var(--color-accent);
-      letter-spacing: 0.08em;
-      font-size: var(--text-base);
-      line-height: 1;
     }
     
     /* ═══════════════════════════════════
@@ -1613,6 +1590,14 @@
       opacity: 0.85;
     }
     
+    /* .video-embed clips overflow, so the global outline (drawn outside) is
+       invisible here: draw the focus ring inside the thumbnail instead. */
+    .video-thumb:focus-visible {
+      outline: 3px solid #fff;
+      outline-offset: -6px;
+      box-shadow: inset 0 0 0 3px var(--color-accent);
+    }
+    
     @media (max-width: 805px) {
       .hero {
         flex-direction: column;
@@ -1677,13 +1662,13 @@
       color: var(--color-accent);
     }
     
-    .filter-chip[aria-pressed="true"] {
+    .filter-chip[aria-current="page"] {
       background-color: var(--color-accent);
       color: var(--color-bg);
       border-color: var(--color-accent);
     }
     
-    .filter-chip[aria-pressed="true"]:hover {
+    .filter-chip[aria-current="page"]:hover {
       background-color: var(--color-accent-hover);
       border-color: var(--color-accent-hover);
       color: var(--color-bg);
@@ -1903,6 +1888,11 @@
       outline: none;
     }
     
+    .dropdown-menu a:focus-visible {
+      outline: 2px solid var(--color-accent);
+      outline-offset: -2px;
+    }
+    
     .dropdown-separator {
       height: 1px;
       background-color: var(--color-rule);
@@ -1920,6 +1910,15 @@
     .has-dropdown:focus-within > .dropdown-trigger .dropdown-caret,
     .has-dropdown[data-open="true"] > .dropdown-trigger .dropdown-caret {
       transform: rotate(180deg);
+    }
+    
+    /* ESC dismisses a desktop dropdown even while hover/focus is still inside (nav.js) */
+    .has-dropdown[data-dismissed] > .dropdown-menu {
+      display: none;
+    }
+    
+    .has-dropdown[data-dismissed] > .dropdown-trigger .dropdown-caret {
+      transform: none;
     }
     
     /* Mobile: dropdown becomes an inline expandable block inside the hamburger */
@@ -2208,6 +2207,32 @@
       color: var(--color-accent);
     }
     
+    /* ── "How it works" numbered steps (service pages) ── */
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+      gap: var(--space-lg);
+      margin-block: var(--space-lg);
+    }
+    .step-num {
+      display: block;
+      font-family: var(--font-heading);
+      font-weight: 600;
+      font-size: 2rem;
+      font-variant-numeric: lining-nums; /* Cormorant's old-style 1 reads as a roman I */
+      line-height: 1;
+      color: var(--color-accent);
+    }
+    .step h3 {
+      font-size: var(--text-md);
+      font-weight: 600;
+      margin-block: var(--space-xs);
+    }
+    .step p {
+      margin: 0;
+      color: var(--color-text-mid);
+    }
+    
     /* ── Care strip: "We take the whole thing off your hands" ──────────── */
     .care-steps {
       list-style: none;
@@ -2222,6 +2247,7 @@
       font-family: var(--font-heading);
       font-weight: 600;
       font-size: 2rem;
+      font-variant-numeric: lining-nums;
       line-height: 1;
       color: var(--color-accent);
     }
@@ -2272,7 +2298,8 @@
       .skip-link,
       .contact-form,
       .btn,
-      .video-embed {
+      .video-embed,
+      .mobile-cta {
         display: none !important;
       }
     
@@ -2450,48 +2477,48 @@
   <header class="site-header">
     <nav class="site-nav page-wrap" aria-label="Main navigation">
       <a href="/" class="site-name">The London Choral Service</a>
-      <button class="nav-toggle" aria-expanded="false" aria-controls="nav-menu" aria-label="Menu">
+      <button type="button" class="nav-toggle" aria-expanded="false" aria-controls="nav-menu" aria-label="Menu">
         <span class="nav-toggle-bar"></span>
       </button>
       <ul id="nav-menu" class="nav-links" role="list">
         <li><a href="/about.html">About</a></li>
         <li class="has-dropdown">
-          <a href="/services.html" aria-haspopup="true" aria-expanded="false" class="dropdown-trigger">Services<span class="dropdown-caret" aria-hidden="true">&#9662;</span></a>
-          <ul class="dropdown-menu" role="menu">
-            <li role="none"><a role="menuitem" href="/weddings.html">Weddings</a></li>
-            <li role="none"><a role="menuitem" href="/funerals.html">Funerals</a></li>
-            <li role="none"><a role="menuitem" href="/corporate.html">Corporate</a></li>
-            <li role="none"><a role="menuitem" href="/christmas.html">Christmas</a></li>
-            <li role="none"><a role="menuitem" href="/carol-singers.html">Carol Singers</a></li>
-            <li role="none"><a role="menuitem" href="/private-events.html">Private Events</a></li>
-            <li role="none"><a role="menuitem" href="/destinations/">Weddings Abroad</a></li>
-            <li role="separator" class="dropdown-separator"></li>
-            <li role="none"><a role="menuitem" href="/services.html">All services</a></li>
+          <a href="/services.html" aria-expanded="false" class="dropdown-trigger">Services<span class="dropdown-caret" aria-hidden="true">&#9662;</span></a>
+          <ul class="dropdown-menu">
+            <li><a href="/weddings.html">Weddings</a></li>
+            <li><a href="/funerals.html">Funerals</a></li>
+            <li><a href="/corporate.html">Corporate</a></li>
+            <li><a href="/christmas.html">Christmas</a></li>
+            <li><a href="/carol-singers.html">Carol Singers</a></li>
+            <li><a href="/private-events.html">Private Events</a></li>
+            <li><a href="/destinations/">Weddings Abroad</a></li>
+            <li class="dropdown-separator" aria-hidden="true"></li>
+            <li><a href="/services.html">All services</a></li>
           </ul>
         </li>
         <li class="has-dropdown">
-          <a href="/planners-and-venues.html" aria-haspopup="true" aria-expanded="false" class="dropdown-trigger">Professionals<span class="dropdown-caret" aria-hidden="true">&#9662;</span></a>
-          <ul class="dropdown-menu" role="menu">
-            <li role="none"><a role="menuitem" href="/for-funeral-directors.html">Funeral Directors</a></li>
-            <li role="none"><a role="menuitem" href="/for-wedding-planners.html">Wedding Planners</a></li>
-            <li role="none"><a role="menuitem" href="/for-event-managers.html">Event Managers</a></li>
-            <li role="none"><a role="menuitem" href="/for-hotels.html">Hotels &amp; Venues</a></li>
-            <li role="none"><a role="menuitem" href="/for-property-managers.html">Property Managers</a></li>
-            <li role="none"><a role="menuitem" href="/for-livery-companies.html">Livery Companies</a></li>
-            <li role="none"><a role="menuitem" href="/for-charities.html">Charities</a></li>
-            <li role="separator" class="dropdown-separator"></li>
-            <li role="none"><a role="menuitem" href="/planners-and-venues.html">Planners, Venues &amp; Estates</a></li>
+          <a href="/planners-and-venues.html" aria-expanded="false" class="dropdown-trigger">Professionals<span class="dropdown-caret" aria-hidden="true">&#9662;</span></a>
+          <ul class="dropdown-menu">
+            <li><a href="/for-funeral-directors.html">Funeral Directors</a></li>
+            <li><a href="/for-wedding-planners.html">Wedding Planners</a></li>
+            <li><a href="/for-event-managers.html">Event Managers</a></li>
+            <li><a href="/for-hotels.html">Hotels &amp; Venues</a></li>
+            <li><a href="/for-property-managers.html">Property Managers</a></li>
+            <li><a href="/for-livery-companies.html">Livery Companies</a></li>
+            <li><a href="/for-charities.html">Charities</a></li>
+            <li class="dropdown-separator" aria-hidden="true"></li>
+            <li><a href="/planners-and-venues.html">Planners, Venues &amp; Estates</a></li>
           </ul>
         </li>
         <li><a href="/listen.html">Listen</a></li>
         <li class="has-dropdown">
-          <a href="/music-guides/" aria-haspopup="true" aria-expanded="false" class="dropdown-trigger">Music Guides<span class="dropdown-caret" aria-hidden="true">&#9662;</span></a>
-          <ul class="dropdown-menu" role="menu">
-            <li role="none"><a role="menuitem" href="/music-guides/?category=weddings">Weddings</a></li>
-            <li role="none"><a role="menuitem" href="/music-guides/?category=funerals">Funerals</a></li>
-            <li role="none"><a role="menuitem" href="/music-guides/?category=christmas">Christmas</a></li>
-            <li role="separator" class="dropdown-separator"></li>
-            <li role="none"><a role="menuitem" href="/music-guides/">Browse all</a></li>
+          <a href="/music-guides/" aria-expanded="false" class="dropdown-trigger">Music Guides<span class="dropdown-caret" aria-hidden="true">&#9662;</span></a>
+          <ul class="dropdown-menu">
+            <li><a href="/music-guides/?category=weddings">Weddings</a></li>
+            <li><a href="/music-guides/?category=funerals">Funerals</a></li>
+            <li><a href="/music-guides/?category=christmas">Christmas</a></li>
+            <li class="dropdown-separator" aria-hidden="true"></li>
+            <li><a href="/music-guides/">Browse all</a></li>
           </ul>
         </li>
         <li><a href="/christmas.html">Christmas</a></li>

@@ -94,14 +94,6 @@
   white-space: nowrap;
 }
 
-.pricing-price .vat {
-  font-family: var(--font-body);
-  font-size: var(--text-sm);
-  font-weight: 400;
-  color: var(--color-text-mid);
-  margin-left: var(--space-xs);
-}
-
 @media (max-width: 599px) {
   .pricing-table td {
     display: block;
@@ -326,37 +318,6 @@ td.compare-us .compare-saving {
 }
 
 /* ═══════════════════════════════════
-   Ensemble Definition List
-   ═══════════════════════════════════ */
-.ensemble-list dt {
-  font-family: var(--font-heading);
-  font-size: var(--text-lg);
-  font-weight: 500;
-  margin-top: var(--space-xl);
-  padding-top: var(--space-xl);
-  border-top: 1px solid var(--color-rule);
-}
-
-.ensemble-list dt:first-child {
-  border-top: none;
-  padding-top: 0;
-  margin-top: 0;
-}
-
-.ensemble-list .aside {
-  font-family: var(--font-body);
-  font-size: var(--text-sm);
-  font-weight: 400;
-  color: var(--color-text-mid);
-}
-
-.ensemble-list dd {
-  margin-top: var(--space-sm);
-  margin-left: 0;
-  color: var(--color-text-mid);
-}
-
-/* ═══════════════════════════════════
    Track Listing (Listen Page)
    ═══════════════════════════════════ */
 .track {
@@ -421,7 +382,7 @@ td.compare-us .compare-saving {
   font-size: var(--text-base);
   padding: var(--space-sm) 0;
   border: none;
-  border-bottom: 1px solid var(--color-rule);
+  border-bottom: 1px solid var(--color-field-rule);
   background: transparent;
   color: var(--color-text);
   border-radius: 0;
@@ -434,7 +395,7 @@ td.compare-us .compare-saving {
   font-family: var(--font-body);
   font-size: var(--text-base);
   padding: var(--space-sm);
-  border: 1px solid var(--color-rule);
+  border: 1px solid var(--color-field-rule);
   background: transparent;
   color: var(--color-text);
   border-radius: 0;
@@ -453,6 +414,13 @@ td.compare-us .compare-saving {
   box-shadow: 0 0 0 1px var(--color-accent);
 }
 
+/* A colour change alone on a 1px underline is too faint a focus cue:
+   thicken the underline to 2px in the accent colour. */
+.form-field input:focus,
+.form-field select:focus {
+  box-shadow: 0 1px 0 0 var(--color-accent);
+}
+
 .form-field select {
   cursor: pointer;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%236B5E56' d='M1.41 0L6 4.58 10.59 0 12 1.41l-6 6-6-6z'/%3E%3C/svg%3E");
@@ -464,7 +432,8 @@ td.compare-us .compare-saving {
 /* ── Validation States ── */
 .form-field input:user-invalid,
 .form-field select:user-invalid,
-.form-field textarea:user-invalid {
+.form-field textarea:user-invalid,
+.form-field [aria-invalid="true"] {
   border-color: var(--color-error);
 }
 
@@ -549,13 +518,6 @@ td.compare-us .compare-saving {
   margin-bottom: 0;
   font-size: var(--text-sm);
   color: var(--color-text-mid);
-}
-
-.hero-trust__stars {
-  color: var(--color-accent);
-  letter-spacing: 0.08em;
-  font-size: var(--text-base);
-  line-height: 1;
 }
 
 /* ═══════════════════════════════════
@@ -864,6 +826,14 @@ td.compare-us .compare-saving {
   opacity: 0.85;
 }
 
+/* .video-embed clips overflow, so the global outline (drawn outside) is
+   invisible here: draw the focus ring inside the thumbnail instead. */
+.video-thumb:focus-visible {
+  outline: 3px solid #fff;
+  outline-offset: -6px;
+  box-shadow: inset 0 0 0 3px var(--color-accent);
+}
+
 @media (max-width: 805px) {
   .hero {
     flex-direction: column;
@@ -928,13 +898,13 @@ td.compare-us .compare-saving {
   color: var(--color-accent);
 }
 
-.filter-chip[aria-pressed="true"] {
+.filter-chip[aria-current="page"] {
   background-color: var(--color-accent);
   color: var(--color-bg);
   border-color: var(--color-accent);
 }
 
-.filter-chip[aria-pressed="true"]:hover {
+.filter-chip[aria-current="page"]:hover {
   background-color: var(--color-accent-hover);
   border-color: var(--color-accent-hover);
   color: var(--color-bg);
@@ -1154,6 +1124,11 @@ td.compare-us .compare-saving {
   outline: none;
 }
 
+.dropdown-menu a:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: -2px;
+}
+
 .dropdown-separator {
   height: 1px;
   background-color: var(--color-rule);
@@ -1171,6 +1146,15 @@ td.compare-us .compare-saving {
 .has-dropdown:focus-within > .dropdown-trigger .dropdown-caret,
 .has-dropdown[data-open="true"] > .dropdown-trigger .dropdown-caret {
   transform: rotate(180deg);
+}
+
+/* ESC dismisses a desktop dropdown even while hover/focus is still inside (nav.js) */
+.has-dropdown[data-dismissed] > .dropdown-menu {
+  display: none;
+}
+
+.has-dropdown[data-dismissed] > .dropdown-trigger .dropdown-caret {
+  transform: none;
 }
 
 /* Mobile: dropdown becomes an inline expandable block inside the hamburger */
@@ -1459,6 +1443,32 @@ td.compare-us .compare-saving {
   color: var(--color-accent);
 }
 
+/* ── "How it works" numbered steps (service pages) ── */
+.steps {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  gap: var(--space-lg);
+  margin-block: var(--space-lg);
+}
+.step-num {
+  display: block;
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 2rem;
+  font-variant-numeric: lining-nums; /* Cormorant's old-style 1 reads as a roman I */
+  line-height: 1;
+  color: var(--color-accent);
+}
+.step h3 {
+  font-size: var(--text-md);
+  font-weight: 600;
+  margin-block: var(--space-xs);
+}
+.step p {
+  margin: 0;
+  color: var(--color-text-mid);
+}
+
 /* ── Care strip: "We take the whole thing off your hands" ──────────── */
 .care-steps {
   list-style: none;
@@ -1473,6 +1483,7 @@ td.compare-us .compare-saving {
   font-family: var(--font-heading);
   font-weight: 600;
   font-size: 2rem;
+  font-variant-numeric: lining-nums;
   line-height: 1;
   color: var(--color-accent);
 }

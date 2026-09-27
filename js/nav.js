@@ -4,23 +4,35 @@
   // ── Hamburger toggle ──
   var toggle = document.querySelector('.nav-toggle');
   var menu = document.getElementById('nav-menu');
+  function setMenuOpen(open) {
+    toggle.setAttribute('aria-expanded', String(open));
+    menu.classList.toggle('is-open', open);
+    // When closing the hamburger, also collapse any expanded dropdowns
+    if (!open) {
+      document.querySelectorAll('.has-dropdown').forEach(function (item) {
+        item.setAttribute('data-open', 'false');
+        var trig = item.querySelector('.dropdown-trigger');
+        if (trig) trig.setAttribute('aria-expanded', 'false');
+      });
+    }
+  }
+
   if (toggle && menu) {
     toggle.addEventListener('click', function () {
-      var expanded = toggle.getAttribute('aria-expanded') === 'true';
-      toggle.setAttribute('aria-expanded', String(!expanded));
-      menu.classList.toggle('is-open');
-      // When closing the hamburger, also collapse any expanded dropdowns
-      if (expanded) {
-        document.querySelectorAll('.has-dropdown').forEach(function (item) {
-          item.setAttribute('data-open', 'false');
-          var trig = item.querySelector('.dropdown-trigger');
-          if (trig) trig.setAttribute('aria-expanded', 'false');
-        });
-      }
+      setMenuOpen(toggle.getAttribute('aria-expanded') !== 'true');
+    });
+
+    // Keyboard: ESC closes the open mobile menu and returns focus to the toggle.
+    // An open dropdown inside the menu consumes the first ESC (below).
+    document.addEventListener('keydown', function (e) {
+      if (e.key !== 'Escape' || !menu.classList.contains('is-open')) return;
+      setMenuOpen(false);
+      toggle.focus();
     });
   }
 
-  // ── Dropdown (Music Guides) ──
+  // ── Dropdowns (Services, Professionals, Music Guides) ──
+  var mobileQuery = window.matchMedia('(max-width: 1080px)');
   var dropdownItems = document.querySelectorAll('.has-dropdown');
   dropdownItems.forEach(function (item) {
     var trigger = item.querySelector('.dropdown-trigger');
@@ -36,8 +48,7 @@
     // hits the trigger AND the menu is currently closed as "open
     // first, navigate next time".
     trigger.addEventListener('click', function (e) {
-      var isMobile = window.matchMedia('(max-width: 1080px)').matches;
-      if (!isMobile) return; // desktop: hover handles it
+      if (!mobileQuery.matches) return; // desktop: hover handles it
       var isOpen = item.getAttribute('data-open') === 'true';
       if (!isOpen) {
         e.preventDefault();
@@ -46,20 +57,44 @@
       // If already open, the click navigates to the trigger's href.
     });
 
-    // Desktop: CSS :hover opens the menu — keep aria-expanded in sync
-    // for assistive tech, since the click handler above only runs on mobile.
+    // Desktop: CSS :hover and :focus-within open the menu — keep aria-expanded
+    // in sync for assistive tech, since the click handler above only runs on
+    // mobile. data-dismissed (set by ESC) hides the menu while the pointer or
+    // focus is still inside it; leaving the item clears it.
     item.addEventListener('mouseenter', function () {
-      if (!window.matchMedia('(max-width: 1080px)').matches) setOpen(true);
+      if (!mobileQuery.matches) setOpen(true);
     });
     item.addEventListener('mouseleave', function () {
-      if (!window.matchMedia('(max-width: 1080px)').matches) setOpen(false);
+      item.removeAttribute('data-dismissed');
+      if (!mobileQuery.matches && !item.contains(document.activeElement)) setOpen(false);
+    });
+    item.addEventListener('focusin', function () {
+      if (!mobileQuery.matches && !item.hasAttribute('data-dismissed')) setOpen(true);
+    });
+    item.addEventListener('focusout', function (e) {
+      if (item.contains(e.relatedTarget)) return;
+      item.removeAttribute('data-dismissed');
+      if (!mobileQuery.matches) setOpen(false);
     });
 
     // Keyboard: ESC closes the dropdown and returns focus to the trigger.
     item.addEventListener('keydown', function (e) {
       if (e.key === 'Escape') {
+        // In the mobile menu an open dropdown consumes this ESC; a second one
+        // closes the menu itself.
+        if (mobileQuery.matches && item.getAttribute('data-open') === 'true') e.stopPropagation();
         setOpen(false);
+        if (!mobileQuery.matches) item.setAttribute('data-dismissed', '');
         trigger.focus();
+      }
+    });
+
+    // ESC also dismisses a menu opened by mouse hover, where focus is elsewhere
+    // (WCAG 1.4.13: content shown on hover must be dismissible).
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && !mobileQuery.matches && item.matches(':hover')) {
+        setOpen(false);
+        item.setAttribute('data-dismissed', '');
       }
     });
 
@@ -70,6 +105,19 @@
       }
     });
   });
+
+  // Crossing the mobile/desktop breakpoint resets every dropdown, so one opened
+  // inline on a phone-width window is not left pinned open on desktop.
+  function resetDropdowns() {
+    dropdownItems.forEach(function (item) {
+      item.setAttribute('data-open', 'false');
+      item.removeAttribute('data-dismissed');
+      var trig = item.querySelector('.dropdown-trigger');
+      if (trig) trig.setAttribute('aria-expanded', 'false');
+    });
+  }
+  if (mobileQuery.addEventListener) mobileQuery.addEventListener('change', resetDropdowns);
+  else if (mobileQuery.addListener) mobileQuery.addListener(resetDropdowns);
 
   // ── aria-current on the matching nav link ──
   // Set aria-current="page" on the nav link whose href matches
@@ -88,6 +136,10 @@
         link.setAttribute('aria-current', 'page');
       }
     });
+
+    // One current link at most: if a top-level link already matched (e.g.
+    // Christmas, which is also listed under Services), leave the triggers alone.
+    if (document.querySelector('#nav-menu > li > a[aria-current]')) return;
 
     document.querySelectorAll('.has-dropdown').forEach(function (item) {
       var trigger = item.querySelector('.dropdown-trigger');
@@ -114,7 +166,7 @@
   // ── Mobile CTA: hide when footer is on-screen ──
   var cta = document.querySelector('.mobile-cta');
   var footer = document.querySelector('.site-footer');
-  if (cta && footer) {
+  if (cta && footer && 'IntersectionObserver' in window) {
     var footerObserver = new IntersectionObserver(function (entries) {
       entries.forEach(function (entry) {
         if (entry.isIntersecting) {

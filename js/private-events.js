@@ -116,19 +116,19 @@
   });
 
   // ── UTM / click-ID capture ──
-  // Same-named hidden inputs exist empty in the markup; fill them from the
-  // landing URL (kept for the tab by the analytics snippet) so the enquiry
-  // email carries its source.
-  try {
-    var params = new URLSearchParams(window.location.search);
-    var kept = typeof window.lcsAttribution === 'function' ? window.lcsAttribution() : {};
-    ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'gclid'].forEach(function (key) {
-      var value = params.get(key) || kept[key];
-      if (!value) return;
-      var input = document.querySelector('input[name="' + key + '"]');
-      if (input) input.value = value;
-    });
-  } catch (_) { /* URLSearchParams unsupported — non-fatal */ }
+  // Same-named hidden inputs exist empty in the markup; fill them at submit
+  // from lcsAttribution() (analytics snippet), which returns nothing unless the
+  // visitor has allowed cookies, as privacy.html promises. Filling at submit
+  // rather than on load picks up an Allow given after the page opened.
+  function fillAttribution() {
+    try {
+      var kept = typeof window.lcsAttribution === 'function' ? window.lcsAttribution() : {};
+      ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'gclid'].forEach(function (key) {
+        var input = document.querySelector('input[name="' + key + '"]');
+        if (input) input.value = kept[key] || '';
+      });
+    } catch (_) { /* non-fatal */ }
+  }
 
   // ── Conditional fields ──
   // Hidden wrappers also disable their fields so FormData excludes them.
@@ -250,7 +250,10 @@
 
       // Required-field guard: focus the first invalid field and name the
       // problem (the CSS :user-invalid rule marks the fields themselves).
-      var invalid = form.querySelectorAll(':invalid');
+      // (form.elements, not :invalid, which would also match a fieldset.)
+      var invalid = Array.prototype.filter.call(form.elements, function (el) {
+        return el.willValidate && !el.validity.valid;
+      });
       if (invalid.length) {
         showError('incomplete', false);
         invalid[0].focus();
@@ -261,6 +264,9 @@
       // silently do nothing.
       var honeypot = form.querySelector('input[name="botcheck"]');
       if (honeypot && honeypot.checked) return;
+
+      // Clear an earlier failure so it is not shown beside a new one.
+      if (errorBox) errorBox.setAttribute('data-visible', 'false');
 
       // hCaptcha guard (mirrors js/form.js): Web3Forms rejects submissions
       // without a token, so block early and name the reason. Only block when
@@ -280,8 +286,6 @@
         return;
       }
 
-      if (errorBox) errorBox.setAttribute('data-visible', 'false');
-
       // Timing check: a submit within seconds of page load is not a person.
       var elapsed = (Date.now() - pageLoadTs) / 1000;
       if (elapsed < PE.MIN_SECONDS) {
@@ -296,6 +300,8 @@
         submitBtn.disabled = true;
         submitBtn.textContent = 'Sending…';
       }
+
+      fillAttribution();
 
       // Collect form data as a plain object (disabled fields excluded)
       var data = {};
