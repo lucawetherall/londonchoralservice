@@ -1,13 +1,15 @@
 # CLAUDE.md
 
-The website of The London Choral Service (Alma Consort Ltd) — a choir-for-hire business selling professional singers for funerals, weddings, corporate events, and Christmas across the UK. ~165 hand-authored static HTML pages served directly by GitHub Pages. No framework, no package.json, no CI.
+The website of The London Choral Service (Alma Consort Ltd) — a choir-for-hire business selling professional singers for funerals, weddings, corporate events, and Christmas across the UK. ~165 hand-authored static HTML pages on GitHub Pages. No framework, no package.json, no CI build.
 
 ## Critical: the build pipeline
 
 - **Never hand-edit the inlined `<style>` block in any page** — edit `css/tokens|base|layout|components|pages.css` and run `./build.sh`. `css/style.css` is generated too.
 - **Never hand-edit content between `<!-- @include-start … -->` / `@include-end` markers** — edit `partials/*.html` and run `./build.sh`.
 - Run `./build.sh` after any `css/` or `partials/` change or new page; a ~165-file diff afterwards is normal. **Load the `build-and-verify` skill before touching styles, nav, footer, or doing any bulk edit.**
-- The built output is what gets committed and deployed — there is no CI build step.
+- The built output is what gets committed and deployed — there is no CI build step. On each push to `main`, `.github/workflows/deploy-pages.yml` copies the files `scripts/stage_site.py` publishes into the Pages artifact, byte for byte, and deploys them. It never builds or edits a page.
+- **The site serves an allowlist, not the repo.** `PUBLIC` in `scripts/stage_site.py` lists the pages, `assets/`, `css/`, `fonts/`, `js/` and the root files fetched by name (robots, sitemap, llms, favicon, manifest, IndexNow key). Everything else (docs/, logs/, scripts/, data/, tests/, partials/, graphify-out/, .claude/, every `.md`, `.py`, `.yml`, `.json`) returns 404 on the live site, and `PRIVATE` refuses those even if `PUBLIC` is widened. A new directory of pages, or a new root file the site must serve, needs a `PUBLIC` line: `./build.sh` and the pull-request check fail until it has one. Never loosen `PRIVATE`, and keep Settings → Pages → Source on "GitHub Actions" (branch mode serves every file).
+- Off the site is not private: the GitHub repo itself is public. Never commit secrets or client data.
 
 ## Repo map
 
@@ -23,6 +25,7 @@ The website of The London Choral Service (Alma Consort Ltd) — a choir-for-hire
 - `docs/ROADMAP.md` — prioritised backlog with self-contained items; `docs/superpowers/` — dated specs and plans
 - `MANUAL-ACTIONS-REQUIRED.md` — human-only dashboard tasks. **Never attempt these**
 - `SITE-STOP-SLOP-PLAN.md` — house copy-style audit (distilled into the `writing-site-copy` skill)
+- `.github/workflows/` — `deploy-pages.yml` (allowlist checks on every pull request; deploy on `main`) and `indexnow.yml` (IndexNow ping, called after each deploy)
 - `graphify-out/` — pre-built knowledge graph of the whole repo (pages, guides, boroughs, skills, plans, cross-links). **Committed and checked in** — query it instead of re-exploring the codebase for broad "how does X relate to Y" or "what links to Z" questions. See Commands below.
 
 ## Commands
@@ -31,6 +34,8 @@ The website of The London Choral Service (Alma Consort Ltd) — a choir-for-hire
 - JSON-LD check alone: `python3 validate_jsonld.py`
 - Competitor claim check alone: `python3 validate_competitor_claims.py`
 - Validator tests: `python3 tests/test_competitor_claims.py`
+- Deploy allowlist check alone: `python3 scripts/stage_site.py` (`--list` prints what the site serves; `--out _site` stages it as CI does). Tests: `python3 tests/test_stage_site.py`
+- Check the live site after a deploy or an allowlist change: `git fetch origin && python3 scripts/check_live_site.py` (every published file 200, every other repo file 404, sitemap URLs 200)
 - Local preview: `python3 -m http.server 8000`
 - Query the repo graph: `/graphify query "<question>"` (reads the committed `graphify-out/graph.json` — do not rebuild unless files have changed since the last graph commit). Refresh after a large content sweep with `/graphify --update`.
 

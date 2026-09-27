@@ -1,0 +1,66 @@
+name: Deploy site to Pages
+
+# Publishes londonchoralservice.com. The repo also holds internal files (docs/,
+# logs/, scripts/, data/, .claude/ ...), so this deploys only the files that
+# scripts/stage_site.py publishes, copied byte for byte. It does not build:
+# build.sh runs locally and its output is committed. Pull requests get the same
+# checks and stop before deploying.
+#
+# Needs Settings → Pages → Build and deployment → Source: "GitHub Actions".
+# Setting it back to "Deploy from a branch" would serve every file in the repo.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  # Runs on main deploy: they queue one at a time, in order, and are never
+  # cancelled part-way. Any other run is only a check, and a newer run for the
+  # same pull request or branch replaces it.
+  group: ${{ github.ref == 'refs/heads/main' && 'pages-deploy' || format('pages-check-{0}', github.ref) }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+jobs:
+  stage:
+    name: Check and stage public files
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Test the staging script
+        run: python3 tests/test_stage_site.py
+      - name: Check the allowlist and stage the site
+        run: python3 scripts/stage_site.py --out _site
+      - name: Upload the Pages artifact
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: _site
+
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: stage
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v5
+
+  indexnow:
+    name: IndexNow ping
+    needs: deploy
+    uses: ./.github/workflows/indexnow.yml
