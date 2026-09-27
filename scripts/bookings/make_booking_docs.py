@@ -8,6 +8,7 @@ the bank details, so they never go in this public repo):
 The invoice is rendered with headless Google Chrome and must fit on one page.
 
     .venv/bin/python scripts/bookings/make_booking_docs.py spec.json
+    .venv/bin/python scripts/bookings/make_booking_docs.py '{"ref": "2111", ...}'   (spec inline)
 
 spec.json (all money in pounds; the fee must be the one the client accepted):
   {"ref": "2111", "client_name": "…", "service_type": "Wedding ceremony",
@@ -51,8 +52,9 @@ def fail(msg):
 
 def main():
     if len(sys.argv) != 2:
-        fail("usage: make_booking_docs.py spec.json")
-    spec = json.loads(Path(sys.argv[1]).read_text())
+        fail("usage: make_booking_docs.py <spec.json | '{json}'>")
+    arg = sys.argv[1].strip()
+    spec = json.loads(arg if arg.startswith("{") else Path(arg).read_text())
     for f in ("ref", "client_name", "service_type", "service_date", "provision", "items",
               "instalment_1_due", "instalment_2_due"):
         if not spec.get(f):
