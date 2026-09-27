@@ -437,16 +437,16 @@ TOOLS (so the run never stops on a permission prompt)
   .venv/bin/python scripts/bookings/assistant_io.py state
   .venv/bin/python scripts/bookings/assistant_io.py style
   .venv/bin/python scripts/bookings/assistant_io.py refs
-  .venv/bin/python scripts/bookings/assistant_io.py done <ISO start of this run> <messageId> <messageId> ...
+  .venv/bin/python scripts/bookings/assistant_io.py done <messageId> <messageId> ...
   .venv/bin/python scripts/bookings/assistant_io.py ledger-add '<one-line JSON object>'
   .venv/bin/python scripts/bookings/make_booking_docs.py '<one-line JSON spec>'
-  In JSON passed inside single quotes, write any apostrophe as '.
+  Inside those single-quoted JSON arguments, write any apostrophe as the typographic ’ (never a straight ').
 
 SET-UP (each run)
 - Read CLAUDE.md. Its business rules apply to emails: Alma Consort Ltd is not VAT-registered (if VAT comes up: "We're not VAT-registered, so no VAT is added"; never "including VAT"); never quote how many singers we have; the London cathedral and Westminster Abbey rule; the standard booking is up to two hours.
 - Read the price tables in pricing.html (and christmas-pricing.html for Christmas) and quote only those figures, including the combination prices. Travel beyond Greater London is extra: say it will be confirmed with the quote (Luca's usual figure is £80 per singer). Never offer a discount, match a budget or change a price; if a client pushes on price, draft a short holding reply and flag it for Luca.
 - Voice: run `assistant_io.py style` and follow Luca's style guide closely (structure, salutation, openings, price-list format, terms sentence, closing and sign-off). Load the stop-slop skill. Before drafting each reply, read two or three of Luca's most recent sent replies for the same kind of booking (Sent folder, from office@londonchoralservice.com; search the subject for wedding, funeral, carol or choir; skip Alma Consort) and model the draft on them: their order, their phrasing, their length. Never copy their prices, dates or client details.
-- Run `assistant_io.py state` for last_checked and the handled message ids.
+- Run `assistant_io.py state` first: it gives the time now, last_checked and the handled message ids, and records when this run started.
 
 EACH RUN
 1. Find new messages since last_checked (allow a 15-minute overlap): ZohoMail_listEmails on the Inbox folder, newest first, stopping at older messages, or ZohoMail_SearchEmails with fromDate. Skip handled ids, anything from office@ or luca@, DMARC reports, newsletters, notifications that aren't enquiries, spam and Alma Consort mail.
@@ -467,7 +467,7 @@ EACH RUN
    - CHANGE or CANCELLATION: a short, kind acknowledgement. Don't state refund terms beyond "the terms in your booking confirmation"; flag it for Luca.
    Before saving each draft, check it against stop-slop and against Luca's examples: cut filler, adverbs and generic phrases; no em dashes inside sentences (the price-list lines keep Luca's "Item — £price" dash); correct prices; the exact sign-off.
 4. Ad click reference: in the client's first message, look for the web form's "gclid", "gbraid" or "wbraid" lines, or an "Ad ref:" line (the site adds it to WhatsApp messages and emails). Use it in the ledger's gclid column (gbraid:<value> or wbraid:<value> when not a gclid). consent = granted only if the reference came from the site and the first message is dated 27 Sep 2026 or later; otherwise unknown.
-5. Run `assistant_io.py done <ISO start of this run> <every processed messageId>`.
+5. Run `assistant_io.py done <every processed messageId>`; it moves last_checked to when this run started.
 6. If you saved at least one draft, send one PushNotification (under 200 characters): "<n> enquiry replies drafted in Zoho Drafts to review and send" plus ", <m> invoices ready in ~/lcs-private/invoices" when you made any. Otherwise send nothing.
 
 FINAL SUMMARY (short, no preamble)

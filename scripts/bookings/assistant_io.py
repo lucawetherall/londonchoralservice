@@ -4,9 +4,10 @@ unattended run needs no ad-hoc shell commands (which would stop on permission
 prompts). Private data stays in ~/lcs-private/; this file holds none.
 
     .venv/bin/python scripts/bookings/assistant_io.py state
-        print last_checked and the handled message ids (creates the file, 24 h back)
-    .venv/bin/python scripts/bookings/assistant_io.py done <iso-start-of-run> [messageId ...]
-        mark messages handled and move last_checked to the start of this run
+        start a run: print the time now, last_checked and the handled message ids
+        (creates the file, 24 h back) and remember when this run started
+    .venv/bin/python scripts/bookings/assistant_io.py done [messageId ...]
+        mark messages handled and move last_checked to when this run started
     .venv/bin/python scripts/bookings/assistant_io.py style
         print the private email style guide (~/lcs-private/email-style.md)
     .venv/bin/python scripts/bookings/assistant_io.py refs
@@ -48,16 +49,17 @@ def main():
     cmd, args = (sys.argv[1] if len(sys.argv) > 1 else ""), sys.argv[2:]
     if cmd == "state":
         s = load_state()
-        print(json.dumps({"last_checked": s["last_checked"], "handled": s["handled"][-500:]}))
-    elif cmd == "done":
-        if not args:
-            raise SystemExit("usage: done <iso-start-of-run> [messageId ...]")
-        datetime.datetime.fromisoformat(args[0])  # validates
-        s = load_state()
-        s["handled"] = (s["handled"] + [m for m in args[1:] if m not in s["handled"]])[-500:]
-        s["last_checked"] = args[0]
+        now = datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds")
+        s["run_started"] = now
         private_write(STATE, json.dumps(s, indent=1))
-        print(f"state saved: last_checked {args[0]}, {len(args) - 1} message(s) marked")
+        print(json.dumps({"now": now, "last_checked": s["last_checked"], "handled": s["handled"][-500:]}))
+    elif cmd == "done":
+        s = load_state()
+        started = s.pop("run_started", None) or datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds")
+        s["handled"] = (s["handled"] + [m for m in args if m not in s["handled"]])[-500:]
+        s["last_checked"] = started
+        private_write(STATE, json.dumps(s, indent=1))
+        print(f"state saved: last_checked {started}, {len(args)} message(s) marked")
     elif cmd == "style":
         print(STYLE.read_text() if STYLE.exists() else "(no style guide at ~/lcs-private/email-style.md)")
     elif cmd == "refs":
