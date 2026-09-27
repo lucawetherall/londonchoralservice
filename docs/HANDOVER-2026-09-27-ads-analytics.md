@@ -218,21 +218,26 @@ For Zoho Mail, follow section 5, item 1. Zoho's MCP URL works like a password: r
    3. Restart Claude Code and say *"grab my invoices"*. Claude finds them, matches each to its enquiry email for the ad-click reference, writes only to `~/lcs-private/bookings.csv`, then asks you to approve the upload (`scripts/ads/upload_bookings.py`, via the Data Manager API).
    4. Uploads need the `datamanager` scope from step 5 of section 4 (present since 28 Sep).
    5. Bookings whose enquiry came before 27 Sep 2026 carry no ad-click reference, so they are recorded in the ledger but never uploaded.
-2. **Exclude your own visits from GA4.**
+2. **Connect Starling (read-only) so deposits confirm themselves.**
+   - Sign in at developer.starlingbank.com (a Starling developer account links to one bank account, so use one for the Alma Consort business account).
+   - Personal access → create a token with only `account-list:read` and `transaction:read`. Nothing else: no payment or payee scopes.
+   - In Terminal run `security add-generic-password -a "$USER" -s lcs-starling-read -w` and paste the token when asked (it isn't shown).
+   - Check it with `.venv/bin/python scripts/bookings/check_payments.py --selftest` from the repo. Revoke the token in the portal at any time to switch it off.
+3. **Exclude your own visits from GA4.**
    - Open `https://londonchoralservice.com/?lcs_internal=1` once on each of your devices and browsers.
    - Then GA4 → **Admin → Data collection and modification → Data filters → Internal Traffic** → set to **Active** → Save.
-3. **Set the Business Profile's default location to London.**
+4. **Set the Business Profile's default location to London.**
    - Business Profile → **Edit profile → Location**: hide the business address and set the **Service area** to London (add boroughs if you like).
    - Don't use the website's N1 7GU postcode as the address unless you actually work there; Google doesn't allow registered-office or mail-forwarding addresses.
    - Google Ads picks the change up automatically.
-4. **One real tap test.** On your phone, allow cookies on the live site and tap WhatsApp. The "WhatsApp or email click" signal hasn't been seen by Google yet because of low traffic. Do this before the `?lcs_internal=1` visit on that phone.
-5. **Weekly reviews** run every Monday until 20 Dec. **Monday 5 October** is the first Christmas budget call. £6/day is recommended only if at least 90% of spend is on hiring searches, the campaign is hitting its cap, and a real enquiry has come in. Raising it also means approving a change to the £5 cap in `CLAUDE.md`, for that campaign only.
-6. **Check the new wedding and funeral ads passed Google's review** (they were "in review" at handover).
-7. **Later, once there's data:**
+5. **One real tap test.** On your phone, allow cookies on the live site and tap WhatsApp. The "WhatsApp or email click" signal hasn't been seen by Google yet because of low traffic. Do this before the `?lcs_internal=1` visit on that phone.
+6. **Weekly reviews** run every Monday until 20 Dec. **Monday 5 October** is the first Christmas budget call. £6/day is recommended only if at least 90% of spend is on hiring searches, the campaign is hitting its cap, and a real enquiry has come in. Raising it also means approving a change to the £5 cap in `CLAUDE.md`, for that campaign only.
+7. **Check the new wedding and funeral ads passed Google's review** (they were "in review" at handover).
+8. **Later, once there's data:**
    - Make "Booked job" primary once a handful of bookings have been uploaded, then consider bidding on value.
    - Consider enhanced conversions for leads (an Ads setting).
    - Microsoft Advertising (Bing) as an optional extra channel for office bookers.
-8. **Housekeeping.**
+9. **Housekeeping.**
    - Old unmerged branches from other sessions (`claude/brave-gagarin`, `claude/interesting-pike-959791`, `claude/sleepy-faraday`, `claude/wizardly-lichterman`) and open PR #112 (Barbershop Grams, another session) need a decision.
    - Refresh the knowledge graph (`/graphify --update`) after large content changes.
 
@@ -293,7 +298,7 @@ EACH RUN
    b. For each one, fetch the raw email with ZohoMail_getOriginalMessage (Claude Code saves the large result to a file), run `.venv/bin/python scripts/bookings/invoice_text.py <that file>` for the invoice number, date, billed-to, items and total, then delete the saved file. Skip booking_refs already in the ledger, bookings the thread shows were cancelled or declined, and superseded versions (keep the latest invoice with that number).
    c. Find the client's first message in the thread: a web-form notification from notify@web3forms.com (its gclid, gbraid or wbraid lines) or a direct email with an "Ad ref:" line. Record the reference in the ledger's gclid column (as gbraid:<value> or wbraid:<value> when not a gclid). Set consent = granted only if the reference came from the site and the first message is dated 27 Sep 2026 or later; otherwise unknown.
    d. Append the new rows to ~/lcs-private/bookings.csv (columns in its header row), then run `.venv/bin/python scripts/ads/upload_bookings.py` (validate only) and include what it would upload or skip.
-   e. Rows whose notes start with "PENDING" were invoiced by the enquiry assistant before any deposit. For each, read its thread: if the client says they have paid, the owner has acknowledged payment, or the event date has passed with no cancellation, replace the "PENDING…;" prefix with "deposit seen <YYYY-MM-DD>;". If the thread shows a cancellation, change the prefix to "CANCELLED <YYYY-MM-DD>;". The uploader never sends PENDING or CANCELLED rows.
+   e. Payments: run `.venv/bin/python scripts/bookings/check_payments.py --apply` (it checks the Starling account, read-only, and skips quietly until the owner has stored the token). It clears PENDING when a deposit has arrived and reports overdue deposits and balances; include its lines (invoice numbers and amounts only). Then, for rows still starting "PENDING", read the thread: if the client says they have paid, the owner has acknowledged payment, or the event date has passed with no cancellation, replace the "PENDING…;" prefix with "deposit seen <YYYY-MM-DD>;". If the thread shows a cancellation, change the prefix to "CANCELLED <YYYY-MM-DD>;". The uploader never sends PENDING or CANCELLED rows.
 7. Christmas budget call, only from 5 Oct 2026 onwards: recommend £6/day ONLY if all three hold: at least 90% of spend is on HIRING terms (after the proposed negatives); the campaign is limited by budget (averaging about £5/day or losing impression share to budget); and at least one real enquiry or WhatsApp/email contact came in. Otherwise hold at £5, or suggest pausing head terms that attract non-buyers, and say what would change the answer. £6 needs the owner to raise the CLAUDE.md £5 cap for this campaign only, until 20 Dec 2026.
 8. After 20 Dec 2026: replace step 7 with a season summary for the Christmas campaign (spend, clicks, enquiries, WhatsApp/email contacts, booked jobs) and recommend pausing it (never delete), once. Keep running every other step for the wedding and funeral campaigns, web presence and bookings.
 
@@ -440,6 +445,8 @@ TOOLS (so the run never stops on a permission prompt)
   .venv/bin/python scripts/bookings/assistant_io.py done <messageId> <messageId> ...
   .venv/bin/python scripts/bookings/assistant_io.py ledger-add '<one-line JSON object>'
   .venv/bin/python scripts/bookings/make_booking_docs.py '<one-line JSON spec>'
+  .venv/bin/python scripts/bookings/check_payments.py --apply
+  .venv/bin/python scripts/bookings/check_payments.py --reminded <invoice ref>
   Inside those single-quoted JSON arguments, write any apostrophe as the typographic ’ (never a straight ').
 
 SET-UP (each run)
@@ -467,8 +474,9 @@ EACH RUN
    - CHANGE or CANCELLATION: a short, kind acknowledgement. Don't state refund terms beyond "the terms in your booking confirmation"; flag it for Luca.
    Before saving each draft, check it against stop-slop and against Luca's examples: cut filler, adverbs and generic phrases; no em dashes inside sentences (the price-list lines keep Luca's "Item — £price" dash); correct prices; the exact sign-off.
 4. Ad click reference: in the client's first message, look for the web form's "gclid", "gbraid" or "wbraid" lines, or an "Ad ref:" line (the site adds it to WhatsApp messages and emails). Use it in the ledger's gclid column (gbraid:<value> or wbraid:<value> when not a gclid). consent = granted only if the reference came from the site and the first message is dated 27 Sep 2026 or later; otherwise unknown.
-5. Run `assistant_io.py done <every processed messageId>`; it moves last_checked to when this run started.
-6. If you saved at least one draft, send one PushNotification (under 200 characters): "<n> enquiry replies drafted in Zoho Drafts to review and send" plus ", <m> invoices ready in ~/lcs-private/invoices" when you made any. Otherwise send nothing.
+5. Payments, on the first run of each day only (when `state` shows the time now before 09:30 UTC): run `check_payments.py --apply`. For each booking it marks DEPOSIT OVERDUE without "(reminder already drafted)", find the client's thread and save a short, friendly reminder draft in Luca's style (the invoice number, the amount of the first instalment, that it secures the date, and "do let me know if you've already sent it"), then run `check_payments.py --reminded <ref>`. If it says no token is stored, skip this step.
+6. Run `assistant_io.py done <every processed messageId>`; it moves last_checked to when this run started.
+7. If you saved at least one draft, send one PushNotification (under 200 characters): "<n> enquiry replies drafted in Zoho Drafts to review and send" plus ", <m> invoices ready in ~/lcs-private/invoices" when you made any. Otherwise send nothing.
 
 FINAL SUMMARY (short, no preamble)
 - Drafts saved: one line each with first name, occasion, date, what you proposed (package and £), and what Luca must check before sending (diary, repertoire, attachments to add, anything flagged).
