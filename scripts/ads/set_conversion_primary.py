@@ -10,6 +10,7 @@ approved; applied changes are appended to logs/ads-changes.md.
     python scripts/ads/set_conversion_primary.py 7796284061 primary --reason "..." --apply
 """
 
+import os
 import argparse
 import datetime
 from pathlib import Path
@@ -32,7 +33,7 @@ def main():
     args = parser.parse_args()
     want = args.role == "primary"
 
-    client = GoogleAdsClient.load_from_storage()
+    client = GoogleAdsClient.load_from_storage(os.environ.get("GOOGLE_ADS_CONFIGURATION_FILE_PATH", os.path.expanduser("~/.config/lcs/google-ads.yaml")))
     rows = list(client.get_service("GoogleAdsService").search(
         customer_id=CUSTOMER_ID,
         query=f"SELECT conversion_action.name, conversion_action.primary_for_goal "

@@ -101,7 +101,7 @@ def main():
         print("Nothing to upload.")
         return
 
-    c = GoogleAdsClient.load_from_storage()
+    c = GoogleAdsClient.load_from_storage(os.environ.get("GOOGLE_ADS_CONFIGURATION_FILE_PATH", os.path.expanduser("~/.config/lcs/google-ads.yaml")))
     ga = c.get_service("GoogleAdsService")
     action_id = next(iter(ga.search(customer_id=CUSTOMER_ID, query=(
         f"SELECT conversion_action.id FROM conversion_action WHERE conversion_action.name = '{ACTION_NAME}' "

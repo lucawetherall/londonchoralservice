@@ -13,6 +13,7 @@ ads, sitelinks and callouts are PAUSED and replaced.
     python scripts/ads/choir_focus_2026_09.py --apply    # after approval
 """
 
+import os
 import argparse
 import datetime
 import re
@@ -118,7 +119,7 @@ def main():
     parser.add_argument("--apply", action="store_true")
     args = parser.parse_args()
     check_limits()
-    c = GoogleAdsClient.load_from_storage()
+    c = GoogleAdsClient.load_from_storage(os.environ.get("GOOGLE_ADS_CONFIGURATION_FILE_PATH", os.path.expanduser("~/.config/lcs/google-ads.yaml")))
     ga = c.get_service("GoogleAdsService")
     E = c.enums
     ops, changes, temp = [], [], iter(range(-1, -1000, -1))

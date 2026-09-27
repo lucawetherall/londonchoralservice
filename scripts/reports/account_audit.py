@@ -7,6 +7,7 @@ campaign. Prints a compact report; changes nothing.
     python scripts/reports/account_audit.py [--days 90]
 """
 
+import os
 import argparse
 import datetime
 from collections import defaultdict
@@ -26,7 +27,7 @@ def main():
     p = argparse.ArgumentParser()
     p.add_argument("--days", type=int, default=90)
     args = p.parse_args()
-    c = GoogleAdsClient.load_from_storage()
+    c = GoogleAdsClient.load_from_storage(os.environ.get("GOOGLE_ADS_CONFIGURATION_FILE_PATH", os.path.expanduser("~/.config/lcs/google-ads.yaml")))
     ga = c.get_service("GoogleAdsService")
     end = datetime.date.today()
     start = end - datetime.timedelta(days=args.days)

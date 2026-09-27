@@ -10,6 +10,7 @@ are appended to logs/ads-changes.md. Existing negatives are skipped.
     python scripts/ads/add_negatives_2026_09.py --apply    # after approval
 """
 
+import os
 import argparse
 import datetime
 from pathlib import Path
@@ -52,7 +53,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--apply", action="store_true")
     args = parser.parse_args()
-    client = GoogleAdsClient.load_from_storage()
+    client = GoogleAdsClient.load_from_storage(os.environ.get("GOOGLE_ADS_CONFIGURATION_FILE_PATH", os.path.expanduser("~/.config/lcs/google-ads.yaml")))
     ga = client.get_service("GoogleAdsService")
     E = client.enums
 
