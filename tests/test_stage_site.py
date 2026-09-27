@@ -22,6 +22,7 @@ PAGE = '''<!DOCTYPE html><html><head>
 <a href="mailto:office@londonchoralservice.com">Email</a> <a href="tel:+440000">Call</a>
 <a href="https://example.com/elsewhere">Elsewhere</a>
 <img src="/assets/logo.png?v=3" srcset="/assets/logo.png 1x, /assets/logo@2x.png 2x" alt="">
+<form data-redirect="thank-you.html?from=wedding" data-occasion="wedding" data-domain="example.com"></form>
 <script src="/js/nav.js"></script>
 {extra}
 </body></html>'''
@@ -29,6 +30,7 @@ PAGE = '''<!DOCTYPE html><html><head>
 SITE = {
     'index.html': PAGE,
     'about.html': '<a href="/">Home</a>',
+    'thank-you.html': '<p>Thank you</p>',
     '404.html': '<h1>Not found</h1>',
     'areas/index.html': '<a href="../about.html">About</a> <a href="london/camden.html">Camden</a>',
     'areas/london/camden.html': '<img src="../../assets/logo.png" alt="">',
@@ -53,9 +55,10 @@ SITE = {
 }
 
 PUBLISHED = {
-    'index.html', 'about.html', '404.html', 'areas/index.html', 'areas/london/camden.html',
-    'assets/logo.png', 'assets/logo@2x.png', 'assets/og.png', 'fonts/serif.woff2',
-    'css/style.css', 'js/nav.js', 'site.webmanifest', 'favicon.ico', 'robots.txt', 'sitemap.xml',
+    'index.html', 'about.html', 'thank-you.html', '404.html', 'areas/index.html',
+    'areas/london/camden.html', 'assets/logo.png', 'assets/logo@2x.png', 'assets/og.png',
+    'fonts/serif.woff2', 'css/style.css', 'js/nav.js', 'site.webmanifest', 'favicon.ico',
+    'robots.txt', 'sitemap.xml',
 }
 
 
@@ -93,7 +96,7 @@ def staged(out):
             for d, _, names in os.walk(out) for f in names}
 
 
-def check(changes=None, extra="", public_prefix=""):
+def check(changes=None, extra='', public_prefix=''):
     repo = make_repo(changes, extra, public_prefix)
     try:
         return run(repo)
@@ -101,19 +104,17 @@ def check(changes=None, extra="", public_prefix=""):
         shutil.rmtree(repo)
 
 
-# ── the real site passes and stages exactly the allowlist ───────────────────
+# ── the site passes and stages exactly the allowlist ────────────────────────
 
-def test_clean_site_passes_without_warnings():
+def test_clean_site_passes():
     code, out = check()
     assert code == 0, out
-    assert 'Deploy allowlist OK: 15 of' in out, out
-    assert 'WARNING' not in out, out
+    assert f'Deploy allowlist OK: {len(PUBLISHED)} of' in out, out
 
 def test_out_copies_only_published_files_byte_for_byte():
-    repo = make_repo()
+    repo, out_dir = make_repo(), tempfile.mkdtemp()
     try:
-        out_dir = os.path.join(repo, '_site')
-        code, out = run(repo, '--out', '_site')
+        code, out = run(repo, '--out', out_dir)
         assert code == 0, out
         assert staged(out_dir) == PUBLISHED, sorted(staged(out_dir) ^ PUBLISHED)
         for path in PUBLISHED:
@@ -121,6 +122,7 @@ def test_out_copies_only_published_files_byte_for_byte():
                 assert a.read() == b.read(), path
     finally:
         shutil.rmtree(repo)
+        shutil.rmtree(out_dir)
 
 def test_repo_checkout_passes():
     """The committed site itself must pass (this is what CI deploys)."""
@@ -132,17 +134,34 @@ def test_repo_checkout_passes():
 # ── internal files are never published ─────────────────────────────────────
 
 def test_widening_public_cannot_publish_internal_files():
-    repo = make_repo(public_prefix="'**',")
+    repo, out_dir = make_repo(public_prefix="'**',"), tempfile.mkdtemp()
     try:
-        code, out = run(repo, '--out', '_site')
+        code, out = run(repo, '--out', out_dir)
         assert code == 1, out
         for path in ('CLAUDE.md', 'docs/ROADMAP.md', 'logs/ads-changes.md', 'scripts/ads/campaign.py',
                      'data/prices.yml', 'partials/nav.html', 'graphify-out/graph.html', 'build.sh'):
             assert f'{path}: PUBLIC selects it' in out, (path, out)
         assert '.claude/settings.json: PUBLIC selects it, but it is a hidden file' in out, out
-        assert not os.path.exists(os.path.join(repo, '_site')), 'staged despite errors'
+        assert staged(out_dir) == set(), 'staged despite errors'
     finally:
         shutil.rmtree(repo)
+        shutil.rmtree(out_dir)
+
+def test_private_ignores_case():
+    code, out = check({'assets/Notes.MD': 'notes', 'js/tool.PY': 'x'}, public_prefix="'assets/**', 'js/**',")
+    assert code == 1, out
+    assert "assets/Notes.MD: PUBLIC selects it, but it matches PRIVATE '**/*.md'" in out, out
+    assert "js/tool.PY: PUBLIC selects it, but it matches PRIVATE '**/*.py'" in out, out
+
+def test_control_character_in_name_is_refused():
+    code, out = check({'assets/odd\nname.png': 'png'})
+    assert code == 1, out
+    assert "'assets/odd\\nname.png': PUBLIC selects it, but its name contains a control character" in out, out
+
+def test_newline_cannot_slip_past_private():
+    code, out = check({'logs/ads\nchanges.html': 'ads'}, public_prefix="'**/*.html',")
+    assert code == 1, out
+    assert "'logs/ads\\nchanges.html': PUBLIC selects it" in out, out
 
 def test_symlink_is_refused():
     repo = make_repo()
@@ -155,7 +174,21 @@ def test_symlink_is_refused():
         shutil.rmtree(repo)
 
 
-# ── gaps in the allowlist fail; broken links only warn ──────────────────────
+# ── every file is classified ────────────────────────────────────────────────
+
+def test_unclassified_root_file_fails():
+    """A verification file dropped at the root must not silently go unserved."""
+    code, out = check({'BingSiteAuth.xml': '<users/>'})
+    assert code == 1, out
+    assert 'BingSiteAuth.xml: is neither published nor internal' in out, out
+
+def test_unlisted_asset_type_fails():
+    code, out = check({'assets/brochure.pdf': 'pdf'})
+    assert code == 1, out
+    assert 'assets/brochure.pdf: is neither published nor internal' in out, out
+
+
+# ── gaps in the allowlist and broken links fail ─────────────────────────────
 
 def test_sitemap_url_outside_allowlist_fails():
     sitemap = SITE['sitemap.xml'].replace(
@@ -186,10 +219,22 @@ def test_relative_css_reference_is_checked():
     assert code == 1, out
     assert '/images/bg.png is referenced by css/style.css' in out, out
 
-def test_broken_link_only_warns():
+def test_data_redirect_is_followed():
+    """js/form.js navigates to data-redirect after a lead, so its target must be served."""
+    code, out = check({'thanks/wedding.html': '<p>Thanks</p>'},
+                      extra='<form data-redirect="thanks/wedding.html?from=wedding"></form>')
+    assert code == 1, out
+    assert '/thanks/wedding.html is referenced by index.html and exists in the repo' in out, out
+
+def test_missing_data_redirect_target_fails():
+    code, out = check({'thank-you.html': None})
+    assert code == 1, out
+    assert '/thank-you.html is referenced by index.html, but no such file exists' in out, out
+
+def test_broken_link_fails():
     code, out = check(extra='<a href="/no-such-page.html">Old</a>')
-    assert code == 0, out
-    assert 'WARNING: /no-such-page.html is referenced by index.html' in out, out
+    assert code == 1, out
+    assert '/no-such-page.html is referenced by index.html, but no such file exists' in out, out
 
 
 # ── files fetched by name ───────────────────────────────────────────────────
@@ -206,18 +251,31 @@ def test_unlisted_indexnow_key_fails():
     assert f'{key}.txt must be published' in out, out
 
 
-# ── staging never deletes ───────────────────────────────────────────────────
+# ── staging never deletes and never writes into the repo ────────────────────
 
-def test_out_refuses_non_empty_directory():
+def test_out_refuses_directory_inside_repo():
     repo = make_repo()
     try:
-        keep = os.path.join(repo, 'docs', 'ROADMAP.md')
-        code, out = run(repo, '--out', 'docs')
+        code, out = run(repo, '--out', '_site')
         assert code != 0, out
-        assert 'is not empty' in out, out
-        assert open(keep, encoding='utf-8').read() == 'roadmap'
+        assert 'is inside the repo' in out, out
+        assert not os.path.exists(os.path.join(repo, '_site'))
     finally:
         shutil.rmtree(repo)
+
+def test_out_refuses_non_empty_directory():
+    repo, out_dir = make_repo(), tempfile.mkdtemp()
+    try:
+        keep = os.path.join(out_dir, 'keep.txt')
+        with open(keep, 'w', encoding='utf-8') as f:
+            f.write('keep')
+        code, out = run(repo, '--out', out_dir)
+        assert code != 0, out
+        assert 'is not empty' in out, out
+        assert staged(out_dir) == {'keep.txt'} and open(keep, encoding='utf-8').read() == 'keep'
+    finally:
+        shutil.rmtree(repo)
+        shutil.rmtree(out_dir)
 
 
 if __name__ == "__main__":

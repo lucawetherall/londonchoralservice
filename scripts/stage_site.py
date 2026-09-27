@@ -8,18 +8,18 @@ files selected here: files that match PUBLIC and nothing in PRIVATE. They are
 copied byte for byte; this script never builds or edits a page. build.sh does
 the building, locally, and its output is committed.
 
-    python3 scripts/stage_site.py              check only (build.sh runs this)
-    python3 scripts/stage_site.py --list       check, and print every published file
-    python3 scripts/stage_site.py --out _site  check, then copy the site into _site/
+    python3 scripts/stage_site.py                      check only (build.sh runs this)
+    python3 scripts/stage_site.py --list               check, and print every published file
+    python3 scripts/stage_site.py --out /tmp/lcs-site  check, then copy the site there
 
 Any failure exits 1 and stages nothing:
-  1. A selected file matches PRIVATE, is hidden, or is a symlink.
-  2. A sitemap.xml URL has no published file behind it.
-  3. A published file references a page or asset that exists in the repo but
-     is not published: PUBLIC is missing it.
-  4. A file that browsers and crawlers fetch by name is not published.
-A reference to a file that exists nowhere is a broken link, not an allowlist
-gap, so it is only a warning.
+  1. Every file is published or internal: never both, never neither. Hidden
+     files and names with control characters count as internal, and a
+     published file may not be a symlink.
+  2. Every sitemap.xml URL has a published file behind it.
+  3. Every same-site page or asset a published file references is published:
+     an allowlist gap if the file exists, a broken link if it does not.
+  4. The files browsers and crawlers fetch by name are published.
 """
 import argparse
 import os
@@ -37,8 +37,8 @@ SITE = 'https://londonchoralservice.com/'
 HOSTS = {'londonchoralservice.com', 'www.londonchoralservice.com'}
 
 # What the site publishes. '*' matches within one directory, '**' across any
-# number. A new directory of pages, or a new file the site must serve from
-# outside these, needs a line here: build.sh fails until it has one.
+# number, '{a,b}' either. A new directory of pages, a new asset type, or a new
+# root file the site must serve needs a line here: build.sh fails until then.
 PUBLIC = [
     # Pages
     '*.html',                  # root pages, including 404.html
@@ -46,11 +46,11 @@ PUBLIC = [
     'compare/**/*.html',
     'destinations/**/*.html',
     'music-guides/**/*.html',
-    # What the pages load
-    'assets/**',
-    'css/**',
-    'fonts/**',
-    'js/**',
+    # What the pages load, by type
+    'assets/**/*.{png,jpg,jpeg,webp,avif,gif,svg,ico}',
+    'css/**/*.css',
+    'fonts/**/*.{woff2,woff}',
+    'js/**/*.js',
     # Fetched by name by browsers, crawlers and search engines
     'favicon.ico',
     'robots.txt',
@@ -62,8 +62,9 @@ PUBLIC = [
     'CNAME',
 ]
 
-# Never published, whatever PUBLIC says. Hidden files and directories
-# (.github/, .claude/, .gitignore) and symlinks are refused as well.
+# Internal: never published, whatever PUBLIC says. Matched ignoring case.
+# A new internal file that matches neither list fails the build until it is
+# added here (or to PUBLIC, if the site should serve it).
 PRIVATE = [
     'logs/**', 'docs/**', 'scripts/**', 'data/**', 'tests/**', 'partials/**', 'graphify-out/**',
     '**/*.md', '**/*.py', '**/*.sh', '**/*.yml', '**/*.yaml', '**/*.json', '**/*.csv',
@@ -75,31 +76,41 @@ PRIVATE = [
 REQUIRED = ['index.html', '404.html', 'robots.txt', 'favicon.ico']
 
 
-def _compile(pattern):
+def _compile(pattern, flags=0):
     """Glob to regex: '*' and '?' stay within one path segment, '**/' spans
-    zero or more directories, a trailing '**' matches everything below."""
-    out, i = [], 0
+    zero or more directories, a trailing '**' matches everything below, and
+    '{a,b}' matches either alternative."""
+    out, i, in_braces = [], 0, False
     while i < len(pattern):
+        c = pattern[i]
         if pattern.startswith('**/', i):
             out.append('(?:.*/)?')
             i += 3
-        elif pattern.startswith('**', i):
+            continue
+        if pattern.startswith('**', i):
             out.append('.*')
             i += 2
-        elif pattern[i] == '*':
+            continue
+        if c == '*':
             out.append('[^/]*')
-            i += 1
-        elif pattern[i] == '?':
+        elif c == '?':
             out.append('[^/]')
-            i += 1
+        elif c == '{':
+            out.append('(?:')
+            in_braces = True
+        elif c == '}' and in_braces:
+            out.append(')')
+            in_braces = False
+        elif c == ',' and in_braces:
+            out.append('|')
         else:
-            out.append(re.escape(pattern[i]))
-            i += 1
-    return re.compile(''.join(out) + r'\Z')
+            out.append(re.escape(c))
+        i += 1
+    return re.compile(''.join(out) + r'\Z', flags | re.DOTALL)
 
 
 _PUBLIC = [(p, _compile(p)) for p in PUBLIC]
-_PRIVATE = [(p, _compile(p)) for p in PRIVATE]
+_PRIVATE = [(p, _compile(p, re.IGNORECASE)) for p in PRIVATE]
 
 
 def _first_match(path, compiled):
@@ -107,7 +118,9 @@ def _first_match(path, compiled):
 
 
 def refusal(path):
-    """Why `path` may never be published, or None."""
+    """Why `path` is internal, or None."""
+    if re.search(r'[\x00-\x1f\x7f]', path):
+        return 'its name contains a control character'
     if any(part.startswith('.') for part in path.split('/')):
         return 'it is a hidden file'
     pattern = _first_match(path, _PRIVATE)
@@ -116,6 +129,10 @@ def refusal(path):
 
 def is_public(path):
     return _first_match(path, _PUBLIC) is not None and refusal(path) is None
+
+
+def _show(path):
+    return path if path.isprintable() else repr(path)
 
 
 def repo_files():
@@ -128,7 +145,7 @@ def repo_files():
             cwd=ROOT, capture_output=True, check=True).stdout
     except (OSError, subprocess.CalledProcessError) as e:
         sys.exit(f'stage_site.py: git ls-files failed ({e}); run this inside the repo checkout.')
-    paths = {p for p in out.decode('utf-8').split('\0') if p}
+    paths = {p for p in out.decode('utf-8', errors='surrogateescape').split('\0') if p}
     return sorted(p for p in paths if os.path.lexists(os.path.join(ROOT, p)))
 
 
@@ -154,6 +171,11 @@ CSS_IMPORT = re.compile(r'@import\s+["\']([^"\']+)["\']')
 URL_ATTRS = {'href', 'src', 'poster', 'data', 'action', 'formaction', 'background',
              'manifest', 'xlink:href', 'cite', 'longdesc'}
 SRCSET_ATTRS = {'srcset', 'imagesrcset'}
+# A data-* value is followed as a link when it looks like one, e.g. the form
+# pages' data-redirect="thank-you.html?from=wedding" that js/form.js navigates to.
+DATA_LINK = re.compile(r'(?:/|\.\.?/|https?://)\S*\Z'
+                       r'|[\w%./-]+\.(?:html?|png|jpe?g|webp|avif|gif|svg|ico|pdf|css|js|'
+                       r'woff2?|xml|txt|webmanifest|mp3|mp4|webm)(?:[?#]\S*)?\Z')
 
 
 class _AttrRefs(HTMLParser):
@@ -174,6 +196,8 @@ class _AttrRefs(HTMLParser):
                 self.refs.append(value)  # og:image, twitter:image, og:url
             elif name == 'style':
                 self.refs.extend(CSS_URL.findall(value))
+            elif name.startswith('data-') and DATA_LINK.match(value):
+                self.refs.append(value)
 
 
 def references(path):
@@ -225,19 +249,20 @@ def _sources(files):
 
 
 def check(files):
-    """Returns (published files, errors, warnings)."""
-    errors, warnings = [], []
-    selected = [p for p in files if _first_match(p, _PUBLIC)]
-    published = []
-    for path in selected:
-        why = refusal(path)
-        if why:
-            errors.append(f'{path}: PUBLIC selects it, but {why}. Internal files are never '
+    """Returns (published files, errors)."""
+    errors, published = [], []
+    for path in files:
+        selected, why = _first_match(path, _PUBLIC), refusal(path)
+        if selected and why:
+            errors.append(f'{_show(path)}: PUBLIC selects it, but {why}. Internal files are never '
                           f'published; narrow the PUBLIC pattern.')
-        elif os.path.islink(os.path.join(ROOT, path)):
-            errors.append(f'{path}: is a symlink. Commit the file itself.')
-        else:
+        elif selected and os.path.islink(os.path.join(ROOT, path)):
+            errors.append(f'{_show(path)}: is a symlink. Commit the file itself.')
+        elif selected:
             published.append(path)
+        elif not why:
+            errors.append(f'{_show(path)}: is neither published nor internal. Add a PUBLIC pattern '
+                          f'if the site should serve it, or a PRIVATE one if not.')
     published_set, repo = set(published), set(files)
 
     def served(path):
@@ -267,30 +292,34 @@ def check(files):
         errors.append(f'{path} is referenced by {_sources(sources)} and exists in the repo, but '
                       f'is not published. Add it to PUBLIC, or drop the reference if it is internal.')
     for path, sources in sorted(broken.items()):
-        warnings.append(f'{path} is referenced by {_sources(sources)}, but no such file exists '
-                        f'(broken link).')
+        errors.append(f'{path} is referenced by {_sources(sources)}, but no such file exists. '
+                      f'Fix the link, or commit the missing file.')
 
     # 4. Files fetched by name are published.
     for name in REQUIRED + indexnow_keys(files):
         if name not in published_set:
             errors.append(f'{name} must be published (browsers or crawlers fetch it by name). '
                           f'Add it to PUBLIC.')
-    return published, errors, warnings
+    return published, errors
 
 
-def report(errors, warnings):
+def report(errors):
     in_ci = os.environ.get('GITHUB_ACTIONS') == 'true'
-    for level, messages in (('warning', warnings), ('error', errors)):
-        for message in messages:
-            if in_ci:
-                print(f'::{level}::' + message.replace('%', '%25'))
-            else:
-                print(f'{level.upper()}: {message}')
+    for message in errors:
+        if in_ci:
+            print('::error::' + message.replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A'))
+        else:
+            print(f'ERROR: {message}')
 
 
 def stage(published, out):
-    """Copy the published files into `out`, which must be empty or absent.
-    Never deletes anything, so a mistyped --out cannot wipe a directory."""
+    """Copy the published files into `out`, a directory outside the repo that is
+    empty or absent. Never deletes anything, so a mistyped --out cannot wipe a
+    directory."""
+    out, root = os.path.realpath(out), os.path.realpath(ROOT)
+    if out == root or out.startswith(root + os.sep):
+        sys.exit(f'stage_site.py: {out} is inside the repo, where build.sh would treat the '
+                 f'copies as pages. Stage outside it, e.g. /tmp/lcs-site (nothing was staged).')
     if os.path.isdir(out) and os.listdir(out):
         sys.exit(f'stage_site.py: {out} is not empty. Delete it first (nothing was staged).')
     for path in published:
@@ -301,22 +330,23 @@ def stage(published, out):
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__.split('\n')[0])
-    ap.add_argument('--out', help='copy the published files into this directory (must be empty or absent)')
+    ap.add_argument('--out', help='copy the published files into this directory, outside the '
+                                  'repo (must be empty or absent)')
     ap.add_argument('--list', action='store_true', help='print every published file')
     args = ap.parse_args()
 
     files = repo_files()
-    published, errors, warnings = check(files)
-    report(errors, warnings)
+    published, errors = check(files)
+    report(errors)
     if args.list:
         print('\n'.join(published))
     if errors:
         print(f'\n{len(errors)} deploy allowlist error(s); nothing staged. '
-              f'The allowlist is PUBLIC in scripts/stage_site.py.')
+              f'PUBLIC and PRIVATE are in scripts/stage_site.py.')
         return 1
     size = sum(os.path.getsize(os.path.join(ROOT, p)) for p in published)
     print(f'Deploy allowlist OK: {len(published)} of {len(files)} files are published '
-          f'({size / 1e6:.1f} MB); the other {len(files) - len(published)} stay in the repo only.')
+          f'({size / 1e6:.1f} MB); the other {len(files) - len(published)} are internal.')
     if args.out:
         stage(published, args.out)
         print(f'Staged {len(published)} files into {args.out}')
