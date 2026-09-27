@@ -12,6 +12,7 @@
 - **Variant B H1:** approved. The nine wedding-led pages read "Wedding and funeral choirs in X" in the H1, title, og:title, twitter:title and share card.
 - **Richmond:** the Chapel Royal at Hampton Court Palace takes weddings with us only with the chapel clergy's permission. The page says so, and no heading names Hampton Court.
 - **Lewisham:** Hither Green Crematorium and Lewisham Crematorium are one venue (Verdant Lane). The page now says so.
+- **Southwark:** we do not add voices to the Cathedral choir; we sing at the Cathedral with its permission.
 - **Westminster:** the claim that several of our singers hold posts in the Abbey's choral foundation is confirmed.
 
 ## Problem
@@ -135,7 +136,7 @@ Then preview five pages at 375 px, one per variant plus Lambeth, and check that 
 
 ## Risks and open items
 
-- **Existing facts (resolved 2026-09-27).** Lewisham's two-crematoria wording is corrected (one venue); Richmond's Hampton Court claim is corrected (clergy permission); the Westminster Abbey claim is confirmed by the owner. The new FAQs on Southwark (supplementing the Cathedral choir) and Kensington & Chelsea (Royal Hospital Chelsea Chapel, by arrangement with the chaplain) repeat claims already on those pages; the owner should keep them in mind if either arrangement changes.
+- **Existing facts (resolved 2026-09-27).** Lewisham's two-crematoria wording is corrected (one venue); Richmond's Hampton Court claim is corrected (clergy permission); the Westminster Abbey claim is confirmed by the owner. Southwark's claim that we supplement the Cathedral choir was wrong (owner): we sing there only with the Cathedral's permission, as a separate ensemble; the body and the new FAQ say so. The new FAQ on Kensington & Chelsea (Royal Hospital Chelsea Chapel, by arrangement with the chaplain) repeats a claim already on that page; the owner should keep it in mind if the arrangement changes.
 - **Internal links.** Dropping `guides` on B pages removes 9 links each to `popular-funeral-hymns` and `funeral-music-costs`. 19 pages still link to both.
 - **Existing copy** still breaks house rules in places ("Absolutely", "privileged", "timed perfectly"). This spec is structural; queue a `writing-site-copy` sweep of `areas/london/` afterwards.
 - **`llms.txt`** said "Holy Trinity Brompton" for Kensington & Chelsea; corrected to Holy Trinity Sloane Square.
