@@ -291,3 +291,18 @@ print('duplicate price-ladder constructions:', len(dupes))  # → 0
 "
 ```
 **Skills:** new-page, site-architecture
+
+---
+
+## R14 — Owner facts the 2026-09-27 audit could not settle  [P2] [DECISION-NEEDED]
+
+**Why:** The 2026-09-27 full-site audit fixed every contradiction with a checkable answer (see commit `copy: correct contradictions and music-history errors…`). These remain because only the owner knows which figure is true. Do not let an agent pick one.
+
+1. **Funeral notice.** `funerals.html` (hero FAQ) and `services.html` say most families contact us "two to five days before the service"; `funerals.html` (FAQ) and `music-guides/last-minute-funeral-singers.html` say "one or two weeks' notice". Both arrived in the same commit. `grep -rn "two to five days\|one or two weeks" --include=*.html . | grep -v graphify`
+2. **Wedding lead time.** `pricing.html` and `music-guides/wedding-choir-guide.html` say book "at least six months" ahead; `weddings.html` and `for-wedding-planners.html` say "three to six months".
+3. **Register-signing length** varies by page: two or three minutes (`weddings.html`), three or four (`anima-christi-catholic-wedding`), four or five (`wedding-readings-and-music`), five to eight (`lesser-known-wedding-choral-pieces`), five to ten (`wedding-choral-repertoire`). Pick one range for a typical church and use it everywhere. `grep -rnoiE "[^.>]*(signing|register)[^.<]{0,80}minutes" --include=*.html music-guides weddings.html`
+4. **"Abide With Me — the most-requested funeral hymn"** (title, h1, meta). The page body, `funerals.html` and `listen.html` now say it shares the top place with The Lord's My Shepherd. Either cite a source for the title claim or retitle ("one of the two most-requested funeral hymns").
+5. **"December dates go by mid-September"** appears on about a dozen pages. After mid-September it tells a late-booking visitor they are too late. Decide on a year-round wording, or schedule a seasonal swap (see R9).
+6. **Mobile call bar `aria-label`** sits on a plain `<div>` in 139 hand-written copies, where screen readers ignore it. Adding `role="group"` by sweep bumps `lastmod` on every page (the sitemap hashes body markup), so it was left out of the audit. Best done by moving the bar into a partial, which also removes the duplication.
+
+**Skills:** writing-site-copy
