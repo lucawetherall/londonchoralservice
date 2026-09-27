@@ -31,6 +31,19 @@ BANNED = [
         "number on the invoice. Either say nothing, or state that no VAT is added.",
     ),
     (
+        re.compile(
+            r"\b(?:supplement|augment|bolster)\w*\s+(?:(?:its|the|their)\s+(?:own\s+|resident\s+)?"
+            r"|(?:the\s+)?(?:cathedral|abbey|minster)(?:&rsquo;|\u2019|')?s?\s+)(?:choir|choral foundation)"
+            r"|\bsupplement\w*\s+it\s+with\s+(?:additional|extra)\s+voices"
+            r"|\b(?:additional|extra)\s+voices\s+(?:to|for|in)\s+(?:its|the|their)\s+(?:own\s+|resident\s+)?choir"
+            r"|\balongside\s+(?:the|its)\s+(?:cathedral|abbey|minster)(?:&rsquo;|\u2019|')?s?\s+(?:own\s+)?(?:choir|choral foundation)",
+            re.IGNORECASE),
+        "cathedral-choir supplement claim",
+        "We never add voices to, or sing as part of, a cathedral's or abbey's own choir (owner, "
+        "2026-09-27). We sing in cathedrals and abbeys as a separate ensemble, with the church's "
+        "permission; say that instead.",
+    ),
+    (
         re.compile(r'\bfive[\s\-]star\b|\b5[\s\-]star\b|\brated 5\b', re.IGNORECASE),
         "self-reported rating claim",
         "Unverifiable rating claims were removed site-wide (ROADMAP R1). Use a checkable "

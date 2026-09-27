@@ -52,6 +52,7 @@ The website of The London Choral Service (Alma Consort Ltd) — a choir-for-hire
 - New visible copy: load `writing-site-copy` and the `stop-slop` skill before drafting, and re-check against stop-slop afterwards. Where they conflict the house rule wins (parenthetical `&thinsp;&mdash;&thinsp;` stays).
 - A price change must also update derived combo figures (soloist + organist £450; an organist added to a choir is the full £250 since #113, e.g. Small Choir + organist £1,400) in prose, FAQ JSON-LD and price grids. Grep the old totals and phrases like "with an organist" or "piano with a", not just the base figure.
 - Never advertise roster size ("150+ singers"); the positioning is a small, hand-picked team. `validate_house_claims.py` enforces this in the build.
+- Never say we supplement, add voices to or sing alongside a cathedral's or abbey's own choir. We sing in cathedrals and abbeys (Westminster Abbey included) only with the church's permission, as a separate ensemble; the same goes for chapels such as the Chapel Royal, Hampton Court. `validate_house_claims.py` enforces the choir part.
 
 ## Workflow
 

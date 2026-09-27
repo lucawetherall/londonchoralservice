@@ -65,7 +65,29 @@ def test_aggregate_rating_fails():
     assert code == 1, out
 
 
+def test_supplement_cathedral_choir_fails():
+    code, out = run_on("<p>We can provide additional voices to supplement its own choir.</p>")
+    assert code == 1, out
+    assert "cathedral-choir supplement claim" in out, out
+
+def test_supplement_it_with_voices_fails():
+    code, out = run_on("<p>The Cathedral has its own choir, and we supplement it with additional voices.</p>")
+    assert code == 1, out
+
+def test_alongside_cathedral_foundation_fails():
+    code, out = run_on("<p>Our singers work alongside the cathedral&rsquo;s own choral foundation.</p>")
+    assert code == 1, out
+
+
 # ── legitimate copy must NOT fail ────────────────────────────────────────────
+
+def test_travel_supplement_passes():
+    code, out = run_on("<p>A travel supplement may apply for a choir of eight outside London.</p>")
+    assert code == 0, out
+
+def test_sing_with_permission_passes():
+    code, out = run_on("<p>The Abbey has its own choir, and we sing there only with the Abbey&rsquo;s permission, as a separate ensemble.</p>")
+    assert code == 0, out
 
 def test_not_vat_registered_passes():
     """The true statement must not trip the VAT pattern."""
