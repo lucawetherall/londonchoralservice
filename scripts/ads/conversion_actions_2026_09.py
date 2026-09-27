@@ -10,6 +10,7 @@ appended to logs/ads-changes.md.
     python scripts/ads/conversion_actions_2026_09.py --apply    # after approval
 """
 
+import os
 import argparse
 import datetime
 from pathlib import Path
@@ -92,7 +93,7 @@ def main():
     parser.add_argument("--apply", action="store_true", help="apply for real (default: validate_only)")
     args = parser.parse_args()
 
-    client = GoogleAdsClient.load_from_storage()
+    client = GoogleAdsClient.load_from_storage(os.environ.get("GOOGLE_ADS_CONFIGURATION_FILE_PATH", os.path.expanduser("~/.config/lcs/google-ads.yaml")))
     existing = current_actions(client)
     ops, changes = build_operations(client, existing)
     if not ops:

@@ -26,7 +26,8 @@ Section 4 lists every step in order.
 | GA4 | Europe/London time zone, 14-month retention, key events `generate_lead` and `contact_message` (WhatsApp/email), five custom dimensions |
 | Site | `christmas-pricing.html` live. Standard booking is up to two hours everywhere. Funeral and wedding pages lead with choirs |
 | API access | Google Ads API **Basic** access (managed in the Cloud project; no developer token needed). Search Console read access working |
-| Still waiting on you | Zoho Mail MCP install, `datamanager` sign-in scope, GA4 internal-traffic filter, Business Profile set to London (section 5) |
+| Still waiting on you | GA4 internal-traffic filter, Business Profile set to London, a real WhatsApp tap test (section 5); trim the Zoho MCP server to read-only tools |
+| Checked 28 Sep | Zoho Mail MCP connected and all six sign-in scopes present. Live tags tested in a browser (Google endpoints stubbed): form enquiry fires `generate_lead` + "Submit lead form" with a transaction ID and hashed user data, and the gclid reaches Web3Forms; WhatsApp tap fires `contact_click` + "WhatsApp or email click"; consent gating and `?lcs_internal=1` work. Ads scripts now find `google-ads.yaml` without sourcing `.venv/bin/activate` |
 
 ## 2. What was done, by pull request
 
@@ -197,7 +198,8 @@ For Zoho Mail, follow section 5, item 1. Zoho's MCP URL works like a password: r
       '
       ```
    3. Restart Claude Code and say *"grab my invoices"*. Claude finds them, matches each to its enquiry email for the ad-click reference, writes only to `~/lcs-private/bookings.csv`, then asks you to approve the upload (`scripts/ads/upload_bookings.py`, via the Data Manager API).
-   4. Uploads need the `datamanager` scope from step 5 of section 4. The old machine's sign-in didn't have it yet.
+   4. Uploads need the `datamanager` scope from step 5 of section 4 (present since 28 Sep).
+   5. Bookings whose enquiry came before 27 Sep 2026 carry no ad-click reference, so they are recorded in the ledger but never uploaded.
 2. **Exclude your own visits from GA4.**
    - Open `https://londonchoralservice.com/?lcs_internal=1` once on each of your devices and browsers.
    - Then GA4 → **Admin → Data collection and modification → Data filters → Internal Traffic** → set to **Active** → Save.

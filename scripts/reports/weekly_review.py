@@ -46,7 +46,7 @@ def pct(x):
 
 
 def ads_sections(since):
-    c = GoogleAdsClient.load_from_storage()
+    c = GoogleAdsClient.load_from_storage(os.environ.get("GOOGLE_ADS_CONFIGURATION_FILE_PATH", os.path.expanduser("~/.config/lcs/google-ads.yaml")))
     ga = c.get_service("GoogleAdsService")
 
     def q(query):
