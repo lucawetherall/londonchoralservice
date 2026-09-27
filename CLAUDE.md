@@ -49,11 +49,15 @@ The website of The London Choral Service (Alma Consort Ltd) — a choir-for-hire
 - `compare/` addresses families. Never link to it from a `for-*.html` page or reuse its inc-VAT figures there — a VAT-registered business buyer reclaims VAT, so those figures do not describe their position.
 - **Alma Consort Ltd is not VAT-registered.** Never state or imply otherwise.
 - Forms POST to Web3Forms with an hCaptcha guard — don't remove the `h-captcha-response` check or the `botcheck` honeypot.
+- New visible copy: load `writing-site-copy` and the `stop-slop` skill before drafting, and re-check against stop-slop afterwards. Where they conflict the house rule wins (parenthetical `&thinsp;&mdash;&thinsp;` stays).
+- A price change must also update derived combo figures (soloist + organist £450; an organist added to a choir is the full £250 since #113, e.g. Small Choir + organist £1,400) in prose, FAQ JSON-LD and price grids. Grep the old totals and phrases like "with an organist" or "piano with a", not just the base figure.
+- Never advertise roster size ("150+ singers"); the positioning is a small, hand-picked team. `validate_house_claims.py` enforces this in the build.
 
 ## Workflow
 
 - Small tasks: pick from `docs/ROADMAP.md` — items are self-contained with verification commands; don't re-derive the analysis. Respect `BLOCKED-ON-HUMAN` and `SPEC-FIRST` labels.
 - Larger features: write a spec in `docs/superpowers/specs/` and a plan in `docs/superpowers/plans/`, named `YYYY-MM-DD-<name>.md`, matching the existing documents' style.
+- The owner gives broad mandates ("make the best decisions", "fix everything"): carry the work through end to end (build, test, PR, merge, verify live) and batch anything needing approval (Google Ads changes, business-policy calls) into one question.
 - Before committing: run the `build-and-verify` checklist. Commit messages follow the existing history style (`fix(scope): …`, `copy: …`, `chore: …`).
 - If a change adds/removes/materially rewrites pages (new-page work, a site-wide sweep, a bulk content edit), refresh the graph with `/graphify --update` and commit `graphify-out/` alongside the content change so it doesn't drift stale.
 
