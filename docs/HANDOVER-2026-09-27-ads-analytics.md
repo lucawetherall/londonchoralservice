@@ -1,5 +1,7 @@
 # Handover: Google Ads, GA4 and site tracking (27 September 2026)
 
+**This file is public** (the repo is public and GitHub Pages serves `docs/`), so it holds no secrets or personal contact details.
+
 This covers the marketing work done on 25–27 September 2026: the Claude Code marketing workspace, conversion tracking, the Christmas carol singers campaign, and the choir-only refocus. It lists what's live, where everything lives, how to set up a second machine, and what's still to do. It contains no secrets.
 
 **Short answer to "do I need to redo anything on a new machine?"** Yes, but only the machine-local parts. Everything set up in Google's systems (Cloud project, APIs, access level, branding, Ads and GA4 configuration) is done once and stays done. What has to be redone on each machine:
@@ -59,7 +61,7 @@ Every Google Ads and GA4 change is logged, with before → after and reason, in 
 
 | Thing | Value |
 |---|---|
-| Google account used everywhere | lucwetho@gmail.com |
+| Google account used everywhere | the owner's Google account that owns the Ads, GA4, Search Console and Business Profile accounts (not written here because this file is public) |
 | Google Cloud project | `lcs-marketing`, ID `project-2dc388e4-c2d8-40c3-803` |
 | Google Ads customer | `873-388-1378` (not a manager account). A manager account was also created; it isn't needed for API access |
 | Google Ads tag | `AW-17988388404` (labels are in `partials/analytics.html` → `LCS_ADS`) |
@@ -95,7 +97,7 @@ Every Google Ads and GA4 change is logged, with before → after and reason, in 
 
 ## 4. Setting up a new machine
 
-Run these in Terminal on the new Mac, in order. Anything that opens a browser needs you to sign in as **lucwetho@gmail.com** and tick every permission box.
+Run these in Terminal on the new Mac, in order. Anything that opens a browser needs you to sign in with the Google account that owns the Ads and GA4 accounts, and tick every permission box.
 
 **1. Install the tools.** (Homebrew; Node is only needed if Zoho's MCP snippet uses it.)
 ```bash
@@ -279,7 +281,7 @@ PHASE 1 – tools and repo
 
 PHASE 2 – my sign-ins (STOP at each)
 Tell me exactly what to run in a separate Terminal, and wait for "done" after each:
-a) `gcloud auth login` as lucwetho@gmail.com. Then set the gcloud project to project-2dc388e4-c2d8-40c3-803.
+a) `gcloud auth login` with the Google account that owns my Google Ads and GA4 accounts. Then set the gcloud project to project-2dc388e4-c2d8-40c3-803.
 b) Copy client_secret.json from my old Mac to ~/.config/lcs/ (AirDrop or USB). Create ~/.config/lcs with chmod 700 first; afterwards check the file exists with ls only and chmod 600 it.
 c) The six-scope `gcloud auth application-default login` command from handover section 4, step 5. Remind me to tick every permission box. Afterwards run the set-quota-project command and confirm, using Google's tokeninfo endpoint and printing only the scope names, that all six scopes are present.
 
