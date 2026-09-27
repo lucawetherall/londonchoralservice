@@ -9,9 +9,13 @@ Sections:
   4. Ads: approval, review status, strength, final URL
   5. GA4: lead/contact events with their parameters; sessions by channel
   6. Search Console: last 7 complete days vs the 7 before, by query and page
+  7. Search Console coverage: sitemap freshness, index status of every ad landing page
+  8. Tracking wiring: live tags and labels, Ads account settings, GA4 key events and links
+  9. Bookings ledger: counts and totals only (no personal data)
 
 Uses google-ads.yaml for Ads and Application Default Credentials (the
 analytics.readonly and webmasters.readonly scopes) for GA4 and Search Console.
+Reads the private bookings ledger for counts only; prints no names or emails.
 
     source .venv/bin/activate
     python scripts/reports/weekly_review.py [--since 2026-09-26]
@@ -22,6 +26,10 @@ import datetime
 import os
 import re
 from collections import defaultdict
+
+import csv
+import urllib.request
+from pathlib import Path
 
 import google.auth
 from google.ads.googleads.client import GoogleAdsClient
@@ -35,6 +43,10 @@ GA4_PROPERTY = "properties/527915578"
 GSC_SITE = "sc-domain:londonchoralservice.com"
 LEAD_EVENTS = ["generate_lead", "contact_click", "contact_message", "form_error"]
 MONEY_TERMS = re.compile(r"funeral|wedding|carol|choir|choral", re.I)
+SITE = "https://londonchoralservice.com"
+REPO = Path(__file__).resolve().parents[2]
+LEDGER = Path(os.environ.get("LCS_BOOKINGS_CSV", Path.home() / "lcs-private" / "bookings.csv"))
+EXPECTED_KEY_EVENTS = {"generate_lead", "contact_message"}
 
 
 def gbp(micros):
@@ -104,12 +116,15 @@ def ads_sections(since):
         print(f"{name:32} {role:9} 7d {a['7']:.1f} · 28d {a['28']:.1f} · last seen {a['last'] or 'not in 90 days'}")
 
     print("\n== 4. Ads (enabled campaigns)")
-    for r in q("""SELECT campaign.name, ad_group.name, ad_group_ad.ad.id, ad_group_ad.status,
+    landing = set()
+    for r in q("""SELECT campaign.name, ad_group.name, ad_group.status, ad_group_ad.ad.id, ad_group_ad.status,
             ad_group_ad.policy_summary.approval_status, ad_group_ad.policy_summary.review_status,
-            ad_group_ad.ad_strength, ad_group_ad.ad.final_urls
+            ad_group_ad.ad_strength, ad_group_ad.action_items, ad_group_ad.ad.final_urls
             FROM ad_group_ad WHERE campaign.status = 'ENABLED' AND ad_group_ad.status != 'REMOVED'"""):
         a = r.ad_group_ad
         urls = list(a.ad.final_urls)
+        if a.status.name == "ENABLED" and r.ad_group.status.name == "ENABLED":
+            landing.update(urls)
         flags = []
         if a.policy_summary.approval_status.name not in ("APPROVED",):
             flags.append("NOT APPROVED")
@@ -118,6 +133,31 @@ def ads_sections(since):
         print(f"{r.campaign.name[:22]:22} {r.ad_group.name[:22]:22} {a.ad.id} {a.status.name}"
               f" {a.policy_summary.approval_status.name}/{a.policy_summary.review_status.name}"
               f" strength={a.ad_strength.name} → {', '.join(urls)} {' '.join('!' + f for f in flags)}")
+        if a.status.name == "ENABLED" and a.ad_strength.name in ("POOR", "AVERAGE"):
+            for item in a.action_items:
+                print(f"      to improve: {item}")
+
+    print("\n== 4b. Google's recommendations (open, not dismissed)")
+    names = {str(r.campaign.id): r.campaign.name for r in q("SELECT campaign.id, campaign.name FROM campaign")}
+    recs = defaultdict(set)
+    for r in q("SELECT recommendation.type, recommendation.campaign, recommendation.dismissed FROM recommendation"):
+        if not r.recommendation.dismissed:
+            camp = r.recommendation.campaign.split("/")[-1]
+            recs[r.recommendation.type_.name].add(names.get(camp, "account") if camp else "account")
+    for kind, camps in sorted(recs.items()):
+        print(f"   {kind:34} {', '.join(sorted(camps))}")
+    if not recs:
+        print("   (none)")
+
+    settings = {}
+    for r in q("""SELECT customer.auto_tagging_enabled,
+            customer.conversion_tracking_setting.accepted_customer_data_terms,
+            customer.conversion_tracking_setting.enhanced_conversions_for_leads_enabled FROM customer"""):
+        t = r.customer.conversion_tracking_setting
+        settings = {"auto-tagging": r.customer.auto_tagging_enabled,
+                    "customer data terms accepted": t.accepted_customer_data_terms,
+                    "enhanced conversions for leads": t.enhanced_conversions_for_leads_enabled}
+    return sorted(landing), settings
 
 
 def ga4_section(s):
@@ -206,15 +246,111 @@ def gsc_section(s):
               f" · impr {r['impressions']:.0f} · pos {r['position']:.1f}")
 
 
+def coverage_section(s, landing):
+    print("\n== 7. Search Console coverage")
+    base = f"https://www.googleapis.com/webmasters/v3/sites/{GSC_SITE}"
+    r = s.get(f"{base}/sitemaps")
+    if not r.ok:
+        print(f"   sitemaps error {r.status_code}: {r.json().get('error', {}).get('message')}")
+    for m in r.json().get("sitemap", []) if r.ok else []:
+        read = (m.get("lastDownloaded") or "")[:10]
+        stale = read and (datetime.date.today() - datetime.date.fromisoformat(read)).days > 14
+        counts = ", ".join(f"{c.get('submitted')} submitted / {c.get('indexed', '?')} indexed" for c in m.get("contents", []))
+        print(f"   {m['path']} · submitted {(m.get('lastSubmitted') or '')[:10]} · last read by Google {read or 'never'}"
+              f" · {counts} · errors {m.get('errors', 0)} · warnings {m.get('warnings', 0)}"
+              f"{'  !STALE: resubmit' if stale or not read else ''}")
+    try:
+        with urllib.request.urlopen(f"{SITE}/sitemap.xml", timeout=20) as f:
+            print(f"   live sitemap.xml lists {f.read().decode().count('<loc>')} URLs")
+    except OSError as e:
+        print(f"   live sitemap.xml unreadable: {e}")
+    print("-- ad landing pages (URL Inspection)")
+    for url in landing:
+        r = s.post("https://searchconsole.googleapis.com/v1/urlInspection/index:inspect",
+                   json={"inspectionUrl": url, "siteUrl": GSC_SITE})
+        if not r.ok:
+            print(f"   {url}: error {r.status_code} {r.json().get('error', {}).get('message', '')[:80]}")
+            continue
+        ir = r.json().get("inspectionResult", {}).get("indexStatusResult", {})
+        flag = "" if ir.get("verdict") == "PASS" else "  !NOT INDEXED"
+        print(f"   {url.replace(SITE, '') or '/'}: {ir.get('coverageState', '?')} · last crawl "
+              f"{(ir.get('lastCrawlTime') or 'never')[:10]}{flag}")
+
+
+def wiring_section(s, ads_settings):
+    print("\n== 8. Tracking wiring")
+    partial = (REPO / "partials" / "analytics.html").read_text()
+    labels = sorted(set(re.findall(r"AW-17988388404/[\w-]+", partial)))
+    checks = {"/": ["G-9FENN7VS0E", "AW-17988388404", "contact_click", "lcsLead", *labels],
+              "/contact.html": ["G-9FENN7VS0E", "h-captcha", "botcheck"],
+              "/js/form.js": ["lcsLead", "lcsAttribution", "h-captcha-response"]}
+    for path, needles in checks.items():
+        try:
+            with urllib.request.urlopen(f"{SITE}{path}", timeout=20) as f:
+                body = f.read().decode("utf-8", "replace")
+        except OSError as e:
+            print(f"   {path}: unreachable ({e})  !CHECK")
+            continue
+        missing = [n for n in needles if n not in body]
+        print(f"   {path}: " + ("all tags present" if not missing else "MISSING " + ", ".join(missing) + "  !CHECK"))
+    for k, v in ads_settings.items():
+        print(f"   Ads {k}: {'on' if v else 'OFF'}")
+    admin = f"https://analyticsadmin.googleapis.com/v1beta/{GA4_PROPERTY}"
+    r = s.get(f"{admin}/keyEvents")
+    if r.ok:
+        have = {e["eventName"] for e in r.json().get("keyEvents", [])}
+        missing = EXPECTED_KEY_EVENTS - have
+        print(f"   GA4 key events: {', '.join(sorted(have)) or '(none)'}"
+              + (f"  !MISSING {', '.join(sorted(missing))}" if missing else ""))
+    else:
+        print(f"   GA4 key events: error {r.status_code}")
+    r = s.get(f"{admin}/googleAdsLinks")
+    links = [l.get("customerId") for l in r.json().get("googleAdsLinks", [])] if r.ok else []
+    print(f"   GA4 ↔ Google Ads link: {'8733881378 linked' if '8733881378' in links else 'NOT LINKED  !CHECK'}")
+    r = s.get(f"{admin}/dataRetentionSettings")
+    if r.ok:
+        print(f"   GA4 event data retention: {r.json().get('eventDataRetention', '?')}")
+
+
+def ledger_section():
+    print("\n== 9. Bookings ledger (counts only)")
+    if not LEDGER.exists():
+        print(f"   no ledger yet at {LEDGER}")
+        return
+    with open(LEDGER, newline="") as f:
+        rows = list(csv.DictReader(f))
+
+    def value(r):
+        try:
+            return float((r.get("value_gbp") or "0").replace("£", "").replace(",", ""))
+        except ValueError:
+            return 0.0
+
+    has_ref = [r for r in rows if (r.get("gclid") or "").strip()]
+    ready = [r for r in has_ref if (r.get("consent") or "").lower() == "granted" and not (r.get("uploaded_at") or "").strip()]
+    uploaded = [r for r in rows if (r.get("uploaded_at") or "").strip()]
+    latest = max((r.get("invoice_date") or "" for r in rows), default="")
+    print(f"   {len(rows)} bookings, £{sum(map(value, rows)):,.2f} · latest invoice {latest or '-'}")
+    print(f"   with an ad click reference {len(has_ref)} · ready to upload {len(ready)} · uploaded {len(uploaded)}")
+    by = defaultdict(lambda: [0, 0.0])
+    for r in rows:
+        by[r.get("occasion") or "?"][0] += 1
+        by[r.get("occasion") or "?"][1] += value(r)
+    print("   by occasion: " + " · ".join(f"{k} {n} (£{v:,.0f})" for k, (n, v) in sorted(by.items())))
+
+
 def main():
     p = argparse.ArgumentParser()
     p.add_argument("--since", type=datetime.date.fromisoformat, default=datetime.date(2026, 9, 26))
     args = p.parse_args()
-    ads_sections(args.since)
+    landing, ads_settings = ads_sections(args.since)
     creds, _ = google.auth.default()
     s = AuthorizedSession(creds)
     ga4_section(s)
     gsc_section(s)
+    coverage_section(s, landing)
+    wiring_section(s, ads_settings)
+    ledger_section()
 
 
 if __name__ == "__main__":

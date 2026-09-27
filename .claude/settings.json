@@ -2,7 +2,40 @@
   "permissions": {
     "allow": [
       "mcp__google-ads",
-      "mcp__analytics-mcp"
+      "mcp__analytics-mcp",
+      "mcp__zoho-mail__ZohoMail_SearchEmails",
+      "mcp__zoho-mail__ZohoMail_listEmails",
+      "mcp__zoho-mail__ZohoMail_getMessageContent",
+      "mcp__zoho-mail__ZohoMail_getMessageDetails",
+      "mcp__zoho-mail__ZohoMail_getMessageHeader",
+      "mcp__zoho-mail__ZohoMail_getMessageAttachmentInfo",
+      "mcp__zoho-mail__ZohoMail_getOriginalMessage",
+      "mcp__zoho-mail__ZohoMail_getAllFolders",
+      "mcp__zoho-mail__ZohoMail_getFolder",
+      "mcp__zoho-mail__ZohoMail_getMailAccounts",
+      "mcp__zoho-mail__ZohoMail_sendEmail",
+      "mcp__zoho-mail__ZohoMail_sendReplyEmail",
+      "Bash(.venv/bin/python scripts/reports/weekly_review.py)",
+      "Bash(.venv/bin/python scripts/reports/weekly_review.py *)",
+      "Bash(.venv/bin/python scripts/reports/account_audit.py)",
+      "Bash(.venv/bin/python scripts/bookings/invoice_text.py *)",
+      "Bash(.venv/bin/python scripts/ads/upload_bookings.py)",
+      "Bash(.venv/bin/python scripts/gsc/submit_sitemap.py)",
+      "Bash(.venv/bin/python scripts/bookings/make_booking_docs.py *)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "mcp__zoho-mail__.*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/zoho_guard.py\"",
+            "timeout": 10
+          }
+        ]
+      }
     ]
   }
 }
