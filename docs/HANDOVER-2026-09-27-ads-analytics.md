@@ -232,25 +232,51 @@ All of these are in `CLAUDE.md`, which Claude reads automatically:
 
 ## Appendix A: Weekly review task prompt
 
-Use this verbatim when recreating the scheduled task (Mondays 09:00). Adjust the repo path if it differs on the new machine.
+Use this verbatim when recreating the scheduled task "Weekly marketing review" (Mondays 09:00). Updated 27 September 2026: it gathers everything with `scripts/reports/weekly_review.py`, adds Search Console, keeps running after Christmas for weddings, funerals and web presence, and writes files only in a worktree. It replaces the two cloud routines ("Weekly web-presence check" and "LCS web-presence weekly drive"), which had no repository attached and were deleted. Adjust the repo path if it differs on the new machine.
 
-> Weekly review of The London Choral Service's Google Ads account (customer 8733881378). Change NOTHING in Google Ads or GA4 without the owner's explicit approval in chat.
->
-> If today is after 20 December 2026: give a short season summary for the Christmas campaign (spend, clicks, enquiries, WhatsApp/email contacts, booked jobs if any in logs/ads-changes.md), recommend pausing it (never delete), and tell the owner this weekly task can now be disabled from the Scheduled section. Then stop.
->
-> Where to work: the repo ~/Documents/GitHub/londonchoralservice. Read its CLAUDE.md first; its "Google Ads & GA4" section is binding (validate_only first, current → new + reason, explicit approval, pause never delete, log every applied change in logs/ads-changes.md, never print or read credentials in ~/.config/lcs/ or ~/.config/gcloud/). Reads go through the google-ads and analytics-mcp MCP tools; the Python venv is .venv (source .venv/bin/activate); a read-only audit is scripts/reports/account_audit.py; negatives scripts to copy the pattern from are scripts/ads/add_negatives_2026_09.py and scripts/ads/add_negatives_2026_09_27.py.
->
-> Owner's targeting rules: only choir bookings (weddings, funerals) and "carol singers" (plural) bookings of at least four singers (a Small Choir, £1,150). Never target solo singer searches (all campaigns carry negatives singer, soloist, solo, vocalist). Keep the "London Funeral Singers" competitor-brand keywords (owner's choice). WhatsApp and email contacts are the preferred lead routes, then the enquiry form; calls are secondary.
->
-> Campaigns: "Christmas carol singers – events 2026" (24295921372, £5/day, ends 20 Dec, lands on christmas-pricing.html, every ad pins "4 Carol Singers from £1,150"); "wedding-leads" (23739971001) and "funeral expert campaign" (23735776277), both choir-only since 26 Sep 2026, so low volume and underspend are expected — never broaden them with singer terms.
->
-> Each run:
-> 1. For each campaign, metrics for the last 7 days and since 26 Sep 2026: impressions, clicks, CTR, avg CPC, cost, search impression share, and share lost to budget vs rank.
-> 2. Full search terms report for the last 7 days. Classify each term as HIRING (booking carol singers or a choir), UNCLEAR, or NOT A BUYER (concerts or services to attend, lyrics, songs, jobs, objects, Dickens, solo singers, music research, etc.). Show cost and clicks per class, and which keyword matched each non-buyer term. Known issue fixed 27 Sep: the "carol singers london" keywords matched concert-goers ("carols at royal albert hall"); negatives concert, concerts, carols, singalong, "albert hall", "westminster abbey", "sing along", "carol service(s)", "carol singing" were added — check they're holding.
-> 3. Tracking: conversions per action ("Submit lead form" and "WhatsApp or email click" primary; "Call click", "Booked job" secondary) and the conversion actions' last-received-request times; GA4 property 527915578 events generate_lead, contact_click, contact_message (key event), form_error, with lead_source/occasion/method, excluding traffic_type=internal.
-> 4. Prepare (validate_only, do not apply) a negatives change set for every NOT A BUYER pattern, as a new script in scripts/ads/ following the existing pattern.
-> 5. Christmas budget call — only once there are at least 7 days of data (from 5 October 2026): recommend £6/day ONLY if ≥90% of spend is on HIRING terms (after the proposed negatives), the campaign is limited by budget (spending ~£5/day or losing impression share to budget), and at least one real enquiry or WhatsApp/email contact came through. Otherwise hold at £5 (or suggest pausing head terms that attract non-buyers) and say what would change the answer. If recommending £6, note CLAUDE.md caps every campaign at £5/day and the scripts refuse more, so the owner must approve raising the cap for this campaign only, until 20 December 2026.
-> 6. Reply with a short plain-English report: a table of search terms by class, key numbers, and the proposed changes as current → new + reason, then ask the owner to approve the change set in one question.
+```text
+Weekly marketing review for The London Choral Service: Google Ads (customer 8733881378), GA4 (property 527915578) and Search Console (sc-domain:londonchoralservice.com). You are running unattended. Change NOTHING in Google Ads, GA4 or the live site; prepare changes and ask the owner to approve them in one question at the end.
+
+SET-UP
+- Repo: ~/Documents/GitHub/londonchoralservice. Read its CLAUDE.md first. Its "Google Ads & GA4" section is binding: validate_only first; current → new + reason; explicit approval; pause, never delete; £5/day budget cap; log every applied change in logs/ads-changes.md; never print or read anything in ~/.config/lcs/, ~/.config/gcloud/ or ~/lcs-private/.
+- Get all the data with ONE command, run from the repo: `.venv/bin/python scripts/reports/weekly_review.py`. It prints campaigns (last 7 days and since 26 Sep 2026), search terms with matched keywords, conversions per action, ad status, GA4 lead events and channels, and Search Console queries and pages. Use the google-ads or analytics-mcp MCP tools only to drill into something the report leaves unclear.
+- If the report fails with an auth or permission error, stop and tell the owner to redo the six-scope sign-in in docs/HANDOVER-2026-09-27-ads-analytics.md, section 4, step 5. Don't try to work around it.
+- Put any file you write (a negatives script, a log line) on a new branch in a worktree, never in the main checkout: `git -C ~/Documents/GitHub/londonchoralservice fetch -q origin && git -C ~/Documents/GitHub/londonchoralservice worktree add -b claude/weekly-review-<YYYY-MM-DD> .claude/worktrees/weekly-review-<YYYY-MM-DD> origin/main`. Run scripts with the main checkout's `.venv/bin/python`. Do not commit or push until the owner approves.
+
+OWNER'S RULES
+- Targeting: only choir bookings (weddings, funerals) and "carol singers" (plural) bookings of at least four singers (a Small Choir, £1,150). Never target solo-singer searches; every campaign carries the negatives singer, soloist, solo and vocalist. Keep the "London Funeral Singers" competitor-brand keywords.
+- Wedding and funeral campaigns ("wedding-leads" 23739971001, "funeral expert campaign" 23735776277) are choir-only since 26 Sep 2026. Low volume and underspend are expected; never broaden them with singer terms.
+- Christmas campaign "Christmas carol singers – events 2026" (24295921372): £5/day, max £3.50 a click, ends 20 Dec, lands on christmas-pricing.html, every ad pins "4 Carol Singers from £1,150".
+- Preferred lead routes: WhatsApp and email, then the enquiry form; calls are secondary.
+
+EACH RUN
+1. Ads performance: per campaign, the week's and since-26-Sep numbers from the report. Flag any campaign averaging over its budget, any ad not APPROVED, and any final URL on http://.
+2. Search terms: classify every term as HIRING (booking a choir or carol singers), UNCLEAR, or NOT A BUYER (concerts or services to attend, lyrics, songs, jobs, objects, Dickens, solo singers or soloist acts, music research, other genres such as sangeet, mariachi or singing waiters). Give cost and clicks per class, and the matched keyword for each non-buyer term. Check the 27 Sep concert-goer negatives are holding (concert, concerts, carols, singalong, "albert hall", "westminster abbey", "sing along", "carol service(s)", "carol singing"). If a keyword keeps pulling non-buyers, propose pausing it.
+3. Negatives: for every NOT A BUYER pattern, write a new script in the worktree, scripts/ads/add_negatives_<YYYY_MM_DD>.py, copying scripts/ads/add_negatives_2026_09_27.py (existing negatives are skipped). Run it validate-only and include its output. Never add a negative that would block a HIRING term; check each one against this week's HIRING terms.
+4. Tracking health:
+   - Conversions per action: "Submit lead form" and "WhatsApp or email click" are primary; "Call click" and "Booked job" are secondary. Report the last day each was seen.
+   - GA4: generate_lead, contact_click, contact_message and form_error, with occasion, lead_source, method and error_type. The rebuilt tracking went live on 26–27 Sep 2026.
+   - Alarm: from 5 Oct 2026, if GA4 shows no generate_lead AND no contact_click for the whole week while Paid Search or Organic sessions are above zero, flag it. Check the live pages still carry the code (`curl -s https://londonchoralservice.com/ | grep -c contact_click`, same for js/form.js and lcsLead) and say what you found.
+   - Form errors: if form_error outnumbers generate_lead, flag the error_type breakdown.
+5. Web presence (from section 6 of the report; Search Console lags about 3 days):
+   - Clicks, impressions and average position this week vs the week before.
+   - The money queries (funeral, wedding, carol, choir) that gained or lost more than 3 positions, or appeared for the first time.
+   - Which pages carry the organic clicks.
+   - Hiring-intent queries where the site ranks 8–20 (for example "christmas carol singers london", "choir for funeral", "hire a choir"). Name the page Google shows for each and suggest one concrete on-page fix. Don't write site copy; that needs the writing-site-copy and stop-slop skills and the owner's go-ahead.
+   - Write a one-line dated entry for MANUAL-ACTIONS-REQUIRED.md §12, in the same style as the existing entries, in the worktree. Commit it only with the owner's approval.
+6. Christmas budget call, only from 5 Oct 2026 onwards: recommend £6/day ONLY if all three hold: at least 90% of spend is on HIRING terms (after the proposed negatives); the campaign is limited by budget (averaging about £5/day or losing impression share to budget); and at least one real enquiry or WhatsApp/email contact came in. Otherwise hold at £5, or suggest pausing head terms that attract non-buyers, and say what would change the answer. £6 needs the owner to raise the CLAUDE.md £5 cap for this campaign only, until 20 Dec 2026.
+7. After 20 Dec 2026: replace step 6 with a season summary for the Christmas campaign (spend, clicks, enquiries, WhatsApp/email contacts, booked jobs in logs/ads-changes.md) and recommend pausing it (never delete), once. Keep running every other step for the wedding and funeral campaigns and web presence.
+
+REPLY FORMAT
+Plain English, short, UK spelling, no preamble:
+- 3–5 headline numbers.
+- A search-terms table by class.
+- A tracking line.
+- A web-presence paragraph.
+- Proposed changes as a numbered list: resource → field: current → new, with a reason.
+- End with ONE question asking the owner to approve the change set, by number: all, some or none.
+If nothing needs changing, say so and ask nothing. After approval, in a later message, apply exactly what was approved with --apply, log it, commit on the worktree branch, open a PR, and merge it (docs and scripts only, no site pages).
+```
 
 ## Appendix B: How the tracking fits together
 
