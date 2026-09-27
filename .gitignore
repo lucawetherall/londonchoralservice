@@ -11,3 +11,7 @@ graphify-out/.graphify_root
 client_secret*.json
 google-ads.yaml
 *.local.*
+
+# Private bookings ledger (client data) — lives in ~/lcs-private/, never in the repo
+bookings*.csv
+lcs-private/
