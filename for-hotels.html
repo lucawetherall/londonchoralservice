@@ -179,16 +179,17 @@
   <meta property="og:url" content="https://londonchoralservice.com/for-hotels.html">
   <meta property="og:locale" content="en_GB">
   <meta property="og:site_name" content="London Choral Service">
-  <meta property="og:image" content="https://londonchoralservice.com/assets/og-image.png">
+  <meta property="og:image" content="https://londonchoralservice.com/assets/og/for-hotels.png">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
-  <meta property="og:image:alt" content="The London Choral Service: professional choirs and singers for funerals, weddings, and ceremonies">
+  <meta property="og:image:alt" content="The London Choral Service: For Hotels &amp; Venues. Carol singers who need no stage, no PA, and no piano">
 
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Carol Singers &amp; Christmas Music for Hotels | LCS">
   <meta name="twitter:description" content="Carol singers and Christmas music for hotels and venues: lobby carols, festive afternoon teas, switch-ons and party-season sets. A cappella, so no stage or PA.">
-  <meta name="twitter:image" content="https://londonchoralservice.com/assets/og-image.png">
-  <meta name="twitter:image:alt" content="The London Choral Service: professional choirs and singers for funerals, weddings, and ceremonies">
+  <meta name="twitter:image" content="https://londonchoralservice.com/assets/og/for-hotels.png">
+  <meta name="twitter:image:alt" content="The London Choral Service: For Hotels &amp; Venues. Carol singers who need no stage, no PA, and no piano">
+  <link rel="preconnect" href="https://img.youtube.com">
   <link rel="dns-prefetch" href="https://www.googletagmanager.com">
   <link rel="dns-prefetch" href="https://api.web3forms.com">
 
@@ -200,8 +201,9 @@
       --color-text:       #2C2420;
       --color-text-mid:   #6B5E56;
       --color-accent:     #8B3A3A;
-      --color-accent-hover: #A85454;
+      --color-accent-hover: #9E4A4A; /* 4.9:1 on --color-bg-alt (link hover in tinted boxes) */
       --color-rule:       #D6CEC6;
+      --color-field-rule: #8F827A;   /* form-field edges: 3:1+ on both backgrounds (WCAG 1.4.11) */
     
       /* ── Feedback Colours ── */
       --color-error:      #9B2C2C;
@@ -670,6 +672,7 @@
     @media (max-width: 1080px) {
       .nav-toggle {
         display: block;
+        flex-shrink: 0;
       }
     
       .nav-links {
@@ -709,6 +712,18 @@
         position: relative;
       }
     
+    }
+    
+    /* The nowrap site name at --text-lg plus the toggle is ~377px wide:
+       scale the name with the viewport on small phones so the header fits at 320px. */
+    @media (max-width: 420px) {
+      .site-name {
+        font-size: clamp(1.125rem, 6vw, var(--text-lg));
+      }
+    
+      .site-nav {
+        gap: var(--space-md);
+      }
     }
     
     /* ═══════════════════════════════════
@@ -770,6 +785,14 @@
       }
       .footer-col--brand {
         grid-column: 1 / -1;
+      }
+      /* Touch screens: pad the link lists to a ~40px tap target */
+      .footer-col li {
+        margin-bottom: 0;
+      }
+      .footer-col li a {
+        display: inline-block;
+        padding-block: var(--space-sm);
       }
     }
     
@@ -872,14 +895,6 @@
       font-weight: 600;
       text-align: right;
       white-space: nowrap;
-    }
-    
-    .pricing-price .vat {
-      font-family: var(--font-body);
-      font-size: var(--text-sm);
-      font-weight: 400;
-      color: var(--color-text-mid);
-      margin-left: var(--space-xs);
     }
     
     @media (max-width: 599px) {
@@ -1106,37 +1121,6 @@
     }
     
     /* ═══════════════════════════════════
-       Ensemble Definition List
-       ═══════════════════════════════════ */
-    .ensemble-list dt {
-      font-family: var(--font-heading);
-      font-size: var(--text-lg);
-      font-weight: 500;
-      margin-top: var(--space-xl);
-      padding-top: var(--space-xl);
-      border-top: 1px solid var(--color-rule);
-    }
-    
-    .ensemble-list dt:first-child {
-      border-top: none;
-      padding-top: 0;
-      margin-top: 0;
-    }
-    
-    .ensemble-list .aside {
-      font-family: var(--font-body);
-      font-size: var(--text-sm);
-      font-weight: 400;
-      color: var(--color-text-mid);
-    }
-    
-    .ensemble-list dd {
-      margin-top: var(--space-sm);
-      margin-left: 0;
-      color: var(--color-text-mid);
-    }
-    
-    /* ═══════════════════════════════════
        Track Listing (Listen Page)
        ═══════════════════════════════════ */
     .track {
@@ -1201,7 +1185,7 @@
       font-size: var(--text-base);
       padding: var(--space-sm) 0;
       border: none;
-      border-bottom: 1px solid var(--color-rule);
+      border-bottom: 1px solid var(--color-field-rule);
       background: transparent;
       color: var(--color-text);
       border-radius: 0;
@@ -1214,7 +1198,7 @@
       font-family: var(--font-body);
       font-size: var(--text-base);
       padding: var(--space-sm);
-      border: 1px solid var(--color-rule);
+      border: 1px solid var(--color-field-rule);
       background: transparent;
       color: var(--color-text);
       border-radius: 0;
@@ -1233,6 +1217,13 @@
       box-shadow: 0 0 0 1px var(--color-accent);
     }
     
+    /* A colour change alone on a 1px underline is too faint a focus cue:
+       thicken the underline to 2px in the accent colour. */
+    .form-field input:focus,
+    .form-field select:focus {
+      box-shadow: 0 1px 0 0 var(--color-accent);
+    }
+    
     .form-field select {
       cursor: pointer;
       background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%236B5E56' d='M1.41 0L6 4.58 10.59 0 12 1.41l-6 6-6-6z'/%3E%3C/svg%3E");
@@ -1244,7 +1235,8 @@
     /* ── Validation States ── */
     .form-field input:user-invalid,
     .form-field select:user-invalid,
-    .form-field textarea:user-invalid {
+    .form-field textarea:user-invalid,
+    .form-field [aria-invalid="true"] {
       border-color: var(--color-error);
     }
     
@@ -1329,13 +1321,6 @@
       margin-bottom: 0;
       font-size: var(--text-sm);
       color: var(--color-text-mid);
-    }
-    
-    .hero-trust__stars {
-      color: var(--color-accent);
-      letter-spacing: 0.08em;
-      font-size: var(--text-base);
-      line-height: 1;
     }
     
     /* ═══════════════════════════════════
@@ -1644,6 +1629,14 @@
       opacity: 0.85;
     }
     
+    /* .video-embed clips overflow, so the global outline (drawn outside) is
+       invisible here: draw the focus ring inside the thumbnail instead. */
+    .video-thumb:focus-visible {
+      outline: 3px solid #fff;
+      outline-offset: -6px;
+      box-shadow: inset 0 0 0 3px var(--color-accent);
+    }
+    
     @media (max-width: 805px) {
       .hero {
         flex-direction: column;
@@ -1708,13 +1701,13 @@
       color: var(--color-accent);
     }
     
-    .filter-chip[aria-pressed="true"] {
+    .filter-chip[aria-current="page"] {
       background-color: var(--color-accent);
       color: var(--color-bg);
       border-color: var(--color-accent);
     }
     
-    .filter-chip[aria-pressed="true"]:hover {
+    .filter-chip[aria-current="page"]:hover {
       background-color: var(--color-accent-hover);
       border-color: var(--color-accent-hover);
       color: var(--color-bg);
@@ -1934,6 +1927,11 @@
       outline: none;
     }
     
+    .dropdown-menu a:focus-visible {
+      outline: 2px solid var(--color-accent);
+      outline-offset: -2px;
+    }
+    
     .dropdown-separator {
       height: 1px;
       background-color: var(--color-rule);
@@ -1951,6 +1949,15 @@
     .has-dropdown:focus-within > .dropdown-trigger .dropdown-caret,
     .has-dropdown[data-open="true"] > .dropdown-trigger .dropdown-caret {
       transform: rotate(180deg);
+    }
+    
+    /* ESC dismisses a desktop dropdown even while hover/focus is still inside (nav.js) */
+    .has-dropdown[data-dismissed] > .dropdown-menu {
+      display: none;
+    }
+    
+    .has-dropdown[data-dismissed] > .dropdown-trigger .dropdown-caret {
+      transform: none;
     }
     
     /* Mobile: dropdown becomes an inline expandable block inside the hamburger */
@@ -2025,16 +2032,21 @@
       align-items: start;
     }
     
+    .services-hero .pull-quote--marquee {
+      margin-block: 0;
+    }
+    
+    /* Two columns: the quote rides alongside the text. In the single-column
+       layout it must stay static, or it sticks over the text scrolling up. */
     @media (min-width: 52rem) {
       .services-hero {
         grid-template-columns: 1fr 1.4fr;
       }
-    }
     
-    .services-hero .pull-quote--marquee {
-      margin-block: 0;
-      position: sticky;
-      top: var(--space-2xl);
+      .services-hero .pull-quote--marquee {
+        position: sticky;
+        top: var(--space-2xl);
+      }
     }
     
     /* ═══════════════════════════════════
@@ -2239,6 +2251,32 @@
       color: var(--color-accent);
     }
     
+    /* ── "How it works" numbered steps (service pages) ── */
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+      gap: var(--space-lg);
+      margin-block: var(--space-lg);
+    }
+    .step-num {
+      display: block;
+      font-family: var(--font-heading);
+      font-weight: 600;
+      font-size: 2rem;
+      font-variant-numeric: lining-nums; /* Cormorant's old-style 1 reads as a roman I */
+      line-height: 1;
+      color: var(--color-accent);
+    }
+    .step h3 {
+      font-size: var(--text-md);
+      font-weight: 600;
+      margin-block: var(--space-xs);
+    }
+    .step p {
+      margin: 0;
+      color: var(--color-text-mid);
+    }
+    
     /* ── Care strip: "We take the whole thing off your hands" ──────────── */
     .care-steps {
       list-style: none;
@@ -2253,6 +2291,7 @@
       font-family: var(--font-heading);
       font-weight: 600;
       font-size: 2rem;
+      font-variant-numeric: lining-nums;
       line-height: 1;
       color: var(--color-accent);
     }
@@ -2303,7 +2342,8 @@
       .skip-link,
       .contact-form,
       .btn,
-      .video-embed {
+      .video-embed,
+      .mobile-cta {
         display: none !important;
       }
     
@@ -2435,7 +2475,7 @@
             "name": "How does pricing work for one date compared with several dates in December?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Each date is quoted on the standard scale, from £1,150 for a Small Choir of four up to £3,000 for a twelve-voice chorus, and Christmas carries no seasonal uplift. Only 24 and 25 December cost more. Prices include taxes, fees, and travel within Greater London. Send us every December date you are considering and we will quote them together."
+              "text": "Each date is quoted on the standard scale, from £1,150 for a Small Choir of four up to £3,000 for a twelve-voice chorus, and Christmas carries no seasonal uplift. Only 24 and 25 December cost more. Prices include fees and travel within Greater London, with no VAT to add. Send us every December date you are considering and we will quote them together."
             }
           },
           {
@@ -2451,7 +2491,7 @@
             "name": "When should hotels book carol singers for the party season?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "By mid-September for the first three weeks of December, which is when our diary closes out every year. For a repeat December residency, get in touch by the previous spring. A late enquiry is still worth making, since cancellations happen, but the choice of ensemble size narrows sharply after September."
+              "text": "By mid-September for the first three weeks of December, which is when our diary starts to fill every year. For a repeat December residency, get in touch by the previous spring. Last-minute Christmas bookings are welcome too: send us the date, however close, and we will confirm availability within one working day."
             }
           }
         ]
@@ -2473,48 +2513,48 @@
   <header class="site-header">
     <nav class="site-nav page-wrap" aria-label="Main navigation">
       <a href="/" class="site-name">The London Choral Service</a>
-      <button class="nav-toggle" aria-expanded="false" aria-controls="nav-menu" aria-label="Menu">
+      <button type="button" class="nav-toggle" aria-expanded="false" aria-controls="nav-menu" aria-label="Menu">
         <span class="nav-toggle-bar"></span>
       </button>
       <ul id="nav-menu" class="nav-links" role="list">
         <li><a href="/about.html">About</a></li>
         <li class="has-dropdown">
-          <a href="/services.html" aria-haspopup="true" aria-expanded="false" class="dropdown-trigger">Services<span class="dropdown-caret" aria-hidden="true">&#9662;</span></a>
-          <ul class="dropdown-menu" role="menu">
-            <li role="none"><a role="menuitem" href="/weddings.html">Weddings</a></li>
-            <li role="none"><a role="menuitem" href="/funerals.html">Funerals</a></li>
-            <li role="none"><a role="menuitem" href="/corporate.html">Corporate</a></li>
-            <li role="none"><a role="menuitem" href="/christmas.html">Christmas</a></li>
-            <li role="none"><a role="menuitem" href="/carol-singers.html">Carol Singers</a></li>
-            <li role="none"><a role="menuitem" href="/private-events.html">Private Events</a></li>
-            <li role="none"><a role="menuitem" href="/destinations/">Weddings Abroad</a></li>
-            <li role="separator" class="dropdown-separator"></li>
-            <li role="none"><a role="menuitem" href="/services.html">All services</a></li>
+          <a href="/services.html" aria-expanded="false" class="dropdown-trigger">Services<span class="dropdown-caret" aria-hidden="true">&#9662;</span></a>
+          <ul class="dropdown-menu">
+            <li><a href="/weddings.html">Weddings</a></li>
+            <li><a href="/funerals.html">Funerals</a></li>
+            <li><a href="/corporate.html">Corporate</a></li>
+            <li><a href="/christmas.html">Christmas</a></li>
+            <li><a href="/carol-singers.html">Carol Singers</a></li>
+            <li><a href="/private-events.html">Private Events</a></li>
+            <li><a href="/destinations/">Weddings Abroad</a></li>
+            <li class="dropdown-separator" aria-hidden="true"></li>
+            <li><a href="/services.html">All services</a></li>
           </ul>
         </li>
         <li class="has-dropdown">
-          <a href="/planners-and-venues.html" aria-haspopup="true" aria-expanded="false" class="dropdown-trigger">Professionals<span class="dropdown-caret" aria-hidden="true">&#9662;</span></a>
-          <ul class="dropdown-menu" role="menu">
-            <li role="none"><a role="menuitem" href="/for-funeral-directors.html">Funeral Directors</a></li>
-            <li role="none"><a role="menuitem" href="/for-wedding-planners.html">Wedding Planners</a></li>
-            <li role="none"><a role="menuitem" href="/for-event-managers.html">Event Managers</a></li>
-            <li role="none"><a role="menuitem" href="/for-hotels.html">Hotels &amp; Venues</a></li>
-            <li role="none"><a role="menuitem" href="/for-property-managers.html">Property Managers</a></li>
-            <li role="none"><a role="menuitem" href="/for-livery-companies.html">Livery Companies</a></li>
-            <li role="none"><a role="menuitem" href="/for-charities.html">Charities</a></li>
-            <li role="separator" class="dropdown-separator"></li>
-            <li role="none"><a role="menuitem" href="/planners-and-venues.html">Planners, Venues &amp; Estates</a></li>
+          <a href="/planners-and-venues.html" aria-expanded="false" class="dropdown-trigger">Professionals<span class="dropdown-caret" aria-hidden="true">&#9662;</span></a>
+          <ul class="dropdown-menu">
+            <li><a href="/for-funeral-directors.html">Funeral Directors</a></li>
+            <li><a href="/for-wedding-planners.html">Wedding Planners</a></li>
+            <li><a href="/for-event-managers.html">Event Managers</a></li>
+            <li><a href="/for-hotels.html">Hotels &amp; Venues</a></li>
+            <li><a href="/for-property-managers.html">Property Managers</a></li>
+            <li><a href="/for-livery-companies.html">Livery Companies</a></li>
+            <li><a href="/for-charities.html">Charities</a></li>
+            <li class="dropdown-separator" aria-hidden="true"></li>
+            <li><a href="/planners-and-venues.html">Planners, Venues &amp; Estates</a></li>
           </ul>
         </li>
         <li><a href="/listen.html">Listen</a></li>
         <li class="has-dropdown">
-          <a href="/music-guides/" aria-haspopup="true" aria-expanded="false" class="dropdown-trigger">Music Guides<span class="dropdown-caret" aria-hidden="true">&#9662;</span></a>
-          <ul class="dropdown-menu" role="menu">
-            <li role="none"><a role="menuitem" href="/music-guides/?category=weddings">Weddings</a></li>
-            <li role="none"><a role="menuitem" href="/music-guides/?category=funerals">Funerals</a></li>
-            <li role="none"><a role="menuitem" href="/music-guides/?category=christmas">Christmas</a></li>
-            <li role="separator" class="dropdown-separator"></li>
-            <li role="none"><a role="menuitem" href="/music-guides/">Browse all</a></li>
+          <a href="/music-guides/" aria-expanded="false" class="dropdown-trigger">Music Guides<span class="dropdown-caret" aria-hidden="true">&#9662;</span></a>
+          <ul class="dropdown-menu">
+            <li><a href="/music-guides/?category=weddings">Weddings</a></li>
+            <li><a href="/music-guides/?category=funerals">Funerals</a></li>
+            <li><a href="/music-guides/?category=christmas">Christmas</a></li>
+            <li class="dropdown-separator" aria-hidden="true"></li>
+            <li><a href="/music-guides/">Browse all</a></li>
           </ul>
         </li>
         <li><a href="/christmas.html">Christmas</a></li>
@@ -2544,8 +2584,8 @@
         </div>
         <div class="hero-video">
           <div class="video-embed">
-            <button class="video-thumb" aria-label="Play video" data-video="Lov_NegzVhM">
-              <img src="https://img.youtube.com/vi/Lov_NegzVhM/maxresdefault.jpg" alt="The London Choral Service singing unaccompanied" loading="lazy" width="1280" height="720">
+            <button class="video-thumb" aria-label="Play our film: singers for funerals, weddings and events" data-video="Lov_NegzVhM">
+              <img src="https://img.youtube.com/vi/Lov_NegzVhM/maxresdefault.jpg" alt="Still from our film of singers for funerals, weddings and events" fetchpriority="high" width="1280" height="720">
               <svg class="play-btn" viewBox="0 0 68 48" aria-hidden="true">
                 <path d="M66.52 7.74c-.78-2.93-2.49-5.41-5.42-6.19C55.79.13 34 0 34 0S12.21.13 6.9 1.55c-2.93.78-4.63 3.26-5.42 6.19C.06 13.05 0 24 0 24s.06 10.95 1.48 16.26c.78 2.93 2.49 5.41 5.42 6.19C12.21 47.87 34 48 34 48s21.79-.13 27.1-1.55c2.93-.78 4.63-3.26 5.42-6.19C67.94 34.95 68 24 68 24s-.06-10.95-1.48-16.26z" fill="rgba(0,0,0,.7)"/>
                 <path d="M45 24 27 14v20z" fill="#fff"/>
@@ -2564,8 +2604,8 @@
         <p>The choir either roams or stays put. Roaming suits a switch-on, a drinks reception, or the arrivals hour, when guests are moving through the space and the singing follows them. A stationary set suits the moment you want people to stop and listen. Because we sing a cappella there is no cabling to run and no soundcheck to schedule around your service.</p>
         <p>Dress is yours to choose: concert dress for a formal afternoon tea, all black for a lobby set that should read as part of the building, casual for a family switch-on. Christmas jumpers if you want them, and we have Santa hats.</p>
         <p>Where your space has a piano, we can send a pianist to play with the choir and to cover the gaps between sets. Where there is no piano, we can bring a keyboard and a speaker for an extra charge, quoted upfront in the written quote before you commit to anything.</p>
-        <p>Ensemble sizes and prices are the same in December as the rest of the year. Carol bookings start with a Small Choir (4) from &pound;1,150, quintet from &pound;1,400, sextet from &pound;1,600, full choir of eight from &pound;2,000, twelve-voice chorus from &pound;3,000. A pianist or organist is from &pound;250. Every figure includes taxes, fees, and travel within Greater London, and there is no Christmas uplift. A premium applies to 24 and 25 December, confirmed in the written quote. Full details are on our <a href="pricing.html">pricing page</a>.</p>
-        <p>Lead times: our December diary closes out by mid&#8209;September. If you want the same night each week through the party season, talk to us by the previous spring, while the calendar is still open.</p>
+        <p>Ensemble sizes and prices are the same in December as the rest of the year. Carol bookings start with a Small Choir (4) from &pound;1,150, quintet from &pound;1,400, sextet from &pound;1,600, full choir of eight from &pound;2,000, twelve-voice chorus from &pound;3,000. A pianist or organist is from &pound;250. Every figure includes fees and travel within Greater London, with no VAT to add, and there is no Christmas uplift. A premium applies to 24 and 25 December, confirmed in the written quote. Full details are on our <a href="pricing.html">pricing page</a>.</p>
+        <p>Lead times: our December diary starts to fill by mid&#8209;September. If you want the same night each week through the party season, talk to us by the previous spring, while the calendar is still open.</p>
       </div>
     </section>
 
@@ -2614,13 +2654,13 @@
         <p>No. We sing a cappella, so there is nothing to plug in and no stage to build. A twelve-voice chorus fills a large lobby unamplified; four singers suit a lounge or a tea room. In a busy lobby we place the choir where the sound reflects, near a stone stair or a hard wall.</p>
 
         <h3>How does pricing work for one date compared with several dates in December?</h3>
-        <p>Each date is quoted on the standard scale, from &pound;1,150 for a Small Choir of four up to &pound;3,000 for a twelve-voice chorus, and Christmas carries no seasonal uplift. Only 24 and 25 December cost more. Prices include taxes, fees, and travel within Greater London. Send us every December date you are considering and we will quote them together.</p>
+        <p>Each date is quoted on the standard scale, from &pound;1,150 for a Small Choir of four up to &pound;3,000 for a twelve-voice chorus, and Christmas carries no seasonal uplift. Only 24 and 25 December cost more. Prices include fees and travel within Greater London, with no VAT to add. Send us every December date you are considering and we will quote them together.</p>
 
         <h3>What insurance and compliance documents can you send our venue team?</h3>
         <p>Alma Consort Ltd carries &pound;5m public liability cover and we email the certificate the same day you ask. PAT certificates for any equipment we bring are available on the same basis. If your venue needs the paperwork before it releases a back-of-house room, tell us at booking and we send it straight through.</p>
 
         <h3>When should hotels book carol singers for the party season?</h3>
-        <p>By mid-September for the first three weeks of December, which is when our diary closes out every year. For a repeat December residency, get in touch by the previous spring. A late enquiry is still worth making, since cancellations happen, but the choice of ensemble size narrows sharply after September.</p>
+        <p>By mid-September for the first three weeks of December, which is when our diary starts to fill every year. For a repeat December residency, get in touch by the previous spring. Last-minute Christmas bookings are welcome too: send us the date, however close, and we will confirm availability within one working day.</p>
       </div>
     </section>
 
@@ -2776,7 +2816,7 @@
   </footer>
   <!-- @include-end partials/footer.html -->
 
-  <div class="mobile-cta" aria-label="Quick contact">
+  <div class="mobile-cta" role="group" aria-label="Quick contact">
     <a href="https://wa.me/447356042468" target="_blank" rel="noopener" class="mobile-cta-whatsapp" data-whatsapp><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" aria-hidden="true" focusable="false"><path fill="currentColor" d="M16 .395a15.6 15.6 0 0 0-13.534 23.36L0 32l8.43-2.42A15.6 15.6 0 0 0 31.6 16.005 15.6 15.6 0 0 0 16 .395Zm0 28.41a12.78 12.78 0 0 1-6.523-1.79l-.467-.28-4.846 1.39 1.42-4.738-.305-.486A12.78 12.78 0 0 1 16 3.214a12.81 12.81 0 0 1 12.81 12.81A12.81 12.81 0 0 1 16 28.805Zm7.025-9.575c-.385-.193-2.275-1.122-2.628-1.25-.353-.13-.609-.193-.866.193s-.994 1.25-1.218 1.508c-.225.257-.45.29-.834.097-.385-.193-1.626-.6-3.097-1.911-1.144-1.02-1.916-2.28-2.14-2.665-.225-.385-.024-.594.169-.787.174-.173.385-.45.578-.674.193-.225.257-.385.385-.642.13-.257.064-.482-.032-.674-.097-.193-.866-2.087-1.187-2.857-.312-.75-.628-.65-.866-.66l-.738-.013a1.42 1.42 0 0 0-1.027.482c-.353.385-1.347 1.315-1.347 3.207s1.379 3.72 1.572 3.977c.193.257 2.715 4.146 6.578 5.815.92.397 1.637.633 2.196.81.923.293 1.762.252 2.426.153.74-.11 2.275-.93 2.595-1.829.32-.898.32-1.668.225-1.829-.097-.16-.353-.257-.738-.45Z"/></svg>WhatsApp</a>
     <a href="#enquiry" class="mobile-cta-enquire">Enquire</a>
   </div>

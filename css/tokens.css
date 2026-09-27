@@ -5,8 +5,9 @@
   --color-text:       #2C2420;
   --color-text-mid:   #6B5E56;
   --color-accent:     #8B3A3A;
-  --color-accent-hover: #A85454;
+  --color-accent-hover: #9E4A4A; /* 4.9:1 on --color-bg-alt (link hover in tinted boxes) */
   --color-rule:       #D6CEC6;
+  --color-field-rule: #8F827A;   /* form-field edges: 3:1+ on both backgrounds (WCAG 1.4.11) */
 
   /* ── Feedback Colours ── */
   --color-error:      #9B2C2C;

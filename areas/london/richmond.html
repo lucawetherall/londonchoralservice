@@ -165,7 +165,7 @@
   <script src="/js/consent.js" defer></script>
   <!-- @include-end partials/analytics.html -->
 
-  <title>Funeral and wedding choirs in Richmond upon Thames | LCS</title>
+  <title>Wedding and funeral choirs in Richmond upon Thames | LCS</title>
   <meta name="description" content="Hire conservatoire-trained singers for funerals, weddings, and memorials in Richmond upon Thames. Soloists and choirs available from £250. Enquire today.">
   <meta name="theme-color" content="#F7F3EE">
   <meta name="robots" content="index, follow">
@@ -173,22 +173,22 @@
   <link rel="alternate" hreflang="en-gb" href="https://londonchoralservice.com/areas/london/richmond.html">
   <link rel="alternate" hreflang="x-default" href="https://londonchoralservice.com/areas/london/richmond.html">
 
-  <meta property="og:title" content="Funeral and wedding choirs in Richmond upon Thames | LCS">
+  <meta property="og:title" content="Wedding and funeral choirs in Richmond upon Thames | LCS">
   <meta property="og:description" content="Hire conservatoire-trained singers for funerals, weddings, and memorials in Richmond upon Thames. Soloists and choirs available from £250. Enquire today.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://londonchoralservice.com/areas/london/richmond.html">
   <meta property="og:locale" content="en_GB">
   <meta property="og:site_name" content="London Choral Service">
-  <meta property="og:image" content="https://londonchoralservice.com/assets/og-image.png">
+  <meta property="og:image" content="https://londonchoralservice.com/assets/og/areas-london-richmond.png">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
-  <meta property="og:image:alt" content="The London Choral Service: professional choirs and singers for funerals, weddings, and ceremonies">
+  <meta property="og:image:alt" content="The London Choral Service: Wedding &amp; Funeral Choirs in Richmond upon Thames. Live singers for churches, crematoria and carol services">
 
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Funeral and wedding choirs in Richmond upon Thames | LCS">
+  <meta name="twitter:title" content="Wedding and funeral choirs in Richmond upon Thames | LCS">
   <meta name="twitter:description" content="Hire conservatoire-trained singers for funerals, weddings, and memorials in Richmond upon Thames. Soloists and choirs available from £250. Enquire today.">
-  <meta name="twitter:image" content="https://londonchoralservice.com/assets/og-image.png">
-  <meta name="twitter:image:alt" content="The London Choral Service: professional choirs and singers for funerals, weddings, and ceremonies">
+  <meta name="twitter:image" content="https://londonchoralservice.com/assets/og/areas-london-richmond.png">
+  <meta name="twitter:image:alt" content="The London Choral Service: Wedding &amp; Funeral Choirs in Richmond upon Thames. Live singers for churches, crematoria and carol services">
   <link rel="dns-prefetch" href="https://www.googletagmanager.com">
   <link rel="dns-prefetch" href="https://api.web3forms.com">
 
@@ -200,8 +200,9 @@
       --color-text:       #2C2420;
       --color-text-mid:   #6B5E56;
       --color-accent:     #8B3A3A;
-      --color-accent-hover: #A85454;
+      --color-accent-hover: #9E4A4A; /* 4.9:1 on --color-bg-alt (link hover in tinted boxes) */
       --color-rule:       #D6CEC6;
+      --color-field-rule: #8F827A;   /* form-field edges: 3:1+ on both backgrounds (WCAG 1.4.11) */
     
       /* ── Feedback Colours ── */
       --color-error:      #9B2C2C;
@@ -670,6 +671,7 @@
     @media (max-width: 1080px) {
       .nav-toggle {
         display: block;
+        flex-shrink: 0;
       }
     
       .nav-links {
@@ -709,6 +711,18 @@
         position: relative;
       }
     
+    }
+    
+    /* The nowrap site name at --text-lg plus the toggle is ~377px wide:
+       scale the name with the viewport on small phones so the header fits at 320px. */
+    @media (max-width: 420px) {
+      .site-name {
+        font-size: clamp(1.125rem, 6vw, var(--text-lg));
+      }
+    
+      .site-nav {
+        gap: var(--space-md);
+      }
     }
     
     /* ═══════════════════════════════════
@@ -770,6 +784,14 @@
       }
       .footer-col--brand {
         grid-column: 1 / -1;
+      }
+      /* Touch screens: pad the link lists to a ~40px tap target */
+      .footer-col li {
+        margin-bottom: 0;
+      }
+      .footer-col li a {
+        display: inline-block;
+        padding-block: var(--space-sm);
       }
     }
     
@@ -872,14 +894,6 @@
       font-weight: 600;
       text-align: right;
       white-space: nowrap;
-    }
-    
-    .pricing-price .vat {
-      font-family: var(--font-body);
-      font-size: var(--text-sm);
-      font-weight: 400;
-      color: var(--color-text-mid);
-      margin-left: var(--space-xs);
     }
     
     @media (max-width: 599px) {
@@ -1106,37 +1120,6 @@
     }
     
     /* ═══════════════════════════════════
-       Ensemble Definition List
-       ═══════════════════════════════════ */
-    .ensemble-list dt {
-      font-family: var(--font-heading);
-      font-size: var(--text-lg);
-      font-weight: 500;
-      margin-top: var(--space-xl);
-      padding-top: var(--space-xl);
-      border-top: 1px solid var(--color-rule);
-    }
-    
-    .ensemble-list dt:first-child {
-      border-top: none;
-      padding-top: 0;
-      margin-top: 0;
-    }
-    
-    .ensemble-list .aside {
-      font-family: var(--font-body);
-      font-size: var(--text-sm);
-      font-weight: 400;
-      color: var(--color-text-mid);
-    }
-    
-    .ensemble-list dd {
-      margin-top: var(--space-sm);
-      margin-left: 0;
-      color: var(--color-text-mid);
-    }
-    
-    /* ═══════════════════════════════════
        Track Listing (Listen Page)
        ═══════════════════════════════════ */
     .track {
@@ -1201,7 +1184,7 @@
       font-size: var(--text-base);
       padding: var(--space-sm) 0;
       border: none;
-      border-bottom: 1px solid var(--color-rule);
+      border-bottom: 1px solid var(--color-field-rule);
       background: transparent;
       color: var(--color-text);
       border-radius: 0;
@@ -1214,7 +1197,7 @@
       font-family: var(--font-body);
       font-size: var(--text-base);
       padding: var(--space-sm);
-      border: 1px solid var(--color-rule);
+      border: 1px solid var(--color-field-rule);
       background: transparent;
       color: var(--color-text);
       border-radius: 0;
@@ -1233,6 +1216,13 @@
       box-shadow: 0 0 0 1px var(--color-accent);
     }
     
+    /* A colour change alone on a 1px underline is too faint a focus cue:
+       thicken the underline to 2px in the accent colour. */
+    .form-field input:focus,
+    .form-field select:focus {
+      box-shadow: 0 1px 0 0 var(--color-accent);
+    }
+    
     .form-field select {
       cursor: pointer;
       background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%236B5E56' d='M1.41 0L6 4.58 10.59 0 12 1.41l-6 6-6-6z'/%3E%3C/svg%3E");
@@ -1244,7 +1234,8 @@
     /* ── Validation States ── */
     .form-field input:user-invalid,
     .form-field select:user-invalid,
-    .form-field textarea:user-invalid {
+    .form-field textarea:user-invalid,
+    .form-field [aria-invalid="true"] {
       border-color: var(--color-error);
     }
     
@@ -1329,13 +1320,6 @@
       margin-bottom: 0;
       font-size: var(--text-sm);
       color: var(--color-text-mid);
-    }
-    
-    .hero-trust__stars {
-      color: var(--color-accent);
-      letter-spacing: 0.08em;
-      font-size: var(--text-base);
-      line-height: 1;
     }
     
     /* ═══════════════════════════════════
@@ -1644,6 +1628,14 @@
       opacity: 0.85;
     }
     
+    /* .video-embed clips overflow, so the global outline (drawn outside) is
+       invisible here: draw the focus ring inside the thumbnail instead. */
+    .video-thumb:focus-visible {
+      outline: 3px solid #fff;
+      outline-offset: -6px;
+      box-shadow: inset 0 0 0 3px var(--color-accent);
+    }
+    
     @media (max-width: 805px) {
       .hero {
         flex-direction: column;
@@ -1708,13 +1700,13 @@
       color: var(--color-accent);
     }
     
-    .filter-chip[aria-pressed="true"] {
+    .filter-chip[aria-current="page"] {
       background-color: var(--color-accent);
       color: var(--color-bg);
       border-color: var(--color-accent);
     }
     
-    .filter-chip[aria-pressed="true"]:hover {
+    .filter-chip[aria-current="page"]:hover {
       background-color: var(--color-accent-hover);
       border-color: var(--color-accent-hover);
       color: var(--color-bg);
@@ -1934,6 +1926,11 @@
       outline: none;
     }
     
+    .dropdown-menu a:focus-visible {
+      outline: 2px solid var(--color-accent);
+      outline-offset: -2px;
+    }
+    
     .dropdown-separator {
       height: 1px;
       background-color: var(--color-rule);
@@ -1951,6 +1948,15 @@
     .has-dropdown:focus-within > .dropdown-trigger .dropdown-caret,
     .has-dropdown[data-open="true"] > .dropdown-trigger .dropdown-caret {
       transform: rotate(180deg);
+    }
+    
+    /* ESC dismisses a desktop dropdown even while hover/focus is still inside (nav.js) */
+    .has-dropdown[data-dismissed] > .dropdown-menu {
+      display: none;
+    }
+    
+    .has-dropdown[data-dismissed] > .dropdown-trigger .dropdown-caret {
+      transform: none;
     }
     
     /* Mobile: dropdown becomes an inline expandable block inside the hamburger */
@@ -2025,16 +2031,21 @@
       align-items: start;
     }
     
+    .services-hero .pull-quote--marquee {
+      margin-block: 0;
+    }
+    
+    /* Two columns: the quote rides alongside the text. In the single-column
+       layout it must stay static, or it sticks over the text scrolling up. */
     @media (min-width: 52rem) {
       .services-hero {
         grid-template-columns: 1fr 1.4fr;
       }
-    }
     
-    .services-hero .pull-quote--marquee {
-      margin-block: 0;
-      position: sticky;
-      top: var(--space-2xl);
+      .services-hero .pull-quote--marquee {
+        position: sticky;
+        top: var(--space-2xl);
+      }
     }
     
     /* ═══════════════════════════════════
@@ -2239,6 +2250,32 @@
       color: var(--color-accent);
     }
     
+    /* ── "How it works" numbered steps (service pages) ── */
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+      gap: var(--space-lg);
+      margin-block: var(--space-lg);
+    }
+    .step-num {
+      display: block;
+      font-family: var(--font-heading);
+      font-weight: 600;
+      font-size: 2rem;
+      font-variant-numeric: lining-nums; /* Cormorant's old-style 1 reads as a roman I */
+      line-height: 1;
+      color: var(--color-accent);
+    }
+    .step h3 {
+      font-size: var(--text-md);
+      font-weight: 600;
+      margin-block: var(--space-xs);
+    }
+    .step p {
+      margin: 0;
+      color: var(--color-text-mid);
+    }
+    
     /* ── Care strip: "We take the whole thing off your hands" ──────────── */
     .care-steps {
       list-style: none;
@@ -2253,6 +2290,7 @@
       font-family: var(--font-heading);
       font-weight: 600;
       font-size: 2rem;
+      font-variant-numeric: lining-nums;
       line-height: 1;
       color: var(--color-accent);
     }
@@ -2303,7 +2341,8 @@
       .skip-link,
       .contact-form,
       .btn,
-      .video-embed {
+      .video-embed,
+      .mobile-cta {
         display: none !important;
       }
     
@@ -2437,42 +2476,18 @@
         "mainEntity": [
           {
             "@type": "Question",
-            "name": "How much does a funeral singer cost in Richmond?",
+            "name": "What size of choir suits St Anne’s Kew?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Whether the service is at Mortlake Crematorium, St Mary Magdalene Richmond, or St Anne's Kew, a solo funeral singer starts from £250. A choir of four is £1,150, a choir of five £1,400, a choir of six £1,600, and a full choir of eight £2,000. Prices include travel within Greater London."
+              "text": "St Anne’s Kew is more intimate than St Mary Magdalene, and a quartet (from £1,150) or a sextet (from £1,600) sits comfortably there, depending on the size of the congregation."
             }
           },
           {
             "@type": "Question",
-            "name": "Can you provide a choir for a wedding in Richmond?",
-            "acceptedAnswer": {
-              "@type": "Answer",
-              "text": "Yes. Richmond is one of London's most sought-after wedding locations, and we provide choirs at St Mary Magdalene, Hampton Court Chapel, and churches across Twickenham, Kew, and Ham. Ensembles range from a solo vocalist to a full twelve-voice chorus with instrumental accompaniment."
-            }
-          },
-          {
-            "@type": "Question",
-            "name": "What types of music can you perform at a funeral in Richmond?",
-            "acceptedAnswer": {
-              "@type": "Answer",
-              "text": "We cover the full range — traditional hymns and sacred choral music through to contemporary songs, folk arrangements, and popular favourites. At St Mary Magdalene's riverside setting or the intimate churches of Teddington and Barnes, we tailor the programme to the venue and the family's wishes. We also prepare bespoke arrangements on request."
-            }
-          },
-          {
-            "@type": "Question",
-            "name": "Do you cover crematorium services in Richmond?",
+            "name": "Do you sing at Mortlake Crematorium in Richmond?",
             "acceptedAnswer": {
               "@type": "Answer",
               "text": "Yes, we sing at Mortlake Crematorium regularly and know its chapels well. Our singers arrive early to coordinate with staff and plan the programme to fit within the allocated time slots. A soloist is often the best choice for crematorium services, though a quartet works well there too."
-            }
-          },
-          {
-            "@type": "Question",
-            "name": "Can you provide carol singers for a Christmas event in Richmond?",
-            "acceptedAnswer": {
-              "@type": "Answer",
-              "text": "Yes. We provide carol services and roaming carol singers for offices, hotels, and residents' events across Richmond upon Thames throughout December. The choir performs entirely a cappella, singing a set programme or moving among your guests as you prefer. December dates fill quickly and are usually booked out by mid-September, so do enquire early via our Christmas page."
             }
           }
         ]
@@ -2489,48 +2504,48 @@
   <header class="site-header">
     <nav class="site-nav page-wrap" aria-label="Main navigation">
       <a href="/" class="site-name">The London Choral Service</a>
-      <button class="nav-toggle" aria-expanded="false" aria-controls="nav-menu" aria-label="Menu">
+      <button type="button" class="nav-toggle" aria-expanded="false" aria-controls="nav-menu" aria-label="Menu">
         <span class="nav-toggle-bar"></span>
       </button>
       <ul id="nav-menu" class="nav-links" role="list">
         <li><a href="/about.html">About</a></li>
         <li class="has-dropdown">
-          <a href="/services.html" aria-haspopup="true" aria-expanded="false" class="dropdown-trigger">Services<span class="dropdown-caret" aria-hidden="true">&#9662;</span></a>
-          <ul class="dropdown-menu" role="menu">
-            <li role="none"><a role="menuitem" href="/weddings.html">Weddings</a></li>
-            <li role="none"><a role="menuitem" href="/funerals.html">Funerals</a></li>
-            <li role="none"><a role="menuitem" href="/corporate.html">Corporate</a></li>
-            <li role="none"><a role="menuitem" href="/christmas.html">Christmas</a></li>
-            <li role="none"><a role="menuitem" href="/carol-singers.html">Carol Singers</a></li>
-            <li role="none"><a role="menuitem" href="/private-events.html">Private Events</a></li>
-            <li role="none"><a role="menuitem" href="/destinations/">Weddings Abroad</a></li>
-            <li role="separator" class="dropdown-separator"></li>
-            <li role="none"><a role="menuitem" href="/services.html">All services</a></li>
+          <a href="/services.html" aria-expanded="false" class="dropdown-trigger">Services<span class="dropdown-caret" aria-hidden="true">&#9662;</span></a>
+          <ul class="dropdown-menu">
+            <li><a href="/weddings.html">Weddings</a></li>
+            <li><a href="/funerals.html">Funerals</a></li>
+            <li><a href="/corporate.html">Corporate</a></li>
+            <li><a href="/christmas.html">Christmas</a></li>
+            <li><a href="/carol-singers.html">Carol Singers</a></li>
+            <li><a href="/private-events.html">Private Events</a></li>
+            <li><a href="/destinations/">Weddings Abroad</a></li>
+            <li class="dropdown-separator" aria-hidden="true"></li>
+            <li><a href="/services.html">All services</a></li>
           </ul>
         </li>
         <li class="has-dropdown">
-          <a href="/planners-and-venues.html" aria-haspopup="true" aria-expanded="false" class="dropdown-trigger">Professionals<span class="dropdown-caret" aria-hidden="true">&#9662;</span></a>
-          <ul class="dropdown-menu" role="menu">
-            <li role="none"><a role="menuitem" href="/for-funeral-directors.html">Funeral Directors</a></li>
-            <li role="none"><a role="menuitem" href="/for-wedding-planners.html">Wedding Planners</a></li>
-            <li role="none"><a role="menuitem" href="/for-event-managers.html">Event Managers</a></li>
-            <li role="none"><a role="menuitem" href="/for-hotels.html">Hotels &amp; Venues</a></li>
-            <li role="none"><a role="menuitem" href="/for-property-managers.html">Property Managers</a></li>
-            <li role="none"><a role="menuitem" href="/for-livery-companies.html">Livery Companies</a></li>
-            <li role="none"><a role="menuitem" href="/for-charities.html">Charities</a></li>
-            <li role="separator" class="dropdown-separator"></li>
-            <li role="none"><a role="menuitem" href="/planners-and-venues.html">Planners, Venues &amp; Estates</a></li>
+          <a href="/planners-and-venues.html" aria-expanded="false" class="dropdown-trigger">Professionals<span class="dropdown-caret" aria-hidden="true">&#9662;</span></a>
+          <ul class="dropdown-menu">
+            <li><a href="/for-funeral-directors.html">Funeral Directors</a></li>
+            <li><a href="/for-wedding-planners.html">Wedding Planners</a></li>
+            <li><a href="/for-event-managers.html">Event Managers</a></li>
+            <li><a href="/for-hotels.html">Hotels &amp; Venues</a></li>
+            <li><a href="/for-property-managers.html">Property Managers</a></li>
+            <li><a href="/for-livery-companies.html">Livery Companies</a></li>
+            <li><a href="/for-charities.html">Charities</a></li>
+            <li class="dropdown-separator" aria-hidden="true"></li>
+            <li><a href="/planners-and-venues.html">Planners, Venues &amp; Estates</a></li>
           </ul>
         </li>
         <li><a href="/listen.html">Listen</a></li>
         <li class="has-dropdown">
-          <a href="/music-guides/" aria-haspopup="true" aria-expanded="false" class="dropdown-trigger">Music Guides<span class="dropdown-caret" aria-hidden="true">&#9662;</span></a>
-          <ul class="dropdown-menu" role="menu">
-            <li role="none"><a role="menuitem" href="/music-guides/?category=weddings">Weddings</a></li>
-            <li role="none"><a role="menuitem" href="/music-guides/?category=funerals">Funerals</a></li>
-            <li role="none"><a role="menuitem" href="/music-guides/?category=christmas">Christmas</a></li>
-            <li role="separator" class="dropdown-separator"></li>
-            <li role="none"><a role="menuitem" href="/music-guides/">Browse all</a></li>
+          <a href="/music-guides/" aria-expanded="false" class="dropdown-trigger">Music Guides<span class="dropdown-caret" aria-hidden="true">&#9662;</span></a>
+          <ul class="dropdown-menu">
+            <li><a href="/music-guides/?category=weddings">Weddings</a></li>
+            <li><a href="/music-guides/?category=funerals">Funerals</a></li>
+            <li><a href="/music-guides/?category=christmas">Christmas</a></li>
+            <li class="dropdown-separator" aria-hidden="true"></li>
+            <li><a href="/music-guides/">Browse all</a></li>
           </ul>
         </li>
         <li><a href="/christmas.html">Christmas</a></li>
@@ -2551,7 +2566,7 @@
             <li>Richmond upon Thames</li>
           </ol>
         </nav>
-        <h1>Funeral and wedding choirs in Richmond upon Thames</h1>
+        <h1>Wedding and funeral choirs in Richmond upon Thames</h1>
         <p class="guide-meta">Musicians selected by Luca Wetherall, Artistic Director &amp; Tutor in Music, University of Oxford &mdash; <a href="/luca-wetherall.html">read more about our team</a>.</p>
         <p class="lede">The London Borough of Richmond upon Thames is widely regarded as one of the most beautiful parts of London, with its royal parks, Thames-side walks, and handsome period architecture. The London Choral Service provides conservatoire-trained singers and instrumentalists for funerals, weddings, memorials, and ceremonies across Richmond, Twickenham, Kew, Ham, and the surrounding areas.</p>
         <p>Richmond is one of <a href="../london.html">over thirty London boroughs we cover</a> &mdash; see the full list, with named venues, on our London hub page.</p>
@@ -2561,43 +2576,31 @@
 
     <section class="section">
       <div class="prose">
-        <h2>Funeral music in Richmond upon Thames</h2>
-        <p>We regularly perform at services throughout the borough, including St&nbsp;Mary Magdalene Richmond&thinsp;&mdash;&thinsp;a landmark church overlooking the Thames&thinsp;&mdash;&thinsp;Mortlake Crematorium, and St&nbsp;Anne&rsquo;s Kew. Our singers also work at churches and chapels in Ham, Twickenham, Teddington, and Barnes, bringing the same care and professionalism to every service. A soloist singing a reflective piece, a quartet leading the congregation in traditional hymns&thinsp;&mdash;&thinsp;we help you find music that feels right for the person you are remembering. Our <a href="../../music-guides/funeral-music-guide.html">funeral music guide</a> offers a wide range of suggestions, and we encourage you to <a href="../../contact.html">get in touch</a> to discuss your plans.</p>
-        <p>For practical guidance on music at crematorium services &mdash; timing, acoustics, and making a shorter service meaningful &mdash; see our <a href="../../music-guides/crematorium-music.html">guide to crematorium music</a>.</p>
-        <p>Mortlake Crematorium serves a wide area of south-west London, and our singers know its chapels well. We understand the particular timing constraints of crematorium services and work efficiently within them, ensuring that every note counts. Live singing at a crematorium service changes the mood of the room in a way recorded music rarely does. You can find out more about how we prepare for each service on our <a href="../../services.html">services page</a>.</p>
+        <h2>Weddings at St&nbsp;Mary Magdalene and in Kew</h2>
+        <p>Richmond upon Thames is one of London&rsquo;s most sought-after wedding locations, and it is easy to see why. St&nbsp;Mary Magdalene by the river and the churches of Kew both make fine settings for a marriage ceremony, and our singers also perform at the many licensed venues in Twickenham, Ham, and beyond. At the Chapel Royal, Hampton Court Palace, we sing at weddings only with the permission of the chapel&rsquo;s clergy. From triumphant hymns to tender motets, we work with each couple to create a musical programme that enhances the joy of the day. Our <a href="../../music-guides/choosing-wedding-hymns.html">guide to choosing wedding hymns</a> is a good place to start.</p>
 
-        <h2>Wedding choirs in Richmond upon Thames</h2>
-        <p>Richmond upon Thames is one of London&rsquo;s most sought-after wedding locations, and it is easy to see why. The Tudor splendour of Hampton Court Chapel, the riverside elegance of St&nbsp;Mary Magdalene, and the botanical beauty of Kew all provide extraordinary settings for a marriage ceremony. Our singers can perform at any of these venues, as well as at the many licensed venues in Twickenham, Ham, and beyond. From triumphant hymns to tender motets, we work with each couple to create a musical programme that enhances the joy of the day. Our <a href="../../music-guides/choosing-wedding-hymns.html">guide to choosing wedding hymns</a> is a good place to start.</p>
-
-        <h2>Ensembles for weddings, funerals, and memorials</h2>
-        <p>For a wedding at Hampton Court Chapel or St&nbsp;Mary Magdalene Richmond, we&rsquo;d typically suggest a sextet or larger &mdash; the volume of those buildings rewards more voices, and a full eight-voice choir suits Hampton Court&rsquo;s Tudor scale particularly well. St&nbsp;Anne&rsquo;s Kew is more intimate; a quartet or sextet sits comfortably there depending on the size of the congregation. Mortlake Crematorium runs to a fixed service length, so a quartet is generally the right call: enough to lead a hymn, compact enough for the chapel. The parish churches in Twickenham, Teddington, Ham, and Barnes vary in scale; most handle a quartet well, with a sextet adding weight at the larger ones. For a graveside committal, a soloist is often more fitting. Our <a href="../../pricing.html">pricing page</a> sets out costs.</p>
+        <h2>Choir sizes from St&nbsp;Mary Magdalene to St&nbsp;Anne&rsquo;s Kew</h2>
+        <p>For a wedding at St&nbsp;Mary Magdalene Richmond, we&rsquo;d typically suggest a sextet or larger, because the volume of the building rewards more voices. St&nbsp;Anne&rsquo;s Kew is more intimate; a quartet or sextet sits comfortably there depending on the size of the congregation. Mortlake Crematorium runs to a fixed service length, so a quartet is generally the right call: enough to lead a hymn, compact enough for the chapel. The parish churches in Twickenham, Teddington, Ham, and Barnes vary in scale; most handle a quartet well, with a sextet adding weight at the larger ones. For a graveside committal, a soloist is often more fitting. You&rsquo;ll find the fee for a quartet at Mortlake or a sextet at St&nbsp;Mary Magdalene on our <a href="../../pricing.html">pricing page</a>.</p>
 
         <figure class="pull-quote">
           <blockquote><p>&ldquo;The singers were quite simply wonderful. They brought such warmth to the service&thinsp;&mdash;&thinsp;it was exactly what we had hoped for and more.&rdquo;</p></blockquote>
           <figcaption>&mdash;&ensp;Helen, Buckinghamshire</figcaption>
         </figure>
 
-        <h2>Christmas carol singers in Richmond upon Thames</h2>
+        <h2>Funerals at Mortlake Crematorium and St&nbsp;Mary Magdalene</h2>
+        <p>We regularly perform at services throughout the borough, including St&nbsp;Mary Magdalene Richmond&thinsp;&mdash;&thinsp;a landmark church overlooking the Thames&thinsp;&mdash;&thinsp;Mortlake Crematorium, and St&nbsp;Anne&rsquo;s Kew. Our singers also work at churches and chapels in Ham, Twickenham, Teddington, and Barnes, bringing the same care and professionalism to every service. A soloist singing a reflective piece, a quartet leading the congregation in traditional hymns&thinsp;&mdash;&thinsp;we help you find music that feels right for the person you are remembering. Our <a href="../../music-guides/funeral-music-guide.html">funeral music guide</a> offers a wide range of suggestions, and we encourage you to <a href="../../contact.html">get in touch</a> to discuss your plans.</p>
+        <p>Mortlake Crematorium serves a wide area of south-west London, and our singers know its chapels well. We understand the particular timing constraints of crematorium services and work efficiently within them, ensuring that every note counts. Live singing at a crematorium service changes the mood of the room in a way recorded music rarely does. You can find out more about how we prepare for each service on our <a href="../../services.html">services page</a>.</p>
+
+        <h2>Carols from Richmond&rsquo;s riverside to Twickenham</h2>
         <p>Every December we provide carol services and roaming carol singers for offices, venues, and residents&rsquo; events across Richmond upon Thames, from the riverside terraces of Richmond to Twickenham, Kew, and Ham. A small ensemble can lead <a href="../../christmas.html">Christmas carol services</a> at a venue near St&nbsp;Mary Magdalene, or <a href="../../carol-singers.html">carol singers for your event</a> can circulate through an office party or residents&rsquo; gathering.</p>
 
-        <h2>Frequently asked questions</h2>
+        <h2>Questions about Kew, Richmond and Mortlake</h2>
 
-        <h3>How much does a funeral singer cost in Richmond?</h3>
-        <p>Whether the service is at Mortlake Crematorium, St&nbsp;Mary Magdalene Richmond, or St&nbsp;Anne&rsquo;s Kew, a solo funeral singer starts from &pound;250. A choir of four is &pound;1,150, a choir of five &pound;1,400, a choir of six &pound;1,600, and a full choir of eight &pound;2,000. Prices include travel within Greater London.</p>
+        <h3>What size of choir suits St&nbsp;Anne&rsquo;s Kew?</h3>
+        <p>St&nbsp;Anne&rsquo;s Kew is more intimate than St&nbsp;Mary Magdalene, and a quartet (from &pound;1,150) or a sextet (from &pound;1,600) sits comfortably there, depending on the size of the congregation.</p>
 
-        <h3>Can you provide a choir for a wedding in Richmond?</h3>
-        <p>Yes. Richmond is one of London&rsquo;s most sought-after wedding locations, and we provide choirs at St&nbsp;Mary Magdalene, Hampton Court Chapel, and churches across Twickenham, Kew, and Ham. Ensembles range from a solo vocalist to a full twelve-voice chorus with instrumental accompaniment.</p>
-
-        <h3>What types of music can you perform at a funeral in Richmond?</h3>
-        <p>We cover the full range &mdash; traditional hymns and sacred choral music through to contemporary songs, folk arrangements, and popular favourites. At St&nbsp;Mary Magdalene&rsquo;s riverside setting or the intimate churches of Teddington and Barnes, we tailor the programme to the venue and the family&rsquo;s wishes. We also prepare bespoke arrangements on request.</p>
-
-        <h3>Do you cover crematorium services in Richmond?</h3>
+        <h3>Do you sing at Mortlake Crematorium in Richmond?</h3>
         <p>Yes, we sing at Mortlake Crematorium regularly and know its chapels well. Our singers arrive early to coordinate with staff and plan the programme to fit within the allocated time slots. A soloist is often the best choice for crematorium services, though a quartet works well there too.</p>
-
-        <h3>Can you provide carol singers for a Christmas event in Richmond?</h3>
-        <p>Yes. We provide carol services and roaming carol singers for offices, hotels, and residents&rsquo; events across Richmond upon Thames throughout December. The choir performs entirely a cappella, singing a set programme or moving among your guests as you prefer. December dates fill quickly and are usually booked out by mid-September, so do enquire early via our <a href="../../christmas.html">Christmas page</a>.</p>
-
-        <p>For more guidance, explore our <a href="../../music-guides/funeral-music-guide.html">funeral music guide</a>, <a href="../../music-guides/popular-funeral-hymns.html">popular funeral hymns</a>, <a href="../../music-guides/choosing-wedding-hymns.html">wedding hymns guide</a>, or <a href="../../music-guides/funeral-music-costs.html">funeral music costs guide</a>.</p>
 
         <p><a href="../../contact.html" class="btn-link">Get in touch about your occasion in Richmond</a></p>
       </div>
@@ -2688,7 +2691,7 @@
   </footer>
   <!-- @include-end partials/footer.html -->
 
-  <div class="mobile-cta" aria-label="Quick contact">
+  <div class="mobile-cta" role="group" aria-label="Quick contact">
     <a href="https://wa.me/447356042468" target="_blank" rel="noopener" class="mobile-cta-whatsapp" data-whatsapp><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" aria-hidden="true" focusable="false"><path fill="currentColor" d="M16 .395a15.6 15.6 0 0 0-13.534 23.36L0 32l8.43-2.42A15.6 15.6 0 0 0 31.6 16.005 15.6 15.6 0 0 0 16 .395Zm0 28.41a12.78 12.78 0 0 1-6.523-1.79l-.467-.28-4.846 1.39 1.42-4.738-.305-.486A12.78 12.78 0 0 1 16 3.214a12.81 12.81 0 0 1 12.81 12.81A12.81 12.81 0 0 1 16 28.805Zm7.025-9.575c-.385-.193-2.275-1.122-2.628-1.25-.353-.13-.609-.193-.866.193s-.994 1.25-1.218 1.508c-.225.257-.45.29-.834.097-.385-.193-1.626-.6-3.097-1.911-1.144-1.02-1.916-2.28-2.14-2.665-.225-.385-.024-.594.169-.787.174-.173.385-.45.578-.674.193-.225.257-.385.385-.642.13-.257.064-.482-.032-.674-.097-.193-.866-2.087-1.187-2.857-.312-.75-.628-.65-.866-.66l-.738-.013a1.42 1.42 0 0 0-1.027.482c-.353.385-1.347 1.315-1.347 3.207s1.379 3.72 1.572 3.977c.193.257 2.715 4.146 6.578 5.815.92.397 1.637.633 2.196.81.923.293 1.762.252 2.426.153.74-.11 2.275-.93 2.595-1.829.32-.898.32-1.668.225-1.829-.097-.16-.353-.257-.738-.45Z"/></svg>WhatsApp</a>
     <a href="/contact.html" class="mobile-cta-enquire">Enquire</a>
   </div>

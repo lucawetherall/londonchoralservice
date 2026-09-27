@@ -9,11 +9,12 @@ import tempfile
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
-def run_on(html):
-    """Drop `html` into a temp repo as index.html, run the validator, return (exit, output)."""
+def run_on(html, path="index.html"):
+    """Drop `html` into a temp repo at `path`, run the validator, return (exit, output)."""
     tmp = tempfile.mkdtemp()
     try:
-        with open(os.path.join(tmp, "index.html"), "w", encoding="utf-8") as f:
+        os.makedirs(os.path.dirname(os.path.join(tmp, path)), exist_ok=True)
+        with open(os.path.join(tmp, path), "w", encoding="utf-8") as f:
             f.write(html)
         shutil.copy(os.path.join(ROOT, "validate_house_claims.py"), tmp)
         p = subprocess.run([sys.executable, "validate_house_claims.py"],
@@ -65,7 +66,40 @@ def test_aggregate_rating_fails():
     assert code == 1, out
 
 
+def test_supplement_choir_on_london_page_fails():
+    code, out = run_on("<p>We can provide additional voices to supplement its own choir.</p>",
+                       path="areas/london/southwark.html")
+    assert code == 1, out
+    assert "London cathedral-choir supplement claim" in out, out
+
+def test_supplement_it_with_voices_near_london_cathedral_fails():
+    code, out = run_on("<p>Southwark Cathedral has its own choir, and we supplement it with additional voices.</p>")
+    assert code == 1, out
+
+def test_alongside_abbey_foundation_fails():
+    code, out = run_on("<p>At Westminster Abbey our singers work alongside the abbey&rsquo;s own choral foundation.</p>")
+    assert code == 1, out
+
+def test_supplement_st_pauls_choir_fails():
+    code, out = run_on("<p>At St&nbsp;Paul&rsquo;s Cathedral we can supplement the cathedral choir.</p>")
+    assert code == 1, out
+
+
 # ── legitimate copy must NOT fail ────────────────────────────────────────────
+
+def test_travel_supplement_passes():
+    code, out = run_on("<p>A travel supplement may apply for a choir of eight outside London.</p>")
+    assert code == 0, out
+
+def test_supplement_outside_london_passes():
+    """Outside London we may join a cathedral choir with the church's permission (owner, 2026-09-27)."""
+    code, out = run_on("<p>With the cathedral&rsquo;s permission, we can sing alongside the cathedral&rsquo;s own choir.</p>",
+                       path="areas/oxford.html")
+    assert code == 0, out
+
+def test_sing_with_permission_passes():
+    code, out = run_on("<p>The Abbey has its own choir, and we sing there only with the Abbey&rsquo;s permission, as a separate ensemble.</p>")
+    assert code == 0, out
 
 def test_not_vat_registered_passes():
     """The true statement must not trip the VAT pattern."""

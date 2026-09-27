@@ -268,7 +268,11 @@ This is a business-integrity question, not a copy-quality one — an agent doesn
 **Update 2026-09-04:** the "Tony, Battersea" quote ("she just took the music completely off our hands") was replaced on its seven pages. Two quotes still say "she" ("Pamela, Richmond", 9 pages; "Helen, Wimbledon", 4 pages). If a colleague handles the phone, say so on `about.html` and `contact.html` and keep them; otherwise replace them too. Owner decision.
 ---
 
-## R13 — Borough page template is a rigid, visible mould across all 33 pages  [P3] [SPEC-FIRST]
+## R13 — Borough page template is a rigid, visible mould across all 33 pages  [P3] [done 2026-09-27]
+
+**Done:** spec `docs/superpowers/specs/2026-09-27-borough-template-variants-design.md`, plan `data/r13-borough-plan.json`, applied by `scripts/r13_borough_variants.py`. Four variants, 15 section orders, no two pages with the same H2 sequence, 2–4 FAQs each with one borough-specific question, FAQPage JSON-LD kept in step. Testimonials unchanged (R12). Follow-up: a `writing-site-copy` pass on the repeated sentences the spec lists.
+
+**Original text:**
 
 **Why:** The 2026-08-30 content audit found every one of the 33 `areas/london/*.html` pages follows the identical H2 sequence (funeral music / wedding choirs / ensembles / Christmas carols / FAQ) with the same 3-question FAQ topic order every time. The prose itself is genuinely localised (real named churches, crematoria, historical detail), and the price-ladder FAQ answer's repeated sentence construction was already fixed site-wide (see verify command below) — what's left is the structural sameness of the container itself, which is exactly the kind of programmatic-SEO pattern current Google quality guidance is trained to flag, independent of how good the sentence-level writing is.
 
@@ -294,11 +298,26 @@ print('duplicate price-ladder constructions:', len(dupes))  # → 0
 
 ---
 
-## R14 — Barbershop Grams product line  [P1] [done 2026-09-03]
+## R14 — Owner facts the 2026-09-27 audit could not settle  [P2] [DECISION-NEEDED]
+
+**Why:** The 2026-09-27 full-site audit fixed every contradiction with a checkable answer (see commit `copy: correct contradictions and music-history errors…`). These remain because only the owner knows which figure is true. Do not let an agent pick one.
+
+1. **[done 2026-09-27: one or two weeks usual, short notice fine]** **Funeral notice.** `funerals.html` (hero FAQ) and `services.html` say most families contact us "two to five days before the service"; `funerals.html` (FAQ) and `music-guides/last-minute-funeral-singers.html` say "one or two weeks' notice". Both arrived in the same commit. `grep -rn "two to five days\|one or two weeks" --include=*.html . | grep -v graphify`
+2. **[done 2026-09-27: around six months ideal, last-minute fine]** **Wedding lead time.** `pricing.html` and `music-guides/wedding-choir-guide.html` say book "at least six months" ahead; `weddings.html` and `for-wedding-planners.html` say "three to six months".
+3. **[done 2026-09-27: around five minutes; one piece suits it best, two if both are short or the music may run on after the signing]** **Register-signing length** varied by page: two or three minutes (`weddings.html`), three or four (`anima-christi-catholic-wedding`), four or five (`wedding-readings-and-music`), five to eight (`lesser-known-wedding-choral-pieces`), five to ten (`wedding-choral-repertoire`). Pick one range for a typical church and use it everywhere. `grep -rnoiE "[^.>]*(signing|register)[^.<]{0,80}minutes" --include=*.html music-guides weddings.html`
+4. **[done 2026-09-27: now "one of the most-requested"]** **"Abide With Me — the most-requested funeral hymn"** (title, h1, meta). The page body, `funerals.html` and `listen.html` now say it shares the top place with The Lord's My Shepherd. Either cite a source for the title claim or retitle ("one of the two most-requested funeral hymns").
+5. **[done 2026-09-27]** "December dates go by mid-September" (about 60 pages) now reads "starts to fill by mid-September", at the owner's request, so late visitors are not put off enquiring.
+6. **[done 2026-09-27: role=group added; lastmod kept for markup-only pages]** **Mobile call bar `aria-label`** sits on a plain `<div>` in 139 hand-written copies, where screen readers ignore it. Adding `role="group"` by sweep bumps `lastmod` on every page (the sitemap hashes body markup), so it was left out of the audit. Best done by moving the bar into a partial, which also removes the duplication.
+
+**Skills:** writing-site-copy
+
+---
+
+## R15 — Barbershop Grams product line  [P1] [done 2026-09-03]
 
 **What shipped:** a second product line at `/barbershop-grams/` (hub + repertoire page), a self-contained mini-site in its own visual register — a scoped `bs-` stylesheet plus its own nav and footer partials, insulated from the main site's CSS bundle and never including `partials/nav.html` or `partials/footer.html`. A `barbershop-gram` `<option>` on `contact.html` wiring the enquiry pre-fill, and `barbershop-grams/*.html` added to both claim validators (`validate_jsonld.py`, `validate_house_claims.py`), which previously could not see the directory at all. Sitemap and `llms.txt` entries for both pages.
 
-Inbound links from the main site: `services.html` gets a note after the ensemble grid plus a "Gifts & Surprises" `Offer` inside its `OfferCatalog` JSON-LD; `weddings.html` and `corporate.html` each get one contextual paragraph link. `sitemap.xml` now lists 162 URLs.
+Inbound links from the main site: `services.html` gets a note after the ensemble grid plus a "Gifts & Surprises" `Offer` inside its `OfferCatalog` JSON-LD; `weddings.html` and `corporate.html` each get one contextual paragraph link. `sitemap.xml` now lists 165 URLs.
 
 **Deliberately not done, and why:**
 - **No gram prices on `pricing.html`.** A section was added there (`a3dad63`) and reverted by owner decision (`10abc0d`): barbershop is sold separately from the choral service and its bookings are almost always a quartet, so listing its rates in the choral price table works against the separation the mini-site exists to maintain. `barbershop-grams/index.html` is the source of truth for the five gram prices; `pricing.html` stays the source of truth for choral prices. The `CLAUDE.md` convention was rewritten to carve this out.
@@ -312,9 +331,9 @@ Inbound links from the main site: `services.html` gets a note after the ensemble
 
 **Verify:**
 ```sh
-./build.sh                                 # ends "Done." — House claims clean across 166 files checked.
+./build.sh                                 # ends "Done." — House claims clean across 169 files checked.
 python3 tests/test_competitor_claims.py    # 0 failure(s)
-grep -c '<loc>' sitemap.xml                # 162
+grep -c '<loc>' sitemap.xml                # 165
 grep -n 'barbershop' validate_jsonld.py validate_house_claims.py   # both glob barbershop-grams/*.html
 ls barbershop-grams/                       # index.html  repertoire.html
 grep -rln 'barbershop-grams/' services.html weddings.html corporate.html   # all three

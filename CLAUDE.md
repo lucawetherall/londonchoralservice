@@ -32,6 +32,7 @@ The website of The London Choral Service (Alma Consort Ltd) — a choir-for-hire
 - Competitor claim check alone: `python3 validate_competitor_claims.py`
 - Validator tests: `python3 tests/test_competitor_claims.py`
 - Local preview: `python3 -m http.server 8000`
+- Social share cards: `node scripts/og/generate_og_images.mjs --wire` renders `assets/og/*.png` (1200×630, from each page's h1) and rewires `og:image`/`twitter:image`. Needs Playwright + Chromium; rerun after adding an area, borough, destination or `for-*` page.
 - Query the repo graph: `/graphify query "<question>"` (reads the committed `graphify-out/graph.json` — do not rebuild unless files have changed since the last graph commit). Refresh after a large content sweep with `/graphify --update`.
 
 ## Conventions
@@ -48,11 +49,16 @@ The website of The London Choral Service (Alma Consort Ltd) — a choir-for-hire
 - `compare/` addresses families. Never link to it from a `for-*.html` page or reuse its inc-VAT figures there — a VAT-registered business buyer reclaims VAT, so those figures do not describe their position.
 - **Alma Consort Ltd is not VAT-registered.** Never state or imply otherwise.
 - Forms POST to Web3Forms with an hCaptcha guard — don't remove the `h-captcha-response` check or the `botcheck` honeypot.
+- New visible copy: load `writing-site-copy` and the `stop-slop` skill before drafting, and re-check against stop-slop afterwards. Where they conflict the house rule wins (parenthetical `&thinsp;&mdash;&thinsp;` stays).
+- A price change must also update derived combo figures (soloist + organist £450; an organist added to a choir is the full £250 since #113, e.g. Small Choir + organist £1,400) in prose, FAQ JSON-LD and price grids. Grep the old totals and phrases like "with an organist" or "piano with a", not just the base figure.
+- Never advertise roster size ("150+ singers"); the positioning is a small, hand-picked team. `validate_house_claims.py` enforces this in the build.
+- **London cathedrals and Westminster Abbey:** never say we supplement, add voices to or sing alongside their own choirs. We sing there only with the church's permission, as a separate ensemble; the same goes for chapels such as the Chapel Royal, Hampton Court. **Cathedrals in other cities:** with the church's permission we may join the cathedral choir or sing as a separate ensemble; never imply we can do either without it. `validate_house_claims.py` enforces the London choir rule (London pages, or near a London cathedral's name).
 
 ## Workflow
 
 - Small tasks: pick from `docs/ROADMAP.md` — items are self-contained with verification commands; don't re-derive the analysis. Respect `BLOCKED-ON-HUMAN` and `SPEC-FIRST` labels.
 - Larger features: write a spec in `docs/superpowers/specs/` and a plan in `docs/superpowers/plans/`, named `YYYY-MM-DD-<name>.md`, matching the existing documents' style.
+- The owner gives broad mandates ("make the best decisions", "fix everything"): carry the work through end to end (build, test, PR, merge, verify live) and batch anything needing approval (Google Ads changes, business-policy calls) into one question.
 - Before committing: run the `build-and-verify` checklist. Commit messages follow the existing history style (`fix(scope): …`, `copy: …`, `chore: …`).
 - If a change adds/removes/materially rewrites pages (new-page work, a site-wide sweep, a bulk content edit), refresh the graph with `/graphify --update` and commit `graphify-out/` alongside the content change so it doesn't drift stale.
 
