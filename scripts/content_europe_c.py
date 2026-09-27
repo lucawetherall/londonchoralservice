@@ -5,7 +5,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from gen_country_pages import build
 
 n = build('gibraltar', 'Gibraltar',
-  'A Wedding Choir in Gibraltar &mdash; Cathedrals and the Rock | Alma Consort',
+  'A Wedding Choir in Gibraltar &mdash; Cathedrals and the Rock',
   'A British consort at Gibraltar weddings: British law, two cathedrals, English throughout, and no '
   'work permit needed for visiting British musicians.',
   'British law, British paperwork, and a cathedral choir&rsquo;s worth of stone.',
@@ -86,7 +86,7 @@ n = build('gibraltar', 'Gibraltar',
 print(f'gibraltar {n}')
 
 n = build('ireland', 'Ireland',
-  'A Wedding Choir in Ireland &mdash; Castles, Churches, Country Houses | Alma Consort',
+  'A Wedding Choir in Ireland &mdash; Castles, Country Houses',
   'A British consort at Irish weddings: Catholic and Church of Ireland services, castle and country '
   'house ceremonies, and no permits or long-haul cost.',
   'A short hop, a familiar service, and buildings that flatter voices.',
@@ -165,7 +165,7 @@ n = build('ireland', 'Ireland',
 print(f'ireland {n}')
 
 n = build('scotland', 'Scotland',
-  'A Wedding Choir in Scotland &mdash; Castles, Highlands, Edinburgh | Alma Consort',
+  'A Wedding Choir in Scotland &mdash; Castles, Highlands, Edinburgh',
   'A British consort at Scottish weddings: why Scots law allows a legal ceremony anywhere, what that '
   'means for the music, and our published UK rates.',
   'Scotland lets you marry anywhere, which changes where the music goes.',

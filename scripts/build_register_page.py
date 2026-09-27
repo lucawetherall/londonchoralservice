@@ -15,6 +15,7 @@ silently on it. See docs/superpowers/specs/2026-08-29-international-luxury-weddi
 """
 
 import os
+import re
 
 SITE = 'https://londonchoralservice.com'
 ACCESS_KEY = 'dc1af546-26ac-45b3-a85d-064a3a59886d'
@@ -24,15 +25,42 @@ OG_ALT = ('Alma Consort, London: the sound of an English cathedral, wherever you
 
 
 
-def og_image(path):
-    """The page's own share card from scripts/og/generate_og_images.mjs, if rendered;
-    otherwise the register's shared card."""
+def og_card(path):
+    """The page's own share card from scripts/og/generate_og_images.mjs, if rendered."""
+    if path.endswith('/'):
+        path += 'index.html'
     card = 'assets/og/' + path[:-len('.html')].replace('/index', '-index').replace('/', '-') + '.png'
     root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    return f'{SITE}/{card}' if os.path.exists(os.path.join(root, card)) else OG_IMAGE
+    return card if os.path.exists(os.path.join(root, card)) else None
 
 
-def head(title, description, path):
+def og_image(path):
+    card = og_card(path)
+    return f'{SITE}/{card}' if card else OG_IMAGE
+
+
+# Mirrors decode() and the alt text in scripts/og/generate_og_images.mjs, so a
+# regenerated page carries exactly the alt text --wire gave it.
+_DECODE = [('&amp;', '&'), ('&rsquo;', '’'), ('&lsquo;', '‘'), ('&mdash;', '—'),
+           ('&ndash;', '–'), ('&eacute;', 'é'), ('&egrave;', 'è'),
+           ('&uacute;', 'ú'), ('&nbsp;', ' '), ('&thinsp;', '')]
+
+
+def og_alt(path, body):
+    """The card's alt text: 'Alma Consort, London: ' plus the page's h1, as the card shows it."""
+    m = re.search(r'<h1[^>]*>(.*?)</h1>', body, re.S)
+    if not og_card(path) or not m:
+        return OG_ALT
+    text = re.sub(r'<span class="h1-sub">.*?</span>', '', m.group(1), flags=re.S)
+    text = re.sub(r'<[^>]+>', '', re.sub(r'<br\s*/?>', ' ', text, flags=re.I))
+    for ent, ch in _DECODE:
+        text = text.replace(ent, ch)
+    text = re.sub(r'\s+', ' ', text).strip()
+    alt = ('Alma Consort, London: ' + text).replace('&', '&amp;').replace('<', '&lt;').replace('"', '&quot;')
+    return alt.replace('—', '&mdash;').replace('’', '&rsquo;')
+
+
+def head(title, description, path, alt=OG_ALT):
     """path is site-relative with no leading slash, e.g. 'destinations/italy.html'."""
     url = f'{SITE}/{path}'
     image = og_image(path)
@@ -66,13 +94,13 @@ def head(title, description, path):
   <meta property="og:image" content="{image}">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
-  <meta property="og:image:alt" content="{OG_ALT}">
+  <meta property="og:image:alt" content="{alt}">
 
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="{title}">
   <meta name="twitter:description" content="{description}">
   <meta name="twitter:image" content="{image}">
-  <meta name="twitter:image:alt" content="{OG_ALT}">
+  <meta name="twitter:image:alt" content="{alt}">
   <link rel="dns-prefetch" href="https://www.googletagmanager.com">
   <link rel="dns-prefetch" href="https://api.web3forms.com">
   <link rel="dns-prefetch" href="https://hcaptcha.com">
@@ -95,6 +123,7 @@ def head_close(jsonld):
   <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
 </head>
 <body>
+  <a href="#main" class="skip-link">Skip to main content</a>
 '''
 
 
@@ -296,10 +325,10 @@ FOOT = '''
 
 def page(title, description, path, jsonld, crumbs, body, source_page=None,
          subject=None, enquiring_as_default=None, form_intro=None):
-    return (head(title, description, path)
+    return (head(title, description, path, og_alt(path, body))
             + head_close(jsonld)
             + header(crumbs)
-            + '\n  <main>\n'
+            + '\n  <main id="main">\n'
             + body
             + enquiry_form(source_page or path,
                            subject or 'Private events enquiry — Alma Consort / LCS',

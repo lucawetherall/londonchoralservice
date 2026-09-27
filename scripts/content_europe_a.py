@@ -5,7 +5,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from gen_country_pages import build
 
 n = build('italy', 'Italy',
-  'A Wedding Choir in Italy &mdash; Tuscany, Como, Amalfi | Alma Consort',
+  'A Wedding Choir in Italy &mdash; Tuscany, Como, Amalfi',
   'A British consort singing at Italian weddings: the nuptial Mass, what many parishes allow and '
   'refuse, Latin and Italian, and the acoustics of a Tuscan pieve.',
   'Italy gives a choir the building it was written for.',
@@ -106,7 +106,7 @@ n = build('italy', 'Italy',
 print(f'italy {n}')
 
 n = build('france', 'France',
-  'A Wedding Choir in France &mdash; Provence, Loire, Riviera | Alma Consort',
+  'A Wedding Choir in France &mdash; Provence, Loire, Riviera',
   'A British consort singing at French weddings: why there are two ceremonies, where the music '
   'actually goes, and what a ch&acirc;teau terrace does to eight voices.',
   'In France the music belongs to the second ceremony.',
@@ -195,7 +195,7 @@ n = build('france', 'France',
 print(f'france {n}')
 
 n = build('spain', 'Spain',
-  'A Wedding Choir in Spain &mdash; Ibiza, Mallorca, Marbella | Alma Consort',
+  'A Wedding Choir in Spain &mdash; Ibiza, Mallorca, Marbella',
   'A British consort singing at Spanish weddings: the nuptial Mass on the mainland, villa ceremonies '
   'in the Balearics, and what changes between the two.',
   'Two countries, musically: the mainland church and the island villa.',
@@ -276,7 +276,7 @@ n = build('spain', 'Spain',
 print(f'spain {n}')
 
 n = build('portugal', 'Portugal',
-  'A Wedding Choir in Portugal &mdash; Algarve, Sintra, Lisbon | Alma Consort',
+  'A Wedding Choir in Portugal &mdash; Algarve, Sintra, Lisbon',
   'A British consort singing at Portuguese weddings: quinta ceremonies in the Algarve, palace '
   'weddings at Sintra, and city churches in Lisbon and Porto.',
   'Portugal is the short flight that still feels a long way from home.',
