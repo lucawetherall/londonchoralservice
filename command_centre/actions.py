@@ -914,12 +914,30 @@ def applied_records():
     return out
 
 
-def already_applied(blob, args):
-    """True when this script blob with these arguments has been applied, under any proposal id (an .applied
-    record, or an apply whose record couldn't be written since the app started)."""
-    if (blob, list(args)) in _UNRECORDED["runs"]:
-        return True
-    return any(r.get("blob") == blob and list(r.get("args") or []) == list(args) for r in applied_records())
+def already_applied(script_path, blob, args):
+    """True when the MOST RECENT applied record for this script and first argument (the campaign) is this exact
+    blob and args, under any proposal id (an .applied record, or an apply whose record couldn't be written since
+    the app started). A campaign that returns to an earlier amount later is allowed to repeat it: only a replay
+    of the latest change for that campaign is refused."""
+    args = list(args)
+    campaign = args[0] if args else None
+
+    def same_campaign(rec_script, rec_args):
+        rec_args = list(rec_args or [])
+        return rec_script == script_path and (rec_args[0] if rec_args else None) == campaign
+
+    candidates = []
+    for r in applied_records():
+        if isinstance(r, dict) and not r.get("unreadable") and same_campaign(r.get("script_path"), r.get("args")):
+            candidates.append((r.get("applied_at") or "", r.get("blob"), list(r.get("args") or [])))
+    for r in _UNRECORDED["runs"]:
+        if same_campaign(r.get("script_path"), r.get("args")):
+            candidates.append((r.get("at") or "", r.get("blob"), list(r.get("args") or [])))
+    if not candidates:
+        return False
+    candidates.sort(key=lambda t: t[0])
+    _, last_blob, last_args = candidates[-1]
+    return last_blob == blob and last_args == args
 
 
 def is_applied(pid):
@@ -964,9 +982,13 @@ def load_proposal(pid):
         raise ActionError("the proposal's id doesn't match its file name")
     if p.get("kind") != "ads":
         raise ActionError("not an Ads proposal")
-    unknown = set(p) - {"id", "kind", "title", "summary", "script_path", "created", "script_blob", "commit", "args"}
+    unknown = set(p) - {"id", "kind", "title", "summary", "script_path", "created", "script_blob", "commit", "args",
+                        "superseded_by"}
     if unknown:
         raise ActionError("the proposal has an unexpected field")
+    if "superseded_by" in p and not (p["superseded_by"] is None or (
+            isinstance(p["superseded_by"], str) and PROPOSAL_ID_RE.fullmatch(p["superseded_by"]))):
+        raise ActionError("the proposal's superseded_by is invalid")
     for k, most in (("title", 120), ("summary", 1000), ("script_path", 100), ("created", 40)):
         if not isinstance(p.get(k), str) or not p[k].strip() or len(p[k]) > most:
             raise ActionError(f"the proposal's {k} is missing or too long")
@@ -981,7 +1003,8 @@ def load_proposal(pid):
             isinstance(a, str) and TOKEN_RE.fullmatch(a) for a in args):
         raise ActionError("the proposal's args must be a short list of simple words or numbers")
     out = {k: p[k].strip() for k in ("id", "title", "summary", "script_path", "created")}
-    return dict(out, blob=p["script_blob"], commit=p["commit"], args=list(args))
+    return dict(out, blob=p["script_blob"], commit=p["commit"], args=list(args),
+                superseded_by=p.get("superseded_by") or None)
 
 
 def list_proposals():
@@ -999,8 +1022,10 @@ def list_proposals():
                  "applied": good_id and is_applied(pid), "validated": False}
         try:
             p = load_proposal(pid)
+            if p.get("superseded_by"):
+                continue  # a newer proposal for the same campaign replaced this one: hide it
             entry.update({k: p[k] for k in ("id", "title", "summary", "script_path", "created")})
-            if not entry["applied"] and already_applied(p["blob"], p["args"]):
+            if not entry["applied"] and already_applied(p["script_path"], p["blob"], p["args"]):
                 raise ActionError("this script with these arguments was already applied")
             with contextlib.suppress(NotFetched):  # checked against GitHub when the owner opens it
                 commit_facts(p["commit"], p["script_path"], p["blob"], fetch=False)
@@ -1018,7 +1043,7 @@ def _ads_common(raw):
     p = load_proposal(f["proposal"])
     if is_applied(p["id"]):
         raise ActionError("already applied")
-    if already_applied(p["blob"], p["args"]):
+    if already_applied(p["script_path"], p["blob"], p["args"]):
         raise ActionError("this script with these arguments was already applied")
     facts = commit_facts(p["commit"], p["script_path"], p["blob"])
     return dict(p, facts=facts, input={"proposal": p["id"]})
@@ -1102,15 +1127,17 @@ def _apply_after(c, code, raw, who):
         head = audit_status()["last"]
     except OSError:
         head = None
+    applied_at = datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds")
     try:
         write_private(applied_path(c["id"]), {
-            "applied_at": datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds"),
-            "proposal": c["id"], "commit": c["commit"], "blob": c["blob"], "args": list(c["args"]),
+            "applied_at": applied_at, "proposal": c["id"], "commit": c["commit"], "script_path": c["script_path"],
+            "blob": c["blob"], "args": list(c["args"]),
             "validated_sha256": c["validated_sha"], "output_sha256": hashlib.sha256(raw).hexdigest(),
             "audit_sha256": head, "login": who.get("login", ""), "passkey": who.get("passkey")})
     except Exception:  # noqa: BLE001 (anything: the change is live at Google either way)
         _UNRECORDED["ids"].add(c["id"])
-        _UNRECORDED["runs"].append((c["blob"], list(c["args"])))
+        _UNRECORDED["runs"].append({"script_path": c["script_path"], "blob": c["blob"], "args": list(c["args"]),
+                                    "at": applied_at})
         return UNRECORDED_WARNING
     return None
 
