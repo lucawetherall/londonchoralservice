@@ -26,7 +26,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import lcs_money as lm  # noqa: E402
 
-PRIVATE = Path.home() / "lcs-private"
+PRIVATE = lm.PRIVATE  # $LCS_PRIVATE_DIR (default ~/lcs-private), like the ledger
 STATE = PRIVATE / "assistant-state.json"
 STYLE = PRIVATE / "email-style.md"
 LEDGER = lm.LEDGER  # $LCS_BOOKINGS_CSV, else bookings.csv in $LCS_PRIVATE_DIR (default ~/lcs-private)
@@ -34,7 +34,7 @@ INVOICES = PRIVATE / "invoices"
 
 
 def private_write(path, text):
-    PRIVATE.mkdir(mode=0o700, exist_ok=True)
+    PRIVATE.mkdir(mode=0o700, parents=True, exist_ok=True)
     path.write_text(text)
     os.chmod(path, 0o600)
 

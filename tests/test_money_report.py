@@ -104,6 +104,23 @@ def test_overdue_deposit_in_the_next_week_is_on_both_lines_and_flagged():
     assert lines[2] == "balances due in the next 7 days: 2, £975.00 (0110, 0210) (includes 1 with no deposit)"
 
 
+def test_noted_paid_label_says_what_is_in_the_bank():
+    a = [{"ref": "0909", "state": "NOTED_PAID", "balance": 650.0, "received": 0.0, "event_date": "2026-10-30"},
+         {"ref": "1010", "state": "NOTED_PAID", "balance": 575.0, "received": 575.0, "event_date": "2026-10-30"}]
+    assert mr.summary_lines(a, [], QUIET_SINGERS, T)[3] == \
+        "needs a hand check: 2 (0909 noted paid, not in bank; 1010 noted paid, £575.00 in bank)"
+
+
+def test_payments_on_cancelled_or_closed_bookings_are_hand_checks_not_balances():
+    a = [{"ref": "0510", "state": "PAYMENT_ON_CANCELLED", "balance": 575.0, "received": 575.0, "event_date": "2026-10-01"},
+         {"ref": "1506", "state": "PAYMENT_AFTER_CLOSE", "balance": 0.0, "received": 1150.0, "event_date": "2026-10-02"},
+         {"ref": "3009", "state": "CHECK_PAYMENT", "balance": 575.0, "received": 575.0, "event_date": "2026-09-30"}]
+    lines = mr.summary_lines(a, [], QUIET_SINGERS, T)
+    assert lines[2] == "balances due in the next 7 days: 0, £0.00", lines[2]
+    assert lines[3] == ("needs a hand check: 3 (0510 payment on a cancelled booking; 1506 payment after paid in full; "
+                        "3009 possible balance payment)"), lines[3]
+
+
 if __name__ == "__main__":
     failures = 0
     for name, fn in sorted(globals().items()):

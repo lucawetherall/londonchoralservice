@@ -33,21 +33,33 @@ event), AWAITING_DEPOSIT (until the deposit falls due: 7 days after the invoice,
 or 3 days before a short-notice event, never the invoice day), DEPOSIT_OVERDUE
 (future events only), NOTED_PAID (the owner's notes say paid, or an earlier run's
 "deposit seen … (Starling)" with nothing in the feed now; negated or future
-phrases such as "not yet seen", "to be paid" or "asked if paid" don't count, and
-with a deposit in the bank only a note of the whole fee does: "£575 paid 5 Sep"
-is the deposit. It stays on the Monday hand check until the notes say "paid in
-full YYYY-MM-DD"), PAST_UNMATCHED / PAST_PART_PAID (past events), CHECK_PAYMENT
-(only an unconfirmed match, which outranks a stale auto note), CHECK_VALUE (no
-readable booking value, invoice date or event date), CANCELLED.
+phrases such as "not yet seen", "no payment received", "to be paid" or "asked if
+paid" don't count, but "no chase needed - paid 5 Sep" does. With a deposit in the
+bank only a note of the whole fee counts: "balance of £575 paid" or "£1,150 paid
+in total" do, "£575 paid 5 Sep" or "deposit paid in full" are the deposit. It
+stays on the Monday hand check until the notes say "paid in full YYYY-MM-DD"),
+PAST_UNMATCHED / PAST_PART_PAID (past events), CHECK_PAYMENT (only an unconfirmed
+match, which outranks a stale auto note; or a confident deposit plus an
+unconfirmed payment dated on or after it, or the size of the balance, which may
+be the balance paid by someone else), CHECK_VALUE (no readable booking value,
+invoice date or event date), CANCELLED ("cancelled", "cancellation confirmed",
+"received" or "requested", or "cancelling" unless "may", "might", "thinking of" and the like
+come just before it; the row then drops out of everything), PAYMENT_ON_CANCELLED
+(a payment inside a cancelled booking's window) and PAYMENT_AFTER_CLOSE (a payment
+dated after a "paid in full YYYY-MM-DD" note; received_since leaves it out).
 Only DEPOSIT_OVERDUE and BALANCE_DUE are ever chased; just_received (a confident
-payment in the last 14 days with no receipt drafted) asks for a thank-you, and
-short_notice (event within 10 days of the invoice) asks for the full fee rather
-than a deposit. Output shows invoice numbers and amounts only.
+payment in the last 14 days with no receipt drafted, only in PAID_IN_FULL,
+DEPOSIT_SEEN, BALANCE_DUE or NOTED_PAID) asks for a thank-you, and short_notice
+(event within 10 days of the invoice) asks for the full fee rather than a deposit.
+Every CHECK_*, PAST_*, NOTED_PAID and PAYMENT_* state is on the Monday money line's
+"needs a hand check" (money_report.py); --apply never rewrites the notes of a
+cancelled or closed row. Output shows invoice numbers and amounts only.
 """
 
 import argparse
 import datetime
 import contextlib
+import csv
 import json
 import math
 import re
@@ -63,23 +75,33 @@ MARK_TEXT = {"deposit": "reminder drafted", "balance": "balance reminder drafted
 CONFIDENT = ("reference", "name and amount")
 RECEIPT_DAYS = 14
 SHORT_NOTICE_DAYS = 10
+# A thank-you is only ever drafted in these states; notes are never rewritten in the others.
+RECEIPT_STATES = {"PAID_IN_FULL", "DEPOSIT_SEEN", "BALANCE_DUE", "NOTED_PAID"}
+NEVER_WRITTEN = {"CANCELLED", "PAYMENT_ON_CANCELLED", "PAYMENT_AFTER_CLOSE"}
 # URLError and HTTPError are OSErrors too; a non-JSON 200 body (an outage page) is a JSONDecodeError
 STARLING_DOWN = (urllib.error.URLError, TimeoutError, OSError, json.JSONDecodeError)
 # The script's own notes, removed before reading the owner's hand-written ones.
 AUTO_NOTE = re.compile(r"deposit seen \d{4}-\d{2}-\d{2} \(Starling\)", re.I)
 MARK_NOTE = re.compile(r"\b(balance )?reminder drafted( \d{4}-\d{2}-\d{2})?|\breceipt drafted( \d{4}-\d{2}-\d{2})?", re.I)
 FULL_NOTE = re.compile(r"paid in full \d{4}-\d{2}-\d{2}", re.I)
-# Negated, conditional or future phrases, removed before looking for a paid word. The gaps never cross
-# ";", "." or "," so "no reminder needed, paid 5 Sep" keeps its "paid".
+# Negated, conditional or future phrases, removed before looking for a paid word. A bare negation only
+# reaches a paid word across a few listed filler words ("no payment received", "not yet been paid"), so
+# "no chase needed - paid 5 Sep" or "not a problem: paid" keep their "paid"; the other gaps never cross
+# ";", ".", ",", ":", " - ", a dash or "but" ("said he'd ring but paid 5 Sep" is paid).
+def _gap(n=""):
+    return r"(?:(?!\bbut\b|\s-\s|[;.,:\u2013\u2014]).)" + (f"{{0,{n}}}" if n else "*")
+
+
 NOT_PAID = re.compile(
     r"\bdeposit not yet seen\b"
     r"|(\b(not|un)|n't)\s*(yet\s+)?(been\s+)?(paid|received|seen|settled)\b"
-    r"|\b(not|never|no|nothing)\b[^;.,]{0,20}\b(paid|received|seen|settled|in)\b"
-    r"|\bto be (paid|received|settled)\b[^;.,]*"
-    r"|\bif\b[^;.,]{0,15}\bpaid\b"
-    r"|\b(asked|says|said)\b[^;.,]{0,20}\bpaid\b"
-    r"|\bwill\s+(have\s+)?(pay|paid)\b[^;.,]*"
-    r"|\b(deposit|balance|payment)\s+in\s+by\b", re.I)  # "deposit in by Friday please" is a deadline
+    r"|\b(not|never|no|nothing)\s+((yet|been|the|a|any|deposit|balance|payment|money|funds|anything)\s+){0,3}"
+    r"(paid|received|seen|settled|in)\b"
+    r"|\bto be (paid|received|settled)\b" + _gap()
+    + r"|\bif\b" + _gap(15) + r"\bpaid\b"
+    r"|\b(asked|says|said)\b" + _gap(20) + r"\bpaid\b"
+    r"|\bwill\s+(have\s+)?(pay|paid)\b" + _gap()
+    + r"|\b(deposit|balance|payment)\s+in\s+by\b", re.I)  # "deposit in by Friday please" is a deadline
 # "deposit seen <date>;" is what the enquiry assistant writes by hand (handover Appendix E)
 PAID_WORD = re.compile(r"\b(paid|received|settled)\b|\bdeposit\s+(seen|in)\b", re.I)
 # With a confident deposit in the bank, only a note of the WHOLE fee stops a balance chase.
@@ -91,8 +113,15 @@ FULL_PAID = re.compile(
     r"|(?<!deposit )\bpaid\s+(by\s+|in\s+)?(cash|cheque|card|bank\s+transfer)\b", re.I)
 # A full-payment phrase in a clause that starts with "deposit", or carries a £ amount below the booking
 # value with no word for the rest of the fee, is about the deposit: "£575 paid 5 Sep" never stops a balance chase.
+# A word for the rest of the fee next to a paid word is the whole fee, whatever the amount ("balance of £575 paid",
+# "£1,150 paid in total"); in a clause starting "deposit" only balance/rest/remainder count ("deposit paid in full"
+# is the deposit).
 CLAUSE = re.compile(r";|\.(?!\d)|,(?!\d)")
-REST_WORD = re.compile(r"\b(balance|rest|remainder|remaining|in full|fully|final)\b", re.I)
+REST_WORD = re.compile(r"\b(balance|rest|remainder|remaining|in full|fully|final|in total|total)\b", re.I)
+REST_PAID = re.compile(
+    r"\b(balance|rest|remainder|remaining|total)\b(?:(?!\bdeposit\b).){0,30}?\b(paid|received|settled)\b"
+    r"|\b(paid|received|settled)\b(?:(?!\bdeposit\b).){0,30}?\b(in\s+full|in\s+total|the\s+(balance|rest|remainder))\b", re.I)
+OTHER_PART = re.compile(r"\b(balance|rest|remainder|remaining)\b", re.I)
 POUNDS = re.compile(r"£\s*(\d[\d,]*(?:\.\d+)?)")
 # Not surnames: the last real word of each party is ("T Cribb & Sons" is Cribb).
 GENERIC = {"son", "sons", "ltd", "limited", "funeral", "funerals", "director", "directors", "church", "parish", "and",
@@ -174,9 +203,28 @@ def fits_amount(amount, r):
     return v > 0 and any(abs(amount - x) < 0.01 for x in (v, v / 2))
 
 
+CANCEL_WORD = re.compile(r"(?<!not )\b(cancell?ed|cancellation (confirmed|received|requested))\b", re.I)
+CANCELLING = re.compile(r"\bcancell?ing\b", re.I)
+# "cancelling" is a cancellation unless one of these comes within the three words before it
+MAYBE_WORDS = {"may", "might", "considering", "thinking", "about", "of", "not", "possibly", "could"}
+
+
 def is_cancelled(r):
-    return bool(re.search(r"(?<!not )\b(cancell?ed|cancellation (confirmed|received|requested))\b"
-                          r"|(?<!not )(?<!about )(?<!considering )(?<!of )\bcancell?ing\b", r.get("notes") or "", re.I))
+    notes = r.get("notes") or ""
+    if CANCEL_WORD.search(notes):
+        return True
+    for m in CANCELLING.finditer(notes):
+        clause = re.split(r"[;.,:]", notes[:m.start()])[-1]  # "not sure; client cancelling" is cancelled
+        before = re.findall(r"[a-z']+", clause.lower())[-3:]
+        if not MAYBE_WORDS & set(before):
+            return True
+    return False
+
+
+def closed_on(r):
+    """The latest "paid in full YYYY-MM-DD" date in the notes, or None: the booking is closed from then."""
+    days = [date_or_none(m.group(0)[-10:]) for m in FULL_NOTE.finditer(r.get("notes") or "")]
+    return max((d for d in days if d), default=None)
 
 
 def is_pending(notes):
@@ -244,12 +292,17 @@ def hand_notes(notes):
 def full_paid(own, value):
     """True when the owner's words record the whole fee as paid, not just the deposit."""
     for clause in CLAUSE.split(own):
+        rest_paid = REST_PAID.search(clause)
+        if clause.strip().lower().startswith("deposit"):
+            # "deposit and balance paid in cash" is the whole fee; "deposit paid in full" is the deposit
+            if rest_paid and OTHER_PART.search(rest_paid.group(0)):
+                return True
+            continue
+        if rest_paid:
+            return True
         if not FULL_PAID.search(clause):
             continue
-        rest = REST_WORD.search(clause)
-        if clause.strip().lower().startswith("deposit") and not rest:
-            continue
-        if not rest and any(lm.money(x) + 0.01 < value for x in POUNDS.findall(clause)):
+        if not REST_WORD.search(clause) and any(lm.money(x) + 0.01 < value for x in POUNDS.findall(clause)):
             continue
         return True
     return False
@@ -279,8 +332,16 @@ def assess(r, paid, today):
     noted_auto = bool(AUTO_NOTE.search(notes))  # the script saw a deposit on an earlier run
     noted_full = full_paid(own, value)
     upcoming = event is None or event >= today
+    close = closed_on(r)
+    # an unconfirmed payment after the first confident one, or the size of what is left, may be the balance
+    possible_balance = [p for p in maybe if first and (p[0] >= first or abs(p[1] - (value - total)) < 0.01)]
+    flagged = []  # payments on a cancelled or closed booking: never chased or thanked, always a hand check
     if is_cancelled(r):
-        state = "CANCELLED"
+        flagged = [p for p in paid if in_window(r, p[0], today)]
+        state = "PAYMENT_ON_CANCELLED" if flagged else "CANCELLED"
+    elif close and any(d > close.isoformat() for d, _, _ in paid):
+        flagged = [p for p in paid if p[0] > close.isoformat()]
+        state = "PAYMENT_AFTER_CLOSE"
     elif not (math.isfinite(value) and value > 0) or invoice is None or (event_raw and event is None):
         state = "CHECK_VALUE"
     elif total + 0.01 >= value:
@@ -290,6 +351,8 @@ def assess(r, paid, today):
             state = "NOTED_PAID"
         elif not upcoming:
             state = "PAST_PART_PAID"
+        elif possible_balance:
+            state = "CHECK_PAYMENT"
         elif event and today >= event - datetime.timedelta(days=3):
             state = "BALANCE_DUE"
         else:
@@ -309,13 +372,14 @@ def assess(r, paid, today):
                 "receipt": bool(re.search(r"receipt drafted", notes, re.I))}
     first_day = date_or_none(first)
     receipt_due = bool(first_day and datetime.timedelta(0) <= today - first_day <= datetime.timedelta(days=RECEIPT_DAYS)
-                       and not reminded["receipt"] and upcoming
-                       and state != "CANCELLED" and not state.startswith(("PAST_", "CHECK_")))
+                       and not reminded["receipt"] and upcoming and state in RECEIPT_STATES)
     return {
         "ref": r["booking_ref"], "state": state, "received": total, "value": value,
         "balance": round(max(value - total, 0), 2), "first": first,
         "how": sure[0][2] if sure else (maybe[0][2] if state == "CHECK_PAYMENT" else ""),
         "unconfirmed": [[d, a] for d, a, _ in maybe],
+        "possible_balance": [[d, a] for d, a, _ in possible_balance],
+        "hand_check_payments": [[d, a] for d, a, _ in flagged],
         "event_date": event.isoformat() if event else None,
         "deposit_due": deposit_due.isoformat() if deposit_due else None,
         "short_notice": bool(invoice and event and (event - invoice).days <= SHORT_NOTICE_DAYS),
@@ -329,7 +393,11 @@ def describe(a):
     line = f"{a['ref']}: £{a['received']:,.2f} of £{a['value']:,.2f} received"
     if a["first"]:
         line += f" (first {a['first']}, matched by {a['how']})"
-    maybe = ", ".join(f"£{x:,.2f} on {d}" for d, x in a["unconfirmed"])
+    def listed(key):
+        return ", ".join(f"£{x:,.2f} on {d}" for d, x in a.get(key) or [])
+    maybe, flagged = listed("unconfirmed"), listed("hand_check_payments")
+    if a["state"] == "CHECK_PAYMENT" and a["received"] and a.get("possible_balance"):
+        return line + f" · possible balance payment {listed('possible_balance')} (unconfirmed): confirm by hand"
     return line + {
         "PAID_IN_FULL": " · PAID IN FULL",
         "DEPOSIT_SEEN": "",
@@ -345,11 +413,15 @@ def describe(a):
         "CHECK_VALUE": (" · booking value missing or unreadable in the ledger (check by hand)" if a["value"] <= 0
                         else " · invoice or event date missing or unreadable in the ledger (check by hand)"),
         "CANCELLED": " · cancelled",
+        "PAYMENT_ON_CANCELLED": f" · payment on a cancelled booking: {flagged} (check by hand: refund or keep; never chase or thank)",
+        "PAYMENT_AFTER_CLOSE": f" · payment after paid in full: {flagged} (check by hand; never chase or thank)",
     }[a["state"]]
 
 
 def updated_notes(notes, a, paid):
     """Ledger notes after this run; only confident matches (reference, name and amount) change them."""
+    if a["state"] in NEVER_WRITTEN:  # cancelled or closed rows are never rewritten
+        return notes
     sure = [p for p in paid if p[2] in CONFIDENT]
     new = notes
     if sure and is_pending(new):
@@ -365,24 +437,52 @@ def open_rows(rows):
 
 
 def collect(client, rows, today):
-    """[(row, paid, assessment)] for every open booking; payments are matched against every row."""
+    """[(row, paid, assessment)] in ledger order for every open booking, and for every cancelled or closed
+    ("paid in full YYYY-MM-DD") booking with a payment that needs a hand check: on a cancelled booking,
+    any payment inside its window; on a closed one, any payment dated after the close. Payments are
+    matched against every row."""
     live = open_rows(rows)
-    starts = [d for d in (date_or_none(r.get("invoice_date")) for r in live) if d]
-    if not live or not starts:
-        return []
-    found = match(rows, client.feed(min(starts) - datetime.timedelta(days=3), today + datetime.timedelta(days=1), "IN"), today)
-    return [(r, found[r["booking_ref"]], assess(r, found[r["booking_ref"]], today)) for r in live]
+    starts = [d - datetime.timedelta(days=3) for d in (date_or_none(r.get("invoice_date")) for r in live) if d]
+    for r in rows:
+        w = window(r, today)
+        if is_cancelled(r) and w and w[1] >= today:  # a booking still ahead: its deposit may be in the bank
+            starts.append(w[0])
+        elif not is_cancelled(r) and closed_on(r):  # a stray payment after the close lands now, not years ago
+            starts.append(max(closed_on(r), today - datetime.timedelta(days=31)))
+    if not starts:  # nothing with a readable invoice date: no feed to read, but still report each open row
+        return [(r, [], assess(r, [], today)) for r in live]
+    found = match(rows, client.feed(min(starts), today + datetime.timedelta(days=1), "IN"), today)
+    out = []
+    for r in rows:
+        paid = found[r["booking_ref"]]
+        if r in live or (paid and (is_cancelled(r) or closed_on(r))):
+            a = assess(r, paid, today)
+            if r in live or a["state"] in ("PAYMENT_ON_CANCELLED", "PAYMENT_AFTER_CLOSE"):
+                out.append((r, paid, a))
+    return out
 
 
 def received_since(client, rows, since, today):
-    """[(booking_ref, date, amount)] for confident client payments since a date (any non-cancelled booking)."""
-    live = {r["booking_ref"] for r in rows if not is_cancelled(r)}
+    """[(booking_ref, date, amount)] for confident client payments since a date (any non-cancelled booking).
+    A payment on a closed booking dated after its "paid in full" date is left out: collect() puts it on
+    the hand check instead."""
+    live = {r["booking_ref"]: closed_on(r) for r in rows if not is_cancelled(r)}
     if not live:
         return []
     # the feed filters by UTC time: start a day early so 00:00-01:00 BST on `since` is included
     found = match(rows, client.feed(since - datetime.timedelta(days=1), today + datetime.timedelta(days=1), "IN"), today)
     return [(ref, d, a) for ref, hits in found.items() if ref in live
-            for d, a, how in hits if how in CONFIDENT and d >= since.isoformat()]
+            for d, a, how in hits if how in CONFIDENT and d >= since.isoformat()
+            and not (live[ref] and d > live[ref].isoformat())]
+
+
+def header(path):
+    """The ledger's own column names, from its header line, so a rewrite never adds or drops a column."""
+    try:
+        with open(path, newline="") as f:
+            return next(csv.reader(f), [])
+    except FileNotFoundError:
+        return []
 
 
 def main():
@@ -400,7 +500,7 @@ def main():
     if args.reminded:
         with lm.ledger_lock(LEDGER):
             rows = lm.read_csv(LEDGER)
-            cols = list(rows[0].keys()) if rows else []
+            cols = header(LEDGER)
             for r in rows:
                 if r["booking_ref"] == args.reminded:
                     r["notes"] = (f"{r['notes']}; " if (r.get("notes") or "").strip() else "") + f"{MARK_TEXT[args.kind]} {today}"
@@ -422,7 +522,7 @@ def main():
     try:
         with lm.ledger_lock(LEDGER) if args.apply else contextlib.nullcontext():
             rows = lm.read_csv(LEDGER)
-            run(args, client, rows, list(rows[0].keys()) if rows else [], today)
+            run(args, client, rows, header(LEDGER), today)
     except lm.StarlingError as e:
         raise SystemExit(str(e))
 

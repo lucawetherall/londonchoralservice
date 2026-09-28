@@ -67,13 +67,22 @@ def ensure_ledger():
     print(f"Created an empty private ledger at {LEDGER}")
 
 
+def ledger_header():
+    """The ledger's column names from its header line ([] if there is no ledger)."""
+    try:
+        with open(LEDGER, newline="") as f:
+            return next(csv.reader(f), [])
+    except FileNotFoundError:
+        return []
+
+
 def stamp_uploaded(done, now):
     """Stamp uploaded_at on these booking refs. Re-reads the ledger under the shared lock so a row
     another writer added or changed during the upload is kept. lm.ledger_lock is not re-entrant:
     never call this while holding it."""
     with lm.ledger_lock(LEDGER):
         rows = lm.read_csv(LEDGER)
-        cols = list(rows[0].keys()) if rows else list(COLUMNS)
+        cols = ledger_header() or list(COLUMNS)  # the ledger's own header, never a row's keys
         cols += [c for c in COLUMNS if c not in cols]
         for r in rows:
             if r.get("booking_ref") in done:

@@ -146,12 +146,14 @@ def test_collect_never_credits_the_wrong_booking():
     rows = [row("2401", 1150, "2026-08-01", "2026-10-10", "paid in full 2026-09-19"),
             row("2410", 1150, "2026-09-10", "2026-11-14", "PENDING: invoiced")]
     client = FakeClient([pay(575, "2026-09-25", "INV 2401 balance")])
-    got = cp.collect(client, rows, T)
-    assert [r["booking_ref"] for r, _, _ in got] == ["2410"]
-    _, paid, a = got[0]
+    got = {r["booking_ref"]: (paid, a) for r, paid, a in cp.collect(client, rows, T)}
+    assert sorted(got) == ["2401", "2410"]
+    paid, a = got["2410"]
     assert paid == [] and a["state"] in ("DEPOSIT_OVERDUE", "AWAITING_DEPOSIT") and a["just_received"] is False
+    # the payment after "paid in full" goes to the hand check on 2401, never to "received"
+    assert got["2401"][1]["state"] == "PAYMENT_AFTER_CLOSE" and got["2401"][1]["just_received"] is False
     assert client.calls and all(c[2] == "IN" for c in client.calls)
-    assert cp.received_since(client, rows, datetime.date(2026, 9, 21), T) == [("2401", "2026-09-25", 575.0)]
+    assert cp.received_since(client, rows, datetime.date(2026, 9, 21), T) == []
 
 
 def test_collect_uses_the_feed_and_assesses_open_rows():
@@ -696,6 +698,185 @@ def test_upload_bookings_ledger_follows_the_private_dir():
     if "No module named 'google" in p.stderr:
         return
     assert p.stdout.strip() == os.path.join(d, "bookings.csv"), (p.stdout, p.stderr[-300:])
+
+
+# --- round 4: an unconfirmed balance payment stops a balance chase -----------------------------
+
+QUIET = {"unpaid": 0, "unpaid_total": 0.0, "oldest_days": 0, "bank_changed": 0}
+R3009 = row("3009", 1150, "2026-08-01", "2026-09-30", "deposit seen 2026-08-05 (Starling)", name="Ian Lamb")
+
+
+def test_an_unconfirmed_balance_payment_stops_a_balance_chase():
+    import money_report as mr
+    for who, ref in (("MRS P ORTON", "WEDDING BALANCE"), ("P ORTON", "")):
+        feed = [pay(575, "2026-08-05", "LCS3009", "I LAMB"), pay(575, "2026-09-26", ref, who)]
+        found = cp.match([R3009], feed, T)
+        a = cp.assess(R3009, found["3009"], T)
+        assert a["state"] == "CHECK_PAYMENT" and a["receipt_due"] is False and a["received"] == 575.0, a
+        assert "possible balance payment £575.00 on 2026-09-26 (unconfirmed): confirm by hand" in cp.describe(a), cp.describe(a)
+        lines = mr.summary_lines([a], [], QUIET, T)
+        assert lines[2] == "balances due in the next 7 days: 0, £0.00" and lines[3].startswith("needs a hand check: 1 (3009 "), lines
+
+
+def test_which_unconfirmed_payments_stop_a_balance_chase():
+    dep = ("2026-08-05", 575.0, "reference")
+    # dated on or after the first confident payment: any amount
+    assert cp.assess(R3009, [dep, ("2026-09-20", 100.0, "amount only")], T)["state"] == "CHECK_PAYMENT"
+    assert cp.assess(R3009, [dep, ("2026-08-05", 575.0, "amount only, several bookings")], T)["state"] == "CHECK_PAYMENT"
+    # before the deposit but the size of the balance
+    assert cp.assess(R3009, [dep, ("2026-08-01", 575.0, "amount only")], T)["state"] == "CHECK_PAYMENT"
+    # before the deposit and another size: still chased
+    assert cp.assess(R3009, [dep, ("2026-08-01", 100.0, "amount only")], T)["state"] == "BALANCE_DUE"
+    # far from the event: not DEPOSIT_SEEN either
+    far = row("3009", 1150, "2026-08-01", "2026-12-30", "deposit seen 2026-08-05 (Starling)", name="Ian Lamb")
+    assert cp.assess(far, [dep, ("2026-09-26", 575.0, "amount only")], T)["state"] == "CHECK_PAYMENT"
+    assert cp.assess(far, [dep], T)["state"] == "DEPOSIT_SEEN"
+
+
+# --- round 4: the owner's notes win -----------------------------------------------------------
+
+def test_a_paid_note_after_a_loose_negation_counts():
+    for n in ("no chase needed - paid 5 Sep", "Nothing to chase: paid cash 5 Sep", "not a problem: paid 5 Sep",
+              "No issues - paid by bank transfer", "not banked yet but received in cash", "no longer pending: paid",
+              "said he would ring but paid 5 Sep", "asked about the invoice: paid 5 Sep"):
+        a = cp.assess(row("2111", 1150, "2026-09-01", "2026-09-30", n), [], T)
+        assert a["state"] == "NOTED_PAID", (n, a["state"])
+
+
+def test_a_rest_of_fee_note_counts_as_full_even_with_an_amount():
+    paid = [("2026-09-05", 575.0, "reference")]
+    for n in ("no chase: balance paid in cash", "balance of £575 paid", "£1,150 paid in total", "£575 balance paid 20 Sep",
+              "remaining £575 paid in cash", "balance: £575 paid by cheque 20 Sep", "deposit and balance paid in cash",
+              "total of £1,150 received"):
+        a = cp.assess(row("2111", 1150, "2026-09-01", "2026-09-30", "deposit seen 2026-09-05 (Starling); " + n), paid, T)
+        assert a["state"] == "NOTED_PAID", (n, a["state"])
+    for n in ("deposit paid in full", "deposit of £575 paid in full", "deposit received and balance invoiced",
+              "paid deposit and balance invoiced 20 Sep", "balance due 30 Sep", "no balance paid yet", "balance not yet received"):
+        a = cp.assess(row("2111", 1150, "2026-09-01", "2026-09-30", "deposit seen 2026-09-05 (Starling); " + n), paid, T)
+        assert a["state"] == "BALANCE_DUE", (n, a["state"])
+
+
+# --- round 4: payments on cancelled or closed bookings reach the hand check -------------------
+
+E2E_ROWS = [row("0510", 1150, "2026-09-01", "2026-12-05", "Cancelled 20 Sep", name="Eve King"),
+            row("1506", 1150, "2026-06-01", "2026-10-15", "deposit seen 2026-06-03 (Starling); paid in full 2026-09-15", name="Fay Hill"),
+            row("0710", 1150, "2026-09-01", "2026-12-07", "CANCELLED 2026-09-10; no deposit", name="Gil Ray"),
+            row("2111", 1150, "2026-09-10", "2027-06-12", "PENDING: invoiced", name="Ann Smith")]
+E2E_FEED = [pay(575, "2026-09-27", "INV 0510", "E KING"), pay(575, "2026-09-26", "WEDDING", "FAY HILL"),
+            pay(575, "2026-09-14", "INV 1506 balance", "FAY HILL"), pay(575, "2026-09-24", "INV 2111", "A SMITH")]
+
+
+def test_payments_on_cancelled_or_closed_bookings_reach_the_hand_check():
+    import money_report as mr
+    client = FakeClient(E2E_FEED)
+    got = {r["booking_ref"]: a for r, _, a in cp.collect(client, E2E_ROWS, T)}
+    assert sorted(got) == ["0510", "1506", "2111"], sorted(got)  # 0710: cancelled, nothing paid: out of everything
+    assert got["0510"]["state"] == "PAYMENT_ON_CANCELLED" and got["1506"]["state"] == "PAYMENT_AFTER_CLOSE"
+    for ref in ("0510", "1506"):
+        a = got[ref]
+        assert a["just_received"] is False and a["receipt_due"] is False, a
+        assert "check by hand" in cp.describe(a), cp.describe(a)
+    assert "£575.00 on 2026-09-27" in cp.describe(got["0510"]) and "£575.00 on 2026-09-26" in cp.describe(got["1506"])
+    assert "2026-09-14" not in cp.describe(got["1506"]).split(" · ", 1)[1]  # the balance that closed it is not the stray
+    rec = cp.received_since(client, E2E_ROWS, T - datetime.timedelta(days=21), T)
+    assert sorted(rec) == [("1506", "2026-09-14", 575.0), ("2111", "2026-09-24", 575.0)], rec
+    lines = mr.summary_lines(list(got.values()), rec, QUIET, T)
+    assert lines[3] == "needs a hand check: 2 (0510 payment on a cancelled booking; 1506 payment after paid in full)", lines
+    assert "0510" not in lines[2] and "1506" not in lines[2]
+
+
+def test_apply_never_rewrites_a_cancelled_or_closed_row():
+    d = tempfile.mkdtemp()
+    path = os.path.join(d, "bookings.csv")
+    rows = [dict(r, notes="PENDING; " + r["notes"]) if r["booking_ref"] in ("0510", "1506") else dict(r) for r in E2E_ROWS]
+    cols = list(rows[0].keys())
+    cp.lm.write_csv(path, rows, cols)
+    saved = cp.LEDGER
+    cp.LEDGER = path
+    args = type("A", (), {"apply": True, "json": True, "selftest": False})()
+    try:
+        with contextlib.redirect_stdout(io.StringIO()) as out:
+            cp.run(args, FakeClient(E2E_FEED), cp.lm.read_csv(path), cols, T)
+    finally:
+        cp.LEDGER = saved
+    after = {r["booking_ref"]: r["notes"] for r in cp.lm.read_csv(path)}
+    assert after["0510"] == rows[0]["notes"] and after["1506"] == rows[1]["notes"], after
+    assert after["2111"].startswith("deposit seen 2026-09-24 (Starling)"), after
+    states = {a["ref"]: a["state"] for a in json.loads(out.getvalue())}
+    assert states["0510"] == "PAYMENT_ON_CANCELLED" and states["1506"] == "PAYMENT_AFTER_CLOSE", states
+
+
+def test_a_cancelled_booking_payment_counts_only_inside_its_window():
+    r = row("0510", 1150, "2026-09-01", "2026-12-05", "Cancelled 20 Sep", name="Eve King")
+    assert cp.assess(r, [("2026-09-27", 575.0, "reference")], T)["state"] == "PAYMENT_ON_CANCELLED"
+    assert cp.assess(r, [("2026-06-01", 575.0, "reference")], T)["state"] == "CANCELLED"
+    assert cp.assess(r, [], T)["state"] == "CANCELLED"
+
+
+def test_maybe_cancelling_is_still_tracked():
+    for n in ("may be cancelling", "might be cancelling", "possibly cancelling", "could be cancelling", "thinking of cancelling",
+              "client may be cancelling", "not cancelling"):
+        assert not cp.is_cancelled(row("X", 500, "2026-09-01", "2026-10-30", n)), n
+    for n in ("client cancelling", "cancelled", "Cancellation confirmed", "cancellation received 20 Sep", "CANCELLED 2026-09-10;"):
+        assert cp.is_cancelled(row("X", 500, "2026-09-01", "2026-10-30", n)), n
+    got = cp.collect(FakeClient([]), [row("X", 500, "2026-09-01", "2026-10-30", "PENDING; may be cancelling")], T)
+    assert [a["state"] for _, _, a in got] == ["DEPOSIT_OVERDUE"]
+
+
+# --- round 4: rewrites keep the ledger's own header -------------------------------------------
+
+def _ragged_ledger():
+    d = tempfile.mkdtemp()
+    path = os.path.join(d, "bookings.csv")
+    header = "booking_ref,value_gbp,invoice_date,event_date,notes,client_name,uploaded_at,extra_col"
+    with open(path, "w", newline="") as f:
+        f.write(header + "\n2111,650,2026-08-22,2026-11-21,PENDING,Ann Smith,,x,stray\n"
+                "0512,650,2026-09-01,2026-12-05,PENDING,Bo Jones,,y\n")
+    return path, header
+
+
+def test_reminded_keeps_the_ledger_header():
+    path, header = _ragged_ledger()
+    saved = (sys.argv, cp.LEDGER)
+    sys.argv, cp.LEDGER = ["check_payments.py", "--reminded", "0512"], path
+    try:
+        with contextlib.redirect_stdout(io.StringIO()):
+            cp.main()
+    finally:
+        sys.argv, cp.LEDGER = saved
+    lines = open(path).read().splitlines()
+    assert lines[0] == header, lines[0]
+    assert cp.lm.read_csv(path)[1]["notes"].startswith("PENDING; reminder drafted")
+
+
+def test_stamp_uploaded_keeps_the_ledger_header():
+    try:
+        sys.path.insert(0, os.path.join(ROOT, "scripts", "ads"))
+        import upload_bookings as ub
+    except ImportError:
+        return
+    path, header = _ragged_ledger()
+    saved = ub.LEDGER
+    ub.LEDGER = cp.Path(path)
+    try:
+        ub.stamp_uploaded({"0512"}, "2026-09-28 10:00")
+    finally:
+        ub.LEDGER = saved
+    got = open(path).read().splitlines()[0].split(",")
+    want = header.split(",")
+    assert got[:len(want)] == want and None not in got and "" not in got, got
+    assert {r["booking_ref"]: r["uploaded_at"] for r in cp.lm.read_csv(path)} == {"2111": "", "0512": "2026-09-28 10:00"}
+
+
+def test_assistant_paths_follow_the_private_dir():
+    d = tempfile.mkdtemp()
+    code = ("import sys; sys.path.insert(0, %r); import assistant_io as a; print(a.STATE); print(a.INVOICES); print(a.LEDGER)"
+            % os.path.join(ROOT, "scripts", "bookings"))
+    env = {k: v for k, v in os.environ.items() if k != "LCS_BOOKINGS_CSV"}
+    env["LCS_PRIVATE_DIR"] = d
+    p = subprocess.run([PY, "-c", code], env=env, capture_output=True, text=True)
+    assert p.stdout.split() == [os.path.join(d, "assistant-state.json"), os.path.join(d, "invoices"),
+                                os.path.join(d, "bookings.csv")], (p.stdout, p.stderr[-300:])
 
 
 if __name__ == "__main__":

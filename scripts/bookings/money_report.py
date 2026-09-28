@@ -4,11 +4,22 @@
 import datetime
 
 # Never in the balances line: settled, cancelled, uncertain or past bookings.
-NOT_DUE = {"PAID_IN_FULL", "NOTED_PAID", "CANCELLED", "CHECK_PAYMENT", "CHECK_VALUE"}
+NOT_DUE = {"PAID_IN_FULL", "NOTED_PAID", "CANCELLED", "CHECK_PAYMENT", "CHECK_VALUE",
+           "PAYMENT_ON_CANCELLED", "PAYMENT_AFTER_CLOSE"}
 # NOTED_PAID stays here until the owner writes "paid in full YYYY-MM-DD" in the notes (the booking then closes).
 HAND_CHECK = {"CHECK_PAYMENT": "possible payment", "CHECK_VALUE": "unreadable value or date",
               "PAST_UNMATCHED": "past, unpaid", "PAST_PART_PAID": "past, part paid",
-              "NOTED_PAID": "noted paid, not in bank"}
+              "NOTED_PAID": "noted paid, not in bank",
+              "PAYMENT_ON_CANCELLED": "payment on a cancelled booking", "PAYMENT_AFTER_CLOSE": "payment after paid in full"}
+
+
+def hand_check_label(a):
+    received = a.get("received") or 0
+    if a["state"] == "NOTED_PAID" and received:
+        return f"noted paid, £{received:,.2f} in bank"
+    if a["state"] == "CHECK_PAYMENT" and received:  # a deposit is in; the unconfirmed one may be the balance
+        return "possible balance payment"
+    return HAND_CHECK[a["state"]]
 NO_DEPOSIT = {"DEPOSIT_OVERDUE", "AWAITING_DEPOSIT"}
 
 
@@ -33,7 +44,7 @@ def summary_lines(assessments, receipts, singer, today):
                  + (f" (includes {bare} with no deposit)" if bare else ""))
     hand = [a for a in assessments if a["state"] in HAND_CHECK]
     lines.append(f"needs a hand check: {len(hand)}"
-                 + (f" ({'; '.join(a['ref'] + ' ' + HAND_CHECK[a['state']] for a in hand)})" if hand else ""))
+                 + (f" ({'; '.join(a['ref'] + ' ' + hand_check_label(a) for a in hand)})" if hand else ""))
     line = f"singer invoices unpaid: {singer['unpaid']}, £{singer['unpaid_total']:,.2f}"
     if singer["unpaid"]:
         line += f", oldest {plural(singer['oldest_days'], 'day')}"
