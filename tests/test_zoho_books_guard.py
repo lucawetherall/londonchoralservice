@@ -86,6 +86,17 @@ def test_settings_json_is_valid_and_registers_the_guard():
     assert "mcp__zoho-books.*" in matchers
 
 
+def test_read_sounding_writes_are_denied():
+    for name in ("getOrCreateContact", "fetchAndMarkPaid", "getAttachmentUpload",
+                 "list_and_update_items", "getInvoiceAndRecordPayment", "ZohoBooks_getOrAddVendor"):
+        assert decide("zoho-books", name) == "deny", name
+
+
+def test_plain_reads_still_allowed():
+    for name in ("ZohoBooks_getPaymentsReceived", "getContactAddress", "listBills", "getInvoicePdf"):
+        assert decide("zoho-books-invoices", name) == "allow", name
+
+
 if __name__ == "__main__":
     failures = 0
     for name, fn in sorted(globals().items()):

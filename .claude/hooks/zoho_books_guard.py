@@ -28,6 +28,14 @@ DENY_SUBSTRINGS = (
 # A vendor prefix such as "ZohoBooks_" or "ZohoBooksInvoices_" in front of
 # the actual tool name.
 VENDOR_PREFIX = re.compile(r"^Zoho\w*?_")
+# Whole words (camelCase or snake_case parts) that make a read-sounding name a
+# write, e.g. getOrCreateContact, fetchAndMarkPaid, getAttachmentUpload.
+DENY_WORDS = {
+    "create", "update", "edit", "modify", "mark", "record", "apply", "approve",
+    "submit", "upload", "import", "convert", "clone", "add", "set", "post",
+    "enable", "disable", "cancel", "close", "open", "reopen", "write", "put",
+    "patch", "remove", "attach", "assign", "associate", "bulk", "pay",
+}
 
 # Add exact tool names here only after the owner approves them (see
 # docs/superpowers/specs/*zoho-books*).
@@ -40,7 +48,9 @@ def decide(tool, tool_input):
     if name in WRITE_ALLOW or core in WRITE_ALLOW:
         return None  # allowed; normal permission rules apply
     lower = core.lower()
-    if lower.startswith(READ_PREFIXES) and not any(s in lower for s in DENY_SUBSTRINGS):
+    words = {w.lower() for w in re.findall(r"[A-Z]?[a-z]+|[A-Z]+(?![a-z])|\d+", core)}
+    if (lower.startswith(READ_PREFIXES) and not any(s in lower for s in DENY_SUBSTRINGS)
+            and not words & DENY_WORDS):
         return None  # allowed; normal permission rules apply
     return (f"Zoho Books guard: {name} isn't allowed. Claude has read-only access to "
             "Zoho Books until the owner approves specific write tools.")
