@@ -26,7 +26,7 @@ Section 4 lists every step in order.
 | GA4 | Europe/London time zone, 14-month retention, key events `generate_lead` and `contact_message` (WhatsApp/email), five custom dimensions |
 | Site | `christmas-pricing.html` live. Standard booking is up to two hours everywhere. Funeral and wedding pages lead with choirs |
 | API access | Google Ads API **Basic** access (managed in the Cloud project; no developer token needed). Search Console read access working |
-| Still waiting on you | Starling read-only token, GA4 internal-traffic filter (GA4 won't load in Claude's Chrome tabs), Business Profile service area, a real WhatsApp tap test (section 5) |
+| Still waiting on you | Starling read-only token (section 5). Everything else from 28 Sep is done: GA4 internal filter active, Google signals on, Business Profile service area set, test draft deleted, phone tap test. The owner chose not to trim the Zoho MCP tools; the guard hook covers that |
 | Done 28 Sep | `webmasters` write scope granted; sitemap resubmitted; indexing requested for christmas-pricing.html; "Enhanced conversions for leads" on (Google tag); Ads sitelink and pin changes and GA4 annotations applied; Search Console linked to GA4 and to Google Ads; this Mac's Chrome flagged as internal (`?lcs_internal=1`) |
 | Email assistant (28 Sep) | A scheduled task drafts replies to new enquiries every two hours, 08:00–20:00, in Zoho Drafts. Claude can read mail and save drafts from office@ only: `.claude/hooks/zoho_guard.py` blocks sending, deleting and everything else. The owner reviews and sends (Appendix E) |
 | Invoices (28 Sep) | When a client accepts a quote, the assistant makes the invoice PDF and booking confirmation (`scripts/bookings/make_booking_docs.py`, private templates in `~/lcs-private/tools/`) and records the booking as PENDING until the deposit is seen. The Monday review records invoices you send yourself, reading the PDF totals (`scripts/bookings/invoice_text.py`) |
@@ -284,7 +284,7 @@ EACH RUN
    - Conversions per action: "Submit lead form" and "WhatsApp or email click" are primary; "Call click" and "Booked job" are secondary. Report the last day each was seen.
    - GA4: generate_lead, contact_click, contact_message and form_error, with occasion, lead_source, method and error_type.
    - Wiring (section 8): all three pages must show "all tags present", auto-tagging on, GA4 key events include generate_lead and contact_message, and the GA4 ↔ Google Ads link present. Flag anything else.
-   - Alarm: from 5 Oct 2026, if GA4 shows no generate_lead AND no contact_click for the whole week while Paid Search or Organic sessions are above zero, flag it and say what section 8 shows.
+   - Alarm: from 5 Oct 2026, if GA4 shows no generate_lead AND no contact_click for the whole week while Paid Search or Organic sessions are above zero, flag it and say what section 8 shows. If section 5 says !THRESHOLDED, GA4 may be hiding small numbers (Google signals is on since 28 Sep 2026): judge from the Ads conversions in section 3 instead, and if it happens two weeks running, suggest switching GA4's Reporting identity to Device-based (Admin → Data display → Reporting identity), which removes the thresholds.
    - Form errors: if form_error outnumbers generate_lead, flag the error_type breakdown.
    - On the first run of each month, if "enhanced conversions for leads" is OFF, remind the owner once that switching it on (Google Ads → Goals → Settings) lets booking uploads carry hashed emails.
 5. Web presence (from sections 6 and 7; Search Console lags about 3 days):

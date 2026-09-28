@@ -163,11 +163,15 @@ def ads_sections(since):
 def ga4_section(s):
     api = f"https://analyticsdata.googleapis.com/v1beta/{GA4_PROPERTY}:runReport"
 
+    thresholded = []
+
     def report(body):
         r = s.post(api, json=body)
         if not r.ok:
             print(f"GA4 error {r.status_code}: {r.json().get('error', {}).get('message')}")
             return []
+        if r.json().get("metadata", {}).get("subjectToThresholding"):
+            thresholded.append(", ".join(d["name"] for d in body.get("dimensions", [])))
         return r.json().get("rows", [])
 
     week = [{"startDate": "7daysAgo", "endDate": "yesterday"}]
@@ -198,6 +202,9 @@ def ga4_section(s):
     for ch, v in sorted(by.items(), key=lambda kv: -int(kv[1].get("date_range_0", ("0",))[0])):
         now, before = v.get("date_range_0", ("0", "0")), v.get("date_range_1", ("0", "0"))
         print(f"   {ch:22} sessions {now[0]:>4} (was {before[0]:>4}) · key events {now[1]} (was {before[1]})")
+    if thresholded:
+        print("   !THRESHOLDED: GA4 withheld small numbers (Google signals data thresholds) in: " + "; ".join(thresholded)
+              + ". Low counts may show as zero here; use the Ads conversions in section 3 instead.")
 
 
 def gsc_section(s):
