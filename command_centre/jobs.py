@@ -1,9 +1,13 @@
 """The background refresh job: every 30 minutes from 07:00 to 22:00 London time, inside the app process.
 
-Each pass runs `scripts/reports/dashboard.py` (the static dashboard, read-only) and then `scripts/reports/cc_sync.py
-books` (the Books cache, through lcs_mcp's read-only client) as subprocesses: an argv list, never a shell, the
-actions' clean environment (no CC_* variable, LCS_PRIVATE_DIR set explicitly), stdin /dev/null and a timeout each.
-Then it clears the app's bank cache, so the next page load reads Starling afresh.
+Each pass runs, in order, as subprocesses: `scripts/bookings/singer_invoices.py paid --apply` (matches the Starling
+feed, read-only, against the unpaid singer invoices and records a match's paid_on, paid_amount, paid_ref and
+paid_verified in the singer store under its lock: a verified payment shows within 30 minutes even when the enquiry
+assistant hasn't run; it never creates a payee, a payment or a Books record, which the singer clerk still does from
+`paid --books-due`), `scripts/reports/dashboard.py` (the static dashboard, read-only) and `scripts/reports/cc_sync.py
+books` (the Books cache, through lcs_mcp's read-only client; it exits 1 when Books couldn't be read). Each is an
+argv list, never a shell, with the actions' clean environment (no CC_* variable, LCS_PRIVATE_DIR set explicitly),
+stdin /dev/null and a timeout. Then it clears the app's bank cache, so the next page load reads Starling afresh.
 
 - It has its own lock, and it takes the manual refresh's lock (actions._LOCKS["refresh"]) without waiting, so a pass
   never overlaps a "Refresh data now" or another pass: a slot that finds either busy is skipped.
@@ -32,7 +36,8 @@ LONDON = ZoneInfo("Europe/London")
 FIRST, LAST = datetime.time(7, 0), datetime.time(22, 0)  # the first and last slot of the day
 STEP = 30  # minutes
 POLL = 60  # seconds between looks at the clock
-SCRIPTS = (("dashboard", ["scripts/reports/dashboard.py"], 180),
+SCRIPTS = (("singer-paid", ["scripts/bookings/singer_invoices.py", "paid", "--apply"], 180),
+           ("dashboard", ["scripts/reports/dashboard.py"], 180),
            ("books", ["scripts/reports/cc_sync.py", "books"], 300))
 SYSTEM_USER = {"login": "refresh-job"}
 log = logging.getLogger("command_centre")

@@ -17,8 +17,13 @@ already made.
     singer_invoices.py link <message id> <booking ref>  # link it by hand (the ref must be in the ledger): a label
         for the per-event margin, never money
     singer_invoices.py margins             # per booking: client fee, linked singer costs, margin and margin %
-    singer_invoices.py paid [--apply]      # match OUT payments; prints NEWLY PAID <message id>, and for a
-        match on the bank details an indented "books: bill_number … · email … · amount … · date …" line
+    singer_invoices.py paid [--apply] [--books-due]  # match OUT payments; prints NEWLY PAID <message id>, and
+        for a match on the bank details an indented "books: bill_number … · email … · amount … · date …" line.
+        --books-due then adds, read-only, "BOOKS DUE <message id>: …" (with its "books:" line) for an invoice
+        already paid to verified details whose Books bill is still open in the Command Centre's Books cache
+        ("books-due: no Books cache" without one), and "THANKS DUE <message id>: …" for one paid in the last
+        7 days with no "Paid!" reply noted. The Command Centre's refresh job runs `paid --apply` every 30
+        minutes, so a payment is often recorded before the enquiry assistant would see it as NEWLY PAID.
     singer_invoices.py status              # unpaid invoices and totals
     singer_invoices.py thanked <message id>  # note that the "Paid!" reply was drafted
     singer_invoices.py confirm <message id>  # the owner rang the singer: trust these bank details
@@ -61,6 +66,7 @@ import email
 import hmac
 import html
 import io
+import json
 import os
 import re
 import sys
@@ -934,6 +940,77 @@ def bill_number(ref, message_id):
     return "SI-" + (digits[-5:] if digits else re.sub(r"[^A-Za-z0-9]", "", message_id or "")[-5:])
 
 
+def books_bill(r, bills):
+    """The Books bill for a stored invoice, from books.json's bills ({number, vendor, status, balance, …}): the
+    one whose number is bill_number(...) (case and spaces ignored), void bills left out. When several share the
+    number, the one whose vendor first name is the singer's; None when there is none, or no single one."""
+    want = bill_number(r.get("invoice_ref"), r.get("message_id")).strip().casefold()
+    found = [b for b in bills or [] if isinstance(b, dict) and str(b.get("status") or "").lower() != "void"
+             and str(b.get("number") or "").strip().casefold() == want]
+    if len(found) > 1:
+        who = first_name(r.get("singer_name")).casefold()
+        found = [b for b in found if str(b.get("vendor") or "").casefold() == who]
+    return found[0] if len(found) == 1 else None
+
+
+def books_cache_path():
+    """The Command Centre's Books cache (cc_sync.py books), under the private folder read at call time."""
+    return Path(os.environ.get("LCS_PRIVATE_DIR", Path.home() / "lcs-private")) / "command-centre" / "cache" / "books.json"
+
+
+def read_books_bills():
+    """books.json's bills list, or None when the cache is missing or not the expected shape."""
+    try:
+        with open(books_cache_path(), encoding="utf-8") as f:
+            cache = json.load(f)
+    except (OSError, ValueError):
+        return None
+    bills = cache.get("bills") if isinstance(cache, dict) else None
+    return bills if isinstance(bills, list) else None
+
+
+THANKS_DAYS = 7  # a verified payment this recent with no "Paid!" draft yet gets a THANKS DUE line
+
+
+def print_books_due(rows, skip=(), today=None):
+    """paid --books-due: after the normal output, for payments already recorded here (paid_verified yes) and so
+    no longer NEWLY PAID (the Command Centre's half-hourly job may have recorded them first):
+    - "BOOKS DUE <message id>: …" plus the usual "books:" line, when the invoice's Books bill is still open with a
+      balance (a bill not in the cache, or already paid, gets no line);
+    - "THANKS DUE <message id>: …" when it was paid in the last THANKS_DAYS days and no "Paid!" reply is noted.
+    `skip` holds this run's NEWLY PAID ids. Read-only. Without books.json it prints "books-due: no Books cache"
+    instead of the BOOKS DUE lines."""
+    today = today or lm.today()
+    done = [r for r in rows if r.get("paid_on") and r.get("paid_verified") == "yes" and not is_withdrawn(r)
+            and r["message_id"] not in skip]
+    bills = read_books_bills()
+    if bills is None:
+        print("books-due: no Books cache")
+    for r in done:
+        bill = books_bill(r, bills) if bills is not None else None
+        if bill is None or str(bill.get("status") or "").lower() == "paid" or lm.money(bill.get("balance")) <= 0:
+            continue
+        amount = lm.parse_gbp(r.get("paid_amount")) or lm.money(r.get("amount_gbp"))
+        print(f"BOOKS DUE {r['message_id']}: {first_name(r['singer_name'])} £{amount:,.2f} paid {r['paid_on']}, "
+              f"bill open in Books")
+        print(f"   books: bill_number {bill_number(r.get('invoice_ref'), r['message_id'])}"
+              f" · email {r.get('singer_email')} · amount {amount:.2f} · date {r['paid_on']}")
+    for r in done:
+        paid = iso_or_none(r.get("paid_on"))
+        if paid is None or (today - paid).days > THANKS_DAYS or "paid reply drafted" in (r.get("notes") or ""):
+            continue
+        amount = lm.parse_gbp(r.get("paid_amount")) or lm.money(r.get("amount_gbp"))
+        print(f"THANKS DUE {r['message_id']}: {first_name(r['singer_name'])} £{amount:,.2f} paid {r['paid_on']}, "
+              f"no \"Paid!\" reply yet")
+
+
+def iso_or_none(value):
+    try:
+        return datetime.date.fromisoformat(str(value or "")[:10])
+    except ValueError:
+        return None
+
+
 def bill_verdict(warnings, amount, bank_confirmed=False):
     """"yes", or "no (<reason>)": a bank-details alarm (upper-case BANK DETAILS: new, changed, differing
     or not yet verified; unless the owner has confirmed them by phone), no amount, or a zero amount."""
@@ -1104,6 +1181,16 @@ def cmd_rescan(args, client):
 
 
 def cmd_paid(args, client):
+    hits = {}
+    try:
+        hits = match_and_record(args, client)
+    finally:  # --books-due runs even when Starling is unavailable: it reads only the store and the Books cache
+        if getattr(args, "books_due", False):
+            print_books_due(lm.read_csv(STORE), skip=set(hits))
+
+
+def match_and_record(args, client):
+    """paid's matching (and, with --apply, recording); returns the NEWLY PAID hits by message id."""
     rows = lm.read_csv(STORE)
     unpaid = [r for r in rows if is_open(r)]
     for r in unpaid:
@@ -1112,10 +1199,10 @@ def cmd_paid(args, client):
     unpaid = [r for r in unpaid if received_date(r)]
     if not unpaid:
         print("No unpaid singer invoices.")
-        return
+        return {}
     if not client:
         print("No Starling token; paid check skipped.")
-        return
+        return {}
     today = lm.today()
     since = min(received_date(r) for r in unpaid) - LOOKBACK
     used = {r["paid_ref"] for r in rows if r.get("paid_ref")}
@@ -1153,6 +1240,7 @@ def cmd_paid(args, client):
                     r["paid_on"], r["paid_amount"], r["paid_ref"] = when, f"{amount:.2f}", uid
                     r["paid_verified"] = "yes" if verified else "no"
         print("Singer invoice store updated.")
+    return hits
 
 
 def cmd_status(args, client=None):
@@ -1345,6 +1433,8 @@ def main():
     r.add_argument("--fetch", action="store_true", help="fetch the raw email itself, read-only")
     p = sub.add_parser("paid")
     p.add_argument("--apply", action="store_true")
+    p.add_argument("--books-due", action="store_true",
+                   help="also list paid invoices whose Books bill is still open, and recent ones not yet thanked")
     sub.add_parser("status")
     t = sub.add_parser("thanked")
     t.add_argument("message_id")
