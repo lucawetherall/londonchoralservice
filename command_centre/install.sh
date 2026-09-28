@@ -11,7 +11,10 @@
 #      expiry go in the config) and prints the code once: the first passkey registration needs it;
 #   4. writes ~/Library/LaunchAgents/com.lcs.command-centre.plist (runs <repo>/.venv/bin/python -m command_centre
 #      from the repo, at login, restarted if it stops, CC_DEV_LOGIN blanked, logs in
-#      ~/lcs-private/command-centre/logs/, rotated by the app on start);
+#      ~/lcs-private/command-centre/logs/, rotated by the app on start). Its PATH starts with the folders that hold
+#      `npx` and `node` as this shell finds them (or /opt/homebrew/bin:/usr/local/bin when it finds neither): the
+#      refresh job's `cc_sync.py books` starts the Zoho MCP servers with a bare `npx`, and launchd's own PATH has
+#      no Node. Run this again after moving Node (a new nvm version, say);
 #   5. (re)loads it with launchctl (one retry) and checks /healthz on 127.0.0.1:8765 (with the tailnet Host);
 #   6. prints the `tailscale serve` command to run yourself.
 #
@@ -23,7 +26,8 @@
 #   bash command_centre/install.sh --backup
 #
 # also writes and loads ~/Library/LaunchAgents/com.lcs.backup.plist: scripts/reports/cc_backup.py run, every
-# night at 02:30 (refused until `.venv/bin/python scripts/reports/cc_backup.py init` has made the backup key).
+# night at 02:30 (refused until `.venv/bin/python scripts/reports/cc_backup.py init` has made the backup key),
+# with the same PATH.
 set -euo pipefail
 
 WITH_BACKUP=0
@@ -118,9 +122,31 @@ else
   echo "A passkey is registered: no bootstrap code needed."
 fi
 
+# ---------------------------------------------------------------- PATH for the LaunchAgents
+# launchd starts an agent with a bare PATH. The MCP config starts the Zoho servers with a bare `npx`, and npx runs
+# `node` through /usr/bin/env: put the folders holding both first, as this shell finds them now.
+NODE_DIRS=""
+for tool in npx node; do
+  found="$(command -v "$tool" 2>/dev/null || true)"
+  case "$found" in
+    /*)
+      dir="$(dirname "$found")"
+      case ":$NODE_DIRS:" in
+        *":$dir:"*) ;;
+        *) NODE_DIRS="${NODE_DIRS:+$NODE_DIRS:}$dir" ;;
+      esac ;;
+  esac
+done
+if [ -z "$NODE_DIRS" ]; then
+  NODE_DIRS="/opt/homebrew/bin:/usr/local/bin"
+  echo "npx and node aren't on this shell's PATH: the LaunchAgents will look in $NODE_DIRS" >&2
+fi
+AGENT_PATH="$NODE_DIRS:/usr/bin:/bin:/usr/sbin:/sbin"
+echo "LaunchAgent PATH: $AGENT_PATH"
+
 # ---------------------------------------------------------------- LaunchAgent
 mkdir -p "$HOME/Library/LaunchAgents"
-CC_PLIST="$PLIST" CC_LABEL="$LABEL" CC_REPO="$REPO" CC_PY="$PY" CC_LOGS="$CC_DIR/logs" "$PY" - <<'PYEOF'
+CC_PLIST="$PLIST" CC_LABEL="$LABEL" CC_REPO="$REPO" CC_PY="$PY" CC_LOGS="$CC_DIR/logs" CC_PATH="$AGENT_PATH" "$PY" - <<'PYEOF'
 import os, plistlib
 plist = {
     "Label": os.environ["CC_LABEL"],
@@ -130,7 +156,7 @@ plist = {
     "KeepAlive": True,
     "ThrottleInterval": 10,
     "ProcessType": "Interactive",
-    "EnvironmentVariables": {"PATH": "/usr/bin:/bin:/usr/sbin:/sbin", "PYTHONUNBUFFERED": "1", "CC_DEV_LOGIN": ""},
+    "EnvironmentVariables": {"PATH": os.environ["CC_PATH"], "PYTHONUNBUFFERED": "1", "CC_DEV_LOGIN": ""},
     "StandardOutPath": os.path.join(os.environ["CC_LOGS"], "command-centre.out.log"),
     "StandardErrorPath": os.path.join(os.environ["CC_LOGS"], "command-centre.err.log"),
 }
@@ -176,7 +202,7 @@ if [ "$WITH_BACKUP" = 1 ]; then
     echo "(store the key it prints in your password manager), then run this again with --backup." >&2
     exit 1
   fi
-  CC_PLIST="$BACKUP_PLIST" CC_LABEL="$BACKUP_LABEL" CC_REPO="$REPO" CC_PY="$PY" CC_LOGS="$CC_DIR/logs" "$PY" - <<'PYEOF'
+  CC_PLIST="$BACKUP_PLIST" CC_LABEL="$BACKUP_LABEL" CC_REPO="$REPO" CC_PY="$PY" CC_LOGS="$CC_DIR/logs" CC_PATH="$AGENT_PATH" "$PY" - <<'PYEOF'
 import os, plistlib
 plist = {
     "Label": os.environ["CC_LABEL"],
@@ -184,7 +210,7 @@ plist = {
     "WorkingDirectory": os.environ["CC_REPO"],
     "StartCalendarInterval": {"Hour": 2, "Minute": 30},
     "ProcessType": "Background",
-    "EnvironmentVariables": {"PATH": "/usr/bin:/bin:/usr/sbin:/sbin", "PYTHONUNBUFFERED": "1"},
+    "EnvironmentVariables": {"PATH": os.environ["CC_PATH"], "PYTHONUNBUFFERED": "1"},
     "StandardOutPath": os.path.join(os.environ["CC_LOGS"], "backup.out.log"),
     "StandardErrorPath": os.path.join(os.environ["CC_LOGS"], "backup.err.log"),
 }

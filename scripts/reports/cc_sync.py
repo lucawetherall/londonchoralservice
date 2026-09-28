@@ -11,9 +11,11 @@
 books reads Zoho Books (organization_id 941014440) through lcs_mcp, which allows only the read tools on the Books
 guard's READ_ALLOW list (ZohoBooks_list_invoices on zoho-books-invoices, ZohoBooks_list_bills on zoho-books), and
 writes ~/lcs-private/command-centre/cache/books.json: each invoice's number, status, date, due date, total, balance
-and the customer's first name only; each bill's number, the vendor's first name, status, total, balance and date;
+and the customer's first name only; each bill's number, the vendor's first name, status, total, balance and date
+(best effort: the free Books plan has no bills, so a failed bill read gives "bills_read": false and no bills);
 the totals (receivables, overdue, unpaid bills) and generated_at. On any failure it prints the error's type name
-only, keeps the last cache and exits 0, so a scheduled run carries on.
+only, keeps the last cache and exits 1, so the Command Centre's refresh job logs the failure (a scheduled run
+notes it and carries on).
 
 calendar-put takes the diary from the scheduled assistant (Python can't reach the claude.ai Google Calendar
 connector): a JSON list of {start, end, summary, calendar}, at most 500 events, start and end ISO dates (all-day,
@@ -195,11 +197,18 @@ def totals(invoices, bills):
 def books_snapshot(call, now=None):
     """The books.json payload, from `call(server, tool, arguments) -> text` (lcs_mcp.call_tool, or a fake)."""
     invoices = [invoice_row(r) for r in list_all(call, INVOICE_SERVER, "ZohoBooks_list_invoices", "invoices")]
-    bills = [bill_row(r) for r in list_all(call, BILL_SERVER, "ZohoBooks_list_bills", "bills")]
+    # Bills are best effort: the free Books plan (from 29 Sep 2026) has none, so a failed read leaves them
+    # out ("bills_read": false) instead of losing the invoices; singer costs live in singer-invoices.csv.
+    try:
+        bills = [bill_row(r) for r in list_all(call, BILL_SERVER, "ZohoBooks_list_bills", "bills")]
+        bills_read = True
+    except Exception:  # noqa: BLE001  the invoices still count
+        bills, bills_read = [], False
     invoices.sort(key=lambda i: (i["date"], i["number"]), reverse=True)
     bills.sort(key=lambda b: (b["date"], b["number"]), reverse=True)
     when = (now or datetime.datetime.now(LONDON)).isoformat(timespec="seconds")
-    return {"generated_at": when, "invoices": invoices, "bills": bills, "totals": totals(invoices, bills)}
+    return {"generated_at": when, "invoices": invoices, "bills": bills, "bills_read": bills_read,
+            "totals": totals(invoices, bills)}
 
 
 def cmd_books(call=None, now=None):
@@ -208,10 +217,12 @@ def cmd_books(call=None, now=None):
         write_private_json(cache_dir() / "books.json", snap)
     except Exception as e:  # the type name only: a message could carry a client's details or a server's URL
         print(f"books: not updated ({type(e).__name__}); the last cache is kept")
-        return 0
+        return 1
     t = snap["totals"]
-    print(f"books: {len(snap['invoices'])} invoices, {len(snap['bills'])} bills cached; receivables "
-          f"£{t['receivables']:,.2f}, overdue £{t['overdue']:,.2f}, unpaid bills £{t['unpaid_bills']:,.2f}")
+    bills = (f"{len(snap['bills'])} bills" if snap["bills_read"] else "no bills (not on this Books plan)")
+    print(f"books: {len(snap['invoices'])} invoices, {bills} cached; receivables "
+          f"£{t['receivables']:,.2f}, overdue £{t['overdue']:,.2f}"
+          + (f", unpaid bills £{t['unpaid_bills']:,.2f}" if snap["bills_read"] else ""))
     return 0
 
 

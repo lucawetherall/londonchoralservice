@@ -123,7 +123,8 @@ def money_lines(assessments, receipts, singer_rows, today):
 def hand_check(assessments, today):
     """The Monday money line's "needs a hand check" list (money_report.needs_hand_check), one row each."""
     return [{"ref": a["ref"], "state": a["state"], "label": mr.hand_check_label(a), "value": a.get("value") or 0.0,
-             "received": a.get("received") or 0.0} for a in assessments if mr.needs_hand_check(a, today)]
+             "received": a.get("received") or 0.0, "balance": a.get("balance") or 0.0}
+            for a in assessments if mr.needs_hand_check(a, today)]
 
 
 def digits4(value):
@@ -133,11 +134,14 @@ def digits4(value):
 payee_status = si.payee_status  # whether Starling already knows the singer, never the payee's name
 
 
-def singers(rows):
+def singers(rows, history=None):
+    """The unpaid invoices in rows, oldest first. history = the whole store (default rows): an account confirmed
+    or paid to verifiably on any of the singer's invoices is trusted on all of them (si.ring_first_in)."""
+    history = rows if history is None else history
     return [{"received": r.get("received", ""), "first_name": first_name(r.get("singer_name")),
              "amount": lm.money(r.get("amount_gbp")), "payee": payee_status(r.get("payee", "")),
-             "bank_changed": r.get("bank_changed") == "yes", "ring_first": si.ring_first(r),
-             "last4": digits4(r.get("bank_last4"))}
+             "bank_changed": r.get("bank_changed") == "yes", "ring_first": si.ring_first_in(history, r),
+             "bank_trust": si.trust_label(history, r), "last4": digits4(r.get("bank_last4"))}
             for r in sorted(rows, key=lambda r: r.get("received") or "") if si.is_open(r)]
 
 
@@ -220,6 +224,7 @@ def books_section():
     season = season_totals(bc.margins(), season_start())
     unlinked = si.unlinked_invoices(lm.read_csv(si.STORE))
     return {"totals": cache.get("totals") or {}, "drafts": drafts, "overdue": overdue,
+            "bills_read": cache.get("bills_read") is not False,
             "generated_at": when.isoformat() if when else None, "season": season, "unlinked": unlinked}
 
 
@@ -379,7 +384,8 @@ def r_singers(items, data):
     rows = []
     for s in items:
         warn = (badge("BANK DETAILS CHANGED: ring before paying", "bad") if s.get("ring_first")
-                else badge("changed, confirmed by phone", "warn") if s.get("bank_changed") else "")
+                else badge(f"changed, {s.get('bank_trust') or 'confirmed by phone'}", "ok") if s.get("bank_changed")
+                else "")
         rows.append([day(s["received"]), e(str(s["first_name"])), gbp(s["amount"]), e(str(s["payee"])),
                      masked(s.get("last4")) + (" " + warn if warn else "")])
     total = sum(float(s["amount"]) for s in items)
@@ -437,7 +443,9 @@ def r_books(v, data):
     t = v["totals"]
     out = [f'<div class="pair"><div><div class="muted">Receivables</div><div class="big">{gbp(t.get("receivables", 0))}</div></div>'
            f'<div><div class="muted">Overdue</div><div class="big">{gbp(t.get("overdue", 0))}</div></div>'
-           f'<div><div class="muted">Unpaid bills</div><div class="big">{gbp(t.get("unpaid_bills", 0))}</div></div></div>']
+           + (f'<div><div class="muted">Unpaid bills</div><div class="big">{gbp(t.get("unpaid_bills", 0))}</div></div>'
+              if v.get("bills_read", True) is not False else "")
+           + '</div>']
     if v["drafts"]:
         out.append(f'<p>Drafts not yet sent: {", ".join(e(n) for n in v["drafts"])}</p>')
     if v["overdue"]:

@@ -15,18 +15,22 @@ denied, and so is a duplicate key in the JSON). On top of that, no string or
 number anywhere in a write call may carry bank details (in any format, any
 country), VAT wording or Greek/Cyrillic lookalike letters, and no invoice or bill
 text may mention tax. An attachment must be a .pdf or .docx inside
-~/lcs-private/invoices/.
-Claude never emails, reminds, deletes, voids or matches a bank transaction in
-Books, and never updates an invoice: those stay the owner's job. It records a
-payment only with create_customer_payment or create_vendor_payment, against one
-invoice or bill, under their checks below (owner decisions, 28 Sep 2026).
-Calls that go around this hook (a script starting the server itself) are
-refused by mcp_bypass_guard.py. Invoices are created as drafts (`send` absent or false) and carry the DDMM
-booking ref as their number. The guard fails closed: any error, or a tool_input
+iCloud Drive/LCS-invoices/ (~/Library/Mobile Documents/com~apple~CloudDocs/LCS-invoices).
+Claude never emails, reminds, deletes, voids or writes off anything in Books, never
+matches a bank transaction and never updates an invoice. It records only the
+payments the owner approved (a confident client payment against its invoice, with any
+shortfall the owner accepted as transfer fees, at most £25, as its bank_charges; and a
+singer payment against its bill, unused on the free plan, both through the Starling
+account), and marks an invoice sent (a status change; Books emails nobody as long as
+its automatic payment reminders are off) only once Luca's own email carrying that
+invoice is in the Sent folder. Calls that go around this hook (a script starting
+the server itself) are refused by mcp_bypass_guard.py. Invoices are created as drafts (`send`
+absent or false) and carry the DDMM booking ref as their number. The guard fails closed: any error, or a tool_input
 of the wrong shape, denies the call.
 Design: docs/superpowers/specs/2026-09-28-zoho-books-design.md
 """
 import json
+import math
 import os
 import re
 import sys
@@ -175,7 +179,8 @@ BILL_FIELDS = ("vendor_id", "bill_number", "date", "due_date", "reference_number
 BILL_UPDATE_FIELDS = ("notes", "due_date", "date", "reference_number")  # never the vendor or the amounts
 
 INVOICE_NUMBER = re.compile(r"[0-9]{4}[A-Z]?")  # the DDMM booking ref, e.g. 2111 or 2111B
-INVOICES_DIR = os.path.join("~", "lcs-private", "invoices")  # where make_booking_docs.py writes
+# where make_booking_docs.py writes (iCloud Drive, since 29 Sep 2026)
+INVOICES_DIR = os.path.join("~", "Library", "Mobile Documents", "com~apple~CloudDocs", "LCS-invoices")
 SINGER_PDF_DIR = os.path.join("~", "lcs-private", "singer-invoices")  # where singer_invoices.py saves PDFs
 SINGER_PDF_NAME = re.compile(r"[0-9A-Za-z]{1,40}\.pdf")  # <Zoho message id>.pdf
 
@@ -221,7 +226,7 @@ def check_invoice_document(body, query, path):
 
 
 def _check_attachment(value, folder=INVOICES_DIR, exts=(".pdf", ".docx")):
-    """A file the booking scripts wrote: its real path must be inside `folder` (default ~/lcs-private/invoices/)."""
+    """A file the booking scripts wrote: its real path must be inside `folder` (default iCloud Drive/LCS-invoices/)."""
     shown = folder.replace(os.sep, "/") + "/"
     bad = Deny(P + f"query_params.attachment must be a {' or '.join(exts)} file inside {shown} "
                "(a local path, not a URL or file contents).")
@@ -250,6 +255,15 @@ def _singer_pdf(value):
 # schema (28 Sep 2026) describes it only as "Boolean to check if the comment to be shown
 # to the clients" and gives no default; leaving it out lets Books apply its own default
 # (internal). The owner confirms that on the first comment Claude adds.
+# Mark sent (owner decision, 29 Sep 2026, with the move to the free Books plan): the invoice PDF now goes
+# out attached to Luca's own email from Zoho Mail, so the Books invoice is only the accounting record.
+# Once that email is in the Sent folder the daily pass marks the Books invoice sent, a status change
+# only (Books emails nobody while its automatic reminders are off, MANUAL-ACTIONS §27), so payments can be
+# recorded against it. Only the invoice id is allowed.
+def check_mark_invoice_sent(body, query, path):
+    _need(path, "invoice_id", "path_variables")
+
+
 def check_invoice_comment(body, query, path):
     _need(path, "invoice_id", "path_variables")
 
@@ -319,6 +333,13 @@ def check_create_vendor_payment(body, query, path):
 # Client payments (owner decision, 28 Sep 2026, the evening after the singer rule): a payment
 # check_payments.py matched confidently (its "record_in_books" list), recorded against that booking's one
 # invoice, through the Starling account, never with contact_persons (Books would email a thank-you).
+# `amount` is the money received. A shortfall the owner accepted as transfer fees (owner decision, 28 Sep 2026:
+# "short by fees £X accepted", at most £25 a booking) rides on the last payment as `bank_charges`, a plain
+# number more than £0 and at most FEE_CAP; the invoice is then credited with amount + bank_charges, so both
+# amount_applied values must equal that sum. Without bank_charges all three amounts are equal.
+FEE_CAP = 25.00  # check_payments.FEE_CAP
+
+
 def check_create_customer_payment(body, query, path):
     for key in ("customer_id", "date", "invoice_id"):
         _need(body, key, "body")
@@ -336,9 +357,18 @@ def check_create_customer_payment(body, query, path):
     amounts = (body.get("amount"), body.get("amount_applied"), line.get("amount_applied"))
     if not all(isinstance(v, (int, float)) and not isinstance(v, bool) for v in amounts):
         raise Deny(P + "amount, amount_applied and invoices[0].amount_applied must be plain numbers.")
-    if line.get("invoice_id") != body.get("invoice_id") or len({round(v, 2) for v in amounts}) != 1:
-        raise Deny(P + "invoice_id and every amount must agree: one invoice, the whole payment applied to it.")
-    if not 0 < amounts[0] <= 10000:
+    charges = 0
+    if "bank_charges" in body:
+        charges = body["bank_charges"]
+        if not (isinstance(charges, (int, float)) and not isinstance(charges, bool)
+                and math.isfinite(charges) and 0 < charges <= FEE_CAP):
+            raise Deny(P + f"bank_charges must be a plain number, more than £0 and at most £{FEE_CAP:.0f} "
+                       "(a shortfall the owner accepted as transfer fees).")
+    applied = round(amounts[0] + charges, 2)
+    if line.get("invoice_id") != body.get("invoice_id") or {round(v, 2) for v in amounts[1:]} != {applied}:
+        raise Deny(P + "invoice_id and every amount must agree: one invoice, the whole payment applied to it "
+                   "(both amount_applied values equal amount, plus bank_charges when there are any).")
+    if not (math.isfinite(amounts[0]) and 0 < amounts[0] <= 10000):
         raise Deny(P + "amount must be more than £0 and at most £10,000.")
 
 
@@ -368,6 +398,8 @@ WRITE_TOOLS = {
         NOTHING, ORG_ONLY, obj("invoice_id", "document_id"), check_invoice_document),
     "ZohoBooks_upload_invoice_document": (
         NOTHING, obj("organization_id", "attachment"), obj("invoice_id", "document_id"), check_invoice_document),
+    "ZohoBooks_mark_invoice_sent": (
+        NOTHING, ORG_ONLY, obj("invoice_id"), check_mark_invoice_sent),
     "ZohoBooks_add_invoice_comment": (
         obj("description"), ORG_ONLY, obj("invoice_id"), check_invoice_comment),
     "ZohoBooks_create_bill": (
@@ -385,8 +417,8 @@ WRITE_TOOLS = {
             bills=[obj("bill_id", "amount_applied")]),
         ORG_ONLY, NOTHING, check_create_vendor_payment),
     "ZohoBooks_create_customer_payment": (
-        obj("customer_id", "date", "amount", "amount_applied", "invoice_id", "payment_mode", "account_id",
-            "reference_number", "description", invoices=[obj("invoice_id", "amount_applied")]),
+        obj("customer_id", "date", "amount", "amount_applied", "bank_charges", "invoice_id", "payment_mode",
+            "account_id", "reference_number", "description", invoices=[obj("invoice_id", "amount_applied")]),
         ORG_ONLY, NOTHING, check_create_customer_payment),
     "ZohoBooks_create_item": (
         obj("name", "rate", "description", "item_type", "product_type", "purchase_rate", "purchase_description"),

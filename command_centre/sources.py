@@ -27,6 +27,8 @@ MCP_NAMES = ("zoho-mail", "zoho-books")
 DISK_LOW_GB = 5
 ASSISTANT_STALE = datetime.timedelta(hours=3)
 WEEKLY_STALE = datetime.timedelta(days=8)
+BOOKS_STALE = datetime.timedelta(hours=24)  # the refresh job writes it every 30 minutes, 07:00-22:00
+CACHE_STALE = datetime.timedelta(hours=36)  # the daily pass writes the diary and syncs the drafts once a day
 
 
 def private():
@@ -182,11 +184,18 @@ def run_proxies(now):
         ("Bookings ledger", Path(os.environ.get("LCS_BOOKINGS_CSV") or p / "bookings.csv"), None),
         ("Singer invoices", p / "singer-invoices.csv", None),
         ("Enquiry pipeline", p / "enquiries.csv", None),
+        ("Books cache (cc_sync.py books)", auth.config_dir() / "cache" / "books.json", BOOKS_STALE),
+        ("Diary cache (the daily pass)", calendar_path(), CACHE_STALE),
+        ("Drafts cache (the assistant)", auth.config_dir() / "cache" / "drafts.json", CACHE_STALE),
     ]
     out = []
     for label, path, limit in rows:
         when = mtime(path) if path else None
-        out.append({"label": label, "when": when, "stale": bool(limit and (when is None or now - when > limit))})
+        age = None
+        if when is not None and now >= when:
+            age = "under an hour ago" if now - when < datetime.timedelta(hours=1) else age_words(now - when)
+        out.append({"label": label, "when": when, "age": age,
+                    "stale": bool(limit and (when is None or now - when > limit))})
     state = read_json(p / "assistant-state.json")
     checked = state[0].get("last_checked") if state and isinstance(state[0], dict) else None
     try:

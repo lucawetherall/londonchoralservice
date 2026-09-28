@@ -141,7 +141,7 @@ All pages are mobile-first, with dark and light modes and the LCS brand colours.
 13. **Search:** one box across bookings, clients, singers, enquiries, invoice numbers and refs.
 14. **Handoffs (done):** copy-to-clipboard prompts for Claude Code Remote Control — no in-app chat, no server-side execution.
     - Quick prompts: "what's owed this week", "summarise today's business", "why is <ref> on the hand check" (with a ref picker), "draft a reply to <thread>".
-    - The approved Books import: a fixed instruction naming the approval file and its hash, copied once the approval record exists and matches.
+    - The approved Books import: a fixed instruction naming the approval file and its hash, copied once the approval record exists and matches, and only until the import is done (the record carries `imported_at`, or every dry-run ref is already an invoice in the Books cache). The prompt lists Books first and skips any invoice number already there. A changed dry run shows a warning instead of the prompt.
     - Copying needs no passkey: nothing runs until the owner pastes the prompt into Remote Control on his phone.
 15. **Activity log:** every action and every run, filterable.
 
@@ -162,9 +162,10 @@ It needs a passkey (except the local records below) and is logged.
 | Settle or withdraw a singer invoice | `singer_invoices.py settled <id> <date>` / `withdrawn <id> <reason>` |
 | Approve an Ads change set | Run a proposal-aware `scripts/ads/*.py` from its commit on GitHub's main (the app's own mirror) with `--validate-only`, show the output (its first and last 3,000 characters, unmasked), then `--apply` from the same commit after a second tap; the script writes `logs/ads-changes.md` (`LCS_ADS_LOG`). It never goes above £5/day (the script refuses). |
 | Approve the 2026 Books import | Writes an approval record only (no script runs). Its handoff prompt, once the approval matches, tells the owner to open Claude Code Remote Control and run the owner-approved import under the guard. |
+| Mark the Books import done | Rewrites the approval record (atomically, every field kept) with `imported_at` and `status: "imported"`; only while the import is approved (or its dry run has moved on). No script runs and nothing reaches Books. |
 | Mark a draft sent or discarded; tick a to-do | Local record only. **Exception: no passkey.** These write only the app's own files in `~/lcs-private/command-centre/` (never the ledger, the singer store, email, Books or the bank), so the owner's Tailscale identity, the Host check and the same-origin check are enough. They are still registered actions, with a server-built summary and an `audit.jsonl` entry. |
 | Run a scheduled task now | Not an app action: Runs and health explains to use **Run now** on the task in the Claude app (Routines) |
-| Refresh data now | Refresh jobs, read-only |
+| Refresh data now | `dashboard.py`, then `cc_sync.py books`: both read-only |
 | Back up now | The backup job |
 | Copy a handoff prompt | **Exception: no passkey, and it is not a registered action.** The client copies server-written, fixed text to the clipboard; nothing runs, and nothing is sent anywhere. The owner pastes it into Claude Code Remote Control himself. |
 
@@ -194,6 +195,7 @@ Not in the app: sending email, payments, payees, deletes, and Books sends or voi
   - the Ads summary, and the GA4 and Search Console summaries (via weekly_review's functions);
   - Books receivables and bills (via `lcs_mcp` reads, allowlisted read tools only, through a Books read client mirroring `lcs_mcp`'s safety);
   - Zoho drafts and the calendar.
+- The refresh job (`command_centre/jobs.py`) also runs `singer_invoices.py paid --apply` first: it reads the Starling feed and records a matched payment's `paid_on`, `paid_amount`, `paid_ref` and `paid_verified` in the singer store under its lock, so a verified payment shows within 30 minutes. It never makes a payee, a payment or a Books record; the singer clerk records the Books vendor payment from `paid --books-due`.
 - Every panel shows "as of <time>". When a source fails, its panel shows the last good data and the error type; it never breaks the page.
 
 ## Backups

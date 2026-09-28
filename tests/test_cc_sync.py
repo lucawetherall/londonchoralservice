@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Tests for scripts/reports/cc_sync.py (the Books and calendar caches) and command_centre/books_cache.py.
 Stdlib only, a temp private dir, a fake MCP runner: no server is started. .venv/bin/python tests/test_cc_sync.py"""
-import contextlib, datetime, io, json, os, stat, sys, tempfile
+import contextlib, datetime, io, json, os, stat, subprocess, sys, tempfile
 from pathlib import Path
 
 TMP = tempfile.mkdtemp()
@@ -78,7 +78,7 @@ def test_books_cache_shape_and_totals():
     assert code == 0 and out.startswith("books: 4 invoices, 3 bills cached"), out
     data = json.loads((CACHE / "books.json").read_text())
     assert data["generated_at"] == "2026-09-28T09:30:00+01:00"
-    assert set(data) == {"generated_at", "invoices", "bills", "totals"}
+    assert set(data) == {"generated_at", "invoices", "bills", "bills_read", "totals"} and data["bills_read"] is True
     inv = {i["number"]: i for i in data["invoices"]}
     assert inv["2111"] == {"number": "2111", "status": "sent", "date": "2026-09-20", "due_date": "2026-10-05",
                            "total": 1150.0, "balance": 1150.0, "customer": "Harriet"}, inv["2111"]
@@ -95,6 +95,21 @@ def test_books_cache_shape_and_totals():
     assert all(a["query_params"]["organization_id"] == "941014440" for _, _, a in fake.calls)
 
 
+def test_books_without_bills_on_the_free_plan_still_caches_the_invoices():
+    clear()
+    fake = FakeBooks()
+    def call(server, tool, args):
+        if tool == "ZohoBooks_list_bills":
+            raise lcs_mcp.McpError("this feature is not available in your plan")
+        return fake(server, tool, args)
+    code, out = run(cc_sync.cmd_books, call, NOW)
+    assert code == 0 and out.startswith("books: 4 invoices, no bills (not on this Books plan) cached"), out
+    assert "unpaid bills" not in out, out
+    data = json.loads((CACHE / "books.json").read_text())
+    assert data["bills_read"] is False and data["bills"] == [] and len(data["invoices"]) == 4
+    assert data["totals"]["receivables"] == 1375.5 and data["totals"]["unpaid_bills"] == 0
+
+
 def test_books_pages_through():
     clear()
     fake = FakeBooks(per_page=1)
@@ -109,18 +124,18 @@ def test_books_failure_keeps_the_old_cache_and_prints_the_type_only():
     before = (CACHE / "books.json").read_text()
     for fail in (lcs_mcp.McpError("zoho-books: https://secret.example/abc failed"), TimeoutError("h@example.com")):
         code, out = run(cc_sync.cmd_books, FakeBooks(fail=fail), NOW)
-        assert code == 0, code
+        assert code == 1, code  # non-zero, so the Command Centre's refresh job logs the failure
         assert out.strip() == f"books: not updated ({type(fail).__name__}); the last cache is kept", out
     code, out = run(cc_sync.cmd_books, lambda *a: "not json", NOW)
-    assert out.strip() == "books: not updated (JSONDecodeError); the last cache is kept", out
+    assert code == 1 and out.strip() == "books: not updated (JSONDecodeError); the last cache is kept", out
     code, out = run(cc_sync.cmd_books, lambda *a: json.dumps({"code": 0}), NOW)
-    assert "(ValueError)" in out and code == 0
+    assert "(ValueError)" in out and code == 1
     assert (CACHE / "books.json").read_text() == before
     assert [p.name for p in CACHE.iterdir()] == ["books.json"]  # no temp file left behind
 
 
 def test_books_main_uses_the_real_client_path_without_starting_a_server():
-    """cc_sync.py books with no MCP settings at all: lcs_mcp raises, the run still exits 0."""
+    """cc_sync.py books with no MCP settings at all: lcs_mcp raises, the run exits 1 and writes nothing."""
     clear()
     saved = lcs_mcp.CLAUDE_JSON
     lcs_mcp.CLAUDE_JSON = Path(TMP) / "no-such-claude.json"
@@ -128,7 +143,18 @@ def test_books_main_uses_the_real_client_path_without_starting_a_server():
         code, out = run(cc_sync.main, ["books"])
     finally:
         lcs_mcp.CLAUDE_JSON = saved
-    assert code == 0 and out.strip() == "books: not updated (McpError); the last cache is kept", out
+    assert code == 1 and out.strip() == "books: not updated (McpError); the last cache is kept", out
+    assert not (CACHE / "books.json").exists()
+
+
+def test_books_as_a_subprocess_exits_1_on_failure():
+    """The refresh job only sees the exit code: a failed sync must not look like a clean one."""
+    clear()
+    env = dict(os.environ, LCS_PRIVATE_DIR=TMP, LCS_CLAUDE_JSON=str(Path(TMP) / "no-such-claude.json"))
+    proc = subprocess.run([sys.executable, str(Path(ROOT) / "scripts" / "reports" / "cc_sync.py"), "books"],
+                          capture_output=True, text=True, env=env, stdin=subprocess.DEVNULL, timeout=60)
+    assert proc.returncode == 1, (proc.returncode, proc.stdout, proc.stderr)
+    assert proc.stdout.strip() == "books: not updated (McpError); the last cache is kept", proc.stdout
     assert not (CACHE / "books.json").exists()
 
 

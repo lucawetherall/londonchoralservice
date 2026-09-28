@@ -17,15 +17,16 @@ spec.json (all money in pounds; the fee must be the one the client accepted):
    "items": [{"name": "Wedding solo singer", "detail": "…", "qty": 1, "rate": 325}, …],
    "instalment_1_due": "2026-08-28", "instalment_2_due": "2026-11-20"}
 Instalments are 50/50 unless "instalment_1" / "instalment_2" amounts are given.
-Output goes to ~/lcs-private/invoices/<ref> - <client>/ (folders mode 700, files
-mode 600); the ref and client name are cleaned first (safe_name: no "/", "\\", ".."
-or control characters), so the folder can never land outside invoices/. Nothing is
-sent anywhere: the owner attaches the files to the reply draft in Zoho.
+Output goes to iCloud Drive/LCS-invoices/<ref> - <client>/ (~/Library/Mobile Documents/
+com~apple~CloudDocs/LCS-invoices; folders mode 700, files mode 600), so the documents are on
+Luca's other devices too. The ref and client name are cleaned first (safe_name: no "/", "\\",
+".." or control characters), so the folder can never land outside LCS-invoices/. Nothing is
+sent anywhere: imap_draft.py attaches both files to the reply draft in Zoho Drafts, and Luca
+sends it.
 
-~/lcs-private/tools and ~/lcs-private/invoices are fixed paths on purpose (they do not
-follow LCS_PRIVATE_DIR): the Books guard (.claude/hooks/zoho_books_guard.py) allows an
-invoice attachment only from inside ~/lcs-private/invoices/, and the templates are the
-owner's private copies.
+~/lcs-private/tools and iCloud Drive/LCS-invoices are fixed paths on purpose (they do not
+follow LCS_PRIVATE_DIR): imap_draft.py and the Books guard (.claude/hooks/zoho_books_guard.py)
+attach files only from inside LCS-invoices/, and the templates are the owner's private copies.
 """
 
 import datetime
@@ -40,10 +41,10 @@ from pathlib import Path
 from pypdf import PdfReader
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-import lcs_money as lm  # noqa: E402  parse_gbp, today
+import lcs_money as lm  # noqa: E402  parse_gbp, today, ICLOUD_INVOICES
 
 TOOLS = Path.home() / "lcs-private" / "tools"
-OUT_ROOT = Path.home() / "lcs-private" / "invoices"
+OUT_ROOT = lm.ICLOUD_INVOICES
 CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
 
 
@@ -92,11 +93,9 @@ def pounds(value, what):
     return v
 
 
-def main():
-    if len(sys.argv) != 2:
-        fail("usage: make_booking_docs.py <spec.json | '{json}'>")
-    arg = sys.argv[1].strip()
-    spec = json.loads(arg if arg.startswith("{") else Path(arg).read_text())
+def make_docs(spec, root=OUT_ROOT):
+    """Write the invoice PDF and the booking confirmation for `spec` into root/<ref> - <client>/.
+    Returns {"pdf", "docx", "total", "i1", "i2", "pages"}; STOP (SystemExit) on a bad spec or missing tools."""
     for f in ("ref", "client_name", "service_type", "service_date", "provision", "items",
               "instalment_1_due", "instalment_2_due"):
         if not spec.get(f):
@@ -119,7 +118,7 @@ def main():
     service = spec["service_type"] + (f" — {spec['venue']}" if spec.get("venue") else "")
     client, ref = spec["client_name"].strip(), str(spec["ref"]).strip()
 
-    folder = out_folder(ref, client)
+    folder = out_folder(ref, client, root)
     pdf = folder / f"Invoice {safe_name(ref)} - {safe_name(client)}.pdf"
     short = datetime.date.fromisoformat(spec["service_date"]).strftime("%-d %b %Y")
     docx = folder / f"Booking Confirmation - {safe_name(client)} - {short}.docx"
@@ -157,10 +156,21 @@ def main():
     pages = len(PdfReader(pdf).pages)
     for f in (pdf, docx):
         os.chmod(f, 0o600)
-    print(f"invoice {ref}: total {money(total)} · instalments {money(i1)} + {money(i2)} · {pages} page(s)")
-    print(f"   {pdf}")
-    print(f"   {docx}")
-    if pages != 1:
+    return {"pdf": pdf, "docx": docx, "total": total, "i1": i1, "i2": i2, "pages": pages}
+
+
+def main():
+    if len(sys.argv) != 2:
+        fail("usage: make_booking_docs.py <spec.json | '{json}'>")
+    arg = sys.argv[1].strip()
+    spec = json.loads(arg if arg.startswith("{") else Path(arg).read_text())
+    got = make_docs(spec)
+    ref = str(spec["ref"]).strip()
+    print(f"invoice {ref}: total {money(got['total'])} · instalments {money(got['i1'])} + {money(got['i2'])} · "
+          f"{got['pages']} page(s)")
+    print(f"   {got['pdf']}")
+    print(f"   {got['docx']}")
+    if got["pages"] != 1:
         fail("the invoice runs to more than one page; tighten the template before sending")
 
 

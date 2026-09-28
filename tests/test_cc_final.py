@@ -189,12 +189,12 @@ def test_books_flags_follow_appendix_a_6g():
         ("2001", "Books paid, Starling not matched"),
         ("2003", "Starling matched, Books unpaid"),
         ("2004", "Starling paid in full, Books part-paid"),
-        ("2005", "Books draft not sent (>2 days)"),
+        ("2005", "Invoice email not sent (>2 days): check Zoho Drafts"),
         ("2010", "Starling matched, Books unpaid"),
     }, got
     # Starling not checked: the two comparisons are skipped, as 6g skips them; the draft rule stays
     flags = models.books_flags(invoices, ledger, bookings, TODAY, False)
-    assert {(f["ref"], f["text"]) for f in flags} == {("2005", "Books draft not sent (>2 days)")}
+    assert {(f["ref"], f["text"]) for f in flags} == {("2005", "Invoice email not sent (>2 days): check Zoho Drafts")}
     # INV-prefixed numbers match the ledger ref (check_payments.norm_ref)
     inv = books_invoice("INV2001", "paid", "2026-09-01", 100.0, 0.0)
     assert models.books_flags([inv], [{"booking_ref": "2001", "notes": ""}], [{"ref": "2001", "state": "DEPOSIT_SEEN"}],
@@ -205,7 +205,12 @@ def test_books_flags_follow_appendix_a_6g():
 def test_books_summary_and_timeline_lines():
     s = models.books_summary(books_json())
     assert s["totals"]["receivables"] == 1150.0 and s["totals"]["receivables_count"] == 1
-    assert s["drafts"] == ["1212"] and s["overdue"] == []
+    assert s["drafts"] == [{"number": "1212", "href": None}] and s["overdue"] == []  # no ledger: no link
+    s = models.books_summary(books_json(), [{"booking_ref": "1212"}])
+    assert s["drafts"] == [{"number": "1212", "href": "/bookings/1212"}], s["drafts"]
+    s = models.books_summary(books_json([books_invoice("INV1212", "draft", "2026-09-20", 1.0, 1.0)]),
+                             [{"booking_ref": "1212"}, {"booking_ref": "0310"}])
+    assert s["drafts"] == [{"number": "INV1212", "href": "/bookings/1212"}], s["drafts"]  # norm_ref, the ledger's ref
     assert s["generated_at"].hour == 7 and s["generated_at"].tzinfo is not None
     items = models.books_timeline("0310", books_json()["invoices"])
     assert len(items) == 1 and items[0]["kind"] == "books" and items[0]["date"] == datetime.date(2026, 9, 1)
@@ -243,13 +248,140 @@ def test_today_flags_books_disagreements():
     fixtures()
     c = make(FakeBank())
     base = text_of(page(c, "/"))
-    assert "1212" in base and "Books draft not sent (>2 days)" in base, base[:3000]
+    assert "1212" in base and "Invoice email not sent (>2 days): check Zoho Drafts" in base, base[:3000]
     m = re.search(r"(\d+) things? needs? you", base)
     fixtures(books=False)
     without = text_of(page(make(FakeBank()), "/"))
     assert "Books not synced yet" in without
     n = re.search(r"(\d+) things? needs? you", without)
     assert m and int(m.group(1)) == (int(n.group(1)) if n else 0) + 1, (m, n)
+
+
+def test_books_flags_compare_the_ledger_with_books():
+    def row(ref, invoiced, notes=""):
+        return {"booking_ref": ref, "invoice_date": invoiced, "notes": notes}
+    ledger = [row("2101", "2026-09-25"),                          # 3 days, not in Books: flag
+              row("2102", "2026-09-27"),                          # 1 day: too soon
+              row("2108", "2026-09-26"),                          # exactly 2 days: flag
+              row("2103", "2026-09-01", "cancelled 2026-09-10"),  # cancelled: no
+              row("2104", "2026-09-01", "paid in full 2026-09-20"),  # closed: no
+              row("2105", "2026-09-01"),                          # paid in full per Starling: no
+              row("2106", "2026-09-01"),                          # only a void invoice in Books: flag
+              row("2107", "2026-09-01"),                          # a Books draft counts as in Books
+              row("2109", "")]                                    # no invoice date: no
+    bookings = [{"ref": "2105", "state": "PAID_IN_FULL"}]
+    invoices = [books_invoice("INV2106", "void", "2026-09-02", 1.0, 1.0),
+                books_invoice("2107", "draft", "2026-09-27", 1.0, 1.0),
+                books_invoice("3001", "sent", "2026-09-20", 1.0, 1.0),     # not in the ledger: flag
+                books_invoice("3002", "draft", "2026-09-27", 1.0, 1.0),    # a draft: no
+                books_invoice("3003", "void", "2026-09-20", 1.0, 1.0),     # void: no
+                books_invoice("INV2104", "paid", "2026-09-02", 1.0, 0.0)]  # in the ledger (norm_ref): no
+    flags = models.books_flags(invoices, ledger, bookings, TODAY, False)
+    got = {(f["ref"], f["text"], f["href"]) for f in flags}
+    assert got == {("2101", "in the ledger, not in Books", "/bookings/2101"),
+                   ("2108", "in the ledger, not in Books", "/bookings/2108"),
+                   ("2106", "in the ledger, not in Books", "/bookings/2106"),
+                   ("3001", "in Books, not in the ledger", None)}, got
+    assert all(f["tone"] == "warn" for f in flags)
+    # the existing rules link to the ledger's own ref, not the Books number
+    inv = books_invoice("INV2001", "draft", "2026-09-01", 100.0, 100.0)
+    f = models.books_flags([inv], [row("2001", "2026-09-01")], [], TODAY, False)
+    assert f == [{"ref": "INV2001", "text": "Invoice email not sent (>2 days): check Zoho Drafts", "tone": "warn",
+                  "href": "/bookings/2001"}], f
+
+
+def store_row(mid, name, ref, **over):
+    base = {"message_id": mid, "received": "2026-09-20", "singer_name": name, "singer_email": "x@example.org",
+            "invoice_ref": ref, "amount_gbp": "120", "bank_fp": "abc", "bank_last4": "4321", "payee": "",
+            "bank_changed": "no", "paid_on": "", "paid_verified": "", "notes": "", "withdrawn": "", "booking_ref": ""}
+    return dict(base, **over)
+
+
+def bill(number, vendor, status, balance):
+    return {"number": number, "vendor": vendor, "status": status, "total": 120.0, "balance": balance,
+            "date": "2026-09-20"}
+
+
+def test_singer_bill_flags_compare_the_store_with_books():
+    rows = [store_row("m1", "Ann Paidopen", "A1", paid_on="2026-09-25", paid_verified="yes"),   # flag
+            store_row("m2", "Bob Paidpaid", "B1", paid_on="2026-09-25", paid_verified="yes"),   # agree
+            store_row("m3", "Cy Settled", "C1", paid_on="2026-09-25", paid_verified="no"),      # by hand: no
+            store_row("m4", "Di Openhere", "D1"),                                               # flag
+            store_row("m5", "Ed Withdrawn", "E1", withdrawn="2026-09-24"),                      # withdrawn: no
+            store_row("m6", "Flo Nobill", "F1", paid_on="2026-09-25", paid_verified="yes"),     # no bill: no
+            store_row("1789828736363141707", "Gus Longref", "12345678", paid_on="2026-09-25", paid_verified="yes"),
+            store_row("m8", "Hal Same", "SAME-1"), store_row("m9", "Ivy Same", "SAME-1")]
+    bills = [bill("A1", "Ann", "open", 120.0), bill("B1", "Bob", "paid", 0.0), bill("C1", "Cy", "open", 120.0),
+             bill("d1 ", "Di", "paid", 0.0), bill("E1", "Ed", "paid", 0.0),
+             bill("SI-41707", "Gus", "overdue", 120.0),                # bill_number() of a long ref: SI- + message id
+             bill("SAME-1", "Hal", "paid", 0.0), bill("SAME-1", "Ivy", "open", 120.0),  # two share a number
+             bill("A1", "Ann", "void", 120.0)]                          # void bills never count
+    flags = models.singer_bill_flags(rows, bills)
+    got = {(f["ref"], f["text"]) for f in flags}
+    assert got == {("A1 Ann", "paid in Starling, bill open in Books"),
+                   ("D1 Di", "bill paid in Books, invoice open here"),
+                   ("SI-41707 Gus", "paid in Starling, bill open in Books"),
+                   ("SAME-1 Hal", "bill paid in Books, invoice open here")}, got
+    assert all(f["href"] == "/singers" and f["tone"] == "warn" for f in flags)
+    assert models.singer_bill_flags(rows, []) == []
+
+
+def test_today_books_card_shows_bills_links_and_how_old_books_is():
+    fixtures()
+    rows = lm.read_csv(si.STORE)
+    for r in rows:
+        if r["message_id"] == "m2":  # Dora: paid to verified details, her bill still open in Books
+            r["paid_verified"] = "yes"
+    lm.write_csv(si.STORE, rows, si.COLUMNS)
+    before = text_of(page(make(FakeBank()), "/"))
+    invoices = INVOICES + [books_invoice("4444", "sent", "2026-09-20", 10.0, 10.0)]
+    write(CACHE / "books.json", json.dumps(books_json(invoices, BILLS + [
+        {"number": "DQ7", "vendor": "Dora", "status": "open", "total": 150.0, "balance": 150.0, "date": "2026-09-22"}])))
+    html = page(make(FakeBank()), "/")
+    out = text_of(html)
+    assert "DQ7 Dora paid in Starling, bill open in Books" in out, out[:3000]
+    assert '<a class="mono" href="/singers">DQ7 Dora</a>' in html
+    assert "4444 in Books, not in the ledger" in out and '<span class="mono">4444</span>' in html
+    assert 'href="/bookings/4444"' not in html
+    assert '<a class="mono" href="/bookings/1212">1212</a>' in html  # the draft flag links to the ledger booking
+    assert "Books as of Mon 28 Sep 2026, 07:00." in out and "more than 24 hours old" not in out
+    n0 = int(re.search(r"(\d+) things? needs? you", before).group(1))
+    n1 = int(re.search(r"(\d+) things? needs? you", out).group(1))
+    assert n1 == n0 + 2, (n0, n1)  # the singer bill and the Books-only invoice
+    stale = dict(books_json(), generated_at="2026-09-27T07:00:00+01:00")  # 26 and a half hours before NOW
+    write(CACHE / "books.json", json.dumps(stale))
+    out = text_of(page(make(FakeBank()), "/"))
+    assert "Books as of Sun 27 Sep 2026, 07:00." in out and "more than 24 hours old" in out, out[:3000]
+
+
+def test_money_page_links_books_numbers_to_the_ledger_only():
+    fixtures()
+    write(CACHE / "books.json", json.dumps(books_json(INVOICES + [
+        books_invoice("7777", "draft", "2026-09-27", 10.0, 10.0)])))
+    html = page(make(FakeBank()), "/money")
+    assert '<a class="mono" href="/bookings/1212">1212</a>' in html
+    assert '<span class="mono">7777</span>' in html and 'href="/bookings/7777"' not in html
+
+
+def test_health_lists_the_age_of_each_cache():
+    from command_centre import sources
+    fixtures()
+    write(CACHE / "drafts.json", "[]")
+    two_hours = (NOW - datetime.timedelta(hours=2)).timestamp()
+    old = (NOW - datetime.timedelta(hours=30)).timestamp()
+    os.utime(CACHE / "books.json", (two_hours, two_hours))
+    os.utime(CACHE / "drafts.json", (old, old))
+    rows = {r["label"]: r for r in sources.run_proxies(NOW)[0]}
+    books, diary, drafts_ = (rows["Books cache (cc_sync.py books)"], rows["Diary cache (the daily pass)"],
+                             rows["Drafts cache (the assistant)"])
+    assert books["age"] == "2 hours ago" and not books["stale"], books
+    assert diary["when"] is None and diary["age"] is None and diary["stale"], diary
+    assert drafts_["age"] == "30 hours ago" and not drafts_["stale"], drafts_
+    os.utime(CACHE / "books.json", (old, old))
+    assert {r["label"]: r for r in sources.run_proxies(NOW)[0]}["Books cache (cc_sync.py books)"]["stale"]
+    out = text_of(page(make(FakeBank()), "/health"))
+    assert "Books cache (cc_sync.py books)" in out and "(30 hours ago) stale" in out, out
+    assert "Diary cache (the daily pass) never stale" in out, out
 
 
 def test_booking_timeline_books_status_singers_and_margin():
@@ -525,7 +657,7 @@ class Recorder:
     def __call__(self, argv, **kw):
         self.calls.append((argv, kw))
         self.locked.append(actions._LOCKS["refresh"].locked())
-        what = "books" if argv[-1] == "books" else "dashboard"
+        what = "books" if argv[-1] == "books" else "singer-paid" if argv[-1] == "--apply" else "dashboard"
         f = self.fail.get(what)
         if isinstance(f, BaseException):
             raise f
@@ -560,13 +692,16 @@ def test_refresh_job_schedule():
     assert all(r.minute in (0, 30) for r in runs)
 
 
-def test_refresh_job_runs_both_scripts_and_clears_the_bank_cache():
+def test_refresh_job_runs_its_scripts_and_clears_the_bank_cache():
     clean()
     rec, cleared = Recorder(), []
     job = jobs.RefreshJob(clear=lambda: cleared.append(1), runner=rec)
     assert job.run_once() == "ok"
-    assert [c[0][1:] for c in rec.calls] == [[str(Path(ROOT) / "scripts/reports/dashboard.py")],
+    # the singer payments first (a verified payment is recorded within 30 minutes), then the dashboard and Books
+    assert [c[0][1:] for c in rec.calls] == [[str(Path(ROOT) / "scripts/bookings/singer_invoices.py"), "paid", "--apply"],
+                                             [str(Path(ROOT) / "scripts/reports/dashboard.py")],
                                              [str(Path(ROOT) / "scripts/reports/cc_sync.py"), "books"]]
+    assert jobs.SCRIPTS[0] == ("singer-paid", ["scripts/bookings/singer_invoices.py", "paid", "--apply"], 180)
     for argv, kw in rec.calls:
         assert argv[0] == sys.executable and kw["shell"] is False and 0 < kw["timeout"] <= 600
         assert kw["env"]["LCS_PRIVATE_DIR"] == TMP and not any(k.startswith("CC_") for k in kw["env"])
@@ -578,12 +713,15 @@ def test_refresh_job_runs_both_scripts_and_clears_the_bank_cache():
 
 def test_refresh_job_failures_are_isolated_and_logged_by_type_only():
     clean()
-    rec, cleared = Recorder(fail={"dashboard": subprocess.TimeoutExpired("x", 5), "books": 1}), []
+    rec, cleared = Recorder(fail={"singer-paid": 2, "dashboard": subprocess.TimeoutExpired("x", 5), "books": 1}), []
     job = jobs.RefreshJob(clear=lambda: cleared.append(1), runner=rec)
     assert job.run_once() == "failed"
-    assert len(rec.calls) == 2 and cleared == [1]  # books still ran after the dashboard failed
+    assert len(rec.calls) == 3 and cleared == [1]  # each script still ran after the one before failed
     lines = audit_lines()
-    assert [e["result"] for e in lines] == ["failed: TimeoutExpired", "failed: NonZeroExit"], lines
+    assert [e["result"] for e in lines] == ["failed: NonZeroExit", "failed: TimeoutExpired",
+                                            "failed: NonZeroExit"], lines
+    assert [e["summary"] for e in lines] == ["Background refresh: singer-paid", "Background refresh: dashboard",
+                                             "Background refresh: books"], lines
     assert all(e["action"] == "refresh-job" for e in lines)
     assert "secret" not in json.dumps(lines) and "12345678" not in json.dumps(lines)
     rec = Recorder(fail={"books": OSError("/Users/someone/secret path")})

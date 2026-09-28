@@ -32,7 +32,9 @@
 </table>
 {% endmacro %}
 
-{% macro resolve_form(ref, day, open=false) %}
+{#- fee: the balance the bank shows when it could be a transfer-fee shortfall (a part-paid booking, FEE.states); from
+    £0.01 to FEE.cap it adds the "short by transfer fees" form, its amount prefilled. The server checks it again. #}
+{% macro resolve_form(ref, day, open=false, fee=none) %}
 <details class="act"{% if open %} open{% endif %}>
   <summary>Resolve</summary>
   <form class="cc-action" data-action="resolve-hand-check">
@@ -45,6 +47,16 @@
     <label class="field">On <input type="date" name="date" value="{{ day }}" max="{{ day }}" required></label>
     <button type="submit" class="button small">Check, then approve</button>
   </form>
+  {% if fee is not none and 0.01 <= fee <= FEE.cap %}
+  <form class="cc-action" data-action="resolve-hand-check">
+    <input type="hidden" name="ref" value="{{ ref }}">
+    <input type="hidden" name="choice" value="short-by-fees">
+    <input type="hidden" name="amount" value="{{ '%.2f'|format(fee) }}">
+    <p class="muted">Only {{ fee|gbp }} is missing: accept it as transfer fees and the booking reads paid in full.</p>
+    <label class="field">On <input type="date" name="date" value="{{ day }}" max="{{ day }}" required></label>
+    <button type="submit" class="button small quiet">Short by transfer fees ({{ fee|gbp }})</button>
+  </form>
+  {% endif %}
 </details>
 {% endmacro %}
 
@@ -94,7 +106,7 @@
       <td data-label="Why"><span class="badge {{ (h.state|state_tone) or 'warn' }}">{{ h.label }}</span></td>
       <td data-label="Value" class="num">{{ h.value|gbp }}</td>
       <td data-label="Received" class="num">{% if bank_checked %}{{ h.received|gbp }}{% else %}not checked{% endif %}</td>
-      <td data-label="Action">{{ resolve_form(h.ref, day) }}</td>
+      <td data-label="Action">{{ resolve_form(h.ref, day, fee=h.balance if (bank_checked and h.state in FEE.states and h.received) else none) }}</td>
     </tr>
   {% endfor %}
   </tbody>
@@ -113,7 +125,7 @@
       <td data-label="Payee">{{ s.payee or "new payee" }}</td>
       <td data-label="Bank"><span class="mono">{{ s.last4|last4 }}</span>
         {% if s.ring_first %} <span class="badge bad">changed: ring before paying</span>
-        {% elif s.bank_changed %} <span class="badge warn">changed, confirmed by phone</span>{% endif %}</td>
+        {% elif s.bank_changed %} <span class="badge ok">changed, {{ s.bank_trust or "confirmed by phone" }}</span>{% endif %}</td>
       <td data-label="Action">{{ singer_forms(s, day) }}</td>
     </tr>
   {% endfor %}
@@ -146,6 +158,8 @@
 {#- Handoffs: copy a fixed, server-written prompt to the clipboard for Claude Code Remote Control. Nothing
     runs here and no passkey is needed — see docs/superpowers/specs/2026-09-28-command-centre-design.md,
     binding rule 6. `prompt` is plain text the server built; it is never taken from a form field. #}
+{% macro ref_link(text, href) %}{% if href %}<a class="mono" href="{{ href }}">{{ text }}</a>{% else %}<span class="mono">{{ text }}</span>{% endif %}{% endmacro %}
+
 {% macro copy_button(prompt, label="Copy prompt for Remote Control") %}
 {% if prompt %}
 <button type="button" class="button quiet cc-copy" data-prompt="{{ prompt }}">{{ label }}</button>
