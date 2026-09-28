@@ -4,9 +4,11 @@ bookings ledger.
 
 The Zoho Mail MCP cannot download attachments, but ZohoMail_getOriginalMessage
 returns the whole message (MIME, with the PDFs inside). Claude Code saves a
-large result like that to a file; pass that file (or a plain .eml) here:
+large result like that to a file; pass that file (or a plain .eml) here, or let
+the script fetch the message itself (read-only, through scripts/bookings/lcs_mcp.py):
 
     .venv/bin/python scripts/bookings/invoice_text.py <saved-result-file> [...]
+    .venv/bin/python scripts/bookings/invoice_text.py --fetch <message id> [--fetch <message id> ...]
 
 For every attachment named "Invoice*.pdf" it prints the invoice number, issue
 date, who it is billed to, the line items and the total. PDFs are unpacked into
@@ -27,15 +29,27 @@ from pathlib import Path
 from pypdf import PdfReader
 
 
-def raw_message(path):
-    text = Path(path).read_text(errors="replace")
+def raw_message_text(text):
+    """Raw MIME from a ZohoMail_getOriginalMessage result (JSON, as saved or as returned inline) or from MIME itself."""
     try:
         data = json.loads(text)
     except json.JSONDecodeError:
         return text  # already MIME (.eml)
+    if not isinstance(data, dict):
+        return str(data)
     node = data.get("data", data)
     node = node.get("data", node) if isinstance(node, dict) else node
     return node.get("content", "") if isinstance(node, dict) else str(node)
+
+
+def raw_message(path):
+    return raw_message_text(Path(path).read_text(errors="replace"))
+
+
+def fetch_message(message_id, **kw):
+    """Raw MIME of a Zoho message, fetched read-only with ZohoMail_getOriginalMessage (no saved file needed)."""
+    import lcs_mcp
+    return raw_message_text(lcs_mcp.zoho_original_message(message_id, **kw))
 
 
 def summarise(pdf_text):
@@ -60,14 +74,26 @@ def summarise(pdf_text):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("files", nargs="+")
+    ap.add_argument("files", nargs="*")
+    ap.add_argument("--fetch", action="append", default=[], metavar="MESSAGE_ID",
+                    help="fetch this Zoho message read-only instead of reading a saved file")
     ap.add_argument("--json", action="store_true", help="print JSON instead of text")
     args = ap.parse_args()
+    if not args.files and not args.fetch:
+        ap.error("give a saved file or --fetch <message id>")
+    sources = [(Path(f).name, lambda f=f: raw_message(f)) for f in args.files]
+    sources += [(f"message {m}", lambda m=m: fetch_message(m)) for m in args.fetch]
     out = []
     with tempfile.TemporaryDirectory(prefix="lcs-inv-") as tmp:
         Path(tmp).chmod(0o700)
-        for f in args.files:
-            msg = email.message_from_string(raw_message(f), policy=policy.default)
+        for source, load in sources:
+            try:
+                raw = load()
+            except Exception as e:  # lcs_mcp.McpError names the server only, never its command or URL
+                if type(e).__name__ != "McpError":
+                    raise
+                raise SystemExit(f"could not fetch {source}: {e}") from None
+            msg = email.message_from_string(raw, policy=policy.default)
             found = False
             for part in msg.walk():
                 name = part.get_filename() or ""
@@ -79,7 +105,7 @@ def main():
                 text = "\n".join(p.extract_text() or "" for p in PdfReader(pdf).pages)
                 out.append({"file": name, "email_date": msg.get("Date"), **summarise(text)})
             if not found:
-                out.append({"file": None, "source": Path(f).name, "note": "no Invoice*.pdf attachment"})
+                out.append({"file": None, "source": source, "note": "no Invoice*.pdf attachment"})
     if args.json:
         json.dump(out, sys.stdout, indent=1, ensure_ascii=False)
         print()

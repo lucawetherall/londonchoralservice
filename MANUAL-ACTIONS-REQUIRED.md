@@ -323,3 +323,101 @@ What to do:
 5. **Reply-time promises are now: one working day (usually the same day) everywhere, and the same working day (usually within a few hours) on the funeral and funeral-director pages.** If the office cannot keep those, say which to soften.
 6. **The nav's hamburger breakpoint moved from 805px to 1080px** so the eight-item menu never clips; tablets in portrait now get the hamburger. Check on an iPad if that matters to you.
 
+---
+
+## 17. Zoho Books plan
+
+The Books organisation "Alma Consort Ltd" (id `941014440`) is on a Premium trial. Once the trial ends, the MCP tools and the invoice flow described in §18 to §20 stop working.
+
+What to do:
+
+1. Sign in to Zoho Books and open Settings → Subscription.
+2. Choose a paid plan before the trial expiry date shown there. Premium is the plan the automation was designed against; a lower tier may be missing a feature the scripts use, so check the plan comparison against what you actually need (multi-currency and Starling banking are not needed here, GBP only).
+
+---
+
+## 18. Zoho Books set-up
+
+A handful of one-off settings need choosing before invoices go out through Books. None of these can be set by Claude: the write tools available to Claude do not cover organisation settings, and the bank details point below is deliberately blocked in code.
+
+What to do:
+
+1. **Manual invoice numbering.** Settings → Preferences → Invoices, turn off auto-numbering. The assistant uses the existing DDMM reference style (e.g. `2111`) as the invoice number, and Books must not overwrite it with its own sequence.
+2. **Invoice sender.** Set the invoice email sender to `office@londonchoralservice.com`, so a client sees the address they already know, not a Zoho default.
+3. **Bank details on the template.** Add the Alma Consort Starling account details to the invoice template's payment instructions. Claude is blocked, in the guard hook, from ever writing bank details into Books, so this line has to be typed in by hand once.
+4. **VAT status.** Confirm the organisation is marked "not VAT-registered" in Books' tax settings, matching the site and CLAUDE.md.
+5. **Template and branding.** Set the invoice template layout, logo and colours to match the LCS house style.
+6. **Automatic payment reminders.** Decide whether to turn Books' own reminder emails on. If you turn them on, tell Claude (in chat, next session is fine), because the enquiry assistant currently drafts its own balance reminders too, and a client should never get two reminders for the same invoice.
+
+---
+
+## 19. Connect Starling to Zoho Books
+
+Books → Banking → Add bank, and connect the Alma Consort Starling account. Once connected, confirm the bank-feed matches against each invoice yourself in Books as payments come in. Claude never records a payment; it only reads invoice and bill status.
+
+---
+
+## 20. Approve the 2026 import
+
+Claude prepared a private dry-run list of this year's bookings so far at `~/lcs-private/books-import-2026.json` (seven bookings, not in the repo). Nothing has been created in Books yet.
+
+What to do:
+
+1. Open the file (or ask Claude to summarise it) and check the seven bookings look right.
+2. Tell Claude, in chat, "approve the Books import". It will then create one draft invoice per booking in Books, dated at each booking's own invoice date.
+3. In Books, mark each of those invoices as sent and match its payment against the Starling bank feed, the same way you will for new bookings going forward.
+
+---
+
+## 21. Back up ~/lcs-private/fingerprint.key
+
+This key turns a singer's bank sort code and account number into the fingerprint the singer-invoice tracker uses to spot a changed bank detail. It lives outside the repo at `~/lcs-private/fingerprint.key`.
+
+Back it up as part of your normal `~/lcs-private` backup routine (whatever you already use for `bookings.csv` and the rest of that folder). If it's lost, the tracker refuses to run until it's restored, since it can no longer tell whether a singer's bank details have changed. Never commit it to the repo and never share it outside your own backup.
+
+---
+
+## 22. Singer bank details changed
+
+When the assistant's summary carries a warning like "BANK DETAILS CHANGED" or "DIFFER" against a singer invoice, that means the bank details on the new invoice don't match what's on file for that singer.
+
+What to do:
+
+1. Ring the singer on a number you already hold for them, not a number from the new invoice, and confirm the new bank details by voice.
+2. Once confirmed, run `.venv/bin/python scripts/bookings/singer_invoices.py confirm <message id>` yourself. Claude never runs `confirm`: this check exists specifically so a changed bank detail always gets a human phone call before the invoice is treated as genuine.
+
+---
+
+## 23. Google review link
+
+Optional. If you want post-event review requests to go straight to the review-writing form rather than the general Maps listing, find the Business Profile's "Ask for reviews" short link (Google Business Profile → Home → "Ask for reviews", copy the link) and add it to `data/seo-fix-discovered-urls.yml` as `gbp_review_url`.
+
+Until this is added, review requests link to the Maps listing instead, which works but takes one extra click. Either way, review requests are never sent after a funeral booking.
+
+---
+
+## 24. Seasonal budgets
+
+The Monday marketing review can propose seasonal daily-budget changes (carols in the run-up to Christmas, weddings in spring, and so on), but only once you've set the windows it should use.
+
+What to do:
+
+1. Edit `data/budget-windows.yml` with the seasonal daily budgets you want.
+2. Keep every figure at or below the £5/day cap in CLAUDE.md. If you want to go higher for a window, raise the CLAUDE.md cap first and say so to Claude; the scripts refuse anything above it.
+
+Until this file is filled in, the Monday report proposes no seasonal changes.
+
+---
+
+## 25. Confirm the pinned git origin
+
+In the Claude app, open Help → Troubleshooting → Review Pinned Git Origins and confirm this repository's origin is pinned there. This lets Claude sync branches against `main` using the app's own git tool, rather than asking you to run `git fetch`/`git switch` by hand each time.
+
+---
+
+## 26. Old enquiries are not in the pipeline
+
+The enquiry pipeline (follow-ups, "lost" marking, review requests) only tracks threads first seen from 28 September 2026 onward, when the wiring went live. Anything older is not in `~/lcs-private/enquiries.csv` and gets no automatic follow-up.
+
+If you want those older threads chased too, tell Claude you want a back-fill and which date range to start from; nothing happens to them otherwise.
+
