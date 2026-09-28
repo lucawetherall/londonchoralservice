@@ -318,15 +318,50 @@ The reviewer showed that an Ads validate could run code that wasn't the committe
 - [x] Fake data on `127.0.0.1:8795` with the dev login: the dialogs up to the passkey step (a dev browser has no passkey), at 390px and 1280px; the assertion is covered by the unit tests with a software authenticator. Stop the server.
 - [x] Every `tests/test_*.py`; commit; PR; don't merge.
 
-## Phase 4: chat (expand before building)
+## Phase 4: Claude Code chat with passkey-approved tool calls (this PR)
 
-**Goal:** Claude Code in the app under the repo's own guards.
+**Goal:** Claude Code in the app, under the repo's own guards: the same `.claude/settings.json` allowlist, deny rules and hooks as a session in the terminal. A tool call the allowlist already allows runs as it would there. One that would prompt becomes an approval card, and approving a card needs a fresh passkey assertion bound to that exact tool call. Denying needs one tap. The chat is one module (`chat.py`), so it can be swapped out.
 
-- **Task 4.1 `chat.py`.** `claude-agent-sdk` with `cwd=REPO` and the repo's `.claude/settings.json` and hooks; a permission callback that turns any tool call outside the allowlist into an approve/deny card; approving needs a passkey bound to the card's summary.
-- **Task 4.2 Streaming.** Server-sent events to `static/chat.js`; a stop button; a conversation list stored under `~/lcs-private/command-centre/chats/`.
-- **Task 4.3 Quick prompts** and the queue for approved instructions: the Books import approval record from phase 3 (`approvals/books-import-2026.json`, acted on only while the dry run's hash matches), page fixes.
-- **Task 4.4 Run a scheduled task now** (moved from phase 3): the chat asks Claude to run the task's prompt, under the repo's guards.
-- Tests: a crashed chat leaves the other pages working; a denied card never runs the tool.
+**Scope and decisions:**
+- **SDK:** `claude-agent-sdk` (0.2.160, pinned with its dependencies; it bundles Claude Code CLI 2.1.283 and runs that, not the `claude` on the PATH). One `ClaudeSDKClient` per turn: connect, `query(text)`, read `receive_response()` to the `ResultMessage`, disconnect. Later turns pass `resume=<the SDK session id>` from the first turn's result, so the conversation carries on after an app restart.
+- **Options, fixed in one place** (`chat.build_options()`, checked by `chat.check_options()` before every connect): `cwd` the repo root the app runs from; `setting_sources=["project"]` (the checked-in `.claude/settings.json`, its hooks and `CLAUDE.md`; neither `~/.claude/settings.json` nor `settings.local.json`, so an "always allow" clicked in a terminal session does not carry over, and becomes a card here); `permission_mode="default"`; `can_use_tool` set to the card callback; the Claude Code system prompt preset with a short appended note (the owner reads on a phone; plain text); `max_turns` from the message form (1 to 100, default 25). `check_options()` refuses `bypassPermissions`, any other mode but `default`, a `permission_prompt_tool_name`, `allowed_tools`, any `extra_args` and any flag containing `dangerously`, and the test also checks the CLI argv the SDK builds (`SubprocessCLITransport._build_command()`).
+- **Auth for the SDK:** none of the app's own. The bundled CLI reads the owner's Claude Code login the way the terminal `claude` does (macOS Keychain item made by `claude` then `/login`), or `ANTHROPIC_API_KEY` if that is set in the LaunchAgent's environment (it isn't). Documented in the chat page's help text and the PR.
+- **Cards:** the callback builds a canonical form of the call, `json.dumps({"tool", "input"}, sort_keys=True, ensure_ascii=False, separators=(",", ":"))`, and its sha256. The summary (server-built, at most `auth.MAX_SUMMARY` characters) names the conversation, the card id, the tool, the input's length and sha256, and the canonical input truncated to fit, so a truncated summary is still bound to all of it by the hash. The passkey challenge is bound to `auth.Action("chat-tool", summary)`. Approve: `POST /chat/<id>/cards/<card>/options` (`{digest}`) returns assertion options; `POST /chat/<id>/cards/<card>/approve` (`{digest, credential}`) re-checks that the card is pending, that the digest the page saw equals the card's digest and the digest of the card's input as it is now, rebuilds the summary and calls `require_fresh_assertion()`. Only then does the callback return `PermissionResultAllow(updated_input=<the approved input>)`, never with `updated_permissions`, so an approval covers that one call. Deny: `POST /chat/<id>/cards/<card>/deny`, no passkey. Ten minutes without an answer is a deny, and so is a stop, a crash or the end of the turn.
+- **Streaming:** `GET /chat/<id>/stream` is Server-Sent Events (`text/event-stream`), with no side effects: it replays the stored events after `Last-Event-ID` (or `?after=`) and then the live ones, and closes with an `idle` event when no turn is running. Each event is one `data:` line of JSON with `<`, `>` and `&` escaped as `\u003c` and so on; JSON escapes newlines, so no text can end an event or add a field. The browser renders every value with `textContent` (`static/chat.js`, no inline code, CSP unchanged).
+- **Messages:** `POST /chat/new` (form: `kind` = `blank`, `task` or `handoff`, and its `task` or `item`) creates a conversation and, for a task or a handoff, sends its fixed first message. `POST /chat/<id>/message` (form: `text`, `max_turns`) starts a turn. One turn at a time per conversation (409 otherwise) and at most two running across the app. `POST /chat/<id>/stop` denies any open card and interrupts; a turn that hasn't ended ten seconds later is cancelled.
+- **Storage:** `~/lcs-private/command-centre/chats/<id>.jsonl` (id: 16 hex characters; files 600, directory 700): a `meta` line, then one line per event (`user`, `text`, `tool`, `tool_result`, `card`, `card_done`, `result`, `error`, `stopped`). A card still open when the app stopped reads as expired. `GET /chat` lists conversations (newest first); `GET /chat/<id>` shows one.
+- **Costs and limits:** the result event carries turns, `total_cost_usd` and token usage as the SDK reports them; the page shows them under each reply and a total per conversation.
+- **Quick prompts:** "What's owed this week?", "Summarise today", "Why is <ref> on the hand check?" (a picker of the refs on the hand check), "Draft a reply to…". They fill the text box only.
+- **Handoffs** (the Books import approval from phase 3): shown as "Run approved: Books import" while `approvals/books-import-2026.json` exists and the dry run's sha256 still matches the record. It starts a chat with a fixed instruction built by the server (the phase-3 `BOOKS_INSTRUCTION`, the hash to check first, and the Books guard's rules), never text read from the record. It can be started once (`handoffs/<item>.json` records the conversation); after that the button links to that chat.
+- **Run a scheduled task now:** a button per task in `~/.claude/scheduled-tasks/` starts a chat whose first message is that task's `SKILL.md` prompt (the body after the frontmatter; a regular file owned by the owner, no symlink, at most 64 KB), after one line saying it is a manual run. Differences from the scheduled run, shown by the button: it runs under the project settings only, anything outside the allowlist becomes a card, the scheduler's own run history doesn't record it, and it should not be started near a scheduled run (the enquiry assistant runs at :07 past every other hour, 08:00 to 20:00).
+- **Audit:** `chat-start` (with the kind and the first message's sha256), `chat-tool` (`ok` with the passkey, `denied`, `timed out`, `refused: <reason>` for a failed passkey or a changed input, `expired` at the end of a turn) and `chat-stop`, in the phase-3 hash-chained `audit.jsonl`.
+- **Trust:** sending a chat message needs the owner's Tailscale identity, the Host check and a same-origin POST, not a passkey, like the to-do tick. What a message can make Claude do without a card is exactly what the allowlist lets a terminal session do; a process on the Mac that forges the headers could already run `claude` in the repo itself (the accepted risk in the threat model).
+
+**Files:**
+- `command_centre/chat.py` (new): options and their check, the card store and callback, the SSE encoder, the conversation store, `ChatManager` (sessions, turns, stop), task prompts and handoffs.
+- `command_centre/app.py`: the `/chat` routes; Chat in the navigation; the Activity filter learns the chat names.
+- `command_centre/templates/chat.html`, `chat_list.html`; `static/chat.js`; `static/app.css`.
+- `tests/test_cc_chat.py` (new; a fake SDK client emitting real SDK message types and permission requests), `tests/test_cc_security.py` (the pins), `scripts/requirements.txt`.
+- Optional live smoke test: `tests/test_cc_chat.py` runs one real turn only with `CC_LIVE_CHAT=1`; skipped otherwise.
+
+### Task 4.1: The options and the card callback, test-first
+
+- [ ] Tests: `build_options()` has `setting_sources` with `project`, `permission_mode == "default"`, the repo `cwd` and the callback; `check_options()` refuses bypass and every other way round; the SDK's own argv has no `bypassPermissions` and no `dangerously`; no string `bypassPermissions` is passed anywhere in `command_centre/` (AST check).
+- [ ] Tests: a card is approved only with a fresh assertion for that card's summary; a stale, replayed or other card's assertion is refused; a digest the page didn't see, or an input changed after the card was shown, is refused and nothing runs; deny needs no passkey; ten minutes (a module variable in the tests) is a deny; the allow returns exactly the approved input and no permission updates.
+
+### Task 4.2: Streaming, storage, stop
+
+- [ ] Tests: events stored mode 600 in a mode-700 folder and replayed after `Last-Event-ID`; the SSE body escapes `<`, `>` and `&` and a newline in the text stays inside one `data:` line; GET has no side effects; stop denies an open card, interrupts, and is audited; a turn that raises leaves the other pages working; one turn per conversation.
+
+### Task 4.3: Quick prompts, handoffs, run a task now
+
+- [ ] Tests: the quick prompts are on the page; the handoff shows only while the hash matches, starts once with the fixed instruction; a task's prompt is read from its `SKILL.md` body, a symlinked or oversized one is refused.
+
+### Task 4.4: Routes, UI, visual check, PR
+
+- [ ] Tests: every `/chat` route is behind the loopback, Host and identity checks; POSTs are same-origin; no inline script or handler in any template; replies rendered as text.
+- [ ] Fake data and a fake SDK on `127.0.0.1:8794` with the dev login, at 390px and 1280px; stop the server.
+- [ ] Every `tests/test_*.py`; commit; PR; don't merge.
 
 ## Phase 5: PWA, push, drafts inbox, quote calculator, backups (expand before building)
 
