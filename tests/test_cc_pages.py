@@ -252,6 +252,24 @@ def test_bank_errors_mean_not_checked_not_a_crash():
     assert lede_count(out) == "2" and "at least 2 things need you." in plain(out)
 
 
+def test_health_starling_check_retries_a_failure_after_a_minute():
+    clock = Clock()
+    bank = FakeBank(fail=urllib.error.URLError("down"))
+    c, _ = make(bank, clock)
+    assert "account read failed (URLError) at 09:30; retrying" in page(c, "/health")
+    n = bank.calls
+    clock.t += 30
+    page(c, "/health")
+    assert bank.calls == n
+    clock.t += 31
+    bank.fail = None
+    assert "account readable" in page(c, "/health") and bank.calls > n
+    n = bank.calls
+    clock.t += 300
+    page(c, "/health")
+    assert bank.calls == n  # a good check is kept for ten minutes
+
+
 def test_no_bank_client_is_a_setting_not_a_failure():
     c, _ = make(None)
     out = page(c, "/")

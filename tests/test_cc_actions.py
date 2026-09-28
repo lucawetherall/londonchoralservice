@@ -991,6 +991,60 @@ class GitCalls:
         actions.GIT_RUNNER = self.saved
 
 
+def test_pages_read_the_proposals_without_touching_the_mirror():
+    """No GET has a side effect: the pages list the proposals without making, rewriting or fetching the mirror, and
+    run git in it only when it is exactly as ensure_mirror() left it. The refresh job (tidy_mirror) and the Ads
+    actions put it back."""
+    c, a, _ = setup()
+    clear_applied()
+    with AdsRepo() as repo:
+        proposal(repo=repo)
+        # never checked against GitHub: listed, no mirror made, no git run
+        with GitCalls() as g:
+            page(c, "/marketing")
+            page(c, "/")
+        assert g.calls == [] and not actions.mirror_dir().exists()
+        assert {p["id"]: p for p in actions.list_proposals()}["neg-2026-10"]["problem"] is None
+        assert actions.tidy_mirror() == "none" and not actions.mirror_dir().exists()  # the job never makes one
+        # checked once (validate fetches into the mirror): a page reads it as it is and rewrites nothing
+        actions.ADS_VALIDATE.validate({"proposal": "neg-2026-10"})
+        assert actions.mirror_intact()
+        cfg = actions.mirror_dir() / "config"
+        before = (cfg.read_bytes(), cfg.stat().st_mtime_ns)
+        with GitCalls() as g:
+            page(c, "/marketing")
+        assert g.calls and (cfg.read_bytes(), cfg.stat().st_mtime_ns) == before
+        assert not any(word in argv for argv, _ in g.calls for word in ("init", "fetch", "config", "gc"))
+        # a config changed behind the app's back: the page runs no git at all and leaves the file alone
+        cfg.write_text(actions.MIRROR_CONFIG + "[log]\n\tshowSignature = true\n")
+        assert not actions.mirror_intact()
+        with GitCalls() as g:
+            page(c, "/marketing")
+            listed = {p["id"]: p for p in actions.list_proposals()}
+        assert g.calls == [] and "showSignature" in cfg.read_text()
+        assert listed["neg-2026-10"]["problem"] is None  # checked against GitHub when the owner opens it
+        assert actions.tidy_mirror() == "tidied" and actions.mirror_intact()
+        # an alternates file: the same
+        alt = actions.mirror_dir() / "objects" / "info" / "alternates"
+        alt.parent.mkdir(exist_ok=True)
+        alt.write_text("/tmp/elsewhere\n")
+        assert not actions.mirror_intact()
+        with GitCalls() as g:
+            page(c, "/")
+        assert g.calls == [] and alt.exists()
+        # the job's tidy never waits on (or runs beside) an action
+        assert actions._RUN_LOCK.acquire(timeout=1)
+        try:
+            assert actions.tidy_mirror() == "busy" and alt.exists()
+        finally:
+            actions._RUN_LOCK.release()
+        assert actions.tidy_mirror() == "tidied" and not alt.exists() and actions.mirror_intact()
+        os.chmod(actions.mirror_dir(), 0o755)  # a loosened folder isn't the app's own either
+        assert not actions.mirror_intact()
+        actions.ensure_mirror()
+        assert actions.mirror_intact()
+
+
 def test_poc3_every_git_call_is_hardened_and_runs_in_the_mirror():
     """Every git call: GIT_CONFIG_GLOBAL=/dev/null, GIT_CONFIG_NOSYSTEM=1, none of the caller's GIT_*, fsmonitor and
     hooks off, in the app's own mirror (never the working repo), and never `git archive`."""

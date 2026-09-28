@@ -317,8 +317,61 @@ def test_unsubscribe_needs_no_passkey_and_removes_the_device():
     assert post(c, "/actions/push-unsubscribe/run", {"input": {"id": sid}}, origin=None).status_code == 403
 
 
+def test_device_page_never_makes_the_key():
+    c, a, _ = setup()
+    push.forget_key()
+    push.vapid_file().unlink(missing_ok=True)
+    page = c.get("/device", headers=HEADERS).text
+    assert not push.vapid_file().exists()  # a GET writes nothing
+    assert 'data-key=""' in page and "Not set up yet" in page
+    assert push.public_key_b64(create=False) is None and not push.vapid_file().exists()
+    push.private_key()  # what the service does when it starts
+    page = c.get("/device", headers=HEADERS).text
+    assert f'data-key="{push.public_key_b64(create=False)}"' in page and "Not set up yet" not in page
+
+
+def test_the_service_makes_the_key_at_start_up():
+    fake = FakeSecurity()
+    saved = push.SECURITY_RUNNER, push.watch, os.environ.pop("CC_VAPID_STORE")
+
+    async def no_watch(stop=None, poll=None):
+        return None
+
+    push.SECURITY_RUNNER, push.watch = fake, no_watch
+    os.environ["CC_NO_REFRESH_JOB"] = "1"
+    push.forget_key()
+    try:
+        fixtures()
+        app = create_app(client_factory=lambda: None, checkout=lambda: "main", watch=True)
+        assert fake.stored is None and fake.calls == []  # nothing before start-up
+        with TestClient(app, base_url=ORIGIN, client=("127.0.0.1", 50000)):
+            pass
+        assert fake.stored and len(fake.stored) == 64
+        assert sum(1 for argv, _ in fake.calls if argv[1] == "-i") == 1
+    finally:
+        push.SECURITY_RUNNER, push.watch = saved[0], saved[1]
+        os.environ["CC_VAPID_STORE"] = saved[2]
+        os.environ.pop("CC_NO_REFRESH_JOB", None)
+        push.forget_key()
+
+
+def test_save_state_leaves_no_temp_file_when_it_fails():
+    fixtures()
+    d = auth.config_dir()
+    try:
+        push.save_state({"bad": object()})  # json can't write it
+    except TypeError:
+        pass
+    else:
+        raise AssertionError("save_state accepted an unwritable value")
+    assert not [p.name for p in d.iterdir() if p.name.endswith(".tmp")]
+    push.save_state({"ok": 1})
+    assert push.load_state() == {"ok": 1} and not [p for p in d.iterdir() if p.name.endswith(".tmp")]
+
+
 def test_device_page_shows_the_key_and_devices_without_secrets():
     c, a, _ = setup()
+    push.private_key()  # made at the service's start-up
     p = post(c, "/actions/push-subscribe/preview", {"input": sub_input()}).json()
     post(c, "/actions/push-subscribe/run", {"input": sub_input(), "credential": a.assert_(p["options"])})
     page = c.get("/device", headers=HEADERS).text
