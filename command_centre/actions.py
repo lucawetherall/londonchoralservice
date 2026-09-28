@@ -3,7 +3,7 @@ preview that builds the summary on the server (auth.Action), and either a fixed 
 write (LocalAction). Each run is logged, append-only, in ~/lcs-private/command-centre/audit.jsonl (mode 600).
 
 Binding rules (docs/superpowers/specs/2026-09-28-command-centre-design.md, and the plan's phase 3):
-- Every action except `todo-tick`, `refresh-data`, `push-unsubscribe` and `backup-now` (low risk: they write only
+- Every action except `todo-tick`, `draft-mark`, `refresh-data`, `push-unsubscribe` and `backup-now` (low risk: they write only
   the app's own files or an encrypted copy, and still need the same-origin POST) needs a fresh passkey assertion over a challenge bound to the
   summary that preview() writes from the validated input. The summary ends with the exact command ("Runs: …"), so
   the owner's Face ID or Touch ID approves that command and nothing else. run_action() rebuilds the summary from
@@ -1548,3 +1548,39 @@ _LOCKS.update(push=threading.Lock(), backup=threading.Lock())  # neither waits o
 for _a in (PUSH_SUBSCRIBE, PUSH_UNSUBSCRIBE, BACKUP_NOW):
     REGISTRY[_a.name] = _a
     ROUTED.add(_a.name)
+
+
+# ---------------------------------------------------------------- phase 6: mark a draft (no passkey)
+
+
+def _draft_validate(raw):
+    from . import drafts  # imported late, like push
+    f = fields(raw, ("key", "state"))
+    if not drafts.KEY_RE.fullmatch(f["key"]):
+        raise ActionError("unknown draft")
+    if f["state"] not in drafts.STATES:
+        raise ActionError("state must be sent, discarded or open")
+    found = drafts.find(f["key"])
+    if found is None:
+        raise ActionError("unknown draft")
+    return {"key": f["key"], "state": f["state"], "draft": found, "input": {"key": f["key"], "state": f["state"]}}
+
+
+def _draft_preview(c):
+    d = c["draft"]
+    what = {"sent": "as sent", "discarded": "as discarded", "open": "as open again"}[c["state"]]
+    return (f"Mark the {d['kind']} draft to {d['first_name']} ({d['created']}) {what}. A local record only: nothing "
+            f"is sent or deleted in Zoho.\nWrites: ~/lcs-private/command-centre/drafts-marks.json")[:auth.MAX_SUMMARY]
+
+
+def _draft_run(c, who=None):
+    from . import drafts
+    drafts.set_mark(c["key"], c["state"])
+    return f"marked {c['state']}"
+
+
+DRAFT_MARK = LocalAction("draft-mark", _draft_validate, _draft_preview, _draft_run, passkey=False,
+                         title="Mark a draft", lock="drafts")
+_LOCKS["drafts"] = threading.Lock()  # a local record: it never waits on (or blocks) a write
+REGISTRY[DRAFT_MARK.name] = DRAFT_MARK
+ROUTED.add(DRAFT_MARK.name)

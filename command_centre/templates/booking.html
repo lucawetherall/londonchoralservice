@@ -19,6 +19,34 @@
 {{ m.failed(booking) }}
 {% endif %}
 
+<section class="card-group">
+  {% set mg = margin.value if margin.ok else none %}
+  <article class="card">
+    <h2>Margin</h2>
+    {{ m.failed(margin) }}
+    {% if mg %}
+    <div class="figures">
+      <div class="figure"><span class="figure-label">Fee</span><span class="figure-value small">{{ mg.fee|gbp }}</span></div>
+      <div class="figure"><span class="figure-label">Singer costs</span><span class="figure-value small">{{ mg.costs|gbp }}</span></div>
+      <div class="figure"><span class="figure-label">Margin</span><span class="figure-value small">{{ mg.margin|gbp }}</span></div>
+      <div class="figure"><span class="figure-label">Margin %</span><span class="figure-value small">{% if mg.margin_pct is not none %}{{ "%.1f"|format(mg.margin_pct) }}%{% else %}–{% endif %}</span></div>
+    </div>
+    {% if mg.cancelled %}<p class="muted">Cancelled: left out of the season total.</p>{% endif %}
+    {% endif %}
+  </article>
+
+  {% set sl = singer_list.value if singer_list.ok else [] %}
+  <article class="card">
+    <h2>Singers</h2>
+    {{ m.failed(singer_list) }}
+    {% if sl %}
+    <ul class="lines">
+      {% for s in sl %}<li>{{ s.first_name }} · {{ s.amount|gbp }} · {% if s.paid_on %}paid {{ s.paid_on|day }}{% else %}unpaid{% endif %}</li>{% endfor %}
+    </ul>
+    {% elif singer_list.ok %}<p class="muted">No singer invoices linked yet (<span class="mono">singer_invoices.py link</span>, or the automatic link when an invoice's date matches one booking).</p>{% endif %}
+  </article>
+</section>
+
 <section class="card">
   <h2>Resolve a hand check</h2>
   <p class="muted">Adds your note (paid in full, deposit kept, refunded and so on) to this booking's ledger notes, after Face ID or Touch ID.</p>
@@ -28,10 +56,14 @@
 <section class="card">
   <h2>Timeline</h2>
   {% for name, p in parts.items() %}
-  {% if not p.ok %}<p class="fail">{{ {"ledger": "Ledger", "enquiries": "Enquiries", "singers": "Singer invoices"}[name] }}: couldn't load ({{ p.error }})</p>{% endif %}
+  {% if not p.ok %}<p class="fail">{{ {"ledger": "Ledger", "enquiries": "Enquiries", "singers": "Singer invoices", "books": "Books"}[name] }}: couldn't load ({{ p.error }})</p>{% endif %}
   {% endfor %}
   {% if timeline %}{{ m.timeline(timeline) }}{% else %}<p class="muted">Nothing to show yet.</p>{% endif %}
-  {% if parts.singers.ok and not parts.singers.value %}<p class="muted">Singer invoices: none linked (the singer store doesn't record event dates yet).</p>{% endif %}
-  <p class="muted">Notes are shown with emails and surnames masked. Links to the Zoho thread and the Books invoice arrive with the Books read client.</p>
+  {% if parts.books.ok %}
+  {% if books.ok and books.value is none %}<p class="muted">Books not synced yet.</p>
+  {% elif not parts.books.value %}<p class="muted">Not in Books: no Books invoice numbered {{ ref }}.</p>
+  {% else %}<p class="muted">Books as of {{ books.value.generated_at[:16]|replace("T", " ") }}, matched by invoice number.</p>{% endif %}
+  {% endif %}
+  <p class="muted">Notes are shown with emails and surnames masked.</p>
 </section>
 {% endblock %}

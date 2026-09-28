@@ -6,7 +6,9 @@ Phase 1: Today, Money and Passkeys pages, the passkey endpoints and /healthz. Ph
 pages (Bookings, Enquiries, Singers, Marketing, Calendar, Search, Reports, Health, To-do, Exports, More) and
 one local write, POST /todo/tick (actions.REGISTRY["todo-tick"], no passkey: see actions.py). Phase 3: the
 actions (POST /actions/<name>/preview, then POST /actions/<name>/run with a passkey assertion bound to the
-server-built summary; see actions.py) and the Activity page. No GET route has a side effect. See
+server-built summary; see actions.py) and the Activity page. Phase 6: Books and margins on the pages, the drafts
+inbox (/drafts, marked through the draft-mark action), the quote calculator (/quote, a GET form) and the
+background refresh job (jobs.py, the service only). No GET route has a side effect. See
 docs/superpowers/specs/2026-09-28-command-centre-design.md and docs/superpowers/plans/2026-09-28-command-centre.md.
 """
 
@@ -28,7 +30,7 @@ from starlette.responses import HTMLResponse, JSONResponse, PlainTextResponse, R
 from starlette.routing import Mount, Route
 from starlette.staticfiles import StaticFiles
 
-from . import actions, auth, data, models, push, pwa
+from . import actions, auth, data, jobs, models, push, pwa
 
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parent
@@ -36,15 +38,15 @@ LOOPBACK = "127.0.0.1"
 log = logging.getLogger("command_centre")
 
 NAV = [("Today", "/"), ("Bookings", "/bookings"), ("Enquiries", "/enquiries"), ("Money", "/money"),
-       ("Singers", "/singers"), ("Marketing", "/marketing"), ("Calendar", "/calendar"), ("Search", "/search"),
+       ("Drafts", "/drafts"), ("Quote", "/quote"), ("Singers", "/singers"), ("Marketing", "/marketing"), ("Calendar", "/calendar"), ("Search", "/search"),
        ("Reports", "/reports"), ("Health", "/health"), ("To-do", "/todo"), ("Exports", "/exports"),
        ("Activity", "/activity")]
 HAND_CHOICES = [(k, v[0]) for k, v in actions.HAND_CHOICES.items()]
 ACTIVITY_RESULTS = ("ok", "failed", "refused", "started")
 JSON_MAX = 16384  # bytes of an action request (a passkey assertion is about 1 KB)
 TABS = [("Today", "/"), ("Bookings", "/bookings"), ("Enquiries", "/enquiries"), ("Money", "/money")]
-SOON = []  # every page up to phase 4 is live; drafts and the quote calculator come later (no in-app chat: see
-           # docs/superpowers/specs/2026-09-28-command-centre-design.md, binding rule 6)
+SOON = []  # every page is live (no in-app chat: see docs/superpowers/specs/2026-09-28-command-centre-design.md,
+           # binding rule 6)
 FORM_MAX = 4096  # bytes of a urlencoded POST body
 HTMX_CONFIG = json.dumps({"includeIndicatorStyles": False, "allowEval": False, "allowScriptTags": False,
                           "selfRequestsOnly": True, "historyCacheSize": 0}, separators=(",", ":"))
@@ -146,12 +148,13 @@ class CommandCentre(Starlette):
 
 
 def create_app(client_factory=data.default_client, now=None, clock=None, passkeys=None, bind_host=None, port=None,
-               uds=None, checkout=None, watch=False):
+               uds=None, checkout=None, watch=False, refresh_runner=None):
     """The app. `bind_host`, `port` and `uds` say how __main__ serves it. CC_DEV_LOGIN is honoured only on
     127.0.0.1, on a port other than the service's 8765, and never on the Unix socket. `checkout` returns the
     serving checkout's branch (default: read from .git). `watch` starts the push watcher (push.watch) with the
     app: __main__ turns it on for the service only (port 8765 or the socket), never for a local check. The service
-    (watch, the socket or port 8765) refuses CC_VAPID_STORE=file."""
+    (watch, the socket or port 8765) refuses CC_VAPID_STORE=file. `watch` also starts the background refresh job
+    (jobs.RefreshJob), unless CC_NO_REFRESH_JOB is set; `refresh_runner` replaces its subprocess.run (tests)."""
     live = watch or bool(uds) or (port is not None and int(port) == auth.SERVICE_PORT)
     if live and push.file_store():
         raise SystemExit("CC_VAPID_STORE=file is for the tests and a local check only: unset it for the service "
@@ -319,6 +322,15 @@ def create_app(client_factory=data.default_client, now=None, clock=None, passkey
             w.writerow([models.csv_safe(v) for v in r])
         return Response(out.getvalue().encode("utf-8"), media_type="text/csv; charset=utf-8",
                         headers={"Content-Disposition": f'attachment; filename="{filename}"'})
+
+    async def drafts_page(request):
+        return render(request, "drafts.html", title="Drafts", **reader.drafts_page())
+
+    async def quote_page(request):
+        q = request.query_params
+        return render(request, "quote.html", title="Quote calculator",
+                      **reader.quote_page(q.get("list", "standard"), q.get("package", "")[:40],
+                                          q.get("organist") == "yes", q.get("travel") == "yes", q.get("day") == "yes"))
 
     async def more(request):
         return render(request, "more.html", title="More", stamp=data.stamp(reader.now()))
@@ -488,6 +500,8 @@ def create_app(client_factory=data.default_client, now=None, clock=None, passkey
         Route("/exports", exports),
         Route("/exports/{name}.csv", export),
         Route("/more", more),
+        Route("/drafts", drafts_page),
+        Route("/quote", quote_page),
         Route("/manifest.webmanifest", manifest),
         Route("/sw.js", service_worker),
         Route("/device", device),
@@ -501,6 +515,9 @@ def create_app(client_factory=data.default_client, now=None, clock=None, passkey
         Mount("/static", app=StaticFiles(directory=HERE / "static"), name="static"),
     ]
     lifespan = None
+    refresh_job = None
+    if watch and not jobs.disabled():
+        refresh_job = jobs.RefreshJob(clear=reader.clear_caches, **({"runner": refresh_runner} if refresh_runner else {}))
     if watch:
         import asyncio
         import contextlib
@@ -508,12 +525,15 @@ def create_app(client_factory=data.default_client, now=None, clock=None, passkey
         @contextlib.asynccontextmanager
         async def lifespan(app):
             stop = asyncio.Event()
-            task = asyncio.create_task(push.watch(stop))
+            tasks = [asyncio.create_task(push.watch(stop))]
+            if refresh_job is not None:
+                tasks.append(asyncio.create_task(jobs.loop(refresh_job, stop)))
             try:
                 yield
             finally:
                 stop.set()
-                await task
+                for task in tasks:
+                    await task
 
     app = CommandCentre(
         routes=routes, lifespan=lifespan,
@@ -522,4 +542,5 @@ def create_app(client_factory=data.default_client, now=None, clock=None, passkey
     app.state.dev_login = dev_login
     app.state.passkeys = keys
     app.state.checkout_warning = warning
+    app.state.refresh_job = refresh_job
     return app

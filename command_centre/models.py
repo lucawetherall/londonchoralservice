@@ -201,18 +201,133 @@ def booking_enquiries(ref, enquiries, cache, today):
             for x in enquiry_items(r, cache, today)]
 
 
-def booking_singers(event_date, singer_rows):
-    """Singer invoices linked to a booking by the store's event_date field, when the store has one."""
-    if not event_date:
-        return []
+def linked_singer_rows(ref, event_date, singer_rows):
+    """The singer invoices linked to a booking: the store's booking_ref (singer_invoices.py link, or the automatic
+    link at scan), or an event_date column when a store has one. Withdrawn invoices are left out."""
     out = []
     for r in singer_rows:
-        if to_date(r.get("event_date")) == event_date and not si.is_withdrawn(r):
-            paid = f", paid {r['paid_on']}" if r.get("paid_on") else ", unpaid"
-            out.append(item(si.received_date(r), "singer",
-                            f"Singer invoice from {si.first_name(r.get('singer_name'))}: "
-                            f"£{lm.money(r.get('amount_gbp')):,.2f}{paid}"))
+        if si.is_withdrawn(r):
+            continue
+        by_ref = bool(ref) and (r.get("booking_ref") or "").strip() == ref
+        by_date = bool(event_date) and to_date(r.get("event_date")) == event_date
+        if by_ref or by_date:
+            out.append(r)
     return out
+
+
+def booking_singers(event_date, singer_rows, ref=None):
+    """The timeline items for the singer invoices linked to a booking (linked_singer_rows)."""
+    out = []
+    for r in linked_singer_rows(ref, event_date, singer_rows):
+        paid = f", paid {r['paid_on']}" if r.get("paid_on") else ", unpaid"
+        out.append(item(si.received_date(r), "singer",
+                        f"Singer invoice from {si.first_name(r.get('singer_name'))}: "
+                        f"£{lm.money(r.get('amount_gbp')):,.2f}{paid}"))
+    return out
+
+
+def booking_singer_list(ref, event_date, singer_rows):
+    """[{first_name, amount, paid_on}] for the booking's linked singers, first names only."""
+    return [{"first_name": si.first_name(r.get("singer_name")), "amount": lm.money(r.get("amount_gbp")),
+             "paid_on": (r.get("paid_on") or "").strip()}
+            for r in sorted(linked_singer_rows(ref, event_date, singer_rows), key=lambda r: r.get("received") or "")]
+
+
+# ---------------------------------------------------------------- Books (R17) and margins (R18)
+
+
+BOOKS_UNPAID = {"sent", "viewed", "unpaid", "overdue"}
+STARLING_MATCHED = {"DEPOSIT_SEEN", "PAID_IN_FULL"}
+DRAFT_DAYS = 2  # Appendix A step 6g: a Books draft more than 2 days old
+
+
+def books_summary(cache):
+    """The Money page's Books panel from books.json: totals, draft and overdue invoice numbers, and when it was
+    synced (an aware datetime, or None when the stamp is unreadable)."""
+    try:
+        when = datetime.datetime.fromisoformat(str(cache.get("generated_at")))
+    except ValueError:
+        when = None
+    invoices = [i for i in cache.get("invoices") or [] if isinstance(i, dict)]
+    return {"totals": cache.get("totals") or {}, "generated_at": when,
+            "drafts": sorted(str(i.get("number", "")) for i in invoices if i.get("status") == "draft"),
+            "overdue": sorted(str(i.get("number", "")) for i in invoices
+                              if i.get("status") == "overdue" and float(i.get("balance") or 0) > 0)}
+
+
+def books_invoice(ref, invoices):
+    """The Books invoice whose number is this booking ref (check_payments.norm_ref on both), or None."""
+    key = cp.norm_ref(ref)
+    return next((i for i in invoices or [] if isinstance(i, dict) and key and cp.norm_ref(str(i.get("number"))) == key),
+                None)
+
+
+def books_timeline(ref, invoices):
+    """The booking's Books invoice as a timeline item (status, total and balance), or [] when it isn't in Books."""
+    i = books_invoice(ref, invoices)
+    if i is None:
+        return []
+    status = str(i.get("status") or "?")
+    tone = "bad" if status == "overdue" else "warn" if status == "draft" else "ok" if status == "paid" else ""
+    return [item(to_date(i.get("date")), "books",
+                 f"Books invoice {i.get('number')}: {status}, £{float(i.get('total') or 0):,.2f}"
+                 f" (balance £{float(i.get('balance') or 0):,.2f})", tone=tone)]
+
+
+def books_flags(invoices, ledger_rows, bookings, today, bank_checked):
+    """The Appendix A step 6g disagreements, for Today: [{ref, text, tone}].
+
+    - a Books draft more than 2 days old: "Books draft not sent (>2 days)";
+    - Books paid, but Starling hasn't matched the full fee (the state isn't PAID_IN_FULL and the notes have no
+      "paid in full" date): "Books paid, Starling not matched";
+    - Starling matched a payment (DEPOSIT_SEEN, PAID_IN_FULL, or a "paid in full" note) but Books shows the invoice
+      unpaid or overdue with nothing paid: "Starling matched, Books unpaid"; or part-paid when Starling says paid in
+      full: "Starling paid in full, Books part-paid".
+    The two Starling comparisons are skipped when the bank wasn't checked, as 6g skips them."""
+    rows = {cp.norm_ref(r.get("booking_ref")): r for r in ledger_rows if (r.get("booking_ref") or "").strip()}
+    states = {cp.norm_ref(b.get("ref")): b.get("state") for b in bookings}
+    out = []
+    for i in invoices or []:
+        if not isinstance(i, dict):
+            continue
+        number = str(i.get("number") or "")
+        key = cp.norm_ref(number)
+        status = str(i.get("status") or "")
+        made = to_date(i.get("date"))
+        if status == "draft":
+            if made and (today - made).days > DRAFT_DAYS:
+                out.append({"ref": number, "text": "Books draft not sent (>2 days)", "tone": "warn"})
+            continue
+        if not bank_checked or key not in rows:
+            continue
+        state = states.get(key)
+        full = state == "PAID_IN_FULL" or bool(cp.closed_on(rows[key]))
+        matched = full or state in STARLING_MATCHED
+        total, balance = float(i.get("total") or 0), float(i.get("balance") or 0)
+        if status == "paid" and not full:
+            out.append({"ref": number, "text": "Books paid, Starling not matched", "tone": "bad"})
+        elif status in BOOKS_UNPAID and matched and total > 0 and balance >= total - 0.005:
+            out.append({"ref": number, "text": "Starling matched, Books unpaid", "tone": "warn"})
+        elif status == "partially_paid" and full:
+            out.append({"ref": number, "text": "Starling paid in full, Books part-paid", "tone": "warn"})
+    return sorted(out, key=lambda f: (f["ref"], f["text"]))
+
+
+def margin_map(margins):
+    """singer_invoices.margins() keyed by booking ref."""
+    return {m["ref"]: m for m in margins}
+
+
+def season_margin(margins, start):
+    """The season's totals from `start` (a date): bookings with an event date on or after it, cancelled ones left
+    out. {fee, costs, margin, margin_pct, count, start}."""
+    rows = [m for m in margins if not m["cancelled"] and to_date(m.get("event_date")) and
+            to_date(m["event_date"]) >= start]
+    fee = round(sum(m["fee"] for m in rows), 2)
+    costs = round(sum(m["costs"] for m in rows), 2)
+    margin = round(fee - costs, 2)
+    return {"fee": fee, "costs": costs, "margin": margin, "margin_pct": round(100 * margin / fee, 1) if fee else None,
+            "count": len(rows), "start": start}
 
 
 def campaign_for(r, cache):

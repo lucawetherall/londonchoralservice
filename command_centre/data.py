@@ -26,7 +26,7 @@ REPO = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO / "scripts" / "reports"))
 import dashboard as dash  # noqa: E402  its builders are the read functions this reuses
 
-from . import models, sources, todo  # noqa: E402  phase 2's builders and readers
+from . import books_cache, drafts, models, quote, sources, todo  # noqa: E402  the builders and readers
 
 cp, lm, mr, si, pl = dash.cp, dash.lm, dash.mr, dash.si, dash.pl
 LONDON = ZoneInfo("Europe/London")
@@ -145,9 +145,14 @@ class Data:
         horizon = (today + datetime.timedelta(days=WEEK_DAYS)).isoformat()
         week = self.panel("week", lambda u: [x for x in u if x["date"] <= horizon], upcoming)
         later = self.panel("later", lambda u: [x for x in u if x["date"] > horizon], upcoming)
+        books = self.books()
+        flags = self.panel("books_flags", lambda c, rows, b: None if c is None else models.books_flags(
+            c["invoices"], rows, models.booking_rows(rows, b["assessments"], b["bank_checked"], today), today,
+            b["bank_checked"]), books, ledger, bank)
         count = sum(len(p.value) for p in (hand, singers) if p.ok)  # a bank warning is one of the singer invoices
+        count += len(flags.value or []) if flags.ok else 0
         return {"stamp": stamp(now), "today": today, "warnings": warnings, "hand": hand, "singers": singers,
-                "week": week, "later": later, "bank": bank, "attention": count}
+                "week": week, "later": later, "bank": bank, "attention": count, "books_flags": flags}
 
     def money_page(self):
         now, today, ledger, bank, store, singers, hand = self._common()
@@ -155,8 +160,44 @@ class Data:
                                                                            today), bank, store)
         balance = self.panel("balance", lambda b: b["balance"], bank)
         total = self.panel("singer_total", lambda s: round(sum(x["amount"] for x in s), 2), singers)
+        books = self.books()
+        summary = self.panel("books_summary", lambda c: models.books_summary(c) if c else None, books)
+        margins = self.margins(ledger, store)
+        season = self.panel("season_margin", lambda m: models.season_margin(m, dash.season_start()), margins)
         return {"stamp": stamp(now), "today": today, "bank": bank, "balance": balance, "lines": lines, "hand": hand,
-                "singers": singers, "singer_total": total}
+                "singers": singers, "singer_total": total, "books": summary, "season": season}
+
+    # ------------------------------------------------------------ phase 6: Books, margins, drafts, quotes
+
+    def books(self):
+        """books.json (cc_sync.py books), or a Panel with None when Books isn't synced yet."""
+        return self.panel("books", books_cache.books_cache)
+
+    def margins(self, ledger, store):
+        """singer_invoices.margins() over the ledger and the singer store the pages read."""
+        return self.panel("margins", lambda rows, s: si.margins(rows, s), ledger, store)
+
+    def drafts_page(self):
+        now = self.now()
+        found = self.panel("drafts", drafts.read_drafts)
+        marks = self.panel("draft_marks", drafts.load_marks)
+        box = self.panel("drafts_inbox", drafts.inbox, found, marks)
+        return {"stamp": stamp(now), "drafts": found, "inbox": box, "zoho_url": drafts.ZOHO_DRAFTS_URL}
+
+    def quote_page(self, list_key, package, organist, travel, premium_day):
+        now = self.now()
+        lists = self.panel("price_lists", quote.load_lists)
+        list_key = list_key if list_key in quote.LISTS else "standard"
+        result = None
+        if lists.ok and package:
+            try:
+                result = quote.calculate(lists.value, list_key, package, organist=organist, travel=travel,
+                                         premium_day=premium_day)
+            except ValueError:
+                result = None
+        return {"stamp": stamp(now), "lists": lists, "list_key": list_key, "labels": quote.LIST_LABELS,
+                "package": package if result else "", "organist": organist, "travel": travel,
+                "premium_day": premium_day, "result": result}
 
     # ------------------------------------------------------------ phase 2
 
@@ -180,8 +221,10 @@ class Data:
         state = state if state in STATES else ""
         ledger, bank, bookings = self._bookings(today)
         shown = self.panel("bookings_shown", lambda b: models.filter_bookings(b, when, state), bookings, keep=False)
+        store = self.panel("singer_store", lambda: lm.read_csv(si.STORE))
+        margins = self.panel("margins_by_ref", models.margin_map, self.margins(ledger, store))
         return {"stamp": stamp(now), "bank": bank, "bookings": shown, "when": when, "state": state,
-                "states": sorted(STATES.items(), key=lambda kv: kv[1][0])}
+                "states": sorted(STATES.items(), key=lambda kv: kv[1][0]), "margins": margins}
 
     def booking_page(self, ref):
         """None when the ref is malformed or not in the (readable) ledger: the route answers 404."""
@@ -201,12 +244,19 @@ class Data:
             "ledger": self.panel("tl_ledger", lambda b: models.ledger_timeline(row, b, today), booking, keep=False),
             "enquiries": self.panel("tl_enquiries", lambda rows, cache: models.booking_enquiries(ref, rows, cache, today),
                                     self._enquiries(), self._gclids(), keep=False),
-            "singers": self.panel("tl_singers", lambda b, rows: models.booking_singers(b["event_date"], rows),
+            "singers": self.panel("tl_singers", lambda b, rows: models.booking_singers(b["event_date"], rows, ref),
                                   booking, store, keep=False),
         }
+        books = self.books()
+        parts["books"] = self.panel("tl_books", lambda c: models.books_timeline(ref, c["invoices"]) if c else [],
+                                    books, keep=False)
         items = models.sort_items([i for p in parts.values() if p.ok for i in p.value])
+        singer_list = self.panel("booking_singer_list", lambda b, rows: models.booking_singer_list(
+            ref, b["event_date"], rows), booking, store, keep=False)
+        margin = self.panel("booking_margin", lambda m: next((x for x in m if x["ref"] == ref), None),
+                            self.margins(ledger, store), keep=False)
         return {"stamp": stamp(now), "ref": ref, "booking": booking, "bank": bank, "parts": parts, "timeline": items,
-                "ledger": ledger}
+                "ledger": ledger, "books": books, "singer_list": singer_list, "margin": margin}
 
     def enquiries_page(self):
         now = self.now()

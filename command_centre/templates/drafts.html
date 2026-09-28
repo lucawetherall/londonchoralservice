@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% import "macros.html" as m %}
+{% macro mark_forms(d) %}
+<div class="mark-forms">
+  {% if d.state == "open" %}
+  {{ m.action_button("draft-mark", "Mark sent", {"key": d.key, "state": "sent"}) }}
+  {{ m.action_button("draft-mark", "Discarded", {"key": d.key, "state": "discarded"}, quiet=true) }}
+  {% else %}
+  {{ m.action_button("draft-mark", "Reopen", {"key": d.key, "state": "open"}, quiet=true) }}
+  {% endif %}
+</div>
+{% endmacro %}
+{% block content %}
+<p class="lede">
+  <a class="button" href="{{ zoho_url }}" target="_blank" rel="noopener noreferrer">Open Zoho Mail drafts</a>
+  <span class="muted">Review and send each draft in Zoho. Marking one here is a record on the Mac only: nothing is sent or deleted.</span>
+</p>
+{{ m.failed(drafts) }}
+{{ m.failed(inbox) }}
+{% set box = inbox.value if inbox.ok else inbox.stale %}
+{% if drafts.ok and drafts.value is none %}
+<p class="muted">No drafts recorded yet. The reply drafter, the daily pass and the singer clerk record each draft they save (<span class="mono">cc_sync.py drafts-put</span>).</p>
+{% elif box %}
+<section class="card-group" aria-labelledby="open-drafts">
+  <h2 id="open-drafts" class="group-title">To review ({{ box.open|length }})</h2>
+  <article class="card card-wide">
+    {% if box.open %}
+    <table class="table">
+      <thead><tr><th>Saved</th><th>Kind</th><th>To</th><th>Subject</th><th>Mark</th></tr></thead>
+      <tbody>
+      {% for d in box.open %}
+        <tr>
+          <td data-label="Saved">{{ d.created|day }}</td>
+          <td data-label="Kind">{{ d.kind_words }}</td>
+          <td data-label="To">{{ d.first_name }}</td>
+          <td data-label="Subject">{{ d.subject|masked }}</td>
+          <td data-label="Mark">{{ mark_forms(d) }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    {% else %}<p class="muted">Nothing waiting: every recorded draft is marked.</p>{% endif %}
+    <p class="muted">Recorded by the assistant as it saves each draft{% if box.synced %}, last on {{ box.synced|when }}{% endif %}.</p>
+  </article>
+</section>
+{% if box.marked %}
+<details class="card">
+  <summary>Marked ({{ box.marked|length }})</summary>
+  <table class="table">
+    <thead><tr><th>Saved</th><th>Kind</th><th>To</th><th>Subject</th><th>State</th><th></th></tr></thead>
+    <tbody>
+    {% for d in box.marked %}
+      <tr>
+        <td data-label="Saved">{{ d.created|day }}</td>
+        <td data-label="Kind">{{ d.kind_words }}</td>
+        <td data-label="To">{{ d.first_name }}</td>
+        <td data-label="Subject">{{ d.subject|masked }}</td>
+        <td data-label="State"><span class="badge {{ 'ok' if d.state == 'sent' else '' }}">Marked {{ d.state }}</span>{% if d.marked_at %} <span class="muted">{{ d.marked_at|day }}</span>{% endif %}</td>
+        <td data-label="">{{ mark_forms(d) }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</details>
+{% endif %}
+{% endif %}
+{% endblock %}

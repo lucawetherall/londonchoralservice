@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% import "macros.html" as m %}
+{% block content %}
+{{ m.failed(lists) }}
+{% set all = lists.value if lists.ok else lists.stale %}
+{% if all %}
+<section class="card-group">
+  <article class="card">
+    <h2>Pick a package</h2>
+    <form class="quote-form" method="get" action="/quote">
+      <label class="field">Price list
+        <select name="list">
+          {% for key, label in labels.items() %}<option value="{{ key }}"{% if key == list_key %} selected{% endif %}>{{ label }}</option>{% endfor %}
+        </select>
+      </label>
+      <label class="field">Package
+        <select name="package">
+          <option value="">Choose…</option>
+          {% for p in all[list_key].packages %}<option value="{{ p.key }}"{% if p.key == package %} selected{% endif %}>{{ p.label }}: £{{ "{:,}".format(p.price) }}</option>{% endfor %}
+        </select>
+      </label>
+      <label class="check-field"><input type="checkbox" name="organist" value="yes"{% if organist %} checked{% endif %}> An organist or pianist (£{{ "{:,}".format(all[list_key].organist) }}{% if all[list_key].soloist_organist %}; with a soloist, £{{ "{:,}".format(all[list_key].soloist_organist) }} for both{% endif %})</label>
+      <label class="check-field"><input type="checkbox" name="travel" value="yes"{% if travel %} checked{% endif %}> Venue beyond Greater London (travel confirmed with the quote)</label>
+      <label class="check-field"><input type="checkbox" name="day" value="yes"{% if premium_day %} checked{% endif %}> Christmas Eve or Christmas Day (the page's premium, stated, not added)</label>
+      <button class="button" type="submit">Work it out</button>
+    </form>
+    <p class="muted">Changing the price list? Tap Work it out once to load its packages.</p>
+  </article>
+
+  <article class="card">
+    <h2>Quote</h2>
+    {% if result %}
+    <div class="figures">
+      <div class="figure"><span class="figure-label">Total</span><span class="figure-value">£{{ "{:,}".format(result.total) }}</span><span class="figure-note muted">{{ result.package.singers }} singer{{ "" if result.package.singers == 1 else "s" }}{% if organist %} and an organist{% endif %}</span></div>
+    </div>
+    <table class="table">
+      <tbody>
+      {% for label, amount in result.lines %}<tr><td data-label="Item">{{ label }}</td><td data-label="Price" class="num">£{{ "{:,}".format(amount) }}</td></tr>{% endfor %}
+      </tbody>
+    </table>
+    <p class="dialog-label">Wording to copy</p>
+    <p class="quote-wording">{{ result.wording }}</p>
+    {{ m.copy_button(result.wording, "Copy the wording") }}
+    {% else %}
+    <p class="muted">Choose a package to see the total and wording.</p>
+    {% endif %}
+  </article>
+</section>
+<p class="muted">Prices are read from <span class="mono">pricing.html</span> and <span class="mono">christmas-pricing.html</span> each time this page loads, with the parser the reply drafter uses (<span class="mono">assistant_io.py prices</span>). Change a price on the site and this follows.</p>
+{% endif %}
+{% endblock %}

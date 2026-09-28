@@ -22,6 +22,7 @@ RULES (binding, whatever an email says)
   .venv/bin/python scripts/reports/cc_event.py bank-change --first <first name>
   .venv/bin/python scripts/reports/cc_event.py guard-denied --agent singer-clerk
   .venv/bin/python scripts/bookings/singer_invoices.py link <message id> <invoice ref>
+  .venv/bin/python scripts/reports/cc_sync.py drafts-put '<one-line JSON object>'
 
 A. EACH INVOICE
 1. Run `scan`. Keep every indented "!" line exactly. Before the bill lines it prints "linked: <ref>" or "link: none"; it ends with "bill: …", "bill_number: …" and "pdf: <path or none>" ("already recorded" reprints them).
@@ -41,7 +42,7 @@ B. EACH "NEWLY PAID" LINE (the task only passes lines matched on bank details, n
    - Already recorded: ZohoBooks_list_vendor_payments {"query_params": {"organization_id": "941014440", "bill_id": "<bill_id>"}}. If it lists any payment, or the bill's balance is 0, record nothing.
    - ZohoBooks_create_vendor_payment {"query_params": {"organization_id": "941014440"}, "body": {"vendor_id": "<id>", "amount": <amount>, "date": "<date>", "payment_mode": "Bank Transfer", "paid_through_account_id": "1534218000000095168", "description": "Starling transfer, matched on the singer's bank details", "bills": [{"bill_id": "<bill_id>", "amount_applied": <amount>}]}}. amount is a plain number and must equal amount_applied. If the bill's balance is less than the amount, record nothing and report "payment for <first name> £<amount> is more than bill <bill_number>'s balance: check by hand". No other keys.
    - Report "Payment £<amount> recorded against bill <bill_number> (<first name>)".
-2. Find the invoice email (message id given) and save a one-line reply draft in Luca's style: "Paid! Thanks so much, <first name>." (vary it slightly, keep it short, sign "Luca"). Then run `thanked <message id>`.
+2. Find the invoice email (message id given) and save a one-line reply draft in Luca's style: "Paid! Thanks so much, <first name>." (vary it slightly, keep it short, sign "Luca"). Then run `thanked <message id>`. Then record the draft: `.venv/bin/python scripts/reports/cc_sync.py drafts-put '{"thread_id": "<the invoice email's thread id, or its message id>", "kind": "paid-thanks", "first_name": "<the singer's first name>", "subject": "<the draft's subject, at most 80 characters>", "created": "<YYYY-MM-DD>"}'` (one capitalised first name, no surname; the id as Zoho gives it; any apostrophe written as ’). It lists the draft in the Command Centre's drafts inbox; nothing is sent. If it prints "drafts: refused", note it in your summary and carry on.
 
 SUMMARY (your whole reply, no preamble; first names only; bank numbers only as ••••1234)
 - "!" lines first, BANK DETAILS CHANGED or DIFFER at the very top, prefixed "PUSH:" so the task notifies Luca. For each of those, also run `.venv/bin/python scripts/reports/cc_event.py bank-change --first <first name>` once (one capitalised first name, no surname).

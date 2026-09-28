@@ -144,6 +144,7 @@ class PriceParser(html.parser.HTMLParser):
         self.cell = None
         self.extras = []  # li lines with £
         self.notes = []  # premium sentences
+        self.rows = []  # [{table, heading, name, sub, price, detail}]: the same rows, structured (the quote calculator)
 
     def handle_starttag(self, tag, attrs):
         cls = dict(attrs).get("class") or ""
@@ -179,6 +180,7 @@ class PriceParser(html.parser.HTMLParser):
             if r["name"] and r["price"]:
                 line = r["name"] + (f" ({r['sub']})" if r["sub"] else "") + " — " + r["price"]
                 self.blocks[-1][1].append(line)
+                self.rows.append(dict(r, table=len(self.blocks) - 1, heading=self.blocks[-1][0]))
                 for s in sentences(r["detail"]):
                     if "£" in s:
                         self.blocks[-1][1].append("    · " + s)

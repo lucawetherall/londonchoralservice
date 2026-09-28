@@ -414,3 +414,15 @@ details summary { cursor: pointer; font-weight: 600; margin: 6px 0; min-height: 
 .offline-banner { background: var(--warn-bg); color: var(--warn); font-weight: 600; margin: 8px 16px; }
 .steps { margin: 0 0 8px; padding-left: 1.3rem; }
 .steps li { margin: 4px 0; overflow-wrap: anywhere; }
+
+/* phase 6: Books, margins, drafts and the quote calculator */
+.figure-note { font-size: .85rem; }
+.check-field { display: flex; align-items: flex-start; gap: 8px; margin: 10px 0; line-height: 1.35; }
+.check-field input { width: 20px; height: 20px; margin: 1px 0 0; flex: 0 0 auto; accent-color: var(--accent); }
+.quote-form .button { margin-top: 6px; }
+.quote-wording {
+  margin: 4px 0 10px; padding: 10px 12px; border-left: 3px solid var(--accent); background: var(--bg-alt);
+  border-radius: 0 8px 8px 0; font-family: var(--serif); font-size: 1.12rem; line-height: 1.45;
+}
+.mark-forms { display: flex; flex-wrap: wrap; gap: 0 4px; }
+.mark-forms .cc-action.inline { margin: 2px 4px 2px 0; }
