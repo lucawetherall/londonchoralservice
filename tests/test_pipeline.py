@@ -29,10 +29,10 @@ def enq(eid="1001", status="quoted", last=None, followups=0, event="2027-06-12",
     return r
 
 
-def booking(ref, event, notes, name="Ann Smith"):
+def booking(ref, event, notes, name="Ann Smith", occasion="Wedding"):
     r = {c: "" for c in LEDGER_COLS}
     r.update(booking_ref=ref, event_date=event, notes=notes, client_name=name, client_email="ann@example.com",
-             value_gbp="1150", invoice_date="2026-06-01")
+             value_gbp="1150", invoice_date="2026-06-01", occasion=occasion)
     return r
 
 
@@ -47,14 +47,19 @@ def test_first_followup_day_4_is_not_due_day_5_is():
     assert kinds([enq(last=days(5))]) == {"1001": "first"}
 
 
-def test_second_followup_day_14_is_not_due_day_15_is():
-    assert kinds([enq(last=days(14), followups=1)]) == {}
-    assert kinds([enq(last=days(15), followups=1)]) == {"1001": "second"}
+def test_second_followup_9_days_after_the_first_is_not_due_10_is():
+    # last_contact is the day of the first follow-up (`followed` moves it)
+    assert kinds([enq(last=days(9), followups=1)]) == {}
+    assert kinds([enq(last=days(10), followups=1)]) == {"1001": "second"}
 
 
-def test_mark_lost_day_24_is_not_due_day_25_is():
-    assert kinds([enq(last=days(24), followups=2)]) == {}
-    assert kinds([enq(last=days(25), followups=2)]) == {"1001": "mark_lost"}
+def test_mark_lost_9_days_after_the_second_is_not_due_10_is():
+    assert kinds([enq(last=days(9), followups=2)]) == {}
+    assert kinds([enq(last=days(10), followups=2)]) == {"1001": "mark_lost"}
+
+
+def test_timing_constants():
+    assert (pl.FIRST_AFTER, pl.SECOND_AFTER, pl.LOST_AFTER) == (5, 10, 10)
 
 
 def test_the_count_decides_the_kind_not_the_age():
@@ -87,6 +92,27 @@ def test_missing_last_contact_falls_back_to_first_seen():
     assert kinds([r]) == {"1001": "first"}
 
 
+def test_booked_enquiries_are_never_chased():
+    # a booking_ref means the client booked, whatever the status says
+    assert kinds([enq(last=days(20), booking_ref="0612")]) == {}
+    assert kinds([enq(last=days(20), followups=2, booking_ref="0612", event=days(1))]) == {}
+
+
+def test_funeral_enquiries_are_never_chased():
+    for occasion in ("funeral", "Funeral", "FUNERAL SERVICE", "Memorial service", "requiem", "celebration of life"):
+        for n in (0, 1, 2):
+            assert kinds([enq(last=days(40), followups=n, occasion=occasion)]) == {}, (occasion, n)
+        # once the event has passed the enquiry is closed, without a chase
+        assert kinds([enq(last=days(40), occasion=occasion, event=days(1))]) == {"1001": "mark_lost"}, occasion
+        # with no event date, it is never marked lost either
+        assert kinds([enq(last=days(400), followups=2, occasion=occasion, event="")]) == {}, occasion
+    assert kinds([enq(last=days(5), occasion="wedding")]) == {"1001": "first"}
+
+
+def test_blank_occasion_is_never_chased():
+    assert kinds([enq(last=days(40), occasion="")]) == {}
+
+
 def test_followups_due_output_has_only_id_and_kind():
     out = pl.followups_due([enq(last=days(5), notes="Ann Smith, St Mary's")], T)
     assert out == [{"enquiry_id": "1001", "kind": "first"}]
@@ -109,6 +135,12 @@ def test_reviews_due_includes_and_excludes_the_right_rows():
     ]
     got = pl.reviews_due(rows, T)
     assert got == [{"booking_ref": "OK3", "event_date": days(3)}, {"booking_ref": "OK14", "event_date": days(14)}], got
+
+
+def test_reviews_due_never_asks_a_funeral_or_an_unknown_occasion():
+    rows = [booking(f"R{i}", days(5), "paid in full 2026-09-20", occasion=o)
+            for i, o in enumerate(["Funeral", "FUNERAL SERVICE", "Memorial service", "", "  ", "Wedding"])]
+    assert pl.reviews_due(rows, T) == [{"booking_ref": "R5", "event_date": days(5)}], pl.reviews_due(rows, T)
 
 
 # --- pure: summary_dict --------------------------------------------------------------------------
@@ -147,10 +179,44 @@ def test_summary_since_filters_on_first_seen():
     assert pl.summary_dict(summary_rows(), datetime.date(2026, 9, 3)) == s
 
 
+def test_summary_counts_quoted_status_drops_negative_waits_and_ignores_case():
+    rows = [
+        enq("1", status="quoted", first_seen="2026-09-01", quoted_gbp="", notes=""),  # quoted, no figure recorded
+        enq("2", status="Confirmed", first_seen="2026-09-01", booking_ref="0612", notes="quoted 2026-09-03"),
+        enq("3", status=" LOST ", first_seen="2026-09-10", quoted_gbp="", notes="quoted 2026-09-05"),  # typo'd date
+    ]
+    s = pl.summary_dict(rows, None)
+    assert s["by_status"]["quoted"] == 1 and s["by_status"]["confirmed"] == 1 and s["by_status"]["lost"] == 1, s
+    assert s["quoted"] == 3, s
+    assert s["confirmed"] == 1, s
+    assert s["median_days_to_quote"] == 2, s  # the -5 is dropped
+
+
 def test_summary_of_nothing():
     s = pl.summary_dict([], None)
     assert s["enquiries"] == 0 and s["conversion_rate"] is None and s["median_days_to_quote"] is None, s
     assert json.dumps(s)
+
+
+# --- pure: helpers -------------------------------------------------------------------------------
+
+def refused(fn, *a):
+    try:
+        fn(*a)
+    except SystemExit:
+        return True
+    return False
+
+
+def test_gbp_limits():
+    assert pl.gbp("1,150") == "1150" and pl.gbp("100000") == "100000" and pl.gbp("0.5") == "0.50"
+    for bad in ("0", "0.004", "-5", "100000.01", "250000", "inf", "nan", "lots"):
+        assert refused(pl.gbp, bad), bad
+
+
+def test_to_date_turns_a_datetime_into_a_date():
+    d = pl.to_date(datetime.datetime(2026, 9, 28, 10, 30))
+    assert d == datetime.date(2026, 9, 28) and type(d) is datetime.date, d
 
 
 # --- CLI -----------------------------------------------------------------------------------------
@@ -160,9 +226,9 @@ def home():
     return d
 
 
-def cli(d, *args):
+def cli(d, *args, stdin=None):
     env = dict(os.environ, LCS_PRIVATE_DIR=d, LCS_BOOKINGS_CSV=os.path.join(d, "bookings.csv"))
-    return subprocess.run([PY, SCRIPT, *args], env=env, capture_output=True, text=True)
+    return subprocess.run([PY, SCRIPT, *args], env=env, capture_output=True, text=True, input=stdin)
 
 
 def enquiries(d):
@@ -183,10 +249,11 @@ def add(d, **kw):
 
 def test_cli_add_sets_defaults_and_mode_600():
     d = home()
-    p = add(d, gclid="abc123")
+    p = add(d, gclid="Cj0KCQjw_abc123-XYZ")
     assert p.returncode == 0 and p.stdout.strip() == "enquiry 1001: added", (p.stdout, p.stderr)
     r = enquiries(d)["1001"]
-    assert (r["status"], r["followups"], r["last_contact"], r["gclid"]) == ("new", "0", "2026-09-20", "abc123"), r
+    assert (r["status"], r["followups"], r["last_contact"], r["gclid"]) == ("new", "0", "2026-09-20",
+                                                                             "Cj0KCQjw_abc123-XYZ"), r
     path = os.path.join(d, "enquiries.csv")
     assert mode(path) == 0o600, oct(mode(path))
     with open(path, newline="") as f:
@@ -212,6 +279,54 @@ def test_cli_add_validates_values():
         p = add(d, **bad)
         assert p.returncode != 0, (bad, p.stdout)
     assert not os.path.exists(os.path.join(d, "enquiries.csv")) or enquiries(d) == {}
+
+
+def test_cli_add_limits_lengths_and_names_only_the_field():
+    d = home()
+    secret = "Ann Smith " * 40
+    p = add(d, notes=secret[:301])
+    assert p.returncode != 0 and "notes" in p.stderr and "Ann" not in p.stderr + p.stdout, p.stderr
+    p = add(d, package="Ann Smith choir " * 6)
+    assert p.returncode != 0 and "package" in p.stderr and "Ann" not in p.stderr + p.stdout, p.stderr
+    assert not os.path.exists(os.path.join(d, "enquiries.csv")) or enquiries(d) == {}
+    assert add(d, notes="x" * 300, package="y" * 80).returncode == 0
+
+
+def test_cli_add_occasion_must_be_known():
+    d = home()
+    for bad in ("party", "", "wedding reception"):
+        p = add(d, occasion=bad)
+        assert p.returncode != 0 and "occasion" in p.stderr, (bad, p.stderr)
+    no_occasion = dict(enquiry_id="1002", first_seen="2026-09-20", source="email")
+    p = cli(d, "add", json.dumps(no_occasion))
+    assert p.returncode != 0 and "occasion" in p.stderr, p.stderr
+    for i, ok in enumerate(("wedding", "funeral", "christmas", "corporate", "private event", "other", "Private Event")):
+        assert add(d, enquiry_id=f"OK{i}", occasion=ok).returncode == 0, ok
+    assert enquiries(d)["OK6"]["occasion"] == "private event"
+
+
+def test_cli_add_gclid_shape():
+    d = home()
+    long_ok = "Cj0KCQjw" + "a" * 142  # 150 characters: longer than the 80 for other fields
+    for i, ok in enumerate(("Cj0KCQjw_abc-123", "gbraid:0AAAAAoXyz_12345", "wbraid:CkEKCQjw1234567", long_ok)):
+        p = add(d, enquiry_id=f"G{i}", gclid=ok)
+        assert p.returncode == 0, (ok, p.stderr)
+    assert enquiries(d)["G3"]["gclid"] == long_ok
+    for bad in ("abc123", "gclid=Cj0KCQjw_abc", "Cj0KCQ jw_abc123", "fbraid:Cj0KCQjw_abc", "a" * 201):
+        p = add(d, enquiry_id="BAD", gclid=bad)
+        assert p.returncode != 0 and "gclid" in p.stderr, (bad, p.stderr)
+    assert "BAD" not in enquiries(d)
+
+
+def test_cli_add_reads_json_from_stdin():
+    d = home()
+    row = {"enquiry_id": "1001", "first_seen": "2026-09-20", "source": "email", "occasion": "wedding",
+           "notes": "4 singers, bride's side, it's in Kent"}
+    p = cli(d, "add", "-", stdin=json.dumps(row))
+    assert p.returncode == 0, p.stderr
+    assert enquiries(d)["1001"]["notes"] == "4 singers, bride's side, it's in Kent"
+    p = cli(d, "add", "-", stdin="not json")
+    assert p.returncode != 0
 
 
 def test_cli_add_accepts_json_numbers():
@@ -249,6 +364,85 @@ def test_cli_quoted_contact_followed_and_status():
     assert mode(os.path.join(d, "enquiries.csv")) == 0o600
 
 
+def test_cli_chase_timeline():
+    d = home()
+    add(d, first_seen="2026-09-01")
+    assert cli(d, "quoted", "1001", "Small Choir", "1150", "2026-09-01").returncode == 0
+
+    def due(day):
+        p = cli(d, "followups-due", "--today", day)
+        assert p.returncode == 0, p.stderr
+        return json.loads(p.stdout)
+
+    assert due("2026-09-05") == []
+    assert due("2026-09-06") == [{"enquiry_id": "1001", "kind": "first"}]
+    assert cli(d, "followed", "1001", "1", "2026-09-06").returncode == 0
+    assert due("2026-09-15") == []
+    assert due("2026-09-16") == [{"enquiry_id": "1001", "kind": "second"}]
+    assert cli(d, "followed", "1001", "2", "2026-09-16").returncode == 0
+    assert due("2026-09-25") == []
+    assert due("2026-09-26") == [{"enquiry_id": "1001", "kind": "mark_lost"}]
+
+
+def test_cli_contact_refuses_an_older_message():
+    d = home()
+    add(d, first_seen="2026-09-01")
+    cli(d, "quoted", "1001", "Small Choir", "1150", "2026-09-02")
+    cli(d, "followed", "1001", "1", "2026-09-07")
+    p = cli(d, "contact", "1001", "2026-09-03")  # an old message read late must not restart the chase
+    assert p.returncode != 0 and "is before the last contact; nothing changed" in p.stderr, (p.stdout, p.stderr)
+    r = enquiries(d)["1001"]
+    assert (r["followups"], r["last_contact"]) == ("1", "2026-09-07"), r
+    assert cli(d, "contact", "1001", "2026-09-07").returncode == 0  # the same day is not before
+
+
+def test_cli_quoted_refuses_an_older_date_or_a_repeat():
+    d = home()
+    add(d, first_seen="2026-09-01")
+    assert cli(d, "quoted", "1001", "Small Choir", "1150", "2026-09-02").returncode == 0
+    p = cli(d, "quoted", "1001", "Small Choir", "1150", "2026-09-02")  # the same quote seen again
+    assert p.returncode != 0 and "nothing changed" in p.stderr, (p.stdout, p.stderr)
+    cli(d, "followed", "1001", "1", "2026-09-07")
+    p = cli(d, "quoted", "1001", "Small Choir", "1150", "2026-09-02")  # a re-run after the chase
+    assert p.returncode != 0 and "is before the last contact; nothing changed" in p.stderr, (p.stdout, p.stderr)
+    p = cli(d, "quoted", "1001", "Small Choir", "1150", "2026-09-05")  # an older quote not seen before
+    assert p.returncode != 0 and "is before the last contact; nothing changed" in p.stderr, (p.stdout, p.stderr)
+    r = enquiries(d)["1001"]
+    assert (r["followups"], r["last_contact"], r["notes"]) == ("1", "2026-09-07", "quoted 2026-09-02"), r
+    # a genuinely new quote after the chase restarts the clock
+    assert cli(d, "quoted", "1001", "Large Choir", "1900", "2026-09-10").returncode == 0
+    r = enquiries(d)["1001"]
+    assert (r["followups"], r["last_contact"], r["quoted_gbp"]) == ("0", "2026-09-10", "1900"), r
+
+
+def test_cli_status_never_moves_a_booking_back():
+    d = home()
+    for booked in ("confirmed", "deposit_paid", "done"):
+        eid = f"E{booked}"
+        add(d, enquiry_id=eid)
+        assert cli(d, "status", eid, booked, "0612").returncode == 0
+        for back in ("new", "quoted"):
+            p = cli(d, "status", eid, back)
+            assert p.returncode != 0 and booked in p.stderr, (booked, back, p.stderr)
+            assert enquiries(d)[eid]["status"] == booked
+    assert cli(d, "status", "Econfirmed", "deposit_paid").returncode == 0
+    assert cli(d, "status", "Edeposit_paid", "done").returncode == 0
+    assert cli(d, "status", "Edone", "cancelled").returncode == 0
+
+
+def test_cli_event_sets_the_event_date():
+    d = home()
+    add(d, event_date="", status="quoted", quoted_gbp=1150, last_contact="2026-09-01")
+    p = cli(d, "event", "1001", "2026-09-27")
+    assert p.returncode == 0 and p.stdout.strip() == "enquiry 1001: event 2026-09-27", (p.stdout, p.stderr)
+    assert enquiries(d)["1001"]["event_date"] == "2026-09-27"
+    p = cli(d, "followups-due", "--today", "2026-09-28")
+    assert json.loads(p.stdout) == [{"enquiry_id": "1001", "kind": "mark_lost"}], p.stdout
+    assert cli(d, "event", "1001", "27/09/2026").returncode != 0
+    assert cli(d, "event", "9999", "2026-09-27").returncode != 0
+    assert enquiries(d)["1001"]["event_date"] == "2026-09-27"
+
+
 def test_cli_contact_resets_followups():
     d = home()
     add(d, status="quoted", followups=2, last_contact="2026-09-01", quoted_gbp=1150, package="Small Choir")
@@ -265,7 +459,7 @@ def test_cli_unknown_enquiry_is_refused():
     d = home()
     add(d)
     for args in (["quoted", "9999", "Small Choir", "1150", "2026-09-21"], ["contact", "9999", "2026-09-21"],
-                 ["status", "9999", "lost"], ["followed", "9999", "1", "2026-09-21"]):
+                 ["status", "9999", "lost"], ["followed", "9999", "1", "2026-09-21"], ["event", "9999", "2027-01-01"]):
         p = cli(d, *args)
         assert p.returncode != 0 and "9999" in p.stderr, (args, p.stderr)
 
@@ -300,7 +494,7 @@ def write_ledger(d, rows, cols=LEDGER_COLS):
 
 def test_cli_reviews_due_and_reviewed_keep_columns_and_mode():
     d = home()
-    cols = ["notes", "booking_ref", "client_name", "event_date", "value_gbp", "extra_col"]
+    cols = ["notes", "booking_ref", "client_name", "event_date", "occasion", "value_gbp", "extra_col"]
     rows = [booking("2009", "2026-09-20", "paid in full 2026-09-19"),
             booking("1509", "2026-09-15", "deposit seen 2026-08-01 (Starling)", name="Bob Jones")]
     rows[0]["extra_col"] = "keep me"
@@ -322,6 +516,48 @@ def test_cli_reviews_due_and_reviewed_keep_columns_and_mode():
     assert p.returncode != 0 and "9999" in p.stderr, p.stderr
     p = cli(d, "reviewed", "2009", "2026-09-29")
     assert p.returncode != 0 and "already" in p.stderr, "a second review request must be refused"
+
+
+def test_cli_reviewed_refuses_a_row_wider_than_the_header():
+    d = home()
+    path = write_ledger(d, [booking("2009", "2026-09-20", "paid in full 2026-09-19")])
+    with open(path, "a", newline="") as f:
+        f.write("1509,2026-06-01,2026-09-15,Bob,bob@example.com,Wedding,,1150,,,,,,notes,SPILL\n")
+    with open(path, "rb") as f:
+        before = f.read()
+    p = cli(d, "reviewed", "2009", "2026-09-28")
+    assert p.returncode != 0 and "nothing written" in p.stderr, (p.stdout, p.stderr)
+    assert "Bob" not in p.stderr + p.stdout
+    with open(path, "rb") as f:
+        assert f.read() == before
+
+
+def test_cli_done_due():
+    d = home()
+    for eid, status, ref in (("A", "confirmed", "0901"), ("B", "deposit_paid", "0902"), ("C", "confirmed", "1010"),
+                             ("D", "done", "0903"), ("E", "quoted", ""), ("F", "confirmed", "0904"),
+                             ("G", "deposit_paid", "0928"), ("H", "confirmed", "0905")):
+        add(d, enquiry_id=eid, occasion="funeral" if eid == "A" else "wedding")
+        if ref:
+            assert cli(d, "status", eid, status, ref).returncode == 0
+        else:
+            cli(d, "quoted", eid, "Small Choir", "1150", "2026-09-21")
+    write_ledger(d, [
+        booking("0901", "2026-09-01", "paid in full 2026-08-30", occasion="Funeral"),  # A: due, funeral too
+        booking("0902", "2026-09-02", "deposit seen 2026-08-01 (Starling)"),           # B: not paid in full
+        booking("1010", "2026-10-10", "paid in full 2026-09-20"),                      # C: event to come
+        booking("0903", "2026-09-03", "paid in full 2026-09-01"),                      # D: already done
+        booking("0904", "2026-09-04", "paid in full 2026-09-01; cancelled 2026-09-02"),  # F: cancelled
+        booking("0928", "2026-09-28", "paid in full 2026-09-20"),                      # G: event today
+        booking("0905", "2026-09-05", "paid in full 2026-09-01"),                      # H: due
+    ])
+    p = cli(d, "done-due", "--today", "2026-09-28")
+    assert p.returncode == 0, p.stderr
+    assert json.loads(p.stdout) == [{"enquiry_id": "A", "booking_ref": "0901"},
+                                    {"enquiry_id": "H", "booking_ref": "0905"}], p.stdout
+    assert "Ann" not in p.stdout
+    p = cli(home(), "done-due", "--today", "2026-09-28")
+    assert p.returncode == 0 and json.loads(p.stdout) == [], (p.stdout, p.stderr)
 
 
 def test_cli_summary_json():
