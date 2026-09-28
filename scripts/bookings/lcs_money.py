@@ -7,7 +7,11 @@
 - The token lives in the owner's macOS Keychain (service lcs-starling-read)
   and is read at run time, never printed.
 - Private files live in ~/lcs-private/ (override with LCS_PRIVATE_DIR), mode 600.
-- Bank details are reduced to a fingerprint plus the last four digits.
+- Bank details are reduced to a fingerprint plus the last four digits. The
+  fingerprint is an HMAC-SHA256 keyed with fingerprint.key (32 random bytes,
+  mode 600, made on first use in the private dir), so the stored fingerprint and
+  last four digits can't be brute-forced back to an account number. Never commit,
+  copy or share the key; losing it only means earlier fingerprints stop matching.
 """
 
 import contextlib
@@ -15,6 +19,7 @@ import csv
 import datetime
 import fcntl
 import hashlib
+import hmac
 import json
 import os
 import re
@@ -26,6 +31,7 @@ from zoneinfo import ZoneInfo
 API = "https://api.starlingbank.com"
 KEYCHAIN_SERVICE = "lcs-starling-read"
 PRIVATE = Path(os.environ.get("LCS_PRIVATE_DIR", Path.home() / "lcs-private"))
+_KEYS = {}
 LEDGER = Path(os.environ.get("LCS_BOOKINGS_CSV", PRIVATE / "bookings.csv"))
 
 
@@ -98,13 +104,42 @@ def local_date(ts):
     return t.astimezone(ZoneInfo("Europe/London")).date().isoformat()
 
 
+def _fingerprint_key():
+    """The 32-byte key in <private dir>/fingerprint.key (LCS_PRIVATE_DIR read at call time), made once, mode 600."""
+    home = Path(os.environ.get("LCS_PRIVATE_DIR", Path.home() / "lcs-private"))
+    path = home / "fingerprint.key"
+    if path not in _KEYS:
+        if not path.exists():
+            home.mkdir(mode=0o700, parents=True, exist_ok=True)
+            tmp = home / f".fingerprint.key.{os.getpid()}.{os.urandom(4).hex()}.tmp"
+            fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+            try:
+                with os.fdopen(fd, "wb") as f:
+                    f.write(os.urandom(32))
+                os.link(tmp, path)  # atomic: another process may have won the race, which is fine
+            except FileExistsError:
+                pass
+            finally:
+                tmp.unlink(missing_ok=True)
+        key = path.read_bytes()
+        if len(key) != 32:
+            raise ValueError(f"{path} is damaged (not 32 bytes): restore it from a backup")
+        _KEYS[path] = key
+    return _KEYS[path]
+
+
 def bank_fingerprint(sort_code, account_number):
-    """16-hex fingerprint of a UK bank account, or None if the details aren't a sort code + account."""
+    """16-hex keyed fingerprint of a UK bank account, or None if the details aren't a sort code + account."""
     sc = re.sub(r"\D", "", sort_code or "")
     acc = re.sub(r"\D", "", account_number or "")
     if len(sc) != 6 or not 6 <= len(acc) <= 8:
         return None
-    return hashlib.sha256(f"{sc}:{acc.zfill(8)}".encode()).hexdigest()[:16]
+    return hmac.new(_fingerprint_key(), f"{sc}:{acc.zfill(8)}".encode(), hashlib.sha256).hexdigest()[:16]
+
+
+def feed_item_fingerprint(item):
+    """Fingerprint of the recipient's bank details on a Starling feed item (payments to a payee), or None."""
+    return bank_fingerprint(item.get("counterPartySubEntityIdentifier"), item.get("counterPartySubEntitySubIdentifier"))
 
 
 def last4(account_number):

@@ -2,6 +2,7 @@
 """Tests for scripts/bookings/lcs_money.py. Stdlib only: .venv/bin/python tests/test_lcs_money.py"""
 import datetime, inspect, io, json, os, sys, tempfile
 
+os.environ["LCS_PRIVATE_DIR"] = tempfile.mkdtemp()  # the fingerprint key goes here, never in ~/lcs-private
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, "scripts", "bookings"))
 import lcs_money as m
@@ -35,6 +36,36 @@ def test_fingerprint_rejects_bad_input():
     assert m.bank_fingerprint("6083", "24972792") is None
     assert m.bank_fingerprint("60-83-71", "12") is None
     assert m.bank_fingerprint("", "") is None
+
+
+def test_fingerprint_is_keyed_and_the_key_is_private():
+    home = os.environ["LCS_PRIVATE_DIR"]
+    a = m.bank_fingerprint("60-83-71", "24972792")
+    assert a == m.bank_fingerprint("608371", "24972792")
+    key = os.path.join(home, "fingerprint.key")
+    assert oct(os.stat(key).st_mode)[-3:] == "600" and len(open(key, "rb").read()) == 32
+    other = os.path.join(tempfile.mkdtemp(), "priv")
+    os.environ["LCS_PRIVATE_DIR"] = other
+    try:
+        b = m.bank_fingerprint("60-83-71", "24972792")
+        assert b and b != a and len(b) == 16
+        assert oct(os.stat(other).st_mode)[-3:] == "700"
+        assert oct(os.stat(os.path.join(other, "fingerprint.key")).st_mode)[-3:] == "600"
+    finally:
+        os.environ["LCS_PRIVATE_DIR"] = home
+    assert m.bank_fingerprint("60-83-71", "24972792") == a
+
+
+def test_fingerprint_is_not_a_plain_hash():
+    import hashlib
+    assert m.bank_fingerprint("608371", "24972792") != hashlib.sha256(b"608371:24972792").hexdigest()[:16]
+
+
+def test_feed_item_fingerprint():
+    item = {"counterPartySubEntityIdentifier": "608371", "counterPartySubEntitySubIdentifier": "24972792"}
+    assert m.feed_item_fingerprint(item) == m.bank_fingerprint("60-83-71", "24972792")
+    assert m.feed_item_fingerprint({"counterPartyName": "X"}) is None
+    assert m.feed_item_fingerprint({"counterPartySubEntityIdentifier": "", "counterPartySubEntitySubIdentifier": "1"}) is None
 
 
 def test_last4():
