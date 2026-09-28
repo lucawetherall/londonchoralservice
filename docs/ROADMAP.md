@@ -254,7 +254,7 @@ grep -rn 'over 150\|150 auditioned' --include='*.html' --include='*.txt' .   # e
 
 ---
 
-## R12 — Testimonial pool reused across geographically mismatched pages  [P2] [DECISION-NEEDED]
+## R12 — Testimonial pool reused across geographically mismatched pages  [P2] [done 2026-09-28 — owner decision: keep the place names; pronouns corrected]
 
 **Update 2026-09-28:** the owner confirmed the "Pamela, Richmond" and "Helen, Wimbledon" quotes are about him, so "she" is now "he" on all 13 pages. Still open: whether to strip place names from attributions that don't match the page.
 
@@ -397,7 +397,7 @@ print('duplicate price-ladder constructions:', len(dupes))  # → 0
 - *Static dashboard.* `scripts/reports/dashboard.py` has a Books panel (receivables, overdue, unpaid bills, drafts not yet sent, overdue invoice numbers), the season margin and unlinked singer invoices, reusing `command_centre/books_cache.py` read-only, exactly as R17 said it would. "Books not synced yet." when the cache doesn't exist. Tests: `tests/test_dashboard.py`.
 
 **Left out, on purpose:**
-- *Per-draft "open in Zoho".* The page still links only to the Drafts folder (`https://mail.zoho.com/zm/#mail/folder/drafts`, the .com data centre); a per-message link needs Zoho's message URL form confirmed on the owner's account first, which is a manual check, not something to guess at from a script.
+- *Per-draft "open in Zoho".* **Won't do (owner, 2026-09-28): Zoho doesn't expose a URL for a single draft.** The page still links only to the Drafts folder (`https://mail.zoho.com/zm/#mail/folder/drafts`, the .com data centre); a per-message link needs Zoho's message URL form confirmed on the owner's account first, which is a manual check, not something to guess at from a script.
 - *Quote extras.* The calculator still states the Christmas Eve/Day premium and leaves longer programmes and keyboard hire "quoted upfront", as the pages do; it never prices them. Pricing those needs the owner's rules for what they cost, not just wiring.
 
 **Skills:** none
