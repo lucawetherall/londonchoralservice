@@ -1316,8 +1316,10 @@ def nonce_file(d, content=None, mode=0o600, age=0):
     return path
 
 
-def run_owner(d, path, args, stdin_text=None, stdin=None):
-    env = dict(os.environ, LCS_BOOKINGS_CSV=path, LCS_PRIVATE_DIR=d)
+def run_owner(d, path, args, stdin_text=None, stdin=None, env_extra=None):
+    env = {k: v for k, v in os.environ.items() if k != "LCS_BOOKINGS_CSV"}  # the ledger is <d>/bookings.csv
+    env["LCS_PRIVATE_DIR"] = d
+    env.update(env_extra or {})
     kw = {"input": stdin_text} if stdin_text is not None else {"stdin": stdin if stdin is not None else subprocess.DEVNULL}
     p = subprocess.run([PY, SCRIPT, *args], env=env, capture_output=True, text=True, timeout=30, **kw)
     with open(path, newline="") as f:
@@ -1417,6 +1419,30 @@ def test_without_owner_the_owner_phrases_are_still_refused():
         nonce_file(d)  # even with a valid nonce waiting, no --owner means the normal rules
         p, notes = run_owner(d, path, ["--note", "2111", text], stdin_text=NONCE + "\n")
         assert p.returncode != 0 and notes == "PENDING: invoiced", text
+
+
+def test_owner_note_refuses_a_ledger_outside_the_nonce_folder():
+    """The nonce proves the app asked; the ledger must be the one beside it. LCS_BOOKINGS_CSV is refused outright,
+    even pointing at the same file, and the nonce is left unburnt."""
+    d, path = owner_ledger()
+    nf = nonce_file(d)
+    p, notes = run_owner(d, path, OWNER_ARGS, stdin_text=NONCE + "\n", env_extra={"LCS_BOOKINGS_CSV": path})
+    assert p.returncode != 0 and "LCS_BOOKINGS_CSV" in p.stderr and notes == "PENDING: invoiced", p.stderr
+    assert os.path.exists(nf)
+    other, other_path = owner_ledger()
+    p, _ = run_owner(d, path, OWNER_ARGS, stdin_text=NONCE + "\n", env_extra={"LCS_BOOKINGS_CSV": other_path})
+    with open(other_path, newline="") as f:
+        assert p.returncode != 0 and list(csv.DictReader(f))[0]["notes"] == "PENDING: invoiced"
+    # in-process: a ledger in another folder than the nonce's private dir
+    saved = cp.LEDGER
+    try:
+        cp.LEDGER = other_path
+        assert "same private folder" in cp.owner_ledger_problem({})
+        cp.LEDGER = os.path.join(os.environ["LCS_PRIVATE_DIR"], "bookings.csv")
+        assert cp.owner_ledger_problem({}) is None
+        assert "LCS_BOOKINGS_CSV" in cp.owner_ledger_problem({"LCS_BOOKINGS_CSV": "x"})
+    finally:
+        cp.LEDGER = saved
 
 
 def test_owner_note_keeps_the_single_line_rules():

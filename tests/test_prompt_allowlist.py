@@ -31,6 +31,9 @@ NEVER = [
     f"{PY} scripts/ads/set_campaign_status.py 24295921372 enabled --reason X --apply",
     f"{PY} scripts/ads/generated_proposal_2026_10_05.py --apply",
     f"{PY} scripts/ads/generated_proposal_2026_10_05.py",  # even the validate-only run goes through the app
+    f"{PY} scripts/ads/set_budget.py 24295921372 4.50 --apply",
+    f"{PY} scripts/ads/set_budget.py 24295921372 4.50 --validate-only",
+    f"{PY} scripts/bookings/singer_invoices.py confirm X --expect-fp a1b2c3d4",
 ]
 # Owner-only forms the allowlist can't exclude (a glob can't forbid a flag): `--note *` and `--reminded *` match
 # them, so check_payments.py itself refuses --owner without the Command Centre's one-time nonce on a pipe
@@ -156,6 +159,15 @@ def test_script_guarded_forms_are_documented_and_guarded():
         assert cmd.rstrip().endswith("--owner")
     src = open(os.path.join(ROOT, "scripts", "bookings", "check_payments.py"), encoding="utf-8").read()
     assert "def owner_confirmed(" in src and "if not owner_confirmed():" in src
+
+
+def test_claude_file_tools_cant_write_the_command_centre_folder():
+    """The owner nonce, proposals, approvals and audit log live in ~/lcs-private/command-centre/: Claude's Write
+    and Edit tools are denied there (the nonce file is the --owner barrier; a pipe alone is not)."""
+    with open(SETTINGS, encoding="utf-8") as f:
+        deny = json.load(f)["permissions"]["deny"]
+    for tool in ("Write", "Edit"):
+        assert f"{tool}(~/lcs-private/command-centre/**)" in deny, tool
 
 
 def test_no_allowlist_rule_covers_every_script():

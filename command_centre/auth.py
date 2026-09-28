@@ -59,7 +59,7 @@ LOOPBACK_PEERS = {"127.0.0.1", "::1"}
 SINGLE_HEADERS = {"host", "tailscale-user-login", "tailscale-user-name", "origin", "sec-fetch-site"}
 REGISTER_SUMMARY = "register a new passkey"
 RP_NAME = "LCS Command Centre"
-MAX_SUMMARY = 500
+MAX_SUMMARY = 2000  # an Ads preview carries the git facts, the script's docstring and Claude's description
 OPEN_PATHS = {"/healthz"}
 SAFE_METHODS = {"GET", "HEAD", "OPTIONS"}
 
@@ -266,8 +266,11 @@ class PasskeyError(Exception):
         self.status = status
 
 
-def action_hash(purpose, summary):
-    return hashlib.sha256(f"{purpose}\n{summary}".encode("utf-8")).digest()
+def action_hash(purpose, summary, name=None):
+    """sha256 over the purpose, the action's name (for an action assertion) and the summary: two actions whose
+    summaries happened to match still get different challenges."""
+    text = f"{purpose}\n{summary}" if name is None else f"{purpose}\n{name}\n{summary}"
+    return hashlib.sha256(text.encode("utf-8")).digest()
 
 
 class ChallengeStore:
@@ -281,8 +284,8 @@ class ChallengeStore:
         self._issued = {}
         self._lock = threading.Lock()
 
-    def issue(self, purpose, summary):
-        challenge = secrets.token_bytes(16) + action_hash(purpose, summary)
+    def issue(self, purpose, summary, name=None):
+        challenge = secrets.token_bytes(16) + action_hash(purpose, summary, name)
         now = self.clock()
         with self._lock:
             self._issued = {c: e for c, e in self._issued.items() if e[1] > now}  # drop the expired
@@ -291,14 +294,14 @@ class ChallengeStore:
             self._issued[challenge] = (purpose, now + self.ttl)
         return challenge
 
-    def consume(self, challenge, purpose, summary):
+    def consume(self, challenge, purpose, summary, name=None):
         with self._lock:
             entry = self._issued.pop(challenge, None)
         if entry is None:
             raise PasskeyError("unknown or used challenge")
         if self.clock() >= entry[1]:
             raise PasskeyError("challenge expired")
-        if entry[0] != purpose or not hmac.compare_digest(challenge[16:], action_hash(purpose, summary)):
+        if entry[0] != purpose or not hmac.compare_digest(challenge[16:], action_hash(purpose, summary, name)):
             raise PasskeyError("wrong action")
 
 
@@ -459,7 +462,7 @@ class Passkeys:
         if not keys:
             raise PasskeyError("no passkeys registered", status=409)
         opts = generate_authentication_options(
-            rp_id=cfg["rp_id"], challenge=self.store.issue("assert", action.summary), timeout=CHALLENGE_TTL * 1000,
+            rp_id=cfg["rp_id"], challenge=self.store.issue("assert", action.summary, action.name), timeout=CHALLENGE_TTL * 1000,
             allow_credentials=[PublicKeyCredentialDescriptor(id=unb64url(k["id"])) for k in keys],
             user_verification=UserVerificationRequirement.REQUIRED)
         return json.loads(options_to_json(opts))
@@ -472,7 +475,7 @@ class Passkeys:
         action = _require_action(action)
         cred = _credential(credential)
         challenge = client_challenge(cred)
-        self.store.consume(challenge, "assert", action.summary)
+        self.store.consume(challenge, "assert", action.summary, action.name)
         cfg = self._cfg()
         key = next((k for k in self._keys(cfg) if k.get("id") == cred.get("id")), None)
         if key is None:

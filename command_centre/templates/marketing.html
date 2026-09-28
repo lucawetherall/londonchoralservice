@@ -103,7 +103,7 @@
   <ul class="proposals">
     {% for p in props %}
     <li class="proposal{% if p.problem %} proposal-bad{% endif %}">
-      <p><strong>{{ p.title }}</strong>{% if p.created %} <span class="muted">proposed {{ p.created[:10]|day }}</span>{% endif %}</p>
+      <p><span class="muted">Claude's description:</span> <strong>{{ p.title }}</strong>{% if p.created %} <span class="muted">proposed {{ p.created[:10]|day }}</span>{% endif %}</p>
       {% if p.summary %}<p>{{ p.summary }}</p>{% endif %}
       {% if p.script_path %}<p class="muted">Script <span class="mono">{{ p.script_path }}</span></p>{% endif %}
       {% if p.applied %}<p><span class="badge ok">applied</span></p>
@@ -115,7 +115,7 @@
     </li>
     {% endfor %}
   </ul>
-  <p class="muted">Each step needs Face ID or Touch ID: first a validate-only run, then the apply, bound to the output you saw. The scripts keep the £5 daily cap and log to logs/ads-changes.md.</p>
+  <p class="muted">Each step needs Face ID or Touch ID: first a validate-only run, then the apply, bound to the output you saw. The check shows what git says about the script (its commit on origin/main, who last changed it, its own description) beside Claude's. It runs from an archived copy of that commit, never the working folder. The scripts keep the £5 daily cap and log to logs/ads-changes.md.</p>
   {% elif proposals.ok %}<p class="muted">No change sets waiting. The Monday review will write them here.</p>{% endif %}
 </section>
 

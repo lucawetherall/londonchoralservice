@@ -672,6 +672,9 @@ def main():
         if args.owner:
             if is_pending(text):
                 raise SystemExit("a note never starts with PENDING; nothing written")
+            where = owner_ledger_problem()
+            if where:
+                raise SystemExit(f"--owner {where}; nothing written")
             if not owner_confirmed():
                 raise SystemExit("--owner needs the Command Centre's one-time owner nonce (the owner's passkey "
                                  "approval); nothing written")
@@ -708,6 +711,22 @@ OWNER_NONCE_TTL = 60  # seconds: the Command Centre writes the file moments befo
 def owner_nonce_path():
     """<private dir>/command-centre/owner-nonce (LCS_PRIVATE_DIR read at call time)."""
     return Path(os.environ.get("LCS_PRIVATE_DIR", Path.home() / "lcs-private")) / "command-centre" / "owner-nonce"
+
+
+def owner_ledger_problem(environ=None):
+    """None when an --owner note would land in the ledger beside the nonce, else the reason. The nonce proves the
+    app asked; this proves the note goes to the ledger the app read: LCS_BOOKINGS_CSV must be unset (the app never
+    sets it for its subprocesses) and the ledger must sit directly in the nonce's private dir."""
+    environ = os.environ if environ is None else environ
+    if environ.get("LCS_BOOKINGS_CSV"):
+        return "refuses LCS_BOOKINGS_CSV (the ledger must be the one in the private folder)"
+    private = owner_nonce_path().parent.parent
+    try:
+        if Path(LEDGER).resolve().parent != private.resolve():
+            return "needs the ledger in the same private folder as the nonce"
+    except OSError:
+        return "couldn't resolve the ledger's folder"
+    return None
 
 
 def owner_confirmed(stdin_fd=0):

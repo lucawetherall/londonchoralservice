@@ -48,7 +48,9 @@
     "deny": [
       "Bash(security find-generic-password *)",
       "Bash(security dump-keychain)",
-      "Bash(security dump-keychain *)"
+      "Bash(security dump-keychain *)",
+      "Write(~/lcs-private/command-centre/**)",
+      "Edit(~/lcs-private/command-centre/**)"
     ]
   },
   "hooks": {

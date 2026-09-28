@@ -41,6 +41,8 @@ MSG = "1789828736363141700"
 MSG_PAID = "1789828736363141701"
 MSG_NOBANK = "1789828736363141702"
 MSG_CONFIRMED = "1789828736363141703"
+FP_A = "a1b2c3d4e5f60718"
+FP_C = "c0ffee00c0ffee00"
 LEDGER_COLS = ["booking_ref", "invoice_date", "event_date", "client_name", "client_email", "occasion", "ensemble",
                "value_gbp", "enquiry_date", "source", "gclid", "consent", "uploaded_at", "notes"]
 sources.HOME = Path(HOME)
@@ -117,13 +119,13 @@ def fixtures():
     base = {"singer_email": "jane@example.org", "invoice_ref": "INV-7", "amount_gbp": "120.00", "payee": "",
             "bank_changed": "", "paid_verified": "", "notes": "", "withdrawn": ""}
     write_csv(str(si.STORE), si.COLUMNS, [
-        dict(base, message_id=MSG, received="2026-09-20", singer_name="Jane Fenwickson", bank_fp="fp-a", bank_last4="4321",
+        dict(base, message_id=MSG, received="2026-09-20", singer_name="Jane Fenwickson", bank_fp=FP_A, bank_last4="4321",
              bank_confirmed=""),
-        dict(base, message_id=MSG_PAID, received="2026-09-01", singer_name="Jane Fenwickson", bank_fp="fp-a",
+        dict(base, message_id=MSG_PAID, received="2026-09-01", singer_name="Jane Fenwickson", bank_fp=FP_A,
              bank_last4="4321", paid_on="2026-09-05", paid_amount="120.00"),
         dict(base, message_id=MSG_NOBANK, received="2026-09-21", singer_name="Bob Quillfeather", bank_fp="",
              bank_last4=""),
-        dict(base, message_id=MSG_CONFIRMED, received="2026-09-22", singer_name="Cat Mistakeham", bank_fp="fp-c",
+        dict(base, message_id=MSG_CONFIRMED, received="2026-09-22", singer_name="Cat Mistakeham", bank_fp=FP_C,
              bank_last4="9876", bank_confirmed="yes")])
 
 
@@ -291,10 +293,11 @@ def test_singer_actions_argv_and_refusals():
     key, paid, nobank, confirmed = (models.invoice_key(m) for m in (MSG, MSG_PAID, MSG_NOBANK, MSG_CONFIRMED))
     assert re.fullmatch(r"[a-z]{12}", key)
     c = actions.SINGER_CONFIRM.validate({"invoice": key})
-    assert actions.SINGER_CONFIRM.argv(c) == [PYX, SINGER, "confirm", MSG]
+    assert actions.SINGER_CONFIRM.argv(c) == [PYX, SINGER, "confirm", MSG, "--expect-fp", FP_A[:8]]
     s = actions.SINGER_CONFIRM.preview(c)
     assert "Jane" in s and "Fenwickson" not in s and "••••4321" in s and "£120.00" in s
-    assert s.endswith(f"Runs: .venv/bin/python scripts/bookings/singer_invoices.py confirm {MSG}")
+    assert f"fingerprint {FP_A[:8]}" in s and FP_A not in s
+    assert s.endswith(f"Runs: .venv/bin/python scripts/bookings/singer_invoices.py confirm {MSG} --expect-fp {FP_A[:8]}")
     c = actions.SINGER_SETTLED.validate({"invoice": key, "date": D})
     assert actions.SINGER_SETTLED.argv(c) == [PYX, SINGER, "settled", MSG, D]
     c = actions.SINGER_WITHDRAWN.validate({"invoice": key, "reason": "not-ours"})
@@ -361,7 +364,8 @@ def test_preview_shows_summary_and_command_and_binds_the_challenge():
     assert body["passkey"] is True and body["title"] == "Resolve a hand check"
     assert body["command"] == f".venv/bin/python scripts/bookings/check_payments.py --note 2111 'paid in full {D}' --owner"
     challenge = unb64(body["options"]["challenge"])
-    assert challenge[16:] == auth.action_hash("assert", body["summary"])
+    assert challenge[16:] == auth.action_hash("assert", body["summary"], "resolve-hand-check")
+    assert challenge[16:] != auth.action_hash("assert", body["summary"], "singer-confirm")  # the name is bound too
     assert body["options"]["userVerification"] == "required"
     assert audit_lines() == []  # a preview runs nothing and logs nothing
 
@@ -564,16 +568,19 @@ def test_books_import_approval_writes_one_record():
     rec_path.unlink(missing_ok=True)
     r = preview(c, "approve-books-import", {})
     assert r.status_code == 400 and "no dry run" in r.json()["error"]
-    dry.write_text(json.dumps([{"ref": "2111"}, {"ref": "0310"}]))
+    dry.write_text(json.dumps([{"ref": "2111", "total": 650}, {"ref": "0310", "total": "575.00"}]))
     p = preview(c, "approve-books-import", {}).json()
     sha = hashlib.sha256(dry.read_bytes()).hexdigest()
     assert "2 entries" in p["summary"] and sha[:16] in p["summary"] and p["passkey"] is True
+    assert "£1,225.00 in total" in p["summary"] and "first 2111, last 0310" in p["summary"], p["summary"]
     r = post(c, "/actions/approve-books-import/run", {"input": {}})
     assert r.status_code == 403 and not rec_path.exists()
     r = post(c, "/actions/approve-books-import/run", {"input": {}, "credential": a.assert_(p["options"])})
     assert r.status_code == 200 and r.json()["ok"], r.text
     record = json.loads(rec_path.read_text())
     assert record["dry_run_sha256"] == sha and record["entries"] == 2 and record["status"] == "approved"
+    assert record["approved_by"] == LOGIN and record["passkey"] == b64(a.cred_id)
+    assert record["total_gbp"] == 1225.0 and (record["first_ref"], record["last_ref"]) == ("2111", "0310")
     assert oct(os.stat(rec_path).st_mode & 0o777) == "0o600"
     assert oct(os.stat(rec_path.parent).st_mode & 0o777) == "0o700"
     assert preview(c, "approve-books-import", {}).json()["error"] == "already approved"
@@ -583,18 +590,44 @@ def test_books_import_approval_writes_one_record():
 # ---------------------------------------------------------------- Ads proposals
 
 
+NEG_SCRIPT = '''"""Add three negatives (a test script)."""
+import argparse
+import helper
+p = argparse.ArgumentParser()
+p.add_argument("words", nargs="*")
+m = p.add_mutually_exclusive_group()
+m.add_argument("--validate-only", action="store_true")
+m.add_argument("--apply", action="store_true")
+a = p.parse_args()
+print("APPLIED" if a.apply else "validate only", helper.X, *a.words)
+'''
+OLD_SCRIPT = '''"""An old script: validate by default, --apply to apply; no --validate-only."""
+import argparse
+p = argparse.ArgumentParser()
+p.add_argument("--apply", action="store_true")
+p.parse_args()
+print("old script ran")
+'''
+
+
 class AdsRepo:
-    """A temp git repo with scripts/ads/, and actions.REPO pointed at it for the block."""
+    """A temp git repo with scripts/ads/ (committed and published to a local origin/main ref), and actions.REPO
+    pointed at it for the block."""
 
     def __enter__(self):
         self.root = Path(tempfile.mkdtemp())
         (self.root / "scripts" / "ads").mkdir(parents=True)
         (self.root / "scripts" / "other").mkdir(parents=True)
+        (self.root / "logs").mkdir()
         self.git("init", "-q")
-        self.write("scripts/ads/negatives_2026_10.py", "print('validate only')\n")
+        self.write("scripts/ads/negatives_2026_10.py", NEG_SCRIPT)
+        self.write("scripts/ads/helper.py", "X = 'honest helper'\n")
+        self.write("scripts/ads/old_style.py", OLD_SCRIPT)
         self.write("scripts/other/tool.py", "print('x')\n")
+        self.write(".gitignore", "__pycache__/\n")
         self.git("add", "-A")
         self.commit("first")
+        self.publish()
         self.saved = actions.REPO
         actions.REPO = self.root
         actions.reset_validations()
@@ -610,7 +643,19 @@ class AdsRepo:
         return p.stdout
 
     def commit(self, msg):
-        self.git("-c", "user.name=t", "-c", "user.email=t@example.org", "commit", "-q", "-m", msg)
+        self.git("-c", "user.name=Tess Author", "-c", "user.email=t@example.org", "commit", "-q", "-m", msg)
+        return self.head()
+
+    def head(self):
+        return self.git("rev-parse", "HEAD").strip()
+
+    def publish(self):
+        """Point origin/main at HEAD (what a push and a fetch would do)."""
+        self.git("update-ref", "refs/remotes/origin/main", "HEAD")
+
+    def blob(self, rel="scripts/ads/negatives_2026_10.py", commit="HEAD"):
+        p = subprocess.run(["git", "-C", str(self.root), "rev-parse", f"{commit}:{rel}"], capture_output=True, text=True)
+        return p.stdout.strip() if p.returncode == 0 else "e" * 40  # not in that commit
 
     def write(self, rel, text):
         path = self.root / rel
@@ -618,60 +663,95 @@ class AdsRepo:
         return path
 
 
-def proposal(pid="neg-2026-10", mode=0o600, **over):
+def proposal(pid="neg-2026-10", mode=0o600, repo=None, **over):
+    """A proposal file; with `repo`, pinned to its HEAD and the script's blob there."""
     d = Path(TMP) / "command-centre" / "proposals"
     d.mkdir(parents=True, exist_ok=True)
     (d / f"{pid}.applied").unlink(missing_ok=True)
     body = {"id": pid, "kind": "ads", "title": "Add 3 negatives", "summary": "Adds solo, soloist and vocalist.",
-            "script_path": "scripts/ads/negatives_2026_10.py", "created": "2026-10-05T09:00:00+01:00"}
+            "script_path": "scripts/ads/negatives_2026_10.py", "created": "2026-10-05T09:00:00+01:00",
+            "args": ["solo", "soloist", "vocalist"]}
+    if repo is not None:
+        body["commit"] = repo.head()
+        body["script_blob"] = repo.blob(over.get("script_path", body["script_path"]))
     body.update(over)
     path = d / f"{pid}.json"
     path.unlink(missing_ok=True)
-    path.write_text(json.dumps(body))
+    path.write_text(json.dumps({k: v for k, v in body.items() if v is not None}))
     os.chmod(path, mode)
     return path
 
 
+def clear_applied():
+    d = Path(TMP) / "command-centre" / "proposals"
+    for p in d.glob("*.applied") if d.exists() else []:
+        p.unlink()
+
+
 def test_ads_proposal_checks():
     fixtures()
+    clear_applied()
     with AdsRepo() as repo:
         v = actions.ADS_VALIDATE.validate
-        proposal()
+        proposal(repo=repo)
         c = v({"proposal": "neg-2026-10"})
-        blob = repo.git("rev-parse", "HEAD:scripts/ads/negatives_2026_10.py").strip()
-        assert c["blob"] == blob
-        assert actions.ADS_VALIDATE.argv(c) == [PYX, str(repo.root / "scripts/ads/negatives_2026_10.py")]
-        assert actions.ADS_VALIDATE.command(c) == ".venv/bin/python scripts/ads/negatives_2026_10.py"
+        assert c["blob"] == repo.blob() and c["commit"] == repo.head() and c["args"] == ["solo", "soloist", "vocalist"]
+        assert c["facts"]["author"] == "Tess Author" and c["facts"]["doc"] == "Add three negatives (a test script)."
+        assert actions.ADS_VALIDATE.command(c) == (".venv/bin/python -E -s -B scripts/ads/negatives_2026_10.py solo "
+                                                   "soloist vocalist --validate-only")
+        s = actions.ADS_VALIDATE.preview(c)
+        for bit in ("scripts/ads/negatives_2026_10.py", repo.head()[:12], "on origin/main: yes", "Tess Author",
+                    "What the script says it does: Add three negatives (a test script).",
+                    "Claude's description: \"Add 3 negatives\": Adds solo, soloist and vocalist."):
+            assert bit in s, (bit, s)
+        assert s.splitlines()[-1].startswith("Runs: ")
         results = []
         checks = [(dict(script_path="scripts/other/tool.py"), 0o600, "the script must be a file in scripts/ads/"),
                   (dict(script_path="scripts/ads/../other/tool.py"), 0o600, "the script must be a file in scripts/ads/"),
                   (dict(script_path="/etc/passwd"), 0o600, "the script must be a file in scripts/ads/"),
-                  (dict(script_path="scripts/ads/missing.py"), 0o600, "the script must be a file in scripts/ads/"),
+                  (dict(script_blob=None), 0o600, "the proposal must pin the script's blob (script_blob)"),
+                  (dict(script_blob="abc"), 0o600, "the proposal must pin the script's blob (script_blob)"),
+                  (dict(commit=None), 0o600, "the proposal must pin a full commit id (commit)"),
+                  (dict(commit="main"), 0o600, "the proposal must pin a full commit id (commit)"),
+                  (dict(commit="f" * 40), 0o600, "the proposal's commit isn't in this repo"),
+                  (dict(script_blob="e" * 40), 0o600, "the script at that commit isn't the blob the proposal names"),
+                  (dict(args="solo"), 0o600, "the proposal's args must be a short list of simple words or numbers"),
+                  (dict(args=["--apply"]), 0o600, "the proposal's args must be a short list of simple words or numbers"),
+                  (dict(args=["-x"]), 0o600, "the proposal's args must be a short list of simple words or numbers"),
+                  (dict(args=["a b"]), 0o600, "the proposal's args must be a short list of simple words or numbers"),
+                  (dict(args=["../x"]), 0o600, "the proposal's args must be a short list of simple words or numbers"),
+                  (dict(args=["x"] * 13), 0o600, "the proposal's args must be a short list of simple words or numbers"),
+                  (dict(args=[5]), 0o600, "the proposal's args must be a short list of simple words or numbers"),
+                  (dict(extra="x"), 0o600, "the proposal has an unexpected field"),
                   ({}, 0o644, "the proposal file must be mode 600"),
                   ({}, 0o640, "the proposal file must be mode 600"),
                   (dict(id="other-id"), 0o600, "the proposal's id doesn't match its file name"),
                   (dict(kind="books"), 0o600, "not an Ads proposal"),
                   (dict(title=""), 0o600, "the proposal's title is missing or too long")]
         for over, mode, why in checks:
-            proposal(mode=mode, **over)
+            proposal(mode=mode, repo=repo, **over)
             results.append((over, mode, refused(v, {"proposal": "neg-2026-10"}), why))
         for over, mode, got, why in results:
             assert got == why, (over, mode, got)
-        # untracked, then modified, then a symlink
-        repo.write("scripts/ads/new_one.py", "print(1)\n")
-        proposal(script_path="scripts/ads/new_one.py")
-        assert refused(v, {"proposal": "neg-2026-10"}) == "the script isn't committed"
-        repo.write("scripts/ads/negatives_2026_10.py", "print('changed')\n")
-        proposal()
-        assert refused(v, {"proposal": "neg-2026-10"}) == "the script has uncommitted changes"
-        repo.git("checkout", "--", "scripts/ads/negatives_2026_10.py")
+        # a commit that isn't on origin/main (committed locally, never pushed)
+        repo.write("scripts/ads/negatives_2026_10.py", NEG_SCRIPT + "# local only\n")
+        repo.git("add", "-A")
+        repo.commit("local")
+        proposal(repo=repo)
+        assert refused(v, {"proposal": "neg-2026-10"}) == "the proposal's commit isn't on origin/main"
+        repo.publish()
+        assert v({"proposal": "neg-2026-10"})["commit"] == repo.head()
+        # a script path missing at that commit, and a symlink committed in scripts/ads/
+        proposal(repo=repo, script_path="scripts/ads/missing.py", script_blob="e" * 40)
+        assert refused(v, {"proposal": "neg-2026-10"}) == "the script isn't in that commit"
         os.symlink(repo.root / "scripts/other/tool.py", repo.root / "scripts/ads/link_tool.py")
         repo.git("add", "scripts/ads/link_tool.py")
         repo.commit("a symlink")
-        proposal(script_path="scripts/ads/link_tool.py")
+        repo.publish()
+        proposal(repo=repo, script_path="scripts/ads/link_tool.py")
         assert refused(v, {"proposal": "neg-2026-10"}) == "the script must be a file in scripts/ads/"
         # a symlinked proposal file, and bad ids
-        proposal()
+        proposal(repo=repo)
         d = Path(TMP) / "command-centre" / "proposals"
         (d / "sneaky.json").unlink(missing_ok=True)
         os.symlink(d / "neg-2026-10.json", d / "sneaky.json")
@@ -683,10 +763,127 @@ def test_ads_proposal_checks():
         assert listed["neg-2026-10"]["problem"] is None and not listed["neg-2026-10"]["applied"]
 
 
+def test_ads_git_ignores_the_callers_git_environment():
+    fixtures()
+    with AdsRepo() as repo:
+        proposal(repo=repo)
+        bogus = tempfile.mkdtemp()
+        saved = {k: os.environ.get(k) for k in ("GIT_DIR", "GIT_WORK_TREE", "GIT_CONFIG_PARAMETERS")}
+        os.environ.update(GIT_DIR=bogus, GIT_WORK_TREE=bogus, GIT_CONFIG_PARAMETERS="'core.fsmonitor'='touch /x'")
+        try:
+            c = actions.ADS_VALIDATE.validate({"proposal": "neg-2026-10"})
+        finally:
+            for k, val in saved.items():
+                if val is None:
+                    os.environ.pop(k, None)
+                else:
+                    os.environ[k] = val
+        assert c["commit"] == repo.head()
+        env = actions.git_env()
+        assert not any(k.startswith("GIT_") and k != "GIT_TERMINAL_PROMPT" for k in env)
+
+
+def real_validate(c, a, inp):
+    """ads-validate through the full route with the real subprocess.run (the archived script really runs)."""
+    with Runner(subprocess.run):
+        return run(c, a, "ads-validate", inp)
+
+
+def test_poc_the_working_tree_never_changes_what_runs():
+    """The reviewer's ads_poc.py: an untracked module shadowing the stdlib, an uncommitted edit to a tracked helper,
+    an ignored unchecked-hash .pyc, and a file swapped between the check and the run. Each ran before; now the
+    archived commit runs and none of them is seen."""
+    c, a, _ = setup()
+    clear_applied()
+    with AdsRepo() as repo:
+        proposal(repo=repo)
+        inp = {"proposal": "neg-2026-10"}
+        clean = real_validate(c, a, inp)
+        assert clean.json()["ok"] and clean.json()["output"] == "validate only honest helper solo soloist vocalist", \
+            clean.json()
+        # 1. an untracked shadow of a stdlib module in scripts/ads/
+        repo.write("scripts/ads/argparse.py", "import sys; sys.stdout.write('SHADOW argparse ran\\n'); raise SystemExit(0)\n")
+        # 2. an uncommitted change to a tracked sibling helper
+        repo.write("scripts/ads/helper.py", "X = 'EVIL helper (uncommitted change)'\n")
+        # 3. an ignored __pycache__ holding an unchecked-hash .pyc for the helper
+        import py_compile
+        evil = repo.root / "evil_src.py"
+        evil.write_text("X = 'EVIL from unchecked pyc'\n")
+        (repo.root / "scripts/ads/__pycache__").mkdir(exist_ok=True)
+        py_compile.compile(str(evil), cfile=str(repo.root / f"scripts/ads/__pycache__/helper.{sys.implementation.cache_tag}.pyc"),
+                           invalidation_mode=py_compile.PycInvalidationMode.UNCHECKED_HASH)
+        evil.unlink()
+        r = real_validate(c, a, inp)
+        out = r.json()["output"]
+        assert r.json()["ok"] and "honest helper" in out and "SHADOW" not in out and "EVIL" not in out, out
+        # 4. TOCTOU: the script swapped after the preview's checks, before the run
+        p = preview(c, "ads-validate", inp).json()
+        repo.write("scripts/ads/negatives_2026_10.py", "print('SWAPPED after the git check')\n")
+        with Runner(subprocess.run):
+            r = post(c, "/actions/ads-validate/run", {"input": inp, "credential": a.assert_(p["options"])})
+        assert r.json()["ok"] and "SWAPPED" not in r.json()["output"] and "honest helper" in r.json()["output"]
+        # the archive folder is gone afterwards
+        assert list((Path(TMP) / "command-centre" / "runs").iterdir()) == []
+
+
+def test_poc_skip_worktree_and_assume_unchanged_hide_nothing():
+    """The reviewer's ads_poc2.py: an edit hidden from `git status` by --skip-worktree or --assume-unchanged."""
+    c, a, _ = setup()
+    clear_applied()
+    with AdsRepo() as repo:
+        proposal(repo=repo)
+        inp = {"proposal": "neg-2026-10"}
+        for flag in ("--skip-worktree", "--assume-unchanged"):
+            repo.git("update-index", flag, "scripts/ads/negatives_2026_10.py")
+            repo.write("scripts/ads/negatives_2026_10.py", f"print('MODIFIED, hidden by {flag}')\n")
+            assert repo.git("status", "--porcelain") == ""
+            r = real_validate(c, a, inp)
+            out = r.json()["output"]
+            assert r.json()["ok"] and "MODIFIED" not in out and "honest helper" in out, (flag, out)
+            repo.git("update-index", flag.replace("--", "--no-"), "scripts/ads/negatives_2026_10.py")
+            repo.git("checkout", "--", "scripts/ads/negatives_2026_10.py")
+
+
+def test_ads_child_gets_only_the_allowlisted_environment():
+    c, a, _ = setup()
+    clear_applied()
+    with AdsRepo() as repo:
+        proposal(repo=repo)
+        seen = {}
+
+        def check(argv, kw):
+            seen["argv"], seen["kw"] = argv, kw
+            root = Path(kw["cwd"])
+            seen["files"] = sorted(str(p.relative_to(root)) for p in root.rglob("*") if p.is_file())
+            seen["mode"] = os.stat(root).st_mode & 0o777
+        os.environ["CC_SECRET"] = os.environ["SOME_TOKEN"] = os.environ["PYTHONPATH"] = "x"
+        os.environ["GIT_DIR"] = "/nowhere"
+        try:
+            with Runner(Recorder(out=b"ok", check=check)):
+                assert run(c, a, "ads-validate", {"proposal": "neg-2026-10"}).json()["ok"]
+        finally:
+            for k in ("CC_SECRET", "SOME_TOKEN", "PYTHONPATH", "GIT_DIR"):
+                os.environ.pop(k, None)
+        kw, argv = seen["kw"], seen["argv"]
+        assert set(kw["env"]) <= set(actions.ADS_ENV_KEYS) | {"LCS_PRIVATE_DIR", "LCS_ADS_LOG", "PYTHONNOUSERSITE",
+                                                              "PYTHONDONTWRITEBYTECODE", "PYTHONPYCACHEPREFIX"}
+        assert kw["env"]["LCS_PRIVATE_DIR"] == TMP and kw["env"]["LCS_ADS_LOG"] == str(repo.root / "logs" / "ads-changes.md")
+        assert kw["env"]["PYTHONNOUSERSITE"] == "1" and kw["env"]["PYTHONDONTWRITEBYTECODE"] == "1"
+        root = Path(kw["cwd"])
+        assert root.parent == Path(TMP) / "command-centre" / "runs" and seen["mode"] == 0o700
+        assert argv[:4] == [PYX, "-E", "-s", "-B"] and argv[4] == "-X" and argv[5].startswith("pycache_prefix=")
+        assert argv[6] == str(root / "scripts/ads/negatives_2026_10.py")
+        assert argv[7:] == ["solo", "soloist", "vocalist", "--validate-only"]
+        assert "scripts/ads/negatives_2026_10.py" in seen["files"] and "scripts/other/tool.py" in seen["files"]
+        assert not any(f.startswith(".git") or "__pycache__" in f for f in seen["files"]), seen["files"]
+        assert not root.exists()
+
+
 def test_ads_validate_then_apply_bound_to_the_output():
     c, a, _ = setup()
+    clear_applied()
     with AdsRepo() as repo:
-        proposal()
+        proposal(repo=repo)
         inp = {"proposal": "neg-2026-10"}
         # apply before any validate: refused, nothing runs
         r = preview(c, "ads-apply", inp)
@@ -695,11 +892,11 @@ def test_ads_validate_then_apply_bound_to_the_output():
             r = run(c, a, "ads-validate", inp)
         assert r.status_code == 200 and r.json()["ok"], r.text
         assert r.json()["next"] == {"action": "ads-apply", "input": inp, "label": "Apply this change set"}
-        assert rec.calls[0][0] == [PYX, str(repo.root / "scripts/ads/negatives_2026_10.py")]
+        assert rec.calls[0][0][-1] == "--validate-only"
         out_sha = hashlib.sha256(b"Validated 3 operations (validate_only)\n").hexdigest()
         p = preview(c, "ads-apply", inp).json()
-        assert out_sha[:16] in p["summary"] and p["command"].endswith("negatives_2026_10.py --apply")
-        assert "£5 daily cap" in p["summary"]
+        assert out_sha[:16] in p["summary"] and p["command"].endswith("negatives_2026_10.py solo soloist vocalist --apply")
+        assert "£5 daily cap" in p["summary"] and repo.head()[:12] in p["summary"]
         # the apply's assertion is bound to that output: a second validate with other output changes the summary
         with Runner(Recorder(out=b"Validated 4 operations\n")):
             run(c, a, "ads-validate", inp)
@@ -708,28 +905,230 @@ def test_ads_validate_then_apply_bound_to_the_output():
             assert r.status_code == 403 and r.json()["error"] == "wrong action" and rec.calls == []
             r = run(c, a, "ads-apply", inp)
         assert r.status_code == 200 and r.json()["ok"], r.text
-        assert rec.calls[0][0] == [PYX, str(repo.root / "scripts/ads/negatives_2026_10.py"), "--apply"]
-        assert (Path(TMP) / "command-centre" / "proposals" / "neg-2026-10.applied").exists()
+        argv, kw = rec.calls[0]
+        assert argv[-4:] == ["solo", "soloist", "vocalist", "--apply"] and argv[:4] == [PYX, "-E", "-s", "-B"]
+        applied = json.loads((Path(TMP) / "command-centre" / "proposals" / "neg-2026-10.applied").read_text())
+        assert applied["commit"] == repo.head() and applied["blob"] == repo.blob()
+        assert applied["args"] == ["solo", "soloist", "vocalist"] and applied["login"] == LOGIN
+        assert applied["passkey"] == b64(a.cred_id)
         # applied: neither step is offered again
         assert preview(c, "ads-validate", inp).json()["error"] == "already applied"
         assert preview(c, "ads-apply", inp).json()["error"] == "already applied"
+        # the same blob and args under another proposal id: refused too
+        proposal(pid="neg-again", repo=repo)
+        assert preview(c, "ads-validate", {"proposal": "neg-again"}).json()["error"] == \
+            "this script with these arguments was already applied"
+        # other args are a different change
+        proposal(pid="neg-other", repo=repo, args=["opera"])
+        assert preview(c, "ads-validate", {"proposal": "neg-other"}).status_code == 200
+        listed = {p["id"]: p for p in actions.list_proposals()}
+        assert listed["neg-again"]["problem"] == "this script with these arguments was already applied"
 
 
-def test_ads_apply_refused_after_the_script_changes_or_a_failed_validate():
+def test_ads_apply_runs_from_the_validated_commit_only():
     c, a, _ = setup()
+    clear_applied()
     with AdsRepo() as repo:
-        proposal()
+        proposal(repo=repo)
         inp = {"proposal": "neg-2026-10"}
         with Runner(Recorder(code=1, out=b"GoogleAdsException\n")):
             assert run(c, a, "ads-validate", inp).json()["next"] is None
         assert preview(c, "ads-apply", inp).status_code == 409
         with Runner(Recorder()):
             run(c, a, "ads-validate", inp)
-        repo.write("scripts/ads/negatives_2026_10.py", "print('now it spends')\n")
+        repo.write("scripts/ads/negatives_2026_10.py", NEG_SCRIPT + "print('now it spends')\n")
         repo.git("add", "-A")
         repo.commit("changed after validation")
+        repo.publish()
+        proposal(repo=repo)  # re-pinned to the new commit: not the one validated
         r = preview(c, "ads-apply", inp)
         assert r.status_code == 409 and "changed since it was validated" in r.json()["error"]
+
+
+def test_old_scripts_fail_the_validate_step_at_argparse():
+    c, a, _ = setup()
+    clear_applied()
+    with AdsRepo() as repo:
+        proposal(repo=repo, script_path="scripts/ads/old_style.py", args=[])
+        r = real_validate(c, a, {"proposal": "neg-2026-10"})
+        body = r.json()
+        assert body["ok"] is False and body["exit_code"] == 2 and "unrecognized arguments: --validate-only" in body["output"]
+        assert body["next"] is None and "old script ran" not in body["output"]
+        assert preview(c, "ads-apply", {"proposal": "neg-2026-10"}).status_code == 409
+
+
+def test_one_apply_per_validate_even_racing():
+    """The validate record is popped atomically when the apply starts: a second apply finds nothing."""
+    c, a, _ = setup()
+    clear_applied()
+    with AdsRepo() as repo:
+        proposal(repo=repo)
+        inp = {"proposal": "neg-2026-10"}
+        with Runner(Recorder()):
+            run(c, a, "ads-validate", inp)
+        p1 = preview(c, "ads-apply", inp).json()
+        p2 = preview(c, "ads-apply", inp).json()
+        with Runner(Recorder(code=1, out=b"REJECTED\n")) as rec:  # a failed apply writes no .applied
+            r1 = post(c, "/actions/ads-apply/run", {"input": inp, "credential": a.assert_(p1["options"])})
+            r2 = post(c, "/actions/ads-apply/run", {"input": inp, "credential": a.assert_(p2["options"])})
+        assert r1.json()["ok"] is False and len(rec.calls) == 1
+        assert r2.status_code == 409, r2.text
+        assert audit_lines()[-1]["result"].startswith("refused: validate")
+
+
+def test_ads_output_is_head_and_tail_unmasked():
+    body = "".join(f"line {i:05d} campaign 23739971001 £4.50\n" for i in range(1000))
+    shown = actions.head_and_tail(body + "refresh_token=1//0gAbCdEfGh\n")
+    assert shown.startswith("line 00000 campaign 23739971001") and "23739971001 £4.50" in shown
+    assert "characters left out" in shown and "0gAbCdEfGh" not in shown
+    head, tail = shown.split("characters left out")
+    assert len(head) < actions.ADS_HEAD + 40 and len(tail) < actions.ADS_TAIL + 40
+    assert actions.head_and_tail("short 12345678") == "short 12345678"
+
+
+# ---------------------------------------------------------------- locking, refusals, the audit chain
+
+
+def test_validation_runs_under_the_action_lock_and_refusals_are_audited():
+    c, a, _ = setup()
+    seen = []
+    real = actions.RESOLVE_HAND_CHECK.validate
+
+    def watching(raw):
+        seen.append(actions._RUN_LOCK.locked())
+        return real(raw)
+    import dataclasses as dc
+    defn = dc.replace(actions.RESOLVE_HAND_CHECK, validate=watching)
+    inp = {"ref": "2111", "choice": "refunded", "date": D}
+    with Runner(Recorder()):
+        try:
+            actions.run_action(defn, inp, {"login": LOGIN})
+        except actions.ActionError:
+            pass
+    assert seen == [True], seen
+    # a refusal at the run step (bad input) is logged with the action's name and a hash of the input
+    bad = {"ref": "9999", "choice": "refunded", "date": D}
+    r = post(c, "/actions/resolve-hand-check/run", {"input": bad})
+    assert r.status_code == 400 and r.json()["error"] == "unknown booking"
+    last = audit_lines()[-1]
+    assert last["action"] == "resolve-hand-check" and last["result"] == "refused: unknown booking"
+    assert last["input_sha256"] == actions.input_sha256(bad) and "input" not in last and "9999" not in json.dumps(last)
+    # busy: another action holds the lock
+    assert actions._RUN_LOCK.acquire(timeout=1)
+    saved = actions.RUN_WAIT
+    actions.RUN_WAIT = 0.05
+    try:
+        r = run(c, a, "resolve-hand-check", inp)
+        assert r.status_code == 409
+        assert audit_lines()[-1]["result"] == "refused: another action is running"
+        # refresh-data has its own lock: it still runs
+        with Runner(Recorder(out=b"wrote dashboard\n")):
+            r = post(c, "/actions/refresh-data/run", {"input": {}})
+        assert r.status_code == 200 and r.json()["ok"], r.text
+    finally:
+        actions.RUN_WAIT = saved
+        actions._RUN_LOCK.release()
+
+
+def test_the_applied_check_is_made_under_the_lock():
+    """An apply that was validated, then applied by another path before this run takes the lock, is refused."""
+    c, a, _ = setup()
+    clear_applied()
+    with AdsRepo() as repo:
+        proposal(repo=repo)
+        inp = {"proposal": "neg-2026-10"}
+        with Runner(Recorder()):
+            run(c, a, "ads-validate", inp)
+        p = preview(c, "ads-apply", inp).json()
+        actions.write_private(actions.applied_path("neg-2026-10"), {"blob": repo.blob(), "args": []})
+        with Runner(Recorder()) as rec:
+            r = post(c, "/actions/ads-apply/run", {"input": inp, "credential": a.assert_(p["options"])})
+        assert r.status_code == 400 and r.json()["error"] == "already applied" and rec.calls == []
+        assert audit_lines()[-1]["result"] == "refused: already applied"
+
+
+def test_the_audit_log_is_hash_chained():
+    c, a, _ = setup()
+    with Runner(Recorder(out=b"ok")):
+        run(c, a, "resolve-hand-check", {"ref": "2111", "choice": "refunded", "date": D})
+        run(c, a, "singer-confirm", {"invoice": models.invoice_key(MSG)})
+    lines = audit_lines()
+    assert len(lines) == 4 and lines[0]["prev"] == actions.GENESIS
+    raw = (Path(TMP) / "command-centre" / "audit.jsonl").read_bytes().split(b"\n")
+    for before, entry in zip(raw, lines[1:]):
+        assert entry["prev"] == hashlib.sha256(before).hexdigest()
+    assert actions.verify_audit() == []
+    path = Path(TMP) / "command-centre" / "audit.jsonl"
+    good = path.read_bytes()
+    path.write_bytes(good.replace(b'"result": "ok"', b'"result": "OK"', 1))  # an edited line breaks the next one
+    assert actions.verify_audit() != []
+    path.write_bytes(b"\n".join(good.split(b"\n")[1:]))  # a removed first line
+    assert actions.verify_audit() == [1]
+    path.write_bytes(good + b"not json\n")  # an appended stray line, then a real entry chains onto it
+    actions.write_audit("x", "y", {"login": LOGIN}, "ok")
+    assert actions.verify_audit() == [5]
+    path.write_bytes(good[:-1])  # a file that doesn't end with a newline still gets a whole new line
+    actions.write_audit("x", "y", {"login": LOGIN}, "ok")
+    assert actions.verify_audit() == [] and audit_lines()[-1]["action"] == "x"
+
+
+def test_a_failed_audit_write_after_a_run_is_reported():
+    c, a, _ = setup()
+    real = actions.write_audit
+    calls = []
+
+    def flaky(name, summary, user, result, **extra):
+        calls.append(result)
+        if result != "started":
+            raise PermissionError("disk")
+        return real(name, summary, user, result, **extra)
+    actions.write_audit = flaky
+    try:
+        with Runner(Recorder(out=b"2111: note added\n")) as rec:
+            r = run(c, a, "resolve-hand-check", {"ref": "2111", "choice": "refunded", "date": D})
+    finally:
+        actions.write_audit = real
+    assert r.status_code == 200 and len(rec.calls) == 1 and calls == ["started", "ok"]
+    assert r.json()["output"].startswith("ran, but the audit write failed (PermissionError)")
+    assert "2111: note added" in r.json()["output"]
+
+
+def test_the_hand_check_child_gets_the_private_dir_and_no_ledger_override():
+    c, a, _ = setup()
+    with Runner(Recorder()) as rec:
+        run(c, a, "resolve-hand-check", {"ref": "2111", "choice": "refunded", "date": D})
+        run(c, a, "singer-settled", {"invoice": models.invoice_key(MSG), "date": D})
+    hand, singer = rec.calls[0][1]["env"], rec.calls[1][1]["env"]
+    assert hand["LCS_PRIVATE_DIR"] == TMP and "LCS_BOOKINGS_CSV" not in hand
+    assert singer["LCS_PRIVATE_DIR"] == TMP
+    # a ledger moved elsewhere by LCS_BOOKINGS_CSV: the app won't ask check_payments to write beside the nonce
+    saved = cp.LEDGER
+    try:
+        cp.LEDGER = Path(tempfile.mkdtemp()) / "bookings.csv"
+        assert refused(actions.RESOLVE_HAND_CHECK.validate, {"ref": "2111", "choice": "refunded", "date": D}) == \
+            "the ledger isn't the one in the private folder (LCS_BOOKINGS_CSV moves it)"
+    finally:
+        cp.LEDGER = saved
+
+
+def test_real_singer_confirm_through_the_route_is_bound_to_the_fingerprint():
+    c, a, _ = setup()
+    key = models.invoice_key(MSG)
+    r = run(c, a, "singer-confirm", {"invoice": key})
+    assert r.status_code == 200 and r.json()["ok"], r.json()
+    row = next(x for x in lm.read_csv(si.STORE) if x["message_id"] == MSG)
+    assert row["bank_confirmed"] == "yes"
+    # the details changed after the preview: the rebuilt summary no longer matches the signed one
+    fixtures()
+    p = preview(c, "singer-confirm", {"invoice": key}).json()
+    rows = lm.read_csv(si.STORE)
+    for x in rows:
+        if x["message_id"] == MSG:
+            x["bank_fp"] = "ffffffff00000000"
+    write_csv(str(si.STORE), si.COLUMNS, rows)
+    with Runner(Recorder()) as rec:
+        r = post(c, "/actions/singer-confirm/run", {"input": {"invoice": key}, "credential": a.assert_(p["options"])})
+    assert r.status_code == 403 and r.json()["error"] == "wrong action" and rec.calls == []
 
 
 # ---------------------------------------------------------------- owner-only protection vs the allowlist
@@ -769,11 +1168,13 @@ def test_the_apps_own_commands_are_not_allowlisted_unless_safe():
         if name in SAFE_ON_ALLOWLIST:
             continue
         assert not on, f"{name}: {cmd} is allowlisted"
-    with AdsRepo():
-        proposal()
-        for name, flag in (("ads-validate", []), ("ads-apply", ["--apply"])):
-            cmd = f"{allowlist.PY} scripts/ads/negatives_2026_10.py" + (" --apply" if flag else "")
-            assert not allowlist.allowed(cmd, pats), cmd
+    with AdsRepo() as repo:
+        proposal(repo=repo)
+        for name, flag in (("ads-validate", "--validate-only"), ("ads-apply", "--apply")):
+            for cmd in (f"{allowlist.PY} scripts/ads/negatives_2026_10.py solo {flag}",
+                        f"{allowlist.PY} -E -s -B scripts/ads/negatives_2026_10.py solo {flag}",
+                        f"{allowlist.PY} scripts/ads/set_budget.py 111 4.50 {flag}"):
+                assert not allowlist.allowed(cmd, pats), cmd
             seen.add(name)
     seen |= {"approve-books-import", "todo-tick"}  # no subprocess
     assert seen == set(actions.REGISTRY)
@@ -822,10 +1223,12 @@ def test_pages_carry_the_action_forms_without_ids_or_inline_code():
 
 def test_marketing_lists_proposals():
     c, a, _ = setup()
-    with AdsRepo():
-        proposal()
-        proposal(pid="bad-one", mode=0o644)
+    clear_applied()
+    with AdsRepo() as repo:
+        proposal(repo=repo)
+        proposal(pid="bad-one", mode=0o644, repo=repo)
         out = page(c, "/marketing")
+    assert "Claude&#39;s description:" in out or "Claude's description:" in out
     assert "Add 3 negatives" in out and 'data-action="ads-validate"' in out and 'value="neg-2026-10"' in out
     assert "the proposal file must be mode 600" in out
     assert 'data-action="ads-apply"' not in out  # only after a validate
