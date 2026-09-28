@@ -101,8 +101,9 @@ APPROVED_WRITES = {
     "ZohoBooks_add_invoice_document", "ZohoBooks_upload_invoice_document",
     "ZohoBooks_add_invoice_comment",
     "ZohoBooks_create_bill", "ZohoBooks_update_bill", "ZohoBooks_add_bill_comment",
-    "ZohoBooks_create_item",
+    "ZohoBooks_create_item", "ZohoBooks_create_bank_account", "ZohoBooks_create_vendor_payment",
 }
+STARLING = "1534218000000095168"
 ORG = {"organization_id": "941014440"}
 CONFIRMATION = "~/lcs-private/invoices/2111 - A Client/Booking Confirmation - A Client - 21 Nov 2026.docx"
 
@@ -148,6 +149,16 @@ def good_inputs():
                                   "query_params": ORG, "path_variables": {"bill_id": "666"}},
         "ZohoBooks_add_bill_comment": {"body": {"description": "Booking 2111"}, "query_params": ORG,
                                        "path_variables": {"bill_id": "666"}},
+        "ZohoBooks_create_vendor_payment": {"body": {"vendor_id": "1534218000000100001", "amount": 100,
+                                                     "date": "2026-09-28", "payment_mode": "Bank Transfer",
+                                                     "paid_through_account_id": STARLING,
+                                                     "description": "Starling transfer",
+                                                     "bills": [{"bill_id": "1534218000000102002",
+                                                                "amount_applied": 100}]},
+                                            "query_params": ORG},
+        "ZohoBooks_create_bank_account": {"body": {"account_name": "Starling Business", "account_type": "bank",
+                                                   "currency_code": "GBP", "description": "Business account"},
+                                          "query_params": ORG},
         "ZohoBooks_create_item": {"body": {"name": "Singing fee", "rate": 0, "description": "Singer's fee",
                                            "item_type": "purchases", "product_type": "service",
                                            "purchase_rate": "0", "purchase_description": "Singer's fee"},
@@ -442,6 +453,37 @@ def test_bill_lines_may_only_use_the_singer_fees_account():
     assert not denied(B, with_(B, "body", line_items=[line]))
     assert not denied(B, with_(B, "body", line_items=[dict(line, account_id="1534218000000034003")]))
     assert denied(B, with_(B, "body", line_items=[dict(line, account_id="1534218000000000373")]))
+
+
+def test_vendor_payment_is_one_bill_in_full_through_starling():
+    V = "ZohoBooks_create_vendor_payment"
+    bill = {"bill_id": "1534218000000102002", "amount_applied": 100}
+    assert denied(V, with_(V, "body", paid_through_account_id="1534218000000117002"))
+    assert denied(V, with_(V, "body", paid_through_account_id=None))
+    assert denied(V, with_(V, "body", payment_mode="Cash"))
+    assert not denied(V, with_(V, "body", payment_mode=None))
+    assert denied(V, with_(V, "body", amount=90))
+    assert denied(V, with_(V, "body", amount=0, bills=[dict(bill, amount_applied=0)]))
+    assert denied(V, with_(V, "body", amount=20000, bills=[dict(bill, amount_applied=20000)]))
+    assert denied(V, with_(V, "body", amount="100"))
+    assert denied(V, with_(V, "body", bills=[]))
+    assert denied(V, with_(V, "body", bills=[bill, bill]))
+    assert denied(V, with_(V, "body", vendor_id=None))
+    for key in ("reference_number", "check_details", "exchange_rate", "location_id"):
+        assert denied(V, with_(V, "body", **{key: "x"})), key
+    assert denied(V, with_(V, "body", description="Paid to sort code 12-34-56"))
+    for tool in ("ZohoBooks_create_customer_payment", "ZohoBooks_email_vendor_payment"):
+        assert decide("zoho-books", tool, {"query_params": ORG}) == "deny", tool
+
+
+def test_bank_account_is_a_named_gbp_bank_with_no_numbers():
+    A = "ZohoBooks_create_bank_account"
+    assert denied(A, with_(A, "body", account_type="credit_card"))
+    assert denied(A, with_(A, "body", currency_code="EUR"))
+    assert denied(A, with_(A, "body", account_name=None))
+    for key in ("account_number", "routing_number", "account_code", "bank_name", "is_primary_account"):
+        assert denied(A, with_(A, "body", **{key: "12345678"})), key
+    assert denied(A, with_(A, "body", description="Sort code 12-34-56"))
 
 
 def test_item_create_is_a_purchase_service_with_no_account_or_tax_keys():

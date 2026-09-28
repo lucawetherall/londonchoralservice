@@ -10,7 +10,8 @@ scan and rescan end with two lines for the Books bill: "bill: yes" or "bill: no 
 amount not found or zero amount) and "bill_number: <x>" (the singer's ref, or SI- plus the last 5 digits of
 the message id when the ref has a digit run over 5 digits). On a message already recorded, scan prints
 "already recorded: <id>", then the stored line, its warnings and the bill lines, so a crashed run can resume.
-    singer_invoices.py paid [--apply]      # match OUT payments; prints NEWLY PAID <message id>
+    singer_invoices.py paid [--apply]      # match OUT payments; prints NEWLY PAID <message id>, and for a
+        match on the bank details an indented "books: bill_number … · email … · amount … · date …" line
     singer_invoices.py status              # unpaid invoices and totals
     singer_invoices.py thanked <message id>  # note that the "Paid!" reply was drafted
     singer_invoices.py confirm <message id>  # the owner rang the singer: trust these bank details
@@ -997,6 +998,9 @@ def cmd_paid(args, client):
             when, amount, uid, verified = hits[r["message_id"]]
             print(f"NEWLY PAID {r['message_id']}: {first_name(r['singer_name'])} £{amount:,.2f} on {when}"
                   + (" (bank details match)" if verified else " (matched by name, check before thanking)"))
+            if verified:  # what the clerk needs to record the payment against the Books bill
+                print(f"   books: bill_number {bill_number(r.get('invoice_ref'), r['message_id'])}"
+                      f" · email {r.get('singer_email')} · amount {amount:.2f} · date {when}")
     if not hits:
         print("No new payments to singers matched.")
     elif args.apply:
