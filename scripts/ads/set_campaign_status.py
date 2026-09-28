@@ -3,7 +3,7 @@
 
 Default run is validate_only. --apply only after approval; applied changes
 are appended to logs/ads-changes.md. Refuses to enable a campaign whose
-daily budget is above the £5 cap.
+daily budget is above its cap (£5, or a dated exception in budget_cap.py).
 
     source .venv/bin/activate
     python scripts/ads/set_campaign_status.py 24295921372 enabled --reason "..."
@@ -15,11 +15,14 @@ import argparse
 import datetime
 from pathlib import Path
 
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import budget_cap  # noqa: E402
+
 from google.ads.googleads.client import GoogleAdsClient
 from google.ads.googleads.errors import GoogleAdsException
 
 CUSTOMER_ID = "8733881378"
-MAX_DAILY_BUDGET_MICROS = 5_000_000
 LOG = Path(__file__).resolve().parents[2] / "logs" / "ads-changes.md"
 SCRIPT = "scripts/ads/set_campaign_status.py"
 
@@ -44,8 +47,9 @@ def main():
     if current == want:
         print(f'"{camp.name}" is already {want}. Nothing to change.')
         return
-    if want == "enabled" and budget > MAX_DAILY_BUDGET_MICROS:
-        raise SystemExit(f"Refusing: daily budget £{budget/1e6:.2f} is above the £5 cap")
+    cap = budget_cap.cap_micros(args.campaign_id)
+    if want == "enabled" and budget > cap:
+        raise SystemExit(f"Refusing: daily budget £{budget/1e6:.2f} is above the £{cap/1e6:g} cap")
 
     resource = f'campaign "{camp.name}" ({args.campaign_id})'
     print(f"{'APPLYING' if args.apply else 'VALIDATE ONLY'}:\n\n{resource}\n   status: {current} → {want}"

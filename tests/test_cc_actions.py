@@ -1153,7 +1153,7 @@ def test_ads_validate_then_apply_bound_to_the_output():
         out_sha = hashlib.sha256(b"Validated 3 operations (validate_only)\n").hexdigest()
         p = preview(c, "ads-apply", inp).json()
         assert out_sha[:16] in p["summary"] and p["command"].endswith("negatives_2026_10.py solo soloist vocalist --apply")
-        assert "£5 daily cap" in p["summary"] and repo.head()[:12] in p["summary"]
+        assert "daily cap (£5" in p["summary"] and repo.head()[:12] in p["summary"]
         # the apply's assertion is bound to that output: a second validate with other output changes the summary
         with Runner(Recorder(out=b"Validated 4 operations\n")):
             run(c, a, "ads-validate", inp)

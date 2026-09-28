@@ -227,6 +227,18 @@ def test_money_page_books_panel_and_season_total():
     assert "couldn't load" not in out
 
 
+def test_money_page_shows_unlinked_singer_invoices():
+    fixtures()
+    rows = lm.read_csv(si.STORE)
+    rows.append({"message_id": "m5", "received": "2026-09-25", "singer_name": "Uma Unlinked",
+                 "singer_email": "uma@example.org", "invoice_ref": "UN1", "amount_gbp": "90", "bank_fp": "uuu",
+                 "bank_last4": "3333", "payee": "", "bank_changed": "no", "paid_on": "", "booking_ref": ""})
+    lm.write_csv(si.STORE, rows, si.COLUMNS)
+    out = text_of(page(make(FakeBank()), "/money"))
+    assert "Unlinked singer invoices: 1, £90.00." in out, out
+    assert "Uma Unlinked" not in out  # first name only, like every other singer row
+
+
 def test_today_flags_books_disagreements():
     fixtures()
     c = make(FakeBank())

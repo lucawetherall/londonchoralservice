@@ -387,11 +387,26 @@ def test_seed_file_loads_and_stays_under_the_cap():
     cfg = ec.load_windows(os.path.join(ROOT, "data", "budget-windows.yml"))
     assert cfg["season_start"] == D(2026, 9, 1)
     names = [w["name"] for w in cfg["windows"]]
-    assert names == ["carols", "carols-off", "weddings", "funerals"], names
-    assert all(w["daily_gbp"] <= 5 for w in cfg["windows"])
+    assert names == ["carols", "carols-late", "carols-off", "weddings", "funerals"], names
+    assert all(w["daily_gbp"] <= 5 for w in cfg["windows"] if w["name"] != "carols")
+    cams = [dict(c, id="24295921372") if c["name"].startswith("Christmas") else c for c in CAMPAIGNS]
     for day in (D(2026, 1, 1), D(2026, 1, 2), D(2026, 5, 1), D(2026, 10, 1), D(2026, 12, 21), MON):
-        items = ec.proposals(CAMPAIGNS, cfg["windows"], day)
+        items = ec.proposals(cams, cfg["windows"], day)
         assert not [i for i in items if i["kind"] == "error"], (day, items)
+
+
+def test_the_christmas_exception_allows_eight_pounds_only_for_its_id_and_dates():
+    cfg = ec.load_windows(os.path.join(ROOT, "data", "budget-windows.yml"))
+    xmas = {"name": "Christmas carol singers – events 2026", "status": "ENABLED", "budget_gbp": 5.0,
+            "id": "24295921372"}
+    lines = ec.proposal_lines(ec.proposals([xmas], cfg["windows"], D(2026, 10, 1)))
+    assert lines == ["PROPOSE: Christmas carol singers – events 2026 £5.00 → £8.00/day (window carols)"], lines
+    lines = ec.proposal_lines(ec.proposals([dict(xmas, budget_gbp=8.0)], cfg["windows"], D(2026, 12, 14)))
+    assert lines == ["PROPOSE: Christmas carol singers – events 2026 £8.00 → £5.00/day (window carols-late)"], lines
+    # the same name without the id, or the same id after 13 Dec 2026, gets the £5 cap
+    for cam, day in ((dict(xmas, id=None), D(2026, 10, 1)), (xmas, D(2027, 10, 1))):
+        lines = ec.proposal_lines(ec.proposals([cam], cfg["windows"], day))
+        assert lines == ["CONFIG ERROR: window carols asks for £8.00/day, above the £5 cap: capped at £5.00"], lines
 
 
 # ---------- Search Console shortlist ----------

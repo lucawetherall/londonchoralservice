@@ -13,6 +13,11 @@ gather(client, today) reads the private files (and Starling, when a client is gi
 render(data) turns that dict into HTML and nothing else, so tests drive it with fake data. Each section is
 built and rendered on its own: one that fails shows "couldn't load (<TypeName>)" and the rest still render.
 Only client and singer first names appear, and never more of a bank account than ••••last4.
+
+The Books section (R21) reuses command_centre/books_cache.py, read-only, for the cache the daily pass writes
+(cc_sync.py books): totals, draft and overdue invoice numbers, the season margin (books_cache.margins(), the
+same figures the Command Centre's Money page shows) and unlinked singer invoices (singer_invoices.unlinked_
+invoices). "Books not synced yet." when the cache doesn't exist.
 """
 
 import argparse
@@ -37,6 +42,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import economics as ec  # noqa: E402  load_windows: the season start
 
 REPO = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(REPO))
+from command_centre import books_cache as bc  # noqa: E402  R21: the Books panel and season margin reuse this reader
 BUDGET_WINDOWS = REPO / "data" / "budget-windows.yml"  # season_start, as the Monday report's section 11 reads it
 
 LONDON = ZoneInfo("Europe/London")
@@ -182,6 +189,40 @@ def ads(enq):
     return {"generated": str(summary.get("generated") or ""), "weeks": out}
 
 
+def season_totals(margins, start):
+    """The season's margin totals from `start` (a date), cancelled bookings left out: {fee, costs, margin,
+    margin_pct, count, start}. A small local copy of command_centre.models.season_margin: importing that module
+    here would import dashboard right back (it does `import dashboard as dash`), so this stays self-contained."""
+    rows = [m for m in margins if not m["cancelled"] and cp.date_or_none(m.get("event_date")) and
+            cp.date_or_none(m["event_date"]) >= start]
+    fee = round(sum(m["fee"] for m in rows), 2)
+    costs = round(sum(m["costs"] for m in rows), 2)
+    margin = round(fee - costs, 2)
+    return {"fee": fee, "costs": costs, "margin": margin, "margin_pct": round(100 * margin / fee, 1) if fee else None,
+            "count": len(rows), "start": start}
+
+
+def books_section():
+    """The Books panel: totals, draft and overdue invoice numbers (command_centre.books_cache.books_cache(),
+    written by the daily pass's `cc_sync.py books`), the season margin (books_cache.margins(), the same reader
+    the Command Centre's Money page uses) and unlinked singer invoices. None when Books isn't synced yet."""
+    cache = bc.books_cache()
+    if cache is None:
+        return None
+    invoices = [i for i in cache.get("invoices") or [] if isinstance(i, dict)]
+    drafts = sorted(str(i.get("number", "")) for i in invoices if i.get("status") == "draft")
+    overdue = sorted(str(i.get("number", "")) for i in invoices
+                      if i.get("status") == "overdue" and float(i.get("balance") or 0) > 0)
+    try:
+        when = datetime.datetime.fromisoformat(str(cache.get("generated_at")))
+    except ValueError:
+        when = None
+    season = season_totals(bc.margins(), season_start())
+    unlinked = si.unlinked_invoices(lm.read_csv(si.STORE))
+    return {"totals": cache.get("totals") or {}, "drafts": drafts, "overdue": overdue,
+            "generated_at": when.isoformat() if when else None, "season": season, "unlinked": unlinked}
+
+
 def bank_balance(client):
     if client is None:
         return None
@@ -216,6 +257,7 @@ def gather(client, today):
     data["pipeline"] = section(pipeline, enq, today) if enq_ok else enq
     data["ads"] = section(ads, enq if enq_ok else None)
     data["bank"] = section(bank_balance, client)
+    data["books"] = section(books_section)
     return data
 
 
@@ -389,9 +431,31 @@ def r_bank(b, data):
             f'<div><div class="muted">Effective</div><div class="big">{gbp(b["effective"])}</div></div></div>')
 
 
+def r_books(v, data):
+    if v is None:
+        return '<p class="muted">Books not synced yet.</p>'
+    t = v["totals"]
+    out = [f'<div class="pair"><div><div class="muted">Receivables</div><div class="big">{gbp(t.get("receivables", 0))}</div></div>'
+           f'<div><div class="muted">Overdue</div><div class="big">{gbp(t.get("overdue", 0))}</div></div>'
+           f'<div><div class="muted">Unpaid bills</div><div class="big">{gbp(t.get("unpaid_bills", 0))}</div></div></div>']
+    if v["drafts"]:
+        out.append(f'<p>Drafts not yet sent: {", ".join(e(n) for n in v["drafts"])}</p>')
+    if v["overdue"]:
+        out.append(f'<p>Overdue: {", ".join(e(n) for n in v["overdue"])}</p>')
+    s = v["season"]
+    pct = f"{s['margin_pct']:.1f}%" if s["margin_pct"] is not None else "–"
+    out.append(f'<p>Season margin from {day(s["start"].isoformat())}: fee {gbp(s["fee"])}, singer costs {gbp(s["costs"])}, '
+               f'margin {gbp(s["margin"])} ({e(pct)}), {e(str(s["count"]))} booking{"" if s["count"] == 1 else "s"}.</p>')
+    u = v["unlinked"]
+    if u["count"]:
+        out.append(f'<p>Unlinked singer invoices: {e(str(u["count"]))}, {gbp(u["total"])}.</p>')
+    return "".join(out)
+
+
 SECTIONS = [("Upcoming events", "upcoming", r_upcoming), ("Money", "money", r_money),
             ("Needs a hand check", "hand_check", r_hand), ("Singer invoices unpaid", "singers", r_singers),
-            ("Pipeline", "pipeline", r_pipeline), ("Ads", "ads", r_ads), ("Bank balance", "bank", r_bank)]
+            ("Pipeline", "pipeline", r_pipeline), ("Ads", "ads", r_ads), ("Bank balance", "bank", r_bank),
+            ("Books", "books", r_books)]
 
 
 def render(data):

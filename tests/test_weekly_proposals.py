@@ -57,7 +57,7 @@ def test_writes_a_proposal_the_app_accepts():
                  "summary": p["summary"], "script_path": "scripts/ads/set_budget.py",
                  "created": "2026-10-05T09:05:00+01:00", "commit": COMMIT, "script_blob": BLOB,
                  "args": ["24295921372", "5.00"]}, p
-    assert "window carols" in p["summary"] and "never above £5/day" in p["summary"]
+    assert "window carols" in p["summary"] and "never above £8/day" in p["summary"]
     f = PDIR / "budget-24295921372-500-20261005.json"
     assert stat.S_IMODE(f.stat().st_mode) == 0o600 and stat.S_IMODE(PDIR.stat().st_mode) == 0o700
     assert stat.S_IMODE(PDIR.parent.stat().st_mode) == 0o700
@@ -109,11 +109,13 @@ def test_a_new_amount_supersedes_the_older_waiting_proposal_for_the_same_campaig
 
 def test_never_above_five_pounds_and_needs_a_campaign_id():
     clear()
-    lines = wr.write_proposals([item(new=5.01), item(new=6), item(new=0), item(cid=None), item(cid="12a")], MON,
+    lines = wr.write_proposals([item(cid="1", new=5.01), item(cid="1", new=6), item(cid="1", new=0),
+                                item(new=8.01), item(cid=None), item(cid="12a")], MON,
                                git_runner=FakeGit(), now=NOW)
     assert lines == ["not written (Christmas carol singers – events 2026): £5.01/day is outside £0–£5",
                      "not written (Christmas carol singers – events 2026): £6.00/day is outside £0–£5",
                      "not written (Christmas carol singers – events 2026): £0.00/day is outside £0–£5",
+                     "not written (Christmas carol singers – events 2026): £8.01/day is outside £0–£8",
                      "not written (Christmas carol singers – events 2026): no campaign id",
                      "not written (Christmas carol singers – events 2026): no campaign id"], lines
     assert not written()
@@ -157,11 +159,11 @@ def run_section(write, git):
 def test_section_12_writes_only_with_the_flag():
     clear()
     out = run_section(False, FakeGit())
-    assert "PROPOSE: Christmas carol singers – events 2026 £4.00 → £5.00/day (window carols)" in out, out
+    assert "PROPOSE: Christmas carol singers – events 2026 £4.00 → £8.00/day (window carols)" in out, out
     assert "proposal" not in out.split("(window carols)")[1] and not written()
     out = run_section(True, FakeGit())
-    assert "   proposal written: budget-24295921372-500-20261005" in out.splitlines(), out
-    assert list(written()) == ["budget-24295921372-500-20261005"]
+    assert "   proposal written: budget-24295921372-800-20261005" in out.splitlines(), out
+    assert list(written()) == ["budget-24295921372-800-20261005"]
     out = run_section(True, FakeGit(code=1))
     assert "   Command Centre proposals not written: RuntimeError" in out.splitlines(), out
 
@@ -188,6 +190,33 @@ def test_flag_is_parsed():
     finally:
         wr.run_sections, sys.argv = saved
     assert seen["write_proposals"] is True and seen["save_report"] is False
+
+
+def test_christmas_value_check_flags_extra_spend_past_sixty_pounds():
+    from types import SimpleNamespace as N
+    rows = lambda costs: (lambda query: [N(metrics=N(cost_micros=int(c * 1e6))) for c in costs])
+    lines = wr.value_check_lines(rows([8, 8, 2]), datetime.date(2026, 10, 5))
+    assert lines[0] == "Christmas value check: £18.00 spent since 28 Sep, £6.00 of it above the £5/day level", lines
+    lines = wr.value_check_lines(rows([8] * 21), datetime.date(2026, 11, 2))
+    assert "PAST £60: back to £5 unless a real enquiry came from the campaign" in lines[0], lines
+    assert "(checked from" not in lines[0]
+    assert wr.value_check_lines(rows([8]), datetime.date(2026, 9, 27)) == []
+
+
+def test_spend_guard_flags_eighty_pounds_with_no_lead_and_enough_clicks():
+    from types import SimpleNamespace as N
+    def rows(query):
+        return [N(campaign=N(id=1, name="wedding-leads"), metrics=N(cost_micros=95_000_000, clicks=20, conversions=0.0)),
+                N(campaign=N(id=2, name="funeral expert campaign"), metrics=N(cost_micros=120_000_000, clicks=25, conversions=2.0)),
+                N(campaign=N(id=3, name="quiet"), metrics=N(cost_micros=85_000_000, clicks=9, conversions=0.0)),
+                N(campaign=N(id=4, name="small"), metrics=N(cost_micros=30_000_000, clicks=6, conversions=0.0))]
+    lines = wr.spend_guard_lines(rows, datetime.date(2026, 10, 26))
+    assert lines[0] == ("spend guard wedding-leads: £95.00, 20 clicks, 0 leads in 28 days — STOP GUARD: propose "
+                        "pausing (never deleting) until the owner decides"), lines
+    assert lines[1] == "spend guard funeral expert campaign: £120.00, 25 clicks, 2 leads in 28 days", lines
+    assert lines[2].endswith("under 15 clicks, too few to judge; watch next week"), lines
+    assert lines[3] == "spend guard small: £30.00, 6 clicks, 0 leads in 28 days", lines
+    assert lines[4].startswith("stop rule: £80+ in 28 days with no lead")
 
 
 if __name__ == "__main__":

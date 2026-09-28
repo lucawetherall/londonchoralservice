@@ -1,10 +1,14 @@
 """The drafts inbox: the drafts the scheduled assistant saved in Zoho Mail, and the owner's local marks.
 
 cache/drafts.json is written by `scripts/reports/cc_sync.py drafts-put` (the reply drafter, the daily pass and the
-singer clerk run it once per saved draft). The marks (sent, discarded, or open again) live in
-<private>/command-centre/drafts-marks.json and are written only by the app's draft-mark action (no passkey: it is a
-local record and never touches Zoho). A draft is named on the page and in forms by a 12-letter hash of its thread,
-kind and date, so no thread id (a long digit run) reaches the page.
+singer clerk run it once per saved draft, tagged source "assistant") and replaced, thread by thread, by
+`cc_sync.py drafts-sync` (the daily pass's read-only listing of the whole Zoho Drafts folder): a thread drafts-put
+already knew keeps its kind and source; any other thread is a draft the owner saved by hand, kind "other", source
+"zoho", shown on the page as "saved by you". An entry with no source (written before drafts-sync existed) is
+treated as "assistant". The marks (sent, discarded, or open again) live in <private>/command-centre/drafts-marks.json
+and are written only by the app's draft-mark action (no passkey: it is a local record and never touches Zoho). A
+draft is named on the page and in forms by a 12-letter hash of its thread, kind and date, so no thread id (a long
+digit run) reaches the page.
 """
 
 import datetime
@@ -50,7 +54,9 @@ def read_drafts():
     out = []
     for d in value:
         if isinstance(d, dict) and all(isinstance(d.get(k), str) for k in FIELDS):
-            out.append({k: d[k] for k in FIELDS})
+            row = {k: d[k] for k in FIELDS}
+            row["source"] = d.get("source") if d.get("source") in ("assistant", "zoho") else "assistant"
+            out.append(row)
     return out, when
 
 
@@ -82,7 +88,7 @@ def inbox(found, marks):
         state = m.get("state") if m.get("state") in STATES else "open"
         row = {"key": key, "kind": d["kind"], "kind_words": KIND_WORDS.get(d["kind"], d["kind"]),
                "first_name": d["first_name"], "subject": d["subject"], "created": d["created"], "state": state,
-               "marked_at": str(m.get("at") or "")[:10]}
+               "marked_at": str(m.get("at") or "")[:10], "saved_by_you": d.get("source") == "zoho"}
         (open_ if state == "open" else marked).append(row)
     order = lambda r: (r["created"], r["key"])  # noqa: E731
     return {"open": sorted(open_, key=order, reverse=True), "marked": sorted(marked, key=order, reverse=True),

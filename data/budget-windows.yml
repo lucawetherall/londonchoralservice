@@ -6,8 +6,9 @@
 # proposal goes into the Monday review's one approval question, and only an
 # approved change is applied, through scripts/ads/ with validate_only first.
 #
-# Nothing above £5/day is ever proposed (CLAUDE.md, "Google Ads & GA4"). A window
-# above £5 is reported as a config error and its proposal is capped at £5.
+# Nothing above a campaign's cap is ever proposed: £5/day (CLAUDE.md, "Google Ads & GA4"),
+# or a dated exception for one campaign id in scripts/ads/budget_cap.py. A window above
+# the cap is reported as a config error and its proposal is capped.
 #
 # Fields:
 #   season_start  first day counted by section 11 (true cost per booking)
@@ -19,12 +20,20 @@
 
 season_start: 2026-09-01
 
-# Seeded on 28 Sep 2026 to match the live budgets, so nothing is proposed until
-# the owner chooses seasonal figures. Edit daily_gbp (never above 5) to change that.
+# Seeded on 28 Sep 2026 to match the live budgets. Carols raised to £8 the same day
+# (owner: people book December carols from late September); budget_cap.py allows £8
+# for the Christmas campaign from 28 Sep to 13 Dec 2026 only, so from 2027 this window
+# is flagged and capped at £5 until the owner decides again. Stop rule: see budget_cap.py.
 windows:
   - name: carols
     campaigns: ["christmas", "carol"]
     start: "09-15"
+    end: "12-13"
+    daily_gbp: 8
+
+  - name: carols-late
+    campaigns: ["christmas", "carol"]
+    start: "12-14"
     end: "12-20"
     daily_gbp: 5
 

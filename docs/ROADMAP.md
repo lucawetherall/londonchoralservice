@@ -121,7 +121,7 @@ Merged into `js/form.js` (occasion pre-fill from contact.js + `data-redirect` su
 
 ---
 
-## R6 — Revisit CSS inlining vs cached stylesheet  [P3] [DECISION-NEEDED]
+## R6 — Revisit CSS inlining vs cached stylesheet  [P3] [done 2026-09-28 — decided: keep inlining. GA4, last 90 days: organic sessions average 1.41 pages (paid 1.59, direct 1.56), so single-page landings dominate and inlined CSS gives them the fastest first paint. Revisit if pages per session passes about 2.]
 
 **Why:** `build.sh` inlines the full ~40KB CSS into every page: zero render-blocking requests (great first paint) but zero cross-page caching — a visitor browsing 3 pages downloads the same CSS 3 times, and every page weighs 55–78KB. For a site whose funnel is multi-page (area page → pricing → contact), a single cached `<link rel="stylesheet">` is likely a net win after the first page.
 
@@ -256,6 +256,8 @@ grep -rn 'over 150\|150 auditioned' --include='*.html' --include='*.txt' .   # e
 
 ## R12 — Testimonial pool reused across geographically mismatched pages  [P2] [DECISION-NEEDED]
 
+**Update 2026-09-28:** the owner confirmed the "Pamela, Richmond" and "Helen, Wimbledon" quotes are about him, so "she" is now "he" on all 13 pages. Still open: whether to strip place names from attributions that don't match the page.
+
 **Why:** A 2026-08-30 content audit found a small pool of ~16 distinct testimonials (no `AggregateRating`/`Review` schema involved — these are plain pull-quotes in body copy) reused across the 53 area/borough pages, several with the same first name but a different quote *and* a different named location depending which page they land on. E.g. "Tony, Surrey" (8 pages, all in London boroughs — none in Surrey) and "Tony, Battersea" (6 pages, none in Battersea) are two different quotes; the same pattern repeats for "Pamela" (Hampshire/Richmond) and "Helen" (Buckinghamshire/Wimbledon). Separately, the single "Margaret, Dulwich" quote is repeated verbatim, unmodified, on 17 pages. Full attribution counts: `grep -rho '<figcaption>&mdash;&ensp;[^<]*</figcaption>' areas/*.html areas/london/*.html index.html funerals.html weddings.html | sort | uniq -c | sort -rn`.
 
 This is a business-integrity question, not a copy-quality one — an agent doesn't know whether "Tony" is one real client whose quote is being redistributed to unrelated pages (which would misrepresent a real person's words as being about a place they weren't), two real clients who happen to share a first name, or a placeholder pattern. Do not let an agent guess: whether to (a) source enough distinct real per-area testimonials to stop the cross-contamination, (b) strip the specific location from the attribution wherever it doesn't match the page, or (c) leave as-is and accept the trust cost. No new testimonial text should ever be invented to fill the gap — CLAUDE.md already forbids invented testimonials.
@@ -298,7 +300,7 @@ print('duplicate price-ladder constructions:', len(dupes))  # → 0
 
 ---
 
-## R14 — Owner facts the 2026-09-27 audit could not settle  [P2] [DECISION-NEEDED]
+## R14 — Owner facts the 2026-09-27 audit could not settle  [P2] [done 2026-09-27 — all six settled]
 
 **Why:** The 2026-09-27 full-site audit fixed every contradiction with a checkable answer (see commit `copy: correct contradictions and music-history errors…`). These remain because only the owner knows which figure is true. Do not let an agent pick one.
 
@@ -313,7 +315,7 @@ print('duplicate price-ladder constructions:', len(dupes))  # → 0
 
 ---
 
-## R15 — Run the 2026 Zoho Books import  [P2] [BLOCKED-ON-HUMAN]
+## R15 — Run the 2026 Zoho Books import  [P2] [done 2026-09-28 — 7 draft invoices, £9,423.08, owner-approved; logged in logs/books-changes.md. The owner marks them sent (without emailing) and matches payments in Books.]
 
 **Why:** the Zoho Books design (`docs/superpowers/specs/2026-09-28-zoho-books-design.md`, flow D) prepared a private dry-run list of this year's bookings at `~/lcs-private/books-import-2026.json` (seven bookings), ready to become draft invoices in Books. It has not run: the owner has to look at the list and say the word first (see `MANUAL-ACTIONS-REQUIRED.md` §20).
 
@@ -339,7 +341,7 @@ print('duplicate price-ladder constructions:', len(dupes))  # → 0
 
 ## R17 — Dashboard should read invoice status from Zoho Books, not Starling alone  [P3] [done 2026-09-28 — Command Centre phase 6]
 
-**Status:** `scripts/reports/cc_sync.py books` (run by the enquiry assistant's daily pass, `.claude/agents/lcs-daily-pass.md`) writes `~/lcs-private/command-centre/cache/books.json` through `lcs_mcp`'s Books read client (only the tools on the guard's READ_ALLOW); `command_centre/books_cache.py` reads it. **Done (phase 6):** the Command Centre's Money page has a Books panel (receivables, overdue, drafts not yet sent, unpaid bills, freshness); each booking's timeline shows its Books invoice by number; Today flags a Books draft more than 2 days old and Books/Starling disagreements by Appendix A step 6g's rules (`models.books_flags`, `tests/test_cc_final.py`); a background job refreshes the cache every 30 minutes from 07:00 to 22:00. The static `dashboard.py` is left without Books: the Command Centre replaces it (R21).
+**Status:** `scripts/reports/cc_sync.py books` (run by the enquiry assistant's daily pass, `.claude/agents/lcs-daily-pass.md`) writes `~/lcs-private/command-centre/cache/books.json` through `lcs_mcp`'s Books read client (only the tools on the guard's READ_ALLOW); `command_centre/books_cache.py` reads it. **Done (phase 6):** the Command Centre's Money page has a Books panel (receivables, overdue, drafts not yet sent, unpaid bills, freshness); each booking's timeline shows its Books invoice by number; Today flags a Books draft more than 2 days old and Books/Starling disagreements by Appendix A step 6g's rules (`models.books_flags`, `tests/test_cc_final.py`); a background job refreshes the cache every 30 minutes from 07:00 to 22:00. **Done (R21):** the static `dashboard.py` also has a Books panel, season margin and unlinked singer invoices, reusing `command_centre/books_cache.py` read-only.
 
 **Why:** `scripts/reports/dashboard.py` (`gather()`) currently builds every payment state from `check_payments.assess()` against the Starling feed only. Since Books is now the system of record for invoice status (the owner confirms bank-feed matches in Books, per the Zoho Books design's flow B), the dashboard can show a stale or disagreeing picture next to what the owner sees in Books. The Monday report already gets a Books line for this (design §"Flows", flow E, section 11: receivables, overdue invoices, unpaid bills, disagreements with the Starling check); the dashboard never picked up the equivalent.
 
@@ -375,7 +377,7 @@ print('duplicate price-ladder constructions:', len(dupes))  # → 0
 
 ---
 
-## R20 — Back-fill enquiries from before the pipeline existed  [P4] [DECISION-NEEDED]
+## R20 — Back-fill enquiries from before the pipeline existed  [P4] [done 2026-09-28 — owner approved; 5 enquiries since 1 Sep 2026 added, older quotes pre-marked so they aren't chased]
 
 **Why:** per `docs/superpowers/plans/2026-09-28-automation-phase-2-pipeline.md` ("Older threads") and `MANUAL-ACTIONS-REQUIRED.md` §26, only enquiries first seen from 28 September 2026 are tracked in `~/lcs-private/enquiries.csv`; anything older gets no automatic follow-up, quote-chase, or loss marking. This was a deliberate scope cut for the initial rollout, not an oversight, so whether it's worth doing is the owner's call, not an agent's.
 
@@ -385,16 +387,18 @@ print('duplicate price-ladder constructions:', len(dupes))  # → 0
 
 ---
 
-## R21 — Command Centre loose ends after phase 6  [P4]
+## R21 — Command Centre loose ends after phase 6  [P4] [partly done 2026-09-28]
 
 **Why:** phase 6 (`docs/superpowers/plans/2026-09-28-command-centre.md`) wired Books, margins, the diary, the drafts inbox, the quote calculator and the background refresh. These pieces were left out on purpose and are recorded here so they aren't lost.
 
-**Do (each is small and independent):**
-- *Drafts from Zoho itself.* The inbox lists only the drafts the assistant records (`cc_sync.py drafts-put`). A read-only Zoho Mail drafts listing (folder 6133510000000008016) in the daily pass would also catch drafts saved by hand and drop ones deleted in Zoho. Needs a tool on the zoho-mail read allowlist and a `drafts-sync` writer that replaces rather than merges.
-- *Per-draft "open in Zoho".* The page links to the Drafts folder (`https://mail.zoho.com/zm/#mail/folder/drafts`, the .com data centre). A per-message link needs Zoho's message URL form confirmed on the owner's account first.
-- *Static dashboard.* `scripts/reports/dashboard.py` shows no Books panel or margins. Only worth doing if the owner still opens the static page; otherwise retire it once the Command Centre has run a month.
-- *Unlinked singer invoices.* Margins count only invoices linked to a booking; `singer_invoices.py margins` prints the unlinked total, the pages don't. Add an "unlinked: n, £x" line to Money's season margin.
-- *Quote extras.* The calculator states the Christmas Eve/Day premium and leaves longer programmes and keyboard hire "quoted upfront", as the pages do; it never prices them.
+**Done 2026-09-28:**
+- *Drafts from Zoho itself.* `cc_sync.py drafts-sync '<JSON list>'` takes the daily pass's read-only `ZohoMail_listEmails` listing of the Drafts folder (6133510000000008016, already on the mail guard's read allowlist) as `{thread_id, subject, date, to_first_name}` rows and replaces the Zoho-sourced part of `cache/drafts.json`: a thread `drafts-put` already recorded keeps its kind, any other thread gets kind "other" and is shown "saved by you", and a thread no longer in the listing drops out (sent or deleted in Zoho, where `drafts-put` alone left a stale row forever). Step added to `lcs-daily-pass.md` (e2); `command_centre/drafts.py` and the Drafts page show both sources. Tests: `tests/test_cc_sync.py`.
+- *Unlinked singer invoices.* `singer_invoices.unlinked_invoices()` (a pure helper factored out of `cmd_margins`'s own print line) backs a new line on Money's season margin panel and the static dashboard's Books panel: "Unlinked singer invoices: n, £x". Tests: `tests/test_singer_invoices.py`, `tests/test_cc_final.py`.
+- *Static dashboard.* `scripts/reports/dashboard.py` has a Books panel (receivables, overdue, unpaid bills, drafts not yet sent, overdue invoice numbers), the season margin and unlinked singer invoices, reusing `command_centre/books_cache.py` read-only, exactly as R17 said it would. "Books not synced yet." when the cache doesn't exist. Tests: `tests/test_dashboard.py`.
+
+**Left out, on purpose:**
+- *Per-draft "open in Zoho".* The page still links only to the Drafts folder (`https://mail.zoho.com/zm/#mail/folder/drafts`, the .com data centre); a per-message link needs Zoho's message URL form confirmed on the owner's account first, which is a manual check, not something to guess at from a script.
+- *Quote extras.* The calculator still states the Christmas Eve/Day premium and leaves longer programmes and keyboard hire "quoted upfront", as the pages do; it never prices them. Pricing those needs the owner's rules for what they cost, not just wiring.
 
 **Skills:** none
 

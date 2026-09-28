@@ -359,6 +359,8 @@ Books → Banking → Add bank, and connect the Alma Consort Starling account. O
 
 ## 20. Approve the 2026 import
 
+**Done 2026-09-28:** approved; the 7 invoices are in Books, marked sent without email, with their Starling payments recorded.
+
 Claude prepared a private dry-run list of this year's bookings so far at `~/lcs-private/books-import-2026.json` (seven bookings, not in the repo). Nothing has been created in Books yet.
 
 What to do:
@@ -416,6 +418,8 @@ In the Claude app, open Help → Troubleshooting → Review Pinned Git Origins a
 ---
 
 ## 26. Old enquiries are not in the pipeline
+
+**Done 2026-09-28:** the owner approved a back-fill; enquiries since 1 Sep 2026 are in the pipeline.
 
 The enquiry pipeline (follow-ups, "lost" marking, review requests) only tracks threads first seen from 28 September 2026 onward, when the wiring went live. Anything older is not in `~/lcs-private/enquiries.csv` and gets no automatic follow-up.
 
