@@ -337,7 +337,9 @@ print('duplicate price-ladder constructions:', len(dupes))  # → 0
 
 ---
 
-## R17 — Dashboard should read invoice status from Zoho Books, not Starling alone  [P3] [ready]
+## R17 — Dashboard should read invoice status from Zoho Books, not Starling alone  [P3] [done 2026-09-28 script side; UI wiring pending]
+
+**Status:** `scripts/reports/cc_sync.py books` (run by the enquiry assistant's daily pass, `.claude/agents/lcs-daily-pass.md`) writes `~/lcs-private/command-centre/cache/books.json` through `lcs_mcp`'s Books read client (only the tools on the guard's READ_ALLOW); `command_centre/books_cache.py` reads it. UI wiring pending: the Command Centre pages (and `dashboard.py`, if still wanted) should show it beside the Starling state.
 
 **Why:** `scripts/reports/dashboard.py` (`gather()`) currently builds every payment state from `check_payments.assess()` against the Starling feed only. Since Books is now the system of record for invoice status (the owner confirms bank-feed matches in Books, per the Zoho Books design's flow B), the dashboard can show a stale or disagreeing picture next to what the owner sees in Books. The Monday report already gets a Books line for this (design §"Flows", flow E, section 11: receivables, overdue invoices, unpaid bills, disagreements with the Starling check); the dashboard never picked up the equivalent.
 
@@ -349,7 +351,9 @@ print('duplicate price-ladder constructions:', len(dupes))  # → 0
 
 ---
 
-## R18 — Automation Phase 4 is now mostly covered by Zoho Books  [P3] [done by Books except per-event margin]
+## R18 — Automation Phase 4 is now mostly covered by Zoho Books  [P3] [done 2026-09-28 script side; UI wiring pending]
+
+**Status:** Phase 4 marked done-by-Books in the business-automation spec. Per-event margin: `singer_invoices.py link <message id> <booking ref>` (and an automatic link at scan/rescan when the invoice's date matches exactly one ledger booking) writes a `booking_ref` column; `singer_invoices.py margins` and the pure `margins(ledger_rows, singer_rows)` (also `command_centre/books_cache.margins()`) give fee, singer costs, margin and margin % per booking. UI wiring pending.
 
 **Why:** `docs/superpowers/specs/2026-09-28-zoho-books-design.md` states plainly that it "replaces most of [the business-automation spec's] Phase 4 (per-event margin, bookkeeping export), which Books now provides": Books' own reports give the monthly bookkeeping export (feature 15 of the business-automation spec) for free once invoices and bills live there, so that half of Phase 4 needs no bespoke script. **Feature 14, per-event margin, is not covered yet**: Books has no native concept of "this booking's client invoice minus this booking's singer bills", because that link runs through the booking ref, which lives in the private ledger and in bill/invoice notes, not as a first-class Books field.
 

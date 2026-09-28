@@ -68,6 +68,8 @@ Use the connections already in place (Zoho Mail, the Starling business account, 
 
 ### Phase 4: Admin (plan to write)
 
+**Update, 28 Sep 2026:** mostly done by Zoho Books (its reports give the bookkeeping export). The per-event margin is done script-side (`singer_invoices.py link` and `margins`, roadmap R18); the Command Centre UI wiring is pending.
+
 | # | Feature | Behaviour |
 |---|---|---|
 | 14 | Per-event margin | Client fee (ledger) minus the singer and organist invoices linked to the event (tracker) equals margin per booking, shown in the dashboard. Linking uses event date and booking_ref; the owner confirms ambiguous links |

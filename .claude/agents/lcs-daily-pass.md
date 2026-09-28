@@ -3,7 +3,7 @@ name: lcs-daily-pass
 description: Enquiry assistant helper, once a day. Checks client payments against Starling and drafts deposit, balance and receipt emails, drafts quote follow-ups and review requests, closes finished enquiries and regenerates the private dashboard. Called by the enquiry-assistant task when daily_due is true; never sends anything.
 model: sonnet
 maxTurns: 80
-tools: ToolSearch, Bash, Read, Skill, mcp__zoho-mail__ZohoMail_listEmails, mcp__zoho-mail__ZohoMail_SearchEmails, mcp__zoho-mail__ZohoMail_getMessageContent, mcp__zoho-mail__ZohoMail_sendReplyEmail, mcp__zoho-books-invoices__ZohoBooks_list_invoices, mcp__zoho-books-invoices__ZohoBooks_list_contacts, mcp__zoho-books__ZohoBooks_get_contact
+tools: ToolSearch, Bash, Read, Skill, mcp__zoho-mail__ZohoMail_listEmails, mcp__zoho-mail__ZohoMail_SearchEmails, mcp__zoho-mail__ZohoMail_getMessageContent, mcp__zoho-mail__ZohoMail_sendReplyEmail, mcp__zoho-books-invoices__ZohoBooks_list_invoices, mcp__zoho-books-invoices__ZohoBooks_list_contacts, mcp__zoho-books__ZohoBooks_get_contact, mcp__caefd5da-81a5-4eb0-993a-dfeaa5b9d7c1__list_calendars, mcp__caefd5da-81a5-4eb0-993a-dfeaa5b9d7c1__list_events
 ---
 
 You run the daily money, follow-up and review pass for The London Choral Service, in the repo folder ~/Documents/GitHub/londonchoralservice. You save DRAFTS only; Luca reviews and sends them. Reply with the SUMMARY at the end.
@@ -30,6 +30,9 @@ SHELL COMMANDS (only these, from the repo folder)
   .venv/bin/python scripts/bookings/pipeline.py review-skipped <invoice ref> <planner|unresolved>
   .venv/bin/python scripts/bookings/pipeline.py done-due
   .venv/bin/python scripts/reports/dashboard.py
+  .venv/bin/python scripts/reports/cc_sync.py books
+  .venv/bin/python scripts/reports/cc_sync.py calendar-put '<one-line JSON list of events>'
+  Never pipe or use a heredoc into these: calendar-put takes its JSON as the one single-quoted argument, with any apostrophe written as ’.
 
 A booking's thread: `pipeline.py thread <ref>`; on "no thread", ZohoBooks_list_invoices by invoice_number → customer_id → ZohoBooks_get_contact → ZohoMail_SearchEmails for that email. Read the whole thread before drafting. If Drafts already holds this step's draft for the thread, draft nothing and just run the recording command.
 
@@ -46,6 +49,7 @@ b. Follow-ups: `pipeline.py followups-due` (never a funeral or a booked client).
 c. Reviews: `pipeline.py reviews-due` (never a funeral). For each ref read the thread. Anything wrong or unresolved, or the correspondent is a planner or venue: `review-skipped <ref> <unresolved|planner>`, flag once, no draft. Otherwise a short thank-you: thanks for having us, a line about the day if the thread gives one, and one sentence asking whether they'd leave a Google review, with the link from data/seo-fix-discovered-urls.yml (Read tool): `gbp_review_url` if present, else `gbp_canonical_maps_url`. Never offer anything for a review or ask only for a good one. Then `reviewed <ref> <today>`.
 d. Done: `pipeline.py done-due`, then `status <enquiry_id> done` for each.
 e. Dashboard: run `scripts/reports/dashboard.py` (it prints "dashboard written: <path>"); on failure note the error's type name only.
+e2. Command Centre caches: run `cc_sync.py books` (Books invoices and bills, read-only; on a failure it prints "books: not updated (<type>)", keeps the last cache, and you carry on). Then the diary: list_calendars once (find "Personal", "Work" and "Alma Consort"), list_events on each from today to 60 days ahead (Europe/London), and run `cc_sync.py calendar-put '<one-line JSON list>'` with every event as {"start": "<YYYY-MM-DD for all-day, else the ISO datetime with its offset>", "end": "<the same form; all-day end exclusive>", "summary": "<the event title, at most 120 characters>", "calendar": "Personal|Work|Alma Consort"} and no other keys. It prints "calendar: <n> events cached", or "calendar: refused (<reason>)": fix the JSON once and retry, else note "diary not synced (<reason>)". If a calendar can't be read, note "diary not synced" and skip calendar-put (never a partial diary). Never put the events in your summary.
 f. Run `assistant_io.py daily-done`.
 
 SUMMARY (your whole reply, no preamble; refs and first names only)
@@ -53,4 +57,5 @@ SUMMARY (your whole reply, no preamble; refs and first names only)
 - Follow-ups drafted (thread ids, first or second), enquiries marked lost or found booked, "accepted, no invoice yet", reviews drafted or skipped (refs, reason).
 - "Money to check by hand:" lines (refs, states, amounts).
 - "dashboard updated" or "dashboard failed (<type name>)".
+- e2's lines as printed ("books: …", then "calendar: …" or "diary not synced").
 - "drafts: <n>".

@@ -23,17 +23,25 @@ analytics.readonly and webmasters.readonly scopes) for GA4 and Search Console.
 Reads the private bookings ledger for counts only; prints no names or emails.
 
     source .venv/bin/activate
-    python scripts/reports/weekly_review.py [--since 2026-09-26] [--gsc-shortlist] [--save-report]
+    python scripts/reports/weekly_review.py [--since 2026-09-26] [--gsc-shortlist] [--save-report] [--write-proposals]
 
 --save-report also archives everything printed to ~/lcs-private/reports/<today, Europe/London>.txt
 (LCS_PRIVATE_DIR respected), mode 600 in a mode-700 directory, written atomically. A same-day rerun
 overwrites the file. It still prints to stdout as normal.
+
+--write-proposals also writes each section 12 "PROPOSE" line as a Command Centre proposal,
+~/lcs-private/command-centre/proposals/<id>.json (mode 600): kind "ads", scripts/ads/set_budget.py with the
+campaign id and the £/day as its args, pinned to origin/main's commit and the script's blob there (git run with
+command_centre/actions' hardened settings). Never above £5/day; a proposal with the same blob and args that is
+still waiting (no .applied record) isn't written twice. The owner approves it in the app; nothing here changes
+the account.
 """
 
 import argparse
 import contextlib
 import datetime
 import io
+import json
 import os
 import re
 import sys
@@ -496,19 +504,171 @@ def cost_section(q, today):
         print(f"   true cost per booking failed: {type(e).__name__}")
 
 
-def budget_section(q, today):
+def budget_section(q, today, write=False, git_runner=None, now=None):
     print("\n== 12. Seasonal budget rules (data/budget-windows.yml; proposals only, nothing changed)")
     try:
         import economics as ec
         cfg = ec.load_windows(BUDGET_WINDOWS)
-        campaigns = [{"name": r.campaign.name, "status": r.campaign.status.name,
+        campaigns = [{"id": str(r.campaign.id), "name": r.campaign.name, "status": r.campaign.status.name,
                       "budget_gbp": r.campaign_budget.amount_micros / 1e6}
-                     for r in q("""SELECT campaign.name, campaign.status, campaign_budget.amount_micros
+                     for r in q("""SELECT campaign.id, campaign.name, campaign.status, campaign_budget.amount_micros
                             FROM campaign WHERE campaign.status != 'REMOVED'""")]
-        for line in ec.proposal_lines(ec.proposals(campaigns, cfg["windows"], today)):
+        items = ec.proposals(campaigns, cfg["windows"], today)
+        for line in ec.proposal_lines(items):
             print("   " + line)
     except Exception as e:
         print(f"   seasonal budget rules failed: {type(e).__name__}")
+        return
+    if write:
+        try:
+            for line in write_proposals(items, today, git_runner=git_runner, now=now):
+                print("   " + line)
+        except Exception as e:  # type name only
+            print(f"   Command Centre proposals not written: {type(e).__name__}")
+
+
+# ---------- 12b. Command Centre proposals (--write-proposals) ----------
+# Each PROPOSE line becomes ~/lcs-private/command-centre/proposals/<id>.json (mode 600), the format
+# command_centre/actions.load_proposal checks: the app runs scripts/ads/set_budget.py <campaign id> <£/day> from
+# the pinned commit of GitHub's main, --validate-only and then --apply, after the owner's passkey. Nothing here
+# talks to Google or changes the account.
+
+SET_BUDGET = "scripts/ads/set_budget.py"
+PROPOSAL_CAP_GBP = 5.0  # CLAUDE.md: never above £5/day (set_budget.py refuses it too)
+SHA_RE = re.compile(r"^(?:[0-9a-f]{40}|[0-9a-f]{64})$")
+AMOUNT_RE = re.compile(r"^\d{1,4}\.\d{2}$")
+
+
+def proposals_dir():
+    """Read at call time, so the tests (and a moved private tree) never touch ~/lcs-private."""
+    return Path(os.environ.get("LCS_PRIVATE_DIR", Path.home() / "lcs-private")) / "command-centre" / "proposals"
+
+
+def hardened_git():
+    """(git binary, global options, environment) from command_centre/actions, the app's hardened git: no global or
+    system config, none of the caller's GIT_* variables, no replace refs, fsmonitor and hooks off. If the app's
+    module can't be imported (a machine without its dependencies), the same settings, copied here."""
+    try:
+        if str(REPO) not in sys.path:
+            sys.path.insert(0, str(REPO))
+        from command_centre import actions
+        return actions.git_binary(), list(actions.GIT_SAFE), actions.git_env()
+    except Exception:
+        keep = ("HOME", "PATH", "LANG", "TZ", "https_proxy", "HTTPS_PROXY", "no_proxy", "NO_PROXY")
+        env = {k: os.environ[k] for k in keep if k in os.environ}
+        env.update(GIT_CONFIG_GLOBAL="/dev/null", GIT_CONFIG_NOSYSTEM="1", GIT_TERMINAL_PROMPT="0",
+                   GIT_NO_REPLACE_OBJECTS="1")
+        safe = ["-c", "core.fsmonitor=false", "-c", "core.hooksPath=/dev/null", "-c", "core.attributesFile=/dev/null",
+                "--no-replace-objects"]
+        return ("/usr/bin/git" if os.path.exists("/usr/bin/git") else "git"), safe, env
+
+
+def git_pins(runner=None):
+    """(script blob, commit): `git rev-parse origin/main:scripts/ads/set_budget.py` and `origin/main`, run in this
+    repo with the hardened git settings. Raises if either isn't a full object id."""
+    import subprocess
+    binary, safe, env = hardened_git()
+
+    def rev(spec):
+        p = (runner or subprocess.run)([binary, "-C", str(REPO), *safe, "rev-parse", "--verify", "--quiet", spec],
+                                       capture_output=True, text=True, timeout=15, env=env,
+                                       stdin=subprocess.DEVNULL, shell=False)
+        out = (p.stdout or "").strip()
+        if p.returncode != 0 or not SHA_RE.fullmatch(out):
+            raise RuntimeError("git rev-parse failed")
+        return out
+    return rev(f"origin/main:{SET_BUDGET}"), rev("origin/main^{commit}")
+
+
+def _private_dirs(path):
+    missing, d = [], Path(path)
+    while not d.exists():
+        missing.append(d)
+        d = d.parent
+    for d in reversed(missing):
+        d.mkdir(mode=0o700, exist_ok=True)
+
+
+def _waiting(pdir, blob, args):
+    """The id of a proposal already in `pdir` with this blob and these args and no .applied record, or None."""
+    for p in sorted(pdir.glob("*.json")):
+        try:
+            rec = json.loads(p.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        if isinstance(rec, dict) and rec.get("script_blob") == blob and rec.get("args") == args \
+                and not (pdir / f"{p.stem}.applied").exists():
+            return p.stem
+    return None
+
+
+def _write_new(pdir, pid, record):
+    """Write <pid>.json at mode 600, all at once and never over an existing file (a temp file, then a hard link)."""
+    tmp = pdir / f".{pid}.{os.getpid()}.{os.urandom(4).hex()}.tmp"
+    fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            json.dump(record, f, ensure_ascii=False, indent=1)
+            f.flush()
+            os.fsync(f.fileno())
+        os.link(tmp, pdir / f"{pid}.json")
+    finally:
+        tmp.unlink(missing_ok=True)
+
+
+def write_proposals(items, today, git_runner=None, now=None):
+    """Write one Command Centre proposal per "propose" item; returns the lines to print. Never above £5/day, and
+    never a second proposal while one with the same script blob and args is still waiting (no .applied record)."""
+    wanted = [i for i in items if i.get("kind") == "propose"]
+    if not wanted:
+        return ["no budget proposals to write"]
+    blob, commit = git_pins(git_runner)
+    pdir = proposals_dir()
+    _private_dirs(pdir)
+    created = (now or datetime.datetime.now().astimezone()).isoformat(timespec="seconds")
+    lines = []
+    for i in wanted:
+        cid, name = str(i.get("campaign_id") or ""), str(i.get("campaign") or "?")
+        try:
+            new, cur = float(i["proposed"]), float(i["current"])
+        except (KeyError, TypeError, ValueError):
+            lines.append(f"not written ({name}): no usable amount")
+            continue
+        if not cid.isdigit():
+            lines.append(f"not written ({name}): no campaign id")
+            continue
+        if not (0 < new <= PROPOSAL_CAP_GBP):
+            lines.append(f"not written ({name}): £{new:,.2f}/day is outside £0–£5")
+            continue
+        amount = f"{new:.2f}"
+        if not AMOUNT_RE.fullmatch(amount):
+            lines.append(f"not written ({name}): bad amount")
+            continue
+        args = [cid, amount]
+        waiting = _waiting(pdir, blob, args)
+        if waiting:
+            lines.append(f"proposal already waiting: {waiting}")
+            continue
+        room = 120 - len(f"Budget:  £{cur:.2f} → £{new:.2f}/day")
+        shown = name if len(name) <= room else name[:room - 1] + "…"
+        record = {
+            "id": "", "kind": "ads", "title": f"Budget: {shown} £{cur:.2f} → £{new:.2f}/day",
+            "summary": (f"Seasonal window {i.get('window', '?')} (data/budget-windows.yml): set the daily budget of "
+                        f"{name} (campaign {cid}) from £{cur:.2f} to £{new:.2f}. From the Monday review of {today}. "
+                        f"Runs {SET_BUDGET} {cid} {amount}, validate-only first; never above £5/day.")[:1000],
+            "script_path": SET_BUDGET, "created": created, "commit": commit, "script_blob": blob, "args": args}
+        base = f"budget-{cid}-{int(round(new * 100))}-{today:%Y%m%d}"
+        for n in range(1, 10):
+            pid = base if n == 1 else f"{base}-{n}"
+            try:
+                _write_new(pdir, pid, dict(record, id=pid))
+            except FileExistsError:
+                continue
+            lines.append(f"proposal written: {pid}")
+            break
+        else:
+            lines.append(f"not written ({name}): too many proposals with that id today")
+    return lines
 
 
 def shortlist_section(s, today, force):
@@ -548,7 +708,7 @@ def run_sections(args):
     money_section()
     today = lm.today()
     cost_section(q, today)
-    budget_section(q, today)
+    budget_section(q, today, write=args.write_proposals)
     shortlist_section(s, today, args.gsc_shortlist)
 
 
@@ -563,6 +723,8 @@ def main():
     p.add_argument("--gsc-shortlist", action="store_true", help="run section 13 even if it isn't the first Monday")
     p.add_argument("--save-report", action="store_true",
                    help="also archive everything printed to ~/lcs-private/reports/<today>.txt (mode 600)")
+    p.add_argument("--write-proposals", action="store_true",
+                   help="write each section 12 PROPOSE line as a Command Centre proposal (mode 600)")
     args = p.parse_args()
     if args.save_report:
         with tee_to(report_path()):

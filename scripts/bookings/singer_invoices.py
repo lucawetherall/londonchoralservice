@@ -10,6 +10,12 @@ scan and rescan end with two lines for the Books bill: "bill: yes" or "bill: no 
 amount not found or zero amount) and "bill_number: <x>" (the singer's ref, or SI- plus the last 5 digits of
 the message id when the ref has a digit run over 5 digits). On a message already recorded, scan prints
 "already recorded: <id>", then the stored line, its warnings and the bill lines, so a crashed run can resume.
+They also print "linked: <booking ref>" or "link: none": an invoice is linked to a ledger booking automatically
+when its text mentions a date (with or without the year) and exactly one ledger booking has that event date; a
+rescan keeps a link already made.
+    singer_invoices.py link <message id> <booking ref>  # link it by hand (the ref must be in the ledger): a label
+        for the per-event margin, never money
+    singer_invoices.py margins             # per booking: client fee, linked singer costs, margin and margin %
     singer_invoices.py paid [--apply]      # match OUT payments; prints NEWLY PAID <message id>
     singer_invoices.py status              # unpaid invoices and totals
     singer_invoices.py thanked <message id>  # note that the "Paid!" reply was drafted
@@ -72,7 +78,8 @@ PDF_DIR = lm.PRIVATE / "singer-invoices"  # <message id>.pdf, mode 600: attached
 MAX_PDF_BYTES = 10 * 1024 * 1024
 COLUMNS = ["message_id", "received", "singer_name", "singer_email", "invoice_ref", "amount_gbp", "bank_fp", "bank_last4",
            "payee", "bank_changed", "bank_confirmed", "paid_on", "paid_amount", "paid_ref", "paid_verified", "notes",
-           "withdrawn"]  # withdrawn: the date `withdrawn` was run (last, so an older store just gains it)
+           "withdrawn", "booking_ref"]  # withdrawn: the date `withdrawn` was run; booking_ref: the ledger booking
+# this invoice is for (a label for the per-event margin, never money). Both last, so an older store just gains them.
 REASON_RE = re.compile(r"^[a-z][a-z-]{0,19}$")  # one lower-case word, such as not-ours
 NEW_PAYEE = "NEW: add as a payee in the Starling app"
 NEW_DETAILS = "NEW BANK DETAILS: confirm them by phone on a number you already hold before adding the payee"
@@ -639,17 +646,98 @@ def mentions_bank(text):
                 or any(not NOT_OURS.search(text[max(0, m.start() - 12):m.start()]) for m in ACCOUNT.finditer(text)))
 
 
+MONTHS = {m: i + 1 for i, m in enumerate(("jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct",
+                                          "nov", "dec"))}
+MONTH_WORD = (r"(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|june?|july?|aug(?:ust)?|sep(?:t(?:ember)?)?"
+              r"|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\.?")
+YEAR = r"((?:19|20)\d{2})"
+DATE_FORMS = [  # (pattern, the groups' order: y m d, with m a number or a month word)
+    (re.compile(r"(?<!\d)" + YEAR + r"-(\d{1,2})-(\d{1,2})(?!\d)"), "ymd"),
+    (re.compile(r"(?<![\d/.\-])(\d{1,2})[/.\-](\d{1,2})[/.\-]((?:19|20)?\d{2})(?![\d/.\-]?\d)"), "dmy"),
+    (re.compile(r"(?<![\w])(\d{1,2})(?:st|nd|rd|th)?(?:\s+of)?\s+" + MONTH_WORD + r"(?![a-z])(?:,?\s+" + YEAR
+                + r"(?!\d))?", re.I), "dMy"),
+    (re.compile(r"(?<![a-z])" + MONTH_WORD + r"(?![a-z])\s+(\d{1,2})(?:st|nd|rd|th)?(?!\d)(?:,?\s+" + YEAR
+                + r"(?!\d))?", re.I), "Mdy"),
+]
+
+
+def mentioned_dates(text):
+    """Dates the text mentions, as (year or None, month, day): 2026-11-21, 21/11/2026, 21.11.26, 21 November
+    (2026), 21st Nov, November 21(, 2026). Impossible dates are dropped; the order is first seen."""
+    out = []
+    for pattern, order in DATE_FORMS:
+        for m in pattern.finditer(text or ""):
+            g = m.groups()
+            if order == "ymd":
+                y, mo, d = g
+            elif order == "dmy":
+                d, mo, y = g
+                y = y if len(y) == 4 else "20" + y
+            elif order == "dMy":
+                d, mo, y = g
+            else:
+                mo, d, y = g
+            month = int(mo) if mo.isdigit() else MONTHS[mo[:3].lower()]
+            year = int(y) if y else None
+            try:
+                datetime.date(year or 2000, month, int(d))  # 2000: a leap year, so 29 February without a year passes
+            except ValueError:
+                continue
+            key = (year, month, int(d))
+            if key not in out:
+                out.append(key)
+    return out
+
+
+YEARLESS_WINDOW = 200  # days: a date without a year matches an event this close to the invoice's received date
+
+
+def link_candidates(dates, ledger_rows, received=None):
+    """Booking refs whose event date is one of `dates` ((year or None, month, day)). A date without a year matches
+    an event on that day and month within YEARLESS_WINDOW days of `received` (any year when that is unknown)."""
+    try:
+        got = datetime.date.fromisoformat(str(received or "")[:10])
+    except ValueError:
+        got = None
+    refs = []
+    for r in ledger_rows:
+        ref = (r.get("booking_ref") or "").strip()
+        try:
+            event = datetime.date.fromisoformat((r.get("event_date") or "").strip())
+        except ValueError:
+            continue
+        for y, m, d in dates:
+            if (m, d) != (event.month, event.day):
+                continue
+            if (y is not None and y == event.year) or (
+                    y is None and (got is None or abs((event - got).days) <= YEARLESS_WINDOW)):
+                if ref and ref not in refs:
+                    refs.append(ref)
+    return refs
+
+
+def auto_link(dates, ledger_rows, received=None):
+    """The one booking ref the invoice's dates point to, or "" when none or more than one do."""
+    refs = link_candidates(dates, ledger_rows, received)
+    return refs[0] if len(refs) == 1 else ""
+
+
+def print_link(ref):
+    print(f"linked: {ref}" if ref else "link: none")
+
+
 def read_invoice(path=None, raw=None):
     """Amount, ref and bank details from every PDF and .docx and the body (`raw`: the MIME text itself). Bank details come from the first PDF that
     has both numbers (else the first source that does); when sources give different details, or one gives
     unclear details while another is clear, `sources_disagree` is set and DIFFER is warned."""
     found = {"amount": 0.0, "invoice_ref": "", "sort_code": "", "account_number": "", "warnings": [],
-             "sources_disagree": False}
+             "sources_disagree": False, "dates": []}
     details, unclear = [], False  # details: (is a pdf, sort code, account number)
     for label, text, problem in message_texts(path, raw=raw):
         if text is None:
             found["warnings"].append(f"could not read {label} (.doc): check by hand")
             continue
+        found["dates"] += [d for d in mentioned_dates(text) if d not in found["dates"]]
         if problem:
             found["warnings"].append(f"could not read {label} ({problem}): check it by hand")
         elif label != "email body" and not text.strip():
@@ -828,6 +916,7 @@ def print_stored(r):
           + (f" · bank ••••{r['bank_last4']}" if r.get("bank_last4") else ""))
     for w in warnings:
         print(f"   ! {w}")
+    print_link((r.get("booking_ref") or "").strip())
     if is_withdrawn(r):
         print("bill: no (withdrawn)")
         print(f"bill_number: {bill_number(r.get('invoice_ref'), r['message_id'])}")
@@ -863,6 +952,7 @@ def cmd_scan(args, client):
     raw = load_raw(args)
     inv = read_invoice(None, raw=raw)
     payees = payee_info(client)
+    link = auto_link(inv.get("dates") or [], lm.read_csv(lm.LEDGER), args.received)
     with lm.locked_rows(STORE, COLUMNS) as t:  # after the fetch: never hold the lock over the network
         rows = t.rows  # read again: a fetch can take a while
         if already_recorded(rows, args.message_id):
@@ -874,10 +964,11 @@ def cmd_scan(args, client):
                      "amount_gbp": f"{inv['amount']:.2f}", "bank_fp": a["bank_fp"], "bank_last4": a["bank_last4"],
                      "payee": a["payee"], "bank_changed": changed, "bank_confirmed": "", "paid_on": "",
                      "paid_amount": "", "paid_ref": "", "paid_verified": "",
-                     "notes": "; ".join(inv["warnings"] + a["warnings"])})
+                     "notes": "; ".join(inv["warnings"] + a["warnings"]), "booking_ref": link})
     for line in flagged:
         print(line)
     print_result(args.sender_name, inv, a)
+    print_link(link)
     print_bill(inv["warnings"] + a["warnings"], inv["amount"], inv["invoice_ref"], args.message_id)
     print(f"pdf: {save_pdf(raw, args.message_id) or 'none'}")
 
@@ -918,15 +1009,17 @@ def cmd_rescan(args, client):
             raise SystemExit(f"{args.message_id}: withdrawn on {row['withdrawn']}; not rescanned")
         return row
 
-    find(lm.read_csv(STORE))
+    first = find(lm.read_csv(STORE))
     inv = load_invoice(args)
     payees = payee_info(client)
+    guess = auto_link(inv.get("dates") or [], lm.read_csv(lm.LEDGER), first.get("received"))
     with lm.locked_rows(STORE, COLUMNS) as t:  # after the fetch: never hold the lock over the network
         rows = t.rows  # read again: a fetch can take a while
         row = find(rows)
+        link = (row.get("booking_ref") or "").strip() or guess  # a link already made (by hand, too) is kept
         fp = lm.bank_fingerprint(inv["sort_code"], inv["account_number"]) or ""
         if row.get("bank_fp") and not fp:
-            print("no bank details found on rescan; nothing changed")
+            print("no bank details found on rescan; nothing changed")  # the link too: run `link` by hand
             return
         if not inv["amount"] and lm.money(row.get("amount_gbp")):
             inv = dict(inv, amount=lm.money(row["amount_gbp"]),
@@ -952,10 +1045,12 @@ def cmd_rescan(args, client):
             kept = [n for n in kept if not n.startswith("bank details confirmed by phone")]
         row.update(invoice_ref=inv["invoice_ref"], amount_gbp=f"{inv['amount']:.2f}", bank_fp=a["bank_fp"],
                    bank_last4=a["bank_last4"], payee=a["payee"], bank_changed=changed,
-                   notes="; ".join(inv["warnings"] + a["warnings"] + kept + [f"rescanned {lm.today()}"]))
+                   notes="; ".join(inv["warnings"] + a["warnings"] + kept + [f"rescanned {lm.today()}"]),
+                   booking_ref=link)
     for line in flagged:
         print(line)
     print_result(row.get("singer_name"), inv, a)
+    print_link(link)
     print_bill(inv["warnings"] + a["warnings"], inv["amount"], inv["invoice_ref"], row["message_id"],
                row.get("bank_confirmed") == "yes")
     for line in rescan_changes(old, row):
@@ -1101,6 +1196,70 @@ def cmd_withdrawn(args, client=None):
     print(f"{args.message_id}: withdrawn ({reason})")
 
 
+BOOKING_REF_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9-]{0,19}$")
+
+
+def cmd_link(args, client=None):
+    """Link an invoice to a ledger booking by hand: a label for the per-event margin, never money. The ref must be
+    a booking_ref in the ledger; the invoice must be in the store. Relinking prints the old ref."""
+    ref = (args.booking_ref or "").strip()
+    if not BOOKING_REF_RE.fullmatch(ref):
+        raise SystemExit(f"not a booking ref: {args.booking_ref!r}; nothing linked")
+    if ref not in {(r.get("booking_ref") or "").strip() for r in lm.read_csv(lm.LEDGER)}:
+        raise SystemExit(f"{ref} isn't in the bookings ledger; nothing linked")
+    before = {}
+
+    def edit(r):
+        before["ref"] = (r.get("booking_ref") or "").strip()
+        r["booking_ref"] = ref
+    update_invoice(args.message_id, edit)
+    was = before.get("ref")
+    print(f"{args.message_id}: linked to {ref}" + (f" (was {was})" if was and was != ref else ""))
+
+
+def margins(ledger_rows, singer_rows):
+    """Per booking in the ledger, by event date: {ref, event_date, fee, costs, invoices, margin, margin_pct,
+    cancelled}. costs is the sum of the linked singer invoices' amounts (withdrawn ones left out); margin_pct is
+    None when the fee is 0. Pure: no I/O."""
+    import check_payments  # the one cancelled rule every ledger reader uses
+    costs, counts = {}, {}
+    for s in singer_rows:
+        ref = (s.get("booking_ref") or "").strip()
+        if ref and not is_withdrawn(s):
+            costs[ref] = costs.get(ref, 0.0) + lm.money(s.get("amount_gbp"))
+            counts[ref] = counts.get(ref, 0) + 1
+    out = []
+    for r in ledger_rows:
+        ref = (r.get("booking_ref") or "").strip()
+        if not ref:
+            continue
+        fee = round(lm.money(r.get("value_gbp")), 2)
+        cost = round(costs.get(ref, 0.0), 2)
+        margin = round(fee - cost, 2)
+        out.append({"ref": ref, "event_date": (r.get("event_date") or "").strip(), "fee": fee, "costs": cost,
+                    "invoices": counts.get(ref, 0), "margin": margin,
+                    "margin_pct": round(100 * margin / fee, 1) if fee else None,
+                    "cancelled": check_payments.is_cancelled(r)})
+    out.sort(key=lambda m: (m["event_date"] or "9999-99-99", m["ref"]))
+    return out
+
+
+def cmd_margins(args=None, client=None):
+    items = margins(lm.read_csv(lm.LEDGER), lm.read_csv(STORE))
+    if not items:
+        print("No bookings in the ledger.")
+        return
+    for m in items:
+        pct = f"{m['margin_pct']:.1f}%" if m["margin_pct"] is not None else "–"
+        print(f"{m['ref']} {m['event_date'] or '?'}: fee £{m['fee']:,.2f} · singers £{m['costs']:,.2f} "
+              f"({m['invoices']} invoice{'s' if m['invoices'] != 1 else ''}) · margin £{m['margin']:,.2f} ({pct})"
+              + (" · cancelled" if m["cancelled"] else ""))
+    unlinked = [s for s in lm.read_csv(STORE) if not (s.get("booking_ref") or "").strip() and not is_withdrawn(s)]
+    if unlinked:
+        print(f"{len(unlinked)} singer invoice{'s' if len(unlinked) != 1 else ''} not linked to a booking "
+              f"(£{sum(lm.money(s.get('amount_gbp')) for s in unlinked):,.2f})")
+
+
 def strict_date(value):
     """YYYY-MM-DD only; anything else is refused (SystemExit), so a typo never marks a wrong day."""
     try:
@@ -1143,6 +1302,10 @@ def main():
     w = sub.add_parser("withdrawn")
     w.add_argument("message_id")
     w.add_argument("reason")
+    lk = sub.add_parser("link")
+    lk.add_argument("message_id")
+    lk.add_argument("booking_ref")
+    sub.add_parser("margins")
     args = ap.parse_args()
     if args.cmd in ("scan", "rescan", "pdf") and bool(args.fetch) == bool(args.file):
         ap.error(f"{args.cmd}: give either --fetch or a saved file")
@@ -1150,7 +1313,8 @@ def main():
     client = lm.StarlingReadOnly(tok) if tok else None
     try:
         {"scan": cmd_scan, "rescan": cmd_rescan, "paid": cmd_paid, "status": cmd_status, "thanked": cmd_thanked,
-         "confirm": cmd_confirm, "settled": cmd_settled, "withdrawn": cmd_withdrawn, "pdf": cmd_pdf}[args.cmd](args, client)
+         "confirm": cmd_confirm, "settled": cmd_settled, "withdrawn": cmd_withdrawn, "pdf": cmd_pdf,
+         "link": cmd_link, "margins": cmd_margins}[args.cmd](args, client)
     except (lm.StarlingError, urllib.error.URLError, TimeoutError, ConnectionError) as e:  # type name only
         print(f"Starling unavailable ({type(e).__name__}); {args.cmd} skipped")
     except lcs_mcp.McpError as e:  # names the server only, never its command or URL

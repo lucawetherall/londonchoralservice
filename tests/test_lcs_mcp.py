@@ -350,6 +350,62 @@ def test_invoice_text_fetch_failure_is_one_line():
         invoice_text.fetch_message, sys.argv = saved
 
 
+def books_config():
+    server = Path(TMP) / "fake_server.py"
+    server.write_text(FAKE_SERVER)
+    entry = {"command": sys.executable, "args": [str(server), "ok", SECRET]}
+    path = Path(TMP) / "claude-books.json"
+    path.write_text(json.dumps({"projects": {REPO: {"mcpServers": {"zoho-books": entry, "zoho-books-invoices": entry}}}}))
+    return path
+
+
+def test_books_read_list_is_the_guard_hooks():
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("g", os.path.join(ROOT, ".claude", "hooks", "zoho_books_guard.py"))
+    guard = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(guard)
+    assert lcs_mcp.BOOKS_READ == frozenset(guard.READ_ALLOW) and lcs_mcp.BOOKS_READ
+    assert not lcs_mcp.BOOKS_READ & set(guard.WRITE_TOOLS)
+    assert {"ZohoBooks_list_invoices", "ZohoBooks_list_bills"} <= lcs_mcp.BOOKS_READ
+
+
+def test_books_read_tools_run_on_the_books_servers_only():
+    saved = lcs_mcp.REPO
+    lcs_mcp.REPO = Path(REPO)
+    try:
+        for server, tool in (("zoho-books-invoices", "ZohoBooks_list_invoices"), ("zoho-books", "ZohoBooks_list_bills")):
+            spy = Spy()
+            text = lcs_mcp.call_tool(server, tool, {"query_params": {"organization_id": "941014440"}},
+                                     config_path=books_config(), popen=spy)
+            sent = json.loads(json.loads(text)["data"]["content"].split("\n\n", 1)[1])
+            assert sent == {"name": tool, "arguments": {"query_params": {"organization_id": "941014440"}}}, sent
+            assert len(spy.procs) == 1 and spy.procs[0].poll() is not None
+    finally:
+        lcs_mcp.REPO = saved
+
+
+def test_books_writes_and_unlisted_tools_are_refused_before_a_process():
+    spy = Spy()
+    for server, tool in (("zoho-books", "ZohoBooks_create_bill"), ("zoho-books-invoices", "ZohoBooks_create_invoice"),
+                         ("zoho-books-invoices", "ZohoBooks_update_invoice"), ("zoho-books", "ZohoBooks_delete_bill"),
+                         ("zoho-books", "ZohoBooks_list_bank_accounts"), ("zoho-books", "ZohoBooks_get_contact_bank_account"),
+                         ("zoho-mail", "ZohoBooks_list_invoices"), ("zoho-books-x", "ZohoBooks_list_invoices"),
+                         ("zoho-books", "ZohoMail_getOriginalMessage")):
+        msg = fails(lambda: lcs_mcp.call_tool(server, tool, {}, config_path=books_config(), popen=spy))
+        assert msg == f"{server}: tool {tool} is not allowed", msg
+    assert spy.procs == []
+
+
+def test_an_unloadable_guard_allows_no_books_tool():
+    bad = Path(TMP) / "broken_guard.py"
+    bad.write_text("raise RuntimeError('broken')\n")
+    assert lcs_mcp.books_read_allow(bad) == frozenset()
+    assert lcs_mcp.books_read_allow(Path(TMP) / "missing.py") == frozenset()
+    odd = Path(TMP) / "odd_guard.py"
+    odd.write_text("READ_ALLOW = {'ZohoBooks_list_invoices', 'ZohoBooks_create_bill'}\nWRITE_TOOLS = {'ZohoBooks_create_bill': 1}\n")
+    assert lcs_mcp.books_read_allow(odd) == frozenset({"ZohoBooks_list_invoices"})
+
+
 if __name__ == "__main__":
     failures = 0
     for name, fn in sorted(globals().items()):
