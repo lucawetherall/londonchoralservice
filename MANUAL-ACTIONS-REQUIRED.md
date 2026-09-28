@@ -369,7 +369,7 @@ What to do:
 
 1. Open the file (or ask Claude to summarise it) and check the seven bookings look right.
 2. Tell Claude, in chat, "approve the Books import". It will then create one draft invoice per booking in Books, dated at each booking's own invoice date.
-3. In Books, mark each of those invoices as sent and match its payment against the Starling bank feed, the same way you will for new bookings going forward.
+3. In Books, mark each of those invoices as sent and record its payments. (Done 28 Sep: Claude marked them sent, with no email, and recorded the Starling payments. From 29 Sep the free plan has no bank feed, and the daily pass records confident payments itself.)
 
 ---
 
@@ -431,7 +431,9 @@ If you want those older threads chased too, tell Claude you want a back-fill and
 
 ## 27. Move Zoho Books to the free plan
 
-Decision 2026-09-29: no Premium. Before the trial ends, in Books → Settings → Subscription (or the trial banner), choose the **Free** plan. It keeps what the automation uses: invoices, contacts, customer payments and API access (1,000 calls a day). It has no bills and no bank feeds, so the singer clerk no longer makes bills (singer invoices stay in the private tracker) and the daily pass records client payments itself. Bills made during the trial may become read-only; nothing depends on them. The free plan is for businesses under Zoho's revenue limit for the UK; check the figure on the plan page.
+Decision 2026-09-29: no Premium. Before the trial ends, in Books → Settings → Subscription (or the trial banner), choose the **Free** plan. It keeps what the automation uses: invoices, contacts, customer payments and API access (1,000 calls a day). It has no bills and no bank feeds, so the singer clerk no longer makes bills (singer invoices stay in the private tracker) and the daily pass records client payments itself. Bills made during the trial may become read-only; nothing depends on them.
+
+Also check, while you're in Books: Settings → Reminders → **automated payment reminders off**. The daily pass marks an invoice "sent" once your email carrying it has gone; with reminders on, Books would start emailing clients itself about overdue instalments, on top of the assistant's own reminder drafts. The free plan is for businesses under Zoho's revenue limit for the UK; check the figure on the plan page.
 
 ---
 
@@ -445,6 +447,6 @@ The assistant saves each confirmation email with the invoice PDF and booking con
    ```bash
    security add-generic-password -s lcs-zoho-imap -a office@londonchoralservice.com -w
    ```
-4. Tell Claude "IMAP password added". Claude runs `imap_draft.py check` and `imap_draft.py test`, and a test draft addressed to luca@almaconsort.com appears in Drafts. Delete it.
+4. Tell Claude "IMAP password added". Claude runs `imap_draft.py check` (sign-in, folders, and that iCloud Drive/LCS-invoices is writable; if macOS asks whether Claude may use iCloud Drive, allow it) and `imap_draft.py test`: a test draft to luca@almaconsort.com, with a small PDF attached, appears in Drafts. Open it to check the attachment shows and the draft can be edited, then delete it.
 
 Invoices and booking confirmations are saved in iCloud Drive → LCS-invoices → "<ref> - <client>".
