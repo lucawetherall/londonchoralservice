@@ -431,6 +431,8 @@ If you want those older threads chased too, tell Claude you want a back-fill and
 
 ## 27. Move Zoho Books to the free plan
 
+**Done 2026-09-29:** Books is on the Free plan (the API still reads invoices and the trial's bills); automated payment reminders are off.
+
 Decision 2026-09-29: no Premium. Before the trial ends, in Books → Settings → Subscription (or the trial banner), choose the **Free** plan. It keeps what the automation uses: invoices, contacts, customer payments and API access (1,000 calls a day). It has no bills and no bank feeds, so the singer clerk no longer makes bills (singer invoices stay in the private tracker) and the daily pass records client payments itself. Bills made during the trial may become read-only; nothing depends on them.
 
 Also check, while you're in Books: Settings → Reminders → **automated payment reminders off**. The daily pass marks an invoice "sent" once your email carrying it has gone; with reminders on, Books would start emailing clients itself about overdue instalments, on top of the assistant's own reminder drafts. The free plan is for businesses under Zoho's revenue limit for the UK; check the figure on the plan page.
@@ -438,6 +440,8 @@ Also check, while you're in Books: Settings → Reminders → **automated paymen
 ---
 
 ## 28. Zoho app password for drafts with attachments
+
+**Done 2026-09-29:** IMAP on (imappro.zoho.com), app password in the Keychain; `imap_draft.py check` signs in and iCloud Drive/LCS-invoices is writable, and `imap_draft.py test` saved a draft with a PDF attached (Zoho keeps the draft key header).
 
 The assistant saves each confirmation email with the invoice PDF and booking confirmation already attached, straight into Zoho Drafts over IMAP. It can only add drafts; it cannot send. It needs, once:
 
