@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
-"""Cache writers for the Command Centre: Zoho Books receivables and bills, and the diary.
+"""Cache writers for the Command Centre: Zoho Books receivables and bills, marketing, the diary and drafts.
 
     .venv/bin/python scripts/reports/cc_sync.py books
+    .venv/bin/python scripts/reports/cc_sync.py marketing
     .venv/bin/python scripts/reports/cc_sync.py calendar-put '<one-line JSON list of events>'
     .venv/bin/python scripts/reports/cc_sync.py calendar-put --file <path inside ~/lcs-private>
     <JSON on stdin> | .venv/bin/python scripts/reports/cc_sync.py calendar-put
@@ -16,6 +17,16 @@ and the customer's first name only; each bill's number, the vendor's first name,
 the totals (receivables, overdue, unpaid bills) and generated_at. On any failure it prints the error's type name
 only, keeps the last cache and exits 1, so the Command Centre's refresh job logs the failure (a scheduled run
 notes it and carries on).
+
+marketing reads Google Ads, Search Console and GA4 through weekly_review.py's own read-only functions (its GAQL
+search() runner and an AuthorizedSession on Application Default Credentials; never a mutate) and writes
+~/lcs-private/command-centre/cache/marketing.json: the search terms of the last 7 and 28 days that
+economics.search_term_flag flags (solo-singer words, other non-hiring words, no choir or hiring word), one row per
+term and campaign with clicks, cost and the reason, at most 30; the Search Console shortlist (weekly_review's
+section 13 over the last 28 final days, at most 20 queries, each with its page path and suggested fix, and the
+window's dates); and the GA4 lead events section 5 counts, by full week for the last 8 weeks. Only counts, query
+text and page paths: no client data, no click ids. generated_at is in Europe/London. The Command Centre's refresh
+job runs it once a day. It fails like books: the error's type name only, the last cache kept, exit 1.
 
 calendar-put takes the diary from the scheduled assistant (Python can't reach the claude.ai Google Calendar
 connector): a JSON list of {start, end, summary, calendar}, at most 500 events, start and end ISO dates (all-day,
@@ -63,6 +74,7 @@ from zoneinfo import ZoneInfo
 
 REPO = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO / "scripts" / "bookings"))
+sys.path.insert(1, str(REPO / "scripts" / "reports"))  # weekly_review, imported by the marketing command only
 import lcs_mcp  # noqa: E402
 
 ORG = "941014440"
@@ -506,10 +518,99 @@ def cmd_drafts_sync(text):
     return 0
 
 
+# ---------------------------------------------------------------- marketing
+
+
+TERMS_MAX, SHORTLIST_MAX, LEAD_WEEKS = 30, 20, 8
+TERM_MAX, CAMPAIGN_MAX, PATH_MAX = 120, 80, 200
+
+
+def _count(value):
+    try:
+        x = float(value)
+    except (TypeError, ValueError):
+        return 0
+    return int(x) if math.isfinite(x) and x > 0 else 0
+
+
+def flagged_terms(week_rows, month_rows, flag, limit=TERMS_MAX):
+    """The search terms `flag(term)` gives a reason for, one row per term and campaign (the keyword rows summed):
+    {term, campaign, clicks_7, cost_7, clicks_28, cost_28, impressions_28, why}, costliest over 28 days first, at
+    most `limit`. Rows are the GAQL rows of weekly_review.search_term_rows."""
+    by = {}
+    for span, rows in (("7", week_rows), ("28", month_rows)):
+        for r in rows:
+            term = short(r.search_term_view.search_term, TERM_MAX)
+            campaign = short(r.campaign.name, CAMPAIGN_MAX)
+            if not term:
+                continue
+            row = by.setdefault((term, campaign), {"term": term, "campaign": campaign, "clicks_7": 0, "cost_7": 0.0,
+                                                   "clicks_28": 0, "cost_28": 0.0, "impressions_28": 0})
+            row[f"clicks_{span}"] += _count(r.metrics.clicks)
+            row[f"cost_{span}"] += _count(r.metrics.cost_micros) / 1e6
+            if span == "28":
+                row["impressions_28"] += _count(r.metrics.impressions)
+    out = []
+    for row in by.values():
+        why = flag(row["term"])
+        if why:
+            row.update(cost_7=round(row["cost_7"], 2), cost_28=round(row["cost_28"], 2), why=short(why, 120))
+            out.append(row)
+    out.sort(key=lambda r: (-r["cost_28"], -r["clicks_28"], -r["impressions_28"], r["term"], r["campaign"]))
+    return out[:limit], len(by)
+
+
+def page_path(url):
+    """A Search Console page URL as the site path ("/" for the home page); the host is dropped."""
+    from urllib.parse import urlparse
+    return short(urlparse(str(url or "")).path or "/", PATH_MAX)
+
+
+def shortlist_rows(items):
+    return [{"query": short(i.get("query"), TERM_MAX), "page": page_path(i.get("page")),
+             "position": round(gbp(i.get("position")), 1), "impressions": _count(i.get("impressions")),
+             "clicks": _count(i.get("clicks")), "fix": short(i.get("fix"), 200)} for i in items]
+
+
+def marketing_snapshot(q, session, today, now=None):
+    """The marketing.json payload from weekly_review's read-only functions: `q` (its GAQL runner, or a fake) for
+    the search terms, `session` (an AuthorizedSession, or a fake) for Search Console and GA4. Any failure
+    propagates: the caller keeps the last cache."""
+    import weekly_review as wr
+    month_where = (f"segments.date BETWEEN '{today - datetime.timedelta(days=28)}' "
+                   f"AND '{today - datetime.timedelta(days=1)}'")  # the 28 days before today, as LAST_7_DAYS is
+    terms, looked_at = flagged_terms(wr.search_term_rows(q), wr.search_term_rows(q, month_where), wr.search_term_flag)
+    start, end, items = wr.shortlist_items(session, today, limit=SHORTLIST_MAX)
+    weeks, thresholded = wr.ga4_lead_weeks(session, today, LEAD_WEEKS)
+    when = (now or datetime.datetime.now(LONDON)).astimezone(LONDON).isoformat(timespec="seconds")
+    return {"generated_at": when,
+            "search_terms": {"items": terms, "looked_at": looked_at},
+            "shortlist": {"start": start.isoformat(), "end": end.isoformat(), "items": shortlist_rows(items)},
+            "leads": {"weeks": weeks, "thresholded": thresholded}}
+
+
+def cmd_marketing(q=None, session=None, now=None):
+    try:
+        import weekly_review as wr
+        now = now or datetime.datetime.now(LONDON)
+        snap = marketing_snapshot(q or wr.ads_query(), session or wr.google_session(), now.astimezone(LONDON).date(),
+                                  now)
+        write_private_json(cache_dir() / "marketing.json", snap)
+    except Exception as e:  # the type name only: a message could carry a URL, a query or an account detail
+        print(f"marketing: not updated ({type(e).__name__}); the last cache is kept")
+        return 1
+    leads = sum(w["form"] for w in snap["leads"]["weeks"])
+    print(f"marketing: {len(snap['search_terms']['items'])} search terms to check, "
+          f"{len(snap['shortlist']['items'])} shortlist queries, {leads} form leads in {LEAD_WEEKS} weeks cached")
+    return 0
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description="Command Centre cache writers")
     sub = ap.add_subparsers(dest="cmd", required=True)
     sub.add_parser("books", help="cache Books invoices, bills and totals (read-only)")
+    sub.add_parser("marketing", help="cache flagged search terms, the Search Console shortlist and GA4 leads "
+                                     "(read-only)")
     c = sub.add_parser("calendar-put", help="cache the diary from a JSON list (argument, --file or stdin)")
     c.add_argument("json", nargs="?", help="the JSON list itself, as one argument")
     c.add_argument("--file", help="a JSON file inside ~/lcs-private")
@@ -520,6 +621,8 @@ def main(argv=None):
     args = ap.parse_args(argv)
     if args.cmd == "books":
         return cmd_books()
+    if args.cmd == "marketing":
+        return cmd_marketing()
     if args.cmd == "drafts-put":
         return cmd_drafts_put(args.json)
     if args.cmd == "drafts-sync":
