@@ -236,9 +236,17 @@ def check_invoice_comment(body, query, path):
     _need(path, "invoice_id", "path_variables")
 
 
+# The expense account every singer and organist bill line goes to: "Cost of Goods Sold", the
+# account Books gave the "Singing fee" and "Organ fee" purchase items on 28 Sep 2026.
+SINGER_FEES_ACCOUNT_ID = "1534218000000034003"
+
+
 def check_create_bill(body, query, path):
     _need(body, "vendor_id", "body")
     _need(body, "bill_number", "body")
+    for line in body.get("line_items") or []:
+        if isinstance(line, dict) and "account_id" in line and line["account_id"] != SINGER_FEES_ACCOUNT_ID:
+            raise Deny(f"{P}bill lines go to Cost of Goods Sold: account_id must be \"{SINGER_FEES_ACCOUNT_ID}\".")
 
 
 def check_update_bill(body, query, path):
@@ -247,6 +255,17 @@ def check_update_bill(body, query, path):
 
 def check_bill_comment(body, query, path):
     _need(path, "bill_id", "path_variables")
+
+
+# Purchase items ("Singing fee", "Organ fee") set up the singer bills' expense account: the
+# connector has no chart-of-accounts tool, and Books files a purchase item under its default
+# expense account, which get_item then shows. No account key is allowed, so Books picks it.
+def check_create_item(body, query, path):
+    _need(body, "name", "body")
+    if body.get("item_type") != "purchases":
+        raise Deny(P + "item_type must be \"purchases\": items are only for singer and organist bills.")
+    if body.get("product_type") not in (None, "service"):
+        raise Deny(P + "product_type must be \"service\" or absent.")
 
 
 # Write tools the owner approved on 28 Sep 2026, as tool name -> (allowed keys of body,
@@ -275,6 +294,9 @@ WRITE_TOOLS = {
         obj(*BILL_UPDATE_FIELDS), ORG_ONLY, obj("bill_id"), check_update_bill),
     "ZohoBooks_add_bill_comment": (
         obj("description"), ORG_ONLY, obj("bill_id"), check_bill_comment),
+    "ZohoBooks_create_item": (
+        obj("name", "rate", "description", "item_type", "product_type", "purchase_rate", "purchase_description"),
+        ORG_ONLY, NOTHING, check_create_item),
 }
 
 

@@ -101,6 +101,7 @@ APPROVED_WRITES = {
     "ZohoBooks_add_invoice_document", "ZohoBooks_upload_invoice_document",
     "ZohoBooks_add_invoice_comment",
     "ZohoBooks_create_bill", "ZohoBooks_update_bill", "ZohoBooks_add_bill_comment",
+    "ZohoBooks_create_item",
 }
 ORG = {"organization_id": "941014440"}
 CONFIRMATION = "~/lcs-private/invoices/2111 - A Client/Booking Confirmation - A Client - 21 Nov 2026.docx"
@@ -127,7 +128,7 @@ def good_inputs():
             "due_date": "2026-10-12", "reference_number": "2111", "notes": "Booking 2111",
             "payment_terms": 14, "payment_terms_label": "Net 14",
             "line_items": [{"name": "Wedding, 2111", "description": "Tenor", "rate": 180, "quantity": 1,
-                            "account_id": "460000000033333", "item_order": 1}]}
+                            "account_id": "1534218000000034003", "item_order": 1}]}
     return {
         "ZohoBooks_create_contact": {"body": contact, "query_params": ORG},
         "ZohoBooks_update_contact": {"body": {"contact_name": "A Client", "company_name": "A Client Ltd"},
@@ -147,6 +148,10 @@ def good_inputs():
                                   "query_params": ORG, "path_variables": {"bill_id": "666"}},
         "ZohoBooks_add_bill_comment": {"body": {"description": "Booking 2111"}, "query_params": ORG,
                                        "path_variables": {"bill_id": "666"}},
+        "ZohoBooks_create_item": {"body": {"name": "Singing fee", "rate": 0, "description": "Singer's fee",
+                                           "item_type": "purchases", "product_type": "service",
+                                           "purchase_rate": "0", "purchase_description": "Singer's fee"},
+                                  "query_params": ORG},
     }
 
 
@@ -410,6 +415,26 @@ def test_bill_update_needs_bill_id_and_changes_notes_dates_and_reference_only():
     for key, val in (("vendor_id", "1"), ("line_items", []), ("line_items", [{"rate": 1}]), ("bill_number", "S-1"),
                      ("payment_terms", 7), ("documents", []), ("account_id", "1")):
         assert denied(U, with_(U, "body", **{key: val})), key
+
+
+def test_bill_lines_may_only_use_the_singer_fees_account():
+    B = "ZohoBooks_create_bill"
+    line = {"name": "Singing fee", "rate": 100, "quantity": 1}
+    assert not denied(B, with_(B, "body", line_items=[line]))
+    assert not denied(B, with_(B, "body", line_items=[dict(line, account_id="1534218000000034003")]))
+    assert denied(B, with_(B, "body", line_items=[dict(line, account_id="1534218000000000373")]))
+
+
+def test_item_create_is_a_purchase_service_with_no_account_or_tax_keys():
+    T = "ZohoBooks_create_item"
+    assert denied(T, with_(T, "body", item_type=None))
+    for bad in ("sales", "sales_and_purchases", "inventory"):
+        assert denied(T, with_(T, "body", item_type=bad)), bad
+    assert denied(T, with_(T, "body", product_type="goods"))
+    assert not denied(T, with_(T, "body", product_type=None))
+    assert denied(T, with_(T, "body", name=None))
+    for key in ("account_id", "purchase_account_id", "inventory_account_id", "tax_id", "vendor_id", "sku"):
+        assert denied(T, with_(T, "body", **{key: "460000000033333"})), key
 
 
 def test_bill_comment_needs_bill_id():
