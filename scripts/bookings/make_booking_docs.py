@@ -32,6 +32,9 @@ from pathlib import Path
 
 from pypdf import PdfReader
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import lcs_money as lm  # noqa: E402  parse_gbp, today
+
 TOOLS = Path.home() / "lcs-private" / "tools"
 OUT_ROOT = Path.home() / "lcs-private" / "invoices"
 CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
@@ -50,6 +53,14 @@ def fail(msg):
     raise SystemExit(f"STOP: {msg}")
 
 
+def pounds(value, what):
+    """A money figure from the spec (lm.parse_gbp); STOP for anything unreadable, nan, inf or negative."""
+    v = lm.parse_gbp(value)
+    if v is None or v < 0:
+        fail(f"{what} is not an amount in pounds: {value!r}")
+    return v
+
+
 def main():
     if len(sys.argv) != 2:
         fail("usage: make_booking_docs.py <spec.json | '{json}'>")
@@ -64,12 +75,13 @@ def main():
             fail(f"{TOOLS / need} is missing (see the handover doc, section 4)")
     if re.search(r"\bVAT\b", json.dumps(spec), re.I):
         fail("the spec mentions VAT; Alma Consort Ltd is not VAT-registered, so no VAT line")
-    total = round(sum(float(i["rate"]) * float(i.get("qty", 1)) for i in spec["items"]), 2)
-    i1 = round(float(spec.get("instalment_1", total / 2)), 2)
-    i2 = round(float(spec.get("instalment_2", total - i1)), 2)
+    total = round(sum(pounds(i.get("rate"), "an item's rate") * pounds(i.get("qty", 1), "an item's qty")
+                      for i in spec["items"]), 2)
+    i1 = round(pounds(spec.get("instalment_1", total / 2), "instalment_1"), 2)
+    i2 = round(pounds(spec.get("instalment_2", total - i1), "instalment_2"), 2)
     if abs(i1 + i2 - total) > 0.005:
         fail(f"instalments {i1} + {i2} do not add up to the total {total}")
-    issue = spec.get("issue_date") or datetime.date.today().isoformat()
+    issue = spec.get("issue_date") or lm.today().isoformat()
     when = long_date(spec["service_date"], weekday=True)
     if spec.get("service_time"):
         when += f" at {spec['service_time']}"

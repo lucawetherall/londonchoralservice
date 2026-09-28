@@ -110,12 +110,10 @@ def iso(s, field):
 
 
 def gbp(s):
-    text = str(s).replace("£", "").replace(",", "").strip()
-    try:
-        v = float(text)
-    except ValueError:
+    v = lm.parse_gbp(s)
+    if v is None:  # unreadable, nan or inf
         raise SystemExit("quoted_gbp must be an amount in pounds, such as 1150")
-    if not v > 0 or round(v, 2) == 0:  # also nan
+    if not v > 0 or round(v, 2) == 0:
         raise SystemExit("quoted_gbp must be more than zero")
     if v > MAX_GBP:
         raise SystemExit(f"quoted_gbp must be at most {MAX_GBP}")
@@ -260,24 +258,16 @@ def summary_dict(rows, since=None):
 
 # --- file access ---------------------------------------------------------------------------------
 
-def columns_of(path):
-    """The file's own header (so a rewrite never drops a column), plus any of ours it lacks."""
-    have = cp.header(path)
-    return have + [c for c in COLUMNS if c not in have] if have else list(COLUMNS)
-
-
 def change(enquiry_id, fn):
     """Read-modify-write one enquiry under enquiries.csv's own lock. fn(row) edits the row in place."""
-    # lm.ledger_lock is not re-entrant: never nest it, or call another writer of this file inside it.
-    with lm.ledger_lock(ENQUIRIES):
-        rows = lm.read_csv(ENQUIRIES)
-        for r in rows:
+    # lm.locked_rows is not re-entrant: never nest it, or call another writer of this file inside it.
+    with lm.locked_rows(ENQUIRIES, COLUMNS) as t:
+        for r in t.rows:
             if r.get("enquiry_id") == enquiry_id:
                 fn(r)
                 break
         else:
             raise SystemExit(f"no enquiry {enquiry_id}")
-        lm.write_csv(ENQUIRIES, rows, columns_of(ENQUIRIES))
 
 
 def clean_row(data):
@@ -333,11 +323,10 @@ def cmd_add(args):
     except json.JSONDecodeError:
         raise SystemExit("add needs one JSON object")
     row = clean_row(data)
-    with lm.ledger_lock(ENQUIRIES):
-        rows = lm.read_csv(ENQUIRIES)
-        if any(r.get("enquiry_id") == row["enquiry_id"] for r in rows):
+    with lm.locked_rows(ENQUIRIES, COLUMNS) as t:
+        if any(r.get("enquiry_id") == row["enquiry_id"] for r in t.rows):
             raise SystemExit(f"duplicate enquiry_id {row['enquiry_id']}; nothing written")
-        lm.write_csv(ENQUIRIES, rows + [row], columns_of(ENQUIRIES))
+        t.rows.append(row)
     print(f"enquiry {row['enquiry_id']}: added")
 
 
@@ -426,7 +415,7 @@ def cmd_review_skipped(args):
     reason = args.reason.strip()
     if not REASON_RE.fullmatch(reason):
         raise SystemExit("the reason must be one lower-case word, such as planner or unresolved")
-    note_review(args.booking_ref, f"review request skipped {datetime.date.today().isoformat()} ({reason})")
+    note_review(args.booking_ref, f"review request skipped {lm.today().isoformat()} ({reason})")
 
 
 def cmd_thread(args):
@@ -441,12 +430,9 @@ def note_review(booking_ref, text):
     if not ledger.exists():
         raise SystemExit("no bookings ledger")
     # The same lock as check_payments and assistant_io; not re-entrant, so nothing else writes inside it.
-    with lm.ledger_lock(ledger):
-        rows = lm.read_csv(ledger)
-        cols = cp.header(ledger)
-        if any(None in r for r in rows):  # a row wider than the header: a rewrite would drop its extra fields
-            raise SystemExit("the bookings ledger has a row with more fields than its header; nothing written")
-        for r in rows:
+    # locked_rows refuses a row wider than the header (a rewrite would drop its extra fields).
+    with lm.locked_rows(ledger) as t:
+        for r in t.rows:
             if r.get("booking_ref") == booking_ref:
                 if REVIEW_NOTE.search(r.get("notes") or ""):
                     raise SystemExit(f"{booking_ref}: review request already drafted or skipped; nothing written")
@@ -454,12 +440,11 @@ def note_review(booking_ref, text):
                 break
         else:
             raise SystemExit(f"no booking {booking_ref}")
-        lm.write_csv(ledger, rows, cols)
     print(f"{booking_ref}: {text}")
 
 
 def today_arg(args):
-    return to_date(args.today) if args.today else datetime.date.today()
+    return to_date(args.today) if args.today else lm.today()
 
 
 def main(argv=None):

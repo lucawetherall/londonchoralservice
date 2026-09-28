@@ -10,9 +10,14 @@ campaign. Prints a compact report; changes nothing.
 import os
 import argparse
 import datetime
+import sys
 from collections import defaultdict
+from pathlib import Path
 
 from google.ads.googleads.client import GoogleAdsClient
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "bookings"))
+import lcs_money as lm  # noqa: E402  today(): the Europe/London date
 
 CUSTOMER_ID = "8733881378"
 GREATER_LONDON = "geoTargetConstants/9041106"
@@ -29,7 +34,7 @@ def main():
     args = p.parse_args()
     c = GoogleAdsClient.load_from_storage(os.environ.get("GOOGLE_ADS_CONFIGURATION_FILE_PATH", os.path.expanduser("~/.config/lcs/google-ads.yaml")))
     ga = c.get_service("GoogleAdsService")
-    end = datetime.date.today()
+    end = lm.today()
     start = end - datetime.timedelta(days=args.days)
     span = f"segments.date BETWEEN '{start}' AND '{end}'"
 

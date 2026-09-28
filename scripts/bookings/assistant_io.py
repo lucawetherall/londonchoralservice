@@ -27,7 +27,6 @@ prompts). Private data stays in ~/lcs-private/; this file holds none.
         occasion that isn't wedding, funeral, christmas, corporate, private event or other
 """
 
-import csv
 import datetime
 import html
 import html.parser
@@ -37,7 +36,6 @@ import re
 import string
 import sys
 from pathlib import Path
-from zoneinfo import ZoneInfo
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import lcs_money as lm  # noqa: E402
@@ -51,14 +49,22 @@ INVOICES = PRIVATE / "invoices"
 REPO = Path(__file__).resolve().parents[2]
 PRICE_PAGES = ("pricing.html", "christmas-pricing.html")
 OCCASIONS = ("wedding", "funeral", "christmas", "corporate", "private event", "other")
-LONDON = ZoneInfo("Europe/London")
 REF_RE = re.compile(r"[0-9]{4}[A-Z]?")
 
 
 def private_write(path, text):
-    PRIVATE.mkdir(mode=0o700, parents=True, exist_ok=True)
-    path.write_text(text)
-    os.chmod(path, 0o600)
+    """Atomic write at mode 600: a temp file in the same folder, then os.replace."""
+    path = Path(path)
+    path.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
+    tmp = path.with_name(f".{path.name}.{os.getpid()}.{os.urandom(4).hex()}.tmp")
+    fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+    try:
+        with os.fdopen(fd, "w") as f:
+            f.write(text)
+        os.replace(tmp, path)
+    except BaseException:
+        tmp.unlink(missing_ok=True)
+        raise
 
 
 def load_state():
@@ -70,10 +76,7 @@ def load_state():
     return state
 
 
-def london_today(now=None):
-    """Today's date in Europe/London (`now` an aware datetime, default the current time)."""
-    now = now or datetime.datetime.now(datetime.timezone.utc)
-    return now.astimezone(LONDON).date()
+london_today = lm.today  # today's Europe/London date (`now`: an aware datetime, default the current time)
 
 
 def daily_due(state, now=None):
@@ -84,10 +87,7 @@ def daily_due(state, now=None):
 # --- invoice refs --------------------------------------------------------------------------------
 
 def taken_refs():
-    refs = set()
-    if LEDGER.exists():
-        with open(LEDGER, newline="") as f:
-            refs |= {(r.get("booking_ref") or "").strip() for r in csv.DictReader(f)}
+    refs = {(r.get("booking_ref") or "").strip() for r in lm.read_csv(LEDGER)}
     if INVOICES.exists():
         refs |= {p.name.split(" - ")[0].strip() for p in INVOICES.iterdir() if p.is_dir()}
     return {r for r in refs if r}
@@ -235,20 +235,16 @@ def ledger_add(row):
         raise SystemExit(f"occasion must be one of: {', '.join(OCCASIONS)}; nothing written")
     if not LEDGER.exists():
         raise SystemExit("no ledger yet: run scripts/ads/upload_bookings.py once to create it")
-    # The same lock as check_payments and upload_bookings, around the whole read-check-append.
-    # lm.ledger_lock is not re-entrant: never nest it or call another ledger writer inside it.
-    with lm.ledger_lock(LEDGER):
-        with open(LEDGER, newline="") as f:
-            reader = csv.DictReader(f)
-            cols, rows = reader.fieldnames, list(reader)
-        unknown = set(row) - set(cols)
+    # The same lock as check_payments and upload_bookings, around the whole read-check-write; the file is
+    # rewritten atomically at mode 600. lm.locked_rows is not re-entrant: never nest it or call another
+    # ledger writer inside it.
+    with lm.locked_rows(LEDGER) as t:
+        unknown = set(row) - set(t.columns)
         if unknown:
             raise SystemExit(f"unknown columns: {', '.join(sorted(unknown))}")
-        if not row.get("booking_ref") or any(r["booking_ref"] == row["booking_ref"] for r in rows):
+        if not row.get("booking_ref") or any(r["booking_ref"] == row["booking_ref"] for r in t.rows):
             raise SystemExit("missing or duplicate booking_ref; nothing written")
-        with open(LEDGER, "a", newline="") as f:
-            csv.DictWriter(f, fieldnames=cols).writerow({c: row.get(c, "") for c in cols})
-        os.chmod(LEDGER, 0o600)
+        t.rows.append({c: "" if row.get(c) is None else str(row.get(c)) for c in t.columns})
     print(f"ledger: added {row['booking_ref']}")
 
 

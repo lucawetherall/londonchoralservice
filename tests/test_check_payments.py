@@ -503,7 +503,7 @@ def test_apply_and_reminded_hold_the_ledger_lock():
 
     cp.lm.ledger_lock = spy
     try:
-        run_main_with(OSError("x"), "--apply")
+        run_main_with(OSError("x"), "--apply")  # Starling down: --apply never took the lock (M9)
         d = tempfile.mkdtemp()
         path = os.path.join(d, "b.csv")
         cp.lm.write_csv(path, [row("2111", 650, "2026-08-22", "2026-11-21", "PENDING")], list(row("a", 1, "", "").keys()))
@@ -516,7 +516,52 @@ def test_apply_and_reminded_hold_the_ledger_lock():
             sys.argv, cp.LEDGER = saved
     finally:
         cp.lm.ledger_lock = real
-    assert seen == ["held", "held"], seen
+    assert seen == ["held"], seen
+
+
+class LockCheckingClient(FakeClient):
+    """A feed that records whether the ledger lock is free while Starling is being read."""
+
+    def __init__(self, items, path):
+        super().__init__(items)
+        self.path, self.lock_free = path, []
+
+    def feed(self, since, until, direction):
+        import fcntl
+        fd = os.open(str(self.path) + ".lock", os.O_RDWR | os.O_CREAT, 0o600)
+        try:
+            try:
+                fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                self.lock_free.append(True)
+            except BlockingIOError:
+                self.lock_free.append(False)
+        finally:
+            os.close(fd)
+        return super().feed(since, until, direction)
+
+
+def test_apply_reads_starling_before_taking_the_lock_and_merges_a_concurrent_edit():
+    d = tempfile.mkdtemp()
+    path = os.path.join(d, "bookings.csv")
+    cols = list(row("a", 1, "", "").keys())
+    cp.lm.write_csv(path, [row("2111", 650, "2026-08-22", "2026-11-21", "PENDING: invoiced"),
+                           row("0512", 650, "2026-09-01", "2026-12-05", "PENDING: invoiced", name="Bo Jones")], cols)
+    client = LockCheckingClient([pay(325, "2026-09-24", "INV 2111")], path)
+    stale = cp.lm.read_csv(path)
+    # another writer notes 0512 after this run read the ledger, before it writes
+    cp.lm.write_csv(path, [stale[0], dict(stale[1], notes="PENDING: invoiced; reminder drafted 2026-09-28")], cols)
+    args = type("A", (), {"apply": True, "json": True, "selftest": False})()
+    saved = cp.LEDGER
+    cp.LEDGER = path
+    try:
+        with contextlib.redirect_stdout(io.StringIO()):
+            cp.run(args, client, stale, T)
+    finally:
+        cp.LEDGER = saved
+    assert client.lock_free and all(client.lock_free), client.lock_free
+    after = {r["booking_ref"]: r["notes"] for r in cp.lm.read_csv(path)}
+    assert after["2111"] == "deposit seen 2026-09-24 (Starling); invoiced", after
+    assert after["0512"] == "PENDING: invoiced; reminder drafted 2026-09-28", after  # the other writer's edit is kept
 
 
 # --- round 3: letter after the number ---------------------------------------------------------
@@ -818,7 +863,7 @@ def test_apply_never_rewrites_a_cancelled_or_closed_row():
     args = type("A", (), {"apply": True, "json": True, "selftest": False})()
     try:
         with contextlib.redirect_stdout(io.StringIO()) as out:
-            cp.run(args, FakeClient(E2E_FEED), cp.lm.read_csv(path), cols, T)
+            cp.run(args, FakeClient(E2E_FEED), cp.lm.read_csv(path), T)
     finally:
         cp.LEDGER = saved
     after = {r["booking_ref"]: r["notes"] for r in cp.lm.read_csv(path)}
@@ -847,18 +892,39 @@ def test_maybe_cancelling_is_still_tracked():
 
 # --- round 4: rewrites keep the ledger's own header -------------------------------------------
 
-def _ragged_ledger():
+def _ragged_ledger(stray=True):
     d = tempfile.mkdtemp()
     path = os.path.join(d, "bookings.csv")
     header = "booking_ref,value_gbp,invoice_date,event_date,notes,client_name,uploaded_at,extra_col"
     with open(path, "w", newline="") as f:
-        f.write(header + "\n2111,650,2026-08-22,2026-11-21,PENDING,Ann Smith,,x,stray\n"
+        f.write(header + "\n2111,650,2026-08-22,2026-11-21,PENDING,Ann Smith,,x" + (",stray" if stray else "") + "\n"
                 "0512,650,2026-09-01,2026-12-05,PENDING,Bo Jones,,y\n")
     return path, header
 
 
+def test_every_ledger_writer_refuses_a_row_wider_than_the_header():
+    import assistant_io as aio
+    path, _ = _ragged_ledger()
+    before = open(path).read()
+    attempts = [("check_payments", ["check_payments.py", "--reminded", "0512"], cp.main),
+                ("check_payments", ["check_payments.py", "--note", "0512", "paid per client email 2026-09-28"], cp.main),
+                ("assistant_io", ["assistant_io.py", "ledger-add", json.dumps({"booking_ref": "0612", "occasion": "wedding"})], aio.main)]
+    for name, argv, fn in attempts:
+        saved = (sys.argv, cp.LEDGER, aio.LEDGER)
+        sys.argv, cp.LEDGER, aio.LEDGER = argv, path, cp.Path(path)
+        try:
+            with contextlib.redirect_stdout(io.StringIO()):
+                fn()
+            raise AssertionError(f"{name} {argv[1]} wrote a ragged ledger")
+        except SystemExit as e:
+            assert "more fields than its header" in str(e), (name, e)
+        finally:
+            sys.argv, cp.LEDGER, aio.LEDGER = saved
+        assert open(path).read() == before, name
+
+
 def test_reminded_keeps_the_ledger_header():
-    path, header = _ragged_ledger()
+    path, header = _ragged_ledger(stray=False)
     saved = (sys.argv, cp.LEDGER)
     sys.argv, cp.LEDGER = ["check_payments.py", "--reminded", "0512"], path
     try:
@@ -877,7 +943,7 @@ def test_stamp_uploaded_keeps_the_ledger_header():
         import upload_bookings as ub
     except ImportError:
         return
-    path, header = _ragged_ledger()
+    path, header = _ragged_ledger(stray=False)
     saved = ub.LEDGER
     ub.LEDGER = cp.Path(path)
     try:

@@ -443,7 +443,7 @@ def main(argv=None):
     ap = argparse.ArgumentParser(description="Write the owner's private dashboard to ~/lcs-private/dashboard.html.")
     ap.add_argument("--no-bank", action="store_true", help="don't read the Keychain token or call Starling")
     args = ap.parse_args(argv)
-    today = datetime.datetime.now(LONDON).date()
+    today = lm.today()
     client = None
     if not args.no_bank:
         tok = lm.keychain_token()

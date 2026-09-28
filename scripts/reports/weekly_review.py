@@ -28,7 +28,6 @@ Reads the private bookings ledger for counts only; prints no names or emails.
 
 import argparse
 import datetime
-import math
 import os
 import re
 import sys
@@ -42,6 +41,7 @@ REPO = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO / "scripts" / "bookings"))
 sys.path.insert(0, str(REPO / "scripts" / "ads"))
 import check_payments  # noqa: E402  is_cancelled: one cancelled rule for every ledger reader
+import lcs_money as lm  # noqa: E402  LEDGER, parse_gbp, today
 import upload_bookings  # noqa: E402  select_ready: section 9 counts what the upload would send
 
 # .venv/bin/activate sets this; default it so a bare `.venv/bin/python` run works too.
@@ -53,8 +53,7 @@ GSC_SITE = "sc-domain:londonchoralservice.com"
 LEAD_EVENTS = ["generate_lead", "contact_click", "contact_message", "form_error"]
 MONEY_TERMS = re.compile(r"funeral|wedding|carol|choir|choral", re.I)
 SITE = "https://londonchoralservice.com"
-# the same ledger as scripts/bookings/lcs_money.py, so sections 9 and 10 always agree
-LEDGER = Path(os.environ.get("LCS_BOOKINGS_CSV", Path(os.environ.get("LCS_PRIVATE_DIR", Path.home() / "lcs-private")) / "bookings.csv"))
+LEDGER = lm.LEDGER  # the same ledger as every bookings script, so sections 9 and 10 always agree
 EXPECTED_KEY_EVENTS = {"generate_lead", "contact_message"}
 BUDGET_WINDOWS = REPO / "data" / "budget-windows.yml"
 
@@ -79,7 +78,7 @@ def ads_query():
 
 
 def ads_sections(since, q):
-    today = datetime.date.today()
+    today = lm.today()
     spans = [("last 7 days", "segments.date DURING LAST_7_DAYS", 7),
              (f"since {since}", f"segments.date BETWEEN '{since}' AND '{today}'", max((today - since).days, 1))]
     print("== 1. Campaigns")
@@ -224,7 +223,7 @@ def ga4_section(s):
 
 def gsc_section(s):
     api = f"https://searchconsole.googleapis.com/webmasters/v3/sites/{GSC_SITE}/searchAnalytics/query"
-    end = datetime.date.today() - datetime.timedelta(days=3)  # Search Console data lags ~2-3 days
+    end = lm.today() - datetime.timedelta(days=3)  # Search Console data lags ~2-3 days
     cur = (end - datetime.timedelta(days=6), end)
     prev = (cur[0] - datetime.timedelta(days=7), cur[0] - datetime.timedelta(days=1))
 
@@ -277,7 +276,7 @@ def coverage_section(s, landing):
     for m in r.json().get("sitemap", []) if r.ok else []:
         read = (m.get("lastDownloaded") or "")[:10]
         sent = (m.get("lastSubmitted") or "")[:10]
-        age = lambda d: (datetime.date.today() - datetime.date.fromisoformat(d)).days if d else 9999
+        age = lambda d: (lm.today() - datetime.date.fromisoformat(d)).days if d else 9999
         stale = age(read) > 14 and age(sent) > 7  # a fresh resubmission gets a week to be read
         counts = ", ".join(f"{c.get('submitted')} submitted / {c.get('indexed', '?')} indexed" for c in m.get("contents", []))
         print(f"   {m['path']} · submitted {(m.get('lastSubmitted') or '')[:10]} · last read by Google {read or 'never'}"
@@ -340,11 +339,7 @@ def ledger_counts(rows):
     """Section 9's figures. Cancelled bookings (check_payments.is_cancelled, the rule every ledger reader uses)
     are counted apart and left out of the totals; "ready" is exactly what upload_bookings.select_ready would send."""
     def value(r):
-        try:
-            v = float((r.get("value_gbp") or "0").replace("£", "").replace(",", ""))
-        except ValueError:
-            return 0.0
-        return v if math.isfinite(v) else 0.0
+        return lm.money(r.get("value_gbp"))  # 0.0 when unreadable, nan or inf
 
     live = [r for r in rows if not check_payments.is_cancelled(r)]
     by = defaultdict(lambda: [0, 0.0])
@@ -384,7 +379,7 @@ def money_section():
         import lcs_money
         import money_report
         import singer_invoices
-        today = datetime.date.today()
+        today = lm.today()
         tok = lcs_money.keychain_token()
         if not tok:
             print("   no Starling token in the Keychain: money check skipped")
@@ -504,7 +499,7 @@ def main():
     wiring_section(s, ads_settings)
     ledger_section()
     money_section()
-    today = datetime.date.today()
+    today = lm.today()
     cost_section(q, today)
     budget_section(q, today)
     shortlist_section(s, today, args.gsc_shortlist)

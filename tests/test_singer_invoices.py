@@ -1447,6 +1447,75 @@ def test_already_recorded_reprints_the_stored_line_and_bill_lines():
     assert "   ! NEW BANK DETAILS" in again and bill_lines(again)[0] == "bill: no (bank warning)", again
 
 
+# --- review I1: every store writer holds the lock, and never over the network -----------------
+
+def _lock_held(path):
+    import fcntl
+    fd = os.open(str(path) + ".lock", os.O_RDWR | os.O_CREAT, 0o600)
+    try:
+        try:
+            fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            return False
+        except BlockingIOError:
+            return True
+    finally:
+        os.close(fd)
+
+
+def test_every_store_writer_holds_the_lock_and_paid_reads_the_bank_first():
+    import fcntl
+    rows = [dict(unpaid("L1", "Ben Fenwick", 100, "2026-09-20"), bank_fp=lm.bank_fingerprint("123456", "11112222"),
+                 bank_last4="2222"), unpaid("L2", "Anna Smith", 100, "2026-09-20")]
+    lm.write_csv(si.STORE, rows, si.COLUMNS)
+    seen, real_write = [], lm.write_csv
+
+    def spy_write(path, rows_, cols):
+        seen.append(_lock_held(path))
+        return real_write(path, rows_, cols)
+
+    class NetClient(FakeClient):
+        def feed(self, since, until, direction):
+            seen.append(("feed, lock held", _lock_held(si.STORE)))
+            return super().feed(since, until, direction)
+
+    lm.write_csv = spy_write
+    try:
+        with contextlib.redirect_stdout(io.StringIO()):
+            si.cmd_thanked(Args(message_id="L1"))
+            si.cmd_confirm(Args(message_id="L1"))
+            si.cmd_settled(Args(message_id="L2", date="2026-09-21"))
+            si.cmd_paid(Args(apply=True), NetClient(out=[out(100, "2026-09-22", "BEN FENWICK", "pay1")]))
+    finally:
+        lm.write_csv = real_write
+    assert seen == [True, True, True, ("feed, lock held", False), True], seen
+    got = {r["message_id"]: r for r in lm.read_csv(si.STORE)}
+    assert got["L1"]["bank_confirmed"] == "yes" and "paid reply drafted" in got["L1"]["notes"], got["L1"]
+    assert got["L1"]["paid_ref"] == "pay1" and got["L2"]["paid_on"] == "2026-09-21", got
+    # a refused edit writes nothing
+    before = open(si.STORE).read()
+    try:
+        si.cmd_settled(Args(message_id="L2", date="2026-09-21"))
+        raise AssertionError("a second settle must be refused")
+    except SystemExit:
+        pass
+    assert open(si.STORE).read() == before
+
+
+def test_paid_apply_never_overwrites_an_invoice_settled_meanwhile():
+    lm.write_csv(si.STORE, [unpaid("S1", "Ben Fenwick", 100, "2026-09-20")], si.COLUMNS)
+
+    class RacingClient(FakeClient):
+        def feed(self, since, until, direction):  # the owner settles it by hand while the feed is read
+            with contextlib.redirect_stdout(io.StringIO()):
+                si.cmd_settled(Args(message_id="S1", date="2026-09-21"))
+            return super().feed(since, until, direction)
+
+    with contextlib.redirect_stdout(io.StringIO()):
+        si.cmd_paid(Args(apply=True), RacingClient(out=[out(100, "2026-09-22", "BEN FENWICK", "pay9")]))
+    r = lm.read_csv(si.STORE)[0]
+    assert r["paid_on"] == "2026-09-21" and r["paid_ref"] == "" and "settled by hand" in r["notes"], r
+
+
 if __name__ == "__main__":
     failures = 0
     for name, fn in sorted(globals().items()):

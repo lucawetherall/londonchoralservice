@@ -34,10 +34,8 @@ data) to logs/ads-changes.md.
 """
 
 import argparse
-import csv
 import datetime
 import hashlib
-import math
 import os
 import sys
 from pathlib import Path
@@ -58,38 +56,22 @@ LONDON = ZoneInfo("Europe/London")
 
 
 def ensure_ledger():
+    """Create an empty ledger (header only, mode 600, written atomically) if there is none."""
     with lm.ledger_lock(LEDGER):
         if LEDGER.exists():
             return
-        LEDGER.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
-        with open(LEDGER, "w", newline="") as f:
-            csv.writer(f).writerow(COLUMNS)
-        os.chmod(LEDGER, 0o600)
+        lm.write_csv(LEDGER, [], COLUMNS)
     print(f"Created an empty private ledger at {LEDGER}")
 
 
-def ledger_header():
-    """The ledger's column names from its header line ([] if there is no ledger)."""
-    try:
-        with open(LEDGER, newline="") as f:
-            return next(csv.reader(f), [])
-    except FileNotFoundError:
-        return []
-
-
 def stamp_uploaded(done, now):
-    """Stamp uploaded_at on these booking refs. Re-reads the ledger under the shared lock so a row
-    another writer added or changed during the upload is kept. lm.ledger_lock is not re-entrant:
-    never call this while holding it."""
-    with lm.ledger_lock(LEDGER):
-        rows = lm.read_csv(LEDGER)
-        cols = ledger_header() or list(COLUMNS)  # the ledger's own header, never a row's keys
-        cols += [c for c in COLUMNS if c not in cols]
-        for r in rows:
+    """Stamp uploaded_at on these booking refs. Re-reads the ledger under the shared lock (lm.locked_rows:
+    the ledger's own header, atomic mode-600 write) so a row another writer added or changed during the
+    upload is kept. lm.ledger_lock is not re-entrant: never call this while holding it."""
+    with lm.locked_rows(LEDGER, COLUMNS) as t:
+        for r in t.rows:
             if r.get("booking_ref") in done:
                 r["uploaded_at"] = now
-        lm.write_csv(LEDGER, rows, cols)
-        os.chmod(LEDGER, 0o600)
 
 
 def to_datetime(day):
@@ -141,14 +123,14 @@ def select_ready(rows):
             skipped.append((ref, "no recorded consent for ad measurement"))
             continue
         try:
-            value = float((r.get("value_gbp") or "").replace("£", "").replace(",", ""))
             when, when_str = to_datetime(r["invoice_date"])
             enquired = to_datetime(r["enquiry_date"])[0] if (r.get("enquiry_date") or "").strip() else None
         except (ValueError, KeyError, AttributeError):
-            skipped.append((ref, "missing or unreadable value_gbp / invoice_date / enquiry_date"))
+            skipped.append((ref, "missing or unreadable invoice_date / enquiry_date"))
             continue
-        if not (math.isfinite(value) and value > 0):
-            skipped.append((ref, "value_gbp is not an amount above zero"))
+        value = lm.parse_gbp(r.get("value_gbp"))  # None when unreadable, nan or inf
+        if value is None or value <= 0:
+            skipped.append((ref, "value_gbp is missing, unreadable or not above zero"))
             continue
         if enquired and (when - enquired).days > 90:
             skipped.append((ref, "booked more than 90 days after the enquiry (outside the conversion window)"))
@@ -162,8 +144,7 @@ def main():
     parser.add_argument("--apply", action="store_true")
     args = parser.parse_args()
     ensure_ledger()
-    with lm.ledger_lock(LEDGER), open(LEDGER, newline="") as f:
-        rows = list(csv.DictReader(f))
+    rows = lm.read_csv(LEDGER)
 
     ready, skipped = select_ready(rows)
 

@@ -782,8 +782,8 @@ def cmd_scan(args, client):
         return
     inv = load_invoice(args)
     payees = payee_info(client)
-    with lm.ledger_lock(STORE):  # after the fetch: never hold the lock over the network
-        rows = lm.read_csv(STORE)  # read again: a fetch can take a while
+    with lm.locked_rows(STORE, COLUMNS) as t:  # after the fetch: never hold the lock over the network
+        rows = t.rows  # read again: a fetch can take a while
         if already_recorded(rows, args.message_id):
             return
         a, changed, flagged = assess_invoice(inv, rows, args.message_id, args.received, args.sender_email,
@@ -794,7 +794,6 @@ def cmd_scan(args, client):
                      "payee": a["payee"], "bank_changed": changed, "bank_confirmed": "", "paid_on": "",
                      "paid_amount": "", "paid_ref": "", "paid_verified": "",
                      "notes": "; ".join(inv["warnings"] + a["warnings"])})
-        lm.write_csv(STORE, rows, COLUMNS)
     for line in flagged:
         print(line)
     print_result(args.sender_name, inv, a)
@@ -838,8 +837,8 @@ def cmd_rescan(args, client):
     find(lm.read_csv(STORE))
     inv = load_invoice(args)
     payees = payee_info(client)
-    with lm.ledger_lock(STORE):  # after the fetch: never hold the lock over the network
-        rows = lm.read_csv(STORE)  # read again: a fetch can take a while
+    with lm.locked_rows(STORE, COLUMNS) as t:  # after the fetch: never hold the lock over the network
+        rows = t.rows  # read again: a fetch can take a while
         row = find(rows)
         fp = lm.bank_fingerprint(inv["sort_code"], inv["account_number"]) or ""
         if row.get("bank_fp") and not fp:
@@ -869,8 +868,7 @@ def cmd_rescan(args, client):
             kept = [n for n in kept if not n.startswith("bank details confirmed by phone")]
         row.update(invoice_ref=inv["invoice_ref"], amount_gbp=f"{inv['amount']:.2f}", bank_fp=a["bank_fp"],
                    bank_last4=a["bank_last4"], payee=a["payee"], bank_changed=changed,
-                   notes="; ".join(inv["warnings"] + a["warnings"] + kept + [f"rescanned {datetime.date.today()}"]))
-        lm.write_csv(STORE, rows, COLUMNS)
+                   notes="; ".join(inv["warnings"] + a["warnings"] + kept + [f"rescanned {lm.today()}"]))
     for line in flagged:
         print(line)
     print_result(row.get("singer_name"), inv, a)
@@ -893,7 +891,7 @@ def cmd_paid(args, client):
     if not client:
         print("No Starling token; paid check skipped.")
         return
-    today = datetime.date.today()
+    today = lm.today()
     since = min(received_date(r) for r in unpaid) - LOOKBACK
     used = {r["paid_ref"] for r in rows if r.get("paid_ref")}
     legacy = {(r["paid_on"], round(lm.money(r.get("paid_amount")), 2), surname(r.get("singer_name")))
@@ -915,19 +913,23 @@ def cmd_paid(args, client):
             when, amount, uid, verified = hits[r["message_id"]]
             print(f"NEWLY PAID {r['message_id']}: {first_name(r['singer_name'])} £{amount:,.2f} on {when}"
                   + (" (bank details match)" if verified else " (matched by name, check before thanking)"))
-            if args.apply:
-                r["paid_on"], r["paid_amount"], r["paid_ref"] = when, f"{amount:.2f}", uid
-                r["paid_verified"] = "yes" if verified else "no"
     if not hits:
         print("No new payments to singers matched.")
     elif args.apply:
-        lm.write_csv(STORE, rows, COLUMNS)
+        # after every Starling call: lock, re-read, and mark only invoices still unpaid, with feed items unused
+        with lm.locked_rows(STORE, COLUMNS) as t:
+            used_now = {r["paid_ref"] for r in t.rows if r.get("paid_ref")}
+            for r in t.rows:
+                if r["message_id"] in hits and not r.get("paid_on") and hits[r["message_id"]][2] not in used_now:
+                    when, amount, uid, verified = hits[r["message_id"]]
+                    r["paid_on"], r["paid_amount"], r["paid_ref"] = when, f"{amount:.2f}", uid
+                    r["paid_verified"] = "yes" if verified else "no"
         print("Singer invoice store updated.")
 
 
 def cmd_status(args, client=None):
     rows = lm.read_csv(STORE)
-    today = datetime.date.today()
+    today = lm.today()
     for r in rows:
         if not r["paid_on"]:
             print(f"{r['received']} {first_name(r['singer_name'])} £{lm.money(r['amount_gbp']):,.2f} "
@@ -939,50 +941,48 @@ def cmd_status(args, client=None):
           + (f", {s['bank_changed']} with changed bank details" if s["bank_changed"] else ""))
 
 
+def update_invoice(message_id, fn):
+    """Read-modify-write one stored invoice under the store's lock (lm.locked_rows). fn(row) edits it in
+    place and may raise SystemExit to refuse, which writes nothing."""
+    with lm.locked_rows(STORE, COLUMNS) as t:
+        for r in t.rows:
+            if r["message_id"] == message_id:
+                fn(r)
+                return r
+        raise SystemExit(f"no invoice {message_id}")
+
+
 def cmd_thanked(args, client=None):
-    rows = lm.read_csv(STORE)
-    for r in rows:
-        if r["message_id"] == args.message_id:
-            note(r, f"paid reply drafted {datetime.date.today()}")
-            lm.write_csv(STORE, rows, COLUMNS)
-            print(f"{args.message_id}: paid reply noted")
-            return
-    raise SystemExit(f"no invoice {args.message_id}")
+    update_invoice(args.message_id, lambda r: note(r, f"paid reply drafted {lm.today()}"))
+    print(f"{args.message_id}: paid reply noted")
 
 
 def cmd_confirm(args, client=None):
     """The owner rang the singer on a number already held: trust this invoice's bank details."""
-    rows = lm.read_csv(STORE)
-    for r in rows:
-        if r["message_id"] == args.message_id:
-            if not r.get("bank_fp"):
-                raise SystemExit(f"{args.message_id}: no bank details recorded, nothing to confirm")
-            r["bank_confirmed"] = "yes"
-            note(r, f"bank details confirmed by phone {datetime.date.today()}")
-            lm.write_csv(STORE, rows, COLUMNS)
-            print(f"{args.message_id}: bank details confirmed")
-            print(f"   trusted from now on: the account ending ••••{r.get('bank_last4', '')}")
-            return
-    raise SystemExit(f"no invoice {args.message_id}")
+    def edit(r):
+        if not r.get("bank_fp"):
+            raise SystemExit(f"{args.message_id}: no bank details recorded, nothing to confirm")
+        r["bank_confirmed"] = "yes"
+        note(r, f"bank details confirmed by phone {lm.today()}")
+    r = update_invoice(args.message_id, edit)
+    print(f"{args.message_id}: bank details confirmed")
+    print(f"   trusted from now on: the account ending ••••{r.get('bank_last4', '')}")
 
 
 def cmd_settled(args, client=None):
     """The owner's hand command: an invoice paid outside the feed's reach. Marks it paid for its own amount,
     unverified; never trusts its bank details (bank_confirmed is left alone)."""
     day = strict_date(args.date)
-    if day > datetime.date.today().isoformat():  # a typo'd year never marks a payment that hasn't happened
+    if day > lm.today().isoformat():  # a typo'd year never marks a payment that hasn't happened
         raise SystemExit(f"{args.message_id}: {day} is after today; settle it on the day it was paid")
-    rows = lm.read_csv(STORE)
-    for r in rows:
-        if r["message_id"] == args.message_id:
-            if r.get("paid_on"):
-                raise SystemExit(f"{args.message_id}: already paid on {r['paid_on']}")
-            r["paid_on"], r["paid_amount"], r["paid_verified"] = day, f"{lm.money(r['amount_gbp']):.2f}", "no"
-            note(r, "settled by hand")
-            lm.write_csv(STORE, rows, COLUMNS)
-            print(f"{args.message_id}: settled by hand")
-            return
-    raise SystemExit(f"no invoice {args.message_id}")
+
+    def edit(r):
+        if r.get("paid_on"):
+            raise SystemExit(f"{args.message_id}: already paid on {r['paid_on']}")
+        r["paid_on"], r["paid_amount"], r["paid_verified"] = day, f"{lm.money(r['amount_gbp']):.2f}", "no"
+        note(r, "settled by hand")
+    update_invoice(args.message_id, edit)
+    print(f"{args.message_id}: settled by hand")
 
 
 def strict_date(value):

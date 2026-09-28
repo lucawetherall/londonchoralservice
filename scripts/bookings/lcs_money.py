@@ -7,6 +7,8 @@
 - The token lives in the owner's macOS Keychain (service lcs-starling-read)
   and is read at run time, never printed.
 - Private files live in ~/lcs-private/ (override with LCS_PRIVATE_DIR), mode 600.
+- One helper each, used by every bookings and report script: locked_rows (the locked
+  read-modify-write of a private CSV), parse_gbp (money) and today (the Europe/London date).
 - Bank details are reduced to a fingerprint plus the last four digits. The
   fingerprint is an HMAC-SHA256 keyed with fingerprint.key (32 random bytes,
   mode 600, made on first use in the private dir), so the stored fingerprint and
@@ -24,6 +26,7 @@ import fcntl
 import hashlib
 import hmac
 import json
+import math
 import os
 import re
 import subprocess
@@ -34,6 +37,7 @@ from zoneinfo import ZoneInfo
 API = "https://api.starlingbank.com"
 KEYCHAIN_SERVICE = "lcs-starling-read"
 PRIVATE = Path(os.environ.get("LCS_PRIVATE_DIR", Path.home() / "lcs-private"))
+LONDON = ZoneInfo("Europe/London")
 _KEYS = {}
 LEDGER = Path(os.environ.get("LCS_BOOKINGS_CSV", PRIVATE / "bookings.csv"))
 
@@ -87,11 +91,31 @@ class StarlingReadOnly:
         return self.get("/api/v2/payees").get("payees", [])
 
 
-def money(value):
+def parse_gbp(value):
+    """An amount in pounds ("£1,150.00", "575.5", 325) -> float, or None for anything unreadable, blank,
+    nan or inf. The one money parser for the bookings and report scripts: callers decide what a negative
+    or zero amount means."""
+    if value is None:
+        return None
+    text = str(value).replace("£", "").replace(",", "").strip()
     try:
-        return float(str(value if value is not None else "0").replace("£", "").replace(",", "") or 0)
+        v = float(text)
     except ValueError:
-        return 0.0
+        return None
+    return v if math.isfinite(v) else None
+
+
+def money(value):
+    """parse_gbp, with 0.0 for anything unreadable (nan and inf included)."""
+    v = parse_gbp(value)
+    return 0.0 if v is None else v
+
+
+def today(now=None):
+    """Today's date in Europe/London (`now`: an aware datetime, default the current time). Use this, never
+    date.today(): the scheduled tasks and the ledger's dates are London dates, whatever the machine's zone."""
+    now = now or datetime.datetime.now(datetime.timezone.utc)
+    return now.astimezone(LONDON).date()
 
 
 def local_date(ts):
@@ -104,7 +128,7 @@ def local_date(ts):
         return ts[:10]
     if t.tzinfo is None:
         t = t.replace(tzinfo=datetime.timezone.utc)
-    return t.astimezone(ZoneInfo("Europe/London")).date().isoformat()
+    return t.astimezone(LONDON).date().isoformat()
 
 
 def _fingerprint_key():
@@ -206,3 +230,35 @@ def ledger_lock(path):
         yield
     finally:
         os.close(fd)  # closing releases the lock
+
+
+class LockedTable:
+    """What locked_rows yields: .rows (list of dicts, edit or append in place) and .columns (the header)."""
+
+    def __init__(self, rows, columns):
+        self.rows, self.columns = rows, columns
+
+
+@contextlib.contextmanager
+def locked_rows(path, columns=None):
+    """The one read-modify-write for a private CSV. Takes ledger_lock, reads the rows with the file's own
+    header (plus any of `columns` it lacks, appended), and refuses (SystemExit, nothing written) a row with
+    more fields than the header, since a rewrite would drop them. On a clean exit, if the rows changed, it
+    writes them back atomically at mode 600 (write_csv); after an exception, SystemExit included, it writes
+    nothing. ledger_lock is not re-entrant: never nest this, or call another writer of the file inside it."""
+    path = Path(path)
+    with ledger_lock(path):
+        header, rows = [], []
+        if path.exists():
+            with open(path, newline="") as f:
+                reader = csv.DictReader(f)
+                header = list(reader.fieldnames or [])
+                rows = list(reader)
+        if any(None in r for r in rows):
+            raise SystemExit(f"{path.name} has a row with more fields than its header; nothing written")
+        cols = header + [c for c in (columns or []) if c not in header]
+        before = [dict(r) for r in rows]
+        table = LockedTable(rows, cols)
+        yield table
+        if table.rows != before:
+            write_csv(path, table.rows, table.columns)

@@ -84,8 +84,6 @@ it writes "deposit seen … (Starling)". Output shows invoice numbers and amount
 
 import argparse
 import datetime
-import contextlib
-import csv
 import json
 import math
 import re
@@ -158,8 +156,7 @@ REF_TOKEN = re.compile(r"(?:" + PREFIX + r"\s*[-#:]?\s*(?=\d))?([A-Z0-9]+)")
 
 
 def money(row):
-    v = lm.money(row.get("value_gbp"))
-    return v if math.isfinite(v) else 0.0  # "nan"/"inf" are unreadable, not a price
+    return lm.money(row.get("value_gbp"))  # 0.0 when unreadable, "nan" and "inf" included
 
 
 def date_or_none(s):
@@ -629,15 +626,6 @@ def received_since(client, rows, since, today):
             and not (live[ref] and d > live[ref].isoformat())]
 
 
-def header(path):
-    """The ledger's own column names, from its header line, so a rewrite never adds or drops a column."""
-    try:
-        with open(path, newline="") as f:
-            return next(csv.reader(f), [])
-    except FileNotFoundError:
-        return []
-
-
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--apply", action="store_true")
@@ -647,39 +635,20 @@ def main():
     ap.add_argument("--kind", choices=sorted(MARK_TEXT), default="deposit")
     ap.add_argument("--note", nargs=2, metavar=("REF", "TEXT"))
     args = ap.parse_args()
-    today = datetime.date.today()
+    today = lm.today()
 
-    # lm.ledger_lock is an flock on a fresh descriptor: NOT re-entrant. Never nest it, or call another
-    # ledger writer while holding it, in one process: the second acquire deadlocks.
+    # lm.locked_rows holds lm.ledger_lock, an flock on a fresh descriptor: NOT re-entrant. Never nest it, or
+    # call another ledger writer while holding it, in one process: the second acquire deadlocks.
     if args.note:
         ref, text = args.note
         if "\n" in text or "\r" in text or len(text) > 120 or ";" in text:
             raise SystemExit("note text must be a single line, at most 120 characters, with no ';'")
-        with lm.ledger_lock(LEDGER):
-            rows = lm.read_csv(LEDGER)
-            cols = header(LEDGER)
-            for r in rows:
-                if r["booking_ref"] == ref:
-                    notes = r.get("notes") or ""
-                    r["notes"] = (f"{notes}; " if notes.strip() else "") + text
-                    break
-            else:
-                raise SystemExit(f"no booking {ref}")
-            lm.write_csv(LEDGER, rows, cols)
+        append_note(ref, text)
         print(f"{ref}: note added")
         return
 
     if args.reminded:
-        with lm.ledger_lock(LEDGER):
-            rows = lm.read_csv(LEDGER)
-            cols = header(LEDGER)
-            for r in rows:
-                if r["booking_ref"] == args.reminded:
-                    r["notes"] = (f"{r['notes']}; " if (r.get("notes") or "").strip() else "") + f"{MARK_TEXT[args.kind]} {today}"
-                    break
-            else:
-                raise SystemExit(f"no booking {args.reminded}")
-            lm.write_csv(LEDGER, rows, cols)
+        append_note(args.reminded, f"{MARK_TEXT[args.kind]} {today}")
         print(f"{args.reminded}: {MARK_TEXT[args.kind]} noted")
         return
 
@@ -692,11 +661,21 @@ def main():
         return
     client = lm.StarlingReadOnly(tok)
     try:
-        with lm.ledger_lock(LEDGER) if args.apply else contextlib.nullcontext():
-            rows = lm.read_csv(LEDGER)
-            run(args, client, rows, header(LEDGER), today)
+        run(args, client, lm.read_csv(LEDGER), today)  # --apply takes the lock only after the Starling calls
     except lm.StarlingError as e:
         raise SystemExit(str(e))
+
+
+def append_note(ref, text):
+    """Append "; <text>" to one booking's notes, under the ledger lock."""
+    with lm.locked_rows(LEDGER) as t:
+        for r in t.rows:
+            if r["booking_ref"] == ref:
+                notes = r.get("notes") or ""
+                r["notes"] = (f"{notes}; " if notes.strip() else "") + text
+                break
+        else:
+            raise SystemExit(f"no booking {ref}")
 
 
 def starling_unavailable(args, e):
@@ -707,7 +686,10 @@ def starling_unavailable(args, e):
     print(f"Starling unavailable ({type(e).__name__}{code})", file=sys.stderr)
 
 
-def run(args, client, rows, cols, today):
+def run(args, client, rows, today):
+    """Report (and with --apply, note) payments. All Starling calls happen first, on `rows` read without the
+    lock; --apply then takes the lock, re-reads the ledger, and reassesses each booking from its fresh row
+    (the same payments, no network) before writing, so an edit made meanwhile is kept."""
     if args.selftest:
         try:
             scopes = sorted(client.get("/api/v2/identity/token").get("scopes", []))
@@ -732,20 +714,30 @@ def run(args, client, rows, cols, today):
     if not results:
         print("[]" if args.json else "No open bookings to check.")
         return
-    changed = False
-    for r, paid, a in results:
+    for _, _, a in results:
         if not args.json:
             print(describe(a))
-        if args.apply:
-            new = updated_notes(r.get("notes") or "", a, paid)
-            if new != (r.get("notes") or ""):
-                r["notes"], changed = new, True
     if args.json:
         print(json.dumps([a for _, _, a in results]))
-    if args.apply and changed:
-        lm.write_csv(LEDGER, rows, cols)
-        if not args.json:
-            print("Ledger notes updated.")
+    if args.apply and apply_notes(results, today) and not args.json:
+        print("Ledger notes updated.")
+
+
+def apply_notes(results, today):
+    """Write updated_notes for each assessed booking under the lock, from the ledger as it is now. True if
+    anything changed."""
+    paid_by_ref = {r["booking_ref"]: paid for r, paid, _ in results}
+    changed = False
+    with lm.locked_rows(LEDGER) as t:
+        for r in t.rows:
+            if r.get("booking_ref") not in paid_by_ref:
+                continue
+            paid = paid_by_ref[r["booking_ref"]]
+            notes = r.get("notes") or ""
+            new = updated_notes(notes, assess(r, paid, today), paid)
+            if new != notes:
+                r["notes"], changed = new, True
+    return changed
 
 
 if __name__ == "__main__":
