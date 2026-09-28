@@ -66,3 +66,5 @@
   </tbody>
 </table>
 {% endmacro %}
+
+{% macro passkey_line(info) %}{% if info.count %}{{ info.count }} passkey{{ "" if info.count == 1 else "s" }}{% if info.last_added %}, last added {{ info.last_added|london_day }}{% endif %}.{% else %}No passkeys yet.{% endif %}{% endmacro %}

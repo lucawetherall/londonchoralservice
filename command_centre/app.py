@@ -1,6 +1,6 @@
 """The Command Centre web app: routes, templates and middleware.
 
-    create_app()  ->  Starlette app (python -m command_centre serves it on 127.0.0.1:8765)
+    create_app()  ->  Starlette app (python -m command_centre serves it on 127.0.0.1:8765, or on a Unix socket)
 
 Phase 1 is read-only: Today, Money and Passkeys pages, the passkey endpoints and /healthz. See
 docs/superpowers/specs/2026-09-28-command-centre-design.md and docs/superpowers/plans/2026-09-28-command-centre.md.
@@ -23,6 +23,7 @@ from starlette.staticfiles import StaticFiles
 from . import auth, data
 
 HERE = Path(__file__).resolve().parent
+REPO = HERE.parent
 LOOPBACK = "127.0.0.1"
 log = logging.getLogger("command_centre")
 
@@ -60,10 +61,42 @@ def state_tone(state):
     return data.STATES.get(state, ("", ""))[1]
 
 
+def checkout_branch(repo=REPO):
+    """The branch checked out at `repo` (read from .git/HEAD, no subprocess), or None if detached/unknown."""
+    git = Path(repo) / ".git"
+    try:
+        if git.is_file():  # a worktree: ".git" names the real git dir
+            line = git.read_text(encoding="utf-8").strip()
+            if not line.startswith("gitdir:"):
+                return None
+            gitdir = Path(line.split(":", 1)[1].strip())
+            git = gitdir if gitdir.is_absolute() else (Path(repo) / gitdir)
+        head = (git / "HEAD").read_text(encoding="utf-8").strip()
+    except OSError:
+        return None
+    prefix = "ref: refs/heads/"
+    return head[len(prefix):] if head.startswith(prefix) else None
+
+
+def checkout_warning(branch):
+    """The LaunchAgent runs the main checkout, so it serves whatever that checkout has checked out: warn when
+    that isn't main (a review branch left checked out would be live)."""
+    if branch == "main":
+        return None
+    return f"The service's checkout is not on main (it is on {branch or 'a detached HEAD'})."
+
+
+def london_day(value):
+    if isinstance(value, datetime.datetime) and value.tzinfo is not None:
+        value = value.astimezone(data.LONDON)
+    return day(value.isoformat() if hasattr(value, "isoformat") else value)
+
+
 def make_env():
     env = Environment(loader=FileSystemLoader(HERE / "templates"), autoescape=select_autoescape(default=True),
                       trim_blocks=True, lstrip_blocks=True)
-    env.filters.update(gbp=gbp, day=day, last4=last4, state_words=state_words, state_tone=state_tone)
+    env.filters.update(gbp=gbp, day=day, london_day=london_day, last4=last4, state_words=state_words,
+                       state_tone=state_tone)
     env.globals.update(NAV=NAV, SOON=SOON, HTMX_CONFIG=HTMX_CONFIG)
     return env
 
@@ -75,16 +108,26 @@ class CommandCentre(Starlette):
         return auth.SecurityHeadersMiddleware(super().build_middleware_stack())
 
 
-def create_app(client_factory=data.default_client, now=None, clock=None, passkeys=None, bind_host=None):
-    """The app. `bind_host` is what __main__ binds to; CC_DEV_LOGIN is honoured only when it is 127.0.0.1."""
+def create_app(client_factory=data.default_client, now=None, clock=None, passkeys=None, bind_host=None, port=None,
+               uds=None, checkout=None):
+    """The app. `bind_host`, `port` and `uds` say how __main__ serves it. CC_DEV_LOGIN is honoured only on
+    127.0.0.1, on a port other than the service's 8765, and never on the Unix socket. `checkout` returns the
+    serving checkout's branch (default: read from .git)."""
     env = make_env()
     reader = data.Data(client_factory, now=now, **({"clock": clock} if clock else {}))
     keys = passkeys or auth.Passkeys()
     dev_login = os.environ.get("CC_DEV_LOGIN", "").strip() or None
-    if bind_host != LOOPBACK:
+    if bind_host != LOOPBACK or uds or port is None or int(port) == auth.SERVICE_PORT:
         dev_login = None
     if dev_login:
         log.warning("CC_DEV_LOGIN is set: requests are treated as %s (local check only)", dev_login)
+    warning = checkout_warning((checkout or checkout_branch)())
+
+    def passkey_info():
+        try:
+            return auth.passkey_summary(auth.load_config())
+        except (OSError, ValueError):
+            return auth.passkey_summary({})
 
     def render(request, name, **ctx):
         page = env.get_template(name).render(request=request, path=request.url.path, **ctx)
@@ -94,19 +137,16 @@ def create_app(client_factory=data.default_client, now=None, clock=None, passkey
         return PlainTextResponse("ok")
 
     async def today(request):
-        return render(request, "today.html", title="Today", **reader.today_page())
+        return render(request, "today.html", title="Today", passkey_info=passkey_info(), checkout_warning=warning,
+                      **reader.today_page())
 
     async def money(request):
         return render(request, "money.html", title="Money", **reader.money_page())
 
     async def passkeys_page(request):
-        try:
-            cfg = auth.load_config()
-            count = len(cfg.get("passkeys") or [])
-        except (OSError, ValueError):
-            count = 0
-        now = reader.now()
-        return render(request, "passkeys.html", title="Passkeys", count=count, stamp=data.stamp(now))
+        info = passkey_info()
+        return render(request, "passkeys.html", title="Passkeys", count=info["count"], passkey_info=info,
+                      register_action=auth.REGISTER.name, check_action=auth.CHECK.name, stamp=data.stamp(reader.now()))
 
     async def body(request):
         try:
@@ -123,20 +163,23 @@ def create_app(client_factory=data.default_client, now=None, clock=None, passkey
     async def register_options(request):
         payload = await body(request)
         u = user(request)
-        return JSONResponse(keys.registration_options(u["login"], u["name"], payload.get("assertion")))
+        return JSONResponse(keys.registration_options(u["login"], u["name"], payload.get("assertion"),
+                                                      payload.get("bootstrap")))
 
     async def register(request):
         payload = await body(request)
-        keys.finish_registration(payload.get("credential"), user(request)["login"], payload.get("label", ""))
+        keys.finish_registration(payload.get("credential"), user(request)["login"], payload.get("label", ""),
+                                 payload.get("bootstrap"))
         return JSONResponse({"ok": True})
 
     async def assert_options(request):
         payload = await body(request)
-        return JSONResponse(keys.assertion_options(payload.get("action")))
+        # the request names the action; its summary is the server's (auth.Action), never the client's text
+        return JSONResponse(keys.assertion_options(auth.action_named(payload.get("action"))))
 
     async def assert_check(request):
         payload = await body(request)
-        keys.require_fresh_assertion(payload.get("credential"), payload.get("action"))
+        keys.require_fresh_assertion(payload.get("credential"), auth.action_named(payload.get("action")))
         return JSONResponse({"ok": True})
 
     async def passkey_error(request, exc):
@@ -158,8 +201,9 @@ def create_app(client_factory=data.default_client, now=None, clock=None, passkey
     ]
     app = CommandCentre(
         routes=routes,
-        middleware=[Middleware(auth.IdentityMiddleware, dev_login=dev_login)],
+        middleware=[Middleware(auth.IdentityMiddleware, dev_login=dev_login, dev_port=port, uds=bool(uds))],
         exception_handlers={auth.PasskeyError: passkey_error, 404: not_found})
     app.state.dev_login = dev_login
     app.state.passkeys = keys
+    app.state.checkout_warning = warning
     return app

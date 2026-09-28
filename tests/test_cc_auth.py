@@ -26,6 +26,8 @@ LOGIN = "owner@example.org"
 ORIGIN = "https://mac.example-tailnet.ts.net"
 RP_ID = "mac.example-tailnet.ts.net"
 HEADERS = {"Tailscale-User-Login": LOGIN, "Tailscale-User-Name": "Owner Example"}
+LOCAL = ("127.0.0.1", 50000)  # the peer `tailscale serve` connects from; the app refuses any other
+DEV = "http://127.0.0.1:8799"  # a spare port for the dev login (never the service's 8765)
 
 
 def b64(b):
@@ -87,7 +89,14 @@ class Authenticator:
 
 
 def client(**kw):
-    return TestClient(create_app(client_factory=lambda: None, **kw), base_url=ORIGIN)
+    kw.setdefault("checkout", lambda: "main")
+    return TestClient(create_app(client_factory=lambda: None, **kw), base_url=ORIGIN, client=LOCAL)
+
+
+def first_options(c, code=None):
+    """Register/options for the first passkey, with a fresh bootstrap code (issued here when not given)."""
+    code = code or auth.new_bootstrap()
+    return code, post(c, "/auth/passkey/register/options", {"bootstrap": code})
 
 
 def post(c, path, body, headers=HEADERS, origin=ORIGIN):
@@ -103,8 +112,8 @@ def registered(clock=None):
     pk = auth.Passkeys(auth.ChallengeStore(clock=clock or Clock()))
     c = client(passkeys=pk)
     a = Authenticator()
-    opts = post(c, "/auth/passkey/register/options", {}).json()
-    r = post(c, "/auth/passkey/register", {"credential": a.register(opts)})
+    code, opts = first_options(c)
+    r = post(c, "/auth/passkey/register", {"credential": a.register(opts.json()), "bootstrap": code})
     assert r.status_code == 200, r.text
     return c, a, pk
 
@@ -159,7 +168,7 @@ def test_missing_or_empty_config_fails_closed():
 
 
 def test_healthz_is_open_and_says_nothing():
-    os.remove(auth.config_path())
+    write_config(allowed_logins=[])  # no identity needed, but the Host check still applies
     c = client()
     r = c.get("/healthz")
     assert r.status_code == 200 and r.text == "ok", r.text
@@ -178,9 +187,9 @@ def test_config_is_private():
 def test_dev_login_is_off_by_default():
     write_config()
     os.environ.pop("CC_DEV_LOGIN", None)
-    app = create_app(client_factory=lambda: None, bind_host="127.0.0.1")
+    app = create_app(client_factory=lambda: None, bind_host="127.0.0.1", port=8799)
     assert app.state.dev_login is None
-    assert TestClient(app).get("/").status_code == 403
+    assert TestClient(app, base_url=DEV, client=LOCAL).get("/").status_code == 403
 
 
 def test_dev_login_needs_the_loopback_bind():
@@ -188,12 +197,12 @@ def test_dev_login_needs_the_loopback_bind():
     os.environ["CC_DEV_LOGIN"] = LOGIN
     try:
         for host in [None, "0.0.0.0", "192.168.1.5", "::"]:
-            app = create_app(client_factory=lambda: None, bind_host=host)
+            app = create_app(client_factory=lambda: None, bind_host=host, port=8799)
             assert app.state.dev_login is None, host
-            assert TestClient(app).get("/").status_code == 403, host
-        app = create_app(client_factory=lambda: None, bind_host="127.0.0.1")
+            assert TestClient(app, base_url=DEV, client=LOCAL).get("/").status_code == 403, host
+        app = create_app(client_factory=lambda: None, bind_host="127.0.0.1", port=8799)
         assert app.state.dev_login == LOGIN
-        assert TestClient(app).get("/").status_code == 200
+        assert TestClient(app, base_url=DEV, client=LOCAL).get("/").status_code == 200
     finally:
         os.environ.pop("CC_DEV_LOGIN", None)
 
@@ -202,8 +211,8 @@ def test_dev_login_still_needs_an_allowed_login():
     write_config()
     os.environ["CC_DEV_LOGIN"] = "intruder@example.org"
     try:
-        app = create_app(client_factory=lambda: None, bind_host="127.0.0.1")
-        assert TestClient(app).get("/").status_code == 403
+        app = create_app(client_factory=lambda: None, bind_host="127.0.0.1", port=8799)
+        assert TestClient(app, base_url=DEV, client=LOCAL).get("/").status_code == 403
     finally:
         os.environ.pop("CC_DEV_LOGIN", None)
 
@@ -220,7 +229,7 @@ def test_main_binds_loopback_only():
 def test_post_needs_the_configured_origin():
     write_config()
     c = client()
-    body = {"action": "check passkey"}
+    body = {"action": "check"}
     assert post(c, "/auth/passkey/assert/options", body, origin=None).status_code == 403
     assert post(c, "/auth/passkey/assert/options", body, origin="https://evil.example.org").status_code == 403
     # no passkeys yet, so options are refused for a different reason, but the origin check passed
@@ -282,6 +291,7 @@ def test_wrong_summary_burns_the_challenge():
 
 
 def test_first_registration_needs_no_assertion_and_stores_public_key_only():
+    """(And needs the bootstrap code: tests/test_cc_security.py.)"""
     c, a, pk = registered()
     cfg = auth.load_config()
     assert len(cfg["passkeys"]) == 1
@@ -289,6 +299,7 @@ def test_first_registration_needs_no_assertion_and_stores_public_key_only():
     assert stored["id"] == b64(a.cred_id)
     assert unb64(stored["public_key"]) == a.cose()
     assert set(stored) <= {"id", "public_key", "sign_count", "created", "login", "label", "transports"}
+    assert "bootstrap" not in cfg
 
 
 def test_registration_challenge_is_single_use():
@@ -296,9 +307,9 @@ def test_registration_challenge_is_single_use():
     pk = auth.Passkeys(auth.ChallengeStore(clock=Clock()))
     c = client(passkeys=pk)
     a = Authenticator()
-    opts = post(c, "/auth/passkey/register/options", {}).json()
-    cred = a.register(opts)
-    assert post(c, "/auth/passkey/register", {"credential": cred}).status_code == 200
+    code, opts = first_options(c)
+    cred = a.register(opts.json())
+    assert post(c, "/auth/passkey/register", {"credential": cred, "bootstrap": code}).status_code == 200
     r = post(c, "/auth/passkey/register", {"credential": cred})
     assert r.status_code == 403 and r.json()["error"] == "unknown or used challenge", r.text
 
@@ -308,9 +319,9 @@ def test_registration_challenge_expires():
     clock = Clock()
     pk = auth.Passkeys(auth.ChallengeStore(clock=clock))
     c = client(passkeys=pk)
-    opts = post(c, "/auth/passkey/register/options", {}).json()
+    code, opts = first_options(c)
     clock.t += 61
-    r = post(c, "/auth/passkey/register", {"credential": Authenticator().register(opts)})
+    r = post(c, "/auth/passkey/register", {"credential": Authenticator().register(opts.json()), "bootstrap": code})
     assert r.status_code == 403 and r.json()["error"] == "challenge expired"
     assert auth.load_config()["passkeys"] == []
 
@@ -319,8 +330,9 @@ def test_registration_from_another_origin_is_refused():
     write_config()
     pk = auth.Passkeys(auth.ChallengeStore(clock=Clock()))
     c = client(passkeys=pk)
-    opts = post(c, "/auth/passkey/register/options", {}).json()
-    r = post(c, "/auth/passkey/register", {"credential": Authenticator().register(opts, origin="https://evil.example.org")})
+    code, opts = first_options(c)
+    r = post(c, "/auth/passkey/register", {"credential": Authenticator().register(opts.json(), origin="https://evil.example.org"),
+                                           "bootstrap": code})
     assert r.status_code == 403 and r.json()["error"] == "verification failed"
 
 
@@ -330,11 +342,11 @@ def test_second_registration_needs_a_fresh_assertion():
     r = post(c, "/auth/passkey/register/options", {})
     assert r.status_code == 403 and r.json()["error"] == "assertion required", r.text
     # an assertion for another action: refused
-    opts = post(c, "/auth/passkey/assert/options", {"action": "check passkey"}).json()
+    opts = post(c, "/auth/passkey/assert/options", {"action": "check"}).json()
     r = post(c, "/auth/passkey/register/options", {"assertion": a.assert_(opts)})
     assert r.status_code == 403 and r.json()["error"] == "wrong action", r.text
     # an assertion for "register a new passkey": allowed, and the new key is stored
-    opts = post(c, "/auth/passkey/assert/options", {"action": auth.REGISTER_SUMMARY}).json()
+    opts = post(c, "/auth/passkey/assert/options", {"action": "register"}).json()
     reg = post(c, "/auth/passkey/register/options", {"assertion": a.assert_(opts)})
     assert reg.status_code == 200, reg.text
     assert [x["id"] for x in reg.json()["excludeCredentials"]] == [b64(a.cred_id)]
@@ -345,20 +357,20 @@ def test_second_registration_needs_a_fresh_assertion():
 
 def test_assertion_accepted_and_sign_count_updated():
     c, a, pk = registered()
-    opts = post(c, "/auth/passkey/assert/options", {"action": "check passkey"}).json()
+    opts = post(c, "/auth/passkey/assert/options", {"action": "check"}).json()
     assert opts["userVerification"] == "required"
-    r = post(c, "/auth/passkey/assert", {"action": "check passkey", "credential": a.assert_(opts)})
+    r = post(c, "/auth/passkey/assert", {"action": "check", "credential": a.assert_(opts)})
     assert r.status_code == 200 and r.json() == {"ok": True}, r.text
     assert auth.load_config()["passkeys"][0]["sign_count"] == 1
 
 
 def test_require_fresh_assertion_binds_the_summary():
     c, a, pk = registered()
-    summary = "resolve hand check 0310: paid in full 2026-09-28"
+    summary = auth.Action("resolve", "resolve hand check 0310: paid in full 2026-09-28")
     opts = pk.assertion_options(summary)
     cred = a.assert_(opts)
     try:
-        pk.require_fresh_assertion(cred, "resolve hand check 0310: refunded 2026-09-28")
+        pk.require_fresh_assertion(cred, auth.Action("t", "resolve hand check 0310: refunded 2026-09-28"))
         raise AssertionError("another action's assertion accepted")
     except auth.PasskeyError as e:
         assert e.reason == "wrong action"
@@ -374,11 +386,11 @@ def test_require_fresh_assertion_binds_the_summary():
 
 def test_require_fresh_assertion_refuses_replay():
     c, a, pk = registered()
-    opts = pk.assertion_options("x")
+    opts = pk.assertion_options(auth.Action("t", "x"))
     cred = a.assert_(opts)
-    pk.require_fresh_assertion(cred, "x")
+    pk.require_fresh_assertion(cred, auth.Action("t", "x"))
     try:
-        pk.require_fresh_assertion(cred, "x")
+        pk.require_fresh_assertion(cred, auth.Action("t", "x"))
         raise AssertionError("replay accepted")
     except auth.PasskeyError as e:
         assert e.reason == "unknown or used challenge"
@@ -387,10 +399,10 @@ def test_require_fresh_assertion_refuses_replay():
 def test_require_fresh_assertion_refuses_after_60_seconds():
     clock = Clock()
     c, a, pk = registered(clock)
-    opts = pk.assertion_options("x")
+    opts = pk.assertion_options(auth.Action("t", "x"))
     clock.t += 60.5
     try:
-        pk.require_fresh_assertion(a.assert_(opts), "x")
+        pk.require_fresh_assertion(a.assert_(opts), auth.Action("t", "x"))
         raise AssertionError("stale assertion accepted")
     except auth.PasskeyError as e:
         assert e.reason == "challenge expired"
@@ -400,22 +412,22 @@ def test_require_fresh_assertion_refuses_unknown_key_and_bad_signature():
     c, a, pk = registered()
     stranger = Authenticator(b"cred-stranger-01")
     try:
-        pk.require_fresh_assertion(stranger.assert_(pk.assertion_options("x")), "x")
+        pk.require_fresh_assertion(stranger.assert_(pk.assertion_options(auth.Action("t", "x"))), auth.Action("t", "x"))
         raise AssertionError("unknown credential accepted")
     except auth.PasskeyError as e:
         assert e.reason == "unknown credential"
-    forged = a.assert_(pk.assertion_options("x"))
+    forged = a.assert_(pk.assertion_options(auth.Action("t", "x")))
     sig = bytearray(unb64(forged["response"]["signature"]))
     sig[-1] ^= 1
     forged["response"]["signature"] = b64(bytes(sig))
     try:
-        pk.require_fresh_assertion(forged, "x")
+        pk.require_fresh_assertion(forged, auth.Action("t", "x"))
         raise AssertionError("bad signature accepted")
     except auth.PasskeyError as e:
         assert e.reason == "verification failed"
-    other_rp = a.assert_(pk.assertion_options("x"), rp_id="evil.example.org")
+    other_rp = a.assert_(pk.assertion_options(auth.Action("t", "x")), rp_id="evil.example.org")
     try:
-        pk.require_fresh_assertion(other_rp, "x")
+        pk.require_fresh_assertion(other_rp, auth.Action("t", "x"))
         raise AssertionError("another RP's assertion accepted")
     except auth.PasskeyError as e:
         assert e.reason == "verification failed"
@@ -436,8 +448,8 @@ def test_require_fresh_assertion_with_mocked_verifier():
     real = auth.verify_authentication_response
     auth.verify_authentication_response = fake_verify
     try:
-        opts = pk.assertion_options("summary")
-        pk.require_fresh_assertion(a.assert_(opts), "summary")
+        opts = pk.assertion_options(auth.Action("t", "summary"))
+        pk.require_fresh_assertion(a.assert_(opts), auth.Action("t", "summary"))
     finally:
         auth.verify_authentication_response = real
     assert seen["expected_challenge"] == unb64(opts["challenge"])
@@ -452,11 +464,11 @@ def test_garbage_credentials_are_refused_cleanly():
     for bad in [None, "x", {}, {"response": {}}, {"response": {"clientDataJSON": "!!!"}},
                 {"response": {"clientDataJSON": b64(b"{}")}}]:
         try:
-            pk.require_fresh_assertion(bad, "x")
+            pk.require_fresh_assertion(bad, auth.Action("t", "x"))
             raise AssertionError(f"accepted {bad!r}")
         except auth.PasskeyError:
             pass
-    r = post(c, "/auth/passkey/assert", {"action": "x", "credential": "junk"})
+    r = post(c, "/auth/passkey/assert", {"action": "check", "credential": "junk"})
     assert r.status_code == 403
     r = c.post("/auth/passkey/assert", content=b"not json", headers=dict(HEADERS, Origin=ORIGIN))
     assert r.status_code == 400
@@ -464,7 +476,7 @@ def test_garbage_credentials_are_refused_cleanly():
 
 def test_assert_options_need_a_summary():
     c, a, pk = registered()
-    for body in [{}, {"action": ""}, {"action": "x" * 501}, {"action": 5}]:
+    for body in [{}, {"action": ""}, {"action": "x" * 501}, {"action": 5}, {"action": "check passkey"}]:
         assert post(c, "/auth/passkey/assert/options", body).status_code == 400, body
 
 

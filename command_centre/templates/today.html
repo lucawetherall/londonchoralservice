@@ -56,4 +56,11 @@
     {% elif later.ok %}<p class="muted">Nothing further ahead in the ledger.</p>{% endif %}
   </article>
 </section>
+
+<section class="health" aria-labelledby="health">
+  <h2 id="health" class="group-title">Health</h2>
+  <p class="health-line{% if checkout_warning %} health-warn{% endif %}">
+    {% if checkout_warning %}<span class="fail">{{ checkout_warning }}</span> {% endif %}<a href="/passkeys">{{ m.passkey_line(passkey_info) }}</a>
+  </p>
+</section>
 {% endblock %}

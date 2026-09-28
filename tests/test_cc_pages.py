@@ -25,6 +25,7 @@ NOW = datetime.datetime(2026, 9, 28, 9, 30, tzinfo=LONDON)
 LOGIN = "owner@example.org"
 ORIGIN = "https://mac.example-tailnet.ts.net"
 HEADERS = {"Tailscale-User-Login": LOGIN, "Tailscale-User-Name": "Owner"}
+LOCAL = ("127.0.0.1", 50000)  # the app refuses any peer but loopback
 PAGES = ["/", "/money", "/passkeys"]
 LEDGER_COLS = ["booking_ref", "invoice_date", "event_date", "client_name", "client_email", "occasion", "ensemble",
                "value_gbp", "enquiry_date", "source", "gclid", "consent", "uploaded_at", "notes"]
@@ -96,8 +97,9 @@ def fixtures():
 
 def make(bank=None, clock=None):
     fixtures()
-    app = create_app(client_factory=(lambda: bank), now=lambda: NOW, clock=clock or Clock())
-    return TestClient(app, base_url=ORIGIN), app
+    app = create_app(client_factory=(lambda: bank), now=lambda: NOW, clock=clock or Clock(),
+                     checkout=lambda: "main")
+    return TestClient(app, base_url=ORIGIN, client=LOCAL), app
 
 
 def page(c, path):
@@ -220,7 +222,7 @@ def test_values_are_escaped():
     rows[0]["ensemble"] = '"><img src=x onerror=alert(1)>'
     lm.write_csv(lm.LEDGER, rows, LEDGER_COLS)
     app = create_app(client_factory=lambda: None, now=lambda: NOW, clock=Clock())
-    out = TestClient(app, base_url=ORIGIN).get("/", headers=HEADERS).text
+    out = TestClient(app, base_url=ORIGIN, client=LOCAL).get("/", headers=HEADERS).text
     assert "<script>alert" not in out and "<img src=x" not in out
     assert "&lt;img src=x" in out or "&lt;script&gt;" in out
 
@@ -331,7 +333,7 @@ def test_a_crash_is_a_500_with_headers_and_no_detail():
     data.Data.today_page = crash
     try:
         app = create_app(client_factory=lambda: None, now=lambda: NOW, clock=Clock())
-        r = TestClient(app, base_url=ORIGIN, raise_server_exceptions=False).get("/", headers=HEADERS)
+        r = TestClient(app, base_url=ORIGIN, raise_server_exceptions=False, client=LOCAL).get("/", headers=HEADERS)
     finally:
         data.Data.today_page = real
     assert r.status_code == 500

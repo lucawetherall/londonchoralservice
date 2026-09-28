@@ -190,3 +190,10 @@ p { margin: 6px 0; }
 }
 
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+
+.health { margin-top: 8px; }
+.health-line { margin: 0; color: var(--muted); font-size: .92rem; }
+.health-line a { color: inherit; }
+.field { display: flex; flex-direction: column; gap: 4px; margin: 8px 0; }
+.field input { font: inherit; font-family: var(--mono); padding: 8px 10px; border: 1px solid var(--muted); border-radius: 6px;
+  background: transparent; color: var(--text); max-width: 22rem; }

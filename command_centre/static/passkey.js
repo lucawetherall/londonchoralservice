@@ -67,7 +67,8 @@
     return data;
   }
 
-  // A fresh assertion bound to `action`: the server's challenge embeds a hash of it and lasts 60 seconds.
+  // A fresh assertion for the action named `action`: the server looks up that action's summary, and its
+  // challenge embeds a hash of it and lasts 60 seconds. The page never sends summary text.
   async function assertFor(action) {
     var opts = await post("/auth/passkey/assert/options", { action: action });
     var cred = await navigator.credentials.get({ publicKey: requestOptions(opts) });
@@ -82,15 +83,20 @@
   var reg = document.getElementById("pk-register");
   if (reg) reg.addEventListener("click", async function () {
     try {
-      var body = {};
+      var body = {}, finish = {};
       if (box.dataset.hasKeys === "yes") {
         say("First, confirm with a passkey you already have.");
-        body.assertion = await assertFor(box.dataset.registerSummary);
+        body.assertion = await assertFor(box.dataset.registerAction);
+      } else {
+        var code = document.getElementById("pk-bootstrap");
+        body.bootstrap = finish.bootstrap = code ? code.value.trim() : "";
+        if (!body.bootstrap) { say("Enter the bootstrap code from install.sh first."); return; }
       }
       var opts = await post("/auth/passkey/register/options", body);
       say("Now create the passkey on this device.");
       var cred = await navigator.credentials.create({ publicKey: creationOptions(opts) });
-      await post("/auth/passkey/register", { credential: credentialJSON(cred) });
+      finish.credential = credentialJSON(cred);
+      await post("/auth/passkey/register", finish);
       say("Passkey registered. Reloading.");
       window.location.reload();
     } catch (e) {
@@ -101,7 +107,7 @@
   var test = document.getElementById("pk-test");
   if (test) test.addEventListener("click", async function () {
     try {
-      var action = "check passkey";
+      var action = box.dataset.checkAction;
       var cred = await assertFor(action);
       await post("/auth/passkey/assert", { action: action, credential: cred });
       say("Passkey accepted.");
