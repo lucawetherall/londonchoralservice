@@ -50,9 +50,74 @@ def test_attribution_not_found_in_30_days_is_cached_as_unattributed():
     cache = {}
     assert ec.attribute("old", D(2026, 9, 22), fake, cache, today=MON) is None
     assert len(fake.asked) == 31, len(fake.asked)  # the enquiry date and 30 days back
-    assert "old" in cache and cache["old"] is None
+    assert "old" not in cache and list(cache.values()) == [None], cache  # the miss is keyed on gclid and date
     ec.attribute("old", D(2026, 9, 22), fake, cache, today=MON)
     assert len(fake.asked) == 31
+
+
+def test_a_click_not_yet_in_click_view_is_not_cached_and_is_found_later():
+    # Monday 28 Sep: the 27 Sep click hasn't landed in click_view yet, so the search isn't complete
+    cache = {}
+    assert ec.attribute("G1", "2026-09-27", FakeClicks({}), cache, today=MON) is None
+    assert cache == {}, cache
+    assert ec.attribute("G1", "2026-09-28", FakeClicks({}), cache, today=MON) is None
+    assert cache == {}, cache  # today isn't settled either
+    later = FakeClicks({D(2026, 9, 27): {"G1": "Weddings"}})
+    assert ec.attribute("G1", "2026-09-27", later, cache, today=MON + datetime.timedelta(7)) == "Weddings"
+    assert cache == {"G1": "Weddings"}
+
+
+def test_a_settled_miss_two_days_back_is_cached():
+    cache = {}
+    ec.attribute("G1", "2026-09-26", FakeClicks({}), cache, today=MON)
+    assert cache == {"G1@2026-09-26/30": None}, cache
+
+
+def test_an_unparseable_enquiry_date_returns_none_and_caches_nothing():
+    fake = FakeClicks({MON: {"G3": "Weddings"}})
+    cache = {}
+    for bad in ("28/09/2026", "next week", "2026-13-01"):
+        assert ec.attribute("G3", bad, fake, cache, today=MON) is None
+    assert cache == {} and fake.asked == []
+
+
+def test_a_blank_enquiry_date_searches_the_whole_retained_window_then_a_filled_one_still_works():
+    click = D(2026, 8, 10)
+    fake = FakeClicks({click: {"G2": "Funerals"}})
+    cache = {}
+    # invoiced 40 days after the click, no enquiry date: the 30-day walk would miss it
+    row = {"gclid": "G2", "enquiry_date": "", "invoice_date": "2026-09-19"}
+    assert ec.attribute_booking(row, fake, cache, today=MON) == "Funerals"
+    assert cache == {"G2": "Funerals"}
+    # a miss on the blank-date search doesn't block a later search once enquiry_date is filled
+    cache = {}
+    none = FakeClicks({})
+    assert ec.attribute_booking({"gclid": "G2", "enquiry_date": "", "invoice_date": "2026-09-19"}, none, cache, MON) is None
+    assert min(none.asked) == MON - datetime.timedelta(days=ec.CLICK_VIEW_DAYS - 1)
+    assert "G2" not in cache
+    assert ec.attribute_booking({"gclid": "G2", "enquiry_date": "2026-08-11", "invoice_date": "2026-09-19"},
+                                fake, cache, MON) == "Funerals"
+
+
+def test_an_old_cached_miss_under_the_bare_gclid_is_searched_again():
+    cache = {"G4": None}  # written by an earlier version
+    assert ec.attribute("G4", "2026-09-20", FakeClicks({D(2026, 9, 19): {"G4": "Weddings"}}), cache, MON) == "Weddings"
+
+
+def test_a_corrupt_gclid_cache_is_moved_aside_and_a_fresh_one_started():
+    d = tempfile.mkdtemp(dir=TMP)
+    path = os.path.join(d, "gclid-campaigns.json")
+    open(path, "w").write('{"abc": "wedd')
+    assert ec.load_gclid_cache(path, MON) == {}
+    assert not os.path.exists(path)
+    assert open(os.path.join(d, "gclid-campaigns.json.corrupt-2026-09-28")).read() == '{"abc": "wedd'
+    open(path, "w").write("[1, 2]")  # valid JSON but not a mapping; the first corrupt copy is kept
+    assert ec.load_gclid_cache(path, MON) == {}
+    assert sorted(os.listdir(d)) == ["gclid-campaigns.json.corrupt-2026-09-28",
+                                     "gclid-campaigns.json.corrupt-2026-09-28-2"], os.listdir(d)
+    assert ec.load_gclid_cache(os.path.join(d, "missing.json"), MON) == {}
+    ec.save_json_private(path, {"abc": "wedding-leads"})
+    assert ec.load_gclid_cache(path, MON) == {"abc": "wedding-leads"}
 
 
 def test_braid_prefixes_and_blank_gclids_are_unattributed_without_a_lookup():
@@ -105,6 +170,15 @@ def test_season_bookings_skip_cancelled_and_earlier_invoices():
     ]
     got = ec.season_bookings(rows, D(2026, 9, 1))
     assert [r["booking_ref"] for r in got] == ["1", "5", "6"], got
+
+
+def test_season_bookings_share_check_payments_cancelled_rule():
+    def counts(notes):
+        return bool(ec.season_bookings([{"invoice_date": "2026-09-10", "notes": notes}], D(2026, 9, 1)))
+    assert counts("not cancelled, date moved")
+    assert counts("may be cancelling")
+    assert not counts("cancellation confirmed 2026-09-20")
+    assert not counts("client cancelling")
 
 
 def test_season_enquiries_use_first_seen():
@@ -271,6 +345,38 @@ def test_config_errors_for_bad_dates_and_overlaps():
     assert not any(l.startswith("PROPOSE: funeral") for l in lines), lines
 
 
+def test_non_positive_or_non_finite_daily_budgets_are_config_errors():
+    cams = [{"name": "Weddings", "status": "ENABLED", "budget_gbp": 4.0}]
+    for bad in (-1, 0, "0", "nan", "inf"):
+        w = [{"name": "x", "campaigns": ["wedding"], "start": "01-01", "end": "12-31", "daily_gbp": bad}]
+        lines = ec.proposal_lines(ec.proposals(cams, w, MON))
+        assert lines[0].startswith("CONFIG ERROR: window x"), (bad, lines)
+        assert not any(l.startswith("PROPOSE") for l in lines), (bad, lines)
+    w = [{"name": "s", "campaigns": ["wedding"], "start": "01-01", "end": "12-31", "daily_gbp": "4.5"}]
+    assert ec.proposal_lines(ec.proposals(cams, w, MON)) == ["PROPOSE: Weddings £4.00 → £4.50/day (window s)"]
+
+
+def test_blank_campaign_substrings_are_config_errors():
+    cams = [{"name": "Weddings", "status": "ENABLED", "budget_gbp": 4.0},
+            {"name": "Funerals", "status": "ENABLED", "budget_gbp": 4.0}]
+    for subs in ([""], ["  "], ["wedding", ""]):
+        w = [{"name": "s", "campaigns": subs, "start": "01-01", "end": "12-31", "daily_gbp": 3}]
+        lines = ec.proposal_lines(ec.proposals(cams, w, MON))
+        assert lines[0] == "CONFIG ERROR: window s has a blank campaign name: skipped", (subs, lines)
+        assert not any(l.startswith("PROPOSE") for l in lines), (subs, lines)
+
+
+def test_load_windows_keeps_null_campaigns_blank_and_a_bad_season_start_is_none():
+    d = tempfile.mkdtemp(dir=TMP)
+    for text, want in (("season_start: 2026-13-01\n", None), ("windows: []\n", None),
+                       ("season_start: nonsense\n", None), ("season_start: 2026-09-01\n", D(2026, 9, 1))):
+        p = os.path.join(d, "w.yml")
+        open(p, "w").write(text)
+        assert ec.load_windows(p)["season_start"] == want, text
+    open(p, "w").write('windows:\n  - {name: s, campaigns: [~], start: "01-01", end: "12-31", daily_gbp: 3}\n')
+    assert ec.load_windows(p)["windows"][0]["campaigns"] == [""]
+
+
 def test_enabled_campaign_with_no_window_is_noted_not_proposed():
     got = ec.proposals([{"name": "brand terms", "status": "ENABLED", "budget_gbp": 2.0}], WINDOWS, MON)
     assert ec.proposal_lines(got) == ["no window covers brand terms today: left as it is",
@@ -311,6 +417,18 @@ def test_hiring_intent_keeps_singers_and_drops_singer():
     assert not ec.hiring_intent("Solo Vocalist For Wedding")
 
 
+def test_hiring_intent_uses_whole_words_and_drops_non_hiring_queries():
+    for q in ("facebook wedding band", "booklet for funeral", "yorkshire funeral music", "caroline flack funeral",
+              "join a choir london", "carol service order of service", "9 lessons and carols readings",
+              "nine lessons and carols readings", "choir auditions london", "wedding singer", "singer's fee",
+              "funeral soloists", "solo singers for weddings"):
+        assert not ec.hiring_intent(q), q
+    for q in ("singers for funeral", "carol singers london", "hire a choir for wedding", "book choir wedding",
+              "carollers for hire", "christmas carolers singers", "a cappella group hire", "choristers for a wedding",
+              "string quartets and choir", "booking a choir"):
+        assert ec.hiring_intent(q), q
+
+
 def test_shortlist_filters_position_impressions_and_intent():
     rows = [row("choir for funeral", f"{SITE}/funerals.html", 100, 9.0),
             row("hire a choir", f"{SITE}/", 50, 15.0),
@@ -345,6 +463,14 @@ def test_suggested_fix_rules():
     assert got["choir for funeral"] == "add an internal link from a related page with anchor 'choir for funeral'"
     assert got["wedding singers london"] == "strengthen the title/meta for 'wedding singers london'"
     assert got["hire a gospel choir"] == "add a section answering 'hire a gospel choir'"
+
+
+def test_suggested_fix_strips_one_plural_s_but_not_ss():
+    item = {"query": "bass singers", "position": 15.0}
+    assert ec.suggested_fix(item, ["Bass and tenor"]) == "strengthen the title/meta for 'bass singers'"
+    assert ec.suggested_fix(item, ["Tenors"]) == "add a section answering 'bass singers'"  # "ba" must not match
+    item = {"query": "hire a choir for weddings", "position": 15.0}
+    assert ec.suggested_fix(item, ["Our wedding packages"]) == "strengthen the title/meta for 'hire a choir for weddings'"
 
 
 def test_main_term_skips_generic_words():
@@ -387,6 +513,10 @@ def test_page_h2s_reads_local_files():
     assert h2(f"{SITE}/areas/london/") == ["London"]
     assert h2(f"{SITE}/missing.html") is None
     assert h2(f"{SITE}/../../etc/passwd") is None
+    assert h2("https://x/%2e%2e/%2e%2e/etc/passwd") is None and h2("https://x//etc/passwd") is None
+    assert h2("file:///etc/passwd") is None and h2("/etc/hosts") is None
+    open(os.path.join(root, "notes.py"), "w").write("<h2>not a page</h2>")
+    assert h2(f"{SITE}/notes.py") is None  # only .html pages are read
 
 
 if __name__ == "__main__":
@@ -396,8 +526,8 @@ if __name__ == "__main__":
             try:
                 fn()
                 print(f"PASS {name}")
-            except AssertionError as e:
-                print(f"FAIL {name}: {e}")
+            except Exception as e:
+                print(f"FAIL {name}: {type(e).__name__}: {e}")
                 failures += 1
     print(f"\n{failures} failure(s)")
     sys.exit(1 if failures else 0)

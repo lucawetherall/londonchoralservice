@@ -7,7 +7,7 @@
 - 12, seasonal budget rules: dated windows turned into budget proposals, never above £5/day;
 - 13, a Search Console shortlist: hiring-intent queries at positions 8–20, each with one page and one fix.
 
-**Architecture:** Pure functions go in a new `scripts/reports/economics.py`. `weekly_review.py` makes every Google call (GAQL `search` and Search Console `searchAnalytics.query`, both read-only) and prints the sections. Each new section sits in its own try/except and prints only the exception's type name, so one failure never stops the report. The owner edits the budget windows in `data/budget-windows.yml`. Two private files are written in `~/lcs-private/` (mode 600): `gclid-campaigns.json`, a cache so each gclid is looked up once, and `ads-summary.json` for the Phase 5 dashboard.
+**Architecture:** Pure functions go in a new `scripts/reports/economics.py`. `weekly_review.py` makes every Google call (GAQL `search` and Search Console `searchAnalytics.query`, both read-only) and prints the sections. Each new section sits in its own try/except and prints only the exception's type name, so one failure never stops the report. The owner edits the budget windows in `data/budget-windows.yml`. Two private files are written in `~/lcs-private/` (mode 600): `gclid-campaigns.json`, a cache so a gclid isn't looked up again once the answer is final, and `ads-summary.json` for the Phase 5 dashboard.
 
 **Tech Stack:** Python 3 in the repo's `.venv` (google-ads, google-auth, PyYAML). The tests are a stdlib script with no network access.
 
@@ -21,6 +21,7 @@
 - **The £5 cap.** `proposals()` never proposes more than £5/day. A window above £5 prints `CONFIG ERROR: … capped at £5.00`.
 - **Targeting.** The shortlist drops "singer" (singular), solo, soloist and vocalist queries, per the 26 Sep targeting decision. "singers" stays in.
 - **No names.** Section 11 prints campaign names and totals only. It prints no client names, emails or booking refs.
+- **Booked value, not receipts.** Section 11's "booked £" is each ledger row's `value_gbp` (the invoiced fee), not money received in Starling. Section 10 covers receipts.
 - **Tests** point `LCS_PRIVATE_DIR` and `LCS_BOOKINGS_CSV` at a temp directory before importing.
 
 ## File structure
@@ -36,12 +37,12 @@
 
 ### Task 1: Tests first (`tests/test_economics.py`)
 
-- [x] Attribution: `attribute()` walks back from the enquiry date and stops at the first hit. It caches hits and misses, so each gclid is looked up once, and never caches a failed lookup. `gbraid:`/`wbraid:` refs and blank gclids are unattributed without any query. It skips future dates and dates older than click_view's 90 days.
-- [x] Bookings in the season: only rows invoiced on or after `season_start`, and not those whose notes match `\bcancell?ed\b`. Enquiries count by `first_seen`.
+- [x] Attribution: `attribute()` walks back from the enquiry date and stops at the first hit. A hit is cached under the gclid. A miss is cached only when the search was complete (`settled`: the enquiry date is at least 2 days old, so click_view has landed), keyed on gclid, date and span, so a corrected date searches again. An unparseable date returns None and caches nothing, and a failed lookup is never cached. `gbraid:`/`wbraid:` refs and blank gclids are unattributed without any query. It skips future dates and dates older than click_view's 90 days. A booking with no enquiry date is searched over the whole 90-day window back from its invoice date (`attribute_booking()`). A corrupt cache file is renamed `.corrupt-<date>` and a fresh cache started.
+- [x] Bookings in the season: only rows invoiced on or after `season_start`, and not those `check_payments.is_cancelled()` treats as cancelled (one rule for the ledger: "not cancelled, date moved" counts; "cancellation confirmed" and "client cancelling" don't). Enquiries count by `first_seen`.
 - [x] Cost maths: per campaign, the unattributed line and the total. A zero divisor gives "–". With no pipeline sheet, the enquiry figures are "–" and never "None".
 - [x] Weeks: the last 8 full Monday–Sunday weeks. Empty weeks are filled in, and today's partial week is ignored.
-- [x] Budget windows: windows that wrap the new year, the proposals on 28 Sep and 1 Oct, the £5 cap and its config error, bad MM-DD dates, overlapping windows and an enabled campaign in no window. The seed file loads, and none of it goes over £5.
-- [x] Shortlist: "singers" is kept and "singer" dropped. Positions run 8–20 inclusive, with at least 20 impressions. Pages are merged per query, and the main page is the one with the most impressions. The three fix rules work, the main term skips generic words and numbers, and h2s are read from the local page with path traversal refused.
+- [x] Budget windows: windows that wrap the new year, the proposals on 28 Sep and 1 Oct, the £5 cap and its config error, bad MM-DD dates, overlapping windows and an enabled campaign in no window. A `daily_gbp` of 0 or less (or not a finite number) and a blank campaign substring are config errors, and that window is skipped. A bad or missing `season_start` makes section 11 print "config error: season_start". The seed file loads, and none of it goes over £5.
+- [x] Shortlist: "singers" is kept and "singer" dropped. The intent words match whole words only ("yorkshire" isn't "hire", "facebook" isn't "book"), and readings, order of service, join and audition queries are dropped. Positions run 8–20 inclusive, with at least 20 impressions. Pages are merged per query, and the main page is the one with the most impressions. The three fix rules work, the main term skips generic words and numbers, and h2s are read from the local page with path traversal refused.
 
 Run: `.venv/bin/python tests/test_economics.py`
 
@@ -49,7 +50,7 @@ Run: `.venv/bin/python tests/test_economics.py`
 
 - [x] The pure functions above. `proposals(campaigns, windows, today)` returns error, propose and note items. `proposal_lines()` prints the config errors first, then the `PROPOSE:` lines, then "budgets match the season's windows" when there's nothing to change.
 - [x] `shortlist(rows, h2s=None)` takes Search Console rows (keys `[query, page]`). The "today" part of the section lives in `gsc_window(today)`, the last 28 days to 3 days ago, and `is_first_monday(today)`, so the filter itself doesn't depend on the date.
-- [x] The seed windows: carols 10-01..12-20 £5; carols-off 12-21..09-30 £1; weddings-peak 01-02..04-30 £5; weddings-base 05-01..01-01 £3; funerals all year £3; `season_start: 2026-09-01`.
+- [x] The seed windows: carols 09-15..12-20 £5; carols-off 12-21..09-14 £5; weddings all year £4; funerals all year £4; `season_start: 2026-09-01`. These match the live budgets, so nothing is proposed until the owner edits `data/budget-windows.yml`.
 
 ### Task 3: Wire into `weekly_review.py`
 
@@ -65,7 +66,7 @@ Run: `.venv/bin/python tests/test_economics.py`
 
 - [x] `weekly_review.py --gsc-shortlist` ran end to end: sections 1–13, exit 0, no section failed.
 - [x] Section 11: £317.83 spent since 1 Sep. The one season booking has no ad click reference, so it's unattributed. There's no pipeline sheet yet.
-- [x] Section 12 proposed three changes from the seed windows: funeral £4 → £3, wedding £4 → £3, and Christmas £5 → £1. The Christmas proposal comes from carols-off, which runs to 30 Sep, two days before the carols window. **The owner should check the seed windows before Appendix A is wired**, or the first Monday run will put these three proposals in the approval question.
+- [x] Section 12: with the seed windows at the live budgets (carols £5 from 15 Sep, weddings £4, funerals £4), it prints "budgets match the season's windows" and proposes nothing. Proposals start only when the owner edits the windows.
 - [x] Section 13: two queries. "funeral singers near me" → best-funeral-singers-london (no h2 mentions "funeral", so the fix is "add a section"), and "9 lessons and carols readings" → nine-lessons-and-carols (position 9.2, so the fix is "add an internal link").
 
 ### Task 5: Wire the Monday review (not done here: the handover doc is being edited elsewhere)
@@ -82,8 +83,8 @@ Sections: 1 campaigns (last 7 days and since 26 Sep 2026), 2 search terms with m
 
 ```text
 6g. Marketing economics (section 11): give season spend, enquiries, bookings, £ booked, cost per enquiry and cost per booking for each campaign, plus the unattributed and total lines, exactly as printed ("–" means nothing to divide by). If "pipeline sheet not set up yet" shows, say so in one line. Never add names or booking refs.
-6h. Seasonal budgets (section 12): each "PROPOSE: <campaign> £a → £b/day (window <name>)" line becomes one Ads change set in the approval question: campaign budget → amount: £a → £b/day, reason "seasonal window <name> (data/budget-windows.yml)". Write the change as a scripts/ads/ script in the worktree and run it validate-only. Never propose more than £5/day. If the report prints "CONFIG ERROR", report it and propose no change for that window; the owner fixes data/budget-windows.yml. From 5 Oct, step 7's Christmas budget call takes precedence over the carols window for the Christmas campaign.
-6i. Search Console shortlist (section 13, first Monday of the month): list each query → page, position, impressions and the suggested fix. Turn each into a proposed page fix in the change list ("<page>: <fix>"). Don't write the copy: a fix is drafted on a branch only after the owner approves, under the writing-site-copy and stop-slop skills, and it never targets singular "singer", solo or soloist searches.
+6h. Seasonal budgets (section 12): each "PROPOSE: <campaign> £a → £b/day (window <name>)" line becomes one Ads change set in the approval question: campaign budget → amount: £a → £b/day, reason "seasonal window <name> (data/budget-windows.yml)". Write the change as a scripts/ads/ script in the worktree that refuses any amount above 5_000_000 micros before it calls the API, and run it validate-only. Apply it only after the owner approves that change set, and log it in logs/ads-changes.md. Never propose more than £5/day. If the report prints "CONFIG ERROR", report it and propose no change for that window; the owner fixes data/budget-windows.yml. From 5 Oct, step 7's Christmas budget call takes precedence over the carols window for the Christmas campaign.
+6i. Search Console shortlist (section 13, first Monday of the month): list each query → page, position, impressions and the suggested fix. Turn each into a proposed page fix in the change list ("<page>: <fix>"). Don't write the copy: a fix is drafted on a branch only after the owner approves, under the writing-site-copy and stop-slop skills, and it never targets singular "singer", solo or soloist searches. destinations/ pages and planners-and-venues.html are generated: edit the generator in scripts/, rerun it, then build. compare/ pages are price-gated by validate_competitor_claims.py.
 ```
 
 **3. In REPLY FORMAT, after the bookings line, add:**
@@ -104,4 +105,5 @@ Sections: 1 campaigns (last 7 days and since 26 Sep 2026), 2 search terms with m
   - error lines print type names only.
 - **Known gaps:**
   - Enquiries need Phase 2's `enquiries.csv`, with `first_seen` and `gclid` columns.
-  - Google keeps `click_view` for only 90 days. A gclid whose enquiry is older than that stays unattributed, and the miss is cached.
+  - Google keeps `click_view` for only 90 days. A gclid whose enquiry is older than that stays unattributed, and the miss is cached (for that gclid and date).
+  - Section 11 counts booked value (`value_gbp`), not Starling receipts, so a cancelled-but-unmarked or unpaid booking still counts until the ledger says otherwise.

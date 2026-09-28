@@ -15,6 +15,7 @@ Nothing here talks to Google, prints names or changes anything.
 import datetime
 import html
 import json
+import math
 import os
 import re
 import sys
@@ -24,6 +25,7 @@ from urllib.parse import urlparse
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "bookings"))
 import lcs_money  # noqa: E402  PRIVATE, LEDGER, read_csv, money
+import check_payments  # noqa: E402  is_cancelled: one cancelled rule for the ledger
 
 PRIVATE = lcs_money.PRIVATE
 GCLID_CACHE = PRIVATE / "gclid-campaigns.json"
@@ -32,7 +34,7 @@ ENQUIRIES = PRIVATE / "enquiries.csv"
 BUDGET_CAP_GBP = 5.0
 LOOKBACK_DAYS = 30      # a booking's click is looked for from its enquiry date back this many days
 CLICK_VIEW_DAYS = 90    # Google keeps click_view for the last 90 days only
-CANCELLED = re.compile(r"\bcancell?ed\b", re.I)
+SETTLE_DAYS = 2         # click_view for a date is complete once it is this many days old
 
 
 # ---------- private files ----------
@@ -60,6 +62,28 @@ def save_json_private(path, obj):
         raise
 
 
+def load_gclid_cache(path, today):
+    """The gclid cache, or {} when it's missing. A corrupt file is renamed
+    <name>.corrupt-<date> (never deleted) and a fresh cache is started."""
+    path = Path(path)
+    try:
+        with open(path) as f:
+            cache = json.load(f)
+        if isinstance(cache, dict):
+            return cache
+    except FileNotFoundError:
+        return {}
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        pass
+    aside = path.with_name(f"{path.name}.corrupt-{today.isoformat()}")
+    n = 2
+    while aside.exists():
+        aside = path.with_name(f"{path.name}.corrupt-{today.isoformat()}-{n}")
+        n += 1
+    os.replace(path, aside)
+    return {}
+
+
 def _date(value):
     if isinstance(value, datetime.date):
         return value
@@ -71,40 +95,63 @@ def _date(value):
 
 # ---------- 11. true cost per booking ----------
 
+def _miss_key(gclid, start, days):
+    return f"{gclid}@{start.isoformat()}/{days}"
+
+
 def attribute(gclid, enquiry_date, clicks_on, cache, today, days=LOOKBACK_DAYS):
     """Campaign name for a gclid, or None (unattributed).
 
     clicks_on(date) -> {gclid: campaign name} runs the click_view query for one date.
     Dates are tried from the enquiry date back `days` days, stopping at the first hit.
-    Every answer, including "not found", is cached so each gclid is looked up once;
-    an error propagates and nothing is cached."""
+    A hit is cached under the gclid. A miss is cached only when the search was
+    complete (the enquiry date is SETTLE_DAYS or more old, so click_view has landed),
+    and under the gclid, date and span, so a corrected date searches again.
+    An unparseable date returns None and caches nothing; an error propagates and
+    nothing is cached."""
     gclid = (gclid or "").strip()
     if not gclid or gclid.startswith(("gbraid:", "wbraid:")):
         return None
-    if gclid in cache:
-        return cache[gclid]
-    found = None
     start = _date(enquiry_date)
-    if start:
-        oldest = today - datetime.timedelta(days=CLICK_VIEW_DAYS - 1)
-        day = min(start, today)
-        stop = start - datetime.timedelta(days=days)
-        while day >= stop and day >= oldest:
-            campaign = clicks_on(day).get(gclid)
-            if campaign:
-                found = campaign
-                break
-            day -= datetime.timedelta(days=1)
-    cache[gclid] = found
+    if not start:
+        return None
+    if cache.get(gclid):  # a bare-gclid None is from an older version: search again
+        return cache[gclid]
+    miss = _miss_key(gclid, start, days)
+    if miss in cache:
+        return None
+    found = None
+    oldest = today - datetime.timedelta(days=CLICK_VIEW_DAYS - 1)
+    day = min(start, today)
+    stop = start - datetime.timedelta(days=days)
+    while day >= stop and day >= oldest:
+        campaign = clicks_on(day).get(gclid)
+        if campaign:
+            found = campaign
+            break
+        day -= datetime.timedelta(days=1)
+    settled = start <= today - datetime.timedelta(days=SETTLE_DAYS)
+    if found:
+        cache[gclid] = found
+    elif settled:
+        cache[miss] = None
     return found
 
 
+def attribute_booking(row, clicks_on, cache, today):
+    """attribute() for a ledger row. With no enquiry date, the click can be anywhere
+    before the invoice, so the whole retained click_view window is searched."""
+    if (row.get("enquiry_date") or "").strip():
+        return attribute(row.get("gclid"), row.get("enquiry_date"), clicks_on, cache, today)
+    return attribute(row.get("gclid"), row.get("invoice_date"), clicks_on, cache, today, days=CLICK_VIEW_DAYS)
+
+
 def season_bookings(rows, season_start):
-    """Ledger rows invoiced on or after season_start whose notes don't say cancelled."""
+    """Ledger rows invoiced on or after season_start that check_payments doesn't treat as cancelled."""
     out = []
     for r in rows:
         d = _date(r.get("invoice_date"))
-        if d and d >= season_start and not CANCELLED.search(r.get("notes") or ""):
+        if d and d >= season_start and not check_payments.is_cancelled(r):
             out.append(r)
     return out
 
@@ -200,13 +247,18 @@ def ads_summary(weeks, table, season_start, generated):
 # ---------- 12. seasonal budget rules ----------
 
 def load_windows(path):
+    """season_start is None when missing or not a real date (the caller reports a config error)."""
     import yaml
+
+    class Loader(yaml.SafeLoader):  # dates stay strings, so "2026-13-01" is a bad value, not a crash
+        pass
+    Loader.add_constructor("tag:yaml.org,2002:timestamp", lambda loader, node: loader.construct_scalar(node))
     with open(path) as f:
-        cfg = yaml.safe_load(f) or {}
+        cfg = yaml.load(f, Loader=Loader) or {}
     windows = []
     for w in cfg.get("windows") or []:
         w = dict(w)
-        w["campaigns"] = [str(c) for c in w.get("campaigns") or []]
+        w["campaigns"] = ["" if c is None else str(c) for c in w.get("campaigns") or []]
         w["start"], w["end"] = str(w.get("start", "")), str(w.get("end", ""))
         windows.append(w)
     return {"season_start": _date(cfg.get("season_start")), "windows": windows}
@@ -237,13 +289,18 @@ def proposals(campaigns, windows, today):
         try:
             daily = float(w.get("daily_gbp"))
         except (TypeError, ValueError):
-            items.append({"kind": "error", "text": f"window {name} has no usable daily_gbp: skipped"})
+            daily = None
+        if daily is None or not math.isfinite(daily) or daily <= 0:
+            items.append({"kind": "error", "text": f"window {name} has no usable daily_gbp (want a number above 0): skipped"})
             continue
         if not _mmdd(w.get("start")) or not _mmdd(w.get("end")):
             items.append({"kind": "error", "text": f"window {name} has a bad start or end (want MM-DD): skipped"})
             continue
         if not w.get("campaigns"):
             items.append({"kind": "error", "text": f"window {name} names no campaigns: skipped"})
+            continue
+        if any(not c.strip() for c in w["campaigns"]):
+            items.append({"kind": "error", "text": f"window {name} has a blank campaign name: skipped"})
             continue
         if daily > BUDGET_CAP_GBP:
             items.append({"kind": "error", "text": f"window {name} asks for £{daily:,.2f}/day, above the £5 cap: "
@@ -281,8 +338,10 @@ def proposal_lines(items):
 
 # ---------- 13. Search Console shortlist ----------
 
-INTENT = re.compile(r"(choir|singers|carol|chorister|quartet|ensemble|hire|book)", re.I)
-NOT_INTENT = re.compile(r"\b(solo|soloist|singer\b|vocalist|lyrics|chords|meaning|history|youtube|free)\b", re.I)
+INTENT = re.compile(r"\b(choirs?|singers|carol(ler)?s? singers?|carollers|choristers?|quartets?|ensembles?"
+                    r"|hire|hiring|book|booking)\b", re.I)
+NOT_INTENT = re.compile(r"\b(solo|soloists?|singer|vocalists?|lyrics|chords|meaning|history|youtube|free"
+                        r"|readings|order of service|join|auditions?)\b", re.I)
 STOP = {"a", "an", "the", "for", "of", "in", "at", "to", "and", "or", "with", "near", "me", "my", "uk", "london",
         "hire", "hiring", "hired", "book", "booking", "cost", "costs", "price", "prices", "how", "much", "best",
         "local", "cheap", "service", "services"}
@@ -337,6 +396,8 @@ def shortlist(rows, h2s=None, limit=10):
     for query, a in by.items():
         if not a["impr"] or not hiring_intent(query):
             continue
+        # Impression-weighted mean of the per-page positions: an approximation of the
+        # query's own average position, which Search Console doesn't give per query x page.
         pos = a["pos_x_impr"] / a["impr"]
         if a["impr"] < 20 or not 8 <= pos <= 20:
             continue
@@ -352,7 +413,9 @@ def shortlist(rows, h2s=None, limit=10):
 
 def suggested_fix(item, h2s):
     q = item["query"]
-    term = main_term(q).rstrip("s") or main_term(q)
+    term = main_term(q)
+    if term.endswith("s") and not term.endswith("ss") and len(term) > 1:
+        term = term[:-1]  # one plural s only: "weddings" -> "wedding", "bass" stays
     if h2s is not None and not any(term in h.lower() for h in h2s):
         return f"add a section answering '{q}'"
     if 8 <= item["position"] <= 12:
@@ -383,7 +446,7 @@ def page_h2s_from(root):
             [rel] if Path(rel).suffix else [rel + ".html", rel + "/index.html"])
         for c in candidates:
             f = (root / c).resolve()
-            if root not in f.parents or not f.is_file():
+            if f.suffix != ".html" or root not in f.parents or not f.is_file():
                 continue
             text = f.read_text(encoding="utf-8", errors="replace")
             found = re.findall(r"<h2\b[^>]*>(.*?)</h2>", text, re.S | re.I)

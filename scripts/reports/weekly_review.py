@@ -389,6 +389,9 @@ def cost_section(q, today):
     try:
         import economics as ec
         season = ec.load_windows(BUDGET_WINDOWS)["season_start"]
+        if not season:
+            print("   config error: season_start")
+            return
         print(f"   season since {season}")
         spend = defaultdict(lambda: [0, 0])
         for r in q(f"""SELECT campaign.name, metrics.cost_micros, metrics.clicks FROM campaign
@@ -403,12 +406,11 @@ def cost_section(q, today):
                     f"SELECT click_view.gclid, campaign.name FROM click_view WHERE segments.date = '{day}'")}
             return by_date[day]
 
-        cache = ec.load_json(ec.GCLID_CACHE, {})
+        cache = ec.load_gclid_cache(ec.GCLID_CACHE, today)
         try:
             bookings = []
             for r in ec.season_bookings(ec.lcs_money.read_csv(ec.lcs_money.LEDGER), season):
-                when = r.get("enquiry_date") or r.get("invoice_date")
-                bookings.append((ec.attribute(r.get("gclid"), when, clicks_on, cache, today),
+                bookings.append((ec.attribute_booking(r, clicks_on, cache, today),
                                  ec.lcs_money.money(r.get("value_gbp"))))
             enquiries = None
             if ec.ENQUIRIES.exists():
