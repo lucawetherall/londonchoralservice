@@ -43,7 +43,8 @@ HAND_CHOICES = [(k, v[0]) for k, v in actions.HAND_CHOICES.items()]
 ACTIVITY_RESULTS = ("ok", "failed", "refused", "started")
 JSON_MAX = 16384  # bytes of an action request (a passkey assertion is about 1 KB)
 TABS = [("Today", "/"), ("Bookings", "/bookings"), ("Enquiries", "/enquiries"), ("Money", "/money")]
-SOON = []  # every page up to phase 2 is live; chat, drafts and the quote calculator come later
+SOON = []  # every page up to phase 4 is live; drafts and the quote calculator come later (no in-app chat: see
+           # docs/superpowers/specs/2026-09-28-command-centre-design.md, binding rule 6)
 FORM_MAX = 4096  # bytes of a urlencoded POST body
 HTMX_CONFIG = json.dumps({"includeIndicatorStyles": False, "allowEval": False, "allowScriptTags": False,
                           "selfRequestsOnly": True, "historyCacheSize": 0}, separators=(",", ":"))
@@ -186,8 +187,17 @@ def create_app(client_factory=data.default_client, now=None, clock=None, passkey
         books = actions.books_status()
         ctx = reader.today_page()
         ctx["attention"] += len(waiting) + (1 if books["dry_run"] and not books["approved_at"] else 0)
+        hand_panel = ctx.get("hand")
+        hand_items = (hand_panel.value if hand_panel.ok else hand_panel.stale) or [] if hand_panel else []
+        handoffs = {
+            "books": models.books_import_handoff(books),
+            "whats_owed": models.whats_owed_prompt(),
+            "summarise_today": models.summarise_today_prompt(),
+            "hand": [(h["ref"], models.hand_check_prompt(h["ref"], h.get("label", ""))) for h in hand_items
+                     if models.hand_check_prompt(h["ref"], h.get("label", ""))],
+        }
         return render(request, "today.html", title="Today", passkey_info=passkey_info(), checkout_warning=warning,
-                      proposals=props, waiting=waiting, books=books, **ctx)
+                      proposals=props, waiting=waiting, books=books, handoffs=handoffs, **ctx)
 
     async def money(request):
         return render(request, "money.html", title="Money", **reader.money_page())
@@ -212,7 +222,20 @@ def create_app(client_factory=data.default_client, now=None, clock=None, passkey
         return page_or_404(request, "booking.html", reader.booking_page(ref), title=f"Booking {ref}")
 
     async def enquiries(request):
-        return render(request, "enquiries.html", title="Enquiries", **reader.enquiries_page())
+        ctx = reader.enquiries_page()
+        due_panel = ctx.get("due")
+        due_items = (due_panel.value if due_panel.ok else due_panel.stale) or [] if due_panel else []
+        seen, reply_prompts = set(), []
+        for d in due_items:
+            eid = d.get("enquiry_id")
+            if not eid or eid in seen:
+                continue
+            seen.add(eid)
+            prompt = models.draft_reply_prompt(eid)
+            if prompt:
+                reply_prompts.append((eid, prompt))
+        return render(request, "enquiries.html", title="Enquiries",
+                      handoffs={"reply": reply_prompts}, **ctx)
 
     async def enquiry(request):
         eid = request.path_params["eid"]
@@ -240,7 +263,9 @@ def create_app(client_factory=data.default_client, now=None, clock=None, passkey
         return page_or_404(request, "report.html", reader.report_page(name), title=f"Report {name[:10]}")
 
     async def health(request):
-        return render(request, "health.html", title="Runs and health", **reader.health_page(checkout_now()))
+        handoffs = {"whats_owed": models.whats_owed_prompt(), "summarise_today": models.summarise_today_prompt()}
+        return render(request, "health.html", title="Runs and health", handoffs=handoffs,
+                      **reader.health_page(checkout_now()))
 
     async def todo_list(request):
         return render(request, "todo.html", title="To-do", **reader.todo_page())

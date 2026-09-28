@@ -417,6 +417,25 @@ def test_bill_update_needs_bill_id_and_changes_notes_dates_and_reference_only():
         assert denied(U, with_(U, "body", **{key: val})), key
 
 
+def test_bill_attachment_is_only_a_saved_singer_pdf():
+    B = "ZohoBooks_create_bill"
+    home = tempfile.mkdtemp()
+    os.makedirs(os.path.join(home, "lcs-private", "singer-invoices"))
+    os.makedirs(os.path.join(home, "lcs-private", "invoices"))
+    env = dict(os.environ, HOME=home)
+    ok = "~/lcs-private/singer-invoices/1790614912727141700.pdf"
+    def run(att):
+        return decide("zoho-books", B, with_(B, "query_params", attachment=att), env=env)
+    assert run(ok) == "allow"
+    assert run(os.path.join(home, "lcs-private", "singer-invoices", "1790614912727141700.pdf")) == "allow"
+    for bad in ("~/lcs-private/invoices/2111.pdf", "~/lcs-private/singer-invoices/x.docx",
+                "~/lcs-private/singer-invoices/../invoices/a.pdf", "~/lcs-private/singer-invoices/a b.pdf",
+                "~/lcs-private/singer-invoices/sub/a.pdf", "https://example.com/a.pdf", "~/Desktop/a.pdf"):
+        assert run(bad) == "deny", bad
+    # the long digit run is exempt only as that file name, never in bill text
+    assert decide("zoho-books", B, with_(B, "body", notes="1790614912727141700"), env=env) == "deny"
+
+
 def test_bill_lines_may_only_use_the_singer_fees_account():
     B = "ZohoBooks_create_bill"
     line = {"name": "Singing fee", "rate": 100, "quantity": 1}

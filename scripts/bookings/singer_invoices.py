@@ -17,6 +17,8 @@ the message id when the ref has a digit run over 5 digits). On a message already
     singer_invoices.py confirm <message id> --expect-fp <bank_fp, all 16 hex>  # the Command Centre's form:
         refused unless the recorded details are still the ones the owner approved
     singer_invoices.py settled <message id> YYYY-MM-DD  # the owner paid it outside the feed's reach: mark it paid
+    singer_invoices.py pdf <message id> [--fetch | <saved message>]  # save the invoice PDF for the Books bill
+        (scan saves it too and ends with "pdf: <path>" or "pdf: none")
     singer_invoices.py withdrawn <message id> <reason word>  # sent to us by mistake (another organisation's
         booking): out of unpaid, status, summary, paid matching, the dashboard, the money line and bills
 
@@ -51,6 +53,7 @@ import email
 import hmac
 import html
 import io
+import os
 import re
 import sys
 import urllib.error
@@ -65,6 +68,8 @@ import lcs_mcp  # noqa: E402
 import lcs_money as lm  # noqa: E402
 
 STORE = lm.PRIVATE / "singer-invoices.csv"
+PDF_DIR = lm.PRIVATE / "singer-invoices"  # <message id>.pdf, mode 600: attached to the Books bill
+MAX_PDF_BYTES = 10 * 1024 * 1024
 COLUMNS = ["message_id", "received", "singer_name", "singer_email", "invoice_ref", "amount_gbp", "bank_fp", "bank_last4",
            "payee", "bank_changed", "bank_confirmed", "paid_on", "paid_amount", "paid_ref", "paid_verified", "notes",
            "withdrawn"]  # withdrawn: the date `withdrawn` was run (last, so an older store just gains it)
@@ -691,6 +696,38 @@ def note(r, text):
     r["notes"] = (r["notes"] + "; " if r.get("notes") else "") + text
 
 
+def save_pdf(raw, message_id):
+    """The message's first PDF attachment, written to PDF_DIR/<message id>.pdf (mode 600, folder 700) so the
+    Books bill can carry it. Returns the path, or None when there is no readable PDF under MAX_PDF_BYTES."""
+    safe = re.sub(r"[^0-9A-Za-z]", "", message_id or "")
+    if not safe:
+        return None
+    msg = email.message_from_string(raw, policy=policy.default)
+    for part in msg.walk():
+        if not (part.get_filename() or "").lower().endswith(".pdf"):
+            continue
+        data = part.get_payload(decode=True) or b""
+        if not data.startswith(b"%PDF") or len(data) > MAX_PDF_BYTES:
+            continue
+        PDF_DIR.mkdir(mode=0o700, parents=True, exist_ok=True)
+        path = PDF_DIR / f"{safe}.pdf"
+        tmp = PDF_DIR / f".{safe}.pdf.tmp"
+        fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+        with os.fdopen(fd, "wb") as f:
+            f.write(data)
+        os.replace(tmp, path)
+        return path
+    return None
+
+
+def load_raw(args):
+    """The MIME text: fetched (--fetch) or from a saved getOriginalMessage result or .eml."""
+    if getattr(args, "fetch", False):
+        return fetch_raw(args.message_id)
+    from invoice_text import raw_message
+    return raw_message(args.file)
+
+
 def fetch_raw(message_id):
     """Raw MIME of the invoice email, fetched read-only (ZohoMail_getOriginalMessage through lcs_mcp)."""
     from invoice_text import fetch_message
@@ -803,6 +840,8 @@ def already_recorded(rows, message_id):
     if row is not None:
         print(f"already recorded: {message_id}")
         print_stored(row)
+        saved = PDF_DIR / f"{re.sub(r'[^0-9A-Za-z]', '', message_id)}.pdf"
+        print(f"pdf: {saved if saved.is_file() else 'none'}")
     return row is not None
 
 
@@ -810,10 +849,19 @@ def load_invoice(args):
     return read_invoice(None, raw=fetch_raw(args.message_id)) if getattr(args, "fetch", False) else read_invoice(args.file)
 
 
+def cmd_pdf(args, client=None):
+    """Save the invoice PDF of a recorded invoice and print "pdf: <path>" (or "pdf: none")."""
+    if not any(r["message_id"] == args.message_id for r in lm.read_csv(STORE)):
+        raise SystemExit(f"no invoice {args.message_id}")
+    path = save_pdf(load_raw(args), args.message_id)
+    print(f"pdf: {path or 'none'}")
+
+
 def cmd_scan(args, client):
     if already_recorded(lm.read_csv(STORE), args.message_id):
         return
-    inv = load_invoice(args)
+    raw = load_raw(args)
+    inv = read_invoice(None, raw=raw)
     payees = payee_info(client)
     with lm.locked_rows(STORE, COLUMNS) as t:  # after the fetch: never hold the lock over the network
         rows = t.rows  # read again: a fetch can take a while
@@ -831,6 +879,7 @@ def cmd_scan(args, client):
         print(line)
     print_result(args.sender_name, inv, a)
     print_bill(inv["warnings"] + a["warnings"], inv["amount"], inv["invoice_ref"], args.message_id)
+    print(f"pdf: {save_pdf(raw, args.message_id) or 'none'}")
 
 
 KEEP_NOTES = ("bank details confirmed by phone", "paid reply drafted", "settled by hand", "rescanned", "withdrawn")
@@ -1087,17 +1136,21 @@ def main():
     st = sub.add_parser("settled")
     st.add_argument("message_id")
     st.add_argument("date")
+    pd = sub.add_parser("pdf")
+    pd.add_argument("message_id")
+    pd.add_argument("file", nargs="?", help="a saved getOriginalMessage result or .eml (not with --fetch)")
+    pd.add_argument("--fetch", action="store_true", help="fetch the raw email itself, read-only")
     w = sub.add_parser("withdrawn")
     w.add_argument("message_id")
     w.add_argument("reason")
     args = ap.parse_args()
-    if args.cmd in ("scan", "rescan") and bool(args.fetch) == bool(args.file):
+    if args.cmd in ("scan", "rescan", "pdf") and bool(args.fetch) == bool(args.file):
         ap.error(f"{args.cmd}: give either --fetch or a saved file")
     tok = lm.keychain_token() if args.cmd in ("scan", "rescan", "paid") else None
     client = lm.StarlingReadOnly(tok) if tok else None
     try:
         {"scan": cmd_scan, "rescan": cmd_rescan, "paid": cmd_paid, "status": cmd_status, "thanked": cmd_thanked,
-         "confirm": cmd_confirm, "settled": cmd_settled, "withdrawn": cmd_withdrawn}[args.cmd](args, client)
+         "confirm": cmd_confirm, "settled": cmd_settled, "withdrawn": cmd_withdrawn, "pdf": cmd_pdf}[args.cmd](args, client)
     except (lm.StarlingError, urllib.error.URLError, TimeoutError, ConnectionError) as e:  # type name only
         print(f"Starling unavailable ({type(e).__name__}); {args.cmd} skipped")
     except lcs_mcp.McpError as e:  # names the server only, never its command or URL

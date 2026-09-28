@@ -13,7 +13,7 @@
 
 ## Goal
 
-One private web app, on any of the owner's devices, that shows everything about the business and lets him act on it: approve proposals, resolve checks, confirm singer bank details, and talk to Claude Code. It is not tied to Claude: the chat is one module that can be swapped out.
+One private web app, on any of the owner's devices, that shows everything about the business and lets him act on it: approve proposals, resolve checks, confirm singer bank details. Claude work is done through Claude Code Remote Control from his phone, not an in-app chat: the app offers copy-to-clipboard handoff prompts that carry the right context and files across.
 
 ## Binding rules
 
@@ -26,7 +26,7 @@ These are the programme's rules, plus:
 3. **Actions reuse the guarded paths.** Each action calls an existing script or guarded tool with fixed arguments, never a new path. It shows exactly what will happen first, and it is logged, append-only, in `~/lcs-private/command-centre/audit.jsonl`.
 4. **Money never moves from the app.** It never sends email, never makes a payment or payee, and never deletes. The owner still presses Send in Zoho or Books, and pays in Starling.
 5. **Private data stays on the Mac.** It lives in `~/lcs-private` only (mode 600 files, 700 directories). The repo holds code only, never data, and nothing is published. The app stores no credentials of its own: it uses the Keychain, the existing MCP config and ADC.
-6. **Claude Code chat keeps the repo's guards.** It runs with the repo's `.claude/settings.json`, hooks and allowlist. Tool calls outside the allowlist become approve/deny cards, and approving one needs a passkey.
+6. **Claude work is done through Claude Code Remote Control from his phone.** The app offers copy-to-clipboard handoff prompts; it never executes Claude tool calls itself, so a handoff prompt needs no passkey to copy (nothing has run yet).
 
 
 ## Threat model
@@ -56,7 +56,7 @@ iPhone / iPad / laptop ──Tailscale (WireGuard, HTTPS via tailscale serve)─
                                                               ├─ data layer ──▶ scripts/bookings/*, scripts/reports/* (import, no shell)
                                                               ├─ cache ──────▶ ~/lcs-private/command-centre/cache/*.json (written by scheduled runs + refresh jobs)
                                                               ├─ actions ────▶ fixed script invocations (subprocess, argv lists, allowlisted)
-                                                              ├─ chat ───────▶ Claude Agent SDK (repo cwd, repo settings/hooks)
+                                                              ├─ handoffs ───▶ copy-to-clipboard prompts for Claude Code Remote Control (no execution)
                                                               ├─ push ───────▶ Web Push (VAPID keys in Keychain)
                                                               └─ audit log, backups, health
 ```
@@ -64,12 +64,11 @@ iPhone / iPad / laptop ──Tailscale (WireGuard, HTTPS via tailscale serve)─
 - **Stack:**
   - Python 3 in the repo `.venv`.
   - Starlette or FastAPI plus uvicorn.
-  - Jinja2 templates with htmx for partial updates, no JS build step. A small vanilla JS file handles the passkey, the chat stream and push.
+  - Jinja2 templates with htmx for partial updates, no JS build step. Small vanilla JS files handle the passkey, copy-to-clipboard handoffs and push.
   - `webauthn` (py_webauthn) and `pywebpush`.
-  - `claude-agent-sdk`.
   - Tests use the stdlib runner, as elsewhere in the repo, with Starlette's TestClient.
 - **Code:**
-  - `command_centre/` in the repo: `app.py` (routes), `auth.py` (Tailscale identity and passkeys), `data.py` (read models), `actions.py` (the action registry), `chat.py`, `push.py`, `jobs.py` (refresh and backup), `templates/`, `static/`.
+  - `command_centre/` in the repo: `app.py` (routes), `auth.py` (Tailscale identity and passkeys), `data.py` (read models), `actions.py` (the action registry), `push.py`, `jobs.py` (refresh and backup), `templates/`, `static/`.
   - Each module has one job, with its own tests in `tests/test_cc_*.py`.
 - **Service:**
   - A LaunchAgent `com.lcs.command-centre.plist`, started at login and restarted on crash, with logs to `~/lcs-private/command-centre/logs/`.
@@ -123,17 +122,16 @@ All pages are mobile-first, with dark and light modes and the LCS brand colours.
 9. **Quote calculator:** packages, organist and travel taken from `pricing.html` and `christmas-pricing.html` (parsed the same way as `assistant_io.py prices`), with copyable wording in Luca's style.
 10. **Reports:** every Monday review archived (the scheduled task writes its report to `~/lcs-private/reports/YYYY-MM-DD.txt`), plus trend charts drawn as inline SVG with no external library.
 11. **Runs and health:**
-    - scheduled-task runs (last run, result, failures, and a **Run now** button that triggers the task);
+    - scheduled-task runs (last run, result, failures); the app has no local trigger for a task, so it explains: "Use Run now on the task in the Claude app (Routines)";
     - Starling selftest, Google ADC, the Zoho Mail and Books MCPs, Tailscale status and disk;
     - the fingerprint-key backup age;
     - the last backup.
 12. **To-do:** the owner-only items from `MANUAL-ACTIONS-REQUIRED.md` (parsed), with ticks stored locally.
 13. **Search:** one box across bookings, clients, singers, enquiries, invoice numbers and refs.
-14. **Chat:** Claude Code.
-    - Quick prompts: "what's owed this week", "draft a reply to …", "summarise today", "why is <ref> on the hand check".
-    - Streamed replies and a conversation list.
-    - Approve/deny cards (passkey).
-    - A "stop" button.
+14. **Handoffs (done):** copy-to-clipboard prompts for Claude Code Remote Control — no in-app chat, no server-side execution.
+    - Quick prompts: "what's owed this week", "summarise today's business", "why is <ref> on the hand check" (with a ref picker), "draft a reply to <thread>".
+    - The approved Books import: a fixed instruction naming the approval file and its hash, copied once the approval record exists and matches.
+    - Copying needs no passkey: nothing runs until the owner pastes the prompt into Remote Control on his phone.
 15. **Activity log:** every action and every run, filterable.
 
 ## Actions (the registry)
@@ -152,11 +150,12 @@ It needs a passkey (except the local records below) and is logged.
 | Confirm singer bank details | `singer_invoices.py confirm <id> --expect-fp <the whole 16-character fingerprint>` (refused if the details changed) |
 | Settle or withdraw a singer invoice | `singer_invoices.py settled <id> <date>` / `withdrawn <id> <reason>` |
 | Approve an Ads change set | Run a proposal-aware `scripts/ads/*.py` from its commit on GitHub's main (the app's own mirror) with `--validate-only`, show the output (its first and last 3,000 characters, unmasked), then `--apply` from the same commit after a second tap; the script writes `logs/ads-changes.md` (`LCS_ADS_LOG`). It never goes above £5/day (the script refuses). |
-| Approve the 2026 Books import / a proposed page fix | Queue it for Claude Code (chat) with the approved instruction. The chat runs it under its guards. |
+| Approve the 2026 Books import | Writes an approval record only (no script runs). Its handoff prompt, once the approval matches, tells the owner to open Claude Code Remote Control and run the owner-approved import under the guard. |
 | Mark a draft sent or discarded; tick a to-do | Local record only. **Exception: no passkey.** These write only the app's own files in `~/lcs-private/command-centre/` (never the ledger, the singer store, email, Books or the bank), so the owner's Tailscale identity, the Host check and the same-origin check are enough. They are still registered actions, with a server-built summary and an `audit.jsonl` entry. |
-| Run a scheduled task now | Triggers the task (headless `claude -p` with the task prompt in the repo folder, the same as the scheduled run) |
+| Run a scheduled task now | Not an app action: Runs and health explains to use **Run now** on the task in the Claude app (Routines) |
 | Refresh data now | Refresh jobs, read-only |
 | Back up now | The backup job |
+| Copy a handoff prompt | **Exception: no passkey, and it is not a registered action.** The client copies server-written, fixed text to the clipboard; nothing runs, and nothing is sent anywhere. The owner pastes it into Claude Code Remote Control himself. |
 
 Not in the app: sending email, payments, payees, deletes, and Books sends or voids.
 
@@ -198,7 +197,7 @@ Not in the app: sending email, payments, payees, deletes, and Books sends or voi
 
 - Every data source is wrapped: on failure the panel shows its stale data and the reason, and the page still renders.
 - An action failure shows the command's stderr, trimmed and with secrets scrubbed (`lcs_mcp` scrub rules), and is logged. There are no automatic retries for actions.
-- If the chat crashes, it doesn't affect the rest of the app.
+- A failed clipboard write (an unsupported or non-secure-context browser) falls back to a selectable text box; nothing about a handoff prompt reaches the server beyond the fixed text it was built from.
 
 ## Testing
 
@@ -218,8 +217,8 @@ Not in the app: sending email, payments, payees, deletes, and Books sends or voi
 
 1. **Skeleton:** the app, auth (Tailscale identity and passkey), LaunchAgent, install script, and Today and Money read-only.
 2. **Data pages:** Bookings, Enquiries, Singers, Marketing, Calendar, Search, Reports, Runs and health, To-do, CSV exports.
-3. **Actions:** the registry with passkey; hand checks, singer confirm/settle/withdraw, Ads approve, run now, refresh, backup.
-4. **Chat:** the Agent SDK, streaming, approval cards, quick prompts.
+3. **Actions:** the registry with passkey; hand checks, singer confirm/settle/withdraw, Ads approve, refresh, backup.
+4. **Handoffs (done):** copy-to-clipboard prompts for Claude Code Remote Control — the Books import handoff, and quick prompts for money, summaries, hand checks and draft replies.
 5. **PWA and push, drafts inbox, quote calculator, backups.**
 
 Each phase is reviewed and merged before the next. The static `dashboard.py` stays as a fallback until phase 2 ships.
@@ -229,4 +228,5 @@ Each phase is reviewed and merged before the next. The static `dashboard.py` sta
 - Public access.
 - Multiple users.
 - Sending email or moving money from the app.
-- Editing site pages from the app (the chat can propose; the owner approves in chat).
+- An in-app chat, or any server-side execution of Claude tool calls. Claude work happens through Claude Code Remote Control, started by the owner from his phone; the app only prepares the prompt.
+- Editing site pages from the app (a handoff prompt can ask Claude Code to propose a fix; the owner still reviews and approves it there).

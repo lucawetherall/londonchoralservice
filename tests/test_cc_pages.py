@@ -132,6 +132,21 @@ def test_today_counts_what_needs_attention():
     assert re.search(r'class="count[^"]*">\s*4\s*<', out), "4 things: 2 hand checks and 2 unpaid invoices (the bank warning is one of those invoices)"
 
 
+def test_today_offers_handoff_prompts_instead_of_a_chat():
+    # No in-app chat: Today offers copy-to-clipboard prompts for Claude Code Remote Control. The general
+    # prompts are fixed text; the hand-check prompt is picked per ref, so the page carries one option per ref
+    # currently on the hand check, never a free-text field.
+    c, _ = make(FakeBank())
+    out = page(c, "/")
+    assert "cc-copy" in out and "What&#39;s owed this week?" in out and "Summarise today&#39;s business" in out
+    assert "scripts/reports/dashboard.py" in out and "scripts/bookings/money_report.py" in out
+    assert '<select id="hand-handoff-select"' in out
+    opt = re.search(r'<option value="0107" data-prompt="([^"]*)">0107</option>', out)
+    assert opt, out
+    assert "0107" in opt.group(1) and "check_payments.py" in opt.group(1) and "hand check" in opt.group(1)
+    assert '<script src="/static/handoffs.js" defer></script>' in out
+
+
 # ---------------------------------------------------------------- Money
 
 
