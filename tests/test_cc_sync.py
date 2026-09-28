@@ -153,6 +153,81 @@ def test_books_cache_reader():
         pass
 
 
+# ---------------------------------------------------------------- drafts-sync
+
+
+def zdraft(**kw):
+    d = {"thread_id": "T1", "subject": "Re: Wedding on 3 October", "date": "2026-09-28", "to_first_name": "Ann"}
+    d.update(kw)
+    return d
+
+
+def test_drafts_sync_is_strict():
+    clear()
+    bad = [
+        "not json", json.dumps({"thread_id": "T1"}), json.dumps(zdraft(extra="x")),
+        json.dumps({k: v for k, v in zdraft().items() if k != "date"}),
+        json.dumps(zdraft(subject="x" * 81)), json.dumps(zdraft(subject="line\nbreak")),
+        json.dumps(zdraft(subject="   ")), json.dumps(zdraft(to_first_name="ann")),
+        json.dumps(zdraft(to_first_name="Ann Smithfield")), json.dumps(zdraft(date="28/09/2026")),
+        json.dumps(zdraft(date="2026-02-30")), json.dumps(zdraft(thread_id="12 34")),
+        json.dumps(zdraft(thread_id="x" * 41)), json.dumps(zdraft(thread_id=12345)),
+        json.dumps(zdraft()),  # a bare object, not a list, must be refused (unlike drafts-put)
+        json.dumps([zdraft()] * 201),
+    ]
+    for text in bad:
+        code, out = run(cc_sync.cmd_drafts_sync, text)
+        assert code == 2 and out.startswith("drafts-sync: refused ("), (text[:60], out)
+        assert not (CACHE / "drafts.json").exists(), text[:60]
+    code, out = run(cc_sync.cmd_drafts_sync, "x" * (cc_sync.MAX_INPUT + 1))
+    assert code == 2
+    assert run(cc_sync.cmd_drafts_sync, "[]")[0] == 0
+
+
+def test_sync_drafts_keeps_assistant_kind_marks_hand_saved_and_drops_gone_threads():
+    old = [
+        {"thread_id": "T1", "kind": "deposit-reminder", "first_name": "Ann", "subject": "old subject",
+         "created": "2026-09-20", "source": "assistant"},
+        {"thread_id": "T2", "kind": "receipt", "first_name": "Dan", "subject": "receipt", "created": "2026-09-21",
+         "source": "assistant"},
+        {"thread_id": "T3", "kind": "other", "first_name": "Eve", "subject": "stale", "created": "2026-09-01",
+         "source": "zoho"},
+    ]
+    rows = [zdraft(thread_id="T1", subject="Re: Wedding, updated", date="2026-09-28", to_first_name="Ann"),
+            zdraft(thread_id="T4", subject="A hand-saved draft", date="2026-09-27", to_first_name="Zoe")]
+    merged = cc_sync.sync_drafts(old, rows)
+    by_thread = {d["thread_id"]: d for d in merged}
+    assert set(by_thread) == {"T1", "T4"}  # T2 and T3 dropped: no longer in the live listing
+    assert by_thread["T1"] == {"thread_id": "T1", "kind": "deposit-reminder", "first_name": "Ann",
+                               "subject": "Re: Wedding, updated", "created": "2026-09-28", "source": "assistant"}
+    assert by_thread["T4"] == {"thread_id": "T4", "kind": "other", "first_name": "Zoe",
+                               "subject": "A hand-saved draft", "created": "2026-09-27", "source": "zoho"}
+    # an entry with no source at all (written before drafts-sync existed) counts as assistant for kind lookup
+    old2 = [{"thread_id": "T5", "kind": "follow-up", "first_name": "Cat", "subject": "x", "created": "2026-09-01"}]
+    merged2 = cc_sync.sync_drafts(old2, [zdraft(thread_id="T5", to_first_name="Cat")])
+    assert merged2[0]["kind"] == "follow-up" and merged2[0]["source"] == "assistant"
+
+
+def test_cmd_drafts_sync_writes_and_reports_saved_by_you():
+    clear()
+    quiet_code, out = run(cc_sync.cmd_drafts_put, json.dumps(
+        {"thread_id": "T1", "kind": "reply", "first_name": "Ann", "subject": "Re: Wedding", "created": "2026-09-20"}))
+    assert quiet_code == 0, out
+    code, out = run(cc_sync.cmd_drafts_sync, json.dumps(
+        [zdraft(thread_id="T1", subject="Re: Wedding, v2"), zdraft(thread_id="T9", to_first_name="Zed")]))
+    assert code == 0 and out.strip() == "drafts-sync: 2 drafts synced (1 saved by you)", out
+    saved = json.loads((CACHE / "drafts.json").read_text())
+    assert {d["thread_id"]: (d["kind"], d["source"]) for d in saved} == {"T1": ("reply", "assistant"),
+                                                                         "T9": ("other", "zoho")}
+    assert stat.S_IMODE(os.stat(CACHE / "drafts.json").st_mode) == 0o600
+    # a second sync with T1 gone drops it, even though drafts-put alone would have kept it forever
+    code, out = run(cc_sync.cmd_drafts_sync, json.dumps([zdraft(thread_id="T9", to_first_name="Zed")]))
+    assert code == 0 and out.strip() == "drafts-sync: 1 drafts synced (1 saved by you)", out
+    saved = json.loads((CACHE / "drafts.json").read_text())
+    assert [d["thread_id"] for d in saved] == ["T9"]
+    assert cc_sync.main(["drafts-sync", json.dumps([zdraft(thread_id="T9", to_first_name="Zed")])]) == 0
+
+
 # ---------------------------------------------------------------- calendar
 
 EVENTS = [

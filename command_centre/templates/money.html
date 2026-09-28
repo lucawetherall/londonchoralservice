@@ -73,6 +73,11 @@
     </div>
     <p class="muted">{{ sm.count }} booking{{ "" if sm.count == 1 else "s" }} with an event from {{ sm.start|day }} (the season start in <span class="mono">data/budget-windows.yml</span>), cancelled ones left out. Singer costs are the invoices linked to each booking; an unlinked invoice isn't counted.</p>
     {% endif %}
+    {{ m.failed(unlinked) }}
+    {% set u = unlinked.value if unlinked.ok else unlinked.stale %}
+    {% if u and u.count %}
+    <p class="muted">Unlinked singer invoices: {{ u.count }}, {{ u.total|gbp }}.</p>
+    {% endif %}
   </article>
 
   {% set items = singers.value if singers.ok else (singers.stale or []) %}

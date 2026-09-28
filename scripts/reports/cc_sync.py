@@ -6,6 +6,7 @@
     .venv/bin/python scripts/reports/cc_sync.py calendar-put --file <path inside ~/lcs-private>
     <JSON on stdin> | .venv/bin/python scripts/reports/cc_sync.py calendar-put
     .venv/bin/python scripts/reports/cc_sync.py drafts-put '<one-line JSON object, or a list of them>'
+    .venv/bin/python scripts/reports/cc_sync.py drafts-sync '<one-line JSON list from the Zoho Drafts folder>'
 
 books reads Zoho Books (organization_id 941014440) through lcs_mcp, which allows only the read tools on the Books
 guard's READ_ALLOW list (ZohoBooks_list_invoices on zoho-books-invoices, ZohoBooks_list_bills on zoho-books), and
@@ -30,6 +31,17 @@ of at most 80 characters with no control character, and the created date as YYYY
 whole input and writes nothing. The drafts are merged into ~/lcs-private/command-centre/cache/drafts.json (a new
 one with the same thread and kind replaces the old), newest first, at most 500 kept, under an flock. The owner's
 sent/discarded marks live elsewhere (drafts-marks.json, written by the app), so a re-recorded draft keeps its mark.
+Each entry written by drafts-put is tagged source "assistant": the assistant knows what kind of draft it saved.
+
+drafts-sync records the daily pass's read-only listing of the whole Zoho Drafts folder (ZohoMail_listEmails,
+already on the mail guard's read allowlist), for drafts saved by hand and to drop ones no longer there (sent or
+deleted in Zoho, where drafts-put alone would leave a stale row forever). One JSON list of at most 200, each
+exactly {thread_id, subject, date, to_first_name}: the same thread id and subject rules as drafts-put, date as
+YYYY-MM-DD, and to_first_name one capitalised first name. Anything else refuses the whole input and writes
+nothing. It REPLACES ~/lcs-private/command-centre/cache/drafts.json with one row per listed thread: when a
+thread was already recorded by drafts-put (source "assistant"), its kind is kept and the row's source stays
+"assistant"; a thread the assistant never recorded gets kind "other" and source "zoho" ("saved by you" on the
+Drafts page). A thread that no longer appears in the listing drops out, whichever source last wrote it.
 
 All caches are written atomically (a temp file in the same folder, then os.replace) at mode 600, in folders made
 mode 700. LCS_PRIVATE_DIR moves the private tree (the tests use a temp dir).
@@ -69,6 +81,8 @@ DRAFT_KEYS = {"thread_id", "kind", "first_name", "subject", "created"}
 DRAFTS_PER_CALL, DRAFTS_KEPT, DRAFT_SUBJECT_MAX = 50, 500, 80
 THREAD_RE = re.compile(r"^[A-Za-z0-9]{1,40}$")
 FIRST_RE = re.compile(r"^[A-Z][a-z'’-]{1,20}$")  # cc_event.py's first-name rule
+ZOHO_DRAFT_KEYS = {"thread_id", "subject", "date", "to_first_name"}
+ZOHO_SYNC_MAX = 200  # a Drafts folder listing in one call
 
 
 def private_dir():
@@ -340,7 +354,7 @@ def validate_drafts(value):
         except ValueError:
             raise Refused(f"{where} created is not a real date") from None
         out.append({"thread_id": d["thread_id"], "kind": d["kind"], "first_name": d["first_name"],
-                    "subject": subject, "created": d["created"]})
+                    "subject": subject, "created": d["created"], "source": "assistant"})
     return out
 
 
@@ -354,6 +368,55 @@ def merge_drafts(old, new):
         by[(d["thread_id"], d["kind"])] = d
     return sorted(by.values(), key=lambda d: (str(d.get("created", "")), d["thread_id"], d["kind"]),
                   reverse=True)[:DRAFTS_KEPT]
+
+
+def validate_zoho_drafts(value):
+    """The checked Zoho Drafts listing, or Refused naming the first problem. Each row: {thread_id, subject, date,
+    to_first_name}, the same rules as validate_drafts bar kind (Zoho's own listing carries no kind)."""
+    if not isinstance(value, list):
+        raise Refused("the drafts input must be a JSON list")
+    if len(value) > ZOHO_SYNC_MAX:
+        raise Refused(f"more than {ZOHO_SYNC_MAX} drafts")
+    out = []
+    for i, d in enumerate(value):
+        where = f"draft {i}"
+        if not isinstance(d, dict) or set(d) != ZOHO_DRAFT_KEYS:
+            raise Refused(f"{where} must have exactly thread_id, subject, date and to_first_name")
+        if not isinstance(d["thread_id"], str) or not THREAD_RE.fullmatch(d["thread_id"]):
+            raise Refused(f"{where} thread_id must be 1 to 40 letters and digits")
+        subject = _text(d["subject"], DRAFT_SUBJECT_MAX, f"{where} subject", blank_ok=False)
+        if not isinstance(d["date"], str) or not DATE_RE.fullmatch(d["date"]):
+            raise Refused(f"{where} date must be YYYY-MM-DD")
+        try:
+            datetime.date.fromisoformat(d["date"])
+        except ValueError:
+            raise Refused(f"{where} date is not a real date") from None
+        if not isinstance(d["to_first_name"], str) or not FIRST_RE.fullmatch(d["to_first_name"]):
+            raise Refused(f"{where} to_first_name must be one capitalised first name")
+        out.append({"thread_id": d["thread_id"], "subject": subject, "date": d["date"],
+                    "to_first_name": d["to_first_name"]})
+    return out
+
+
+def sync_drafts(old, rows):
+    """The full replacement drafts.json from a live Zoho Drafts listing (`rows`, validate_zoho_drafts's output):
+    one entry per listed thread, newest first. A thread drafts-put already recorded (source "assistant") keeps
+    its kind and source; any other thread gets kind "other" and source "zoho" ("saved by you" on the page). A
+    thread no longer listed (sent or deleted in Zoho) is dropped, whichever source last wrote it. Pure: no I/O."""
+    kind_by_thread = {}
+    for d in (old if isinstance(old, list) else []):
+        if isinstance(d, dict) and d.get("source", "assistant") == "assistant" and isinstance(d.get("thread_id"), str) \
+                and isinstance(d.get("kind"), str):
+            prev = kind_by_thread.get(d["thread_id"])
+            if prev is None or str(d.get("created", "")) >= prev[1]:
+                kind_by_thread[d["thread_id"]] = (d["kind"], str(d.get("created", "")))
+    out = []
+    for row in rows:
+        known = kind_by_thread.get(row["thread_id"])
+        out.append({"thread_id": row["thread_id"], "kind": known[0] if known else "other",
+                    "first_name": row["to_first_name"], "subject": row["subject"], "created": row["date"],
+                    "source": "assistant" if known else "zoho"})
+    return sorted(out, key=lambda d: (d["created"], d["thread_id"], d["kind"]), reverse=True)[:DRAFTS_KEPT]
 
 
 def make_private_dirs(path):
@@ -399,6 +462,39 @@ def cmd_drafts_put(text):
     return 0
 
 
+def cmd_drafts_sync(text):
+    try:
+        raw = text.encode("utf-8")
+        if len(raw) > MAX_INPUT:
+            raise Refused(f"the drafts input is over {MAX_INPUT} bytes")
+        try:
+            value = json.loads(raw.decode("utf-8"))
+        except (UnicodeDecodeError, ValueError):
+            raise Refused("the drafts input isn't valid JSON") from None
+        rows = validate_zoho_drafts(value)
+    except Refused as e:
+        print(f"drafts-sync: refused ({e}); nothing written")
+        return 2
+    path = cache_dir() / "drafts.json"
+    lock = cache_dir() / ".drafts.lock"
+    make_private_dirs(lock)
+    fd = os.open(lock, os.O_RDWR | os.O_CREAT | os.O_NOFOLLOW, 0o600)
+    try:
+        fcntl.flock(fd, fcntl.LOCK_EX)  # one writer at a time, the same lock drafts-put uses
+        try:
+            with open(path, encoding="utf-8") as f:
+                old = json.load(f)
+        except (FileNotFoundError, ValueError):
+            old = []
+        synced = sync_drafts(old, rows)
+        write_private_json(path, synced)
+    finally:
+        os.close(fd)
+    by_you = sum(1 for d in synced if d["source"] == "zoho")
+    print(f"drafts-sync: {len(synced)} drafts synced ({by_you} saved by you)")
+    return 0
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description="Command Centre cache writers")
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -408,11 +504,15 @@ def main(argv=None):
     c.add_argument("--file", help="a JSON file inside ~/lcs-private")
     d = sub.add_parser("drafts-put", help="record drafts saved in Zoho Mail (one JSON object or a list)")
     d.add_argument("json", help="the JSON itself, as one argument")
+    s = sub.add_parser("drafts-sync", help="replace the Zoho-sourced drafts from a live Drafts folder listing")
+    s.add_argument("json", help="the JSON list itself, as one argument")
     args = ap.parse_args(argv)
     if args.cmd == "books":
         return cmd_books()
     if args.cmd == "drafts-put":
         return cmd_drafts_put(args.json)
+    if args.cmd == "drafts-sync":
+        return cmd_drafts_sync(args.json)
     if args.json is not None and args.file is not None:
         ap.error("calendar-put: give the JSON or --file, not both")
     return cmd_calendar_put(args.json, args.file)

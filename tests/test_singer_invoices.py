@@ -1695,6 +1695,19 @@ def test_an_old_store_without_the_withdrawn_column_still_reads_and_gains_it():
     assert si.summary(lm.read_csv(si.STORE), lm.today())["unpaid"] == 0
 
 
+def test_unlinked_invoices_counts_unlinked_not_withdrawn():
+    rows = [
+        dict(unpaid("m1", "Ben Fenwick", 120, "2026-09-20"), booking_ref="0310"),  # linked: not counted
+        dict(unpaid("m2", "Dora Quill", 80, "2026-09-21"), booking_ref=""),
+        dict(unpaid("m3", "Zed Mistake", 50, "2026-09-22"), booking_ref="", withdrawn="2026-09-23"),  # withdrawn
+        dict(unpaid("m4", "Eve Organ", 30.5, "2026-09-24")),  # no booking_ref column at all
+    ]
+    assert si.unlinked_invoices(rows) == {"count": 2, "total": 110.5}
+    assert si.unlinked_invoices([]) == {"count": 0, "total": 0.0}
+    assert si.unlinked_invoices([dict(unpaid("m1", "Ben Fenwick", 120, "2026-09-20"), booking_ref="0310")]) == \
+        {"count": 0, "total": 0.0}
+
+
 if __name__ == "__main__":
     failures = 0
     for name, fn in sorted(globals().items()):

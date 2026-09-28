@@ -339,7 +339,7 @@ print('duplicate price-ladder constructions:', len(dupes))  # → 0
 
 ## R17 — Dashboard should read invoice status from Zoho Books, not Starling alone  [P3] [done 2026-09-28 — Command Centre phase 6]
 
-**Status:** `scripts/reports/cc_sync.py books` (run by the enquiry assistant's daily pass, `.claude/agents/lcs-daily-pass.md`) writes `~/lcs-private/command-centre/cache/books.json` through `lcs_mcp`'s Books read client (only the tools on the guard's READ_ALLOW); `command_centre/books_cache.py` reads it. **Done (phase 6):** the Command Centre's Money page has a Books panel (receivables, overdue, drafts not yet sent, unpaid bills, freshness); each booking's timeline shows its Books invoice by number; Today flags a Books draft more than 2 days old and Books/Starling disagreements by Appendix A step 6g's rules (`models.books_flags`, `tests/test_cc_final.py`); a background job refreshes the cache every 30 minutes from 07:00 to 22:00. The static `dashboard.py` is left without Books: the Command Centre replaces it (R21).
+**Status:** `scripts/reports/cc_sync.py books` (run by the enquiry assistant's daily pass, `.claude/agents/lcs-daily-pass.md`) writes `~/lcs-private/command-centre/cache/books.json` through `lcs_mcp`'s Books read client (only the tools on the guard's READ_ALLOW); `command_centre/books_cache.py` reads it. **Done (phase 6):** the Command Centre's Money page has a Books panel (receivables, overdue, drafts not yet sent, unpaid bills, freshness); each booking's timeline shows its Books invoice by number; Today flags a Books draft more than 2 days old and Books/Starling disagreements by Appendix A step 6g's rules (`models.books_flags`, `tests/test_cc_final.py`); a background job refreshes the cache every 30 minutes from 07:00 to 22:00. **Done (R21):** the static `dashboard.py` also has a Books panel, season margin and unlinked singer invoices, reusing `command_centre/books_cache.py` read-only.
 
 **Why:** `scripts/reports/dashboard.py` (`gather()`) currently builds every payment state from `check_payments.assess()` against the Starling feed only. Since Books is now the system of record for invoice status (the owner confirms bank-feed matches in Books, per the Zoho Books design's flow B), the dashboard can show a stale or disagreeing picture next to what the owner sees in Books. The Monday report already gets a Books line for this (design §"Flows", flow E, section 11: receivables, overdue invoices, unpaid bills, disagreements with the Starling check); the dashboard never picked up the equivalent.
 
@@ -385,15 +385,17 @@ print('duplicate price-ladder constructions:', len(dupes))  # → 0
 
 ---
 
-## R21 — Command Centre loose ends after phase 6  [P4]
+## R21 — Command Centre loose ends after phase 6  [P4] [partly done 2026-09-28]
 
 **Why:** phase 6 (`docs/superpowers/plans/2026-09-28-command-centre.md`) wired Books, margins, the diary, the drafts inbox, the quote calculator and the background refresh. These pieces were left out on purpose and are recorded here so they aren't lost.
 
-**Do (each is small and independent):**
-- *Drafts from Zoho itself.* The inbox lists only the drafts the assistant records (`cc_sync.py drafts-put`). A read-only Zoho Mail drafts listing (folder 6133510000000008016) in the daily pass would also catch drafts saved by hand and drop ones deleted in Zoho. Needs a tool on the zoho-mail read allowlist and a `drafts-sync` writer that replaces rather than merges.
-- *Per-draft "open in Zoho".* The page links to the Drafts folder (`https://mail.zoho.com/zm/#mail/folder/drafts`, the .com data centre). A per-message link needs Zoho's message URL form confirmed on the owner's account first.
-- *Static dashboard.* `scripts/reports/dashboard.py` shows no Books panel or margins. Only worth doing if the owner still opens the static page; otherwise retire it once the Command Centre has run a month.
-- *Unlinked singer invoices.* Margins count only invoices linked to a booking; `singer_invoices.py margins` prints the unlinked total, the pages don't. Add an "unlinked: n, £x" line to Money's season margin.
-- *Quote extras.* The calculator states the Christmas Eve/Day premium and leaves longer programmes and keyboard hire "quoted upfront", as the pages do; it never prices them.
+**Done 2026-09-28:**
+- *Drafts from Zoho itself.* `cc_sync.py drafts-sync '<JSON list>'` takes the daily pass's read-only `ZohoMail_listEmails` listing of the Drafts folder (6133510000000008016, already on the mail guard's read allowlist) as `{thread_id, subject, date, to_first_name}` rows and replaces the Zoho-sourced part of `cache/drafts.json`: a thread `drafts-put` already recorded keeps its kind, any other thread gets kind "other" and is shown "saved by you", and a thread no longer in the listing drops out (sent or deleted in Zoho, where `drafts-put` alone left a stale row forever). Step added to `lcs-daily-pass.md` (e2); `command_centre/drafts.py` and the Drafts page show both sources. Tests: `tests/test_cc_sync.py`.
+- *Unlinked singer invoices.* `singer_invoices.unlinked_invoices()` (a pure helper factored out of `cmd_margins`'s own print line) backs a new line on Money's season margin panel and the static dashboard's Books panel: "Unlinked singer invoices: n, £x". Tests: `tests/test_singer_invoices.py`, `tests/test_cc_final.py`.
+- *Static dashboard.* `scripts/reports/dashboard.py` has a Books panel (receivables, overdue, unpaid bills, drafts not yet sent, overdue invoice numbers), the season margin and unlinked singer invoices, reusing `command_centre/books_cache.py` read-only, exactly as R17 said it would. "Books not synced yet." when the cache doesn't exist. Tests: `tests/test_dashboard.py`.
+
+**Left out, on purpose:**
+- *Per-draft "open in Zoho".* The page still links only to the Drafts folder (`https://mail.zoho.com/zm/#mail/folder/drafts`, the .com data centre); a per-message link needs Zoho's message URL form confirmed on the owner's account first, which is a manual check, not something to guess at from a script.
+- *Quote extras.* The calculator still states the Christmas Eve/Day premium and leaves longer programmes and keyboard hire "quoted upfront", as the pages do; it never prices them. Pricing those needs the owner's rules for what they cost, not just wiring.
 
 **Skills:** none
