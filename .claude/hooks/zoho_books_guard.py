@@ -172,6 +172,8 @@ BILL_UPDATE_FIELDS = ("notes", "due_date", "date", "reference_number")  # never 
 
 INVOICE_NUMBER = re.compile(r"[0-9]{4}[A-Z]?")  # the DDMM booking ref, e.g. 2111 or 2111B
 INVOICES_DIR = os.path.join("~", "lcs-private", "invoices")  # where make_booking_docs.py writes
+SINGER_PDF_DIR = os.path.join("~", "lcs-private", "singer-invoices")  # where singer_invoices.py saves PDFs
+SINGER_PDF_NAME = re.compile(r"[0-9A-Za-z]{1,40}\.pdf")  # <Zoho message id>.pdf
 
 
 def _present(v):
@@ -214,18 +216,30 @@ def check_invoice_document(body, query, path):
         _check_attachment(query["attachment"])
 
 
-def _check_attachment(value):
-    """A .pdf or .docx the booking scripts wrote: its real path must be inside ~/lcs-private/invoices/."""
-    bad = Deny(P + "query_params.attachment must be a .pdf or .docx file inside ~/lcs-private/invoices/ "
+def _check_attachment(value, folder=INVOICES_DIR, exts=(".pdf", ".docx")):
+    """A file the booking scripts wrote: its real path must be inside `folder` (default ~/lcs-private/invoices/)."""
+    shown = folder.replace(os.sep, "/") + "/"
+    bad = Deny(P + f"query_params.attachment must be a {' or '.join(exts)} file inside {shown} "
                "(a local path, not a URL or file contents).")
-    if not (isinstance(value, str) and value.startswith(("~/", "/")) and value.endswith((".pdf", ".docx"))):
+    if not (isinstance(value, str) and value.startswith(("~/", "/")) and value.endswith(exts)):
         raise bad
     if ".." in value or any(unicodedata.category(c).startswith("C") for c in value):
         raise bad
-    root = os.path.realpath(os.path.expanduser(INVOICES_DIR))
+    root = os.path.realpath(os.path.expanduser(folder))
     real = os.path.realpath(os.path.expanduser(value))
     if not root.startswith("/") or os.path.commonpath([root, real]) != root or real == root:
         raise bad
+    return real
+
+
+def _singer_pdf(value):
+    """True for the path of a PDF singer_invoices.py saved: ~/lcs-private/singer-invoices/<message id>.pdf."""
+    try:
+        real = _check_attachment(value, SINGER_PDF_DIR, (".pdf",))
+    except Deny:
+        return False
+    return (os.path.dirname(real) == os.path.realpath(os.path.expanduser(SINGER_PDF_DIR))
+            and bool(SINGER_PDF_NAME.fullmatch(os.path.basename(real))))
 
 
 # show_comment_to_clients is not on the list, so it is denied with any value. The live
@@ -244,6 +258,9 @@ SINGER_FEES_ACCOUNT_ID = "1534218000000034003"
 def check_create_bill(body, query, path):
     _need(body, "vendor_id", "body")
     _need(body, "bill_number", "body")
+    if "attachment" in query and not _singer_pdf(query["attachment"]):
+        raise Deny(P + "a bill's query_params.attachment must be a singer invoice PDF that singer_invoices.py "
+                   "saved: ~/lcs-private/singer-invoices/<message id>.pdf.")
     for line in body.get("line_items") or []:
         if isinstance(line, dict) and "account_id" in line and line["account_id"] != SINGER_FEES_ACCOUNT_ID:
             raise Deny(f"{P}bill lines go to Cost of Goods Sold: account_id must be \"{SINGER_FEES_ACCOUNT_ID}\".")
@@ -289,7 +306,8 @@ WRITE_TOOLS = {
     "ZohoBooks_add_invoice_comment": (
         obj("description"), ORG_ONLY, obj("invoice_id"), check_invoice_comment),
     "ZohoBooks_create_bill": (
-        obj(*BILL_FIELDS, line_items=[BILL_LINE], documents=[BILL_DOCUMENT]), ORG_ONLY, NOTHING, check_create_bill),
+        obj(*BILL_FIELDS, line_items=[BILL_LINE], documents=[BILL_DOCUMENT]), obj("organization_id", "attachment"),
+        NOTHING, check_create_bill),
     "ZohoBooks_update_bill": (
         obj(*BILL_UPDATE_FIELDS), ORG_ONLY, obj("bill_id"), check_update_bill),
     "ZohoBooks_add_bill_comment": (
@@ -403,7 +421,8 @@ def _scan(value, key, where, tax):
         text = _plain(str(value))
         own = OWN_PATTERN.get(key)
         exempt = (own is not None and isinstance(value, str) and own.fullmatch(value)) or (
-            isinstance(key, str) and key.endswith("_id") and RECORD_ID.fullmatch(text))
+            isinstance(key, str) and key.endswith("_id") and RECORD_ID.fullmatch(text)) or (
+            key == "attachment" and _singer_pdf(value))  # the file name is the Zoho message id
         bare = strip_dates(text)
         if ((not exempt and _bank_digits(bare)) or BANK_WORDS.search(bare) or VAT_WORDS.search(bare)
                 or _lookalike(text) or any(sum(c.isdigit() for c in m.group()) >= 10 for m in IBAN.finditer(bare))):
