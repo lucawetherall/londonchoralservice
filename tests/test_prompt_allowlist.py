@@ -54,6 +54,14 @@ def appendix_blocks():
         m = re.search(rf"^## Appendix {letter}:.*?^```text\n(.*?)^```", text, re.M | re.S)
         assert m, f"Appendix {letter} has no ```text block"
         out[letter] = m.group(1)
+    # The enquiry assistant (Appendix E) dispatches to sub-agents in .claude/agents/; their prompts run
+    # unattended under the same allowlist, so they are checked too (key "agent:<name>").
+    agents = os.path.join(ROOT, ".claude", "agents")
+    if os.path.isdir(agents):
+        for f in sorted(os.listdir(agents)):
+            if f.endswith(".md"):
+                body = open(os.path.join(agents, f), encoding="utf-8").read()
+                out[f"agent:{f[:-3]}"] = body.split("---", 2)[2] if body.startswith("---") else body
     return out
 
 
@@ -129,7 +137,8 @@ def allowed(cmd, pats):
 def test_prompts_name_commands():
     blocks, scripts = appendix_blocks(), script_paths()
     assert len(commands(blocks["A"], scripts)) >= 5
-    assert len(commands(blocks["E"], scripts)) >= 20
+    assistant = [c for k, b in blocks.items() if k == "E" or k.startswith("agent:") for c in commands(b, scripts)]
+    assert len(assistant) >= 20, len(assistant)
 
 
 def test_every_prompt_command_is_allowlisted():
