@@ -32,25 +32,78 @@
 </table>
 {% endmacro %}
 
-{% macro hand_table(items, bank_checked) %}
+{% macro resolve_form(ref, day, open=false) %}
+<details class="act"{% if open %} open{% endif %}>
+  <summary>Resolve</summary>
+  <form class="cc-action" data-action="resolve-hand-check">
+    <input type="hidden" name="ref" value="{{ ref }}">
+    <label class="field">What happened
+      <select name="choice">
+        {% for k, words in HAND_CHOICES %}<option value="{{ k }}">{{ words }}</option>{% endfor %}
+      </select>
+    </label>
+    <label class="field">On <input type="date" name="date" value="{{ day }}" max="{{ day }}" required></label>
+    <button type="submit" class="button small">Check, then approve</button>
+  </form>
+</details>
+{% endmacro %}
+
+{% macro action_button(name, label, fields={}, quiet=false) %}
+<form class="cc-action inline" data-action="{{ name }}">
+  {% for k, v in fields.items() %}<input type="hidden" name="{{ k }}" value="{{ v }}">{% endfor %}
+  <button type="submit" class="button small{% if quiet %} quiet{% endif %}">{{ label }}</button>
+</form>
+{% endmacro %}
+
+{% macro singer_forms(s, day) %}
+{% if s.key and (s.can_confirm or s.can_settle or s.can_withdraw) %}
+<details class="act">
+  <summary>Act</summary>
+  {% if s.can_confirm %}
+  <form class="cc-action" data-action="singer-confirm">
+    <input type="hidden" name="invoice" value="{{ s.key }}">
+    <p class="muted">Only after ringing them on a number you already hold.</p>
+    <button type="submit" class="button small">Confirm bank details</button>
+  </form>
+  {% endif %}
+  {% if s.can_settle %}
+  <form class="cc-action" data-action="singer-settled">
+    <input type="hidden" name="invoice" value="{{ s.key }}">
+    <label class="field">Paid by you on <input type="date" name="date" value="{{ day }}" max="{{ day }}" required></label>
+    <button type="submit" class="button small quiet">Mark paid</button>
+  </form>
+  {% endif %}
+  {% if s.can_withdraw %}
+  <form class="cc-action" data-action="singer-withdrawn">
+    <input type="hidden" name="invoice" value="{{ s.key }}">
+    <label class="field">Reason (one word) <input type="text" name="reason" value="not-ours" pattern="[a-z][a-z\-]{0,19}" required autocapitalize="off" spellcheck="false"></label>
+    <button type="submit" class="button small quiet">Withdraw</button>
+  </form>
+  {% endif %}
+</details>
+{% endif %}
+{% endmacro %}
+
+{% macro hand_table(items, bank_checked, day) %}
 <table class="table">
-  <thead><tr><th>Ref</th><th>Why</th><th class="num">Value</th><th class="num">Received</th></tr></thead>
+  <thead><tr><th>Ref</th><th>Why</th><th class="num">Value</th><th class="num">Received</th><th>Action</th></tr></thead>
   <tbody>
   {% for h in items %}
     <tr>
-      <td data-label="Ref" class="mono">{{ h.ref }}</td>
+      <td data-label="Ref" class="mono"><a href="/bookings/{{ h.ref }}">{{ h.ref }}</a></td>
       <td data-label="Why"><span class="badge {{ (h.state|state_tone) or 'warn' }}">{{ h.label }}</span></td>
       <td data-label="Value" class="num">{{ h.value|gbp }}</td>
       <td data-label="Received" class="num">{% if bank_checked %}{{ h.received|gbp }}{% else %}not checked{% endif %}</td>
+      <td data-label="Action">{{ resolve_form(h.ref, day) }}</td>
     </tr>
   {% endfor %}
   </tbody>
 </table>
 {% endmacro %}
 
-{% macro singers_table(items) %}
+{% macro singers_table(items, day) %}
 <table class="table">
-  <thead><tr><th>Received</th><th>Singer</th><th class="num">Amount</th><th>Payee</th><th>Bank</th></tr></thead>
+  <thead><tr><th>Received</th><th>Singer</th><th class="num">Amount</th><th>Payee</th><th>Bank</th><th>Action</th></tr></thead>
   <tbody>
   {% for s in items %}
     <tr>
@@ -61,6 +114,7 @@
       <td data-label="Bank"><span class="mono">{{ s.last4|last4 }}</span>
         {% if s.ring_first %} <span class="badge bad">changed: ring before paying</span>
         {% elif s.bank_changed %} <span class="badge warn">changed, confirmed by phone</span>{% endif %}</td>
+      <td data-label="Action">{{ singer_forms(s, day) }}</td>
     </tr>
   {% endfor %}
   </tbody>

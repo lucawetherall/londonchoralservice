@@ -48,6 +48,15 @@ def stamp(when):
     return dash.stamp(when)
 
 
+def open_singers(rows):
+    """dash.singers (the unpaid invoices, oldest first) with each row's action handle and allowed actions."""
+    out = []
+    for r in sorted(rows, key=lambda r: r.get("received") or ""):
+        for s in dash.singers([r]):
+            out.append(dict(s, **models.singer_actions(r)))
+    return out
+
+
 class Panel:
     """One source's result for a template: .value, or .error (a type name) with .stale (the last good value)."""
 
@@ -116,9 +125,15 @@ class Data:
         ledger = self.panel("ledger", lambda: lm.read_csv(cp.LEDGER))
         bank = self.panel("bank", lambda rows: self.bank(rows, today), ledger)
         store = self.panel("singer_store", lambda: lm.read_csv(si.STORE))
-        singers = self.panel("singers", dash.singers, store)
+        singers = self.panel("singers", open_singers, store)
         hand = self.panel("hand_check", lambda b: dash.hand_check(b["assessments"], today), bank)
         return now, today, ledger, bank, store, singers, hand
+
+    def clear_caches(self):
+        """"Refresh data now": the next page load reads the bank (and the health page's Starling check) afresh."""
+        with self._lock:
+            self._bank = None
+            self._starling = None
 
     # ------------------------------------------------------------ pages
 

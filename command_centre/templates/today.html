@@ -16,7 +16,7 @@
     {{ m.failed(warnings) }}
     {% if items %}
     <p>Ring the singer on a number you already have before paying.</p>
-    {{ m.singers_table(items) }}
+    {{ m.singers_table(items, action_day) }}
     {% elif warnings.ok %}<p class="muted">No changed bank details waiting.</p>{% endif %}
   </article>
 
@@ -24,8 +24,25 @@
   <article class="card{% if items %} card-warn{% endif %}">
     <h3>Needs a hand check</h3>
     {{ m.failed(hand) }}
-    {% if items %}{{ m.hand_table(items, bank.ok and bank.value.bank_checked) }}
+    {% if items %}{{ m.hand_table(items, bank.ok and bank.value.bank_checked, action_day) }}
     {% elif hand.ok %}<p class="muted">Nothing needs a hand check.</p>{% endif %}
+  </article>
+
+  <article class="card{% if waiting or (books.dry_run and not books.approved_at) %} card-warn{% endif %}">
+    <h3>Approvals waiting</h3>
+    {{ m.failed(proposals) }}
+    {% if waiting %}
+    <ul class="lines">
+      {% for p in waiting %}<li><a href="/marketing#proposals">{{ p.title }}</a> <span class="muted">(Ads change set{% if p.validated %}, checked with Google{% endif %})</span></li>{% endfor %}
+    </ul>
+    {% endif %}
+    {% if books.dry_run and not books.approved_at %}
+    <p>The 2026 Books import: a dry run is waiting in <span class="mono">~/lcs-private/books-import-2026.json</span>.</p>
+    {{ m.action_button("approve-books-import", "Approve the Books import") }}
+    {% elif books.approved_at %}
+    <p class="muted">Books import approved {{ books.approved_at[:10]|day }}; the chat or a session carries it out.</p>
+    {% endif %}
+    {% if not waiting and not (books.dry_run and not books.approved_at) %}<p class="muted">Nothing waiting for approval.</p>{% endif %}
   </article>
 
   {% set items = singers.value if singers.ok else (singers.stale or []) %}
@@ -34,7 +51,7 @@
     {{ m.failed(singers) }}
     {% if items %}
     <p>{{ items|length }} unpaid, {{ items|sum(attribute="amount")|gbp }}</p>
-    {{ m.singers_table(items) }}
+    {{ m.singers_table(items, action_day) }}
     {% elif singers.ok %}<p class="muted">No unpaid singer invoices.</p>{% endif %}
   </article>
 </section>

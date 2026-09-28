@@ -50,6 +50,21 @@
   {% endfor %}
   <a class="tab" href="/more"{% if not ns.tabbed %} aria-current="page"{% endif %}><span class="tab-dot" aria-hidden="true"></span>More</a>
 </nav>
+<dialog id="cc-dialog" class="dialog" aria-labelledby="cc-title">
+  <h2 id="cc-title">Check before you approve</h2>
+  <p id="cc-summary" class="dialog-summary"></p>
+  <p class="dialog-label">Command</p>
+  <pre id="cc-command" class="command"></pre>
+  <p id="cc-status" class="status" role="status" aria-live="polite"></p>
+  <pre id="cc-output" class="output" hidden></pre>
+  <div class="actions">
+    <button type="button" class="button" id="cc-approve">Approve with Face ID or Touch ID</button>
+    <button type="button" class="button" id="cc-next" hidden>Next</button>
+    <button type="button" class="button quiet" id="cc-close">Close</button>
+  </div>
+</dialog>
+<script src="/static/passkey.js" defer></script>
+<script src="/static/actions.js" defer></script>
 {% block scripts %}{% endblock %}
 </body>
 </html>

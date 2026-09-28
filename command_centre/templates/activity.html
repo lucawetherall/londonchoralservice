@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% import "macros.html" as m %}
+{% block content %}
+<form class="filters" method="get" action="/activity">
+  <label class="field">Action
+    <select name="action">
+      <option value="">all</option>
+      {% for n in names %}<option value="{{ n }}"{% if n == action_name %} selected{% endif %}>{{ n }}</option>{% endfor %}
+    </select>
+  </label>
+  <label class="field">Result
+    <select name="result">
+      <option value="">all</option>
+      {% for r in results %}<option value="{{ r }}"{% if r == result %} selected{% endif %}>{{ r }}</option>{% endfor %}
+    </select>
+  </label>
+  <label class="field">Text <input type="search" name="q" value="{{ text }}" maxlength="80"></label>
+  <button type="submit" class="button small">Filter</button>
+</form>
+
+{{ m.failed(entries) }}
+{% if shown %}
+<p class="muted">{{ shown|length }} of the last {{ (entries.value or [])|length }} entries, newest first. The log is append-only, in <span class="mono">~/lcs-private/command-centre/audit.jsonl</span>.</p>
+<ol class="activity">
+  {% for e in shown %}
+  {% set res = e.result|string %}
+  <li class="activity-item">
+    <div class="activity-head">
+      <span class="badge {{ 'ok' if res == 'ok' else ('' if res == 'started' else 'bad') }}">{{ res|masked }}</span>
+      <span class="mono">{{ e.action }}</span>
+      <span class="muted">{{ e.at|string|masked }}</span>
+      {% if e.exit_code is defined and e.exit_code is not none %}<span class="muted">exit {{ e.exit_code }}</span>{% endif %}
+    </div>
+    <p class="activity-summary">{{ e.summary|string|masked }}</p>
+    <p class="muted">
+      {% if e.login %}by {{ (e.login|string).split("@")[0]|truncate(40)|masked }}{% endif %}
+      {% if e.passkey %} · passkey {{ e.passkey }}{% endif %}
+      {% if e.input %} · input {% for k, v in e.input.items() %}{{ k }}={{ v|string|masked }}{{ ", " if not loop.last }}{% endfor %}{% endif %}
+      {% if e.output_sha256 %} · output sha256 <span class="mono">{{ e.output_sha256[:16] }}</span>{% endif %}
+    </p>
+  </li>
+  {% endfor %}
+</ol>
+{% elif entries.ok %}<p class="muted">{% if entries.value %}Nothing matches those filters.{% else %}No actions yet.{% endif %}</p>{% endif %}
+{% endblock %}
