@@ -5,7 +5,8 @@ Alma Consort Starling account, READ-ONLY (see lcs_money.StarlingReadOnly).
     .venv/bin/python scripts/bookings/check_payments.py                  # report
     .venv/bin/python scripts/bookings/check_payments.py --apply          # also update ledger notes
     .venv/bin/python scripts/bookings/check_payments.py --apply --json   # machine-readable, for the assistant;
-        each item's "action" is receipt | deposit_reminder | balance_reminder | hand_check | none (action_for)
+        each item's "action" is receipt | deposit_reminder | balance_reminder | hand_check | none (action_for),
+        and "record_in_books" lists its confident payments [[date, amount]] for the Books invoice (BOOKS_STATES)
     .venv/bin/python scripts/bookings/check_payments.py --reminded 2111 [--kind deposit|balance|receipt]
     .venv/bin/python scripts/bookings/check_payments.py --note 2111 "paid per client email 2026-09-28"
         (one line, at most 120 characters, no ';'; refuses the scripts' own phrases and the owner's hand-written
@@ -119,6 +120,9 @@ RECEIPT_DAYS = 14
 SHORT_NOTICE_DAYS = 10
 # A thank-you is only ever drafted in these states; notes are never rewritten in the others.
 RECEIPT_STATES = {"PAID_IN_FULL", "DEPOSIT_SEEN", "BALANCE_DUE", "NOTED_PAID"}
+# States whose confident payments the assistant records against the Books invoice (owner decision, 28 Sep 2026).
+# Every CHECK_*, PAST_*, NOTED_PAID, PAYMENT_* and CANCELLED state stays with the owner.
+BOOKS_STATES = {"PAID_IN_FULL", "DEPOSIT_SEEN", "BALANCE_DUE", "ARRANGED"}
 NEVER_WRITTEN = {"CANCELLED", "PAYMENT_ON_CANCELLED", "PAYMENT_AFTER_CLOSE"}
 # URLError and HTTPError are OSErrors too; a non-JSON 200 body (an outage page) is a JSONDecodeError
 STARLING_DOWN = (urllib.error.URLError, TimeoutError, OSError, json.JSONDecodeError)
@@ -544,6 +548,10 @@ def assess(r, paid, today):
         "short_notice": bool(invoice and event and (event - invoice).days <= SHORT_NOTICE_DAYS),
         "reminded": reminded,
         "just_received": just_received,  # draft a thank-you (action "receipt"); the one key for it
+        # confident payments to record against the Books invoice: [[date, amount]], oldest first; empty unless
+        # the state is settled enough and the confident payments don't exceed the booking's value
+        "record_in_books": ([[d, a] for d, a, _ in sorted(sure)]
+                            if state in BOOKS_STATES and total <= value + 0.01 else []),
     }
     out["action"] = action_for(out, today)
     return out

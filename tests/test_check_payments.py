@@ -1488,6 +1488,23 @@ def test_a_past_tense_rest_note_still_counts_as_paid():
     assert cp.assess(row("X", 500, "2026-09-01", "2026-10-30", "paid 14 Sep"), [], T)["state"] == "NOTED_PAID"
 
 
+
+def test_record_in_books_lists_only_confident_payments_in_settled_states():
+    sure = [("2026-09-27", 325.0, "reference")]
+    a = cp.assess(row("X", 650, "2026-09-20", "2026-11-21"), sure + [("2026-09-28", 100.0, "amount only")], T)
+    assert a["state"] == "CHECK_PAYMENT" and a["record_in_books"] == [], a  # an unconfirmed payment: owner checks
+    a = cp.assess(row("X", 650, "2026-09-20", "2026-11-21"), sure, T)
+    assert a["state"] == "DEPOSIT_SEEN" and a["record_in_books"] == [["2026-09-27", 325.0]], a
+    both = [("2026-09-28", 325.0, "name and amount"), ("2026-09-21", 325.0, "reference")]
+    a = cp.assess(row("X", 650, "2026-09-20", "2026-11-21"), both, T)
+    assert a["state"] == "PAID_IN_FULL" and a["record_in_books"] == [["2026-09-21", 325.0], ["2026-09-28", 325.0]]
+    a = cp.assess(row("X", 650, "2026-09-20", "2026-11-21"), both + [("2026-09-28", 50.0, "reference")], T)
+    assert a["record_in_books"] == [], a  # more than the booking's value: owner checks
+    a = cp.assess(row("X", 650, "2026-09-20", "2026-11-21", "cancelled 27 Sep"), sure, T)
+    assert a["record_in_books"] == [], a
+    a = cp.assess(row("X", 650, "2026-09-20", "2026-11-21"), [("2026-09-27", 325.0, "amount only")], T)
+    assert a["record_in_books"] == [], a
+
 if __name__ == "__main__":
     failures = 0
     for name, fn in sorted(globals().items()):
