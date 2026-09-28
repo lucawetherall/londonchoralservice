@@ -904,11 +904,11 @@ def test_assistant_paths_follow_the_private_dir():
 # --- round 5: resumed cancellations -------------------------------------------------------------
 
 def test_a_resumed_or_conditional_cancellation_is_not_cancelled():
-    for n in ("cancellation requested, then withdrawn", "cancelled then rebooked", "rain date if cancelled",
+    for n in ("cancellation requested, then withdrawn", "rain date if cancelled",
               "Cancellation requested 20 Sep; going ahead after all", "cancelled 20 Sep, reinstated 25 Sep",
               "if it is cancelled the deposit is kept"):
         assert not cp.is_cancelled(row("X", 500, "2026-09-01", "2026-10-30", n)), n
-    for n in ("cancelled 5 Oct", "rebooked for 2027; cancelled 5 Oct", "cancelled, not going ahead", "client cancelled after all",
+    for n in ("cancelled 5 Oct", "cancelled then rebooked", "rebooked for 2027; cancelled 5 Oct", "cancelled, not going ahead", "client cancelled after all",
               "cancellation requested, may be withdrawn", "Cancelled; deposit withdrawn from escrow"):
         assert cp.is_cancelled(row("X", 500, "2026-09-01", "2026-10-30", n)), n
 
@@ -923,7 +923,7 @@ def test_a_resumed_booking_is_chased_again():
 def test_a_kept_deposit_note_silences_earlier_payments_on_a_cancelled_booking():
     import money_report as mr
     paid = [("2026-08-05", 575.0, "reference")]
-    for n in ("Cancelled 15 Sep; deposit kept 2026-09-15", "cancelled; refunded 2026-09-20", "Cancelled; checked 2026-09-28",
+    for n in ("Cancelled 15 Sep; deposit kept 2026-09-15", "cancelled; refunded 2026-09-20", "Cancelled; payment checked 2026-09-28",
               "cancelled; Deposit Kept 2026-08-05"):
         r = row("4003", 1150, "2026-08-01", "2027-04-01", n, name="Gil Hart")
         a = cp.assess(r, paid, T)
@@ -1005,9 +1005,12 @@ def test_split_payments_from_the_client_are_a_hand_check_not_an_overdue_deposit(
     assert cp.match([r], [pay(300, "2026-03-10", "", "K NASH")], T)["4009"] == []
     # a whole-word surname only
     assert cp.match([r], [pay(300, "2026-09-10", "", "K NASHE")], T)["4009"] == []
-    # never on a cancelled or closed booking
-    for n in ("cancelled 5 Sep", "paid in full 2026-09-05"):
-        assert cp.match([dict(r, notes=n)], [pay(300, "2026-09-10", "", "K NASH")], T)["4009"] == [], n
+    # never on a closed booking; on a cancelled one it is the cancelled client's payment, a hand check
+    assert cp.match([dict(r, notes="paid in full 2026-09-05")], [pay(300, "2026-09-10", "", "K NASH")], T)["4009"] == []
+    gone = dict(r, notes="cancelled 5 Sep")
+    found = cp.match([gone], [pay(300, "2026-09-10", "", "K NASH")], T)
+    assert found["4009"] == [("2026-09-10", 300.0, "name, cancelled booking")], found
+    assert cp.assess(gone, found["4009"], T)["state"] == "PAYMENT_ON_CANCELLED"
 
 
 def test_an_odd_amount_after_the_deposit_is_a_possible_balance():
@@ -1029,6 +1032,112 @@ def test_updated_notes_drop_a_leftover_deposit_not_yet_seen():
         r = row("4001", 1150, "2026-09-10", "2027-05-01", before)
         a = cp.assess(r, paid, T)
         assert cp.updated_notes(r["notes"], a, paid) == after, (before, cp.updated_notes(r["notes"], a, paid))
+
+
+# --- round 6: only an explicit reversal undoes a cancellation ---------------------------------
+
+STAYS_CANCELLED = (
+    "Cancelled 1 Sep; rebooked with another choir", "cancelled - went with another choir after all",
+    "cancelled; wedding going ahead without music", "cancelled, going ahead at another venue with their organist",
+    "cancelled; they rebooked elsewhere", "cancelled; complaint withdrawn", "cancelled; offer withdrawn",
+    "cancellation requested; client says funeral going ahead elsewhere", "cancelled 2026-09-01; church booking withdrawn",
+    "cancelled; reinstated with a different choir", "cancelled; going ahead after all with another choir",
+    "cancelled; will get back on Monday about the refund")
+RESUMED_NOTES = ("cancellation requested, then withdrawn", "cancelled 2 Sep; reinstated 5 Sep", "cancelled but back on",
+                 "going ahead after all", "cancelled 20 Sep; cancellation withdrawn 22 Sep",
+                 "cancellation request withdrawn", "Cancelled 1 Sep; going ahead after all")
+
+
+def test_only_an_explicit_reversal_undoes_a_cancellation():
+    import money_report as mr
+    dep = [("2026-07-04", 575.0, "reference")]
+    for n in STAYS_CANCELLED:
+        r = row("4009", 1150, "2026-07-01", "2026-10-01", "deposit seen 2026-07-04 (Starling); " + n, name="Kim Nash")
+        assert cp.is_cancelled(r), n
+        a = cp.assess(r, dep, T)  # a live row would be BALANCE_DUE: a chase
+        assert a["state"] == "PAYMENT_ON_CANCELLED" and a["receipt_due"] is False and mr.needs_hand_check(a, T), (n, a["state"])
+    for n in RESUMED_NOTES:
+        r = row("4009", 1150, "2026-07-01", "2026-10-01", "deposit seen 2026-07-04 (Starling); " + n, name="Kim Nash")
+        assert not cp.is_cancelled(r), n
+        assert cp.assess(r, dep, T)["state"] == "BALANCE_DUE", n
+
+
+def test_collect_never_chases_a_booking_cancelled_for_another_choir():
+    rows = [row("0110", 1150, "2026-07-01", "2026-10-01",
+                "deposit seen 2026-07-04 (Starling); cancelled 2026-09-01, deposit kept; wedding going ahead without music"),
+            row("0112", 1150, "2026-09-01", "2027-01-12",
+                "PENDING: invoiced by enquiry assistant, deposit not yet seen; cancelled 2026-09-10, rebooked with another choir",
+                name="Bob Jones")]
+    got = {r["booking_ref"]: a for r, _, a in cp.collect(FakeClient([pay(575, "2026-07-04", "0110", "A SMITH")]), rows, T)}
+    assert set(got) == {"0110"} and got["0110"]["state"] == "PAYMENT_ON_CANCELLED", {k: a["state"] for k, a in got.items()}
+    assert not any(a["state"] in ("DEPOSIT_OVERDUE", "BALANCE_DUE") or a["receipt_due"] for a in got.values())
+
+
+# --- round 6: paid or negated cash notes are not an arranged balance -------------------------
+
+def test_a_paid_cash_note_is_noted_paid_not_arranged():
+    dep = [("2026-07-04", 575.0, "reference")]
+    for n in ("balance paid in cash on the day", "paid in full in cash on the day", "balance received in cash on the day",
+              "balance paid by cheque on the day 2026-10-01"):
+        assert cp.arranged_notes(n)[0] is False, n
+        for event in ("2026-10-01", "2026-09-20"):
+            a = cp.assess(row("4009", 1150, "2026-07-01", event, "deposit seen 2026-07-04 (Starling); " + n), dep, T)
+            assert a["state"] == "NOTED_PAID", (n, event, a["state"])
+    for n in ("balance to be paid in cash on the day", "deposit paid and balance to be paid in cash on the day",
+              "rest will be paid by cheque"):
+        a = cp.assess(row("4009", 1150, "2026-07-01", "2026-10-01", "deposit seen 2026-07-04 (Starling); " + n), dep, T)
+        assert a["state"] == "ARRANGED", (n, a["state"])
+
+
+def test_a_negated_or_refused_cash_note_is_chased_normally():
+    dep = [("2026-07-04", 575.0, "reference")]
+    for n in ("asked about paying cash on the day; told bank transfer only", "balance due by transfer not cash",
+              "refused to pay cash", "was going to pay cash but will transfer", "balance payable by BACS only no cash",
+              "balance due; cash on the day not accepted", "never pays cash", "nothing in cash on the day",
+              "won't pay by cheque on the day", "will pay by cheque instead"):
+        assert cp.arranged_notes(n)[0] is False, n
+        a = cp.assess(row("4009", 1150, "2026-07-01", "2026-10-01", "deposit seen 2026-07-04 (Starling); " + n), dep, T)
+        assert a["state"] == "BALANCE_DUE", (n, a["state"])
+    for n in ("asked about paying cash on the day, said no", "deposit due by transfer not cash"):
+        a = cp.assess(row("4010", 1150, "2026-09-01", "2027-01-09", "PENDING: deposit not yet seen; " + n), [], T)
+        assert a["state"] == "DEPOSIT_OVERDUE", (n, a["state"])
+
+
+# --- round 6: a cancelled client's unreferenced payment stays with the cancelled booking -----
+
+def test_a_cancelled_clients_unreferenced_payment_is_never_linked_to_a_live_booking():
+    import money_report as mr
+    rows = [row("6001", 1150, "2026-09-05", "2027-03-01", "Cancellation requested 20 Sep", name="Gwen Hall"),
+            row("6002", 1150, "2026-09-10", "2027-02-01", "PENDING: invoiced", name="Pat Lee")]
+    feed = [pay(575, "2026-09-26", "", "G HALL")]
+    found = cp.match(rows, feed, T)
+    assert found == {"6001": [("2026-09-26", 575.0, "name, cancelled booking")], "6002": []}, found
+    got = {r["booking_ref"]: a for r, _, a in cp.collect(FakeClient(feed), rows, T)}
+    assert got["6001"]["state"] == "PAYMENT_ON_CANCELLED" and mr.needs_hand_check(got["6001"], T), got["6001"]
+    assert got["6002"]["state"] == "DEPOSIT_OVERDUE" and got["6002"]["unconfirmed"] == [], got["6002"]
+    # the same client with a live booking too (a fee the payment doesn't fit): the live one is never chased
+    # as if nothing came in
+    rows.append(row("6003", 900, "2026-09-12", "2027-04-01", "PENDING: invoiced", name="Gwen Hall"))
+    found = cp.match(rows, feed, T)
+    assert [k for k, v in found.items() if v] == ["6001", "6003"], found
+    a = cp.assess(rows[2], found["6003"], T)
+    assert a["state"] == "CHECK_PAYMENT" and a["receipt_due"] is False, a
+
+
+# --- round 6: silencing notes -----------------------------------------------------------------
+
+def test_only_a_payment_check_note_silences_and_never_a_future_one():
+    paid = [("2026-08-05", 575.0, "reference")]
+    for n, state in (("Cancelled 15 Sep; venue availability checked 2026-09-20", "PAYMENT_ON_CANCELLED"),
+                     ("Cancelled 15 Sep; payment checked 2026-09-20", "CANCELLED"),
+                     ("Cancelled 15 Sep; refund checked 2026-09-20", "CANCELLED"),
+                     ("Cancelled 15 Sep; deposit checked 2026-09-20", "CANCELLED"),
+                     ("Cancelled 15 Sep; refund not checked 2026-09-20", "PAYMENT_ON_CANCELLED"),
+                     ("Cancelled 15 Sep; deposit kept 2026-12-20", "PAYMENT_ON_CANCELLED"),
+                     ("Cancelled 15 Sep; payment checked 2026-09-29", "PAYMENT_ON_CANCELLED"),
+                     ("Cancelled 15 Sep; refunded 2026-09-28", "CANCELLED")):
+        a = cp.assess(row("4003", 1150, "2026-08-01", "2027-04-01", n, name="Gil Hart"), paid, T)
+        assert a["state"] == state, (n, a["state"])
 
 
 if __name__ == "__main__":

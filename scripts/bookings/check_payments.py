@@ -30,7 +30,9 @@ or fee of open bookings inside their window: an "amount only" match, on each
 booking it fits, which is unconfirmed and never counts as paid. Failing that too,
 when the payer's name has an open booking's surname as a whole word inside its
 window (a split or odd amount: £300 then £275 from "K NASH"): "name only, amount
-differs", on each such booking, also unconfirmed.
+differs", on each such booking, also unconfirmed. A payment with no reference from a
+cancelled booking's client (surname, inside its window) is "name, cancelled booking"
+before any amount-only match, so it never lands on another client's live booking.
 
 States (assess): PAID_IN_FULL, DEPOSIT_SEEN, BALANCE_DUE (from 3 days before the
 event), AWAITING_DEPOSIT (until the deposit falls due: 7 days after the invoice,
@@ -49,18 +51,24 @@ be the balance paid by someone else), CHECK_VALUE (no readable booking value,
 invoice date or event date), CANCELLED ("cancelled", "cancellation confirmed",
 "received" or "requested", unless "if" or "unless" comes just before it ("rain date if
 cancelled"), or "cancelling" unless "may", "might", "thinking of" and the like come
-just before it; a later "withdrawn", "going ahead", "after all", "rebooked" or
-"reinstated" undoes it ("cancellation requested, then withdrawn"), unless negated or
-doubtful ("not going ahead", "may be withdrawn"); the row then drops out of
-everything), PAYMENT_ON_CANCELLED (a payment inside a cancelled booking's window; once
-the owner has dealt with it, "deposit kept YYYY-MM-DD", "refunded YYYY-MM-DD" or
-"checked YYYY-MM-DD" in the notes limits this to payments dated after that day, so
-with none the row drops off the hand check), PAYMENT_AFTER_CLOSE (a payment dated
+just before it; only a later explicit reversal undoes it: "reinstated",
+"cancellation (request) withdrawn" ("cancellation requested, then withdrawn"),
+"going ahead after all" or "back on", unless negated or doubtful ("may be
+reinstated") or followed within three words by with, elsewhere, another, without
+or different ("going ahead after all with another choir"); bare "rebooked",
+"withdrawn" or "going ahead" never undo it. The row then drops out of everything),
+PAYMENT_ON_CANCELLED (a payment inside a cancelled booking's window; once the owner
+has dealt with it, "deposit kept YYYY-MM-DD", "refunded YYYY-MM-DD" or "payment
+(refund, deposit) checked YYYY-MM-DD" in the notes limits this to payments dated
+after that day, so with none the row drops off the hand check; a date after today
+silences nothing), PAYMENT_AFTER_CLOSE (a payment dated
 after a "paid in full YYYY-MM-DD" note; received_since leaves it out) and ARRANGED
 (the notes say the balance will come in cash or by cheque: "balance to be paid in
 cash", "will pay balance in cash", "balance payable in cash on the day", "rest will
-be paid in cash", "cheque on the day"; not when negated, "won't pay cash on the day",
-and a note of the whole fee paid still wins. Never chased or thanked; on the Monday
+be paid in cash", "cheque on the day"; not when the clause has a paid word ("balance
+paid in cash on the day" is NOTED_PAID) or a negation, refusal or doubt anywhere in
+it ("told bank transfer only", "by transfer not cash", "going to pay cash but will
+transfer"), and a note of the whole fee paid still wins. Never chased or thanked; on the Monday
 hand check from 7 days before the event, or every week when no deposit is in the bank
 or the notes. A possible balance payment in the bank makes it CHECK_PAYMENT instead).
 Only DEPOSIT_OVERDUE and BALANCE_DUE are ever chased; just_received (a confident
@@ -227,11 +235,19 @@ CANCELLING = re.compile(r"\bcancell?ing\b", re.I)
 MAYBE_WORDS = {"may", "might", "considering", "thinking", "about", "of", "not", "possibly", "could"}
 # "cancelled" is not a cancellation with one of these within the three words before it ("rain date if cancelled")
 IF_WORDS = {"if", "unless"}
-# A later phrase that undoes the cancellation ("cancellation requested, then withdrawn", "cancelled then rebooked")
-RESUMED = re.compile(r"\b(withdrawn|reinstated|re-?booked|going ahead|after all)\b", re.I)
-# ...unless it is negated or doubtful ("not going ahead", "may be withdrawn")
+# Only an explicit reversal undoes the cancellation: "reinstated", "cancellation (request) withdrawn" ("cancellation
+# requested, then withdrawn"), "going ahead after all", "back on". Bare "rebooked", "withdrawn", "going ahead" or
+# "after all" never do: "rebooked with another choir", "complaint withdrawn", "going ahead without music".
+RESUMED = re.compile(
+    r"\breinstated\b|\bcancellation(?:\s+request(?:ed)?)?[\s,;]+(?:(?:then|now|since|later|was|is|has|had|been)\s+)*withdrawn\b"
+    r"|\bgoing\s+ahead\s+after\s+all\b|\bback\s+on\b", re.I)
+# ...unless it is negated or doubtful ("not going ahead after all", "may be reinstated")
 DOUBT_WORDS = MAYBE_WORDS | IF_WORDS | {"no", "never", "longer", "perhaps", "maybe", "hope", "hoping", "unlikely"}
-MONEY_WORDS = {"deposit", "payment", "money", "funds", "refund"}  # "deposit withdrawn" is not the booking
+# ...or another choir, venue or plan follows within three words ("reinstated with another choir")
+ELSEWHERE_WORDS = {"with", "elsewhere", "another", "without", "different"}
+# "get back on Monday" is a reply, not the booking
+CALL_WORDS = {"get", "gets", "got", "getting", "come", "comes", "came", "coming", "call", "ring", "phone", "reply",
+              "respond", "write", "email", "report", "text"}
 
 
 def words_before(notes, pos, n=3):
@@ -256,23 +272,24 @@ def is_cancelled(r):
         before = words_before(notes, m.start(), 4)
         if DOUBT_WORDS & set(before) or any(w.endswith(("n't", "n’t")) for w in before):
             continue
-        word = m.group(1).lower()
-        if word == "after all" and any(w.startswith("cancel") for w in before[-2:]):
-            continue  # "client cancelled after all"
-        if word == "withdrawn" and MONEY_WORDS & set(before):
+        if m.group(0).lower().startswith("back") and before[-1:] and before[-1] in CALL_WORDS:
+            continue
+        after = re.findall(r"[a-z'’]+", notes[m.end():].lower())[:3]
+        if ELSEWHERE_WORDS & set(after):
             continue
         return False
     return True
 
 
-# "deposit kept 2026-09-15", "refunded 2026-09-20", "checked 2026-09-28" on a cancelled row: payments up to that
-# date have been dealt with; only a later one is a hand check.
-SETTLED_NOTE = re.compile(r"(?<!not )\b(?:deposit kept|refunded|checked)\s+(\d{4}-\d{2}-\d{2})\b", re.I)
+# "deposit kept 2026-09-15", "refunded 2026-09-20", "payment checked 2026-09-28" on a cancelled row: payments up to
+# that date have been dealt with; only a later one is a hand check. A note dated after today silences nothing.
+SETTLED_NOTE = re.compile(
+    r"(?<!not )\b(?:deposit kept|refunded|(?:payment|refund|deposit) checked)\s+(\d{4}-\d{2}-\d{2})\b", re.I)
 
 
-def cancel_settled_on(r):
+def cancel_settled_on(r, today):
     days = [date_or_none(m.group(1)) for m in SETTLED_NOTE.finditer(r.get("notes") or "")]
-    return max((d for d in days if d), default=None)
+    return max((d for d in days if d and d <= today), default=None)
 
 
 def closed_on(r):
@@ -330,6 +347,11 @@ def match(rows, items, today):
             refs = [r["booking_ref"] for r in rows if not is_cancelled(r) and fits_amount(amount, r)
                     and in_window(r, when, today) and payer_is(r, payer)]
             how = "name and amount" if len(refs) == 1 else "name and amount, several bookings"
+            if not refs:  # a cancelled client paying without a reference: never an amount-only match on a live row
+                refs = [r["booking_ref"] for r in rows if is_cancelled(r) and in_window(r, when, today) and payer_is(r, payer)]
+                if refs:  # the same client's live booking gets it too, unconfirmed, so it is never chased meanwhile
+                    refs += [r["booking_ref"] for r in live if in_window(r, when, today) and payer_is(r, payer)]
+                how = "name, cancelled booking"
         if not refs:
             refs = [r["booking_ref"] for r in live if fits_amount(amount, r) and in_window(r, when, today)]
             how = "amount only" if len(refs) == 1 else "amount only, several bookings"
@@ -353,15 +375,24 @@ ARRANGED_NOTE = re.compile(
     r"|\b(?:will|to|going to)\s+(?:pay|bring)\b(?:(?![;.,]).){0,25}?\b(?:cash|cheque)\b"
     r"|\b(?:cash|cheque)\s+on\s+the\s+day\b", re.I)
 NEGATION = {"not", "no", "never", "longer", "wont", "cant"}
+# A clause with a paid word ("balance paid in cash on the day" is a note of payment, not an arrangement; "to be
+# paid" and "will be paid" still arrange), or with a negation, refusal or doubt anywhere in it ("told bank transfer
+# only", "by transfer not cash", "was going to pay cash but will transfer"), never arranges a balance.
+ARRANGED_PAID = re.compile(r"(?<!\bbe )(?<!\bdeposit )\b(paid|received|settled)\b", re.I)  # "deposit paid and ..." is the deposit
+NOT_ARRANGED = re.compile(r"\b(not|never|no|nothing|won['’]?t|refus\w*|told|asked|about|instead|only|but)\b", re.I)
 
 
 def arranged_notes(notes):
-    """(True when a clause arranges a cash or cheque balance, the notes without those clauses). A negated
-    arrangement ("won't pay cash on the day") doesn't count and stays in the notes."""
+    """(True when a clause arranges a cash or cheque balance, the notes without those clauses). A negated,
+    refused or already paid arrangement ("won't pay cash on the day", "balance paid in cash") doesn't count and
+    stays in the notes."""
     base = MARK_NOTE.sub(" ", AUTO_NOTE.sub(" ", notes or ""))
     keep, found = [], False
     for clause in CLAUSE.split(base):
         hit = False
+        if ARRANGED_PAID.search(clause) or NOT_ARRANGED.search(clause):
+            keep.append(clause)
+            continue
         for m in ARRANGED_NOTE.finditer(clause):
             before = words_before(clause, m.start(), 4)
             if not (NEGATION & set(before) or any(w.endswith(("n't", "n’t")) for w in before)):
@@ -421,7 +452,7 @@ def assess(r, paid, today):
     possible_balance = [p for p in maybe if first and (p[0] >= first or abs(p[1] - (value - total)) < 0.01)]
     flagged = []  # payments on a cancelled or closed booking: never chased or thanked, always a hand check
     if is_cancelled(r):
-        settled = cancel_settled_on(r)  # "deposit kept YYYY-MM-DD": payments up to then are dealt with
+        settled = cancel_settled_on(r, today)  # "deposit kept YYYY-MM-DD": payments up to then are dealt with
         flagged = [p for p in paid if in_window(r, p[0], today) and not (settled and p[0] <= settled.isoformat())]
         state = "PAYMENT_ON_CANCELLED" if flagged else "CANCELLED"
     elif close and any(d > close.isoformat() for d, _, _ in paid):

@@ -562,6 +562,8 @@ def cmd_settled(args, client=None):
     """The owner's hand command: an invoice paid outside the feed's reach. Marks it paid for its own amount,
     unverified; never trusts its bank details (bank_confirmed is left alone)."""
     day = strict_date(args.date)
+    if day > datetime.date.today().isoformat():  # a typo'd year never marks a payment that hasn't happened
+        raise SystemExit(f"{args.message_id}: {day} is after today; settle it on the day it was paid")
     rows = lm.read_csv(STORE)
     for r in rows:
         if r["message_id"] == args.message_id:

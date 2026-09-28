@@ -799,6 +799,20 @@ def test_settled_command_errors():
         assert si.STORE.read_text() == before
 
 
+def test_settled_refuses_a_date_after_today():
+    fresh_store()
+    scan(GEN.format(n=1), "g1", "2026-08-01")
+    before = si.STORE.read_text()
+    tomorrow = (datetime.date.today() + datetime.timedelta(days=1)).isoformat()
+    try:
+        settle("g1", tomorrow)
+        raise AssertionError(f"settled g1 on {tomorrow}")
+    except SystemExit as e:
+        assert "after today" in str(e.code), e.code
+    assert si.STORE.read_text() == before
+    assert settle("g1", datetime.date.today().isoformat()).strip() == "g1: settled by hand"
+
+
 def test_settled_cli():
     fresh_store()
     scan(GEN.format(n=1), "g1", "2026-08-01")
