@@ -7,7 +7,7 @@
 **Architecture:** `command_centre/` is a Starlette app served by uvicorn on `127.0.0.1:8765` only (or, optionally, a Unix socket in a mode-700 directory), and published to the tailnet by `tailscale serve`. Every request must come from a loopback peer with `Host` equal to the Mac's tailnet name (DNS rebinding); every request except `/healthz` must also carry the Tailscale identity headers for an allowed login; every write (from phase 3) also needs a WebAuthn assertion made in the last 60 seconds over a challenge bound to that action's summary. The data layer imports the existing read functions (`dashboard.py`, `check_payments`, `money_report`, `singer_invoices`, `pipeline`, `economics`, `weekly_review`) and never shells out to read. Pages are Jinja2 templates (autoescape on) with htmx served from `static/`, and nothing is loaded from any other origin.
 
 **Tech Stack:**
-- Python 3 in the repo's `.venv`: `starlette`, `jinja2`, `uvicorn`, `webauthn` (py_webauthn), pinned to exact versions with their dependencies in `scripts/requirements.txt`. Test-only: `httpx2` (Starlette's TestClient) in `scripts/requirements-dev.txt`, which `install.sh` never installs. Later, also pinned: `pywebpush` (phase 5), `claude-agent-sdk` (phase 4).
+- Python 3 in the repo's `.venv`: `starlette`, `jinja2`, `uvicorn`, `webauthn` (py_webauthn), pinned to exact versions with their dependencies in `scripts/requirements.txt`. Test-only: `httpx2` (Starlette's TestClient) in `scripts/requirements-dev.txt`, which `install.sh` never installs. Later, also pinned: `pywebpush` (phase 5). No `claude-agent-sdk`: Claude work is done through Claude Code Remote Control from the owner's phone, not an in-app chat (owner decision, 2026-09-28; PR #161 closed unmerged).
 - htmx 2.0.11, vendored as `command_centre/static/htmx.min.js` (from the npm package `htmx.org@2.0.11`, tarball integrity `sha512-Thx/WtpeOQqSrqBCw/A1cwGJGg4UrVa3+sW0GmrM3p4gJgO89ecH4qtbnyzDDWFvBTqjnIMCgELTNt636dtamA==`; file SHA-256 `d6fdc75f204e6bdefa99b69bf1e6d4ac69b8a364f77929f45c13476b4000f717`).
 - Tests are stdlib-only scripts in the repo's style, with Starlette's `TestClient`: `.venv/bin/python tests/test_cc_auth.py`.
 
@@ -41,7 +41,7 @@
 | `command_centre/models.py`, `sources.py`, `todo.py` | Pure page builders; cache, report and health readers; the to-do parser and tick store | 2 |
 | `command_centre/actions.py` | The action registry: validated input, preview, fixed argv, audit log | 2 (the to-do tick), 3 |
 | `command_centre/jobs.py` | Refresh jobs and caches, backups | 5 |
-| `command_centre/chat.py` | Claude Agent SDK session, streaming, approval cards | 4 |
+| `command_centre/static/handoffs.js` | Copy-to-clipboard handoff prompts for Claude Code Remote Control (no server-side execution) | 4 |
 | `command_centre/push.py` | Web Push, events watcher | 5 |
 | `tests/test_cc_*.py` | One test file per module | all |
 
@@ -231,7 +231,7 @@ Config, `~/lcs-private/command-centre/config.json` (mode 600):
 **Goal:** the action registry, every write behind a passkey (the to-do tick and "refresh data now" excepted), fixed argv lists with no shell, an append-only audit log, and an Activity page. These are the app's first writes to the ledger, the singer store and Google Ads, so each step below is test-first and the owner-only operations are closed to anything Claude can run unprompted.
 
 **Scope changes from the outline:**
-- **Run a scheduled task now** moves to phase 4. There is no reliable local trigger for a scheduled task (the task metadata has no run command, and a headless `claude -p` started from the app would sit outside the scheduler's own bookkeeping). In phase 4 the chat can ask Claude to run a task's prompt under the repo's guards.
+- **Run a scheduled task now** moves to phase 4. There is no reliable local trigger for a scheduled task (the task metadata has no run command, and a headless `claude -p` started from the app would sit outside the scheduler's own bookkeeping). Phase 4 has no chat to ask, so the app just explains: use Run now on the task in the Claude app (Routines).
 - **Back up now** moves to phase 5 with the backup job itself.
 - **Task 3.0, the 30-minute refresh job** (`jobs.py` writing `cache/{ads,ga4,gsc,books,drafts,calendar}.json`), moves to phase 5 with the other background jobs. Phase 3's "Refresh data now" re-runs `scripts/reports/dashboard.py` and clears the app's in-memory caches (the 10-minute bank cache and the Starling health check).
 - **Approve the 2026 Books import** writes an approval record only. The app never calls Books.
@@ -289,7 +289,7 @@ The allowlist entry `Bash(.venv/bin/python scripts/bookings/check_payments.py --
 | `todo-tick` | as phase 2 | local record | no |
 
 - **Ads proposals:** `~/lcs-private/command-centre/proposals/<id>.json`, `{id, kind: "ads", title, summary, script_path, created, commit, script_blob, args?}`, written by the Monday review in future. Refused unless: the file is a regular file (no symlink), owned by this user, mode exactly 600, has no other field, its `id` matches the file name (`^[a-z0-9][a-z0-9-]{0,63}$`), `kind` is `ads`, `script_path` matches `^scripts/ads/[a-z0-9_]+\.py$`, `commit` and `script_blob` are full ids, and `args` (optional) is at most 12 simple tokens (`^[A-Za-z0-9][A-Za-z0-9._]{0,63}$`: never a flag, a path or a space). The commit, blob and running are Task 3.5. `ads-validate` records `{commit, blob, args, sha256 of the raw output}` (exit 0 only, kept 15 minutes, in memory); `ads-apply` is refused without that record or when any of the four changed, takes the record atomically when it starts (one apply per validate), and its summary names the commit, the blob and the validate output's hash, so the second passkey tap is bound to the output the owner saw. After a successful apply the app writes `proposals/<id>.applied` (mode 600: commit, blob, args, hashes, login, passkey); that proposal, and any other with the same blob and args, is no longer offered. The scripts keep their own £5 cap and write `logs/ads-changes.md` themselves.
-- **Books import approval:** refused unless `~/lcs-private/books-import-2026.json` (the dry run, MANUAL-ACTIONS §20) exists; the summary names its sha256, entry count, total and first and last refs; the record `{approved_at, approved_by, passkey, dry_run_sha256, entries, total_gbp, first_ref, last_ref, instruction}` is written once (mode 600, directory 700). Phase 4's chat, or a session the owner starts, acts on it and must check the dry run's hash still matches.
+- **Books import approval:** refused unless `~/lcs-private/books-import-2026.json` (the dry run, MANUAL-ACTIONS §20) exists; the summary names its sha256, entry count, total and first and last refs; the record `{approved_at, approved_by, passkey, dry_run_sha256, entries, total_gbp, first_ref, last_ref, instruction}` is written once (mode 600, directory 700). Phase 4's handoff prompt points a Claude Code Remote Control session at it, and that session must check the dry run's hash still matches.
 - **Where:** hand checks on Today, Money and each booking's timeline; singer confirm, settle and withdraw on Singers and on the singer rows of Today and Money; ads proposals on Marketing, counted on Today with the Books approval; Refresh data now on Health.
 - [x] Tests: every action's valid and invalid input and exact argv; the ads path checks (outside `scripts/ads/`, a symlink, untracked, modified, wrong mode, id mismatch: each refused); apply without a validate, after the blob changed, or twice: refused; one real run of `check_payments.py --note … --owner` through the full route against a temp ledger.
 
@@ -318,15 +318,15 @@ The reviewer showed that an Ads validate could run code that wasn't the committe
 - [x] Fake data on `127.0.0.1:8795` with the dev login: the dialogs up to the passkey step (a dev browser has no passkey), at 390px and 1280px; the assertion is covered by the unit tests with a software authenticator. Stop the server.
 - [x] Every `tests/test_*.py`; commit; PR; don't merge.
 
-## Phase 4: chat (expand before building)
+## Phase 4: Handoffs (done)
 
-**Goal:** Claude Code in the app under the repo's own guards.
+**Goal:** no in-app chat and no server-side execution of Claude tool calls. Claude work is done through Claude Code Remote Control from the owner's phone; the app's job is only to put a correct, useful prompt on the clipboard.
 
-- **Task 4.1 `chat.py`.** `claude-agent-sdk` with `cwd=REPO` and the repo's `.claude/settings.json` and hooks; a permission callback that turns any tool call outside the allowlist into an approve/deny card; approving needs a passkey bound to the card's summary.
-- **Task 4.2 Streaming.** Server-sent events to `static/chat.js`; a stop button; a conversation list stored under `~/lcs-private/command-centre/chats/`.
-- **Task 4.3 Quick prompts** and the queue for approved instructions: the Books import approval record from phase 3 (`approvals/books-import-2026.json`, acted on only while the dry run's hash matches), page fixes.
-- **Task 4.4 Run a scheduled task now** (moved from phase 3): the chat asks Claude to run the task's prompt, under the repo's guards.
-- Tests: a crashed chat leaves the other pages working; a denied card never runs the tool.
+- **Task 4.1 Books import handoff.** When `~/lcs-private/command-centre/approvals/books-import-2026.json` exists and its `dry_run_sha256` still matches the current dry-run list, Today and Marketing show a "Copy prompt for Remote Control" button. It copies a fixed, server-written instruction naming the two files, the approval hash and the guard doc (`docs/superpowers/specs/2026-09-28-zoho-books-design.md`), asking Claude Code to check the hash, create each invoice as a draft under the guard, and report. It never includes any record's own text (client names, amounts, refs).
+- **Task 4.2 Run a scheduled task now.** Not an app action: Runs and health explains "Use Run now on the task in the Claude app (Routines)". No button, nothing to copy.
+- **Task 4.3 Quick prompts.** Fixed copy-to-clipboard buttons naming the relevant scripts and files: "What's owed this week?", "Summarise today's business", "Why is `<ref>` on the hand check?" (with a ref picker filled from the current hand-check list), "Draft a reply to `<thread>`" (from Bookings/Enquiries thread ids). Each prompt is built entirely server-side from fixed templates plus the chosen ref/thread id; no free text from the page reaches the prompt.
+- **Task 4.4 UI.** `static/handoffs.js` (no inline code, CSP self-only): `navigator.clipboard.writeText`, with a fallback that selects a `<textarea>`/`<pre>` holding the text for a manual copy when the Clipboard API is unavailable or refuses (not a secure context, permission denied). Copying needs no passkey and is not a registered action: nothing runs, nothing is sent to the server beyond the page load that rendered the fixed text.
+- Tests: each quick prompt's exact text for known fixtures; the Books import button appears only when the approval file exists and its hash matches, and disappears (or shows why) when the dry run has moved on; the ref picker only offers refs currently on the hand check; no handoff route accepts free text from the client into the copied prompt; `handoffs.js` contains no `eval`, inline handler or non-`self` fetch.
 
 ## Phase 5: PWA, push, drafts inbox, quote calculator, backups (expand before building)
 

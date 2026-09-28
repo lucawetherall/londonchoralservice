@@ -585,6 +585,15 @@ def test_books_import_approval_writes_one_record():
     assert oct(os.stat(rec_path.parent).st_mode & 0o777) == "0o700"
     assert preview(c, "approve-books-import", {}).json()["error"] == "already approved"
     assert audit_lines()[-1]["result"] == "ok"
+    # There is no in-app chat and the app never runs Claude Code itself: once approved, Today offers a fixed
+    # copy-to-clipboard handoff prompt for Claude Code Remote Control instead.
+    out = page(c, "/")
+    assert 'class="button quiet cc-copy"' in out and "Copy prompt for Remote Control" in out
+    assert "books-import-2026.json" in out and sha[:16] in out
+    assert "docs/superpowers/specs/2026-09-28-zoho-books-design.md" in out
+    assert "never send, void or record a payment" in out
+    prompt = re.search(r'data-prompt="([^"]*)"[^>]*>Copy prompt for Remote Control', out).group(1)
+    assert "2111" not in prompt and "0310" not in prompt and "650" not in prompt and "1,225" not in prompt
 
 
 # ---------------------------------------------------------------- Ads proposals

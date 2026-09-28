@@ -573,3 +573,77 @@ def export_pipeline(enquiries, cache):
     cols = [c for c in pl.COLUMNS if c not in ("notes", "gclid")]
     rows = [[r.get(c, "") for c in cols] + [campaign_for(r, cache) or ""] for r in enquiries]
     return cols + ["campaign"], rows
+
+
+# ---------------------------------------------------------------- handoff prompts (Claude Code Remote Control)
+#
+# There is no in-app chat and the app never runs Claude Code itself (see docs/superpowers/specs/
+# 2026-09-28-command-centre-design.md, binding rule 6). These build the fixed text a "Copy prompt for Remote
+# Control" button puts on the clipboard: plain templates plus a ref/thread id already on the page, never free
+# text typed into the app. Copying needs no passkey, because nothing runs until the owner pastes the prompt
+# into Claude Code Remote Control on his phone.
+
+BOOKS_IMPORT_PROMPT = (
+    "Run the owner-approved Zoho Books 2026 import: read ~/lcs-private/books-import-2026.json and "
+    "~/lcs-private/command-centre/approvals/books-import-2026.json{approval}, check the approval's dry-run "
+    "sha256 still matches the dry run, then create each invoice as a draft in Zoho Books under the guard "
+    "(see docs/superpowers/specs/2026-09-28-zoho-books-design.md) — never send, void or record a payment — "
+    "then report."
+)
+
+
+def books_import_handoff(approval):
+    """The fixed Books-import handoff prompt, or None while there's nothing approved to hand off. `approval` is
+    actions.books_status()'s dict. The prompt never carries any record's own text (client names, amounts,
+    refs): only the file paths, the guard doc, and the approval's own sha256 prefix, which is a fingerprint of
+    the record, not its content, and is already shown on the page."""
+    if not approval or not approval.get("approved_at"):
+        return None
+    sha = approval.get("dry_run_sha256")
+    detail = f" (approval hash {sha[:16]}…)" if sha else ""
+    return BOOKS_IMPORT_PROMPT.format(approval=detail)
+
+
+def whats_owed_prompt():
+    return (
+        "What's owed this week? Read the ledger and the Starling balance the way "
+        "scripts/reports/dashboard.py and scripts/bookings/money_report.py do, and scripts/bookings/"
+        "check_payments.py for anything on the hand check. Summarise what's due this week, what's overdue, "
+        "and what's outstanding from singers (scripts/bookings/singer_invoices.py). Read only; don't change "
+        "anything."
+    )
+
+
+def summarise_today_prompt():
+    return (
+        "Summarise today's business: today's and this week's events from the ledger "
+        "(scripts/reports/dashboard.py), anything on the hand check (scripts/bookings/check_payments.py), "
+        "enquiries needing a follow-up (scripts/bookings/pipeline.py) and anything flagged on the Command "
+        "Centre's Runs and health page. A few lines, read only."
+    )
+
+
+def hand_check_prompt(ref, label=""):
+    """`ref` must already be a value the hand-check panel produced (REF_RE); the caller only offers refs
+    currently on the hand check, so this never becomes a way to name an arbitrary ledger row from free text."""
+    if not isinstance(ref, str) or not REF_RE.fullmatch(ref):
+        return None
+    why = f" (currently: {label})" if label else ""
+    return (
+        f"Why is {ref} on the hand check{why}? Read scripts/bookings/check_payments.py's assessment for {ref} "
+        f"against the ledger (scripts/bookings/money_report.py) and, if the Starling token is available, the "
+        f"bank transactions, and explain what would resolve it. Read only; don't change anything."
+    )
+
+
+def draft_reply_prompt(thread_id):
+    """`thread_id` must be an enquiry id the caller already has (pl.ID_RE) — an enquiry the pipeline knows
+    about, not a value typed into the app."""
+    if not isinstance(thread_id, str) or not pl.ID_RE.fullmatch(thread_id):
+        return None
+    return (
+        f"Draft a reply to {thread_id}: read the Zoho thread for enquiry {thread_id} "
+        f"(scripts/bookings/pipeline.py), Luca's quote style (~/lcs-private/email-style.md) and his most "
+        f"recent sent replies for the same kind of booking, checked against the stop-slop skill. Prices from "
+        f"pricing.html/christmas-pricing.html. Save the reply as a Zoho draft only — never send it."
+    )

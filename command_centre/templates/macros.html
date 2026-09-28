@@ -142,3 +142,25 @@
 {% endmacro %}
 
 {% macro passkey_line(info) %}{% if info.count %}{{ info.count }} passkey{{ "" if info.count == 1 else "s" }}{% if info.last_added %}, last added {{ info.last_added|london_day }}{% endif %}.{% else %}No passkeys yet.{% endif %}{% endmacro %}
+
+{#- Handoffs: copy a fixed, server-written prompt to the clipboard for Claude Code Remote Control. Nothing
+    runs here and no passkey is needed — see docs/superpowers/specs/2026-09-28-command-centre-design.md,
+    binding rule 6. `prompt` is plain text the server built; it is never taken from a form field. #}
+{% macro copy_button(prompt, label="Copy prompt for Remote Control") %}
+{% if prompt %}
+<button type="button" class="button quiet cc-copy" data-prompt="{{ prompt }}">{{ label }}</button>
+{% endif %}
+{% endmacro %}
+
+{% macro handoff_picker(id_prefix, label, options) %}
+{% if options %}
+<div class="handoff">
+  <label class="field" for="{{ id_prefix }}-select">{{ label }}
+    <select id="{{ id_prefix }}-select" class="handoff-select">
+      {% for value, prompt in options %}<option value="{{ value }}" data-prompt="{{ prompt }}">{{ value }}</option>{% endfor %}
+    </select>
+  </label>
+  <button type="button" class="button quiet cc-copy-select" data-select="{{ id_prefix }}-select">Copy prompt for Remote Control</button>
+</div>
+{% endif %}
+{% endmacro %}

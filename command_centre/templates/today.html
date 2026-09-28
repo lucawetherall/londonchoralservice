@@ -40,7 +40,13 @@
     <p>The 2026 Books import: a dry run is waiting in <span class="mono">~/lcs-private/books-import-2026.json</span>.</p>
     {{ m.action_button("approve-books-import", "Approve the Books import") }}
     {% elif books.approved_at %}
-    <p class="muted">Books import approved {{ books.approved_at[:10]|day }}; the chat or a session carries it out.</p>
+    <p class="muted">Books import approved {{ books.approved_at[:10]|day }}.</p>
+    {% if handoffs.books %}
+    <p>Claude Code Remote Control carries it out under the guard.</p>
+    {{ m.copy_button(handoffs.books) }}
+    {% else %}
+    <p class="muted">The dry run has moved on since it was approved: re-check before handing it off.</p>
+    {% endif %}
     {% endif %}
     {% if not waiting and not (books.dry_run and not books.approved_at) %}<p class="muted">Nothing waiting for approval.</p>{% endif %}
   </article>
@@ -71,6 +77,18 @@
     {{ m.failed(later) }}
     {% if items %}{{ m.events_table(items) }}
     {% elif later.ok %}<p class="muted">Nothing further ahead in the ledger.</p>{% endif %}
+  </article>
+</section>
+
+<section class="card-group" aria-labelledby="handoffs">
+  <h2 id="handoffs" class="group-title">Handoffs</h2>
+  <article class="card card-wide">
+    <p class="muted">Copy a prompt for Claude Code Remote Control on your phone. Nothing runs from this page.</p>
+    <ul class="lines">
+      <li>{{ m.copy_button(handoffs.whats_owed, "What's owed this week?") }}</li>
+      <li>{{ m.copy_button(handoffs.summarise_today, "Summarise today's business") }}</li>
+    </ul>
+    {{ m.handoff_picker("hand-handoff", "Why is this on the hand check?", handoffs.hand) }}
   </article>
 </section>
 
