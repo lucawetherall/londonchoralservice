@@ -16,9 +16,12 @@ number anywhere in a write call may carry bank details (in any format, any
 country), VAT wording or Greek/Cyrillic lookalike letters, and no invoice or bill
 text may mention tax. An attachment must be a .pdf or .docx inside
 ~/lcs-private/invoices/.
-Claude never emails, reminds, deletes, voids, records a payment or matches a
-bank transaction in Books, and never updates an invoice: those stay the owner's
-job. Invoices are created as drafts (`send` absent or false) and carry the DDMM
+Claude never emails, reminds, deletes, voids or matches a bank transaction in
+Books, and never updates an invoice: those stay the owner's job. It records a
+payment only with create_customer_payment or create_vendor_payment, against one
+invoice or bill, under their checks below (owner decisions, 28 Sep 2026).
+Calls that go around this hook (a script starting the server itself) are
+refused by mcp_bypass_guard.py. Invoices are created as drafts (`send` absent or false) and carry the DDMM
 booking ref as their number. The guard fails closed: any error, or a tool_input
 of the wrong shape, denies the call.
 Design: docs/superpowers/specs/2026-09-28-zoho-books-design.md
