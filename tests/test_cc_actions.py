@@ -233,9 +233,9 @@ DASH = str(Path(ROOT) / "scripts" / "reports" / "dashboard.py")
 def test_registry_and_passkey_flags():
     assert set(actions.REGISTRY) == {"todo-tick", "resolve-hand-check", "singer-confirm", "singer-settled",
                                      "singer-withdrawn", "refresh-data", "ads-validate", "ads-apply",
-                                     "approve-books-import"}
+                                     "approve-books-import", "push-subscribe", "push-unsubscribe", "backup-now"}
     no_passkey = {n for n, a in actions.REGISTRY.items() if not a.passkey}
-    assert no_passkey == {"todo-tick", "refresh-data"}, no_passkey
+    assert no_passkey == {"todo-tick", "refresh-data", "push-unsubscribe", "backup-now"}, no_passkey
     assert "todo-tick" not in actions.ROUTED
 
 
@@ -1484,7 +1484,9 @@ def test_the_apps_own_commands_are_not_allowlisted_unless_safe():
         "singer-settled": {"invoice": key, "date": D},
         "singer-withdrawn": {"invoice": key, "reason": "not-ours"},
         "refresh-data": {},
+        "backup-now": {},
     }
+    write_config(backup={"recipient": "age1test", "target": TMP})
     seen = set()
     for name, inp in samples.items():
         defn = actions.REGISTRY[name]
@@ -1502,7 +1504,7 @@ def test_the_apps_own_commands_are_not_allowlisted_unless_safe():
                         f"{allowlist.PY} scripts/ads/set_budget.py 111 4.50 {flag}"):
                 assert not allowlist.allowed(cmd, pats), cmd
             seen.add(name)
-    seen |= {"approve-books-import", "todo-tick"}  # no subprocess
+    seen |= {"approve-books-import", "todo-tick", "push-subscribe", "push-unsubscribe"}  # no subprocess
     assert seen == set(actions.REGISTRY)
     # the guarded one really is matched, and its refusal is tested in test_check_payments.py
     cmd = claude_form(actions.RESOLVE_HAND_CHECK.argv(actions.RESOLVE_HAND_CHECK.validate(samples["resolve-hand-check"])))

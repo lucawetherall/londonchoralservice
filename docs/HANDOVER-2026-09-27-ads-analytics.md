@@ -330,6 +330,7 @@ Plain English, short, UK spelling, no preamble:
 - An economics block: section 11's per-campaign lines, then section 12's proposals with "Budget proposals are waiting in the command centre" (or "budgets match the season's windows"), then, on the first Monday of the month, section 13's shortlist.
 - Proposed changes as a numbered list: resource → field: current → new, with a reason. Include step 1's ad fixes, step 3's negatives, 5's MANUAL-ACTIONS line, only those 6j budget proposals the report could not write to the Command Centre (as Ads change sets) and 6k's page fixes as site changes. Text only: no scripts are written in this run.
 - End with ONE question asking the owner to approve the change set, by number: all, some or none. In the same question, ask whether any WhatsApp enquiry this week turned into a booking and, if so, to paste its "Ad ref" line.
+- Just before you reply, run `.venv/bin/python scripts/reports/cc_event.py monday-ready` (no arguments: the notification is a fixed text), so the owner's phone is told.
 If nothing needs changing, say so and ask only the WhatsApp question. After approval, in a later message: set up the worktree, write the scripts for exactly what was approved, run each validate-only (stop and report if the output differs from the approved change), apply it with --apply, log it, commit on the worktree branch, open a PR, and merge it (docs and scripts only, no site pages).
 ```
 

@@ -240,11 +240,52 @@ def mcp_checks():
     return [check(f"MCP {n}", n in names, "configured" if n in names else "not configured") for n in MCP_NAMES]
 
 
-def fingerprint_check():
+BACKUP_STALE = datetime.timedelta(hours=36)
+
+
+def backup_status(now):
+    """The last backup, from <private>/command-centre/backup-state.json (written by scripts/reports/cc_backup.py):
+    {"at", "age", "name", "size", "stale", "configured"}. The backup folder itself isn't listed (iCloud may hold
+    it offline). Only the public recipient's presence is checked; nothing secret is read."""
+    try:
+        cfg = auth.load_config()
+    except (OSError, ValueError):
+        cfg = {}
+    block = cfg.get("backup") if isinstance(cfg.get("backup"), dict) else {}
+    found = read_json(auth.config_dir() / "backup-state.json")
+    state = found[0] if found and isinstance(found[0], dict) else {}
+    try:
+        at = datetime.datetime.fromisoformat(str(state.get("at"))).astimezone(LONDON) if state.get("at") else None
+    except ValueError:
+        at = None
+    age = now - at if at else None
+    return {"at": at, "age": age, "name": str(state.get("name") or "")[:80], "size": state.get("size"),
+            "stale": age is None or age > BACKUP_STALE, "configured": bool(block.get("recipient"))}
+
+
+def age_words(age):
+    hours = int(age.total_seconds() // 3600)
+    return f"{hours} hours ago" if hours < 48 else f"{hours // 24} days ago"
+
+
+def backup_check(now):
+    b = backup_status(now)
+    if not b["configured"]:
+        return check("Backup", False, "no backup key yet: run scripts/reports/cc_backup.py init on the Mac")
+    if b["at"] is None:
+        return check("Backup", False, "no backup yet: tap Back up now, then install the nightly LaunchAgent")
+    detail = f"last {age_words(b['age'])}" + (" (over 36 hours: check the nightly LaunchAgent)" if b["stale"] else "")
+    return check("Backup", not b["stale"], detail)
+
+
+def fingerprint_check(now=None):
     present = (private() / "fingerprint.key").exists()
     if not present:
-        return check("Fingerprint key", False, "fingerprint.key not found (backups arrive in phase 5)")
-    return check("Fingerprint key", None, "present; backup age: no backups yet (the backup job arrives in phase 5)")
+        return check("Fingerprint key", False, "fingerprint.key not found")
+    b = backup_status(now or datetime.datetime.now(LONDON))
+    if b["at"] is None:
+        return check("Fingerprint key", None, "present; not in a backup yet")
+    return check("Fingerprint key", not b["stale"], f"present; in the encrypted backup of {age_words(b['age'])}")
 
 
 def disk_check():

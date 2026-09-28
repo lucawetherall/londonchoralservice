@@ -7,6 +7,8 @@ socket.
 - CC_DEV_LOGIN, for a local check only, stands in for the Tailscale identity headers. create_app refuses it on
   port 8765 and on the socket; the LaunchAgent sets it to "".
 
+The service (port 8765 or the socket) also runs the push watcher (command_centre/push.py).
+
 On start, logs over 5 MB in ~/lcs-private/command-centre/logs are rotated (3 kept): launchd can't rotate them.
 """
 import argparse
@@ -94,10 +96,12 @@ def main(argv=None):
     common = dict(proxy_headers=False, server_header=False, date_header=False, access_log=False, log_level="info")
     if args.uds:
         path = prepare_uds(args.uds)
-        uvicorn.run(create_app(bind_host=HOST, uds=path), uds=path, **common)
+        uvicorn.run(create_app(bind_host=HOST, uds=path, watch=True), uds=path, **common)
     else:
         port = int(os.environ.get("CC_PORT", str(auth.SERVICE_PORT)))
-        uvicorn.run(create_app(bind_host=HOST, port=port), host=HOST, port=port, **common)
+        # the push watcher runs in the service only, never on a spare port for a local check
+        uvicorn.run(create_app(bind_host=HOST, port=port, watch=port == auth.SERVICE_PORT), host=HOST, port=port,
+                    **common)
 
 
 if __name__ == "__main__":

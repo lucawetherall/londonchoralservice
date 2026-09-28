@@ -30,6 +30,8 @@ SHELL COMMANDS (only these, from the repo folder)
   .venv/bin/python scripts/bookings/pipeline.py review-skipped <invoice ref> <planner|unresolved>
   .venv/bin/python scripts/bookings/pipeline.py done-due
   .venv/bin/python scripts/reports/dashboard.py
+  .venv/bin/python scripts/reports/cc_event.py deposit --first <first name> --ref <invoice ref>
+  .venv/bin/python scripts/reports/cc_event.py hand-check --ref <invoice ref> --state <state>
   .venv/bin/python scripts/reports/cc_sync.py books
   .venv/bin/python scripts/reports/cc_sync.py calendar-put '<one-line JSON list of events>'
   Never pipe or use a heredoc into these: calendar-put takes its JSON as the one single-quoted argument, with any apostrophe written as ’.
@@ -37,10 +39,10 @@ SHELL COMMANDS (only these, from the repo folder)
 A booking's thread: `pipeline.py thread <ref>`; on "no thread", ZohoBooks_list_invoices by invoice_number → customer_id → ZohoBooks_get_contact → ZohoMail_SearchEmails for that email. Read the whole thread before drafting. If Drafts already holds this step's draft for the thread, draft nothing and just run the recording command.
 
 a. Payments: run `check_payments.py --apply --json` ([] when Starling is unavailable: skip a). Act on each booking's "action" only:
-   - receipt: unless Luca has already thanked them, a reply thanking them for the payment and confirming their date is secured. Either way `--reminded <ref> --kind receipt` and `pipeline.py status <threadId> deposit_paid` (ignore "no enquiry").
+   - receipt: unless Luca has already thanked them, a reply thanking them for the payment and confirming their date is secured. Either way `--reminded <ref> --kind receipt` and `pipeline.py status <threadId> deposit_paid` (ignore "no enquiry"). Then `.venv/bin/python scripts/reports/cc_event.py deposit --first <first name> --ref <ref>`.
    - deposit_reminder: if the client says they've paid or Luca has acknowledged a payment, draft nothing and list it under "Money to check by hand". Otherwise a short reminder: invoice number, the first instalment (or, when short_notice is true, the full fee, due before the event), that it secures the date, and "do let me know if you've already sent it". Then `--reminded <ref> --kind deposit`.
    - balance_reminder: the same paid check. Otherwise a short reminder: the balance, due the day before the event, and "the bank details are on your invoice". Then `--reminded <ref> --kind balance`. For a funeral add "funeral: check tone before sending".
-   - hand_check: draft nothing; list under "Money to check by hand" with ref, state and £.
+   - hand_check: draft nothing; list under "Money to check by hand" with ref, state and £. Then `.venv/bin/python scripts/reports/cc_event.py hand-check --ref <ref> --state <state>` (the state exactly as check_payments.py gives it; no name).
 b. Follow-ups: `pipeline.py followups-due` (never a funeral or a booked client). For each (enquiry_id = threadId):
    - Client wrote since Luca's last message: `contact <id> <date>`, no draft.
    - Luca already chased by hand: `followed <id> <n> <date he sent it>`, no draft.

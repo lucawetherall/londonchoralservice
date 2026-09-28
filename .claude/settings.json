@@ -47,6 +47,7 @@
       "Agent(lcs-daily-pass)",
       "Bash(.venv/bin/python scripts/bookings/pipeline.py *)",
       "Bash(.venv/bin/python scripts/reports/dashboard.py)",
+      "Bash(.venv/bin/python scripts/reports/cc_event.py *)",
       "mcp__caefd5da-81a5-4eb0-993a-dfeaa5b9d7c1__list_calendars",
       "mcp__caefd5da-81a5-4eb0-993a-dfeaa5b9d7c1__list_events",
       "mcp__caefd5da-81a5-4eb0-993a-dfeaa5b9d7c1__search_events",
@@ -61,6 +62,7 @@
       "Bash(git update-ref *)",
       "Bash(git remote set-url *)",
       "Bash(git config *)",
+      "Bash(*cc_backup.py init*)",
       "Edit(.git/**)"
     ]
   },

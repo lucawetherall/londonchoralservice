@@ -46,6 +46,17 @@ These are the programme's rules, plus:
   - *Checks under one lock, and a tamper-evident log.* The action lock is taken before validation, so the `.applied` check and the validate record are read under it. Refusals at the run step are logged with the action name and a hash of the input. Each audit line carries the sha256 of the line before it; Activity shows whether the chain is whole, its line count and the last line's hash, and each `.applied` record stores that hash as it stood after the apply. If the `.applied` record can't be written after a successful apply, the result says "applied, but the record couldn't be saved: DO NOT re-apply" and an in-memory marker refuses the change set until the app restarts. `.claude/settings.json` denies `git update-ref`, `git remote set-url`, `git config` and edits under `.git/`.
   - **Residual risk (accepted):** code on GitHub's `main` is trusted. Getting a script there takes a merged pull request, and Claude may merge its own; the owner's passkey tap, after reading the diff and git facts in the preview, is the last check. The preview shows the script's own last change only: a change to a sibling module in `scripts/` that the script imports is not in that diff, so the link to the commit is there to read further.
   - **Residual risk (accepted): the interpreter and its site-packages.** The app runs Ads scripts with its own Python (the repo's `.venv`), and that venv's site-packages, including any `.pth` file (which Python executes at start-up even with `-E -s`), the installed `google-ads` library, the `git` binary, the mirror and the private folder are all trusted. They belong to the same macOS user as the app, and a process running as that user could alter any of them. The mirror and the run folder stop the working tree and its git state from changing what runs; they do not stop that user. A process running as the owner outside Claude's tools (a command the owner approves at a prompt) can still write a nonce file or edit the ledger directly, as before.
+- **Phone and push (the security review of phase 5):**
+  - *Push endpoints can't be turned into requests elsewhere (SSRF).* A subscription's endpoint must be ASCII https on a known push service host (Apple, Google, Mozilla, Microsoft), with no whitespace or backslash anywhere, no `%`, `;`, `@` or brackets in the host part, a host of DNS labels (`^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}$`, so no IP literal, empty label or trailing dot), no port but 443, and no user info, query or fragment; and urllib3's reading of the host (what requests connects to) must equal urlsplit's, which closes the `https://127.0.0.1\.push.apple.com/` parser differential. The check runs at subscribe time and again before every send, and the push session follows no redirect (`max_redirects = 0`, `allow_redirects=False` forced) and refuses any URL the check refuses.
+  - *Nothing a prompt or an email says reaches the lock screen.* `cc_event.py` takes a kind and validated fields only (a first name matching `^[A-Z][a-z'’-]{1,20}$`, a booking ref matching `^[A-Z0-9-]{3,20}$`, an ISO date or "tbc", and words from fixed lists), and the app builds each notification from a fixed template, validating the stored fields again at push time. Notifications still show on the lock screen: turn off lock-screen previews for this app in iOS Settings if you prefer.
+  - *A flood can't bury the phone.* At most 5 pushes per watcher pass plus one "And N more", and at most 20 in any hour. A line in `events.jsonl` longer than 256 KB is skipped rather than stalling the watcher.
+  - *Offline copies expire.* The service worker deletes its saved Today and Money pages when either returns 401 or 403, refuses a copy more than 7 days old (its `X-CC-Saved-At` stamp), and deletes them on "Clear offline copies" (/device) and when notifications are turned off. The banner says "Couldn't reach the Mac (showing the copy from <time>)".
+  - *The test key store stays in the tests.* `CC_VAPID_STORE=file` is refused by the live service (the watcher, the socket or port 8765).
+- **Backups:**
+  - `cc_backup.py init` prints the age identity once and only to a terminal: it refuses when stdout isn't a TTY, and `.claude/settings.json` denies Claude `Bash(*cc_backup.py init*)`, so the key can't end up in a pipe, a log or a transcript.
+  - `run` streams the tar.gz through an `os.pipe` into age (a second thread writes the archive), and `verify` decrypts through a pipe the same way, so no plaintext copy of the private folder is written to disk. FileVault stays on as the backstop for everything else in `~/lcs-private`. Interrupted runs' `.part` files are removed after a day.
+  - *iCloud background writes (check once).* macOS can hold back or delay a LaunchAgent's writes into iCloud Drive (a privacy prompt, "Optimise Mac Storage", or iCloud being signed out). After installing the nightly job, check the next morning that Health shows a backup under 36 hours old and that the file has reached iCloud (it appears on another device or on iCloud.com). If it doesn't, set `backup.target` in the config to a local folder and copy it off the Mac another way.
+- **Keychain ACL (accepted).** Choosing "Always Allow" for the `lcs-starling-read` and `lcs-command-centre-vapid` items adds the repo's `.venv` python to each item's access list, so any script that python runs as the owner can read them without a prompt, including a script a Claude session runs with `.venv/bin/python`. The `security find-generic-password` deny covers the CLI only, not a Python call into the Security framework. This is the same-user risk above; "Allow" (once) instead of "Always Allow" narrows it at the cost of a prompt on each service start.
 - **Out of the model:** a compromised macOS account, or root. Those own the Keychain and the private files anyway.
 
 ## Architecture
@@ -73,6 +84,11 @@ iPhone / iPad / laptop ──Tailscale (WireGuard, HTTPS via tailscale serve)─
 - **Service:**
   - A LaunchAgent `com.lcs.command-centre.plist`, started at login and restarted on crash, with logs to `~/lcs-private/command-centre/logs/`.
   - A one-time `tailscale serve --bg --https=443 http://127.0.0.1:8765` makes it reachable at `https://<mac>.<tailnet>.ts.net`.
+- **Access from the phone (owner decision, phase 5):** Tailscale only, and the phone doesn't keep the VPN on.
+  - In the Tailscale admin console (DNS), MagicDNS and HTTPS certificates are on: the Home Screen app and Web Push need the real ts.net certificate.
+  - An iPhone Shortcut "LCS" (Tailscale → Connect, then Open URL `https://<mac>.<tailnet>.ts.net/`) on the Home Screen is the main way in; an optional second Shortcut disconnects.
+  - Web Push arrives with the VPN off, through Apple's push service. The Mac sends it over its normal internet connection, never through the tailnet.
+  - With the VPN off, the installed app shows the last Today and Money pages it saw, marked "Couldn't reach the Mac (showing the copy from <time>)", after a fetch timeout of at most 4 seconds. A copy more than 7 days old isn't shown; a 401 or 403, "Clear offline copies" on /device and turning notifications off delete them. Nothing that writes works offline.
   - Both steps are scripted in `command_centre/install.sh`. The owner runs it once; it is idempotent and needs no secrets.
 - **Config:** `~/lcs-private/command-centre/config.json`. It holds the allowed Tailscale login(s), the passkey credentials (public keys only), the push subscriptions and the backup target.
 
@@ -165,8 +181,8 @@ Not in the app: sending email, payments, payees, deletes, and Books sends or voi
   - a scheduled run failed or wasn't seen for more than 3 hours in the daytime;
   - the Monday review is ready;
   - a hand check was added.
-- **Sources:** hooks and scripts append events to `~/lcs-private/command-centre/events.jsonl`, and the app watches the file and pushes. The scheduled prompts also add one line each: "append an event" via a tiny `cc_event.py` CLI, which is allowlisted.
-- **Content:** a short title and a first name only. Full detail opens in the app.
+- **Sources:** hooks and scripts append events to `~/lcs-private/command-centre/events.jsonl`, and the app watches the file and pushes. The scheduled prompts also add one line each via a tiny `cc_event.py` CLI, which is allowlisted. It takes a kind and validated fields, never free text: `enquiry --first <Name> --occasion <fixed list> --date <ISO|tbc>`, `deposit --first <Name> --ref <ref>`, `hand-check --ref <ref> --state <fixed list>`, `bank-change --first <Name>`, `guard-denied --agent <reply-drafter|singer-clerk|daily-pass|monday>`, `run-failed`, `monday-ready`.
+- **Content:** a short title and a body from a fixed template per kind: a first name, a booking ref, a date and fixed words only. Full detail opens in the app. At most 5 per watcher pass (then one "And N more") and 20 an hour. They show on the lock screen: turn off lock-screen previews for this app in iOS Settings if you prefer.
 
 ## Data freshness
 
@@ -183,7 +199,7 @@ Not in the app: sending email, payments, payees, deletes, and Books sends or voi
 ## Backups
 
 - A nightly encrypted archive of `~/lcs-private`, keeping 14 days, in `tar` + `age` format.
-- The recipient key is in the Keychain; the identity key is printed once for the owner to store in his password manager.
+- The recipient (public) key is in the config (it is not a secret, and the nightly run needs no Keychain prompt); the identity key is printed once for the owner to store in his password manager, and never stored on the Mac.
 - The target is iCloud Drive `LCS-backups/` by default (config).
 - A restore procedure is documented.
 - The health page warns if the last backup is more than 36 hours old.
