@@ -406,6 +406,77 @@ def test_an_unloadable_guard_allows_no_books_tool():
     assert lcs_mcp.books_read_allow(odd) == frozenset({"ZohoBooks_list_invoices"})
 
 
+def test_a_bare_command_is_found_in_the_node_folders():
+    """launchd gives the Command Centre a bare PATH: a bare `npx` is looked for in the usual Node folders."""
+    seen = []
+
+    def which(cmd, path=None):
+        seen.append((cmd, path))
+        return f"{path}/{cmd}" if path == "/fake/node/bin" else None
+    assert lcs_mcp.resolve_command("zoho-books", "/abs/npx", "/usr/bin", dirs=["/x"], which=which) == ("/abs/npx", None)
+    assert seen == []  # a path is used as it is
+    assert lcs_mcp.resolve_command("zoho-books", "npx", "/fake/node/bin", dirs=["/x"], which=which) == ("npx", None)
+    seen.clear()
+    found = lcs_mcp.resolve_command("zoho-books", "npx", "/usr/bin:/bin", dirs=["/opt/none", "/fake/node/bin"],
+                                    which=which)
+    assert found == ("/fake/node/bin/npx", "/fake/node/bin"), found
+    assert seen == [("npx", "/usr/bin:/bin"), ("npx", "/opt/none"), ("npx", "/fake/node/bin")], seen
+    try:
+        lcs_mcp.resolve_command("zoho-books", "npx", "/usr/bin", dirs=["/opt/none"], which=lambda c, path=None: None)
+    except lcs_mcp.CommandNotFound as e:
+        assert isinstance(e, lcs_mcp.McpError) and str(e).startswith("zoho-books: ") and "npx" not in str(e), e
+    else:
+        raise AssertionError("no CommandNotFound")
+
+
+def test_fallback_folders_are_homebrew_then_nvm_newest_first():
+    home = Path(tempfile.mkdtemp())
+    for v in ("v18.19.0", "v20.11.1", "v9.0.0"):
+        (home / ".nvm" / "versions" / "node" / v / "bin").mkdir(parents=True)
+    dirs = lcs_mcp.fallback_dirs(home)
+    assert dirs[:2] == ["/opt/homebrew/bin", "/usr/local/bin"], dirs
+    assert [Path(d).parent.name for d in dirs[2:]] == ["v20.11.1", "v18.19.0", "v9.0.0"], dirs
+    assert lcs_mcp.fallback_dirs(Path(tempfile.mkdtemp())) == ["/opt/homebrew/bin", "/usr/local/bin"]
+
+
+def test_the_session_starts_the_resolved_command_with_its_folder_on_path():
+    """No real server: a fake Node folder holds an executable `npx`, and a popen stand-in records what would run."""
+    node = Path(tempfile.mkdtemp())
+    fake = node / "lcs-fake-npx"
+    fake.write_text("#!/bin/sh\nexit 0\n")
+    fake.chmod(0o700)
+    cfg = config("bare", entry={"command": "lcs-fake-npx", "args": [SECRET]})
+    calls = []
+
+    def popen(argv, **kw):
+        calls.append((argv, kw))
+        raise OSError("not starting anything in a test")
+    saved = (lcs_mcp.REPO, lcs_mcp.NODE_DIRS, os.environ.get("PATH"))
+    lcs_mcp.REPO, lcs_mcp.NODE_DIRS = Path(REPO), (str(node),)
+    os.environ["PATH"] = "/usr/bin:/bin:/usr/sbin:/sbin"  # launchd's
+    try:
+        msg = fails(lambda: lcs_mcp.zoho_original_message("1788039834223141600", config_path=cfg, popen=popen))
+        assert msg == "zoho-mail: could not start the MCP server", msg
+        argv, kw = calls[0]
+        assert argv == [str(fake), SECRET], argv
+        assert kw["env"]["PATH"].split(os.pathsep)[0] == str(node), kw["env"]["PATH"]
+        calls.clear()
+        lcs_mcp.NODE_DIRS = ()
+        missing = config("bare-missing", entry={"command": "lcs-no-such-npx", "args": [SECRET]})
+        saved_home = os.environ.get("HOME")
+        os.environ["HOME"] = tempfile.mkdtemp()  # no nvm folders either
+        try:
+            msg = fails(lambda: lcs_mcp.zoho_original_message("1788039834223141600", config_path=missing,
+                                                             popen=popen))
+        finally:
+            os.environ["HOME"] = saved_home
+        assert calls == [] and msg.startswith("zoho-mail: the MCP server's command isn't on PATH"), msg
+        assert "SECRETTOKEN" not in msg and "lcs-no-such-npx" not in msg, msg
+    finally:
+        lcs_mcp.REPO, lcs_mcp.NODE_DIRS = saved[0], saved[1]
+        os.environ["PATH"] = saved[2]
+
+
 if __name__ == "__main__":
     failures = 0
     for name, fn in sorted(globals().items()):

@@ -239,20 +239,52 @@ def booking_singer_list(ref, event_date, singer_rows):
 BOOKS_UNPAID = {"sent", "viewed", "unpaid", "overdue"}
 STARLING_MATCHED = {"DEPOSIT_SEEN", "PAID_IN_FULL"}
 DRAFT_DAYS = 2  # Appendix A step 6g: a Books draft more than 2 days old
+LEDGER_SETTLED = {"PAID_IN_FULL", "CLOSED", "CANCELLED", "PAYMENT_ON_CANCELLED"}  # not "open" for the ledger rule
 
 
-def books_summary(cache):
-    """The Money page's Books panel from books.json: totals, draft and overdue invoice numbers, and when it was
-    synced (an aware datetime, or None when the stamp is unreadable)."""
+BOOKS_STALE = datetime.timedelta(hours=24)  # Today warns when books.json is older than this
+
+
+def books_synced(cache, now):
+    """{generated_at (an aware datetime, or None when unreadable), stale} for the "as of" line on Today."""
+    try:
+        when = datetime.datetime.fromisoformat(str(cache.get("generated_at")))
+    except ValueError:
+        when = None
+    if when is not None and when.tzinfo is None:
+        when = when.replace(tzinfo=dash.LONDON)
+    if now.tzinfo is None:
+        now = now.replace(tzinfo=dash.LONDON)
+    return {"generated_at": when, "stale": when is None or now - when > BOOKS_STALE}
+
+
+def ledger_href(number, ledger_rows):
+    """/bookings/<ref> for the ledger booking whose ref is this Books number (check_payments.norm_ref on both), or
+    None when there is no such booking."""
+    key = cp.norm_ref(str(number or ""))
+    for r in ledger_rows or []:
+        ref = (r.get("booking_ref") or "").strip()
+        if key and cp.norm_ref(ref) == key and REF_RE.fullmatch(ref):
+            return f"/bookings/{ref}"
+    return None
+
+
+def books_summary(cache, ledger_rows=None):
+    """The Money page's Books panel from books.json: totals, draft and overdue invoices ({number, href}: the ledger
+    booking's page, or None when the ledger has no such booking), and when it was synced (an aware datetime, or
+    None when the stamp is unreadable)."""
     try:
         when = datetime.datetime.fromisoformat(str(cache.get("generated_at")))
     except ValueError:
         when = None
     invoices = [i for i in cache.get("invoices") or [] if isinstance(i, dict)]
+
+    def listed(keep):
+        numbers = sorted(str(i.get("number", "")) for i in invoices if keep(i))
+        return [{"number": n, "href": ledger_href(n, ledger_rows)} for n in numbers]
     return {"totals": cache.get("totals") or {}, "generated_at": when,
-            "drafts": sorted(str(i.get("number", "")) for i in invoices if i.get("status") == "draft"),
-            "overdue": sorted(str(i.get("number", "")) for i in invoices
-                              if i.get("status") == "overdue" and float(i.get("balance") or 0) > 0)}
+            "drafts": listed(lambda i: i.get("status") == "draft"),
+            "overdue": listed(lambda i: i.get("status") == "overdue" and float(i.get("balance") or 0) > 0)}
 
 
 def books_invoice(ref, invoices):
@@ -283,10 +315,24 @@ def books_flags(invoices, ledger_rows, bookings, today, bank_checked):
     - Starling matched a payment (DEPOSIT_SEEN, PAID_IN_FULL, or a "paid in full" note) but Books shows the invoice
       unpaid or overdue with nothing paid: "Starling matched, Books unpaid"; or part-paid when Starling says paid in
       full: "Starling paid in full, Books part-paid".
-    The two Starling comparisons are skipped when the bank wasn't checked, as 6g skips them."""
+    The two Starling comparisons are skipped when the bank wasn't checked, as 6g skips them.
+
+    And the ledger against Books (the caller passes a cache, so these never run while Books isn't synced):
+    - an open ledger booking (not cancelled, not closed, not paid in full) invoiced at least 2 days ago with no
+      Books invoice of its ref (a void one doesn't count): "in the ledger, not in Books";
+    - a Books invoice, not a draft or void, whose number is no ledger ref: "in Books, not in the ledger".
+    Each flag carries `href`: the ledger booking's page, or None when the ledger has no such booking."""
     rows = {cp.norm_ref(r.get("booking_ref")): r for r in ledger_rows if (r.get("booking_ref") or "").strip()}
     states = {cp.norm_ref(b.get("ref")): b.get("state") for b in bookings}
     out = []
+
+    def flag(number, text, tone):
+        row = rows.get(cp.norm_ref(number))
+        ref = (row.get("booking_ref") or "").strip() if row else ""
+        out.append({"ref": number, "text": text, "tone": tone,
+                    "href": f"/bookings/{ref}" if ref and REF_RE.fullmatch(ref) else None})
+
+    in_books = set()
     for i in invoices or []:
         if not isinstance(i, dict):
             continue
@@ -294,9 +340,13 @@ def books_flags(invoices, ledger_rows, bookings, today, bank_checked):
         key = cp.norm_ref(number)
         status = str(i.get("status") or "")
         made = to_date(i.get("date"))
+        if key and status != "void":
+            in_books.add(key)
+        if key and status not in ("draft", "void") and key not in rows:
+            flag(number, "in Books, not in the ledger", "warn")
         if status == "draft":
             if made and (today - made).days > DRAFT_DAYS:
-                out.append({"ref": number, "text": "Books draft not sent (>2 days)", "tone": "warn"})
+                flag(number, "Books draft not sent (>2 days)", "warn")
             continue
         if not bank_checked or key not in rows:
             continue
@@ -305,11 +355,49 @@ def books_flags(invoices, ledger_rows, bookings, today, bank_checked):
         matched = full or state in STARLING_MATCHED
         total, balance = float(i.get("total") or 0), float(i.get("balance") or 0)
         if status == "paid" and not full:
-            out.append({"ref": number, "text": "Books paid, Starling not matched", "tone": "bad"})
+            flag(number, "Books paid, Starling not matched", "bad")
         elif status in BOOKS_UNPAID and matched and total > 0 and balance >= total - 0.005:
-            out.append({"ref": number, "text": "Starling matched, Books unpaid", "tone": "warn"})
+            flag(number, "Starling matched, Books unpaid", "warn")
         elif status == "partially_paid" and full:
-            out.append({"ref": number, "text": "Starling paid in full, Books part-paid", "tone": "warn"})
+            flag(number, "Starling paid in full, Books part-paid", "warn")
+    for key, r in rows.items():
+        invoiced = to_date(r.get("invoice_date"))
+        if key in in_books or cp.is_cancelled(r) or cp.closed_on(r) or invoiced is None \
+                or states.get(key) in LEDGER_SETTLED:
+            continue
+        if (today - invoiced).days >= DRAFT_DAYS:
+            flag(r["booking_ref"].strip(), "in the ledger, not in Books", "warn")
+    return sorted(out, key=lambda f: (f["ref"], f["text"]))
+
+
+def _bill_first(r):
+    return si.first_name(r.get("singer_name"))
+
+
+def singer_bill_flags(store_rows, bills):
+    """The singer store against the Books bills, for Today's Books and Starling card: [{ref, text, tone, href}].
+
+    - a singer invoice paid with paid_verified "yes" whose Books bill (singer_invoices.books_bill) is still open
+      with a balance: "paid in Starling, bill open in Books";
+    - a Books bill marked paid whose invoice is still open here (not paid, not withdrawn): "bill paid in Books,
+      invoice open here".
+    `ref` is the bill number and the first name ("SI-12345 Jane"); `href` is the Singers page."""
+    out = []
+    for r in store_rows or []:
+        if si.is_withdrawn(r):
+            continue
+        bill = si.books_bill(r, bills)
+        if bill is None:
+            continue
+        number = si.bill_number(r.get("invoice_ref"), r.get("message_id"))
+        label = f"{mask_digits(number)} {_bill_first(r)}".strip()
+        status = str(bill.get("status") or "")
+        balance = float(bill.get("balance") or 0)
+        if r.get("paid_on") and r.get("paid_verified") == "yes" and status not in ("paid", "void") and balance > 0:
+            out.append({"ref": label, "text": "paid in Starling, bill open in Books", "tone": "warn", "href": "/singers"})
+        elif status == "paid" and si.is_open(r):
+            out.append({"ref": label, "text": "bill paid in Books, invoice open here", "tone": "warn",
+                        "href": "/singers"})
     return sorted(out, key=lambda f: (f["ref"], f["text"]))
 
 
@@ -698,18 +786,19 @@ def export_pipeline(enquiries, cache):
 BOOKS_IMPORT_PROMPT = (
     "Run the owner-approved Zoho Books 2026 import: read ~/lcs-private/books-import-2026.json and "
     "~/lcs-private/command-centre/approvals/books-import-2026.json{approval}, check the approval's dry-run "
-    "sha256 still matches the dry run, then create each invoice as a draft in Zoho Books under the guard "
+    "sha256 still matches the dry run, first list the invoices already in Books and skip any invoice number "
+    "that already exists, then create each remaining invoice as a draft in Zoho Books under the guard "
     "(see docs/superpowers/specs/2026-09-28-zoho-books-design.md) — never send, void or record a payment — "
-    "then report."
+    "then report. I mark the import done on the Command Centre's Today page afterwards."
 )
 
 
 def books_import_handoff(approval):
-    """The fixed Books-import handoff prompt, or None while there's nothing approved to hand off. `approval` is
-    actions.books_status()'s dict. The prompt never carries any record's own text (client names, amounts,
-    refs): only the file paths, the guard doc, and the approval's own sha256 prefix, which is a fingerprint of
-    the record, not its content, and is already shown on the page."""
-    if not approval or not approval.get("approved_at"):
+    """The fixed Books-import handoff prompt, or None unless the import is approved, matches the dry run and isn't
+    done yet (state "approved"). `approval` is actions.books_status()'s dict. The prompt never carries any
+    record's own text (client names, amounts, refs): only the file paths, the guard doc, and the approval's own
+    sha256 prefix, which is a fingerprint of the record, not its content, and is already shown on the page."""
+    if not approval or approval.get("state") != "approved" or not approval.get("approved_at"):
         return None
     sha = approval.get("dry_run_sha256")
     detail = f" (approval hash {sha[:16]}…)" if sha else ""

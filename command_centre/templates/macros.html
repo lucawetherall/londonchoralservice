@@ -146,6 +146,8 @@
 {#- Handoffs: copy a fixed, server-written prompt to the clipboard for Claude Code Remote Control. Nothing
     runs here and no passkey is needed — see docs/superpowers/specs/2026-09-28-command-centre-design.md,
     binding rule 6. `prompt` is plain text the server built; it is never taken from a form field. #}
+{% macro ref_link(text, href) %}{% if href %}<a class="mono" href="{{ href }}">{{ text }}</a>{% else %}<span class="mono">{{ text }}</span>{% endif %}{% endmacro %}
+
 {% macro copy_button(prompt, label="Copy prompt for Remote Control") %}
 {% if prompt %}
 <button type="button" class="button quiet cc-copy" data-prompt="{{ prompt }}">{{ label }}</button>

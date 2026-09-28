@@ -16,6 +16,9 @@ tools/call, returns the text content and kills the process.
   no exception raised here carries them: errors name the server only, and any
   text passed on from the server is scrubbed of URLs and of the args.
 - The server's stderr is discarded (mcp-remote logs the URL there).
+- A bare command (the config's `npx`) not on the child's PATH is looked for in /opt/homebrew/bin, /usr/local/bin
+  and nvm's folders (launchd gives the Command Centre a bare PATH); none found raises CommandNotFound, an
+  McpError that names the server only.
 - The server runs in its own session and process group; close() kills the whole group (npx's children
   too), and never waits on a pipe a stray grandchild might still hold open. A single reply is capped at
   MAX_REPLY characters.
@@ -25,6 +28,7 @@ import json
 import os
 import queue
 import re
+import shutil
 import signal
 import subprocess
 import threading
@@ -47,6 +51,48 @@ PROTOCOL = "2025-06-18"
 
 class McpError(Exception):
     """Raised with the server name only: never the command, args or URL."""
+
+
+class CommandNotFound(McpError):
+    """The server's command is a bare name found neither on PATH nor in the usual Node folders (NODE_DIRS)."""
+
+
+NODE_DIRS = ("/opt/homebrew/bin", "/usr/local/bin")  # Homebrew on Apple silicon, then Intel (and the Node installer)
+NVM_GLOB = ".nvm/versions/node/*/bin"  # under HOME: each nvm-installed Node, newest version first
+
+
+def _version_key(path):
+    """Sort key for an nvm folder ("…/node/v20.11.1/bin"): the version as numbers, unreadable ones last."""
+    name = Path(path).parent.name.lstrip("v")
+    try:
+        return tuple(int(x) for x in name.split("."))
+    except ValueError:
+        return ()
+
+
+def fallback_dirs(home=None):
+    """The folders searched for a bare command that isn't on PATH: NODE_DIRS, then nvm's, newest first."""
+    home = Path(home) if home is not None else Path.home()
+    nvm = sorted((str(p) for p in home.glob(NVM_GLOB) if p.is_dir()), key=_version_key, reverse=True)
+    return [*NODE_DIRS, *nvm]
+
+
+def resolve_command(name, command, env_path, dirs=None, which=shutil.which):
+    """(the command to run, the folder to put first on the child's PATH or None). A command with a "/" is used
+    as it is; a bare name is looked up on `env_path` (the PATH the child gets), then in `dirs` (fallback_dirs()).
+    When found in a fallback folder, that folder goes first on the child's PATH too, so a `#!/usr/bin/env node`
+    script such as npx finds node beside it. Raises CommandNotFound naming the server only (launchd's bare PATH
+    has no Node: command_centre/install.sh adds its folders)."""
+    if "/" in command:
+        return command, None
+    if which(command, path=env_path):
+        return command, None
+    for d in (fallback_dirs() if dirs is None else dirs):
+        found = which(command, path=d)
+        if found:
+            return found, d
+    raise CommandNotFound(f"{name}: the MCP server's command isn't on PATH or in the usual Node folders "
+                          f"(re-run command_centre/install.sh, or check the MCP config)")
 
 
 def books_read_allow(path=BOOKS_GUARD):
@@ -140,6 +186,9 @@ class _Session:
         self._deadline = None
         self._timeout = timeout
         full_env = {**os.environ, **{k: str(v) for k, v in env.items()}}
+        command, first = resolve_command(name, command, full_env.get("PATH", os.defpath))
+        if first:
+            full_env["PATH"] = os.pathsep.join(p for p in (first, full_env.get("PATH", "")) if p)
         try:
             # its own session: close() can kill the whole process group, npx's children included
             self.proc = popen([command, *args], stdin=subprocess.PIPE, stdout=subprocess.PIPE,

@@ -195,7 +195,9 @@ def create_app(client_factory=data.default_client, now=None, clock=None, passkey
         waiting = [p for p in (props.value or []) if not p["applied"] and not p["problem"]] if props.ok else []
         books = actions.books_status()
         ctx = reader.today_page()
-        ctx["attention"] += len(waiting) + (1 if books["dry_run"] and not books["approved_at"] else 0)
+        # an import waiting for approval, or one whose dry run moved on since, needs the owner; an approved one is a
+        # handoff (like the others) and a done one needs nothing
+        ctx["attention"] += len(waiting) + (1 if books["state"] in ("waiting", "stale") else 0)
         hand_panel = ctx.get("hand")
         hand_items = (hand_panel.value if hand_panel.ok else hand_panel.stale) or [] if hand_panel else []
         handoffs = {
