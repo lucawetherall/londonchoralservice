@@ -19,10 +19,10 @@
     <a class="brand" href="/"><span class="brand-mark">LCS</span> <span class="brand-name">Command Centre</span></a>
     <nav class="nav" aria-label="Pages">
       {% for label, href in NAV %}
-      <a class="nav-item" href="{{ href }}"{% if path == href %} aria-current="page"{% endif %}>{{ label }}</a>
+      <a class="nav-item" href="{{ href }}"{% if current(href, path) %} aria-current="page"{% endif %}>{{ label }}</a>
       {% endfor %}
       {% for label in SOON %}
-      <span class="nav-item nav-soon" aria-disabled="true" title="Coming in the next phase">{{ label }} <span class="soon">soon</span></span>
+      <span class="nav-item nav-soon" aria-disabled="true" title="Coming in a later phase">{{ label }} <span class="soon">soon</span></span>
       {% endfor %}
     </nav>
   </div>
@@ -33,7 +33,8 @@
       <h1>{{ title }}</h1>
       <p class="stamp">As of {{ stamp }}</p>
     </div>
-    <a class="button quiet" href="{{ path }}" hx-get="{{ path }}" hx-select="#main" hx-target="#main" hx-swap="outerHTML">Refresh</a>
+    {% set here = request.url.path ~ ("?" ~ request.url.query if request.url.query else "") %}
+    <a class="button quiet" href="{{ here }}" hx-get="{{ here }}" hx-select="#main" hx-target="#main" hx-swap="outerHTML">Refresh</a>
   </div>
 {% block content %}{% endblock %}
 </main>
@@ -41,6 +42,14 @@
   <span>Private to the owner · reached over Tailscale only</span>
   <a href="/passkeys"{% if path == "/passkeys" %} aria-current="page"{% endif %}>Passkeys</a>
 </footer>
+{% set ns = namespace(tabbed=false) %}
+{% for label, href in TABS %}{% if current(href, path) %}{% set ns.tabbed = true %}{% endif %}{% endfor %}
+<nav class="tabbar" aria-label="Main pages">
+  {% for label, href in TABS %}
+  <a class="tab" href="{{ href }}"{% if current(href, path) %} aria-current="page"{% endif %}><span class="tab-dot" aria-hidden="true"></span>{{ label }}</a>
+  {% endfor %}
+  <a class="tab" href="/more"{% if not ns.tabbed %} aria-current="page"{% endif %}><span class="tab-dot" aria-hidden="true"></span>More</a>
+</nav>
 {% block scripts %}{% endblock %}
 </body>
 </html>

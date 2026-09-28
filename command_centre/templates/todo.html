@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% import "macros.html" as m %}
+{% block content %}
+{% set items = items_panel.value if items_panel.ok else (items_panel.stale or []) %}
+{{ m.failed(items_panel) }}
+{% if items %}
+{% set open = items|rejectattr("done")|list %}
+{% set done = items|selectattr("done")|list %}
+<p class="muted">From <span class="mono">MANUAL-ACTIONS-REQUIRED.md</span>: {{ open|length }} open, {{ done|length }} done. Ticks are kept on the Mac only.</p>
+<ol class="todo">
+  {% for i in open %}
+  <li class="card todo-item">
+    <div class="todo-text">
+      <h2><span class="todo-num">{{ i.number }}.</span> {{ i.title }}</h2>
+      {% if i.summary %}<p>{{ i.summary }}</p>{% endif %}
+    </div>
+    <form method="post" action="/todo/tick">
+      <input type="hidden" name="key" value="{{ i.key }}">
+      <input type="hidden" name="done" value="yes">
+      <button class="button quiet" type="submit">Mark done</button>
+    </form>
+  </li>
+  {% endfor %}
+</ol>
+{% if done %}
+<details class="card">
+  <summary>Done ({{ done|length }})</summary>
+  <ol class="todo">
+    {% for i in done %}
+    <li class="todo-item todo-done">
+      <div class="todo-text"><h3><span class="todo-num">{{ i.number }}.</span> {{ i.title }}</h3>
+        <p class="muted">Ticked {{ i.at[:10] }}</p></div>
+      <form method="post" action="/todo/tick">
+        <input type="hidden" name="key" value="{{ i.key }}">
+        <input type="hidden" name="done" value="no">
+        <button class="button quiet" type="submit">Reopen</button>
+      </form>
+    </li>
+    {% endfor %}
+  </ol>
+</details>
+{% endif %}
+{% elif items_panel.ok %}<p class="muted">No numbered sections found.</p>{% endif %}
+{% endblock %}

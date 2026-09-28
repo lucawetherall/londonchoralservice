@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% import "macros.html" as m %}
+{% block content %}
+{{ m.failed(summary) }}
+{% if summary.ok and not summary.value %}
+<section class="card"><p class="muted">No Ads summary yet: the Monday review writes <span class="mono">ads-summary.json</span> when it runs.</p></section>
+{% else %}
+<p class="lede"><span class="muted">Data as of {{ generated|when if generated else "an unknown time" }} (written by the Monday review).</span></p>
+
+<section class="card-group">
+  <article class="card card-wide">
+    <h2>Weekly spend and clicks</h2>
+    {{ m.failed(chart) }}
+    {% set c = chart.value if chart.ok else chart.stale %}
+    {% if c %}
+    <figure class="chart">
+      <svg viewBox="0 0 {{ c.width }} {{ c.height }}" role="img" aria-labelledby="chart-title chart-desc" preserveAspectRatio="xMidYMid meet">
+        <title id="chart-title">Weekly Ads spend (bars) and clicks (line)</title>
+        <desc id="chart-desc">The last {{ c.bars|length }} full weeks; the highest week's spend was {{ c.max_spend|gbp }}, the most clicks {{ c.max_clicks }}.</desc>
+        <line class="axis" x1="{{ c.left }}" y1="{{ c.base }}" x2="{{ c.right }}" y2="{{ c.base }}"></line>
+        <line class="grid" x1="{{ c.left }}" y1="{{ c.top }}" x2="{{ c.right }}" y2="{{ c.top }}"></line>
+        <text class="tick" x="{{ c.left - 6 }}" y="{{ c.top + 4 }}" text-anchor="end">{{ c.max_spend|gbp }}</text>
+        <text class="tick" x="{{ c.left - 6 }}" y="{{ c.base + 4 }}" text-anchor="end">£0</text>
+        {% for b in c.bars %}
+        <rect class="bar" x="{{ b.x }}" y="{{ b.y }}" width="{{ b.w }}" height="{{ b.h }}" rx="3"><title>{{ b.title }}</title></rect>
+        <text class="tick" x="{{ b.lx }}" y="{{ c.label_y }}" text-anchor="middle">{{ b.label }}</text>
+        {% endfor %}
+        <polyline class="line" points="{{ c.line }}"></polyline>
+      </svg>
+      <figcaption class="legend"><span class="key key-bar"></span> spend <span class="key key-line"></span> clicks (scaled to the tallest week)</figcaption>
+    </figure>
+    {% elif chart.ok %}<p class="muted">No weekly figures in the summary.</p>{% endif %}
+  </article>
+
+  {% set w = weeks.value if weeks.ok else weeks.stale %}
+  <article class="card">
+    <h2>Last four weeks</h2>
+    {{ m.failed(weeks) }}
+    {% if w and w.weeks %}
+    <table class="table">
+      <thead><tr><th>Week of</th><th class="num">Spend</th><th class="num">Clicks</th><th class="num">Enquiries</th><th class="num">Per enquiry</th></tr></thead>
+      <tbody>
+      {% for r in w.weeks %}
+        <tr>
+          <td data-label="Week of">{{ r.week_start|day }}</td>
+          <td data-label="Spend" class="num">{{ r.spend|gbp }}</td>
+          <td data-label="Clicks" class="num">{{ r.clicks }}</td>
+          <td data-label="Enquiries" class="num">{{ "–" if r.enquiries is none else r.enquiries }}</td>
+          <td data-label="Per enquiry" class="num">{{ r.cpe|gbp_or_dash }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    <p class="muted">Enquiries are every enquiry first seen that week, from any source.</p>
+    {% endif %}
+  </article>
+
+  {% set tr = traced.value if traced.ok else (traced.stale or []) %}
+  <article class="card">
+    <h2>Click ids traced</h2>
+    {{ m.failed(traced) }}
+    {% if tr %}
+    <ul class="plain">
+      {% for name, n in tr %}<li>{{ name }}: {{ n }} click id{{ "" if n == 1 else "s" }}</li>{% endfor %}
+    </ul>
+    <p class="muted">From the gclid cache the Monday review keeps; no Google call is made here.</p>
+    {% else %}<p class="muted">No click ids traced to a campaign yet.</p>{% endif %}
+  </article>
+</section>
+
+{% set s = season.value if season.ok else season.stale %}
+<section class="card">
+  <h2>Season by campaign{% if s and s.start %} <span class="muted">since {{ s.start|day }}</span>{% endif %}</h2>
+  {{ m.failed(season) }}
+  {% if s %}
+  <table class="table">
+    <thead><tr><th>Campaign</th><th class="num">Spend</th><th class="num">Clicks</th><th class="num">Enquiries</th><th class="num">Bookings</th><th class="num">Booked</th><th class="num">Per enquiry</th><th class="num">Per booking</th></tr></thead>
+    <tbody>
+    {% for r in s.campaigns + [s.total] %}
+      <tr{% if loop.last %} class="total"{% endif %}>
+        <td data-label="Campaign">{{ r.campaign }}</td>
+        <td data-label="Spend" class="num">{{ r.spend_gbp|gbp_or_dash }}</td>
+        <td data-label="Clicks" class="num">{{ "–" if r.clicks is none else r.clicks|int }}</td>
+        <td data-label="Enquiries" class="num">{{ "–" if r.enquiries is none else r.enquiries|int }}</td>
+        <td data-label="Bookings" class="num">{{ "–" if r.bookings is none else r.bookings|int }}</td>
+        <td data-label="Booked" class="num">{{ r.booked_gbp|gbp_or_dash }}</td>
+        <td data-label="Per enquiry" class="num">{{ r.cost_per_enquiry|gbp_or_dash }}</td>
+        <td data-label="Per booking" class="num">{{ r.cost_per_booking|gbp_or_dash }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  <p class="muted">Not traced to a campaign: {{ "–" if s.unattributed.enquiries is none else s.unattributed.enquiries|int }} enquiries, {{ "–" if s.unattributed.bookings is none else s.unattributed.bookings|int }} bookings ({{ s.unattributed.booked_gbp|gbp_or_dash }}).</p>
+  {% endif %}
+</section>
+{% endif %}
+
+<section class="card">
+  <h2>Still to come</h2>
+  <p class="muted">Budget proposals, flagged search terms, the Search Console shortlist and GA4 leads arrive with the refresh job (phase 3). Until then they are in the Monday report.</p>
+</section>
+{% endblock %}

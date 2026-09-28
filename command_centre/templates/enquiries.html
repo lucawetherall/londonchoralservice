@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% import "macros.html" as m %}
+{% block content %}
+{{ m.failed(enquiries) }}
+<section class="card-group">
+  {% set items = due.value if due.ok else (due.stale or []) %}
+  <article class="card{% if items %} card-warn{% endif %}">
+    <h2>Follow-ups due</h2>
+    {% if due.ok or due.stale %}
+    {% if items %}
+    <ul class="plain">
+      {% for d in items %}
+      <li><a class="mono" href="/enquiries/{{ d.enquiry_id }}">{{ d.enquiry_id }}</a> · <span class="badge {{ 'bad' if d.kind == 'mark_lost' else 'warn' }}">{{ "mark lost" if d.kind == "mark_lost" else d.kind ~ " follow-up" }}</span></li>
+      {% endfor %}
+    </ul>
+    <p class="muted">The enquiry assistant drafts these on its next run (never for funerals).</p>
+    {% else %}<p class="muted">No follow-ups due today.</p>{% endif %}
+    {% endif %}
+  </article>
+
+  {% set wins = windows.value if windows.ok else (windows.stale or []) %}
+  <article class="card">
+    <h2>Conversion</h2>
+    {{ m.failed(windows) }}
+    {% if wins %}
+    <table class="table">
+      <thead><tr><th>Window</th><th class="num">Enquiries</th><th class="num">Quoted</th><th class="num">Booked</th><th class="num">Rate</th></tr></thead>
+      <tbody>
+      {% for w in wins %}
+        <tr>
+          <td data-label="Window">{{ w.label }}</td>
+          <td data-label="Enquiries" class="num">{{ w.total }}</td>
+          <td data-label="Quoted" class="num">{{ w.quoted }}</td>
+          <td data-label="Booked" class="num">{{ w.confirmed }}</td>
+          <td data-label="Rate" class="num">{{ w.rate|pct if w.rate is not none else "–" }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    <p class="muted">The Monday report's figures (pipeline.summary_dict).</p>
+    {% endif %}
+  </article>
+
+  {% set mix = sources.value if sources.ok else (sources.stale or []) %}
+  <article class="card">
+    <h2>Sources</h2>
+    {{ m.failed(sources) }}
+    {% if mix %}
+    {% set top = mix[0][1] %}
+    <ul class="bars">
+      {% for name, n in mix %}
+      <li><span class="bar-label">{{ name }}</span><meter class="bar-meter" min="0" max="{{ top }}" value="{{ n }}">{{ n }}</meter><span class="num">{{ n }}</span></li>
+      {% endfor %}
+    </ul>
+    {% elif sources.ok %}<p class="muted">No enquiries yet.</p>{% endif %}
+  </article>
+</section>
+
+<h2 class="group-title">Board</h2>
+{% set cols = board.value if board.ok else (board.stale or []) %}
+{{ m.failed(board) }}
+<div class="board">
+  {% for status, cards in cols %}
+  <section class="board-col" aria-label="{{ status }}">
+    <h3>{{ status|replace("_", " ") }} <span class="muted">{{ cards|length }}</span></h3>
+    {% for r in cards %}
+    <a class="board-card" href="/enquiries/{{ r.enquiry_id }}">
+      <span class="mono">{{ r.enquiry_id }}</span>
+      <span>{{ r.occasion or "occasion?" }}{% if r.event_date %} · {{ r.event_date|day }}{% endif %}</span>
+      <span class="muted">{{ r.source or "source?" }}{% if r.quoted_gbp %} · {{ r.quoted_gbp|gbp }}{% endif %}</span>
+    </a>
+    {% else %}
+    <p class="muted board-empty">none</p>
+    {% endfor %}
+  </section>
+  {% endfor %}
+</div>
+{% endblock %}

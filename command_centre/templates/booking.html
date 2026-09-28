@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% import "macros.html" as m %}
+{% block content %}
+<p><a href="/bookings">← All bookings</a></p>
+{{ m.failed(ledger) }}
+{% set b = booking.value if booking.ok else booking.stale %}
+{% if b %}
+<section class="card">
+  <div class="figures">
+    <div class="figure"><span class="figure-label">Client</span><span class="figure-value small">{{ b.first_name }}</span></div>
+    <div class="figure"><span class="figure-label">Event</span><span class="figure-value small">{% if b.event_date %}{{ b.event_date|day }}{% else %}no date{% endif %}</span></div>
+    <div class="figure"><span class="figure-label">Value</span><span class="figure-value small">{{ b.value|gbp }}</span></div>
+    <div class="figure"><span class="figure-label">Received</span><span class="figure-value small">{{ b.received|gbp }}</span></div>
+  </div>
+  <p>{{ b.occasion }}{% if b.ensemble %} · {{ b.ensemble }}{% endif %} · <span class="badge {{ b.state|state_tone }}">{{ b.state|state_words }}</span>
+  {% if not b.bank_checked %}<span class="muted">(from the ledger notes; bank not checked)</span>{% endif %}</p>
+</section>
+{% else %}
+{{ m.failed(booking) }}
+{% endif %}
+
+<section class="card">
+  <h2>Timeline</h2>
+  {% for name, p in parts.items() %}
+  {% if not p.ok %}<p class="fail">{{ {"ledger": "Ledger", "enquiries": "Enquiries", "singers": "Singer invoices"}[name] }}: couldn't load ({{ p.error }})</p>{% endif %}
+  {% endfor %}
+  {% if timeline %}{{ m.timeline(timeline) }}{% else %}<p class="muted">Nothing to show yet.</p>{% endif %}
+  {% if parts.singers.ok and not parts.singers.value %}<p class="muted">Singer invoices: none linked (the singer store doesn't record event dates yet).</p>{% endif %}
+  <p class="muted">Notes are shown with emails and surnames masked. Links to the Zoho thread and the Books invoice arrive with the Books read client.</p>
+</section>
+{% endblock %}
