@@ -329,10 +329,12 @@ class Data:
         checks = [self.panel("check_starling", self.starling_check),
                   self.panel("check_adc", sources.adc_check),
                   self.panel("check_mcp", sources.mcp_checks),
-                  self.panel("check_fingerprint", sources.fingerprint_check),
+                  self.panel("check_fingerprint", lambda: sources.fingerprint_check(now)),
+                  self.panel("check_backup", lambda: sources.backup_check(now)),
                   self.panel("check_disk", sources.disk_check),
                   self.panel("check_branch", lambda: sources.branch_check(branch))]
-        return {"stamp": stamp(now), "tasks": tasks, "proxies": proxies, "checks": checks}
+        backup = self.panel("backup", lambda: sources.backup_status(now))
+        return {"stamp": stamp(now), "tasks": tasks, "proxies": proxies, "checks": checks, "backup": backup}
 
     def todo_page(self):
         items = self.panel("todo", lambda: todo.todo_items(todo.read_items(), todo.load_ticks()))

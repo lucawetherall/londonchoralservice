@@ -3,7 +3,8 @@ preview that builds the summary on the server (auth.Action), and either a fixed 
 write (LocalAction). Each run is logged, append-only, in ~/lcs-private/command-centre/audit.jsonl (mode 600).
 
 Binding rules (docs/superpowers/specs/2026-09-28-command-centre-design.md, and the plan's phase 3):
-- Every action except `todo-tick` and `refresh-data` needs a fresh passkey assertion over a challenge bound to the
+- Every action except `todo-tick`, `refresh-data`, `push-unsubscribe` and `backup-now` (low risk: they write only
+  the app's own files or an encrypted copy, and still need the same-origin POST) needs a fresh passkey assertion over a challenge bound to the
   summary that preview() writes from the validated input. The summary ends with the exact command ("Runs: …"), so
   the owner's Face ID or Touch ID approves that command and nothing else. run_action() rebuilds the summary from
   the data as it is at run time: if anything it depends on changed since the preview, the assertion no longer
@@ -1432,3 +1433,91 @@ TODO_TICK = LocalAction("todo-tick", _todo_validate, _todo_preview, _todo_run, p
 REGISTRY = {a.name: a for a in (TODO_TICK, RESOLVE_HAND_CHECK, SINGER_CONFIRM, SINGER_SETTLED, SINGER_WITHDRAWN,
                                 REFRESH, ADS_VALIDATE, ADS_APPLY, BOOKS_IMPORT)}
 ROUTED = {n for n in REGISTRY if n != "todo-tick"}  # the JSON routes; the tick keeps its own form route
+
+
+# ---------------------------------------------------------------- phase 5: push subscriptions and the backup
+
+
+def _push():
+    from . import push  # imported late: push imports the scripts' cleaning rules
+    return push
+
+
+def _subscribe_validate(raw):
+    try:
+        sub = _push().validate_subscription(raw)
+    except ValueError as e:
+        raise ActionError(str(e)) from None
+    # the audit keeps the push service and the id only, never the endpoint or the device's keys
+    return {"sub": sub, "input": {"service": sub["service"], "id": sub["id"]}}
+
+
+def _subscribe_preview(c):
+    key = hashlib.sha256(c["sub"]["p256dh"].encode("ascii")).hexdigest()[:12]
+    return (f"Send push notifications to a new device: {c['sub']['service']} (device {c['sub']['id']}, key {key}). "
+            f"Each carries a title, a line of at most 80 characters and first names only.\n"
+            f"Writes: push_subscriptions in ~/lcs-private/command-centre/config.json")
+
+
+def _subscribe_run(c, who):
+    _push().add_subscription(c["sub"], who.get("login", ""), who.get("passkey"))
+    return "notifications on for this device"
+
+
+def _unsubscribe_validate(raw):
+    f = fields(raw, ("id",))
+    push = _push()
+    if not push.SUB_ID_RE.fullmatch(f["id"]):
+        raise ActionError("unknown device")
+    found = next((s for s in push.subscriptions() if s.get("id") == f["id"]), None)
+    if found is None:
+        raise ActionError("unknown device")
+    return {"id": f["id"], "service": found.get("service", ""), "input": {"id": f["id"]}}
+
+
+def _unsubscribe_preview(c):
+    return (f"Stop push notifications to device {c['id']} ({c['service']}).\n"
+            f"Writes: push_subscriptions in ~/lcs-private/command-centre/config.json")
+
+
+def _unsubscribe_run(c, who):
+    if not _push().remove_subscription(c["id"]):
+        raise ActionError("unknown device")
+    return "notifications off for that device"
+
+
+PUSH_SUBSCRIBE = LocalAction("push-subscribe", _subscribe_validate, _subscribe_preview, _subscribe_run,
+                             title="Turn on notifications for this device", lock="push")
+PUSH_UNSUBSCRIBE = LocalAction("push-unsubscribe", _unsubscribe_validate, _unsubscribe_preview, _unsubscribe_run,
+                               passkey=False, title="Turn off notifications", lock="push")
+CC_BACKUP = "scripts/reports/cc_backup.py"
+BACKUP_DEFAULT_TARGET = "~/Library/Mobile Documents/com~apple~CloudDocs/LCS-backups"
+
+
+def backup_settings():
+    """(recipient or None, target folder as written) from the config, as cc_backup.py reads them."""
+    try:
+        cfg = auth.load_config()
+    except (OSError, ValueError):
+        cfg = {}
+    block = cfg.get("backup") if isinstance(cfg.get("backup"), dict) else {}
+    return (str(block.get("recipient") or "") or None), str(block.get("target") or BACKUP_DEFAULT_TARGET)
+
+
+def _backup_validate(raw):
+    fields(raw, ())
+    recipient, target = backup_settings()
+    if not recipient:
+        raise ActionError("no backup key yet: run scripts/reports/cc_backup.py init on the Mac first")
+    return {"target": target, "input": {}}
+
+
+BACKUP_NOW = ScriptAction(
+    "backup-now", CC_BACKUP, _backup_validate,
+    lambda c: (f"Back up ~/lcs-private now: a tar.gz encrypted with age to the backup key, written to {c['target']}; "
+               f"backups older than 14 days are removed."),
+    lambda c: ["run"], passkey=False, timeout=900, title="Back up now", lock="backup")
+_LOCKS.update(push=threading.Lock(), backup=threading.Lock())  # neither waits on (or blocks) a write
+for _a in (PUSH_SUBSCRIBE, PUSH_UNSUBSCRIBE, BACKUP_NOW):
+    REGISTRY[_a.name] = _a
+    ROUTED.add(_a.name)

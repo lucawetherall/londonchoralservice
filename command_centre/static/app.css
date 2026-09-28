@@ -404,3 +404,13 @@ details summary { cursor: pointer; font-weight: 600; margin: 6px 0; min-height: 
 .cc-action .field input, .cc-action .field select { width: 100%; max-width: 16rem; min-width: 0; box-sizing: border-box; }
 .table td, .table th { overflow-wrap: anywhere; }
 .table td .badge { white-space: normal; }
+
+/* phase 5: the install hint, the offline banner (written by sw.js), the device page */
+.install-hint, .offline-banner {
+  margin: 0 0 12px; padding: 10px 12px; border-radius: var(--radius); background: var(--accent-soft);
+  color: var(--text); font-size: .92rem; overflow-wrap: anywhere;
+}
+.install-hint .button { margin-left: 6px; }
+.offline-banner { background: var(--warn-bg); color: var(--warn); font-weight: 600; margin: 8px 16px; }
+.steps { margin: 0 0 8px; padding-left: 1.3rem; }
+.steps li { margin: 4px 0; overflow-wrap: anywhere; }

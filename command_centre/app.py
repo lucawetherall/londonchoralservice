@@ -28,7 +28,7 @@ from starlette.responses import HTMLResponse, JSONResponse, PlainTextResponse, R
 from starlette.routing import Mount, Route
 from starlette.staticfiles import StaticFiles
 
-from . import actions, auth, data, models
+from . import actions, auth, data, models, push, pwa
 
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parent
@@ -146,10 +146,11 @@ class CommandCentre(Starlette):
 
 
 def create_app(client_factory=data.default_client, now=None, clock=None, passkeys=None, bind_host=None, port=None,
-               uds=None, checkout=None):
+               uds=None, checkout=None, watch=False):
     """The app. `bind_host`, `port` and `uds` say how __main__ serves it. CC_DEV_LOGIN is honoured only on
     127.0.0.1, on a port other than the service's 8765, and never on the Unix socket. `checkout` returns the
-    serving checkout's branch (default: read from .git)."""
+    serving checkout's branch (default: read from .git). `watch` starts the push watcher (push.watch) with the
+    app: __main__ turns it on for the service only (port 8765 or the socket), never for a local check."""
     env = make_env()
     reader = data.Data(client_factory, now=now, **({"clock": clock} if clock else {}))
     keys = passkeys or auth.Passkeys()
@@ -317,6 +318,31 @@ def create_app(client_factory=data.default_client, now=None, clock=None, passkey
     async def more(request):
         return render(request, "more.html", title="More", stamp=data.stamp(reader.now()))
 
+    async def manifest(request):
+        return JSONResponse(pwa.manifest(), media_type="application/manifest+json")
+
+    async def service_worker(request):
+        # served from the root so its scope is the whole app; no-store (the security headers), so an update is seen
+        body = (HERE / "static" / "sw.js").read_bytes()
+        return Response(body, media_type="application/javascript", headers={"Service-Worker-Allowed": "/"})
+
+    async def device(request):
+        try:
+            vapid_key = data.Panel(value=await run_in_threadpool(push.public_key_b64))
+        except Exception as e:  # the type only (the Keychain unreadable, say)
+            log.warning("push key: %s", type(e).__name__)
+            vapid_key = data.Panel(error=type(e).__name__)
+        try:
+            devices = data.Panel(value=push.device_list())
+        except Exception as e:
+            devices = data.Panel(error=type(e).__name__)
+        try:
+            origin = str(auth.load_config().get("origin") or "")
+        except (OSError, ValueError):
+            origin = ""
+        return render(request, "device.html", title="This device", stamp=data.stamp(reader.now()),
+                      vapid_key=vapid_key, devices=devices, origin=origin)
+
     async def activity(request):
         q = request.query_params
         name = q.get("action", "")
@@ -457,6 +483,9 @@ def create_app(client_factory=data.default_client, now=None, clock=None, passkey
         Route("/exports", exports),
         Route("/exports/{name}.csv", export),
         Route("/more", more),
+        Route("/manifest.webmanifest", manifest),
+        Route("/sw.js", service_worker),
+        Route("/device", device),
         Route("/activity", activity),
         Route("/actions/{name}/preview", action_preview, methods=["POST"]),
         Route("/actions/{name}/run", action_run, methods=["POST"]),
@@ -466,8 +495,23 @@ def create_app(client_factory=data.default_client, now=None, clock=None, passkey
         Route("/auth/passkey/assert", assert_check, methods=["POST"]),
         Mount("/static", app=StaticFiles(directory=HERE / "static"), name="static"),
     ]
+    lifespan = None
+    if watch:
+        import asyncio
+        import contextlib
+
+        @contextlib.asynccontextmanager
+        async def lifespan(app):
+            stop = asyncio.Event()
+            task = asyncio.create_task(push.watch(stop))
+            try:
+                yield
+            finally:
+                stop.set()
+                await task
+
     app = CommandCentre(
-        routes=routes,
+        routes=routes, lifespan=lifespan,
         middleware=[Middleware(auth.IdentityMiddleware, dev_login=dev_login, dev_port=port, uds=bool(uds))],
         exception_handlers={auth.PasskeyError: passkey_error, actions.ActionError: action_error, 404: not_found})
     app.state.dev_login = dev_login

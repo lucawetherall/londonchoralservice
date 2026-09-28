@@ -142,7 +142,8 @@ def login_allowed(login, cfg):
 SECURITY_HEADERS = [
     (b"content-security-policy",
      b"default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; font-src 'self'; "
-     b"connect-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'; "
+     b"connect-src 'self'; manifest-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'none'; "
+     b"form-action 'self'; "
      b"frame-ancestors 'none'"),
     (b"referrer-policy", b"no-referrer"),
     (b"x-frame-options", b"DENY"),

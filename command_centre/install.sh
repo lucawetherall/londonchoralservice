@@ -19,7 +19,20 @@
 # scripts/requirements-dev.txt). It needs no secrets and stores none. The app listens on 127.0.0.1 only; `tailscale serve` is the only way in
 # from your other devices, and it adds the Tailscale-User-Login / Tailscale-User-Name headers the app checks
 # (and strips any a device tries to send itself). Never turn on Tailscale Funnel for this port.
+#
+#   bash command_centre/install.sh --backup
+#
+# also writes and loads ~/Library/LaunchAgents/com.lcs.backup.plist: scripts/reports/cc_backup.py run, every
+# night at 02:30 (refused until `.venv/bin/python scripts/reports/cc_backup.py init` has made the backup key).
 set -euo pipefail
+
+WITH_BACKUP=0
+for arg in "$@"; do
+  case "$arg" in
+    --backup) WITH_BACKUP=1 ;;
+    *) echo "Unknown option: $arg (the only option is --backup)" >&2; exit 2 ;;
+  esac
+done
 
 LABEL="com.lcs.command-centre"
 PORT=8765
@@ -154,6 +167,41 @@ if ! curl -fsS -H "Host: $RP_ID" "http://127.0.0.1:$PORT/healthz" >/dev/null 2>&
   exit 1
 fi
 
+# ---------------------------------------------------------------- nightly backup (optional: --backup)
+BACKUP_LABEL="com.lcs.backup"
+BACKUP_PLIST="$HOME/Library/LaunchAgents/$BACKUP_LABEL.plist"
+if [ "$WITH_BACKUP" = 1 ]; then
+  if ! CC_CONFIG="$CONFIG" "$PY" -c 'import json,os,sys; b=json.load(open(os.environ["CC_CONFIG"])).get("backup") or {}; sys.exit(0 if b.get("recipient") else 1)'; then
+    echo "No backup key yet. First run: cd $REPO && .venv/bin/python scripts/reports/cc_backup.py init" >&2
+    echo "(store the key it prints in your password manager), then run this again with --backup." >&2
+    exit 1
+  fi
+  CC_PLIST="$BACKUP_PLIST" CC_LABEL="$BACKUP_LABEL" CC_REPO="$REPO" CC_PY="$PY" CC_LOGS="$CC_DIR/logs" "$PY" - <<'PYEOF'
+import os, plistlib
+plist = {
+    "Label": os.environ["CC_LABEL"],
+    "ProgramArguments": [os.environ["CC_PY"], os.path.join(os.environ["CC_REPO"], "scripts", "reports", "cc_backup.py"), "run"],
+    "WorkingDirectory": os.environ["CC_REPO"],
+    "StartCalendarInterval": {"Hour": 2, "Minute": 30},
+    "ProcessType": "Background",
+    "EnvironmentVariables": {"PATH": "/usr/bin:/bin:/usr/sbin:/sbin", "PYTHONUNBUFFERED": "1"},
+    "StandardOutPath": os.path.join(os.environ["CC_LOGS"], "backup.out.log"),
+    "StandardErrorPath": os.path.join(os.environ["CC_LOGS"], "backup.err.log"),
+}
+path = os.environ["CC_PLIST"]
+tmp = path + ".tmp"
+with open(tmp, "wb") as f:
+    plistlib.dump(plist, f)
+os.chmod(tmp, 0o644)
+os.replace(tmp, path)
+print(f"Backup LaunchAgent written: {path} (02:30 nightly)")
+PYEOF
+  launchctl bootout "$DOMAIN/$BACKUP_LABEL" 2>/dev/null || true
+  launchctl bootstrap "$DOMAIN" "$BACKUP_PLIST"
+  launchctl enable "$DOMAIN/$BACKUP_LABEL" 2>/dev/null || true
+  echo "Nightly backup loaded. Tap Back up now on the Health page once to check it works."
+fi
+
 SOCK="$CC_DIR/run/cc.sock"
 cat <<EOF
 
@@ -174,6 +222,21 @@ Check that https://$RP_ID/ loads before relying on it; if it doesn't, go back to
 Then open https://$RP_ID/passkeys on your iPhone and register a passkey with the bootstrap code below. The
 first time the app reads the bank, macOS may ask whether python may use the "lcs-starling-read" Keychain
 item: choose Always Allow.
+
+The phone app (Tailscale only; the phone doesn't keep the VPN on):
+  1. Tailscale admin console -> DNS: turn on MagicDNS and HTTPS certificates. The Home Screen app and Web
+     Push need the real ts.net certificate.
+  2. On the iPhone, with Tailscale connected, open https://$RP_ID/ in Safari: Share -> Add to Home Screen.
+  3. Shortcuts app: a shortcut "LCS" with two actions, Tailscale -> Connect, then Open URL https://$RP_ID/.
+     Add it to the Home Screen and open the app with it. Optional: a second shortcut, Tailscale -> Disconnect.
+  4. In the app: More -> This device -> Enable notifications, then Approve this device (Face ID). macOS may
+     ask once whether python may use the "lcs-command-centre-vapid" Keychain item: Always Allow.
+     Notifications arrive with the VPN off, through Apple's push service (the Mac sends them over its normal
+     internet connection). With the VPN off the app shows the last Today and Money pages, marked
+     "Offline, as of <time>"; actions need the VPN.
+
+Backups (once): .venv/bin/python scripts/reports/cc_backup.py init  (store the printed AGE-SECRET-KEY line
+in your password manager; it is shown once), then: bash command_centre/install.sh --backup
 EOF
 if [ -n "$BOOTSTRAP_MSG" ]; then
   echo
