@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Tests for scripts/bookings/lcs_money.py. Stdlib only: .venv/bin/python tests/test_lcs_money.py"""
-import datetime, inspect, io, json, os, sys, tempfile
+import csv, datetime, inspect, io, json, os, sys, tempfile
 
 os.environ["LCS_PRIVATE_DIR"] = tempfile.mkdtemp()  # the fingerprint key goes here, never in ~/lcs-private
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -59,6 +59,49 @@ def test_fingerprint_is_keyed_and_the_key_is_private():
 def test_fingerprint_is_not_a_plain_hash():
     import hashlib
     assert m.bank_fingerprint("608371", "24972792") != hashlib.sha256(b"608371:24972792").hexdigest()[:16]
+
+
+def test_fingerprint_coerces_non_string_input():
+    assert m.bank_fingerprint("12-34-56", 12345678) == m.bank_fingerprint("12-34-56", "12345678")
+    assert m.bank_fingerprint(123456, "12345678") == m.bank_fingerprint("123456", "12345678")
+    assert m.bank_fingerprint(None, "12345678") is None
+    assert m.bank_fingerprint("12-34-56", None) is None
+    item = {"counterPartySubEntityIdentifier": "12-34-56", "counterPartySubEntitySubIdentifier": 12345678}
+    assert m.feed_item_fingerprint(item) == m.bank_fingerprint("12-34-56", "12345678")
+
+
+def test_lost_key_guard_refuses_to_recreate_when_fingerprints_are_on_record():
+    home = tempfile.mkdtemp()
+    with open(os.path.join(home, "singer-invoices.csv"), "w", newline="") as f:
+        w = csv.DictWriter(f, fieldnames=["message_id", "bank_fp"])
+        w.writeheader()
+        w.writerow({"message_id": "m1", "bank_fp": "abc123"})
+    saved = os.environ["LCS_PRIVATE_DIR"]
+    os.environ["LCS_PRIVATE_DIR"] = home
+    try:
+        try:
+            m.bank_fingerprint("60-83-71", "24972792")
+            assert False, "should have refused to create a new key"
+        except ValueError as e:
+            assert "restore the key from a backup" in str(e) and "fingerprint.key is missing" in str(e)
+        assert not os.path.exists(os.path.join(home, "fingerprint.key"))
+    finally:
+        os.environ["LCS_PRIVATE_DIR"] = saved
+
+
+def test_lost_key_guard_allows_a_fresh_key_when_no_fingerprints_are_on_record():
+    home = tempfile.mkdtemp()
+    with open(os.path.join(home, "singer-invoices.csv"), "w", newline="") as f:
+        w = csv.DictWriter(f, fieldnames=["message_id", "bank_fp"])
+        w.writeheader()
+        w.writerow({"message_id": "m1", "bank_fp": ""})
+    saved = os.environ["LCS_PRIVATE_DIR"]
+    os.environ["LCS_PRIVATE_DIR"] = home
+    try:
+        assert m.bank_fingerprint("60-83-71", "24972792") is not None
+        assert os.path.exists(os.path.join(home, "fingerprint.key"))
+    finally:
+        os.environ["LCS_PRIVATE_DIR"] = saved
 
 
 def test_feed_item_fingerprint():

@@ -42,6 +42,7 @@ COLUMNS = ["message_id", "received", "singer_name", "singer_email", "invoice_ref
            "payee", "bank_changed", "bank_confirmed", "paid_on", "paid_amount", "paid_ref", "paid_verified", "notes"]
 NEW_PAYEE = "NEW: add as a payee in the Starling app"
 NEW_DETAILS = "NEW BANK DETAILS: confirm them by phone on a number you already hold before adding the payee"
+NOT_YET_VERIFIED = "BANK DETAILS NOT YET VERIFIED (seen on an earlier invoice): confirm by phone"
 LOOKBACK = datetime.timedelta(days=14)  # a payment up to 14 days before an invoice arrived is reported, not applied
 INVOICING_DOMAINS = ("intuit.com", "quickbooks.com", "xero.com", "freeagent.com", "zohoinvoice.com", "zoho.com",
                      "sumup.com", "paypal.com", "stripe.com", "invoice2go.com", "wave.com", "waveapps.com")
@@ -186,9 +187,15 @@ def is_trusted(r):
     return bool(r.get("bank_fp")) and (r.get("paid_verified") == "yes" or r.get("bank_confirmed") == "yes")
 
 
-def assess_new(inv, sender_email, sender_name, history, payee_fps, payee_names, payee_last4=None):
+def same_last4_note(old, new):
+    """Extra clause for a CHANGED warning when the old and new last four digits happen to be equal."""
+    return " (same last four digits, different sort code or account)" if old and new and old == new else ""
+
+
+def assess_new(inv, sender_email, sender_name, history, payee_fps, payee_names, payee_last4=None, message_id=""):
     """Payee status and warnings for a new invoice. history = all stored rows; payee_fps None = no Starling token;
-    payee_last4 = {payee name: last four digits}."""
+    payee_last4 = {payee name: last four digits}; message_id, when given, is named in the NEW/NOT-YET-VERIFIED
+    warning as the invoice to run `singer_invoices.py confirm` against once the singer is rung."""
     fp = lm.bank_fingerprint(inv["sort_code"], inv["account_number"])
     now = lm.last4(inv["account_number"])
     by_date = lambda rows: sorted(rows, key=lambda r: r.get("received") or "")  # noqa: E731
@@ -202,14 +209,19 @@ def assess_new(inv, sender_email, sender_name, history, payee_fps, payee_names, 
         before = trusted_rows or [r for r in known if r["bank_fp"] != fp]
         if before:
             changed = True
-            warnings.append(f"BANK DETAILS CHANGED since their last invoice (was ••••{before[-1].get('bank_last4', '')}, "
-                            f"now ••••{now}): ring them before paying")
+            old4 = before[-1].get("bank_last4", "")
+            warnings.append(f"BANK DETAILS CHANGED since their last invoice (was ••••{old4}, "
+                            f"now ••••{now}): ring them before paying{same_last4_note(old4, now)}")
         elif named:
             changed = True
             was = (payee_last4 or {}).get(named[0], "")
             warnings.append(f"BANK DETAILS CHANGED: Starling payee '{named[0]}' has different bank details "
-                            f"(was ••••{was or '?'}, now ••••{now}): ring them before paying")
-        warnings.append(NEW_DETAILS)
+                            f"(was ••••{was or '?'}, now ••••{now}): ring them before paying{same_last4_note(was, now)}")
+        confirm_hint = f", then run singer_invoices.py confirm {message_id}" if message_id else ""
+        if fp in {r["bank_fp"] for r in known}:  # seen on an earlier invoice from this singer, just never trusted
+            warnings.append(f"{NOT_YET_VERIFIED}{confirm_hint}")
+        else:
+            warnings.append(NEW_DETAILS + confirm_hint)
     if payee_fps is None:
         payee = "unknown (no Starling token)"
     elif fp and fp in payee_fps:
@@ -237,15 +249,33 @@ def payer_names(r):
     return names
 
 
-def match_paid(unpaid, out_items, report=None):
+def match_paid(unpaid, out_items, report=None, history=None, payee_fps=None):
     """{message_id: (date, amount, feed item uid, verified)} for OUT payments that settle an unpaid invoice.
 
-    Invoices oldest first, payments oldest first, each payment settles at most one invoice. When both
-    the invoice and the payment carry bank details, only equal fingerprints (and amounts) match, and the
-    match is verified. Otherwise the amount and the name decide (names_agree), unless the singer's name
-    is a single word. A payment that fits invoices from different singers, or predates the invoice, and
-    a feed item without an id, are only added to `report`."""
+    Invoices oldest first, payments oldest first, each payment settles at most one invoice. When both the
+    invoice and the payment carry bank details, only equal fingerprints (and amounts) match, and the match
+    is verified; a payment to different bank details that would otherwise fit by name is never matched,
+    only reported once per feed item as PAID TO DIFFERENT BANK DETAILS. When only the payment carries bank
+    details, the amount and the name decide (names_agree), unless the singer's name is a single word or the
+    payment's own fingerprint is already known to belong to someone else — trusted (verified or confirmed)
+    in a different singer's history, or a Starling payee whose name disagrees with this invoice (`history`
+    and `payee_fps` supply that knowledge; a caller that omits them keeps the old name-only behaviour). A
+    payment that fits invoices from different singers, or predates the invoice, and a feed item without an
+    id, are only added to `report`."""
     report = [] if report is None else report
+    history = unpaid if history is None else history
+    trusted_names_by_fp = {}
+    for r2 in history:
+        if is_trusted(r2):
+            trusted_names_by_fp.setdefault(r2["bank_fp"], set()).add(normalise_name(r2.get("singer_name")))
+
+    def fp_belongs_to_someone_else(r, ifp):
+        others = trusted_names_by_fp.get(ifp, set()) - {normalise_name(r.get("singer_name"))}
+        if others:
+            return True
+        payee_name = (payee_fps or {}).get(ifp)
+        return bool(payee_name) and not names_agree(r.get("singer_name"), payee_name)
+
     open_ = sorted((r for r in unpaid if received_date(r)), key=lambda r: r["received"])
     hits, no_id, too_short = {}, 0, []
     for it in sorted(out_items, key=lambda i: i.get("transactionTime") or ""):
@@ -255,7 +285,7 @@ def match_paid(unpaid, out_items, report=None):
         paid = (it.get("amount") or {}).get("minorUnits", 0) / 100
         when = lm.local_date(it.get("transactionTime"))
         who, ifp = it.get("counterPartyName") or "", lm.feed_item_fingerprint(it)
-        fits, verified = [], []
+        fits, verified, wrong_bank = [], [], []
         for r in open_:
             if (r["message_id"] in hits or abs(paid - lm.money(r["amount_gbp"])) >= 0.01
                     or when < (received_date(r) - LOOKBACK).isoformat()):
@@ -263,15 +293,25 @@ def match_paid(unpaid, out_items, report=None):
             if ifp and r.get("bank_fp"):
                 if ifp == r["bank_fp"]:
                     verified.append(r)
+                elif any(names_agree(n, who) for n in payer_names(r)):
+                    wrong_bank.append(r)
             elif len(normalise_name(r.get("singer_name")).split()) < 2:
                 if r["message_id"] not in too_short:
                     too_short.append(r["message_id"])
+            elif ifp and fp_belongs_to_someone_else(r, ifp):
+                pass  # this payment's own fingerprint is already someone else's: a name match alone won't do
             elif any(names_agree(n, who) for n in payer_names(r)):
                 fits.append(r)
         pool = verified or fits
         on_time = [r for r in pool if when >= r["received"][:10]]
         pool = on_time or pool
         if not pool:
+            if wrong_bank:
+                wr = wrong_bank[0]
+                item_last4 = lm.last4(it.get("counterPartySubEntitySubIdentifier"))
+                report.append(f"PAID TO DIFFERENT BANK DETAILS £{paid:,.2f} on {when} to ••••{item_last4} fits "
+                              f"{wr['message_id']} ({first_name(wr.get('singer_name'))}, "
+                              f"invoice ••••{wr.get('bank_last4', '')}): check by hand")
             continue
         if len({normalise_name(r.get("singer_name")) or r["message_id"] for r in pool}) > 1:
             names = ", ".join(f"{r['message_id']} ({first_name(r.get('singer_name'))})" for r in pool)
@@ -400,11 +440,12 @@ def cmd_scan(args, client):
         if (fp and r.get("bank_fp") and r["bank_fp"] != fp and not r.get("paid_on")
                 and r.get("bank_changed") != "yes" and (r.get("received") or "") > args.received):
             r["bank_changed"] = "yes"
+            new4 = lm.last4(inv["account_number"])
             w = (f"BANK DETAILS CHANGED: ••••{r.get('bank_last4', '')} differs from an older invoice "
-                 f"(••••{lm.last4(inv['account_number'])}): ring them before paying")
+                 f"(••••{new4}): ring them before paying{same_last4_note(r.get('bank_last4', ''), new4)}")
             note(r, w)
             print(f"   ! {r['message_id']}: {w}")
-    a = assess_new(inv, args.sender_email, args.sender_name, rows, fps, names, payee_last4)
+    a = assess_new(inv, args.sender_email, args.sender_name, rows, fps, names, payee_last4, args.message_id)
     changed = "yes" if a["bank_changed"] == "yes" or inv.get("sources_disagree") else "no"
     rows.append({"message_id": args.message_id, "received": args.received, "singer_name": args.sender_name,
                  "singer_email": args.sender_email.lower(), "invoice_ref": inv["invoice_ref"],
@@ -443,8 +484,9 @@ def cmd_paid(args, client):
 
     items = [it for it in client.feed(since, today + datetime.timedelta(days=1), "OUT")
              if not (it.get("feedItemUid") and it["feedItemUid"] in used) and not settled_before(it)]
+    payee_fps = lm.payee_fingerprints(client.payees())  # so a payment's own fp can be recognised as someone else's
     report = []
-    hits = match_paid(unpaid, items, report)
+    hits = match_paid(unpaid, items, report, history=rows, payee_fps=payee_fps)
     for line in report:
         print(line)
     for r in rows:

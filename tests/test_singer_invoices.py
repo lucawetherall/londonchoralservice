@@ -250,8 +250,31 @@ def test_new_bank_details_warning():
     assert new not in si.assess_new(inv(), "b@x.com", "Ben Fenwick", [], fps, ["Ben W"])["warnings"]
     history = [hrow("b@x.com", "Ben Fenwick", "123456", "12345678", "2026-08-01", confirmed="yes")]
     assert new not in si.assess_new(inv(), "b@x.com", "Ben Fenwick", history, {}, [])["warnings"]
-    history[0]["bank_confirmed"] = ""  # seen before but never confirmed or paid to verifiably: still new
-    assert new in si.assess_new(inv(), "b@x.com", "Ben Fenwick", history, {}, [])["warnings"]
+    history[0]["bank_confirmed"] = ""  # seen before but never confirmed or paid to verifiably: not-yet-verified, not new
+    a2 = si.assess_new(inv(), "b@x.com", "Ben Fenwick", history, {}, [])
+    assert new not in a2["warnings"]
+    assert any(w.startswith(si.NOT_YET_VERIFIED) for w in a2["warnings"])
+
+
+def test_new_bank_details_warning_names_the_confirm_command():
+    a = si.assess_new(inv(), "b@x.com", "Ben Fenwick", [], {}, [], message_id="m42")
+    assert f"{si.NEW_DETAILS}, then run singer_invoices.py confirm m42" in a["warnings"]
+    history = [hrow("b@x.com", "Ben Fenwick", "123456", "12345678", "2026-08-01")]
+    a2 = si.assess_new(inv(), "b@x.com", "Ben Fenwick", history, {}, [], message_id="m43")
+    assert f"{si.NOT_YET_VERIFIED}, then run singer_invoices.py confirm m43" in a2["warnings"]
+    # without a message id (old callers), the hint is simply omitted
+    assert si.NEW_DETAILS in si.assess_new(inv(), "b@x.com", "Ben Fenwick", [], {}, [])["warnings"]
+
+
+def test_changed_warning_notes_same_last_four_digits():
+    history = [hrow("b@x.com", "Ben Fenwick", "111111", "11111234", "2026-08-01", verified="yes")]
+    a = si.assess_new(inv("999999", "99991234"), "b@x.com", "Ben Fenwick", history, {}, [])
+    assert any("was ••••1234" in w and "now ••••1234" in w
+              and "(same last four digits, different sort code or account)" in w for w in a["warnings"])
+    # a genuinely different last four never gets the note
+    history2 = [hrow("b@x.com", "Ben Fenwick", "111111", "11112222", "2026-08-01", verified="yes")]
+    a2 = si.assess_new(inv("999999", "99991234"), "b@x.com", "Ben Fenwick", history2, {}, [])
+    assert not any("same last four digits" in w for w in a2["warnings"])
 
 
 def test_changed_details_warn_until_verified():
@@ -482,12 +505,55 @@ def test_match_paid_mismatched_bank_details_block_the_name_match():
     assert si.match_paid(rows, [fp_out(120, "2026-09-22", "BEN FENWICK", "x1", "654321", "99998888")]) == {}
 
 
+def test_match_paid_reports_payment_to_different_bank_details():
+    rows = [fp_unpaid("m1", "Ben Fenwick", 120, "2026-09-21")]
+    report = []
+    assert si.match_paid(rows, [fp_out(120, "2026-09-22", "BEN FENWICK", "x1", "654321", "99998888")], report) == {}
+    assert report == ["PAID TO DIFFERENT BANK DETAILS £120.00 on 2026-09-22 to ••••8888 fits m1 "
+                      "(Ben, invoice ••••2222): check by hand"]
+
+
+def test_match_paid_different_bank_details_reported_once_per_item():
+    fresh_store()
+    anna = dict(email="anna@example.com", name="Anna Price")
+    scan(INV_FP.format(n=1), "a1", "2026-09-01", client=FakeClient(payees=ANNA_PAYEE), **anna)
+    paid(FakeClient(payees=ANNA_PAYEE, out=[fp_out(150, "2026-09-03", "ANNA PRICE", "p1", "20-30-40", "55667788")]))
+    scan(NEW_FP.format(n=2), "a2", "2026-10-01", client=FakeClient(payees=ANNA_PAYEE), **anna)
+    assert rows_by_id()["a2"]["bank_changed"] == "yes"
+    report_out = paid(FakeClient(payees=ANNA_PAYEE,
+                                  out=[fp_out(150, "2026-10-03", "ANNA PRICE", "p2", "20-30-40", "55667788")]))
+    assert "PAID TO DIFFERENT BANK DETAILS £150.00 on 2026-10-03 to ••••7788 fits a2 " \
+           "(Anna, invoice ••••3344): check by hand" in report_out
+    assert rows_by_id()["a2"]["paid_on"] == ""
+
+
 def test_match_paid_name_fallback_when_either_side_lacks_bank_details():
     rows = [unpaid("m1", "Ben Fenwick", 120, "2026-09-21")]
     item = fp_out(120, "2026-09-22", "BEN FENWICK", "n1", "654321", "99998888")
     assert si.match_paid(rows, [item]) == {"m1": ("2026-09-22", 120.0, "n1", False)}
     rows = [fp_unpaid("m1", "Ben Fenwick", 120, "2026-09-21")]
     assert si.match_paid(rows, [out(120, "2026-09-22", "B FENWICK", "n2")]) == {"m1": ("2026-09-22", 120.0, "n2", False)}
+
+
+def test_match_paid_blocks_name_match_when_fp_is_trusted_for_a_different_singer():
+    ben = fp_unpaid("ben1", "Ben Fenwick", 150, "2026-08-01", sc="112233", acc="99990000")
+    ben["paid_on"], ben["paid_verified"] = "2026-08-05", "yes"  # Ben's own row: verified, and settled already
+    bella = unpaid("bella1", "Bella Fenwick", 150, "2026-09-01")  # Bella's invoice carried no bank details
+    item = fp_out(150, "2026-09-02", "B FENWICK", "x9", "112233", "99990000")  # but this payment carries Ben's fp
+    report = []
+    assert si.match_paid([bella], [item], report, history=[ben, bella]) == {}
+    assert report == []
+    # without the guard (no history passed) the initial+surname alone would have matched Bella
+    assert si.match_paid([bella], [item]) == {"bella1": ("2026-09-02", 150.0, "x9", False)}
+
+
+def test_match_paid_blocks_name_match_for_a_disagreeing_starling_payee():
+    fp = lm.bank_fingerprint("112233", "99990000")
+    bella = unpaid("bella1", "Bella Fenwick", 150, "2026-09-01")
+    item = fp_out(150, "2026-09-02", "B FENWICK", "x9", "112233", "99990000")
+    assert si.match_paid([bella], [item], history=[bella], payee_fps={fp: "Priya Kaur"}) == {}
+    assert si.match_paid([bella], [item], history=[bella], payee_fps={fp: "Bella Fenwick"}) == \
+        {"bella1": ("2026-09-02", 150.0, "x9", False)}
 
 
 def test_match_paid_needs_the_first_name_or_initial():
@@ -599,6 +665,9 @@ def test_scan_conflicting_sources_marks_bank_changed():
 
 GEN = "Invoice {n}\nTotal £100.00\nSort code 12-34-56\nAccount number 11112222"
 FRAUD = "Invoice {n}\nTotal £100.00\nSort code 65-43-21\nAccount number 99998888"
+INV_FP = "Invoice {n}\nTotal £150.00\nSort code 20-30-40\nAccount number 55667788"
+NEW_FP = "Invoice {n}\nTotal £150.00\nSort code 40-50-60\nAccount number 11223344"
+ANNA_PAYEE = [{"payeeName": "Anna Price", "accounts": [{"bankIdentifier": "203040", "accountIdentifier": "55667788"}]}]
 
 
 def scan(body, mid, received, client=None, email="ben@example.com", name="Ben Fenwick"):

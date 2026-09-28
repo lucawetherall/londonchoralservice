@@ -11,7 +11,10 @@
   fingerprint is an HMAC-SHA256 keyed with fingerprint.key (32 random bytes,
   mode 600, made on first use in the private dir), so the stored fingerprint and
   last four digits can't be brute-forced back to an account number. Never commit,
-  copy or share the key; losing it only means earlier fingerprints stop matching.
+  copy or share the key; if it's lost, restore it from a backup rather than letting
+  one be recreated — a new key would make every fingerprint already on record
+  unmatchable, so lcs_money refuses to create one while singer-invoices.csv still
+  holds fingerprints made with the old one.
 """
 
 import contextlib
@@ -105,11 +108,20 @@ def local_date(ts):
 
 
 def _fingerprint_key():
-    """The 32-byte key in <private dir>/fingerprint.key (LCS_PRIVATE_DIR read at call time), made once, mode 600."""
+    """The 32-byte key in <private dir>/fingerprint.key (LCS_PRIVATE_DIR read at call time), made once, mode 600.
+    Refuses to make a new one when singer-invoices.csv already carries fingerprints made with an old key: recreating
+    it here would make every one of those fingerprints unmatchable, so the old key must be restored instead."""
     home = Path(os.environ.get("LCS_PRIVATE_DIR", Path.home() / "lcs-private"))
     path = home / "fingerprint.key"
     if path not in _KEYS:
         if not path.exists():
+            csv_path = home / "singer-invoices.csv"
+            if csv_path.exists():
+                with open(csv_path, newline="") as f:
+                    if any((row.get("bank_fp") or "").strip() for row in csv.DictReader(f)):
+                        raise ValueError(
+                            "fingerprint.key is missing but singer-invoices.csv has fingerprints made with it: "
+                            "restore the key from a backup (creating a new one would break every stored fingerprint)")
             home.mkdir(mode=0o700, parents=True, exist_ok=True)
             tmp = home / f".fingerprint.key.{os.getpid()}.{os.urandom(4).hex()}.tmp"
             fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
@@ -129,9 +141,10 @@ def _fingerprint_key():
 
 
 def bank_fingerprint(sort_code, account_number):
-    """16-hex keyed fingerprint of a UK bank account, or None if the details aren't a sort code + account."""
-    sc = re.sub(r"\D", "", sort_code or "")
-    acc = re.sub(r"\D", "", account_number or "")
+    """16-hex keyed fingerprint of a UK bank account, or None if the details aren't a sort code + account.
+    Inputs are coerced with str() (None -> ""), so a numeric field straight out of JSON can't crash this."""
+    sc = re.sub(r"\D", "", str(sort_code) if sort_code is not None else "")
+    acc = re.sub(r"\D", "", str(account_number) if account_number is not None else "")
     if len(sc) != 6 or not 6 <= len(acc) <= 8:
         return None
     return hmac.new(_fingerprint_key(), f"{sc}:{acc.zfill(8)}".encode(), hashlib.sha256).hexdigest()[:16]
