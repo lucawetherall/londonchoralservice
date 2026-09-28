@@ -134,6 +134,7 @@ READ_ALLOW = {
     "ZohoBooks_list_tax_exemptions",
     "ZohoBooks_list_taxes",
     "ZohoBooks_list_vendor_payments",
+    "ZohoBooks_get_vendor_payment",
     "ZohoBooks_list_vendors",
     "ZohoBooks_print_invoice_delivery_note",
     "ZohoBooks_print_invoice_packing_slip",
@@ -277,6 +278,41 @@ def check_bill_comment(body, query, path):
 # Purchase items ("Singing fee", "Organ fee") set up the singer bills' expense account: the
 # connector has no chart-of-accounts tool, and Books files a purchase item under its default
 # expense account, which get_item then shows. No account key is allowed, so Books picks it.
+# The Books bank account singer payments are recorded against ("Starling Business"): a name and GBP only,
+# never an account number or sort code (those keys aren't allowed, and the bank-details scan still runs).
+def check_create_bank_account(body, query, path):
+    _need(body, "account_name", "body")
+    if body.get("account_type") != "bank":
+        raise Deny(P + "account_type must be \"bank\".")
+    if body.get("currency_code") not in (None, "GBP"):
+        raise Deny(P + "currency_code must be \"GBP\" or absent.")
+
+
+# Singer bills only (owner decision, 28 Sep 2026): a payment Starling shows was made to the singer's own bank
+# details, recorded against that one bill, in full, through the owner's "Starling Business" account in Books.
+# Client payments stay the owner's: Books' customer-payment tools are still denied.
+STARLING_BOOKS_ACCOUNT_ID = "1534218000000095168"  # the owner's Starling Business account in Books
+
+
+def check_create_vendor_payment(body, query, path):
+    for key in ("vendor_id", "date"):
+        _need(body, key, "body")
+    if not STARLING_BOOKS_ACCOUNT_ID or body.get("paid_through_account_id") != STARLING_BOOKS_ACCOUNT_ID:
+        raise Deny(P + "paid_through_account_id must be the Starling Business account in Books"
+                   + (f" (\"{STARLING_BOOKS_ACCOUNT_ID}\")." if STARLING_BOOKS_ACCOUNT_ID else ", and it isn't set yet."))
+    if body.get("payment_mode") not in (None, "Bank Transfer"):
+        raise Deny(P + "payment_mode must be \"Bank Transfer\" or absent.")
+    bills = body.get("bills")
+    if not (isinstance(bills, list) and len(bills) == 1 and isinstance(bills[0], dict)):
+        raise Deny(P + "a payment settles exactly one bill: bills must list one {bill_id, amount_applied}.")
+    _need(bills[0], "bill_id", "body.bills[0]")
+    amount, applied = body.get("amount"), bills[0].get("amount_applied")
+    if not all(isinstance(v, (int, float)) and not isinstance(v, bool) for v in (amount, applied)):
+        raise Deny(P + "amount and amount_applied must be plain numbers.")
+    if not (0 < amount <= 10000 and round(amount, 2) == round(applied, 2)):
+        raise Deny(P + "amount must equal the bill's amount_applied (more than £0, at most £10,000).")
+
+
 def check_create_item(body, query, path):
     _need(body, "name", "body")
     if body.get("item_type") != "purchases":
@@ -312,6 +348,13 @@ WRITE_TOOLS = {
         obj(*BILL_UPDATE_FIELDS), ORG_ONLY, obj("bill_id"), check_update_bill),
     "ZohoBooks_add_bill_comment": (
         obj("description"), ORG_ONLY, obj("bill_id"), check_bill_comment),
+    "ZohoBooks_create_bank_account": (
+        obj("account_name", "account_type", "currency_code", "description"), ORG_ONLY, NOTHING,
+        check_create_bank_account),
+    "ZohoBooks_create_vendor_payment": (
+        obj("vendor_id", "amount", "date", "payment_mode", "paid_through_account_id", "description",
+            bills=[obj("bill_id", "amount_applied")]),
+        ORG_ONLY, NOTHING, check_create_vendor_payment),
     "ZohoBooks_create_item": (
         obj("name", "rate", "description", "item_type", "product_type", "purchase_rate", "purchase_description"),
         ORG_ONLY, NOTHING, check_create_item),
@@ -460,7 +503,7 @@ def decide(tool, tool_input):
     if name == "ZohoBooks_update_invoice":
         return P + "Claude doesn't update invoices. The owner edits drafts in Books."
     return (f"{P}{name} isn't allowed. Claude may read Books and make draft invoices, contacts and bills; "
-            "it never emails, reminds, deletes, voids, records payments or matches bank transactions.")
+            "it never emails, reminds, deletes, voids, records client payments or matches bank transactions.")
 
 
 def _no_duplicate_keys(pairs):

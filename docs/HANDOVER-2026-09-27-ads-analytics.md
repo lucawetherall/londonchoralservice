@@ -467,7 +467,7 @@ EACH RUN
    - SINGER INVOICE: to luca@almaconsort.com, hasAttachment, subject mentioning invoice or inv, from a musician (not a client or software supplier; for QuickBooks, Xero and similar senders the musician's name is in the subject).
    - QUOTES: Luca's Sent messages from office@ since last_checked.
    - SKIP: everything else, including Alma Consort mail (to luca@ or izzy@almaconsort.com, "New message from almaconsort.com", recording projects).
-3. Run `singer_invoices.py paid --apply`. Keep its "NEWLY PAID …" lines without "check before thanking" for the clerk; put every other line (AMBIGUOUS, POSSIBLY ALREADY PAID, PAID TO DIFFERENT BANK DETAILS, PAYMENT TO ANOTHER SINGER'S ACCOUNT, NAME TOO SHORT, "feed item without id skipped", "check before thanking") under "Money to check by hand".
+3. Run `singer_invoices.py paid --apply`. Keep its "NEWLY PAID …" lines without "check before thanking", each with the indented "books: …" line under it, for the clerk (it records the payment against the Books bill and drafts "Paid!"); put every other line (AMBIGUOUS, POSSIBLY ALREADY PAID, PAID TO DIFFERENT BANK DETAILS, PAYMENT TO ANOTHER SINGER'S ACCOUNT, NAME TOO SHORT, "feed item without id skipped", "check before thanking") under "Money to check by hand".
 4. If there are no CLIENT or QUOTES messages, no SINGER INVOICE, no NEWLY PAID line and daily_due is false: run `assistant_io.py done` and reply "Nothing new" (plus any step 3 lines). Stop.
 5. Start the sub-agents that have work, all in one message so they run in parallel. Give each only what it needs, one line per message: messageId, threadId, from, to, subject, received date (YYYY-MM-DD).
    - lcs-reply-drafter: the CLIENT and QUOTES messages.
@@ -475,7 +475,7 @@ EACH RUN
    - lcs-daily-pass: only when daily_due is true (no messages needed; say "run the daily pass for <today>").
    If the Agent tool says an agent type isn't found, start a general-purpose agent instead, with model "sonnet" ("haiku" for the clerk), and begin its prompt: "Read .claude/agents/<name>.md and follow it exactly: its tools line is the only tools you may use."
 6. Run `assistant_io.py done` with every messageId you sorted (CLIENT, QUOTES, SINGER INVOICE and SKIP) plus any "processed:" ids the agents list.
-7. If a clerk line starts with "PUSH:", send a PushNotification at once: "Singer bank details changed: <first name>. Ring them before paying." Then, if the agents saved any drafts or made any invoices or bills, send one PushNotification (under 200 characters): "<n> drafts in Zoho to review and send", plus ", <m> invoices ready in Books" and ", <k> singer bills in Books" when there are any. Otherwise send nothing else.
+7. If a clerk line starts with "PUSH:", send a PushNotification at once: "Singer bank details changed: <first name>. Ring them before paying." Then, if the agents saved any drafts or made any invoices or bills, send one PushNotification (under 200 characters): "<n> drafts in Zoho to review and send", plus ", <m> invoices ready in Books", ", <k> singer bills in Books" and ", <p> singer payments recorded" when there are any. Otherwise send nothing else.
 
 FINAL SUMMARY (short, no preamble): the agents' summaries merged in this order: warnings (PUSH lines, "!" lines, hook blocks, Books refusals, unverified cancellations); drafts saved; invoices; pipeline; singer invoices and bills; Money to check by hand; the dashboard line; messages skipped that may still need Luca, or "Nothing new".
 ```
