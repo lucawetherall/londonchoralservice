@@ -48,7 +48,8 @@ def test_short_notice_unpaid_booking_is_in_the_balances_line():
          "notes": "PENDING: invoiced", "client_name": "Ann Smith"}
     a = cp.assess(r, [], T)
     assert a["state"] == "AWAITING_DEPOSIT"
-    assert mr.summary_lines([a], [], QUIET_SINGERS, T)[2] == "balances due in the next 7 days: 1, £1,150.00 (0210)"
+    assert mr.summary_lines([a], [], QUIET_SINGERS, T)[2] == \
+        "balances due in the next 7 days: 1, £1,150.00 (0210) (includes 1 with no deposit)"
 
 
 def test_balances_line_takes_every_open_upcoming_state_and_nothing_else():
@@ -64,7 +65,7 @@ def test_balances_line_takes_every_open_upcoming_state_and_nothing_else():
         a("x6", "PAST_UNMATCHED", "2026-10-01"), a("x7", "PAST_PART_PAID", "2026-10-01"),
     ]
     assert mr.summary_lines(assessments, [], QUIET_SINGERS, T)[2] == \
-        "balances due in the next 7 days: 4, £400.00 (in1, in2, in3, in4)"
+        "balances due in the next 7 days: 4, £400.00 (in1, in2, in3, in4) (includes 2 with no deposit)"
 
 
 def test_hand_check_line():
@@ -73,16 +74,34 @@ def test_hand_check_line():
         {"ref": "0909", "state": "PAST_UNMATCHED", "balance": 650.0, "event_date": "2026-09-09"},
         {"ref": "0101", "state": "DEPOSIT_SEEN", "balance": 325.0, "event_date": "2027-01-01"},
     ]
-    assert mr.summary_lines(assessments, [], QUIET_SINGERS, T)[3] == "needs a hand check: 2 (2410 possible payment, 0909 past, unpaid)"
+    assert mr.summary_lines(assessments, [], QUIET_SINGERS, T)[3] == "needs a hand check: 2 (2410 possible payment; 0909 past, unpaid)"
     more = [{"ref": "0808", "state": "PAST_PART_PAID", "balance": 1.0, "event_date": "2026-08-08"},
             {"ref": "1111", "state": "CHECK_VALUE", "balance": 0.0, "event_date": None}]
-    assert mr.summary_lines(more, [], QUIET_SINGERS, T)[3] == "needs a hand check: 2 (0808 past, part paid, 1111 unreadable value or date)"
+    assert mr.summary_lines(more, [], QUIET_SINGERS, T)[3] == "needs a hand check: 2 (0808 past, part paid; 1111 unreadable value or date)"
 
 
 def test_singer_line_wording():
     one = {"unpaid": 1, "unpaid_total": 75.0, "oldest_days": 1, "bank_changed": 2}
     assert mr.summary_lines([], [], one, T)[-1] == \
         "singer invoices unpaid: 1, £75.00, oldest 1 day · BANK DETAILS CHANGED on 2 invoices: ring before paying"
+
+
+def test_noted_paid_needs_a_hand_check_until_marked_paid_in_full():
+    r = {"booking_ref": "0909", "value_gbp": "650", "invoice_date": "2026-09-01", "event_date": "2026-10-30",
+         "notes": "PENDING: invoiced; client paid by cash 5 Sep", "client_name": "Ann Smith"}
+    a = cp.assess(r, [], T)
+    assert a["state"] == "NOTED_PAID"
+    assert mr.summary_lines([a], [], QUIET_SINGERS, T)[3] == "needs a hand check: 1 (0909 noted paid, not in bank)"
+    r["notes"] += "; paid in full 2026-09-05"
+    assert cp.open_rows([r]) == []  # the owner's note takes it off the list
+
+
+def test_overdue_deposit_in_the_next_week_is_on_both_lines_and_flagged():
+    a = [{"ref": "0110", "state": "DEPOSIT_OVERDUE", "balance": 650.0, "event_date": "2026-10-01"},
+         {"ref": "0210", "state": "BALANCE_DUE", "balance": 325.0, "event_date": "2026-10-02"}]
+    lines = mr.summary_lines(a, [], QUIET_SINGERS, T)
+    assert lines[1] == "deposits overdue: 1 (0110)"
+    assert lines[2] == "balances due in the next 7 days: 2, £975.00 (0110, 0210) (includes 1 with no deposit)"
 
 
 if __name__ == "__main__":

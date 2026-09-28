@@ -12,22 +12,33 @@ Matching (against every ledger row, closed ones too, so a payment is never
 credited to the wrong booking): an incoming payment belongs to a booking when its
 reference names the invoice number ("INV2111", "INV 2111", "INV-2111",
 "LCS2111", "INV2111DEPOSIT" and "2111" all name 2111; "24081" does not name
-2408; "INV 1212 A" and "1212A" name 1212A). A reference that names any booking
-is final, but it is only CONFIDENT when nothing contradicts it: a bare "1212"
-when 1212A also exists needs the payer's surname to pick one, and a payer whose
-surname fits another booking and not the named one leaves it unconfirmed on
-both. Failing a reference, when its amount is the deposit or full fee, the
-payer's name contains the client's surname as a whole word, and it falls inside
-that booking's invoice-to-event window. Failing that, when its amount is the
-deposit or fee of open bookings inside their window: an "amount only" match, on
-each booking it fits, which is unconfirmed and never counts as paid.
+2408). A letter names a suffixed ref only as the reference's last token ("INV
+1212 A") or a glued one-letter tail ("1212A", "INV1212A"); "1212 A SMITH" and
+"INV1212BAL" name 1212. A reference that names any booking is final, but it is
+only CONFIDENT when nothing contradicts it: "1212" when 1212A also exists names
+them all, and the payer's surname may pick one (else all are unconfirmed); and
+the payer's surname contradicts it only when it fits another open booking whose
+window and fee or half-fee fit the payment, while the named client's surname is
+absent from the payer's name (then both are unconfirmed). Parents and funeral
+directors paying under another name are normal. Surnames are the last real word
+of each party ("Ann Smith & Tom Jones": Smith or Jones; "T Cribb & Sons": Cribb).
+Failing a reference, when its amount is the deposit or full fee, the payer's name
+contains the client's surname as a whole word, and it falls inside that
+booking's invoice-to-event window. Failing that, when its amount is the deposit
+or fee of open bookings inside their window: an "amount only" match, on each
+booking it fits, which is unconfirmed and never counts as paid.
 
 States (assess): PAID_IN_FULL, DEPOSIT_SEEN, BALANCE_DUE (from 3 days before the
 event), AWAITING_DEPOSIT (until the deposit falls due: 7 days after the invoice,
 or 3 days before a short-notice event, never the invoice day), DEPOSIT_OVERDUE
-(future events only), NOTED_PAID (ledger notes say paid), PAST_UNMATCHED /
-PAST_PART_PAID (past events), CHECK_PAYMENT (only an unconfirmed match),
-CHECK_VALUE (no readable booking value, invoice date or event date), CANCELLED.
+(future events only), NOTED_PAID (the owner's notes say paid, or an earlier run's
+"deposit seen … (Starling)" with nothing in the feed now; negated or future
+phrases such as "not yet seen", "to be paid" or "asked if paid" don't count, and
+with a deposit in the bank only a note of the whole fee does: "£575 paid 5 Sep"
+is the deposit. It stays on the Monday hand check until the notes say "paid in
+full YYYY-MM-DD"), PAST_UNMATCHED / PAST_PART_PAID (past events), CHECK_PAYMENT
+(only an unconfirmed match, which outranks a stale auto note), CHECK_VALUE (no
+readable booking value, invoice date or event date), CANCELLED.
 Only DEPOSIT_OVERDUE and BALANCE_DUE are ever chased; just_received (a confident
 payment in the last 14 days with no receipt drafted) asks for a thank-you, and
 short_notice (event within 10 days of the invoice) asks for the full fee rather
@@ -52,12 +63,23 @@ MARK_TEXT = {"deposit": "reminder drafted", "balance": "balance reminder drafted
 CONFIDENT = ("reference", "name and amount")
 RECEIPT_DAYS = 14
 SHORT_NOTICE_DAYS = 10
-STARLING_DOWN = (urllib.error.URLError, TimeoutError, OSError)  # URLError and HTTPError are OSErrors too
+# URLError and HTTPError are OSErrors too; a non-JSON 200 body (an outage page) is a JSONDecodeError
+STARLING_DOWN = (urllib.error.URLError, TimeoutError, OSError, json.JSONDecodeError)
 # The script's own notes, removed before reading the owner's hand-written ones.
 AUTO_NOTE = re.compile(r"deposit seen \d{4}-\d{2}-\d{2} \(Starling\)", re.I)
 MARK_NOTE = re.compile(r"\b(balance )?reminder drafted( \d{4}-\d{2}-\d{2})?|\breceipt drafted( \d{4}-\d{2}-\d{2})?", re.I)
 FULL_NOTE = re.compile(r"paid in full \d{4}-\d{2}-\d{2}", re.I)
-NOT_PAID = re.compile(r"(\b(not|un)|n't)\s*(yet\s+)?(been\s+)?(paid|received|seen|settled)\b", re.I)
+# Negated, conditional or future phrases, removed before looking for a paid word. The gaps never cross
+# ";", "." or "," so "no reminder needed, paid 5 Sep" keeps its "paid".
+NOT_PAID = re.compile(
+    r"\bdeposit not yet seen\b"
+    r"|(\b(not|un)|n't)\s*(yet\s+)?(been\s+)?(paid|received|seen|settled)\b"
+    r"|\b(not|never|no|nothing)\b[^;.,]{0,20}\b(paid|received|seen|settled|in)\b"
+    r"|\bto be (paid|received|settled)\b[^;.,]*"
+    r"|\bif\b[^;.,]{0,15}\bpaid\b"
+    r"|\b(asked|says|said)\b[^;.,]{0,20}\bpaid\b"
+    r"|\bwill\s+(have\s+)?(pay|paid)\b[^;.,]*"
+    r"|\b(deposit|balance|payment)\s+in\s+by\b", re.I)  # "deposit in by Friday please" is a deadline
 # "deposit seen <date>;" is what the enquiry assistant writes by hand (handover Appendix E)
 PAID_WORD = re.compile(r"\b(paid|received|settled)\b|\bdeposit\s+(seen|in)\b", re.I)
 # With a confident deposit in the bank, only a note of the WHOLE fee stops a balance chase.
@@ -67,6 +89,14 @@ FULL_PAID = re.compile(
     r"|(?<!deposit )\bpaid\s+(on\s+)?(" + _DATE + r")\b|(?<!deposit )\bpaid\s+the\s+balance\b"
     r"|\bsettled\s+in\s+cash\b|\bbalance\s+in\s+cash\b"
     r"|(?<!deposit )\bpaid\s+(by\s+|in\s+)?(cash|cheque|card|bank\s+transfer)\b", re.I)
+# A full-payment phrase in a clause that starts with "deposit", or carries a £ amount below the booking
+# value with no word for the rest of the fee, is about the deposit: "£575 paid 5 Sep" never stops a balance chase.
+CLAUSE = re.compile(r";|\.(?!\d)|,(?!\d)")
+REST_WORD = re.compile(r"\b(balance|rest|remainder|remaining|in full|fully|final)\b", re.I)
+POUNDS = re.compile(r"£\s*(\d[\d,]*(?:\.\d+)?)")
+# Not surnames: the last real word of each party is ("T Cribb & Sons" is Cribb).
+GENERIC = {"son", "sons", "ltd", "limited", "funeral", "funerals", "director", "directors", "church", "parish", "and",
+           "co", "plc", "llp", "mr", "mrs", "ms", "miss", "dr", "rev", "revd"}
 PREFIX = r"(INVOICE|INV|LCS)"
 REF_TOKEN = re.compile(r"(?:" + PREFIX + r"\s*[-#:]?\s*(?=\d))?([A-Z0-9]+)")
 
@@ -102,8 +132,9 @@ def norm_ref(ref):
 
 
 def named_keys(text, known):
-    """Known refs a payment reference names. "INV 1212 A" or "1212A" name 1212A when it exists; glued
-    forms ("INV2111DEPOSIT", "LCS2111") try the longest known candidate first; "24081" never names 2408."""
+    """Known refs a payment reference names. A single letter names a suffixed ref only when it is the
+    reference's LAST token ("INV 1212 A") or the whole glued tail ("1212A", "INV1212A"); "2111 A SMITH"
+    and "INV2111BAL" name 2111 (and so every 2111 sibling). "24081" never names 2408."""
     toks = [(bool(m.group(1)), m.group(2)) for m in REF_TOKEN.finditer((text or "").upper())]
     out = set()
     for i, (prefixed, t) in enumerate(toks):
@@ -111,25 +142,31 @@ def named_keys(text, known):
         if not m:
             continue
         digits, letters = m.groups()
-        nxt = toks[i + 1] if i + 1 < len(toks) else (True, "")
-        cands = [digits + nxt[1]] if not letters and not nxt[0] and re.fullmatch(r"[A-Z]", nxt[1]) else []
+        last_letter = (not letters and i == len(toks) - 2 and not toks[i + 1][0]
+                       and re.fullmatch(r"[A-Z]", toks[i + 1][1]))
+        cands = [digits + toks[i + 1][1]] if last_letter else []
         cands.append(t)
         if prefixed and letters and len(digits) == 4:
-            cands += [digits + letters[0], digits]
+            cands.append(digits)  # "INV2111DEPOSIT", "INV2111A" when there is no 2111A
         hit = next((c for c in cands if c in known), None)
         if hit:
             out.add(hit)
     return out
 
 
-def surname(r):
-    s = (r.get("client_name") or "").strip().split(" ")[-1]
-    return s if len(s) > 2 else ""
+def surnames(r):
+    """The last real word of each party in the client name ("Ann Smith & Tom Jones" -> Smith, Jones),
+    skipping generic words ("& Sons", "Ltd", "Funeral Directors") and anything under three letters."""
+    out = []
+    for party in re.split(r"&|\band\b|\+|/", r.get("client_name") or "", flags=re.I):
+        words = [w for w in re.findall(r"[^\W\d_][\w'’-]*", party) if w.lower().strip("'’-") not in GENERIC]
+        if words and len(words[-1]) > 2 and words[-1] not in out:
+            out.append(words[-1])
+    return out
 
 
 def payer_is(r, payer):
-    s = surname(r)
-    return bool(s and re.search(rf"\b{re.escape(s)}\b", payer or "", re.I))
+    return any(re.search(rf"\b{re.escape(s)}\b", payer or "", re.I) for s in surnames(r))
 
 
 def fits_amount(amount, r):
@@ -138,15 +175,19 @@ def fits_amount(amount, r):
 
 
 def is_cancelled(r):
-    return bool(re.search(r"(?<!not )\b(cancell?ed|cancellation (confirmed|received))\b", r.get("notes") or "", re.I))
+    return bool(re.search(r"(?<!not )\b(cancell?ed|cancellation (confirmed|received|requested))\b"
+                          r"|(?<!not )(?<!about )(?<!considering )(?<!of )\bcancell?ing\b", r.get("notes") or "", re.I))
 
 
 def is_pending(notes):
     return notes.lstrip().upper().startswith("PENDING")
 
 
-def by_reference(keys, by_key, payer, rows, when, today):
-    """(booking refs, how) for a payment whose reference names these ledger keys."""
+def by_reference(keys, by_key, payer, amount, rows, when, today):
+    """(booking refs, how) for a payment whose reference names these ledger keys. The payer's surname
+    contradicts the reference only when it fits another OPEN booking whose window and fee (or half-fee)
+    fit the payment too, and the named client's own surname isn't in the payer's name; a parent or
+    funeral director paying under another name is otherwise normal."""
     named = []
     for k in sorted(keys):
         group = list(by_key[k])
@@ -160,8 +201,8 @@ def by_reference(keys, by_key, payer, rows, when, today):
     refs = sorted({r["booking_ref"] for r in named})
     if len(refs) > 1:
         return refs, "reference naming several bookings"
-    others = sorted({r["booking_ref"] for r in rows if r["booking_ref"] != refs[0] and payer_is(r, payer)
-                     and in_window(r, when, today)})
+    others = sorted({r["booking_ref"] for r in open_rows(rows) if r["booking_ref"] != refs[0] and payer_is(r, payer)
+                     and in_window(r, when, today) and fits_amount(amount, r)})
     if others and not any(payer_is(r, payer) for r in named):
         return refs + others, "reference, but the payer's name fits another booking"
     return refs, "reference"
@@ -182,7 +223,7 @@ def match(rows, items, today):
         payer = it.get("counterPartyName") or ""
         keys = named_keys(it.get("reference"), by_key)
         if keys:
-            refs, how = by_reference(keys, by_key, payer, rows, when, today)
+            refs, how = by_reference(keys, by_key, payer, amount, rows, when, today)
         else:
             refs = [r["booking_ref"] for r in rows if not is_cancelled(r) and fits_amount(amount, r)
                     and in_window(r, when, today) and payer_is(r, payer)]
@@ -197,7 +238,21 @@ def match(rows, items, today):
 
 def hand_notes(notes):
     """The owner's own words: the script's auto notes and negated phrases ("not yet seen", "unpaid") removed."""
-    return NOT_PAID.sub(" ", MARK_NOTE.sub(" ", AUTO_NOTE.sub(" ", notes or "")))
+    return NOT_PAID.sub(" ~ ", MARK_NOTE.sub(" ", AUTO_NOTE.sub(" ", notes or "")))  # "~" keeps "balance to be paid in cash" apart
+
+
+def full_paid(own, value):
+    """True when the owner's words record the whole fee as paid, not just the deposit."""
+    for clause in CLAUSE.split(own):
+        if not FULL_PAID.search(clause):
+            continue
+        rest = REST_WORD.search(clause)
+        if clause.strip().lower().startswith("deposit") and not rest:
+            continue
+        if not rest and any(lm.money(x) + 0.01 < value for x in POUNDS.findall(clause)):
+            continue
+        return True
+    return False
 
 
 def deposit_due_date(invoice, event):
@@ -220,8 +275,9 @@ def assess(r, paid, today):
     event = date_or_none(event_raw)
     deposit_due = deposit_due_date(invoice, event)
     own = hand_notes(notes)
-    noted_any = bool(PAID_WORD.search(own) or AUTO_NOTE.search(notes))  # the script saw a deposit before
-    noted_full = bool(FULL_PAID.search(own))
+    noted_hand = bool(PAID_WORD.search(own))
+    noted_auto = bool(AUTO_NOTE.search(notes))  # the script saw a deposit on an earlier run
+    noted_full = full_paid(own, value)
     upcoming = event is None or event >= today
     if is_cancelled(r):
         state = "CANCELLED"
@@ -238,8 +294,10 @@ def assess(r, paid, today):
             state = "BALANCE_DUE"
         else:
             state = "DEPOSIT_SEEN"
-    elif noted_any:
+    elif noted_hand or (noted_auto and not maybe):
         state = "NOTED_PAID"
+    elif noted_auto:  # an unconfirmed payment now outranks a stale "deposit seen … (Starling)"
+        state = "CHECK_PAYMENT"
     elif not upcoming:
         state = "PAST_UNMATCHED"
     elif maybe:
@@ -278,8 +336,9 @@ def describe(a):
         "AWAITING_DEPOSIT": " · awaiting deposit (not yet due)",
         "BALANCE_DUE": f" · BALANCE £{a['balance']:,.2f} DUE" + (" (reminder already drafted)" if a["reminded"]["balance"] else ""),
         "DEPOSIT_OVERDUE": f" · DEPOSIT OVERDUE since {a['deposit_due']}" + (" (reminder already drafted)" if a["reminded"]["deposit"] else ""),
-        "NOTED_PAID": (" · part paid in the bank feed; the ledger notes say the rest was paid (check by hand)" if a["received"]
-                       else " · no matching payment in the bank feed, but the ledger notes say it was paid (check by hand)"),
+        "NOTED_PAID": (" · part paid in the bank feed; the ledger notes say the rest was paid" if a["received"]
+                       else " · no matching payment in the bank feed, but the ledger notes say it was paid")
+                      + " (check by hand, then add \"paid in full YYYY-MM-DD\" to the notes)",
         "PAST_UNMATCHED": " · event has passed; no matching payment in the bank feed (check by hand; never chase automatically)",
         "PAST_PART_PAID": " · event has passed; part paid (check by hand; never chase automatically)",
         "CHECK_PAYMENT": f" · possible payment {maybe} matched by {a['how']}: confirm by hand",
@@ -336,6 +395,8 @@ def main():
     args = ap.parse_args()
     today = datetime.date.today()
 
+    # lm.ledger_lock is an flock on a fresh descriptor: NOT re-entrant. Never nest it, or call another
+    # ledger writer while holding it, in one process: the second acquire deadlocks.
     if args.reminded:
         with lm.ledger_lock(LEDGER):
             rows = lm.read_csv(LEDGER)
@@ -367,10 +428,11 @@ def main():
 
 
 def starling_unavailable(args, e):
-    """One line, type name only (the message could carry bank data); nothing is written."""
+    """One line, type name (and HTTP status) only, since the message could carry bank data; nothing is written."""
     if args.json:
         print("[]")
-    print(f"Starling unavailable ({type(e).__name__})", file=sys.stderr)
+    code = f" {e.code}" if isinstance(e, urllib.error.HTTPError) else ""
+    print(f"Starling unavailable ({type(e).__name__}{code})", file=sys.stderr)
 
 
 def run(args, client, rows, cols, today):

@@ -3,7 +3,7 @@
 their real value, so bidding can learn which searches become paid bookings.
 
 The ledger is PRIVATE and lives outside the repo (never commit it):
-    ~/lcs-private/bookings.csv   (override with $LCS_BOOKINGS_CSV)
+    ~/lcs-private/bookings.csv   (override with $LCS_BOOKINGS_CSV or $LCS_PRIVATE_DIR)
 
 Columns (header row required):
     booking_ref, invoice_date, event_date, client_name, client_email, occasion,
@@ -35,6 +35,7 @@ import csv
 import datetime
 import hashlib
 import os
+import sys
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
@@ -42,9 +43,12 @@ import google.auth
 from google.ads.googleads.client import GoogleAdsClient
 from google.auth.transport.requests import AuthorizedSession
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "bookings"))
+import lcs_money as lm  # noqa: E402  (ledger path and lock shared with the bookings scripts)
+
 CUSTOMER_ID = "8733881378"
 ACTION_NAME = "Booked job"
-LEDGER = Path(os.environ.get("LCS_BOOKINGS_CSV", Path.home() / "lcs-private" / "bookings.csv"))
+LEDGER = lm.LEDGER  # $LCS_BOOKINGS_CSV, else bookings.csv in $LCS_PRIVATE_DIR (default ~/lcs-private)
 COLUMNS = ["booking_ref", "invoice_date", "event_date", "client_name", "client_email", "occasion", "ensemble",
            "value_gbp", "enquiry_date", "source", "gclid", "consent", "uploaded_at", "notes"]
 LOG = Path(__file__).resolve().parents[2] / "logs" / "ads-changes.md"
@@ -53,13 +57,29 @@ LONDON = ZoneInfo("Europe/London")
 
 
 def ensure_ledger():
-    if LEDGER.exists():
-        return
-    LEDGER.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
-    with open(LEDGER, "w", newline="") as f:
-        csv.writer(f).writerow(COLUMNS)
-    os.chmod(LEDGER, 0o600)
+    with lm.ledger_lock(LEDGER):
+        if LEDGER.exists():
+            return
+        LEDGER.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
+        with open(LEDGER, "w", newline="") as f:
+            csv.writer(f).writerow(COLUMNS)
+        os.chmod(LEDGER, 0o600)
     print(f"Created an empty private ledger at {LEDGER}")
+
+
+def stamp_uploaded(done, now):
+    """Stamp uploaded_at on these booking refs. Re-reads the ledger under the shared lock so a row
+    another writer added or changed during the upload is kept. lm.ledger_lock is not re-entrant:
+    never call this while holding it."""
+    with lm.ledger_lock(LEDGER):
+        rows = lm.read_csv(LEDGER)
+        cols = list(rows[0].keys()) if rows else list(COLUMNS)
+        cols += [c for c in COLUMNS if c not in cols]
+        for r in rows:
+            if r.get("booking_ref") in done:
+                r["uploaded_at"] = now
+        lm.write_csv(LEDGER, rows, cols)
+        os.chmod(LEDGER, 0o600)
 
 
 def to_datetime(day):
@@ -93,7 +113,7 @@ def main():
     parser.add_argument("--apply", action="store_true")
     args = parser.parse_args()
     ensure_ledger()
-    with open(LEDGER, newline="") as f:
+    with lm.ledger_lock(LEDGER), open(LEDGER, newline="") as f:
         rows = list(csv.DictReader(f))
 
     ready, skipped = [], []
@@ -181,14 +201,7 @@ def main():
     now = datetime.datetime.now(LONDON).strftime("%Y-%m-%d %H:%M")
     print(f"Accepted by Google (request {request_id}); processing status can be checked with that ID.")
     done = {ready[i][0]["booking_ref"] for i in range(len(ready)) if i not in failed}
-    for r in rows:
-        if r.get("booking_ref") in done:
-            r["uploaded_at"] = now
-    with open(LEDGER, "w", newline="") as f:
-        w = csv.DictWriter(f, fieldnames=COLUMNS, extrasaction="ignore")
-        w.writeheader()
-        w.writerows(rows)
-    os.chmod(LEDGER, 0o600)
+    stamp_uploaded(done, now)
     uploaded_value = sum(v for r, v, _ in ready if r["booking_ref"] in done)
     row = (f"| {now} | conversion_action \"{ACTION_NAME}\" | offline upload | +{len(done)} booking(s), "
            f"£{uploaded_value:,.2f} total | Confirmed bookings from the private ledger (not in repo) | `{SCRIPT}` |\n")
