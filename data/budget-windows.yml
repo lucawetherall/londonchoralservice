@@ -1,0 +1,51 @@
+# Seasonal Google Ads budget windows, read by scripts/reports/weekly_review.py (section 12).
+#
+# These are PROPOSALS the owner edits. The Monday report compares each enabled
+# campaign's current daily budget with the window active today and prints a
+# "PROPOSE: ..." line when they differ. Nothing here changes the account: a
+# proposal goes into the Monday review's one approval question, and only an
+# approved change is applied, through scripts/ads/ with validate_only first.
+#
+# Nothing above £5/day is ever proposed (CLAUDE.md, "Google Ads & GA4"). A window
+# above £5 is reported as a config error and its proposal is capped at £5.
+#
+# Fields:
+#   season_start  first day counted by section 11 (true cost per booking)
+#   name          label printed with each proposal
+#   campaigns     case-insensitive substrings of campaign names
+#   start, end    MM-DD, inclusive; a window may wrap round the new year
+#   daily_gbp     proposed daily budget in pounds
+# A campaign should sit in exactly one window on any day; overlaps are reported.
+
+season_start: 2026-09-01
+
+windows:
+  - name: carols
+    campaigns: ["christmas", "carol"]
+    start: "10-01"
+    end: "12-20"
+    daily_gbp: 5
+
+  - name: carols-off
+    campaigns: ["christmas", "carol"]
+    start: "12-21"
+    end: "09-30"
+    daily_gbp: 1
+
+  - name: weddings-peak
+    campaigns: ["wedding"]
+    start: "01-02"
+    end: "04-30"
+    daily_gbp: 5
+
+  - name: weddings-base
+    campaigns: ["wedding"]
+    start: "05-01"
+    end: "01-01"
+    daily_gbp: 3
+
+  - name: funerals
+    campaigns: ["funeral"]
+    start: "01-01"
+    end: "12-31"
+    daily_gbp: 3

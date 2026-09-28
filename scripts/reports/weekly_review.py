@@ -13,13 +13,17 @@ Sections:
   8. Tracking wiring: live tags and labels, Ads account settings, GA4 key events and links
   9. Bookings ledger: counts and totals only (no personal data)
   10. Money: client receipts, deposits overdue, balances due, singer invoices (totals only)
+  11. True cost per booking: season spend, enquiries, bookings and £ booked by campaign
+      (also writes ~/lcs-private/ads-summary.json for the dashboard)
+  12. Seasonal budget rules: proposals from data/budget-windows.yml (never above £5/day)
+  13. Search Console shortlist: first Monday of the month, or with --gsc-shortlist
 
 Uses google-ads.yaml for Ads and Application Default Credentials (the
 analytics.readonly and webmasters.readonly scopes) for GA4 and Search Console.
 Reads the private bookings ledger for counts only; prints no names or emails.
 
     source .venv/bin/activate
-    python scripts/reports/weekly_review.py [--since 2026-09-26]
+    python scripts/reports/weekly_review.py [--since 2026-09-26] [--gsc-shortlist]
 """
 
 import argparse
@@ -50,6 +54,7 @@ REPO = Path(__file__).resolve().parents[2]
 # the same ledger as scripts/bookings/lcs_money.py, so sections 9 and 10 always agree
 LEDGER = Path(os.environ.get("LCS_BOOKINGS_CSV", Path(os.environ.get("LCS_PRIVATE_DIR", Path.home() / "lcs-private")) / "bookings.csv"))
 EXPECTED_KEY_EVENTS = {"generate_lead", "contact_message"}
+BUDGET_WINDOWS = REPO / "data" / "budget-windows.yml"
 
 
 def gbp(micros):
@@ -60,13 +65,17 @@ def pct(x):
     return f"{x * 100:.0f}%" if x else "-"
 
 
-def ads_sections(since):
+def ads_query():
+    """A read-only GAQL runner: search() only, never a mutate."""
     c = GoogleAdsClient.load_from_storage(os.environ.get("GOOGLE_ADS_CONFIGURATION_FILE_PATH", os.path.expanduser("~/.config/lcs/google-ads.yaml")))
     ga = c.get_service("GoogleAdsService")
 
     def q(query):
         return list(ga.search(customer_id=CUSTOMER_ID, query=query))
+    return q
 
+
+def ads_sections(since, q):
     today = datetime.date.today()
     spans = [("last 7 days", "segments.date DURING LAST_7_DAYS", 7),
              (f"since {since}", f"segments.date BETWEEN '{since}' AND '{today}'", max((today - since).days, 1))]
@@ -375,11 +384,98 @@ def money_section():
         print(f"   money check failed: {type(e).__name__}")
 
 
+def cost_section(q, today):
+    print("\n== 11. True cost per booking (season to date, by campaign)")
+    try:
+        import economics as ec
+        season = ec.load_windows(BUDGET_WINDOWS)["season_start"]
+        print(f"   season since {season}")
+        spend = defaultdict(lambda: [0, 0])
+        for r in q(f"""SELECT campaign.name, metrics.cost_micros, metrics.clicks FROM campaign
+                WHERE segments.date BETWEEN '{season}' AND '{today}'"""):
+            spend[r.campaign.name][0] += r.metrics.cost_micros
+            spend[r.campaign.name][1] += r.metrics.clicks
+        by_date = {}
+
+        def clicks_on(day):
+            if day not in by_date:
+                by_date[day] = {r.click_view.gclid: r.campaign.name for r in q(
+                    f"SELECT click_view.gclid, campaign.name FROM click_view WHERE segments.date = '{day}'")}
+            return by_date[day]
+
+        cache = ec.load_json(ec.GCLID_CACHE, {})
+        try:
+            bookings = []
+            for r in ec.season_bookings(ec.lcs_money.read_csv(ec.lcs_money.LEDGER), season):
+                when = r.get("enquiry_date") or r.get("invoice_date")
+                bookings.append((ec.attribute(r.get("gclid"), when, clicks_on, cache, today),
+                                 ec.lcs_money.money(r.get("value_gbp"))))
+            enquiries = None
+            if ec.ENQUIRIES.exists():
+                enquiries = [ec.attribute(r.get("gclid"), r.get("first_seen"), clicks_on, cache, today)
+                             for r in ec.season_enquiries(ec.lcs_money.read_csv(ec.ENQUIRIES), season)]
+        finally:
+            ec.save_json_private(ec.GCLID_CACHE, cache)
+        table = ec.cost_table({k: tuple(v) for k, v in spend.items()}, bookings, enquiries)
+        if enquiries is None:
+            print("   enquiries: pipeline sheet not set up yet")
+        for line in ec.cost_lines(table):
+            print("   " + line)
+        start = ec.full_weeks(today, 8)[0]
+        daily = [(r.segments.date, r.metrics.cost_micros, r.metrics.clicks, r.metrics.conversions)
+                 for r in q(f"""SELECT segments.date, metrics.cost_micros, metrics.clicks, metrics.conversions
+                        FROM customer WHERE segments.date BETWEEN '{start}' AND '{today}'""")]
+        summary = ec.ads_summary(ec.week_buckets(daily, today, 8), table, season, datetime.datetime.now())
+        ec.save_json_private(ec.ADS_SUMMARY, summary)
+        print(f"   wrote {ec.ADS_SUMMARY.name} (last 8 full weeks and the season)")
+    except Exception as e:  # type name only: the message could carry ledger data
+        print(f"   true cost per booking failed: {type(e).__name__}")
+
+
+def budget_section(q, today):
+    print("\n== 12. Seasonal budget rules (data/budget-windows.yml; proposals only, nothing changed)")
+    try:
+        import economics as ec
+        cfg = ec.load_windows(BUDGET_WINDOWS)
+        campaigns = [{"name": r.campaign.name, "status": r.campaign.status.name,
+                      "budget_gbp": r.campaign_budget.amount_micros / 1e6}
+                     for r in q("""SELECT campaign.name, campaign.status, campaign_budget.amount_micros
+                            FROM campaign WHERE campaign.status != 'REMOVED'""")]
+        for line in ec.proposal_lines(ec.proposals(campaigns, cfg["windows"], today)):
+            print("   " + line)
+    except Exception as e:
+        print(f"   seasonal budget rules failed: {type(e).__name__}")
+
+
+def shortlist_section(s, today, force):
+    print("\n== 13. Search Console shortlist (hiring intent, positions 8–20)")
+    try:
+        import economics as ec
+        if not force and not ec.is_first_monday(today):
+            print(f"   runs on the first Monday of the month (next {ec.next_first_monday(today)});"
+                  " use --gsc-shortlist to run it now")
+            return
+        start, end = ec.gsc_window(today)
+        api = f"https://searchconsole.googleapis.com/webmasters/v3/sites/{GSC_SITE}/searchAnalytics/query"
+        r = s.post(api, json={"startDate": str(start), "endDate": str(end), "dimensions": ["query", "page"],
+                              "rowLimit": 5000, "dataState": "final"})
+        if not r.ok:
+            print(f"   Search Console error {r.status_code}")
+            return
+        print(f"   {start} to {end}, top 10 by impressions")
+        for line in ec.shortlist_lines(ec.shortlist(r.json().get("rows", []), ec.page_h2s_from(REPO))):
+            print("   " + line)
+    except Exception as e:
+        print(f"   Search Console shortlist failed: {type(e).__name__}")
+
+
 def main():
     p = argparse.ArgumentParser()
     p.add_argument("--since", type=datetime.date.fromisoformat, default=datetime.date(2026, 9, 26))
+    p.add_argument("--gsc-shortlist", action="store_true", help="run section 13 even if it isn't the first Monday")
     args = p.parse_args()
-    landing, ads_settings = ads_sections(args.since)
+    q = ads_query()
+    landing, ads_settings = ads_sections(args.since, q)
     creds, _ = google.auth.default()
     s = AuthorizedSession(creds)
     ga4_section(s)
@@ -388,6 +484,10 @@ def main():
     wiring_section(s, ads_settings)
     ledger_section()
     money_section()
+    today = datetime.date.today()
+    cost_section(q, today)
+    budget_section(q, today)
+    shortlist_section(s, today, args.gsc_shortlist)
 
 
 if __name__ == "__main__":
