@@ -107,6 +107,28 @@ def test_only_last4_of_a_bank_account_is_shown():
     assert not re.search(r"\d{8}", page)
 
 
+def test_a_trusted_account_shows_ok_not_ring_first():
+    # one phone confirmation (or a verified payment) trusts the account on every invoice to it: an ok badge, not amber
+    base = {"singer_email": "ben@example.org", "singer_name": "Ben Fenwick", "amount_gbp": "120", "bank_fp": "abc",
+            "bank_last4": "4321", "payee": "yes", "bank_changed": "yes"}
+    rows = [dict(base, message_id="m1", received="2026-09-20", paid_on="", notes="BANK DETAILS CHANGED: ring them"),
+            dict(base, message_id="m2", received="2026-09-22", paid_on="", bank_confirmed="yes")]
+    s = dash.singers(rows)
+    assert [x["ring_first"] for x in s] == [False, False] and s[0]["bank_trust"] == "confirmed by phone", s
+    page = dash.render(fake_data(singers=s))
+    assert "ring before paying" not in page and page.count('<span class="badge ok">changed, confirmed by phone') == 2
+    # paid to verifiably on an earlier invoice to the same account: trusted too, labelled so
+    rows[1] = dict(base, message_id="m0", received="2026-08-01", paid_on="2026-08-05", paid_verified="yes")
+    s = dash.singers(rows)
+    assert len(s) == 1 and not s[0]["ring_first"] and s[0]["bank_trust"] == "paid to verifiably", s
+    assert '<span class="badge ok">changed, paid to verifiably' in dash.render(fake_data(singers=s))
+    # a different account is not covered: still ring first, and the dashboard's own history arg is used
+    other = dict(base, message_id="m3", received="2026-09-25", bank_fp="xyz", paid_on="")
+    s = dash.singers([other], rows + [other])
+    assert s[0]["ring_first"] and s[0]["bank_trust"] == ""
+    assert "BANK DETAILS CHANGED: ring before paying" in dash.render(fake_data(singers=s))
+
+
 def test_missing_files_give_the_placeholders():
     reset()
     out = dash.render(dash.gather(None, T))

@@ -41,7 +41,9 @@ NAV = [("Today", "/"), ("Bookings", "/bookings"), ("Enquiries", "/enquiries"), (
        ("Drafts", "/drafts"), ("Quote", "/quote"), ("Singers", "/singers"), ("Marketing", "/marketing"), ("Calendar", "/calendar"), ("Search", "/search"),
        ("Reports", "/reports"), ("Health", "/health"), ("To-do", "/todo"), ("Exports", "/exports"),
        ("Activity", "/activity")]
-HAND_CHOICES = [(k, v[0]) for k, v in actions.HAND_CHOICES.items()]
+# the resolve form's select; short by fees has its own form, with the balance as its amount (macros.resolve_form)
+HAND_CHOICES = [(k, v[0]) for k, v in actions.HAND_CHOICES.items() if k != actions.FEE_CHOICE]
+FEE = {"cap": data.cp.FEE_CAP, "states": actions.FEE_STATES}
 ACTIVITY_RESULTS = ("ok", "failed", "refused", "started")
 JSON_MAX = 16384  # bytes of an action request (a passkey assertion is about 1 KB)
 TABS = [("Today", "/"), ("Bookings", "/bookings"), ("Enquiries", "/enquiries"), ("Money", "/money")]
@@ -136,7 +138,7 @@ def make_env():
                        state_tone=state_tone, gbp_or_dash=gbp_or_dash, when=when, pct=models.rate)
     env.filters.update(masked=lambda v: actions.DIGITS_RE.sub("••••••", str(v)))
     env.globals.update(NAV=NAV, TABS=TABS, SOON=SOON, HTMX_CONFIG=HTMX_CONFIG, current=current,
-                       HAND_CHOICES=HAND_CHOICES)
+                       HAND_CHOICES=HAND_CHOICES, FEE=FEE)
     return env
 
 
@@ -161,6 +163,7 @@ def create_app(client_factory=data.default_client, now=None, clock=None, passkey
                          "(the VAPID key belongs in the Keychain)")
     env = make_env()
     reader = data.Data(client_factory, now=now, **({"clock": clock} if clock else {}))
+    actions.use_bank(reader)  # the short-by-fees check reads the same cached bank assessment the pages show
     keys = passkeys or auth.Passkeys()
     dev_login = os.environ.get("CC_DEV_LOGIN", "").strip() or None
     if bind_host != LOOPBACK or uds or port is None or int(port) == auth.SERVICE_PORT:
@@ -195,7 +198,9 @@ def create_app(client_factory=data.default_client, now=None, clock=None, passkey
         waiting = [p for p in (props.value or []) if not p["applied"] and not p["problem"]] if props.ok else []
         books = actions.books_status()
         ctx = reader.today_page()
-        ctx["attention"] += len(waiting) + (1 if books["dry_run"] and not books["approved_at"] else 0)
+        # an import waiting for approval, or one whose dry run moved on since, needs the owner; an approved one is a
+        # handoff (like the others) and a done one needs nothing
+        ctx["attention"] += len(waiting) + (1 if books["state"] in ("waiting", "stale") else 0)
         hand_panel = ctx.get("hand")
         hand_items = (hand_panel.value if hand_panel.ok else hand_panel.stale) or [] if hand_panel else []
         handoffs = {

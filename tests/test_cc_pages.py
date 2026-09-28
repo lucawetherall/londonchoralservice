@@ -196,7 +196,7 @@ def test_a_failing_source_is_isolated():
     c, _ = make(FakeBank())
     real = data.dash.singers
 
-    def boom(rows):
+    def boom(rows, history=None):
         raise ValueError("Fenwickson secret message")
 
     data.dash.singers = boom

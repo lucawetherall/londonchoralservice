@@ -7,7 +7,7 @@ Stdlib runner, Starlette's TestClient, fake fixtures in a temp LCS_PRIVATE_DIR (
 emails), a fake Starling client and a fake home folder. Never touches the real private files, the real bank,
 ~/.claude or the Google credentials.
 """
-import datetime, json, os, re, sys, tempfile
+import argparse, contextlib, datetime, io, json, os, re, sys, tempfile
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
@@ -362,6 +362,29 @@ def test_singers_directory():
         ben = [g for g in models.singer_directory(lm.read_csv(si.STORE), datetime.date(2026, 9, 28))
                if g["first_name"] == "Ben"]
         assert len(ben) == 1 and len(ben[0]["invoices"]) == 2, ben   # "Fenwickson, Ben (tenor)" groups with Ben
+
+
+def test_confirmed_bank_details_clear_the_singers_card_and_today():
+    # owner report: after `confirm`, the old CHANGED clause stayed in the row's notes and kept the card red
+    def ben():
+        return next(g for g in models.singer_directory(lm.read_csv(si.STORE), datetime.date(2026, 9, 28))
+                    if g["first_name"] == "Ben")
+
+    with Patched():
+        c = make(FakeBank())
+        assert "No changed bank details waiting" not in page(c, "/")
+        assert ben()["warnings"] and ben()["bank_check"] == "not yet verified"
+        with contextlib.redirect_stdout(io.StringIO()):
+            si.cmd_confirm(argparse.Namespace(message_id="m1"))
+        g = ben()
+        assert g["warnings"] == [] and g["bank_check"] == "confirmed by phone", g
+        assert not any(i["ring_first"] for i in g["invoices"]), g["invoices"]
+        assert "BANK DETAILS CHANGED" in next(r for r in lm.read_csv(si.STORE) if r["message_id"] == "m1")["notes"]
+        c = TestClient(create_app(client_factory=(lambda: FakeBank()), now=lambda: NOW, clock=Clock(),
+                                  checkout=lambda: "main"), base_url=ORIGIN, client=LOCAL, follow_redirects=False)
+        assert "card-bad" not in page(c, "/singers")
+        today = page(c, "/")
+        assert "No changed bank details waiting" in today and "changed: ring before paying" not in today
 
 
 # ---------------------------------------------------------------- marketing

@@ -914,6 +914,107 @@ def test_newly_paid_by_name_says_check_before_thanking():
     assert len(books) == 1 and books[0].startswith("   books: bill_number ") and "amount 100.00 · date 2026-08-04" in books[0], books
 
 
+# --- paid --books-due: payments recorded before the assistant saw them (the Command Centre's half-hourly job) ---
+
+
+BOOKS_CACHE = Path(TMP) / "command-centre" / "cache" / "books.json"
+
+
+def books_cache(bills):
+    import json
+    BOOKS_CACHE.parent.mkdir(parents=True, exist_ok=True)
+    BOOKS_CACHE.write_text(json.dumps({"generated_at": "2026-09-28T07:00:00+01:00", "invoices": [], "totals": {},
+                                       "bills": bills}))
+
+
+def paid_due(client=None, apply=True):
+    buf = io.StringIO()
+    with contextlib.redirect_stdout(buf):
+        si.cmd_paid(Args(apply=apply, books_due=True), client)
+    return buf.getvalue()
+
+
+def test_books_due_lists_open_bills_and_recent_payments_not_thanked():
+    fresh_store()
+    today = lm.today()
+    d = lambda n: (today - datetime.timedelta(days=n)).isoformat()  # noqa: E731
+    base = {"received": d(30), "singer_email": "x@example.org", "amount_gbp": "100.00", "bank_fp": "f",
+            "bank_last4": "1111", "payee": "", "bank_changed": "no", "bank_confirmed": "", "paid_ref": "p",
+            "paid_amount": "100.00", "notes": "", "withdrawn": "", "booking_ref": ""}
+    rows = [dict(base, message_id="a", singer_name="Ann Able", invoice_ref="A1", paid_on=d(1), paid_verified="yes"),
+            dict(base, message_id="b", singer_name="Bob Baker", invoice_ref="B1", paid_on=d(1), paid_verified="yes",
+                 notes=f"paid reply drafted {d(1)}"),
+            dict(base, message_id="c", singer_name="Cy Cole", invoice_ref="C1", paid_on=d(20), paid_verified="yes"),
+            dict(base, message_id="d", singer_name="Di Dent", invoice_ref="D1", paid_on=d(1), paid_verified="no"),
+            dict(base, message_id="e", singer_name="Ed Eyre", invoice_ref="E1", paid_on=d(1), paid_verified="yes",
+                 withdrawn=d(1)),
+            dict(base, message_id="f", singer_name="Flo Fry", invoice_ref="F1", paid_on=d(2), paid_verified="yes"),
+            dict(base, message_id="g", singer_name="Gus Gray", invoice_ref="G1", paid_on="", paid_verified="",
+                 paid_amount="", paid_ref="")]
+    lm.write_csv(si.STORE, rows, si.COLUMNS)
+    BOOKS_CACHE.unlink(missing_ok=True)
+    got = paid_due(None).splitlines()
+    assert "books-due: no Books cache" in got and not any(x.startswith("BOOKS DUE") for x in got), got
+    assert [x.split(":")[0] for x in got if x.startswith("THANKS DUE")] == ["THANKS DUE a", "THANKS DUE f"], got
+    books_cache([{"number": "A1", "vendor": "Ann", "status": "open", "total": 100.0, "balance": 100.0},
+                 {"number": "B1", "vendor": "Bob", "status": "paid", "total": 100.0, "balance": 0.0},
+                 {"number": "C1", "vendor": "Cy", "status": "overdue", "total": 100.0, "balance": 100.0},
+                 {"number": "D1", "vendor": "Di", "status": "open", "total": 100.0, "balance": 100.0},
+                 {"number": "E1", "vendor": "Ed", "status": "open", "total": 100.0, "balance": 100.0},
+                 {"number": "G1", "vendor": "Gus", "status": "open", "total": 100.0, "balance": 100.0}])
+    before = si.STORE.read_bytes()
+    got = paid_due(None).splitlines()
+    assert si.STORE.read_bytes() == before  # read-only
+    assert got[0] == "No unpaid singer invoices." or got[0] == "No Starling token; paid check skipped.", got
+    due = [x for x in got if x.startswith(("BOOKS DUE", "   books:"))]
+    assert due == [f"BOOKS DUE a: Ann £100.00 paid {d(1)}, bill open in Books",
+                   f"   books: bill_number A1 · email x@example.org · amount 100.00 · date {d(1)}",
+                   f"BOOKS DUE c: Cy £100.00 paid {d(20)}, bill open in Books",
+                   f"   books: bill_number C1 · email x@example.org · amount 100.00 · date {d(20)}"], due
+    assert [x for x in got if x.startswith("THANKS DUE")] == [
+        f"THANKS DUE a: Ann £100.00 paid {d(1)}, no \"Paid!\" reply yet",
+        f"THANKS DUE f: Flo £100.00 paid {d(2)}, no \"Paid!\" reply yet"], got
+    assert "books-due: no Books cache" not in got
+    # without --books-due, paid prints none of it
+    buf = io.StringIO()
+    with contextlib.redirect_stdout(buf):
+        si.cmd_paid(Args(apply=True), None)
+    assert "DUE" not in buf.getvalue() and "books-due" not in buf.getvalue()
+    BOOKS_CACHE.unlink()
+
+
+def test_books_due_skips_this_runs_newly_paid_and_reappears_until_the_bill_is_paid():
+    fresh_store()
+    today = lm.today()
+    when = (today - datetime.timedelta(days=1)).isoformat()
+    scan(GEN.format(n=1), "g1", (today - datetime.timedelta(days=3)).isoformat())
+    number = si.bill_number(rows_by_id()["g1"]["invoice_ref"], "g1")
+    books_cache([{"number": number, "vendor": "Ben", "status": "open", "total": 100.0, "balance": 100.0}])
+    feed = FakeClient(out=[fp_out(100, when, "BW MUSIC", "p1", "123456", "11112222")])
+    got = paid_due(feed)
+    assert f"NEWLY PAID g1: Ben £100.00 on {when} (bank details match)" in got, got
+    assert "BOOKS DUE" not in got and "THANKS DUE" not in got, got  # the NEWLY PAID line already covers it
+    got = paid_due(feed)  # the next run: the payment is recorded, so no NEWLY PAID, but the bill is still open
+    assert "NEWLY PAID" not in got and f"BOOKS DUE g1: Ben £100.00 paid {when}, bill open in Books" in got, got
+    assert f"   books: bill_number {number} · email ben@example.com · amount 100.00 · date {when}" in got, got
+    assert f"THANKS DUE g1: Ben £100.00 paid {when}" in got
+    si.cmd_thanked(Args(message_id="g1"))
+    books_cache([{"number": number, "vendor": "Ben", "status": "paid", "total": 100.0, "balance": 0.0}])
+    got = paid_due(feed)
+    assert "DUE g1" not in got, got
+    BOOKS_CACHE.unlink()
+
+
+def test_books_bill_matches_by_number_then_vendor():
+    r = {"invoice_ref": "SAME-1", "message_id": "m1", "singer_name": "Hal Hart"}
+    bills = [{"number": "same-1 ", "vendor": "Ivy", "status": "open"}, {"number": "SAME-1", "vendor": "Hal", "status": "paid"},
+             {"number": "SAME-1", "vendor": "Hal", "status": "void"}]
+    assert si.books_bill(r, bills)["status"] == "paid"
+    assert si.books_bill(r, bills[:1])["vendor"] == "Ivy"  # one bill of that number: whoever the vendor
+    assert si.books_bill(r, []) is None and si.books_bill(r, None) is None
+    assert si.books_bill(r, [{"number": "SAME-1", "vendor": "Ivy"}, {"number": "SAME-1", "vendor": "Jo"}]) is None
+
+
 # --- round 6: what the first live backfill showed: .docx, fetching by id, rescan, refs --------------
 
 def test_extract_ref_backfill_shapes():
@@ -1706,6 +1807,97 @@ def test_unlinked_invoices_counts_unlinked_not_withdrawn():
     assert si.unlinked_invoices([]) == {"count": 0, "total": 0.0}
     assert si.unlinked_invoices([dict(unpaid("m1", "Ben Fenwick", 120, "2026-09-20"), booking_ref="0310")]) == \
         {"count": 0, "total": 0.0}
+
+
+# --- owner report: bank details wrongly flagged after a phone confirmation or a verified payment -----
+
+CHANGED_NOTE = "BANK DETAILS CHANGED since their last invoice (was ••••9999, now ••••2222): ring them before paying"
+
+
+def trow(mid, received, sc="123456", acc="11112222", **kw):
+    r = hrow("ben@example.com", "Ben Fenwick", sc, acc, received, mid=mid, changed="yes")
+    r.update(notes=CHANGED_NOTE, paid_on="", amount_gbp="100.00")
+    r.update(kw)
+    return r
+
+
+def test_confirming_one_invoice_trusts_the_account_on_every_invoice():
+    rows = [trow("a", "2026-09-01"), trow("b", "2026-09-10")]
+    assert all(si.ring_first_in(rows, r) for r in rows)
+    assert si.summary(rows, datetime.date(2026, 9, 28))["bank_changed"] == 2
+    rows[0]["bank_confirmed"] = "yes"
+    assert not any(si.ring_first_in(rows, r) for r in rows)
+    assert si.live_warnings(rows, rows[0]) == [] and si.live_warnings(rows, rows[1]) == []
+    assert si.trust_label(rows, rows[1]) == "confirmed by phone"
+    assert si.summary(rows, datetime.date(2026, 9, 28))["bank_changed"] == 0
+    assert si.ring_first(rows[1])  # the per-row check is unchanged for any old caller
+    # clauses that are not bank alarms stay in view
+    rows[1]["notes"] = CHANGED_NOTE + "; amount not found: check the invoice by hand; paid reply drafted 2026-09-12"
+    assert si.live_warnings(rows, rows[1]) == ["amount not found: check the invoice by hand"]
+
+
+def test_a_verified_payment_trusts_the_account_on_every_invoice():
+    rows = [trow("a", "2026-09-01", paid_on="2026-09-05", paid_verified="yes"), trow("b", "2026-09-10")]
+    assert not si.ring_first_in(rows, rows[1]) and si.live_warnings(rows, rows[1]) == []
+    assert si.trust_label(rows, rows[1]) == "paid to verifiably"
+    rows[0]["paid_verified"] = "no"  # paid by name only: never trust
+    assert si.ring_first_in(rows, rows[1]) and si.live_warnings(rows, rows[1]) == [CHANGED_NOTE]
+
+
+def test_a_different_account_for_the_same_singer_is_still_flagged():
+    rows = [trow("a", "2026-09-01", bank_confirmed="yes"), trow("b", "2026-09-10", sc="654321", acc="99998888")]
+    assert si.ring_first_in(rows, rows[1]) and not si.account_trusted(rows, rows[1])
+    assert si.live_warnings(rows, rows[1]) == [CHANGED_NOTE] and si.trust_label(rows, rows[1]) == ""
+    # the same fingerprint trusted in another singer's history vouches for nothing here
+    rows = [dict(trow("a", "2026-09-01", bank_confirmed="yes"), singer_email="dora@example.com", singer_name="Dora Quill"),
+            trow("b", "2026-09-10")]
+    assert si.ring_first_in(rows, rows[1]) and si.live_warnings(rows, rows[1]) == [CHANGED_NOTE]
+
+
+def test_details_going_a_b_b_flag_the_change_once():
+    history = [hrow("b@x.com", "Ben Fenwick", "999999", "99990000", "2026-08-01", mid="a"),
+               hrow("b@x.com", "Ben Fenwick", "123456", "12345678", "2026-09-01", changed="yes", mid="b1")]
+    a = si.assess_new(inv(), "b@x.com", "Ben Fenwick", history, {}, [])
+    assert a["bank_changed"] == "no" and not any("CHANGED" in w for w in a["warnings"]), a
+    assert any(w.startswith(si.NOT_YET_VERIFIED) for w in a["warnings"])  # still an alarm: no bill until rung
+    # once the first B is paid (by name, unverified) its flag is out of view, so the next B carries it again
+    history[1]["paid_on"] = "2026-09-05"
+    assert si.assess_new(inv(), "b@x.com", "Ben Fenwick", history, {}, [])["bank_changed"] == "yes"
+    # back to A after B is a change again
+    history[1]["paid_on"] = ""
+    assert si.assess_new(inv("999999", "99990000"), "b@x.com", "Ben Fenwick", history, {}, [])["bank_changed"] == "yes"
+
+
+def test_sources_disagree_on_a_trusted_account_is_not_a_change():
+    trusted = [hrow("b@x.com", "Ben Fenwick", "123456", "12345678", "2026-08-01", paid_on="2026-08-03", verified="yes")]
+    i = dict(inv(), sources_disagree=True, warnings=[si.DIFFER])
+    a, changed, _ = si.assess_invoice(i, trusted, "m2", "2026-09-01", "b@x.com", "Ben Fenwick", ({}, [], {}))
+    assert changed == "no" and si.DIFFER not in i["warnings"] and si.TRUSTED_DIFFER in i["warnings"], i
+    assert si.bill_verdict(i["warnings"] + a["warnings"], 100.0) == "yes"
+    # a Starling payee with these details counts as trusted too
+    i = dict(inv(), sources_disagree=True, warnings=[si.DIFFER])
+    fps = {lm.bank_fingerprint("123456", "12345678"): "Ben Fenwick"}
+    assert si.assess_invoice(i, [], "m2", "2026-09-01", "b@x.com", "Ben Fenwick", (fps, ["Ben Fenwick"], {}))[1] == "no"
+    # details nobody trusts: DIFFER and the change flag, as before
+    for history in ([], [dict(trusted[0], paid_verified="no")]):
+        i = dict(inv(), sources_disagree=True, warnings=[si.DIFFER])
+        a, changed, _ = si.assess_invoice(i, history, "m2", "2026-09-01", "b@x.com", "Ben Fenwick", ({}, [], {}))
+        assert changed == "yes" and si.DIFFER in i["warnings"] and si.TRUSTED_DIFFER not in i["warnings"], history
+
+
+def test_bill_verdict_yes_for_a_trusted_account_with_an_old_warning():
+    assert si.bill_verdict([CHANGED_NOTE], 100.0) == "no (bank warning)"
+    assert si.bill_verdict([CHANGED_NOTE], 100.0, True) == "yes"
+    fresh_store()
+    scan(GEN.format(n=1), "g1", "2026-08-01")
+    scan(GEN.format(n=2), "g2", "2026-08-20")
+    assert si.NOT_YET_VERIFIED in rows_by_id()["g2"]["notes"]
+    assert bill_lines(scan(GEN.format(n=2), "g2", "2026-08-20"))[0] == "bill: no (bank warning)"
+    with contextlib.redirect_stdout(io.StringIO()):
+        si.cmd_confirm(Args(message_id="g1"))  # rung once, confirmed on the other invoice
+    again = scan(GEN.format(n=2), "g2", "2026-08-20")
+    assert bill_lines(again)[0] == "bill: yes" and "   ! " not in again, again
+    assert si.NOT_YET_VERIFIED in rows_by_id()["g2"]["notes"]  # the record keeps what scan said at the time
 
 
 if __name__ == "__main__":

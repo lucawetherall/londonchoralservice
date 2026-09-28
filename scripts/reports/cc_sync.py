@@ -14,7 +14,8 @@ writes ~/lcs-private/command-centre/cache/books.json: each invoice's number, sta
 and the customer's first name only; each bill's number, the vendor's first name, status, total, balance and date
 (best effort: the free Books plan has no bills, so a failed bill read gives "bills_read": false and no bills);
 the totals (receivables, overdue, unpaid bills) and generated_at. On any failure it prints the error's type name
-only, keeps the last cache and exits 0, so a scheduled run carries on.
+only, keeps the last cache and exits 1, so the Command Centre's refresh job logs the failure (a scheduled run
+notes it and carries on).
 
 calendar-put takes the diary from the scheduled assistant (Python can't reach the claude.ai Google Calendar
 connector): a JSON list of {start, end, summary, calendar}, at most 500 events, start and end ISO dates (all-day,
@@ -216,7 +217,7 @@ def cmd_books(call=None, now=None):
         write_private_json(cache_dir() / "books.json", snap)
     except Exception as e:  # the type name only: a message could carry a client's details or a server's URL
         print(f"books: not updated ({type(e).__name__}); the last cache is kept")
-        return 0
+        return 1
     t = snap["totals"]
     bills = (f"{len(snap['bills'])} bills" if snap["bills_read"] else "no bills (not on this Books plan)")
     print(f"books: {len(snap['invoices'])} invoices, {bills} cached; receivables "

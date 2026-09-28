@@ -52,7 +52,7 @@ def open_singers(rows):
     """dash.singers (the unpaid invoices, oldest first) with each row's action handle and allowed actions."""
     out = []
     for r in sorted(rows, key=lambda r: r.get("received") or ""):
-        for s in dash.singers([r]):
+        for s in dash.singers([r], rows):  # the whole store: an account trusted on one invoice is on all
             out.append(dict(s, **models.singer_actions(r)))
     return out
 
@@ -149,10 +149,14 @@ class Data:
         flags = self.panel("books_flags", lambda c, rows, b: None if c is None else models.books_flags(
             c["invoices"], rows, models.booking_rows(rows, b["assessments"], b["bank_checked"], today), today,
             b["bank_checked"]), books, ledger, bank)
+        bill_flags = self.panel("singer_bill_flags", lambda c, s: None if c is None else models.singer_bill_flags(
+            s, c["bills"]), books, store)
+        synced = self.panel("books_synced", lambda c: None if c is None else models.books_synced(c, now), books)
         count = sum(len(p.value) for p in (hand, singers) if p.ok)  # a bank warning is one of the singer invoices
-        count += len(flags.value or []) if flags.ok else 0
+        count += sum(len(p.value or []) for p in (flags, bill_flags) if p.ok)
         return {"stamp": stamp(now), "today": today, "warnings": warnings, "hand": hand, "singers": singers,
-                "week": week, "later": later, "bank": bank, "attention": count, "books_flags": flags}
+                "week": week, "later": later, "bank": bank, "attention": count, "books_flags": flags,
+                "singer_bill_flags": bill_flags, "books_synced": synced}
 
     def money_page(self):
         now, today, ledger, bank, store, singers, hand = self._common()
@@ -161,7 +165,8 @@ class Data:
         balance = self.panel("balance", lambda b: b["balance"], bank)
         total = self.panel("singer_total", lambda s: round(sum(x["amount"] for x in s), 2), singers)
         books = self.books()
-        summary = self.panel("books_summary", lambda c: models.books_summary(c) if c else None, books)
+        summary = self.panel("books_summary", lambda c: models.books_summary(
+            c, ledger.value if ledger.ok else None) if c else None, books)
         margins = self.margins(ledger, store)
         season = self.panel("season_margin", lambda m: models.season_margin(m, dash.season_start()), margins)
         unlinked = self.panel("unlinked_singer_invoices", si.unlinked_invoices, store)

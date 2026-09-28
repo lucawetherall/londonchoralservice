@@ -37,6 +37,7 @@
       "Bash(.venv/bin/python scripts/bookings/singer_invoices.py scan *)",
       "Bash(.venv/bin/python scripts/bookings/singer_invoices.py rescan *)",
       "Bash(.venv/bin/python scripts/bookings/singer_invoices.py paid --apply)",
+      "Bash(.venv/bin/python scripts/bookings/singer_invoices.py paid --apply --books-due)",
       "Bash(.venv/bin/python scripts/bookings/singer_invoices.py status)",
       "Bash(.venv/bin/python scripts/bookings/singer_invoices.py thanked *)",
       "Bash(.venv/bin/python scripts/bookings/singer_invoices.py withdrawn *)",

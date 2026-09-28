@@ -18,7 +18,8 @@ text may mention tax. An attachment must be a .pdf or .docx inside
 iCloud Drive/LCS-invoices/ (~/Library/Mobile Documents/com~apple~CloudDocs/LCS-invoices).
 Claude never emails, reminds, deletes, voids or writes off anything in Books, never
 matches a bank transaction and never updates an invoice. It records only the
-payments the owner approved (a confident client payment against its invoice, and a
+payments the owner approved (a confident client payment against its invoice, with any
+shortfall the owner accepted as transfer fees, at most £25, as its bank_charges; and a
 singer payment against its bill, unused on the free plan, both through the Starling
 account), and marks an invoice sent (a status change; Books emails nobody as long as
 its automatic payment reminders are off) only once Luca's own email carrying that
@@ -28,6 +29,7 @@ of the wrong shape, denies the call.
 Design: docs/superpowers/specs/2026-09-28-zoho-books-design.md
 """
 import json
+import math
 import os
 import re
 import sys
@@ -330,6 +332,13 @@ def check_create_vendor_payment(body, query, path):
 # Client payments (owner decision, 28 Sep 2026, the evening after the singer rule): a payment
 # check_payments.py matched confidently (its "record_in_books" list), recorded against that booking's one
 # invoice, through the Starling account, never with contact_persons (Books would email a thank-you).
+# `amount` is the money received. A shortfall the owner accepted as transfer fees (owner decision, 28 Sep 2026:
+# "short by fees £X accepted", at most £25 a booking) rides on the last payment as `bank_charges`, a plain
+# number more than £0 and at most FEE_CAP; the invoice is then credited with amount + bank_charges, so both
+# amount_applied values must equal that sum. Without bank_charges all three amounts are equal.
+FEE_CAP = 25.00  # check_payments.FEE_CAP
+
+
 def check_create_customer_payment(body, query, path):
     for key in ("customer_id", "date", "invoice_id"):
         _need(body, key, "body")
@@ -347,9 +356,18 @@ def check_create_customer_payment(body, query, path):
     amounts = (body.get("amount"), body.get("amount_applied"), line.get("amount_applied"))
     if not all(isinstance(v, (int, float)) and not isinstance(v, bool) for v in amounts):
         raise Deny(P + "amount, amount_applied and invoices[0].amount_applied must be plain numbers.")
-    if line.get("invoice_id") != body.get("invoice_id") or len({round(v, 2) for v in amounts}) != 1:
-        raise Deny(P + "invoice_id and every amount must agree: one invoice, the whole payment applied to it.")
-    if not 0 < amounts[0] <= 10000:
+    charges = 0
+    if "bank_charges" in body:
+        charges = body["bank_charges"]
+        if not (isinstance(charges, (int, float)) and not isinstance(charges, bool)
+                and math.isfinite(charges) and 0 < charges <= FEE_CAP):
+            raise Deny(P + f"bank_charges must be a plain number, more than £0 and at most £{FEE_CAP:.0f} "
+                       "(a shortfall the owner accepted as transfer fees).")
+    applied = round(amounts[0] + charges, 2)
+    if line.get("invoice_id") != body.get("invoice_id") or {round(v, 2) for v in amounts[1:]} != {applied}:
+        raise Deny(P + "invoice_id and every amount must agree: one invoice, the whole payment applied to it "
+                   "(both amount_applied values equal amount, plus bank_charges when there are any).")
+    if not (math.isfinite(amounts[0]) and 0 < amounts[0] <= 10000):
         raise Deny(P + "amount must be more than £0 and at most £10,000.")
 
 
@@ -398,8 +416,8 @@ WRITE_TOOLS = {
             bills=[obj("bill_id", "amount_applied")]),
         ORG_ONLY, NOTHING, check_create_vendor_payment),
     "ZohoBooks_create_customer_payment": (
-        obj("customer_id", "date", "amount", "amount_applied", "invoice_id", "payment_mode", "account_id",
-            "reference_number", "description", invoices=[obj("invoice_id", "amount_applied")]),
+        obj("customer_id", "date", "amount", "amount_applied", "bank_charges", "invoice_id", "payment_mode",
+            "account_id", "reference_number", "description", invoices=[obj("invoice_id", "amount_applied")]),
         ORG_ONLY, NOTHING, check_create_customer_payment),
     "ZohoBooks_create_item": (
         obj("name", "rate", "description", "item_type", "product_type", "purchase_rate", "purchase_description"),
