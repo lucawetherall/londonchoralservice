@@ -254,11 +254,13 @@ def coverage_section(s, landing):
         print(f"   sitemaps error {r.status_code}: {r.json().get('error', {}).get('message')}")
     for m in r.json().get("sitemap", []) if r.ok else []:
         read = (m.get("lastDownloaded") or "")[:10]
-        stale = read and (datetime.date.today() - datetime.date.fromisoformat(read)).days > 14
+        sent = (m.get("lastSubmitted") or "")[:10]
+        age = lambda d: (datetime.date.today() - datetime.date.fromisoformat(d)).days if d else 9999
+        stale = age(read) > 14 and age(sent) > 7  # a fresh resubmission gets a week to be read
         counts = ", ".join(f"{c.get('submitted')} submitted / {c.get('indexed', '?')} indexed" for c in m.get("contents", []))
         print(f"   {m['path']} · submitted {(m.get('lastSubmitted') or '')[:10]} · last read by Google {read or 'never'}"
               f" · {counts} · errors {m.get('errors', 0)} · warnings {m.get('warnings', 0)}"
-              f"{'  !STALE: resubmit' if stale or not read else ''}")
+              f"{'  !STALE: resubmit' if stale else ('  (resubmitted, waiting for Google)' if age(read) > 14 else '')}")
     try:
         with urllib.request.urlopen(f"{SITE}/sitemap.xml", timeout=20) as f:
             print(f"   live sitemap.xml lists {f.read().decode().count('<loc>')} URLs")
