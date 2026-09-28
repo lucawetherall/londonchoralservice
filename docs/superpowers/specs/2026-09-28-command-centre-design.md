@@ -74,6 +74,11 @@ iPhone / iPad / laptop ──Tailscale (WireGuard, HTTPS via tailscale serve)─
 - **Service:**
   - A LaunchAgent `com.lcs.command-centre.plist`, started at login and restarted on crash, with logs to `~/lcs-private/command-centre/logs/`.
   - A one-time `tailscale serve --bg --https=443 http://127.0.0.1:8765` makes it reachable at `https://<mac>.<tailnet>.ts.net`.
+- **Access from the phone (owner decision, phase 5):** Tailscale only, and the phone doesn't keep the VPN on.
+  - In the Tailscale admin console (DNS), MagicDNS and HTTPS certificates are on: the Home Screen app and Web Push need the real ts.net certificate.
+  - An iPhone Shortcut "LCS" (Tailscale → Connect, then Open URL `https://<mac>.<tailnet>.ts.net/`) on the Home Screen is the main way in; an optional second Shortcut disconnects.
+  - Web Push arrives with the VPN off, through Apple's push service. The Mac sends it over its normal internet connection, never through the tailnet.
+  - With the VPN off, the installed app shows the last Today and Money pages it saw, marked "Offline, as of <time>", after a fetch timeout of at most 4 seconds. Nothing that writes works offline.
   - Both steps are scripted in `command_centre/install.sh`. The owner runs it once; it is idempotent and needs no secrets.
 - **Config:** `~/lcs-private/command-centre/config.json`. It holds the allowed Tailscale login(s), the passkey credentials (public keys only), the push subscriptions and the backup target.
 
@@ -184,7 +189,7 @@ Not in the app: sending email, payments, payees, deletes, and Books sends or voi
 ## Backups
 
 - A nightly encrypted archive of `~/lcs-private`, keeping 14 days, in `tar` + `age` format.
-- The recipient key is in the Keychain; the identity key is printed once for the owner to store in his password manager.
+- The recipient (public) key is in the config (it is not a secret, and the nightly run needs no Keychain prompt); the identity key is printed once for the owner to store in his password manager, and never stored on the Mac.
 - The target is iCloud Drive `LCS-backups/` by default (config).
 - A restore procedure is documented.
 - The health page warns if the last backup is more than 36 hours old.

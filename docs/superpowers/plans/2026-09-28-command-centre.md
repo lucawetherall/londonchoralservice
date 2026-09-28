@@ -328,15 +328,81 @@ The reviewer showed that an Ads validate could run code that wasn't the committe
 - **Task 4.4 Run a scheduled task now** (moved from phase 3): the chat asks Claude to run the task's prompt, under the repo's guards.
 - Tests: a crashed chat leaves the other pages working; a denied card never runs the tool.
 
-## Phase 5: PWA, push, drafts inbox, quote calculator, backups (expand before building)
+## Phase 5: installable app, push notifications, encrypted nightly backups (this PR)
 
-- **Task 5.1 PWA.** Manifest, service worker (no caching of data pages), icons.
-- **Task 5.2 Push.** VAPID keys in the Keychain; `events.jsonl` watcher; `scripts/bookings/cc_event.py` (allowlisted) for the scheduled prompts; payload has a title and a first name only (tested).
-- **Task 5.3 Drafts inbox.** From run summaries and a Zoho drafts read; "open in Zoho"; local sent/discarded marks.
-- **Task 5.4 Quote calculator.** Prices parsed as `assistant_io.py prices` does; copyable wording in Luca's style.
-- **Task 5.0 Refresh job** (moved from phase 3's Task 3.0): `jobs.py` writes `cache/{ads,ga4,gsc,books,drafts,calendar}.json` every 30 minutes, 07:00 to 22:00; a failing refresher keeps the last good file and records the error type.
-- **Task 5.5 Backups** (with "Back up now", moved from phase 3). Nightly `tar` + `age` of `~/lcs-private`, 14 kept, to iCloud Drive `LCS-backups/`; the health page warns after 36 hours; a documented restore.
-- **Task 5.6 Security review** by a separate agent, adversarially, before go-live of the actions.
+**Goal:** the app installs on the iPhone's Home Screen and shows Today and Money offline; the owner gets a push notification for the events that need him; `~/lcs-private` is backed up every night, encrypted, with 14 days kept.
+
+**Access (owner decision):** Tailscale only, and the phone does not keep the VPN on. The owner opens the app with an iPhone Shortcut that connects Tailscale and then opens the ts.net URL. Web Push reaches the phone through Apple's push service with the VPN off; the Mac sends it over its normal internet connection, never through the tailnet. With the VPN off the Home Screen app shows the cached Today and Money pages, marked "Offline, as of <time>", after at most a 4-second wait.
+
+**Scope changes from the outline:**
+- The drafts inbox (5.3), the quote calculator (5.4) and the 30-minute refresh job (5.0) move to a later PR; this one is the PWA, push and backups.
+- The service worker caches the last Today and Money pages for offline viewing (the outline said no data pages): the owner wants them with the VPN off. Nothing else is cached, and no write.
+- The backup recipient (a public key, not a secret) lives in the config rather than the Keychain, so the nightly run from launchd needs no Keychain prompt. The identity (the private key) is printed once by `init` and never stored.
+
+**Files:**
+- `command_centre/push.py`: VAPID keys (Keychain), subscriptions (config), the payload builder, the `events.jsonl` watcher and the stale-run check.
+- `command_centre/pwa.py`: the manifest and the icons (pure-Python PNG: Pillow isn't in the venv); `static/sw.js`, `pwa.js`, `push.js`, `icons/*.png`, `icon.svg`.
+- `command_centre/app.py`: `GET /manifest.webmanifest`, `GET /sw.js`, `GET /device`; the watcher in the app's lifespan (the service only). `auth.py`: `worker-src 'self'` in the CSP.
+- `command_centre/actions.py`: `push-subscribe` (passkey), `push-unsubscribe` and `backup-now` (no passkey, same-origin), each on its own lock.
+- `command_centre/sources.py`, `data.py`, `templates/health.html`: the backup age.
+- `scripts/reports/cc_event.py` (allowlisted), `scripts/reports/cc_backup.py` (not allowlisted).
+- `command_centre/install.sh`: `--backup` installs the `com.lcs.backup` LaunchAgent (02:30 nightly); the owner steps for Tailscale, the Shortcut and notifications in its output.
+- Handover Appendices A and E: one `cc_event.py` line where each event happens. `.claude/settings.json`: the allowlist entry.
+- Tests: `tests/test_cc_pwa.py`, `tests/test_cc_push.py`, `tests/test_cc_backup.py`; `tests/test_prompt_allowlist.py` keeps passing.
+
+### Task 5.1: PWA
+
+- [ ] `GET /manifest.webmanifest` (`application/manifest+json`): name "LCS Command Centre", short name "LCS", `display: standalone`, start URL and scope `/`, theme `#8B3A3A`, background `#F7F3EE`, icons 180, 192, 512 and a maskable 512, PNG files in `static/icons/` drawn by `pwa.py` (a drift test redraws them). No external asset.
+- [ ] `GET /sw.js` (`application/javascript`, `Service-Worker-Allowed: /`, `no-store`), scope `/`. It caches the app shell (CSS, JS, icons) and the last copy of `/` and `/money` (exact paths, no query, a 200 HTML answer only). Those two pages are fetched with a 4-second timeout; when the network fails or is slow (Tailscale off) the saved copy is served with a banner "Offline, as of <time>". Any method but GET returns before the worker touches it, so it never sees, caches or replays a POST; `/actions/`, `/auth/`, exports and every other page are never cached. On push it shows the title and body (truncated); a tap opens the payload's path when it is a same-origin path, else `/`.
+- [ ] `base.html`: the manifest link, `theme-color`, the Apple touch icon, `pwa.js` (registers the worker) and an install hint in iOS Safari when the app isn't installed yet.
+- [ ] CSP: `worker-src 'self'` and `manifest-src 'self'`; the rest unchanged.
+
+### Task 5.2: Push
+
+- [ ] `pywebpush==2.5.0` pinned with its dependencies. **VAPID keys:** a P-256 key made once with `cryptography`, its private scalar (hex) stored with the `security` CLI under the Keychain service `lcs-command-centre-vapid` (added through `security -i` on stdin, so the key never appears in a process list; read with `find-generic-password -w` from the app's own process, never by Claude). For tests and the local visual check only, `CC_VAPID_STORE=file` switches to `<private>/command-centre/vapid-test.json` (mode 600).
+- [ ] **Subscribe** is `push-subscribe` in the registry: input `endpoint`, `p256dh`, `auth`. The endpoint must be `https://` on a known push service (Apple, Google, Mozilla, Microsoft) with no port, user info or fragment, so the app can't be made to POST anywhere else. The summary names the push service and a hash of the device key; the owner approves it with a passkey (a new device receiving business information). Stored in the config's `push_subscriptions` (id = the first 16 hex characters of sha256(endpoint), when, login, passkey id). **Unsubscribe** is `push-unsubscribe` (input `id`), no passkey: it only narrows who is told. Both pass the Host and same-origin checks and are audited.
+- [ ] **Events:** `scripts/reports/cc_event.py <kind> <short text>` appends `{"at", "kind", "text"}` to `~/lcs-private/command-centre/events.jsonl` (mode 600, directory 700, under an flock). Kinds: enquiry, deposit, bank-change, guard-denied, run-failed, monday-ready, hand-check. It strips emails, links and runs of six or more digits and cuts the text to 80 characters.
+- [ ] **Payload:** `{"title", "body", "url"}` only. The title and the page come from the kind (a fixed table); the body is the event's text, scrubbed again, with every known client and singer surname removed (ledger, pipeline, singer store), at most 80 characters.
+- [ ] **Sending:** pywebpush over the Mac's normal internet connection (a `requests` session with no proxy from the environment and a 10-second timeout; the push services are public hosts, never tailnet addresses).
+- [ ] **Watcher** (the service only, never on a dev port): every 20 seconds it reads new lines from `events.jsonl` (from the end of the file on its first start, so history isn't replayed; the offset lives in `push-state.json`), pushes each to every subscription (a 404 or 410 drops that subscription) and runs the stale-run check.
+- [ ] **Stale run:** between 08:00 and 21:00 London time, if `assistant-state.json` hasn't changed for more than 3 daytime hours (21:00 to 08:00 doesn't count, so the first run of the morning isn't late), push "Enquiry assistant not seen" once per stale file.
+- [ ] **This device** (`/device`, from More and the footer): the install steps (Shortcut included), this device's notification state, **Enable notifications** (asks permission and subscribes; a second tap approves it with Face ID or Touch ID), **Turn off on this device**, and the subscribed devices with a remove button each.
+
+### Task 5.3: Backups
+
+- [ ] `pyrage==1.4.0` (the age format; no CLI needed to make or check a backup). `scripts/reports/cc_backup.py`:
+  - `init`: makes an age X25519 identity, saves the recipient (public key) in the config's `backup.recipient`, and prints the identity once for the password manager. It never writes the identity anywhere. Refused if a recipient exists, unless `--replace`.
+  - `run` (the LaunchAgent and "Back up now"): a tar.gz of `~/lcs-private` without the backups themselves, `command-centre/runs/`, `command-centre/cache/` and `command-centre/mirror.git`, nor sockets or other special files, built in an unlinked temp file, encrypted to the recipient, written as `lcs-backup-YYYYMMDD-HHMMSS.tar.gz.age` (mode 600) through a `.part` file and a rename. Then backups older than 14 days go (only files with that exact name pattern, regular files, never the newest). `command-centre/backup-state.json` records the time, name, size and sha256. One run at a time (flock).
+  - `verify`: reads the identity from stdin (hidden when typed), decrypts the newest backup in memory and prints its listing. Nothing is extracted.
+  - Target: the config's `backup.target`, default `~/Library/Mobile Documents/com~apple~CloudDocs/LCS-backups`.
+- [ ] Health shows the last backup's age and warns after 36 hours (or when there is none, or no recipient); the fingerprint key row points at it.
+- [ ] `backup-now` in the registry: `cc_backup.py run`, no passkey, same-origin (CSRF) required, its own lock, a 15-minute timeout.
+- [ ] `install.sh --backup` writes and loads `com.lcs.backup` (02:30 daily), refused until `init` has set a recipient.
+- **Restore:** `brew install age`, then `age -d -i key.txt lcs-backup-….tar.gz.age | tar -xz -C ~/restore-check` (key.txt holds the identity, typed from the password manager and deleted afterwards). `cc_backup.py verify` checks a backup without extracting it.
+
+### Task 5.4: Wiring
+
+- [ ] `.claude/settings.json` allows `Bash(.venv/bin/python scripts/reports/cc_event.py *)`.
+- [ ] Appendix E: a new enquiry recorded (3a), a receipt drafted (5a), a bank-change warning (4), a Books guard denial (3.iii and 4a), a hand check (5a); Appendix A: the Monday review ready. One `cc_event.py` line each; Appendix E's command list names each kind it uses. `tests/test_prompt_allowlist.py` passes.
+
+### Task 5.5: Tests, visual check, PR
+
+- [ ] `tests/test_cc_pwa.py`: manifest and worker served with their headers; the CSP; the worker's GET-only early return, its cache list and its 4-second timeout (a static check of `sw.js`); the icons valid and in step with `pwa.py`; the base template's links.
+- [ ] `tests/test_cc_push.py`: subscribe needs a passkey (refused without one, with a stale one or another action's); the endpoint allowlist; unsubscribe; the payload has only title, body and url and no surname, email or long number; events → pushes (a fake pywebpush); a 410 drops the subscription; no replay of history; the stale-run window; `cc_event.py` kinds, length and file mode; the VAPID file store and the Keychain calls (a fake `security`).
+- [ ] `tests/test_cc_backup.py`: excludes, retention, an encryption round trip with a test key, `verify` from stdin, the identity never on disk, Health's age and warning, `backup-now` with no passkey.
+- [ ] Visual check on `127.0.0.1:8792` with fake data (the manifest link, the install hint, Health's backup line); stop the server.
+- [ ] Every `tests/test_*.py`; commit; PR; don't merge.
+- **Task 5.6 (next):** a security review by a separate agent, adversarially, before relying on push.
+
+### Owner steps after merge (phase 5)
+
+1. `git pull` in the main checkout, then `bash command_centre/install.sh` (it installs the new pinned packages and restarts the app).
+2. **Tailscale admin console → DNS:** turn on MagicDNS and HTTPS certificates. The Home Screen app and Web Push need the real ts.net certificate.
+3. **Install:** on the iPhone, with Tailscale connected, open `https://<mac>.<tailnet>.ts.net/` in Safari, Share → Add to Home Screen.
+4. **Shortcut "LCS":** in the Shortcuts app, a new shortcut with two actions: Tailscale → Connect, then Open URL `https://<mac>.<tailnet>.ts.net/`. Add it to the Home Screen: it is the main way to open the app. Optional second shortcut: Tailscale → Disconnect.
+5. **Notifications:** open the installed app, More → This device, tap **Enable notifications**, allow them, then **Approve this device** with Face ID. macOS may ask once whether python may use the `lcs-command-centre-vapid` Keychain item: Always Allow. Notifications arrive with the VPN off, through Apple's push service; tapping one opens the app (connect Tailscale first, or use the Shortcut, to see live data).
+6. **Offline:** with the VPN off, the Home Screen app shows the last Today and Money pages it saw, marked "Offline, as of <time>". Actions need the VPN.
+7. **Backups:** `.venv/bin/python scripts/reports/cc_backup.py init`; store the printed `AGE-SECRET-KEY-…` line in the password manager (shown once, kept nowhere else). Then `bash command_centre/install.sh --backup` for the 02:30 LaunchAgent. Tap **Back up now** on Health once, and check it with `.venv/bin/python scripts/reports/cc_backup.py verify` (paste the key). If the run says "Operation not permitted", macOS is blocking iCloud Drive for background processes: give `.venv/bin/python` Full Disk Access, or set `backup.target` in the config to another folder.
 
 ---
 
