@@ -19,33 +19,29 @@
 
 season_start: 2026-09-01
 
+# Seeded on 28 Sep 2026 to match the live budgets, so nothing is proposed until
+# the owner chooses seasonal figures. Edit daily_gbp (never above 5) to change that.
 windows:
   - name: carols
     campaigns: ["christmas", "carol"]
-    start: "10-01"
+    start: "09-15"
     end: "12-20"
     daily_gbp: 5
 
   - name: carols-off
     campaigns: ["christmas", "carol"]
     start: "12-21"
-    end: "09-30"
-    daily_gbp: 1
-
-  - name: weddings-peak
-    campaigns: ["wedding"]
-    start: "01-02"
-    end: "04-30"
+    end: "09-14"
     daily_gbp: 5
 
-  - name: weddings-base
+  - name: weddings
     campaigns: ["wedding"]
-    start: "05-01"
-    end: "01-01"
-    daily_gbp: 3
+    start: "01-01"
+    end: "12-31"
+    daily_gbp: 4
 
   - name: funerals
     campaigns: ["funeral"]
     start: "01-01"
     end: "12-31"
-    daily_gbp: 3
+    daily_gbp: 4

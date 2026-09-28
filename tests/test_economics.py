@@ -281,7 +281,7 @@ def test_seed_file_loads_and_stays_under_the_cap():
     cfg = ec.load_windows(os.path.join(ROOT, "data", "budget-windows.yml"))
     assert cfg["season_start"] == D(2026, 9, 1)
     names = [w["name"] for w in cfg["windows"]]
-    assert names == ["carols", "carols-off", "weddings-peak", "weddings-base", "funerals"], names
+    assert names == ["carols", "carols-off", "weddings", "funerals"], names
     assert all(w["daily_gbp"] <= 5 for w in cfg["windows"])
     for day in (D(2026, 1, 1), D(2026, 1, 2), D(2026, 5, 1), D(2026, 10, 1), D(2026, 12, 21), MON):
         items = ec.proposals(CAMPAIGNS, cfg["windows"], day)
