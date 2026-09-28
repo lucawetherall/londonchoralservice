@@ -110,3 +110,133 @@ def summary(rows, today):
     ages = [(today - datetime.date.fromisoformat(r["received"][:10])).days for r in unpaid]
     return {"unpaid": len(unpaid), "unpaid_total": round(sum(lm.money(r["amount_gbp"]) for r in unpaid), 2),
             "oldest_days": max(ages, default=0), "bank_changed": sum(1 for r in unpaid if r.get("bank_changed") == "yes")}
+
+
+def message_texts(path):
+    """[(label, text)] for every PDF attachment in a saved message, then its body."""
+    from invoice_text import raw_message
+    from pypdf import PdfReader
+    msg = email.message_from_string(raw_message(path), policy=policy.default)
+    out = []
+    for part in msg.walk():
+        name = part.get_filename() or ""
+        if name.lower().endswith(".pdf"):
+            try:
+                reader = PdfReader(io.BytesIO(part.get_payload(decode=True) or b""))
+                out.append((name, "\n".join(p.extract_text() or "" for p in reader.pages)))
+            except Exception:
+                out.append((name, ""))
+    body = msg.get_body(preferencelist=("plain", "html"))
+    if body is not None:
+        out.append(("email body", re.sub(r"<[^>]+>", " ", body.get_content())))
+    return out
+
+
+def read_invoice(path):
+    found = {"amount": 0.0, "invoice_ref": "", "sort_code": "", "account_number": ""}
+    for _, text in message_texts(path):
+        e = extract(text)
+        if not found["amount"] and e["amount"]:
+            found.update(amount=e["amount"], invoice_ref=e["invoice_ref"])
+        if not found["sort_code"] and e["sort_code"] and e["account_number"]:
+            found.update(sort_code=e["sort_code"], account_number=e["account_number"])
+    return found
+
+
+def first_name(name):
+    return (name or "?").split()[0]
+
+
+def cmd_scan(args, client):
+    rows = lm.read_csv(STORE)
+    if any(r["message_id"] == args.message_id for r in rows):
+        print(f"already recorded: {args.message_id}")
+        return
+    inv = read_invoice(args.file)
+    payees = client.payees() if client else None
+    fps = lm.payee_fingerprints(payees) if payees is not None else None
+    names = [p.get("payeeName", "") for p in payees] if payees is not None else []
+    a = assess_new(inv, args.sender_email, args.sender_name, rows, fps, names)
+    rows.append({"message_id": args.message_id, "received": args.received, "singer_name": args.sender_name,
+                 "singer_email": args.sender_email.lower(), "invoice_ref": inv["invoice_ref"],
+                 "amount_gbp": f"{inv['amount']:.2f}", "bank_fp": a["bank_fp"], "bank_last4": a["bank_last4"],
+                 "payee": a["payee"], "bank_changed": a["bank_changed"], "paid_on": "", "paid_amount": "",
+                 "notes": "; ".join(a["warnings"])})
+    lm.write_csv(STORE, rows, COLUMNS)
+    print(f"{first_name(args.sender_name)}: £{inv['amount']:,.2f} (ref {inv['invoice_ref'] or '?'}) · payee {a['payee']}"
+          + (f" · bank ••••{a['bank_last4']}" if a["bank_last4"] else ""))
+    for w in a["warnings"]:
+        print(f"   ! {w}")
+
+
+def cmd_paid(args, client):
+    rows = lm.read_csv(STORE)
+    unpaid = [r for r in rows if not r["paid_on"]]
+    if not unpaid:
+        print("No unpaid singer invoices.")
+        return
+    if not client:
+        print("No Starling token; paid check skipped.")
+        return
+    today = datetime.date.today()
+    since = min(datetime.date.fromisoformat(r["received"][:10]) for r in unpaid) - datetime.timedelta(days=1)
+    hits = match_paid(unpaid, client.feed(since, today + datetime.timedelta(days=1), "OUT"))
+    for r in rows:
+        if r["message_id"] in hits:
+            when, amount = hits[r["message_id"]]
+            print(f"NEWLY PAID {r['message_id']}: {first_name(r['singer_name'])} £{amount:,.2f} on {when}")
+            if args.apply:
+                r["paid_on"], r["paid_amount"] = when, f"{amount:.2f}"
+    if not hits:
+        print("No new payments to singers matched.")
+    elif args.apply:
+        lm.write_csv(STORE, rows, COLUMNS)
+        print("Singer invoice store updated.")
+
+
+def cmd_status(args, client=None):
+    rows = lm.read_csv(STORE)
+    today = datetime.date.today()
+    for r in rows:
+        if not r["paid_on"]:
+            print(f"{r['received']} {first_name(r['singer_name'])} £{lm.money(r['amount_gbp']):,.2f} "
+                  f"(ref {r['invoice_ref'] or '?'}) · payee {r['payee']}"
+                  + (" · BANK DETAILS CHANGED: ring before paying" if r["bank_changed"] == "yes" else ""))
+    s = summary(rows, today)
+    print(f"{s['unpaid']} unpaid, £{s['unpaid_total']:,.2f}, oldest {s['oldest_days']} days"
+          + (f", {s['bank_changed']} with changed bank details" if s["bank_changed"] else ""))
+
+
+def cmd_thanked(args, client=None):
+    rows = lm.read_csv(STORE)
+    for r in rows:
+        if r["message_id"] == args.message_id:
+            r["notes"] = (r["notes"] + "; " if r["notes"] else "") + f"paid reply drafted {datetime.date.today()}"
+            lm.write_csv(STORE, rows, COLUMNS)
+            print(f"{args.message_id}: paid reply noted")
+            return
+    raise SystemExit(f"no invoice {args.message_id}")
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    sub = ap.add_subparsers(dest="cmd", required=True)
+    s = sub.add_parser("scan")
+    s.add_argument("file")
+    s.add_argument("--message-id", required=True)
+    s.add_argument("--received", required=True)
+    s.add_argument("--sender-email", required=True)
+    s.add_argument("--sender-name", required=True)
+    p = sub.add_parser("paid")
+    p.add_argument("--apply", action="store_true")
+    sub.add_parser("status")
+    t = sub.add_parser("thanked")
+    t.add_argument("message_id")
+    args = ap.parse_args()
+    tok = lm.keychain_token() if args.cmd in ("scan", "paid") else None
+    client = lm.StarlingReadOnly(tok) if tok else None
+    {"scan": cmd_scan, "paid": cmd_paid, "status": cmd_status, "thanked": cmd_thanked}[args.cmd](args, client)
+
+
+if __name__ == "__main__":
+    main()

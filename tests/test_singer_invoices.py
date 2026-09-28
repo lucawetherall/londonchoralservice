@@ -115,6 +115,52 @@ def test_summary_counts():
     assert si.summary(rows, datetime.date(2026, 9, 28)) == {"unpaid": 2, "unpaid_total": 150.0, "oldest_days": 8, "bank_changed": 1}
 
 
+class FakeClient:
+    def __init__(self, payees=(), out=()):
+        self._payees, self._out = list(payees), list(out)
+
+    def payees(self):
+        return self._payees
+
+    def feed(self, since, until, direction):
+        assert direction == "OUT"
+        return self._out
+
+
+def eml(body, sender="Ben Fenwick <ben@example.com>"):
+    path = os.path.join(TMP, "msg.eml")
+    with open(path, "w") as f:
+        f.write(f"From: {sender}\nSubject: Invoice\nContent-Type: text/plain; charset=utf-8\n\n{body}")
+    return path
+
+
+class Args:
+    def __init__(self, **kw):
+        self.__dict__.update(kw)
+
+
+def test_store_lifecycle():
+    """scan -> repeat scan -> paid --apply -> thanked, in order (one test: the runner sorts by name)."""
+    if si.STORE.exists():
+        si.STORE.unlink()
+    a = Args(file=eml(LABELLED), message_id="m1", received="2026-09-25", sender_email="ben@example.com", sender_name="Ben Fenwick")
+    si.cmd_scan(a, FakeClient())
+    rows = lm.read_csv(si.STORE)
+    assert len(rows) == 1 and rows[0]["amount_gbp"] == "100.00" and rows[0]["payee"] == si.NEW_PAYEE
+    assert "12345678" not in si.STORE.read_text() and rows[0]["bank_last4"] == "5678"
+    assert oct(si.STORE.stat().st_mode)[-3:] == "600"
+    si.cmd_scan(a, FakeClient())
+    assert len(lm.read_csv(si.STORE)) == 1
+
+    si.cmd_paid(Args(apply=True), FakeClient(out=[{"direction": "OUT", "amount": {"minorUnits": 10000},
+                                                   "transactionTime": "2026-09-26T09:00:00Z", "counterPartyName": "BEN FENWICK"}]))
+    row = lm.read_csv(si.STORE)[0]
+    assert (row["paid_on"], row["paid_amount"]) == ("2026-09-26", "100.00")
+
+    si.cmd_thanked(Args(message_id="m1"))
+    assert "paid reply drafted" in lm.read_csv(si.STORE)[0]["notes"]
+
+
 if __name__ == "__main__":
     failures = 0
     for name, fn in sorted(globals().items()):
