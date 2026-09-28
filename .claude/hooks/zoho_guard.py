@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """PreToolUse guard for the Zoho Mail MCP server (matcher mcp__zoho-mail__.*).
 
-Claude may READ mail and may SAVE DRAFTS from office@londonchoralservice.com.
+Claude may READ mail and may SAVE DRAFTS from office@londonchoralservice.com or luca@almaconsort.com.
 It may never send, schedule, delete, move, label, mark or change settings: the
 owner reviews every draft in Zoho and presses Send. This holds whatever tools
 the Zoho MCP console exposes, and it fails closed: any error denies the call.
@@ -17,7 +17,7 @@ READ_TOOLS = {
     "ZohoMail_getSpecificLabelDetails",
 }
 DRAFT_TOOLS = {"ZohoMail_sendEmail", "ZohoMail_sendReplyEmail"}
-DRAFT_FROM = "office@londonchoralservice.com"
+DRAFT_FROM = {"office@londonchoralservice.com", "luca@almaconsort.com"}
 
 
 def decide(tool, tool_input):
@@ -30,8 +30,8 @@ def decide(tool, tool_input):
             return "Zoho guard: Claude may only save drafts (body.mode = \"draft\"); the owner sends from Zoho."
         if body.get("isSchedule") or body.get("scheduleType") or body.get("scheduleTime"):
             return "Zoho guard: scheduled sending is a send; save a plain draft instead."
-        if (body.get("fromAddress") or "").strip().lower() != DRAFT_FROM:
-            return f"Zoho guard: drafts must come from {DRAFT_FROM}."
+        if (body.get("fromAddress") or "").strip().lower() not in DRAFT_FROM:
+            return "Zoho guard: drafts must come from office@londonchoralservice.com (clients) or luca@almaconsort.com (singers)."
         if body.get("bccAddress"):
             return "Zoho guard: no Bcc on drafts."
         if body.get("attachments"):
@@ -39,7 +39,7 @@ def decide(tool, tool_input):
         if not (body.get("toAddress") or "").strip():
             return "Zoho guard: a draft needs the client's address in toAddress."
         return None
-    return f"Zoho guard: {name} is not allowed. Claude has read access plus drafts from {DRAFT_FROM} only."
+    return f"Zoho guard: {name} is not allowed. Claude has read access plus drafts from office@ or luca@almaconsort.com only."
 
 
 def main():
