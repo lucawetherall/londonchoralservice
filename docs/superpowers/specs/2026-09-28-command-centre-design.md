@@ -126,6 +126,7 @@ All pages are mobile-first, with dark and light modes and the LCS brand colours.
    - the Search Console shortlist;
    - GA4 leads;
    - trends.
+   - The last three come from `cache/marketing.json` (`cc_sync.py marketing`): "Search terms to check" (7 and 28 days, flagged by `economics.search_term_flag`: solo-singer words, other non-hiring words, no choir or hiring word; at most 30), the Search Console shortlist (at most 20, with its 28-day window) and GA4 leads by week (8 weeks, inline SVG). Each panel shows "as of", a stale warning after 36 hours and a "not synced yet" state; negatives are still proposed only in the Monday review.
 7. **Drafts:** the drafts the assistant saved in Zoho, taken from its run summaries and a Zoho drafts read.
    - Each has a preview and an "open in Zoho" link.
    - The owner can mark a draft sent or discarded; this is a local record only, and the app never sends.
@@ -195,6 +196,7 @@ Not in the app: sending email, payments, payees, deletes, and Books sends or voi
   - the Ads summary, and the GA4 and Search Console summaries (via weekly_review's functions);
   - Books receivables and bills (via `lcs_mcp` reads, allowlisted read tools only, through a Books read client mirroring `lcs_mcp`'s safety);
   - Zoho drafts and the calendar.
+  - the marketing cache (`cc_sync.py marketing`: flagged search terms, the Search Console shortlist, GA4 leads by week), from weekly_review's read-only functions, once a day: a SCRIPTS entry with daily=True runs in the refresh job's first pass of the London day (07:00, or the first pass after it); a failure is logged by type and waits for the next day.
 - The refresh job (`command_centre/jobs.py`) also runs `singer_invoices.py paid --apply` first: it reads the Starling feed and records a matched payment's `paid_on`, `paid_amount`, `paid_ref` and `paid_verified` in the singer store under its lock, so a verified payment shows within 30 minutes. It never makes a payee, a payment or a Books record; the singer clerk records the Books vendor payment from `paid --books-due`.
 - Every panel shows "as of <time>". When a source fails, its panel shows the last good data and the error type; it never breaks the page.
 
