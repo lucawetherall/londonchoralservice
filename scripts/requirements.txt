@@ -1,0 +1,5 @@
+# Python packages for scripts/ (install into the repo's .venv):
+#   .venv/bin/pip install --upgrade -r scripts/requirements.txt
+google-ads
+pypdf
+pyyaml

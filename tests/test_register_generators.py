@@ -29,7 +29,8 @@ def main():
         shutil.copytree(ROOT, work, ignore=shutil.ignore_patterns('.git', '__pycache__', '.venv', 'node_modules'))
         for g in GENERATORS:
             subprocess.run([sys.executable, f'scripts/{g}.py'], cwd=work, check=True, capture_output=True)
-        subprocess.run(['./build.sh'], cwd=work, check=True, capture_output=True)
+        subprocess.run(['./build.sh'], cwd=work, check=True, capture_output=True,
+                       env=dict(os.environ, LCS_PYTHON=sys.executable))
         pages = sorted(glob.glob('destinations/*.html', root_dir=ROOT)) + ['planners-and-venues.html']
         drift = [p for p in pages
                  if not filecmp.cmp(os.path.join(ROOT, p), os.path.join(work, p), shallow=False)]

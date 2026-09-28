@@ -138,25 +138,37 @@ done
 
 echo "Inlined CSS into $count HTML files"
 
+# Python for the generators and validators: $LCS_PYTHON if set, else the repo's
+# .venv (it has PyYAML, see scripts/requirements.txt), also when building from a
+# worktree, else python3.
+PY="${LCS_PYTHON:-}"
+if [ -z "$PY" ]; then
+  PY=python3
+  MAIN_CHECKOUT="$( (git rev-parse --path-format=absolute --git-common-dir 2>/dev/null || true) | sed 's#/\.git$##')"
+  for candidate in ".venv/bin/python" "$MAIN_CHECKOUT/.venv/bin/python"; do
+    if [ -x "$candidate" ]; then PY="$candidate"; break; fi
+  done
+fi
+
 echo "Generating sitemap.xml from page content..."
-python3 scripts/generate_sitemap.py
+"$PY" scripts/generate_sitemap.py
 
 echo "Synchronising article dates..."
-python3 scripts/sync_dates.py
+"$PY" scripts/sync_dates.py
 
 echo "Generating llms-full.txt..."
-python3 scripts/generate_llms_full.py
+"$PY" scripts/generate_llms_full.py
 
 echo "Validating JSON-LD..."
-python3 validate_jsonld.py
+"$PY" validate_jsonld.py
 
 echo "Validating competitor claims..."
-python3 validate_competitor_claims.py
+"$PY" validate_competitor_claims.py
 
 echo "Validating house claims..."
-python3 validate_house_claims.py
+"$PY" validate_house_claims.py
 
 echo "Checking the deploy allowlist..."
-python3 scripts/stage_site.py
+"$PY" scripts/stage_site.py
 
 echo "Done."

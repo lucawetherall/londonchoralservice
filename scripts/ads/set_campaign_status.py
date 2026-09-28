@@ -10,6 +10,7 @@ daily budget is above the £5 cap.
     python scripts/ads/set_campaign_status.py 24295921372 enabled --reason "..." --apply
 """
 
+import os
 import argparse
 import datetime
 from pathlib import Path
@@ -31,7 +32,7 @@ def main():
     parser.add_argument("--apply", action="store_true")
     args = parser.parse_args()
 
-    client = GoogleAdsClient.load_from_storage()
+    client = GoogleAdsClient.load_from_storage(os.environ.get("GOOGLE_ADS_CONFIGURATION_FILE_PATH", os.path.expanduser("~/.config/lcs/google-ads.yaml")))
     rows = list(client.get_service("GoogleAdsService").search(
         customer_id=CUSTOMER_ID,
         query=f"SELECT campaign.name, campaign.status, campaign_budget.amount_micros "
