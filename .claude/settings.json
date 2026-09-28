@@ -51,7 +51,8 @@
       "mcp__caefd5da-81a5-4eb0-993a-dfeaa5b9d7c1__list_calendars",
       "mcp__caefd5da-81a5-4eb0-993a-dfeaa5b9d7c1__list_events",
       "mcp__caefd5da-81a5-4eb0-993a-dfeaa5b9d7c1__search_events",
-      "mcp__caefd5da-81a5-4eb0-993a-dfeaa5b9d7c1__get_event"
+      "mcp__caefd5da-81a5-4eb0-993a-dfeaa5b9d7c1__get_event",
+      "mcp__caefd5da-81a5-4eb0-993a-dfeaa5b9d7c1__create_event"
     ],
     "deny": [
       "Bash(security find-generic-password *)",
