@@ -2,6 +2,10 @@
 """Tests for scripts/bookings/check_payments.py. Stdlib only."""
 import contextlib, csv, datetime, io, json, os, subprocess, sys, tempfile
 
+_HOME = tempfile.mkdtemp()  # never the real ~/lcs-private, even for the in-process imports (review M15)
+os.environ["LCS_PRIVATE_DIR"] = _HOME
+os.environ["LCS_BOOKINGS_CSV"] = os.path.join(_HOME, "bookings.csv")
+
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, "scripts", "bookings"))
 import check_payments as cp
@@ -71,7 +75,7 @@ def test_paid_in_full():
     assert a["state"] == "PAID_IN_FULL" and a["balance"] == 0
 
 
-def test_receipt_due_lasts_fourteen_days_until_a_receipt_is_drafted():
+def test_just_received_lasts_fourteen_days_until_a_receipt_is_drafted():
     paid = [("2026-09-27", 325.0, "reference")]
     assert cp.assess(row("X", 650, "2026-09-20", "2026-11-21", "PENDING: invoiced"), paid, T)["just_received"] is True
     # a Monday --apply rewrites PENDING; the receipt signal must survive it
@@ -254,12 +258,12 @@ def run_cli(notes, *args):
 
 def test_cli_reminded_default_kind():
     p, notes = run_cli("PENDING: invoiced", "--reminded", "2111")
-    assert p.returncode == 0 and notes == f"PENDING: invoiced; reminder drafted {datetime.date.today()}", notes
+    assert p.returncode == 0 and notes == f"PENDING: invoiced; reminder drafted {cp.lm.today()}", notes
 
 
 def test_cli_reminded_balance_kind():
     p, notes = run_cli("deposit seen 2026-08-26 (Starling)", "--reminded", "2111", "--kind", "balance")
-    assert p.returncode == 0 and notes.endswith(f"; balance reminder drafted {datetime.date.today()}"), notes
+    assert p.returncode == 0 and notes.endswith(f"; balance reminder drafted {cp.lm.today()}"), notes
 
 
 def test_cli_reminded_unknown_ref_fails():
@@ -577,7 +581,7 @@ def test_a_letter_mid_reference_never_picks_a_sibling():
         for k in ("2111A", "2111B"):
             assert all(how not in cp.CONFIDENT for _, _, how in found[k]), (ref, found)
         states = [cp.assess(r, found[r["booking_ref"]], T) for r in SIBLINGS]
-        assert all(a["state"] == "CHECK_PAYMENT" and a["receipt_due"] is False for a in states), (ref, states)
+        assert all(a["state"] == "CHECK_PAYMENT" and a["just_received"] is False for a in states), (ref, states)
 
 
 def test_a_final_or_glued_single_letter_names_the_sibling():
@@ -779,7 +783,7 @@ def test_an_unconfirmed_balance_payment_stops_a_balance_chase():
         feed = [pay(575, "2026-08-05", "LCS3009", "I LAMB"), pay(575, "2026-09-26", ref, who)]
         found = cp.match([R3009], feed, T)
         a = cp.assess(R3009, found["3009"], T)
-        assert a["state"] == "CHECK_PAYMENT" and a["receipt_due"] is False and a["received"] == 575.0, a
+        assert a["state"] == "CHECK_PAYMENT" and a["just_received"] is False and a["received"] == 575.0, a
         assert "possible balance payment £575.00 on 2026-09-26 (unconfirmed): confirm by hand" in cp.describe(a), cp.describe(a)
         lines = mr.summary_lines([a], [], QUIET, T)
         assert lines[2] == "balances due in the next 7 days: 0, £0.00" and lines[3].startswith("needs a hand check: 1 (3009 "), lines
@@ -841,7 +845,7 @@ def test_payments_on_cancelled_or_closed_bookings_reach_the_hand_check():
     assert got["0510"]["state"] == "PAYMENT_ON_CANCELLED" and got["1506"]["state"] == "PAYMENT_AFTER_CLOSE"
     for ref in ("0510", "1506"):
         a = got[ref]
-        assert a["just_received"] is False and a["receipt_due"] is False, a
+        assert a["just_received"] is False, a
         assert "check by hand" in cp.describe(a), cp.describe(a)
     assert "£575.00 on 2026-09-27" in cp.describe(got["0510"]) and "£575.00 on 2026-09-26" in cp.describe(got["1506"])
     assert "2026-09-14" not in cp.describe(got["1506"]).split(" · ", 1)[1]  # the balance that closed it is not the stray
@@ -1024,7 +1028,7 @@ def test_an_arranged_cash_balance_is_never_chased_or_thanked():
     for n in ARRANGED_NOTES:
         for event in ("2026-09-30", "2026-12-12", "2026-09-20"):
             a = cp.assess(row("2111", 1150, "2026-09-01", event, "deposit seen 2026-09-20 (Starling); " + n), dep, T)
-            assert a["state"] == "ARRANGED" and a["receipt_due"] is False and a["just_received"] is False, (n, event, a["state"])
+            assert a["state"] == "ARRANGED" and a["just_received"] is False, (n, event, a["state"])
     # with nothing in the bank and no note of a deposit, the deposit is still what is owed
     for n in ARRANGED_NOTES:
         a = cp.assess(row("2111", 1150, "2026-09-01", "2026-12-12", "PENDING: invoiced; " + n), [], T)
@@ -1064,7 +1068,7 @@ def test_split_payments_from_the_client_are_a_hand_check_not_an_overdue_deposit(
     assert found["4009"] == [("2026-09-10", 300.0, "name only, amount differs"),
                              ("2026-09-11", 275.0, "name only, amount differs")], found
     a = cp.assess(r, found["4009"], T)
-    assert a["state"] == "CHECK_PAYMENT" and a["received"] == 0 and a["receipt_due"] is False, a
+    assert a["state"] == "CHECK_PAYMENT" and a["received"] == 0 and a["just_received"] is False, a
     assert "matched by name only, amount differs: confirm by hand" in cp.describe(a)
     # a name that fits no open booking, or falls outside the window, is still nobody's
     assert cp.match([r], [pay(300, "2026-09-10", "", "J BLOGGS")], T)["4009"] == []
@@ -1121,7 +1125,7 @@ def test_only_an_explicit_reversal_undoes_a_cancellation():
         r = row("4009", 1150, "2026-07-01", "2026-10-01", "deposit seen 2026-07-04 (Starling); " + n, name="Kit Farrow")
         assert cp.is_cancelled(r), n
         a = cp.assess(r, dep, T)  # a live row would be BALANCE_DUE: a chase
-        assert a["state"] == "PAYMENT_ON_CANCELLED" and a["receipt_due"] is False and mr.needs_hand_check(a, T), (n, a["state"])
+        assert a["state"] == "PAYMENT_ON_CANCELLED" and a["just_received"] is False and mr.needs_hand_check(a, T), (n, a["state"])
     for n in RESUMED_NOTES:
         r = row("4009", 1150, "2026-07-01", "2026-10-01", "deposit seen 2026-07-04 (Starling); " + n, name="Kit Farrow")
         assert not cp.is_cancelled(r), n
@@ -1136,7 +1140,7 @@ def test_collect_never_chases_a_booking_cancelled_for_another_choir():
                 name="Bob Jones")]
     got = {r["booking_ref"]: a for r, _, a in cp.collect(FakeClient([pay(575, "2026-07-04", "0110", "A SMITH")]), rows, T)}
     assert set(got) == {"0110"} and got["0110"]["state"] == "PAYMENT_ON_CANCELLED", {k: a["state"] for k, a in got.items()}
-    assert not any(a["state"] in ("DEPOSIT_OVERDUE", "BALANCE_DUE") or a["receipt_due"] for a in got.values())
+    assert not any(a["state"] in ("DEPOSIT_OVERDUE", "BALANCE_DUE") or a["just_received"] for a in got.values())
 
 
 # --- round 6: paid or negated cash notes are not an arranged balance -------------------------
@@ -1187,7 +1191,7 @@ def test_a_cancelled_clients_unreferenced_payment_is_never_linked_to_a_live_book
     found = cp.match(rows, feed, T)
     assert [k for k, v in found.items() if v] == ["6001", "6003"], found
     a = cp.assess(rows[2], found["6003"], T)
-    assert a["state"] == "CHECK_PAYMENT" and a["receipt_due"] is False, a
+    assert a["state"] == "CHECK_PAYMENT" and a["just_received"] is False, a
 
 
 # --- round 6: silencing notes -----------------------------------------------------------------
@@ -1256,6 +1260,25 @@ def test_action_none_for_quiet_states():
 def test_every_assessment_carries_an_action():
     a = cp.assess(row("X", 500, "2026-09-25", "2026-10-30", "PENDING: invoiced"), [], T)
     assert a["action"] in cp.ACTIONS and a["action"] == "none"
+
+
+# --- review I5: --note never writes the phrases the scripts or the owner rely on -------------
+
+def test_note_refuses_the_reserved_phrases():
+    for text in ("paid in full 2026-09-28", "deposit seen 2026-09-28 (Starling)", "reminder drafted 2026-09-28",
+                 "balance reminder drafted", "receipt drafted 2026-09-28", "deposit kept 2026-09-28",
+                 "refunded 2026-09-28", "payment checked 2026-09-28", "reinstated 2026-09-28",
+                 "cancellation withdrawn", "going ahead after all", "back on", "review request drafted 2026-09-28",
+                 "review request skipped 2026-09-28 (planner)", "PENDING: invoiced", "pending deposit"):
+        p, notes = run_cli("deposit seen 2026-08-26 (Starling)", "--note", "2111", text)
+        assert p.returncode != 0 and notes == "deposit seen 2026-08-26 (Starling)", (text, p.returncode, notes)
+        assert "by hand" in p.stderr, (text, p.stderr)
+
+
+def test_note_still_takes_the_prompts_phrases():
+    for text in ("cancelled 2026-09-28 by client email", "paid per client email 2026-09-28"):
+        p, notes = run_cli("PENDING: invoiced", "--note", "2111", text)
+        assert p.returncode == 0 and notes == "PENDING: invoiced; " + text, (text, p.stderr, notes)
 
 
 if __name__ == "__main__":

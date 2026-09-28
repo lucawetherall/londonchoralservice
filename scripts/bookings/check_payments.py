@@ -8,6 +8,9 @@ Alma Consort Starling account, READ-ONLY (see lcs_money.StarlingReadOnly).
         each item's "action" is receipt | deposit_reminder | balance_reminder | hand_check | none (action_for)
     .venv/bin/python scripts/bookings/check_payments.py --reminded 2111 [--kind deposit|balance|receipt]
     .venv/bin/python scripts/bookings/check_payments.py --note 2111 "paid per client email 2026-09-28"
+        (one line, at most 120 characters, no ';'; refuses the scripts' own phrases and the owner's hand-written
+        ones: paid in full, deposit seen … (Starling), reminder/receipt drafted, deposit kept, refunded,
+        payment checked, reinstated and the like, review request …, and anything starting PENDING)
     .venv/bin/python scripts/bookings/check_payments.py --selftest       # token, account and permissions
 
 Matching (against every ledger row, closed ones too, so a payment is never
@@ -285,6 +288,18 @@ SETTLED_NOTE = re.compile(
     r"(?<!not )\b(?:deposit kept|refunded|(?:payment|refund|deposit) checked)\s+(\d{4}-\d{2}-\d{2})\b", re.I)
 
 
+# The pipeline's own note on a ledger row (pipeline.py reviewed / review-skipped).
+REVIEW_NOTE = re.compile(r"review request (drafted|skipped)", re.I)
+# Phrases --note never writes: the scripts' own notes, and the ones the owner writes by hand in the ledger
+# (paid in full, deposit kept / refunded / checked, reinstated), which close, settle or reopen a booking.
+RESERVED_NOTES = (FULL_NOTE, AUTO_NOTE, MARK_NOTE, SETTLED_NOTE, RESUMED, REVIEW_NOTE)
+
+
+def reserved_note(text):
+    """True when --note must refuse this text: a reserved phrase, or anything starting with PENDING."""
+    return is_pending(text) or any(p.search(text) for p in RESERVED_NOTES)
+
+
 def cancel_settled_on(r, today):
     days = [date_or_none(m.group(1)) for m in SETTLED_NOTE.finditer(r.get("notes") or "")]
     return max((d for d in days if d and d <= today), default=None)
@@ -489,7 +504,7 @@ def assess(r, paid, today):
                 "balance": bool(re.search(r"balance reminder drafted", notes, re.I)),
                 "receipt": bool(re.search(r"receipt drafted", notes, re.I))}
     first_day = date_or_none(first)
-    receipt_due = bool(first_day and datetime.timedelta(0) <= today - first_day <= datetime.timedelta(days=RECEIPT_DAYS)
+    just_received = bool(first_day and datetime.timedelta(0) <= today - first_day <= datetime.timedelta(days=RECEIPT_DAYS)
                        and not reminded["receipt"] and upcoming and state in RECEIPT_STATES)
     out = {
         "ref": r["booking_ref"], "state": state, "received": total, "value": value,
@@ -504,8 +519,7 @@ def assess(r, paid, today):
         "deposit_due": deposit_due.isoformat() if deposit_due else None,
         "short_notice": bool(invoice and event and (event - invoice).days <= SHORT_NOTICE_DAYS),
         "reminded": reminded,
-        "receipt_due": receipt_due,
-        "just_received": receipt_due,  # old name, same meaning: draft a thank-you
+        "just_received": just_received,  # draft a thank-you (action "receipt"); the one key for it
     }
     out["action"] = action_for(out, today)
     return out
@@ -643,6 +657,9 @@ def main():
         ref, text = args.note
         if "\n" in text or "\r" in text or len(text) > 120 or ";" in text:
             raise SystemExit("note text must be a single line, at most 120 characters, with no ';'")
+        if reserved_note(text):
+            raise SystemExit("that phrase is the scripts' own or the owner's (he writes it in the ledger by hand); "
+                             "nothing written")
         append_note(ref, text)
         print(f"{ref}: note added")
         return
@@ -703,8 +720,8 @@ def run(args, client, rows, today):
         print("Token permissions: " + ", ".join(scopes))
         risky = [x for x in scopes if not x.startswith("(") and not x.endswith(":read")]
         if risky:
-            print("WARNING: this token can do more than read: " + ", ".join(risky)
-                  + ". Revoke it in the Starling developer portal and create one with only account-list:read and transaction:read.")
+            print("Note: this token can do more than read: " + ", ".join(risky)
+                  + ". The owner chose to keep it (CLAUDE.md, Payments); these scripts only ever send GET requests.")
         return
 
     try:

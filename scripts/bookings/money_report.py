@@ -13,6 +13,7 @@ HAND_CHECK = {"CHECK_PAYMENT": "possible payment", "CHECK_VALUE": "unreadable va
               "PAYMENT_ON_CANCELLED": "payment on a cancelled booking", "PAYMENT_AFTER_CLOSE": "payment after paid in full",
               "ARRANGED": "balance arranged (cash/cheque on the day)"}
 ARRANGED_DAYS = 7  # an arranged cash or cheque balance is a hand check from 7 days before the event
+NO_DEPOSIT = {"DEPOSIT_OVERDUE", "AWAITING_DEPOSIT"}
 
 
 def needs_hand_check(a, today):
@@ -32,7 +33,6 @@ def hand_check_label(a):
     if a["state"] == "ARRANGED" and a.get("arranged_no_deposit"):
         return HAND_CHECK["ARRANGED"] + ", no deposit seen"
     return HAND_CHECK[a["state"]]
-NO_DEPOSIT = {"DEPOSIT_OVERDUE", "AWAITING_DEPOSIT"}
 
 
 def plural(n, word):
@@ -57,10 +57,16 @@ def summary_lines(assessments, receipts, singer, today):
     hand = [a for a in assessments if needs_hand_check(a, today)]
     lines.append(f"needs a hand check: {len(hand)}"
                  + (f" ({'; '.join(a['ref'] + ' ' + hand_check_label(a) for a in hand)})" if hand else ""))
+    lines.append(singer_line(singer))
+    return lines
+
+
+def singer_line(singer):
+    """The singer invoices line (singer_invoices.summary), on its own: it needs no bank token, so the Monday
+    report prints it (and its bank-change warning) even when the client money check is skipped."""
     line = f"singer invoices unpaid: {singer['unpaid']}, £{singer['unpaid_total']:,.2f}"
     if singer["unpaid"]:
         line += f", oldest {plural(singer['oldest_days'], 'day')}"
     if singer["bank_changed"]:
         line += f" · BANK DETAILS CHANGED on {plural(singer['bank_changed'], 'invoice')}: ring before paying"
-    lines.append(line)
-    return lines
+    return line

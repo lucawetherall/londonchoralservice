@@ -380,15 +380,16 @@ def money_section():
         import money_report
         import singer_invoices
         today = lm.today()
+        singer = singer_invoices.summary(lcs_money.read_csv(singer_invoices.STORE), today)
         tok = lcs_money.keychain_token()
-        if not tok:
-            print("   no Starling token in the Keychain: money check skipped")
+        if not tok:  # the singer line needs no token: its bank-change warning must never go missing
+            print("   no Starling token in the Keychain: client money check skipped")
+            print("   " + money_report.singer_line(singer))
             return
         client = lcs_money.StarlingReadOnly(tok)
         rows = lcs_money.read_csv(check_payments.LEDGER)
         assessments = [a for _, _, a in check_payments.collect(client, rows, today)]
         receipts = check_payments.received_since(client, rows, today - datetime.timedelta(days=6), today)  # today and six days before
-        singer = singer_invoices.summary(lcs_money.read_csv(singer_invoices.STORE), today)
         for line in money_report.summary_lines(assessments, receipts, singer, today):
             print("   " + line)
     except Exception as e:  # type name only: the message could carry ledger or bank data
@@ -404,6 +405,8 @@ def cost_section(q, today):
             print("   config error: season_start")
             return
         print(f"   season since {season}")
+        print("   bookings: ledger rows invoiced since then, cancelled ones left out (check_payments.is_cancelled),"
+              " PENDING ones (deposit not yet seen) counted")
         spend = defaultdict(lambda: [0, 0])
         for r in q(f"""SELECT campaign.name, metrics.cost_micros, metrics.clicks FROM campaign
                 WHERE segments.date BETWEEN '{season}' AND '{today}'"""):

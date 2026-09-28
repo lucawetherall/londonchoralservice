@@ -15,6 +15,8 @@ the message id when the ref has a digit run over 5 digits). On a message already
     singer_invoices.py thanked <message id>  # note that the "Paid!" reply was drafted
     singer_invoices.py confirm <message id>  # the owner rang the singer: trust these bank details
     singer_invoices.py settled <message id> YYYY-MM-DD  # the owner paid it outside the feed's reach: mark it paid
+    singer_invoices.py withdrawn <message id> <reason word>  # sent to us by mistake (another organisation's
+        booking): out of unpaid, status, summary, paid matching, the dashboard, the money line and bills
 
 Bank details are stored as a keyed fingerprint (lcs_money.bank_fingerprint) plus
 the last four digits, and only "••••1234" is ever printed. This script never
@@ -61,7 +63,9 @@ import lcs_money as lm  # noqa: E402
 
 STORE = lm.PRIVATE / "singer-invoices.csv"
 COLUMNS = ["message_id", "received", "singer_name", "singer_email", "invoice_ref", "amount_gbp", "bank_fp", "bank_last4",
-           "payee", "bank_changed", "bank_confirmed", "paid_on", "paid_amount", "paid_ref", "paid_verified", "notes"]
+           "payee", "bank_changed", "bank_confirmed", "paid_on", "paid_amount", "paid_ref", "paid_verified", "notes",
+           "withdrawn"]  # withdrawn: the date `withdrawn` was run (last, so an older store just gains it)
+REASON_RE = re.compile(r"^[a-z][a-z-]{0,19}$")  # one lower-case word, such as not-ours
 NEW_PAYEE = "NEW: add as a payee in the Starling app"
 NEW_DETAILS = "NEW BANK DETAILS: confirm them by phone on a number you already hold before adding the payee"
 NOT_YET_VERIFIED = "BANK DETAILS NOT YET VERIFIED (seen on an earlier invoice): confirm by phone"
@@ -326,7 +330,7 @@ def payees_named(sender_name, payee_names, history):
     levels = {n: name_match(sender_name, n) for n in dict.fromkeys(payee_names)}
     top = max(levels.values(), default=0)
     named = [n for n, lvl in levels.items() if top and lvl == top]
-    others = {r.get("singer_name") for r in history if not r.get("paid_on") and r.get("singer_name")
+    others = {r.get("singer_name") for r in history if is_open(r) and r.get("singer_name")
               and not names_equivalent(r["singer_name"], sender_name)}
     ambiguous = len(named) > 1 or any(name_match(o, n) >= top for n in named for o in others)
     return named, ambiguous
@@ -355,7 +359,7 @@ def assess_new(inv, sender_email, sender_name, history, payee_fps, payee_names, 
         elif named and not ambiguous:
             changed = True
             was = (payee_last4 or {}).get(named[0], "")
-            warnings.append(f"BANK DETAILS CHANGED: Starling payee '{named[0]}' has different bank details "
+            warnings.append(f"BANK DETAILS CHANGED: Starling payee '{first_name(named[0])}' has different bank details "
                             f"(was ••••{was or '?'}, now ••••{now}): ring them before paying{same_last4_note(was, now)}")
         confirm_hint = f", then run singer_invoices.py confirm {message_id}" if message_id else ""
         if fp in {r["bank_fp"] for r in known}:  # seen on an earlier invoice from this singer, just never trusted
@@ -479,8 +483,17 @@ def match_paid(unpaid, out_items, report=None, history=None, payee_fps=None):
     return hits
 
 
+def is_withdrawn(r):
+    return bool((r.get("withdrawn") or "").strip())
+
+
+def is_open(r):
+    """Unpaid and not withdrawn: the invoices that are still ours to pay."""
+    return not r.get("paid_on") and not is_withdrawn(r)
+
+
 def summary(rows, today):
-    unpaid = [r for r in rows if not r.get("paid_on")]
+    unpaid = [r for r in rows if is_open(r)]
     ages = [(today - d).days for d in map(received_date, unpaid) if d]
     return {"unpaid": len(unpaid), "unpaid_total": round(sum(lm.money(r["amount_gbp"]) for r in unpaid), 2),
             "oldest_days": max(ages, default=0), "bank_changed": sum(1 for r in unpaid if ring_first(r))}
@@ -702,7 +715,7 @@ def assess_invoice(inv, history, message_id, received, sender_email, sender_name
     fp = lm.bank_fingerprint(inv["sort_code"], inv["account_number"])
     flagged = []
     for r in singer_history(history, sender_email, sender_name):
-        if (fp and r.get("bank_fp") and r["bank_fp"] != fp and not r.get("paid_on")
+        if (fp and r.get("bank_fp") and r["bank_fp"] != fp and is_open(r)
                 and r.get("bank_changed") != "yes" and (r.get("received") or "") > received):
             r["bank_changed"] = "yes"
             new4 = lm.last4(inv["account_number"])
@@ -715,8 +728,21 @@ def assess_invoice(inv, history, message_id, received, sender_email, sender_name
     return a, changed, flagged
 
 
+def payee_status(payee):
+    """What is printed for a stored payee value: whether Starling already knows the singer, never the payee's
+    name (the full value stays in the CSV only). Used for every printed line and the dashboard."""
+    payee = payee or ""
+    for prefix, label in (("existing: ", "existing payee"),
+                          ("name matches payee ", "matches an existing payee, different bank details"),
+                          ("probably existing: ", "probably an existing payee (no bank details on the invoice)"),
+                          ("ambiguous: ", "ambiguous: the name fits more than one payee or singer: check by hand")):
+        if payee.startswith(prefix):
+            return label
+    return payee
+
+
 def print_result(name, inv, a):
-    print(f"{first_name(name)}: £{inv['amount']:,.2f} (ref {inv['invoice_ref'] or '?'}) · payee {a['payee']}"
+    print(f"{first_name(name)}: £{inv['amount']:,.2f} (ref {inv['invoice_ref'] or '?'}) · payee {payee_status(a['payee'])}"
           + (f" · bank ••••{a['bank_last4']}" if a["bank_last4"] else ""))
     for w in inv["warnings"] + a["warnings"]:
         print(f"   ! {w}")
@@ -758,10 +784,14 @@ def print_stored(r):
     warnings = [n for n in (r.get("notes") or "").split("; ")
                 if n and not n.startswith(KEEP_NOTES)]
     amount = lm.money(r.get("amount_gbp"))
-    print(f"{first_name(r.get('singer_name'))}: £{amount:,.2f} (ref {r.get('invoice_ref') or '?'}) · payee {r.get('payee')}"
+    print(f"{first_name(r.get('singer_name'))}: £{amount:,.2f} (ref {r.get('invoice_ref') or '?'}) · payee {payee_status(r.get('payee'))}"
           + (f" · bank ••••{r['bank_last4']}" if r.get("bank_last4") else ""))
     for w in warnings:
         print(f"   ! {w}")
+    if is_withdrawn(r):
+        print("bill: no (withdrawn)")
+        print(f"bill_number: {bill_number(r.get('invoice_ref'), r['message_id'])}")
+        return
     print_bill(warnings, amount, r.get("invoice_ref"), r["message_id"], r.get("bank_confirmed") == "yes")
 
 
@@ -800,7 +830,7 @@ def cmd_scan(args, client):
     print_bill(inv["warnings"] + a["warnings"], inv["amount"], inv["invoice_ref"], args.message_id)
 
 
-KEEP_NOTES = ("bank details confirmed by phone", "paid reply drafted", "settled by hand", "rescanned")
+KEEP_NOTES = ("bank details confirmed by phone", "paid reply drafted", "settled by hand", "rescanned", "withdrawn")
 
 
 def rescan_changes(old, new):
@@ -810,7 +840,7 @@ def rescan_changes(old, new):
     lines = []
     for label, show in (("amount", lambda r: f"£{lm.money(r.get('amount_gbp')):,.2f}"),
                         ("ref", lambda r: r.get("invoice_ref") or "?"), ("bank details", bank),
-                        ("payee", lambda r: r.get("payee") or "?"),
+                        ("payee", lambda r: payee_status(r.get("payee")) or "?"),
                         ("bank changed", lambda r: r.get("bank_changed") or "no"),
                         ("bank confirmed", lambda r: r.get("bank_confirmed") or "no")):
         if label == "bank details" and old.get("bank_fp") != new.get("bank_fp") and bank(old) == bank(new):
@@ -832,6 +862,8 @@ def cmd_rescan(args, client):
             raise SystemExit(f"no invoice {args.message_id}")
         if row.get("paid_on"):
             raise SystemExit(f"{args.message_id}: already paid on {row['paid_on']}; not rescanned")
+        if is_withdrawn(row):
+            raise SystemExit(f"{args.message_id}: withdrawn on {row['withdrawn']}; not rescanned")
         return row
 
     find(lm.read_csv(STORE))
@@ -880,7 +912,7 @@ def cmd_rescan(args, client):
 
 def cmd_paid(args, client):
     rows = lm.read_csv(STORE)
-    unpaid = [r for r in rows if not r.get("paid_on")]
+    unpaid = [r for r in rows if is_open(r)]
     for r in unpaid:
         if not received_date(r):
             print(f"skipped {r['message_id']}: received date {r.get('received')!r} is not YYYY-MM-DD")
@@ -920,7 +952,7 @@ def cmd_paid(args, client):
         with lm.locked_rows(STORE, COLUMNS) as t:
             used_now = {r["paid_ref"] for r in t.rows if r.get("paid_ref")}
             for r in t.rows:
-                if r["message_id"] in hits and not r.get("paid_on") and hits[r["message_id"]][2] not in used_now:
+                if r["message_id"] in hits and is_open(r) and hits[r["message_id"]][2] not in used_now:
                     when, amount, uid, verified = hits[r["message_id"]]
                     r["paid_on"], r["paid_amount"], r["paid_ref"] = when, f"{amount:.2f}", uid
                     r["paid_verified"] = "yes" if verified else "no"
@@ -931,9 +963,9 @@ def cmd_status(args, client=None):
     rows = lm.read_csv(STORE)
     today = lm.today()
     for r in rows:
-        if not r["paid_on"]:
+        if is_open(r):
             print(f"{r['received']} {first_name(r['singer_name'])} £{lm.money(r['amount_gbp']):,.2f} "
-                  f"(ref {r['invoice_ref'] or '?'}) · payee {r['payee']}"
+                  f"(ref {r['invoice_ref'] or '?'}) · payee {payee_status(r['payee'])}"
                   + (" · BANK DETAILS CHANGED: ring before paying" if ring_first(r)
                      else " · changed bank details confirmed by phone" if r["bank_changed"] == "yes" else ""))
     s = summary(rows, today)
@@ -979,10 +1011,31 @@ def cmd_settled(args, client=None):
     def edit(r):
         if r.get("paid_on"):
             raise SystemExit(f"{args.message_id}: already paid on {r['paid_on']}")
+        if is_withdrawn(r):
+            raise SystemExit(f"{args.message_id}: withdrawn on {r['withdrawn']}; not settled")
         r["paid_on"], r["paid_amount"], r["paid_verified"] = day, f"{lm.money(r['amount_gbp']):.2f}", "no"
         note(r, "settled by hand")
     update_invoice(args.message_id, edit)
     print(f"{args.message_id}: settled by hand")
+
+
+def cmd_withdrawn(args, client=None):
+    """An invoice sent to us by mistake (another organisation's booking): mark it withdrawn today, with a
+    one-word reason in the notes. Refuses a paid or already withdrawn invoice."""
+    reason = (args.reason or "").strip()
+    if not REASON_RE.fullmatch(reason):
+        raise SystemExit("the reason must be one lower-case word, such as not-ours")
+
+    def edit(r):
+        if r.get("paid_on"):
+            raise SystemExit(f"{args.message_id}: already paid on {r['paid_on']}; not withdrawn")
+        if is_withdrawn(r):
+            raise SystemExit(f"{args.message_id}: already withdrawn on {r['withdrawn']}")
+        today = lm.today().isoformat()
+        r["withdrawn"] = today
+        note(r, f"withdrawn {today} ({reason})")
+    update_invoice(args.message_id, edit)
+    print(f"{args.message_id}: withdrawn ({reason})")
 
 
 def strict_date(value):
@@ -1019,6 +1072,9 @@ def main():
     st = sub.add_parser("settled")
     st.add_argument("message_id")
     st.add_argument("date")
+    w = sub.add_parser("withdrawn")
+    w.add_argument("message_id")
+    w.add_argument("reason")
     args = ap.parse_args()
     if args.cmd in ("scan", "rescan") and bool(args.fetch) == bool(args.file):
         ap.error(f"{args.cmd}: give either --fetch or a saved file")
@@ -1026,7 +1082,7 @@ def main():
     client = lm.StarlingReadOnly(tok) if tok else None
     try:
         {"scan": cmd_scan, "rescan": cmd_rescan, "paid": cmd_paid, "status": cmd_status, "thanked": cmd_thanked,
-         "confirm": cmd_confirm, "settled": cmd_settled}[args.cmd](args, client)
+         "confirm": cmd_confirm, "settled": cmd_settled, "withdrawn": cmd_withdrawn}[args.cmd](args, client)
     except (lm.StarlingError, urllib.error.URLError, TimeoutError, ConnectionError) as e:  # type name only
         print(f"Starling unavailable ({type(e).__name__}); {args.cmd} skipped")
     except lcs_mcp.McpError as e:  # names the server only, never its command or URL

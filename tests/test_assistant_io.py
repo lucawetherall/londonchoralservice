@@ -124,6 +124,52 @@ def test_ledger_add_requires_a_known_occasion():
     assert code != 0 and "duplicate" in err
 
 
+# --- review I9 / M2: ledger-add, state and done ---------------------------------------------------
+
+def test_ledger_add_appends_one_row_atomically_at_mode_600():
+    fresh(refs=["0110"])
+    ledger = os.path.join(_HOME, "bookings.csv")
+    os.chmod(ledger, 0o644)
+    code, out, err = run("ledger-add", json.dumps({"booking_ref": "2111", "occasion": "wedding", "value_gbp": 1150,
+                                                   "notes": "PENDING: invoiced by enquiry assistant"}))
+    assert code == 0 and out.strip() == "ledger: added 2111", (out, err)
+    with open(ledger, newline="") as f:
+        rows = list(csv.DictReader(f))
+    assert [r["booking_ref"] for r in rows] == ["0110", "2111"] and rows[1]["value_gbp"] == "1150", rows
+    assert oct(os.stat(ledger).st_mode & 0o777) == "0o600"
+    assert sorted(n for n in os.listdir(_HOME) if n.startswith(".")) == [], os.listdir(_HOME)  # no temp file left
+
+
+def test_ledger_add_refuses_duplicates_unknown_columns_bad_json_and_no_ledger():
+    fresh(refs=["2111"])
+    ledger = os.path.join(_HOME, "bookings.csv")
+    before = open(ledger).read()
+    for args, why in ((json.dumps({"booking_ref": "2111", "occasion": "wedding"}), "duplicate"),
+                      (json.dumps({"booking_ref": "2112", "occasion": "wedding", "phone": "x"}), "unknown columns"),
+                      (json.dumps({"occasion": "wedding"}), "missing"),
+                      ("{not json", "one JSON object"),
+                      (json.dumps(["2112"]), "one JSON object")):
+        code, _, err = run("ledger-add", args)
+        assert code != 0 and why in err, (args, err)
+    assert open(ledger).read() == before
+    os.remove(ledger)
+    code, _, err = run("ledger-add", json.dumps({"booking_ref": "2112", "occasion": "wedding"}))
+    assert code != 0 and "no ledger yet" in err, err
+
+
+def test_state_file_is_private_and_done_moves_last_checked_to_the_run_start():
+    fresh()
+    state = json.loads(run("state")[1])
+    path = os.path.join(_HOME, "assistant-state.json")
+    assert oct(os.stat(path).st_mode & 0o777) == "0o600"
+    started = state["now"]
+    code, out, _ = run("done", "m1", "m2")
+    assert code == 0 and f"last_checked {started}" in out, out
+    saved = json.load(open(path))
+    assert saved["last_checked"] == started and saved["handled"] == ["m1", "m2"] and "run_started" not in saved, saved
+    assert json.loads(run("state")[1])["handled"] == ["m1", "m2"]
+
+
 if __name__ == "__main__":
     failures = 0
     for name, fn in sorted(globals().items()):

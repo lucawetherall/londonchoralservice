@@ -1354,7 +1354,8 @@ def test_payee_recognised_under_an_equivalent_name():
     assert rows_by_id()["o1"]["payee"] == "probably existing: Crispin Fairleighbrook (no bank details on the invoice)", got
     got = scan("Invoice 4\nTotal £90.00\nSort code 11-11-11\nAccount number 22223333", "o2", "2026-09-22",
                client=FakeClient(payees=CRISPIN_PAYEE), email="crispin@x.example", name="Crispin Fairleigh Brook")
-    assert "BANK DETAILS CHANGED: Starling payee 'Crispin Fairleighbrook'" in got, got
+    assert "BANK DETAILS CHANGED: Starling payee 'Crispin' has different bank details" in got, got
+    assert "Fairleighbrook" not in got and "Fairleighbrook" not in rows_by_id()["o2"]["notes"], got  # I3
 
 
 def test_payee_name_fitting_two_payees_or_another_open_singer_is_ambiguous():
@@ -1514,6 +1515,132 @@ def test_paid_apply_never_overwrites_an_invoice_settled_meanwhile():
         si.cmd_paid(Args(apply=True), RacingClient(out=[out(100, "2026-09-22", "BEN FENWICK", "pay9")]))
     r = lm.read_csv(si.STORE)[0]
     assert r["paid_on"] == "2026-09-21" and r["paid_ref"] == "" and "settled by hand" in r["notes"], r
+
+
+# --- review I3: only first names and a payee status are ever printed ---------------------------
+
+def test_payee_status_never_shows_a_payee_name():
+    cases = {
+        "existing: Benjamin Fenwick": "existing payee",
+        "name matches payee Benjamin Fenwick but with different bank details":
+            "matches an existing payee, different bank details",
+        "probably existing: Benjamin Fenwick (no bank details on the invoice)":
+            "probably an existing payee (no bank details on the invoice)",
+        "ambiguous: Ben Fenwick, Benjamin Fenwick (the name fits more than one payee or singer): check by hand":
+            "ambiguous: the name fits more than one payee or singer: check by hand",
+        si.NEW_PAYEE: si.NEW_PAYEE,
+        "unknown (no Starling token)": "unknown (no Starling token)",
+        "": "",
+    }
+    for stored, shown in cases.items():
+        assert si.payee_status(stored) == shown, (stored, si.payee_status(stored))
+        assert "Fenwick" not in si.payee_status(stored)
+
+
+def test_scan_rescan_and_status_print_no_payee_or_singer_surname():
+    fresh_store()
+    two = [{"payeeName": "Ben Fenwick", "accounts": []}, {"payeeName": "Benjamin Fenwick", "accounts": []}]
+    outputs = [scan("Invoice 7\nTotal £100.00", "z1", "2026-09-20", client=FakeClient(payees=two))]
+    outputs.append(scan("Invoice 8\nTotal £100.00\nSort code 20-30-40\nAccount number 55667788", "z2", "2026-09-21",
+                        client=FakeClient(payees=BEN_PAYEE)))
+    assert rows_by_id()["z1"]["payee"].startswith("ambiguous: Ben Fenwick, Benjamin Fenwick")  # the CSV keeps it
+    assert rows_by_id()["z2"]["payee"] == "existing: Benjamin Fenwick"
+    outputs.append(scan("Invoice 8\nTotal £100.00", "z2", "2026-09-21", client=FakeClient(payees=BEN_PAYEE)))  # reprint
+    buf = io.StringIO()
+    with contextlib.redirect_stdout(buf):
+        si.cmd_status(Args())
+    outputs.append(buf.getvalue())
+    for got in outputs:
+        assert "Fenwick" not in got and "FENWICK" not in got, got
+    assert "payee ambiguous: the name fits more than one payee or singer: check by hand" in outputs[0], outputs[0]
+    assert "payee existing payee" in outputs[1] and "payee existing payee" in outputs[2], outputs[1:3]
+    assert "payee existing payee" in outputs[3], outputs[3]
+
+
+def test_rescan_changes_show_the_payee_status_only():
+    old = {"amount_gbp": "100.00", "payee": "probably existing: Benjamin Fenwick (no bank details on the invoice)"}
+    new = dict(old, payee="existing: Benjamin Fenwick")
+    lines = si.rescan_changes(old, new)
+    assert lines == ["   payee: probably an existing payee (no bank details on the invoice) → existing payee"], lines
+
+
+# --- withdrawn: an invoice sent to us by mistake (another organisation's booking) ----------------
+
+def _withdraw(mid, reason="not-ours"):
+    buf = io.StringIO()
+    with contextlib.redirect_stdout(buf):
+        si.cmd_withdrawn(Args(message_id=mid, reason=reason))
+    return buf.getvalue()
+
+
+def test_withdrawn_marks_the_row_and_drops_it_from_everything_unpaid():
+    fresh_store()
+    scan("Invoice 31\nTotal £120.00", "w1", "2026-09-20")
+    scan("Invoice 32\nTotal £80.00", "w2", "2026-09-21", email="anna@example.com", name="Anna Smith")
+    assert _withdraw("w1") == "w1: withdrawn (not-ours)\n"
+    r = rows_by_id()["w1"]
+    assert r["withdrawn"] == str(lm.today()) and r["paid_on"] == "" and "withdrawn" in r["notes"] and "not-ours" in r["notes"], r
+    assert si.summary(lm.read_csv(si.STORE), lm.today())["unpaid"] == 1
+    assert si.summary(lm.read_csv(si.STORE), lm.today())["unpaid_total"] == 80.0
+    buf = io.StringIO()
+    with contextlib.redirect_stdout(buf):
+        si.cmd_status(Args())
+    assert "Ben" not in buf.getvalue() and "Anna" in buf.getvalue(), buf.getvalue()
+    # paid matching never settles it, even with a payment that fits it exactly
+    got = paid(FakeClient(out=[out(120, "2026-09-22", "BEN FENWICK", "pw")]))
+    assert rows_by_id()["w1"]["paid_on"] == "" and "NEWLY PAID w1" not in got, got
+    # a repeat scan reprints it with no bill
+    again = scan("Invoice 31\nTotal £120.00", "w1", "2026-09-20")
+    assert "already recorded: w1" in again and "bill: no (withdrawn)" in again, again
+    # the dashboard leaves it out
+    sys.path.insert(0, os.path.join(ROOT, "scripts", "reports"))
+    import dashboard
+    assert [x["first_name"] for x in dashboard.singers(lm.read_csv(si.STORE))] == ["Anna"]
+
+
+def test_withdrawn_refuses_a_paid_row_a_repeat_and_a_bad_reason():
+    fresh_store()
+    scan("Invoice 41\nTotal £120.00", "w3", "2026-09-20")
+    for bad in ("Not Ours", "not ours", "", "x" * 30, "a;b"):
+        try:
+            _withdraw("w3", bad)
+            raise AssertionError(f"reason {bad!r} accepted")
+        except SystemExit:
+            pass
+    si.cmd_settled(Args(message_id="w3", date="2026-09-21"))
+    before = open(si.STORE).read()
+    for mid in ("w3", "nope"):
+        try:
+            _withdraw(mid)
+            raise AssertionError(f"{mid} withdrawn")
+        except SystemExit as e:
+            assert "paid" in str(e) or "no invoice" in str(e), e
+    assert open(si.STORE).read() == before
+    scan("Invoice 42\nTotal £60.00", "w4", "2026-09-22")
+    _withdraw("w4")
+    try:
+        _withdraw("w4")
+        raise AssertionError("withdrawn twice")
+    except SystemExit as e:
+        assert "already withdrawn" in str(e), e
+    for fn, args in ((si.cmd_settled, Args(message_id="w4", date="2026-09-23")),):
+        try:
+            fn(args)
+            raise AssertionError("a withdrawn invoice was settled")
+        except SystemExit as e:
+            assert "withdrawn" in str(e), e
+
+
+def test_an_old_store_without_the_withdrawn_column_still_reads_and_gains_it():
+    fresh_store()
+    old_cols = [c for c in si.COLUMNS if c != "withdrawn"]
+    lm.write_csv(si.STORE, [dict(unpaid("o1", "Ben Fenwick", 50, "2026-09-20"))], old_cols)
+    assert si.summary(lm.read_csv(si.STORE), lm.today())["unpaid"] == 1
+    _withdraw("o1")
+    with open(si.STORE) as f:
+        header = f.readline().strip().split(",")
+    assert header[:len(old_cols)] == old_cols and header[-1] == "withdrawn", header
+    assert si.summary(lm.read_csv(si.STORE), lm.today())["unpaid"] == 0
 
 
 if __name__ == "__main__":

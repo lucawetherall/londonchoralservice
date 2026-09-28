@@ -69,11 +69,10 @@ SOURCES = {"web form", "email", "whatsapp", "phone", "referral"}
 STATUSES = {"new", "quoted", "confirmed", "deposit_paid", "done", "lost", "cancelled"}
 STATUS_ORDER = ["new", "quoted", "confirmed", "deposit_paid", "done", "lost", "cancelled"]
 BOOKED = {"confirmed", "deposit_paid", "done"}
-DATE_FIELDS = ("first_seen", "event_date", "last_contact")
 FIRST_AFTER, SECOND_AFTER, LOST_AFTER = 5, 10, 10  # days since last_contact (the quote, then each chase)
 REVIEW_FROM, REVIEW_UNTIL = 3, 14  # days after the event
 QUOTED_NOTE = re.compile(r"\bquoted (\d{4}-\d{2}-\d{2})\b")
-REVIEW_NOTE = re.compile(r"review request (drafted|skipped)", re.I)
+REVIEW_NOTE = cp.REVIEW_NOTE  # "review request drafted|skipped": one pattern, which check_payments --note refuses
 REASON_RE = re.compile(r"^[a-z][a-z-]{0,19}$")
 ID_RE = re.compile(r"^[A-Za-z0-9._:-]{1,64}$")
 FUNERAL = re.compile(r"\b(funeral|memorial|requiem|burial|interment|committal|cremation|thanksgiving"
@@ -337,8 +336,8 @@ def cmd_quoted(args):
         raise SystemExit("package must be one line, at most 80 characters, with no ';'")
 
     def edit(r):
-        if r.get("status") in BOOKED or r.get("status") == "cancelled":
-            raise SystemExit(f"enquiry {r['enquiry_id']} is {r['status']}; not re-quoted")
+        if status_of(r) in BOOKED or status_of(r) == "cancelled":
+            raise SystemExit(f"enquiry {r['enquiry_id']} is {status_of(r)}; not re-quoted")
         not_before_last_contact(r, when)
         if when in QUOTED_NOTE.findall(r.get("notes") or ""):
             raise SystemExit(f"enquiry {r['enquiry_id']} already has a quote on {when}; nothing changed")
@@ -396,8 +395,8 @@ def cmd_followed(args):
     n, when = int(args.number), iso(args.date, "date")
 
     def edit(r):
-        if r.get("status") != "quoted":
-            raise SystemExit(f"enquiry {r['enquiry_id']} is {r.get('status') or 'blank'}, not quoted")
+        if status_of(r) != "quoted":
+            raise SystemExit(f"enquiry {r['enquiry_id']} is {status_of(r) or 'blank'}, not quoted")
         if followups_of(r) != n - 1:
             raise SystemExit(f"enquiry {r['enquiry_id']} already has {r.get('followups')} follow-up(s); "
                              f"follow-up {n} not recorded")

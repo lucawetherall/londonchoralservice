@@ -639,6 +639,20 @@ def test_paths_follow_the_private_dir():
     assert str(pl.ENQUIRIES) == os.path.join(_HOME, "enquiries.csv"), pl.ENQUIRIES
 
 
+def test_quoted_and_followed_read_the_status_whatever_its_case():
+    d = tempfile.mkdtemp()
+    rows = [enq("q1", status="Quoted ", last="2026-09-20"), enq("c1", status="CONFIRMED", booking_ref="2111")]
+    with open(os.path.join(d, "enquiries.csv"), "w", newline="") as f:
+        w = csv.DictWriter(f, fieldnames=pl.COLUMNS)
+        w.writeheader()
+        w.writerows(rows)
+    p = cli(d, "followed", "q1", "1", "2026-09-25")
+    assert p.returncode == 0, p.stderr
+    p = cli(d, "quoted", "c1", "Small Choir", "1150", "2026-09-26")
+    assert p.returncode != 0 and "is confirmed; not re-quoted" in p.stderr, p.stderr
+    assert enquiries(d)["c1"]["status"] == "CONFIRMED"
+
+
 if __name__ == "__main__":
     failures = 0
     for name, fn in sorted(globals().items()):

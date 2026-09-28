@@ -37,6 +37,7 @@
       "Bash(.venv/bin/python scripts/bookings/singer_invoices.py paid --apply)",
       "Bash(.venv/bin/python scripts/bookings/singer_invoices.py status)",
       "Bash(.venv/bin/python scripts/bookings/singer_invoices.py thanked *)",
+      "Bash(.venv/bin/python scripts/bookings/singer_invoices.py withdrawn *)",
       "Bash(.venv/bin/python scripts/bookings/pipeline.py *)",
       "Bash(.venv/bin/python scripts/reports/dashboard.py)",
       "mcp__caefd5da-81a5-4eb0-993a-dfeaa5b9d7c1__list_calendars",

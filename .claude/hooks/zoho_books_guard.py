@@ -41,24 +41,15 @@ SERVERS = {"zoho-books", "zoho-books-invoices"}
 #   list_all_contact_bank_accounts (contacts' bank details);
 #   get_contact_card, list_contact_cards and get_contact_card_count (stored cards);
 #   list_contact_autobill_recurring_invoices (card autobilling) and
-#   get_invoice_qr_code (it can carry payment details).
+#   get_invoice_qr_code (it can carry payment details);
+#   every bank account, bank transaction, bank statement and reconciliation read
+#   (get_bank_*, list_bank_*, get_matching_bank_transactions and the like): no
+#   prompt uses them, and they hold the business's own bank data (review M16).
 # Unknown or new tools are denied.
 READ_ALLOW = {
     "ZohoBooks_bulk_export_invoices_as_pdf",
     "ZohoBooks_bulk_fetch_pricebooks",
     "ZohoBooks_bulk_print_invoices",
-    "ZohoBooks_get_bank_account",
-    "ZohoBooks_get_bank_account_balance",
-    "ZohoBooks_get_bank_account_balances",
-    "ZohoBooks_get_bank_account_insights",
-    "ZohoBooks_get_bank_account_overview",
-    "ZohoBooks_get_bank_account_preferences",
-    "ZohoBooks_get_bank_account_rule",
-    "ZohoBooks_get_bank_account_statement_summary",
-    "ZohoBooks_get_bank_accounts_overview",
-    "ZohoBooks_get_bank_reconciliation",
-    "ZohoBooks_get_bank_reconciliation_document",
-    "ZohoBooks_get_bank_transaction",
     "ZohoBooks_get_bill",
     "ZohoBooks_get_bill_comments",
     "ZohoBooks_get_contact",
@@ -100,8 +91,6 @@ READ_ALLOW = {
     "ZohoBooks_get_item",
     "ZohoBooks_get_item_master",
     "ZohoBooks_get_item_variant",
-    "ZohoBooks_get_last_imported_bank_statement",
-    "ZohoBooks_get_matching_bank_transactions",
     "ZohoBooks_get_payment_reminder_mail_content_for_invoice",
     "ZohoBooks_get_recurring_bill",
     "ZohoBooks_get_tax",
@@ -110,15 +99,6 @@ READ_ALLOW = {
     "ZohoBooks_get_tax_group",
     "ZohoBooks_get_unused_retainer_payments",
     "ZohoBooks_list_all_contact_persons",
-    "ZohoBooks_list_bank_account_balances",
-    "ZohoBooks_list_bank_account_match_filters",
-    "ZohoBooks_list_bank_account_rules",
-    "ZohoBooks_list_bank_account_statements",
-    "ZohoBooks_list_bank_account_subaccounts",
-    "ZohoBooks_list_bank_account_transactions",
-    "ZohoBooks_list_bank_accounts",
-    "ZohoBooks_list_bank_reconciliations",
-    "ZohoBooks_list_bank_transactions",
     "ZohoBooks_list_bill_payments",
     "ZohoBooks_list_bills",
     "ZohoBooks_list_contact_addresses",
@@ -153,7 +133,6 @@ READ_ALLOW = {
     "ZohoBooks_list_tax_authorities",
     "ZohoBooks_list_tax_exemptions",
     "ZohoBooks_list_taxes",
-    "ZohoBooks_list_unreviewed_bank_statements",
     "ZohoBooks_list_vendor_payments",
     "ZohoBooks_list_vendors",
     "ZohoBooks_print_invoice_delivery_note",
