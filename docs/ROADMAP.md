@@ -121,7 +121,7 @@ Merged into `js/form.js` (occasion pre-fill from contact.js + `data-redirect` su
 
 ---
 
-## R6 — Revisit CSS inlining vs cached stylesheet  [P3] [DECISION-NEEDED]
+## R6 — Revisit CSS inlining vs cached stylesheet  [P3] [done 2026-09-28 — decided: keep inlining. GA4, last 90 days: organic sessions average 1.41 pages (paid 1.59, direct 1.56), so single-page landings dominate and inlined CSS gives them the fastest first paint. Revisit if pages per session passes about 2.]
 
 **Why:** `build.sh` inlines the full ~40KB CSS into every page: zero render-blocking requests (great first paint) but zero cross-page caching — a visitor browsing 3 pages downloads the same CSS 3 times, and every page weighs 55–78KB. For a site whose funnel is multi-page (area page → pricing → contact), a single cached `<link rel="stylesheet">` is likely a net win after the first page.
 
@@ -298,7 +298,7 @@ print('duplicate price-ladder constructions:', len(dupes))  # → 0
 
 ---
 
-## R14 — Owner facts the 2026-09-27 audit could not settle  [P2] [DECISION-NEEDED]
+## R14 — Owner facts the 2026-09-27 audit could not settle  [P2] [done 2026-09-27 — all six settled]
 
 **Why:** The 2026-09-27 full-site audit fixed every contradiction with a checkable answer (see commit `copy: correct contradictions and music-history errors…`). These remain because only the owner knows which figure is true. Do not let an agent pick one.
 
