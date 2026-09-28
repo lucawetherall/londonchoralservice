@@ -551,6 +551,44 @@ def test_todo_tick_needs_the_right_origin_and_host():
         assert not (Path(TMP) / "command-centre" / "todo.json").exists()
 
 
+def test_todo_tick_posts_with_fetch_not_a_plain_form():
+    # Referrer-Policy: no-referrer makes a browser send "Origin: null" on a plain form POST, which the same-origin
+    # check refuses (it did, in a real browser). todo.js posts the form with fetch(), which sends the real Origin,
+    # and the route answers JSON with the page to load.
+    static = Path(ROOT) / "command_centre" / "static"
+    js = (static / "todo.js").read_text()
+    assert 'querySelectorAll("form.todo-tick")' in js and '"Accept": "application/json"' in js
+    assert "preventDefault" in js and "fetch(f.action" in js
+    with Patched():
+        c = make(FakeBank())
+        out = page(c, "/todo")
+        forms = re.findall(r"<form\b[^>]*>", out)
+        assert forms and all('class="todo-tick"' in f for f in forms if 'method="post"' in f), forms
+        assert '<script src="/static/todo.js" defer></script>' in out and "<script>" not in out
+        assert c.get("/static/todo.js", headers=HEADERS).status_code == 200
+        key = todo.parse(MANUAL)[1]["key"]
+        assert tick(c, key, headers=dict(POST_HEADERS, Origin="null")).status_code == 403   # what a plain form sends
+        js_headers = dict(POST_HEADERS, Accept="application/json")
+        r = tick(c, key, headers=js_headers)
+        assert r.status_code == 200 and r.json() == {"url": "/todo"}, (r.status_code, r.text)
+        assert json.loads((Path(TMP) / "command-centre" / "todo.json").read_text())[key]["done"] is True
+        r = tick(c, "99-made-up", headers=js_headers)
+        assert r.status_code == 400 and set(r.json()) == {"error"}, r.text
+
+
+def test_every_post_form_in_the_templates_is_sent_by_a_script():
+    # A plain <form method="post"> would be refused in a browser (see above); each one needs a class that a static
+    # script intercepts. The action forms (class cc-action) have no method and are sent by actions.js.
+    handled = {"todo-tick": "todo.js"}
+    templates = Path(ROOT) / "command_centre" / "templates"
+    for f in sorted(templates.glob("*.html")):
+        for form in re.findall(r"<form\b[^>]*>", f.read_text()):
+            if re.search(r'method="?post', form, re.I):
+                cls = re.search(r'class="([^"]*)"', form)
+                names = set(cls.group(1).split()) if cls else set()
+                assert names & set(handled), (f.name, form)
+
+
 def test_todo_tick_is_a_registered_local_action_without_a_passkey():
     a = actions.REGISTRY["todo-tick"]
     assert a.passkey is False

@@ -14,7 +14,7 @@
       <h2><span class="todo-num">{{ i.number }}.</span> {{ i.title }}</h2>
       {% if i.summary %}<p>{{ i.summary }}</p>{% endif %}
     </div>
-    <form method="post" action="/todo/tick">
+    <form class="todo-tick" method="post" action="/todo/tick">
       <input type="hidden" name="key" value="{{ i.key }}">
       <input type="hidden" name="done" value="yes">
       <button class="button quiet" type="submit">Mark done</button>
@@ -30,7 +30,7 @@
     <li class="todo-item todo-done">
       <div class="todo-text"><h3><span class="todo-num">{{ i.number }}.</span> {{ i.title }}</h3>
         <p class="muted">Ticked {{ i.at[:10] }}</p></div>
-      <form method="post" action="/todo/tick">
+      <form class="todo-tick" method="post" action="/todo/tick">
         <input type="hidden" name="key" value="{{ i.key }}">
         <input type="hidden" name="done" value="no">
         <button class="button quiet" type="submit">Reopen</button>
@@ -42,3 +42,4 @@
 {% endif %}
 {% elif items_panel.ok %}<p class="muted">No numbered sections found.</p>{% endif %}
 {% endblock %}
+{% block scripts %}<script src="/static/todo.js" defer></script>{% endblock %}
