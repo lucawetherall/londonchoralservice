@@ -49,13 +49,13 @@
     <div class="figures">
       <div class="figure"><span class="figure-label">Receivables</span><span class="figure-value">{{ t.receivables|gbp }}</span><span class="figure-note muted">{{ t.receivables_count }} invoice{{ "" if t.receivables_count == 1 else "s" }}</span></div>
       <div class="figure"><span class="figure-label">Overdue</span><span class="figure-value">{{ t.overdue|gbp }}</span><span class="figure-note muted">{{ t.overdue_count }} invoice{{ "" if t.overdue_count == 1 else "s" }}</span></div>
-      <div class="figure"><span class="figure-label">Unpaid bills</span><span class="figure-value">{{ t.unpaid_bills|gbp }}</span><span class="figure-note muted">{{ t.unpaid_bills_count }} bill{{ "" if t.unpaid_bills_count == 1 else "s" }}</span></div>
+      {% if bk.bills_read is not sameas false %}<div class="figure"><span class="figure-label">Unpaid bills</span><span class="figure-value">{{ t.unpaid_bills|gbp }}</span><span class="figure-note muted">{{ t.unpaid_bills_count }} bill{{ "" if t.unpaid_bills_count == 1 else "s" }}</span></div>{% endif %}
     </div>
     <ul class="lines">
       <li>Drafts not yet sent: {% if bk.drafts %}{% for n in bk.drafts %}{{ m.ref_link(n.number, n.href) }}{% if not loop.last %}, {% endif %}{% endfor %}{% else %}none{% endif %}</li>
       {% if bk.overdue %}<li>Overdue: {% for n in bk.overdue %}{{ m.ref_link(n.number, n.href) }}{% if not loop.last %}, {% endif %}{% endfor %}</li>{% endif %}
     </ul>
-    <p class="muted">Books as of {{ bk.generated_at|when }}, read-only (the daily pass and the half-hourly refresh run <span class="mono">cc_sync.py books</span>). Invoices are sent and payments confirmed in Books, not here.</p>
+    <p class="muted">Books as of {{ bk.generated_at|when }}, read-only (the daily pass and the half-hourly refresh run <span class="mono">cc_sync.py books</span>). Invoices go out attached to your reply in Zoho Mail; Books keeps the record.</p>
     {% elif books.ok %}
     <p class="muted">Books not synced yet: the daily pass runs <span class="mono">cc_sync.py books</span>.</p>
     {% endif %}

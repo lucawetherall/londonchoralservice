@@ -283,6 +283,7 @@ def books_summary(cache, ledger_rows=None):
         numbers = sorted(str(i.get("number", "")) for i in invoices if keep(i))
         return [{"number": n, "href": ledger_href(n, ledger_rows)} for n in numbers]
     return {"totals": cache.get("totals") or {}, "generated_at": when,
+            "bills_read": cache.get("bills_read") is not False,  # false on the free Books plan (no bills)
             "drafts": listed(lambda i: i.get("status") == "draft"),
             "overdue": listed(lambda i: i.get("status") == "overdue" and float(i.get("balance") or 0) > 0)}
 

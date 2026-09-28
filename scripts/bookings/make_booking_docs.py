@@ -17,15 +17,16 @@ spec.json (all money in pounds; the fee must be the one the client accepted):
    "items": [{"name": "Wedding solo singer", "detail": "…", "qty": 1, "rate": 325}, …],
    "instalment_1_due": "2026-08-28", "instalment_2_due": "2026-11-20"}
 Instalments are 50/50 unless "instalment_1" / "instalment_2" amounts are given.
-Output goes to ~/lcs-private/invoices/<ref> - <client>/ (folders mode 700, files
-mode 600); the ref and client name are cleaned first (safe_name: no "/", "\\", ".."
-or control characters), so the folder can never land outside invoices/. Nothing is
-sent anywhere: the owner attaches the files to the reply draft in Zoho.
+Output goes to iCloud Drive/LCS-invoices/<ref> - <client>/ (~/Library/Mobile Documents/
+com~apple~CloudDocs/LCS-invoices; folders mode 700, files mode 600), so the documents are on
+Luca's other devices too. The ref and client name are cleaned first (safe_name: no "/", "\\",
+".." or control characters), so the folder can never land outside LCS-invoices/. Nothing is
+sent anywhere: imap_draft.py attaches both files to the reply draft in Zoho Drafts, and Luca
+sends it.
 
-~/lcs-private/tools and ~/lcs-private/invoices are fixed paths on purpose (they do not
-follow LCS_PRIVATE_DIR): the Books guard (.claude/hooks/zoho_books_guard.py) allows an
-invoice attachment only from inside ~/lcs-private/invoices/, and the templates are the
-owner's private copies.
+~/lcs-private/tools and iCloud Drive/LCS-invoices are fixed paths on purpose (they do not
+follow LCS_PRIVATE_DIR): imap_draft.py and the Books guard (.claude/hooks/zoho_books_guard.py)
+attach files only from inside LCS-invoices/, and the templates are the owner's private copies.
 """
 
 import datetime
@@ -40,10 +41,10 @@ from pathlib import Path
 from pypdf import PdfReader
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-import lcs_money as lm  # noqa: E402  parse_gbp, today
+import lcs_money as lm  # noqa: E402  parse_gbp, today, ICLOUD_INVOICES
 
 TOOLS = Path.home() / "lcs-private" / "tools"
-OUT_ROOT = Path.home() / "lcs-private" / "invoices"
+OUT_ROOT = lm.ICLOUD_INVOICES
 CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
 
 

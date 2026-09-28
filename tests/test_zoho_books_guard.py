@@ -62,7 +62,7 @@ def test_bank_account_and_transaction_reads_are_denied():
 def test_send_and_write_tools_are_denied():
     for name in ("ZohoBooks_email_invoice", "ZohoBooks_email_invoices", "ZohoBooks_schedule_invoice_email",
                  "ZohoBooks_delete_invoice",
-                 "ZohoBooks_mark_invoice_void", "ZohoBooks_mark_invoice_sent", "ZohoBooks_write_off_invoice",
+                 "ZohoBooks_mark_invoice_void", "ZohoBooks_write_off_invoice",
                  "ZohoBooks_remind_customer_for_invoice_payment", "ZohoBooks_create_customer_payment",
                  "ZohoBooks_fetch_invoice_einvoice", "ZohoBooks_generate_invoice_payment_link",
                  "ZohoBooks_get_bank_statement_import_encryption_key", "ZohoBooks_add_contact_bank_account",
@@ -99,14 +99,14 @@ APPROVED_WRITES = {
     "ZohoBooks_create_contact", "ZohoBooks_update_contact",
     "ZohoBooks_create_invoice",
     "ZohoBooks_add_invoice_document", "ZohoBooks_upload_invoice_document",
-    "ZohoBooks_add_invoice_comment",
+    "ZohoBooks_add_invoice_comment", "ZohoBooks_mark_invoice_sent",
     "ZohoBooks_create_bill", "ZohoBooks_update_bill", "ZohoBooks_add_bill_comment",
     "ZohoBooks_create_item", "ZohoBooks_create_bank_account", "ZohoBooks_create_vendor_payment",
     "ZohoBooks_create_customer_payment",
 }
 STARLING = "1534218000000095168"
 ORG = {"organization_id": "941014440"}
-CONFIRMATION = "~/lcs-private/invoices/2111 - A Client/Booking Confirmation - A Client - 21 Nov 2026.docx"
+CONFIRMATION = "~/Library/Mobile Documents/com~apple~CloudDocs/LCS-invoices/2111 - A Client/Booking Confirmation - A Client - 21 Nov 2026.docx"
 
 
 def good_inputs():
@@ -141,6 +141,7 @@ def good_inputs():
                                            "path_variables": {"invoice_id": "444", "document_id": "555"}},
         "ZohoBooks_upload_invoice_document": {"query_params": dict(ORG, attachment=CONFIRMATION),
                                               "path_variables": {"invoice_id": "444", "document_id": "555"}},
+        "ZohoBooks_mark_invoice_sent": {"query_params": ORG, "path_variables": {"invoice_id": "444"}},
         "ZohoBooks_add_invoice_comment": {"body": {"description": "Booking confirmation to attach"},
                                           "query_params": ORG, "path_variables": {"invoice_id": "444"}},
         "ZohoBooks_create_bill": {"body": dict(bill, documents=[{"document_id": "777", "file_name": "S-17.pdf"}]),
@@ -449,7 +450,7 @@ def test_bill_attachment_is_only_a_saved_singer_pdf():
         return decide("zoho-books", B, with_(B, "query_params", attachment=att), env=env)
     assert run(ok) == "allow"
     assert run(os.path.join(home, "lcs-private", "singer-invoices", "1790614912727141700.pdf")) == "allow"
-    for bad in ("~/lcs-private/invoices/2111.pdf", "~/lcs-private/singer-invoices/x.docx",
+    for bad in ("~/Library/Mobile Documents/com~apple~CloudDocs/LCS-invoices/2111.pdf", "~/lcs-private/singer-invoices/x.docx",
                 "~/lcs-private/singer-invoices/../invoices/a.pdf", "~/lcs-private/singer-invoices/a b.pdf",
                 "~/lcs-private/singer-invoices/sub/a.pdf", "https://example.com/a.pdf", "~/Desktop/a.pdf"):
         assert run(bad) == "deny", bad
@@ -619,7 +620,7 @@ def test_bank_details_and_vat_are_denied_in_any_text():
         assert denied("ZohoBooks_add_invoice_comment",
                       with_("ZohoBooks_add_invoice_comment", "body", description=text)), text
         assert denied("ZohoBooks_update_contact", with_("ZohoBooks_update_contact", "body", company_name=text)), text
-        assert denied(U, with_(U, "query_params", attachment=f"~/lcs-private/invoices/{text}.pdf")), text
+        assert denied(U, with_(U, "query_params", attachment=f"~/Library/Mobile Documents/com~apple~CloudDocs/LCS-invoices/{text}.pdf")), text
     # a number is scanned as well as a string
     assert denied(I, with_(I, "body", line_items=[{"name": "Choir", "rate": 12345678}]))
     assert denied(I, with_(I, "body", line_items=[{"name": "Choir", "rate": 40000412345678}]))
@@ -708,21 +709,35 @@ def test_only_the_invoice_number_is_exempt_from_the_digit_rule():
     assert denied(B, with_(B, "body", reference_number="20260928"))
 
 
+# --- mark sent: the invoice id only, nothing else ---------------------------------------
+
+def test_mark_invoice_sent_takes_only_the_invoice_id():
+    M = "ZohoBooks_mark_invoice_sent"
+    assert decide("zoho-books-invoices", M, {"query_params": ORG, "path_variables": {"invoice_id": "444"}}) == "allow"
+    for bad in ({"query_params": ORG},
+                {"query_params": ORG, "path_variables": {"invoice_id": ""}},
+                {"query_params": dict(ORG, send=True), "path_variables": {"invoice_id": "444"}},
+                {"query_params": dict(ORG, send_email=True), "path_variables": {"invoice_id": "444"}},
+                {"query_params": ORG, "path_variables": {"invoice_id": "444"}, "body": {"to_mail_ids": ["a@b.com"]}},
+                {"query_params": ORG, "path_variables": {"invoice_id": "444", "contact_id": "1"}}):
+        assert decide("zoho-books-invoices", M, bad) == "deny", bad
+
+
 # --- attachments come only from the private invoices folder ---------------------------
 
 def test_attachment_must_be_a_pdf_or_docx_in_the_private_invoices_folder():
     U = "ZohoBooks_upload_invoice_document"
     home = os.path.expanduser("~")
-    for ok in (CONFIRMATION, "~/lcs-private/invoices/2111 - A Client/Invoice 2111 - A Client.pdf",
-               os.path.join(home, "lcs-private", "invoices", "Invoice 2111 - A Client.pdf")):
+    for ok in (CONFIRMATION, "~/Library/Mobile Documents/com~apple~CloudDocs/LCS-invoices/2111 - A Client/Invoice 2111 - A Client.pdf",
+               os.path.join(home, "Library", "Mobile Documents", "com~apple~CloudDocs", "LCS-invoices", "Invoice 2111 - A Client.pdf")):
         assert decide("zoho-books-invoices", U, with_(U, "query_params", attachment=ok)) == "allow", ok
     for bad in ("/tmp/Booking Confirmation.docx", "/Users/luca/.config/lcs/google-ads.yaml",
                 "~/.config/gcloud/application_default_credentials.json", "~/lcs-private/bookings.csv",
-                "~/lcs-private/invoices/../bookings.csv", "~/lcs-private/invoices/../invoices/a.pdf",
-                "~/lcs-private/invoices/a/../../x.pdf", "~/lcs-private/invoicesX/a.pdf", "~/lcs-private/invoices",
-                "~/lcs-private/invoices/", "~/lcs-private/invoices/a.txt", "~/lcs-private/invoices/a.pdf.exe",
-                "~/lcs-private/invoices/a.PDF", "~/lcs-private/invoices/a.pdf\n", "~/lcs-private/invoices/a\u0000.pdf",
-                "lcs-private/invoices/a.pdf", "~root/lcs-private/invoices/a.pdf", "~/.ssh/id_ed25519",
+                "~/Library/Mobile Documents/com~apple~CloudDocs/LCS-invoices/../bookings.csv", "~/Library/Mobile Documents/com~apple~CloudDocs/LCS-invoices/../invoices/a.pdf",
+                "~/Library/Mobile Documents/com~apple~CloudDocs/LCS-invoices/a/../../x.pdf", "~/Library/Mobile Documents/com~apple~CloudDocs/LCS-invoicesX/a.pdf", "~/Library/Mobile Documents/com~apple~CloudDocs/LCS-invoices",
+                "~/Library/Mobile Documents/com~apple~CloudDocs/LCS-invoices/", "~/Library/Mobile Documents/com~apple~CloudDocs/LCS-invoices/a.txt", "~/Library/Mobile Documents/com~apple~CloudDocs/LCS-invoices/a.pdf.exe",
+                "~/Library/Mobile Documents/com~apple~CloudDocs/LCS-invoices/a.PDF", "~/Library/Mobile Documents/com~apple~CloudDocs/LCS-invoices/a.pdf\n", "~/Library/Mobile Documents/com~apple~CloudDocs/LCS-invoices/a\u0000.pdf",
+                "Library/Mobile Documents/com~apple~CloudDocs/LCS-invoices/a.pdf", "~root/Library/Mobile Documents/com~apple~CloudDocs/LCS-invoices/a.pdf", "~/lcs-private/invoices/a.pdf", "~/.ssh/id_ed25519",
                 "../../etc/passwd", "https://evil.test/a.pdf", "file:///Users/luca/lcs-private/invoices/a.pdf",
                 "JVBERi0xLjQKJcfsj6IKNSAwIG9iago8PC9MZW5ndGggNiAwIFI+PgpzdHJlYW0K", "data:application/pdf;base64,JVBERi0=",
                 json.dumps({"send": True}), "", 1, True, ["a.pdf"]):
@@ -732,15 +747,15 @@ def test_attachment_must_be_a_pdf_or_docx_in_the_private_invoices_folder():
 def test_attachment_path_is_resolved_through_symlinks():
     U = "ZohoBooks_upload_invoice_document"
     home = tempfile.mkdtemp()
-    inv = os.path.join(home, "lcs-private", "invoices")
+    inv = os.path.join(home, "Library", "Mobile Documents", "com~apple~CloudDocs", "LCS-invoices")
     os.makedirs(inv)
     os.symlink("/etc", os.path.join(inv, "etc"))
     open(os.path.join(home, "secret.pdf"), "w").close()
     os.symlink(os.path.join(home, "secret.pdf"), os.path.join(inv, "link.pdf"))
     env = dict(os.environ, HOME=home)
-    ok = with_(U, "query_params", attachment="~/lcs-private/invoices/Invoice 2111 - A Client.pdf")
+    ok = with_(U, "query_params", attachment="~/Library/Mobile Documents/com~apple~CloudDocs/LCS-invoices/Invoice 2111 - A Client.pdf")
     assert decide("zoho-books-invoices", U, ok, env) == "allow"
-    for bad in ("~/lcs-private/invoices/etc/passwd.pdf", "~/lcs-private/invoices/link.pdf"):
+    for bad in ("~/Library/Mobile Documents/com~apple~CloudDocs/LCS-invoices/etc/passwd.pdf", "~/Library/Mobile Documents/com~apple~CloudDocs/LCS-invoices/link.pdf"):
         assert denied_env(U, with_(U, "query_params", attachment=bad), env), bad
 
 
@@ -780,7 +795,7 @@ def test_tax_fields_are_denied():
 def test_still_denied_tools_from_the_design():
     # A plausible-looking argument set must not unlock any of these.
     ti = good_inputs()["ZohoBooks_create_invoice"]
-    for name in ("ZohoBooks_email_invoice", "ZohoBooks_mark_invoice_sent", "ZohoBooks_delete_invoice",
+    for name in ("ZohoBooks_email_invoice", "ZohoBooks_delete_invoice",
                  "ZohoBooks_mark_invoice_void", "ZohoBooks_write_off_invoice", "ZohoBooks_create_customer_payment",
                  "ZohoBooks_match_bank_transaction", "ZohoBooks_categorize_bank_transaction",
                  "ZohoBooks_approve_bill", "ZohoBooks_delete_bill", "ZohoBooks_convert_purchase_order_to_bill",

@@ -78,7 +78,7 @@ def test_books_cache_shape_and_totals():
     assert code == 0 and out.startswith("books: 4 invoices, 3 bills cached"), out
     data = json.loads((CACHE / "books.json").read_text())
     assert data["generated_at"] == "2026-09-28T09:30:00+01:00"
-    assert set(data) == {"generated_at", "invoices", "bills", "totals"}
+    assert set(data) == {"generated_at", "invoices", "bills", "bills_read", "totals"} and data["bills_read"] is True
     inv = {i["number"]: i for i in data["invoices"]}
     assert inv["2111"] == {"number": "2111", "status": "sent", "date": "2026-09-20", "due_date": "2026-10-05",
                            "total": 1150.0, "balance": 1150.0, "customer": "Harriet"}, inv["2111"]
@@ -93,6 +93,21 @@ def test_books_cache_shape_and_totals():
     assert {(s, t) for s, t, _ in fake.calls} == {("zoho-books-invoices", "ZohoBooks_list_invoices"),
                                                   ("zoho-books", "ZohoBooks_list_bills")}
     assert all(a["query_params"]["organization_id"] == "941014440" for _, _, a in fake.calls)
+
+
+def test_books_without_bills_on_the_free_plan_still_caches_the_invoices():
+    clear()
+    fake = FakeBooks()
+    def call(server, tool, args):
+        if tool == "ZohoBooks_list_bills":
+            raise lcs_mcp.McpError("this feature is not available in your plan")
+        return fake(server, tool, args)
+    code, out = run(cc_sync.cmd_books, call, NOW)
+    assert code == 0 and out.startswith("books: 4 invoices, no bills (not on this Books plan) cached"), out
+    assert "unpaid bills" not in out, out
+    data = json.loads((CACHE / "books.json").read_text())
+    assert data["bills_read"] is False and data["bills"] == [] and len(data["invoices"]) == 4
+    assert data["totals"]["receivables"] == 1375.5 and data["totals"]["unpaid_bills"] == 0
 
 
 def test_books_pages_through():
