@@ -524,6 +524,11 @@ def budget_section(q, today, write=False, git_runner=None, now=None):
             print("   " + line)
     except Exception as e:  # type name only
         print(f"   Christmas value check failed: {type(e).__name__}")
+    try:
+        for line in spend_guard_lines(q, today):
+            print("   " + line)
+    except Exception as e:  # type name only
+        print(f"   spend guard failed: {type(e).__name__}")
     if write:
         try:
             for line in write_proposals(items, today, git_runner=git_runner, now=now):
@@ -554,6 +559,28 @@ def value_check_lines(q, today):
                  f"{' (checked from ' + XMAS_CHECK_BY.strftime('%d %b') + ')' if today < XMAS_CHECK_BY else ''}")
     return [line, "stop rule: back to £5 if the extra passes £60 by 2 Nov with no real enquiry, "
                   "or if under 90% of a week's spend went on hiring searches"]
+
+
+GUARD_DAYS, GUARD_SPEND_GBP, GUARD_MIN_CLICKS = 28, 80.0, 15
+
+
+def spend_guard_lines(q, today):
+    """The stop rule for every enabled campaign (owner, 28 Sep 2026): spend of £80 or more in the last 28 days
+    with no primary conversion (form, WhatsApp or email click) means the campaign is proposed for pausing, never
+    deletion, until the owner decides. Under 15 clicks is too little to judge and is said so."""
+    since = today - datetime.timedelta(days=GUARD_DAYS - 1)
+    lines = []
+    for r in q(f"""SELECT campaign.id, campaign.name, metrics.cost_micros, metrics.clicks, metrics.conversions
+                   FROM campaign WHERE campaign.status = 'ENABLED'
+                   AND segments.date BETWEEN '{since}' AND '{today}'"""):
+        cost, clicks, conv = r.metrics.cost_micros / 1e6, r.metrics.clicks, r.metrics.conversions
+        line = f"spend guard {r.campaign.name}: £{cost:,.2f}, {clicks} clicks, {conv:g} leads in {GUARD_DAYS} days"
+        if cost >= GUARD_SPEND_GBP and conv == 0:
+            line += (" — STOP GUARD: propose pausing (never deleting) until the owner decides"
+                     if clicks >= GUARD_MIN_CLICKS else
+                     f" — under {GUARD_MIN_CLICKS} clicks, too few to judge; watch next week")
+        lines.append(line)
+    return lines + [f"stop rule: £{GUARD_SPEND_GBP:.0f}+ in {GUARD_DAYS} days with no lead → propose pausing"]
 
 
 # ---------- 12b. Command Centre proposals (--write-proposals) ----------

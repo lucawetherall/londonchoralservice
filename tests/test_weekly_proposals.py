@@ -203,6 +203,22 @@ def test_christmas_value_check_flags_extra_spend_past_sixty_pounds():
     assert wr.value_check_lines(rows([8]), datetime.date(2026, 9, 27)) == []
 
 
+def test_spend_guard_flags_eighty_pounds_with_no_lead_and_enough_clicks():
+    from types import SimpleNamespace as N
+    def rows(query):
+        return [N(campaign=N(id=1, name="wedding-leads"), metrics=N(cost_micros=95_000_000, clicks=20, conversions=0.0)),
+                N(campaign=N(id=2, name="funeral expert campaign"), metrics=N(cost_micros=120_000_000, clicks=25, conversions=2.0)),
+                N(campaign=N(id=3, name="quiet"), metrics=N(cost_micros=85_000_000, clicks=9, conversions=0.0)),
+                N(campaign=N(id=4, name="small"), metrics=N(cost_micros=30_000_000, clicks=6, conversions=0.0))]
+    lines = wr.spend_guard_lines(rows, datetime.date(2026, 10, 26))
+    assert lines[0] == ("spend guard wedding-leads: £95.00, 20 clicks, 0 leads in 28 days — STOP GUARD: propose "
+                        "pausing (never deleting) until the owner decides"), lines
+    assert lines[1] == "spend guard funeral expert campaign: £120.00, 25 clicks, 2 leads in 28 days", lines
+    assert lines[2].endswith("under 15 clicks, too few to judge; watch next week"), lines
+    assert lines[3] == "spend guard small: £30.00, 6 clicks, 0 leads in 28 days", lines
+    assert lines[4].startswith("stop rule: £80+ in 28 days with no lead")
+
+
 if __name__ == "__main__":
     failures = 0
     for name, fn in sorted((n, f) for n, f in globals().items() if n.startswith("test_") and callable(f)):
