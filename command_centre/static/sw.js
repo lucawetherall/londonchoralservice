@@ -18,7 +18,7 @@ var SHELL_CACHE = VERSION + "-shell";
 var PAGE_CACHE = VERSION + "-pages";
 var SHELL = [
   "/static/app.css", "/static/htmx.min.js", "/static/passkey.js", "/static/actions.js", "/static/handoffs.js",
-  "/static/pwa.js", "/static/push.js", "/static/icons/icon-192.png", "/static/icons/icon-180.png"
+  "/static/pwa.js", "/static/push.js", "/static/swap.js", "/static/icons/icon-192.png", "/static/icons/icon-180.png"
 ];
 var OFFLINE_PAGES = ["/", "/money"];
 var TIMEOUT_MS = 4000;

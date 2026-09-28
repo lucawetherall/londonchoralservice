@@ -408,9 +408,13 @@ def test_a_bad_books_cache_breaks_only_its_panel():
     fixtures()
     write(CACHE / "books.json", json.dumps({"invoices": "nope"}))
     c = make(FakeBank())
-    for path in ("/", "/money", "/bookings/0310"):
+    for path in ("/money", "/bookings/0310"):
         out = text_of(page(c, path))
         assert "couldn't load (ValueError)" in out, (path, out[:1500])
+    # Today names it, and its count is a floor, never a green 0
+    out = text_of(page(c, "/"))
+    assert "Some sources didn't load: the Books cache (ValueError)." in out, out[:1500]
+    assert re.search(r"at least \d+ things? needs? you", out) and "Nothing needs you" not in out, out[:1500]
     out = text_of(page(c, "/money"))
     assert "£2,030.00" in out  # the season margin still renders
     write(CACHE / "books.json", "{not json")

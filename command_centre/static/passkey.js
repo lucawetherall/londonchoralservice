@@ -84,13 +84,14 @@
     }
   });
 
-  var box = document.getElementById("passkeys");
-  if (!box) return;
-  var status = document.getElementById("pk-status");
-  function say(text) { status.textContent = text; }
+  // The Passkeys page's buttons: one click listener on the document (delegated), and the page's elements looked up
+  // at click time, so they still work after the Refresh link re-renders the page.
+  function say(text) {
+    var status = document.getElementById("pk-status");
+    if (status) status.textContent = text;
+  }
 
-  var reg = document.getElementById("pk-register");
-  if (reg) reg.addEventListener("click", async function () {
+  async function register(box) {
     try {
       var body = {}, finish = {};
       if (box.dataset.hasKeys === "yes") {
@@ -111,10 +112,9 @@
     } catch (e) {
       say("Not registered: " + (e && e.message ? e.message : "cancelled"));
     }
-  });
+  }
 
-  var test = document.getElementById("pk-test");
-  if (test) test.addEventListener("click", async function () {
+  async function test(box) {
     try {
       var action = box.dataset.checkAction;
       var cred = await assertFor(action);
@@ -123,5 +123,13 @@
     } catch (e) {
       say("Not accepted: " + (e && e.message ? e.message : "cancelled"));
     }
+  }
+
+  document.addEventListener("click", function (ev) {
+    var btn = ev.target && ev.target.closest ? ev.target.closest("#pk-register, #pk-test") : null;
+    var box = document.getElementById("passkeys");
+    if (!btn || !box) return;
+    if (btn.id === "pk-register") register(box);
+    else test(box);
   });
 })();

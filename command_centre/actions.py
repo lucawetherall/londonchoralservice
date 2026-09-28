@@ -13,7 +13,8 @@ Binding rules (docs/superpowers/specs/2026-09-28-command-centre-design.md, and t
   arguments (none may start with "-" unless it is a fixed flag), cwd the repo, the environment minus every CC_*
   variable with LCS_PRIVATE_DIR set explicitly (and LCS_BOOKINGS_CSV removed), stdin /dev/null (or the owner
   nonce), a timeout, one action at a time, and no retries. run_action() takes the action lock before it validates,
-  so every check (an .applied record, a validate record) is re-read under the lock; refresh-data has its own lock.
+  so every check (an .applied record, a validate record) is re-read under the lock; refresh-data has its own lock,
+  shared with the background refresh (jobs.py), and waits up to REFRESH_WAIT seconds for a pass to finish.
 - Output is scrubbed (lcs_mcp's approach: URLs, token-like values; plus any run of six or more digits) and trimmed
   before it reaches the page; the audit keeps only its sha256. Ads output is not masked: its first and last 3,000
   characters are shown, secrets still redacted.
@@ -235,6 +236,9 @@ def join_warning(warning, text):
 
 _RUN_LOCK = threading.Lock()
 _LOCKS = {"action": _RUN_LOCK, "refresh": threading.Lock()}  # refresh-data never waits on (or blocks) a write
+REFRESH_WAIT = 20  # seconds "Refresh data now" waits for a background pass (jobs.py) holding the refresh lock
+BACKGROUND_REFRESH = threading.Event()  # set while jobs.RefreshJob holds the refresh lock
+BACKGROUND_BUSY = "A background refresh is running; the page will show its results when it finishes"
 
 
 def clean_env(drop=()):
@@ -343,8 +347,13 @@ def refuse_early(defn, raw, user, reason):
 def run_action(defn, raw, user, credential=None, passkeys=None):
     """Take the action's lock, then validate (so every check is made under the lock), check the passkey when the
     action needs one, and perform. Raises ActionError or auth.PasskeyError; every refusal is logged."""
-    lock = _LOCKS[getattr(defn, "lock", "action")]
-    if not lock.acquire(timeout=RUN_WAIT):
+    name = getattr(defn, "lock", "action")
+    lock = _LOCKS[name]
+    if not lock.acquire(timeout=REFRESH_WAIT if name == "refresh" else RUN_WAIT):
+        if name == "refresh" and BACKGROUND_REFRESH.is_set():
+            # the half-hourly pass runs the same scripts and clears the bank cache when it ends
+            refuse_early(defn, raw, user, "a background refresh is running")
+            raise ActionError(BACKGROUND_BUSY, status=409)
         refuse_early(defn, raw, user, "another action is running")
         raise ActionError("another action is running; try again in a moment", status=409)
     try:
@@ -868,11 +877,54 @@ def ensure_mirror():
     with os.fdopen(fd, "w", encoding="ascii") as f:
         f.write(MIRROR_CONFIG)
     os.replace(tmp, cfg)
-    for rel in ("objects/info/alternates", "objects/info/http-alternates", "info/grafts", "info/attributes",
-                "shallow"):
+    for rel in MIRROR_DROPPED:
         with contextlib.suppress(FileNotFoundError, IsADirectoryError):
             os.unlink(d / rel)
     return d
+
+
+MIRROR_DROPPED = ("objects/info/alternates", "objects/info/http-alternates", "info/grafts", "info/attributes", "shallow")
+
+
+def mirror_intact():
+    """True when the mirror is exactly as ensure_mirror() leaves it, checked without writing anything (the pages'
+    read of the proposals): a real folder of this user's, mode 700, holding objects/, its config a regular file
+    whose bytes are MIRROR_CONFIG, and none of the files ensure_mirror() drops. False otherwise (missing, never
+    set up, or changed since: git isn't run in it until ensure_mirror() has put it back)."""
+    d = mirror_dir()
+    try:
+        st = os.lstat(d)
+        if not stat.S_ISDIR(st.st_mode) or st.st_uid != os.getuid() or stat.S_IMODE(st.st_mode) != 0o700:
+            return False
+        if not stat.S_ISDIR(os.lstat(d / "objects").st_mode):
+            return False
+        fd = os.open(d / "config", os.O_RDONLY | os.O_NOFOLLOW)
+        try:
+            cst = os.fstat(fd)
+            if not stat.S_ISREG(cst.st_mode) or cst.st_size > 4096:
+                return False
+            if os.read(fd, 4097) != MIRROR_CONFIG.encode("ascii"):
+                return False
+        finally:
+            os.close(fd)
+    except OSError:
+        return False
+    return not any(os.path.lexists(d / rel) for rel in MIRROR_DROPPED)
+
+
+def tidy_mirror():
+    """The refresh job's pass over the mirror: ensure_mirror() when it exists (never creating one: the first Ads
+    check does), under the action lock without waiting (an Ads run in progress tidies it itself). Returns
+    "tidied", "none" (no mirror yet) or "busy"."""
+    if not os.path.lexists(mirror_dir()):
+        return "none"
+    if not _RUN_LOCK.acquire(blocking=False):
+        return "busy"
+    try:
+        ensure_mirror()
+    finally:
+        _RUN_LOCK.release()
+    return "tidied"
 
 
 def fetch_args():
@@ -939,9 +991,10 @@ def commit_facts(commit, rel, blob, fetch=True):
     if fetch:
         fetch_mirror()
     else:
-        if not (mirror_dir() / "objects").is_dir():
+        # a page (a GET) changes nothing: it reads the mirror only when it is exactly as ensure_mirror() left it
+        # (the refresh job and the Ads actions put it back); anything else waits for the owner's check
+        if not mirror_intact():
             raise NotFetched("not checked against GitHub yet")
-        ensure_mirror()
         if _git("rev-parse", "--verify", "--quiet", MAIN).returncode != 0:
             raise NotFetched("not checked against GitHub yet")
     if _git("cat-file", "-e", f"{commit}^{{commit}}").returncode != 0 or \
@@ -1328,9 +1381,6 @@ def run_folder(commit, rel, blob):
         yield root
     finally:
         shutil.rmtree(root, ignore_errors=True)
-
-
-archived = run_folder  # the name the earlier review's proofs of concept call
 
 
 @dataclasses.dataclass(frozen=True)

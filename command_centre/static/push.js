@@ -2,6 +2,9 @@
 // device with Face ID or Touch ID (a second tap: the server's summary, bound to a passkey challenge). Turn off:
 // unsubscribe here and remove the device on the server (no passkey: it only narrows who is told), and clear the
 // saved offline pages. "Clear offline copies" asks the service worker to delete the saved Today and Money pages.
+//
+// One click listener on the document (delegated), with the page's elements looked up when they are used, and the
+// state read again after the Refresh link re-renders the page (htmx:load), so the buttons keep working.
 (function () {
   "use strict";
 
@@ -21,31 +24,15 @@
   }
   window.LCSClearOffline = clearOffline;
 
-  var clearButton = document.getElementById("offline-clear");
-  var clearStatus = document.getElementById("offline-status");
-  if (clearButton) {
-    clearButton.addEventListener("click", function () {
-      clearButton.disabled = true;
-      clearOffline().then(function (ok) {
-        clearStatus.textContent = ok ? "Offline copies cleared on this device." : "Nothing to clear on this device.";
-      }, function () {
-        clearStatus.textContent = "Couldn't clear the offline copies.";
-      }).then(function () { clearButton.disabled = false; });
-    });
-  }
-
-  var box = document.getElementById("push-box");
-  if (!box || !window.LCSPasskey) return;
-  var status = document.getElementById("push-status");
-  var summary = document.getElementById("push-summary");
-  var enable = document.getElementById("push-enable");
-  var approve = document.getElementById("push-approve");
-  var off = document.getElementById("push-off");
-  var known = (box.dataset.ids || "").split(",").filter(Boolean);
   var pending = null;  // {input, options} between the two taps
 
-  function say(text) { status.textContent = text; }
-  function show(el, on) { if (el) el.hidden = !on; }
+  function el(id) { return document.getElementById(id); }
+  function say(text) { var s = el("push-status"); if (s) s.textContent = text; }
+  function show(e, on) { if (e) e.hidden = !on; }
+  function known() {
+    var box = el("push-box");
+    return ((box && box.dataset.ids) || "").split(",").filter(Boolean);
+  }
 
   function keyBytes(s) {
     s = s.replace(/-/g, "+").replace(/_/g, "/");
@@ -70,29 +57,49 @@
     return reg.pushManager.getSubscription();
   }
 
+  // Show this device's state (the page's buttons start hidden).
   async function refresh() {
-    show(approve, false);
+    var box = el("push-box");
+    if (!box) return;
+    pending = null;
+    show(el("push-approve"), false);
     if (!supported()) {
       say("Notifications work once the app is on the Home Screen (iOS 16.4 or later). Add it first, then open it from there.");
-      show(enable, false); show(off, false);
+      show(el("push-enable"), false); show(el("push-off"), false);
       return;
     }
     if (!box.dataset.key) {
-      say("The server has no notification key yet (see Health).");
-      show(enable, false); show(off, false);
+      say("Notifications aren't set up yet: the service makes its key when it starts.");
+      show(el("push-enable"), false); show(el("push-off"), false);
       return;
     }
     var sub = await current();
-    var on = sub && known.indexOf(await deviceId(sub.endpoint)) !== -1 && Notification.permission === "granted";
+    var on = sub && known().indexOf(await deviceId(sub.endpoint)) !== -1 && Notification.permission === "granted";
     say(on ? "Notifications are on for this device." :
         Notification.permission === "denied" ? "Notifications are blocked for this app in the phone's Settings." :
         "Notifications are off for this device.");
-    show(enable, !on && Notification.permission !== "denied");
-    show(off, !!on);
+    show(el("push-enable"), !on && Notification.permission !== "denied");
+    show(el("push-off"), !!on);
   }
 
-  enable.addEventListener("click", async function () {
-    enable.disabled = true;
+  function start() {
+    refresh().catch(function () { say("Couldn't read this device's notification state."); });
+  }
+
+  function clearCopies(button) {
+    var status = el("offline-status");
+    button.disabled = true;
+    clearOffline().then(function (ok) {
+      if (status) status.textContent = ok ? "Offline copies cleared on this device." : "Nothing to clear on this device.";
+    }, function () {
+      if (status) status.textContent = "Couldn't clear the offline copies.";
+    }).then(function () { button.disabled = false; });
+  }
+
+  async function enable(button) {
+    var box = el("push-box");
+    if (!box || !window.LCSPasskey) return;
+    button.disabled = true;
     try {
       var perm = await Notification.requestPermission();
       if (perm !== "granted") { say("Notifications weren't allowed."); return; }
@@ -103,21 +110,21 @@
       var input = { endpoint: j.endpoint, p256dh: j.keys.p256dh, auth: j.keys.auth };
       var p = await window.LCSPasskey.post("/actions/push-subscribe/preview", { input: input });
       pending = { input: input, options: p.options };
-      summary.textContent = p.summary;
-      summary.hidden = false;
-      show(enable, false);
-      show(approve, true);
+      var summary = el("push-summary");
+      if (summary) { summary.textContent = p.summary; summary.hidden = false; }
+      show(button, false);
+      show(el("push-approve"), true);
       say("One more tap: approve this device with Face ID or Touch ID (within 60 seconds).");
     } catch (e) {
       say("Not turned on: " + (e && e.message ? e.message : "no answer"));
     } finally {
-      enable.disabled = false;
+      button.disabled = false;
     }
-  });
+  }
 
-  approve.addEventListener("click", async function () {
-    if (!pending) return;
-    approve.disabled = true;
+  async function approve(button) {
+    if (!pending || !window.LCSPasskey) return;
+    button.disabled = true;
     try {
       var cred = await window.LCSPasskey.assertWith(pending.options);
       await window.LCSPasskey.post("/actions/push-subscribe/run", { input: pending.input, credential: cred });
@@ -125,20 +132,21 @@
     } catch (e) {
       say("Not approved: " + (e && e.message ? e.message : "cancelled") + ". Tap Enable notifications to try again.");
       pending = null;
-      show(approve, false);
-      show(enable, true);
+      show(button, false);
+      show(el("push-enable"), true);
     } finally {
-      approve.disabled = false;
+      button.disabled = false;
     }
-  });
+  }
 
-  off.addEventListener("click", async function () {
-    off.disabled = true;
+  async function turnOff(button) {
+    if (!window.LCSPasskey) return;
+    button.disabled = true;
     try {
       var sub = await current();
       if (sub) {
         var input = { id: await deviceId(sub.endpoint) };
-        if (known.indexOf(input.id) !== -1) {
+        if (known().indexOf(input.id) !== -1) {
           await window.LCSPasskey.post("/actions/push-unsubscribe/preview", { input: input });
           await window.LCSPasskey.post("/actions/push-unsubscribe/run", { input: input });
         }
@@ -149,9 +157,22 @@
     } catch (e) {
       say("Not turned off: " + (e && e.message ? e.message : "no answer"));
     } finally {
-      off.disabled = false;
+      button.disabled = false;
     }
+  }
+
+  var HANDLERS = { "offline-clear": clearCopies, "push-enable": enable, "push-approve": approve, "push-off": turnOff };
+
+  document.addEventListener("click", function (ev) {
+    var button = ev.target && ev.target.closest ? ev.target.closest("#offline-clear, #push-enable, #push-approve, #push-off") : null;
+    if (button && HANDLERS[button.id]) HANDLERS[button.id](button);
   });
 
-  refresh().catch(function () { say("Couldn't read this device's notification state."); });
+  // after the Refresh link swaps in a new #main, read this device's state again for the new buttons
+  document.addEventListener("htmx:load", function (ev) {
+    var t = ev.target;
+    if (t && t.querySelector && (t.id === "push-box" || t.querySelector("#push-box"))) start();
+  });
+
+  start();
 })();

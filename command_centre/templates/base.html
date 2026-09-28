@@ -27,12 +27,10 @@
       {% for label, href in NAV %}
       <a class="nav-item" href="{{ href }}"{% if current(href, path) %} aria-current="page"{% endif %}>{{ label }}</a>
       {% endfor %}
-      {% for label in SOON %}
-      <span class="nav-item nav-soon" aria-disabled="true" title="Coming in a later phase">{{ label }} <span class="soon">soon</span></span>
-      {% endfor %}
     </nav>
   </div>
 </header>
+<p class="fail swap-error" id="cc-swap-error" role="alert" hidden></p>
 <main id="main" class="main">
   <p class="install-hint" id="cc-install-hint" hidden>Add this app to your Home Screen: in Safari, tap Share, then Add to Home Screen. <a href="/device">More on this device</a> <button type="button" class="button quiet small" id="cc-install-close">Not now</button></p>
   <div class="page-head">
@@ -41,7 +39,9 @@
       <p class="stamp">As of {{ stamp }}</p>
     </div>
     {% set here = request.url.path ~ ("?" ~ request.url.query if request.url.query else "") %}
-    <a class="button quiet" href="{{ here }}" hx-get="{{ here }}" hx-select="#main" hx-target="#main" hx-swap="outerHTML">Refresh</a>
+    {#- swap.js: POST /refresh (drops the bank cache), then fires cc-refresh, which re-renders #main; without
+        scripts the link is a plain reload #}
+    <a class="button quiet cc-refresh" href="{{ here }}" hx-get="{{ here }}" hx-trigger="cc-refresh" hx-select="#main" hx-target="#main" hx-swap="outerHTML">Refresh</a>
   </div>
 {% block content %}{% endblock %}
 </main>
@@ -79,6 +79,7 @@
 <script src="/static/actions.js" defer></script>
 <script src="/static/handoffs.js" defer></script>
 <script src="/static/pwa.js" defer></script>
+<script src="/static/swap.js" defer></script>
 {% block scripts %}{% endblock %}
 </body>
 </html>
