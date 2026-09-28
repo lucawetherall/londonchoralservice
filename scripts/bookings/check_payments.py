@@ -1,88 +1,50 @@
 #!/usr/bin/env python3
 """Confirm deposits and balances for London Choral Service bookings against the
-Alma Consort Starling account, READ-ONLY.
+Alma Consort Starling account, READ-ONLY (see lcs_money.StarlingReadOnly).
 
-The owner creates a Starling personal access token with read-only scopes
-(account-list:read, transaction:read) and stores it in the macOS Keychain
-himself (see the handover); Claude never sees it:
-    security add-generic-password -a "$USER" -s lcs-starling-read -w
-This script reads it from the Keychain at run time and never prints it.
-
-    .venv/bin/python scripts/bookings/check_payments.py            # report only
-    .venv/bin/python scripts/bookings/check_payments.py --apply    # also update the ledger notes
-    .venv/bin/python scripts/bookings/check_payments.py --reminded 2111   # note that a reminder was drafted
-    .venv/bin/python scripts/bookings/check_payments.py --selftest # token and account check
+    .venv/bin/python scripts/bookings/check_payments.py                  # report
+    .venv/bin/python scripts/bookings/check_payments.py --apply          # also update ledger notes
+    .venv/bin/python scripts/bookings/check_payments.py --apply --json   # machine-readable, for the assistant
+    .venv/bin/python scripts/bookings/check_payments.py --reminded 2111 [--kind deposit|balance|receipt]
+    .venv/bin/python scripts/bookings/check_payments.py --selftest       # token, account and permissions
 
 Matching: an incoming payment belongs to a booking when its reference contains
-the invoice number (e.g. "INV 2111", "2111"); failing that, when its amount is
-the deposit or the full fee and the payer's name contains the client's surname;
-failing that, when its amount is exactly the deposit or the full fee of one open
-booking and of no other, inside that booking's invoice-to-event window.
-Only bookings still to come are ever reported as overdue: a past event, or a
-ledger note saying it was paid, is never chased. Output shows invoice numbers, amounts and dates only: never payer names,
-balances or unrelated transactions. --apply turns "PENDING…" notes into
-"deposit seen <date> (Starling)" and adds "paid in full <date>" when covered.
+the invoice number; failing that, when its amount is the deposit or full fee and
+the payer's name contains the client's surname; failing that, when its amount is
+exactly the deposit or fee of one open booking and of no other, inside that
+booking's invoice-to-event window.
+
+States (assess): PAID_IN_FULL, DEPOSIT_SEEN, BALANCE_DUE (from 3 days before the
+event), AWAITING_DEPOSIT (first 7 days), DEPOSIT_OVERDUE (future events only),
+NOTED_PAID (ledger notes say paid), PAST_UNMATCHED / PAST_PART_PAID (past
+events: reported, never chased). Output shows invoice numbers and amounts only.
 """
 
 import argparse
-import csv
 import datetime
 import json
-import os
 import re
-import subprocess
-import urllib.request
+import sys
 from pathlib import Path
 
-API = "https://api.starlingbank.com"
-KEYCHAIN_SERVICE = "lcs-starling-read"
-LEDGER = Path(os.environ.get("LCS_BOOKINGS_CSV", Path.home() / "lcs-private" / "bookings.csv"))
-TODAY = datetime.date.today()
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import lcs_money as lm  # noqa: E402
 
-
-def token():
-    r = subprocess.run(["security", "find-generic-password", "-s", KEYCHAIN_SERVICE, "-w"],
-                       capture_output=True, text=True)
-    return r.stdout.strip() if r.returncode == 0 else None
-
-
-def get(path, tok):
-    req = urllib.request.Request(API + path, headers={"Authorization": f"Bearer {tok}", "Accept": "application/json"})
-    with urllib.request.urlopen(req, timeout=30) as resp:
-        return json.load(resp)
-
-
-def account(tok):
-    accounts = get("/api/v2/accounts", tok).get("accounts", [])
-    want = os.environ.get("LCS_STARLING_ACCOUNT_UID")
-    for a in accounts:
-        if not want or a.get("accountUid") == want:
-            return a
-    raise SystemExit("No matching Starling account (set LCS_STARLING_ACCOUNT_UID if there are several).")
-
-
-def incoming(tok, acct, since):
-    path = (f"/api/v2/feed/account/{acct['accountUid']}/category/{acct['defaultCategory']}/transactions-between"
-            f"?minTransactionTimestamp={since.isoformat()}T00:00:00.000Z"
-            f"&maxTransactionTimestamp={(TODAY + datetime.timedelta(days=1)).isoformat()}T00:00:00.000Z")
-    items = get(path, tok).get("feedItems", [])
-    return [i for i in items if i.get("direction") == "IN" and i.get("status") not in ("DECLINED", "REVERSED", "REFUNDED")]
+LEDGER = lm.LEDGER
+MARK_TEXT = {"deposit": "reminder drafted", "balance": "balance reminder drafted", "receipt": "receipt drafted"}
 
 
 def money(row):
-    try:
-        return float((row.get("value_gbp") or "0").replace("£", "").replace(",", ""))
-    except ValueError:
-        return 0.0
+    return lm.money(row.get("value_gbp"))
 
 
-def window(r):
+def window(r, today):
     start = datetime.date.fromisoformat(r["invoice_date"][:10]) - datetime.timedelta(days=3)
-    end = (datetime.date.fromisoformat(r["event_date"][:10]) if r.get("event_date") else TODAY) + datetime.timedelta(days=14)
+    end = (datetime.date.fromisoformat(r["event_date"][:10]) if r.get("event_date") else today) + datetime.timedelta(days=14)
     return start, end
 
 
-def match(rows, items):
+def match(rows, items, today):
     """booking_ref -> list of (date, amount, how)."""
     found = {r["booking_ref"]: [] for r in rows}
     for it in items:
@@ -106,7 +68,7 @@ def match(rows, items):
         if not hit and when:
             day = datetime.date.fromisoformat(when)
             fits = [r for r in rows if any(abs(amount - x) < 0.01 for x in (money(r), money(r) / 2))
-                    and window(r)[0] <= day <= window(r)[1]]
+                    and window(r, today)[0] <= day <= window(r, today)[1]]
             same_value = [r for r in rows if abs(money(r) - money(fits[0])) < 0.01] if len(fits) == 1 else []
             if len(fits) == 1 and len(same_value) == 1:
                 hit = (fits[0]["booking_ref"], "amount only")
@@ -115,38 +77,120 @@ def match(rows, items):
     return found
 
 
+def assess(r, paid, today):
+    value, notes = money(r), r.get("notes") or ""
+    total = round(sum(a for _, a, _ in paid), 2)
+    first = min((d for d, _, _ in paid), default=None)
+    deposit_due = datetime.date.fromisoformat(r["invoice_date"][:10]) + datetime.timedelta(days=7)
+    event = datetime.date.fromisoformat(r["event_date"][:10]) if r.get("event_date") else None
+    pending = notes.upper().startswith("PENDING")
+    manual = bool(re.search(r"\b(paid|deposit seen)\b", notes, re.I)) and not pending
+    upcoming = event is None or event >= today
+    if value > 0 and total + 0.01 >= value:
+        state = "PAID_IN_FULL"
+    elif not upcoming:
+        state = "PAST_PART_PAID" if paid else ("NOTED_PAID" if manual else "PAST_UNMATCHED")
+    elif not paid:
+        state = ("NOTED_PAID" if manual else "DEPOSIT_OVERDUE") if today > deposit_due else "AWAITING_DEPOSIT"
+    elif event and today >= event - datetime.timedelta(days=3):
+        state = "BALANCE_DUE"
+    else:
+        state = "DEPOSIT_SEEN"
+    return {
+        "ref": r["booking_ref"], "state": state, "received": total, "value": value,
+        "balance": round(max(value - total, 0), 2), "first": first, "how": paid[0][2] if paid else "",
+        "event_date": event.isoformat() if event else None, "deposit_due": deposit_due.isoformat(),
+        "reminded": {"deposit": bool(re.search(r"(?<!balance )reminder drafted", notes)),
+                     "balance": "balance reminder drafted" in notes,
+                     "receipt": "receipt drafted" in notes},
+        "just_received": bool(paid) and pending,
+    }
+
+
+def describe(a):
+    line = f"{a['ref']}: £{a['received']:,.2f} of £{a['value']:,.2f} received"
+    if a["first"]:
+        line += f" (first {a['first']}, matched by {a['how']})"
+    return line + {
+        "PAID_IN_FULL": " · PAID IN FULL",
+        "DEPOSIT_SEEN": "",
+        "AWAITING_DEPOSIT": " · awaiting deposit (not yet due)",
+        "BALANCE_DUE": f" · BALANCE £{a['balance']:,.2f} DUE" + (" (reminder already drafted)" if a["reminded"]["balance"] else ""),
+        "DEPOSIT_OVERDUE": f" · DEPOSIT OVERDUE since {a['deposit_due']}" + (" (reminder already drafted)" if a["reminded"]["deposit"] else ""),
+        "NOTED_PAID": " · no matching payment in the bank feed, but the ledger notes say it was paid (check by hand)",
+        "PAST_UNMATCHED": " · event has passed; no matching payment in the bank feed (check by hand; never chase automatically)",
+        "PAST_PART_PAID": " · event has passed; part paid (check by hand; never chase automatically)",
+    }[a["state"]]
+
+
+def updated_notes(notes, a, paid):
+    new = notes
+    if paid and new.upper().startswith("PENDING"):
+        rest = new.split(";", 1)[1].strip() if ";" in new else ""
+        new = f"deposit seen {a['first']} (Starling)" + (f"; {rest}" if rest else "")
+    if a["state"] == "PAID_IN_FULL" and not re.search(r"paid in full \d{4}-\d{2}-\d{2}", new):
+        new += f"; paid in full {max(d for d, _, _ in paid)}"
+    return new
+
+
+def open_rows(rows):
+    return [r for r in rows if not (r.get("notes") or "").upper().startswith("CANCELLED")
+            and not re.search(r"paid in full \d{4}-\d{2}-\d{2}", r.get("notes") or "")]
+
+
+def collect(client, rows, today):
+    """[(row, paid, assessment)] for every open booking."""
+    rows = open_rows(rows)
+    if not rows:
+        return []
+    since = min(datetime.date.fromisoformat(r["invoice_date"][:10]) for r in rows) - datetime.timedelta(days=3)
+    found = match(rows, client.feed(since, today + datetime.timedelta(days=1), "IN"), today)
+    return [(r, found[r["booking_ref"]], assess(r, found[r["booking_ref"]], today)) for r in rows]
+
+
+def received_since(client, rows, since, today):
+    """[(booking_ref, date, amount)] for client payments since a date (any non-cancelled booking)."""
+    live = [r for r in rows if not (r.get("notes") or "").upper().startswith("CANCELLED")]
+    if not live:
+        return []
+    found = match(live, client.feed(since, today + datetime.timedelta(days=1), "IN"), today)
+    return [(ref, d, a) for ref, hits in found.items() for d, a, _ in hits if d >= since.isoformat()]
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--apply", action="store_true")
+    ap.add_argument("--json", action="store_true")
     ap.add_argument("--selftest", action="store_true")
     ap.add_argument("--reminded", metavar="REF")
+    ap.add_argument("--kind", choices=sorted(MARK_TEXT), default="deposit")
     args = ap.parse_args()
-    rows = list(csv.DictReader(open(LEDGER, newline=""))) if LEDGER.exists() else []
+    today = datetime.date.today()
+    rows = lm.read_csv(LEDGER)
     cols = list(rows[0].keys()) if rows else []
 
     if args.reminded:
         for r in rows:
             if r["booking_ref"] == args.reminded:
-                r["notes"] = (r.get("notes") or "") + f"; reminder drafted {TODAY}"
+                r["notes"] = (r.get("notes") or "") + f"; {MARK_TEXT[args.kind]} {today}"
                 break
         else:
             raise SystemExit(f"no booking {args.reminded}")
-        with open(LEDGER, "w", newline="") as f:
-            w = csv.DictWriter(f, fieldnames=cols); w.writeheader(); w.writerows(rows)
-        os.chmod(LEDGER, 0o600)
-        print(f"{args.reminded}: reminder noted")
+        lm.write_csv(LEDGER, rows, cols)
+        print(f"{args.reminded}: {MARK_TEXT[args.kind]} noted")
         return
 
-    tok = token()
+    tok = lm.keychain_token()
     if not tok:
-        print(f"No Starling token in the Keychain (service {KEYCHAIN_SERVICE}); payment check skipped.")
+        print(f"No Starling token in the Keychain (service {lm.KEYCHAIN_SERVICE}); payment check skipped.")
         return
+    client = lm.StarlingReadOnly(tok)
     if args.selftest:
         try:
-            scopes = sorted(get("/api/v2/identity/token", tok).get("scopes", []))
+            scopes = sorted(client.get("/api/v2/identity/token").get("scopes", []))
         except Exception as e:  # identity endpoint unavailable: still test the account call
             scopes = [f"(could not read scopes: {type(e).__name__})"]
-        acct = account(tok)
+        acct = client.account()
         print("Starling token works; account found (uid ends …" + acct["accountUid"][-4:] + ").")
         print("Token permissions: " + ", ".join(scopes))
         risky = [x for x in scopes if not x.startswith("(") and not x.endswith(":read")]
@@ -154,59 +198,25 @@ def main():
             print("WARNING: this token can do more than read: " + ", ".join(risky)
                   + ". Revoke it in the Starling developer portal and create one with only account-list:read and transaction:read.")
         return
-    acct = account(tok)
 
-    open_rows = [r for r in rows if not (r.get("notes") or "").upper().startswith("CANCELLED")
-                 and not re.search(r"paid in full \d{4}-\d{2}-\d{2}", r.get("notes") or "")]
-    if not open_rows:
-        print("No open bookings to check.")
+    results = collect(client, rows, today)
+    if not results:
+        print("[]" if args.json else "No open bookings to check.")
         return
-    since = min(datetime.date.fromisoformat(r["invoice_date"][:10]) for r in open_rows) - datetime.timedelta(days=3)
-    found = match(open_rows, incoming(tok, acct, since))
     changed = False
-    for r in open_rows:
-        ref, value, notes = r["booking_ref"], money(r), r.get("notes") or ""
-        paid = found[ref]
-        total = sum(a for _, a, _ in paid)
-        first = min((d for d, _, _ in paid), default=None)
-        how = paid[0][2] if paid else ""
-        deposit_due = datetime.date.fromisoformat(r["invoice_date"][:10]) + datetime.timedelta(days=7)
-        event = datetime.date.fromisoformat(r["event_date"][:10]) if r.get("event_date") else None
-        line = f"{ref}: £{total:,.2f} of £{value:,.2f} received"
-        if first:
-            line += f" (first {first}, matched by {how})"
-        manual = re.search(r"\b(paid|deposit seen)\b", notes, re.I) and not notes.upper().startswith("PENDING")
-        upcoming = event is None or event >= TODAY
-        if total + 0.01 >= value > 0:
-            line += " · PAID IN FULL"
-        elif not upcoming:
-            if not paid:
-                line += " · event has passed; no matching payment in the bank feed" + (
-                    " (ledger notes say it was paid)" if manual else " (check by hand; never chase automatically)")
-        elif not paid and TODAY > deposit_due:
-            if manual:
-                line += " · no matching payment in the bank feed, but the ledger notes say it was paid (check by hand)"
-            else:
-                line += f" · DEPOSIT OVERDUE since {deposit_due}" + (" (reminder already drafted)" if "reminder drafted" in notes else "")
-        elif paid and event and TODAY >= event - datetime.timedelta(days=1):
-            line += f" · BALANCE £{value - total:,.2f} DUE BY {event - datetime.timedelta(days=1)}"
-        print(line)
-        if args.apply and paid:
-            new = notes
-            if new.upper().startswith("PENDING"):
-                rest = new.split(";", 1)[1].strip() if ";" in new else ""
-                new = f"deposit seen {first} (Starling)" + (f"; {rest}" if rest else "")
-            if total + 0.01 >= value > 0 and "paid in full" not in new:
-                new += f"; paid in full {max(d for d, _, _ in paid)}"
-            if new != notes:
+    for r, paid, a in results:
+        if not args.json:
+            print(describe(a))
+        if args.apply:
+            new = updated_notes(r.get("notes") or "", a, paid)
+            if new != (r.get("notes") or ""):
                 r["notes"], changed = new, True
+    if args.json:
+        print(json.dumps([a for _, _, a in results]))
     if args.apply and changed:
-        by_ref = {r["booking_ref"]: r for r in open_rows}
-        rows = [by_ref.get(r["booking_ref"], r) for r in rows]
-        with open(LEDGER, "w", newline="") as f:
-            w = csv.DictWriter(f, fieldnames=cols); w.writeheader(); w.writerows(rows)
-        os.chmod(LEDGER, 0o600)
-        print("Ledger notes updated.")
+        lm.write_csv(LEDGER, rows, cols)
+        if not args.json:
+            print("Ledger notes updated.")
 
 
 if __name__ == "__main__":
