@@ -281,7 +281,7 @@ def in_window(day, start, end):
 
 
 def proposals(campaigns, windows, today):
-    """campaigns: [{name, status, budget_gbp}]. Returns items with kind error / propose / note.
+    """campaigns: [{name, status, budget_gbp, id (optional)}]. Returns items with kind error / propose / note.
     Only ENABLED campaigns get proposals, and no proposal is ever above £5/day."""
     items, valid = [], []
     for w in windows:
@@ -321,8 +321,8 @@ def proposals(campaigns, windows, today):
             continue
         w = active[0]
         if abs(w["daily"] - c["budget_gbp"]) >= 0.005:
-            items.append({"kind": "propose", "campaign": c["name"], "current": c["budget_gbp"],
-                          "proposed": w["daily"], "window": w["name"],
+            items.append({"kind": "propose", "campaign": c["name"], "campaign_id": c.get("id"),
+                          "current": c["budget_gbp"], "proposed": w["daily"], "window": w["name"],
                           "text": f"{c['name']} £{c['budget_gbp']:,.2f} → £{w['daily']:,.2f}/day (window {w['name']})"})
     return items
 

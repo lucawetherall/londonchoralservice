@@ -6,8 +6,12 @@ this repo, falling back to the main checkout's entry, then the user-level
 mcpServers), spawns it, runs initialize -> notifications/initialized ->
 tools/call, returns the text content and kills the process.
 
-- Only the (server, tool) pairs in ALLOWED can be called; anything else is
-  refused before a process is started.
+- Only the (server, tool) pairs in ALLOWED can be called, plus the Zoho Books
+  servers (zoho-books, zoho-books-invoices) with a tool named in the Books guard
+  hook's READ_ALLOW (.claude/hooks/zoho_books_guard.py, loaded by path, so the
+  hook's read list is the only list). Anything else, every Books write tool
+  included, is refused before a process is started. If the hook can't be
+  loaded, no Books tool is allowed (fail closed).
 - The server command and args hold a secret URL. They are never printed, and
   no exception raised here carries them: errors name the server only, and any
   text passed on from the server is scrubbed of URLs and of the args.
@@ -25,6 +29,7 @@ import signal
 import subprocess
 import threading
 import time
+import importlib.util
 import urllib.parse
 from pathlib import Path
 
@@ -34,12 +39,37 @@ CLAUDE_JSON = Path(os.environ.get("LCS_CLAUDE_JSON", Path.home() / ".claude.json
 TIMEOUT = 90  # seconds, for the whole exchange
 MAX_REPLY = 60 << 20  # characters in one reply line (a raw email with its attachments, base64)
 ALLOWED = {("zoho-mail", "ZohoMail_getOriginalMessage")}
+BOOKS_SERVERS = frozenset({"zoho-books", "zoho-books-invoices"})
+BOOKS_GUARD = REPO / ".claude" / "hooks" / "zoho_books_guard.py"
 ZOHO_ACCOUNT = "6133510000000008002"
 PROTOCOL = "2025-06-18"
 
 
 class McpError(Exception):
     """Raised with the server name only: never the command, args or URL."""
+
+
+def books_read_allow(path=BOOKS_GUARD):
+    """The Books guard's READ_ALLOW, imported from the hook file by path, minus any name that is also one of its
+    write tools; an empty set when the hook can't be loaded (fail closed)."""
+    try:
+        spec = importlib.util.spec_from_file_location("_lcs_zoho_books_guard", path)
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        names = set(mod.READ_ALLOW)
+        if not all(isinstance(n, str) and n for n in names):
+            return frozenset()
+        return frozenset(names - set(getattr(mod, "WRITE_TOOLS", None) or {}))
+    except Exception:
+        return frozenset()
+
+
+BOOKS_READ = books_read_allow()
+
+
+def is_allowed(server, tool):
+    """True for a Mail pair in ALLOWED, and for a Books server with a tool on the Books guard's read list."""
+    return (server, tool) in ALLOWED or (server in BOOKS_SERVERS and tool in BOOKS_READ)
 
 
 _TOO_LARGE = object()  # queued by the reader when one reply line exceeds MAX_REPLY
@@ -225,7 +255,7 @@ def _session(server, config_path, timeout, popen, fn):
 
 def call_tool(server, tool, arguments, config_path=None, timeout=TIMEOUT, popen=subprocess.Popen):
     """Text content of one allowed, read-only tool call. Raises McpError (server name only) on any failure."""
-    if (server, tool) not in ALLOWED:
+    if not is_allowed(server, tool):
         raise McpError(f"{server}: tool {tool} is not allowed")
 
     def run(s, deadline):

@@ -1183,6 +1183,39 @@ def test_ads_validate_then_apply_bound_to_the_output():
         assert listed["neg-again"]["problem"] == "this script with these arguments was already applied"
 
 
+def _apply(c, a, pid, repo, args):
+    """Validate then apply a proposal for `repo`'s script with these args; asserts it goes through."""
+    proposal(pid=pid, repo=repo, args=args)
+    inp = {"proposal": pid}
+    with Runner(Recorder()):
+        assert run(c, a, "ads-validate", inp).json()["ok"]
+    with Runner(Recorder(out=b"Applied and logged\n")):
+        r = run(c, a, "ads-apply", inp)
+    assert r.status_code == 200 and r.json()["ok"], r.text
+
+
+def test_a_campaign_can_return_to_an_earlier_amount_but_not_replay_the_latest_one():
+    """already_applied only blocks a replay of the MOST RECENT applied change for the same script and first
+    argument (the campaign): a budget that goes 4.00 -> 5.00 -> 4.00 again is fine, but repeating the 5.00 that
+    was just applied is refused."""
+    c, a, _ = setup()
+    clear_applied()
+    with AdsRepo() as repo:
+        _apply(c, a, "bud-1", repo, ["24295921372", "4.00"])
+        _apply(c, a, "bud-2", repo, ["24295921372", "5.00"])
+        # back to the earlier amount: allowed, since the latest change for this campaign was 5.00, not 4.00
+        proposal(pid="bud-3", repo=repo, args=["24295921372", "4.00"])
+        assert preview(c, "ads-validate", {"proposal": "bud-3"}).status_code == 200
+        _apply(c, a, "bud-3", repo, ["24295921372", "4.00"])
+        # immediately replaying the amount just applied (4.00 again) is refused
+        proposal(pid="bud-4", repo=repo, args=["24295921372", "4.00"])
+        assert preview(c, "ads-validate", {"proposal": "bud-4"}).json()["error"] == \
+            "this script with these arguments was already applied"
+        # a different campaign (first argument) is unaffected by any of the above
+        proposal(pid="bud-other", repo=repo, args=["999", "4.00"])
+        assert preview(c, "ads-validate", {"proposal": "bud-other"}).status_code == 200
+
+
 def test_ads_apply_runs_from_the_validated_commit_only():
     c, a, _ = setup()
     clear_applied()

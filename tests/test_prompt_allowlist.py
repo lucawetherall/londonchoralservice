@@ -240,8 +240,27 @@ def test_helper_commands_the_prompts_rely_on_are_covered():
                 f"{PY} scripts/bookings/check_payments.py --apply --json",
                 f"{PY} scripts/bookings/check_payments.py --reminded 2111 --kind balance",
                 f"{PY} scripts/bookings/invoice_text.py --fetch 6133510000000170001",
-                f"{PY} scripts/bookings/singer_invoices.py withdrawn 1789828736363141700 not-ours"):
+                f"{PY} scripts/bookings/singer_invoices.py withdrawn 1789828736363141700 not-ours",
+                f"{PY} scripts/bookings/singer_invoices.py link 1789828736363141700 2111",
+                f"{PY} scripts/bookings/singer_invoices.py margins",
+                f"{PY} scripts/reports/cc_sync.py books",
+                f"{PY} scripts/reports/cc_sync.py calendar-put 'X'",
+                f"{PY} scripts/reports/weekly_review.py --save-report --write-proposals"):
         assert allowed(cmd, pats), cmd
+
+
+def test_the_command_centre_caches_and_proposals_are_in_the_prompts():
+    """The daily pass writes the Books and diary caches with plain allowlisted commands (never a pipe or heredoc,
+    which the allowlist can't vouch for), and the Monday review writes its budget proposals for the app."""
+    blocks, scripts = appendix_blocks(), script_paths()
+    a = commands(blocks["A"], scripts)
+    agents = {name: commands(blocks[f"agent:{name}"], scripts) for name in ("lcs-daily-pass", "lcs-singer-clerk")}
+    assert f"{PY} scripts/reports/cc_sync.py books" in agents["lcs-daily-pass"], agents
+    assert f"{PY} scripts/reports/cc_sync.py calendar-put 'X'" in agents["lcs-daily-pass"], agents
+    assert f"{PY} scripts/bookings/singer_invoices.py link X X" in agents["lcs-singer-clerk"], agents
+    assert f"{PY} scripts/reports/weekly_review.py --save-report --write-proposals" in a, a
+    assert "Budget proposals are waiting in the command centre" in blocks["A"]
+    assert not allowed(f"{PY} scripts/reports/cc_sync.py calendar-put < /tmp/x | cat", allow_patterns())
 
 
 def test_extraction_handles_remarks_placeholders_and_continuations():
