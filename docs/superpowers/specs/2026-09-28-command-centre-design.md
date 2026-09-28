@@ -28,6 +28,17 @@ These are the programme's rules, plus:
 5. **Private data stays on the Mac.** It lives in `~/lcs-private` only (mode 600 files, 700 directories). The repo holds code only, never data, and nothing is published. The app stores no credentials of its own: it uses the Keychain, the existing MCP config and ADC.
 6. **Claude Code chat keeps the repo's guards.** It runs with the repo's `.claude/settings.json`, hooks and allowlist. Tool calls outside the allowlist become approve/deny cards, and approving one needs a passkey.
 
+
+## Threat model
+
+- **Who it defends against:**
+  - other devices on the tailnet or the local network: the app listens on loopback only and refuses any other peer address;
+  - web pages in the owner's browsers: the Host must be the Mac's tailnet name (DNS rebinding), POSTs must be same-origin, and every write needs a passkey;
+  - a stolen or forged Tailscale identity: writes still need a passkey;
+  - someone who reaches the page before the owner registers: the first passkey needs a one-time bootstrap code that `install.sh` prints (sha256 stored, 30 minutes, deleted on use).
+- **Accepted risk: other processes on the Mac.** This is a single-user Mac. Any process running as the owner can connect to 127.0.0.1:8765 and send any headers, so it can read the pages as the owner. It can't make a write, because that needs a passkey assertion from the owner's Face ID or Touch ID. Such a process could already read `~/lcs-private` directly, so the app adds no new exposure. The optional Unix socket (`python -m command_centre --uds`, in a mode-700 directory) narrows this to processes of the same user, which are the same set; it is offered in `install.sh` as an alternative to verify, not the default.
+- **Out of the model:** a compromised macOS account, or root. Those own the Keychain and the private files anyway.
+
 ## Architecture
 
 ```

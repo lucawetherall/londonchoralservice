@@ -1,5 +1,26 @@
 # Python packages for scripts/ (install into the repo's .venv):
-#   .venv/bin/pip install --upgrade -r scripts/requirements.txt
+#   .venv/bin/pip install -r scripts/requirements.txt
+# Test-only packages are in scripts/requirements-dev.txt.
 google-ads
 pypdf
 pyyaml
+# The Command Centre (command_centre/): exact versions, so a new release never reaches the private app
+# unreviewed. Upgrade deliberately: bump here, run tests/test_cc_*.py, commit.
+starlette==1.7.0
+jinja2==3.1.6
+uvicorn==0.54.0
+webauthn==3.0.1
+# ... and what those four pull in, at the versions tested with them
+anyio==4.15.1
+idna==3.20
+typing_extensions==4.16.0
+MarkupSafe==3.0.3
+click==8.5.0
+h11==0.16.0
+cbor2==6.1.4
+cryptography==50.0.1
+cffi==2.1.1
+pycparser==3.0
+pyOpenSSL==26.4.0
+pyasn1==0.6.4
+pyasn1_modules==0.4.2

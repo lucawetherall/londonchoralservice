@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="referrer" content="no-referrer">
+<meta name="robots" content="noindex, nofollow">
+<meta name="htmx-config" content='{{ HTMX_CONFIG|safe }}'>
+<title>{{ title }} · LCS Command Centre</title>
+<link rel="stylesheet" href="/static/app.css">
+<script src="/static/htmx.min.js" defer></script>
+{% block head %}{% endblock %}
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="top">
+  <div class="top-inner">
+    <a class="brand" href="/"><span class="brand-mark">LCS</span> <span class="brand-name">Command Centre</span></a>
+    <nav class="nav" aria-label="Pages">
+      {% for label, href in NAV %}
+      <a class="nav-item" href="{{ href }}"{% if path == href %} aria-current="page"{% endif %}>{{ label }}</a>
+      {% endfor %}
+      {% for label in SOON %}
+      <span class="nav-item nav-soon" aria-disabled="true" title="Coming in the next phase">{{ label }} <span class="soon">soon</span></span>
+      {% endfor %}
+    </nav>
+  </div>
+</header>
+<main id="main" class="main">
+  <div class="page-head">
+    <div>
+      <h1>{{ title }}</h1>
+      <p class="stamp">As of {{ stamp }}</p>
+    </div>
+    <a class="button quiet" href="{{ path }}" hx-get="{{ path }}" hx-select="#main" hx-target="#main" hx-swap="outerHTML">Refresh</a>
+  </div>
+{% block content %}{% endblock %}
+</main>
+<footer class="foot">
+  <span>Private to the owner · reached over Tailscale only</span>
+  <a href="/passkeys"{% if path == "/passkeys" %} aria-current="page"{% endif %}>Passkeys</a>
+</footer>
+{% block scripts %}{% endblock %}
+</body>
+</html>

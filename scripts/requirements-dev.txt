@@ -1,0 +1,7 @@
+# Test-only packages (never installed by command_centre/install.sh):
+#   .venv/bin/pip install -r scripts/requirements-dev.txt
+-r requirements.txt
+# Starlette's TestClient, for tests/test_cc_*.py
+httpx2==2.13.1
+httpcore2==2.13.1
+truststore==0.10.4
