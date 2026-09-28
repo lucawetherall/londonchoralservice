@@ -352,23 +352,26 @@ def ledger_section():
 
 def money_section():
     print("\n== 10. Money (totals and invoice numbers only)")
-    sys.path.insert(0, str(REPO / "scripts" / "bookings"))
-    import check_payments
-    import lcs_money
-    import money_report
-    import singer_invoices
-    today = datetime.date.today()
-    tok = lcs_money.keychain_token()
-    if not tok:
-        print("   no Starling token in the Keychain: money check skipped")
-        return
-    client = lcs_money.StarlingReadOnly(tok)
-    rows = lcs_money.read_csv(check_payments.LEDGER)
-    assessments = [a for _, _, a in check_payments.collect(client, rows, today)]
-    receipts = check_payments.received_since(client, rows, today - datetime.timedelta(days=7), today)
-    singer = singer_invoices.summary(lcs_money.read_csv(singer_invoices.STORE), today)
-    for line in money_report.summary_lines(assessments, receipts, singer, today):
-        print("   " + line)
+    try:
+        sys.path.insert(0, str(REPO / "scripts" / "bookings"))
+        import check_payments
+        import lcs_money
+        import money_report
+        import singer_invoices
+        today = datetime.date.today()
+        tok = lcs_money.keychain_token()
+        if not tok:
+            print("   no Starling token in the Keychain: money check skipped")
+            return
+        client = lcs_money.StarlingReadOnly(tok)
+        rows = lcs_money.read_csv(check_payments.LEDGER)
+        assessments = [a for _, _, a in check_payments.collect(client, rows, today)]
+        receipts = check_payments.received_since(client, rows, today - datetime.timedelta(days=7), today)
+        singer = singer_invoices.summary(lcs_money.read_csv(singer_invoices.STORE), today)
+        for line in money_report.summary_lines(assessments, receipts, singer, today):
+            print("   " + line)
+    except Exception as e:  # type name only: the message could carry ledger or bank data
+        print(f"   money check failed: {type(e).__name__}")
 
 
 def main():
