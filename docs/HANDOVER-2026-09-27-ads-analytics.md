@@ -1,6 +1,6 @@
 # Handover: Google Ads, GA4 and site tracking (27 September 2026)
 
-**This file is public** (the repo is public and GitHub Pages serves `docs/`), so it holds no secrets or personal contact details.
+**This file is public** (the repo is public on GitHub, even though the website no longer serves `docs/`), so it holds no secrets or personal contact details.
 
 This covers the marketing work done on 25–27 September 2026: the Claude Code marketing workspace, conversion tracking, the Christmas carol singers campaign, and the choir-only refocus. It lists what's live, where everything lives, how to set up a second machine, and what's still to do. It contains no secrets.
 
