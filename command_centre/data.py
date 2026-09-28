@@ -52,7 +52,7 @@ def open_singers(rows):
     """dash.singers (the unpaid invoices, oldest first) with each row's action handle and allowed actions."""
     out = []
     for r in sorted(rows, key=lambda r: r.get("received") or ""):
-        for s in dash.singers([r]):
+        for s in dash.singers([r], rows):  # the whole store: an account trusted on one invoice is on all
             out.append(dict(s, **models.singer_actions(r)))
     return out
 

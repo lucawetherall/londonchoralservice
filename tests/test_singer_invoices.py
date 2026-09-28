@@ -1708,6 +1708,97 @@ def test_unlinked_invoices_counts_unlinked_not_withdrawn():
         {"count": 0, "total": 0.0}
 
 
+# --- owner report: bank details wrongly flagged after a phone confirmation or a verified payment -----
+
+CHANGED_NOTE = "BANK DETAILS CHANGED since their last invoice (was ••••9999, now ••••2222): ring them before paying"
+
+
+def trow(mid, received, sc="123456", acc="11112222", **kw):
+    r = hrow("ben@example.com", "Ben Fenwick", sc, acc, received, mid=mid, changed="yes")
+    r.update(notes=CHANGED_NOTE, paid_on="", amount_gbp="100.00")
+    r.update(kw)
+    return r
+
+
+def test_confirming_one_invoice_trusts_the_account_on_every_invoice():
+    rows = [trow("a", "2026-09-01"), trow("b", "2026-09-10")]
+    assert all(si.ring_first_in(rows, r) for r in rows)
+    assert si.summary(rows, datetime.date(2026, 9, 28))["bank_changed"] == 2
+    rows[0]["bank_confirmed"] = "yes"
+    assert not any(si.ring_first_in(rows, r) for r in rows)
+    assert si.live_warnings(rows, rows[0]) == [] and si.live_warnings(rows, rows[1]) == []
+    assert si.trust_label(rows, rows[1]) == "confirmed by phone"
+    assert si.summary(rows, datetime.date(2026, 9, 28))["bank_changed"] == 0
+    assert si.ring_first(rows[1])  # the per-row check is unchanged for any old caller
+    # clauses that are not bank alarms stay in view
+    rows[1]["notes"] = CHANGED_NOTE + "; amount not found: check the invoice by hand; paid reply drafted 2026-09-12"
+    assert si.live_warnings(rows, rows[1]) == ["amount not found: check the invoice by hand"]
+
+
+def test_a_verified_payment_trusts_the_account_on_every_invoice():
+    rows = [trow("a", "2026-09-01", paid_on="2026-09-05", paid_verified="yes"), trow("b", "2026-09-10")]
+    assert not si.ring_first_in(rows, rows[1]) and si.live_warnings(rows, rows[1]) == []
+    assert si.trust_label(rows, rows[1]) == "paid to verifiably"
+    rows[0]["paid_verified"] = "no"  # paid by name only: never trust
+    assert si.ring_first_in(rows, rows[1]) and si.live_warnings(rows, rows[1]) == [CHANGED_NOTE]
+
+
+def test_a_different_account_for_the_same_singer_is_still_flagged():
+    rows = [trow("a", "2026-09-01", bank_confirmed="yes"), trow("b", "2026-09-10", sc="654321", acc="99998888")]
+    assert si.ring_first_in(rows, rows[1]) and not si.account_trusted(rows, rows[1])
+    assert si.live_warnings(rows, rows[1]) == [CHANGED_NOTE] and si.trust_label(rows, rows[1]) == ""
+    # the same fingerprint trusted in another singer's history vouches for nothing here
+    rows = [dict(trow("a", "2026-09-01", bank_confirmed="yes"), singer_email="dora@example.com", singer_name="Dora Quill"),
+            trow("b", "2026-09-10")]
+    assert si.ring_first_in(rows, rows[1]) and si.live_warnings(rows, rows[1]) == [CHANGED_NOTE]
+
+
+def test_details_going_a_b_b_flag_the_change_once():
+    history = [hrow("b@x.com", "Ben Fenwick", "999999", "99990000", "2026-08-01", mid="a"),
+               hrow("b@x.com", "Ben Fenwick", "123456", "12345678", "2026-09-01", changed="yes", mid="b1")]
+    a = si.assess_new(inv(), "b@x.com", "Ben Fenwick", history, {}, [])
+    assert a["bank_changed"] == "no" and not any("CHANGED" in w for w in a["warnings"]), a
+    assert any(w.startswith(si.NOT_YET_VERIFIED) for w in a["warnings"])  # still an alarm: no bill until rung
+    # once the first B is paid (by name, unverified) its flag is out of view, so the next B carries it again
+    history[1]["paid_on"] = "2026-09-05"
+    assert si.assess_new(inv(), "b@x.com", "Ben Fenwick", history, {}, [])["bank_changed"] == "yes"
+    # back to A after B is a change again
+    history[1]["paid_on"] = ""
+    assert si.assess_new(inv("999999", "99990000"), "b@x.com", "Ben Fenwick", history, {}, [])["bank_changed"] == "yes"
+
+
+def test_sources_disagree_on_a_trusted_account_is_not_a_change():
+    trusted = [hrow("b@x.com", "Ben Fenwick", "123456", "12345678", "2026-08-01", paid_on="2026-08-03", verified="yes")]
+    i = dict(inv(), sources_disagree=True, warnings=[si.DIFFER])
+    a, changed, _ = si.assess_invoice(i, trusted, "m2", "2026-09-01", "b@x.com", "Ben Fenwick", ({}, [], {}))
+    assert changed == "no" and si.DIFFER not in i["warnings"] and si.TRUSTED_DIFFER in i["warnings"], i
+    assert si.bill_verdict(i["warnings"] + a["warnings"], 100.0) == "yes"
+    # a Starling payee with these details counts as trusted too
+    i = dict(inv(), sources_disagree=True, warnings=[si.DIFFER])
+    fps = {lm.bank_fingerprint("123456", "12345678"): "Ben Fenwick"}
+    assert si.assess_invoice(i, [], "m2", "2026-09-01", "b@x.com", "Ben Fenwick", (fps, ["Ben Fenwick"], {}))[1] == "no"
+    # details nobody trusts: DIFFER and the change flag, as before
+    for history in ([], [dict(trusted[0], paid_verified="no")]):
+        i = dict(inv(), sources_disagree=True, warnings=[si.DIFFER])
+        a, changed, _ = si.assess_invoice(i, history, "m2", "2026-09-01", "b@x.com", "Ben Fenwick", ({}, [], {}))
+        assert changed == "yes" and si.DIFFER in i["warnings"] and si.TRUSTED_DIFFER not in i["warnings"], history
+
+
+def test_bill_verdict_yes_for_a_trusted_account_with_an_old_warning():
+    assert si.bill_verdict([CHANGED_NOTE], 100.0) == "no (bank warning)"
+    assert si.bill_verdict([CHANGED_NOTE], 100.0, True) == "yes"
+    fresh_store()
+    scan(GEN.format(n=1), "g1", "2026-08-01")
+    scan(GEN.format(n=2), "g2", "2026-08-20")
+    assert si.NOT_YET_VERIFIED in rows_by_id()["g2"]["notes"]
+    assert bill_lines(scan(GEN.format(n=2), "g2", "2026-08-20"))[0] == "bill: no (bank warning)"
+    with contextlib.redirect_stdout(io.StringIO()):
+        si.cmd_confirm(Args(message_id="g1"))  # rung once, confirmed on the other invoice
+    again = scan(GEN.format(n=2), "g2", "2026-08-20")
+    assert bill_lines(again)[0] == "bill: yes" and "   ! " not in again, again
+    assert si.NOT_YET_VERIFIED in rows_by_id()["g2"]["notes"]  # the record keeps what scan said at the time
+
+
 if __name__ == "__main__":
     failures = 0
     for name, fn in sorted(globals().items()):

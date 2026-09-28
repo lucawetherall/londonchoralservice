@@ -2,7 +2,7 @@
 
 The rules stay in the scripts: payment states come from check_payments (collect, assess, deposit_due_date,
 is_cancelled, closed_on), the pipeline's from pipeline (followups_due, reviews_due, summary_dict, STATUS_ORDER),
-the singers' from singer_invoices (normalise_name, first_name, payee_status, is_open, ring_first, is_trusted,
+the singers' from singer_invoices (normalise_name, first_name, payee_status, is_open, ring_first_in, trust_label, live_warnings,
 bill_number). What is here only arranges their answers for a page.
 
 Privacy, as on the phase-1 pages: client and singer first names only, emails never, bank accounts as
@@ -377,8 +377,9 @@ def rate(value):
 # ---------------------------------------------------------------- singers
 
 
-def _warnings(r):
-    return [mask_digits(n) for n in (r.get("notes") or "").split("; ") if n and not n.startswith(si.KEEP_NOTES)]
+def _warnings(rows, r):
+    """si.live_warnings (no bank alarm once the account is trusted anywhere in rows), long digit runs masked."""
+    return [mask_digits(n) for n in si.live_warnings(rows, r)]
 
 
 def singer_directory(rows, today):
@@ -394,23 +395,19 @@ def singer_directory(rows, today):
         latest = live[0] if live else group[0]
         paid = [r for r in live if r.get("paid_on")]
         warnings = []
-        if any(si.ring_first(r) for r in live if si.is_open(r)):
+        if any(si.ring_first_in(rows, r) for r in live if si.is_open(r)):
             warnings.append("Bank details changed: ring on a number you already have before paying")
         for r in live:
             if si.is_open(r):
-                warnings += [w for w in _warnings(r) if w not in warnings]
+                warnings += [w for w in _warnings(rows, r) if w not in warnings]
         if not latest.get("bank_fp"):
             check = "no bank details on file"
-        elif latest.get("bank_confirmed") == "yes":
-            check = "confirmed by phone"
-        elif latest.get("paid_verified") == "yes":
-            check = "paid to verifiably"
-        else:
-            check = "not yet verified"
+        else:  # the account, not just this row: confirmed or paid to verifiably on any invoice with the same details
+            check = si.trust_label(rows, latest) or "not yet verified"
         invoices = [{"received": si.received_date(r), "bill_number": si.bill_number(r.get("invoice_ref"), r.get("message_id")),
                      "amount": lm.money(r.get("amount_gbp")), "paid_on": to_date(r.get("paid_on")),
                      "paid_amount": lm.parse_gbp(r.get("paid_amount")), "open": si.is_open(r),
-                     "ring_first": si.ring_first(r), "last4": dash.digits4(r.get("bank_last4")),
+                     "ring_first": si.ring_first_in(rows, r), "last4": dash.digits4(r.get("bank_last4")),
                      **singer_actions(r)} for r in live]
         withdrawn = [{"received": si.received_date(r), "bill_number": si.bill_number(r.get("invoice_ref"), r.get("message_id")),
                       "amount": lm.money(r.get("amount_gbp")), "on": to_date(r.get("withdrawn"))}

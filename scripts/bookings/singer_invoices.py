@@ -335,6 +335,26 @@ def is_trusted(r):
     return bool(r.get("bank_fp")) and (r.get("paid_verified") == "yes" or r.get("bank_confirmed") == "yes")
 
 
+def trust_label(rows, r):
+    """How r's bank account came to be trusted, over the whole of this singer's history: "confirmed by phone" when
+    any of their invoices with the same fingerprint was confirmed, else "paid to verifiably" when one was paid to
+    verifiably, else "". Same fingerprint = same account, so a different account is never covered."""
+    fp = r.get("bank_fp")
+    if not fp:
+        return ""
+    same = [x for x in [r] + singer_history(rows, r.get("singer_email"), r.get("singer_name"))
+            if x.get("bank_fp") == fp and is_trusted(x)]  # r itself counts even when rows doesn't hold it
+    if any(x.get("bank_confirmed") == "yes" for x in same):
+        return "confirmed by phone"
+    return "paid to verifiably" if same else ""
+
+
+def account_trusted(rows, r):
+    """True when r's bank account (its fingerprint) was confirmed by phone or paid to verifiably on any of this
+    singer's invoices, r included: one phone call or one verified payment settles every invoice to that account."""
+    return bool(trust_label(rows, r))
+
+
 def same_last4_note(old, new):
     """Extra clause for a CHANGED warning when the old and new last four digits happen to be equal."""
     return " (same last four digits, different sort code or account)" if old and new and old == new else ""
@@ -368,7 +388,14 @@ def assess_new(inv, sender_email, sender_name, history, payee_fps, payee_names, 
     if fp and fp not in trusted:
         # compare with the trusted details, else with any earlier details on record (unconfirmed, but still theirs)
         before = trusted_rows or [r for r in known if r["bank_fp"] != fp]
-        if before:
+        last = known[-1] if known else {}
+        # details going A, B, B with nothing trusted: while the first B is open with its CHANGED flag (ring first),
+        # the change is in view once and this invoice is only not yet verified. Once that invoice is paid (by name,
+        # unverified) or withdrawn, its flag is out of view, so the next one is flagged again.
+        if (not trusted_rows and last.get("bank_fp") == fp and is_open(last)
+                and last.get("bank_changed") == "yes"):
+            pass
+        elif before:
             changed = True
             old4 = before[-1].get("bank_last4", "")
             warnings.append(f"BANK DETAILS CHANGED since their last invoice (was ••••{old4}, "
@@ -513,11 +540,28 @@ def summary(rows, today):
     unpaid = [r for r in rows if is_open(r)]
     ages = [(today - d).days for d in map(received_date, unpaid) if d]
     return {"unpaid": len(unpaid), "unpaid_total": round(sum(lm.money(r["amount_gbp"]) for r in unpaid), 2),
-            "oldest_days": max(ages, default=0), "bank_changed": sum(1 for r in unpaid if ring_first(r))}
+            "oldest_days": max(ages, default=0), "bank_changed": sum(1 for r in unpaid if ring_first_in(rows, r))}
 
 
 def ring_first(r):
+    """This row alone: changed details not confirmed on this invoice. Pages and reports use ring_first_in."""
     return r.get("bank_changed") == "yes" and r.get("bank_confirmed") != "yes"
+
+
+def ring_first_in(rows, r):
+    """ring_first, unless the same account is already trusted on another of the singer's invoices (account_trusted)."""
+    return ring_first(r) and not account_trusted(rows, r)
+
+
+BANK_ALARMS = ("BANK DETAILS", "NEW BANK DETAILS")  # CHANGED, DIFFER, NOT_YET_VERIFIED, NEW_DETAILS all start so
+
+
+def live_warnings(rows, r):
+    """r's notes clauses still worth showing: not the KEEP_NOTES records, and no bank-details alarm once the
+    account is trusted (confirmed by phone on this invoice, or account_trusted over the singer's history)."""
+    trusted = r.get("bank_confirmed") == "yes" or account_trusted(rows, r)
+    return [n for n in (r.get("notes") or "").split("; ")
+            if n and not n.startswith(KEEP_NOTES) and not (trusted and n.startswith(BANK_ALARMS))]
 
 
 def _docx_runs(el):
@@ -896,8 +940,23 @@ def assess_invoice(inv, history, message_id, received, sender_email, sender_name
             note(r, w)
             flagged.append(f"   ! {r['message_id']}: {w}")
     a = assess_new(inv, sender_email, sender_name, history, fps, names, payee_last4, message_id)
-    changed = "yes" if a["bank_changed"] == "yes" or inv.get("sources_disagree") else "no"
+    disagree = inv.get("sources_disagree")
+    if disagree and fp and fp in trusted_fps(history, sender_email, sender_name, fps):
+        # the details paid to match a trusted account (the other source is often a half-read sort code in a
+        # quoted reply): noted, not an alarm. Details that are not trusted still get DIFFER and a change flag.
+        inv["warnings"] = [TRUSTED_DIFFER if w == DIFFER else w for w in inv["warnings"]]
+        disagree = False
+    changed = "yes" if a["bank_changed"] == "yes" or disagree else "no"
     return a, changed, flagged
+
+
+TRUSTED_DIFFER = "sources differed; details match a trusted account"
+
+
+def trusted_fps(history, sender_email, sender_name, payee_fps):
+    """Fingerprints this singer's details are trusted under: confirmed or paid to verifiably on their own
+    invoices, plus every Starling payee's (payee_fps; None without a token)."""
+    return {r["bank_fp"] for r in singer_history(history, sender_email, sender_name) if is_trusted(r)} | set(payee_fps or {})
 
 
 def payee_status(payee):
@@ -934,10 +993,11 @@ def bill_number(ref, message_id):
     return "SI-" + (digits[-5:] if digits else re.sub(r"[^A-Za-z0-9]", "", message_id or "")[-5:])
 
 
-def bill_verdict(warnings, amount, bank_confirmed=False):
+def bill_verdict(warnings, amount, bank_trusted=False):
     """"yes", or "no (<reason>)": a bank-details alarm (upper-case BANK DETAILS: new, changed, differing
-    or not yet verified; unless the owner has confirmed them by phone), no amount, or a zero amount."""
-    if not bank_confirmed and any("BANK DETAILS" in w for w in warnings):
+    or not yet verified; unless the account is trusted: confirmed by phone on this invoice, or account_trusted),
+    no amount, or a zero amount."""
+    if not bank_trusted and any("BANK DETAILS" in w for w in warnings):
         return "no (bank warning)"
     if any(w.startswith("amount not found") for w in warnings):
         return "no (amount not found)"
@@ -946,15 +1006,15 @@ def bill_verdict(warnings, amount, bank_confirmed=False):
     return "yes"
 
 
-def print_bill(warnings, amount, ref, message_id, bank_confirmed=False):
-    print(f"bill: {bill_verdict(warnings, amount, bank_confirmed)}")
+def print_bill(warnings, amount, ref, message_id, bank_trusted=False):
+    print(f"bill: {bill_verdict(warnings, amount, bank_trusted)}")
     print(f"bill_number: {bill_number(ref, message_id)}")
 
 
-def print_stored(r):
-    """A recorded invoice as scan printed it (from the store), then its bill lines: a crashed run can resume."""
-    warnings = [n for n in (r.get("notes") or "").split("; ")
-                if n and not n.startswith(KEEP_NOTES)]
+def print_stored(r, rows=()):
+    """A recorded invoice as scan printed it (from the store), then its bill lines: a crashed run can resume.
+    rows = the whole store, so an account trusted on another invoice clears this one's bank alarms too."""
+    warnings = live_warnings(rows, r)
     amount = lm.money(r.get("amount_gbp"))
     print(f"{first_name(r.get('singer_name'))}: £{amount:,.2f} (ref {r.get('invoice_ref') or '?'}) · payee {payee_status(r.get('payee'))}"
           + (f" · bank ••••{r['bank_last4']}" if r.get("bank_last4") else ""))
@@ -965,14 +1025,15 @@ def print_stored(r):
         print("bill: no (withdrawn)")
         print(f"bill_number: {bill_number(r.get('invoice_ref'), r['message_id'])}")
         return
-    print_bill(warnings, amount, r.get("invoice_ref"), r["message_id"], r.get("bank_confirmed") == "yes")
+    print_bill(warnings, amount, r.get("invoice_ref"), r["message_id"],
+               r.get("bank_confirmed") == "yes" or account_trusted(rows, r))
 
 
 def already_recorded(rows, message_id):
     row = next((r for r in rows if r["message_id"] == message_id), None)
     if row is not None:
         print(f"already recorded: {message_id}")
-        print_stored(row)
+        print_stored(row, rows)
         saved = PDF_DIR / f"{re.sub(r'[^0-9A-Za-z]', '', message_id)}.pdf"
         print(f"pdf: {saved if saved.is_file() else 'none'}")
     return row is not None
@@ -1098,7 +1159,7 @@ def cmd_rescan(args, client):
     print_result(row.get("singer_name"), inv, a)
     print_link(link)
     print_bill(inv["warnings"] + a["warnings"], inv["amount"], inv["invoice_ref"], row["message_id"],
-               row.get("bank_confirmed") == "yes")
+               row.get("bank_confirmed") == "yes" or account_trusted(rows, row))
     for line in rescan_changes(old, row):
         print(line)
 
@@ -1162,8 +1223,9 @@ def cmd_status(args, client=None):
         if is_open(r):
             print(f"{r['received']} {first_name(r['singer_name'])} £{lm.money(r['amount_gbp']):,.2f} "
                   f"(ref {r['invoice_ref'] or '?'}) · payee {payee_status(r['payee'])}"
-                  + (" · BANK DETAILS CHANGED: ring before paying" if ring_first(r)
-                     else " · changed bank details confirmed by phone" if r["bank_changed"] == "yes" else ""))
+                  + (" · BANK DETAILS CHANGED: ring before paying" if ring_first_in(rows, r)
+                     else f" · changed bank details {trust_label(rows, r) or 'confirmed by phone'}"
+                     if r["bank_changed"] == "yes" else ""))
     s = summary(rows, today)
     print(f"{s['unpaid']} unpaid, £{s['unpaid_total']:,.2f}, oldest {s['oldest_days']} days"
           + (f", {s['bank_changed']} with changed bank details" if s["bank_changed"] else ""))

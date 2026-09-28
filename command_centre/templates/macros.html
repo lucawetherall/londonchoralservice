@@ -113,7 +113,7 @@
       <td data-label="Payee">{{ s.payee or "new payee" }}</td>
       <td data-label="Bank"><span class="mono">{{ s.last4|last4 }}</span>
         {% if s.ring_first %} <span class="badge bad">changed: ring before paying</span>
-        {% elif s.bank_changed %} <span class="badge warn">changed, confirmed by phone</span>{% endif %}</td>
+        {% elif s.bank_changed %} <span class="badge ok">changed, {{ s.bank_trust or "confirmed by phone" }}</span>{% endif %}</td>
       <td data-label="Action">{{ singer_forms(s, day) }}</td>
     </tr>
   {% endfor %}

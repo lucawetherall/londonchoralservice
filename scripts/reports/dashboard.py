@@ -133,11 +133,14 @@ def digits4(value):
 payee_status = si.payee_status  # whether Starling already knows the singer, never the payee's name
 
 
-def singers(rows):
+def singers(rows, history=None):
+    """The unpaid invoices in rows, oldest first. history = the whole store (default rows): an account confirmed
+    or paid to verifiably on any of the singer's invoices is trusted on all of them (si.ring_first_in)."""
+    history = rows if history is None else history
     return [{"received": r.get("received", ""), "first_name": first_name(r.get("singer_name")),
              "amount": lm.money(r.get("amount_gbp")), "payee": payee_status(r.get("payee", "")),
-             "bank_changed": r.get("bank_changed") == "yes", "ring_first": si.ring_first(r),
-             "last4": digits4(r.get("bank_last4"))}
+             "bank_changed": r.get("bank_changed") == "yes", "ring_first": si.ring_first_in(history, r),
+             "bank_trust": si.trust_label(history, r), "last4": digits4(r.get("bank_last4"))}
             for r in sorted(rows, key=lambda r: r.get("received") or "") if si.is_open(r)]
 
 
@@ -379,7 +382,8 @@ def r_singers(items, data):
     rows = []
     for s in items:
         warn = (badge("BANK DETAILS CHANGED: ring before paying", "bad") if s.get("ring_first")
-                else badge("changed, confirmed by phone", "warn") if s.get("bank_changed") else "")
+                else badge(f"changed, {s.get('bank_trust') or 'confirmed by phone'}", "ok") if s.get("bank_changed")
+                else "")
         rows.append([day(s["received"]), e(str(s["first_name"])), gbp(s["amount"]), e(str(s["payee"])),
                      masked(s.get("last4")) + (" " + warn if warn else "")])
     total = sum(float(s["amount"]) for s in items)
