@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Tests for scripts/bookings/check_payments.py. Stdlib only."""
-import contextlib, csv, datetime, io, os, subprocess, sys, tempfile
+import contextlib, csv, datetime, io, json, os, subprocess, sys, tempfile
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, "scripts", "bookings"))
@@ -31,12 +31,15 @@ def test_match_by_surname_and_deposit():
     assert found["0810"][0][2] == "name and amount"
 
 
-def test_amount_only_needs_a_unique_amount():
+def test_amount_only_fitting_several_bookings_is_unconfirmed_on_each():
     one = [row("A", 1150, "2026-09-01", "2026-10-10", name="X Y")]
     two = one + [row("B", 1150, "2026-09-02", "2026-10-11", name="P Q")]
     payment = [pay(1150, "2026-09-05", "wedding")]
     assert cp.match(one, payment, T)["A"][0][2] == "amount only"
-    assert cp.match(two, payment, T) == {"A": [], "B": []}
+    found = cp.match(two, payment, T)
+    assert found["A"] and found["B"], found
+    assert all(how not in cp.CONFIDENT for hits in found.values() for _, _, how in hits)
+    assert [cp.assess(r, found[r["booking_ref"]], T)["state"] for r in two] == ["CHECK_PAYMENT", "CHECK_PAYMENT"]
 
 
 def test_past_event_is_never_overdue():
@@ -68,10 +71,22 @@ def test_paid_in_full():
     assert a["state"] == "PAID_IN_FULL" and a["balance"] == 0
 
 
-def test_just_received_only_from_pending():
+def test_receipt_due_lasts_fourteen_days_until_a_receipt_is_drafted():
     paid = [("2026-09-27", 325.0, "reference")]
     assert cp.assess(row("X", 650, "2026-09-20", "2026-11-21", "PENDING: invoiced"), paid, T)["just_received"] is True
-    assert cp.assess(row("X", 650, "2026-09-20", "2026-11-21", "deposit seen 2026-09-27 (Starling)"), paid, T)["just_received"] is False
+    # a Monday --apply rewrites PENDING; the receipt signal must survive it
+    assert cp.assess(row("X", 650, "2026-09-20", "2026-11-21", "deposit seen 2026-09-27 (Starling)"), paid, T)["just_received"] is True
+    assert cp.assess(row("X", 650, "2026-09-20", "2026-11-21", "deposit seen 2026-09-27 (Starling); receipt drafted 2026-09-28"),
+                     paid, T)["just_received"] is False
+    assert cp.assess(row("X", 650, "2026-09-20", "2026-11-21"), [("2026-09-14", 325.0, "reference")], T)["just_received"] is True
+    assert cp.assess(row("X", 650, "2026-09-20", "2026-11-21"), [("2026-09-13", 325.0, "reference")], T)["just_received"] is False
+    # an old first payment, as in the live 2111 row, never asks for a receipt
+    assert cp.assess(row("2111", 650, "2026-08-22", "2026-11-21", "deposit seen 2026-08-22 (Starling)"),
+                     [("2026-08-22", 325.0, "reference")], T)["just_received"] is False
+    # unconfirmed, cancelled or past: never
+    assert cp.assess(row("X", 650, "2026-09-20", "2026-11-21"), [("2026-09-27", 325.0, "amount only")], T)["just_received"] is False
+    assert cp.assess(row("X", 650, "2026-09-20", "2026-11-21", "cancelled 27 Sep"), paid, T)["just_received"] is False
+    assert cp.assess(row("X", 650, "2026-09-10", "2026-09-26"), [("2026-09-20", 325.0, "reference")], T)["just_received"] is False
 
 
 def test_reminder_marks_are_distinct():
@@ -113,8 +128,11 @@ def test_reference_is_token_exact():
 
 def test_reference_accepts_inv_prefix_forms():
     rows = [row("2111", 650, "2026-08-22", "2026-11-21")]
-    for ref in ("INV2111", "inv-2111 deposit", "2111", "Invoice INV 2111"):
-        assert cp.match(rows, [pay(325, "2026-08-26", ref)], T)["2111"][0][2] == "reference", ref
+    for ref in ("INV2111", "inv-2111 deposit", "2111", "Invoice INV 2111", "INV2111DEPOSIT", "INV2111DEP", "INV-2111",
+                "LCS2111", "INVOICE2111", "INV#2111", "inv:2111", "Ref: INV 2111.", "Smith wedding 2111"):
+        assert cp.match(rows, [pay(325, "2026-08-26", ref)], T)["2111"] == [("2026-08-26", 325.0, "reference")], ref
+    for ref in ("INV24081", "21110", "INV 21112"):
+        assert all(how != "reference" for _, _, how in cp.match(rows, [pay(325, "2026-08-26", ref)], T)["2111"]), ref
 
 
 def test_reference_to_a_closed_booking_never_falls_through():
@@ -140,7 +158,7 @@ def test_collect_uses_the_feed_and_assesses_open_rows():
     rows = [row("2111", 650, "2026-08-22", "2026-11-21", "PENDING: invoiced"),
             row("2000", 500, "2026-08-01", "2026-12-01", "cancelled by client 3 Sep")]
     got = cp.collect(FakeClient([pay(325, "2026-08-26", "INV 2111")]), rows, T)
-    assert [(r["booking_ref"], a["state"], a["just_received"]) for r, _, a in got] == [("2111", "DEPOSIT_SEEN", True)]
+    assert [(r["booking_ref"], a["state"], a["just_received"]) for r, _, a in got] == [("2111", "DEPOSIT_SEEN", False)]
 
 
 def test_unrelated_amount_only_payment_needs_a_hand_check():
@@ -258,6 +276,224 @@ def test_json_without_a_token_prints_an_empty_list():
     finally:
         cp.lm.keychain_token, sys.argv, cp.LEDGER = saved
     assert out.getvalue() == "[]\n" and "No Starling token" in err.getvalue()
+
+
+# --- suffix refs ("1212", "1212A") -------------------------------------------------------------
+
+SUFFIX_ROWS = [row("1212", 650, "2026-09-20", "2026-12-12", "PENDING: invoiced", name="Ann Smith"),
+               row("1212A", 650, "2026-09-21", "2026-12-12", "PENDING: invoiced", name="Bo Jones")]
+
+
+def test_spaced_letter_suffix_names_the_suffixed_ref():
+    for ref in ("INV 1212 A", "INV1212A", "INV-1212-A", "1212A deposit"):
+        found = cp.match(SUFFIX_ROWS, [pay(325, "2026-09-24", ref, "BO JONES")], T)
+        assert found["1212A"] == [("2026-09-24", 325.0, "reference")] and found["1212"] == [], (ref, found)
+
+
+def test_bare_number_with_suffixed_siblings_uses_the_surname():
+    found = cp.match(SUFFIX_ROWS, [pay(325, "2026-09-24", "INV 1212", "BO JONES")], T)
+    assert found["1212A"] == [("2026-09-24", 325.0, "reference")] and found["1212"] == [], found
+
+
+def test_bare_number_with_suffixed_siblings_and_no_surname_is_unconfirmed_on_all():
+    found = cp.match(SUFFIX_ROWS, [pay(325, "2026-09-24", "1212", "KATE DOE")], T)
+    assert found["1212"] and found["1212A"], found
+    states = [cp.assess(r, found[r["booking_ref"]], T) for r in SUFFIX_ROWS]
+    assert [a["state"] for a in states] == ["CHECK_PAYMENT", "CHECK_PAYMENT"]
+    assert all(a["received"] == 0 and a["just_received"] is False for a in states)
+
+
+def test_reference_to_one_booking_from_another_clients_name_is_unconfirmed():
+    rows = [row("2111", 650, "2026-08-22", "2026-11-21", "PENDING: invoiced", name="Ann Smith"),
+            row("0512", 650, "2026-09-20", "2026-12-05", "PENDING: invoiced", name="Bo Jones")]
+    found = cp.match(rows, [pay(325, "2026-09-24", "INV 2111", "BO JONES")], T)
+    assert found["2111"] and found["0512"], found
+    assert all(how not in cp.CONFIDENT for hits in found.values() for _, _, how in hits)
+    # the booking's own client (or a stranger) paying by reference stays confident
+    assert cp.match(rows, [pay(325, "2026-09-24", "INV 2111", "MRS A SMITH")], T)["2111"][0][2] == "reference"
+    assert cp.match(rows, [pay(325, "2026-09-24", "INV 2111", "KATE DOE")], T)["2111"][0][2] == "reference"
+
+
+# --- paid notes -------------------------------------------------------------------------------
+
+def test_paid_notes_count_whatever_the_wording():
+    for note in ("PENDING: invoiced by enquiry assistant, deposit not yet seen. Paid by cash 5 Sep",
+                 "PENDING: invoiced by enquiry assistant, deposit not yet seen, client paid 5 Sep",
+                 "PENDING; deposit received by bank transfer",
+                 "PENDING - settled in cash", "deposit seen 2026-09-05; from quote", "Deposit in 5 Sep (cash)"):
+        assert cp.assess(row("X", 500, "2026-09-01", "2026-10-30", note), [], T)["state"] == "NOTED_PAID", note
+    for note in ("PENDING: invoiced, deposit not yet seen", "PENDING: invoiced; unpaid", "PENDING: not paid yet",
+                 "PENDING: invoiced; reminder drafted 2026-09-10"):
+        assert cp.assess(row("X", 500, "2026-09-01", "2026-10-30", note), [], T)["state"] == "DEPOSIT_OVERDUE", note
+
+
+def test_part_paid_needs_a_full_payment_note():
+    paid = [("2026-08-26", 325.0, "reference")]
+    for note in ("deposit seen 2026-08-26 (Starling); paid the balance", "deposit seen 2026-08-26 (Starling); paid 29 Sep",
+                 "deposit seen 2026-08-26 (Starling); paid 29 September", "deposit seen 2026-08-26 (Starling); client paid on 2026-09-29",
+                 "deposit seen 2026-08-26 (Starling); balance in cash 29 Sep", "deposit seen 2026-08-26 (Starling); settled in cash",
+                 "deposit seen 2026-08-26 (Starling); rest paid in cash", "deposit seen 2026-08-26 (Starling); Paid in full (cash)"):
+        assert cp.assess(row("2111", 650, "2026-08-22", "2026-09-30", note), paid, T)["state"] == "NOTED_PAID", note
+    for note in ("deposit seen 2026-08-26 (Starling); deposit received", "deposit seen 2026-08-26 (Starling); deposit paid 26 Aug",
+                 "deposit seen 2026-08-26 (Starling); balance not yet paid", "deposit seen 2026-08-26 (Starling); receipt drafted 2026-08-27"):
+        assert cp.assess(row("2111", 650, "2026-08-22", "2026-09-30", note), paid, T)["state"] == "BALANCE_DUE", note
+
+
+# --- dates and values -------------------------------------------------------------------------
+
+def test_bad_dates_and_values_are_check_value_not_a_crash():
+    for inv, ev in (("", "2026-10-30"), ("TBC", "2026-10-30"), (None, "2026-10-30"), ("2026-09-01", "TBC"), ("2026-09-01", "31/10/2026")):
+        a = cp.assess(row("X", 500, inv, ev, "PENDING: x"), [], T)
+        assert a["state"] == "CHECK_VALUE", (inv, ev, a["state"])
+        assert "(check by hand)" in cp.describe(a)
+    assert cp.assess(row("X", 500, "2026-09-01", "", "PENDING: x"), [], T)["state"] == "DEPOSIT_OVERDUE"
+    for v in ("nan", "inf", "-inf", "NaN"):
+        a = cp.assess(row("X", v, "2026-09-01", "2026-10-30", "PENDING: x"), [], T)
+        assert a["state"] == "CHECK_VALUE", v
+        json.dumps(a, allow_nan=False)
+
+
+def test_collect_survives_a_row_with_bad_dates():
+    rows = [row("X", 500, "", "2026-10-30", "PENDING: x"), row("Y", 500, "2026-09-01", "2026-10-30", "PENDING: x")]
+    got = {r["booking_ref"]: a["state"] for r, _, a in cp.collect(FakeClient([]), rows, T)}
+    assert got == {"X": "CHECK_VALUE", "Y": "DEPOSIT_OVERDUE"}, got
+
+
+# --- short notice -----------------------------------------------------------------------------
+
+def test_short_notice_deposit_falls_due_before_the_event():
+    r = row("0210", 1150, "2026-09-26", "2026-10-02", "PENDING: invoiced")
+    a = cp.assess(r, [], datetime.date(2026, 9, 28))
+    assert a["state"] == "AWAITING_DEPOSIT" and a["deposit_due"] == "2026-09-29" and a["short_notice"] is True
+    assert cp.assess(r, [], datetime.date(2026, 9, 29))["state"] == "AWAITING_DEPOSIT"
+    assert cp.assess(r, [], datetime.date(2026, 9, 30))["state"] == "DEPOSIT_OVERDUE"
+    # never due on the invoice day itself
+    assert cp.assess(row("X", 500, "2026-09-26", "2026-09-27", "PENDING"), [], datetime.date(2026, 9, 26))["deposit_due"] == "2026-09-27"
+    assert cp.assess(row("X", 500, "2026-09-01", "2026-10-30", "PENDING"), [], T)["short_notice"] is False
+    assert cp.assess(row("X", 500, "2026-09-20", "2026-09-30", "PENDING"), [], T)["short_notice"] is True
+
+
+# --- cancellations ----------------------------------------------------------------------------
+
+def test_cancelled_wording():
+    for note in ("Cancelled 20 Sep", "CANCELED", "cancellation confirmed by email", "PENDING; cancellation received"):
+        assert cp.is_cancelled(row("X", 500, "2026-09-01", "2026-10-30", note)), note
+    for note in ("PENDING: invoiced; cancellation terms explained", "postponed, not cancelled", "cancel policy sent"):
+        assert not cp.is_cancelled(row("X", 500, "2026-09-01", "2026-10-30", note)), note
+
+
+# --- notes, feed window, errors, lock ---------------------------------------------------------
+
+def test_clearing_pending_without_a_semicolon_keeps_the_text():
+    paid = [("2026-09-24", 325.0, "reference")]
+    for notes, want in (("PENDING: invoiced, from quote", "deposit seen 2026-09-24 (Starling); invoiced, from quote"),
+                        ("PENDING - invoiced", "deposit seen 2026-09-24 (Starling); invoiced"),
+                        ("PENDING", "deposit seen 2026-09-24 (Starling)")):
+        r = row("X", 650, "2026-09-20", "2026-11-21", notes)
+        assert cp.updated_notes(notes, cp.assess(r, paid, T), paid) == want, notes
+
+
+def test_received_since_counts_early_hours_bst_payments():
+    rows = [row("2111", 650, "2026-08-22", "2026-11-21")]
+    early = pay(325, "2026-09-21", "INV 2111")
+    early["transactionTime"] = "2026-09-21T23:30:00Z"  # 00:30 on 22 Sep in London
+    before = pay(100, "2026-09-21", "INV 2111")         # 11:00 on 21 Sep in London
+
+    class UtcFeed(FakeClient):
+        def feed(self, since, until, direction):
+            self.calls.append((since, until, direction))
+            lo, hi = since.isoformat() + "T00:00:00", until.isoformat() + "T00:00:00"
+            return [i for i in self.items if lo <= i["transactionTime"][:19] < hi]
+
+    c = UtcFeed([early, before])
+    assert cp.received_since(c, rows, datetime.date(2026, 9, 22), T) == [("2111", "2026-09-22", 325.0)]
+    assert c.calls[0][0] == datetime.date(2026, 9, 21)
+
+
+class DownClient:
+    def __init__(self, exc):
+        self.exc = exc
+
+    def feed(self, *a):
+        raise self.exc
+
+    def get(self, *a):
+        raise self.exc
+
+    def account(self):
+        raise self.exc
+
+
+def run_main_with(exc, *argv):
+    import urllib.error
+    d = tempfile.mkdtemp()
+    path = os.path.join(d, "bookings.csv")
+    cols = ["booking_ref", "value_gbp", "invoice_date", "event_date", "notes", "client_name"]
+    with open(path, "w", newline="") as f:
+        w = csv.DictWriter(f, fieldnames=cols)
+        w.writeheader()
+        w.writerow(row("2111", 650, "2026-08-22", "2026-11-21", "PENDING: invoiced"))
+    before = open(path).read()
+    out, err = io.StringIO(), io.StringIO()
+    saved = (cp.lm.keychain_token, cp.lm.StarlingReadOnly, sys.argv, cp.LEDGER)
+    cp.lm.keychain_token, cp.lm.StarlingReadOnly = (lambda: "tok"), (lambda tok: DownClient(exc))
+    sys.argv, cp.LEDGER, code = ["check_payments.py", *argv], path, 0
+    try:
+        with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+            try:
+                cp.main()
+            except SystemExit as e:
+                code = e.code
+    finally:
+        cp.lm.keychain_token, cp.lm.StarlingReadOnly, sys.argv, cp.LEDGER = saved
+    return code, out.getvalue(), err.getvalue(), open(path).read() == before
+
+
+def test_starling_unavailable_is_one_quiet_line():
+    import urllib.error
+    for exc in (urllib.error.URLError("down"), urllib.error.HTTPError("u", 503, "x", {}, None), TimeoutError(), OSError("x")):
+        code, out, err, unchanged = run_main_with(exc, "--apply", "--json")
+        name = type(exc).__name__
+        assert code in (0, None) and out == "[]\n" and err == f"Starling unavailable ({name})\n" and unchanged, (name, code, out, err)
+        code, out, err, unchanged = run_main_with(exc, "--apply")
+        assert code in (0, None) and out == "" and err == f"Starling unavailable ({name})\n" and unchanged, (name, out, err)
+
+
+def test_apply_and_reminded_hold_the_ledger_lock():
+    import fcntl
+    seen = []
+    real = cp.lm.ledger_lock
+
+    @contextlib.contextmanager
+    def spy(path):
+        with real(path):
+            fd = os.open(str(path) + ".lock", os.O_RDWR)
+            try:
+                try:
+                    fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                    seen.append("free")
+                except BlockingIOError:
+                    seen.append("held")
+            finally:
+                os.close(fd)
+            yield
+
+    cp.lm.ledger_lock = spy
+    try:
+        run_main_with(OSError("x"), "--apply")
+        d = tempfile.mkdtemp()
+        path = os.path.join(d, "b.csv")
+        cp.lm.write_csv(path, [row("2111", 650, "2026-08-22", "2026-11-21", "PENDING")], list(row("a", 1, "", "").keys()))
+        saved = (sys.argv, cp.LEDGER)
+        sys.argv, cp.LEDGER = ["check_payments.py", "--reminded", "2111"], path
+        try:
+            with contextlib.redirect_stdout(io.StringIO()):
+                cp.main()
+        finally:
+            sys.argv, cp.LEDGER = saved
+    finally:
+        cp.lm.ledger_lock = real
+    assert seen == ["held", "held"], seen
 
 
 if __name__ == "__main__":

@@ -41,7 +41,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/zoho_guard.py\"",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/zoho_guard.py\" || exit 2",
             "timeout": 10
           }
         ]

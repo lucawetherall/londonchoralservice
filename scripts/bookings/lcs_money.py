@@ -10,8 +10,10 @@
 - Bank details are reduced to a fingerprint plus the last four digits.
 """
 
+import contextlib
 import csv
 import datetime
+import fcntl
 import hashlib
 import json
 import os
@@ -143,3 +145,16 @@ def write_csv(path, rows, columns):
     except BaseException:
         tmp.unlink(missing_ok=True)
         raise
+
+
+@contextlib.contextmanager
+def ledger_lock(path):
+    """Exclusive lock for a read-modify-write of a private CSV: flock on "<path>.lock" (mode 600)."""
+    path = Path(path)
+    path.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
+    fd = os.open(f"{path}.lock", os.O_RDWR | os.O_CREAT, 0o600)
+    try:
+        fcntl.flock(fd, fcntl.LOCK_EX)
+        yield
+    finally:
+        os.close(fd)  # closing releases the lock

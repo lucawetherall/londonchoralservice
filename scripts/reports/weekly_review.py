@@ -47,7 +47,8 @@ LEAD_EVENTS = ["generate_lead", "contact_click", "contact_message", "form_error"
 MONEY_TERMS = re.compile(r"funeral|wedding|carol|choir|choral", re.I)
 SITE = "https://londonchoralservice.com"
 REPO = Path(__file__).resolve().parents[2]
-LEDGER = Path(os.environ.get("LCS_BOOKINGS_CSV", Path.home() / "lcs-private" / "bookings.csv"))
+# the same ledger as scripts/bookings/lcs_money.py, so sections 9 and 10 always agree
+LEDGER = Path(os.environ.get("LCS_BOOKINGS_CSV", Path(os.environ.get("LCS_PRIVATE_DIR", Path.home() / "lcs-private")) / "bookings.csv"))
 EXPECTED_KEY_EVENTS = {"generate_lead", "contact_message"}
 
 
@@ -366,7 +367,7 @@ def money_section():
         client = lcs_money.StarlingReadOnly(tok)
         rows = lcs_money.read_csv(check_payments.LEDGER)
         assessments = [a for _, _, a in check_payments.collect(client, rows, today)]
-        receipts = check_payments.received_since(client, rows, today - datetime.timedelta(days=7), today)
+        receipts = check_payments.received_since(client, rows, today - datetime.timedelta(days=6), today)  # today and six days before
         singer = singer_invoices.summary(lcs_money.read_csv(singer_invoices.STORE), today)
         for line in money_report.summary_lines(assessments, receipts, singer, today):
             print("   " + line)

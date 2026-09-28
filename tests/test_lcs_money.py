@@ -87,6 +87,7 @@ def test_account_is_fetched_once():
 
 
 def test_missing_account_raises_starling_error():
+    saved = os.environ.get("LCS_STARLING_ACCOUNT_UID")
     os.environ["LCS_STARLING_ACCOUNT_UID"] = "nope"
     try:
         m.StarlingReadOnly("tok", opener=FakeOpener(ACCOUNTS)).account()
@@ -94,7 +95,10 @@ def test_missing_account_raises_starling_error():
     except m.StarlingError:
         pass
     finally:
-        del os.environ["LCS_STARLING_ACCOUNT_UID"]
+        if saved is None:
+            del os.environ["LCS_STARLING_ACCOUNT_UID"]
+        else:
+            os.environ["LCS_STARLING_ACCOUNT_UID"] = saved
 
 
 def test_local_date_is_london_time():
@@ -146,6 +150,42 @@ def test_csv_write_is_atomic_and_leaves_no_temp_files():
     except Exception:
         pass
     assert m.read_csv(path) == [{"a": "2"}] and os.listdir(d) == ["f.csv"]
+
+
+def test_ledger_lock_is_exclusive_and_private():
+    import fcntl
+    path = os.path.join(tempfile.mkdtemp(), "sub", "bookings.csv")
+    with m.ledger_lock(path):
+        assert oct(os.stat(path + ".lock").st_mode)[-3:] == "600"
+        fd = os.open(path + ".lock", os.O_RDWR)
+        try:
+            try:
+                fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                assert False, "second lock taken while the first is held"
+            except BlockingIOError:
+                pass
+        finally:
+            os.close(fd)
+    fd = os.open(path + ".lock", os.O_RDWR)
+    try:
+        fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)  # released on exit
+    finally:
+        os.close(fd)
+
+
+def test_ledger_lock_releases_on_error():
+    import fcntl
+    path = os.path.join(tempfile.mkdtemp(), "bookings.csv")
+    try:
+        with m.ledger_lock(path):
+            raise KeyError("boom")
+    except KeyError:
+        pass
+    fd = os.open(path + ".lock", os.O_RDWR)
+    try:
+        fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    finally:
+        os.close(fd)
 
 
 if __name__ == "__main__":
