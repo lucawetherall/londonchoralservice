@@ -142,10 +142,10 @@ def test_a_good_spec_passes_and_reads_each_file_once():
 def test_only_one_recipient_and_no_cc_bcc_or_from():
     for bad in ("a@example.com, b@example.com", "a@example.com; b@example.com", "a@example.com b@example.com",
                 "Sam <a@example.com>", "not-an-address", "a@example.com\r\nBcc: x@example.com", ""):
-        assert refused(spec(to=bad, attachments=[])), bad
+        assert refused(spec(to=bad, key="2111-reply", attachments=[])), bad
     for key in ("cc", "bcc", "from", "fromAddress", "ccAddress", "send", "mode"):
         assert "not allowed" in (refused(spec(**{key: "x@example.com"})) or ""), key
-    assert refused(spec(to="office@londonchoralservice.com", attachments=[])), "our own address"
+    assert refused(spec(to="office@londonchoralservice.com", key="2111-reply", attachments=[])), "our own address"
 
 
 def test_header_injection_and_control_characters_are_refused():
@@ -158,6 +158,7 @@ def test_header_injection_and_control_characters_are_refused():
         assert refused(spec(references=bad)), repr(bad)
     for key in ("", "a b", "x" * 41, "../x", "k\n"):
         assert refused(spec(key=key, attachments=[])), key
+    assert d.validate(spec(key="2111-reply", attachments=[]))["attachments"] == []  # a plain draft takes none
 
 
 def test_a_long_references_list_is_trimmed_not_refused():
@@ -169,18 +170,27 @@ def test_a_long_references_list_is_trimmed_not_refused():
 
 # --- attachments belong to this booking and this client ----------------------------------------
 
+def test_a_confirmation_carries_both_files_and_nothing_else_carries_any():
+    for files in ([], [str(PDF)], [str(DOCX)]):
+        assert "both files" in (refused(spec(attachments=files)) or ""), files
+    assert "only a confirmation" in refused(spec(key="2111-reply"))
+    assert "only a confirmation" in refused(spec(key="2111-followup", attachments=[str(PDF)]))
+    got = d.validate(spec(attachments=[str(DOCX), str(PDF)]))
+    assert [a[0] for a in got["attachments"]] == [PDF.name, DOCX.name], "the invoice first"
+
+
 def test_attachments_must_be_this_bookings_files_for_this_client():
-    assert "not in booking 2111's folder" in refused(spec(attachments=[str(OTHER_PDF)]))
+    assert "not in booking 2111's folder" in refused(spec(attachments=[str(OTHER_PDF), str(DOCX)]))
     assert "not the client on booking 2111" in refused(spec(to="other@example.com"))
     assert "no client email in the ledger" in refused(spec(key="3112-confirmation"))
-    assert "needs the key <ref>-confirmation" in refused(spec(key="2111-reply"))
     wrong = FOLDER / "Invoice 0512 - A Client.pdf"
     wrong.write_bytes(b"%PDF-1.4")
     notes = FOLDER / "Notes.pdf"
     notes.write_bytes(b"%PDF-1.4")
     for bad in (wrong, notes):
-        assert "only booking 2111's invoice PDF" in refused(spec(attachments=[str(bad)])), bad
+        assert "only booking 2111's invoice PDF" in refused(spec(attachments=[str(bad), str(DOCX)])), bad
     assert refused(spec(attachments=[str(PDF), str(PDF)])), "the same invoice twice"
+    assert refused(spec(attachments=[str(DOCX), str(DOCX)])), "the same confirmation twice"
     assert refused(spec(attachments=[str(PDF), str(DOCX), str(PDF)])), "three files"
 
 
@@ -195,19 +205,19 @@ def test_links_paths_and_contents_are_checked():
     if not hard.exists():
         os.link(outside, hard)
     fake.write_bytes(b"not a pdf")
-    assert refused(spec(attachments=[str(sym)])), "symlink"
-    assert "ordinary file" in refused(spec(attachments=[str(hard)])), "hard link"
-    assert "doesn't look like a .pdf" in refused(spec(attachments=[str(fake)]))
+    assert refused(spec(attachments=[str(sym), str(DOCX)])), "symlink"
+    assert "ordinary file" in refused(spec(attachments=[str(hard), str(DOCX)])), "hard link"
+    assert "doesn't look like a .pdf" in refused(spec(attachments=[str(fake), str(DOCX)]))
     for bad in (str(FOLDER / "Invoice 2111 - Missing.pdf"), str(FOLDER / ".." / "0512 - Someone Else" / OTHER_PDF.name),
                 "relative/Invoice 2111 - A.pdf", "https://evil.test/Invoice 2111 - A.pdf", str(INV),
                 str(FOLDER / "Invoice 2111 - A .pdf")):
-        assert refused(spec(attachments=[bad])), bad
+        assert refused(spec(attachments=[bad, str(DOCX)])), bad
     assert refused(spec(attachments=str(PDF))), "not a list"
 
 
 def test_an_icloud_only_file_says_how_to_fix_it():
     (FOLDER / ".Invoice 2111 - Evicted.pdf.icloud").write_bytes(b"")
-    assert "iCloud only" in refused(spec(attachments=[str(FOLDER / "Invoice 2111 - Evicted.pdf")]))
+    assert "iCloud only" in refused(spec(attachments=[str(FOLDER / "Invoice 2111 - Evicted.pdf"), str(DOCX)]))
 
 
 def test_bank_details_in_the_text_are_refused():
@@ -301,11 +311,38 @@ def test_the_host_must_be_zoho():
 def test_check_and_test_for_the_owner():
     rc, out = run_main(["check"], FakeIMAP(drafts=[b"x"]))
     assert rc == 0 and out.startswith("IMAP ok") and "1 draft(s), 0 sent" in out and "writable" in out, out
-    imap = FakeIMAP()
-    rc, out = run_main(["test"], imap)
-    assert rc == 0 and "draft saved" in out and "header kept by Zoho: yes" in out, out
-    parsed = email.message_from_bytes(imap.boxes["Drafts"][0], policy=email.policy.default)
-    assert parsed["To"] == "luca@almaconsort.com" and [p.get_filename() for p in parsed.iter_attachments()] == ["LCS test.pdf"]
+    docs = [("Invoice 0101 - Test Client.pdf", "application", "pdf", b"%PDF-1.7 real enough"),
+            ("Booking Confirmation - Test Client - 1 Jan 2027.docx", *d.FILES[".docx"][:2], b"PK\x03\x04 docx")]
+    real = d.sample_documents
+    d.sample_documents = lambda: docs
+    try:
+        imap = FakeIMAP()
+        rc, out = run_main(["test"], imap)
+        assert rc == 0 and "draft saved" in out and "header kept by Zoho: yes; attachments intact: yes" in out, out
+        parsed = email.message_from_bytes(imap.boxes["Drafts"][0], policy=email.policy.default)
+        assert parsed["To"] == "luca@almaconsort.com"
+        assert [p.get_filename() for p in parsed.iter_attachments()] == [n for n, *_ in docs]
+
+        class Mangling(FakeIMAP):  # a server that alters an attachment on the way in
+            def append(self, box, flags, when, data):
+                return super().append(box, flags, when, data.replace(b"JVBERi0xLjcgcmVhbCBlbm91Z2g=", b"QlJPS0VO"))  # the PDF's bytes, base64
+        rc, out = run_main(["test"], Mangling())
+        assert rc == 0 and "attachments intact: NO" in out, out
+    finally:
+        d.sample_documents = real
+
+
+def test_the_sample_documents_stop_cleanly_without_the_templates():
+    import make_booking_docs as mbd
+    real = mbd.make_docs
+    def missing(spec, root):
+        raise SystemExit("STOP: /x/invoice.html is missing")
+    mbd.make_docs = missing
+    try:
+        rc, out = run_main(["test"], FakeIMAP())
+        assert rc == 1 and out.startswith("STOP: the sample documents couldn't be made (/x/invoice.html is missing)"), out
+    finally:
+        mbd.make_docs = real
 
 
 # --- sent: the evidence for marking a Books invoice sent ---------------------------------------
