@@ -10,15 +10,44 @@ MATCHER = f"mcp__{SERVER}__.*"
 READ = ("list_calendars", "list_events", "search_events", "get_event", "suggest_time")
 
 
-def raw(stdin):
+LCS_CAL = "abc123@group.calendar.google.com"
+
+
+def home_with(config):
+    """A temporary HOME whose ~/lcs-private/calendar.json holds `config` (None: no file)."""
+    home = tempfile.mkdtemp()
+    os.makedirs(os.path.join(home, "lcs-private"))
+    if config is not None:
+        with open(os.path.join(home, "lcs-private", "calendar.json"), "w") as f:
+            f.write(config if isinstance(config, str) else json.dumps(config))
+    return home
+
+
+HOME = home_with({"lcs_calendar_id": LCS_CAL})
+
+
+def raw(stdin, home=None):
     """Run the guard on raw stdin; its decision ("allow" when it prints nothing)."""
-    p = subprocess.run([sys.executable, GUARD], input=stdin, capture_output=True, text=True)
+    p = subprocess.run([sys.executable, GUARD], input=stdin, capture_output=True, text=True,
+                       env=dict(os.environ, HOME=home or HOME))
     assert p.returncode == 0, (p.returncode, p.stderr)
     return json.loads(p.stdout)["hookSpecificOutput"]["permissionDecision"] if p.stdout.strip() else "allow"
 
 
-def decide(tool, tool_input=None):
-    return raw(json.dumps({"tool_name": tool, "tool_input": tool_input or {}}))
+def decide(tool, tool_input=None, home=None):
+    return raw(json.dumps({"tool_name": tool, "tool_input": tool_input or {}}), home)
+
+
+CREATE = f"mcp__{SERVER}__create_event"
+
+
+def booking(**changes):
+    event = {"calendarId": LCS_CAL, "summary": "LCS 2108 Wedding, Sam", "startTime": "2027-08-21T14:00:00+01:00",
+             "endTime": "2027-08-21T16:00:00+01:00", "timeZone": "Europe/London", "location": "St Mary's, Barnes",
+             "description": "Small Choir (4 singers), £1,150. Invoice 2108.", "notificationLevel": "NONE",
+             "availability": "AVAILABILITY_FREE"}
+    event.update(changes)
+    return {k: v for k, v in event.items() if v is not None}
 
 
 def hook_command():
@@ -36,9 +65,33 @@ def test_read_tools_are_allowed():
 
 
 def test_write_tools_are_denied():
-    for name in ("create_event", "update_event", "delete_event", "respond_to_event", "unknown_tool",
+    for name in ("update_event", "delete_event", "respond_to_event", "unknown_tool",
                  "List_events", "list_events_and_delete", ""):
         assert decide(f"mcp__{SERVER}__{name}") == "deny", name
+
+
+def test_booking_on_the_lcs_calendar_is_allowed():
+    assert decide(CREATE, booking()) == "allow"
+    assert decide(CREATE, booking(allDay=True, startTime="2027-08-21", endTime="2027-08-22",
+                                  location=None, notificationLevel=None)) == "allow"
+
+
+def test_create_event_elsewhere_or_with_extras_is_denied():
+    for changes in ({"calendarId": "primary"}, {"calendarId": "lucwetho@gmail.com"}, {"calendarId": None},
+                    {"calendarId": LCS_CAL + " "}, {"attendees": [{"email": "a@b.com"}]},
+                    {"attendeeEmails": ["a@b.com"]}, {"addGoogleMeetUrl": True}, {"recurrenceData": ["RRULE:FREQ=DAILY"]},
+                    {"attachments": [{"fileUrl": "https://x"}]}, {"notificationLevel": "ALL"},
+                    {"summary": "Wedding, Sam"}, {"summary": "LCS " + "x" * 120}, {"summary": None},
+                    {"startTime": None}, {"endTime": ""}, {"description": "Client sam@example.com"},
+                    {"location": "call sam@example.com"}, {"description": "Sort code 12-34-56, account 12345678"},
+                    {"description": 5}, {"description": "x" * 1001}):
+        assert decide(CREATE, booking(**changes)) == "deny", changes
+    assert decide(CREATE, "not an object") == "deny"
+
+
+def test_create_event_without_a_good_config_is_denied():
+    for config in (None, "{not json", [], {}, {"lcs_calendar_id": ""}, {"lcs_calendar_id": 5}):
+        assert decide(CREATE, booking(), home_with(config)) == "deny", config
 
 
 def test_other_servers_and_odd_names_are_denied():
@@ -55,13 +108,13 @@ def test_malformed_events_fail_closed():
     assert raw(json.dumps(["not", "an", "object"])) == "deny"
 
 
-def test_settings_registers_the_guard_and_allows_only_read_tools():
+def test_settings_registers_the_guard_and_allows_reads_and_create_event():
     assert hook_command() == 'python3 "$CLAUDE_PROJECT_DIR/.claude/hooks/calendar_guard.py" || exit 2'
     with open(SETTINGS) as f:
         cfg = json.load(f)
     allowed = sorted(a for a in cfg["permissions"]["allow"] if SERVER in a)
     assert allowed == sorted(f"mcp__{SERVER}__{n}" for n in
-                             ("list_calendars", "list_events", "search_events", "get_event")), allowed
+                             ("list_calendars", "list_events", "search_events", "get_event", "create_event")), allowed
     assert f"mcp__{SERVER}" not in cfg["permissions"]["allow"]  # never the whole server
 
 
