@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Tests for scripts/bookings/lcs_money.py. Stdlib only: .venv/bin/python tests/test_lcs_money.py"""
-import datetime, io, json, os, sys, tempfile
+import datetime, inspect, io, json, os, sys, tempfile
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, "scripts", "bookings"))
@@ -53,7 +53,55 @@ def test_client_only_sends_get_with_bearer():
     fake = FakeOpener(ACCOUNTS)
     m.StarlingReadOnly("tok", opener=fake).account()
     assert fake.requests and all(r.get_method() == "GET" for r in fake.requests)
-    assert fake.requests[0].headers["Authorization"] == "Bearer tok"
+    assert fake.requests[0].get_header("Authorization") == "Bearer tok"
+
+
+def test_token_is_never_sent_on_after_a_redirect():
+    fake = FakeOpener(ACCOUNTS)
+    m.StarlingReadOnly("tok", opener=fake).account()
+    req = fake.requests[0]
+    assert "Authorization" in req.unredirected_hdrs and "Authorization" not in req.headers
+
+
+def test_get_takes_only_a_path():
+    assert list(inspect.signature(m.StarlingReadOnly.get).parameters) == ["self", "path"]
+
+
+def test_every_call_is_a_bodiless_get():
+    payload = lambda url: ACCOUNTS if url.endswith("/accounts") else {"feedItems": [], "payees": []}
+    fake = FakeOpener(payload)
+    c = m.StarlingReadOnly("tok", opener=fake)
+    c.account()
+    c.feed(datetime.date(2026, 9, 1), datetime.date(2026, 9, 2), "IN")
+    c.payees()
+    assert len(fake.requests) >= 3
+    assert all(r.get_method() == "GET" and r.data is None for r in fake.requests)
+
+
+def test_account_is_fetched_once():
+    fake = FakeOpener(lambda url: ACCOUNTS if url.endswith("/accounts") else {"feedItems": []})
+    c = m.StarlingReadOnly("tok", opener=fake)
+    c.feed(datetime.date(2026, 9, 1), datetime.date(2026, 9, 2), "IN")
+    c.feed(datetime.date(2026, 9, 1), datetime.date(2026, 9, 2), "OUT")
+    assert sum(r.full_url.endswith("/accounts") for r in fake.requests) == 1
+
+
+def test_missing_account_raises_starling_error():
+    os.environ["LCS_STARLING_ACCOUNT_UID"] = "nope"
+    try:
+        m.StarlingReadOnly("tok", opener=FakeOpener(ACCOUNTS)).account()
+        assert False, "no error"
+    except m.StarlingError:
+        pass
+    finally:
+        del os.environ["LCS_STARLING_ACCOUNT_UID"]
+
+
+def test_local_date_is_london_time():
+    assert m.local_date("2026-09-30T23:30:00.000Z") == "2026-10-01"
+    assert m.local_date("2026-12-31T23:30:00.000Z") == "2026-12-31"
+    assert m.local_date("2026-09-30T10:00:00Z") == "2026-09-30"
+    assert m.local_date("") == ""
 
 
 def test_client_has_no_write_methods():
@@ -83,6 +131,21 @@ def test_csv_round_trip_is_private():
     assert oct(os.stat(path).st_mode)[-3:] == "600"
     assert m.read_csv(path) == [{"a": "1", "b": "x"}]
     assert m.read_csv(path + ".missing") == []
+
+
+def test_csv_write_is_atomic_and_leaves_no_temp_files():
+    d = tempfile.mkdtemp()
+    path = os.path.join(d, "f.csv")
+    m.write_csv(path, [{"a": "1"}], ["a"])
+    m.write_csv(path, [{"a": "2"}], ["a"])
+    assert os.listdir(d) == ["f.csv"]
+    assert oct(os.stat(path).st_mode)[-3:] == "600"
+    assert m.read_csv(path) == [{"a": "2"}]
+    try:
+        m.write_csv(path, [{"a": "3"}, None], ["a"])  # fails half way through
+    except Exception:
+        pass
+    assert m.read_csv(path) == [{"a": "2"}] and os.listdir(d) == ["f.csv"]
 
 
 if __name__ == "__main__":

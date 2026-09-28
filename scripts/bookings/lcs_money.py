@@ -11,6 +11,7 @@
 """
 
 import csv
+import datetime
 import hashlib
 import json
 import os
@@ -18,6 +19,7 @@ import re
 import subprocess
 import urllib.request
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 API = "https://api.starlingbank.com"
 KEYCHAIN_SERVICE = "lcs-starling-read"
@@ -31,27 +33,34 @@ def keychain_token():
     return r.stdout.strip() if r.returncode == 0 else None
 
 
+class StarlingError(Exception):
+    pass
+
+
 class StarlingReadOnly:
     """GET-only Starling client. Add no other public methods."""
 
     def __init__(self, token, opener=urllib.request.urlopen):
         self._token = token
         self._open = opener
+        self._account = None
 
     def get(self, path):
-        req = urllib.request.Request(API + path, method="GET",
-                                     headers={"Authorization": f"Bearer {self._token}",
-                                              "Accept": "application/json"})
+        req = urllib.request.Request(API + path, method="GET", headers={"Accept": "application/json"})
+        req.add_unredirected_header("Authorization", f"Bearer {self._token}")  # never follows a redirect
         with self._open(req, timeout=30) as resp:
             return json.load(resp)
 
     def account(self):
-        accounts = self.get("/api/v2/accounts").get("accounts", [])
-        want = os.environ.get("LCS_STARLING_ACCOUNT_UID")
-        for a in accounts:
-            if not want or a.get("accountUid") == want:
-                return a
-        raise SystemExit("No matching Starling account (set LCS_STARLING_ACCOUNT_UID if there are several).")
+        if self._account is None:
+            want = os.environ.get("LCS_STARLING_ACCOUNT_UID")
+            for a in self.get("/api/v2/accounts").get("accounts", []):
+                if not want or a.get("accountUid") == want:
+                    self._account = a
+                    break
+            else:
+                raise StarlingError("No matching Starling account (set LCS_STARLING_ACCOUNT_UID if there are several).")
+        return self._account
 
     def feed(self, since, until, direction):
         """Settled-or-pending feed items between two dates, one direction ("IN" or "OUT")."""
@@ -72,6 +81,19 @@ def money(value):
         return float(str(value if value is not None else "0").replace("£", "").replace(",", "") or 0)
     except ValueError:
         return 0.0
+
+
+def local_date(ts):
+    """ISO timestamp (UTC unless it says otherwise) -> Europe/London date string."""
+    if not ts:
+        return ""
+    try:
+        t = datetime.datetime.fromisoformat(ts.replace("Z", "+00:00"))
+    except ValueError:
+        return ts[:10]
+    if t.tzinfo is None:
+        t = t.replace(tzinfo=datetime.timezone.utc)
+    return t.astimezone(ZoneInfo("Europe/London")).date().isoformat()
 
 
 def bank_fingerprint(sort_code, account_number):
@@ -110,8 +132,14 @@ def read_csv(path):
 def write_csv(path, rows, columns):
     path = Path(path)
     path.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
-    with open(path, "w", newline="") as f:
-        w = csv.DictWriter(f, fieldnames=columns, extrasaction="ignore")
-        w.writeheader()
-        w.writerows(rows)
-    os.chmod(path, 0o600)
+    tmp = path.with_name(f".{path.name}.{os.getpid()}.{os.urandom(4).hex()}.tmp")
+    fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+    try:
+        with os.fdopen(fd, "w", newline="") as f:
+            w = csv.DictWriter(f, fieldnames=columns, extrasaction="ignore")
+            w.writeheader()
+            w.writerows(rows)
+        os.replace(tmp, path)
+    except BaseException:
+        tmp.unlink(missing_ok=True)
+        raise
