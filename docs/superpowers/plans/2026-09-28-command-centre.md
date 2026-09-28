@@ -40,7 +40,7 @@
 | `command_centre/install.sh` | LaunchAgent, config, the `tailscale serve` command to run | 1 |
 | `command_centre/models.py`, `sources.py`, `todo.py` | Pure page builders; cache, report and health readers; the to-do parser and tick store | 2 |
 | `command_centre/actions.py` | The action registry: validated input, preview, fixed argv, audit log | 2 (the to-do tick), 3 |
-| `command_centre/jobs.py` | Refresh jobs and caches, backups | 3, 5 |
+| `command_centre/jobs.py` | Refresh jobs and caches, backups | 5 |
 | `command_centre/chat.py` | Claude Agent SDK session, streaming, approval cards | 4 |
 | `command_centre/push.py` | Web Push, events watcher | 5 |
 | `tests/test_cc_*.py` | One test file per module | all |
@@ -226,15 +226,82 @@ Config, `~/lcs-private/command-centre/config.json` (mode 600):
 - [x] Every `tests/test_*.py`; commit; PR; don't merge.
 - **Task 2.13 (after merge)** Retire `dashboard.py` from the scheduled prompts (Appendices A and E) once the owner has used the app for a week.
 
-## Phase 3: actions (expand before building)
+## Phase 3: passkey-gated actions and the activity log (this PR)
 
-**Goal:** the action registry, every write behind a passkey, append-only audit log.
+**Goal:** the action registry, every write behind a passkey (the to-do tick and "refresh data now" excepted), fixed argv lists with no shell, an append-only audit log, and an Activity page. These are the app's first writes to the ledger, the singer store and Google Ads, so each step below is test-first and the owner-only operations are closed to anything Claude can run unprompted.
 
-- **Task 3.0 Refresh job (moved from phase 2).** `jobs.py`: every 30 minutes, 07:00 to 22:00, writes `cache/{ads,ga4,gsc,books,drafts,calendar}.json` (calendar in phase 2's shape) from `weekly_review`'s and `economics`' functions and a Books read client mirroring `lcs_mcp`'s allowlisted reads; each entry stores `as_of` and the last error type. Tests: a failing refresher keeps the last good file and records the type.
-- **Task 3.1 `actions.py`.** Phase 2 created the registry with `todo-tick`. Each action: a name, a validator for its input, `preview(input) -> str` (the exact summary the passkey challenge binds), `argv(input) -> list[str]` (fixed script path, no shell). Runs with `subprocess.run(argv, shell=False, cwd=REPO, timeout=...)`; stderr trimmed and scrubbed with `lcs_mcp`'s rules; `audit.jsonl` appended (mode 600) before and after. Tests: exact argv per action, bad input refused, no `shell=True` anywhere (AST check).
-- **Task 3.2 Routes.** `POST /actions/<name>/preview` returns the summary and assertion options; `POST /actions/<name>` needs `require_fresh_assertion(credential, action)`, where `action` is an `auth.Action` the registry built from the validated input (never text from the request), and the same-origin check. Tests: refused without, with a stale, a replayed, or another action's assertion.
-- **Task 3.3 The actions.** Hand-check resolutions (`check_payments.py --note <ref> "<phrase> <date>" --owner`: add the `--owner` flag to `check_payments.py` first, test-first); singer confirm, settle and withdraw (`singer_invoices.py`); Ads approve (validate-only run, show output, second tap to apply; the scripts' £5 cap stays); run a scheduled task now (headless `claude -p` with the task prompt); refresh now; back up now; local records (draft sent or discarded, to-do ticks).
-- **Task 3.4 Activity log page.** Every action and run from `audit.jsonl`, filterable.
+**Scope changes from the outline:**
+- **Run a scheduled task now** moves to phase 4. There is no reliable local trigger for a scheduled task (the task metadata has no run command, and a headless `claude -p` started from the app would sit outside the scheduler's own bookkeeping). In phase 4 the chat can ask Claude to run a task's prompt under the repo's guards.
+- **Back up now** moves to phase 5 with the backup job itself.
+- **Task 3.0, the 30-minute refresh job** (`jobs.py` writing `cache/{ads,ga4,gsc,books,drafts,calendar}.json`), moves to phase 5 with the other background jobs. Phase 3's "Refresh data now" re-runs `scripts/reports/dashboard.py` and clears the app's in-memory caches (the 10-minute bank cache and the Starling health check).
+- **Approve the 2026 Books import** writes an approval record only. The app never calls Books.
+
+**Files:**
+- `command_centre/actions.py`: the registry (`LocalAction`, `ScriptAction`), validation, previews, argv lists, the runner, output scrubbing, the owner nonce, the audit log, the ads proposal checks.
+- `command_centre/app.py`: `POST /actions/<name>/preview`, `POST /actions/<name>/run`, `GET /activity`.
+- `command_centre/data.py`, `models.py`: invoice keys on singer rows, proposals and the Books approval on Today and Marketing, the activity reader.
+- `command_centre/templates/*.html`, `static/actions.js`, `static/passkey.js`, `static/app.css`: action buttons, the preview dialog, the Activity page.
+- `scripts/bookings/check_payments.py`: `--owner` (test-first).
+- `tests/test_cc_actions.py` (new), `tests/test_check_payments.py`, `tests/test_prompt_allowlist.py`.
+
+### Task 3.1: Owner-only protection, test-first
+
+The allowlist entry `Bash(.venv/bin/python scripts/bookings/check_payments.py --note *)` also matches `--note X "paid in full …" --owner`, and `--reminded *` matches `--reminded X --note Y "…" --owner`. A glob can't exclude a flag, so the refusal lives in the script.
+
+**Design: a one-time owner nonce, hashed on disk, delivered over a pipe.**
+
+- Before the app runs `check_payments.py --note <ref> "<phrase> <date>" --owner`, it makes 32 random bytes (the nonce, hex), writes `sha256(nonce)` to `~/lcs-private/command-centre/owner-nonce` (`O_CREAT|O_EXCL|O_NOFOLLOW`, mode 600, directory 700) and passes the nonce itself on the child's stdin (a pipe). It deletes the file afterwards, whatever happened. Actions run one at a time (a lock), so there is only ever one nonce.
+- `check_payments.py --owner` writes nothing unless all of these hold:
+  - stdin is a pipe (`S_ISFIFO`), not a terminal and not a redirected file;
+  - the nonce file is a regular file (opened with `O_NOFOLLOW`, so not a symlink), owned by this user, mode 600 with no group or other bits, and written in the last 60 seconds;
+  - `sha256(first line of stdin)` equals the file's contents (constant-time compare).
+  On a match it deletes the file (single use) before writing, and appends ` (owner)` to the note. Without `--owner` nothing changes: the owner-only phrases are still refused.
+- **Why this design.** An allowlisted command can't meet it: delivering the nonce needs a pipe, which makes a compound command that prompts; redirecting the nonce file itself (`< owner-nonce`) gives a regular file, not a pipe, and holds only the hash, whose hash doesn't match; and no allowlisted command writes into `~/lcs-private/command-centre/`. The nonce exists only in the app's memory and the pipe, for under a second. An environment token (`CC_OWNER_TOKEN`) was the alternative, but the script would still need a stored secret to compare it with, and an env prefix on the command line is easier to forge than a pipe plus a file. **Residual risk (accepted, as in the threat model):** a command the owner approves at a prompt, or any process running as the owner, can write its own nonce file and pipe the matching nonce. Such a process could edit the ledger directly anyway.
+- **Singer confirm and settle, Ads apply:** no allowlist entry matches `singer_invoices.py confirm|settled` or any `scripts/ads/*.py --apply`, and no allowlisted command reaches them (argparse subcommands; no allowlisted script calls them). `tests/test_prompt_allowlist.py`'s NEVER list grows to cover them, and the `--owner` forms that the allowlist can't exclude are listed as SCRIPT_GUARDED, each tested to be refused by the script without the nonce.
+- **The app's own argv lists** (`tests/test_cc_actions.py`): each registered action's argv, written as Claude would type it, must not be allowlisted, unless the action is on an explicit list with its reason: `refresh-data` (read-only; `dashboard.py` is allowlisted for the scheduled prompts), `singer-withdrawn` (the enquiry assistant may already withdraw a mis-sent invoice) and `resolve-hand-check` (allowlisted by `--note *`, refused by the script without the nonce).
+
+- [ ] **Step 1: Tests first** (`tests/test_check_payments.py`): `--owner` with no nonce file, a nonce file but stdin from `/dev/null` or a redirected file (even the nonce file itself), the wrong nonce, an old file (over 60 seconds), a group-readable file or a symlink are all refused and leave the ledger unchanged; the right nonce over a pipe writes `"<text> (owner)"` once and deletes the file; a second use is refused. Without `--owner`, the owner-only phrases are still refused.
+- [ ] **Step 2: Implement** `owner_confirmed()` in `check_payments.py`, and `--owner` in `main()`.
+- [ ] **Step 3:** Extend `tests/test_prompt_allowlist.py`: NEVER gains `singer_invoices.py confirm` and `settled` forms and three `scripts/ads/*.py --apply` forms; SCRIPT_GUARDED lists `--note X "paid in full 2026-09-28" --owner` and `--reminded X --note X "refunded 2026-09-28" --owner`.
+
+### Task 3.2: The registry (`command_centre/actions.py`), test-first
+
+- Each action: `name`, `validate(raw) -> cleaned` (strict: a dict of strings, unknown keys refused, every field checked against a pattern or a fixed choice and against the current private data), `preview(cleaned) -> str` (plain English, then `Runs: <argv as shown>`; this is the `auth.Action` summary the passkey challenge binds, so the challenge covers the exact command), `argv(cleaned) -> list[str]` (`sys.executable`, a fixed absolute script path under the repo, validated arguments), `passkey` (True for all but `todo-tick` and `refresh-data`), `timeout`.
+- **Runner:** `subprocess.run(argv, shell=False, cwd=REPO, env=os.environ minus every CC_* variable, capture_output=True, timeout=…)`, stdin `/dev/null` except for the owner nonce. One action at a time (a lock). No retries.
+- **Output:** stdout and stderr joined, scrubbed (lcs_mcp's approach: URLs become `<url>`; plus `token=…`-style values and long token-shaped strings become `<redacted>`, and any run of six or more digits becomes `••••••`), and trimmed to the last 6,000 characters. The audit keeps only the sha256 of the raw output.
+- **Audit:** `audit.jsonl` (mode 600, append-only) gets a `started` line before a script runs and a result line after: `at`, `login`, `action`, `summary`, `input` (the cleaned fields), `result` (`ok`, `failed`, `refused: <reason>`), `exit_code`, `output_sha256`, `passkey` (the first 8 characters of the credential id). A refused passkey is logged too.
+- **Routes:** `POST /actions/<name>/preview` (JSON `{input}`) validates and returns `{summary, argv, passkey, options}`, where `options` are assertion options bound to `auth.Action(name, summary)`. `POST /actions/<name>/run` (JSON `{input, credential}`) validates again, rebuilds the summary from the data as it is now, calls `require_fresh_assertion(credential, action)`, then runs. Both pass the identity middleware's Host and same-origin checks. `todo-tick` keeps its form route; a registry action with no passkey (refresh) needs no credential.
+- [ ] **Step 1: Tests first** (`tests/test_cc_actions.py`): valid and invalid input for every action; the exact argv; no `shell=True` and no `os.system`/`os.popen` anywhere in `command_centre/` (AST check); a passkey is required, and a stale (over 60 seconds), replayed, other action's or other input's assertion is refused and nothing runs; audit lines written; output scrubbed; a timeout reported.
+- [ ] **Step 2: Implement.**
+
+### Task 3.3: The actions
+
+| Action | Input | argv | Passkey |
+|---|---|---|---|
+| `resolve-hand-check` | `ref` (in the ledger), `choice` (paid-in-full, deposit-kept, refunded, reinstated, cancelled, payment-checked, arranged-cash, arranged-cheque), `date` (ISO, not after today, not over two years back) | `check_payments.py --note <ref> "<phrase> <date>" --owner`, nonce on stdin. Phrases: `paid in full D`, `deposit kept D`, `refunded D`, `reinstated D`, `cancelled D`, `payment checked D`, `balance payable in cash on the day (arranged D)`, `balance payable by cheque on the day (arranged D)`, each tested against `check_payments` for what it means | yes |
+| `singer-confirm` | `invoice` (a 12-letter key derived from the message id, so no long digit run reaches a page; must name one stored invoice with bank details not yet confirmed) | `singer_invoices.py confirm <message id>` | yes |
+| `singer-settled` | `invoice` (open), `date` (ISO, not after today) | `singer_invoices.py settled <message id> <date>` | yes |
+| `singer-withdrawn` | `invoice` (unpaid, not withdrawn), `reason` (`^[a-z][a-z-]{0,19}$`) | `singer_invoices.py withdrawn <message id> <reason>` | yes |
+| `refresh-data` | none | `scripts/reports/dashboard.py`, then the app clears its bank and Starling caches | no (same-origin only) |
+| `ads-validate` | `proposal` (an id in `proposals/`) | `scripts/ads/<name>.py` (the scripts' default run is validate-only) | yes |
+| `ads-apply` | `proposal` | `scripts/ads/<name>.py --apply` | yes, a second tap |
+| `approve-books-import` | none | no script: writes `approvals/books-import-2026.json` | yes |
+| `todo-tick` | as phase 2 | local record | no |
+
+- **Ads proposals:** `~/lcs-private/command-centre/proposals/<id>.json`, `{id, kind: "ads", title, summary, script_path, created}`, written by the Monday review in future. Refused unless: the file is a regular file (no symlink), owned by this user, mode exactly 600, its `id` matches the file name (`^[a-z0-9][a-z0-9-]{0,63}$`), `kind` is `ads`, `script_path` matches `^scripts/ads/[a-z0-9_]+\.py$` and resolves inside `scripts/ads/` without a symlink, and git says it is tracked and unmodified (`git ls-files --error-unmatch`, an empty `git status --porcelain`), with its blob id read from `git rev-parse HEAD:<path>`. `ads-validate` records `{blob, sha256 of the raw output}` for the proposal (exit 0 only, kept 15 minutes, in memory); `ads-apply` is refused without that record or when the blob changed, and its summary names the proposal, the blob and the validate output's hash, so the second passkey tap is bound to the output the owner saw. After a successful apply the app writes `proposals/<id>.applied` (mode 600) and the proposal is no longer offered. The scripts keep their own £5 cap and write `logs/ads-changes.md` themselves.
+- **Books import approval:** refused unless `~/lcs-private/books-import-2026.json` (the dry run, MANUAL-ACTIONS §20) exists; the summary names its sha256 and entry count; the record `{approved_at, login, passkey, dry_run_sha256, entries, instruction}` is written once (mode 600, directory 700). Phase 4's chat, or a session the owner starts, acts on it and must check the dry run's hash still matches.
+- **Where:** hand checks on Today, Money and each booking's timeline; singer confirm, settle and withdraw on Singers and on the singer rows of Today and Money; ads proposals on Marketing, counted on Today with the Books approval; Refresh data now on Health.
+- [ ] Tests: every action's valid and invalid input and exact argv; the ads path checks (outside `scripts/ads/`, a symlink, untracked, modified, wrong mode, id mismatch: each refused); apply without a validate, after the blob changed, or twice: refused; one real run of `check_payments.py --note … --owner` through the full route against a temp ledger.
+
+### Task 3.4: UI
+
+- [ ] `static/actions.js` (no inline code): a button in a `form.cc-action` posts the form's fields to `/actions/<name>/preview`, shows a `<dialog>` with the plain-English summary and the argv, then **Approve with Face ID or Touch ID** (`navigator.credentials.get` with the returned options, through `passkey.js`'s helpers, which it now exposes as `window.LCSPasskey`), then the result: exit code and the scrubbed output. A result may offer a next step (validate, then apply).
+- [ ] `GET /activity`: `audit.jsonl`, newest first, the last 1,000 lines, filterable by action, result and text; any six-digit run masked; a malformed line skipped.
+
+### Task 3.5: Visual check and PR
+
+- [ ] Fake data on `127.0.0.1:8795` with the dev login: the dialogs up to the passkey step (a dev browser has no passkey), at 390px and 1280px; the assertion is covered by the unit tests with a software authenticator. Stop the server.
+- [ ] Every `tests/test_*.py`; commit; PR; don't merge.
 
 ## Phase 4: chat (expand before building)
 
@@ -242,7 +309,8 @@ Config, `~/lcs-private/command-centre/config.json` (mode 600):
 
 - **Task 4.1 `chat.py`.** `claude-agent-sdk` with `cwd=REPO` and the repo's `.claude/settings.json` and hooks; a permission callback that turns any tool call outside the allowlist into an approve/deny card; approving needs a passkey bound to the card's summary.
 - **Task 4.2 Streaming.** Server-sent events to `static/chat.js`; a stop button; a conversation list stored under `~/lcs-private/command-centre/chats/`.
-- **Task 4.3 Quick prompts** and the queue for approved instructions (Books import, page fixes) from phase 3.
+- **Task 4.3 Quick prompts** and the queue for approved instructions: the Books import approval record from phase 3 (`approvals/books-import-2026.json`, acted on only while the dry run's hash matches), page fixes.
+- **Task 4.4 Run a scheduled task now** (moved from phase 3): the chat asks Claude to run the task's prompt, under the repo's guards.
 - Tests: a crashed chat leaves the other pages working; a denied card never runs the tool.
 
 ## Phase 5: PWA, push, drafts inbox, quote calculator, backups (expand before building)
@@ -251,7 +319,8 @@ Config, `~/lcs-private/command-centre/config.json` (mode 600):
 - **Task 5.2 Push.** VAPID keys in the Keychain; `events.jsonl` watcher; `scripts/bookings/cc_event.py` (allowlisted) for the scheduled prompts; payload has a title and a first name only (tested).
 - **Task 5.3 Drafts inbox.** From run summaries and a Zoho drafts read; "open in Zoho"; local sent/discarded marks.
 - **Task 5.4 Quote calculator.** Prices parsed as `assistant_io.py prices` does; copyable wording in Luca's style.
-- **Task 5.5 Backups.** Nightly `tar` + `age` of `~/lcs-private`, 14 kept, to iCloud Drive `LCS-backups/`; the health page warns after 36 hours; a documented restore.
+- **Task 5.0 Refresh job** (moved from phase 3's Task 3.0): `jobs.py` writes `cache/{ads,ga4,gsc,books,drafts,calendar}.json` every 30 minutes, 07:00 to 22:00; a failing refresher keeps the last good file and records the error type.
+- **Task 5.5 Backups** (with "Back up now", moved from phase 3). Nightly `tar` + `age` of `~/lcs-private`, 14 kept, to iCloud Drive `LCS-backups/`; the health page warns after 36 hours; a documented restore.
 - **Task 5.6 Security review** by a separate agent, adversarially, before go-live of the actions.
 
 ---
