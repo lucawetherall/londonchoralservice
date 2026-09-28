@@ -38,6 +38,10 @@ API = "https://api.starlingbank.com"
 KEYCHAIN_SERVICE = "lcs-starling-read"
 PRIVATE = Path(os.environ.get("LCS_PRIVATE_DIR", Path.home() / "lcs-private"))
 LONDON = ZoneInfo("Europe/London")
+# Invoices and booking confirmations (make_booking_docs.py), in iCloud Drive so they are on every device.
+# LCS_INVOICES_DIR overrides it for tests only; make_booking_docs.py, imap_draft.py and the Books guard
+# use the fixed path.
+ICLOUD_INVOICES = Path.home() / "Library" / "Mobile Documents" / "com~apple~CloudDocs" / "LCS-invoices"
 _KEYS = {}
 LEDGER = Path(os.environ.get("LCS_BOOKINGS_CSV", PRIVATE / "bookings.csv"))
 

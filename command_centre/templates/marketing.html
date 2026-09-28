@@ -13,22 +13,9 @@
     {{ m.failed(chart) }}
     {% set c = chart.value if chart.ok else chart.stale %}
     {% if c %}
-    <figure class="chart">
-      <svg viewBox="0 0 {{ c.width }} {{ c.height }}" role="img" aria-labelledby="chart-title chart-desc" preserveAspectRatio="xMidYMid meet">
-        <title id="chart-title">Weekly Ads spend (bars) and clicks (line)</title>
-        <desc id="chart-desc">The last {{ c.bars|length }} full weeks; the highest week's spend was {{ c.max_spend|gbp }}, the most clicks {{ c.max_clicks }}.</desc>
-        <line class="axis" x1="{{ c.left }}" y1="{{ c.base }}" x2="{{ c.right }}" y2="{{ c.base }}"></line>
-        <line class="grid" x1="{{ c.left }}" y1="{{ c.top }}" x2="{{ c.right }}" y2="{{ c.top }}"></line>
-        <text class="tick" x="{{ c.left - 6 }}" y="{{ c.top + 4 }}" text-anchor="end">{{ c.max_spend|gbp }}</text>
-        <text class="tick" x="{{ c.left - 6 }}" y="{{ c.base + 4 }}" text-anchor="end">£0</text>
-        {% for b in c.bars %}
-        <rect class="bar" x="{{ b.x }}" y="{{ b.y }}" width="{{ b.w }}" height="{{ b.h }}" rx="3"><title>{{ b.title }}</title></rect>
-        <text class="tick" x="{{ b.lx }}" y="{{ c.label_y }}" text-anchor="middle">{{ b.label }}</text>
-        {% endfor %}
-        <polyline class="line" points="{{ c.line }}"></polyline>
-      </svg>
-      <figcaption class="legend"><span class="key key-bar"></span> spend <span class="key key-line"></span> clicks (scaled to the tallest week)</figcaption>
-    </figure>
+    {{ m.bar_line_chart(c, "chart", "Weekly Ads spend (bars) and clicks (line)",
+       "The last " ~ (c.bars|length) ~ " full weeks; the highest week's spend was " ~ (c.max_spend|gbp) ~ ", the most clicks " ~ c.max_clicks ~ ".",
+       "£0", "spend", "clicks (scaled to the tallest week)") }}
     {% elif chart.ok %}<p class="muted">No weekly figures in the summary.</p>{% endif %}
   </article>
 
@@ -119,8 +106,87 @@
   {% elif proposals.ok %}<p class="muted">No change sets waiting. The Monday review will write them here.</p>{% endif %}
 </section>
 
-<section class="card">
-  <h2>In the Monday report</h2>
-  <p class="muted">Flagged search terms, the Search Console shortlist and GA4 leads are in the Monday report: see <a href="/reports">Reports</a>.</p>
+{% set mk = market.value if market.ok else market.stale %}
+<section class="card{% if mk and (mk.stale or mk.terms) %} card-warn{% endif %}" id="search-terms">
+  <h2>Search terms to check</h2>
+  {{ m.failed(market) }}
+  {% if mk %}
+  {% if mk.terms %}
+  <table class="table">
+    <thead><tr><th>Term</th><th>Campaign</th><th class="num">Clicks 7 days</th><th class="num">Clicks 28 days</th><th class="num">Cost 7 days</th><th class="num">Cost 28 days</th><th>Why flagged</th></tr></thead>
+    <tbody>
+    {% for t in mk.terms %}
+      <tr>
+        <td data-label="Term">{{ t.term }}</td>
+        <td data-label="Campaign">{{ t.campaign }}</td>
+        <td data-label="Clicks 7 days" class="num">{{ t.clicks_7 }}</td>
+        <td data-label="Clicks 28 days" class="num">{{ t.clicks_28 }}</td>
+        <td data-label="Cost 7 days" class="num">{{ t.cost_7|gbp }}</td>
+        <td data-label="Cost 28 days" class="num">{{ t.cost_28|gbp }}</td>
+        <td data-label="Why flagged">{{ t.why }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% else %}<p class="muted">No search term flagged in the last 28 days{% if mk.looked_at %} ({{ mk.looked_at }} looked at){% endif %}.</p>{% endif %}
+  <p class="muted">Flagged: solo-singer words (singer, soloist, solo, vocalist: choirs of four or more only), other words that aren't a hiring search, and terms with no choir or hiring word. Costliest first, at most 30. Nothing changes here: negatives are proposed in the Monday review and applied only after you approve them.</p>
+  {{ m.marketing_synced(mk) }}
+  {% elif market.ok %}{{ m.marketing_not_synced() }}{% endif %}
+</section>
+
+<section class="card" id="shortlist">
+  <h2>Search Console shortlist{% if mk and mk.shortlist.start and mk.shortlist.end %} <span class="muted">{{ mk.shortlist.start|day }} to {{ mk.shortlist.end|day }}</span>{% endif %}</h2>
+  {{ m.failed(market) }}
+  {% if mk %}
+  {% if mk.shortlist["items"] %}
+  <table class="table">
+    <thead><tr><th>Query</th><th>Page</th><th class="num">Position</th><th class="num">Impressions</th><th class="num">Clicks</th><th>Suggested fix</th></tr></thead>
+    <tbody>
+    {% for s in mk.shortlist["items"] %}
+      <tr>
+        <td data-label="Query">{{ s.query }}</td>
+        <td data-label="Page" class="mono">{{ s.page }}</td>
+        <td data-label="Position" class="num">{{ "–" if s.position is none else "%.1f"|format(s.position) }}</td>
+        <td data-label="Impressions" class="num">{{ s.impressions }}</td>
+        <td data-label="Clicks" class="num">{{ s.clicks }}</td>
+        <td data-label="Suggested fix">{{ s.fix }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% else %}<p class="muted">No hiring-intent query at positions 8 to 20 with 20 or more impressions.</p>{% endif %}
+  <p class="muted">Hiring-intent queries just off the first page over the last 28 days of final data, by impressions, at most 20. The Monday review prints the same list on the first Monday of the month.</p>
+  {{ m.marketing_synced(mk) }}
+  {% elif market.ok %}{{ m.marketing_not_synced() }}{% endif %}
+</section>
+
+<section class="card" id="leads">
+  <h2>GA4 leads by week</h2>
+  {{ m.failed(market) }}
+  {% if mk %}
+  {% set lc = mk.chart %}
+  {% if lc %}
+  {{ m.bar_line_chart(lc, "leads", "Weekly form enquiries (bars) and WhatsApp or email taps (line)",
+     "The last " ~ (lc.bars|length) ~ " full weeks; the most form enquiries in a week was " ~ lc.top_label ~ ", the most taps " ~ lc.max_line ~ ".",
+     "0", "form enquiries", "WhatsApp and email taps (scaled to the busiest week)") }}
+  <table class="table">
+    <thead><tr><th>Week of</th><th class="num">Form</th><th class="num">WhatsApp</th><th class="num">Email</th><th class="num">Call</th></tr></thead>
+    <tbody>
+    {% for w in mk.lead_weeks|reverse %}
+      <tr>
+        <td data-label="Week of">{{ w.week_start|day }}</td>
+        <td data-label="Form" class="num">{{ w.form }}</td>
+        <td data-label="WhatsApp" class="num">{{ w.whatsapp }}</td>
+        <td data-label="Email" class="num">{{ w.email }}</td>
+        <td data-label="Call" class="num">{{ w.call }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  <p class="muted">GA4 events, as the Monday review counts them: a form enquiry is a <span class="mono">generate_lead</span> sent after Web3Forms accepts it; WhatsApp, email and call are <span class="mono">contact_click</span> taps, not enquiries.{% if mk.extra.form_error %} Form errors in these weeks: {{ mk.extra.form_error }}.{% endif %}{% if mk.extra.message or mk.extra.other %} Other contact events: {{ mk.extra.message + mk.extra.other }}.{% endif %}</p>
+  {% if mk.thresholded %}<p><span class="badge warn">thresholded</span> GA4 withheld small numbers, so low weeks may show as zero; the Ads conversions in the Monday report are the check.</p>{% endif %}
+  {% else %}<p class="muted">No weekly GA4 figures in the cache.</p>{% endif %}
+  {{ m.marketing_synced(mk) }}
+  {% elif market.ok %}{{ m.marketing_not_synced() }}{% endif %}
 </section>
 {% endblock %}

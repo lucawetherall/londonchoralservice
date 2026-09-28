@@ -189,12 +189,12 @@ def test_books_flags_follow_appendix_a_6g():
         ("2001", "Books paid, Starling not matched"),
         ("2003", "Starling matched, Books unpaid"),
         ("2004", "Starling paid in full, Books part-paid"),
-        ("2005", "Books draft not sent (>2 days)"),
+        ("2005", "Invoice email not sent (>2 days): check Zoho Drafts"),
         ("2010", "Starling matched, Books unpaid"),
     }, got
     # Starling not checked: the two comparisons are skipped, as 6g skips them; the draft rule stays
     flags = models.books_flags(invoices, ledger, bookings, TODAY, False)
-    assert {(f["ref"], f["text"]) for f in flags} == {("2005", "Books draft not sent (>2 days)")}
+    assert {(f["ref"], f["text"]) for f in flags} == {("2005", "Invoice email not sent (>2 days): check Zoho Drafts")}
     # INV-prefixed numbers match the ledger ref (check_payments.norm_ref)
     inv = books_invoice("INV2001", "paid", "2026-09-01", 100.0, 0.0)
     assert models.books_flags([inv], [{"booking_ref": "2001", "notes": ""}], [{"ref": "2001", "state": "DEPOSIT_SEEN"}],
@@ -248,7 +248,7 @@ def test_today_flags_books_disagreements():
     fixtures()
     c = make(FakeBank())
     base = text_of(page(c, "/"))
-    assert "1212" in base and "Books draft not sent (>2 days)" in base, base[:3000]
+    assert "1212" in base and "Invoice email not sent (>2 days): check Zoho Drafts" in base, base[:3000]
     m = re.search(r"(\d+) things? needs? you", base)
     fixtures(books=False)
     without = text_of(page(make(FakeBank()), "/"))
@@ -286,7 +286,7 @@ def test_books_flags_compare_the_ledger_with_books():
     # the existing rules link to the ledger's own ref, not the Books number
     inv = books_invoice("INV2001", "draft", "2026-09-01", 100.0, 100.0)
     f = models.books_flags([inv], [row("2001", "2026-09-01")], [], TODAY, False)
-    assert f == [{"ref": "INV2001", "text": "Books draft not sent (>2 days)", "tone": "warn",
+    assert f == [{"ref": "INV2001", "text": "Invoice email not sent (>2 days): check Zoho Drafts", "tone": "warn",
                   "href": "/bookings/2001"}], f
 
 
@@ -651,6 +651,79 @@ def test_quote_page():
     assert r.status_code == 200 and not (Path(TMP) / "command-centre" / "quote").exists()
 
 
+# ---------------------------------------------------------------- marketing panels (cc_sync.py marketing)
+
+
+def marketing_json(generated_at="2026-09-28T07:00:00+01:00"):
+    weeks = [{"week_start": (datetime.date(2026, 8, 3) + datetime.timedelta(weeks=i)).isoformat(), "form": i % 3,
+              "whatsapp": i, "email": 1, "call": 0, "other": 0, "message": 0, "form_error": 1 if i == 5 else 0}
+             for i in range(8)]
+    return {"generated_at": generated_at,
+            "search_terms": {"looked_at": 12, "items": [
+                {"term": "wedding singer london", "campaign": "Weddings", "clicks_7": 2, "cost_7": 3.1, "clicks_28": 6,
+                 "cost_28": 8.0, "impressions_28": 45, "why": "solo-singer search ('singer'): choirs of four or more only"},
+                {"term": "<script>alert(1)</script> lyrics", "campaign": "Funerals", "clicks_7": 0, "cost_7": 0,
+                 "clicks_28": 1, "cost_28": 0.9, "impressions_28": 4, "why": "not a hiring search ('lyrics')"}]},
+            "shortlist": {"start": "2026-08-29", "end": "2026-09-25", "items": [
+                {"query": "funeral choir hire london", "page": "/funerals.html", "position": 11.2, "impressions": 60,
+                 "clicks": 1, "fix": "add an internal link from a related page with anchor 'funeral choir hire london'"},
+                {"query": "odd page", "page": "javascript:alert(1)", "position": 9, "impressions": 20, "clicks": 0,
+                 "fix": "x"}]},
+            "leads": {"weeks": weeks, "thresholded": True}}
+
+
+def test_marketing_panels_render_from_the_cache():
+    fixtures()
+    write(CACHE / "marketing.json", json.dumps(marketing_json()))
+    out = page(make(FakeBank()), "/marketing")
+    t = text_of(out)
+    assert "Still to come" not in t
+    assert "Search terms to check" in t and "wedding singer london" in t and "Weddings" in t and "£8.00" in t
+    assert "solo-singer search ('singer'): choirs of four or more only" in t
+    assert "negatives are proposed in the Monday review and applied only after you approve them" in t
+    assert "<script>alert(1)" not in out and "&lt;script&gt;alert(1)&lt;/script&gt; lyrics" in out
+    assert "Search Console shortlist" in t and "Sat 29 Aug 2026 to Fri 25 Sep 2026" in t
+    assert "funeral choir hire london" in t and "/funerals.html" in t and "11.2" in t
+    assert "javascript:" not in out  # a page that isn't a site path shows as "/"
+    assert "GA4 leads by week" in t and 'aria-labelledby="leads-title leads-desc"' in out
+    assert out.count('<rect class="bar"') == 8 and "week of 21 Sep: 1 form enquiry, 8 WhatsApp or email taps" in out
+    assert "Weekly form enquiries (bars) and WhatsApp or email taps (line)" in t
+    assert "Form errors in these weeks: 1." in t and "thresholded" in t
+    assert t.count("As of Mon 28 Sep 2026, 07:00") == 3, t
+    assert "More than 36 hours old" not in t and "Not synced yet" not in t
+    assert "couldn't load" not in t
+
+
+def test_marketing_panels_not_synced_and_stale():
+    fixtures()
+    t = text_of(page(make(FakeBank()), "/marketing"))
+    assert t.count("Not synced yet: the refresh job writes this once a day") == 3, t
+    assert "Search terms to check" in t and "GA4 leads by week" in t
+    write(CACHE / "marketing.json", json.dumps(marketing_json("2026-09-26T21:29:00+01:00")))  # 36 h 1 min old
+    t = text_of(page(make(FakeBank()), "/marketing"))
+    assert t.count("More than 36 hours old") == 3 and "Not synced yet" not in t, t
+    write(CACHE / "marketing.json", json.dumps(marketing_json("2026-09-26T21:31:00+01:00")))  # 35 h 59 min
+    assert "More than 36 hours old" not in text_of(page(make(FakeBank()), "/marketing"))
+    write(CACHE / "marketing.json", json.dumps(marketing_json("not a time")))
+    t = text_of(page(make(FakeBank()), "/marketing"))
+    assert "As of an unknown time" in t and "More than 36 hours old" in t
+    write(CACHE / "marketing.json", "[1, 2]")  # not an object: the panels say so and the page still renders
+    t = text_of(page(make(FakeBank()), "/marketing"))
+    assert "couldn't load (ValueError)" in t and "Ads change sets to approve" in t, t
+    empty = dict(marketing_json(), search_terms={"items": [], "looked_at": 7}, shortlist={"start": "2026-08-29",
+                 "end": "2026-09-25", "items": []}, leads={"weeks": [], "thresholded": False})
+    write(CACHE / "marketing.json", json.dumps(empty))
+    t = text_of(page(make(FakeBank()), "/marketing"))
+    assert "No search term flagged in the last 28 days (7 looked at)" in t
+    assert "No hiring-intent query at positions 8 to 20" in t and "No weekly GA4 figures in the cache" in t
+
+
+def test_health_lists_the_marketing_cache():
+    fixtures()
+    t = text_of(page(make(FakeBank()), "/health"))
+    assert "Marketing cache (cc_sync.py marketing, daily)" in t
+
+
 # ---------------------------------------------------------------- background refresh
 
 
@@ -661,7 +734,7 @@ class Recorder:
     def __call__(self, argv, **kw):
         self.calls.append((argv, kw))
         self.locked.append(actions._LOCKS["refresh"].locked())
-        what = "books" if argv[-1] == "books" else "singer-paid" if argv[-1] == "--apply" else "dashboard"
+        what = {"books": "books", "--apply": "singer-paid", "marketing": "marketing"}.get(argv[-1], "dashboard")
         f = self.fail.get(what)
         if isinstance(f, BaseException):
             raise f
@@ -705,7 +778,8 @@ def test_refresh_job_runs_its_scripts_and_clears_the_bank_cache():
     assert [c[0][1:] for c in rec.calls] == [[str(Path(ROOT) / "scripts/bookings/singer_invoices.py"), "paid", "--apply"],
                                              [str(Path(ROOT) / "scripts/reports/dashboard.py")],
                                              [str(Path(ROOT) / "scripts/reports/cc_sync.py"), "books"]]
-    assert jobs.SCRIPTS[0] == ("singer-paid", ["scripts/bookings/singer_invoices.py", "paid", "--apply"], 180)
+    assert jobs.SCRIPTS[0] == ("singer-paid", ["scripts/bookings/singer_invoices.py", "paid", "--apply"], 180, False)
+    assert jobs.SCRIPTS[-1] == ("marketing", ["scripts/reports/cc_sync.py", "marketing"], 300, True)
     for argv, kw in rec.calls:
         assert argv[0] == sys.executable and kw["shell"] is False and 0 < kw["timeout"] <= 600
         assert kw["env"]["LCS_PRIVATE_DIR"] == TMP and not any(k.startswith("CC_") for k in kw["env"])
@@ -713,6 +787,52 @@ def test_refresh_job_runs_its_scripts_and_clears_the_bank_cache():
     assert cleared == [1] and all(rec.locked)
     assert not actions._LOCKS["refresh"].locked()
     assert audit_lines() == []  # a clean run is not logged
+
+
+def test_refresh_job_runs_the_daily_scripts_in_the_first_pass_of_each_day_only():
+    clean()
+    rec = Recorder()
+    job = jobs.RefreshJob(clear=lambda: None, runner=rec)
+    daily = [what for what, _, _, is_daily in jobs.SCRIPTS if is_daily]
+    assert daily == ["marketing"]
+    # a fake clock over two days: every pass runs the half-hourly scripts, the 07:00 pass alone adds marketing
+    t, passes = at(0, 0), []
+    while t < at(0, 0, day=30):
+        before = len(rec.calls)
+        if job.tick(t):
+            passes.append((t, [c[0][-1] for c in rec.calls[before:]]))
+        t += datetime.timedelta(minutes=1)
+    with_marketing = [p for p, argv in passes if "marketing" in argv]
+    assert with_marketing == [at(7, 0), at(7, 0, day=29)], with_marketing
+    assert len(passes) == 62 and all(len(argv) == (4 if p.time() == datetime.time(7, 0) else 3) for p, argv in passes)
+    first = next(argv for p, argv in passes if p == at(7, 0))
+    assert first == ["--apply", str(Path(ROOT) / "scripts/reports/dashboard.py"), "books", "marketing"], first
+    # the service started at 14:10: its first pass that day runs marketing, the next ones don't
+    rec = Recorder()
+    job = jobs.RefreshJob(clear=lambda: None, runner=rec)
+    assert job.tick(at(14, 10)) and rec.calls[-1][0][-2:] == [str(Path(ROOT) / "scripts/reports/cc_sync.py"),
+                                                              "marketing"]
+    n = len(rec.calls)
+    assert job.tick(at(14, 30)) and len(rec.calls) == n + 3
+    # a first slot skipped as busy (a manual refresh) leaves marketing for the next pass
+    rec = Recorder()
+    job = jobs.RefreshJob(clear=lambda: None, runner=rec)
+    assert actions._LOCKS["refresh"].acquire(timeout=1)
+    try:
+        assert job.tick(at(7, 0)) and rec.calls == []
+    finally:
+        actions._LOCKS["refresh"].release()
+    assert job.tick(at(7, 30)) and [c[0][-1] for c in rec.calls][-1] == "marketing"
+    # a failed marketing sync is logged by type and not retried until tomorrow
+    rec = Recorder(fail={"marketing": 1})
+    job = jobs.RefreshJob(clear=lambda: None, runner=rec)
+    assert job.run_once(at(7, 0)) == "failed"
+    assert audit_lines()[-1]["summary"] == "Background refresh: marketing"
+    assert audit_lines()[-1]["result"] == "failed: NonZeroExit"
+    assert job.run_once(at(7, 30)) == "ok" and "marketing" not in [c[0][-1] for c in rec.calls[4:]]
+    # run_once() with no clock (a direct call) never runs a daily script
+    rec = Recorder()
+    assert jobs.RefreshJob(clear=lambda: None, runner=rec).run_once() == "ok" and len(rec.calls) == 3
 
 
 def test_refresh_job_failures_are_isolated_and_logged_by_type_only():

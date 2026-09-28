@@ -283,6 +283,7 @@ def books_summary(cache, ledger_rows=None):
         numbers = sorted(str(i.get("number", "")) for i in invoices if keep(i))
         return [{"number": n, "href": ledger_href(n, ledger_rows)} for n in numbers]
     return {"totals": cache.get("totals") or {}, "generated_at": when,
+            "bills_read": cache.get("bills_read") is not False,  # false on the free Books plan (no bills)
             "drafts": listed(lambda i: i.get("status") == "draft"),
             "overdue": listed(lambda i: i.get("status") == "overdue" and float(i.get("balance") or 0) > 0)}
 
@@ -309,7 +310,7 @@ def books_timeline(ref, invoices):
 def books_flags(invoices, ledger_rows, bookings, today, bank_checked):
     """The Appendix A step 6g disagreements, for Today: [{ref, text, tone}].
 
-    - a Books draft more than 2 days old: "Books draft not sent (>2 days)";
+    - a Books draft more than 2 days old: "Invoice email not sent (>2 days): check Zoho Drafts";
     - Books paid, but Starling hasn't matched the full fee (the state isn't PAID_IN_FULL and the notes have no
       "paid in full" date): "Books paid, Starling not matched";
     - Starling matched a payment (DEPOSIT_SEEN, PAID_IN_FULL, or a "paid in full" note) but Books shows the invoice
@@ -346,7 +347,7 @@ def books_flags(invoices, ledger_rows, bookings, today, bank_checked):
             flag(number, "in Books, not in the ledger", "warn")
         if status == "draft":
             if made and (today - made).days > DRAFT_DAYS:
-                flag(number, "Books draft not sent (>2 days)", "warn")
+                flag(number, "Invoice email not sent (>2 days): check Zoho Drafts", "warn")
             continue
         if not bank_checked or key not in rows:
             continue
@@ -649,6 +650,31 @@ def season_table(summary):
             "total": clean(dict(season.get("total") or {}, campaign="Total"))}
 
 
+def bar_line_chart(pts, bar_title, top_label, width=480, height=210):
+    """Geometry for an inline SVG of bars and a line, one slot per (date, bar value, line value), oldest first;
+    the line is scaled to its own largest value. `bar_title(day, bar, line)` gives each bar's tooltip and
+    `top_label(largest bar)` the top tick. None when there are no points."""
+    pts = sorted(pts)
+    if not pts:
+        return None
+    left, right, top, bottom = 62, 12, 14, 30
+    plot_w, plot_h = width - left - right, height - top - bottom
+    top_bar = max(p[1] for p in pts) or 1.0
+    top_line = max(p[2] for p in pts) or 1.0
+    slot = plot_w / len(pts)
+    bars, line = [], []
+    for i, (day, value, other) in enumerate(pts):
+        h = plot_h * value / top_bar
+        x = left + i * slot
+        bars.append({"x": round(x + slot * 0.15, 1), "y": round(top + plot_h - h, 1), "w": round(slot * 0.7, 1),
+                     "h": round(h, 1), "label": f"{day.day} {day:%b}", "lx": round(x + slot / 2, 1),
+                     "title": bar_title(day, value, other)})
+        line.append(f"{round(x + slot / 2, 1)},{round(top + plot_h - plot_h * other / top_line, 1)}")
+    return {"width": width, "height": height, "bars": bars, "line": " ".join(line), "top": top,
+            "base": top + plot_h, "left": left, "right": width - right, "max_bar": top_bar,
+            "max_line": int(top_line), "top_label": top_label(top_bar), "label_y": height - 10}
+
+
 def weekly_chart(weeks, width=480, height=210):
     """Geometry for an inline SVG: bars of weekly spend and a line of clicks, oldest week first."""
     pts = []
@@ -657,25 +683,87 @@ def weekly_chart(weeks, width=480, height=210):
         spend, clicks = _num(w.get("spend_gbp")), _num(w.get("clicks"))
         if day and spend is not None:
             pts.append((day, spend, clicks or 0))
-    pts.sort()
-    if not pts:
-        return None
-    left, right, top, bottom = 62, 12, 14, 30
-    plot_w, plot_h = width - left - right, height - top - bottom
-    top_spend = max(p[1] for p in pts) or 1.0
-    top_clicks = max(p[2] for p in pts) or 1.0
-    slot = plot_w / len(pts)
-    bars, line = [], []
-    for i, (day, spend, clicks) in enumerate(pts):
-        h = plot_h * spend / top_spend
-        x = left + i * slot
-        bars.append({"x": round(x + slot * 0.15, 1), "y": round(top + plot_h - h, 1), "w": round(slot * 0.7, 1),
-                     "h": round(h, 1), "label": f"{day.day} {day:%b}", "lx": round(x + slot / 2, 1),
-                     "title": f"week of {day.day} {day:%b}: £{spend:,.2f}, {int(clicks)} clicks"})
-        line.append(f"{round(x + slot / 2, 1)},{round(top + plot_h - plot_h * clicks / top_clicks, 1)}")
-    return {"width": width, "height": height, "bars": bars, "line": " ".join(line), "top": top,
-            "base": top + plot_h, "left": left, "right": width - right, "max_spend": top_spend,
-            "max_clicks": int(top_clicks), "label_y": height - 10}
+    c = bar_line_chart(pts, lambda d, spend, clicks: f"week of {d.day} {d:%b}: £{spend:,.2f}, {int(clicks)} clicks",
+                       lambda most: f"£{most:,.2f}", width, height)
+    if c:
+        c.update(max_spend=c["max_bar"], max_clicks=c["max_line"])
+    return c
+
+
+# ---------------------------------------------------------------- marketing cache (cc_sync.py marketing)
+
+
+MARKETING_STALE = datetime.timedelta(hours=36)  # written once a day, in the refresh job's first pass
+LEAD_KEYS = ("form", "whatsapp", "email", "call", "other", "message", "form_error")
+
+
+def _count(value):
+    v = _num(value)
+    return int(v) if v is not None and v > 0 else 0
+
+
+def _clean(value, most):
+    return re.sub(r"[\x00-\x1f\x7f]", "", str(value or "")).strip()[:most]
+
+
+def leads_chart(weeks, width=480, height=210):
+    """Geometry for the GA4 leads chart: bars of form enquiries (generate_lead) and a line of WhatsApp and email
+    taps (contact_click), oldest week first."""
+    pts = []
+    for w in weeks or []:
+        day = to_date(str(w.get("week_start") or "")[:10])
+        if day:
+            pts.append((day, _count(w.get("form")), _count(w.get("whatsapp")) + _count(w.get("email"))))
+
+    def title(d, form, taps):
+        return (f"week of {d.day} {d:%b}: {int(form)} form enquir{'y' if form == 1 else 'ies'}, "
+                f"{int(taps)} WhatsApp or email tap{'' if taps == 1 else 's'}")
+    return bar_line_chart(pts, title, lambda most: f"{int(most)}", width, height)
+
+
+def marketing_view(cache, now):
+    """The Marketing page's three cached panels from marketing.json, every value checked: {generated_at (aware, or
+    None when unreadable), stale (over 36 hours old, or no readable time), terms, looked_at, shortlist {start, end,
+    items}, lead_weeks, chart, thresholded, extra {message, form_error, other}}."""
+    try:
+        when = datetime.datetime.fromisoformat(str(cache.get("generated_at")))
+    except ValueError:
+        when = None
+    if when is not None and when.tzinfo is None:
+        when = when.replace(tzinfo=dash.LONDON)
+    if now.tzinfo is None:
+        now = now.replace(tzinfo=dash.LONDON)
+    st = cache.get("search_terms") if isinstance(cache.get("search_terms"), dict) else {}
+    terms = []
+    for r in st.get("items") or []:
+        if isinstance(r, dict) and _clean(r.get("term"), 120):
+            terms.append({"term": _clean(r.get("term"), 120), "campaign": _clean(r.get("campaign"), 80) or "?",
+                          "clicks_7": _count(r.get("clicks_7")), "cost_7": _num(r.get("cost_7")) or 0.0,
+                          "clicks_28": _count(r.get("clicks_28")), "cost_28": _num(r.get("cost_28")) or 0.0,
+                          "why": _clean(r.get("why"), 120)})
+    sl = cache.get("shortlist") if isinstance(cache.get("shortlist"), dict) else {}
+    shortlist = []
+    for r in sl.get("items") or []:
+        if isinstance(r, dict) and _clean(r.get("query"), 120):
+            page = _clean(r.get("page"), 200)
+            shortlist.append({"query": _clean(r.get("query"), 120), "page": page if page.startswith("/") else "/",
+                              "position": _num(r.get("position")), "impressions": _count(r.get("impressions")),
+                              "clicks": _count(r.get("clicks")), "fix": _clean(r.get("fix"), 200)})
+    leads = cache.get("leads") if isinstance(cache.get("leads"), dict) else {}
+    weeks = []
+    for w in leads.get("weeks") or []:
+        day = to_date(str(w.get("week_start") or "")[:10]) if isinstance(w, dict) else None
+        if day:
+            weeks.append({"week_start": day, **{k: _count(w.get(k)) for k in LEAD_KEYS}})
+    weeks.sort(key=lambda w: w["week_start"])
+    return {"generated_at": when, "stale": when is None or now - when > MARKETING_STALE,
+            "terms": terms, "looked_at": _count(st.get("looked_at")),
+            "shortlist": {"start": to_date(str(sl.get("start") or "")[:10]),
+                          "end": to_date(str(sl.get("end") or "")[:10]), "items": shortlist},
+            "lead_weeks": weeks,
+            "chart": leads_chart([dict(w, week_start=w["week_start"].isoformat()) for w in weeks]),
+            "thresholded": bool(leads.get("thresholded")),
+            "extra": {k: sum(w[k] for w in weeks) for k in ("message", "form_error", "other")}}
 
 
 def gclid_counts(cache):

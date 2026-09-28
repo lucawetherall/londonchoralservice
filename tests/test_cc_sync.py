@@ -78,7 +78,7 @@ def test_books_cache_shape_and_totals():
     assert code == 0 and out.startswith("books: 4 invoices, 3 bills cached"), out
     data = json.loads((CACHE / "books.json").read_text())
     assert data["generated_at"] == "2026-09-28T09:30:00+01:00"
-    assert set(data) == {"generated_at", "invoices", "bills", "totals"}
+    assert set(data) == {"generated_at", "invoices", "bills", "bills_read", "totals"} and data["bills_read"] is True
     inv = {i["number"]: i for i in data["invoices"]}
     assert inv["2111"] == {"number": "2111", "status": "sent", "date": "2026-09-20", "due_date": "2026-10-05",
                            "total": 1150.0, "balance": 1150.0, "customer": "Harriet"}, inv["2111"]
@@ -93,6 +93,21 @@ def test_books_cache_shape_and_totals():
     assert {(s, t) for s, t, _ in fake.calls} == {("zoho-books-invoices", "ZohoBooks_list_invoices"),
                                                   ("zoho-books", "ZohoBooks_list_bills")}
     assert all(a["query_params"]["organization_id"] == "941014440" for _, _, a in fake.calls)
+
+
+def test_books_without_bills_on_the_free_plan_still_caches_the_invoices():
+    clear()
+    fake = FakeBooks()
+    def call(server, tool, args):
+        if tool == "ZohoBooks_list_bills":
+            raise lcs_mcp.McpError("this feature is not available in your plan")
+        return fake(server, tool, args)
+    code, out = run(cc_sync.cmd_books, call, NOW)
+    assert code == 0 and out.startswith("books: 4 invoices, no bills (not on this Books plan) cached"), out
+    assert "unpaid bills" not in out, out
+    data = json.loads((CACHE / "books.json").read_text())
+    assert data["bills_read"] is False and data["bills"] == [] and len(data["invoices"]) == 4
+    assert data["totals"]["receivables"] == 1375.5 and data["totals"]["unpaid_bills"] == 0
 
 
 def test_books_pages_through():
@@ -324,6 +339,206 @@ def test_calendar_put_is_strict():
     assert run(cc_sync.cmd_calendar_put, json.dumps([ok] * 500))[0] == 0
     assert run(cc_sync.cmd_calendar_put, json.dumps([dict(ok, summary="x" * 120, start="2026-10-03T13:00:00Z")]))[0] == 0
     assert run(cc_sync.cmd_calendar_put, "[]")[1].strip() == "calendar: 0 events cached"
+
+
+# ---------------------------------------------------------------- marketing
+# Fakes for weekly_review's Google reads: a GAQL runner (search() only) and an AuthorizedSession's post(). Nothing
+# here talks to Google.
+
+import types  # noqa: E402
+import weekly_review as wr  # noqa: E402
+
+
+def ns(**kw):
+    return types.SimpleNamespace(**kw)
+
+
+def term_row(term, campaign, clicks, cost_gbp, impressions=10, keyword="funeral choir"):
+    return ns(campaign=ns(name=campaign), search_term_view=ns(search_term=term),
+              segments=ns(keyword=ns(info=ns(text=keyword, match_type=ns(name="PHRASE")))),
+              metrics=ns(impressions=impressions, clicks=clicks, cost_micros=int(cost_gbp * 1e6), conversions=0.0))
+
+
+WEEK_TERMS = [term_row("wedding singer london", "Weddings", 2, 3.10),
+              term_row("funeral choir hire", "Funerals", 1, 1.50)]
+MONTH_TERMS = [term_row("wedding singer london", "Weddings", 5, 7.25, 40),
+               term_row("wedding singer london", "Weddings", 1, 0.75, 5, keyword="wedding choir"),  # a second keyword
+               term_row("funeral choir hire", "Funerals", 3, 4.00),
+               term_row("amazing grace lyrics", "Funerals", 1, 0.90),
+               term_row("funeral music ideas", "Funerals", 0, 0.0, 30),
+               term_row("carol singers kent", "Christmas", 2, 2.00),
+               term_row("london choral service", "Brand", 4, 1.00)]
+
+
+class FakeAds:
+    """weekly_review's GAQL runner: records each query and answers the search-term query by its date clause."""
+    def __init__(self, week=WEEK_TERMS, month=MONTH_TERMS, fail=None):
+        self.queries, self.week, self.month, self.fail = [], week, month, fail
+
+    def __call__(self, query):
+        self.queries.append(query)
+        if self.fail:
+            raise self.fail
+        assert query.lstrip().startswith("SELECT") and "FROM search_term_view" in query, query
+        return self.week if "DURING LAST_7_DAYS" in query else self.month
+
+
+class FakeResponse:
+    def __init__(self, body, status=200):
+        self.body, self.status_code, self.ok = body, status, status == 200
+
+    def json(self):
+        return self.body
+
+
+GSC_ROWS = [{"keys": ["funeral choir hire london", "https://londonchoralservice.com/funerals.html"], "clicks": 1,
+             "impressions": 60, "position": 11.2},
+            {"keys": ["wedding choir kent", "https://londonchoralservice.com/areas/kent.html?x=1"], "clicks": 0,
+             "impressions": 25, "position": 14.0},
+            {"keys": ["wedding singer", "https://londonchoralservice.com/weddings.html"], "clicks": 0,
+             "impressions": 90, "position": 12.0},  # a solo search: never on the shortlist
+            {"keys": ["choir for hire", "https://londonchoralservice.com/"], "clicks": 9, "impressions": 500,
+             "position": 3.0}]  # already on the first page
+
+
+def ga4_row(day, event, method, count):
+    return {"dimensionValues": [{"value": day}, {"value": event}, {"value": method}],
+            "metricValues": [{"value": str(count)}]}
+
+
+GA4_ROWS = [ga4_row("20260921", "generate_lead", "(not set)", 2), ga4_row("20260923", "generate_lead", "(not set)", 1),
+            ga4_row("20260922", "contact_click", "whatsapp", 3), ga4_row("20260924", "contact_click", "email", 1),
+            ga4_row("20260925", "contact_click", "call", 2), ga4_row("20260914", "form_error", "(not set)", 1),
+            ga4_row("20260803", "generate_lead", "(not set)", 1),
+            ga4_row("20260801", "generate_lead", "(not set)", 7)]  # before the first full week: not counted
+
+
+class FakeSession:
+    """AuthorizedSession.post for Search Console and GA4; records the bodies."""
+    def __init__(self, gsc=GSC_ROWS, ga4=GA4_ROWS, ga4_status=200, gsc_status=200, thresholded=False):
+        self.posts, self.gsc, self.ga4 = [], gsc, ga4
+        self.ga4_status, self.gsc_status, self.thresholded = ga4_status, gsc_status, thresholded
+
+    def post(self, url, json=None):
+        self.posts.append((url, json))
+        if "searchconsole" in url:
+            assert url.endswith("/searchAnalytics/query"), url
+            return FakeResponse({"rows": self.gsc} if self.gsc_status == 200 else
+                                {"error": {"message": "https://secret.example"}}, self.gsc_status)
+        assert url == wr.GA4_API, url
+        if self.ga4_status != 200:
+            return FakeResponse({"error": {"message": "quota for h@example.com"}}, self.ga4_status)
+        return FakeResponse({"rows": self.ga4, "metadata": {"subjectToThresholding": self.thresholded}})
+
+    def get(self, *a, **kw):
+        raise AssertionError("the marketing sync makes no GET")
+
+
+def test_marketing_cache_shape():
+    clear()
+    ads, gsc = FakeAds(), FakeSession()
+    code, out = run(cc_sync.cmd_marketing, ads, gsc, NOW)
+    assert code == 0, out
+    assert out.strip() == "marketing: 3 search terms to check, 2 shortlist queries, 4 form leads in 8 weeks cached", out
+    data = json.loads((CACHE / "marketing.json").read_text())
+    assert mode(CACHE / "marketing.json") == 0o600 and mode(CACHE) == 0o700
+    assert set(data) == {"generated_at", "search_terms", "shortlist", "leads"}
+    assert data["generated_at"] == "2026-09-28T09:30:00+01:00"  # Europe/London
+    # two search-term queries, both read-only: last 7 days as section 2, and the 28 days before today
+    assert len(ads.queries) == 2 and "DURING LAST_7_DAYS" in ads.queries[0]
+    assert "BETWEEN '2026-08-31' AND '2026-09-27'" in ads.queries[1], ads.queries[1]
+    assert not any("mutate" in q.lower() or "click_view" in q or "gclid" in q.lower() for q in ads.queries)
+    terms = data["search_terms"]["items"]
+    by = {t["term"]: t for t in terms}
+    assert "funeral choir hire" not in by and "carol singers kent" not in by and "london choral service" not in by
+    w = by["wedding singer london"]
+    assert w == {"term": "wedding singer london", "campaign": "Weddings", "clicks_7": 2, "cost_7": 3.1,
+                 "clicks_28": 6, "cost_28": 8.0, "impressions_28": 45,
+                 "why": "solo-singer search ('singer'): choirs of four or more only"}, w
+    assert by["amazing grace lyrics"]["why"] == "not a hiring search ('lyrics')"
+    assert by["funeral music ideas"]["why"] == "no choir or hiring word"
+    assert [t["term"] for t in terms] == ["wedding singer london", "amazing grace lyrics", "funeral music ideas"], terms
+    assert data["search_terms"]["looked_at"] == 6
+    sl = data["shortlist"]
+    assert (sl["start"], sl["end"]) == ("2026-08-29", "2026-09-25")
+    assert [(i["query"], i["page"]) for i in sl["items"]] == [("funeral choir hire london", "/funerals.html"),
+                                                            ("wedding choir kent", "/areas/kent.html")], sl
+    assert set(sl["items"][0]) == {"query", "page", "position", "impressions", "clicks", "fix"}
+    assert sl["items"][0]["position"] == 11.2 and sl["items"][0]["fix"]
+    weeks = data["leads"]["weeks"]
+    assert [w["week_start"] for w in weeks][0] == "2026-08-03" and weeks[-1]["week_start"] == "2026-09-21"
+    assert len(weeks) == 8 and data["leads"]["thresholded"] is False
+    assert weeks[-1] == {"week_start": "2026-09-21", "form": 3, "whatsapp": 3, "email": 1, "call": 2, "other": 0,
+                         "message": 0, "form_error": 0}, weeks[-1]
+    assert weeks[0]["form"] == 1 and weeks[-2]["form_error"] == 1
+    ga4_body = next(b for u, b in gsc.posts if u == wr.GA4_API)
+    assert ga4_body["dateRanges"] == [{"startDate": "2026-08-03", "endDate": "2026-09-27"}]
+    assert ga4_body["dimensionFilter"]["filter"]["inListFilter"]["values"] == wr.LEAD_EVENTS
+    text = json.dumps(data)
+    assert "https://" not in text and "@" not in text and "gclid" not in text
+
+
+def test_marketing_cap_and_no_flags():
+    clear()
+    many = [term_row(f"singer number {i}", "Weddings", 1, i / 10) for i in range(45)]
+    code, _ = run(cc_sync.cmd_marketing, FakeAds(week=[], month=many), FakeSession(gsc=[], ga4=[]), NOW)
+    data = json.loads((CACHE / "marketing.json").read_text())
+    assert code == 0 and len(data["search_terms"]["items"]) == 30 and data["search_terms"]["looked_at"] == 45
+    assert data["search_terms"]["items"][0]["term"] == "singer number 44"  # costliest first
+    assert data["shortlist"]["items"] == [] and all(w["form"] == 0 for w in data["leads"]["weeks"])
+    gsc = [{"keys": [f"choir hire {i}", "https://londonchoralservice.com/x.html"], "clicks": 0, "impressions": 30 + i,
+            "position": 10.0} for i in range(25)]
+    run(cc_sync.cmd_marketing, FakeAds(week=[], month=[]), FakeSession(gsc=gsc, thresholded=True), NOW)
+    data = json.loads((CACHE / "marketing.json").read_text())
+    assert len(data["shortlist"]["items"]) == 20 and data["search_terms"]["items"] == []
+    assert data["leads"]["thresholded"] is True
+
+
+def test_marketing_failure_keeps_the_old_cache_and_prints_the_type_only():
+    clear()
+    run(cc_sync.cmd_marketing, FakeAds(), FakeSession(), NOW)
+    before = (CACHE / "marketing.json").read_text()
+    for ads, session, name in ((FakeAds(fail=RuntimeError("customer 8733881378 https://secret.example")),
+                                FakeSession(), "RuntimeError"),
+                               (FakeAds(), FakeSession(ga4_status=403), "GA4Error"),
+                               (FakeAds(), FakeSession(gsc_status=500), "SearchConsoleError")):
+        code, out = run(cc_sync.cmd_marketing, ads, session, NOW)
+        assert code == 1, code
+        assert out.strip() == f"marketing: not updated ({name}); the last cache is kept", out
+    assert (CACHE / "marketing.json").read_text() == before
+    assert [p.name for p in CACHE.iterdir()] == ["marketing.json"]  # no temp file left behind
+
+
+def test_marketing_main_without_google_credentials_exits_1():
+    """cc_sync.py marketing with the real client path: weekly_review's own ads_query and google_session. Both are
+    replaced by ones that fail as a missing credentials file would, so nothing reaches Google."""
+    clear()
+    saved = wr.ads_query, wr.google_session
+
+    def no_file():
+        raise FileNotFoundError("/Users/someone/.config/lcs/google-ads.yaml")
+    wr.ads_query = no_file
+    wr.google_session = no_file
+    try:
+        code, out = run(cc_sync.main, ["marketing"])
+    finally:
+        wr.ads_query, wr.google_session = saved
+    assert code == 1 and out.strip() == "marketing: not updated (FileNotFoundError); the last cache is kept", out
+    assert not (CACHE / "marketing.json").exists()
+
+
+def test_weekly_review_section_2_flags_the_same_terms():
+    buf = io.StringIO()
+    rows = [term_row("wedding singer london", "Weddings", 2, 3.1), term_row("funeral choir hire", "Funerals", 1, 1.5)]
+
+    def q(query):
+        if "FROM search_term_view" in query:
+            return rows
+        return []
+    with contextlib.redirect_stdout(buf):
+        wr.ads_sections(datetime.date(2026, 9, 26), q)
+    lines = [ln for ln in buf.getvalue().splitlines() if " | " in ln and "£" in ln]
+    assert "!CHECK: solo-singer search ('singer')" in lines[0] and "!CHECK" not in lines[1], lines
 
 
 if __name__ == "__main__":

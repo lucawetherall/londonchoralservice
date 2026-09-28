@@ -24,6 +24,8 @@
       "Bash(.venv/bin/python scripts/ads/upload_bookings.py)",
       "Bash(.venv/bin/python scripts/gsc/submit_sitemap.py)",
       "Bash(.venv/bin/python scripts/bookings/make_booking_docs.py *)",
+      "Bash(.venv/bin/python scripts/bookings/imap_draft.py save *)",
+      "Bash(.venv/bin/python scripts/bookings/imap_draft.py sent *)",
       "Bash(.venv/bin/python scripts/bookings/assistant_io.py *)",
       "Bash(.venv/bin/python scripts/bookings/check_payments.py)",
       "Bash(.venv/bin/python scripts/bookings/check_payments.py --apply)",

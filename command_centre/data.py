@@ -339,8 +339,10 @@ class Data:
                 generated = datetime.datetime.fromisoformat(str(summary.value.get("generated")))
             except ValueError:
                 generated = None
+        cache = self.panel("marketing_cache", sources.marketing_cache)
+        market = self.panel("marketing_view", lambda c: models.marketing_view(c, now) if c else None, cache)
         return {"stamp": stamp(now), "summary": summary, "weeks": weeks, "chart": chart, "season": season,
-                "traced": traced, "generated": generated}
+                "traced": traced, "generated": generated, "market": market}
 
     def calendar_page(self, view="month", date=None):
         now = self.now()
