@@ -6,6 +6,7 @@ Alma Consort Starling account, READ-ONLY (see lcs_money.StarlingReadOnly).
     .venv/bin/python scripts/bookings/check_payments.py --apply          # also update ledger notes
     .venv/bin/python scripts/bookings/check_payments.py --apply --json   # machine-readable, for the assistant
     .venv/bin/python scripts/bookings/check_payments.py --reminded 2111 [--kind deposit|balance|receipt]
+    .venv/bin/python scripts/bookings/check_payments.py --note 2111 "paid per client email 2026-09-28"
     .venv/bin/python scripts/bookings/check_payments.py --selftest       # token, account and permissions
 
 Matching (against every ledger row, closed ones too, so a payment is never
@@ -492,11 +493,30 @@ def main():
     ap.add_argument("--selftest", action="store_true")
     ap.add_argument("--reminded", metavar="REF")
     ap.add_argument("--kind", choices=sorted(MARK_TEXT), default="deposit")
+    ap.add_argument("--note", nargs=2, metavar=("REF", "TEXT"))
     args = ap.parse_args()
     today = datetime.date.today()
 
     # lm.ledger_lock is an flock on a fresh descriptor: NOT re-entrant. Never nest it, or call another
     # ledger writer while holding it, in one process: the second acquire deadlocks.
+    if args.note:
+        ref, text = args.note
+        if "\n" in text or "\r" in text or len(text) > 120 or ";" in text:
+            raise SystemExit("note text must be a single line, at most 120 characters, with no ';'")
+        with lm.ledger_lock(LEDGER):
+            rows = lm.read_csv(LEDGER)
+            cols = header(LEDGER)
+            for r in rows:
+                if r["booking_ref"] == ref:
+                    notes = r.get("notes") or ""
+                    r["notes"] = (f"{notes}; " if notes.strip() else "") + text
+                    break
+            else:
+                raise SystemExit(f"no booking {ref}")
+            lm.write_csv(LEDGER, rows, cols)
+        print(f"{ref}: note added")
+        return
+
     if args.reminded:
         with lm.ledger_lock(LEDGER):
             rows = lm.read_csv(LEDGER)

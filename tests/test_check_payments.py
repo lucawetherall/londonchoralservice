@@ -267,6 +267,27 @@ def test_cli_reminded_unknown_ref_fails():
     assert p.returncode != 0 and notes == "PENDING: invoiced"
 
 
+def test_cli_note_is_appended():
+    p, notes = run_cli("PENDING: invoiced", "--note", "2111", "paid per client email 2026-09-28")
+    assert p.returncode == 0 and notes == "PENDING: invoiced; paid per client email 2026-09-28", notes
+    assert p.stdout.strip() == "2111: note added"
+
+
+def test_cli_note_on_empty_notes_has_no_leading_separator():
+    p, notes = run_cli("", "--note", "2111", "cancelled 2026-09-28")
+    assert p.returncode == 0 and notes == "cancelled 2026-09-28", notes
+
+
+def test_cli_note_unknown_ref_fails():
+    p, notes = run_cli("PENDING: invoiced", "--note", "9999", "paid 5 Sep")
+    assert p.returncode != 0 and notes == "PENDING: invoiced"
+
+
+def test_cli_note_rejects_a_semicolon():
+    p, notes = run_cli("PENDING: invoiced", "--note", "2111", "paid; per client email")
+    assert p.returncode != 0 and notes == "PENDING: invoiced"
+
+
 
 def test_json_without_a_token_prints_an_empty_list():
     out, err, saved = io.StringIO(), io.StringIO(), (cp.lm.keychain_token, sys.argv, cp.LEDGER)
