@@ -941,14 +941,18 @@ def test_books_due_lists_open_bills_and_recent_payments_not_thanked():
     base = {"received": d(30), "singer_email": "x@example.org", "amount_gbp": "100.00", "bank_fp": "f",
             "bank_last4": "1111", "payee": "", "bank_changed": "no", "bank_confirmed": "", "paid_ref": "p",
             "paid_amount": "100.00", "notes": "", "withdrawn": "", "booking_ref": ""}
-    rows = [dict(base, message_id="a", singer_name="Ann Able", invoice_ref="A1", paid_on=d(1), paid_verified="yes"),
+    rows = [dict(base, message_id="a", singer_name="Ann Able", invoice_ref="A1", paid_on=d(1), paid_verified="yes",
+                 notes=f"thanks due {d(1)}"),
             dict(base, message_id="b", singer_name="Bob Baker", invoice_ref="B1", paid_on=d(1), paid_verified="yes",
                  notes=f"paid reply drafted {d(1)}"),
             dict(base, message_id="c", singer_name="Cy Cole", invoice_ref="C1", paid_on=d(20), paid_verified="yes"),
             dict(base, message_id="d", singer_name="Di Dent", invoice_ref="D1", paid_on=d(1), paid_verified="no"),
             dict(base, message_id="e", singer_name="Ed Eyre", invoice_ref="E1", paid_on=d(1), paid_verified="yes",
                  withdrawn=d(1)),
-            dict(base, message_id="f", singer_name="Flo Fry", invoice_ref="F1", paid_on=d(2), paid_verified="yes"),
+            dict(base, message_id="f", singer_name="Flo Fry", invoice_ref="F1", paid_on=d(2), paid_verified="yes",
+                 notes=f"thanks due {d(2)}"),
+            # verified and recent, but recorded before paid --apply noted THANKS_MARK: thanked by hand, never listed
+            dict(base, message_id="h", singer_name="Hal Hope", invoice_ref="H1", paid_on=d(1), paid_verified="yes"),
             dict(base, message_id="g", singer_name="Gus Gray", invoice_ref="G1", paid_on="", paid_verified="",
                  paid_amount="", paid_ref="")]
     lm.write_csv(si.STORE, rows, si.COLUMNS)

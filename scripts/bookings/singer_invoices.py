@@ -1029,6 +1029,9 @@ def read_books_bills():
 
 
 THANKS_DAYS = 7  # a verified payment this recent with no "Paid!" draft yet gets a THANKS DUE line
+# `paid --apply` notes this on each payment it records as verified: THANKS DUE lists only those, so payments
+# recorded before the Command Centre began recording them (thanked by hand, or not at all) are never re-listed.
+THANKS_MARK = "thanks due"
 
 
 def print_books_due(rows, skip=(), today=None):
@@ -1036,7 +1039,8 @@ def print_books_due(rows, skip=(), today=None):
     no longer NEWLY PAID (the Command Centre's half-hourly job may have recorded them first):
     - "BOOKS DUE <message id>: …" plus the usual "books:" line, when the invoice's Books bill is still open with a
       balance (a bill not in the cache, or already paid, gets no line);
-    - "THANKS DUE <message id>: …" when it was paid in the last THANKS_DAYS days and no "Paid!" reply is noted.
+    - "THANKS DUE <message id>: …" when `paid --apply` recorded it (THANKS_MARK in its notes) in the last
+      THANKS_DAYS days and no "Paid!" reply is noted.
     `skip` holds this run's NEWLY PAID ids. Read-only. Without books.json it prints "books-due: no Books cache"
     instead of the BOOKS DUE lines."""
     today = today or lm.today()
@@ -1056,7 +1060,9 @@ def print_books_due(rows, skip=(), today=None):
               f" · email {r.get('singer_email')} · amount {amount:.2f} · date {r['paid_on']}")
     for r in done:
         paid = iso_or_none(r.get("paid_on"))
-        if paid is None or (today - paid).days > THANKS_DAYS or "paid reply drafted" in (r.get("notes") or ""):
+        notes = r.get("notes") or ""
+        if (paid is None or (today - paid).days > THANKS_DAYS or THANKS_MARK not in notes
+                or "paid reply drafted" in notes):
             continue
         amount = lm.parse_gbp(r.get("paid_amount")) or lm.money(r.get("amount_gbp"))
         print(f"THANKS DUE {r['message_id']}: {first_name(r['singer_name'])} £{amount:,.2f} paid {r['paid_on']}, "
@@ -1156,7 +1162,8 @@ def cmd_scan(args, client):
     print(f"pdf: {save_pdf(raw, args.message_id) or 'none'}")
 
 
-KEEP_NOTES = ("bank details confirmed by phone", "paid reply drafted", "settled by hand", "rescanned", "withdrawn")
+KEEP_NOTES = ("bank details confirmed by phone", "paid reply drafted", "settled by hand", "rescanned", "withdrawn",
+              THANKS_MARK)
 
 
 def rescan_changes(old, new):
@@ -1300,6 +1307,8 @@ def match_and_record(args, client):
                     when, amount, uid, verified = hits[r["message_id"]]
                     r["paid_on"], r["paid_amount"], r["paid_ref"] = when, f"{amount:.2f}", uid
                     r["paid_verified"] = "yes" if verified else "no"
+                    if verified:
+                        note(r, f"{THANKS_MARK} {when}")
         print("Singer invoice store updated.")
     return hits
 
