@@ -23,14 +23,14 @@ the payer's surname contradicts it only when it fits another open booking whose
 window and fee or half-fee fit the payment, while the named client's surname is
 absent from the payer's name (then both are unconfirmed). Parents and funeral
 directors paying under another name are normal. Surnames are the last real word
-of each party ("Ann Smith & Tom Jones": Smith or Jones; "T Cribb & Sons": Cribb).
+of each party ("Ann Smith & Tom Jones": Smith or Jones; "T Brackenwold & Sons": Brackenwold).
 Failing a reference, when its amount is the deposit or full fee, the payer's name
 contains the client's surname as a whole word, and it falls inside that
 booking's invoice-to-event window. Failing that, when its amount is the deposit
 or fee of open bookings inside their window: an "amount only" match, on each
 booking it fits, which is unconfirmed and never counts as paid. Failing that too,
 when the payer's name has an open booking's surname as a whole word inside its
-window (a split or odd amount: £300 then £275 from "K NASH"): "name only, amount
+window (a split or odd amount: £300 then £275 from "K FARROW"): "name only, amount
 differs", on each such booking, also unconfirmed. A payment with no reference from a
 cancelled booking's client (surname, inside its window) is "name, cancelled booking"
 before any amount-only match, so it never lands on another client's live booking.
@@ -150,7 +150,7 @@ REST_PAID = re.compile(
     r"|\b(paid|received|settled)\b(?:(?!\bdeposit\b).){0,30}?\b(in\s+full|in\s+total|the\s+(balance|rest|remainder))\b", re.I)
 OTHER_PART = re.compile(r"\b(balance|rest|remainder|remaining)\b", re.I)
 POUNDS = re.compile(r"£\s*(\d[\d,]*(?:\.\d+)?)")
-# Not surnames: the last real word of each party is ("T Cribb & Sons" is Cribb).
+# Not surnames: the last real word of each party is ("T Brackenwold & Sons" is Brackenwold).
 GENERIC = {"son", "sons", "ltd", "limited", "funeral", "funerals", "director", "directors", "church", "parish", "and",
            "co", "plc", "llp", "mr", "mrs", "ms", "miss", "dr", "rev", "revd"}
 PREFIX = r"(INVOICE|INV|LCS)"
@@ -356,7 +356,7 @@ def match(rows, items, today):
         if not refs:
             refs = [r["booking_ref"] for r in live if fits_amount(amount, r) and in_window(r, when, today)]
             how = "amount only" if len(refs) == 1 else "amount only, several bookings"
-        if not refs:  # a split or odd amount from the client ("K NASH" £300 then £275): unconfirmed, a hand check
+        if not refs:  # a split or odd amount from the client ("K FARROW" £300 then £275): unconfirmed, a hand check
             refs = [r["booking_ref"] for r in live if in_window(r, when, today) and payer_is(r, payer)]
             how = "name only, amount differs"
         for ref in dict.fromkeys(refs):

@@ -568,9 +568,9 @@ def test_a_parent_paying_under_another_surname_stays_confident():
 
 def test_generic_trailing_words_are_not_surnames():
     rows = [row("3001", 450, "2026-09-20", "2026-10-02", "PENDING: invoiced", name="Mary Brown"),
-            row("3005", 450, "2026-09-21", "2026-10-06", "PENDING: invoiced", name="T Cribb & Sons")]
+            row("3005", 450, "2026-09-21", "2026-10-06", "PENDING: invoiced", name="T Brackenwold & Sons")]
     assert _states(rows, [pay(450, "2026-09-24", "INV 3001", "J H KENYON & SONS")]) == {"3001": "PAID_IN_FULL", "3005": "AWAITING_DEPOSIT"}
-    assert cp.surnames({"client_name": "T Cribb & Sons Ltd."}) == ["Cribb"]
+    assert cp.surnames({"client_name": "T Brackenwold & Sons Ltd."}) == ["Brackenwold"]
     assert cp.surnames({"client_name": "Parish Church"}) == []
     assert cp.surnames({"client_name": "Mr and Mrs Lee"}) == ["Lee"]
 
@@ -730,7 +730,7 @@ R3009 = row("3009", 1150, "2026-08-01", "2026-09-30", "deposit seen 2026-08-05 (
 
 def test_an_unconfirmed_balance_payment_stops_a_balance_chase():
     import money_report as mr
-    for who, ref in (("MRS P ORTON", "WEDDING BALANCE"), ("P ORTON", "")):
+    for who, ref in (("MRS P QUILLAN", "WEDDING BALANCE"), ("P QUILLAN", "")):
         feed = [pay(575, "2026-08-05", "LCS3009", "I LAMB"), pay(575, "2026-09-26", ref, who)]
         found = cp.match([R3009], feed, T)
         a = cp.assess(R3009, found["3009"], T)
@@ -925,24 +925,24 @@ def test_a_kept_deposit_note_silences_earlier_payments_on_a_cancelled_booking():
     paid = [("2026-08-05", 575.0, "reference")]
     for n in ("Cancelled 15 Sep; deposit kept 2026-09-15", "cancelled; refunded 2026-09-20", "Cancelled; payment checked 2026-09-28",
               "cancelled; Deposit Kept 2026-08-05"):
-        r = row("4003", 1150, "2026-08-01", "2027-04-01", n, name="Gil Hart")
+        r = row("4003", 1150, "2026-08-01", "2027-04-01", n, name="Gus Pardew")
         a = cp.assess(r, paid, T)
         assert a["state"] == "CANCELLED" and a["hand_check_payments"] == [], (n, a["state"])
-        got = cp.collect(FakeClient([pay(575, "2026-08-05", "INV4003", "G HART")]), [r], T)
+        got = cp.collect(FakeClient([pay(575, "2026-08-05", "INV4003", "G PARDEW")]), [r], T)
         assert got == [], (n, got)
         assert mr.summary_lines([a for _, _, a in got], [], QUIET, T)[3] == "needs a hand check: 0"
 
 
 def test_a_payment_after_the_kept_deposit_note_still_reaches_the_hand_check():
-    r = row("4003", 1150, "2026-08-01", "2027-04-01", "Cancelled 15 Sep; deposit kept 2026-09-15", name="Gil Hart")
+    r = row("4003", 1150, "2026-08-01", "2027-04-01", "Cancelled 15 Sep; deposit kept 2026-09-15", name="Gus Pardew")
     paid = [("2026-08-05", 575.0, "reference"), ("2026-09-20", 575.0, "reference")]
     a = cp.assess(r, paid, T)
     assert a["state"] == "PAYMENT_ON_CANCELLED" and a["hand_check_payments"] == [["2026-09-20", 575.0]], a
     assert "2026-08-05" not in cp.describe(a).split(" · ", 1)[1]
-    got = cp.collect(FakeClient([pay(575, "2026-08-05", "INV4003", "G HART"), pay(575, "2026-09-20", "INV4003", "G HART")]), [r], T)
+    got = cp.collect(FakeClient([pay(575, "2026-08-05", "INV4003", "G PARDEW"), pay(575, "2026-09-20", "INV4003", "G PARDEW")]), [r], T)
     assert [a["state"] for _, _, a in got] == ["PAYMENT_ON_CANCELLED"]
     # without a date the note silences nothing
-    r2 = row("4003", 1150, "2026-08-01", "2027-04-01", "Cancelled 15 Sep, deposit kept", name="Gil Hart")
+    r2 = row("4003", 1150, "2026-08-01", "2027-04-01", "Cancelled 15 Sep, deposit kept", name="Gus Pardew")
     assert cp.assess(r2, paid[:1], T)["state"] == "PAYMENT_ON_CANCELLED"
 
 
@@ -993,8 +993,8 @@ def test_an_arranged_balance_reaches_the_hand_check_only_near_or_after_the_event
 # --- round 5: split or odd-amount payments from the client ------------------------------------
 
 def test_split_payments_from_the_client_are_a_hand_check_not_an_overdue_deposit():
-    r = row("4009", 1150, "2026-09-01", "2027-01-09", "PENDING: invoiced", name="Kim Nash")
-    found = cp.match([r], [pay(300, "2026-09-10", "", "K NASH"), pay(275, "2026-09-11", "", "K NASH")], T)
+    r = row("4009", 1150, "2026-09-01", "2027-01-09", "PENDING: invoiced", name="Kit Farrow")
+    found = cp.match([r], [pay(300, "2026-09-10", "", "K FARROW"), pay(275, "2026-09-11", "", "K FARROW")], T)
     assert found["4009"] == [("2026-09-10", 300.0, "name only, amount differs"),
                              ("2026-09-11", 275.0, "name only, amount differs")], found
     a = cp.assess(r, found["4009"], T)
@@ -1002,20 +1002,20 @@ def test_split_payments_from_the_client_are_a_hand_check_not_an_overdue_deposit(
     assert "matched by name only, amount differs: confirm by hand" in cp.describe(a)
     # a name that fits no open booking, or falls outside the window, is still nobody's
     assert cp.match([r], [pay(300, "2026-09-10", "", "J BLOGGS")], T)["4009"] == []
-    assert cp.match([r], [pay(300, "2026-03-10", "", "K NASH")], T)["4009"] == []
+    assert cp.match([r], [pay(300, "2026-03-10", "", "K FARROW")], T)["4009"] == []
     # a whole-word surname only
-    assert cp.match([r], [pay(300, "2026-09-10", "", "K NASHE")], T)["4009"] == []
+    assert cp.match([r], [pay(300, "2026-09-10", "", "K FARROWE")], T)["4009"] == []
     # never on a closed booking; on a cancelled one it is the cancelled client's payment, a hand check
-    assert cp.match([dict(r, notes="paid in full 2026-09-05")], [pay(300, "2026-09-10", "", "K NASH")], T)["4009"] == []
+    assert cp.match([dict(r, notes="paid in full 2026-09-05")], [pay(300, "2026-09-10", "", "K FARROW")], T)["4009"] == []
     gone = dict(r, notes="cancelled 5 Sep")
-    found = cp.match([gone], [pay(300, "2026-09-10", "", "K NASH")], T)
+    found = cp.match([gone], [pay(300, "2026-09-10", "", "K FARROW")], T)
     assert found["4009"] == [("2026-09-10", 300.0, "name, cancelled booking")], found
     assert cp.assess(gone, found["4009"], T)["state"] == "PAYMENT_ON_CANCELLED"
 
 
 def test_an_odd_amount_after_the_deposit_is_a_possible_balance():
-    r = row("4009", 1150, "2026-09-01", "2026-09-30", "deposit seen 2026-09-05 (Starling)", name="Kim Nash")
-    found = cp.match([r], [pay(575, "2026-09-05", "INV4009", "K NASH"), pay(500, "2026-09-26", "", "K NASH")], T)
+    r = row("4009", 1150, "2026-09-01", "2026-09-30", "deposit seen 2026-09-05 (Starling)", name="Kit Farrow")
+    found = cp.match([r], [pay(575, "2026-09-05", "INV4009", "K FARROW"), pay(500, "2026-09-26", "", "K FARROW")], T)
     a = cp.assess(r, found["4009"], T)
     assert a["state"] == "CHECK_PAYMENT" and a["possible_balance"] == [["2026-09-26", 500.0]], a
 
@@ -1052,12 +1052,12 @@ def test_only_an_explicit_reversal_undoes_a_cancellation():
     import money_report as mr
     dep = [("2026-07-04", 575.0, "reference")]
     for n in STAYS_CANCELLED:
-        r = row("4009", 1150, "2026-07-01", "2026-10-01", "deposit seen 2026-07-04 (Starling); " + n, name="Kim Nash")
+        r = row("4009", 1150, "2026-07-01", "2026-10-01", "deposit seen 2026-07-04 (Starling); " + n, name="Kit Farrow")
         assert cp.is_cancelled(r), n
         a = cp.assess(r, dep, T)  # a live row would be BALANCE_DUE: a chase
         assert a["state"] == "PAYMENT_ON_CANCELLED" and a["receipt_due"] is False and mr.needs_hand_check(a, T), (n, a["state"])
     for n in RESUMED_NOTES:
-        r = row("4009", 1150, "2026-07-01", "2026-10-01", "deposit seen 2026-07-04 (Starling); " + n, name="Kim Nash")
+        r = row("4009", 1150, "2026-07-01", "2026-10-01", "deposit seen 2026-07-04 (Starling); " + n, name="Kit Farrow")
         assert not cp.is_cancelled(r), n
         assert cp.assess(r, dep, T)["state"] == "BALANCE_DUE", n
 
@@ -1136,7 +1136,7 @@ def test_only_a_payment_check_note_silences_and_never_a_future_one():
                      ("Cancelled 15 Sep; deposit kept 2026-12-20", "PAYMENT_ON_CANCELLED"),
                      ("Cancelled 15 Sep; payment checked 2026-09-29", "PAYMENT_ON_CANCELLED"),
                      ("Cancelled 15 Sep; refunded 2026-09-28", "CANCELLED")):
-        a = cp.assess(row("4003", 1150, "2026-08-01", "2027-04-01", n, name="Gil Hart"), paid, T)
+        a = cp.assess(row("4003", 1150, "2026-08-01", "2027-04-01", n, name="Gus Pardew"), paid, T)
         assert a["state"] == state, (n, a["state"])
 
 

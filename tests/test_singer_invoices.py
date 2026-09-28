@@ -95,20 +95,20 @@ def unpaid(mid, name, amount, received, payee="NEW: add as a payee in the Starli
 
 
 def test_match_paid_by_amount_and_surname():
-    rows = [unpaid("m1", "Laura Penhallow", 200, "2026-09-19")]
-    assert si.match_paid(rows, [out(200, "2026-09-19", "LAURA PENHALLOW", "p1")]) == {"m1": ("2026-09-19", 200.0, "p1", False)}
+    rows = [unpaid("m1", "Laura Pembury", 200, "2026-09-19")]
+    assert si.match_paid(rows, [out(200, "2026-09-19", "LAURA PEMBURY", "p1")]) == {"m1": ("2026-09-19", 200.0, "p1", False)}
 
 
 def test_match_paid_uses_payee_name():
-    rows = [unpaid("m1", "Maddy Kessell", 160, "2026-09-01", payee="existing: M M Kessell")]
-    assert si.match_paid(rows, [out(160, "2026-09-02", "M M KESSELL", "p1")]) == {"m1": ("2026-09-02", 160.0, "p1", False)}
+    rows = [unpaid("m1", "Tilly Thorne", 160, "2026-09-01", payee="existing: T T Thorne")]
+    assert si.match_paid(rows, [out(160, "2026-09-02", "T T THORNE", "p1")]) == {"m1": ("2026-09-02", 160.0, "p1", False)}
 
 
 def test_match_paid_rejects_wrong_amount_early_date_and_double_use():
-    rows = [unpaid("m1", "Laura Penhallow", 200, "2026-09-19"), unpaid("m2", "Laura Penhallow", 200, "2026-09-20")]
-    assert si.match_paid(rows, [out(150, "2026-09-21", "LAURA PENHALLOW", "p0")]) == {}
-    assert si.match_paid(rows[:1], [out(200, "2026-09-10", "LAURA PENHALLOW", "p0")]) == {}
-    assert si.match_paid(rows, [out(200, "2026-09-21", "LAURA PENHALLOW", "p1")]) == {"m1": ("2026-09-21", 200.0, "p1", False)}
+    rows = [unpaid("m1", "Laura Pembury", 200, "2026-09-19"), unpaid("m2", "Laura Pembury", 200, "2026-09-20")]
+    assert si.match_paid(rows, [out(150, "2026-09-21", "LAURA PEMBURY", "p0")]) == {}
+    assert si.match_paid(rows[:1], [out(200, "2026-09-10", "LAURA PEMBURY", "p0")]) == {}
+    assert si.match_paid(rows, [out(200, "2026-09-21", "LAURA PEMBURY", "p1")]) == {"m1": ("2026-09-21", 200.0, "p1", False)}
 
 
 def test_summary_counts():
@@ -326,25 +326,25 @@ def test_match_paid_ambiguous_across_singers():
 
 
 def test_match_paid_before_invoice_arrived():
-    rows = [unpaid("m1", "Laura Penhallow", 200, "2026-09-19")]
+    rows = [unpaid("m1", "Laura Pembury", 200, "2026-09-19")]
     report = []
-    assert si.match_paid(rows, [out(200, "2026-09-10", "LAURA PENHALLOW", "p1")], report) == {}
+    assert si.match_paid(rows, [out(200, "2026-09-10", "LAURA PEMBURY", "p1")], report) == {}
     assert report == ["POSSIBLY ALREADY PAID m1: Laura £200.00 on 2026-09-10 (before the invoice arrived): check by hand"]
     report = []
-    assert si.match_paid(rows, [out(200, "2026-09-01", "LAURA PENHALLOW", "p1")], report) == {} and report == []
+    assert si.match_paid(rows, [out(200, "2026-09-01", "LAURA PEMBURY", "p1")], report) == {} and report == []
 
 
 def test_match_paid_feed_order():
-    rows = [unpaid("m1", "Laura Penhallow", 200, "2026-09-19"), unpaid("m2", "Laura Penhallow", 200, "2026-09-24")]
-    feed = [out(200, "2026-09-21", "LAURA PENHALLOW", "p1"), out(200, "2026-09-25", "LAURA PENHALLOW", "p2")]
+    rows = [unpaid("m1", "Laura Pembury", 200, "2026-09-19"), unpaid("m2", "Laura Pembury", 200, "2026-09-24")]
+    feed = [out(200, "2026-09-21", "LAURA PEMBURY", "p1"), out(200, "2026-09-25", "LAURA PEMBURY", "p2")]
     want = {"m1": ("2026-09-21", 200.0, "p1", False), "m2": ("2026-09-25", 200.0, "p2", False)}
     assert si.match_paid(rows, feed) == want
     assert si.match_paid(rows, feed[::-1]) == want
 
 
 def test_match_paid_uses_london_date():
-    rows = [unpaid("m1", "Laura Penhallow", 200, "2026-09-26")]
-    item = out(200, "2026-09-25", "LAURA PENHALLOW", "p1", at="T23:30:00Z")
+    rows = [unpaid("m1", "Laura Pembury", 200, "2026-09-26")]
+    item = out(200, "2026-09-25", "LAURA PEMBURY", "p1", at="T23:30:00Z")
     assert si.match_paid(rows, [item]) == {"m1": ("2026-09-26", 200.0, "p1", False)}
 
 
@@ -552,7 +552,7 @@ def test_match_paid_blocks_name_match_for_a_disagreeing_starling_payee():
     fp = lm.bank_fingerprint("112233", "99990000")
     bella = unpaid("bella1", "Bella Fenwick", 150, "2026-09-01")
     item = fp_out(150, "2026-09-02", "B FENWICK", "x9", "112233", "99990000")
-    assert si.match_paid([bella], [item], history=[bella], payee_fps={fp: "Priya Kaur"}) == {}
+    assert si.match_paid([bella], [item], history=[bella], payee_fps={fp: "Ines Calloway"}) == {}
     assert si.match_paid([bella], [item], history=[bella], payee_fps={fp: "Bella Fenwick"}) == \
         {"bella1": ("2026-09-02", 150.0, "x9", False)}
 
@@ -591,8 +591,8 @@ def test_match_paid_short_sender_name_never_auto_matches():
 
 def test_match_paid_skips_items_without_an_id():
     report = []
-    rows = [unpaid("m1", "Laura Penhallow", 200, "2026-09-19")]
-    assert si.match_paid(rows, [out(200, "2026-09-20", "LAURA PENHALLOW"), out(200, "2026-09-21", "LAURA PENHALLOW")], report) == {}
+    rows = [unpaid("m1", "Laura Pembury", 200, "2026-09-19")]
+    assert si.match_paid(rows, [out(200, "2026-09-20", "LAURA PEMBURY"), out(200, "2026-09-21", "LAURA PEMBURY")], report) == {}
     assert len([x for x in report if "feed item without id skipped" in x]) == 1, report
 
 
@@ -604,7 +604,7 @@ def test_normalise_name_trade_words_honorifics_commas():
     assert si.normalise_name("Ben Fenwick Music Ltd") == "ben fenwick"
     assert si.normalise_name("Anna Smith-Jones") == "anna smith-jones" and si.surname("Smith-Jones, Anna") == "smith-jones"
     assert si.normalise_name("Ben") == "ben"
-    assert (si.first_name("Fenwick, Ben"), si.first_name("Dr Ben Fenwick"), si.first_name(""), si.first_name("Laura Penhallow")) == \
+    assert (si.first_name("Fenwick, Ben"), si.first_name("Dr Ben Fenwick"), si.first_name(""), si.first_name("Laura Pembury")) == \
         ("Ben", "Ben", "?", "Laura")
 
 
@@ -840,13 +840,13 @@ def test_a_payment_blocked_by_the_guard_is_reported_once():
     bella2 = unpaid("bella2", "Bella Fenwick", 150, "2026-09-05")
     item = fp_out(150, "2026-09-06", "B FENWICK", "x9", "112233", "99990000")
     report = []
-    assert si.match_paid([bella, bella2], [item], report, history=[bella, bella2], payee_fps={fp: "Priya Kaur"}) == {}
+    assert si.match_paid([bella, bella2], [item], report, history=[bella, bella2], payee_fps={fp: "Ines Calloway"}) == {}
     assert report == ["PAYMENT TO ANOTHER SINGER'S ACCOUNT £150.00 on 2026-09-06 ••••0000 not matched to bella1 (Bella): "
                       "check by hand"], report
     # a payment that settles another invoice by its own bank details is not reported
-    priya = fp_unpaid("p1", "Priya Kaur", 150, "2026-09-02", sc="112233", acc="99990000")
+    ines = fp_unpaid("p1", "Ines Calloway", 150, "2026-09-02", sc="112233", acc="99990000")
     report = []
-    assert si.match_paid([bella, priya], [item], report, history=[bella, priya], payee_fps={fp: "Priya Kaur"}) == \
+    assert si.match_paid([bella, ines], [item], report, history=[bella, ines], payee_fps={fp: "Ines Calloway"}) == \
         {"p1": ("2026-09-06", 150.0, "x9", True)}
     assert report == [], report
 
@@ -913,7 +913,7 @@ def make_docx(paragraphs=(), tables=(), footer=None, raw_body=""):
 
 
 DOCX_INVOICE = dict(
-    paragraphs=["Helen Example, soprano", "Invoice No. 018", "Date: 21st September 2026"],
+    paragraphs=["Marnie Example, soprano", "Invoice No. 018", "Date: 21st September 2026"],
     tables=[[("Description", "Amount"), ("Funeral, St Mary's, 21/09", "£150.00"), ("Total", "£150.00")],
             [("Sort code", "12-34-56"), ("Account number", "12345678")]],
     raw_body='<w:p><w:r><w:t>Pay</w:t></w:r><w:r><w:tab/><w:t>by transfer</w:t></w:r></w:p>')
@@ -923,7 +923,7 @@ def att_eml(data, fname, ctype, body="Invoice attached, thanks!"):
     b = base64.b64encode(data).decode()
     path = os.path.join(TMP, "att.eml")
     with open(path, "w") as f:
-        f.write("From: Helen <helen@example.com>\nSubject: Invoice\nMIME-Version: 1.0\n"
+        f.write("From: Marnie <marnie@example.com>\nSubject: Invoice\nMIME-Version: 1.0\n"
                 "Content-Type: multipart/mixed; boundary=XX\n\n"
                 f"--XX\nContent-Type: text/plain\n\n{body}\n--XX\nContent-Type: {ctype}\n"
                 f"Content-Disposition: attachment; filename=\"{fname}\"\nContent-Transfer-Encoding: base64\n\n{b}\n--XX--\n")
@@ -941,7 +941,7 @@ def test_docx_text_keeps_table_rows_on_one_line():
 
 
 def test_read_invoice_from_docx_attachment():
-    found = si.read_invoice(att_eml(make_docx(**DOCX_INVOICE), "Helen invoice.docx", si.DOCX_TYPE))
+    found = si.read_invoice(att_eml(make_docx(**DOCX_INVOICE), "Marnie invoice.docx", si.DOCX_TYPE))
     assert (found["amount"], found["invoice_ref"], found["sort_code"], found["account_number"]) == \
         (150.0, "018", "123456", "12345678"), found
     assert found["warnings"] == [], found["warnings"]
@@ -1045,17 +1045,17 @@ def rescan(mid, file=None, fetch=False, client=None):
 
 def test_rescan_fills_in_an_unread_invoice():
     fresh_store()
-    first = scan("Invoice attached, thanks!", "h1", "2026-09-21", email="helen@example.com", name="Helen Example")
-    assert first.startswith("Helen: £0.00 (ref ?)") and "amount not found" in first
+    first = scan("Invoice attached, thanks!", "h1", "2026-09-21", email="marnie@example.com", name="Marnie Example")
+    assert first.startswith("Marnie: £0.00 (ref ?)") and "amount not found" in first
     got = rescan("h1", file=att_eml(make_docx(**DOCX_INVOICE), "invoice.docx", si.DOCX_TYPE))
-    assert got.splitlines()[0] == ("Helen: £150.00 (ref 018) · payee NEW: add as a payee in the Starling app "
+    assert got.splitlines()[0] == ("Marnie: £150.00 (ref 018) · payee NEW: add as a payee in the Starling app "
                                    "· bank ••••5678"), got
     assert f"{si.NEW_DETAILS}, then run singer_invoices.py confirm h1" in got
     rows = lm.read_csv(si.STORE)
     assert len(rows) == 1
     r = rows[0]
     assert (r["amount_gbp"], r["invoice_ref"], r["bank_last4"], r["received"], r["singer_email"]) == \
-        ("150.00", "018", "5678", "2026-09-21", "helen@example.com"), r
+        ("150.00", "018", "5678", "2026-09-21", "marnie@example.com"), r
     assert "amount not found" not in r["notes"] and f"rescanned {datetime.date.today()}" in r["notes"], r["notes"]
     assert "12345678" not in got and "12345678" not in si.STORE.read_text()
 
@@ -1123,11 +1123,11 @@ def test_bare_total_must_agree_with_the_pound_figures():
     assert amount("Invoice No 77\nMileage claimed\nTotal 120\nat 45p per mile = £54.00") == 54.0
     # a bare total that is one of the £ figures, or their sum, stands
     assert amount("Fee £80\nTravel £20\nTOTAL 100") == 100.0 and amount("Fee £80\nTravel £20\nTOTAL\t80") == 80.0
-    # Catherine's layout: GBP only in the column heading, no £ figures at all
+    # one singer's layout: GBP only in the column heading, no £ figures at all
     assert amount("Anna Price Invoice\t\t21.9.26\nInvoice number: 1\nDate\tDescription\tAmount (GBP)\n"
                   "21.9.26\tFuneral\t100\nTOTAL\t\t100") == 100.0
     assert amount("Amount (GBP)\nTOTAL 1234567") == 0.0  # seven digits: never a bare total
-    # a known limit: a quantity total in a GBP table with no £ figure reads like Catherine's layout
+    # a known limit: a quantity total in a GBP table with no £ figure reads like one singer's layout
     assert amount("Invoice 1020\nItem Qty Amount (GBP)\nTotal 4\n") == 4.0
 
 
@@ -1320,13 +1320,13 @@ def test_probe_rescan_row_survives_an_unreadable_fetch():
 
 
 def test_names_equivalent_pairs():
-    yes = [("Benjamin Fenwick", "Ben Harrow-Fenwick"), ("Rowan Fairleighbrook", "Rowan Fairleighbrook"),
-           ("Jessie A Thornbury", "Jess Thornbury"), ("Kate Brown", "Catherine Brown"), ("Tom Jones", "THOMAS JONES"),
+    yes = [("Benjamin Fenwick", "Ben Harrow-Fenwick"), ("Crispin Fairleighbrook", "Crispin Fairleigh Brook"),
+           ("Jessie A Wendover", "Jess Wendover"), ("Kate Brown", "Catherine Brown"), ("Tom Jones", "THOMAS JONES"),
            ("B FENWICK", "Ben Fenwick"), ("FENWICK BEN", "Benjamin Fenwick"), ("Liz Tay", "Elizabeth Tay"),
            ("Sean O'Brien", "Sean OBrien"), ("Dan Smith", "Daniel Smith"), ("Chris Lee", "Christine Lee"),
            # decided: a double-barrelled surname agrees with one of its parts (4+ letters) when the first names do
            ("Anna Smith", "Anna Smith-Jones")]
-    no = [("Ben Fenwick", "Benedict Ashcombe-Hale"), ("Benedict Ashcombe-Hale", "Ben Harrow-Fenwick"),
+    no = [("Ben Fenwick", "Benedict Oakridge-Smith"), ("Benedict Oakridge-Smith", "Ben Harrow-Fenwick"),
           ("Tom Jones", "Ben Jones"), ("Anna Smith", "Anna Smithson"), ("Ben", "Ben Fenwick"),
           ("Anna Smith-Jones", "Anna Jones-Smith"), ("Jo Smith", "Joanna Smith"), ("Ann Lee", "Ann Le-Bo"),
           ("Tom Jones", "A SMITH-JONES"), ("Tom Jones", "JONES B")]
@@ -1338,23 +1338,23 @@ def test_names_equivalent_pairs():
 
 
 BEN_PAYEE = [{"payeeName": "Benjamin Fenwick", "accounts": [{"bankIdentifier": "203040", "accountIdentifier": "55667788"}]}]
-ORLANDO_PAYEE = [{"payeeName": "Rowan Fairleighbrook", "accounts": [{"bankIdentifier": "102030", "accountIdentifier": "44556677"}]}]
+CRISPIN_PAYEE = [{"payeeName": "Crispin Fairleighbrook", "accounts": [{"bankIdentifier": "102030", "accountIdentifier": "44556677"}]}]
 
 
 def test_payee_recognised_under_an_equivalent_name():
     fresh_store()
     got = scan("Invoice 1\nTotal £100.00", "b1", "2026-09-20", client=FakeClient(payees=BEN_PAYEE),
-               email="ben@hw.example", name="Ben Harrow-Fenwick")
+               email="ben@hf.example", name="Ben Harrow-Fenwick")
     assert rows_by_id()["b1"]["payee"] == "probably existing: Benjamin Fenwick (no bank details on the invoice)", got
     got = scan("Invoice 2\nTotal £100.00\nSort code 20-30-40\nAccount number 55667788", "b2", "2026-09-21",
-               client=FakeClient(payees=BEN_PAYEE), email="ben@hw.example", name="Ben Harrow-Fenwick")
+               client=FakeClient(payees=BEN_PAYEE), email="ben@hf.example", name="Ben Harrow-Fenwick")
     assert rows_by_id()["b2"]["payee"] == "existing: Benjamin Fenwick" and "NEW BANK DETAILS" not in got, got
-    got = scan("Invoice 3\nTotal £90.00", "o1", "2026-09-21", client=FakeClient(payees=ORLANDO_PAYEE),
-               email="orlando@x.example", name="Rowan Fairleighbrook")
-    assert rows_by_id()["o1"]["payee"] == "probably existing: Rowan Fairleighbrook (no bank details on the invoice)", got
+    got = scan("Invoice 3\nTotal £90.00", "o1", "2026-09-21", client=FakeClient(payees=CRISPIN_PAYEE),
+               email="crispin@x.example", name="Crispin Fairleigh Brook")
+    assert rows_by_id()["o1"]["payee"] == "probably existing: Crispin Fairleighbrook (no bank details on the invoice)", got
     got = scan("Invoice 4\nTotal £90.00\nSort code 11-11-11\nAccount number 22223333", "o2", "2026-09-22",
-               client=FakeClient(payees=ORLANDO_PAYEE), email="orlando@x.example", name="Rowan Fairleighbrook")
-    assert "BANK DETAILS CHANGED: Starling payee 'Rowan Fairleighbrook'" in got, got
+               client=FakeClient(payees=CRISPIN_PAYEE), email="crispin@x.example", name="Crispin Fairleigh Brook")
+    assert "BANK DETAILS CHANGED: Starling payee 'Crispin Fairleighbrook'" in got, got
 
 
 def test_payee_name_fitting_two_payees_or_another_open_singer_is_ambiguous():
@@ -1371,13 +1371,13 @@ def test_payee_name_fitting_two_payees_or_another_open_singer_is_ambiguous():
 def test_match_paid_by_equivalent_names():
     ben = [unpaid("b1", "Ben Harrow-Fenwick", 100, "2026-09-20")]
     assert si.match_paid(ben, [out(100, "2026-09-21", "BENJAMIN FENWICK", "p1")]) == {"b1": ("2026-09-21", 100.0, "p1", False)}
-    orl = [unpaid("o1", "Rowan Fairleighbrook", 90, "2026-09-20")]
-    assert si.match_paid(orl, [out(90, "2026-09-21", "Rowan Fairleighbrook", "p2")]) == {"o1": ("2026-09-21", 90.0, "p2", False)}
+    orl = [unpaid("o1", "Crispin Fairleigh Brook", 90, "2026-09-20")]
+    assert si.match_paid(orl, [out(90, "2026-09-21", "CRISPIN FAIRLEIGHBROOK", "p2")]) == {"o1": ("2026-09-21", 90.0, "p2", False)}
     assert si.match_paid([unpaid("x", "Ben Fenwick", 100, "2026-09-20")],
-                         [out(100, "2026-09-21", "BENEDICT ASHCOMBE-HALE", "p3")]) == {}
+                         [out(100, "2026-09-21", "BENEDICT OAKRIDGE-SMITH", "p3")]) == {}
     # equivalent to two open singers at the same strength: reported, never applied
     report = []
-    two = [unpaid("b1", "Ben Harrow-Fenwick", 100, "2026-09-20"), unpaid("b2", "Ben Ashcombe-Fenwick", 100, "2026-09-20")]
+    two = [unpaid("b1", "Ben Harrow-Fenwick", 100, "2026-09-20"), unpaid("b2", "Ben Oakridge-Fenwick", 100, "2026-09-20")]
     assert si.match_paid(two, [out(100, "2026-09-21", "BENJAMIN FENWICK", "p4")], report) == {}
     assert report and report[0].startswith("AMBIGUOUS £100.00"), report
     # an exact name beats a looser one: ANNA SMITH pays Anna Smith, not Anna Smith-Jones
