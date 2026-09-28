@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Tests for scripts/reports/dashboard.py. Stdlib only; never touches the real private files."""
-import datetime, json, os, re, sys, tempfile
+import datetime, json, os, re, shutil, sys, tempfile
 
 TMP = tempfile.mkdtemp()
 os.environ["LCS_PRIVATE_DIR"] = TMP
@@ -23,7 +23,7 @@ def reset():
     for name in os.listdir(TMP):
         p = os.path.join(TMP, name)
         if os.path.isdir(p):
-            os.rmdir(p)
+            shutil.rmtree(p)
         else:
             os.remove(p)
 
@@ -317,6 +317,68 @@ def test_pipeline_figures_are_the_pipeline_scripts_own():
     assert season["counts"] == {"deposit_paid": 1, "quoted": 1, "new": 1, "cancelled": 1}, season
     out = dash.render(dict(fake_data(), pipeline=p))
     assert "4 enquiries, 2 quoted, 2 booked (50%)" in out, out
+
+
+CACHE = os.path.join(TMP, "command-centre", "cache")
+
+
+def books_invoice(number, status, date, total, balance, first="Ann"):
+    return {"number": number, "status": status, "date": date, "due_date": "", "total": total, "balance": balance,
+            "customer": first}
+
+
+def write_books_cache(invoices, bills=None):
+    os.makedirs(CACHE, exist_ok=True)
+    totals = {"receivables": round(sum(i["balance"] for i in invoices if i["status"] not in ("draft", "void", "paid")), 2),
+              "receivables_count": sum(1 for i in invoices if i["status"] not in ("draft", "void", "paid") and i["balance"] > 0),
+              "overdue": round(sum(i["balance"] for i in invoices if i["status"] == "overdue"), 2),
+              "overdue_count": sum(1 for i in invoices if i["status"] == "overdue"),
+              "unpaid_bills": 0.0, "unpaid_bills_count": 0}
+    with open(os.path.join(CACHE, "books.json"), "w") as f:
+        json.dump({"generated_at": "2026-09-28T07:00:00+01:00", "invoices": invoices, "bills": bills or [],
+                   "totals": totals}, f)
+
+
+def test_books_panel_shows_totals_season_margin_and_unlinked():
+    reset()
+    lm.write_csv(lm.LEDGER, [
+        {"booking_ref": "0310", "invoice_date": "2026-09-01", "event_date": "2026-10-03", "client_name": "Ann Smith",
+         "client_email": "ann@example.org", "occasion": "wedding", "ensemble": "Small Choir", "value_gbp": "1150",
+         "notes": ""},
+        {"booking_ref": "1212", "invoice_date": "2026-09-20", "event_date": "2026-12-12", "client_name": "Cat Jones",
+         "client_email": "cat@example.org", "occasion": "christmas", "ensemble": "Small Choir", "value_gbp": "1400",
+         "notes": ""},
+    ], LEDGER_COLS)
+    lm.write_csv(si.STORE, [
+        {"message_id": "m1", "received": "2026-09-20", "singer_name": "Ben Fenwick", "singer_email": "ben@example.org",
+         "amount_gbp": "120", "bank_fp": "abc", "bank_last4": "4321", "payee": "", "bank_changed": "no", "paid_on": "",
+         "booking_ref": "0310"},
+        {"message_id": "m2", "received": "2026-09-22", "singer_name": "Uma Unlinked", "singer_email": "uma@example.org",
+         "amount_gbp": "90", "bank_fp": "def", "bank_last4": "1111", "payee": "", "bank_changed": "no", "paid_on": "",
+         "booking_ref": ""},
+    ], si.COLUMNS)
+    write_books_cache([books_invoice("0310", "sent", "2026-09-01", 1150.0, 1150.0),
+                        books_invoice("1212", "draft", "2026-09-20", 1400.0, 1400.0, "Cat"),
+                        books_invoice("9001", "overdue", "2026-08-01", 300.0, 150.0, "Old")])
+    data = dash.gather(None, T)
+    assert data["books"]["totals"]["receivables"] > 0
+    out = dash.render(data)
+    assert ">Books</h2>" in out
+    assert "Receivables" in out and "Overdue" in out and "Unpaid bills" in out
+    assert "Drafts not yet sent" in out and "1212" in out
+    assert "9001" in out  # overdue invoice number listed
+    # season from data/budget-windows.yml (2026-09-01): both bookings qualify
+    assert "Season margin" in out and "£2,550.00" in out and "£120.00" in out and "£2,430.00" in out, out
+    assert "Unlinked singer invoices: 1, £90.00." in out
+    assert "Uma Unlinked" not in out
+    assert "couldn't load" not in out
+
+
+def test_books_panel_placeholder_when_not_synced():
+    reset()
+    out = dash.render(dash.gather(None, T))
+    assert "Books not synced yet." in out
+    assert ">Books</h2>" in out
 
 
 def test_hand_check_follows_the_monday_rule_for_arranged_balances():

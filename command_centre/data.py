@@ -164,8 +164,9 @@ class Data:
         summary = self.panel("books_summary", lambda c: models.books_summary(c) if c else None, books)
         margins = self.margins(ledger, store)
         season = self.panel("season_margin", lambda m: models.season_margin(m, dash.season_start()), margins)
+        unlinked = self.panel("unlinked_singer_invoices", si.unlinked_invoices, store)
         return {"stamp": stamp(now), "today": today, "bank": bank, "balance": balance, "lines": lines, "hand": hand,
-                "singers": singers, "singer_total": total, "books": summary, "season": season}
+                "singers": singers, "singer_total": total, "books": summary, "season": season, "unlinked": unlinked}
 
     # ------------------------------------------------------------ phase 6: Books, margins, drafts, quotes
 

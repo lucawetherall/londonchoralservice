@@ -1295,6 +1295,14 @@ def margins(ledger_rows, singer_rows):
     return out
 
 
+def unlinked_invoices(singer_rows):
+    """Singer invoices with no booking_ref (withdrawn ones left out): {count, total}. Pure: no I/O. The pages'
+    Money view and the static dashboard both show this next to the season margin: margins() only ever counts
+    invoices linked to a booking, so an unlinked one is otherwise invisible."""
+    rows = [s for s in singer_rows if not (s.get("booking_ref") or "").strip() and not is_withdrawn(s)]
+    return {"count": len(rows), "total": round(sum(lm.money(s.get("amount_gbp")) for s in rows), 2)}
+
+
 def cmd_margins(args=None, client=None):
     items = margins(lm.read_csv(lm.LEDGER), lm.read_csv(STORE))
     if not items:
@@ -1305,10 +1313,10 @@ def cmd_margins(args=None, client=None):
         print(f"{m['ref']} {m['event_date'] or '?'}: fee £{m['fee']:,.2f} · singers £{m['costs']:,.2f} "
               f"({m['invoices']} invoice{'s' if m['invoices'] != 1 else ''}) · margin £{m['margin']:,.2f} ({pct})"
               + (" · cancelled" if m["cancelled"] else ""))
-    unlinked = [s for s in lm.read_csv(STORE) if not (s.get("booking_ref") or "").strip() and not is_withdrawn(s)]
-    if unlinked:
-        print(f"{len(unlinked)} singer invoice{'s' if len(unlinked) != 1 else ''} not linked to a booking "
-              f"(£{sum(lm.money(s.get('amount_gbp')) for s in unlinked):,.2f})")
+    u = unlinked_invoices(lm.read_csv(STORE))
+    if u["count"]:
+        print(f"{u['count']} singer invoice{'s' if u['count'] != 1 else ''} not linked to a booking "
+              f"(£{u['total']:,.2f})")
 
 
 def strict_date(value):
