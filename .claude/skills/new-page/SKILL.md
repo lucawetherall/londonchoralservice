@@ -43,6 +43,7 @@ A page that exists but isn't wired in is invisible. All of these, every time:
 
 - [ ] `sitemap.xml`: nothing to do by hand. `./build.sh` adds the page with today's `lastmod` (`scripts/generate_sitemap.py`); check the new `<url>` appears. Guides and compare pages also get their visible date line and `dateModified` from the build.
 - [ ] `llms.txt`: add the page under the appropriate section.
+- [ ] Deploy allowlist: nothing to do for a page in an existing section. A page in a new top-level directory, a new asset type (a PDF in `assets/`, say) or a new root file needs a line in `PUBLIC` in `scripts/stage_site.py`, or it is never deployed; `./build.sh` fails until it has one.
 - [ ] Internal links from hub pages — see `references/internal-linking.md` for which hubs must link to each page type.
 - [ ] Run `./build.sh` — must exit 0 (this also validates your JSON-LD).
 - [ ] Diff check per the build-and-verify skill: the new file plus the exact wiring files you touched, nothing else unexpected.

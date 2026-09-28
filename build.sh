@@ -5,6 +5,8 @@
 # 3) Inlines the concatenated CSS into HTML files
 # 4) Generates sitemap.xml + data/page-dates.json and syncs article dates
 # 5) Generates llms-full.txt and runs the validators
+# 6) Checks the deploy allowlist: everything the pages use will be served,
+#    nothing internal will (scripts/stage_site.py)
 
 set -euo pipefail
 
@@ -165,5 +167,8 @@ echo "Validating competitor claims..."
 
 echo "Validating house claims..."
 "$PY" validate_house_claims.py
+
+echo "Checking the deploy allowlist..."
+"$PY" scripts/stage_site.py
 
 echo "Done."

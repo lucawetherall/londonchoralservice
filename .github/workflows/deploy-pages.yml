@@ -1,0 +1,78 @@
+name: Deploy site to Pages
+
+# Publishes londonchoralservice.com. The repo also holds internal files (docs/,
+# logs/, scripts/, data/, .claude/ ...), so this deploys only the files that
+# scripts/stage_site.py publishes, copied byte for byte. It does not build:
+# build.sh runs locally and its output is committed. Pull requests get the same
+# checks and stop before deploying.
+#
+# Needs Settings → Pages → Build and deployment → Source: "GitHub Actions".
+# Setting it back to "Deploy from a branch" would serve every file in the repo.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  # Deploys (runs on main) never overlap and are never cancelled part-way. If
+  # several are waiting, only the newest runs; it carries the earlier changes.
+  # Any other run is only a check, and a newer run for the same pull request
+  # or branch replaces it.
+  group: ${{ github.ref == 'refs/heads/main' && 'pages-deploy' || format('pages-check-{0}', github.ref) }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+jobs:
+  stage:
+    name: Check and stage public files
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Test the staging script
+        run: python3 tests/test_stage_site.py
+      - name: Check the allowlist and stage the site
+        run: python3 scripts/stage_site.py --out "$RUNNER_TEMP/site"
+      - name: Upload the Pages artifact
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: ${{ runner.temp }}/site
+
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: stage
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      # In branch mode Pages also builds the whole repo on every push, and the
+      # two deploys would race. Refuse, so a switch back shows up as a failure.
+      - name: Check that Pages deploys from GitHub Actions
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mode=$(gh api "repos/$GITHUB_REPOSITORY/pages" --jq .build_type)
+          if [ "$mode" != workflow ]; then
+            echo "::error::Settings → Pages → Source is '$mode' (Deploy from a branch), which serves every file in the repo. Set it to GitHub Actions, then re-run this workflow."
+            exit 1
+          fi
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v5
+
+  indexnow:
+    name: IndexNow ping
+    needs: deploy
+    uses: ./.github/workflows/indexnow.yml
