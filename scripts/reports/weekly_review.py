@@ -28,6 +28,7 @@ Reads the private bookings ledger for counts only; prints no names or emails.
 
 import argparse
 import datetime
+import math
 import os
 import re
 import sys
@@ -37,9 +38,11 @@ import csv
 import urllib.request
 from pathlib import Path
 
-import google.auth
-from google.ads.googleads.client import GoogleAdsClient
-from google.auth.transport.requests import AuthorizedSession
+REPO = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(REPO / "scripts" / "bookings"))
+sys.path.insert(0, str(REPO / "scripts" / "ads"))
+import check_payments  # noqa: E402  is_cancelled: one cancelled rule for every ledger reader
+import upload_bookings  # noqa: E402  select_ready: section 9 counts what the upload would send
 
 # .venv/bin/activate sets this; default it so a bare `.venv/bin/python` run works too.
 os.environ.setdefault("GOOGLE_ADS_CONFIGURATION_FILE_PATH", os.path.expanduser("~/.config/lcs/google-ads.yaml"))
@@ -50,7 +53,6 @@ GSC_SITE = "sc-domain:londonchoralservice.com"
 LEAD_EVENTS = ["generate_lead", "contact_click", "contact_message", "form_error"]
 MONEY_TERMS = re.compile(r"funeral|wedding|carol|choir|choral", re.I)
 SITE = "https://londonchoralservice.com"
-REPO = Path(__file__).resolve().parents[2]
 # the same ledger as scripts/bookings/lcs_money.py, so sections 9 and 10 always agree
 LEDGER = Path(os.environ.get("LCS_BOOKINGS_CSV", Path(os.environ.get("LCS_PRIVATE_DIR", Path.home() / "lcs-private")) / "bookings.csv"))
 EXPECTED_KEY_EVENTS = {"generate_lead", "contact_message"}
@@ -66,6 +68,7 @@ def pct(x):
 
 
 def ads_query():
+    from google.ads.googleads.client import GoogleAdsClient  # here, so the pure sections import without it
     """A read-only GAQL runner: search() only, never a mutate."""
     c = GoogleAdsClient.load_from_storage(os.environ.get("GOOGLE_ADS_CONFIGURATION_FILE_PATH", os.path.expanduser("~/.config/lcs/google-ads.yaml")))
     ga = c.get_service("GoogleAdsService")
@@ -333,31 +336,44 @@ def wiring_section(s, ads_settings):
         print(f"   GA4 event data retention: {r.json().get('eventDataRetention', '?')}")
 
 
+def ledger_counts(rows):
+    """Section 9's figures. Cancelled bookings (check_payments.is_cancelled, the rule every ledger reader uses)
+    are counted apart and left out of the totals; "ready" is exactly what upload_bookings.select_ready would send."""
+    def value(r):
+        try:
+            v = float((r.get("value_gbp") or "0").replace("£", "").replace(",", ""))
+        except ValueError:
+            return 0.0
+        return v if math.isfinite(v) else 0.0
+
+    live = [r for r in rows if not check_payments.is_cancelled(r)]
+    by = defaultdict(lambda: [0, 0.0])
+    for r in live:
+        by[r.get("occasion") or "?"][0] += 1
+        by[r.get("occasion") or "?"][1] += value(r)
+    return {
+        "bookings": len(live),
+        "total": round(sum(map(value, live)), 2),
+        "cancelled": len(rows) - len(live),
+        "latest": max((r.get("invoice_date") or "" for r in live), default=""),
+        "with_ref": sum(1 for r in live if (r.get("gclid") or "").strip()),
+        "ready": len(upload_bookings.select_ready(rows)[0]),
+        "uploaded": sum(1 for r in rows if (r.get("uploaded_at") or "").strip()),
+        "by_occasion": {k: tuple(v) for k, v in sorted(by.items())},
+    }
+
+
 def ledger_section():
     print("\n== 9. Bookings ledger (counts only)")
     if not LEDGER.exists():
         print(f"   no ledger yet at {LEDGER}")
         return
     with open(LEDGER, newline="") as f:
-        rows = list(csv.DictReader(f))
-
-    def value(r):
-        try:
-            return float((r.get("value_gbp") or "0").replace("£", "").replace(",", ""))
-        except ValueError:
-            return 0.0
-
-    has_ref = [r for r in rows if (r.get("gclid") or "").strip()]
-    ready = [r for r in has_ref if (r.get("consent") or "").lower() == "granted" and not (r.get("uploaded_at") or "").strip()]
-    uploaded = [r for r in rows if (r.get("uploaded_at") or "").strip()]
-    latest = max((r.get("invoice_date") or "" for r in rows), default="")
-    print(f"   {len(rows)} bookings, £{sum(map(value, rows)):,.2f} · latest invoice {latest or '-'}")
-    print(f"   with an ad click reference {len(has_ref)} · ready to upload {len(ready)} · uploaded {len(uploaded)}")
-    by = defaultdict(lambda: [0, 0.0])
-    for r in rows:
-        by[r.get("occasion") or "?"][0] += 1
-        by[r.get("occasion") or "?"][1] += value(r)
-    print("   by occasion: " + " · ".join(f"{k} {n} (£{v:,.0f})" for k, (n, v) in sorted(by.items())))
+        c = ledger_counts(list(csv.DictReader(f)))
+    print(f"   {c['bookings']} bookings, £{c['total']:,.2f} · latest invoice {c['latest'] or '-'}"
+          + (f" · {c['cancelled']} cancelled (not counted)" if c["cancelled"] else ""))
+    print(f"   with an ad click reference {c['with_ref']} · ready to upload {c['ready']} · uploaded {c['uploaded']}")
+    print("   by occasion: " + " · ".join(f"{k} {n} (£{v:,.0f})" for k, (n, v) in c["by_occasion"].items()))
 
 
 def money_section():
@@ -478,6 +494,8 @@ def main():
     args = p.parse_args()
     q = ads_query()
     landing, ads_settings = ads_sections(args.since, q)
+    import google.auth
+    from google.auth.transport.requests import AuthorizedSession
     creds, _ = google.auth.default()
     s = AuthorizedSession(creds)
     ga4_section(s)
