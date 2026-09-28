@@ -1,0 +1,26 @@
+name: History guard
+
+# Refuses a pull request that would bring back names scrubbed from this public
+# repo's history on 28 Sep 2026 (see scripts/check_history_names.py). A branch
+# cut before that rewrite carries the old commits: rebase it onto main.
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  names:
+    name: No scrubbed names in the branch
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Test the check
+        run: python3 tests/test_check_history_names.py
+      - name: Check every commit the pull request adds
+        run: python3 scripts/check_history_names.py "${{ github.event.pull_request.base.sha }}" "${{ github.event.pull_request.head.sha }}"
