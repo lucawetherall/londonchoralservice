@@ -157,7 +157,7 @@ echo 'export GOOGLE_ADS_CONFIGURATION_FILE_PATH="$HOME/.config/lcs/google-ads.ya
 ```
 
 
-**6b. Private invoice templates** (only if you didn't copy `~/lcs-private/tools/`). The templates come from the lcs-invoice-generator and lcs-booking-agreement-generator skills that ship with the desktop app; they hold the bank details, so they live outside the repo. Needs Node and Google Chrome.
+**6b. Private invoice templates** (only if you didn't copy `~/lcs-private/tools/`; copying is better: since 29 Sep 2026 the private copies are adjusted to match the invoices and booking confirmations Luca actually sends, with the "across the United Kingdom" tagline, solid payment-schedule lines and the tighter agreement spacing, and the skill's own templates are not). The templates come from the lcs-invoice-generator and lcs-booking-agreement-generator skills that ship with the desktop app; they hold the bank details, so they live outside the repo. Needs Node and Google Chrome.
 ```bash
 mkdir -p ~/lcs-private/tools && chmod 700 ~/lcs-private ~/lcs-private/tools
 ```

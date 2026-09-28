@@ -9,7 +9,8 @@ Zoho, checks it and presses Send.
     .venv/bin/python scripts/bookings/imap_draft.py save '<one-line JSON spec>'
     .venv/bin/python scripts/bookings/imap_draft.py sent <invoice ref> <client email> <YYYY-MM-DD>
     .venv/bin/python scripts/bookings/imap_draft.py check     (owner: sign in, count the folders; writes nothing)
-    .venv/bin/python scripts/bookings/imap_draft.py test      (owner: one test draft to luca@almaconsort.com; delete it)
+    .venv/bin/python scripts/bookings/imap_draft.py test      (owner: a test draft to luca@almaconsort.com with a real
+                                                              sample invoice and booking confirmation; delete it)
 
 save's spec: {"key": "2111-confirmation", "to": "<the client's address>", "subject": "Re: …",
        "in_reply_to": "<Message-Id of the client's email>", "references": "<id> <id> …",
@@ -19,9 +20,10 @@ save's spec: {"key": "2111-confirmation", "to": "<the client's address>", "subje
   to           one address only. There is no Cc or Bcc, and any other spec key is refused.
   in_reply_to, references   optional; from ZohoMail_getMessageHeader (Message-Id and References), so Zoho
                threads the draft with the client's email. A long References list keeps its first and last ids.
-  attachments  optional. With attachments the key must be "<ref>-confirmation", `to` must be the client_email
-               of booking <ref> in the ledger, and the files must be the ones make_booking_docs.py wrote for
-               that ref: "Invoice <ref> - <client>.pdf" and/or "Booking Confirmation - <client> - <date>.docx",
+  attachments  only on a confirmation, and then both: the key "<ref>-confirmation" needs exactly the two files
+               make_booking_docs.py wrote for that ref, and any other key takes none. `to` must be the
+               client_email of booking <ref> in the ledger (written only once a client has confirmed), and the
+               files are "Invoice <ref> - <client>.pdf" and "Booking Confirmation - <client> - <date>.docx",
                in iCloud Drive/LCS-invoices/<ref> - <client>/, each an ordinary file (no links), at most 10 MB,
                that starts like a PDF or a .docx. Each file is read once, before signing in.
 The subject and text are scanned for bank details with the Zoho Mail guard's scanner
@@ -48,6 +50,8 @@ import ssl
 import stat
 import subprocess
 import sys
+import tempfile
+import hashlib
 import time
 import unicodedata
 from email.message import EmailMessage
@@ -190,13 +194,15 @@ def validate(spec, root=None):
             fail("references must be Message-Ids like <abc@example.com>, separated by spaces")
         refs = trim_references(refs)
     files = spec.get("attachments") or []
-    if not isinstance(files, list) or len(files) > 2:
-        fail("attachments must be a list of at most 2 paths (the invoice PDF and the booking confirmation)")
+    if not isinstance(files, list):
+        fail("attachments must be a list of paths")
     attachments = []
-    if files:
-        m = CONFIRMATION_KEY.fullmatch(key)
-        if not m:
-            fail("a draft with attachments needs the key <ref>-confirmation (e.g. 2111-confirmation)")
+    m = CONFIRMATION_KEY.fullmatch(key)
+    if files and not m:
+        fail("only a confirmation (key <ref>-confirmation) carries attachments")
+    if m:
+        if len(files) != 2:
+            fail("a confirmation carries both files: the invoice PDF and the booking confirmation .docx")
         ref = m.group(1)
         client = ledger_email(ref)
         if client is None:
@@ -204,8 +210,9 @@ def validate(spec, root=None):
         if to.lower() != client:
             fail(f"to is not the client on booking {ref} in the ledger")
         attachments = [read_attachment(f, ref, root) for f in files]
-        if len({a[0].rsplit(".", 1)[1] for a in attachments}) != len(attachments):
-            fail("attach one invoice PDF and one booking confirmation at most")
+        if {a[0].rsplit(".", 1)[1] for a in attachments} != {"pdf", "docx"}:
+            fail("a confirmation carries one invoice PDF and one booking confirmation .docx")
+        attachments.sort(key=lambda a: a[0].endswith(".docx"))  # the invoice first, as Luca attaches them
     from zoho_guard import has_bank_details  # the Zoho Mail guard's own scanner
     if has_bank_details({"subject": subject, "content": html}):
         fail("the draft looks like it carries bank details (sort code, account number, IBAN); "
@@ -326,6 +333,48 @@ def save(spec, conn, record=True):
     return f"draft saved in Zoho Drafts ({spec['key']}, {n} attachment{'s' * (n != 1)})"
 
 
+TEST_SPEC = {"ref": "0101", "client_name": "Test Client", "service_type": "Wedding ceremony (TEST ONLY)",
+             "service_date": "2027-01-01", "service_time": "2.00pm", "venue": "Test Venue",
+             "provision": "Small Choir (test only)",
+             "items": [{"name": "Small Choir", "detail": "Test only: not a real booking", "qty": 1, "rate": 1150}],
+             "instalment_1_due": "2026-12-01", "instalment_2_due": "2026-12-31"}
+
+
+def sample_documents():
+    """A real invoice PDF and booking confirmation for a made-up booking, from the owner's own templates
+    (make_booking_docs.make_docs into a temporary folder, deleted afterwards), as attachments in memory."""
+    import make_booking_docs as mbd
+    try:
+        with tempfile.TemporaryDirectory(prefix="lcs-imap-test-") as tmp:
+            got = mbd.make_docs(TEST_SPEC, root=Path(tmp))
+            return [(f.name, *FILES[f.suffix][:2], f.read_bytes()) for f in (got["pdf"], got["docx"])]
+    except SystemExit as e:  # make_docs STOPs with SystemExit
+        fail(f"the sample documents couldn't be made ({str(e).removeprefix('STOP: ')})")
+
+
+def fetch_draft(conn, key):
+    """The saved draft with this key, parsed, or None."""
+    count = open_folder(conn, DRAFTS)
+    found = None
+    if count:
+        typ, rows = conn.fetch("1:*", f"(BODY.PEEK[HEADER.FIELDS ({KEY_HEADER.upper()})])")
+        for row in rows if typ == "OK" else []:
+            if isinstance(row, tuple) and len(row) > 1 and re.search(
+                    rb"(?im)^" + KEY_HEADER.encode() + rb":\s*" + re.escape(key.encode()) + rb"\s*$", row[1] or b""):
+                num = row[0].split()[0].decode()
+                typ, body = conn.fetch(num, "(BODY.PEEK[])")
+                raw = next((r[1] for r in body or [] if isinstance(r, tuple) and len(r) > 1), None)
+                if typ == "OK" and raw:
+                    found = email.message_from_bytes(raw, policy=email.policy.default)
+                break
+    conn.close()
+    return found
+
+
+def digest(data):
+    return hashlib.sha256(data).hexdigest()
+
+
 def invoice_sent(conn, ref, to, since):
     """"sent: yes <date>" if Sent holds a message to `to` since `since` with "Invoice <ref> - ….pdf" attached."""
     name = re.compile(rf"Invoice {re.escape(ref)} - .+\.pdf")
@@ -399,21 +448,27 @@ def run(argv, factory=None, password=None):
                 f"iCloud Drive/LCS-invoices {'writable' if writable else 'NOT writable'}")
     if argv == ["test"]:
         key = f"test-{int(time.time())}"
-        spec = {"key": key, "to": TEST_TO, "subject": "LCS test draft (delete me)",
-                "html": "<p>A test draft saved by imap_draft.py, with a small test PDF attached. "
-                        "Open it to check the attachment shows and the draft can be edited, then delete it; "
+        docs = sample_documents()
+        spec = {"key": key, "to": TEST_TO, "subject": "LCS test draft with a sample invoice (delete me)",
+                "html": "<p>A test draft saved by imap_draft.py. It carries a sample invoice and booking confirmation "
+                        "for a made-up booking (0101, Test Client), made from your own templates, just as a real "
+                        "confirmation would. Open both attachments to check them, then delete this draft; "
                         "don't send it.</p>",
-                "in_reply_to": None, "references": None,
-                "attachments": [("LCS test.pdf", "application", "pdf", b"%PDF-1.4\n% LCS test\n%%EOF\n")]}
+                "in_reply_to": None, "references": None, "attachments": docs}
         spec["message"] = build_message(spec).as_bytes()
         conn = connect(password, factory)
         try:
             result = save(spec, conn, record=False)
-            keys, _ = draft_keys(conn)
+            back = fetch_draft(conn, key)
         finally:
             conn.logout()
-        kept = "yes" if key in keys else "NO (reruns rely on ~/lcs-private/imap-drafts.csv only)"
-        return f"{result}; draft key header kept by Zoho: {kept}"
+        if back is None:
+            return f"{result}; draft key header kept by Zoho: NO (reruns rely on ~/lcs-private/imap-drafts.csv only)"
+        sent = {n: digest(b) for n, _, _, b in docs}
+        got = {p.get_filename(): digest(p.get_content()) for p in back.iter_attachments()}
+        intact = "yes" if got == sent else f"NO (Zoho returned {', '.join(sorted(got)) or 'no attachments'})"
+        return (f"{result}; draft key header kept by Zoho: yes; attachments intact: {intact} "
+                f"({', '.join(sent)})")
     fail("usage: imap_draft.py save '<JSON>' | sent <ref> <client email> <YYYY-MM-DD> | check | test")
 
 
