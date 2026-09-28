@@ -535,7 +535,7 @@ def today():
 # ---------------------------------------------------------------- resolve a hand check
 
 
-HAND_CHOICES = {  # choice -> (the owner's words in the preview, the ledger phrase; {d} is the date)
+HAND_CHOICES = {  # choice -> (the owner's words in the preview, the ledger phrase; {d} is the date, {a} the fee)
     "paid-in-full": ("paid in full", "paid in full {d}"),
     "deposit-kept": ("deposit kept on a cancelled booking", "deposit kept {d}"),
     "refunded": ("refunded", "refunded {d}"),
@@ -544,16 +544,61 @@ HAND_CHOICES = {  # choice -> (the owner's words in the preview, the ledger phra
     "payment-checked": ("payment checked by hand", "payment checked {d}"),
     "arranged-cash": ("balance arranged in cash on the day", "balance payable in cash on the day (arranged {d})"),
     "arranged-cheque": ("balance arranged by cheque on the day", "balance payable by cheque on the day (arranged {d})"),
+    # a balance lost to transfer fees, accepted (owner decision, 28 Sep 2026): the booking reads paid in full, and
+    # record_in_books lists the fee as bank charges on the last payment. Only with `amount` (_fee_facts).
+    "short-by-fees": ("short by transfer fees", "short by fees £{a} accepted {d}"),
 }
+FEE_CHOICE = "short-by-fees"
+# States in which the balance can be a transfer-fee shortfall: a confident payment in, the rest not in the bank
+FEE_STATES = ("DEPOSIT_SEEN", "BALANCE_DUE", "PAST_PART_PAID", "NOTED_PAID")
+MONEY_RE = re.compile(r"^\d{1,2}(?:\.\d{1,2})?$")  # a plain amount in pounds: "12.40", "12.4", "5"
 HAND_BACK_DAYS = 730
+BANK_SOURCE = None  # create_app's data.Data reader (use_bank): its cached Starling read, the one the pages show
+
+
+def use_bank(reader):
+    """The app's reader, whose bank(rows, today) the short-by-fees check assesses the booking with."""
+    global BANK_SOURCE
+    BANK_SOURCE = reader
+
+
+def _fee_facts(ref, rows, amount, day):
+    """The short-by-fees check: `amount` is a plain amount, more than £0 and at most check_payments.FEE_CAP, within
+    1p of the booking's balance as assessed from the bank (the app's cached read, the one its pages show), in a
+    state where that balance is what the confident payments left, and `day` is no earlier than the last of them.
+    The note records the assessed balance."""
+    if not isinstance(amount, str) or not MONEY_RE.fullmatch(amount):
+        raise ActionError("the amount must be a plain amount in pounds, like 12.40")
+    fee = round(float(amount), 2)
+    if not 0 < fee <= cp.FEE_CAP:
+        raise ActionError(f"the amount must be more than £0 and at most £{cp.FEE_CAP:.2f}")
+    bank = BANK_SOURCE.bank(rows, today()) if BANK_SOURCE is not None else None
+    if not bank or not bank.get("bank_checked"):
+        raise ActionError("the bank wasn't checked: can't confirm the shortfall")
+    a = next((x for x in bank.get("assessments") or [] if x.get("ref") == ref), None)
+    if a is None or a.get("state") not in FEE_STATES or not a.get("received"):
+        raise ActionError("that booking has no part-paid balance to accept")
+    balance = round(float(a.get("balance") or 0), 2)
+    if round(abs(balance - fee), 2) > 0.01:
+        raise ActionError(f"the amount isn't that booking's balance (£{balance:,.2f})")
+    if not 0 < balance <= cp.FEE_CAP:
+        raise ActionError(f"that booking's balance (£{balance:,.2f}) is more than £{cp.FEE_CAP:.2f}")
+    if a.get("last") and day < a["last"]:
+        raise ActionError(f"the date is before the last payment ({a['last']})")
+    return {"fee": f"{balance:.2f}", "received": round(float(a["received"]), 2),
+            "value": round(float(a.get("value") or 0), 2)}
 
 
 def _hand_validate(raw):
-    f = fields(raw, ("ref", "choice", "date"))
+    f = fields(raw, ("ref", "choice", "date", "amount"), required=("ref", "choice", "date"))
     if not REF_RE.fullmatch(f["ref"]):
         raise ActionError("unknown booking")
     if f["choice"] not in HAND_CHOICES:
         raise ActionError("unknown choice")
+    if f["choice"] == FEE_CHOICE and not f.get("amount"):
+        raise ActionError("amount is required")
+    if f["choice"] != FEE_CHOICE and "amount" in f:
+        raise ActionError("an amount goes only with short by transfer fees")
     day = iso_date(f["date"], today(), HAND_BACK_DAYS)
     # check_payments.py --owner writes only to <private dir>/bookings.csv (it refuses LCS_BOOKINGS_CSV): the
     # ledger this preview reads must be that same file
@@ -564,11 +609,23 @@ def _hand_validate(raw):
     if row is None:
         raise ActionError("unknown booking")
     words, phrase = HAND_CHOICES[f["choice"]]
-    return {"input": {"ref": f["ref"], "choice": f["choice"], "date": day}, "ref": f["ref"],
-            "words": words, "phrase": phrase.format(d=day), "first_name": data.dash.first_name(row.get("client_name"))}
+    cleaned = {"input": {"ref": f["ref"], "choice": f["choice"], "date": day}, "ref": f["ref"], "words": words,
+               "first_name": data.dash.first_name(row.get("client_name"))}
+    if f["choice"] == FEE_CHOICE:
+        facts = _fee_facts(f["ref"], rows, f["amount"], day)
+        cleaned["input"]["amount"] = f["amount"]
+        cleaned.update(facts, phrase=phrase.format(a=facts["fee"], d=day))
+    else:
+        cleaned["phrase"] = phrase.format(d=day)
+    return cleaned
 
 
 def _hand_describe(c):
+    if c["input"]["choice"] == FEE_CHOICE:
+        return (f"Accept the shortfall on booking {c['ref']} ({c['first_name']}): £{c['received']:,.2f} received of "
+                f"£{c['value']:,.2f}, short by £{c['fee']} in transfer fees. The booking will read paid in full, and "
+                f"the £{c['fee']} is listed for Books as bank charges on the last payment. "
+                f"Adds \"{c['phrase']} (owner)\" to its ledger notes.")
     return (f"Resolve the hand check on booking {c['ref']} ({c['first_name']}): {c['words']}. "
             f"Adds \"{c['phrase']} (owner)\" to its ledger notes.")
 

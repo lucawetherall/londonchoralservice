@@ -49,8 +49,8 @@
 
 <section class="card">
   <h2>Resolve a hand check</h2>
-  <p class="muted">Adds your note (paid in full, deposit kept, refunded and so on) to this booking's ledger notes, after Face ID or Touch ID.</p>
-  {{ m.resolve_form(ref, action_day) }}
+  <p class="muted">Adds your note (paid in full, short by transfer fees, deposit kept, refunded and so on) to this booking's ledger notes, after Face ID or Touch ID.</p>
+  {{ m.resolve_form(ref, action_day, fee=b.balance if (booking.ok and b and b.bank_checked and b.state in FEE.states and b.received) else none) }}
 </section>
 
 <section class="card">

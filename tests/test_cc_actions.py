@@ -165,7 +165,7 @@ class Runner:
         actions.RUNNER = self.saved
 
 
-def setup(clock=None):
+def setup(clock=None, client_factory=lambda: None):
     """A registered passkey, the fixtures, a fresh audit log; returns (client, authenticator, clock)."""
     for p in ("audit.jsonl",):
         (Path(TMP) / "command-centre" / p).unlink(missing_ok=True)
@@ -174,7 +174,7 @@ def setup(clock=None):
     actions.reset_validations()
     clock = clock or Clock()
     pk = auth.Passkeys(auth.ChallengeStore(clock=clock))
-    app = create_app(client_factory=lambda: None, passkeys=pk, checkout=lambda: "main")
+    app = create_app(client_factory=client_factory, passkeys=pk, checkout=lambda: "main")
     c = TestClient(app, base_url=ORIGIN, client=LOCAL, follow_redirects=False)
     a = Authenticator()
     code = auth.new_bootstrap()
@@ -1600,6 +1600,128 @@ def test_activity_page_filters_and_masks():
     assert "<script>alert" not in q and 'value="&lt;script&gt;alert(1)"' in q and "Nothing matches" in q
     assert "Confirm the bank details" in page(c, "/activity?q=bank+details")
     assert page(c, "/activity?action=%3Cx%3E&result=nope").count("activity-item") >= 3
+
+
+# ---------------------------------------------------------------- short by transfer fees (owner decision, 28 Sep 2026)
+
+
+def days_ago(n):
+    return (TODAY - datetime.timedelta(days=n)).isoformat()
+
+
+FEE_ROW = {"booking_ref": "2408", "invoice_date": days_ago(40), "event_date": (TODAY + datetime.timedelta(days=20)).isoformat(),
+           "client_name": "Bea Feeworthy", "client_email": "bea@example.org", "occasion": "Wedding", "ensemble": "Octet",
+           "value_gbp": "950", "notes": f"deposit seen {days_ago(35)} (Starling)"}
+
+
+class FeeBank:
+    """A GET-only Starling stand-in whose feed holds 2408's two payments: £937.60 of £950, £12.40 lost to fees."""
+
+    def account(self):
+        return {"accountUid": "acc-1", "defaultCategory": "cat-1"}
+
+    def get(self, path):
+        return {"clearedBalance": {"minorUnits": 100000}, "effectiveBalance": {"minorUnits": 100000}}
+
+    def feed(self, since, until, direction):
+        return [{"direction": "IN", "amount": {"minorUnits": m}, "transactionTime": f"{d}T10:00:00Z",
+                 "reference": f"INV {ref}", "counterPartyName": who}
+                for ref, who, m, d in (("2408", "B FEEWORTHY", 47500, days_ago(35)),
+                                       ("2408", "B FEEWORTHY", 46260, days_ago(2)),
+                                       # a past booking's payments (only in the ledger for one test)
+                                       ("0909", "C PASTFIELD", 30000, days_ago(50)),
+                                       ("0909", "C PASTFIELD", 29100, days_ago(10)))]
+
+
+def fee_setup(client_factory=FeeBank):
+    c, a, clock = setup(client_factory=client_factory)
+    rows = lm.read_csv(cp.LEDGER)
+    write_csv(os.path.join(TMP, "bookings.csv"), LEDGER_COLS, rows + [FEE_ROW])
+    return c, a, clock
+
+
+FEE_INPUT = {"ref": "2408", "choice": "short-by-fees", "date": D, "amount": "12.40"}
+
+
+def test_short_by_fees_preview_and_argv():
+    c, _, _ = fee_setup()
+    act = actions.RESOLVE_HAND_CHECK
+    cleaned = act.validate(FEE_INPUT)
+    assert act.argv(cleaned) == [PYX, CHECK, "--note", "2408", f"short by fees £12.40 accepted {D}", "--owner"]
+    s = act.preview(cleaned)
+    for part in ("booking 2408 (Bea)", "£937.60 received of £950.00", "short by £12.40 in transfer fees",
+                 "will read paid in full", f"\"short by fees £12.40 accepted {D} (owner)\""):
+        assert part in s, (part, s)
+    assert "Feeworthy" not in s and "example.org" not in s
+    assert cleaned["input"] == FEE_INPUT
+    assert act.argv(act.validate(dict(FEE_INPUT, amount="12.4")))[4] == f"short by fees £12.40 accepted {D}"
+    assert act.argv(act.validate(dict(FEE_INPUT, amount="12.41")))[4] == f"short by fees £12.40 accepted {D}"  # 1p
+    r = preview(c, "resolve-hand-check", FEE_INPUT)
+    assert r.status_code == 200 and r.json()["summary"] == s, r.text
+    # the owner-only phrase stays out of the ordinary select
+    assert ("short-by-fees", "short by transfer fees") not in create_app.__globals__["HAND_CHOICES"]
+
+
+def test_short_by_fees_refusals():
+    fee_setup()
+    v = actions.RESOLVE_HAND_CHECK.validate
+    reasons = {
+        "25.01": "the amount must be more than £0 and at most £25.00",
+        "30": "the amount must be more than £0 and at most £25.00",
+        "0": "the amount must be more than £0 and at most £25.00",
+        "12.42": "the amount isn't that booking's balance (£12.40)",
+        "5": "the amount isn't that booking's balance (£12.40)",
+    }
+    for amount, reason in reasons.items():
+        assert refused(v, dict(FEE_INPUT, amount=amount)) == reason, amount
+    for amount in ("abc", "12.400", "-12.40", "£12.40", "1e1", "12,40", "112.40", " "):
+        assert refused(v, dict(FEE_INPUT, amount=amount)), amount
+    assert refused(v, {k: x for k, x in FEE_INPUT.items() if k != "amount"}) == "amount is required"
+    assert refused(v, dict(FEE_INPUT, amount=12.4)) == "bad amount"  # a number, not a form string
+    assert refused(v, dict(FEE_INPUT, choice="paid-in-full")) == "an amount goes only with short by transfer fees"
+    assert refused(v, dict(FEE_INPUT, date=days_ago(3))) == f"the date is before the last payment ({days_ago(2)})"
+    assert refused(v, dict(FEE_INPUT, ref="2111", amount="5")) == "that booking has no part-paid balance to accept"
+    assert refused(v, dict(FEE_INPUT, ref="0310")) == "that booking has no part-paid balance to accept"
+    fee_setup(client_factory=lambda: None)  # no bank: nothing to check the shortfall against
+    assert refused(v, FEE_INPUT) == "the bank wasn't checked: can't confirm the shortfall"
+
+
+def test_short_by_fees_through_the_real_script_reads_paid_in_full():
+    c, a, _ = fee_setup()
+    r = run(c, a, "resolve-hand-check", FEE_INPUT)
+    assert r.status_code == 200 and r.json()["ok"] is True, r.text
+    notes = ledger_notes("2408")
+    assert notes == f"{FEE_ROW['notes']}; short by fees £12.40 accepted {D} (owner)", notes
+    row = next(x for x in lm.read_csv(cp.LEDGER) if x["booking_ref"] == "2408")
+    got = cp.collect(FeeBank(), [row], TODAY)
+    assert [x["state"] for _, _, x in got] == ["PAID_IN_FULL"], got
+    assessed = got[0][2]
+    assert assessed["balance"] == 0 and assessed["fees"] == 12.4 and assessed["action"] != "balance_reminder"
+    assert assessed["record_in_books"][-1] == [days_ago(2), 462.6, 12.4], assessed
+
+
+def test_booking_page_offers_short_by_fees_only_for_a_small_part_paid_balance():
+    c, _, _ = fee_setup()
+    out = page(c, "/bookings/2408")
+    assert 'name="choice" value="short-by-fees"' in out and 'name="amount" value="12.40"' in out, out
+    assert "Short by transfer fees (£12.40)" in out
+    assert 'value="short-by-fees"' not in page(c, "/bookings/2111")  # nothing received: no shortfall to accept
+    c, _, _ = fee_setup(client_factory=lambda: None)
+    assert 'value="short-by-fees"' not in page(c, "/bookings/2408")  # bank not checked
+
+
+def test_hand_check_list_offers_short_by_fees_on_a_past_part_paid_booking():
+    c, _, _ = fee_setup()
+    rows = lm.read_csv(cp.LEDGER)
+    past = dict(FEE_ROW, booking_ref="0909", invoice_date=days_ago(60), event_date=days_ago(5), value_gbp="600",
+                notes="", client_name="Cy Pastfield", client_email="cy@example.org")
+    write_csv(os.path.join(TMP, "bookings.csv"), LEDGER_COLS, rows + [past])
+    for path in ("/money", "/"):
+        out = page(c, path)
+        assert "/bookings/0909" in out and 'name="amount" value="9.00"' in out, path
+        assert 'name="amount" value="12.40"' not in out, path  # 2408 isn't a hand check
+    cleaned = actions.RESOLVE_HAND_CHECK.validate({"ref": "0909", "choice": "short-by-fees", "date": D, "amount": "9"})
+    assert cleaned["phrase"] == f"short by fees £9.00 accepted {D}"
 
 
 if __name__ == "__main__":
