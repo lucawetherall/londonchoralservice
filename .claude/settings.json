@@ -50,7 +50,11 @@
       "Bash(security dump-keychain)",
       "Bash(security dump-keychain *)",
       "Write(~/lcs-private/command-centre/**)",
-      "Edit(~/lcs-private/command-centre/**)"
+      "Edit(~/lcs-private/command-centre/**)",
+      "Bash(git update-ref *)",
+      "Bash(git remote set-url *)",
+      "Bash(git config *)",
+      "Edit(.git/**)"
     ]
   },
   "hooks": {

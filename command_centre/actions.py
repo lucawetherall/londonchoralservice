@@ -19,13 +19,25 @@ Binding rules (docs/superpowers/specs/2026-09-28-command-centre-design.md, and t
 - The owner-only hand-check phrases go through `check_payments.py --note … --owner`, which refuses unless it gets
   the one-time owner nonce written here (owner_nonce(): the file holds sha256(nonce), the nonce goes over the pipe),
   and unless the ledger sits beside that nonce (LCS_BOOKINGS_CSV unset).
-- Ads change sets come from ~/lcs-private/command-centre/proposals/<id>.json (mode 600). A proposal pins a commit
-  on origin/main, the script's blob at that commit and its arguments (simple tokens). The script runs from a
-  `git archive` of that commit's scripts/ in an app-owned mode-700 folder, with `python -E -s -B`, an allowlisted
-  environment and no bytecode from anywhere else: nothing in the working tree (untracked files, edits hidden by
-  --skip-worktree, __pycache__) can change what runs. Validate passes --validate-only, which only proposal-aware
-  scripts accept; apply passes --apply, runs from the same commit, and is bound to the validate run's output hash.
-  A blob and arguments once applied are refused again under any proposal id.
+- Ads change sets come from ~/lcs-private/command-centre/proposals/<id>.json (mode 600). A proposal pins a commit,
+  the script's blob at that commit and its arguments (simple tokens). The app keeps its own bare mirror,
+  ~/lcs-private/command-centre/mirror.git (mode 700, its config rewritten to a fixed one each time), and fetches
+  GitHub's main into it from a hard-coded URL (GITHUB_URL) at the preview and again at the run; a failed fetch
+  refuses. The commit must be an ancestor of that fetched main. Every git call runs in the mirror with no global
+  or system config, none of the caller's GIT_* variables, no replace refs, fsmonitor and hooks off; the fetch
+  allows https only. The working repo (its refs, its config, its remote URL, its files) is never read. The run
+  folder is written from `git ls-tree -r` and `git cat-file --batch` in the mirror (no checkout, no archive, so
+  no filters or attributes), each file checked against its blob id, regular files only, in an app-owned mode-700
+  folder, and the script runs with `python -E -s -B`, an allowlisted environment and no bytecode from anywhere
+  else. Validate passes --validate-only, which only proposal-aware scripts accept; apply passes --apply, runs
+  from the same commit, and is bound to the validate run's output hash. The preview shows the script's last
+  change on main as a diff (bound to the summary by its sha256) and links to the file on GitHub. A blob and
+  arguments once applied are refused again under any proposal id.
+- What stays trusted (accepted residual risk, in the spec's threat model): the Python interpreter the app runs
+  (sys.executable, the repo's .venv) and that venv's site-packages, including any .pth file, which Python runs at
+  start-up even with -E -s; the git binary; and the mirror and the private folder on disk. All of these belong to
+  the same macOS user as the app, and a process running as that user could alter them. The mirror and run
+  folder stop the working tree and its git state from changing what runs, not that user.
 - The audit log is hash-chained: each line carries the sha256 of the line before it (verify_audit()).
 """
 
@@ -34,7 +46,6 @@ import dataclasses
 import datetime
 import fcntl
 import hashlib
-import io
 import json
 import os
 import re
@@ -44,7 +55,6 @@ import shutil
 import stat
 import subprocess
 import sys
-import tarfile
 import tempfile
 import threading
 import time
@@ -203,6 +213,8 @@ class ScriptAction:
                                   input=public(cleaned), exit_code=code, output_sha256=digest, passkey=passkey_id)
         nxt = self.after(cleaned, code, raw, {"login": (user or {}).get("login", ""), "passkey": passkey_id}) \
             if self.after else None
+        if isinstance(nxt, str):  # a warning from `after` (the ads apply's record couldn't be saved)
+            warning, nxt = join_warning(nxt, warning), None
         return Result(ok, code, join_warning(warning, self.show(raw)), action.summary, nxt)
 
 
@@ -443,6 +455,19 @@ def verify_audit(path=None):
     return bad
 
 
+def audit_status(path=None):
+    """{"ok", "bad" (verify_audit()), "lines" (non-empty lines), "last" (sha256 of the last line, or None)} for
+    the Activity page and the .applied records."""
+    try:
+        data_ = Path(path or audit_path()).read_bytes()
+    except FileNotFoundError:
+        data_ = b""
+    lines = [ln for ln in data_.split(b"\n") if ln]
+    bad = verify_audit(path)
+    return {"ok": not bad, "bad": bad, "lines": len(lines),
+            "last": hashlib.sha256(lines[-1]).hexdigest() if lines else None}
+
+
 def read_audit(limit=1000):
     """The last `limit` audit entries, newest first; malformed lines are skipped."""
     try:
@@ -579,7 +604,7 @@ def _singer_facts(r):
             "last4": data.dash.digits4(r.get("bank_last4"))}
 
 
-FP_PREFIX = 8  # characters of bank_fp shown in the summary and passed as --expect-fp
+FP_PREFIX = 16  # characters of bank_fp shown in the summary and passed as --expect-fp: all of it
 FP_RE = re.compile(r"^[0-9a-f]{16}$")
 
 
@@ -670,52 +695,129 @@ BLOB_RE = re.compile(r"^(?:[0-9a-f]{40}|[0-9a-f]{64})$")
 COMMIT_RE = BLOB_RE
 TOKEN_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._]{0,63}$")  # a proposal's argument: never a flag, a path or a space
 MAX_ARGS = 12
-ORIGIN_MAIN = "refs/remotes/origin/main"
-FETCH_EVERY = 60  # seconds between `git fetch` attempts
-SAFE_REMOTE_RE = re.compile(r"^(?:https://github\.com/|git@github\.com:|ssh://git@github\.com/)[A-Za-z0-9._/-]+$")
+GITHUB_URL = "https://github.com/lucawetherall/londonchoralservice.git"  # the only place Ads code comes from
+GITHUB_BLOB = "https://github.com/lucawetherall/londonchoralservice/blob"  # for the preview's link to the file
+TEST_UPSTREAM = None  # tests only: a local bare repo standing in for GitHub (a module variable, never read from the environment)
+MAIN = "refs/heads/main"
+DIFF_MAX = 6000  # characters of the script's last change shown in the preview
+RUN_FOLDER_MAX = 20 * 1024 * 1024  # bytes of scripts/ written into a run folder
 ADS_ENV_KEYS = ("HOME", "PATH", "LANG", "TZ", "GOOGLE_ADS_CONFIGURATION_FILE_PATH")
-GIT_SAFE = ["-c", "core.fsmonitor=false", "-c", "core.hooksPath=/dev/null"]
+GIT_ENV_KEYS = ("HOME", "PATH", "LANG", "TZ", "https_proxy", "HTTPS_PROXY", "no_proxy", "NO_PROXY")
+GIT_SAFE = ["-c", "core.fsmonitor=false", "-c", "core.hooksPath=/dev/null", "-c", "core.attributesFile=/dev/null",
+            "--no-replace-objects"]
+MIRROR_CONFIG = "[core]\n\trepositoryformatversion = 0\n\tfilemode = true\n\tbare = true\n"
+GIT_RUNNER = subprocess.run  # the tests wrap this to see every git call
 _VALIDATIONS = {}  # proposal id -> {"commit", "blob", "args", "sha256", "at" (monotonic)}
 _VALIDATIONS_LOCK = threading.Lock()
-_FETCHED = {"at": None}
+_UNRECORDED = {"ids": set(), "runs": []}  # applies whose .applied record couldn't be written: refused until restart
 clock = time.monotonic
+
+
+class NotFetched(ActionError):
+    """The mirror has never been fetched (a GET page doesn't fetch)."""
 
 
 def proposals_dir():
     return auth.config_dir() / "proposals"
 
 
+def mirror_dir():
+    """The app's own bare mirror of GitHub's main: ~/lcs-private/command-centre/mirror.git (mode 700)."""
+    return auth.config_dir() / "mirror.git"
+
+
 def git_env():
-    """The app's environment minus CC_* and every GIT_* variable (GIT_DIR, GIT_CONFIG_*, GIT_EXEC_PATH…), with
-    prompts off."""
-    env = {k: v for k, v in clean_env().items() if not k.startswith("GIT_")}
-    env["GIT_TERMINAL_PROMPT"] = "0"
+    """A fixed environment for git: none of the caller's GIT_* (GIT_DIR, GIT_CONFIG_*, GIT_EXEC_PATH…) and no
+    global or system config, replace refs off, prompts off. Only HOME, PATH, LANG, TZ and proxy settings pass."""
+    env = {k: os.environ[k] for k in GIT_ENV_KEYS if k in os.environ}
+    env.update(GIT_CONFIG_GLOBAL="/dev/null", GIT_CONFIG_NOSYSTEM="1", GIT_TERMINAL_PROMPT="0",
+               GIT_NO_REPLACE_OBJECTS="1")
     return env
 
 
-def _git(*args, timeout=15, text=True):
-    git = shutil.which("git") or "/usr/bin/git"
+def git_binary():
+    return "/usr/bin/git" if os.path.exists("/usr/bin/git") else (shutil.which("git") or "git")
+
+
+def _git(*args, timeout=15, text=True, input=None):
+    """git in the mirror (--git-dir, never the working repo), hardened; ActionError if it doesn't answer."""
+    argv = [git_binary(), f"--git-dir={mirror_dir()}", *GIT_SAFE, *args]
+    kw = {"capture_output": True, "text": text, "timeout": timeout, "env": git_env(), "shell": False,
+          "cwd": str(mirror_dir())}
+    if input is None:
+        kw["stdin"] = subprocess.DEVNULL
+    else:
+        kw["input"] = input
     try:
-        return subprocess.run([git, *GIT_SAFE, "-C", str(REPO), *args], capture_output=True, text=text,
-                              timeout=timeout, env=git_env(), stdin=subprocess.DEVNULL, shell=False)
+        return GIT_RUNNER(argv, **kw)
     except (OSError, subprocess.TimeoutExpired):
         raise ActionError("git didn't answer") from None
 
 
-def fetch_origin():
-    """`git fetch origin main`, at most once a minute, only when origin is a GitHub URL (no local path, no ext::
-    transport), with hooks, fsmonitor and prompts off. Failure is fine: the local origin/main ref is used."""
-    now = clock()
-    if _FETCHED["at"] is not None and now - _FETCHED["at"] < FETCH_EVERY:
-        return
-    _FETCHED["at"] = now
-    url = _git("config", "--get", "remote.origin.url")
-    if url.returncode != 0 or not SAFE_REMOTE_RE.fullmatch(url.stdout.strip()):
-        return
-    with contextlib.suppress(ActionError):
-        _git("-c", "protocol.allow=never", "-c", "protocol.https.allow=always", "-c", "protocol.ssh.allow=always",
-             "-c", "core.sshCommand=ssh -o BatchMode=yes", "fetch", "--quiet", "--no-tags", "origin",
-             "+refs/heads/main:refs/remotes/origin/main", timeout=30)
+def ensure_mirror():
+    """Create the mirror if it's missing; either way make it mode 700, this user's, a real folder (never a
+    symlink), and put back its fixed config, dropping anything that could change what git reads: alternates,
+    grafts, a shallow file, info/attributes."""
+    d = mirror_dir()
+    d.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
+    os.chmod(d.parent, 0o700)
+    try:
+        st = os.lstat(d)
+    except FileNotFoundError:
+        st = None
+    if st is not None and (not stat.S_ISDIR(st.st_mode) or st.st_uid != os.getuid()):
+        raise ActionError("the app's git mirror isn't a folder of its own; nothing runs")
+    if st is None or not (d / "objects").is_dir():
+        env = git_env()
+        try:
+            p = GIT_RUNNER([git_binary(), f"--git-dir={d}", *GIT_SAFE, "init", "--quiet", "--bare"],
+                           capture_output=True, timeout=15, env=env, shell=False, stdin=subprocess.DEVNULL,
+                           cwd=str(d.parent))
+        except (OSError, subprocess.TimeoutExpired):
+            p = None
+        if p is None or p.returncode != 0:
+            raise ActionError("couldn't set up the app's git mirror; nothing runs")
+    os.chmod(d, 0o700)
+    cfg = d / "config"
+    with contextlib.suppress(FileNotFoundError):
+        if cfg.is_symlink() or not cfg.is_file():
+            os.unlink(cfg)
+    tmp = d / f".config.{secrets.token_hex(4)}"
+    fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
+    with os.fdopen(fd, "w", encoding="ascii") as f:
+        f.write(MIRROR_CONFIG)
+    os.replace(tmp, cfg)
+    for rel in ("objects/info/alternates", "objects/info/http-alternates", "info/grafts", "info/attributes",
+                "shallow"):
+        with contextlib.suppress(FileNotFoundError, IsADirectoryError):
+            os.unlink(d / rel)
+    return d
+
+
+def fetch_args():
+    """The fetch: GitHub's main (the hard-coded URL) into the mirror's main, forced, with only https allowed (the
+    file protocol off); in the tests only, from TEST_UPSTREAM with only the file protocol allowed."""
+    if TEST_UPSTREAM is None:
+        url, protocols = GITHUB_URL, ["-c", "protocol.https.allow=always", "-c", "protocol.file.allow=never"]
+    else:
+        url, protocols = str(TEST_UPSTREAM), ["-c", "protocol.file.allow=always"]
+    return ["-c", "protocol.allow=never", *protocols, "-c", "http.followRedirects=false",
+            "-c", "credential.helper=", "-c", "core.askPass=",
+            "fetch", "--quiet", "--no-tags", "--no-write-fetch-head", "--no-recurse-submodules", "--no-auto-gc",
+            url, f"+{MAIN}:{MAIN}"]
+
+
+def fetch_mirror():
+    """Fetch GitHub's main into the mirror, every time (the preview and the run each fetch: no stale ref is
+    trusted). A failure refuses."""
+    ensure_mirror()
+    first = _git("rev-parse", "--verify", "--quiet", MAIN).returncode != 0
+    try:
+        p = _git(*fetch_args(), timeout=300 if first else 60)
+    except ActionError:
+        p = None
+    if p is None or p.returncode != 0 or _git("rev-parse", "--verify", "--quiet", MAIN).returncode != 0:
+        raise ActionError("couldn't verify against GitHub; nothing runs")
 
 
 def git_blob_id(content, like):
@@ -724,19 +826,47 @@ def git_blob_id(content, like):
     return (hashlib.sha1 if len(like) == 40 else hashlib.sha256)(header + content).hexdigest()
 
 
+def _empty_tree(like):
+    """Git's empty tree, in the hash the repo uses."""
+    header = b"tree 0\0"
+    return (hashlib.sha1 if len(like) == 40 else hashlib.sha256)(header).hexdigest()
+
+
+def script_change(changed_in, rel):
+    """The script's last change on main, as git shows it: `git diff <changed_in>^ <changed_in> -- <rel>` (the
+    empty tree for a first commit), no external diff or textconv, capped at DIFF_MAX characters."""
+    parents = _git("log", "-1", "--format=%P", changed_in)
+    if parents.returncode != 0:
+        raise ActionError("git couldn't describe the script")
+    base = (parents.stdout.split() or [_empty_tree(changed_in)])[0]
+    diff = _git("diff", "--no-ext-diff", "--no-textconv", "--no-color", base, changed_in, "--", rel, timeout=30)
+    if diff.returncode != 0:
+        raise ActionError("git couldn't show the script's change")
+    text = diff.stdout
+    if len(text) > DIFF_MAX:
+        text = f"{text[:DIFF_MAX]}\n… ({len(text) - DIFF_MAX:,} characters more: open it on GitHub)"
+    return text
+
+
 def commit_facts(commit, rel, blob, fetch=True):
-    """What the server reads from git about the script to run, or ActionError: the commit exists, is on
-    origin/main, holds `rel` as a regular file whose blob is `blob`; plus who last changed the script and when,
-    and its docstring. `fetch` False (the Marketing page, a GET) uses the local origin/main ref as it is."""
+    """What the server reads from the mirror about the script to run, or ActionError: the commit is on GitHub's
+    main (as just fetched), holds `rel` as a regular file whose blob is `blob`; who last changed the script, when
+    and in which commit, that change's diff and the script's docstring. `fetch` False (the Marketing page, a GET)
+    uses the mirror as last fetched."""
     if not COMMIT_RE.fullmatch(commit or ""):
         raise ActionError("the proposal's commit isn't a full commit id")
-    if _git("cat-file", "-e", f"{commit}^{{commit}}").returncode != 0:
-        raise ActionError("the proposal's commit isn't in this repo")
     if fetch:
-        fetch_origin()
-    if _git("merge-base", "--is-ancestor", commit, ORIGIN_MAIN).returncode != 0:
-        raise ActionError("the proposal's commit isn't on origin/main")
-    tree = _git("ls-tree", "--full-tree", commit, "--", rel)
+        fetch_mirror()
+    else:
+        if not (mirror_dir() / "objects").is_dir():
+            raise NotFetched("not checked against GitHub yet")
+        ensure_mirror()
+        if _git("rev-parse", "--verify", "--quiet", MAIN).returncode != 0:
+            raise NotFetched("not checked against GitHub yet")
+    if _git("cat-file", "-e", f"{commit}^{{commit}}").returncode != 0 or \
+            _git("merge-base", "--is-ancestor", commit, MAIN).returncode != 0:
+        raise ActionError("the proposal's commit isn't on main at GitHub")
+    tree = _git("ls-tree", commit, "--", rel)
     parts = tree.stdout.split()
     if tree.returncode != 0 or len(parts) < 4:
         raise ActionError("the script isn't in that commit")
@@ -745,19 +875,22 @@ def commit_facts(commit, rel, blob, fetch=True):
         raise ActionError("the script must be a file in scripts/ads/")
     if found != blob:
         raise ActionError("the script at that commit isn't the blob the proposal names")
-    log = _git("log", "-1", "--format=%h%x1f%an%x1f%as", commit, "--", rel)
+    log = _git("log", "-1", "--format=%H%x1f%an%x1f%as%x1f%s", commit, "--", rel)
     bits = log.stdout.strip().split("\x1f")
-    if log.returncode != 0 or len(bits) != 3:
+    if log.returncode != 0 or len(bits) != 4 or not COMMIT_RE.fullmatch(bits[0]):
         raise ActionError("git couldn't describe the script")
     src = _git("cat-file", "blob", blob, text=False)
-    if src.returncode != 0 or len(src.stdout) > 512 * 1024:
+    if src.returncode != 0 or len(src.stdout) > 512 * 1024 or git_blob_id(src.stdout, blob) != blob:
         raise ActionError("git couldn't read the script")
     try:
         doc = ast.get_docstring(ast.parse(src.stdout)) or ""
     except (SyntaxError, ValueError):
         raise ActionError("the script at that commit isn't valid Python") from None
-    return {"changed_in": bits[0], "author": _one_line(bits[1], 60), "date": bits[2],
-            "doc": _one_line(doc, 400) or "(no docstring)", "on_main": True}
+    diff = script_change(bits[0], rel)
+    return {"changed_in": bits[0][:12], "changed_in_full": bits[0], "author": _one_line(bits[1], 60),
+            "date": bits[2], "subject": _one_line(bits[3], 80), "doc": _one_line(doc, 400) or "(no docstring)",
+            "on_main": True, "diff": diff, "diff_sha256": hashlib.sha256(diff.encode("utf-8")).hexdigest(),
+            "link": f"{GITHUB_BLOB}/{commit}/{rel}"}
 
 
 def applied_path(pid):
@@ -781,8 +914,21 @@ def applied_records():
 
 
 def already_applied(blob, args):
-    """True when this script blob with these arguments has been applied, under any proposal id."""
+    """True when this script blob with these arguments has been applied, under any proposal id (an .applied
+    record, or an apply whose record couldn't be written since the app started)."""
+    if (blob, list(args)) in _UNRECORDED["runs"]:
+        return True
     return any(r.get("blob") == blob and list(r.get("args") or []) == list(args) for r in applied_records())
+
+
+def is_applied(pid):
+    return pid in _UNRECORDED["ids"] or applied_path(pid).exists()
+
+
+def forget_unrecorded_applies():
+    """Tests only (a restart does the same): drop the in-memory markers."""
+    _UNRECORDED["ids"].clear()
+    _UNRECORDED["runs"].clear()
 
 
 def load_proposal(pid):
@@ -849,13 +995,14 @@ def list_proposals():
         good_id = bool(PROPOSAL_ID_RE.fullmatch(pid))
         entry = {"id": pid if good_id else "", "title": pid if good_id else "(unreadable name)", "summary": "",
                  "created": "", "script_path": "", "problem": None,
-                 "applied": good_id and applied_path(pid).exists(), "validated": False}
+                 "applied": good_id and is_applied(pid), "validated": False}
         try:
             p = load_proposal(pid)
             entry.update({k: p[k] for k in ("id", "title", "summary", "script_path", "created")})
-            commit_facts(p["commit"], p["script_path"], p["blob"], fetch=False)
             if not entry["applied"] and already_applied(p["blob"], p["args"]):
-                entry["problem"] = "this script with these arguments was already applied"
+                raise ActionError("this script with these arguments was already applied")
+            with contextlib.suppress(NotFetched):  # checked against GitHub when the owner opens it
+                commit_facts(p["commit"], p["script_path"], p["blob"], fetch=False)
         except ActionError as e:
             entry["problem"] = e.reason
         with _VALIDATIONS_LOCK:
@@ -868,7 +1015,7 @@ def list_proposals():
 def _ads_common(raw):
     f = fields(raw, ("proposal",))
     p = load_proposal(f["proposal"])
-    if applied_path(p["id"]).exists():
+    if is_applied(p["id"]):
         raise ActionError("already applied")
     if already_applied(p["blob"], p["args"]):
         raise ActionError("this script with these arguments was already applied")
@@ -883,9 +1030,11 @@ def _one_line(text, most):
 
 def _facts_text(c):
     f = c["facts"]
-    return (f"Script: {c['script_path']} at commit {c['commit'][:12]} (on origin/main: "
-            f"{'yes' if f['on_main'] else 'no'}), last changed by {f['author']} on {f['date']} in {f['changed_in']}; "
-            f"blob {c['blob'][:12]}.\n"
+    return (f"Script: {c['script_path']} at commit {c['commit'][:12]} (on main at GitHub: "
+            f"{'yes' if f['on_main'] else 'no'}, fetched just now), last changed by {f['author']} on {f['date']} in "
+            f"{f['changed_in']} (\"{f['subject']}\"); blob {c['blob'][:12]}.\n"
+            f"Its code change is shown below (diff sha256 {f['diff_sha256'][:16]}, {len(f['diff']):,} characters); "
+            f"the file on GitHub: {f['link']}\n"
             f"What the script says it does: {f['doc']}\n"
             f"Claude's description: \"{_one_line(c['title'], 80)}\": {_one_line(c['summary'], 300)}")
 
@@ -896,7 +1045,7 @@ def _validate_validate(raw):
 
 def _validate_describe(c):
     return (f"Check this Ads change set with Google, validate only (nothing changes).\n{_facts_text(c)}\n"
-            f"It runs from an archived copy of that commit.")
+            f"It runs from that commit's scripts/, written out of the app's own mirror of GitHub.")
 
 
 def _validate_after(c, code, raw, who):
@@ -938,19 +1087,36 @@ def _apply_claim(c):
         raise ActionError("validate this change set again", status=409)
 
 
+UNRECORDED_WARNING = ("applied, but the record couldn't be saved: DO NOT re-apply. Check Google Ads and "
+                      "logs/ads-changes.md; the app refuses this change set again until it restarts.")
+
+
 def _apply_after(c, code, raw, who):
-    if code == 0:
+    """After a successful apply: the .applied record, with the audit chain's head at that moment. If the record
+    can't be written, a warning (a string: ScriptAction.perform puts it in front of the output) and an in-memory
+    marker that refuses the same proposal, or the same blob and arguments, until the app restarts."""
+    if code != 0:
+        return None
+    try:
+        head = audit_status()["last"]
+    except OSError:
+        head = None
+    try:
         write_private(applied_path(c["id"]), {
             "applied_at": datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds"),
             "proposal": c["id"], "commit": c["commit"], "blob": c["blob"], "args": list(c["args"]),
             "validated_sha256": c["validated_sha"], "output_sha256": hashlib.sha256(raw).hexdigest(),
-            "login": who.get("login", ""), "passkey": who.get("passkey")})
+            "audit_sha256": head, "login": who.get("login", ""), "passkey": who.get("passkey")})
+    except Exception:  # noqa: BLE001 (anything: the change is live at Google either way)
+        _UNRECORDED["ids"].add(c["id"])
+        _UNRECORDED["runs"].append((c["blob"], list(c["args"])))
+        return UNRECORDED_WARNING
     return None
 
 
 def ads_env(root):
     """Only what an Ads script needs: HOME, PATH, LANG, TZ, the Ads config path, the private dir, the change log
-    (the repo's logs/ads-changes.md: the archived copy has no logs/), and Python told to ignore user site-packages,
+    (the repo's logs/ads-changes.md: the run folder has no logs/), and Python told to ignore user site-packages,
     write no bytecode and look for none outside an empty folder."""
     env = {k: os.environ[k] for k in ADS_ENV_KEYS if k in os.environ}
     env["LCS_PRIVATE_DIR"] = str(auth.private_dir())
@@ -965,41 +1131,109 @@ def runs_dir():
     return auth.config_dir() / "runs"
 
 
+def _tree_files(commit):
+    """[(mode, blob id, path)] for the regular files under scripts/ at `commit`, from `git ls-tree -r -z` in the
+    mirror. Symlinks (120000) and submodules (160000) are left out; an odd path refuses."""
+    ls = _git("ls-tree", "-r", "-z", commit, "--", "scripts/", text=False, timeout=30)
+    if ls.returncode != 0:
+        raise ActionError("git couldn't list that commit's scripts")
+    out = []
+    for rec in ls.stdout.split(b"\0"):
+        if not rec:
+            continue
+        meta, _, raw_path = rec.partition(b"\t")
+        bits = meta.split()
+        if len(bits) != 3:
+            raise ActionError("git's listing of that commit didn't parse")
+        mode, kind, oid = (b.decode("ascii", "replace") for b in bits)
+        if kind != "blob" or mode not in ("100644", "100755"):
+            continue
+        try:
+            path = raw_path.decode("utf-8")
+        except UnicodeDecodeError:
+            raise ActionError("a file name in scripts/ isn't UTF-8") from None
+        parts = path.split("/")
+        if parts[0] != "scripts" or any(x in ("", ".", "..") or "\\" in x for x in parts) or not BLOB_RE.fullmatch(oid):
+            raise ActionError("a file name in scripts/ isn't safe to write")
+        out.append((mode, oid, path))
+    return out
+
+
+def _read_blobs(ids):
+    """{id: bytes} through one `git cat-file --batch` (no filters, no textconv), each checked against its id."""
+    if not ids:
+        return {}
+    p = _git("cat-file", "--batch", text=False, input=("\n".join(ids) + "\n").encode("ascii"), timeout=60)
+    if p.returncode != 0:
+        raise ActionError("git couldn't read that commit's scripts")
+    data_, pos, out = p.stdout, 0, {}
+    for oid in ids:
+        nl = data_.find(b"\n", pos)
+        head = data_[pos:nl].decode("ascii", "replace").split() if nl >= 0 else []
+        if len(head) != 3 or head[0] != oid or head[1] != "blob" or not head[2].isdigit():
+            raise ActionError("git's copy of that commit didn't parse")
+        size = int(head[2])
+        body = data_[nl + 1:nl + 1 + size]
+        if len(body) != size or data_[nl + 1 + size:nl + 2 + size] != b"\n" or git_blob_id(body, oid) != oid:
+            raise ActionError("a file in that commit isn't the blob git named")
+        out[oid] = body
+        pos = nl + 2 + size
+    return out
+
+
 @contextlib.contextmanager
-def archived(commit, rel, blob):
-    """`git archive <commit> scripts/` unpacked into a fresh mode-700 folder under the app's own config dir
-    (regular files and folders only), the script's bytes checked against its blob; removed afterwards."""
+def run_folder(commit, rel, blob):
+    """That commit's scripts/, written out of the mirror into a fresh mode-700 folder under the app's config dir:
+    `git ls-tree -r` for the list, `git cat-file --batch` for the bytes (no checkout, no archive, so no filters or
+    attributes), each file's bytes checked against its blob id, regular files only (no symlinks, no submodules),
+    created exclusively and never through a symlink. The script must be the pinned blob. Removed afterwards."""
+    files = _tree_files(commit)
+    script = next((f for f in files if f[2] == rel), None)
+    if script is None:
+        raise ActionError("the script isn't in that commit")
+    if script[1] != blob:
+        raise ActionError("the script at that commit isn't the pinned blob")
+    blobs = _read_blobs(sorted({oid for _, oid, _ in files}))
+    if sum(len(b) for b in blobs.values()) > RUN_FOLDER_MAX:
+        raise ActionError("that commit's scripts/ is too big to run")
     base = runs_dir()
     base.mkdir(mode=0o700, parents=True, exist_ok=True)
     os.chmod(base, 0o700)
     root = Path(tempfile.mkdtemp(prefix="ads-", dir=base))
     try:
         (root / "pycache").mkdir(mode=0o700)
-        tar = _git("archive", "--format=tar", commit, "--", "scripts/", timeout=30, text=False)
-        if tar.returncode != 0:
-            raise ActionError("git couldn't archive that commit")
-        with tarfile.open(fileobj=io.BytesIO(tar.stdout), mode="r:") as tf:
-            members = [m for m in tf.getmembers() if (m.isfile() or m.isdir()) and m.name.startswith("scripts/")]
-            tf.extractall(root, members=members, filter="data")
-        script = root / rel
-        if script.is_symlink() or not script.is_file():
-            raise ActionError("the script isn't in that commit")
-        if git_blob_id(script.read_bytes(), blob) != blob:
-            raise ActionError("the archived script isn't the pinned blob")
+        for mode, oid, path in files:
+            target = root / path
+            d = root
+            for part in path.split("/")[:-1]:
+                d = d / part
+                with contextlib.suppress(FileExistsError):
+                    d.mkdir(mode=0o700)
+                if d.is_symlink() or not d.is_dir():
+                    raise ActionError("a folder in scripts/ isn't safe to write")
+            fd = os.open(target, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW,
+                         0o700 if mode == "100755" else 0o600)
+            with os.fdopen(fd, "wb") as f:
+                f.write(blobs[oid])
+        if git_blob_id((root / rel).read_bytes(), blob) != blob:
+            raise ActionError("the script at that commit isn't the pinned blob")
         yield root
     finally:
         shutil.rmtree(root, ignore_errors=True)
 
 
+archived = run_folder  # the name the earlier review's proofs of concept call
+
+
 @dataclasses.dataclass(frozen=True)
 class ProposalScriptAction(ScriptAction):
-    """Runs the proposal's own script from an archived copy of its pinned origin/main commit (commit_facts and
-    archived()), never from the working tree. Its `args` are the proposal's own, then one fixed flag:
-    --validate-only (which only proposal-aware scripts accept) or --apply."""
+    """Runs the proposal's own script from its pinned commit on GitHub's main, written out of the app's mirror
+    (commit_facts and run_folder()), never from the working tree. Its `args` are the proposal's own, then one
+    fixed flag: --validate-only (which only proposal-aware scripts accept) or --apply."""
     claim_fn: Optional[Callable] = None
 
     def argv(self, cleaned, root=None):
-        base = Path(root) if root else Path("<archive>")
+        base = Path(root) if root else Path("<run folder>")
         return [sys.executable, "-E", "-s", "-B", "-X", f"pycache_prefix={base / 'pycache'}",
                 str(base / cleaned["script_path"]), *self.args(cleaned)]
 
@@ -1011,8 +1245,14 @@ class ProposalScriptAction(ScriptAction):
             self.claim_fn(cleaned)
 
     def execute_script(self, cleaned):
-        with archived(cleaned["commit"], cleaned["script_path"], cleaned["blob"]) as root:
+        with run_folder(cleaned["commit"], cleaned["script_path"], cleaned["blob"]) as root:
             return run_argv(self.argv(cleaned, root), self.timeout, cwd=root, env=ads_env(root))
+
+    def code(self, cleaned):
+        """For the preview: the script's last change on main (bound to the summary by its sha256) and its link."""
+        f = cleaned["facts"]
+        return {"head": f"{f['changed_in']} by {f['author']} on {f['date']}: {f['subject']}", "diff": f["diff"],
+                "link": f["link"]}
 
     def show(self, raw):
         return head_and_tail(raw.decode("utf-8", "replace"))
@@ -1029,7 +1269,6 @@ ADS_APPLY = ProposalScriptAction("ads-apply", "scripts/ads/", _apply_validate, _
 def reset_validations():
     with _VALIDATIONS_LOCK:
         _VALIDATIONS.clear()
-    _FETCHED["at"] = None
 
 
 # ---------------------------------------------------------------- the 2026 Books import approval

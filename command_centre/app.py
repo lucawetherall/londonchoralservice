@@ -296,6 +296,10 @@ def create_app(client_factory=data.default_client, now=None, clock=None, passkey
             entries = data.Panel(value=actions.read_audit())
         except Exception as e:  # the type only
             entries = data.Panel(error=type(e).__name__)
+        try:
+            chain = data.Panel(value=actions.audit_status())
+        except Exception as e:  # the type only
+            chain = data.Panel(error=type(e).__name__)
         shown = []
         for e in entries.value or []:
             if name and e.get("action") != name:
@@ -307,7 +311,7 @@ def create_app(client_factory=data.default_client, now=None, clock=None, passkey
             shown.append(e)
         return render(request, "activity.html", title="Activity", stamp=data.stamp(reader.now()), entries=entries,
                       shown=shown, names=sorted(actions.REGISTRY), results=ACTIVITY_RESULTS, action_name=name,
-                      result=result, text=text)
+                      result=result, text=text, chain=chain)
 
     def guarded(fn, *args):
         """Refusals pass through; any other failure (an unreadable ledger, say) becomes its type name only."""
@@ -343,6 +347,8 @@ def create_app(client_factory=data.default_client, now=None, clock=None, passkey
         action = auth.Action(defn.name, defn.preview(cleaned))
         body = {"action": defn.name, "title": defn.title, "summary": action.summary, "command": defn.command(cleaned),
                 "passkey": defn.passkey}
+        if hasattr(defn, "code"):  # an Ads change set: the script's code change, bound to the summary by its sha256
+            body["code"] = defn.code(cleaned)
         if defn.passkey:
             body["options"] = keys.assertion_options(action)
         return JSONResponse(body)

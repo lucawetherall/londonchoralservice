@@ -33,7 +33,7 @@ NEVER = [
     f"{PY} scripts/ads/generated_proposal_2026_10_05.py",  # even the validate-only run goes through the app
     f"{PY} scripts/ads/set_budget.py 24295921372 4.50 --apply",
     f"{PY} scripts/ads/set_budget.py 24295921372 4.50 --validate-only",
-    f"{PY} scripts/bookings/singer_invoices.py confirm X --expect-fp a1b2c3d4",
+    f"{PY} scripts/bookings/singer_invoices.py confirm X --expect-fp a1b2c3d4e5f60718",
 ]
 # Owner-only forms the allowlist can't exclude (a glob can't forbid a flag): `--note *` and `--reminded *` match
 # them, so check_payments.py itself refuses --owner without the Command Centre's one-time nonce on a pipe
@@ -102,7 +102,10 @@ def commands(block, scripts):
 
 
 def allow_patterns():
-    rules = json.load(open(SETTINGS))["permissions"]["allow"]
+    return patterns_of(json.load(open(SETTINGS))["permissions"]["allow"])
+
+
+def patterns_of(rules):
     pats = []
     for r in rules:
         m = re.fullmatch(r"Bash\((.*)\)", r)
@@ -168,6 +171,35 @@ def test_claude_file_tools_cant_write_the_command_centre_folder():
         deny = json.load(f)["permissions"]["deny"]
     for tool in ("Write", "Edit"):
         assert f"{tool}(~/lcs-private/command-centre/**)" in deny, tool
+
+
+GIT_DENY = ["Bash(git update-ref *)", "Bash(git remote set-url *)", "Bash(git config *)", "Edit(.git/**)"]
+
+
+def deny_patterns():
+    with open(SETTINGS, encoding="utf-8") as f:
+        deny = json.load(f)["permissions"]["deny"]
+    return deny, patterns_of([r for r in deny if r.startswith("Bash(")])
+
+
+def test_git_ref_and_config_changes_are_denied():
+    """Belt and braces for the Ads mirror (it never trusts the working repo, but Claude shouldn't be moving refs,
+    remotes or git config by hand): the deny rules exist, they don't catch any command the scheduled prompts run,
+    and the prompts never ask for git config, update-ref or remote set-url."""
+    deny, pats = deny_patterns()
+    for rule in GIT_DENY:
+        assert rule in deny, rule
+    for cmd in ("git update-ref refs/remotes/origin/main HEAD", "git remote set-url origin https://example.org/x",
+                "git config filter.x.smudge cat", "git config --local --list"):
+        assert any(p.fullmatch(cmd) for _, p in pats), cmd
+    blocks, scripts = appendix_blocks(), script_paths()
+    for k, b in blocks.items():
+        for c in commands(b, scripts):
+            assert not any(p.fullmatch(c) for _, p in pats), f"Appendix {k}: {c} is denied"
+        for bad in ("git config", "update-ref", "remote set-url"):
+            assert bad not in b, f"Appendix {k} mentions {bad}"
+    for everyday in ("git status", "git fetch -q origin", "git add -A", "git commit -m x", "git push origin x"):
+        assert not any(p.fullmatch(everyday) for _, p in pats), everyday
 
 
 def test_no_allowlist_rule_covers_every_script():

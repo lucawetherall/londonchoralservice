@@ -115,7 +115,7 @@
     </li>
     {% endfor %}
   </ul>
-  <p class="muted">Each step needs Face ID or Touch ID: first a validate-only run, then the apply, bound to the output you saw. The check shows what git says about the script (its commit on origin/main, who last changed it, its own description) beside Claude's. It runs from an archived copy of that commit, never the working folder. The scripts keep the £5 daily cap and log to logs/ads-changes.md.</p>
+  <p class="muted">Each step needs Face ID or Touch ID: first a validate-only run, then the apply, bound to the output you saw. The check shows what git says about the script (its commit on main at GitHub, who last changed it, its code change and its own description) beside Claude's. It runs from that commit as fetched from GitHub into the app's own mirror, never the working folder. The scripts keep the £5 daily cap and log to logs/ads-changes.md.</p>
   {% elif proposals.ok %}<p class="muted">No change sets waiting. The Monday review will write them here.</p>{% endif %}
 </section>
 

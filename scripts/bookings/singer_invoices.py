@@ -14,7 +14,7 @@ the message id when the ref has a digit run over 5 digits). On a message already
     singer_invoices.py status              # unpaid invoices and totals
     singer_invoices.py thanked <message id>  # note that the "Paid!" reply was drafted
     singer_invoices.py confirm <message id>  # the owner rang the singer: trust these bank details
-    singer_invoices.py confirm <message id> --expect-fp <first 8+ hex of bank_fp>  # the Command Centre's form:
+    singer_invoices.py confirm <message id> --expect-fp <bank_fp, all 16 hex>  # the Command Centre's form:
         refused unless the recorded details are still the ones the owner approved
     singer_invoices.py settled <message id> YYYY-MM-DD  # the owner paid it outside the feed's reach: mark it paid
     singer_invoices.py withdrawn <message id> <reason word>  # sent to us by mistake (another organisation's
@@ -992,21 +992,21 @@ def cmd_thanked(args, client=None):
     print(f"{args.message_id}: paid reply noted")
 
 
-FP_PREFIX_RE = re.compile(r"^[0-9a-f]{8,16}$")
+FP_RE = re.compile(r"^[0-9a-f]{16}$")
 
 
 def cmd_confirm(args, client=None):
     """The owner rang the singer on a number already held: trust this invoice's bank details. With --expect-fp
-    (the Command Centre passes the first 8 characters of the fingerprint its passkey summary showed), refuses
-    unless the recorded fingerprint still starts with it, so a rescan between approval and run confirms nothing."""
+    (the Command Centre passes the whole 16-character fingerprint its passkey summary showed), refuses unless the
+    recorded fingerprint is still exactly that, so a rescan between approval and run confirms nothing."""
     expect = getattr(args, "expect_fp", None)
-    if expect is not None and not FP_PREFIX_RE.fullmatch(expect):
-        raise SystemExit(f"{args.message_id}: --expect-fp takes 8 to 16 lower-case hex characters; nothing confirmed")
+    if expect is not None and not FP_RE.fullmatch(expect):
+        raise SystemExit(f"{args.message_id}: --expect-fp takes all 16 lower-case hex characters; nothing confirmed")
 
     def edit(r):
         if not r.get("bank_fp"):
             raise SystemExit(f"{args.message_id}: no bank details recorded, nothing to confirm")
-        if expect is not None and not hmac.compare_digest(r["bank_fp"][:len(expect)], expect):
+        if expect is not None and not hmac.compare_digest(r["bank_fp"], expect):
             raise SystemExit(f"{args.message_id}: the bank details changed since you approved them; nothing confirmed")
         r["bank_confirmed"] = "yes"
         note(r, f"bank details confirmed by phone {lm.today()}")
@@ -1083,7 +1083,7 @@ def main():
     t.add_argument("message_id")
     c = sub.add_parser("confirm")
     c.add_argument("message_id")
-    c.add_argument("--expect-fp", metavar="PREFIX", help="refuse unless bank_fp starts with this (8+ hex)")
+    c.add_argument("--expect-fp", metavar="FINGERPRINT", help="refuse unless bank_fp is exactly this (16 hex)")
     st = sub.add_parser("settled")
     st.add_argument("message_id")
     st.add_argument("date")

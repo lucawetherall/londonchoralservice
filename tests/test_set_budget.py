@@ -52,6 +52,7 @@ def temp_log():
     path = Path(d) / "ads-changes.md"
     path.write_text(LOG_HEAD)
     os.environ["LCS_ADS_LOG"] = str(path)
+    ads_log.TEST_LOG_ROOTS.append(Path(d))
     return path
 
 
@@ -115,6 +116,7 @@ def test_shared_budget_missing_or_ambiguous_campaign_refused():
 
 def test_apply_needs_a_readable_log_before_anything_changes():
     d = tempfile.mkdtemp()
+    ads_log.TEST_LOG_ROOTS.append(Path(d))
     os.environ["LCS_ADS_LOG"] = os.path.join(d, "missing.md")
     client = FakeClient([campaign()])
     code, _ = run(["111", "4", "--apply"], client)
@@ -146,12 +148,61 @@ def test_log_path_default_and_override():
     saved = os.environ.pop("LCS_ADS_LOG", None)
     try:
         assert ads_log.log_path() == Path(ROOT) / "logs" / "ads-changes.md"
-        os.environ["LCS_ADS_LOG"] = "/tmp/elsewhere.md"
-        assert ads_log.log_path() == Path("/tmp/elsewhere.md")
+        os.environ["LCS_ADS_LOG"] = str(Path(ROOT) / "logs" / "ads-changes.md")  # what the Command Centre sets
+        assert ads_log.log_path() == Path(ROOT) / "logs" / "ads-changes.md"
     finally:
         os.environ.pop("LCS_ADS_LOG", None)
         if saved:
             os.environ["LCS_ADS_LOG"] = saved
+
+
+def test_the_log_must_be_the_repos_own_and_never_a_symlink():
+    """LCS_ADS_LOG outside a repo's logs/ads-changes.md, or a symlinked log (or logs/ folder), is refused before
+    anything is read or written. Only the tests' TEST_LOG_ROOTS (a module variable) lets a temp folder through."""
+    saved_env, saved_roots = os.environ.pop("LCS_ADS_LOG", None), list(ads_log.TEST_LOG_ROOTS)
+    ads_log.TEST_LOG_ROOTS.clear()
+    try:
+        d = Path(tempfile.mkdtemp())
+        victim = d / "victim.txt"
+        victim.write_text("keep me\n")
+        stray = d / "elsewhere.md"
+        stray.write_text(LOG_HEAD)
+        # a fake "repo": logs/ads-changes.md beside scripts/ads/ads_log.py and .git
+        fake = d / "repo"
+        (fake / "logs").mkdir(parents=True)
+        (fake / "scripts" / "ads").mkdir(parents=True)
+        (fake / ".git").mkdir()
+        (fake / "scripts" / "ads" / "ads_log.py").write_text("")
+        link = fake / "logs" / "ads-changes.md"
+        os.symlink(victim, link)
+        linked_dir = d / "repo2"
+        (linked_dir / "scripts" / "ads").mkdir(parents=True)
+        (linked_dir / ".git").mkdir()
+        (linked_dir / "scripts" / "ads" / "ads_log.py").write_text("")
+        os.symlink(d, linked_dir / "logs")
+        for bad in (stray, link, linked_dir / "logs" / "ads-changes.md", Path("/etc/hosts"), Path("relative.md")):
+            os.environ["LCS_ADS_LOG"] = str(bad)
+            for fn in (ads_log.check_log, lambda: ads_log.append_row("| x |")):
+                try:
+                    fn()
+                    raise AssertionError(f"accepted {bad}")
+                except SystemExit as e:
+                    assert "change log" in str(e), (bad, e)
+        assert victim.read_text() == "keep me\n" and stray.read_text() == LOG_HEAD
+        # the repo's own log (as a plain file) is accepted, and the test hook lets a temp folder through
+        link.unlink()
+        link.write_text(LOG_HEAD)
+        os.environ["LCS_ADS_LOG"] = str(link)
+        assert ads_log.check_log() == link
+        os.environ["LCS_ADS_LOG"] = str(stray)
+        ads_log.TEST_LOG_ROOTS.append(d)
+        assert ads_log.check_log() == stray
+        assert "LCS_ADS_TEST" not in Path(ads_log.__file__).read_text()  # no environment switch for the hook
+    finally:
+        ads_log.TEST_LOG_ROOTS[:] = saved_roots
+        os.environ.pop("LCS_ADS_LOG", None)
+        if saved_env:
+            os.environ["LCS_ADS_LOG"] = saved_env
 
 
 def test_old_scripts_refuse_the_validate_only_flag():

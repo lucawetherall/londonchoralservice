@@ -19,6 +19,14 @@
 </form>
 
 {{ m.failed(entries) }}
+{{ m.failed(chain) }}
+{% if chain.ok %}{% set ch = chain.value %}
+<p class="audit-chain">
+  {% if ch.ok %}<span class="badge ok">chain intact</span>{% else %}<span class="badge bad">chain broken</span>
+  at line{{ "s" if ch.bad|length > 1 }} {{ ch.bad[:10]|join(", ") }}{% if ch.bad|length > 10 %} and {{ ch.bad|length - 10 }} more{% endif %}{% endif %}
+  <span class="muted">{{ ch.lines }} lines{% if ch.last %}; last line's sha256 <span class="mono">{{ ch.last[:16] }}</span>{% endif %}</span>
+</p>
+{% endif %}
 {% if shown %}
 <p class="muted">{{ shown|length }} of the last {{ (entries.value or [])|length }} entries, newest first. The log is append-only, in <span class="mono">~/lcs-private/command-centre/audit.jsonl</span>.</p>
 <ol class="activity">

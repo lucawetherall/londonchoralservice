@@ -10,6 +10,10 @@
     title: document.getElementById("cc-title"),
     summary: document.getElementById("cc-summary"),
     command: document.getElementById("cc-command"),
+    code: document.getElementById("cc-code"),
+    codeHead: document.getElementById("cc-code-head"),
+    codeLink: document.getElementById("cc-code-link"),
+    diff: document.getElementById("cc-diff"),
     status: document.getElementById("cc-status"),
     output: document.getElementById("cc-output"),
     approve: document.getElementById("cc-approve"),
@@ -31,6 +35,12 @@
   function reset() {
     el.summary.textContent = "";
     el.command.textContent = "";
+    if (el.code) {
+      el.code.hidden = true;
+      el.diff.textContent = "";
+      el.codeHead.textContent = "";
+      el.codeLink.removeAttribute("href");
+    }
     el.output.textContent = "";
     el.output.hidden = true;
     el.next.hidden = true;
@@ -53,6 +63,13 @@
       var tail = p.command ? "\nRuns: " + p.command : "";
       el.summary.textContent = tail && p.summary.slice(-tail.length) === tail ? p.summary.slice(0, -tail.length) : p.summary;
       el.command.textContent = p.command || "(no script: a record in the app's own folder)";
+      if (p.code && el.code) {
+        // the server's diff and link (the summary carries the diff's sha256, so the tap binds this code)
+        el.codeHead.textContent = p.code.head || "";
+        el.diff.textContent = p.code.diff || "(no change in this file)";
+        if (typeof p.code.link === "string") el.codeLink.setAttribute("href", p.code.link);  // built by the server
+        el.code.hidden = false;
+      }
       el.approve.textContent = p.passkey ? "Approve with Face ID or Touch ID" : "Run it";
       el.approve.disabled = false;
       say(p.passkey ? "Nothing has run yet. Approving asks for your passkey, for this exact action, within 60 seconds."

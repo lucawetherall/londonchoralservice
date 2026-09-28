@@ -293,11 +293,11 @@ def test_singer_actions_argv_and_refusals():
     key, paid, nobank, confirmed = (models.invoice_key(m) for m in (MSG, MSG_PAID, MSG_NOBANK, MSG_CONFIRMED))
     assert re.fullmatch(r"[a-z]{12}", key)
     c = actions.SINGER_CONFIRM.validate({"invoice": key})
-    assert actions.SINGER_CONFIRM.argv(c) == [PYX, SINGER, "confirm", MSG, "--expect-fp", FP_A[:8]]
+    assert actions.SINGER_CONFIRM.argv(c) == [PYX, SINGER, "confirm", MSG, "--expect-fp", FP_A]
     s = actions.SINGER_CONFIRM.preview(c)
     assert "Jane" in s and "Fenwickson" not in s and "••••4321" in s and "£120.00" in s
-    assert f"fingerprint {FP_A[:8]}" in s and FP_A not in s
-    assert s.endswith(f"Runs: .venv/bin/python scripts/bookings/singer_invoices.py confirm {MSG} --expect-fp {FP_A[:8]}")
+    assert f"fingerprint {FP_A})" in s  # all 16 characters, the same ones --expect-fp passes
+    assert s.endswith(f"Runs: .venv/bin/python scripts/bookings/singer_invoices.py confirm {MSG} --expect-fp {FP_A}")
     c = actions.SINGER_SETTLED.validate({"invoice": key, "date": D})
     assert actions.SINGER_SETTLED.argv(c) == [PYX, SINGER, "settled", MSG, D]
     c = actions.SINGER_WITHDRAWN.validate({"invoice": key, "reason": "not-ours"})
@@ -611,15 +611,19 @@ print("old script ran")
 
 
 class AdsRepo:
-    """A temp git repo with scripts/ads/ (committed and published to a local origin/main ref), and actions.REPO
-    pointed at it for the block."""
+    """Two temp git repos: `upstream`, a bare repo standing in for GitHub (actions.TEST_UPSTREAM points the app's
+    mirror fetch at it), and `root`, a working clone (actions.REPO) that the tests treat as hostile. The app's
+    mirror under the temp private dir is removed first, so each block starts from an empty mirror."""
 
     def __enter__(self):
+        self.upstream = Path(tempfile.mkdtemp()) / "github.git"
+        subprocess.run(["git", "init", "-q", "--bare", str(self.upstream)], check=True)
         self.root = Path(tempfile.mkdtemp())
         (self.root / "scripts" / "ads").mkdir(parents=True)
         (self.root / "scripts" / "other").mkdir(parents=True)
         (self.root / "logs").mkdir()
         self.git("init", "-q")
+        self.git("remote", "add", "origin", str(self.upstream))
         self.write("scripts/ads/negatives_2026_10.py", NEG_SCRIPT)
         self.write("scripts/ads/helper.py", "X = 'honest helper'\n")
         self.write("scripts/ads/old_style.py", OLD_SCRIPT)
@@ -628,13 +632,16 @@ class AdsRepo:
         self.git("add", "-A")
         self.commit("first")
         self.publish()
-        self.saved = actions.REPO
+        self.saved = (actions.REPO, actions.TEST_UPSTREAM)
         actions.REPO = self.root
+        actions.TEST_UPSTREAM = self.upstream
+        import shutil
+        shutil.rmtree(actions.mirror_dir(), ignore_errors=True)
         actions.reset_validations()
         return self
 
     def __exit__(self, *exc):
-        actions.REPO = self.saved
+        actions.REPO, actions.TEST_UPSTREAM = self.saved
         actions.reset_validations()
 
     def git(self, *args):
@@ -649,9 +656,9 @@ class AdsRepo:
     def head(self):
         return self.git("rev-parse", "HEAD").strip()
 
-    def publish(self):
-        """Point origin/main at HEAD (what a push and a fetch would do)."""
-        self.git("update-ref", "refs/remotes/origin/main", "HEAD")
+    def publish(self, ref="HEAD"):
+        """Push `ref` to GitHub's main (forced: a rewrite of main is a publish too)."""
+        self.git("push", "-q", "--force", "origin", f"{ref}:refs/heads/main")
 
     def blob(self, rel="scripts/ads/negatives_2026_10.py", commit="HEAD"):
         p = subprocess.run(["git", "-C", str(self.root), "rev-parse", f"{commit}:{rel}"], capture_output=True, text=True)
@@ -700,7 +707,7 @@ def test_ads_proposal_checks():
         assert actions.ADS_VALIDATE.command(c) == (".venv/bin/python -E -s -B scripts/ads/negatives_2026_10.py solo "
                                                    "soloist vocalist --validate-only")
         s = actions.ADS_VALIDATE.preview(c)
-        for bit in ("scripts/ads/negatives_2026_10.py", repo.head()[:12], "on origin/main: yes", "Tess Author",
+        for bit in ("scripts/ads/negatives_2026_10.py", repo.head()[:12], "on main at GitHub: yes", "Tess Author",
                     "What the script says it does: Add three negatives (a test script).",
                     "Claude's description: \"Add 3 negatives\": Adds solo, soloist and vocalist."):
             assert bit in s, (bit, s)
@@ -713,7 +720,7 @@ def test_ads_proposal_checks():
                   (dict(script_blob="abc"), 0o600, "the proposal must pin the script's blob (script_blob)"),
                   (dict(commit=None), 0o600, "the proposal must pin a full commit id (commit)"),
                   (dict(commit="main"), 0o600, "the proposal must pin a full commit id (commit)"),
-                  (dict(commit="f" * 40), 0o600, "the proposal's commit isn't in this repo"),
+                  (dict(commit="f" * 40), 0o600, "the proposal's commit isn't on main at GitHub"),
                   (dict(script_blob="e" * 40), 0o600, "the script at that commit isn't the blob the proposal names"),
                   (dict(args="solo"), 0o600, "the proposal's args must be a short list of simple words or numbers"),
                   (dict(args=["--apply"]), 0o600, "the proposal's args must be a short list of simple words or numbers"),
@@ -733,12 +740,12 @@ def test_ads_proposal_checks():
             results.append((over, mode, refused(v, {"proposal": "neg-2026-10"}), why))
         for over, mode, got, why in results:
             assert got == why, (over, mode, got)
-        # a commit that isn't on origin/main (committed locally, never pushed)
+        # a commit that isn't on GitHub's main (committed locally, never pushed)
         repo.write("scripts/ads/negatives_2026_10.py", NEG_SCRIPT + "# local only\n")
         repo.git("add", "-A")
         repo.commit("local")
         proposal(repo=repo)
-        assert refused(v, {"proposal": "neg-2026-10"}) == "the proposal's commit isn't on origin/main"
+        assert refused(v, {"proposal": "neg-2026-10"}) == "the proposal's commit isn't on main at GitHub"
         repo.publish()
         assert v({"proposal": "neg-2026-10"})["commit"] == repo.head()
         # a script path missing at that commit, and a symlink committed in scripts/ads/
@@ -768,8 +775,10 @@ def test_ads_git_ignores_the_callers_git_environment():
     with AdsRepo() as repo:
         proposal(repo=repo)
         bogus = tempfile.mkdtemp()
-        saved = {k: os.environ.get(k) for k in ("GIT_DIR", "GIT_WORK_TREE", "GIT_CONFIG_PARAMETERS")}
-        os.environ.update(GIT_DIR=bogus, GIT_WORK_TREE=bogus, GIT_CONFIG_PARAMETERS="'core.fsmonitor'='touch /x'")
+        keys = ("GIT_DIR", "GIT_WORK_TREE", "GIT_CONFIG_PARAMETERS", "GIT_CONFIG_GLOBAL", "GIT_EXEC_PATH")
+        saved = {k: os.environ.get(k) for k in keys}
+        os.environ.update(GIT_DIR=bogus, GIT_WORK_TREE=bogus, GIT_CONFIG_PARAMETERS="'core.fsmonitor'='touch /x'",
+                          GIT_CONFIG_GLOBAL=os.path.join(bogus, "evil.gitconfig"), GIT_EXEC_PATH=bogus)
         try:
             c = actions.ADS_VALIDATE.validate({"proposal": "neg-2026-10"})
         finally:
@@ -780,7 +789,245 @@ def test_ads_git_ignores_the_callers_git_environment():
                     os.environ[k] = val
         assert c["commit"] == repo.head()
         env = actions.git_env()
-        assert not any(k.startswith("GIT_") and k != "GIT_TERMINAL_PROMPT" for k in env)
+        assert {k for k in env if k.startswith("GIT_")} == {"GIT_CONFIG_GLOBAL", "GIT_CONFIG_NOSYSTEM",
+                                                           "GIT_TERMINAL_PROMPT", "GIT_NO_REPLACE_OBJECTS"}
+        assert env["GIT_CONFIG_GLOBAL"] == "/dev/null" and env["GIT_CONFIG_NOSYSTEM"] == "1"
+
+
+class GitCalls:
+    """Records every git call the app makes (actions.GIT_RUNNER), passing it through."""
+
+    def __enter__(self):
+        self.calls, self.saved = [], actions.GIT_RUNNER
+
+        def rec(argv, **kw):
+            self.calls.append((list(argv), kw))
+            return self.saved(argv, **kw)
+        actions.GIT_RUNNER = rec
+        return self
+
+    def __exit__(self, *exc):
+        actions.GIT_RUNNER = self.saved
+
+
+def test_poc3_every_git_call_is_hardened_and_runs_in_the_mirror():
+    """Every git call: GIT_CONFIG_GLOBAL=/dev/null, GIT_CONFIG_NOSYSTEM=1, none of the caller's GIT_*, fsmonitor and
+    hooks off, in the app's own mirror (never the working repo), and never `git archive`."""
+    c, a, _ = setup()
+    clear_applied()
+    with AdsRepo() as repo:
+        proposal(repo=repo)
+        os.environ["GIT_CONFIG_PARAMETERS"] = "'core.pager'='evil'"
+        try:
+            with GitCalls() as g:
+                assert real_validate(c, a, {"proposal": "neg-2026-10"}).json()["ok"]
+        finally:
+            os.environ.pop("GIT_CONFIG_PARAMETERS", None)
+        mirror = str(actions.mirror_dir())
+        assert g.calls
+        fetches = [argv for argv, _ in g.calls if "fetch" in argv]
+        assert len(fetches) == 2, fetches  # one at the preview, one at the run: no throttle trusts a stale ref
+        for argv, kw in g.calls:
+            env = kw["env"]
+            assert env["GIT_CONFIG_GLOBAL"] == "/dev/null" and env["GIT_CONFIG_NOSYSTEM"] == "1", argv
+            assert "GIT_CONFIG_PARAMETERS" not in env and "GIT_DIR" not in env, argv
+            joined = " ".join(argv)
+            assert "-c core.fsmonitor=false" in joined and "-c core.hooksPath=/dev/null" in joined, argv
+            assert f"--git-dir={mirror}" in argv and str(repo.root) not in joined, argv
+            assert "archive" not in argv and "--filters" not in argv and "--textconv" not in argv, argv
+        for argv in fetches:
+            assert "protocol.allow=never" in argv and argv[argv.index("fetch") + 1:][-2:] == \
+                [str(repo.upstream), "+refs/heads/main:refs/heads/main"], argv
+        assert oct(os.stat(mirror).st_mode & 0o777) == "0o700"
+        assert Path(mirror).parent == Path(TMP) / "command-centre"
+
+
+def test_poc3_the_fetch_url_is_github_hard_coded_and_file_urls_are_off():
+    """The reviewer's p3.py: SAFE_REMOTE_RE accepted any GitHub fork, and the URL came from the working repo's
+    remote.origin.url. Now the URL is a constant, the working repo's config is never read, and the production fetch
+    turns the file protocol off. Only the tests' module variable (never an environment variable) redirects it."""
+    assert actions.GITHUB_URL == "https://github.com/lucawetherall/londonchoralservice.git"
+    assert not hasattr(actions, "SAFE_REMOTE_RE")
+    saved = actions.TEST_UPSTREAM
+    actions.TEST_UPSTREAM = None
+    try:
+        argv = actions.fetch_args()
+    finally:
+        actions.TEST_UPSTREAM = saved
+    assert argv[-2:] == [actions.GITHUB_URL, "+refs/heads/main:refs/heads/main"]
+    for pair in ("protocol.allow=never", "protocol.https.allow=always", "protocol.file.allow=never"):
+        assert pair in argv and argv[argv.index(pair) - 1] == "-c", pair
+    src = Path(actions.__file__).read_text()
+    assert "TEST_UPSTREAM" not in "".join(re.findall(r"os\.environ[^\n]*", src))
+    assert not re.search(r"environ(?:\.get)?\(?\[?[\"']LCS_[A-Z_]*(URL|UPSTREAM|GITHUB)", src)
+    # an attacker's fork as the working repo's origin changes nothing: the app never reads it
+    fixtures()
+    with AdsRepo() as repo:
+        fork = Path(tempfile.mkdtemp()) / "fork.git"
+        subprocess.run(["git", "init", "-q", "--bare", str(fork)], check=True)
+        repo.write("scripts/ads/helper.py", "X = 'EVIL from the fork'\n")
+        repo.git("add", "-A")
+        repo.commit("fork only")
+        repo.git("push", "-q", str(fork), "HEAD:refs/heads/main")
+        repo.git("remote", "set-url", "origin", "https://github.com/attacker/fork")
+        repo.git("config", "remote.origin.url", str(fork))
+        proposal(repo=repo)
+        assert refused(actions.ADS_VALIDATE.validate, {"proposal": "neg-2026-10"}) == \
+            "the proposal's commit isn't on main at GitHub"
+
+
+def test_poc3_a_fetch_failure_fails_closed():
+    fixtures()
+    with AdsRepo() as repo:
+        proposal(repo=repo)
+        assert actions.ADS_VALIDATE.validate({"proposal": "neg-2026-10"})["commit"] == repo.head()
+        actions.TEST_UPSTREAM = Path(tempfile.mkdtemp()) / "gone.git"
+        assert refused(actions.ADS_VALIDATE.validate, {"proposal": "neg-2026-10"}) == \
+            "couldn't verify against GitHub; nothing runs"
+        # the Marketing page (no fetch) still lists it, from the mirror as last fetched
+        listed = {p["id"]: p for p in actions.list_proposals()}
+        assert listed["neg-2026-10"]["problem"] is None
+
+
+def test_poc3_smudge_filters_and_attributes_never_apply():
+    """The reviewer's p3.py: a smudge filter set in the working repo's .git/config with .git/info/attributes (on a
+    sibling helper, then on the script itself) changed what `git archive` wrote. Also a filter in a global config
+    the caller points GIT_CONFIG_GLOBAL at, and one written into the mirror's own config."""
+    c, a, _ = setup()
+    clear_applied()
+    with AdsRepo() as repo:
+        proposal(repo=repo)
+        inp = {"proposal": "neg-2026-10"}
+        assert "honest helper" in real_validate(c, a, inp).json()["output"]
+        repo.git("config", "filter.ev.smudge", "sed s/honest/EVIL-SMUDGED/")
+        (repo.root / ".git" / "info").mkdir(exist_ok=True)
+        for target in ("scripts/ads/helper.py", "scripts/ads/negatives_2026_10.py", "*"):
+            (repo.root / ".git" / "info" / "attributes").write_text(f"{target} filter=ev\n")
+            out = real_validate(c, a, inp).json()["output"]
+            assert "honest helper" in out and "EVIL" not in out, (target, out)
+        evil_cfg = Path(tempfile.mkdtemp()) / "gitconfig"
+        attrs = evil_cfg.with_name("attrs")
+        attrs.write_text("* filter=ev\n")
+        evil_cfg.write_text(f"[filter \"ev\"]\n\tsmudge = sed s/honest/EVIL-GLOBAL/\n[core]\n\tattributesFile = {attrs}\n")
+        os.environ["GIT_CONFIG_GLOBAL"] = str(evil_cfg)
+        try:
+            out = real_validate(c, a, inp).json()["output"]
+        finally:
+            os.environ.pop("GIT_CONFIG_GLOBAL", None)
+        assert "honest helper" in out and "EVIL" not in out, out
+        cfg = actions.mirror_dir() / "config"
+        cfg.write_text(cfg.read_text() + "[filter \"ev\"]\n\tsmudge = sed s/honest/EVIL-MIRROR/\n"
+                       "[core]\n\tfsmonitor = touch /tmp/cc-fsmonitor-ran\n\tattributesFile = " + str(attrs) + "\n")
+        (actions.mirror_dir() / "info").mkdir(exist_ok=True)
+        (actions.mirror_dir() / "info" / "attributes").write_text("* filter=ev\n")
+        out = real_validate(c, a, inp).json()["output"]
+        assert "honest helper" in out and "EVIL" not in out, out
+        assert "EVIL" not in cfg.read_text() and "fsmonitor = touch" not in cfg.read_text()
+        assert not (actions.mirror_dir() / "info" / "attributes").exists()
+
+
+def test_poc3_a_local_commit_and_a_moved_origin_ref_are_refused():
+    """The reviewer's p3.py: a commit made in the working repo, with `git update-ref refs/remotes/origin/main`
+    pointing at it, passed the ancestry check. Now ancestry is checked in the mirror against GitHub's main."""
+    c, a, _ = setup()
+    clear_applied()
+    with AdsRepo() as repo:
+        blob = repo.blob()
+        repo.write("scripts/ads/helper.py", "X = 'EVIL committed locally'\n")
+        repo.git("add", "-A")
+        repo.git("-c", "user.name=Luca Wetherall", "-c", "user.email=t@example.org", "commit", "-q", "-m", "tidy")
+        repo.git("update-ref", "refs/remotes/origin/main", "HEAD")
+        repo.git("update-ref", "refs/heads/main", "HEAD")
+        proposal(repo=repo, script_blob=blob)
+        with Runner(Recorder()) as rec:
+            r = preview(c, "ads-validate", {"proposal": "neg-2026-10"})
+        assert r.status_code == 400 and r.json()["error"] == "the proposal's commit isn't on main at GitHub", r.text
+        assert rec.calls == []
+
+
+def test_poc3_main_rewritten_after_the_validate_refuses_the_apply():
+    """The apply fetches again (no throttle): a commit dropped from GitHub's main after the validate is refused."""
+    c, a, _ = setup()
+    clear_applied()
+    with AdsRepo() as repo:
+        first = repo.head()
+        repo.write("scripts/ads/negatives_2026_10.py", NEG_SCRIPT + "# second\n")
+        repo.git("add", "-A")
+        repo.commit("second")
+        repo.publish()
+        proposal(repo=repo)
+        inp = {"proposal": "neg-2026-10"}
+        with Runner(Recorder()):
+            assert run(c, a, "ads-validate", inp).json()["ok"]
+        p = preview(c, "ads-apply", inp).json()
+        repo.publish(first)  # main force-pushed back: the pinned commit is no longer on it
+        with Runner(Recorder()) as rec:
+            r = post(c, "/actions/ads-apply/run", {"input": inp, "credential": a.assert_(p["options"])})
+        assert r.status_code == 400 and r.json()["error"] == "the proposal's commit isn't on main at GitHub", r.text
+        assert rec.calls == []
+
+
+def test_poc3_symlinks_and_submodules_are_never_written_and_blobs_are_checked():
+    fixtures()
+    with AdsRepo() as repo:
+        os.symlink("/etc/hosts", repo.root / "scripts/ads/link.py")
+        repo.git("add", "-A")
+        repo.git("update-index", "--add", "--cacheinfo", f"160000,{repo.head()},scripts/ads/sub")
+        repo.commit("a symlink and a submodule")
+        repo.publish()
+        actions.fetch_mirror()
+        seen = {}
+        with actions.run_folder(repo.head(), "scripts/ads/negatives_2026_10.py", repo.blob()) as root:
+            files = sorted(str(p.relative_to(root)) for p in root.rglob("*"))
+            seen["link"] = (root / "scripts/ads/link.py").exists() or (root / "scripts/ads/link.py").is_symlink()
+            seen["sub"] = (root / "scripts/ads/sub").exists()
+            seen["modes"] = {str(p.relative_to(root)): p.stat().st_mode & 0o777 for p in root.rglob("*") if p.is_file()}
+        assert not seen["link"] and not seen["sub"], files
+        assert "scripts/ads/helper.py" in files and "scripts/other/tool.py" in files
+        assert all(m in (0o600, 0o700) for m in seen["modes"].values()), seen["modes"]
+        assert list(actions.runs_dir().iterdir()) == []
+        # a pinned blob that isn't the script's at that commit: refused before anything is written
+        try:
+            with actions.run_folder(repo.head(), "scripts/ads/negatives_2026_10.py", "e" * 40):
+                raise AssertionError("ran with the wrong blob")
+        except actions.ActionError as e:
+            assert e.reason == "the script at that commit isn't the pinned blob"
+        assert list(actions.runs_dir().iterdir()) == []
+
+
+def test_the_preview_shows_the_scripts_code_change():
+    c, a, _ = setup()
+    clear_applied()
+    with AdsRepo() as repo:
+        repo.write("scripts/ads/negatives_2026_10.py", NEG_SCRIPT + "print('now it also says hello')\n")
+        repo.git("add", "-A")
+        commit = repo.commit("say hello")
+        repo.write("scripts/other/tool.py", "print('unrelated')\n")
+        repo.git("add", "-A")
+        repo.commit("unrelated change")
+        repo.publish()
+        proposal(repo=repo)
+        body = preview(c, "ads-validate", {"proposal": "neg-2026-10"}).json()
+        code = body["code"]
+        assert "+print('now it also says hello')" in code["diff"] and "unrelated" not in code["diff"]
+        assert code["link"] == (f"https://github.com/lucawetherall/londonchoralservice/blob/{repo.head()}/"
+                                "scripts/ads/negatives_2026_10.py")
+        assert commit[:12] in code["head"] and "say hello" in code["head"] and "Tess Author" in code["head"]
+        digest = hashlib.sha256(code["diff"].encode("utf-8")).hexdigest()
+        assert digest[:16] in body["summary"] and code["link"] in body["summary"]  # the tap binds the code shown
+        # a long change is capped at 6,000 characters, with a pointer to the rest
+        repo.write("scripts/ads/negatives_2026_10.py", NEG_SCRIPT + "".join(f"# line {i:05d}\n" for i in range(2000)))
+        repo.git("add", "-A")
+        repo.commit("long")
+        repo.publish()
+        proposal(repo=repo)
+        code = preview(c, "ads-validate", {"proposal": "neg-2026-10"}).json()["code"]
+        assert len(code["diff"]) <= actions.DIFF_MAX + 200 and "characters more: open it on GitHub" in code["diff"]
+        # the very first version of a script: the whole file is the change
+        fresh = actions.commit_facts(repo.git("rev-list", "--max-parents=0", "HEAD").strip(),
+                                     "scripts/ads/negatives_2026_10.py",
+                                     repo.blob(commit=repo.git("rev-list", "--max-parents=0", "HEAD").strip()))
+        assert "+import helper" in fresh["diff"]
 
 
 def real_validate(c, a, inp):
@@ -911,6 +1158,8 @@ def test_ads_validate_then_apply_bound_to_the_output():
         assert applied["commit"] == repo.head() and applied["blob"] == repo.blob()
         assert applied["args"] == ["solo", "soloist", "vocalist"] and applied["login"] == LOGIN
         assert applied["passkey"] == b64(a.cred_id)
+        raw_audit = (Path(TMP) / "command-centre" / "audit.jsonl").read_bytes().rstrip(b"\n").split(b"\n")
+        assert applied["audit_sha256"] == hashlib.sha256(raw_audit[-1]).hexdigest()
         # applied: neither step is offered again
         assert preview(c, "ads-validate", inp).json()["error"] == "already applied"
         assert preview(c, "ads-apply", inp).json()["error"] == "already applied"
@@ -974,6 +1223,41 @@ def test_one_apply_per_validate_even_racing():
         assert r1.json()["ok"] is False and len(rec.calls) == 1
         assert r2.status_code == 409, r2.text
         assert audit_lines()[-1]["result"].startswith("refused: validate")
+
+
+def test_an_apply_whose_record_cant_be_saved_warns_and_is_never_applied_again():
+    c, a, _ = setup()
+    clear_applied()
+    with AdsRepo() as repo:
+        proposal(repo=repo)
+        inp = {"proposal": "neg-2026-10"}
+        with Runner(Recorder()):
+            run(c, a, "ads-validate", inp)
+        real = actions.write_private
+
+        def broken(path, payload, exclusive=False):
+            if str(path).endswith(".applied"):
+                raise PermissionError("disk")
+            return real(path, payload, exclusive)
+        actions.write_private = broken
+        try:
+            with Runner(Recorder(out=b"Applied and logged\n")) as rec:
+                r = run(c, a, "ads-apply", inp)
+        finally:
+            actions.write_private = real
+        body = r.json()
+        assert r.status_code == 200 and body["ok"] and len(rec.calls) == 1, body
+        assert body["output"].startswith("applied, but the record couldn't be saved: DO NOT re-apply"), body["output"]
+        assert "Applied and logged" in body["output"]
+        assert not actions.applied_path("neg-2026-10").exists()
+        # until the app restarts, neither this proposal nor the same blob and args under another id runs again
+        assert preview(c, "ads-validate", inp).json()["error"] == "already applied"
+        proposal(pid="neg-again", repo=repo)
+        assert preview(c, "ads-validate", {"proposal": "neg-again"}).json()["error"] == \
+            "this script with these arguments was already applied"
+        assert {p["id"]: p for p in actions.list_proposals()}["neg-again"]["problem"] == \
+            "this script with these arguments was already applied"
+        actions.forget_unrecorded_applies()
 
 
 def test_ads_output_is_head_and_tail_unmasked():
@@ -1234,6 +1518,21 @@ def test_marketing_lists_proposals():
     assert 'data-action="ads-apply"' not in out  # only after a validate
     (Path(TMP) / "command-centre" / "proposals" / "bad-one.json").unlink()
     (Path(TMP) / "command-centre" / "proposals" / "neg-2026-10.json").unlink()
+
+
+def test_activity_shows_the_audit_chain_status():
+    c, a, _ = setup()
+    with Runner(Recorder(out=b"ok")):
+        run(c, a, "resolve-hand-check", {"ref": "2111", "choice": "refunded", "date": D})
+    path = Path(TMP) / "command-centre" / "audit.jsonl"
+    lines = path.read_bytes().rstrip(b"\n").split(b"\n")
+    st = actions.audit_status()
+    assert st == {"ok": True, "bad": [], "lines": len(lines), "last": hashlib.sha256(lines[-1]).hexdigest()}
+    out = page(c, "/activity")
+    assert "chain intact" in out and f"{len(lines)} lines" in out and st["last"][:16] in out
+    path.write_bytes(path.read_bytes().replace(b'"result": "started"', b'"result": "STARTED"', 1))  # line 1 edited
+    out = page(c, "/activity")
+    assert "chain broken" in out and re.search(r"at line\s+2\b", out), out
 
 
 def test_activity_page_filters_and_masks():
