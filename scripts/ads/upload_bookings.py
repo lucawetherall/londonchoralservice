@@ -14,9 +14,12 @@ now requires for new offline-conversion integrations; it needs the
 https://www.googleapis.com/auth/datamanager scope on Application Default
 Credentials and the Data Manager API enabled on the Cloud project.
 
-Only rows with an ad click reference, consent = granted, a value, and no
-uploaded_at are uploaded. Rows whose notes start with "PENDING" (invoiced,
-deposit not yet seen) wait until the flag is cleared; "CANCELLED" rows never go. The reference comes from the enquiry (the site adds
+Only rows with an ad click reference, consent = granted, a value above zero,
+and no uploaded_at are uploaded (select_ready). Rows whose notes start with
+"PENDING" (invoiced, deposit not yet seen) wait until the flag is cleared; a
+cancelled booking never goes, by the same rule check_payments uses
+(is_cancelled: "cancelled" anywhere in the notes, unless a later "reinstated"
+or the like undoes it). The reference comes from the enquiry (the site adds
 it only for visitors who allowed cookies): a plain value is a gclid; iPhone
 clicks may carry "gbraid:<value>" or "wbraid:<value>" instead. When
 "Enhanced conversions for leads" is on in the Ads account, the client's email
@@ -31,7 +34,6 @@ data) to logs/ads-changes.md.
 """
 
 import argparse
-import csv
 import datetime
 import hashlib
 import os
@@ -39,11 +41,8 @@ import sys
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
-import google.auth
-from google.ads.googleads.client import GoogleAdsClient
-from google.auth.transport.requests import AuthorizedSession
-
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "bookings"))
+import check_payments as cp  # noqa: E402  (is_cancelled, is_pending: one rule for every ledger reader)
 import lcs_money as lm  # noqa: E402  (ledger path and lock shared with the bookings scripts)
 
 CUSTOMER_ID = "8733881378"
@@ -57,38 +56,22 @@ LONDON = ZoneInfo("Europe/London")
 
 
 def ensure_ledger():
+    """Create an empty ledger (header only, mode 600, written atomically) if there is none."""
     with lm.ledger_lock(LEDGER):
         if LEDGER.exists():
             return
-        LEDGER.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
-        with open(LEDGER, "w", newline="") as f:
-            csv.writer(f).writerow(COLUMNS)
-        os.chmod(LEDGER, 0o600)
+        lm.write_csv(LEDGER, [], COLUMNS)
     print(f"Created an empty private ledger at {LEDGER}")
 
 
-def ledger_header():
-    """The ledger's column names from its header line ([] if there is no ledger)."""
-    try:
-        with open(LEDGER, newline="") as f:
-            return next(csv.reader(f), [])
-    except FileNotFoundError:
-        return []
-
-
 def stamp_uploaded(done, now):
-    """Stamp uploaded_at on these booking refs. Re-reads the ledger under the shared lock so a row
-    another writer added or changed during the upload is kept. lm.ledger_lock is not re-entrant:
-    never call this while holding it."""
-    with lm.ledger_lock(LEDGER):
-        rows = lm.read_csv(LEDGER)
-        cols = ledger_header() or list(COLUMNS)  # the ledger's own header, never a row's keys
-        cols += [c for c in COLUMNS if c not in cols]
-        for r in rows:
+    """Stamp uploaded_at on these booking refs. Re-reads the ledger under the shared lock (lm.locked_rows:
+    the ledger's own header, atomic mode-600 write) so a row another writer added or changed during the
+    upload is kept. lm.ledger_lock is not re-entrant: never call this while holding it."""
+    with lm.locked_rows(LEDGER, COLUMNS) as t:
+        for r in t.rows:
             if r.get("booking_ref") in done:
                 r["uploaded_at"] = now
-        lm.write_csv(LEDGER, rows, cols)
-        os.chmod(LEDGER, 0o600)
 
 
 def to_datetime(day):
@@ -117,25 +100,21 @@ def hashed_email(raw):
     return hashlib.sha256(f"{local}@{domain}".encode()).hexdigest()
 
 
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--apply", action="store_true")
-    args = parser.parse_args()
-    ensure_ledger()
-    with lm.ledger_lock(LEDGER), open(LEDGER, newline="") as f:
-        rows = list(csv.DictReader(f))
-
+def select_ready(rows):
+    """(ready, skipped): ready is [(row, value, event timestamp)] for rows to upload now; skipped is
+    [(booking_ref, reason)]. Rows already uploaded are left out silently. A cancelled booking
+    (check_payments.is_cancelled, so an appended "; cancelled 2026-10-05 by client email" counts) and a
+    PENDING one are never ready, nor is a value that is unreadable, not finite, or not above zero."""
     ready, skipped = [], []
     for r in rows:
         ref = (r.get("booking_ref") or "").strip()
         if (r.get("uploaded_at") or "").strip():
             continue
-        flag = (r.get("notes") or "").strip().upper()
-        if flag.startswith("PENDING"):
-            skipped.append((ref, "PENDING: no deposit seen yet (clear the flag in notes once it is paid)"))
-            continue
-        if flag.startswith("CANCELLED"):
+        if cp.is_cancelled(r):
             skipped.append((ref, "cancelled"))
+            continue
+        if cp.is_pending(r.get("notes") or ""):
+            skipped.append((ref, "PENDING: no deposit seen yet (clear the flag in notes once it is paid)"))
             continue
         if not (r.get("gclid") or "").strip():
             skipped.append((ref, "no ad click reference (not from a Google ad, or cookies declined)"))
@@ -144,23 +123,40 @@ def main():
             skipped.append((ref, "no recorded consent for ad measurement"))
             continue
         try:
-            value = float((r.get("value_gbp") or "").replace("£", "").replace(",", ""))
             when, when_str = to_datetime(r["invoice_date"])
-        except (ValueError, KeyError):
-            skipped.append((ref, "missing or unreadable value_gbp / invoice_date"))
+            enquired = to_datetime(r["enquiry_date"])[0] if (r.get("enquiry_date") or "").strip() else None
+        except (ValueError, KeyError, AttributeError):
+            skipped.append((ref, "missing or unreadable invoice_date / enquiry_date"))
             continue
-        if r.get("enquiry_date"):
-            enquired, _ = to_datetime(r["enquiry_date"])
-            if (when - enquired).days > 90:
-                skipped.append((ref, "booked more than 90 days after the enquiry (outside the conversion window)"))
-                continue
+        value = lm.parse_gbp(r.get("value_gbp"))  # None when unreadable, nan or inf
+        if value is None or value <= 0:
+            skipped.append((ref, "value_gbp is missing, unreadable or not above zero"))
+            continue
+        if enquired and (when - enquired).days > 90:
+            skipped.append((ref, "booked more than 90 days after the enquiry (outside the conversion window)"))
+            continue
         ready.append((r, value, when_str))
+    return ready, skipped
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--apply", action="store_true")
+    args = parser.parse_args()
+    ensure_ledger()
+    rows = lm.read_csv(LEDGER)
+
+    ready, skipped = select_ready(rows)
 
     for ref, why in skipped:
         print(f"skip {ref or '(no ref)'}: {why}")
     if not ready:
         print("Nothing to upload.")
         return
+
+    import google.auth  # only here, so select_ready can be imported (and tested) without Google's libraries
+    from google.ads.googleads.client import GoogleAdsClient
+    from google.auth.transport.requests import AuthorizedSession
 
     c = GoogleAdsClient.load_from_storage(os.environ.get("GOOGLE_ADS_CONFIGURATION_FILE_PATH", os.path.expanduser("~/.config/lcs/google-ads.yaml")))
     ga = c.get_service("GoogleAdsService")
@@ -206,10 +202,9 @@ def main():
     if not args.apply:
         print(f"Google accepted the request (validate only, request {request_id}). Nothing was uploaded.")
         return
-    failed = set()
     now = datetime.datetime.now(LONDON).strftime("%Y-%m-%d %H:%M")
     print(f"Accepted by Google (request {request_id}); processing status can be checked with that ID.")
-    done = {ready[i][0]["booking_ref"] for i in range(len(ready)) if i not in failed}
+    done = {r["booking_ref"] for r, _, _ in ready}
     stamp_uploaded(done, now)
     uploaded_value = sum(v for r, v, _ in ready if r["booking_ref"] in done)
     row = (f"| {now} | conversion_action \"{ACTION_NAME}\" | offline upload | +{len(done)} booking(s), "

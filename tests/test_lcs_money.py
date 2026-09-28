@@ -262,6 +262,103 @@ def test_ledger_lock_releases_on_error():
         os.close(fd)
 
 
+# --- one money parser, one London today, one locked read-modify-write ------------------------
+
+def test_parse_gbp_reads_pounds_and_refuses_the_unreadable():
+    for raw, want in (("1150", 1150.0), ("£1,150.00", 1150.0), (" £ 575.5 ", 575.5), (325, 325.0), (12.5, 12.5),
+                      ("-50", -50.0), ("0", 0.0)):
+        assert m.parse_gbp(raw) == want, (raw, m.parse_gbp(raw))
+    for raw in (None, "", "  ", "abc", "£", "nan", "NaN", "inf", "-inf", "Infinity", float("nan"), float("inf"), "1,150 GBP?"):
+        assert m.parse_gbp(raw) is None, (raw, m.parse_gbp(raw))
+    # money() keeps its old contract (0.0 for anything unreadable), now also for nan and inf
+    assert m.money("nan") == 0.0 and m.money("inf") == 0.0 and m.money(None) == 0.0 and m.money("£1,150") == 1150.0
+
+
+def test_today_is_the_london_date():
+    late = datetime.datetime(2026, 9, 28, 23, 30, tzinfo=datetime.timezone.utc)  # 00:30 on the 29th, BST
+    assert m.today(late) == datetime.date(2026, 9, 29)
+    assert m.today(datetime.datetime(2026, 12, 31, 23, 30, tzinfo=datetime.timezone.utc)) == datetime.date(2026, 12, 31)
+    assert isinstance(m.today(), datetime.date) and not isinstance(m.today(), datetime.datetime)
+
+
+def _table(path, cols, rows, extra_line=None):
+    with open(path, "w", newline="") as f:
+        w = csv.writer(f)
+        w.writerow(cols)
+        for r in rows:
+            w.writerow(r)
+        if extra_line:
+            f.write(extra_line + "\n")
+
+
+def test_locked_rows_reads_with_the_header_and_writes_back_privately():
+    d = tempfile.mkdtemp()
+    path = os.path.join(d, "t.csv")
+    _table(path, ["a", "b", "own"], [["1", "x", "keep"]])
+    os.chmod(path, 0o644)
+    with m.locked_rows(path, ["a", "b", "c"]) as t:
+        assert t.columns == ["a", "b", "own", "c"], t.columns  # the file's own columns first, ours appended
+        assert t.rows == [{"a": "1", "b": "x", "own": "keep"}], t.rows
+        t.rows[0]["b"] = "y"
+        t.rows.append({"a": "2", "c": "new"})
+    with open(path, newline="") as f:
+        assert list(csv.reader(f)) == [["a", "b", "own", "c"], ["1", "y", "keep", ""], ["2", "", "", "new"]]
+    assert oct(os.stat(path).st_mode & 0o777) == "0o600"
+    assert sorted(os.listdir(d)) == ["t.csv", "t.csv.lock"], os.listdir(d)
+
+
+def test_locked_rows_holds_the_lock_and_skips_an_unchanged_or_failed_write():
+    import fcntl
+    d = tempfile.mkdtemp()
+    path = os.path.join(d, "t.csv")
+    _table(path, ["a"], [["1"]])
+    before = os.stat(path).st_mtime_ns, os.stat(path).st_ino
+    with m.locked_rows(path) as t:
+        fd = os.open(path + ".lock", os.O_RDWR)
+        try:
+            try:
+                fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                held = False
+            except BlockingIOError:
+                held = True
+        finally:
+            os.close(fd)
+    assert held, "locked_rows must hold the ledger lock while the caller works"
+    assert (os.stat(path).st_mtime_ns, os.stat(path).st_ino) == before  # nothing changed: nothing written
+    try:
+        with m.locked_rows(path) as t:
+            t.rows[0]["a"] = "2"
+            raise SystemExit("refused")
+    except SystemExit:
+        pass
+    assert m.read_csv(path) == [{"a": "1"}]  # an error inside: nothing written
+
+
+def test_locked_rows_refuses_a_row_wider_than_the_header():
+    d = tempfile.mkdtemp()
+    path = os.path.join(d, "t.csv")
+    _table(path, ["a", "b"], [["1", "2"]], extra_line="3,4,5")
+    before = open(path).read()
+    try:
+        with m.locked_rows(path) as t:
+            t.rows.append({"a": "x"})
+        raise AssertionError("a wider row must be refused")
+    except SystemExit as e:
+        assert "more fields than its header" in str(e), e
+    assert open(path).read() == before
+
+
+def test_locked_rows_on_a_missing_file_starts_empty_and_creates_it_on_write():
+    d = tempfile.mkdtemp()
+    path = os.path.join(d, "sub", "t.csv")
+    with m.locked_rows(path, ["a", "b"]) as t:
+        assert t.rows == [] and t.columns == ["a", "b"]
+    assert not os.path.exists(path)
+    with m.locked_rows(path, ["a", "b"]) as t:
+        t.rows.append({"a": "1"})
+    assert m.read_csv(path) == [{"a": "1", "b": ""}] and oct(os.stat(path).st_mode & 0o777) == "0o600"
+
+
 if __name__ == "__main__":
     failures = 0
     for name, fn in sorted(globals().items()):

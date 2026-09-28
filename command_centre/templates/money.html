@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% import "macros.html" as m %}
+{% block content %}
+<section class="card-group" aria-labelledby="bank-balance">
+  <article class="card">
+    <h2 id="bank-balance">Bank balance</h2>
+    {{ m.failed(balance) }}
+    {% set b = balance.value if balance.ok else balance.stale %}
+    {% if b %}
+    <div class="figures">
+      <div class="figure"><span class="figure-label">Cleared</span><span class="figure-value">{{ b.cleared|gbp }}</span></div>
+      <div class="figure"><span class="figure-label">Effective</span><span class="figure-value">{{ b.effective|gbp }}</span></div>
+    </div>
+    <p class="muted">Starling, read-only, checked at {{ bank.value.as_of if bank.ok else "?" }}. Cached for ten minutes.</p>
+    {% elif balance.ok %}
+    <p class="muted">Bank not checked: no Keychain token, or Starling didn't answer.</p>
+    {% endif %}
+  </article>
+
+  <article class="card">
+    <h2>Money lines</h2>
+    {{ m.failed(lines) }}
+    {% set items = lines.value if lines.ok else (lines.stale or []) %}
+    {% if items %}
+    <ul class="lines">
+      {% for line in items %}<li>{{ line }}</li>{% endfor %}
+    </ul>
+    <p class="muted">The same lines as the Monday report's money section.</p>
+    {% endif %}
+  </article>
+</section>
+
+<section class="card-group">
+  {% set items = hand.value if hand.ok else (hand.stale or []) %}
+  <article class="card card-wide{% if items %} card-warn{% endif %}">
+    <h2>Needs a hand check</h2>
+    {{ m.failed(hand) }}
+    {% if items %}{{ m.hand_table(items, bank.ok and bank.value.bank_checked) }}
+    <p class="muted">Resolving these from the app arrives in phase 3; until then, add the note in the ledger.</p>
+    {% elif hand.ok %}<p class="muted">Nothing needs a hand check.</p>{% endif %}
+  </article>
+
+  {% set items = singers.value if singers.ok else (singers.stale or []) %}
+  <article class="card card-wide">
+    <h2>Singer invoices unpaid</h2>
+    {{ m.failed(singers) }}
+    {% if items %}
+    <p>{{ items|length }} unpaid, {% if singer_total.ok %}{{ singer_total.value|gbp }}{% else %}{{ items|sum(attribute="amount")|gbp }}{% endif %}</p>
+    {{ m.singers_table(items) }}
+    {% elif singers.ok %}<p class="muted">No unpaid singer invoices.</p>{% endif %}
+  </article>
+</section>
+{% endblock %}

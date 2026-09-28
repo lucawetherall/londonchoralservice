@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="referrer" content="no-referrer">
+<meta name="robots" content="noindex, nofollow">
+<meta name="htmx-config" content='{{ HTMX_CONFIG|safe }}'>
+<title>{{ title }} · LCS Command Centre</title>
+<link rel="stylesheet" href="/static/app.css">
+<script src="/static/htmx.min.js" defer></script>
+{% block head %}{% endblock %}
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="top">
+  <div class="top-inner">
+    <a class="brand" href="/"><span class="brand-mark">LCS</span> <span class="brand-name">Command Centre</span></a>
+    <nav class="nav" aria-label="Pages">
+      {% for label, href in NAV %}
+      <a class="nav-item" href="{{ href }}"{% if current(href, path) %} aria-current="page"{% endif %}>{{ label }}</a>
+      {% endfor %}
+      {% for label in SOON %}
+      <span class="nav-item nav-soon" aria-disabled="true" title="Coming in a later phase">{{ label }} <span class="soon">soon</span></span>
+      {% endfor %}
+    </nav>
+  </div>
+</header>
+<main id="main" class="main">
+  <div class="page-head">
+    <div>
+      <h1>{{ title }}</h1>
+      <p class="stamp">As of {{ stamp }}</p>
+    </div>
+    {% set here = request.url.path ~ ("?" ~ request.url.query if request.url.query else "") %}
+    <a class="button quiet" href="{{ here }}" hx-get="{{ here }}" hx-select="#main" hx-target="#main" hx-swap="outerHTML">Refresh</a>
+  </div>
+{% block content %}{% endblock %}
+</main>
+<footer class="foot">
+  <span>Private to the owner · reached over Tailscale only</span>
+  <a href="/passkeys"{% if path == "/passkeys" %} aria-current="page"{% endif %}>Passkeys</a>
+</footer>
+{% set ns = namespace(tabbed=false) %}
+{% for label, href in TABS %}{% if current(href, path) %}{% set ns.tabbed = true %}{% endif %}{% endfor %}
+<nav class="tabbar" aria-label="Main pages">
+  {% for label, href in TABS %}
+  <a class="tab" href="{{ href }}"{% if current(href, path) %} aria-current="page"{% endif %}><span class="tab-dot" aria-hidden="true"></span>{{ label }}</a>
+  {% endfor %}
+  <a class="tab" href="/more"{% if not ns.tabbed %} aria-current="page"{% endif %}><span class="tab-dot" aria-hidden="true"></span>More</a>
+</nav>
+{% block scripts %}{% endblock %}
+</body>
+</html>

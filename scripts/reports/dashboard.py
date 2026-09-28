@@ -31,15 +31,19 @@ sys.path.insert(0, str(BOOKINGS))
 import check_payments as cp  # noqa: E402
 import lcs_money as lm  # noqa: E402
 import money_report as mr  # noqa: E402
+import pipeline as pl  # noqa: E402  summary_dict: the Monday report's pipeline figures
 import singer_invoices as si  # noqa: E402
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import economics as ec  # noqa: E402  load_windows: the season start
+
+REPO = Path(__file__).resolve().parents[2]
+BUDGET_WINDOWS = REPO / "data" / "budget-windows.yml"  # season_start, as the Monday report's section 11 reads it
 
 LONDON = ZoneInfo("Europe/London")
 # URLError and HTTPError are OSErrors too; a non-JSON 200 body (an outage page) is a JSONDecodeError
 BANK_DOWN = (lm.StarlingError, urllib.error.URLError, urllib.error.HTTPError, TimeoutError, OSError,
              json.JSONDecodeError)
-SEASON_START_MONTH = 9  # the pipeline season runs from 1 September
-STATUS_ORDER = ["new", "quoted", "confirmed", "deposit paid", "done", "lost"]
-CONFIRMED = {"confirmed", "deposit paid", "done"}
+STATUS_ORDER = pl.STATUS_ORDER
 STATES = {  # payment state -> (words, tone)
     "PAID_IN_FULL": ("paid in full", "ok"), "CLOSED": ("paid in full (closed)", "ok"),
     "DEPOSIT_SEEN": ("deposit in", "ok"), "AWAITING_DEPOSIT": ("awaiting deposit", ""),
@@ -48,6 +52,7 @@ STATES = {  # payment state -> (words, tone)
     "CHECK_VALUE": ("unreadable value or date", "warn"), "PAST_UNMATCHED": ("past, unpaid", "bad"),
     "PAST_PART_PAID": ("past, part paid", "bad"), "PAYMENT_ON_CANCELLED": ("payment on a cancelled booking", "bad"),
     "PAYMENT_AFTER_CLOSE": ("payment after paid in full", "bad"),
+    "ARRANGED": ("balance arranged (cash/cheque)", "warn"),
 }
 
 
@@ -108,23 +113,17 @@ def money_lines(assessments, receipts, singer_rows, today):
     return lines
 
 
-def hand_check(assessments):
+def hand_check(assessments, today):
+    """The Monday money line's "needs a hand check" list (money_report.needs_hand_check), one row each."""
     return [{"ref": a["ref"], "state": a["state"], "label": mr.hand_check_label(a), "value": a.get("value") or 0.0,
-             "received": a.get("received") or 0.0} for a in assessments if a["state"] in mr.HAND_CHECK]
+             "received": a.get("received") or 0.0} for a in assessments if mr.needs_hand_check(a, today)]
 
 
 def digits4(value):
     return re.sub(r"\D", "", str(value or ""))[-4:]
 
 
-def payee_status(payee):
-    """Whether Starling already knows the singer, without the payee's full name."""
-    for prefix, label in (("existing: ", "existing payee"),
-                          ("name matches payee ", "matches an existing payee, different bank details"),
-                          ("probably existing: ", "probably an existing payee (no bank details on the invoice)")):
-        if payee.startswith(prefix):
-            return label
-    return payee
+payee_status = si.payee_status  # whether Starling already knows the singer, never the payee's name
 
 
 def singers(rows):
@@ -132,7 +131,7 @@ def singers(rows):
              "amount": lm.money(r.get("amount_gbp")), "payee": payee_status(r.get("payee", "")),
              "bank_changed": r.get("bank_changed") == "yes", "ring_first": si.ring_first(r),
              "last4": digits4(r.get("bank_last4"))}
-            for r in sorted(rows, key=lambda r: r.get("received") or "") if not r.get("paid_on")]
+            for r in sorted(rows, key=lambda r: r.get("received") or "") if si.is_open(r)]
 
 
 def enquiries():
@@ -140,30 +139,25 @@ def enquiries():
     return lm.read_csv(path) if path.exists() else None
 
 
-def season_start(today):
-    year = today.year if today.month >= SEASON_START_MONTH else today.year - 1
-    return datetime.date(year, SEASON_START_MONTH, 1)
-
-
-def status_of(r):
-    return (r.get("status") or "").strip().lower() or "(none)"
+def season_start():
+    """season_start from data/budget-windows.yml, the date the Monday report's section 11 counts from."""
+    start = ec.load_windows(BUDGET_WINDOWS)["season_start"]
+    if start is None:
+        raise ValueError("season_start")
+    return start
 
 
 def window(rows, label, since):
-    picked = [r for r in rows if (r.get("first_seen") or "")[:10] >= since.isoformat()]
-    counts = {}
-    for r in picked:
-        counts[status_of(r)] = counts.get(status_of(r), 0) + 1
-    confirmed = sum(status_of(r) in CONFIRMED for r in picked)
-    quoted = sum(status_of(r) in CONFIRMED or status_of(r) == "quoted" or lm.money(r.get("quoted_gbp")) > 0
-                 for r in picked)
-    return {"label": label, "counts": counts, "total": len(picked), "quoted": quoted, "confirmed": confirmed}
+    """One window's figures, straight from pipeline.summary_dict, so they match the Monday report."""
+    s = pl.summary_dict(rows, since)
+    return {"label": label, "counts": {k: n for k, n in s["by_status"].items() if n}, "total": s["enquiries"],
+            "quoted": s["quoted"], "confirmed": s["confirmed"], "rate": s["conversion_rate"]}
 
 
 def pipeline(enq, today):
     if enq is None:
         return None
-    start = season_start(today)
+    start = season_start()
     return {"season_start": start.isoformat(),
             "windows": [window(enq, "Season", start), window(enq, "Last 30 days", today - datetime.timedelta(days=30))]}
 
@@ -215,7 +209,7 @@ def gather(client, today):
     else:
         data["upcoming"] = section(upcoming, rows, assessments, data["bank_checked"], today)
         data["money"] = section(lambda: money_lines(assessments, receipts, lm.read_csv(si.STORE), today))
-        data["hand_check"] = section(hand_check, assessments)
+        data["hand_check"] = section(hand_check, assessments, today)
     data["singers"] = section(lambda: singers(lm.read_csv(si.STORE)))
     enq = section(enquiries)
     enq_ok = not (isinstance(enq, dict) and "failed" in enq)
@@ -363,9 +357,10 @@ def r_pipeline(p, data):
     for w in p["windows"]:
         counts = w["counts"]
         status = " · ".join(f"{e(s)} {e(str(counts[s]))}" for s in ordered(counts)) or "none"
-        rate = f" ({round(100 * w['confirmed'] / w['quoted'])}%)" if w["quoted"] else ""
+        rate = f" ({round(100 * w['rate'])}%)" if w.get("rate") is not None else ""
         out.append(f"<h3>{e(w['label'])}</h3><p>{e(str(w['total']))} enquiries: {status}</p>"
-                   f"<p>Conversion: {e(str(w['confirmed']))} confirmed of {e(str(w['quoted']))} quoted{e(rate)}</p>")
+                   f"<p>{e(str(w['total']))} enquiries, {e(str(w['quoted']))} quoted, "
+                   f"{e(str(w['confirmed']))} booked{e(rate)}</p>")
     return "".join(out)
 
 
@@ -443,7 +438,7 @@ def main(argv=None):
     ap = argparse.ArgumentParser(description="Write the owner's private dashboard to ~/lcs-private/dashboard.html.")
     ap.add_argument("--no-bank", action="store_true", help="don't read the Keychain token or call Starling")
     args = ap.parse_args(argv)
-    today = datetime.datetime.now(LONDON).date()
+    today = lm.today()
     client = None
     if not args.no_bank:
         tok = lm.keychain_token()

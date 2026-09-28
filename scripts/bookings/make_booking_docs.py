@@ -17,8 +17,15 @@ spec.json (all money in pounds; the fee must be the one the client accepted):
    "items": [{"name": "Wedding solo singer", "detail": "…", "qty": 1, "rate": 325}, …],
    "instalment_1_due": "2026-08-28", "instalment_2_due": "2026-11-20"}
 Instalments are 50/50 unless "instalment_1" / "instalment_2" amounts are given.
-Output goes to ~/lcs-private/invoices/<ref> - <client>/ (mode 700). Nothing is
+Output goes to ~/lcs-private/invoices/<ref> - <client>/ (folders mode 700, files
+mode 600); the ref and client name are cleaned first (safe_name: no "/", "\\", ".."
+or control characters), so the folder can never land outside invoices/. Nothing is
 sent anywhere: the owner attaches the files to the reply draft in Zoho.
+
+~/lcs-private/tools and ~/lcs-private/invoices are fixed paths on purpose (they do not
+follow LCS_PRIVATE_DIR): the Books guard (.claude/hooks/zoho_books_guard.py) allows an
+invoice attachment only from inside ~/lcs-private/invoices/, and the templates are the
+owner's private copies.
 """
 
 import datetime
@@ -31,6 +38,9 @@ import tempfile
 from pathlib import Path
 
 from pypdf import PdfReader
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import lcs_money as lm  # noqa: E402  parse_gbp, today
 
 TOOLS = Path.home() / "lcs-private" / "tools"
 OUT_ROOT = Path.home() / "lcs-private" / "invoices"
@@ -50,6 +60,38 @@ def fail(msg):
     raise SystemExit(f"STOP: {msg}")
 
 
+def safe_name(text):
+    """One path component from a ref or client name: "/", "\\" and control characters become spaces, ".."
+    runs become ".", leading dots and spaces go. STOP when nothing is left."""
+    s = "".join(" " if (c in "/\\" or not c.isprintable()) else c for c in str(text or ""))
+    s = re.sub(r"\.{2,}", ".", s)
+    s = re.sub(r"\s+", " ", s).strip().lstrip(". ").strip()
+    if not s:
+        fail(f"{text!r} can't be used in a file name")
+    return s
+
+
+def out_folder(ref, client, root=OUT_ROOT):
+    """root/<ref> - <client>, made with every new folder at mode 700 and checked to sit directly in root."""
+    root = Path(root)
+    root.mkdir(mode=0o700, parents=True, exist_ok=True)
+    os.chmod(root, 0o700)
+    folder = root / f"{safe_name(ref)} - {safe_name(client)}"
+    if folder.resolve().parent != root.resolve():
+        fail(f"the invoice folder would be outside {root}")
+    folder.mkdir(mode=0o700, exist_ok=True)
+    os.chmod(folder, 0o700)
+    return folder
+
+
+def pounds(value, what):
+    """A money figure from the spec (lm.parse_gbp); STOP for anything unreadable, nan, inf or negative."""
+    v = lm.parse_gbp(value)
+    if v is None or v < 0:
+        fail(f"{what} is not an amount in pounds: {value!r}")
+    return v
+
+
 def main():
     if len(sys.argv) != 2:
         fail("usage: make_booking_docs.py <spec.json | '{json}'>")
@@ -64,24 +106,23 @@ def main():
             fail(f"{TOOLS / need} is missing (see the handover doc, section 4)")
     if re.search(r"\bVAT\b", json.dumps(spec), re.I):
         fail("the spec mentions VAT; Alma Consort Ltd is not VAT-registered, so no VAT line")
-    total = round(sum(float(i["rate"]) * float(i.get("qty", 1)) for i in spec["items"]), 2)
-    i1 = round(float(spec.get("instalment_1", total / 2)), 2)
-    i2 = round(float(spec.get("instalment_2", total - i1)), 2)
+    total = round(sum(pounds(i.get("rate"), "an item's rate") * pounds(i.get("qty", 1), "an item's qty")
+                      for i in spec["items"]), 2)
+    i1 = round(pounds(spec.get("instalment_1", total / 2), "instalment_1"), 2)
+    i2 = round(pounds(spec.get("instalment_2", total - i1), "instalment_2"), 2)
     if abs(i1 + i2 - total) > 0.005:
         fail(f"instalments {i1} + {i2} do not add up to the total {total}")
-    issue = spec.get("issue_date") or datetime.date.today().isoformat()
+    issue = spec.get("issue_date") or lm.today().isoformat()
     when = long_date(spec["service_date"], weekday=True)
     if spec.get("service_time"):
         when += f" at {spec['service_time']}"
     service = spec["service_type"] + (f" — {spec['venue']}" if spec.get("venue") else "")
     client, ref = spec["client_name"].strip(), str(spec["ref"]).strip()
 
-    folder = OUT_ROOT / f"{ref} - {client}"
-    folder.mkdir(parents=True, exist_ok=True)
-    os.chmod(folder, 0o700)
-    pdf = folder / f"Invoice {ref} - {client}.pdf"
+    folder = out_folder(ref, client)
+    pdf = folder / f"Invoice {safe_name(ref)} - {safe_name(client)}.pdf"
     short = datetime.date.fromisoformat(spec["service_date"]).strftime("%-d %b %Y")
-    docx = folder / f"Booking Confirmation - {client} - {short}.docx"
+    docx = folder / f"Booking Confirmation - {safe_name(client)} - {short}.docx"
 
     inv_spec = {
         "INVOICE_REF": ref, "ISSUE_DATE": long_date(issue), "CLIENT_NAME": client,

@@ -68,6 +68,7 @@ PUBLIC = [
 # added here (or to PUBLIC, if the site should serve it).
 PRIVATE = [
     'logs/**', 'docs/**', 'scripts/**', 'data/**', 'tests/**', 'partials/**', 'graphify-out/**',
+    'command_centre/**',  # the owner's private web app: code and templates, never served by Pages
     '**/*.md', '**/*.py', '**/*.sh', '**/*.yml', '**/*.yaml', '**/*.json', '**/*.csv',
 ]
 

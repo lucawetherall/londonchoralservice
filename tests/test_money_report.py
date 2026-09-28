@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
 """Tests for scripts/bookings/money_report.py. Stdlib only."""
-import datetime, os, sys
+import contextlib, datetime, io, os, sys, tempfile
+
+_HOME = tempfile.mkdtemp()  # never the real ~/lcs-private, even for the in-process imports (review M15)
+os.environ["LCS_PRIVATE_DIR"] = _HOME
+os.environ["LCS_BOOKINGS_CSV"] = os.path.join(_HOME, "bookings.csv")
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, "scripts", "bookings"))
@@ -132,6 +136,34 @@ def test_an_arranged_balance_is_a_hand_check_only_within_seven_days_or_past():
     assert lines[3] == ("needs a hand check: 4 (in7 balance arranged (cash/cheque on the day); "
                         "past balance arranged (cash/cheque on the day); none balance arranged (cash/cheque on the day); "
                         "bare balance arranged (cash/cheque on the day), no deposit seen)"), lines[3]
+
+
+# --- review I6: the singer line never depends on the Starling token --------------------------
+
+def test_singer_line_on_its_own():
+    assert mr.singer_line(QUIET_SINGERS) == "singer invoices unpaid: 0, £0.00"
+    assert mr.singer_line({"unpaid": 1, "unpaid_total": 90.0, "oldest_days": 1, "bank_changed": 1}) == (
+        "singer invoices unpaid: 1, £90.00, oldest 1 day · BANK DETAILS CHANGED on 1 invoice: ring before paying")
+
+
+def test_weekly_review_prints_the_singer_warning_without_a_token():
+    sys.path.insert(0, os.path.join(ROOT, "scripts", "reports"))
+    import lcs_money as lm
+    import singer_invoices as si
+    import weekly_review as wr
+    lm.write_csv(si.STORE, [{"message_id": "m1", "received": "2026-09-20", "singer_name": "Ben Fenwick",
+                             "amount_gbp": "90.00", "bank_changed": "yes", "bank_confirmed": "", "paid_on": ""}],
+                 si.COLUMNS)
+    saved = lm.keychain_token
+    lm.keychain_token = lambda: None
+    try:
+        with contextlib.redirect_stdout(io.StringIO()) as out:
+            wr.money_section()
+    finally:
+        lm.keychain_token = saved
+    text = out.getvalue()
+    assert "no Starling token" in text and "BANK DETAILS CHANGED on 1 invoice: ring before paying" in text, text
+    assert "Fenwick" not in text, text
 
 
 if __name__ == "__main__":

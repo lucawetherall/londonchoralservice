@@ -3,7 +3,7 @@
 
 Run by build.sh after partial expansion and CSS inlining. Rules:
 
-- Every *.html outside partials/ and graphify-out/ is a candidate; pages
+- Every *.html outside partials/, graphify-out/ and command_centre/ is a candidate; pages
   carrying <meta name="robots" content="noindex…"> are excluded.
 - lastmod comes from data/page-dates.json, keyed by URL path. Each entry
   stores a hash of the page's *content* (body with the inlined <style>,
@@ -58,7 +58,7 @@ def pages():
         # Hidden dirs (.git, .venv, .claude, .superpowers…) are never site content.
         # They also break the build downstream: scratch HTML fragments swept in here
         # reach generate_llms_full.py, which splits on </head> and raises on a fragment.
-        dirnames[:] = [d for d in dirnames if not d.startswith('.') and d not in ('partials', 'graphify-out', 'node_modules')]
+        dirnames[:] = [d for d in dirnames if not d.startswith('.') and d not in ('partials', 'graphify-out', 'node_modules', 'command_centre')]
         for fn in filenames:
             if fn.endswith('.html'):
                 out.append(os.path.normpath(os.path.join(dirpath, fn)))

@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="card">
+  <h2>CSV downloads</h2>
+  <ul class="results">
+    <li><a href="/exports/bookings.csv" download>bookings.csv</a> <span class="muted">every ledger row: ref, dates, first name, occasion, ensemble, value, payment state, received, balance</span></li>
+    <li><a href="/exports/singer-invoices.csv" download>singer-invoices.csv</a> <span class="muted">received, first name, bill number, amount, payee status, bank as ••••last4, flags, paid, withdrawn</span></li>
+    <li><a href="/exports/pipeline.csv" download>pipeline.csv</a> <span class="muted">every enquiry without its notes or click id, plus the traced campaign</span></li>
+  </ul>
+  <p class="muted">First names only, and never a full bank number. The files are private: keep them off shared drives and email.</p>
+</section>
+{% endblock %}

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Tests for scripts/bookings/singer_invoices.py. Stdlib only. Uses a temp private dir."""
-import argparse, base64, contextlib, datetime, io, os, sys, tempfile
+import argparse, base64, contextlib, datetime, io, os, sys, tempfile, zipfile
 
 TMP = tempfile.mkdtemp()
 os.environ["LCS_PRIVATE_DIR"] = TMP
@@ -95,20 +95,20 @@ def unpaid(mid, name, amount, received, payee="NEW: add as a payee in the Starli
 
 
 def test_match_paid_by_amount_and_surname():
-    rows = [unpaid("m1", "Laura Penhallow", 200, "2026-09-19")]
-    assert si.match_paid(rows, [out(200, "2026-09-19", "LAURA PENHALLOW", "p1")]) == {"m1": ("2026-09-19", 200.0, "p1", False)}
+    rows = [unpaid("m1", "Laura Pembury", 200, "2026-09-19")]
+    assert si.match_paid(rows, [out(200, "2026-09-19", "LAURA PEMBURY", "p1")]) == {"m1": ("2026-09-19", 200.0, "p1", False)}
 
 
 def test_match_paid_uses_payee_name():
-    rows = [unpaid("m1", "Maddy Kessell", 160, "2026-09-01", payee="existing: M M Kessell")]
-    assert si.match_paid(rows, [out(160, "2026-09-02", "M M KESSELL", "p1")]) == {"m1": ("2026-09-02", 160.0, "p1", False)}
+    rows = [unpaid("m1", "Tilly Thorne", 160, "2026-09-01", payee="existing: T T Thorne")]
+    assert si.match_paid(rows, [out(160, "2026-09-02", "T T THORNE", "p1")]) == {"m1": ("2026-09-02", 160.0, "p1", False)}
 
 
 def test_match_paid_rejects_wrong_amount_early_date_and_double_use():
-    rows = [unpaid("m1", "Laura Penhallow", 200, "2026-09-19"), unpaid("m2", "Laura Penhallow", 200, "2026-09-20")]
-    assert si.match_paid(rows, [out(150, "2026-09-21", "LAURA PENHALLOW", "p0")]) == {}
-    assert si.match_paid(rows[:1], [out(200, "2026-09-10", "LAURA PENHALLOW", "p0")]) == {}
-    assert si.match_paid(rows, [out(200, "2026-09-21", "LAURA PENHALLOW", "p1")]) == {"m1": ("2026-09-21", 200.0, "p1", False)}
+    rows = [unpaid("m1", "Laura Pembury", 200, "2026-09-19"), unpaid("m2", "Laura Pembury", 200, "2026-09-20")]
+    assert si.match_paid(rows, [out(150, "2026-09-21", "LAURA PEMBURY", "p0")]) == {}
+    assert si.match_paid(rows[:1], [out(200, "2026-09-10", "LAURA PEMBURY", "p0")]) == {}
+    assert si.match_paid(rows, [out(200, "2026-09-21", "LAURA PEMBURY", "p1")]) == {"m1": ("2026-09-21", 200.0, "p1", False)}
 
 
 def test_summary_counts():
@@ -326,25 +326,25 @@ def test_match_paid_ambiguous_across_singers():
 
 
 def test_match_paid_before_invoice_arrived():
-    rows = [unpaid("m1", "Laura Penhallow", 200, "2026-09-19")]
+    rows = [unpaid("m1", "Laura Pembury", 200, "2026-09-19")]
     report = []
-    assert si.match_paid(rows, [out(200, "2026-09-10", "LAURA PENHALLOW", "p1")], report) == {}
+    assert si.match_paid(rows, [out(200, "2026-09-10", "LAURA PEMBURY", "p1")], report) == {}
     assert report == ["POSSIBLY ALREADY PAID m1: Laura £200.00 on 2026-09-10 (before the invoice arrived): check by hand"]
     report = []
-    assert si.match_paid(rows, [out(200, "2026-09-01", "LAURA PENHALLOW", "p1")], report) == {} and report == []
+    assert si.match_paid(rows, [out(200, "2026-09-01", "LAURA PEMBURY", "p1")], report) == {} and report == []
 
 
 def test_match_paid_feed_order():
-    rows = [unpaid("m1", "Laura Penhallow", 200, "2026-09-19"), unpaid("m2", "Laura Penhallow", 200, "2026-09-24")]
-    feed = [out(200, "2026-09-21", "LAURA PENHALLOW", "p1"), out(200, "2026-09-25", "LAURA PENHALLOW", "p2")]
+    rows = [unpaid("m1", "Laura Pembury", 200, "2026-09-19"), unpaid("m2", "Laura Pembury", 200, "2026-09-24")]
+    feed = [out(200, "2026-09-21", "LAURA PEMBURY", "p1"), out(200, "2026-09-25", "LAURA PEMBURY", "p2")]
     want = {"m1": ("2026-09-21", 200.0, "p1", False), "m2": ("2026-09-25", 200.0, "p2", False)}
     assert si.match_paid(rows, feed) == want
     assert si.match_paid(rows, feed[::-1]) == want
 
 
 def test_match_paid_uses_london_date():
-    rows = [unpaid("m1", "Laura Penhallow", 200, "2026-09-26")]
-    item = out(200, "2026-09-25", "LAURA PENHALLOW", "p1", at="T23:30:00Z")
+    rows = [unpaid("m1", "Laura Pembury", 200, "2026-09-26")]
+    item = out(200, "2026-09-25", "LAURA PEMBURY", "p1", at="T23:30:00Z")
     assert si.match_paid(rows, [item]) == {"m1": ("2026-09-26", 200.0, "p1", False)}
 
 
@@ -442,12 +442,12 @@ def test_html_body_and_ref_without_amount():
     path = os.path.join(TMP, "html.eml")
     with open(path, "w") as f:
         f.write("From: B <b@x.com>\nSubject: inv\nContent-Type: text/html; charset=utf-8\n\n"
-                "<p>Invoice 7</p><p>Total: &pound;150.00</p><p>Sort code: 12&#8209;34&#8209;56</p>"
+                "<p>Invoice 107</p><p>Total: &pound;150.00</p><p>Sort code: 12&#8209;34&#8209;56</p>"
                 "<p>Account number: 8765&nbsp;4321</p>")
     found = si.read_invoice(path)
-    assert (found["amount"], found["invoice_ref"], found["sort_code"], found["account_number"]) == (150.0, "7", "123456", "87654321")
-    found = si.read_invoice(eml("Invoice 55\nThanks, see you Sunday"))
-    assert found["invoice_ref"] == "55" and found["amount"] == 0.0
+    assert (found["amount"], found["invoice_ref"], found["sort_code"], found["account_number"]) == (150.0, "107", "123456", "87654321")
+    found = si.read_invoice(eml("Invoice 555\nThanks, see you Sunday"))
+    assert found["invoice_ref"] == "555" and found["amount"] == 0.0
 
 
 class Unavailable:
@@ -552,7 +552,7 @@ def test_match_paid_blocks_name_match_for_a_disagreeing_starling_payee():
     fp = lm.bank_fingerprint("112233", "99990000")
     bella = unpaid("bella1", "Bella Fenwick", 150, "2026-09-01")
     item = fp_out(150, "2026-09-02", "B FENWICK", "x9", "112233", "99990000")
-    assert si.match_paid([bella], [item], history=[bella], payee_fps={fp: "Priya Kaur"}) == {}
+    assert si.match_paid([bella], [item], history=[bella], payee_fps={fp: "Ines Calloway"}) == {}
     assert si.match_paid([bella], [item], history=[bella], payee_fps={fp: "Bella Fenwick"}) == \
         {"bella1": ("2026-09-02", 150.0, "x9", False)}
 
@@ -591,8 +591,8 @@ def test_match_paid_short_sender_name_never_auto_matches():
 
 def test_match_paid_skips_items_without_an_id():
     report = []
-    rows = [unpaid("m1", "Laura Penhallow", 200, "2026-09-19")]
-    assert si.match_paid(rows, [out(200, "2026-09-20", "LAURA PENHALLOW"), out(200, "2026-09-21", "LAURA PENHALLOW")], report) == {}
+    rows = [unpaid("m1", "Laura Pembury", 200, "2026-09-19")]
+    assert si.match_paid(rows, [out(200, "2026-09-20", "LAURA PEMBURY"), out(200, "2026-09-21", "LAURA PEMBURY")], report) == {}
     assert len([x for x in report if "feed item without id skipped" in x]) == 1, report
 
 
@@ -604,7 +604,7 @@ def test_normalise_name_trade_words_honorifics_commas():
     assert si.normalise_name("Ben Fenwick Music Ltd") == "ben fenwick"
     assert si.normalise_name("Anna Smith-Jones") == "anna smith-jones" and si.surname("Smith-Jones, Anna") == "smith-jones"
     assert si.normalise_name("Ben") == "ben"
-    assert (si.first_name("Fenwick, Ben"), si.first_name("Dr Ben Fenwick"), si.first_name(""), si.first_name("Laura Penhallow")) == \
+    assert (si.first_name("Fenwick, Ben"), si.first_name("Dr Ben Fenwick"), si.first_name(""), si.first_name("Laura Pembury")) == \
         ("Ben", "Ben", "?", "Laura")
 
 
@@ -840,13 +840,13 @@ def test_a_payment_blocked_by_the_guard_is_reported_once():
     bella2 = unpaid("bella2", "Bella Fenwick", 150, "2026-09-05")
     item = fp_out(150, "2026-09-06", "B FENWICK", "x9", "112233", "99990000")
     report = []
-    assert si.match_paid([bella, bella2], [item], report, history=[bella, bella2], payee_fps={fp: "Priya Kaur"}) == {}
+    assert si.match_paid([bella, bella2], [item], report, history=[bella, bella2], payee_fps={fp: "Ines Calloway"}) == {}
     assert report == ["PAYMENT TO ANOTHER SINGER'S ACCOUNT £150.00 on 2026-09-06 ••••0000 not matched to bella1 (Bella): "
                       "check by hand"], report
     # a payment that settles another invoice by its own bank details is not reported
-    priya = fp_unpaid("p1", "Priya Kaur", 150, "2026-09-02", sc="112233", acc="99990000")
+    ines = fp_unpaid("p1", "Ines Calloway", 150, "2026-09-02", sc="112233", acc="99990000")
     report = []
-    assert si.match_paid([bella, priya], [item], report, history=[bella, priya], payee_fps={fp: "Priya Kaur"}) == \
+    assert si.match_paid([bella, ines], [item], report, history=[bella, ines], payee_fps={fp: "Ines Calloway"}) == \
         {"p1": ("2026-09-06", 150.0, "x9", True)}
     assert report == [], report
 
@@ -862,6 +862,787 @@ def test_newly_paid_by_name_says_check_before_thanking():
                      "NEWLY PAID g2: Ben £100.00 on 2026-08-04 (bank details match)"], lines
 
 
+# --- round 6: what the first live backfill showed: .docx, fetching by id, rescan, refs --------------
+
+def test_extract_ref_backfill_shapes():
+    ref = lambda t: si.extract(t)["invoice_ref"]  # noqa: E731
+    assert ref("Invoice 21st September\nTotal £100") == ""
+    assert ref("Invoice No. 018\nTotal £100") == "018"
+    assert ref("Recording Session 24/09 Invoice\nTotal £100") == ""
+    assert ref("Invoice INV-0107\nTotal £100") == "INV-0107" and ref("Ref INV-0107") == "INV-0107"
+    assert ref("Invoice 1020\nTotal £100") == "1020"
+    for text in ("Invoice - 27th Sept", "Invoice 21/09", "Invoice 2026-09-21", "Invoice 21.9.26", "Invoice 12",
+                 "Invoice for 21/09/2026", "INVOICE\n\n122 Wedding", "Invoice date 21/09/2026"):
+        assert ref(text) == "", (text, ref(text))
+    assert ref("Invoice Number:\n122\nTotal £100") == "122"  # labelled, the value on the next line
+    assert ref("Invoice #1020") == "1020" and ref("Inv No: 123") == "123"
+    assert ref("Invoice 21st September\nInvoice No: 1020") == "1020"  # the date is skipped, the label found
+    assert ref("INVOICE\n\nLW-042") == "LW-042" and ref("INVOICE\n20260309-001") == "20260309-001"
+    # live shapes: a short ref counts only after an explicit No / Number / # / Ref label
+    assert ref("\tAlma Consort Ltd 20 Wenlock Road, London Invoice #37\t\t") == "37"
+    assert ref("Anna Price Invoice\t\t\t21.9.26\nInvoice number: 1") == "1"
+    assert ref("Invoice No: 21st") == "" and ref("Invoice #21/09") == ""
+
+
+def test_extract_bare_total_in_a_gbp_column():
+    bare = "Anna Price Invoice\t\t21.9.26\nInvoice number: 1\nDate\tDescription\tAmount (GBP)\n" \
+                "21.9.26\tFuneral\t100\nTOTAL\t\t100"
+    e = si.extract(bare)
+    assert (e["amount"], e["invoice_ref"]) == (100.0, "1"), e
+    assert si.extract("Date\tDescription\tAmount (£)\nTotal 1,250\n")["amount"] == 1250.0
+    assert si.extract("Rehearsal and service\nTOTAL\t\t100")["amount"] == 0.0  # no currency named anywhere
+    assert si.extract("Amount (GBP)\nTotal hours 3\nTotal: 25/09/2026")["amount"] == 0.0
+    assert si.extract("Amount (GBP)\nTotal 3 services")["amount"] == 0.0  # the number must end the line
+    assert si.extract("Fee £80\nTravel £20\nTOTAL 100")["amount"] == 100.0  # a labelled total beats the largest £
+
+
+def make_docx(paragraphs=(), tables=(), footer=None, raw_body=""):
+    ns = 'xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"'
+    p = lambda t: f"<w:p><w:r><w:t xml:space=\"preserve\">{t}</w:t></w:r></w:p>"  # noqa: E731
+    tbl = lambda rows: "<w:tbl><w:tblPr/>" + "".join(  # noqa: E731
+        "<w:tr>" + "".join(f"<w:tc><w:tcPr/>{''.join(p(x) for x in c.split('|'))}</w:tc>" for c in r) + "</w:tr>"
+        for r in rows) + "</w:tbl>"
+    body = "".join(p(x) for x in paragraphs) + "".join(tbl(t) for t in tables) + raw_body
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w") as z:
+        z.writestr("[Content_Types].xml", "<Types/>")
+        z.writestr("word/document.xml", f'<?xml version="1.0"?><w:document {ns}><w:body>{body}<w:sectPr/></w:body></w:document>')
+        if footer:
+            z.writestr("word/footer1.xml", f'<?xml version="1.0"?><w:ftr {ns}>{p(footer)}</w:ftr>')
+    return buf.getvalue()
+
+
+DOCX_INVOICE = dict(
+    paragraphs=["Marnie Example, soprano", "Invoice No. 018", "Date: 21st September 2026"],
+    tables=[[("Description", "Amount"), ("Funeral, St Mary's, 21/09", "£150.00"), ("Total", "£150.00")],
+            [("Sort code", "12-34-56"), ("Account number", "12345678")]],
+    raw_body='<w:p><w:r><w:t>Pay</w:t></w:r><w:r><w:tab/><w:t>by transfer</w:t></w:r></w:p>')
+
+
+def att_eml(data, fname, ctype, body="Invoice attached, thanks!"):
+    b = base64.b64encode(data).decode()
+    path = os.path.join(TMP, "att.eml")
+    with open(path, "w") as f:
+        f.write("From: Marnie <marnie@example.com>\nSubject: Invoice\nMIME-Version: 1.0\n"
+                "Content-Type: multipart/mixed; boundary=XX\n\n"
+                f"--XX\nContent-Type: text/plain\n\n{body}\n--XX\nContent-Type: {ctype}\n"
+                f"Content-Disposition: attachment; filename=\"{fname}\"\nContent-Transfer-Encoding: base64\n\n{b}\n--XX--\n")
+    return path
+
+
+def test_docx_text_keeps_table_rows_on_one_line():
+    text = si.docx_text(make_docx(**DOCX_INVOICE, footer="Thank you"))
+    lines = text.splitlines()
+    assert "Total\t£150.00" in lines and "Sort code\t12-34-56" in lines and "Invoice No. 018" in lines, lines
+    assert "Pay\tby transfer" in lines and lines[-1] == "Thank you", lines
+    two = si.docx_text(make_docx(tables=[[("Bank details|Sort code 12-34-56", "Account 12345678")]]))
+    assert two == "Bank details Sort code 12-34-56\tAccount 12345678", two
+    assert si.docx_text(b"not a zip") == "" and si.docx_text(None) == ""
+
+
+def test_read_invoice_from_docx_attachment():
+    found = si.read_invoice(att_eml(make_docx(**DOCX_INVOICE), "Marnie invoice.docx", si.DOCX_TYPE))
+    assert (found["amount"], found["invoice_ref"], found["sort_code"], found["account_number"]) == \
+        (150.0, "018", "123456", "12345678"), found
+    assert found["warnings"] == [], found["warnings"]
+    # no filename, but the Word content type
+    path = att_eml(make_docx(**DOCX_INVOICE), "", si.DOCX_TYPE)
+    assert si.read_invoice(path)["amount"] == 150.0
+
+
+def test_doc_and_damaged_docx_warn():
+    found = si.read_invoice(att_eml(b"\xd0\xcf\x11\xe0 old word file", "Invoice.doc", "application/msword"))
+    assert "could not read Invoice.doc (.doc): check by hand" in found["warnings"], found["warnings"]
+    assert "amount not found: check the invoice by hand" in found["warnings"]
+    found = si.read_invoice(att_eml(b"PK garbage", "Invoice.docx", si.DOCX_TYPE))
+    assert "could not read Invoice.docx (encrypted or damaged): check it by hand" in found["warnings"], found["warnings"]
+
+
+def raw_mime(body):
+    return f"From: Ben Fenwick <ben@example.com>\nSubject: Invoice\nContent-Type: text/plain; charset=utf-8\n\n{body}"
+
+
+@contextlib.contextmanager
+def fake_fetch(texts, calls=None):
+    """Stand in for the MCP fetch: message id -> raw MIME text (or an exception to raise)."""
+    saved = si.fetch_raw
+
+    def fetch(mid):
+        (calls if calls is not None else []).append(mid)
+        got = texts[mid]
+        if isinstance(got, Exception):
+            raise got
+        return got
+    si.fetch_raw = fetch
+    try:
+        yield
+    finally:
+        si.fetch_raw = saved
+
+
+def run_main(argv):
+    saved = (lm.keychain_token, sys.argv)
+    lm.keychain_token = lambda: None  # no Starling in tests
+    buf = io.StringIO()
+    try:
+        sys.argv = ["singer_invoices.py", *argv]
+        with contextlib.redirect_stdout(buf), contextlib.redirect_stderr(io.StringIO()):
+            si.main()
+    finally:
+        lm.keychain_token, sys.argv = saved
+    return buf.getvalue()
+
+
+SCAN_ARGS = ["--message-id", "177", "--received", "2026-09-25", "--sender-email", "ben@example.com", "--sender-name", "Ben Fenwick"]
+
+
+def test_scan_fetch_reads_the_fetched_message():
+    fresh_store()
+    calls = []
+    with fake_fetch({"177": raw_mime(GEN.format(n=101))}, calls):
+        got = run_main(["scan", "--fetch", *SCAN_ARGS])
+        again = run_main(["scan", "--fetch", *SCAN_ARGS])
+    assert again.splitlines()[0] == "already recorded: 177", again
+    assert calls == ["177"], calls  # a recorded invoice isn't fetched again
+    # a crashed run resumes: the stored line and the bill lines again
+    assert again.splitlines()[1:] == [l for l in got.splitlines()], (got, again)
+    assert got.splitlines()[0] == "Ben: £100.00 (ref 101) · payee unknown (no Starling token) · bank ••••2222", got
+    row = rows_by_id()["177"]
+    assert (row["amount_gbp"], row["invoice_ref"], row["bank_last4"]) == ("100.00", "101", "2222")
+    assert "11112222" not in got and "11112222" not in si.STORE.read_text()
+
+
+def test_scan_needs_either_fetch_or_a_file():
+    fresh_store()
+    for argv in (["scan", *SCAN_ARGS], ["scan", eml(GEN.format(n=1)), "--fetch", *SCAN_ARGS],
+                 ["rescan", "177"], ["rescan", "177", eml(GEN.format(n=1)), "--fetch"]):
+        try:
+            run_main(argv)
+            raise AssertionError(f"accepted {argv}")
+        except SystemExit as e:
+            assert e.code == 2, (argv, e.code)
+    assert not si.STORE.exists()
+
+
+def test_scan_fetch_failure_names_the_server_only():
+    fresh_store()
+    import lcs_mcp
+    with fake_fetch({"177": lcs_mcp.McpError("zoho-mail: timed out after 90s")}):
+        try:
+            run_main(["scan", "--fetch", *SCAN_ARGS])
+            raise AssertionError("no error")
+        except SystemExit as e:
+            assert e.code == "could not fetch 177: zoho-mail: timed out after 90s; scan skipped", e.code
+    assert not si.STORE.exists()
+
+
+def rescan(mid, file=None, fetch=False, client=None):
+    buf = io.StringIO()
+    with contextlib.redirect_stdout(buf):
+        si.cmd_rescan(Args(message_id=mid, file=file, fetch=fetch), client or FakeClient())
+    return buf.getvalue()
+
+
+def test_rescan_fills_in_an_unread_invoice():
+    fresh_store()
+    first = scan("Invoice attached, thanks!", "h1", "2026-09-21", email="marnie@example.com", name="Marnie Example")
+    assert first.startswith("Marnie: £0.00 (ref ?)") and "amount not found" in first
+    got = rescan("h1", file=att_eml(make_docx(**DOCX_INVOICE), "invoice.docx", si.DOCX_TYPE))
+    assert got.splitlines()[0] == ("Marnie: £150.00 (ref 018) · payee NEW: add as a payee in the Starling app "
+                                   "· bank ••••5678"), got
+    assert f"{si.NEW_DETAILS}, then run singer_invoices.py confirm h1" in got
+    rows = lm.read_csv(si.STORE)
+    assert len(rows) == 1
+    r = rows[0]
+    assert (r["amount_gbp"], r["invoice_ref"], r["bank_last4"], r["received"], r["singer_email"]) == \
+        ("150.00", "018", "5678", "2026-09-21", "marnie@example.com"), r
+    assert "amount not found" not in r["notes"] and f"rescanned {datetime.date.today()}" in r["notes"], r["notes"]
+    assert "12345678" not in got and "12345678" not in si.STORE.read_text()
+
+
+def test_rescan_with_fetch():
+    fresh_store()
+    scan("Invoice attached", "177", "2026-09-25")
+    with fake_fetch({"177": raw_mime(GEN.format(n=202))}):
+        got = run_main(["rescan", "177", "--fetch"])
+    assert got.splitlines()[0] == "Ben: £100.00 (ref 202) · payee unknown (no Starling token) · bank ••••2222", got
+
+
+def test_rescan_refuses_paid_and_unknown_invoices():
+    fresh_store()
+    scan(GEN.format(n=1), "g1", "2026-08-01")
+    settle("g1", "2026-08-03")
+    before = si.STORE.read_text()
+    calls = []
+    with fake_fetch({"g1": raw_mime(GEN.format(n=9))}, calls):
+        for mid, want in (("g1", "already paid on 2026-08-03"), ("nope", "no invoice nope")):
+            try:
+                rescan(mid, fetch=True)
+                raise AssertionError(f"rescanned {mid}")
+            except SystemExit as e:
+                assert want in str(e.code), e.code
+    assert calls == [] and si.STORE.read_text() == before
+
+
+def test_rescan_keeps_a_confirmation_only_for_the_same_details():
+    fresh_store()
+    scan(GEN.format(n=1), "g1", "2026-08-01")
+    with contextlib.redirect_stdout(io.StringIO()):
+        si.cmd_confirm(Args(message_id="g1"))
+    got = rescan("g1", file=eml(GEN.format(n=1)))
+    r = rows_by_id()["g1"]
+    assert r["bank_confirmed"] == "yes" and r["bank_changed"] == "no" and "NEW BANK DETAILS" not in got, got
+    assert "bank details confirmed by phone" in r["notes"], r["notes"]
+    got = rescan("g1", file=eml(FRAUD.format(n=1)))
+    r = rows_by_id()["g1"]
+    assert "BANK DETAILS CHANGED" in got and "was ••••2222, now ••••8888" in got, got
+    assert r["bank_confirmed"] == "" and r["bank_changed"] == "yes" and "confirmed by phone" not in r["notes"], r
+
+
+def test_rescan_flags_a_newer_invoice_with_other_details():
+    fresh_store()
+    scan("Invoice attached", "old", "2026-09-01")
+    scan(FRAUD.format(n=2), "new", "2026-09-20")
+    got = rescan("old", file=eml(GEN.format(n=1)))
+    assert "   ! new: BANK DETAILS CHANGED: ••••8888 differs from an older invoice (••••2222)" in got, got
+    assert rows_by_id()["new"]["bank_changed"] == "yes"
+
+
+# --- review of PR 152: bare totals, .docx limits, rescan never loses data, names ---------------------
+
+def test_bare_total_must_agree_with_the_pound_figures():
+    amount = lambda t: si.extract(t)["amount"]  # noqa: E731
+    assert amount("Invoice No: 55\nService\tHours\tRate\nFuneral\t3\t£50\nTotal 3\n£150") == 150.0  # hours, not money
+    assert amount("Invoice No: 55\nFee £120\nTravel £30\nTOTAL 2\n£150.00") == 150.0
+    assert amount("Invoice No 77\nFee £200\nTotal due 30") == 200.0  # "due in 30 days"
+    assert amount("Invoice No 77\nFee £200\nTOTAL\t07700900123") == 200.0  # a phone number: over six digits
+    assert amount("Invoice No 77\nFee £200\nTotal 2026") == 200.0  # a year
+    assert amount("Invoice No 77\nAmount (£)\nTotal: 1,500") == 1500.0  # no £ figure to check it against
+    assert amount("Invoice No 77\n£150.50 fee\nTotal 150.5") == 150.5
+    assert amount("Invoice No 77\nFee £100\nSubtotal 100\nTotal 120") == 100.0
+    assert amount("Invoice No 77\nMileage claimed\nTotal 120\nat 45p per mile = £54.00") == 54.0
+    # a bare total that is one of the £ figures, or their sum, stands
+    assert amount("Fee £80\nTravel £20\nTOTAL 100") == 100.0 and amount("Fee £80\nTravel £20\nTOTAL\t80") == 80.0
+    # one singer's layout: GBP only in the column heading, no £ figures at all
+    assert amount("Anna Price Invoice\t\t21.9.26\nInvoice number: 1\nDate\tDescription\tAmount (GBP)\n"
+                  "21.9.26\tFuneral\t100\nTOTAL\t\t100") == 100.0
+    assert amount("Amount (GBP)\nTOTAL 1234567") == 0.0  # seven digits: never a bare total
+    # a known limit: a quantity total in a GBP table with no £ figure reads like one singer's layout
+    assert amount("Invoice 1020\nItem Qty Amount (GBP)\nTotal 4\n") == 4.0
+
+
+def test_extract_ref_probe_shapes():
+    ref = lambda t: si.extract(t)["invoice_ref"]  # noqa: E731
+    assert ref("Invoice #1\nTotal £100") == "1"
+    assert ref("Invoice No:\n12345678\nSort code 12-34-56 Account 12345678\nTotal £1.00") == ""
+    assert ref("Invoice No:\n1234567\nSort code 12-34-56 Account 1234567\nTotal £1.00") == ""
+    assert ref("Invoice No: 5678\nSort code 12-34-56\nAccount number 12345678\nTotal £1.00") == "5678"
+    assert ref("Invoice No:\n123456\nSort code 12-34-56\nAccount 11112222\nAccount 33334444\nTotal £1.00") == ""
+    # bank details too ambiguous to keep, but the account number still never becomes the ref
+    assert ref("Invoice number:\n1234567\nSort code 12-34-56 Sort code 65-43-21\nAccount 1234567\nTotal £1.00") == ""
+    assert ref("Invoice No:\n07700900123\nTotal £1.00") == "07700900123"
+    assert ref("Inv. No. 12\nTotal £1.00") == "12"
+    assert ref("Invoice No.\n21/09/2026\nTotal £1") == ""
+    assert ref("Invoice ref: AC12345678\nSort code 12-34-56 Acc no 12345678\n£1.00") == ""
+
+
+@contextlib.contextmanager
+def patched(obj, **values):
+    saved = {k: getattr(obj, k) for k in values}
+    for k, v in values.items():
+        setattr(obj, k, v)
+    try:
+        yield
+    finally:
+        for k, v in saved.items():
+            setattr(obj, k, v)
+
+
+def docx_parts(parts):
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as z:
+        for name, xml in parts.items():
+            z.writestr(name, xml)
+    return buf.getvalue()
+
+
+NS = 'xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"'
+
+
+def doc_xml(*paras, pad=0):
+    ps = "".join(f"<w:p><w:r><w:t>{t}</w:t></w:r></w:p>" for t in paras)
+    return f'<?xml version="1.0"?><w:document {NS}><w:body>{ps}<!--{"x" * pad}--></w:body></w:document>'
+
+
+def ftr_xml(text):
+    return f'<?xml version="1.0"?><w:ftr {NS}><w:p><w:r><w:t>{text}</w:t></w:r></w:p></w:ftr>'
+
+
+TOO_LARGE = "could not read big.docx (too large or malformed): check it by hand"
+
+
+def test_docx_part_over_the_size_limit_is_skipped():
+    data = docx_parts({"word/document.xml": doc_xml("Invoice No. 5", pad=5000), "word/footer1.xml": ftr_xml("Total £150.00")})
+    with patched(si, DOCX_MAX_PART=2000):
+        text, problem = si.docx_read(data)
+        assert text == "Total £150.00" and problem, (text, problem)
+        found = si.read_invoice(att_eml(data, "big.docx", si.DOCX_TYPE))
+    assert found["amount"] == 150.0 and TOO_LARGE in found["warnings"], found
+    assert not any("encrypted or damaged" in w for w in found["warnings"]), found["warnings"]
+    assert si.DOCX_MAX_PART == 5 << 20 and si.DOCX_MAX_TOTAL == 15 << 20
+    assert si.DOCX_MAX_EXTRA_PARTS == 10 and si.DOCX_MAX_TEXT == 1 << 20 and si.DOCX_MAX_DEPTH == 200
+
+
+def test_docx_total_read_is_capped():
+    data = docx_parts({"word/document.xml": doc_xml("Invoice No. 5", pad=1500), "word/footer1.xml": ftr_xml("x" * 1500)})
+    with patched(si, DOCX_MAX_PART=2500, DOCX_MAX_TOTAL=3000):
+        text, problem = si.docx_read(data)
+    assert text == "Invoice No. 5" and problem, (text, problem)
+    with patched(si, DOCX_MAX_PART=2500, DOCX_MAX_TOTAL=5000):
+        assert si.docx_read(data)[1] is False
+
+
+def test_docx_header_and_footer_parts_are_capped():
+    parts = {"word/document.xml": doc_xml("Body")}
+    parts.update({f"word/footer{i}.xml": ftr_xml(f"F{i}") for i in range(1, 13)})
+    text, problem = si.docx_read(docx_parts(parts))
+    lines = text.splitlines()
+    assert problem and lines == ["Body"] + [f"F{i}" for i in range(1, 11)], lines
+
+
+def test_docx_text_is_truncated():
+    data = docx_parts({"word/document.xml": doc_xml("Total £150.00", "y" * 500)})
+    with patched(si, DOCX_MAX_TEXT=50):
+        text, problem = si.docx_read(data)
+    assert len(text) == 50 and text.startswith("Total £150.00") and problem, (len(text), problem)
+
+
+def test_deep_docx_is_refused_not_crashed():
+    deep = f'<?xml version="1.0"?><w:document {NS}><w:body>' + "<w:sdt>" * 300 + \
+        "<w:p><w:r><w:t>Total £1.00</w:t></w:r></w:p>" + "</w:sdt>" * 300 + "</w:body></w:document>"
+    data = docx_parts({"word/document.xml": deep, "word/footer1.xml": ftr_xml("Invoice No. 9")})
+    text, problem = si.docx_read(data)
+    assert problem and text == "Invoice No. 9", (text, problem)
+    found = si.read_invoice(att_eml(data, "big.docx", si.DOCX_TYPE))
+    assert TOO_LARGE in found["warnings"], found["warnings"]
+    # past the depth cap Python's own recursion limit would hit first: RecursionError is caught too
+    deeper = deep.replace("<w:sdt>" * 300, "<w:sdt>" * 3000).replace("</w:sdt>" * 300, "</w:sdt>" * 3000)
+    with patched(si, DOCX_MAX_DEPTH=10 ** 6):
+        text, problem = si.docx_read(docx_parts({"word/document.xml": deeper}))
+    assert (text, problem) == ("", True)
+
+
+def test_unknown_charset_falls_back():
+    raw = "From: a@b.com\nSubject: Invoice\nContent-Type: text/plain; charset=x-no-such-charset\n\nInvoice No 5 Total £10.00"
+    found = si.read_invoice(raw=raw)
+    assert found["amount"] == 10.0 and found["invoice_ref"] == "5", found
+
+
+GOOD = "Invoice No: 101\nTotal £100.00\nSort code 11-22-33\nAccount number 11112222"
+
+
+def confirmed_row(mid="177"):
+    fresh_store()
+    with fake_fetch({mid: raw_mime(GOOD)}):
+        run_main(["scan", "--fetch", *SCAN_ARGS])
+    with contextlib.redirect_stdout(io.StringIO()):
+        si.cmd_confirm(Args(message_id=mid))
+    return si.STORE.read_text()
+
+
+def test_rescan_without_bank_details_changes_nothing():
+    before = confirmed_row()
+    with fake_fetch({"177": raw_mime("Invoice attached, thanks!")}):
+        got = run_main(["rescan", "177", "--fetch"])
+    assert got.strip() == "no bank details found on rescan; nothing changed", got
+    assert si.STORE.read_text() == before
+
+
+def test_rescan_keeps_the_old_amount_and_ref():
+    confirmed_row()
+    with fake_fetch({"177": raw_mime("Sort code 11-22-33\nAccount number 11112222\nThanks")}):
+        got = run_main(["rescan", "177", "--fetch"])
+    r = rows_by_id()["177"]
+    assert (r["amount_gbp"], r["invoice_ref"], r["bank_confirmed"]) == ("100.00", "101", "yes"), r
+    assert "bank details confirmed by phone" in r["notes"] and "amount not found" not in r["notes"], r["notes"]
+    assert got.splitlines()[0].startswith("Ben: £100.00 (ref 101)"), got
+    assert "11112222" not in got and "112233" not in got
+
+
+def test_rescan_prints_each_change_masked():
+    confirmed_row()
+    with fake_fetch({"177": raw_mime("Invoice No: 102\nTotal £120.00\nSort code 65-43-21\nAccount number 99998888")}):
+        got = run_main(["rescan", "177", "--fetch"])
+    lines = got.splitlines()
+    for want in ("   amount: £100.00 → £120.00", "   ref: 101 → 102", "   bank details: ••••2222 → ••••8888",
+                 "   bank changed: no → yes", "   bank confirmed: yes → no"):
+        assert want in lines, (want, lines)
+    assert "99998888" not in got and "11112222" not in got and "654321" not in got
+    same = "Invoice No: 102\nTotal £120.00\nSort code 65-43-21\nAccount number 99998888"
+    with fake_fetch({"177": raw_mime(same)}):
+        got = run_main(["rescan", "177", "--fetch"])
+    assert "   nothing changed" in got.splitlines(), got  # and the change flagged before still stands
+    r = rows_by_id()["177"]
+    assert r["bank_changed"] == "yes" and "BANK DETAILS CHANGED since their last invoice (was ••••2222" in r["notes"], r
+    four = "Invoice No: 102\nTotal £120.00\nSort code 12-12-12\nAccount number 99998888"
+    with fake_fetch({"177": raw_mime(four)}):
+        got = run_main(["rescan", "177", "--fetch"])
+    assert "   bank details: ••••8888 → ••••8888 (different sort code or account)" in got.splitlines(), got
+
+
+def test_scan_and_rescan_lock_the_store_after_the_fetch():
+    fresh_store()
+    events = []
+
+    @contextlib.contextmanager
+    def lock(path):
+        events.append(("lock", str(path)))
+        yield
+        events.append(("unlock", str(path)))
+
+    def fetch(mid):
+        events.append(("fetch", mid))
+        return raw_mime(GOOD)
+    with patched(lm, ledger_lock=lock), patched(si, fetch_raw=fetch):
+        run_main(["scan", "--fetch", *SCAN_ARGS])
+        run_main(["rescan", "177", "--fetch"])
+    store = str(si.STORE)
+    assert events == [("fetch", "177"), ("lock", store), ("unlock", store)] * 2, events
+
+
+def test_probe_rescan_row_survives_an_unreadable_fetch():
+    confirmed_row()
+    keep = {k: rows_by_id()["177"][k] for k in si.COLUMNS}
+    for bad in ("Invoice attached, thanks!", "Invoice No: 999\nTotal £5.00"):
+        with fake_fetch({"177": raw_mime(bad)}):
+            assert run_main(["rescan", "177", "--fetch"]).strip() == "no bank details found on rescan; nothing changed"
+        assert {k: rows_by_id()["177"][k] for k in si.COLUMNS} == keep
+
+
+def test_names_equivalent_pairs():
+    yes = [("Benjamin Fenwick", "Ben Harrow-Fenwick"), ("Crispin Fairleighbrook", "Crispin Fairleigh Brook"),
+           ("Jessie A Wendover", "Jess Wendover"), ("Kate Brown", "Catherine Brown"), ("Tom Jones", "THOMAS JONES"),
+           ("B FENWICK", "Ben Fenwick"), ("FENWICK BEN", "Benjamin Fenwick"), ("Liz Tay", "Elizabeth Tay"),
+           ("Sean O'Brien", "Sean OBrien"), ("Dan Smith", "Daniel Smith"), ("Chris Lee", "Christine Lee"),
+           # decided: a double-barrelled surname agrees with one of its parts (4+ letters) when the first names do
+           ("Anna Smith", "Anna Smith-Jones")]
+    no = [("Ben Fenwick", "Benedict Oakridge-Smith"), ("Benedict Oakridge-Smith", "Ben Harrow-Fenwick"),
+          ("Tom Jones", "Ben Jones"), ("Anna Smith", "Anna Smithson"), ("Ben", "Ben Fenwick"),
+          ("Anna Smith-Jones", "Anna Jones-Smith"), ("Jo Smith", "Joanna Smith"), ("Ann Lee", "Ann Le-Bo"),
+          ("Tom Jones", "A SMITH-JONES"), ("Tom Jones", "JONES B")]
+    for a, b in yes:
+        assert si.names_equivalent(a, b) and si.names_equivalent(b, a), (a, b)
+    for a, b in no:
+        assert not si.names_equivalent(a, b) and not si.names_equivalent(b, a), (a, b)
+    assert si.name_match("Anna Smith", "ANNA SMITH") == 2 and si.name_match("Anna Smith-Jones", "ANNA SMITH") == 1
+
+
+BEN_PAYEE = [{"payeeName": "Benjamin Fenwick", "accounts": [{"bankIdentifier": "203040", "accountIdentifier": "55667788"}]}]
+CRISPIN_PAYEE = [{"payeeName": "Crispin Fairleighbrook", "accounts": [{"bankIdentifier": "102030", "accountIdentifier": "44556677"}]}]
+
+
+def test_payee_recognised_under_an_equivalent_name():
+    fresh_store()
+    got = scan("Invoice 1\nTotal £100.00", "b1", "2026-09-20", client=FakeClient(payees=BEN_PAYEE),
+               email="ben@hf.example", name="Ben Harrow-Fenwick")
+    assert rows_by_id()["b1"]["payee"] == "probably existing: Benjamin Fenwick (no bank details on the invoice)", got
+    got = scan("Invoice 2\nTotal £100.00\nSort code 20-30-40\nAccount number 55667788", "b2", "2026-09-21",
+               client=FakeClient(payees=BEN_PAYEE), email="ben@hf.example", name="Ben Harrow-Fenwick")
+    assert rows_by_id()["b2"]["payee"] == "existing: Benjamin Fenwick" and "NEW BANK DETAILS" not in got, got
+    got = scan("Invoice 3\nTotal £90.00", "o1", "2026-09-21", client=FakeClient(payees=CRISPIN_PAYEE),
+               email="crispin@x.example", name="Crispin Fairleigh Brook")
+    assert rows_by_id()["o1"]["payee"] == "probably existing: Crispin Fairleighbrook (no bank details on the invoice)", got
+    got = scan("Invoice 4\nTotal £90.00\nSort code 11-11-11\nAccount number 22223333", "o2", "2026-09-22",
+               client=FakeClient(payees=CRISPIN_PAYEE), email="crispin@x.example", name="Crispin Fairleigh Brook")
+    assert "BANK DETAILS CHANGED: Starling payee 'Crispin' has different bank details" in got, got
+    assert "Fairleighbrook" not in got and "Fairleighbrook" not in rows_by_id()["o2"]["notes"], got  # I3
+
+
+def test_payee_name_fitting_two_payees_or_another_open_singer_is_ambiguous():
+    two = [{"payeeName": "Ben Fenwick", "accounts": []}, {"payeeName": "Benjamin Fenwick", "accounts": []}]
+    a = si.assess_new(inv("", ""), "b@x.com", "Ben Fenwick", [], lm.payee_fingerprints(two), [p["payeeName"] for p in two])
+    assert a["payee"].startswith("ambiguous: Ben Fenwick, Benjamin Fenwick"), a["payee"]
+    bella = [unpaid("bella1", "Bella Fenwick", 100, "2026-09-10")]
+    a = si.assess_new(inv("", ""), "b@x.com", "Ben Fenwick", bella, {}, ["B Fenwick"])
+    assert a["payee"].startswith("ambiguous: B Fenwick"), a["payee"]
+    a = si.assess_new(inv("", ""), "b@x.com", "Ben Fenwick", [dict(bella[0], paid_on="2026-09-11")], {}, ["B Fenwick"])
+    assert a["payee"] == "probably existing: B Fenwick (no bank details on the invoice)", a["payee"]
+
+
+def test_match_paid_by_equivalent_names():
+    ben = [unpaid("b1", "Ben Harrow-Fenwick", 100, "2026-09-20")]
+    assert si.match_paid(ben, [out(100, "2026-09-21", "BENJAMIN FENWICK", "p1")]) == {"b1": ("2026-09-21", 100.0, "p1", False)}
+    orl = [unpaid("o1", "Crispin Fairleigh Brook", 90, "2026-09-20")]
+    assert si.match_paid(orl, [out(90, "2026-09-21", "CRISPIN FAIRLEIGHBROOK", "p2")]) == {"o1": ("2026-09-21", 90.0, "p2", False)}
+    assert si.match_paid([unpaid("x", "Ben Fenwick", 100, "2026-09-20")],
+                         [out(100, "2026-09-21", "BENEDICT OAKRIDGE-SMITH", "p3")]) == {}
+    # equivalent to two open singers at the same strength: reported, never applied
+    report = []
+    two = [unpaid("b1", "Ben Harrow-Fenwick", 100, "2026-09-20"), unpaid("b2", "Ben Oakridge-Fenwick", 100, "2026-09-20")]
+    assert si.match_paid(two, [out(100, "2026-09-21", "BENJAMIN FENWICK", "p4")], report) == {}
+    assert report and report[0].startswith("AMBIGUOUS £100.00"), report
+    # an exact name beats a looser one: ANNA SMITH pays Anna Smith, not Anna Smith-Jones
+    annas = [unpaid("a1", "Anna Smith", 100, "2026-09-20"), unpaid("a2", "Anna Smith-Jones", 100, "2026-09-20")]
+    assert si.match_paid(annas, [out(100, "2026-09-21", "ANNA SMITH", "p5")]) == {"a1": ("2026-09-21", 100.0, "p5", False)}
+
+
+# --- bill lines for Zoho Books (handover Appendix E, step 4a) --------------------------------------
+
+BEN_TRUSTED = [{"payeeName": "Ben Fenwick", "accounts": [{"bankIdentifier": "123456", "accountIdentifier": "11112222"}]}]
+
+
+def bill_lines(out):
+    return [l for l in out.splitlines() if l.startswith(("bill:", "bill_number:"))]
+
+
+def test_bill_number_rule():
+    assert si.bill_number("1020", "6133510000000123456") == "1020"
+    assert si.bill_number("INV-0107", "6133510000000123456") == "INV-0107"
+    assert si.bill_number("INV-2026-017", "6133510000000123456") == "SI-23456"  # 2026-017 is one run of 7
+    assert si.bill_number("20260309-001", "6133510000000123456") == "SI-23456"
+    assert si.bill_number("A 12.345", "6133510000000123456") == "A 12.345"  # a run of exactly 5 is fine
+    assert si.bill_number("A 123.456", "6133510000000123456") == "SI-23456"
+    assert si.bill_number("", "6133510000000123456") == "SI-23456"
+    assert si.bill_number("?", "6133510000000123456") == "SI-23456"
+
+
+def test_scan_prints_bill_yes_for_a_trusted_payee():
+    fresh_store()
+    out = scan(GEN.format(n=1020), "6133510000000170001", "2026-09-25", FakeClient(payees=BEN_TRUSTED))
+    assert bill_lines(out) == ["bill: yes", "bill_number: 1020"], out
+
+
+def test_scan_prints_bill_no_for_a_bank_warning():
+    fresh_store()
+    out = scan(GEN.format(n=1020), "6133510000000170002", "2026-09-25")  # new details: ring first
+    assert "!" in out and bill_lines(out) == ["bill: no (bank warning)", "bill_number: 1020"], out
+
+
+def test_scan_prints_bill_no_when_the_amount_is_missing_or_zero():
+    fresh_store()
+    out = scan("Invoice 1021\nThanks!", "6133510000000170003", "2026-09-25", FakeClient(payees=BEN_TRUSTED))
+    assert bill_lines(out)[0] == "bill: no (amount not found)", out
+    fresh_store()
+    zero = "Invoice 1022\nTotal £0.00\nSort code 12-34-56\nAccount number 11112222"
+    out = scan(zero, "6133510000000170004", "2026-09-25", FakeClient(payees=BEN_TRUSTED))
+    assert bill_lines(out)[0] in ("bill: no (zero amount)", "bill: no (amount not found)"), out
+
+
+def test_scan_long_ref_gets_an_si_bill_number():
+    fresh_store()
+    out = scan(GEN.format(n="INV-2026-017"), "6133510000000170005", "2026-09-25", FakeClient(payees=BEN_TRUSTED))
+    assert bill_lines(out) == ["bill: yes", "bill_number: SI-70005"], out
+
+
+def test_already_recorded_reprints_the_stored_line_and_bill_lines():
+    fresh_store()
+    first = scan(GEN.format(n=1020), "6133510000000170006", "2026-09-25", FakeClient(payees=BEN_TRUSTED))
+    again = scan(GEN.format(n=1020), "6133510000000170006", "2026-09-25", FakeClient(payees=BEN_TRUSTED))
+    assert again.splitlines()[0] == "already recorded: 6133510000000170006", again
+    assert again.splitlines()[1] == first.splitlines()[0], (first, again)
+    assert bill_lines(again) == ["bill: yes", "bill_number: 1020"], again
+    assert "11112222" not in again
+    fresh_store()
+    scan(GEN.format(n=1020), "6133510000000170007", "2026-09-25")
+    again = scan(GEN.format(n=1020), "6133510000000170007", "2026-09-25")
+    assert "   ! NEW BANK DETAILS" in again and bill_lines(again)[0] == "bill: no (bank warning)", again
+
+
+# --- review I1: every store writer holds the lock, and never over the network -----------------
+
+def _lock_held(path):
+    import fcntl
+    fd = os.open(str(path) + ".lock", os.O_RDWR | os.O_CREAT, 0o600)
+    try:
+        try:
+            fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            return False
+        except BlockingIOError:
+            return True
+    finally:
+        os.close(fd)
+
+
+def test_every_store_writer_holds_the_lock_and_paid_reads_the_bank_first():
+    import fcntl
+    rows = [dict(unpaid("L1", "Ben Fenwick", 100, "2026-09-20"), bank_fp=lm.bank_fingerprint("123456", "11112222"),
+                 bank_last4="2222"), unpaid("L2", "Anna Smith", 100, "2026-09-20")]
+    lm.write_csv(si.STORE, rows, si.COLUMNS)
+    seen, real_write = [], lm.write_csv
+
+    def spy_write(path, rows_, cols):
+        seen.append(_lock_held(path))
+        return real_write(path, rows_, cols)
+
+    class NetClient(FakeClient):
+        def feed(self, since, until, direction):
+            seen.append(("feed, lock held", _lock_held(si.STORE)))
+            return super().feed(since, until, direction)
+
+    lm.write_csv = spy_write
+    try:
+        with contextlib.redirect_stdout(io.StringIO()):
+            si.cmd_thanked(Args(message_id="L1"))
+            si.cmd_confirm(Args(message_id="L1"))
+            si.cmd_settled(Args(message_id="L2", date="2026-09-21"))
+            si.cmd_paid(Args(apply=True), NetClient(out=[out(100, "2026-09-22", "BEN FENWICK", "pay1")]))
+    finally:
+        lm.write_csv = real_write
+    assert seen == [True, True, True, ("feed, lock held", False), True], seen
+    got = {r["message_id"]: r for r in lm.read_csv(si.STORE)}
+    assert got["L1"]["bank_confirmed"] == "yes" and "paid reply drafted" in got["L1"]["notes"], got["L1"]
+    assert got["L1"]["paid_ref"] == "pay1" and got["L2"]["paid_on"] == "2026-09-21", got
+    # a refused edit writes nothing
+    before = open(si.STORE).read()
+    try:
+        si.cmd_settled(Args(message_id="L2", date="2026-09-21"))
+        raise AssertionError("a second settle must be refused")
+    except SystemExit:
+        pass
+    assert open(si.STORE).read() == before
+
+
+def test_paid_apply_never_overwrites_an_invoice_settled_meanwhile():
+    lm.write_csv(si.STORE, [unpaid("S1", "Ben Fenwick", 100, "2026-09-20")], si.COLUMNS)
+
+    class RacingClient(FakeClient):
+        def feed(self, since, until, direction):  # the owner settles it by hand while the feed is read
+            with contextlib.redirect_stdout(io.StringIO()):
+                si.cmd_settled(Args(message_id="S1", date="2026-09-21"))
+            return super().feed(since, until, direction)
+
+    with contextlib.redirect_stdout(io.StringIO()):
+        si.cmd_paid(Args(apply=True), RacingClient(out=[out(100, "2026-09-22", "BEN FENWICK", "pay9")]))
+    r = lm.read_csv(si.STORE)[0]
+    assert r["paid_on"] == "2026-09-21" and r["paid_ref"] == "" and "settled by hand" in r["notes"], r
+
+
+# --- review I3: only first names and a payee status are ever printed ---------------------------
+
+def test_payee_status_never_shows_a_payee_name():
+    cases = {
+        "existing: Benjamin Fenwick": "existing payee",
+        "name matches payee Benjamin Fenwick but with different bank details":
+            "matches an existing payee, different bank details",
+        "probably existing: Benjamin Fenwick (no bank details on the invoice)":
+            "probably an existing payee (no bank details on the invoice)",
+        "ambiguous: Ben Fenwick, Benjamin Fenwick (the name fits more than one payee or singer): check by hand":
+            "ambiguous: the name fits more than one payee or singer: check by hand",
+        si.NEW_PAYEE: si.NEW_PAYEE,
+        "unknown (no Starling token)": "unknown (no Starling token)",
+        "": "",
+    }
+    for stored, shown in cases.items():
+        assert si.payee_status(stored) == shown, (stored, si.payee_status(stored))
+        assert "Fenwick" not in si.payee_status(stored)
+
+
+def test_scan_rescan_and_status_print_no_payee_or_singer_surname():
+    fresh_store()
+    two = [{"payeeName": "Ben Fenwick", "accounts": []}, {"payeeName": "Benjamin Fenwick", "accounts": []}]
+    outputs = [scan("Invoice 7\nTotal £100.00", "z1", "2026-09-20", client=FakeClient(payees=two))]
+    outputs.append(scan("Invoice 8\nTotal £100.00\nSort code 20-30-40\nAccount number 55667788", "z2", "2026-09-21",
+                        client=FakeClient(payees=BEN_PAYEE)))
+    assert rows_by_id()["z1"]["payee"].startswith("ambiguous: Ben Fenwick, Benjamin Fenwick")  # the CSV keeps it
+    assert rows_by_id()["z2"]["payee"] == "existing: Benjamin Fenwick"
+    outputs.append(scan("Invoice 8\nTotal £100.00", "z2", "2026-09-21", client=FakeClient(payees=BEN_PAYEE)))  # reprint
+    buf = io.StringIO()
+    with contextlib.redirect_stdout(buf):
+        si.cmd_status(Args())
+    outputs.append(buf.getvalue())
+    for got in outputs:
+        assert "Fenwick" not in got and "FENWICK" not in got, got
+    assert "payee ambiguous: the name fits more than one payee or singer: check by hand" in outputs[0], outputs[0]
+    assert "payee existing payee" in outputs[1] and "payee existing payee" in outputs[2], outputs[1:3]
+    assert "payee existing payee" in outputs[3], outputs[3]
+
+
+def test_rescan_changes_show_the_payee_status_only():
+    old = {"amount_gbp": "100.00", "payee": "probably existing: Benjamin Fenwick (no bank details on the invoice)"}
+    new = dict(old, payee="existing: Benjamin Fenwick")
+    lines = si.rescan_changes(old, new)
+    assert lines == ["   payee: probably an existing payee (no bank details on the invoice) → existing payee"], lines
+
+
+# --- withdrawn: an invoice sent to us by mistake (another organisation's booking) ----------------
+
+def _withdraw(mid, reason="not-ours"):
+    buf = io.StringIO()
+    with contextlib.redirect_stdout(buf):
+        si.cmd_withdrawn(Args(message_id=mid, reason=reason))
+    return buf.getvalue()
+
+
+def test_withdrawn_marks_the_row_and_drops_it_from_everything_unpaid():
+    fresh_store()
+    scan("Invoice 31\nTotal £120.00", "w1", "2026-09-20")
+    scan("Invoice 32\nTotal £80.00", "w2", "2026-09-21", email="anna@example.com", name="Anna Smith")
+    assert _withdraw("w1") == "w1: withdrawn (not-ours)\n"
+    r = rows_by_id()["w1"]
+    assert r["withdrawn"] == str(lm.today()) and r["paid_on"] == "" and "withdrawn" in r["notes"] and "not-ours" in r["notes"], r
+    assert si.summary(lm.read_csv(si.STORE), lm.today())["unpaid"] == 1
+    assert si.summary(lm.read_csv(si.STORE), lm.today())["unpaid_total"] == 80.0
+    buf = io.StringIO()
+    with contextlib.redirect_stdout(buf):
+        si.cmd_status(Args())
+    assert "Ben" not in buf.getvalue() and "Anna" in buf.getvalue(), buf.getvalue()
+    # paid matching never settles it, even with a payment that fits it exactly
+    got = paid(FakeClient(out=[out(120, "2026-09-22", "BEN FENWICK", "pw")]))
+    assert rows_by_id()["w1"]["paid_on"] == "" and "NEWLY PAID w1" not in got, got
+    # a repeat scan reprints it with no bill
+    again = scan("Invoice 31\nTotal £120.00", "w1", "2026-09-20")
+    assert "already recorded: w1" in again and "bill: no (withdrawn)" in again, again
+    # the dashboard leaves it out
+    sys.path.insert(0, os.path.join(ROOT, "scripts", "reports"))
+    import dashboard
+    assert [x["first_name"] for x in dashboard.singers(lm.read_csv(si.STORE))] == ["Anna"]
+
+
+def test_withdrawn_refuses_a_paid_row_a_repeat_and_a_bad_reason():
+    fresh_store()
+    scan("Invoice 41\nTotal £120.00", "w3", "2026-09-20")
+    for bad in ("Not Ours", "not ours", "", "x" * 30, "a;b"):
+        try:
+            _withdraw("w3", bad)
+            raise AssertionError(f"reason {bad!r} accepted")
+        except SystemExit:
+            pass
+    si.cmd_settled(Args(message_id="w3", date="2026-09-21"))
+    before = open(si.STORE).read()
+    for mid in ("w3", "nope"):
+        try:
+            _withdraw(mid)
+            raise AssertionError(f"{mid} withdrawn")
+        except SystemExit as e:
+            assert "paid" in str(e) or "no invoice" in str(e), e
+    assert open(si.STORE).read() == before
+    scan("Invoice 42\nTotal £60.00", "w4", "2026-09-22")
+    _withdraw("w4")
+    try:
+        _withdraw("w4")
+        raise AssertionError("withdrawn twice")
+    except SystemExit as e:
+        assert "already withdrawn" in str(e), e
+    for fn, args in ((si.cmd_settled, Args(message_id="w4", date="2026-09-23")),):
+        try:
+            fn(args)
+            raise AssertionError("a withdrawn invoice was settled")
+        except SystemExit as e:
+            assert "withdrawn" in str(e), e
+
+
+def test_an_old_store_without_the_withdrawn_column_still_reads_and_gains_it():
+    fresh_store()
+    old_cols = [c for c in si.COLUMNS if c != "withdrawn"]
+    lm.write_csv(si.STORE, [dict(unpaid("o1", "Ben Fenwick", 50, "2026-09-20"))], old_cols)
+    assert si.summary(lm.read_csv(si.STORE), lm.today())["unpaid"] == 1
+    _withdraw("o1")
+    with open(si.STORE) as f:
+        header = f.readline().strip().split(",")
+    assert header[:len(old_cols)] == old_cols and header[-1] == "withdrawn", header
+    assert si.summary(lm.read_csv(si.STORE), lm.today())["unpaid"] == 0
+
+
 if __name__ == "__main__":
     failures = 0
     for name, fn in sorted(globals().items()):
@@ -871,6 +1652,9 @@ if __name__ == "__main__":
                 print(f"PASS {name}")
             except AssertionError as e:
                 print(f"FAIL {name}: {e}")
+                failures += 1
+            except Exception as e:
+                print(f"ERROR {name}: {type(e).__name__}: {e}")
                 failures += 1
     print(f"\n{failures} failure(s)")
     sys.exit(1 if failures else 0)

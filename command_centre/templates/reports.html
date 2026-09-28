@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% import "macros.html" as m %}
+{% block content %}
+{% set items = reports.value if reports.ok else (reports.stale or []) %}
+<section class="card">
+  {{ m.failed(reports) }}
+  {% if items %}
+  <ul class="results">
+    {% for r in items %}
+    <li><a href="/reports/{{ r.name }}">Monday review, {{ r.date|day }}</a> <span class="mono">{{ r.date }}</span> <span class="muted">{{ (r.size / 1024)|round(1) }} KB, written {{ r.modified|when }}</span></li>
+    {% endfor %}
+  </ul>
+  {% elif reports.ok %}
+  <p class="muted">No archived reports yet. The Monday review will save each report as <span class="mono">~/lcs-private/reports/YYYY-MM-DD.txt</span>.</p>
+  {% endif %}
+</section>
+{% endblock %}

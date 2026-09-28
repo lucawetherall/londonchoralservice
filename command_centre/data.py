@@ -1,0 +1,344 @@
+"""Read models for the Command Centre's pages. Read-only: nothing here writes, sends or pays.
+
+Everything comes from the existing scripts, imported rather than shelled out to, so the app, the static
+dashboard and the Monday report agree: scripts/reports/dashboard.py's builders (payments, upcoming,
+money_lines, hand_check, singers, bank_balance), which in turn use check_payments.collect/assess,
+money_report.needs_hand_check/hand_check_label/summary_lines and singer_invoices.summary/payee_status.
+
+- Private files come from ~/lcs-private (LCS_PRIVATE_DIR), through lcs_money's paths.
+- Starling is read through lcs_money.StarlingReadOnly (GET only) with the Keychain token, and those reads
+  (the payments feed and the balance) are cached for BANK_TTL seconds; the ledger and the singer store are
+  read on every page load.
+- Every source is a Panel: its value, or the failing exception's type name (never its message, which could
+  carry private data), plus the last good value when there was one. A failing source never breaks a page.
+- Client and singer first names only; bank accounts as ••••last4 only.
+"""
+
+import datetime
+import os
+import sys
+import threading
+import time
+from pathlib import Path
+from zoneinfo import ZoneInfo
+
+REPO = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(REPO / "scripts" / "reports"))
+import dashboard as dash  # noqa: E402  its builders are the read functions this reuses
+
+from . import models, sources, todo  # noqa: E402  phase 2's builders and readers
+
+cp, lm, mr, si, pl = dash.cp, dash.lm, dash.mr, dash.si, dash.pl
+LONDON = ZoneInfo("Europe/London")
+BANK_TTL = 600  # seconds: the spec's 10-minute cache for the check_payments collect (and the health check)
+STATES = dict(dash.STATES, CANCELLED=("cancelled", ""))
+WEEK_DAYS = 6  # "this week" is today and the next six days
+
+
+def default_client():
+    """A GET-only Starling client when the Keychain token exists, else None (bank not checked).
+    CC_NO_BANK=1 skips the Keychain and Starling altogether (local checks with fake data)."""
+    if os.environ.get("CC_NO_BANK"):
+        return None
+    token = lm.keychain_token()
+    return lm.StarlingReadOnly(token) if token else None
+
+
+def stamp(when):
+    return dash.stamp(when)
+
+
+class Panel:
+    """One source's result for a template: .value, or .error (a type name) with .stale (the last good value)."""
+
+    def __init__(self, value=None, error=None, stale=None, as_of=None):
+        self.value, self.error, self.stale, self.as_of = value, error, stale, as_of
+
+    @property
+    def ok(self):
+        return self.error is None
+
+
+class Data:
+    def __init__(self, client_factory=default_client, now=None, clock=time.monotonic):
+        self.client_factory = client_factory
+        self.now = now or (lambda: datetime.datetime.now(LONDON))
+        self.clock = clock
+        self._bank = None  # (expires, key, value)
+        self._starling = None  # (expires, value): the health page's account check
+        self._last_good = {}
+        self._lock = threading.Lock()
+
+    # ------------------------------------------------------------ plumbing
+
+    def panel(self, name, fn, *deps, keep=True):
+        """Run fn(*values of deps); any failure (a dep's or its own) becomes a Panel with the type name.
+        keep=False: no last good value (a search's results, or one booking's timeline, are only good for
+        their own request)."""
+        for d in deps:
+            if not d.ok:
+                return Panel(error=d.error, stale=self._last_good.get(name) if keep else None)
+        try:
+            value = fn(*(d.value for d in deps))
+        except Exception as e:  # the type only: the message may hold private data
+            return Panel(error=type(e).__name__, stale=self._last_good.get(name) if keep else None)
+        if keep:
+            self._last_good[name] = value
+        return Panel(value=value)
+
+    def _ledger_key(self):
+        try:
+            st = Path(cp.LEDGER).stat()
+            return (st.st_mtime_ns, st.st_size)
+        except OSError:
+            return None
+
+    def bank(self, rows, today):
+        """The Starling-backed reads, cached BANK_TTL seconds (and redone when the ledger changes):
+        {"assessments", "receipts", "bank_checked", "balance", "as_of"}."""
+        key = (self._ledger_key(), today)
+        with self._lock:
+            cached = self._bank
+            if cached and cached[0] > self.clock() and cached[1] == key:
+                return cached[2]
+        client = self.client_factory()
+        assessments, receipts, checked = dash.payments(client, rows, today)
+        balance = dash.bank_balance(client) if checked else None
+        value = {"assessments": assessments, "receipts": receipts, "bank_checked": checked, "balance": balance,
+                 "as_of": self.now().strftime("%H:%M") if checked else None}
+        with self._lock:
+            self._bank = (self.clock() + BANK_TTL, key, value)
+        return value
+
+    def _common(self):
+        now = self.now()
+        today = lm.today(now)
+        ledger = self.panel("ledger", lambda: lm.read_csv(cp.LEDGER))
+        bank = self.panel("bank", lambda rows: self.bank(rows, today), ledger)
+        store = self.panel("singer_store", lambda: lm.read_csv(si.STORE))
+        singers = self.panel("singers", dash.singers, store)
+        hand = self.panel("hand_check", lambda b: dash.hand_check(b["assessments"], today), bank)
+        return now, today, ledger, bank, store, singers, hand
+
+    # ------------------------------------------------------------ pages
+
+    def today_page(self):
+        now, today, ledger, bank, store, singers, hand = self._common()
+        warnings = self.panel("bank_warnings", lambda s: [x for x in s if x["ring_first"]], singers)
+        upcoming = self.panel("upcoming", lambda rows, b: dash.upcoming(rows, b["assessments"], b["bank_checked"],
+                                                                        today), ledger, bank)
+        horizon = (today + datetime.timedelta(days=WEEK_DAYS)).isoformat()
+        week = self.panel("week", lambda u: [x for x in u if x["date"] <= horizon], upcoming)
+        later = self.panel("later", lambda u: [x for x in u if x["date"] > horizon], upcoming)
+        count = sum(len(p.value) for p in (hand, singers) if p.ok)  # a bank warning is one of the singer invoices
+        return {"stamp": stamp(now), "today": today, "warnings": warnings, "hand": hand, "singers": singers,
+                "week": week, "later": later, "bank": bank, "attention": count}
+
+    def money_page(self):
+        now, today, ledger, bank, store, singers, hand = self._common()
+        lines = self.panel("money_lines", lambda b, rows: dash.money_lines(b["assessments"], b["receipts"], rows,
+                                                                           today), bank, store)
+        balance = self.panel("balance", lambda b: b["balance"], bank)
+        total = self.panel("singer_total", lambda s: round(sum(x["amount"] for x in s), 2), singers)
+        return {"stamp": stamp(now), "today": today, "bank": bank, "balance": balance, "lines": lines, "hand": hand,
+                "singers": singers, "singer_total": total}
+
+    # ------------------------------------------------------------ phase 2
+
+    def _bookings(self, today):
+        ledger = self.panel("ledger", lambda: lm.read_csv(cp.LEDGER))
+        bank = self.panel("bank", lambda rows: self.bank(rows, today), ledger)
+        bookings = self.panel("bookings", lambda rows, b: models.booking_rows(rows, b["assessments"],
+                                                                               b["bank_checked"], today), ledger, bank)
+        return ledger, bank, bookings
+
+    def _enquiries(self):
+        return self.panel("enquiries", lambda: lm.read_csv(pl.ENQUIRIES) if pl.ENQUIRIES.exists() else [])
+
+    def _gclids(self):
+        return self.panel("gclid_cache", sources.gclid_cache)
+
+    def bookings_page(self, when="upcoming", state=""):
+        now = self.now()
+        today = lm.today(now)
+        when = when if when in models.WHEN else "upcoming"
+        state = state if state in STATES else ""
+        ledger, bank, bookings = self._bookings(today)
+        shown = self.panel("bookings_shown", lambda b: models.filter_bookings(b, when, state), bookings, keep=False)
+        return {"stamp": stamp(now), "bank": bank, "bookings": shown, "when": when, "state": state,
+                "states": sorted(STATES.items(), key=lambda kv: kv[1][0])}
+
+    def booking_page(self, ref):
+        """None when the ref is malformed or not in the (readable) ledger: the route answers 404."""
+        if not isinstance(ref, str) or not models.REF_RE.fullmatch(ref):
+            return None
+        now = self.now()
+        today = lm.today(now)
+        ledger, bank, bookings = self._bookings(today)
+        row = None
+        if ledger.ok:
+            row = next((r for r in ledger.value if (r.get("booking_ref") or "").strip() == ref), None)
+            if row is None:
+                return None
+        booking = self.panel("booking", lambda b: next(x for x in b if x["ref"] == ref), bookings, keep=False)
+        store = self.panel("singer_store", lambda: lm.read_csv(si.STORE))
+        parts = {
+            "ledger": self.panel("tl_ledger", lambda b: models.ledger_timeline(row, b, today), booking, keep=False),
+            "enquiries": self.panel("tl_enquiries", lambda rows, cache: models.booking_enquiries(ref, rows, cache, today),
+                                    self._enquiries(), self._gclids(), keep=False),
+            "singers": self.panel("tl_singers", lambda b, rows: models.booking_singers(b["event_date"], rows),
+                                  booking, store, keep=False),
+        }
+        items = models.sort_items([i for p in parts.values() if p.ok for i in p.value])
+        return {"stamp": stamp(now), "ref": ref, "booking": booking, "bank": bank, "parts": parts, "timeline": items,
+                "ledger": ledger}
+
+    def enquiries_page(self):
+        now = self.now()
+        today = lm.today(now)
+        enq = self._enquiries()
+        board = self.panel("board", models.enquiry_board, enq)
+        due = self.panel("followups_due", lambda rows: pl.followups_due(rows, today), enq)
+        windows = self.panel("conversion", lambda rows: [
+            dash.window(rows, "Season", dash.season_start()),
+            dash.window(rows, "Last 30 days", today - datetime.timedelta(days=30)),
+            dash.window(rows, "All time", None)], enq)
+        mix = self.panel("sources", lambda rows: sorted(pl.summary_dict(rows)["by_source"].items(),
+                                                        key=lambda kv: (-kv[1], kv[0])), enq)
+        return {"stamp": stamp(now), "enquiries": enq, "board": board, "due": due, "windows": windows, "sources": mix}
+
+    def enquiry_page(self, eid):
+        """None when the id is malformed or not in the (readable) pipeline: the route answers 404."""
+        if not isinstance(eid, str) or not pl.ID_RE.fullmatch(eid):
+            return None
+        now = self.now()
+        today = lm.today(now)
+        enq = self._enquiries()
+        row = None
+        if enq.ok:
+            row = next((r for r in enq.value if r.get("enquiry_id") == eid), None)
+            if row is None:
+                return None
+        timeline = self.panel("enquiry_timeline", lambda rows: models.enquiry_timeline(row, None, today), enq,
+                              keep=False)
+        campaign = self.panel("campaign", lambda c: models.campaign_for(row or {}, c), self._gclids(), keep=False)
+        return {"stamp": stamp(now), "eid": eid, "row": row, "enquiries": enq, "timeline": timeline,
+                "campaign": campaign, "status": pl.status_of(row) if row else "",
+                "next": models.next_followup(row, today) if row else None}
+
+    def singers_page(self):
+        now = self.now()
+        today = lm.today(now)
+        store = self.panel("singer_store", lambda: lm.read_csv(si.STORE))
+        directory = self.panel("singer_directory", lambda rows: models.singer_directory(rows, today), store)
+        return {"stamp": stamp(now), "directory": directory}
+
+    def marketing_page(self):
+        now = self.now()
+        summary = self.panel("ads_summary", sources.ads_summary)
+        weeks = self.panel("ads_weeks", lambda s, e: dash.ads(e) if s else None, summary, self._enquiries())
+        chart = self.panel("ads_chart", lambda s: models.weekly_chart((s or {}).get("weeks")), summary)
+        season = self.panel("ads_season", lambda s: models.season_table(s) if s else None, summary)
+        traced = self.panel("gclid_counts", models.gclid_counts, self._gclids())
+        generated = None
+        if summary.ok and summary.value:
+            try:
+                generated = datetime.datetime.fromisoformat(str(summary.value.get("generated")))
+            except ValueError:
+                generated = None
+        return {"stamp": stamp(now), "summary": summary, "weeks": weeks, "chart": chart, "season": season,
+                "traced": traced, "generated": generated}
+
+    def calendar_page(self, view="month", date=None):
+        now = self.now()
+        today = lm.today(now)
+        view = view if view in ("month", "week") else "month"
+        anchor = (models.to_date(date) if isinstance(date, str) else None) or today
+        ledger, bank, bookings = self._bookings(today)
+        diary = self.panel("diary", sources.calendar_cache)
+        lists = [self.panel("cal_bookings", models.booking_dates, bookings),
+                 self.panel("cal_enquiries", lambda rows: models.enquiry_dates(rows, today), self._enquiries()),
+                 self.panel("cal_diary", lambda c: models.diary_items(c[0]) if c else [], diary)]
+        grid = self.panel("calendar", lambda: models.calendar_items(view, anchor, today,
+                                                                   *(p.value for p in lists if p.ok)), keep=False)
+        return {"stamp": stamp(now), "view": view, "grid": grid, "lists": lists, "diary": diary, "today": today,
+                "anchor": anchor}
+
+    def search_page(self, q):
+        now = self.now()
+        q = models.clean_query(q)
+        results = []
+        if len(q) >= models.SEARCH_MIN:
+            for label, kind, read in (
+                    ("Bookings", "bookings", lambda: lm.read_csv(cp.LEDGER)),
+                    ("Enquiries", "enquiries", lambda: lm.read_csv(pl.ENQUIRIES) if pl.ENQUIRIES.exists() else []),
+                    ("Singers and their invoices", "singers", lambda: lm.read_csv(si.STORE))):
+                rows = self.panel(f"search_rows_{kind}", read, keep=False)
+                results.append((label, self.panel(f"search_{kind}", lambda r, k=kind: models.search(q, k, r), rows,
+                                                  keep=False)))
+        return {"stamp": stamp(now), "q": q, "results": results, "min": models.SEARCH_MIN}
+
+    def reports_page(self):
+        return {"stamp": stamp(self.now()), "reports": self.panel("reports", sources.report_list)}
+
+    def report_page(self, name):
+        """None for a bad or missing name: the route answers 404."""
+        text = sources.report_text(name)
+        if text is None:
+            return None
+        return {"stamp": stamp(self.now()), "report_name": name, "text": text}
+
+    def starling_check(self):
+        """The Starling account read (GET only), cached BANK_TTL seconds. The token never reaches the page."""
+        with self._lock:
+            cached = self._starling
+            if cached and cached[0] > self.clock():
+                return cached[1]
+        client = self.client_factory()
+        if client is None:
+            value = sources.check("Starling", None, "not checked: no Keychain token, or CC_NO_BANK is set")
+        else:
+            try:
+                client.account()
+                value = sources.check("Starling", True, f"account readable (read-only), checked at {self.now():%H:%M}")
+            except Exception as e:  # the type only
+                value = sources.check("Starling", False, f"account read failed ({type(e).__name__})")
+        with self._lock:
+            self._starling = (self.clock() + BANK_TTL, value)
+        return value
+
+    def health_page(self, branch):
+        now = self.now()
+        tasks = self.panel("tasks", sources.scheduled_tasks)
+        proxies = self.panel("proxies", lambda: sources.run_proxies(now))
+        checks = [self.panel("check_starling", self.starling_check),
+                  self.panel("check_adc", sources.adc_check),
+                  self.panel("check_mcp", sources.mcp_checks),
+                  self.panel("check_fingerprint", sources.fingerprint_check),
+                  self.panel("check_disk", sources.disk_check),
+                  self.panel("check_branch", lambda: sources.branch_check(branch))]
+        return {"stamp": stamp(now), "tasks": tasks, "proxies": proxies, "checks": checks}
+
+    def todo_page(self):
+        items = self.panel("todo", lambda: todo.todo_items(todo.read_items(), todo.load_ticks()))
+        return {"stamp": stamp(self.now()), "items_panel": items}
+
+    EXPORTS = ("bookings", "singer-invoices", "pipeline")
+
+    def export(self, name):
+        """(filename, header, rows) for one CSV export, or None for an unknown name. RuntimeError(<TypeName>)
+        when a source fails (the route answers 503)."""
+        if name not in self.EXPORTS:
+            return None
+        today = lm.today(self.now())
+        if name == "bookings":
+            panel = self.panel("export_bookings", models.export_bookings, self._bookings(today)[2], keep=False)
+        elif name == "singer-invoices":
+            panel = self.panel("export_singers", lambda: models.export_singers(lm.read_csv(si.STORE)), keep=False)
+        else:
+            panel = self.panel("export_pipeline", models.export_pipeline, self._enquiries(), self._gclids(),
+                               keep=False)
+        if not panel.ok:
+            raise RuntimeError(panel.error)
+        head, rows = panel.value
+        return f"lcs-{name}-{today.isoformat()}.csv", head, rows

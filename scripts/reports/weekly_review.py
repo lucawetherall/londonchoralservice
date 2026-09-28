@@ -23,11 +23,17 @@ analytics.readonly and webmasters.readonly scopes) for GA4 and Search Console.
 Reads the private bookings ledger for counts only; prints no names or emails.
 
     source .venv/bin/activate
-    python scripts/reports/weekly_review.py [--since 2026-09-26] [--gsc-shortlist]
+    python scripts/reports/weekly_review.py [--since 2026-09-26] [--gsc-shortlist] [--save-report]
+
+--save-report also archives everything printed to ~/lcs-private/reports/<today, Europe/London>.txt
+(LCS_PRIVATE_DIR respected), mode 600 in a mode-700 directory, written atomically. A same-day rerun
+overwrites the file. It still prints to stdout as normal.
 """
 
 import argparse
+import contextlib
 import datetime
+import io
 import os
 import re
 import sys
@@ -37,9 +43,12 @@ import csv
 import urllib.request
 from pathlib import Path
 
-import google.auth
-from google.ads.googleads.client import GoogleAdsClient
-from google.auth.transport.requests import AuthorizedSession
+REPO = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(REPO / "scripts" / "bookings"))
+sys.path.insert(0, str(REPO / "scripts" / "ads"))
+import check_payments  # noqa: E402  is_cancelled: one cancelled rule for every ledger reader
+import lcs_money as lm  # noqa: E402  LEDGER, parse_gbp, today
+import upload_bookings  # noqa: E402  select_ready: section 9 counts what the upload would send
 
 # .venv/bin/activate sets this; default it so a bare `.venv/bin/python` run works too.
 os.environ.setdefault("GOOGLE_ADS_CONFIGURATION_FILE_PATH", os.path.expanduser("~/.config/lcs/google-ads.yaml"))
@@ -50,11 +59,51 @@ GSC_SITE = "sc-domain:londonchoralservice.com"
 LEAD_EVENTS = ["generate_lead", "contact_click", "contact_message", "form_error"]
 MONEY_TERMS = re.compile(r"funeral|wedding|carol|choir|choral", re.I)
 SITE = "https://londonchoralservice.com"
-REPO = Path(__file__).resolve().parents[2]
-# the same ledger as scripts/bookings/lcs_money.py, so sections 9 and 10 always agree
-LEDGER = Path(os.environ.get("LCS_BOOKINGS_CSV", Path(os.environ.get("LCS_PRIVATE_DIR", Path.home() / "lcs-private")) / "bookings.csv"))
+LEDGER = lm.LEDGER  # the same ledger as every bookings script, so sections 9 and 10 always agree
 EXPECTED_KEY_EVENTS = {"generate_lead", "contact_message"}
 BUDGET_WINDOWS = REPO / "data" / "budget-windows.yml"
+
+
+class _Tee(io.TextIOBase):
+    """Writes to the original stream and also into an in-memory buffer, so a report can be printed as
+    normal and archived at the same time."""
+
+    def __init__(self, original, buffer):
+        self._original = original
+        self._buffer = buffer
+
+    def write(self, s):
+        self._original.write(s)
+        self._buffer.write(s)
+        return len(s)
+
+    def flush(self):
+        self._original.flush()
+
+
+@contextlib.contextmanager
+def tee_to(path):
+    """Mirror everything printed to stdout inside the block into `path`, mode 600, written atomically
+    (a temp file in the same directory, then os.replace), in addition to printing as normal. The
+    directory is created mode 700 if missing. A same-day rerun (same `path`) overwrites the file."""
+    path = Path(path)
+    buffer = io.StringIO()
+    original = sys.stdout
+    sys.stdout = _Tee(original, buffer)
+    try:
+        yield
+    finally:
+        sys.stdout = original
+        path.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
+        tmp = path.with_name(f".{path.name}.{os.getpid()}.{os.urandom(4).hex()}.tmp")
+        fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+        try:
+            with os.fdopen(fd, "w", encoding="utf-8") as f:
+                f.write(buffer.getvalue())
+            os.replace(tmp, path)
+        except BaseException:
+            tmp.unlink(missing_ok=True)
+            raise
 
 
 def gbp(micros):
@@ -66,6 +115,7 @@ def pct(x):
 
 
 def ads_query():
+    from google.ads.googleads.client import GoogleAdsClient  # here, so the pure sections import without it
     """A read-only GAQL runner: search() only, never a mutate."""
     c = GoogleAdsClient.load_from_storage(os.environ.get("GOOGLE_ADS_CONFIGURATION_FILE_PATH", os.path.expanduser("~/.config/lcs/google-ads.yaml")))
     ga = c.get_service("GoogleAdsService")
@@ -76,7 +126,7 @@ def ads_query():
 
 
 def ads_sections(since, q):
-    today = datetime.date.today()
+    today = lm.today()
     spans = [("last 7 days", "segments.date DURING LAST_7_DAYS", 7),
              (f"since {since}", f"segments.date BETWEEN '{since}' AND '{today}'", max((today - since).days, 1))]
     print("== 1. Campaigns")
@@ -221,7 +271,7 @@ def ga4_section(s):
 
 def gsc_section(s):
     api = f"https://searchconsole.googleapis.com/webmasters/v3/sites/{GSC_SITE}/searchAnalytics/query"
-    end = datetime.date.today() - datetime.timedelta(days=3)  # Search Console data lags ~2-3 days
+    end = lm.today() - datetime.timedelta(days=3)  # Search Console data lags ~2-3 days
     cur = (end - datetime.timedelta(days=6), end)
     prev = (cur[0] - datetime.timedelta(days=7), cur[0] - datetime.timedelta(days=1))
 
@@ -274,7 +324,7 @@ def coverage_section(s, landing):
     for m in r.json().get("sitemap", []) if r.ok else []:
         read = (m.get("lastDownloaded") or "")[:10]
         sent = (m.get("lastSubmitted") or "")[:10]
-        age = lambda d: (datetime.date.today() - datetime.date.fromisoformat(d)).days if d else 9999
+        age = lambda d: (lm.today() - datetime.date.fromisoformat(d)).days if d else 9999
         stale = age(read) > 14 and age(sent) > 7  # a fresh resubmission gets a week to be read
         counts = ", ".join(f"{c.get('submitted')} submitted / {c.get('indexed', '?')} indexed" for c in m.get("contents", []))
         print(f"   {m['path']} · submitted {(m.get('lastSubmitted') or '')[:10]} · last read by Google {read or 'never'}"
@@ -333,31 +383,40 @@ def wiring_section(s, ads_settings):
         print(f"   GA4 event data retention: {r.json().get('eventDataRetention', '?')}")
 
 
+def ledger_counts(rows):
+    """Section 9's figures. Cancelled bookings (check_payments.is_cancelled, the rule every ledger reader uses)
+    are counted apart and left out of the totals; "ready" is exactly what upload_bookings.select_ready would send."""
+    def value(r):
+        return lm.money(r.get("value_gbp"))  # 0.0 when unreadable, nan or inf
+
+    live = [r for r in rows if not check_payments.is_cancelled(r)]
+    by = defaultdict(lambda: [0, 0.0])
+    for r in live:
+        by[r.get("occasion") or "?"][0] += 1
+        by[r.get("occasion") or "?"][1] += value(r)
+    return {
+        "bookings": len(live),
+        "total": round(sum(map(value, live)), 2),
+        "cancelled": len(rows) - len(live),
+        "latest": max((r.get("invoice_date") or "" for r in live), default=""),
+        "with_ref": sum(1 for r in live if (r.get("gclid") or "").strip()),
+        "ready": len(upload_bookings.select_ready(rows)[0]),
+        "uploaded": sum(1 for r in rows if (r.get("uploaded_at") or "").strip()),
+        "by_occasion": {k: tuple(v) for k, v in sorted(by.items())},
+    }
+
+
 def ledger_section():
     print("\n== 9. Bookings ledger (counts only)")
     if not LEDGER.exists():
         print(f"   no ledger yet at {LEDGER}")
         return
     with open(LEDGER, newline="") as f:
-        rows = list(csv.DictReader(f))
-
-    def value(r):
-        try:
-            return float((r.get("value_gbp") or "0").replace("£", "").replace(",", ""))
-        except ValueError:
-            return 0.0
-
-    has_ref = [r for r in rows if (r.get("gclid") or "").strip()]
-    ready = [r for r in has_ref if (r.get("consent") or "").lower() == "granted" and not (r.get("uploaded_at") or "").strip()]
-    uploaded = [r for r in rows if (r.get("uploaded_at") or "").strip()]
-    latest = max((r.get("invoice_date") or "" for r in rows), default="")
-    print(f"   {len(rows)} bookings, £{sum(map(value, rows)):,.2f} · latest invoice {latest or '-'}")
-    print(f"   with an ad click reference {len(has_ref)} · ready to upload {len(ready)} · uploaded {len(uploaded)}")
-    by = defaultdict(lambda: [0, 0.0])
-    for r in rows:
-        by[r.get("occasion") or "?"][0] += 1
-        by[r.get("occasion") or "?"][1] += value(r)
-    print("   by occasion: " + " · ".join(f"{k} {n} (£{v:,.0f})" for k, (n, v) in sorted(by.items())))
+        c = ledger_counts(list(csv.DictReader(f)))
+    print(f"   {c['bookings']} bookings, £{c['total']:,.2f} · latest invoice {c['latest'] or '-'}"
+          + (f" · {c['cancelled']} cancelled (not counted)" if c["cancelled"] else ""))
+    print(f"   with an ad click reference {c['with_ref']} · ready to upload {c['ready']} · uploaded {c['uploaded']}")
+    print("   by occasion: " + " · ".join(f"{k} {n} (£{v:,.0f})" for k, (n, v) in c["by_occasion"].items()))
 
 
 def money_section():
@@ -368,16 +427,17 @@ def money_section():
         import lcs_money
         import money_report
         import singer_invoices
-        today = datetime.date.today()
+        today = lm.today()
+        singer = singer_invoices.summary(lcs_money.read_csv(singer_invoices.STORE), today)
         tok = lcs_money.keychain_token()
-        if not tok:
-            print("   no Starling token in the Keychain: money check skipped")
+        if not tok:  # the singer line needs no token: its bank-change warning must never go missing
+            print("   no Starling token in the Keychain: client money check skipped")
+            print("   " + money_report.singer_line(singer))
             return
         client = lcs_money.StarlingReadOnly(tok)
         rows = lcs_money.read_csv(check_payments.LEDGER)
         assessments = [a for _, _, a in check_payments.collect(client, rows, today)]
         receipts = check_payments.received_since(client, rows, today - datetime.timedelta(days=6), today)  # today and six days before
-        singer = singer_invoices.summary(lcs_money.read_csv(singer_invoices.STORE), today)
         for line in money_report.summary_lines(assessments, receipts, singer, today):
             print("   " + line)
     except Exception as e:  # type name only: the message could carry ledger or bank data
@@ -393,6 +453,8 @@ def cost_section(q, today):
             print("   config error: season_start")
             return
         print(f"   season since {season}")
+        print("   bookings: ledger rows invoiced since then, cancelled ones left out (check_payments.is_cancelled),"
+              " PENDING ones (deposit not yet seen) counted")
         spend = defaultdict(lambda: [0, 0])
         for r in q(f"""SELECT campaign.name, metrics.cost_micros, metrics.clicks FROM campaign
                 WHERE segments.date BETWEEN '{season}' AND '{today}'"""):
@@ -471,13 +533,11 @@ def shortlist_section(s, today, force):
         print(f"   Search Console shortlist failed: {type(e).__name__}")
 
 
-def main():
-    p = argparse.ArgumentParser()
-    p.add_argument("--since", type=datetime.date.fromisoformat, default=datetime.date(2026, 9, 26))
-    p.add_argument("--gsc-shortlist", action="store_true", help="run section 13 even if it isn't the first Monday")
-    args = p.parse_args()
+def run_sections(args):
     q = ads_query()
     landing, ads_settings = ads_sections(args.since, q)
+    import google.auth
+    from google.auth.transport.requests import AuthorizedSession
     creds, _ = google.auth.default()
     s = AuthorizedSession(creds)
     ga4_section(s)
@@ -486,10 +546,29 @@ def main():
     wiring_section(s, ads_settings)
     ledger_section()
     money_section()
-    today = datetime.date.today()
+    today = lm.today()
     cost_section(q, today)
     budget_section(q, today)
     shortlist_section(s, today, args.gsc_shortlist)
+
+
+def report_path(today=None):
+    """~/lcs-private/reports/<today, Europe/London>.txt (LCS_PRIVATE_DIR respected via lcs_money.PRIVATE)."""
+    return lm.PRIVATE / "reports" / f"{today or lm.today()}.txt"
+
+
+def main():
+    p = argparse.ArgumentParser()
+    p.add_argument("--since", type=datetime.date.fromisoformat, default=datetime.date(2026, 9, 26))
+    p.add_argument("--gsc-shortlist", action="store_true", help="run section 13 even if it isn't the first Monday")
+    p.add_argument("--save-report", action="store_true",
+                   help="also archive everything printed to ~/lcs-private/reports/<today>.txt (mode 600)")
+    args = p.parse_args()
+    if args.save_report:
+        with tee_to(report_path()):
+            run_sections(args)
+    else:
+        run_sections(args)
 
 
 if __name__ == "__main__":

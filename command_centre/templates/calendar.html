@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% import "macros.html" as m %}
+{% block content %}
+{% set g = grid.value if grid.ok else none %}
+<div class="cal-bar">
+  <div class="seg" role="group" aria-label="View">
+    <a class="seg-item" href="/calendar?view=month&amp;date={{ anchor.isoformat() }}"{% if view == "month" %} aria-current="page"{% endif %}>Month</a>
+    <a class="seg-item" href="/calendar?view=week&amp;date={{ anchor.isoformat() }}"{% if view == "week" %} aria-current="page"{% endif %}>Week</a>
+  </div>
+  {% if g %}
+  <div class="seg" role="group" aria-label="Move">
+    <a class="seg-item" href="/calendar?view={{ view }}&amp;date={{ g.prev.isoformat() }}" aria-label="Previous">←</a>
+    <a class="seg-item" href="/calendar?view={{ view }}&amp;date={{ today.isoformat() }}">Today</a>
+    <a class="seg-item" href="/calendar?view={{ view }}&amp;date={{ g.next.isoformat() }}" aria-label="Next">→</a>
+  </div>
+  {% endif %}
+</div>
+
+{% for p in lists %}{{ m.failed(p) }}{% endfor %}
+<p class="muted">
+  {% if not diary.ok %}<span class="fail">Diary: couldn't load ({{ diary.error }})</span>
+  {% elif diary.value %}Diary synced {{ diary.value[1]|when }}.
+  {% else %}Diary not synced yet: Google Calendar entries appear once the sync job runs (phase 3).{% endif %}
+</p>
+<ul class="cal-key" aria-label="Key">
+  <li><span class="dot dot-event"></span>event</li><li><span class="dot dot-diary"></span>diary</li>
+  <li><span class="dot dot-deposit"></span>deposit due</li><li><span class="dot dot-balance"></span>balance due</li>
+  <li><span class="dot dot-followup"></span>follow-up</li><li><span class="dot dot-enquiry"></span>enquiry</li>
+</ul>
+
+{{ m.failed(grid) }}
+{% if g %}
+<h2 class="cal-title">{{ g.title }}</h2>
+{% if view == "month" %}
+<div class="cal-grid" role="grid" aria-label="{{ g.title }}">
+  <div class="cal-row cal-head" role="row">
+    {% for d in ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"] %}<span class="cal-dow" role="columnheader">{{ d }}</span>{% endfor %}
+  </div>
+  {% for week in g.weeks %}
+  <div class="cal-row" role="row">
+    {% for d in week %}
+    <div class="cal-cell{% if not d.in_range %} cal-out{% endif %}{% if d.today %} cal-today{% endif %}" role="gridcell">
+      <a class="cal-num" href="/calendar?view=week&amp;date={{ d.date.isoformat() }}">{{ d.date.day }}</a>
+      {% for i in d.entries[:4] %}
+      <span class="cal-item k-{{ i.kind }}" title="{{ i.text }}">{{ i.text }}</span>
+      {% endfor %}
+      {% if d.entries|length > 4 %}<span class="muted cal-more">+{{ d.entries|length - 4 }} more</span>{% endif %}
+    </div>
+    {% endfor %}
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<section class="agenda{% if view == 'month' %} agenda-month{% endif %}" aria-label="Agenda">
+  {% set ns = namespace(any=false) %}
+  {% for week in g.weeks %}{% for d in week %}
+  {% if d.in_range and (d.entries or view == "week") %}
+  {% set ns.any = true %}
+  <article class="agenda-day{% if d.today %} agenda-today{% endif %}">
+    <h3>{{ d.date.isoformat()|day }}{% if d.today %} <span class="badge ok">today</span>{% endif %}</h3>
+    {% if d.entries %}
+    <ul class="plain">
+      {% for i in d.entries %}
+      <li class="agenda-item"><span class="dot dot-{{ i.kind }}" aria-hidden="true"></span>{% if i.href %}<a href="{{ i.href }}">{{ i.text }}</a>{% else %}{{ i.text }}{% endif %}</li>
+      {% endfor %}
+    </ul>
+    {% else %}<p class="muted">Nothing.</p>{% endif %}
+  </article>
+  {% endif %}
+  {% endfor %}{% endfor %}
+  {% if not ns.any %}<p class="muted">Nothing this month.</p>{% endif %}
+</section>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block content %}
+<nav aria-label="All pages">
+  <ul class="more">
+    {% for label, href in NAV %}
+    <li><a class="more-item" href="{{ href }}">{{ label }}</a></li>
+    {% endfor %}
+    <li><a class="more-item" href="/passkeys">Passkeys</a></li>
+  </ul>
+</nav>
+{% endblock %}
