@@ -2,7 +2,9 @@
 """Track invoices from singers and organists (money OUT), READ-ONLY against
 Starling. Records live in ~/lcs-private/singer-invoices.csv (mode 600).
 
-    singer_invoices.py scan <saved message> --message-id ID --received YYYY-MM-DD --sender-email E --sender-name 'N'
+    singer_invoices.py scan --fetch --message-id ID --received YYYY-MM-DD --sender-email E --sender-name 'N'
+    singer_invoices.py scan <saved message> --message-id ID …   # the same, from a saved getOriginalMessage result
+    singer_invoices.py rescan <message id> [--fetch | <saved message>]  # re-read an UNPAID invoice
     singer_invoices.py paid [--apply]      # match OUT payments; prints NEWLY PAID <message id>
     singer_invoices.py status              # unpaid invoices and totals
     singer_invoices.py thanked <message id>  # note that the "Paid!" reply was drafted
@@ -27,6 +29,10 @@ a payment that fits several singers, or predates the invoice, is only reported. 
 name-only match prints "(matched by name, check before thanking)": the assistant
 drafts "Paid!" only for a match on the bank details. `settled` is the owner's own
 command; it marks the invoice paid (paid_verified=no) and never trusts its details.
+
+Invoices are read from PDF and .docx attachments and the email body (.doc files
+are flagged to check by hand). With --fetch the script fetches the raw email
+itself, read-only, through lcs_mcp (ZohoMail_getOriginalMessage only).
 """
 
 import argparse
@@ -37,10 +43,13 @@ import io
 import re
 import sys
 import urllib.error
+import xml.etree.ElementTree as ET
+import zipfile
 from email import policy
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+import lcs_mcp  # noqa: E402
 import lcs_money as lm  # noqa: E402
 
 STORE = lm.PRIVATE / "singer-invoices.csv"
@@ -65,7 +74,23 @@ LABELS = [  # highest rank first; the first match of the best label present wins
 ]
 LABELS = [re.compile(lab + r"[^£\d\n]{0,15}?" + MONEY, re.I) for lab in LABELS]
 POUNDS = re.compile(r"£\s*" + AMOUNT)
-REF = re.compile(r"(?:invoice|inv)\s*(?:no\.?|number|#|ref(?:erence)?)?\s*[:#\-]?\s*([A-Z]{0,5}[-/]?\d[\w\-/]{0,15})", re.I)
+TOKEN = r"([A-Z]{0,5}[-/]?\d[\w\-/.]{0,15})"
+REF_TIERS = [  # (pattern, how it's labelled); the first acceptable token of the best tier wins
+    # "Invoice No: 018", "Invoice Number 1020", "Invoice #37", "Inv ref: LW-042" (value may sit on the next line)
+    (re.compile(r"(?<![a-z])inv(?:oice)?\.?[ \t]*(?:(?:no|number|num|ref|reference)(?![a-z])\.?|#)"
+                r"[ \t]*[:#.\-]?[ \t]*\n?[ \t]*" + TOKEN, re.I), "explicit"),
+    (re.compile(r"(?<![a-z0-9])(INV[-/#]?\d[\w\-/]{0,15})", re.I), "labelled"),  # "INV-0107"
+    (re.compile(r"(?<![a-z])invoice[ \t]*[:#\-]?[ \t]*" + TOKEN, re.I), "labelled"),  # "Invoice 1020" on one line
+    (re.compile(r"(?<![a-z])invoice\s*[:#\-]?\s*" + TOKEN, re.I), "loose"),  # "INVOICE" then a number further down
+]
+# "TOTAL<tab><tab>100": a bare figure ending a total line, taken only when the invoice names GBP or £ somewhere
+BARE_TOTAL = re.compile(r"^[ \t]*(?:grand[ \t]+)?total(?:[ \t]+(?:due|payable))?[ \t]*[:=]?[ \t]*[ \t]"
+                        r"(\d{1,3}(?:,\d{3})+|\d+)(?:\.\d{2})?[ \t]*$", re.I | re.M)
+CURRENCY = re.compile(r"£|\bGBP\b")
+ORDINAL = re.compile(r"\d{1,2}(?:st|nd|rd|th)(?![a-z])", re.I)
+DATE_LIKE = re.compile(r"\d{1,2}[/.\-]\d{1,2}(?:[/.\-]\d{2,4})?|\d{4}[/.\-]\d{1,2}[/.\-]\d{1,2}")
+W = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
+DOCX_TYPE = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
 SORT = re.compile(r"(?<![a-z])(?:sort[\s\-]*code|s/c)\W{0,5}(\d{2})\W?(\d{2})\W?(\d{2})(?!\d)", re.I)
 ACCOUNT = re.compile(r"(?<![a-z])(?:account|acct|acc|a/c)(?![a-z])\.?(?:\s*(?:no|number|num|#)\.?)?\W{0,5}"
                      r"(\d{7,8}|\d{4} \d{3,4})(?![ ]?\d)", re.I)
@@ -84,6 +109,9 @@ def extract_amount(text):
         m = label.search(text)
         if m:
             return lm.money(m.group(1) or m.group(2))
+    m = BARE_TOTAL.search(text) if CURRENCY.search(text) else None
+    if m:
+        return lm.money(m.group(1))
     return max((lm.money(x) for x in POUNDS.findall(text)), default=0.0)
 
 
@@ -116,6 +144,29 @@ def extract_bank(text):
     return sort, near[0] if len(near) == 1 else ""
 
 
+def acceptable_ref(token, label):
+    """The token as a ref, or "" for a date or an ordinal ("27th", "21/09", "2026-09-21", "21.9.26"), for anything
+    under three characters unless explicitly labelled ("Invoice #37" yes, "Invoice 12" no), and for a short plain
+    number with no label at all (a loose "122")."""
+    tok = token.rstrip(".-/")
+    if not tok or ORDINAL.match(tok) or DATE_LIKE.fullmatch(tok):
+        return ""
+    if len(tok) < 3 and label != "explicit":
+        return ""
+    if label == "loose" and not re.search(r"[A-Za-z]", tok) and len(re.sub(r"\D", "", tok)) < 5:
+        return ""
+    return tok
+
+
+def extract_ref(text):
+    for pattern, label in REF_TIERS:
+        for m in pattern.finditer(text):
+            tok = acceptable_ref(m.group(1), label)
+            if tok:
+                return tok
+    return ""
+
+
 def clean_ref(ref, sort_code, account):
     digits = re.sub(r"\D", "", ref)
     if re.fullmatch(r"\d{8}", ref) or (digits and (digits in (sort_code, account)
@@ -126,9 +177,8 @@ def clean_ref(ref, sort_code, account):
 
 def extract(text):
     text = re.sub(r"[^\S\n]", " ", text)  # non-breaking and other odd spaces
-    ref = REF.search(text)
     sort, acc = extract_bank(text)
-    return {"amount": round(extract_amount(text), 2), "invoice_ref": clean_ref(ref.group(1) if ref else "", sort, acc),
+    return {"amount": round(extract_amount(text), 2), "invoice_ref": clean_ref(extract_ref(text), sort, acc),
             "sort_code": sort, "account_number": acc}
 
 
@@ -351,20 +401,70 @@ def ring_first(r):
     return r.get("bank_changed") == "yes" and r.get("bank_confirmed") != "yes"
 
 
-def message_texts(path):
-    """[(label, text)] for every PDF attachment in a saved message, then its body."""
+def _docx_runs(el):
+    """Text of a paragraph: w:t runs, w:tab as a tab, w:br/w:cr as a line break."""
+    bits = []
+    for node in el.iter():
+        if node.tag == W + "t":
+            bits.append(node.text or "")
+        elif node.tag == W + "tab":
+            bits.append("\t")
+        elif node.tag in (W + "br", W + "cr"):
+            bits.append("\n")
+    return "".join(bits)
+
+
+def _docx_block(el):
+    """Paragraphs on their own lines; a table row on one line, its cells separated by tabs (a cell's own
+    paragraphs joined by spaces), so "Total | £150.00" reads "Total\t£150.00"."""
+    lines = []
+    for child in el:
+        if child.tag == W + "p":
+            lines.append(_docx_runs(child))
+        elif child.tag == W + "tbl":
+            for tr in child.findall(W + "tr"):
+                cells = [re.sub(r"[ \t]*\n[ \t]*", " ", _docx_block(tc)).strip() for tc in tr.findall(W + "tc")]
+                lines.append("\t".join(cells))
+        else:  # body, content controls, custom XML, headers …
+            inner = _docx_block(child)
+            if inner:
+                lines.append(inner)
+    return "\n".join(lines)
+
+
+def docx_text(data):
+    """Text of a .docx with the standard library only: word/document.xml, then any headers and footers.
+    "" when the file isn't a readable .docx (damaged, or encrypted, which makes it an OLE file, not a zip)."""
+    try:
+        with zipfile.ZipFile(io.BytesIO(data or b"")) as z:
+            names = z.namelist()
+            parts = ["word/document.xml"] + sorted(n for n in names if re.fullmatch(r"word/(?:header|footer)\d*\.xml", n))
+            return "\n".join(_docx_block(ET.fromstring(z.read(n))) for n in parts if n in names)
+    except (zipfile.BadZipFile, ET.ParseError, KeyError, OSError, ValueError):
+        return ""
+
+
+def message_texts(path=None, raw=None):
+    """[(label, text)] for every PDF and .docx attachment in a message, then its body. A .doc attachment
+    gives (name, None): it can't be read here. `raw` is the MIME text itself (a fetched message); else
+    `path` is a saved getOriginalMessage result or an .eml."""
     from invoice_text import raw_message
     from pypdf import PdfReader
-    msg = email.message_from_string(raw_message(path), policy=policy.default)
+    msg = email.message_from_string(raw if raw is not None else raw_message(path), policy=policy.default)
     out = []
     for part in msg.walk():
         name = part.get_filename() or ""
-        if name.lower().endswith(".pdf"):
+        low, ctype = name.lower(), part.get_content_type()
+        if low.endswith(".pdf"):
             try:
                 reader = PdfReader(io.BytesIO(part.get_payload(decode=True) or b""))
                 out.append((name, "\n".join(p.extract_text() or "" for p in reader.pages)))
             except Exception:
                 out.append((name, ""))
+        elif low.endswith(".docx") or (not low and ctype == DOCX_TYPE):
+            out.append((name or "attachment.docx", docx_text(part.get_payload(decode=True))))
+        elif low.endswith(".doc") or (not low and ctype == "application/msword"):
+            out.append((name or "attachment.doc", None))
     body = msg.get_body(preferencelist=("plain", "html"))
     if body is not None:
         text = body.get_content()
@@ -382,14 +482,17 @@ def mentions_bank(text):
                 or any(not NOT_OURS.search(text[max(0, m.start() - 12):m.start()]) for m in ACCOUNT.finditer(text)))
 
 
-def read_invoice(path):
-    """Amount, ref and bank details from every PDF and the body. Bank details come from the first PDF that
+def read_invoice(path=None, raw=None):
+    """Amount, ref and bank details from every PDF and .docx and the body (`raw`: the MIME text itself). Bank details come from the first PDF that
     has both numbers (else the first source that does); when sources give different details, or one gives
     unclear details while another is clear, `sources_disagree` is set and DIFFER is warned."""
     found = {"amount": 0.0, "invoice_ref": "", "sort_code": "", "account_number": "", "warnings": [],
              "sources_disagree": False}
     details, unclear = [], False  # details: (is a pdf, sort code, account number)
-    for label, text in message_texts(path):
+    for label, text in message_texts(path, raw=raw):
+        if text is None:
+            found["warnings"].append(f"could not read {label} (.doc): check by hand")
+            continue
         if label != "email body" and not text.strip():
             found["warnings"].append(f"could not read {label} (encrypted or damaged): check it by hand")
         e = extract(text)
@@ -434,12 +537,14 @@ def note(r, text):
     r["notes"] = (r["notes"] + "; " if r.get("notes") else "") + text
 
 
-def cmd_scan(args, client):
-    rows = lm.read_csv(STORE)
-    if any(r["message_id"] == args.message_id for r in rows):
-        print(f"already recorded: {args.message_id}")
-        return
-    inv = read_invoice(args.file)
+def fetch_raw(message_id):
+    """Raw MIME of the invoice email, fetched read-only (ZohoMail_getOriginalMessage through lcs_mcp)."""
+    from invoice_text import fetch_message
+    return fetch_message(message_id)
+
+
+def payee_info(client):
+    """(fingerprint -> payee name, or None without a token; payee names; payee name -> last four digits)."""
     payees = client.payees() if client else None
     fps = lm.payee_fingerprints(payees) if payees is not None else None
     names = [p.get("payeeName", "") for p in payees] if payees is not None else []
@@ -448,28 +553,103 @@ def cmd_scan(args, client):
         uk = [a for a in p.get("accounts", []) if lm.bank_fingerprint(a.get("bankIdentifier"), a.get("accountIdentifier"))]
         if uk:
             payee_last4.setdefault(p.get("payeeName", ""), lm.last4(uk[0].get("accountIdentifier")))
+    return fps, names, payee_last4
+
+
+def assess_invoice(inv, history, message_id, received, sender_email, sender_name, payees):
+    """The change and payee checks for one invoice against `history` (the other stored rows). A newer unpaid
+    invoice from the same singer with different details (scanned out of order) is flagged, mutating its row.
+    Returns (assess_new result, bank_changed "yes"/"no", lines to print for the flagged rows)."""
+    fps, names, payee_last4 = payees
     fp = lm.bank_fingerprint(inv["sort_code"], inv["account_number"])
-    for r in singer_history(rows, args.sender_email, args.sender_name):  # scanned out of order: flag the newer one
+    flagged = []
+    for r in singer_history(history, sender_email, sender_name):
         if (fp and r.get("bank_fp") and r["bank_fp"] != fp and not r.get("paid_on")
-                and r.get("bank_changed") != "yes" and (r.get("received") or "") > args.received):
+                and r.get("bank_changed") != "yes" and (r.get("received") or "") > received):
             r["bank_changed"] = "yes"
             new4 = lm.last4(inv["account_number"])
             w = (f"BANK DETAILS CHANGED: ••••{r.get('bank_last4', '')} differs from an older invoice "
                  f"(••••{new4}): ring them before paying{same_last4_note(r.get('bank_last4', ''), new4)}")
             note(r, w)
-            print(f"   ! {r['message_id']}: {w}")
-    a = assess_new(inv, args.sender_email, args.sender_name, rows, fps, names, payee_last4, args.message_id)
+            flagged.append(f"   ! {r['message_id']}: {w}")
+    a = assess_new(inv, sender_email, sender_name, history, fps, names, payee_last4, message_id)
     changed = "yes" if a["bank_changed"] == "yes" or inv.get("sources_disagree") else "no"
+    return a, changed, flagged
+
+
+def print_result(name, inv, a):
+    print(f"{first_name(name)}: £{inv['amount']:,.2f} (ref {inv['invoice_ref'] or '?'}) · payee {a['payee']}"
+          + (f" · bank ••••{a['bank_last4']}" if a["bank_last4"] else ""))
+    for w in inv["warnings"] + a["warnings"]:
+        print(f"   ! {w}")
+
+
+def load_invoice(args):
+    return read_invoice(None, raw=fetch_raw(args.message_id)) if getattr(args, "fetch", False) else read_invoice(args.file)
+
+
+def cmd_scan(args, client):
+    if any(r["message_id"] == args.message_id for r in lm.read_csv(STORE)):
+        print(f"already recorded: {args.message_id}")
+        return
+    inv = load_invoice(args)
+    payees = payee_info(client)
+    rows = lm.read_csv(STORE)  # read again: a fetch can take a while
+    if any(r["message_id"] == args.message_id for r in rows):
+        print(f"already recorded: {args.message_id}")
+        return
+    a, changed, flagged = assess_invoice(inv, rows, args.message_id, args.received, args.sender_email,
+                                         args.sender_name, payees)
+    for line in flagged:
+        print(line)
     rows.append({"message_id": args.message_id, "received": args.received, "singer_name": args.sender_name,
                  "singer_email": args.sender_email.lower(), "invoice_ref": inv["invoice_ref"],
                  "amount_gbp": f"{inv['amount']:.2f}", "bank_fp": a["bank_fp"], "bank_last4": a["bank_last4"],
                  "payee": a["payee"], "bank_changed": changed, "bank_confirmed": "", "paid_on": "", "paid_amount": "",
                  "paid_ref": "", "paid_verified": "", "notes": "; ".join(inv["warnings"] + a["warnings"])})
     lm.write_csv(STORE, rows, COLUMNS)
-    print(f"{first_name(args.sender_name)}: £{inv['amount']:,.2f} (ref {inv['invoice_ref'] or '?'}) · payee {a['payee']}"
-          + (f" · bank ••••{a['bank_last4']}" if a["bank_last4"] else ""))
-    for w in inv["warnings"] + a["warnings"]:
-        print(f"   ! {w}")
+    print_result(args.sender_name, inv, a)
+
+
+KEEP_NOTES = ("bank details confirmed by phone", "paid reply drafted", "settled by hand", "rescanned")
+
+
+def cmd_rescan(args, client):
+    """Re-read an UNPAID invoice (fetched, or from a saved file) and redo its amount, ref and bank details with
+    the same change and payee checks as scan. A paid invoice is refused. A phone confirmation survives only
+    when the bank details are unchanged."""
+    def find(rows):
+        row = next((r for r in rows if r["message_id"] == args.message_id), None)
+        if row is None:
+            raise SystemExit(f"no invoice {args.message_id}")
+        if row.get("paid_on"):
+            raise SystemExit(f"{args.message_id}: already paid on {row['paid_on']}; not rescanned")
+        return row
+
+    find(lm.read_csv(STORE))
+    inv = load_invoice(args)
+    payees = payee_info(client)
+    rows = lm.read_csv(STORE)  # read again: a fetch can take a while
+    row = find(rows)
+    fp = lm.bank_fingerprint(inv["sort_code"], inv["account_number"]) or ""
+    still_confirmed = bool(fp) and row.get("bank_confirmed") == "yes" and fp == row.get("bank_fp")
+    others = [r for r in rows if r is not row]
+    # the row as first recorded counts as history when its confirmation still holds (same details, trusted) or when
+    # it carried other details (a change, warned about like any other)
+    history = others + ([dict(row)] if still_confirmed or (fp and row.get("bank_fp") and fp != row["bank_fp"]) else [])
+    a, changed, flagged = assess_invoice(inv, history, row["message_id"], row.get("received") or "",
+                                         row.get("singer_email") or "", row.get("singer_name") or "", payees)
+    for line in flagged:
+        print(line)
+    kept = [n for n in (row.get("notes") or "").split("; ") if n.startswith(KEEP_NOTES)]
+    if not still_confirmed:
+        row["bank_confirmed"] = ""
+        kept = [n for n in kept if not n.startswith("bank details confirmed by phone")]
+    row.update(invoice_ref=inv["invoice_ref"], amount_gbp=f"{inv['amount']:.2f}", bank_fp=a["bank_fp"],
+               bank_last4=a["bank_last4"], payee=a["payee"], bank_changed=changed,
+               notes="; ".join(inv["warnings"] + a["warnings"] + kept + [f"rescanned {datetime.date.today()}"]))
+    lm.write_csv(STORE, rows, COLUMNS)
+    print_result(row.get("singer_name"), inv, a)
 
 
 def cmd_paid(args, client):
@@ -591,11 +771,16 @@ def main():
     ap = argparse.ArgumentParser()
     sub = ap.add_subparsers(dest="cmd", required=True)
     s = sub.add_parser("scan")
-    s.add_argument("file")
+    s.add_argument("file", nargs="?", help="a saved getOriginalMessage result or .eml (not with --fetch)")
+    s.add_argument("--fetch", action="store_true", help="fetch the raw email itself, read-only")
     s.add_argument("--message-id", required=True)
     s.add_argument("--received", required=True, type=iso_date)
     s.add_argument("--sender-email", required=True)
     s.add_argument("--sender-name", required=True)
+    r = sub.add_parser("rescan")
+    r.add_argument("message_id")
+    r.add_argument("file", nargs="?", help="a saved getOriginalMessage result or .eml (not with --fetch)")
+    r.add_argument("--fetch", action="store_true", help="fetch the raw email itself, read-only")
     p = sub.add_parser("paid")
     p.add_argument("--apply", action="store_true")
     sub.add_parser("status")
@@ -607,13 +792,17 @@ def main():
     st.add_argument("message_id")
     st.add_argument("date")
     args = ap.parse_args()
-    tok = lm.keychain_token() if args.cmd in ("scan", "paid") else None
+    if args.cmd in ("scan", "rescan") and bool(args.fetch) == bool(args.file):
+        ap.error(f"{args.cmd}: give either --fetch or a saved file")
+    tok = lm.keychain_token() if args.cmd in ("scan", "rescan", "paid") else None
     client = lm.StarlingReadOnly(tok) if tok else None
     try:
-        {"scan": cmd_scan, "paid": cmd_paid, "status": cmd_status, "thanked": cmd_thanked,
+        {"scan": cmd_scan, "rescan": cmd_rescan, "paid": cmd_paid, "status": cmd_status, "thanked": cmd_thanked,
          "confirm": cmd_confirm, "settled": cmd_settled}[args.cmd](args, client)
     except (lm.StarlingError, urllib.error.URLError, TimeoutError, ConnectionError) as e:  # type name only
         print(f"Starling unavailable ({type(e).__name__}); {args.cmd} skipped")
+    except lcs_mcp.McpError as e:  # names the server only, never its command or URL
+        raise SystemExit(f"could not fetch {args.message_id}: {e}; {args.cmd} skipped") from None
 
 
 if __name__ == "__main__":
