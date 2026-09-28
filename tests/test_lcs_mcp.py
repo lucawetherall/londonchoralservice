@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Tests for scripts/bookings/lcs_mcp.py. Stdlib only, no network: the "server" is a local Python script
 speaking MCP over stdio. .venv/bin/python tests/test_lcs_mcp.py"""
-import json, os, subprocess, sys, tempfile
+import json, os, signal, subprocess, sys, tempfile, time, urllib.parse
 from pathlib import Path
 
 TMP = tempfile.mkdtemp()
@@ -41,6 +41,13 @@ for line in sys.stdin:
             continue
         if mode == "exit":
             sys.exit(3)
+        if mode == "huge":
+            send({"jsonrpc": "2.0", "id": msg["id"], "result": {"content": [{"type": "text", "text": "x" * 5000}]}})
+            continue
+        if mode == "badbytes":
+            sys.stdout.buffer.write(b'{"jsonrpc": "2.0", "id": %d, "result": {"content": [{"type": "text", "text": "caf\xe9"}]}}\n' % msg["id"])
+            sys.stdout.flush()
+            continue
         if mode == "rpc-error":
             send({"jsonrpc": "2.0", "id": msg["id"], "error": {"code": -32000, "message": "upstream " + secret + " failed"}})
             continue
@@ -70,11 +77,12 @@ def config(mode, repo=REPO, entry=None):
 class Spy:
     """Records the processes started, so a test can check they were killed."""
     def __init__(self):
-        self.procs = []
+        self.procs, self.kw = [], []
 
     def __call__(self, *a, **kw):
         p = subprocess.Popen(*a, **kw)
         self.procs.append(p)
+        self.kw.append(kw)
         return p
 
 
@@ -201,6 +209,145 @@ def test_invoice_text_fetch_option():
         invoice_text.fetch_message, sys.argv = saved
     assert calls == ["1788039834223141600"]
     assert buf.getvalue().strip() == "== message 1788039834223141600: no Invoice*.pdf attachment", buf.getvalue()
+
+
+# --- review of PR 152: process groups, reply limits, scrubbing ---------------------------------------
+
+WRAPPER = r"""
+import subprocess, sys
+# like npx: run the real server as a child with inherited stdio, and wait for it
+sys.exit(subprocess.call([sys.executable, sys.argv[1], *sys.argv[2:]]))
+"""
+
+GRANDCHILD = r"""
+import json, os, sys, time
+if sys.argv[2] == "escape":
+    os.setsid()  # leaves the process group: only the pipe handling can save the caller now
+open(sys.argv[1], "w").write(str(os.getpid()))
+for line in sys.stdin:
+    if json.loads(line).get("method") == "initialize":
+        time.sleep(60)  # a hung upstream
+time.sleep(60)  # an open upstream connection keeps it alive after stdin closes
+"""
+
+
+def orphan_call(how):
+    wrapper, child = Path(TMP) / "wrapper.py", Path(TMP) / "grandchild.py"
+    wrapper.write_text(WRAPPER)
+    child.write_text(GRANDCHILD)
+    pidf = Path(TMP) / f"gc-{how}.pid"
+    pidf.unlink(missing_ok=True)
+    cfg = config("orphan-" + how, entry={"command": sys.executable, "args": [str(wrapper), str(child), str(pidf), how]})
+    saved = lcs_mcp.REPO
+    lcs_mcp.REPO = Path(REPO)
+    t = time.monotonic()
+    try:
+        msg = fails(lambda: lcs_mcp.zoho_original_message("1788039834223141600", config_path=cfg, timeout=2))
+    finally:
+        lcs_mcp.REPO = saved
+    return msg, time.monotonic() - t, int(pidf.read_text())
+
+
+def alive(pid):
+    try:
+        os.kill(pid, 0)
+    except ProcessLookupError:
+        return False
+    return True
+
+
+def test_timeout_kills_the_whole_process_group():
+    msg, took, pid = orphan_call("stay")
+    assert msg == "zoho-mail: timed out after 2s" and took < 5, (msg, took)
+    for _ in range(40):  # a killed orphan is reaped by launchd/init
+        if not alive(pid):
+            break
+        time.sleep(0.05)
+    try:
+        assert not alive(pid), f"grandchild {pid} still running"
+    finally:
+        if alive(pid):
+            os.kill(pid, signal.SIGKILL)
+
+
+def test_a_grandchild_holding_stdout_never_blocks_the_call():
+    msg, took, pid = orphan_call("escape")
+    try:
+        assert msg == "zoho-mail: timed out after 2s" and took < 5, (msg, took)
+    finally:
+        if alive(pid):
+            os.kill(pid, signal.SIGKILL)
+
+
+def test_the_server_starts_in_its_own_session():
+    spy = Spy()
+    call("ok", popen=spy)
+    kw = {k: spy.kw[0].get(k) for k in ("start_new_session", "encoding", "errors")}  # never the env: it holds secrets
+    assert kw == {"start_new_session": True, "encoding": "utf-8", "errors": "replace"}, kw
+
+
+def test_a_reply_over_the_cap_is_refused():
+    saved = lcs_mcp.MAX_REPLY
+    lcs_mcp.MAX_REPLY = 1000
+    try:
+        assert fails(lambda: call("huge")) == "zoho-mail: the MCP server's reply was too large"
+    finally:
+        lcs_mcp.MAX_REPLY = saved
+    assert lcs_mcp.MAX_REPLY == 60 << 20
+    assert "x" * 5000 in call("huge")
+
+
+def test_undecodable_bytes_are_replaced():
+    assert call("badbytes") == "caf�"
+
+
+TOKEN = SECRET.rsplit("/", 1)[1]
+
+
+def test_scrub_catches_every_shape_of_the_url():
+    secrets = [sys.executable, "--flag", SECRET]
+    for leak in (f"POST /zoho/{TOKEN} returned 401", "reaching mcp.example.invalid/zoho/" + TOKEN,
+                 "bad url " + urllib.parse.quote(SECRET, safe=""), f"key {TOKEN} revoked",
+                 "host mcp.example.invalid refused", "GET /zoho/" + TOKEN):
+        got = lcs_mcp._scrub(leak, secrets)
+        assert TOKEN not in got and "mcp.example.invalid" not in got and "%2F" not in got, (leak, got)
+    q = "https://h.example.invalid/api?key=QUERYVALUE123&x=1"
+    assert "QUERYVALUE123" not in lcs_mcp._scrub("sent key QUERYVALUE123", [q])
+    assert lcs_mcp._scrub("port 87654321 closed", [87654321]) == "port <redacted> closed"
+    assert lcs_mcp._scrub("fine", [None, "", 5]) == "fine"
+
+
+def test_list_tools_only_for_allowed_servers():
+    spy = Spy()
+    msg = fails(lambda: lcs_mcp.list_tools("zoho-books", config_path=config("ok"), popen=spy))
+    assert msg == "zoho-books: not an allowed server", msg
+    assert spy.procs == []
+
+
+def test_message_id_must_be_ascii_digits():
+    spy = Spy()
+    for bad in ("１２３４５６７８", "١٢٣٤٥٦٧٨", "12345678\n", "", "1" * 26):
+        msg = fails(lambda: lcs_mcp.zoho_original_message(bad, config_path=config("ok"), popen=spy))
+        assert msg.startswith("zoho-mail: not a message id"), (bad, msg)
+    assert spy.procs == []
+
+
+def test_invoice_text_fetch_failure_is_one_line():
+    import contextlib, io
+    saved = (invoice_text.fetch_message, sys.argv)
+
+    def boom(mid):
+        raise lcs_mcp.McpError("zoho-mail: timed out after 90s")
+    invoice_text.fetch_message = boom
+    try:
+        sys.argv = ["invoice_text.py", "--fetch", "1788039834223141600"]
+        with contextlib.redirect_stdout(io.StringIO()):
+            invoice_text.main()
+        raise AssertionError("no SystemExit")
+    except SystemExit as e:
+        assert e.code == "could not fetch message 1788039834223141600: zoho-mail: timed out after 90s", e.code
+    finally:
+        invoice_text.fetch_message, sys.argv = saved
 
 
 if __name__ == "__main__":

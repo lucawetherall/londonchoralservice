@@ -1105,6 +1105,283 @@ def test_rescan_flags_a_newer_invoice_with_other_details():
     assert rows_by_id()["new"]["bank_changed"] == "yes"
 
 
+# --- review of PR 152: bare totals, .docx limits, rescan never loses data, names ---------------------
+
+def test_bare_total_must_agree_with_the_pound_figures():
+    amount = lambda t: si.extract(t)["amount"]  # noqa: E731
+    assert amount("Invoice No: 55\nService\tHours\tRate\nFuneral\t3\t£50\nTotal 3\n£150") == 150.0  # hours, not money
+    assert amount("Invoice No: 55\nFee £120\nTravel £30\nTOTAL 2\n£150.00") == 150.0
+    assert amount("Invoice No 77\nFee £200\nTotal due 30") == 200.0  # "due in 30 days"
+    assert amount("Invoice No 77\nFee £200\nTOTAL\t07700900123") == 200.0  # a phone number: over six digits
+    assert amount("Invoice No 77\nFee £200\nTotal 2026") == 200.0  # a year
+    assert amount("Invoice No 77\nAmount (£)\nTotal: 1,500") == 1500.0  # no £ figure to check it against
+    assert amount("Invoice No 77\n£150.50 fee\nTotal 150.5") == 150.5
+    assert amount("Invoice No 77\nFee £100\nSubtotal 100\nTotal 120") == 100.0
+    assert amount("Invoice No 77\nMileage claimed\nTotal 120\nat 45p per mile = £54.00") == 54.0
+    # a bare total that is one of the £ figures, or their sum, stands
+    assert amount("Fee £80\nTravel £20\nTOTAL 100") == 100.0 and amount("Fee £80\nTravel £20\nTOTAL\t80") == 80.0
+    # Catherine's layout: GBP only in the column heading, no £ figures at all
+    assert amount("Anna Price Invoice\t\t21.9.26\nInvoice number: 1\nDate\tDescription\tAmount (GBP)\n"
+                  "21.9.26\tFuneral\t100\nTOTAL\t\t100") == 100.0
+    assert amount("Amount (GBP)\nTOTAL 1234567") == 0.0  # seven digits: never a bare total
+    # a known limit: a quantity total in a GBP table with no £ figure reads like Catherine's layout
+    assert amount("Invoice 1020\nItem Qty Amount (GBP)\nTotal 4\n") == 4.0
+
+
+def test_extract_ref_probe_shapes():
+    ref = lambda t: si.extract(t)["invoice_ref"]  # noqa: E731
+    assert ref("Invoice #1\nTotal £100") == "1"
+    assert ref("Invoice No:\n12345678\nSort code 12-34-56 Account 12345678\nTotal £1.00") == ""
+    assert ref("Invoice No:\n1234567\nSort code 12-34-56 Account 1234567\nTotal £1.00") == ""
+    assert ref("Invoice No: 5678\nSort code 12-34-56\nAccount number 12345678\nTotal £1.00") == "5678"
+    assert ref("Invoice No:\n123456\nSort code 12-34-56\nAccount 11112222\nAccount 33334444\nTotal £1.00") == ""
+    # bank details too ambiguous to keep, but the account number still never becomes the ref
+    assert ref("Invoice number:\n1234567\nSort code 12-34-56 Sort code 65-43-21\nAccount 1234567\nTotal £1.00") == ""
+    assert ref("Invoice No:\n07700900123\nTotal £1.00") == "07700900123"
+    assert ref("Inv. No. 12\nTotal £1.00") == "12"
+    assert ref("Invoice No.\n21/09/2026\nTotal £1") == ""
+    assert ref("Invoice ref: AC12345678\nSort code 12-34-56 Acc no 12345678\n£1.00") == ""
+
+
+@contextlib.contextmanager
+def patched(obj, **values):
+    saved = {k: getattr(obj, k) for k in values}
+    for k, v in values.items():
+        setattr(obj, k, v)
+    try:
+        yield
+    finally:
+        for k, v in saved.items():
+            setattr(obj, k, v)
+
+
+def docx_parts(parts):
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as z:
+        for name, xml in parts.items():
+            z.writestr(name, xml)
+    return buf.getvalue()
+
+
+NS = 'xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"'
+
+
+def doc_xml(*paras, pad=0):
+    ps = "".join(f"<w:p><w:r><w:t>{t}</w:t></w:r></w:p>" for t in paras)
+    return f'<?xml version="1.0"?><w:document {NS}><w:body>{ps}<!--{"x" * pad}--></w:body></w:document>'
+
+
+def ftr_xml(text):
+    return f'<?xml version="1.0"?><w:ftr {NS}><w:p><w:r><w:t>{text}</w:t></w:r></w:p></w:ftr>'
+
+
+TOO_LARGE = "could not read big.docx (too large or malformed): check it by hand"
+
+
+def test_docx_part_over_the_size_limit_is_skipped():
+    data = docx_parts({"word/document.xml": doc_xml("Invoice No. 5", pad=5000), "word/footer1.xml": ftr_xml("Total £150.00")})
+    with patched(si, DOCX_MAX_PART=2000):
+        text, problem = si.docx_read(data)
+        assert text == "Total £150.00" and problem, (text, problem)
+        found = si.read_invoice(att_eml(data, "big.docx", si.DOCX_TYPE))
+    assert found["amount"] == 150.0 and TOO_LARGE in found["warnings"], found
+    assert not any("encrypted or damaged" in w for w in found["warnings"]), found["warnings"]
+    assert si.DOCX_MAX_PART == 5 << 20 and si.DOCX_MAX_TOTAL == 15 << 20
+    assert si.DOCX_MAX_EXTRA_PARTS == 10 and si.DOCX_MAX_TEXT == 1 << 20 and si.DOCX_MAX_DEPTH == 200
+
+
+def test_docx_total_read_is_capped():
+    data = docx_parts({"word/document.xml": doc_xml("Invoice No. 5", pad=1500), "word/footer1.xml": ftr_xml("x" * 1500)})
+    with patched(si, DOCX_MAX_PART=2500, DOCX_MAX_TOTAL=3000):
+        text, problem = si.docx_read(data)
+    assert text == "Invoice No. 5" and problem, (text, problem)
+    with patched(si, DOCX_MAX_PART=2500, DOCX_MAX_TOTAL=5000):
+        assert si.docx_read(data)[1] is False
+
+
+def test_docx_header_and_footer_parts_are_capped():
+    parts = {"word/document.xml": doc_xml("Body")}
+    parts.update({f"word/footer{i}.xml": ftr_xml(f"F{i}") for i in range(1, 13)})
+    text, problem = si.docx_read(docx_parts(parts))
+    lines = text.splitlines()
+    assert problem and lines == ["Body"] + [f"F{i}" for i in range(1, 11)], lines
+
+
+def test_docx_text_is_truncated():
+    data = docx_parts({"word/document.xml": doc_xml("Total £150.00", "y" * 500)})
+    with patched(si, DOCX_MAX_TEXT=50):
+        text, problem = si.docx_read(data)
+    assert len(text) == 50 and text.startswith("Total £150.00") and problem, (len(text), problem)
+
+
+def test_deep_docx_is_refused_not_crashed():
+    deep = f'<?xml version="1.0"?><w:document {NS}><w:body>' + "<w:sdt>" * 300 + \
+        "<w:p><w:r><w:t>Total £1.00</w:t></w:r></w:p>" + "</w:sdt>" * 300 + "</w:body></w:document>"
+    data = docx_parts({"word/document.xml": deep, "word/footer1.xml": ftr_xml("Invoice No. 9")})
+    text, problem = si.docx_read(data)
+    assert problem and text == "Invoice No. 9", (text, problem)
+    found = si.read_invoice(att_eml(data, "big.docx", si.DOCX_TYPE))
+    assert TOO_LARGE in found["warnings"], found["warnings"]
+    # past the depth cap Python's own recursion limit would hit first: RecursionError is caught too
+    deeper = deep.replace("<w:sdt>" * 300, "<w:sdt>" * 3000).replace("</w:sdt>" * 300, "</w:sdt>" * 3000)
+    with patched(si, DOCX_MAX_DEPTH=10 ** 6):
+        text, problem = si.docx_read(docx_parts({"word/document.xml": deeper}))
+    assert (text, problem) == ("", True)
+
+
+def test_unknown_charset_falls_back():
+    raw = "From: a@b.com\nSubject: Invoice\nContent-Type: text/plain; charset=x-no-such-charset\n\nInvoice No 5 Total £10.00"
+    found = si.read_invoice(raw=raw)
+    assert found["amount"] == 10.0 and found["invoice_ref"] == "5", found
+
+
+GOOD = "Invoice No: 101\nTotal £100.00\nSort code 11-22-33\nAccount number 11112222"
+
+
+def confirmed_row(mid="177"):
+    fresh_store()
+    with fake_fetch({mid: raw_mime(GOOD)}):
+        run_main(["scan", "--fetch", *SCAN_ARGS])
+    with contextlib.redirect_stdout(io.StringIO()):
+        si.cmd_confirm(Args(message_id=mid))
+    return si.STORE.read_text()
+
+
+def test_rescan_without_bank_details_changes_nothing():
+    before = confirmed_row()
+    with fake_fetch({"177": raw_mime("Invoice attached, thanks!")}):
+        got = run_main(["rescan", "177", "--fetch"])
+    assert got.strip() == "no bank details found on rescan; nothing changed", got
+    assert si.STORE.read_text() == before
+
+
+def test_rescan_keeps_the_old_amount_and_ref():
+    confirmed_row()
+    with fake_fetch({"177": raw_mime("Sort code 11-22-33\nAccount number 11112222\nThanks")}):
+        got = run_main(["rescan", "177", "--fetch"])
+    r = rows_by_id()["177"]
+    assert (r["amount_gbp"], r["invoice_ref"], r["bank_confirmed"]) == ("100.00", "101", "yes"), r
+    assert "bank details confirmed by phone" in r["notes"] and "amount not found" not in r["notes"], r["notes"]
+    assert got.splitlines()[0].startswith("Ben: £100.00 (ref 101)"), got
+    assert "11112222" not in got and "112233" not in got
+
+
+def test_rescan_prints_each_change_masked():
+    confirmed_row()
+    with fake_fetch({"177": raw_mime("Invoice No: 102\nTotal £120.00\nSort code 65-43-21\nAccount number 99998888")}):
+        got = run_main(["rescan", "177", "--fetch"])
+    lines = got.splitlines()
+    for want in ("   amount: £100.00 → £120.00", "   ref: 101 → 102", "   bank details: ••••2222 → ••••8888",
+                 "   bank changed: no → yes", "   bank confirmed: yes → no"):
+        assert want in lines, (want, lines)
+    assert "99998888" not in got and "11112222" not in got and "654321" not in got
+    same = "Invoice No: 102\nTotal £120.00\nSort code 65-43-21\nAccount number 99998888"
+    with fake_fetch({"177": raw_mime(same)}):
+        got = run_main(["rescan", "177", "--fetch"])
+    assert "   nothing changed" in got.splitlines(), got  # and the change flagged before still stands
+    r = rows_by_id()["177"]
+    assert r["bank_changed"] == "yes" and "BANK DETAILS CHANGED since their last invoice (was ••••2222" in r["notes"], r
+    four = "Invoice No: 102\nTotal £120.00\nSort code 12-12-12\nAccount number 99998888"
+    with fake_fetch({"177": raw_mime(four)}):
+        got = run_main(["rescan", "177", "--fetch"])
+    assert "   bank details: ••••8888 → ••••8888 (different sort code or account)" in got.splitlines(), got
+
+
+def test_scan_and_rescan_lock_the_store_after_the_fetch():
+    fresh_store()
+    events = []
+
+    @contextlib.contextmanager
+    def lock(path):
+        events.append(("lock", str(path)))
+        yield
+        events.append(("unlock", str(path)))
+
+    def fetch(mid):
+        events.append(("fetch", mid))
+        return raw_mime(GOOD)
+    with patched(lm, ledger_lock=lock), patched(si, fetch_raw=fetch):
+        run_main(["scan", "--fetch", *SCAN_ARGS])
+        run_main(["rescan", "177", "--fetch"])
+    store = str(si.STORE)
+    assert events == [("fetch", "177"), ("lock", store), ("unlock", store)] * 2, events
+
+
+def test_probe_rescan_row_survives_an_unreadable_fetch():
+    confirmed_row()
+    keep = {k: rows_by_id()["177"][k] for k in si.COLUMNS}
+    for bad in ("Invoice attached, thanks!", "Invoice No: 999\nTotal £5.00"):
+        with fake_fetch({"177": raw_mime(bad)}):
+            assert run_main(["rescan", "177", "--fetch"]).strip() == "no bank details found on rescan; nothing changed"
+        assert {k: rows_by_id()["177"][k] for k in si.COLUMNS} == keep
+
+
+def test_names_equivalent_pairs():
+    yes = [("Benjamin Fenwick", "Ben Harrow-Fenwick"), ("Rowan Fairleighbrook", "Rowan Fairleighbrook"),
+           ("Jessie A Thornbury", "Jess Thornbury"), ("Kate Brown", "Catherine Brown"), ("Tom Jones", "THOMAS JONES"),
+           ("B FENWICK", "Ben Fenwick"), ("FENWICK BEN", "Benjamin Fenwick"), ("Liz Tay", "Elizabeth Tay"),
+           ("Sean O'Brien", "Sean OBrien"), ("Dan Smith", "Daniel Smith"), ("Chris Lee", "Christine Lee"),
+           # decided: a double-barrelled surname agrees with one of its parts (4+ letters) when the first names do
+           ("Anna Smith", "Anna Smith-Jones")]
+    no = [("Ben Fenwick", "Benedict Ashcombe-Hale"), ("Benedict Ashcombe-Hale", "Ben Harrow-Fenwick"),
+          ("Tom Jones", "Ben Jones"), ("Anna Smith", "Anna Smithson"), ("Ben", "Ben Fenwick"),
+          ("Anna Smith-Jones", "Anna Jones-Smith"), ("Jo Smith", "Joanna Smith"), ("Ann Lee", "Ann Le-Bo"),
+          ("Tom Jones", "A SMITH-JONES"), ("Tom Jones", "JONES B")]
+    for a, b in yes:
+        assert si.names_equivalent(a, b) and si.names_equivalent(b, a), (a, b)
+    for a, b in no:
+        assert not si.names_equivalent(a, b) and not si.names_equivalent(b, a), (a, b)
+    assert si.name_match("Anna Smith", "ANNA SMITH") == 2 and si.name_match("Anna Smith-Jones", "ANNA SMITH") == 1
+
+
+BEN_PAYEE = [{"payeeName": "Benjamin Fenwick", "accounts": [{"bankIdentifier": "203040", "accountIdentifier": "55667788"}]}]
+ORLANDO_PAYEE = [{"payeeName": "Rowan Fairleighbrook", "accounts": [{"bankIdentifier": "102030", "accountIdentifier": "44556677"}]}]
+
+
+def test_payee_recognised_under_an_equivalent_name():
+    fresh_store()
+    got = scan("Invoice 1\nTotal £100.00", "b1", "2026-09-20", client=FakeClient(payees=BEN_PAYEE),
+               email="ben@hw.example", name="Ben Harrow-Fenwick")
+    assert rows_by_id()["b1"]["payee"] == "probably existing: Benjamin Fenwick (no bank details on the invoice)", got
+    got = scan("Invoice 2\nTotal £100.00\nSort code 20-30-40\nAccount number 55667788", "b2", "2026-09-21",
+               client=FakeClient(payees=BEN_PAYEE), email="ben@hw.example", name="Ben Harrow-Fenwick")
+    assert rows_by_id()["b2"]["payee"] == "existing: Benjamin Fenwick" and "NEW BANK DETAILS" not in got, got
+    got = scan("Invoice 3\nTotal £90.00", "o1", "2026-09-21", client=FakeClient(payees=ORLANDO_PAYEE),
+               email="orlando@x.example", name="Rowan Fairleighbrook")
+    assert rows_by_id()["o1"]["payee"] == "probably existing: Rowan Fairleighbrook (no bank details on the invoice)", got
+    got = scan("Invoice 4\nTotal £90.00\nSort code 11-11-11\nAccount number 22223333", "o2", "2026-09-22",
+               client=FakeClient(payees=ORLANDO_PAYEE), email="orlando@x.example", name="Rowan Fairleighbrook")
+    assert "BANK DETAILS CHANGED: Starling payee 'Rowan Fairleighbrook'" in got, got
+
+
+def test_payee_name_fitting_two_payees_or_another_open_singer_is_ambiguous():
+    two = [{"payeeName": "Ben Fenwick", "accounts": []}, {"payeeName": "Benjamin Fenwick", "accounts": []}]
+    a = si.assess_new(inv("", ""), "b@x.com", "Ben Fenwick", [], lm.payee_fingerprints(two), [p["payeeName"] for p in two])
+    assert a["payee"].startswith("ambiguous: Ben Fenwick, Benjamin Fenwick"), a["payee"]
+    bella = [unpaid("bella1", "Bella Fenwick", 100, "2026-09-10")]
+    a = si.assess_new(inv("", ""), "b@x.com", "Ben Fenwick", bella, {}, ["B Fenwick"])
+    assert a["payee"].startswith("ambiguous: B Fenwick"), a["payee"]
+    a = si.assess_new(inv("", ""), "b@x.com", "Ben Fenwick", [dict(bella[0], paid_on="2026-09-11")], {}, ["B Fenwick"])
+    assert a["payee"] == "probably existing: B Fenwick (no bank details on the invoice)", a["payee"]
+
+
+def test_match_paid_by_equivalent_names():
+    ben = [unpaid("b1", "Ben Harrow-Fenwick", 100, "2026-09-20")]
+    assert si.match_paid(ben, [out(100, "2026-09-21", "BENJAMIN FENWICK", "p1")]) == {"b1": ("2026-09-21", 100.0, "p1", False)}
+    orl = [unpaid("o1", "Rowan Fairleighbrook", 90, "2026-09-20")]
+    assert si.match_paid(orl, [out(90, "2026-09-21", "Rowan Fairleighbrook", "p2")]) == {"o1": ("2026-09-21", 90.0, "p2", False)}
+    assert si.match_paid([unpaid("x", "Ben Fenwick", 100, "2026-09-20")],
+                         [out(100, "2026-09-21", "BENEDICT ASHCOMBE-HALE", "p3")]) == {}
+    # equivalent to two open singers at the same strength: reported, never applied
+    report = []
+    two = [unpaid("b1", "Ben Harrow-Fenwick", 100, "2026-09-20"), unpaid("b2", "Ben Ashcombe-Fenwick", 100, "2026-09-20")]
+    assert si.match_paid(two, [out(100, "2026-09-21", "BENJAMIN FENWICK", "p4")], report) == {}
+    assert report and report[0].startswith("AMBIGUOUS £100.00"), report
+    # an exact name beats a looser one: ANNA SMITH pays Anna Smith, not Anna Smith-Jones
+    annas = [unpaid("a1", "Anna Smith", 100, "2026-09-20"), unpaid("a2", "Anna Smith-Jones", 100, "2026-09-20")]
+    assert si.match_paid(annas, [out(100, "2026-09-21", "ANNA SMITH", "p5")]) == {"a1": ("2026-09-21", 100.0, "p5", False)}
+
+
 if __name__ == "__main__":
     failures = 0
     for name, fn in sorted(globals().items()):
@@ -1114,6 +1391,9 @@ if __name__ == "__main__":
                 print(f"PASS {name}")
             except AssertionError as e:
                 print(f"FAIL {name}: {e}")
+                failures += 1
+            except Exception as e:
+                print(f"ERROR {name}: {type(e).__name__}: {e}")
                 failures += 1
     print(f"\n{failures} failure(s)")
     sys.exit(1 if failures else 0)

@@ -87,7 +87,13 @@ def main():
     with tempfile.TemporaryDirectory(prefix="lcs-inv-") as tmp:
         Path(tmp).chmod(0o700)
         for source, load in sources:
-            msg = email.message_from_string(load(), policy=policy.default)
+            try:
+                raw = load()
+            except Exception as e:  # lcs_mcp.McpError names the server only, never its command or URL
+                if type(e).__name__ != "McpError":
+                    raise
+                raise SystemExit(f"could not fetch {source}: {e}") from None
+            msg = email.message_from_string(raw, policy=policy.default)
             found = False
             for part in msg.walk():
                 name = part.get_filename() or ""

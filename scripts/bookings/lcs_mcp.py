@@ -12,21 +12,27 @@ tools/call, returns the text content and kills the process.
   no exception raised here carries them: errors name the server only, and any
   text passed on from the server is scrubbed of URLs and of the args.
 - The server's stderr is discarded (mcp-remote logs the URL there).
+- The server runs in its own session and process group; close() kills the whole group (npx's children
+  too), and never waits on a pipe a stray grandchild might still hold open. A single reply is capped at
+  MAX_REPLY characters.
 """
 
 import json
 import os
 import queue
 import re
+import signal
 import subprocess
 import threading
 import time
+import urllib.parse
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[2]
 MAIN_CHECKOUT = Path("/Users/luca/Documents/GitHub/londonchoralservice")
 CLAUDE_JSON = Path(os.environ.get("LCS_CLAUDE_JSON", Path.home() / ".claude.json"))
 TIMEOUT = 90  # seconds, for the whole exchange
+MAX_REPLY = 60 << 20  # characters in one reply line (a raw email with its attachments, base64)
 ALLOWED = {("zoho-mail", "ZohoMail_getOriginalMessage")}
 ZOHO_ACCOUNT = "6133510000000008002"
 PROTOCOL = "2025-06-18"
@@ -34,6 +40,9 @@ PROTOCOL = "2025-06-18"
 
 class McpError(Exception):
     """Raised with the server name only: never the command, args or URL."""
+
+
+_TOO_LARGE = object()  # queued by the reader when one reply line exceeds MAX_REPLY
 
 
 def _main_checkout(repo):
@@ -67,23 +76,45 @@ def server_config(name, config_path=None, repo=None):
     return entry["command"], [str(a) for a in entry.get("args") or []], dict(entry.get("env") or {})
 
 
+def _secret_forms(secret):
+    """The secret, and for a URL every piece of it that could turn up on its own in an error: host, path,
+    path segments and query values of 8+ characters, and the percent-encoded URL."""
+    s = str(secret)
+    forms = {s}
+    try:
+        u = urllib.parse.urlsplit(s)
+    except ValueError:
+        return forms
+    if u.scheme and u.netloc:
+        forms |= {u.netloc, u.hostname or "", u.path, u.netloc + u.path, urllib.parse.quote(s, safe="")}
+        forms |= {seg for seg in u.path.split("/") if len(seg) >= 8}
+        forms |= {v for _, v in urllib.parse.parse_qsl(u.query, keep_blank_values=True) if len(v) >= 8}
+    return forms
+
+
 def _scrub(text, secrets):
     text = re.sub(r"(?i)\b(?:https?|wss?)://\S+", "<url>", str(text))
+    forms = set()
     for s in secrets:
-        if s and len(s) >= 6:
-            text = text.replace(s, "<redacted>")
+        if s is not None and s != "":
+            forms |= _secret_forms(s)
+    for f in sorted(forms, key=len, reverse=True):  # longest first, so a URL goes before its host
+        if len(f) >= 6:
+            text = text.replace(f, "<redacted>")
     return text[:300]
 
 
 class _Session:
     def __init__(self, name, command, args, env, timeout, popen):
-        self.name, self._secrets = name, [command, *args, *env.values()]
+        self.name, self._secrets = name, [str(x) for x in (command, *args, *env.values())]
         self._deadline = None
         self._timeout = timeout
-        full_env = {**os.environ, **env}
+        full_env = {**os.environ, **{k: str(v) for k, v in env.items()}}
         try:
+            # its own session: close() can kill the whole process group, npx's children included
             self.proc = popen([command, *args], stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-                              stderr=subprocess.DEVNULL, env=full_env, text=True, bufsize=1)
+                              stderr=subprocess.DEVNULL, env=full_env, text=True, bufsize=1,
+                              encoding="utf-8", errors="replace", start_new_session=True)
         except OSError:
             raise McpError(f"{name}: could not start the MCP server") from None
         self._lines = queue.Queue()
@@ -91,11 +122,25 @@ class _Session:
         self._next_id = 0
 
     def _pump(self):
+        """Reads reply lines on its own thread, and alone closes stdout: a grandchild that escaped the kill
+        may hold the pipe open, and closing it from close() would block on this thread's read."""
+        out = self.proc.stdout
         try:
-            for line in self.proc.stdout:
+            while True:
+                line = out.readline(MAX_REPLY + 1)
+                if not line:
+                    break
+                if len(line) > MAX_REPLY:
+                    self._lines.put(_TOO_LARGE)
+                    return
                 self._lines.put(line)
         except (OSError, ValueError):
             pass
+        finally:
+            try:
+                out.close()
+            except Exception:
+                pass
         self._lines.put(None)
 
     def _send(self, msg):
@@ -119,6 +164,8 @@ class _Session:
                 raise McpError(f"{self.name}: timed out after {self._timeout}s") from None
             if line is None:
                 raise McpError(f"{self.name}: the MCP server exited before answering")
+            if line is _TOO_LARGE:
+                raise McpError(f"{self.name}: the MCP server's reply was too large")
             try:
                 msg = json.loads(line)
             except ValueError:
@@ -145,18 +192,22 @@ class _Session:
 
     def close(self):
         try:
-            self.proc.kill()
-        except OSError:
+            os.killpg(self.proc.pid, signal.SIGKILL)  # the whole group: npx and the server it started
+        except ProcessLookupError:
             pass
+        except OSError:  # a popen that ignored start_new_session (EPERM): at least the process itself
+            try:
+                self.proc.kill()
+            except OSError:
+                pass
         try:
             self.proc.wait(timeout=5)
         except Exception:
             pass
-        for f in (self.proc.stdin, self.proc.stdout):
-            try:
-                f and f.close()
-            except Exception:
-                pass
+        try:
+            self.proc.stdin and self.proc.stdin.close()
+        except Exception:
+            pass
 
 
 def _session(server, config_path, timeout, popen, fn):
@@ -188,7 +239,11 @@ def call_tool(server, tool, arguments, config_path=None, timeout=TIMEOUT, popen=
 
 
 def list_tools(server, config_path=None, timeout=TIMEOUT, popen=subprocess.Popen):
-    """[{name, inputSchema…}] from tools/list: metadata only, for checking a tool's schema."""
+    """[{name, inputSchema…}] from tools/list: metadata only, for checking a tool's schema. Only for a server
+    named in ALLOWED."""
+    if server not in {srv for srv, _ in ALLOWED}:
+        raise McpError(f"{server}: not an allowed server")
+
     def run(s, deadline):
         tools, cursor = [], None
         while True:
@@ -203,7 +258,7 @@ def list_tools(server, config_path=None, timeout=TIMEOUT, popen=subprocess.Popen
 
 def zoho_original_message(message_id, **kw):
     """The tool's text for ZohoMail_getOriginalMessage (JSON wrapping the raw MIME)."""
-    if not re.fullmatch(r"\d{6,25}", str(message_id)):
+    if not re.fullmatch(r"[0-9]{6,25}", str(message_id)):  # ASCII digits only
         raise McpError(f"zoho-mail: not a message id: {message_id!r}")
     return call_tool("zoho-mail", "ZohoMail_getOriginalMessage",
                      {"path_variables": {"accountId": ZOHO_ACCOUNT, "messageId": str(message_id)}}, **kw)
