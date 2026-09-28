@@ -489,7 +489,7 @@ EACH RUN
 4. If there are no CLIENT or QUOTES messages, no SINGER INVOICE, no NEWLY PAID or THANKS DUE line and daily_due is false: run `assistant_io.py done` and reply "Nothing new" (plus any step 3 lines). Stop.
 5. Start the sub-agents that have work, all in one message so they run in parallel. Give each only what it needs, one line per message: messageId, threadId, from, to, subject, received date (YYYY-MM-DD).
    - lcs-reply-drafter: the CLIENT and QUOTES messages.
-   - lcs-singer-clerk: the SINGER INVOICE messages (plus the sender's address and display name) and the NEWLY PAID, BOOKS DUE and THANKS DUE lines. For a SINGER INVOICE whose thread also has a Luca reply in Sent, add "Luca replied: <subject>" so the clerk can check it.
+   - lcs-singer-clerk: the SINGER INVOICE messages (plus the sender's address and display name) and the NEWLY PAID and THANKS DUE lines. For a SINGER INVOICE whose thread also has a Luca reply in Sent, add "Luca replied: <subject>" so the clerk can check it.
    - lcs-daily-pass: only when daily_due is true (no messages needed; say "run the daily pass for <today>").
    If the Agent tool says an agent type isn't found, start a general-purpose agent instead, with model "sonnet" ("haiku" for the clerk), and begin its prompt: "Read .claude/agents/<name>.md and follow it exactly: its tools line is the only tools you may use."
 6. Run `assistant_io.py done` with every messageId you sorted (CLIENT, QUOTES, SINGER INVOICE and SKIP) plus any "processed:" ids the agents list.
