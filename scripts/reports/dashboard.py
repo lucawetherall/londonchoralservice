@@ -220,6 +220,7 @@ def books_section():
     season = season_totals(bc.margins(), season_start())
     unlinked = si.unlinked_invoices(lm.read_csv(si.STORE))
     return {"totals": cache.get("totals") or {}, "drafts": drafts, "overdue": overdue,
+            "bills_read": cache.get("bills_read") is not False,
             "generated_at": when.isoformat() if when else None, "season": season, "unlinked": unlinked}
 
 
@@ -437,7 +438,9 @@ def r_books(v, data):
     t = v["totals"]
     out = [f'<div class="pair"><div><div class="muted">Receivables</div><div class="big">{gbp(t.get("receivables", 0))}</div></div>'
            f'<div><div class="muted">Overdue</div><div class="big">{gbp(t.get("overdue", 0))}</div></div>'
-           f'<div><div class="muted">Unpaid bills</div><div class="big">{gbp(t.get("unpaid_bills", 0))}</div></div></div>']
+           + (f'<div><div class="muted">Unpaid bills</div><div class="big">{gbp(t.get("unpaid_bills", 0))}</div></div>'
+              if v.get("bills_read", True) is not False else "")
+           + '</div>']
     if v["drafts"]:
         out.append(f'<p>Drafts not yet sent: {", ".join(e(n) for n in v["drafts"])}</p>')
     if v["overdue"]:
