@@ -4,6 +4,7 @@ Every change applied to GA4 property 527915578, newest first.
 
 | Date (Europe/London) | Resource | Field | Current → New | Reason | Script |
 |---|---|---|---|---|---|
+| 2026-09-28 01:10 | Search Console link | product link | none → sc-domain:londonchoralservice.com associated with web stream londonchoralservice.com | Organic queries and landing pages in GA4 reports | Search Console UI via Claude in Chrome, owner approved |
 | 2026-09-28 00:54 | reportingDataAnnotation "Lead tracking rebuilt" | annotation | none → 2026-09-26 note | Explain the 26 Sep break in the charts | `scripts/ga4/annotations_2026_09.py` |
 | 2026-09-28 00:54 | reportingDataAnnotation "Ads: choir-only, Christmas campaign live" | annotation | none → 2026-09-26 note | Explain the 26 Sep break in the charts | `scripts/ga4/annotations_2026_09.py` |
 | 2026-09-27 15:39 | eventCreateRule contact_click[whatsapp] → contact_message | rule | none → contact_click with method=whatsapp also recorded as contact_message | WhatsApp and email are the owner's preferred contact routes (primary in Google Ads) | `scripts/ga4/contact_message_key_event_2026_09.py` |

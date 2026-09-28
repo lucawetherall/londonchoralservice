@@ -4,6 +4,7 @@ Every change applied to the Google Ads account (customer 8733881378) is logged h
 
 | Date (Europe/London) | Resource | Field | Current → New | Reason | Script |
 |---|---|---|---|---|---|
+| 2026-09-28 01:10 | Tools → Data manager → Search Console | product link | not linked → linked (https://londonchoralservice.com) | Paid and organic report: see where ads and organic results overlap for the same searches | Google Ads UI via Claude in Chrome, owner approved (not available in the API) |
 | 2026-09-28 01:05 | Account conversion settings | Enhanced conversions for leads | not configured → on, managed through Google tag | Booking uploads can match on the hashed client email as well as the click reference; Google confirmed the site's tag already sends user-provided data | Google Ads UI via Claude in Chrome, owner approved (API cannot change it) |
 | 2026-09-28 00:53 | campaign "funeral expert campaign" sitelink "Get a Quote" (348071213215) | status | enabled → paused | Promises a same-day response; the site says within one working day (callout paused 26 Sep) | `scripts/ads/ad_strength_sitelinks_2026_09_28.py` |
 | 2026-09-28 00:53 | campaign "funeral expert campaign" sitelink "Get a Quote" (424677730988) | link | not linked → linked (existing asset) | Accurate replacement: 'Reply within one working day' | `scripts/ads/ad_strength_sitelinks_2026_09_28.py` |
