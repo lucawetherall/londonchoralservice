@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block content %}
+{% if not sdk_ok %}<p class="card card-bad">The Claude Agent SDK isn't installed in the app's Python. Run <span class="mono">install.sh</span> again.</p>{% endif %}
+<div class="chat-layout">
+  <aside class="chat-side" aria-label="Conversations">
+    <form method="post" action="/chat/new" class="chat-new">
+      <input type="hidden" name="kind" value="blank">
+      <button class="button small" type="submit">New chat</button>
+    </form>
+    <a class="button quiet small" href="/chat">All chats and tasks</a>
+    <ul class="plain conv-list">
+      {% for c in conversations[:20] %}
+      <li><a class="conv-link" href="/chat/{{ c.id }}"{% if c.id == conv.id %} aria-current="page"{% endif %}><span class="conv-title">{{ c.title }}</span> <span class="muted">{{ c.updated|when }}</span></a></li>
+      {% endfor %}
+    </ul>
+  </aside>
+
+  <section class="chat" id="chat" data-chat="{{ conv.id }}" aria-label="Conversation">
+    <p class="chat-meta muted">
+      <span id="chat-state">Loading…</span>
+      · <span id="chat-totals">{{ "$%.4f"|format(totals.cost_usd) }} · {{ totals.input_tokens }} in / {{ totals.output_tokens }} out tokens</span>
+    </p>
+    <noscript><p class="card card-bad">The chat needs JavaScript (the stream and the passkey).</p></noscript>
+    <ol class="chat-log" id="chat-log" aria-live="polite"></ol>
+
+    <div class="chat-quick" aria-label="Quick prompts">
+      {% for label, text in quick %}
+      <button type="button" class="button quiet small" data-prefill="{{ text }}">{{ label }}</button>
+      {% endfor %}
+      <span class="chat-hand">
+        <label class="sr" for="chat-ref">Booking ref on the hand check</label>
+        <select id="chat-ref" {% if not hand_refs %}disabled{% endif %}>
+          {% for r in hand_refs %}<option value="{{ r }}">{{ r }}</option>{% else %}<option value="">no hand checks</option>{% endfor %}
+        </select>
+        <button type="button" class="button quiet small" id="chat-hand" data-template="{{ hand_prompt }}" {% if not hand_refs %}disabled{% endif %}>Why is it on the hand check?</button>
+      </span>
+    </div>
+
+    <form class="chat-form" id="chat-form">
+      <label class="sr" for="chat-text">Message</label>
+      <textarea id="chat-text" name="text" rows="3" maxlength="8000" placeholder="Ask Claude…" required></textarea>
+      <div class="chat-controls">
+        <label class="field-inline" for="chat-turns">Max turns
+          <select id="chat-turns" name="max_turns">
+            {% for n in turn_choices %}<option value="{{ n }}"{% if n == default_turns %} selected{% endif %}>{{ n }}</option>{% endfor %}
+          </select>
+        </label>
+        <button class="button" type="submit" id="chat-send">Send</button>
+        <button class="button quiet" type="button" id="chat-stop" hidden>Stop</button>
+      </div>
+      <p class="status" id="chat-status" role="status" aria-live="polite"></p>
+    </form>
+  </section>
+</div>
+{% endblock %}
+{% block scripts %}<script src="/static/chat.js" defer></script>{% endblock %}

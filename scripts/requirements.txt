@@ -24,3 +24,25 @@ pycparser==3.0
 pyOpenSSL==26.4.0
 pyasn1==0.6.4
 pyasn1_modules==0.4.2
+# Phase 4, the chat: the Claude Agent SDK (it bundles its own Claude Code CLI) and what it pulls in. httpx2 and
+# httpcore2 come in with mcp, so they are runtime packages here too, at the same versions as requirements-dev.txt.
+claude-agent-sdk==0.2.160
+sniffio==1.3.1
+mcp==2.2.0
+mcp-types==2.2.0
+pydantic==2.13.5
+pydantic_core==2.46.5
+annotated-types==0.8.0
+typing-inspection==0.4.4
+jsonschema==4.26.0
+jsonschema-specifications==2025.9.1
+referencing==0.37.0
+rpds-py==2026.6.3
+attrs==26.1.0
+sse-starlette==3.4.11
+PyJWT==2.15.0
+python-multipart==0.0.32
+opentelemetry-api==1.45.0
+httpx2==2.13.1
+httpcore2==2.13.1
+truststore==0.10.4

@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block content %}
+{% if not sdk_ok %}<p class="card card-bad">The Claude Agent SDK isn't installed in the app's Python. Run <span class="mono">install.sh</span> again.</p>{% endif %}
+<div class="chat-home">
+  <section class="card">
+    <h2>New chat</h2>
+    <p class="muted">Claude Code, in the repo, under its own settings and guards. Anything outside the allowlist comes to you as a card to approve with Face ID or Touch ID, or deny.</p>
+    <p class="muted">Claude signs in with your own Claude Code login on this Mac (run <span class="mono">claude</span> in Terminal and <span class="mono">/login</span> once). The app keeps no Claude password or key.</p>
+    <form method="post" action="/chat/new" class="chat-new">
+      <input type="hidden" name="kind" value="blank">
+      <button class="button" type="submit">Start a new chat</button>
+    </form>
+  </section>
+
+  {% if handoffs %}
+  <section class="card card-warn">
+    <h2>Approved, waiting for Claude</h2>
+    <ul class="plain">
+      {% for h in handoffs %}
+      <li>
+        <p><strong>{{ h.label }}</strong> <span class="muted">approved {{ h.approved_at[:16]|replace("T", " ") }}, dry run sha256 {{ h.sha256[:16] }}</span></p>
+        {% if h.started %}
+        <p class="muted">Started{% if h.started != "unknown" %}: <a href="/chat/{{ h.started }}">open that chat</a>{% endif %}.</p>
+        {% else %}
+        <form method="post" action="/chat/new" class="chat-new">
+          <input type="hidden" name="kind" value="handoff">
+          <input type="hidden" name="item" value="{{ h.item }}">
+          <button class="button" type="submit">Run approved: {{ h.label }}</button>
+        </form>
+        {% endif %}
+      </li>
+      {% endfor %}
+    </ul>
+  </section>
+  {% endif %}
+
+  <section class="card">
+    <h2>Run a scheduled task now</h2>
+    <p class="muted">{{ task_note }}</p>
+    {% if tasks %}
+    <ul class="plain">
+      {% for t in tasks %}
+      <li class="task-row">
+        <div class="task-text"><strong>{{ t.name }}</strong>{% if t.description %}<br><span class="muted">{{ t.description }}</span>{% endif %}</div>
+        <form method="post" action="/chat/new" class="chat-new">
+          <input type="hidden" name="kind" value="task">
+          <input type="hidden" name="task" value="{{ t.dir }}">
+          <button class="button quiet small" type="submit">Run now</button>
+        </form>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}<p class="muted">No scheduled tasks found in ~/.claude/scheduled-tasks.</p>{% endif %}
+  </section>
+
+  <section class="card chat-conversations">
+    <h2>Conversations</h2>
+    {% if conversations %}
+    <ul class="plain conv-list">
+      {% for c in conversations %}
+      <li><a class="conv-link" href="/chat/{{ c.id }}"><span class="conv-title">{{ c.title }}</span> <span class="muted">{{ c.updated|when }}</span></a></li>
+      {% endfor %}
+    </ul>
+    {% else %}<p class="muted">No conversations yet.</p>{% endif %}
+  </section>
+</div>
+{% endblock %}
+{% block scripts %}<script src="/static/chat.js" defer></script>{% endblock %}

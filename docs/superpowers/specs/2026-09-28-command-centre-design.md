@@ -129,6 +129,8 @@ All pages are mobile-first, with dark and light modes and the LCS brand colours.
     - Streamed replies and a conversation list.
     - Approve/deny cards (passkey).
     - A "stop" button.
+    - As built (phase 4): the Claude Agent SDK runs its bundled Claude Code CLI in the repo with the project settings only (`.claude/settings.json`, its hooks and `CLAUDE.md`) and the default permission mode. A card's summary is the exact call (tool and canonical JSON input, bound by sha256); approving needs a passkey over that summary, denying doesn't, and ten minutes without an answer is a deny. The SDK signs in with the owner's own Claude Code login on the Mac (the one `claude` then `/login` stores in the Keychain); the app holds no Claude credential.
+    - "Run approved" buttons hand an approval from phase 3 (the Books import) to a chat with a fixed, server-built instruction, once, while the dry run's hash still matches.
 15. **Activity log:** every action and every run, filterable.
 
 ## Actions (the registry)
@@ -149,7 +151,7 @@ It needs a passkey (except the local records below) and is logged.
 | Approve an Ads change set | Run a proposal-aware `scripts/ads/*.py` from its commit on GitHub's main (the app's own mirror) with `--validate-only`, show the output (its first and last 3,000 characters, unmasked), then `--apply` from the same commit after a second tap; the script writes `logs/ads-changes.md` (`LCS_ADS_LOG`). It never goes above £5/day (the script refuses). |
 | Approve the 2026 Books import / a proposed page fix | Queue it for Claude Code (chat) with the approved instruction. The chat runs it under its guards. |
 | Mark a draft sent or discarded; tick a to-do | Local record only. **Exception: no passkey.** These write only the app's own files in `~/lcs-private/command-centre/` (never the ledger, the singer store, email, Books or the bank), so the owner's Tailscale identity, the Host check and the same-origin check are enough. They are still registered actions, with a server-built summary and an `audit.jsonl` entry. |
-| Run a scheduled task now | Triggers the task (headless `claude -p` with the task prompt in the repo folder, the same as the scheduled run) |
+| Run a scheduled task now | Starts a chat whose first message is the task's own `SKILL.md` prompt (phase 4). It runs under the project settings, with cards for anything outside the allowlist; the scheduler's run history doesn't record it |
 | Refresh data now | Refresh jobs, read-only |
 | Back up now | The backup job |
 

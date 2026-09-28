@@ -303,11 +303,14 @@ def test_command_centre_dependencies_are_pinned():
     req = open(os.path.join(ROOT, "scripts", "requirements.txt")).read()
     lines = {re.split(r"[=<>~!\[]", ln)[0].strip().lower(): ln.strip() for ln in req.splitlines()
              if ln.strip() and not ln.startswith("#")}
-    for pkg in ["starlette", "uvicorn", "jinja2", "webauthn"]:
+    for pkg in ["starlette", "uvicorn", "jinja2", "webauthn", "claude-agent-sdk", "mcp"]:
         assert re.fullmatch(rf"{pkg}==\d+(\.\d+)+", lines.get(pkg, ""), re.I), (pkg, lines.get(pkg))
-    assert "httpx2" not in lines and "httpx" not in lines
+    assert "httpx" not in lines
     dev = open(os.path.join(ROOT, "scripts", "requirements-dev.txt")).read()
-    assert re.search(r"^httpx2==\d", dev, re.M)
+    dev_pin = re.search(r"^httpx2==(\S+)", dev, re.M)
+    assert dev_pin
+    # phase 4: mcp (the Agent SDK's dependency) needs httpx2 at run time, so it is pinned in both, at one version
+    assert lines.get("httpx2") == f"httpx2=={dev_pin.group(1)}", lines.get("httpx2")
     install = open(os.path.join(ROOT, "command_centre", "install.sh")).read()
     assert not re.search(r"-r\s+\S*requirements-dev", install)  # test-only packages never reach the service
     assert re.findall(r"-m pip install[^\n]*", install) == ['-m pip install --quiet -r "$REPO/scripts/requirements.txt"']

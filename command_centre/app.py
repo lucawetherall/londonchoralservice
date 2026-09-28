@@ -6,7 +6,9 @@ Phase 1: Today, Money and Passkeys pages, the passkey endpoints and /healthz. Ph
 pages (Bookings, Enquiries, Singers, Marketing, Calendar, Search, Reports, Health, To-do, Exports, More) and
 one local write, POST /todo/tick (actions.REGISTRY["todo-tick"], no passkey: see actions.py). Phase 3: the
 actions (POST /actions/<name>/preview, then POST /actions/<name>/run with a passkey assertion bound to the
-server-built summary; see actions.py) and the Activity page. No GET route has a side effect. See
+server-built summary; see actions.py) and the Activity page. Phase 4: the chat with Claude Code (chat.py): /chat, its
+POST routes for messages, stop and approval cards (approve needs a passkey bound to the card's exact tool call), and
+GET /chat/<id>/stream (Server-Sent Events, no side effects). No GET route has a side effect. See
 docs/superpowers/specs/2026-09-28-command-centre-design.md and docs/superpowers/plans/2026-09-28-command-centre.md.
 """
 
@@ -24,11 +26,12 @@ from starlette.applications import Starlette
 from starlette.concurrency import run_in_threadpool
 from starlette.middleware import Middleware
 from starlette.requests import Request
-from starlette.responses import HTMLResponse, JSONResponse, PlainTextResponse, RedirectResponse, Response
+from starlette.responses import (HTMLResponse, JSONResponse, PlainTextResponse, RedirectResponse, Response,
+                                 StreamingResponse)
 from starlette.routing import Mount, Route
 from starlette.staticfiles import StaticFiles
 
-from . import actions, auth, data, models
+from . import actions, auth, chat, data, models
 
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parent
@@ -38,11 +41,11 @@ log = logging.getLogger("command_centre")
 NAV = [("Today", "/"), ("Bookings", "/bookings"), ("Enquiries", "/enquiries"), ("Money", "/money"),
        ("Singers", "/singers"), ("Marketing", "/marketing"), ("Calendar", "/calendar"), ("Search", "/search"),
        ("Reports", "/reports"), ("Health", "/health"), ("To-do", "/todo"), ("Exports", "/exports"),
-       ("Activity", "/activity")]
+       ("Activity", "/activity"), ("Chat", "/chat")]
 HAND_CHOICES = [(k, v[0]) for k, v in actions.HAND_CHOICES.items()]
-ACTIVITY_RESULTS = ("ok", "failed", "refused", "started")
+ACTIVITY_RESULTS = ("ok", "failed", "refused", "started", "denied", "timed out", "expired", "stopped")
 JSON_MAX = 16384  # bytes of an action request (a passkey assertion is about 1 KB)
-TABS = [("Today", "/"), ("Bookings", "/bookings"), ("Enquiries", "/enquiries"), ("Money", "/money")]
+TABS = [("Today", "/"), ("Bookings", "/bookings"), ("Money", "/money"), ("Chat", "/chat")]
 SOON = []  # every page up to phase 2 is live; chat, drafts and the quote calculator come later
 FORM_MAX = 4096  # bytes of a urlencoded POST body
 HTMX_CONFIG = json.dumps({"includeIndicatorStyles": False, "allowEval": False, "allowScriptTags": False,
@@ -145,13 +148,15 @@ class CommandCentre(Starlette):
 
 
 def create_app(client_factory=data.default_client, now=None, clock=None, passkeys=None, bind_host=None, port=None,
-               uds=None, checkout=None):
+               uds=None, checkout=None, chat_client_factory=None):
     """The app. `bind_host`, `port` and `uds` say how __main__ serves it. CC_DEV_LOGIN is honoured only on
     127.0.0.1, on a port other than the service's 8765, and never on the Unix socket. `checkout` returns the
-    serving checkout's branch (default: read from .git)."""
+    serving checkout's branch (default: read from .git). `chat_client_factory(options)` makes the chat's SDK client
+    (default: claude_agent_sdk.ClaudeSDKClient; the tests pass a fake)."""
     env = make_env()
     reader = data.Data(client_factory, now=now, **({"clock": clock} if clock else {}))
     keys = passkeys or auth.Passkeys()
+    chats = chat.ChatManager(keys, client_factory=chat_client_factory)
     dev_login = os.environ.get("CC_DEV_LOGIN", "").strip() or None
     if bind_host != LOOPBACK or uds or port is None or int(port) == auth.SERVICE_PORT:
         dev_login = None
@@ -288,7 +293,7 @@ def create_app(client_factory=data.default_client, now=None, clock=None, passkey
     async def activity(request):
         q = request.query_params
         name = q.get("action", "")
-        name = name if name in actions.REGISTRY else ""
+        name = name if name in actions.REGISTRY or name in chat.AUDIT_NAMES else ""
         result = q.get("result", "")
         result = result if result in ACTIVITY_RESULTS else ""
         text = q.get("q", "").strip()[:80]
@@ -310,7 +315,7 @@ def create_app(client_factory=data.default_client, now=None, clock=None, passkey
                 continue
             shown.append(e)
         return render(request, "activity.html", title="Activity", stamp=data.stamp(reader.now()), entries=entries,
-                      shown=shown, names=sorted(actions.REGISTRY), results=ACTIVITY_RESULTS, action_name=name,
+                      shown=shown, names=sorted([*actions.REGISTRY, *chat.AUDIT_NAMES]), results=ACTIVITY_RESULTS, action_name=name,
                       result=result, text=text, chain=chain)
 
     def guarded(fn, *args):
@@ -362,6 +367,148 @@ def create_app(client_factory=data.default_client, now=None, clock=None, passkey
         return JSONResponse(result.as_json())
 
     async def action_error(request, exc):
+        return JSONResponse({"error": exc.reason}, status_code=exc.status)
+
+    # ------------------------------------------------------------ chat (phase 4)
+
+    async def read_form(request, allowed):
+        if request.headers.get("content-type", "").split(";")[0].strip() != "application/x-www-form-urlencoded":
+            raise chat.ChatError("malformed request")
+        raw = await request.body()
+        if len(raw) > FORM_MAX:
+            raise chat.ChatError("malformed request")
+        try:
+            fields = urllib.parse.parse_qs(raw.decode("utf-8"), max_num_fields=8, keep_blank_values=True)
+        except (UnicodeDecodeError, ValueError):
+            raise chat.ChatError("malformed request") from None
+        if not set(fields) <= allowed or any(len(v) != 1 for v in fields.values()):
+            raise chat.ChatError("malformed request")
+        return {k: v[0] for k, v in fields.items()}
+
+    async def read_json(request, allowed):
+        if request.headers.get("content-type", "").split(";")[0].strip() != "application/json":
+            raise chat.ChatError("malformed request")
+        raw = await request.body()
+        if len(raw) > JSON_MAX:
+            raise chat.ChatError("request too large")
+        try:
+            payload = json.loads(raw.decode("utf-8")) if raw else {}
+        except (UnicodeDecodeError, ValueError):
+            raise chat.ChatError("malformed request") from None
+        if not isinstance(payload, dict) or not set(payload) <= allowed:
+            raise chat.ChatError("malformed request")
+        return payload
+
+    def hand_refs():
+        try:
+            hand = reader.today_page()["hand"]
+            rows = hand.value if hand.ok else (hand.stale or [])
+            return sorted({str(r.get("ref")) for r in rows if actions.REF_RE.fullmatch(str(r.get("ref", "")))})
+        except Exception as e:  # the picker is a convenience; the page still renders
+            log.warning("hand refs: %s", type(e).__name__)
+            return []
+
+    def chat_common():
+        try:
+            tasks = chat.scheduled_tasks()
+        except OSError:
+            tasks = []
+        return {"stamp": data.stamp(reader.now()), "conversations": chat.list_conversations(),
+                "tasks": tasks, "handoffs": chat.handoffs(), "sdk_ok": chat.sdk is not None,
+                "task_note": chat.TASK_DIFFERENCES}
+
+    async def chat_list(request):
+        return render(request, "chat_list.html", title="Chat", **chat_common())
+
+    async def chat_page(request):
+        conv = chats.get(request.path_params["cid"])
+        if conv is None:
+            return PlainTextResponse("Not found", status_code=404)
+        return render(request, "chat.html", title=conv.meta.get("title") or "Chat", conv=conv, totals=conv.totals(),
+                      quick=chat.QUICK_PROMPTS, hand_refs=await run_in_threadpool(hand_refs),
+                      hand_prompt=chat.HAND_PROMPT, turn_choices=chat.MAX_TURNS_CHOICES,
+                      default_turns=chat.DEFAULT_MAX_TURNS, **chat_common())
+
+    async def chat_new(request):
+        form = await read_form(request, {"kind", "task", "item"})
+        kind = form.get("kind", "blank")
+        u = user(request)
+        if kind == "blank":
+            conv = chats.create(u)
+        elif kind == "task":
+            name = form.get("task", "")
+            prompt = await run_in_threadpool(chat.task_prompt, name)
+            conv = chats.create(u, "task", f"Run now: {name}", prompt)
+            chats.send(conv, prompt, u, max_turns=chat.TASK_MAX_TURNS)
+        elif kind == "handoff":
+            h = next((h for h in chat.handoffs() if h["item"] == form.get("item")), None)
+            if h is None:
+                raise chat.ChatError("nothing approved to run", status=404)
+            if h["started"]:
+                raise chat.ChatError("already started", status=409)
+            prompt = chat.handoff_prompt(h)
+            cid = chat.new_id()
+            chat.record_handoff(h["item"], cid, u)
+            conv = chats.create(u, "handoff", f"Run approved: {h['label']}", prompt, cid=cid)
+            chats.send(conv, prompt, u, max_turns=chat.HANDOFF_MAX_TURNS)
+        else:
+            raise chat.ChatError("malformed request")
+        if wants_json(request):  # chat.js posts the form with fetch(), which sends the real Origin (see chat.js)
+            return JSONResponse({"url": f"/chat/{conv.id}"})
+        return RedirectResponse(f"/chat/{conv.id}", status_code=303)
+
+    async def chat_message(request):
+        conv = chats.require(request.path_params["cid"])
+        payload = await read_json(request, {"text", "max_turns"})
+        chats.send(conv, payload.get("text"), user(request), payload.get("max_turns", chat.DEFAULT_MAX_TURNS))
+        return JSONResponse({"ok": True})
+
+    async def chat_stop(request):
+        conv = chats.require(request.path_params["cid"])
+        await read_json(request, set())
+        chats.stop(conv, user(request))
+        return JSONResponse({"ok": True})
+
+    async def chat_stream(request):
+        conv = chats.require(request.path_params["cid"])
+        after = request.headers.get("last-event-id") or request.query_params.get("after") or "0"
+        after = int(after) if after.isdigit() and len(after) < 10 else 0
+        return StreamingResponse(chats.stream(conv, after), media_type="text/event-stream",
+                                 headers={"X-Accel-Buffering": "no"})
+
+    async def card_options(request):
+        conv = chats.require(request.path_params["cid"])
+        payload = await read_json(request, {"digest"})
+        return JSONResponse(chats.card_options(conv, request.path_params["card"], payload.get("digest")))
+
+    async def card_approve(request):
+        conv = chats.require(request.path_params["cid"])
+        payload = await read_json(request, {"digest", "credential"})
+        u = user(request)
+        card, action = chats.card_check(conv, request.path_params["card"], payload.get("digest"), u)
+        if payload.get("credential") is None:
+            chats.refuse_passkey(conv, card, action, "no passkey", u)
+            raise chat.ChatError("approving needs a passkey", status=403)
+        try:
+            passkey_id = await run_in_threadpool(keys.require_fresh_assertion, payload["credential"], action)
+        except auth.PasskeyError as e:
+            chats.refuse_passkey(conv, card, action, e.reason, u)
+            raise
+        chats.approve_verified(conv, card, action, passkey_id, u)
+        return JSONResponse({"ok": True})
+
+    async def card_deny(request):
+        conv = chats.require(request.path_params["cid"])
+        await read_json(request, set())
+        chats.deny(conv, request.path_params["card"], user(request))
+        return JSONResponse({"ok": True})
+
+    def wants_json(request):
+        return request.headers.get("accept", "").split(",")[0].strip() == "application/json"
+
+    async def chat_error(request, exc):
+        if request.url.path == "/chat/new" and not wants_json(request):
+            return PlainTextResponse(exc.reason, status_code=exc.status)
         return JSONResponse({"error": exc.reason}, status_code=exc.status)
 
     async def body(request):
@@ -428,6 +575,15 @@ def create_app(client_factory=data.default_client, now=None, clock=None, passkey
         Route("/activity", activity),
         Route("/actions/{name}/preview", action_preview, methods=["POST"]),
         Route("/actions/{name}/run", action_run, methods=["POST"]),
+        Route("/chat", chat_list),
+        Route("/chat/new", chat_new, methods=["POST"]),
+        Route("/chat/{cid}", chat_page),
+        Route("/chat/{cid}/message", chat_message, methods=["POST"]),
+        Route("/chat/{cid}/stop", chat_stop, methods=["POST"]),
+        Route("/chat/{cid}/stream", chat_stream),
+        Route("/chat/{cid}/cards/{card}/options", card_options, methods=["POST"]),
+        Route("/chat/{cid}/cards/{card}/approve", card_approve, methods=["POST"]),
+        Route("/chat/{cid}/cards/{card}/deny", card_deny, methods=["POST"]),
         Route("/auth/passkey/register/options", register_options, methods=["POST"]),
         Route("/auth/passkey/register", register, methods=["POST"]),
         Route("/auth/passkey/assert/options", assert_options, methods=["POST"]),
@@ -437,8 +593,10 @@ def create_app(client_factory=data.default_client, now=None, clock=None, passkey
     app = CommandCentre(
         routes=routes,
         middleware=[Middleware(auth.IdentityMiddleware, dev_login=dev_login, dev_port=port, uds=bool(uds))],
-        exception_handlers={auth.PasskeyError: passkey_error, actions.ActionError: action_error, 404: not_found})
+        exception_handlers={auth.PasskeyError: passkey_error, actions.ActionError: action_error,
+                            chat.ChatError: chat_error, 404: not_found})
     app.state.dev_login = dev_login
     app.state.passkeys = keys
+    app.state.chat = chats
     app.state.checkout_warning = warning
     return app
