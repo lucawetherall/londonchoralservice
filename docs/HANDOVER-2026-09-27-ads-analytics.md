@@ -26,7 +26,7 @@ Section 4 lists every step in order.
 | GA4 | Europe/London time zone, 14-month retention, key events `generate_lead` and `contact_message` (WhatsApp/email), five custom dimensions |
 | Site | `christmas-pricing.html` live. Standard booking is up to two hours everywhere. Funeral and wedding pages lead with choirs |
 | API access | Google Ads API **Basic** access (managed in the Cloud project; no developer token needed). Search Console read access working |
-| Still waiting on you | Starling read-only token (section 5). Everything else from 28 Sep is done: GA4 internal filter active, Google signals on, Business Profile service area set, test draft deleted, phone tap test. The owner chose not to trim the Zoho MCP tools; the guard hook covers that |
+| Still waiting on you | Nothing. The Starling token is stored (the owner chose to keep a token with broader permissions: reads plus payee:create and metadata edit, no payments; the script only reads, and `--selftest` lists the permissions and warns, as expected). Everything else from 28 Sep is done: GA4 internal filter active, Google signals on, Business Profile service area set, test draft deleted, phone tap test. The owner chose not to trim the Zoho MCP tools; the guard hook covers that |
 | Done 28 Sep | `webmasters` write scope granted; sitemap resubmitted; indexing requested for christmas-pricing.html; "Enhanced conversions for leads" on (Google tag); Ads sitelink and pin changes and GA4 annotations applied; Search Console linked to GA4 and to Google Ads; this Mac's Chrome flagged as internal (`?lcs_internal=1`) |
 | Email assistant (28 Sep) | A scheduled task drafts replies to new enquiries every two hours, 08:00–20:00, in Zoho Drafts. Claude can read mail and save drafts from office@ only: `.claude/hooks/zoho_guard.py` blocks sending, deleting and everything else. The owner reviews and sends (Appendix E) |
 | Invoices (28 Sep) | When a client accepts a quote, the assistant makes the invoice PDF and booking confirmation (`scripts/bookings/make_booking_docs.py`, private templates in `~/lcs-private/tools/`) and records the booking as PENDING until the deposit is seen. The Monday review records invoices you send yourself, reading the PDF totals (`scripts/bookings/invoice_text.py`) |
@@ -224,6 +224,7 @@ For Zoho Mail, follow section 5, item 1. Zoho's MCP URL works like a password: r
    - Personal access → create a token with only `account-list:read` and `transaction:read`. Nothing else: no payment or payee scopes.
    - In Terminal run `security add-generic-password -a "$USER" -s lcs-starling-read -w` and paste the token when asked (it isn't shown).
    - Check it with `.venv/bin/python scripts/bookings/check_payments.py --selftest` from the repo. Revoke the token in the portal at any time to switch it off.
+   - Done 28 Sep. The owner kept a token with broader permissions than the two above (it can add payees and edit transaction notes, not send money). Claude sessions can't read Keychain secrets (deny rules in `.claude/settings.json`); only the script reads the token.
 3. **Exclude your own visits from GA4.**
    - Open `https://londonchoralservice.com/?lcs_internal=1` once on each of your devices and browsers.
    - Then GA4 → **Admin → Data collection and modification → Data filters → Internal Traffic** → set to **Active** → Save.
