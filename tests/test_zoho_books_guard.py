@@ -533,6 +533,13 @@ def test_settings_json_is_valid_and_registers_the_guard():
         assert f"mcp__{server}" in cfg["permissions"]["allow"], server
 
 
+def test_update_contact_may_restate_contact_type_only_as_customer_or_vendor():
+    ok = {"path_variables": {"contact_id": "1"}, "body": {"contact_name": "Ann Smith", "contact_type": "customer"}}
+    assert decide("zoho-books-invoices", "ZohoBooks_update_contact", ok) == "allow"
+    bad = {"path_variables": {"contact_id": "1"}, "body": {"contact_name": "Ann Smith", "contact_type": "employee"}}
+    assert decide("zoho-books-invoices", "ZohoBooks_update_contact", bad) == "deny"
+
+
 if __name__ == "__main__":
     failures = 0
     for name, fn in sorted(globals().items()):

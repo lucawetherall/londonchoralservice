@@ -205,6 +205,9 @@ def check_create_contact(body, query, path):
 
 def check_update_contact(body, query, path):
     _need(path, "contact_id", "path_variables")
+    # Books' schema requires contact_type on update; it may only restate customer or vendor.
+    if "contact_type" in body and body["contact_type"] not in ("customer", "vendor"):
+        raise Deny(P + "contact_type must be \"customer\" or \"vendor\".")
 
 
 def check_create_invoice(body, query, path):
@@ -255,7 +258,7 @@ WRITE_TOOLS = {
             contact_persons=[CONTACT_PERSON], billing_address=BILLING_ADDRESS),
         ORG_ONLY, NOTHING, check_create_contact),
     "ZohoBooks_update_contact": (
-        obj("contact_name", "company_name"), ORG_ONLY, obj("contact_id"), check_update_contact),
+        obj("contact_name", "company_name", "contact_type"), ORG_ONLY, obj("contact_id"), check_update_contact),
     "ZohoBooks_create_invoice": (
         obj("customer_id", "invoice_number", "date", "due_date", "payment_terms", "payment_terms_label", "notes",
             "terms", "reference_number", "allow_partial_payments", "template_id", line_items=[INVOICE_LINE]),
