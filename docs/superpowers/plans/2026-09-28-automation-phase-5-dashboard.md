@@ -45,7 +45,7 @@
 | 1 | Upcoming events | `bookings.csv` rows with event_date ≥ today, not cancelled, soonest first: date, ref, client first name, occasion, ensemble, value £, payment state from `check_payments.collect` (a closed row reads "paid in full (closed)") | No token or Starling down: "bank not checked" plus the notes-only state from `assess(row, [], today)` |
 | 2 | Money | `money_report.summary_lines` | Received line reads "bank not checked" |
 | 3 | Needs a hand check | assessments in `money_report.HAND_CHECK`: ref, label, value £, received £ | Received reads "not checked" |
-| 4 | Singer invoices unpaid | `singer-invoices.csv` rows with no paid_on: received, first name, £, payee, `••••last4`, a red badge when `ring_first`, an amber one when the change was confirmed by phone | "No unpaid singer invoices." |
+| 4 | Singer invoices unpaid | `singer-invoices.csv` rows with no paid_on: received, first name, £, payee status (never the payee's name), `••••last4`, a red badge when `ring_first`, an amber one when the change was confirmed by phone | "No unpaid singer invoices." |
 | 5 | Pipeline | `enquiries.csv`: counts by status for the season (from 1 September) and the last 30 days; conversion = confirmed (confirmed, deposit paid, done) / quoted (those plus quoted, or any row with quoted_gbp) | "pipeline sheet not set up yet" |
 | 6 | Ads | `ads-summary.json`: the 4 latest weeks' spend and clicks, newest first; with `enquiries.csv`, enquiries whose first_seen falls in each week and spend ÷ enquiries | "run the Monday review to fill this" |
 | 7 | Bank balance | `GET /api/v2/accounts/{uid}/balance`: cleared and effective £ | "not checked" |

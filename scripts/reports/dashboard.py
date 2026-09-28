@@ -117,9 +117,19 @@ def digits4(value):
     return re.sub(r"\D", "", str(value or ""))[-4:]
 
 
+def payee_status(payee):
+    """Whether Starling already knows the singer, without the payee's full name."""
+    for prefix, label in (("existing: ", "existing payee"),
+                          ("name matches payee ", "matches an existing payee, different bank details"),
+                          ("probably existing: ", "probably an existing payee (no bank details on the invoice)")):
+        if payee.startswith(prefix):
+            return label
+    return payee
+
+
 def singers(rows):
     return [{"received": r.get("received", ""), "first_name": first_name(r.get("singer_name")),
-             "amount": lm.money(r.get("amount_gbp")), "payee": r.get("payee", ""),
+             "amount": lm.money(r.get("amount_gbp")), "payee": payee_status(r.get("payee", "")),
              "bank_changed": r.get("bank_changed") == "yes", "ring_first": si.ring_first(r),
              "last4": digits4(r.get("bank_last4"))}
             for r in sorted(rows, key=lambda r: r.get("received") or "") if not r.get("paid_on")]

@@ -281,6 +281,13 @@ def test_no_bank_makes_no_starling_calls():
         dash.lm.keychain_token, dash.lm.StarlingReadOnly = real_token, real_client
 
 
+def test_payee_status_never_shows_the_payee_full_name():
+    assert dash.payee_status("existing: Ben Fenwick") == "existing payee"
+    assert "Fenwick" not in dash.payee_status("name matches payee Ben Fenwick but with different bank details")
+    assert "Fenwick" not in dash.payee_status("probably existing: Ben Fenwick (no bank details on the invoice)")
+    assert dash.payee_status("NEW: add as a payee in the Starling app").startswith("NEW")
+
+
 if __name__ == "__main__":
     failures = 0
     for name, fn in sorted(globals().items()):
