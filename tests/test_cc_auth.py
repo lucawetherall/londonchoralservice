@@ -453,7 +453,7 @@ def test_require_fresh_assertion_with_mocked_verifier():
     finally:
         auth.verify_authentication_response = real
     assert seen["expected_challenge"] == unb64(opts["challenge"])
-    assert seen["expected_challenge"][16:] == auth.action_hash("assert", "summary")
+    assert seen["expected_challenge"][16:] == auth.action_hash("assert", "summary", "t")
     assert seen["expected_rp_id"] == RP_ID and seen["expected_origin"] == ORIGIN
     assert seen["credential_public_key"] == a.cose() and seen["require_user_verification"] is True
     assert auth.load_config()["passkeys"][0]["sign_count"] == 42

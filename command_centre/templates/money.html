@@ -35,8 +35,8 @@
   <article class="card card-wide{% if items %} card-warn{% endif %}">
     <h2>Needs a hand check</h2>
     {{ m.failed(hand) }}
-    {% if items %}{{ m.hand_table(items, bank.ok and bank.value.bank_checked) }}
-    <p class="muted">Resolving these from the app arrives in phase 3; until then, add the note in the ledger.</p>
+    {% if items %}{{ m.hand_table(items, bank.ok and bank.value.bank_checked, action_day) }}
+    <p class="muted">Resolve adds your note to the ledger through check_payments, after Face ID or Touch ID.</p>
     {% elif hand.ok %}<p class="muted">Nothing needs a hand check.</p>{% endif %}
   </article>
 
@@ -46,7 +46,7 @@
     {{ m.failed(singers) }}
     {% if items %}
     <p>{{ items|length }} unpaid, {% if singer_total.ok %}{{ singer_total.value|gbp }}{% else %}{{ items|sum(attribute="amount")|gbp }}{% endif %}</p>
-    {{ m.singers_table(items) }}
+    {{ m.singers_table(items, action_day) }}
     {% elif singers.ok %}<p class="muted">No unpaid singer invoices.</p>{% endif %}
   </article>
 </section>

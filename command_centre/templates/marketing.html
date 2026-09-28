@@ -95,8 +95,32 @@
 </section>
 {% endif %}
 
+<section class="card" id="proposals">
+  <h2>Ads change sets to approve</h2>
+  {{ m.failed(proposals) }}
+  {% set props = proposals.value if proposals.ok else [] %}
+  {% if props %}
+  <ul class="proposals">
+    {% for p in props %}
+    <li class="proposal{% if p.problem %} proposal-bad{% endif %}">
+      <p><span class="muted">Claude's description:</span> <strong>{{ p.title }}</strong>{% if p.created %} <span class="muted">proposed {{ p.created[:10]|day }}</span>{% endif %}</p>
+      {% if p.summary %}<p>{{ p.summary }}</p>{% endif %}
+      {% if p.script_path %}<p class="muted">Script <span class="mono">{{ p.script_path }}</span></p>{% endif %}
+      {% if p.applied %}<p><span class="badge ok">applied</span></p>
+      {% elif p.problem %}<p><span class="badge bad">can't run</span> {{ p.problem }}</p>
+      {% else %}
+      {{ m.action_button("ads-validate", "Check with Google (validate only)", {"proposal": p.id}) }}
+      {% if p.validated %}{{ m.action_button("ads-apply", "Apply this change set", {"proposal": p.id}) }}{% endif %}
+      {% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+  <p class="muted">Each step needs Face ID or Touch ID: first a validate-only run, then the apply, bound to the output you saw. The check shows what git says about the script (its commit on main at GitHub, who last changed it, its code change and its own description) beside Claude's. It runs from that commit as fetched from GitHub into the app's own mirror, never the working folder. The scripts keep the £5 daily cap and log to logs/ads-changes.md.</p>
+  {% elif proposals.ok %}<p class="muted">No change sets waiting. The Monday review will write them here.</p>{% endif %}
+</section>
+
 <section class="card">
   <h2>Still to come</h2>
-  <p class="muted">Budget proposals, flagged search terms, the Search Console shortlist and GA4 leads arrive with the refresh job (phase 3). Until then they are in the Monday report.</p>
+  <p class="muted">Flagged search terms, the Search Console shortlist and GA4 leads arrive with the refresh job (phase 5). Until then they are in the Monday report.</p>
 </section>
 {% endblock %}

@@ -75,6 +75,15 @@
     return credentialJSON(cred);
   }
 
+  // For actions.js: the options come from /actions/<name>/preview, already bound to that action's summary.
+  window.LCSPasskey = Object.freeze({
+    post: post,
+    assertWith: async function (options) {
+      var cred = await navigator.credentials.get({ publicKey: requestOptions(options) });
+      return credentialJSON(cred);
+    }
+  });
+
   var box = document.getElementById("passkeys");
   if (!box) return;
   var status = document.getElementById("pk-status");

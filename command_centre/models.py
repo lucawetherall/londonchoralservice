@@ -10,6 +10,7 @@ Privacy, as on the phase-1 pages: client and singer first names only, emails nev
 """
 
 import datetime
+import hashlib
 import re
 import sys
 from pathlib import Path
@@ -32,6 +33,21 @@ FOLLOWUP_GAP = {0: pl.FIRST_AFTER, 1: pl.SECOND_AFTER, 2: pl.LOST_AFTER}
 
 
 # ---------------------------------------------------------------- small helpers
+
+
+def invoice_key(message_id):
+    """A singer invoice's handle for the action forms: 12 lower-case letters from sha256 of its message id, so a
+    page never carries the id (a long digit run) and the server looks the invoice up again from the store."""
+    digest = hashlib.sha256(("lcs-cc-invoice:" + str(message_id or "")).encode("utf-8")).digest()
+    return "".join(chr(97 + b % 26) for b in digest[:12])
+
+
+def singer_actions(r):
+    """Which singer-invoice actions a store row allows (the validators in actions.py check again)."""
+    open_ = si.is_open(r)
+    return {"key": invoice_key(r.get("message_id")),
+            "can_confirm": bool(r.get("bank_fp")) and r.get("bank_confirmed") != "yes" and not si.is_withdrawn(r),
+            "can_settle": open_, "can_withdraw": open_}
 
 
 def to_date(value):
@@ -279,7 +295,8 @@ def singer_directory(rows, today):
         invoices = [{"received": si.received_date(r), "bill_number": si.bill_number(r.get("invoice_ref"), r.get("message_id")),
                      "amount": lm.money(r.get("amount_gbp")), "paid_on": to_date(r.get("paid_on")),
                      "paid_amount": lm.parse_gbp(r.get("paid_amount")), "open": si.is_open(r),
-                     "ring_first": si.ring_first(r), "last4": dash.digits4(r.get("bank_last4"))} for r in live]
+                     "ring_first": si.ring_first(r), "last4": dash.digits4(r.get("bank_last4")),
+                     **singer_actions(r)} for r in live]
         withdrawn = [{"received": si.received_date(r), "bill_number": si.bill_number(r.get("invoice_ref"), r.get("message_id")),
                       "amount": lm.money(r.get("amount_gbp")), "on": to_date(r.get("withdrawn"))}
                      for r in group if si.is_withdrawn(r)]

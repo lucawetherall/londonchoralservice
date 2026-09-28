@@ -22,9 +22,25 @@ PY = ".venv/bin/python"
 # Owner-only or approval-gated: the prompts name them, but Claude must never run them unattended.
 NEVER = [
     f"{PY} scripts/bookings/singer_invoices.py confirm X",
+    f"{PY} scripts/bookings/singer_invoices.py confirm 1789828736363141700",
     f"{PY} scripts/bookings/singer_invoices.py settled X 2026-09-28",
     f"{PY} scripts/ads/upload_bookings.py --apply",
     f"{PY} scripts/gsc/submit_sitemap.py --apply",
+    # Ads change sets: the Command Centre applies them after two passkey taps (validate, then apply)
+    f"{PY} scripts/ads/add_negatives_2026_09_28.py --apply",
+    f"{PY} scripts/ads/set_campaign_status.py 24295921372 enabled --reason X --apply",
+    f"{PY} scripts/ads/generated_proposal_2026_10_05.py --apply",
+    f"{PY} scripts/ads/generated_proposal_2026_10_05.py",  # even the validate-only run goes through the app
+    f"{PY} scripts/ads/set_budget.py 24295921372 4.50 --apply",
+    f"{PY} scripts/ads/set_budget.py 24295921372 4.50 --validate-only",
+    f"{PY} scripts/bookings/singer_invoices.py confirm X --expect-fp a1b2c3d4e5f60718",
+]
+# Owner-only forms the allowlist can't exclude (a glob can't forbid a flag): `--note *` and `--reminded *` match
+# them, so check_payments.py itself refuses --owner without the Command Centre's one-time nonce on a pipe
+# (tests/test_check_payments.py, test_owner_note_is_refused_without_the_nonce and the tests after it).
+SCRIPT_GUARDED = [
+    f"{PY} scripts/bookings/check_payments.py --note X \"paid in full 2026-09-28\" --owner",
+    f"{PY} scripts/bookings/check_payments.py --reminded X --note X \"refunded 2026-09-28\" --owner",
 ]
 # Script mentions that are references or prohibitions, not commands to run.
 NOT_RUN = re.compile(r"^(singer_invoices\.py (confirm|settled)|scripts/gsc/submit_sitemap\.py --apply)\b")
@@ -86,7 +102,10 @@ def commands(block, scripts):
 
 
 def allow_patterns():
-    rules = json.load(open(SETTINGS))["permissions"]["allow"]
+    return patterns_of(json.load(open(SETTINGS))["permissions"]["allow"])
+
+
+def patterns_of(rules):
     pats = []
     for r in rules:
         m = re.fullmatch(r"Bash\((.*)\)", r)
@@ -132,6 +151,63 @@ def test_owner_only_commands_are_not_allowlisted():
     pats = allow_patterns()
     wrongly = [c for c in NEVER if allowed(c, pats)]
     assert not wrongly, "owner-only or approval-gated commands must prompt: " + ", ".join(wrongly)
+
+
+def test_script_guarded_forms_are_documented_and_guarded():
+    """These ARE matched by the allowlist, which is why check_payments.py must refuse them itself: if one ever
+    stops matching (the allowlist narrowed), it can move to NEVER."""
+    pats = allow_patterns()
+    for cmd in SCRIPT_GUARDED:
+        assert allowed(cmd, pats), f"{cmd} no longer matches the allowlist: move it to NEVER"
+        assert cmd.rstrip().endswith("--owner")
+    src = open(os.path.join(ROOT, "scripts", "bookings", "check_payments.py"), encoding="utf-8").read()
+    assert "def owner_confirmed(" in src and "if not owner_confirmed():" in src
+
+
+def test_claude_file_tools_cant_write_the_command_centre_folder():
+    """The owner nonce, proposals, approvals and audit log live in ~/lcs-private/command-centre/: Claude's Write
+    and Edit tools are denied there (the nonce file is the --owner barrier; a pipe alone is not)."""
+    with open(SETTINGS, encoding="utf-8") as f:
+        deny = json.load(f)["permissions"]["deny"]
+    for tool in ("Write", "Edit"):
+        assert f"{tool}(~/lcs-private/command-centre/**)" in deny, tool
+
+
+GIT_DENY = ["Bash(git update-ref *)", "Bash(git remote set-url *)", "Bash(git config *)", "Edit(.git/**)"]
+
+
+def deny_patterns():
+    with open(SETTINGS, encoding="utf-8") as f:
+        deny = json.load(f)["permissions"]["deny"]
+    return deny, patterns_of([r for r in deny if r.startswith("Bash(")])
+
+
+def test_git_ref_and_config_changes_are_denied():
+    """Belt and braces for the Ads mirror (it never trusts the working repo, but Claude shouldn't be moving refs,
+    remotes or git config by hand): the deny rules exist, they don't catch any command the scheduled prompts run,
+    and the prompts never ask for git config, update-ref or remote set-url."""
+    deny, pats = deny_patterns()
+    for rule in GIT_DENY:
+        assert rule in deny, rule
+    for cmd in ("git update-ref refs/remotes/origin/main HEAD", "git remote set-url origin https://example.org/x",
+                "git config filter.x.smudge cat", "git config --local --list"):
+        assert any(p.fullmatch(cmd) for _, p in pats), cmd
+    blocks, scripts = appendix_blocks(), script_paths()
+    for k, b in blocks.items():
+        for c in commands(b, scripts):
+            assert not any(p.fullmatch(c) for _, p in pats), f"Appendix {k}: {c} is denied"
+        for bad in ("git config", "update-ref", "remote set-url"):
+            assert bad not in b, f"Appendix {k} mentions {bad}"
+    for everyday in ("git status", "git fetch -q origin", "git add -A", "git commit -m x", "git push origin x"):
+        assert not any(p.fullmatch(everyday) for _, p in pats), everyday
+
+
+def test_no_allowlist_rule_covers_every_script():
+    """A rule like Bash(.venv/bin/python *) or Bash(.venv/bin/python scripts/ads/*) would let any owner-only
+    command through."""
+    for rule, _ in allow_patterns():
+        fixed = rule[len("Bash("):-1].split("*", 1)[0]  # everything before the first wildcard
+        assert re.fullmatch(rf"{re.escape(PY)} scripts/[a-z]+/[a-z_]+\.py( .*)?", fixed.rstrip()), rule
 
 
 def test_appendix_e_prose_uses_only_its_own_command_list():

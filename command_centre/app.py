@@ -4,8 +4,9 @@
 
 Phase 1: Today, Money and Passkeys pages, the passkey endpoints and /healthz. Phase 2: the read-only data
 pages (Bookings, Enquiries, Singers, Marketing, Calendar, Search, Reports, Health, To-do, Exports, More) and
-one local write, POST /todo/tick (actions.REGISTRY["todo-tick"], no passkey: see actions.py). No GET route
-has a side effect. See
+one local write, POST /todo/tick (actions.REGISTRY["todo-tick"], no passkey: see actions.py). Phase 3: the
+actions (POST /actions/<name>/preview, then POST /actions/<name>/run with a passkey assertion bound to the
+server-built summary; see actions.py) and the Activity page. No GET route has a side effect. See
 docs/superpowers/specs/2026-09-28-command-centre-design.md and docs/superpowers/plans/2026-09-28-command-centre.md.
 """
 
@@ -20,6 +21,7 @@ from pathlib import Path
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 from starlette.applications import Starlette
+from starlette.concurrency import run_in_threadpool
 from starlette.middleware import Middleware
 from starlette.requests import Request
 from starlette.responses import HTMLResponse, JSONResponse, PlainTextResponse, RedirectResponse, Response
@@ -35,7 +37,11 @@ log = logging.getLogger("command_centre")
 
 NAV = [("Today", "/"), ("Bookings", "/bookings"), ("Enquiries", "/enquiries"), ("Money", "/money"),
        ("Singers", "/singers"), ("Marketing", "/marketing"), ("Calendar", "/calendar"), ("Search", "/search"),
-       ("Reports", "/reports"), ("Health", "/health"), ("To-do", "/todo"), ("Exports", "/exports")]
+       ("Reports", "/reports"), ("Health", "/health"), ("To-do", "/todo"), ("Exports", "/exports"),
+       ("Activity", "/activity")]
+HAND_CHOICES = [(k, v[0]) for k, v in actions.HAND_CHOICES.items()]
+ACTIVITY_RESULTS = ("ok", "failed", "refused", "started")
+JSON_MAX = 16384  # bytes of an action request (a passkey assertion is about 1 KB)
 TABS = [("Today", "/"), ("Bookings", "/bookings"), ("Enquiries", "/enquiries"), ("Money", "/money")]
 SOON = []  # every page up to phase 2 is live; chat, drafts and the quote calculator come later
 FORM_MAX = 4096  # bytes of a urlencoded POST body
@@ -125,7 +131,9 @@ def make_env():
                       trim_blocks=True, lstrip_blocks=True)
     env.filters.update(gbp=gbp, day=day, london_day=london_day, last4=last4, state_words=state_words,
                        state_tone=state_tone, gbp_or_dash=gbp_or_dash, when=when, pct=models.rate)
-    env.globals.update(NAV=NAV, TABS=TABS, SOON=SOON, HTMX_CONFIG=HTMX_CONFIG, current=current)
+    env.filters.update(masked=lambda v: actions.DIGITS_RE.sub("••••••", str(v)))
+    env.globals.update(NAV=NAV, TABS=TABS, SOON=SOON, HTMX_CONFIG=HTMX_CONFIG, current=current,
+                       HAND_CHOICES=HAND_CHOICES)
     return env
 
 
@@ -159,15 +167,27 @@ def create_app(client_factory=data.default_client, now=None, clock=None, passkey
             return auth.passkey_summary({})
 
     def render(request, name, **ctx):
+        ctx.setdefault("action_day", data.lm.today(reader.now()).isoformat())  # the date fields' default and max
         page = env.get_template(name).render(request=request, path=request.url.path, **ctx)
         return HTMLResponse(page)
+
+    def proposals():
+        try:
+            return data.Panel(value=actions.list_proposals())
+        except Exception as e:  # the type only
+            return data.Panel(error=type(e).__name__)
 
     async def healthz(request):
         return PlainTextResponse("ok")
 
     async def today(request):
+        props = proposals()
+        waiting = [p for p in (props.value or []) if not p["applied"] and not p["problem"]] if props.ok else []
+        books = actions.books_status()
+        ctx = reader.today_page()
+        ctx["attention"] += len(waiting) + (1 if books["dry_run"] and not books["approved_at"] else 0)
         return render(request, "today.html", title="Today", passkey_info=passkey_info(), checkout_warning=warning,
-                      **reader.today_page())
+                      proposals=props, waiting=waiting, books=books, **ctx)
 
     async def money(request):
         return render(request, "money.html", title="Money", **reader.money_page())
@@ -202,7 +222,7 @@ def create_app(client_factory=data.default_client, now=None, clock=None, passkey
         return render(request, "singers.html", title="Singers", **reader.singers_page())
 
     async def marketing(request):
-        return render(request, "marketing.html", title="Marketing", **reader.marketing_page())
+        return render(request, "marketing.html", title="Marketing", proposals=proposals(), **reader.marketing_page())
 
     async def calendar(request):
         q = request.query_params
@@ -265,6 +285,85 @@ def create_app(client_factory=data.default_client, now=None, clock=None, passkey
     async def more(request):
         return render(request, "more.html", title="More", stamp=data.stamp(reader.now()))
 
+    async def activity(request):
+        q = request.query_params
+        name = q.get("action", "")
+        name = name if name in actions.REGISTRY else ""
+        result = q.get("result", "")
+        result = result if result in ACTIVITY_RESULTS else ""
+        text = q.get("q", "").strip()[:80]
+        try:
+            entries = data.Panel(value=actions.read_audit())
+        except Exception as e:  # the type only
+            entries = data.Panel(error=type(e).__name__)
+        try:
+            chain = data.Panel(value=actions.audit_status())
+        except Exception as e:  # the type only
+            chain = data.Panel(error=type(e).__name__)
+        shown = []
+        for e in entries.value or []:
+            if name and e.get("action") != name:
+                continue
+            if result and not str(e.get("result", "")).startswith(result):
+                continue
+            if text and text.casefold() not in json.dumps(e, ensure_ascii=False).casefold():
+                continue
+            shown.append(e)
+        return render(request, "activity.html", title="Activity", stamp=data.stamp(reader.now()), entries=entries,
+                      shown=shown, names=sorted(actions.REGISTRY), results=ACTIVITY_RESULTS, action_name=name,
+                      result=result, text=text, chain=chain)
+
+    def guarded(fn, *args):
+        """Refusals pass through; any other failure (an unreadable ledger, say) becomes its type name only."""
+        try:
+            return fn(*args)
+        except (actions.ActionError, auth.PasskeyError):
+            raise
+        except Exception as e:
+            log.warning("action failed: %s", type(e).__name__)
+            raise actions.ActionError(f"couldn't run ({type(e).__name__})", status=503) from None
+
+    async def action_payload(request, name):
+        if name not in actions.ROUTED:
+            raise actions.ActionError("unknown action", status=404)
+        if request.headers.get("content-type", "").split(";")[0].strip() != "application/json":
+            raise actions.ActionError("malformed request")
+        raw = await request.body()
+        if len(raw) > JSON_MAX:
+            raise actions.ActionError("request too large")
+        try:
+            payload = json.loads(raw.decode("utf-8"))
+        except (UnicodeDecodeError, ValueError):
+            raise actions.ActionError("malformed request") from None
+        if not isinstance(payload, dict) or not set(payload) <= {"input", "credential"}:
+            raise actions.ActionError("malformed request")
+        return actions.REGISTRY[name], payload
+
+    async def action_preview(request):
+        """The server-built summary (plain English plus the exact command) and, for a passkey action, assertion
+        options whose challenge is bound to that summary. Nothing runs."""
+        defn, payload = await action_payload(request, request.path_params["name"])
+        cleaned = await run_in_threadpool(guarded, defn.validate, payload.get("input"))
+        action = auth.Action(defn.name, defn.preview(cleaned))
+        body = {"action": defn.name, "title": defn.title, "summary": action.summary, "command": defn.command(cleaned),
+                "passkey": defn.passkey}
+        if hasattr(defn, "code"):  # an Ads change set: the script's code change, bound to the summary by its sha256
+            body["code"] = defn.code(cleaned)
+        if defn.passkey:
+            body["options"] = keys.assertion_options(action)
+        return JSONResponse(body)
+
+    async def action_run(request):
+        defn, payload = await action_payload(request, request.path_params["name"])
+        result = await run_in_threadpool(guarded, actions.run_action, defn, payload.get("input"), user(request),
+                                         payload.get("credential"), keys)
+        if getattr(defn, "clears_cache", False):
+            reader.clear_caches()
+        return JSONResponse(result.as_json())
+
+    async def action_error(request, exc):
+        return JSONResponse({"error": exc.reason}, status_code=exc.status)
+
     async def body(request):
         try:
             payload = await request.json()
@@ -326,6 +425,9 @@ def create_app(client_factory=data.default_client, now=None, clock=None, passkey
         Route("/exports", exports),
         Route("/exports/{name}.csv", export),
         Route("/more", more),
+        Route("/activity", activity),
+        Route("/actions/{name}/preview", action_preview, methods=["POST"]),
+        Route("/actions/{name}/run", action_run, methods=["POST"]),
         Route("/auth/passkey/register/options", register_options, methods=["POST"]),
         Route("/auth/passkey/register", register, methods=["POST"]),
         Route("/auth/passkey/assert/options", assert_options, methods=["POST"]),
@@ -335,7 +437,7 @@ def create_app(client_factory=data.default_client, now=None, clock=None, passkey
     app = CommandCentre(
         routes=routes,
         middleware=[Middleware(auth.IdentityMiddleware, dev_login=dev_login, dev_port=port, uds=bool(uds))],
-        exception_handlers={auth.PasskeyError: passkey_error, 404: not_found})
+        exception_handlers={auth.PasskeyError: passkey_error, actions.ActionError: action_error, 404: not_found})
     app.state.dev_login = dev_login
     app.state.passkeys = keys
     app.state.checkout_warning = warning

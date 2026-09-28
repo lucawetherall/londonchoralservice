@@ -20,6 +20,12 @@
 {% endif %}
 
 <section class="card">
+  <h2>Resolve a hand check</h2>
+  <p class="muted">Adds your note (paid in full, deposit kept, refunded and so on) to this booking's ledger notes, after Face ID or Touch ID.</p>
+  {{ m.resolve_form(ref, action_day) }}
+</section>
+
+<section class="card">
   <h2>Timeline</h2>
   {% for name, p in parts.items() %}
   {% if not p.ok %}<p class="fail">{{ {"ledger": "Ledger", "enquiries": "Enquiries", "singers": "Singer invoices"}[name] }}: couldn't load ({{ p.error }})</p>{% endif %}

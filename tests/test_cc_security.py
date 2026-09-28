@@ -370,7 +370,7 @@ def test_assertions_bind_a_server_built_action():
         r = T.post(c, "/auth/passkey/assert/options", {"action": name})
         assert r.status_code == 400 and r.json()["error"] == "unknown action", (name, r.text)
     opts = T.post(c, "/auth/passkey/assert/options", {"action": "check"}).json()
-    assert auth.unb64url(opts["challenge"])[16:] == auth.action_hash("assert", auth.CHECK.summary)
+    assert auth.unb64url(opts["challenge"])[16:] == auth.action_hash("assert", auth.CHECK.summary, "check")
     r = T.post(c, "/auth/passkey/assert", {"action": "check", "credential": a.assert_(opts)})
     assert r.status_code == 200, r.text
     try:  # an Action can't be altered once built

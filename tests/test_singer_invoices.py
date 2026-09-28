@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Tests for scripts/bookings/singer_invoices.py. Stdlib only. Uses a temp private dir."""
-import argparse, base64, contextlib, datetime, io, os, sys, tempfile, zipfile
+import argparse, base64, contextlib, datetime, io, os, re, subprocess, sys, tempfile, zipfile
+from pathlib import Path
 
 TMP = tempfile.mkdtemp()
 os.environ["LCS_PRIVATE_DIR"] = TMP
@@ -730,6 +731,37 @@ def test_confirm_command():
         raise AssertionError("confirmed a missing invoice")
     except SystemExit:
         pass
+
+
+def test_confirm_expect_fp_is_bound_to_the_fingerprint():
+    fresh_store()
+    scan(GEN.format(n=1), "g1", "2026-08-01")
+    fp = rows_by_id()["g1"]["bank_fp"]
+    assert re.fullmatch(r"[0-9a-f]{16}", fp), fp
+    other = fp[:15] + ("0" if fp[15] != "0" else "1")  # differs only in the last character
+    for bad in (other, fp[:8], fp[:15], fp.upper(), "abc", "-x", fp[:14] + "zz", fp + "0"):
+        try:
+            si.cmd_confirm(Args(message_id="g1", expect_fp=bad))
+            raise AssertionError(f"confirmed with --expect-fp {bad}")
+        except SystemExit:
+            pass
+        assert rows_by_id()["g1"]["bank_confirmed"] == "", bad
+    buf = io.StringIO()
+    with contextlib.redirect_stdout(buf):
+        si.cmd_confirm(Args(message_id="g1", expect_fp=fp))
+    assert rows_by_id()["g1"]["bank_confirmed"] == "yes"
+    # the real command line: argparse takes the option
+    fresh_store()
+    scan(GEN.format(n=1), "g1", "2026-08-01")
+    env = dict(os.environ)
+    p = subprocess.run([sys.executable, str(Path(si.__file__)), "confirm", "g1", "--expect-fp", other], env=env,
+                       capture_output=True, text=True, timeout=30, stdin=subprocess.DEVNULL)
+    assert p.returncode != 0 and "changed since you approved" in p.stderr, (p.stdout, p.stderr)
+    assert rows_by_id()["g1"]["bank_confirmed"] == ""
+    p = subprocess.run([sys.executable, str(Path(si.__file__)), "confirm", "g1", "--expect-fp", fp], env=env,
+                       capture_output=True, text=True, timeout=30, stdin=subprocess.DEVNULL)
+    assert p.returncode == 0, p.stderr
+    assert rows_by_id()["g1"]["bank_confirmed"] == "yes"
 
 
 def test_payee_name_check_needs_the_first_name():

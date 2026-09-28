@@ -11,6 +11,9 @@ Alma Consort Starling account, READ-ONLY (see lcs_money.StarlingReadOnly).
         (one line, at most 120 characters, no ';'; refuses the scripts' own phrases and the owner's hand-written
         ones: paid in full, deposit seen … (Starling), reminder/receipt drafted, deposit kept, refunded,
         payment checked, reinstated and the like, review request …, and anything starting PENDING)
+    … --note 2111 "paid in full 2026-09-28" --owner
+        (the Command Centre only, after the owner's passkey: allows the owner's phrases and records "(owner)";
+        refused unless stdin is a pipe carrying the app's one-time nonce, see owner_confirmed)
     .venv/bin/python scripts/bookings/check_payments.py --selftest       # token, account and permissions
 
 Matching (against every ledger row, closed ones too, so a payment is never
@@ -87,10 +90,16 @@ it writes "deposit seen … (Starling)". Output shows invoice numbers and amount
 
 import argparse
 import datetime
+import hashlib
+import hmac
 import json
 import math
+import os
 import re
+import select
+import stat
 import sys
+import time
 import urllib.error
 from pathlib import Path
 
@@ -648,16 +657,29 @@ def main():
     ap.add_argument("--reminded", metavar="REF")
     ap.add_argument("--kind", choices=sorted(MARK_TEXT), default="deposit")
     ap.add_argument("--note", nargs=2, metavar=("REF", "TEXT"))
+    ap.add_argument("--owner", action="store_true", help="the Command Centre only: needs its one-time nonce on stdin")
     args = ap.parse_args()
     today = lm.today()
 
     # lm.locked_rows holds lm.ledger_lock, an flock on a fresh descriptor: NOT re-entrant. Never nest it, or
     # call another ledger writer while holding it, in one process: the second acquire deadlocks.
+    if args.owner and not args.note:
+        raise SystemExit("--owner goes with --note only; nothing written")
     if args.note:
         ref, text = args.note
         if "\n" in text or "\r" in text or len(text) > 120 or ";" in text:
             raise SystemExit("note text must be a single line, at most 120 characters, with no ';'")
-        if reserved_note(text):
+        if args.owner:
+            if is_pending(text):
+                raise SystemExit("a note never starts with PENDING; nothing written")
+            where = owner_ledger_problem()
+            if where:
+                raise SystemExit(f"--owner {where}; nothing written")
+            if not owner_confirmed():
+                raise SystemExit("--owner needs the Command Centre's one-time owner nonce (the owner's passkey "
+                                 "approval); nothing written")
+            text = f"{text} (owner)"
+        elif reserved_note(text):
             raise SystemExit("that phrase is the scripts' own or the owner's (he writes it in the ledger by hand); "
                              "nothing written")
         append_note(ref, text)
@@ -681,6 +703,69 @@ def main():
         run(args, client, lm.read_csv(LEDGER), today)  # --apply takes the lock only after the Starling calls
     except lm.StarlingError as e:
         raise SystemExit(str(e))
+
+
+OWNER_NONCE_TTL = 60  # seconds: the Command Centre writes the file moments before it runs this script
+
+
+def owner_nonce_path():
+    """<private dir>/command-centre/owner-nonce (LCS_PRIVATE_DIR read at call time)."""
+    return Path(os.environ.get("LCS_PRIVATE_DIR", Path.home() / "lcs-private")) / "command-centre" / "owner-nonce"
+
+
+def owner_ledger_problem(environ=None):
+    """None when an --owner note would land in the ledger beside the nonce, else the reason. The nonce proves the
+    app asked; this proves the note goes to the ledger the app read: LCS_BOOKINGS_CSV must be unset (the app never
+    sets it for its subprocesses) and the ledger must sit directly in the nonce's private dir."""
+    environ = os.environ if environ is None else environ
+    if environ.get("LCS_BOOKINGS_CSV"):
+        return "refuses LCS_BOOKINGS_CSV (the ledger must be the one in the private folder)"
+    private = owner_nonce_path().parent.parent
+    try:
+        if Path(LEDGER).resolve().parent != private.resolve():
+            return "needs the ledger in the same private folder as the nonce"
+    except OSError:
+        return "couldn't resolve the ledger's folder"
+    return None
+
+
+def owner_confirmed(stdin_fd=0):
+    """True only when the Command Centre ran this --owner note after the owner's passkey approval: stdin is a pipe
+    (not a terminal, not a redirected file) whose first line hashes (sha256) to the contents of the one-time nonce
+    file, and that file is a regular file (never followed through a symlink), this user's, mode 600 with no group
+    or other bits, and under OWNER_NONCE_TTL seconds old. The file is deleted on a match, so a nonce works once.
+    The nonce itself lives only in the app's memory and the pipe; the file holds its hash, so redirecting the
+    file into stdin fails twice over. No allowlisted command can pipe or write that file (plan, Task 3.1)."""
+    try:
+        if not stat.S_ISFIFO(os.fstat(stdin_fd).st_mode):
+            return False
+        path = owner_nonce_path()
+        fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | getattr(os, "O_NONBLOCK", 0))
+    except OSError:
+        return False
+    try:
+        st = os.fstat(fd)
+        if (not stat.S_ISREG(st.st_mode) or st.st_uid != os.getuid() or st.st_mode & 0o077
+                or not -5 <= time.time() - st.st_mtime <= OWNER_NONCE_TTL or st.st_size > 200):
+            return False
+        want = os.read(fd, 200).decode("ascii", "replace").strip()
+    finally:
+        os.close(fd)
+    if not re.fullmatch(r"[0-9a-f]{64}", want):
+        return False
+    ready, _, _ = select.select([stdin_fd], [], [], 2.0)  # an idle, open pipe never hangs the script
+    if not ready:
+        return False
+    line = os.read(stdin_fd, 200).decode("ascii", "replace").split("\n", 1)[0].strip()
+    if not re.fullmatch(r"[0-9a-f]{64}", line):
+        return False
+    if not hmac.compare_digest(hashlib.sha256(line.encode("ascii")).hexdigest(), want):
+        return False
+    try:
+        os.unlink(path)  # single use: burnt before the note is written
+    except OSError:
+        return False
+    return True
 
 
 def append_note(ref, text):
