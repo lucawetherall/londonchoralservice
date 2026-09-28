@@ -125,10 +125,20 @@ def main():
     if not tok:
         print(f"No Starling token in the Keychain (service {KEYCHAIN_SERVICE}); payment check skipped.")
         return
-    acct = account(tok)
     if args.selftest:
+        try:
+            scopes = sorted(get("/api/v2/identity/token", tok).get("scopes", []))
+        except Exception as e:  # identity endpoint unavailable: still test the account call
+            scopes = [f"(could not read scopes: {type(e).__name__})"]
+        acct = account(tok)
         print("Starling token works; account found (uid ends …" + acct["accountUid"][-4:] + ").")
+        print("Token permissions: " + ", ".join(scopes))
+        risky = [x for x in scopes if not x.startswith("(") and not x.endswith(":read")]
+        if risky:
+            print("WARNING: this token can do more than read: " + ", ".join(risky)
+                  + ". Revoke it in the Starling developer portal and create one with only account-list:read and transaction:read.")
         return
+    acct = account(tok)
 
     open_rows = [r for r in rows if not (r.get("notes") or "").upper().startswith("CANCELLED")
                  and "paid in full" not in (r.get("notes") or "")]
