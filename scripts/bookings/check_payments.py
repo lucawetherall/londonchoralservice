@@ -4,7 +4,8 @@ Alma Consort Starling account, READ-ONLY (see lcs_money.StarlingReadOnly).
 
     .venv/bin/python scripts/bookings/check_payments.py                  # report
     .venv/bin/python scripts/bookings/check_payments.py --apply          # also update ledger notes
-    .venv/bin/python scripts/bookings/check_payments.py --apply --json   # machine-readable, for the assistant
+    .venv/bin/python scripts/bookings/check_payments.py --apply --json   # machine-readable, for the assistant;
+        each item's "action" is receipt | deposit_reminder | balance_reminder | hand_check | none (action_for)
     .venv/bin/python scripts/bookings/check_payments.py --reminded 2111 [--kind deposit|balance|receipt]
     .venv/bin/python scripts/bookings/check_payments.py --note 2111 "paid per client email 2026-09-28"
     .venv/bin/python scripts/bookings/check_payments.py --selftest       # token, account and permissions
@@ -493,7 +494,7 @@ def assess(r, paid, today):
     first_day = date_or_none(first)
     receipt_due = bool(first_day and datetime.timedelta(0) <= today - first_day <= datetime.timedelta(days=RECEIPT_DAYS)
                        and not reminded["receipt"] and upcoming and state in RECEIPT_STATES)
-    return {
+    out = {
         "ref": r["booking_ref"], "state": state, "received": total, "value": value,
         "balance": round(max(value - total, 0), 2), "first": first,
         "how": sure[0][2] if sure else (maybe[0][2] if state == "CHECK_PAYMENT" else ""),
@@ -509,6 +510,33 @@ def assess(r, paid, today):
         "receipt_due": receipt_due,
         "just_received": receipt_due,  # old name, same meaning: draft a thank-you
     }
+    out["action"] = action_for(out, today)
+    return out
+
+
+ACTIONS = ("receipt", "deposit_reminder", "balance_reminder", "hand_check", "none")
+HAND_CHECK_STATES = {"CHECK_PAYMENT", "CHECK_VALUE", "NOTED_PAID", "PAST_UNMATCHED", "PAST_PART_PAID",
+                     "PAYMENT_ON_CANCELLED", "PAYMENT_AFTER_CLOSE"}
+ARRANGED_CHECK_DAYS = 7
+
+
+def action_for(a, today):
+    """What the enquiry assistant does with one assessed booking (handover Appendix E, step 5a):
+    receipt (a thank-you for a fresh confident payment), deposit_reminder or balance_reminder (once each),
+    hand_check (listed under "Money to check by hand") or none."""
+    reminded = a.get("reminded") or {}
+    if a.get("just_received"):
+        return "receipt"
+    if a["state"] == "DEPOSIT_OVERDUE" and not reminded.get("deposit"):
+        return "deposit_reminder"
+    if a["state"] == "BALANCE_DUE" and not reminded.get("balance"):
+        return "balance_reminder"
+    if a["state"] in HAND_CHECK_STATES:
+        return "hand_check"
+    event = date_or_none(a.get("event_date"))
+    if a["state"] == "ARRANGED" and event and (event - today).days <= ARRANGED_CHECK_DAYS:
+        return "hand_check"  # so Luca remembers to collect the cash or cheque
+    return "none"
 
 
 def describe(a):

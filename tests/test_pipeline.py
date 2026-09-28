@@ -532,6 +532,47 @@ def test_cli_reviewed_refuses_a_row_wider_than_the_header():
         assert f.read() == before
 
 
+def test_cli_thread_maps_a_booking_ref_to_its_enquiry():
+    d = home()
+    add(d, enquiry_id="T1", status="confirmed", booking_ref="2111")
+    add(d, enquiry_id="T2", status="quoted", quoted_gbp=1150)
+    p = cli(d, "thread", "2111")
+    assert p.returncode == 0 and p.stdout.strip() == "T1", (p.stdout, p.stderr)
+    p = cli(d, "thread", "9999")
+    assert p.returncode == 0 and p.stdout.strip() == "no thread", (p.stdout, p.stderr)
+
+
+def test_cli_thread_with_no_file_says_no_thread():
+    d = home()
+    p = cli(d, "thread", "2111")
+    assert p.returncode == 0 and p.stdout.strip() == "no thread", (p.stdout, p.stderr)
+
+
+def test_cli_review_skipped_stops_reviews_due_listing_it():
+    d = home()
+    path = write_ledger(d, [booking("2009", "2026-09-20", "paid in full 2026-09-19")])
+    assert json.loads(cli(d, "reviews-due", "--today", "2026-09-28").stdout) != []
+    p = cli(d, "review-skipped", "2009", "planner")
+    assert p.returncode == 0 and "review request skipped" in p.stdout, (p.stdout, p.stderr)
+    with open(path, newline="") as f:
+        notes = next(csv.DictReader(f))["notes"]
+    assert notes.startswith("paid in full 2026-09-19; review request skipped ") and notes.endswith("(planner)"), notes
+    assert json.loads(cli(d, "reviews-due", "--today", "2026-09-28").stdout) == []
+    assert mode(path) == 0o600
+    p = cli(d, "review-skipped", "2009", "planner")
+    assert p.returncode != 0 and "already" in p.stderr, p.stderr
+    p = cli(d, "reviewed", "2009", "2026-09-28")
+    assert p.returncode != 0 and "already" in p.stderr, "no review request after a skip"
+
+
+def test_cli_review_skipped_takes_one_plain_word():
+    d = home()
+    write_ledger(d, [booking("2009", "2026-09-20", "paid in full 2026-09-19")])
+    for bad in ("Ann Smith", "a;b", "", "x" * 30):
+        assert cli(d, "review-skipped", "2009", bad).returncode != 0, bad
+    assert cli(d, "review-skipped", "9999", "unresolved").returncode != 0
+
+
 def test_cli_done_due():
     d = home()
     for eid, status, ref in (("A", "confirmed", "0901"), ("B", "deposit_paid", "0902"), ("C", "confirmed", "1010"),

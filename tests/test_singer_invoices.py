@@ -1001,8 +1001,11 @@ def test_scan_fetch_reads_the_fetched_message():
     calls = []
     with fake_fetch({"177": raw_mime(GEN.format(n=101))}, calls):
         got = run_main(["scan", "--fetch", *SCAN_ARGS])
-        assert run_main(["scan", "--fetch", *SCAN_ARGS]).strip() == "already recorded: 177"
+        again = run_main(["scan", "--fetch", *SCAN_ARGS])
+    assert again.splitlines()[0] == "already recorded: 177", again
     assert calls == ["177"], calls  # a recorded invoice isn't fetched again
+    # a crashed run resumes: the stored line and the bill lines again
+    assert again.splitlines()[1:] == [l for l in got.splitlines()], (got, again)
     assert got.splitlines()[0] == "Ben: £100.00 (ref 101) · payee unknown (no Starling token) · bank ••••2222", got
     row = rows_by_id()["177"]
     assert (row["amount_gbp"], row["invoice_ref"], row["bank_last4"]) == ("100.00", "101", "2222")
@@ -1380,6 +1383,68 @@ def test_match_paid_by_equivalent_names():
     # an exact name beats a looser one: ANNA SMITH pays Anna Smith, not Anna Smith-Jones
     annas = [unpaid("a1", "Anna Smith", 100, "2026-09-20"), unpaid("a2", "Anna Smith-Jones", 100, "2026-09-20")]
     assert si.match_paid(annas, [out(100, "2026-09-21", "ANNA SMITH", "p5")]) == {"a1": ("2026-09-21", 100.0, "p5", False)}
+
+
+# --- bill lines for Zoho Books (handover Appendix E, step 4a) --------------------------------------
+
+BEN_TRUSTED = [{"payeeName": "Ben Fenwick", "accounts": [{"bankIdentifier": "123456", "accountIdentifier": "11112222"}]}]
+
+
+def bill_lines(out):
+    return [l for l in out.splitlines() if l.startswith(("bill:", "bill_number:"))]
+
+
+def test_bill_number_rule():
+    assert si.bill_number("1020", "6133510000000123456") == "1020"
+    assert si.bill_number("INV-0107", "6133510000000123456") == "INV-0107"
+    assert si.bill_number("INV-2026-017", "6133510000000123456") == "SI-23456"  # 2026-017 is one run of 7
+    assert si.bill_number("20260309-001", "6133510000000123456") == "SI-23456"
+    assert si.bill_number("A 12.345", "6133510000000123456") == "A 12.345"  # a run of exactly 5 is fine
+    assert si.bill_number("A 123.456", "6133510000000123456") == "SI-23456"
+    assert si.bill_number("", "6133510000000123456") == "SI-23456"
+    assert si.bill_number("?", "6133510000000123456") == "SI-23456"
+
+
+def test_scan_prints_bill_yes_for_a_trusted_payee():
+    fresh_store()
+    out = scan(GEN.format(n=1020), "6133510000000170001", "2026-09-25", FakeClient(payees=BEN_TRUSTED))
+    assert bill_lines(out) == ["bill: yes", "bill_number: 1020"], out
+
+
+def test_scan_prints_bill_no_for_a_bank_warning():
+    fresh_store()
+    out = scan(GEN.format(n=1020), "6133510000000170002", "2026-09-25")  # new details: ring first
+    assert "!" in out and bill_lines(out) == ["bill: no (bank warning)", "bill_number: 1020"], out
+
+
+def test_scan_prints_bill_no_when_the_amount_is_missing_or_zero():
+    fresh_store()
+    out = scan("Invoice 1021\nThanks!", "6133510000000170003", "2026-09-25", FakeClient(payees=BEN_TRUSTED))
+    assert bill_lines(out)[0] == "bill: no (amount not found)", out
+    fresh_store()
+    zero = "Invoice 1022\nTotal £0.00\nSort code 12-34-56\nAccount number 11112222"
+    out = scan(zero, "6133510000000170004", "2026-09-25", FakeClient(payees=BEN_TRUSTED))
+    assert bill_lines(out)[0] in ("bill: no (zero amount)", "bill: no (amount not found)"), out
+
+
+def test_scan_long_ref_gets_an_si_bill_number():
+    fresh_store()
+    out = scan(GEN.format(n="INV-2026-017"), "6133510000000170005", "2026-09-25", FakeClient(payees=BEN_TRUSTED))
+    assert bill_lines(out) == ["bill: yes", "bill_number: SI-70005"], out
+
+
+def test_already_recorded_reprints_the_stored_line_and_bill_lines():
+    fresh_store()
+    first = scan(GEN.format(n=1020), "6133510000000170006", "2026-09-25", FakeClient(payees=BEN_TRUSTED))
+    again = scan(GEN.format(n=1020), "6133510000000170006", "2026-09-25", FakeClient(payees=BEN_TRUSTED))
+    assert again.splitlines()[0] == "already recorded: 6133510000000170006", again
+    assert again.splitlines()[1] == first.splitlines()[0], (first, again)
+    assert bill_lines(again) == ["bill: yes", "bill_number: 1020"], again
+    assert "11112222" not in again
+    fresh_store()
+    scan(GEN.format(n=1020), "6133510000000170007", "2026-09-25")
+    again = scan(GEN.format(n=1020), "6133510000000170007", "2026-09-25")
+    assert "   ! NEW BANK DETAILS" in again and bill_lines(again)[0] == "bill: no (bank warning)", again
 
 
 if __name__ == "__main__":

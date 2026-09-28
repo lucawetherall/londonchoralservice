@@ -1,0 +1,138 @@
+#!/usr/bin/env python3
+"""Tests for scripts/bookings/assistant_io.py. Stdlib only: .venv/bin/python tests/test_assistant_io.py"""
+import csv, datetime, json, os, shutil, subprocess, sys, tempfile
+
+_HOME = tempfile.mkdtemp()  # never the real ~/lcs-private
+os.environ["LCS_PRIVATE_DIR"] = _HOME
+os.environ["LCS_BOOKINGS_CSV"] = os.path.join(_HOME, "bookings.csv")
+
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.join(ROOT, "scripts", "bookings"))
+import assistant_io as aio  # noqa: E402
+import check_payments as cp  # noqa: E402
+
+PY, SCRIPT = sys.executable, os.path.join(ROOT, "scripts", "bookings", "assistant_io.py")
+LEDGER_COLS = ["booking_ref", "invoice_date", "event_date", "client_name", "client_email", "occasion", "ensemble",
+               "value_gbp", "enquiry_date", "source", "gclid", "consent", "uploaded_at", "notes"]
+
+
+def run(*args):
+    p = subprocess.run([PY, SCRIPT, *args], capture_output=True, text=True, cwd=ROOT,
+                       env=dict(os.environ, LCS_PRIVATE_DIR=_HOME, LCS_BOOKINGS_CSV=os.path.join(_HOME, "bookings.csv")))
+    return p.returncode, p.stdout, p.stderr
+
+
+def fresh(refs=(), folders=()):
+    for name in os.listdir(_HOME):
+        path = os.path.join(_HOME, name)
+        shutil.rmtree(path) if os.path.isdir(path) else os.remove(path)
+    with open(os.path.join(_HOME, "bookings.csv"), "w", newline="") as f:
+        w = csv.DictWriter(f, fieldnames=LEDGER_COLS)
+        w.writeheader()
+        for ref in refs:
+            w.writerow({c: "" for c in LEDGER_COLS} | {"booking_ref": ref})
+    for name in folders:
+        os.makedirs(os.path.join(_HOME, "invoices", name))
+
+
+# --- state / daily-done -------------------------------------------------------------------------
+
+def test_state_reports_daily_due_until_daily_done_then_not():
+    fresh()
+    code, out, _ = run("state")
+    assert code == 0 and json.loads(out)["daily_due"] is True, out
+    code, out, _ = run("daily-done")
+    assert code == 0 and "daily pass done" in out, out
+    code, out, _ = run("state")
+    assert json.loads(out)["daily_due"] is False, out
+    # `done` keeps the daily record
+    run("done", "m1")
+    assert json.loads(run("state")[1])["daily_due"] is False
+
+
+def test_daily_due_follows_the_london_date_not_utc():
+    # 23:30 UTC on 28 Sep is 00:30 on 29 Sep in London (BST): a new London day
+    late = datetime.datetime(2026, 9, 28, 23, 30, tzinfo=datetime.timezone.utc)
+    assert aio.london_today(late) == datetime.date(2026, 9, 29)
+    assert aio.daily_due({"daily_done": "2026-09-28"}, late) is True
+    assert aio.daily_due({"daily_done": "2026-09-29"}, late) is False
+    # 09:07 UTC and 07:07 UTC on the same BST day are one London day: the daily pass runs once
+    assert aio.london_today(datetime.datetime(2026, 9, 28, 7, 7, tzinfo=datetime.timezone.utc)) == \
+        aio.london_today(datetime.datetime(2026, 9, 28, 9, 7, tzinfo=datetime.timezone.utc))
+    assert aio.daily_due({}, late) is True
+
+
+# --- next-ref ------------------------------------------------------------------------------------
+
+def test_next_ref_takes_the_first_free_suffix_and_the_checker_due_dates():
+    fresh(refs=["2111"], folders=["2111A - Smith"])
+    code, out, err = run("next-ref", "2026-11-21", "--taken", "2111B")
+    assert code == 0, err
+    got = json.loads(out)
+    assert got["ref"] == "2111C", got
+    today = aio.london_today()
+    assert got["instalment_1_due"] == cp.deposit_due_date(today, datetime.date(2026, 11, 21)).isoformat()
+    assert got["instalment_2_due"] == "2026-11-20"
+
+
+def test_next_ref_with_nothing_taken_is_plain_ddmm():
+    fresh()
+    assert json.loads(run("next-ref", "2027-06-05")[1])["ref"] == "0506"
+
+
+def test_next_ref_pure_function_and_short_notice():
+    today = datetime.date(2026, 11, 10)
+    got = aio.next_ref(datetime.date(2026, 11, 14), {"1411", "1411A"}, today)
+    assert got["ref"] == "1411B"
+    assert got["instalment_1_due"] == "2026-11-11"  # 3 days before the event, never the invoice day
+    assert got["instalment_2_due"] == "2026-11-13"
+    assert got["short_notice"] is True
+    far = aio.next_ref(datetime.date(2027, 6, 5), set(), today)
+    assert far["instalment_1_due"] == "2026-11-17" and far["short_notice"] is False
+
+
+def test_next_ref_refuses_a_bad_or_past_date():
+    fresh()
+    assert run("next-ref", "21/11/2026")[0] != 0
+    assert run("next-ref", "2020-01-01")[0] != 0
+    assert run("next-ref", "2026-11-21", "--taken", "21 11")[0] != 0
+
+
+# --- prices --------------------------------------------------------------------------------------
+
+def test_prices_prints_compact_price_tables():
+    code, out, err = run("prices")
+    assert code == 0, err
+    assert "Small Choir" in out and "£1,150" in out and "£" in out, out
+    assert "pricing.html" in out and "christmas-pricing.html" in out
+    assert "£450" in out  # the soloist-with-organist combination price
+    assert len(out.encode()) < 4000, len(out.encode())
+    assert "<" not in out and "&pound;" not in out
+
+
+# --- ledger-add ----------------------------------------------------------------------------------
+
+def test_ledger_add_requires_a_known_occasion():
+    fresh()
+    code, _, err = run("ledger-add", json.dumps({"booking_ref": "2111", "occasion": "Wedding reception"}))
+    assert code != 0 and "occasion" in err, err
+    code, _, err = run("ledger-add", json.dumps({"booking_ref": "2111"}))
+    assert code != 0 and "occasion" in err, err
+    code, out, err = run("ledger-add", json.dumps({"booking_ref": "2111", "occasion": "private event"}))
+    assert code == 0 and "added 2111" in out, err
+    code, _, err = run("ledger-add", json.dumps({"booking_ref": "2111", "occasion": "wedding"}))
+    assert code != 0 and "duplicate" in err
+
+
+if __name__ == "__main__":
+    failures = 0
+    for name, fn in sorted(globals().items()):
+        if name.startswith("test_") and callable(fn):
+            try:
+                fn()
+                print(f"PASS {name}")
+            except AssertionError as e:
+                print(f"FAIL {name}: {e}")
+                failures += 1
+    print(f"\n{failures} failure(s)")
+    sys.exit(1 if failures else 0)

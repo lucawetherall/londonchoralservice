@@ -359,7 +359,7 @@ print('duplicate price-ladder constructions:', len(dupes))  # → 0
 
 ---
 
-## R19 — Lint that the Monday review and enquiry-assistant prompts only use allowlisted commands  [P4] [ready]
+## R19 — Lint that the Monday review and enquiry-assistant prompts only use allowlisted commands  [P4] [done 2026-09-28 — tests/test_prompt_allowlist.py]
 
 **Why:** the Monday review (Appendix A) and enquiry assistant (Appendix E) prompts in `docs/HANDOVER-2026-09-27-ads-analytics.md` are free text describing which scripts to run; the actual permission boundary is the `Bash(...)` entries under `.claude/settings.json`'s `allow` list. Nothing currently checks that every command the two prompts tell Claude to run is actually on that list, or flags a prompt edit that introduces a command the settings file doesn't cover (or a settings entry for a command the prompt no longer uses). Today the two happen to agree; there's no test guarding that they keep agreeing as both documents change.
 

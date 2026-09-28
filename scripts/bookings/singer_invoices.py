@@ -5,6 +5,11 @@ Starling. Records live in ~/lcs-private/singer-invoices.csv (mode 600).
     singer_invoices.py scan --fetch --message-id ID --received YYYY-MM-DD --sender-email E --sender-name 'N'
     singer_invoices.py scan <saved message> --message-id ID …   # the same, from a saved getOriginalMessage result
     singer_invoices.py rescan <message id> [--fetch | <saved message>]  # re-read an UNPAID invoice
+
+scan and rescan end with two lines for the Books bill: "bill: yes" or "bill: no (<reason>)" (bank warning,
+amount not found or zero amount) and "bill_number: <x>" (the singer's ref, or SI- plus the last 5 digits of
+the message id when the ref has a digit run over 5 digits). On a message already recorded, scan prints
+"already recorded: <id>", then the stored line, its warnings and the bill lines, so a crashed run can resume.
     singer_invoices.py paid [--apply]      # match OUT payments; prints NEWLY PAID <message id>
     singer_invoices.py status              # unpaid invoices and totals
     singer_invoices.py thanked <message id>  # note that the "Paid!" reply was drafted
@@ -717,20 +722,69 @@ def print_result(name, inv, a):
         print(f"   ! {w}")
 
 
+BILL_RUN = re.compile(r"\d(?:[ ./_\-]?\d)*")  # digits joined by single separators: one run
+MAX_BILL_RUN = 5  # the Books guard reads a longer run as a possible bank number
+
+
+def bill_number(ref, message_id):
+    """The Books bill_number: the singer's own ref if no digit run in it is longer than 5 digits,
+    else "SI-" plus the last 5 digits of the Zoho message id."""
+    ref = (ref or "").strip()
+    if ref and ref != "?" and all(sum(c.isdigit() for c in m.group()) <= MAX_BILL_RUN for m in BILL_RUN.finditer(ref)):
+        return ref
+    digits = re.sub(r"\D", "", message_id or "")
+    return "SI-" + (digits[-5:] if digits else re.sub(r"[^A-Za-z0-9]", "", message_id or "")[-5:])
+
+
+def bill_verdict(warnings, amount, bank_confirmed=False):
+    """"yes", or "no (<reason>)": a bank-details alarm (upper-case BANK DETAILS: new, changed, differing
+    or not yet verified; unless the owner has confirmed them by phone), no amount, or a zero amount."""
+    if not bank_confirmed and any("BANK DETAILS" in w for w in warnings):
+        return "no (bank warning)"
+    if any(w.startswith("amount not found") for w in warnings):
+        return "no (amount not found)"
+    if not amount or round(amount, 2) <= 0:
+        return "no (zero amount)"
+    return "yes"
+
+
+def print_bill(warnings, amount, ref, message_id, bank_confirmed=False):
+    print(f"bill: {bill_verdict(warnings, amount, bank_confirmed)}")
+    print(f"bill_number: {bill_number(ref, message_id)}")
+
+
+def print_stored(r):
+    """A recorded invoice as scan printed it (from the store), then its bill lines: a crashed run can resume."""
+    warnings = [n for n in (r.get("notes") or "").split("; ")
+                if n and not n.startswith(KEEP_NOTES)]
+    amount = lm.money(r.get("amount_gbp"))
+    print(f"{first_name(r.get('singer_name'))}: £{amount:,.2f} (ref {r.get('invoice_ref') or '?'}) · payee {r.get('payee')}"
+          + (f" · bank ••••{r['bank_last4']}" if r.get("bank_last4") else ""))
+    for w in warnings:
+        print(f"   ! {w}")
+    print_bill(warnings, amount, r.get("invoice_ref"), r["message_id"], r.get("bank_confirmed") == "yes")
+
+
+def already_recorded(rows, message_id):
+    row = next((r for r in rows if r["message_id"] == message_id), None)
+    if row is not None:
+        print(f"already recorded: {message_id}")
+        print_stored(row)
+    return row is not None
+
+
 def load_invoice(args):
     return read_invoice(None, raw=fetch_raw(args.message_id)) if getattr(args, "fetch", False) else read_invoice(args.file)
 
 
 def cmd_scan(args, client):
-    if any(r["message_id"] == args.message_id for r in lm.read_csv(STORE)):
-        print(f"already recorded: {args.message_id}")
+    if already_recorded(lm.read_csv(STORE), args.message_id):
         return
     inv = load_invoice(args)
     payees = payee_info(client)
     with lm.ledger_lock(STORE):  # after the fetch: never hold the lock over the network
         rows = lm.read_csv(STORE)  # read again: a fetch can take a while
-        if any(r["message_id"] == args.message_id for r in rows):
-            print(f"already recorded: {args.message_id}")
+        if already_recorded(rows, args.message_id):
             return
         a, changed, flagged = assess_invoice(inv, rows, args.message_id, args.received, args.sender_email,
                                              args.sender_name, payees)
@@ -744,6 +798,7 @@ def cmd_scan(args, client):
     for line in flagged:
         print(line)
     print_result(args.sender_name, inv, a)
+    print_bill(inv["warnings"] + a["warnings"], inv["amount"], inv["invoice_ref"], args.message_id)
 
 
 KEEP_NOTES = ("bank details confirmed by phone", "paid reply drafted", "settled by hand", "rescanned")
@@ -819,6 +874,8 @@ def cmd_rescan(args, client):
     for line in flagged:
         print(line)
     print_result(row.get("singer_name"), inv, a)
+    print_bill(inv["warnings"] + a["warnings"], inv["amount"], inv["invoice_ref"], row["message_id"],
+               row.get("bank_confirmed") == "yes")
     for line in rescan_changes(old, row):
         print(line)
 

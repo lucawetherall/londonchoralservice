@@ -671,12 +671,12 @@ def test_assistant_ledger_add_holds_the_lock():
     import assistant_io as aio
     d = tempfile.mkdtemp()
     path = os.path.join(d, "bookings.csv")
-    cols = ["booking_ref", "value_gbp", "invoice_date", "event_date", "notes", "client_name"]
+    cols = ["booking_ref", "value_gbp", "invoice_date", "event_date", "notes", "client_name", "occasion"]
     cp.lm.write_csv(path, [row("2111", 650, "2026-08-22", "2026-11-21", "PENDING")], cols)
     seen = []
     real, spy = _lock_spy(seen)
     saved = (aio.LEDGER, sys.argv, cp.lm.ledger_lock)
-    aio.LEDGER, sys.argv, cp.lm.ledger_lock = cp.Path(path), ["assistant_io.py", "ledger-add", json.dumps({"booking_ref": "0512"})], spy
+    aio.LEDGER, sys.argv, cp.lm.ledger_lock = cp.Path(path), ["assistant_io.py", "ledger-add", json.dumps({"booking_ref": "0512", "occasion": "wedding"})], spy
     try:
         with contextlib.redirect_stdout(io.StringIO()):
             aio.main()
@@ -1138,6 +1138,58 @@ def test_only_a_payment_check_note_silences_and_never_a_future_one():
                      ("Cancelled 15 Sep; refunded 2026-09-28", "CANCELLED")):
         a = cp.assess(row("4003", 1150, "2026-08-01", "2027-04-01", n, name="Gil Hart"), paid, T)
         assert a["state"] == state, (n, a["state"])
+
+
+# --- action: what the assistant does with each booking ---------------------------------------------
+
+def test_action_receipt_for_a_fresh_confident_payment():
+    a = cp.assess(row("X", 650, "2026-09-20", "2026-11-21"), [("2026-09-27", 325.0, "reference")], T)
+    assert (a["state"], a["just_received"], a["action"]) == ("DEPOSIT_SEEN", True, "receipt"), a
+    done = cp.assess(row("X", 650, "2026-09-20", "2026-11-21", "receipt drafted 2026-09-27"),
+                     [("2026-09-27", 325.0, "reference")], T)
+    assert done["action"] == "none", done
+
+
+def test_action_deposit_reminder_only_once():
+    a = cp.assess(row("X", 500, "2026-09-01", "2026-10-30", "PENDING: invoiced"), [], T)
+    assert (a["state"], a["action"]) == ("DEPOSIT_OVERDUE", "deposit_reminder"), a
+    b = cp.assess(row("X", 500, "2026-09-01", "2026-10-30", "PENDING: x; reminder drafted 2026-09-20"), [], T)
+    assert b["action"] == "none", b
+
+
+def test_action_balance_reminder_only_once():
+    paid = [("2026-08-26", 325.0, "reference")]
+    a = cp.assess(row("X", 650, "2026-08-22", "2026-10-01", "deposit seen x"), paid, T)
+    assert (a["state"], a["action"]) == ("BALANCE_DUE", "balance_reminder"), a
+    b = cp.assess(row("X", 650, "2026-08-22", "2026-10-01", "deposit seen x; balance reminder drafted 2026-09-28"), paid, T)
+    assert b["action"] == "none", b
+
+
+def test_action_hand_check_states():
+    assert cp.assess(row("2509", 3225, "2026-09-12", "2026-09-21"), [], T)["action"] == "hand_check"  # PAST_UNMATCHED
+    assert cp.assess(row("X", 500, "2026-09-01", "2026-10-30", "paid 14 Sep"), [], T)["action"] == "hand_check"  # NOTED_PAID
+    assert cp.assess(row("X", 0, "2026-09-01", "2026-10-30"), [], T)["action"] == "hand_check"  # CHECK_VALUE
+    maybe = cp.assess(row("X", 650, "2026-09-20", "2026-11-21"), [("2026-09-27", 650.0, "amount only")], T)
+    assert (maybe["state"], maybe["action"]) == ("CHECK_PAYMENT", "hand_check"), maybe
+    for state in cp.HAND_CHECK_STATES:
+        assert cp.action_for({"state": state, "just_received": False, "reminded": {}, "event_date": None}, T) == "hand_check"
+
+
+def test_action_arranged_is_a_hand_check_only_within_a_week():
+    near = {"state": "ARRANGED", "just_received": False, "reminded": {}, "event_date": "2026-10-05"}
+    far = dict(near, event_date="2026-10-06")
+    assert cp.action_for(near, T) == "hand_check" and cp.action_for(far, T) == "none"
+
+
+def test_action_none_for_quiet_states():
+    for state in ("AWAITING_DEPOSIT", "DEPOSIT_SEEN", "PAID_IN_FULL", "CANCELLED"):
+        assert cp.action_for({"state": state, "just_received": False, "reminded": {"deposit": False, "balance": False},
+                              "event_date": "2026-11-21"}, T) == "none", state
+
+
+def test_every_assessment_carries_an_action():
+    a = cp.assess(row("X", 500, "2026-09-25", "2026-10-30", "PENDING: invoiced"), [], T)
+    assert a["action"] in cp.ACTIONS and a["action"] == "none"
 
 
 if __name__ == "__main__":

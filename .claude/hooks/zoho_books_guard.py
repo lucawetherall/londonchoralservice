@@ -370,6 +370,22 @@ def _after_plus(text, i):
     return text[i - 1:i] == "+" or (text[i - 1:i] == " " and text[i - 2:i - 1] == "+")
 
 
+def strip_dates(text):
+    """`text` with real dates and clock times blanked, so they don't count as digit runs."""
+    for pattern in (ISO_DATE, DMY_DATE, MONTH_DATE, CLOCK_TIME):
+        text = pattern.sub(" ", text)
+    return text
+
+
+def bank_details_in(text):
+    """True if plain text carries bank details: a sort-code or account-length digit run, a bank keyword
+    (sort code, account number, IBAN, SWIFT, BIC) or an IBAN. Shared with zoho_guard.py (Mail drafts);
+    VAT wording and lookalike letters are the Books guard's own extra checks, not part of this."""
+    bare = strip_dates(_plain(text))
+    return bool(_bank_digits(bare) or BANK_WORDS.search(bare)
+                or any(sum(c.isdigit() for c in m.group()) >= 10 for m in IBAN.finditer(bare)))
+
+
 def _lookalike(text):
     return any(unicodedata.name(c, "").startswith(("GREEK", "CYRILLIC")) for c in text)
 
@@ -387,9 +403,7 @@ def _scan(value, key, where, tax):
         own = OWN_PATTERN.get(key)
         exempt = (own is not None and isinstance(value, str) and own.fullmatch(value)) or (
             isinstance(key, str) and key.endswith("_id") and RECORD_ID.fullmatch(text))
-        bare = text
-        for pattern in (ISO_DATE, DMY_DATE, MONTH_DATE, CLOCK_TIME):
-            bare = pattern.sub(" ", bare)
+        bare = strip_dates(text)
         if ((not exempt and _bank_digits(bare)) or BANK_WORDS.search(bare) or VAT_WORDS.search(bare)
                 or _lookalike(text) or any(sum(c.isdigit() for c in m.group()) >= 10 for m in IBAN.finditer(bare))):
             raise Deny(BANK_OR_VAT.format(where=where))

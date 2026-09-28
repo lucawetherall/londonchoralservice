@@ -25,6 +25,12 @@ report and the dashboard import summary_dict().
         JSON [{booking_ref, event_date}] from the bookings ledger
     .venv/bin/python scripts/bookings/pipeline.py reviewed <booking_ref> <YYYY-MM-DD>
         appends "review request drafted <date>" to that ledger row's notes
+    .venv/bin/python scripts/bookings/pipeline.py review-skipped <booking_ref> <reason word>
+        appends "review request skipped <today> (<reason>)" to that ledger row's notes, so
+        reviews-due stops listing it (a planner, an unresolved problem); the reason is one
+        lower-case word, never a name
+    .venv/bin/python scripts/bookings/pipeline.py thread <booking_ref>
+        prints the enquiry_id (the Zoho thread id) booked under that ref, or "no thread"
     .venv/bin/python scripts/bookings/pipeline.py done-due [--today YYYY-MM-DD]
         JSON [{enquiry_id, booking_ref}]: booked enquiries whose ledger row is paid in full
         with the event past, not cancelled and not yet done (funerals included)
@@ -67,7 +73,8 @@ DATE_FIELDS = ("first_seen", "event_date", "last_contact")
 FIRST_AFTER, SECOND_AFTER, LOST_AFTER = 5, 10, 10  # days since last_contact (the quote, then each chase)
 REVIEW_FROM, REVIEW_UNTIL = 3, 14  # days after the event
 QUOTED_NOTE = re.compile(r"\bquoted (\d{4}-\d{2}-\d{2})\b")
-REVIEW_NOTE = re.compile(r"review request drafted", re.I)
+REVIEW_NOTE = re.compile(r"review request (drafted|skipped)", re.I)
+REASON_RE = re.compile(r"^[a-z][a-z-]{0,19}$")
 ID_RE = re.compile(r"^[A-Za-z0-9._:-]{1,64}$")
 FUNERAL = re.compile(r"\b(funeral|memorial|requiem|burial|interment|committal|cremation|thanksgiving"
                      r"|celebration of life)\b", re.I)
@@ -412,6 +419,24 @@ def cmd_followed(args):
 
 def cmd_reviewed(args):
     when = iso(args.date, "date")
+    note_review(args.booking_ref, f"review request drafted {when}")
+
+
+def cmd_review_skipped(args):
+    reason = args.reason.strip()
+    if not REASON_RE.fullmatch(reason):
+        raise SystemExit("the reason must be one lower-case word, such as planner or unresolved")
+    note_review(args.booking_ref, f"review request skipped {datetime.date.today().isoformat()} ({reason})")
+
+
+def cmd_thread(args):
+    ref = args.booking_ref.strip()
+    ids = [r["enquiry_id"] for r in lm.read_csv(ENQUIRIES) if (r.get("booking_ref") or "").strip() == ref]
+    print("\n".join(ids) if ids else "no thread")
+
+
+def note_review(booking_ref, text):
+    """Append a review note to one ledger row, under the ledger lock; refuses a second one."""
     ledger = lm.LEDGER
     if not ledger.exists():
         raise SystemExit("no bookings ledger")
@@ -422,15 +447,15 @@ def cmd_reviewed(args):
         if any(None in r for r in rows):  # a row wider than the header: a rewrite would drop its extra fields
             raise SystemExit("the bookings ledger has a row with more fields than its header; nothing written")
         for r in rows:
-            if r.get("booking_ref") == args.booking_ref:
+            if r.get("booking_ref") == booking_ref:
                 if REVIEW_NOTE.search(r.get("notes") or ""):
-                    raise SystemExit(f"{args.booking_ref}: review request already drafted; nothing written")
-                r["notes"] = add_note(r.get("notes"), f"review request drafted {when}")
+                    raise SystemExit(f"{booking_ref}: review request already drafted or skipped; nothing written")
+                r["notes"] = add_note(r.get("notes"), text)
                 break
         else:
-            raise SystemExit(f"no booking {args.booking_ref}")
+            raise SystemExit(f"no booking {booking_ref}")
         lm.write_csv(ledger, rows, cols)
-    print(f"{args.booking_ref}: review request drafted {when}")
+    print(f"{booking_ref}: {text}")
 
 
 def today_arg(args):
@@ -465,6 +490,11 @@ def main(argv=None):
     p = sub.add_parser("reviewed")
     p.add_argument("booking_ref")
     p.add_argument("date")
+    p = sub.add_parser("review-skipped")
+    p.add_argument("booking_ref")
+    p.add_argument("reason")
+    p = sub.add_parser("thread")
+    p.add_argument("booking_ref")
     p = sub.add_parser("summary")
     p.add_argument("--since", type=lambda s: iso(s, "--since"))
     args = ap.parse_args(argv)
@@ -489,6 +519,10 @@ def main(argv=None):
         print(json.dumps(done_due(lm.read_csv(ENQUIRIES), lm.read_csv(lm.LEDGER), today_arg(args))))
     elif args.cmd == "reviewed":
         cmd_reviewed(args)
+    elif args.cmd == "review-skipped":
+        cmd_review_skipped(args)
+    elif args.cmd == "thread":
+        cmd_thread(args)
     elif args.cmd == "summary":
         print(json.dumps(summary_dict(lm.read_csv(ENQUIRIES), args.since)))
 
