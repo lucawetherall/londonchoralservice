@@ -123,7 +123,8 @@ def money_lines(assessments, receipts, singer_rows, today):
 def hand_check(assessments, today):
     """The Monday money line's "needs a hand check" list (money_report.needs_hand_check), one row each."""
     return [{"ref": a["ref"], "state": a["state"], "label": mr.hand_check_label(a), "value": a.get("value") or 0.0,
-             "received": a.get("received") or 0.0} for a in assessments if mr.needs_hand_check(a, today)]
+             "received": a.get("received") or 0.0, "balance": a.get("balance") or 0.0}
+            for a in assessments if mr.needs_hand_check(a, today)]
 
 
 def digits4(value):
