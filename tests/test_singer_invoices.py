@@ -910,6 +910,8 @@ def test_newly_paid_by_name_says_check_before_thanking():
     lines = [x for x in got.splitlines() if x.startswith("NEWLY PAID")]
     assert lines == ["NEWLY PAID g1: Ben £100.00 on 2026-08-03 (matched by name, check before thanking)",
                      "NEWLY PAID g2: Ben £100.00 on 2026-08-04 (bank details match)"], lines
+    books = [x for x in got.splitlines() if x.startswith("   books:")]
+    assert len(books) == 1 and books[0].startswith("   books: bill_number ") and "amount 100.00 · date 2026-08-04" in books[0], books
 
 
 # --- round 6: what the first live backfill showed: .docx, fetching by id, rescan, refs --------------
