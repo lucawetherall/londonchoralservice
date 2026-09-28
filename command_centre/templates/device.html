@@ -18,7 +18,8 @@
 
   <article class="card" id="push-box" data-key="{{ vapid_key.value or '' }}" data-ids="{{ devices.value|map(attribute='id')|join(',') if devices.ok else '' }}">
     <h2>Notifications</h2>
-    {% if not vapid_key.ok %}<p class="fail">Notification key: couldn't load ({{ vapid_key.error }})</p>{% endif %}
+    {% if not vapid_key.ok %}<p class="fail">Notification key: couldn't load ({{ vapid_key.error }})</p>
+    {% elif not vapid_key.value %}<p class="muted">Not set up yet: the service makes its notification key when it starts. Restart it on the Mac (the LaunchAgent), then come back here.</p>{% endif %}
     <p>A new enquiry, a payment, a singer's bank details changing, a guard refusing a call, a run failing or not seen, the Monday review and a new hand check. Each shows a title and one short line, first names only; tap it to open the page.</p>
     <p class="muted">They arrive with the VPN off, through Apple's push service. They show on the lock screen: turn off lock-screen previews for this app in iOS Settings if you prefer. Turning notifications off here also clears the offline copies.</p>
     <p class="status" id="push-status" role="status" aria-live="polite">Checking this device…</p>

@@ -20,7 +20,7 @@
 <p class="muted">
   {% if not diary.ok %}<span class="fail">Diary: couldn't load ({{ diary.error }})</span>
   {% elif diary.value %}Diary synced {{ diary.value[1]|when }}.
-  {% else %}Diary not synced yet: Google Calendar entries appear once the sync job runs (phase 3).{% endif %}
+  {% else %}Diary not synced yet: Google Calendar entries appear once the enquiry assistant's daily pass writes them.{% endif %}
 </p>
 <ul class="cal-key" aria-label="Key">
   <li><span class="dot dot-event"></span>event</li><li><span class="dot dot-diary"></span>diary</li>

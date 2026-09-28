@@ -84,11 +84,6 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outlin
 }
 a.nav-item:hover { background: var(--bg-alt); }
 .nav-item[aria-current="page"] { background: var(--accent); color: var(--card); }
-.nav-soon { color: var(--muted); cursor: default; }
-.soon {
-  font-size: .68rem; text-transform: uppercase; letter-spacing: .06em;
-  border: 1px solid var(--rule); border-radius: 999px; padding: 0 5px; margin-left: 2px; vertical-align: 1px;
-}
 
 /* Page */
 .main { flex: 1; width: 100%; max-width: 72rem; margin: 0 auto; padding: 20px 16px 32px; }
@@ -108,7 +103,22 @@ h3 { font-size: 1rem; margin: 0 0 8px; }
   font-variant-numeric: tabular-nums;
 }
 .count.ok { background: var(--ok); }
+.count.unknown { background: var(--warn); }
 .muted { color: var(--muted); }
+.swap-error { width: 100%; max-width: 72rem; margin: 12px auto 0; padding: 0 16px; box-sizing: border-box; }
+.swap-error[hidden] { display: none; }
+
+/* Today: what needs the owner, one row each */
+.needs { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.need {
+  background: var(--card); border: 1px solid var(--rule); border-left: 4px solid var(--warn);
+  border-radius: var(--radius); padding: 10px 14px; box-shadow: var(--shadow); min-width: 0;
+}
+.need-bad { border-left-color: var(--bad); }
+.need-text { margin: 0; }
+.need .act { margin-top: 6px; }
+.info-lines { margin: 0; padding-left: 1.1em; color: var(--muted); }
+.info-lines li { margin: 3px 0; }
 p { margin: 6px 0; }
 
 /* Cards */

@@ -105,6 +105,7 @@ All pages are mobile-first, with dark and light modes and the LCS brand colours.
      - Books drafts not sent;
      - follow-ups the assistant drafted;
      - failed runs.
+   - "Needs you" lists only what the owner must act on, one row each (a grouped row such as "Pay 3 singer invoices, £X" counts its items); an empty category shows nothing, and "Nothing needs you." stands alone when all is clear. Deposits overdue, balances due, singer invoices to pay and a stale backup are rows too; a deposit not yet due, an arranged balance more than 7 days out and a follow-up not yet due never are. The count is the sum of the rows; when a source didn't load, Today says "at least N" (or "?") and names it, never a green 0. Books sync times, the Books import's notes and handoffs sit below, "For information".
    - Also: today's and this week's events, with diary entries and money deadlines.
 2. **Bookings:** a list and filters (upcoming, past, state).
    - Each booking has a timeline: enquiry, quote, follow-ups, invoice (ledger and Books), payments (Starling), singers booked, singer bills, review request, and notes.
@@ -190,7 +191,7 @@ Not in the app: sending email, payments, payees, deletes, and Books sends or voi
 
 - **Live on each page load** (fast, local):
   - the ledger, the singer store and enquiries.csv;
-  - the check_payments collect, cached for 10 minutes;
+  - the check_payments collect, cached for 10 minutes (a failed Starling read for one minute only, shown on Today as "Bank unreachable at HH:MM (retrying)"; the Refresh link drops the cache with a same-origin POST first);
   - the audit log and events.
 - **Cached** (written by the scheduled runs and by a refresh job every 30 minutes, 07:00–22:00):
   - the Ads summary, and the GA4 and Search Console summaries (via weekly_review's functions);

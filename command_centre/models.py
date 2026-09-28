@@ -162,7 +162,7 @@ def ledger_timeline(row, booking, today):
     return out
 
 
-def enquiry_items(r, cache, today, prefix=""):
+def enquiry_items(r, today, prefix=""):
     """An enquiry's timeline items (pipeline row): first seen, quotes, follow-ups, next follow-up, event."""
     eid = r.get("enquiry_id", "")
     href = f"/enquiries/{eid}"
@@ -188,17 +188,17 @@ def enquiry_items(r, cache, today, prefix=""):
     return out
 
 
-def enquiry_timeline(r, cache, today):
-    out = enquiry_items(r, cache, today)
+def enquiry_timeline(r, today):
+    out = enquiry_items(r, today)
     event = to_date(r.get("event_date"))
     if event:
         out.append(item(event, "event", "Event date"))
     return sort_items(out)
 
 
-def booking_enquiries(ref, enquiries, cache, today):
+def booking_enquiries(ref, enquiries, today):
     return [x for r in enquiries if (r.get("booking_ref") or "").strip() == ref
-            for x in enquiry_items(r, cache, today)]
+            for x in enquiry_items(r, today)]
 
 
 def linked_singer_rows(ref, event_date, singer_rows):
@@ -397,9 +397,123 @@ def singer_bill_flags(store_rows, bills):
         if r.get("paid_on") and r.get("paid_verified") == "yes" and status not in ("paid", "void") and balance > 0:
             out.append({"ref": label, "text": "paid in Starling, bill open in Books", "tone": "warn", "href": "/singers"})
         elif status == "paid" and si.is_open(r):
+            # `key`: the open invoice's handle, so Today doesn't also ask the owner to pay it (needs_you)
             out.append({"ref": label, "text": "bill paid in Books, invoice open here", "tone": "warn",
-                        "href": "/singers"})
+                        "href": "/singers", "key": invoice_key(r.get("message_id"))})
     return sorted(out, key=lambda f: (f["ref"], f["text"]))
+
+
+# ---------------------------------------------------------------- Today: what needs the owner
+
+NEEDS_SOURCES = {  # panel name -> how "Some sources didn't load" names it
+    "ledger": "the bookings ledger", "singer_store": "the singer invoices", "books": "the Books cache",
+    "enquiries": "the enquiry pipeline", "singers": "the singer invoices", "hand": "the hand checks",
+    "bank": "the payment states", "proposals": "the Ads proposals", "books_import": "the Books import",
+    "drafts": "the drafts inbox", "books_flags": "the Books comparison", "bill_flags": "the singer bills",
+    "followups": "the follow-ups", "runs": "the run times", "backup": "the backup record"}
+NEEDS_ROOTS = {"singers": ("singer_store",), "hand": ("ledger",), "bank": ("ledger",), "followups": ("enquiries",),
+               "books_flags": ("books", "ledger"), "bill_flags": ("books", "singer_store")}
+BANK_SOURCE = "the bank (Starling)"
+
+
+def needs_you(panels, bank_unreachable=False):
+    """Today's "Needs you": (rows, missing). Only what the owner must act on now; a category with nothing in it
+    adds no row, and informational lines (Books sync times, handoffs, the bank line) live elsewhere on the page.
+
+    `panels` maps a name in NEEDS_SOURCES to a data.Panel (anything with .ok, .value); a missing name is skipped.
+    Rows, in the spec's priority order, each {"kind", "count", "tone", ...}:
+      ring      a singer invoice whose bank details changed and aren't trusted yet (ring first): one row each;
+      hand      a hand check (money_report.needs_hand_check, so an ARRANGED balance only from 7 days out): one each;
+      deposits  the DEPOSIT_OVERDUE bookings, one grouped row;   balances  the BALANCE_DUE bookings, grouped;
+      approval  an Ads change set waiting (not applied, no problem): one each;
+      books-import  the 2026 Books import waiting for approval (only "waiting": approved, stale or imported is
+                a handoff or a note, not an approval);
+      drafts    the drafts inbox's open drafts, grouped;
+      books     a Books/Starling/ledger disagreement (books_flags): one each;
+      bill      a singer bill disagreement (singer_bill_flags): one each;
+      pay       the other open singer invoices, grouped ("Pay N singer invoices, £X"): not a ring-first one (its own
+                row) and not one Books already shows paid (its bill row says to check it instead);
+      followups pipeline.followups_due (due by today only), grouped;
+      runs      the Health page's stale run files that have been written before (one never written is a run not
+                set up yet, which Health shows), grouped;   backup  a backup key set up but no backup in 36 hours.
+
+    The count rule: a row counts the items it stands for, 1 for a single row and N for a grouped row, which says
+    its N in its own words; the lede is the sum, so it always equals the numbers the rows show. Nothing is counted
+    twice (a ring-first invoice is not also in the pay group; a hand check, a deposit and a balance are different
+    payment states of different bookings).
+
+    `missing` names each source that didn't load, with its error's type name. Its category lists nothing (never its stale data), so the count
+    is then a floor. While Starling can't be read (`bank_unreachable`), the payment states are the ledger notes'
+    guesses, so the hand checks, deposits and balances are left out and the bank is named instead."""
+    rows, missing = [], []
+
+    def note(name, error):
+        label = f"{NEEDS_SOURCES.get(name, name)} ({error})"  # the error's type name only, as every panel shows it
+        if label not in missing:
+            missing.append(label)
+
+    def value(name):
+        """The panel's value, or None (when it failed, noted in `missing` by its root source when that failed)."""
+        p = panels.get(name)
+        if p is None:
+            return None
+        for root in NEEDS_ROOTS.get(name, ()):
+            r = panels.get(root)
+            if r is not None and not r.ok:
+                note(root, r.error)
+                return None
+        if not p.ok:
+            note(name, p.error)
+            return None
+        return p.value
+
+    singers = value("singers") or []
+    for s in singers:
+        if s.get("ring_first"):
+            rows.append({"kind": "ring", "count": 1, "tone": "bad", "item": s})
+    if bank_unreachable:
+        if BANK_SOURCE not in missing:
+            missing.append(BANK_SOURCE)
+    else:
+        for h in value("hand") or []:
+            rows.append({"kind": "hand", "count": 1, "tone": "warn", "item": h})
+        bank = value("bank")
+        for state, kind, tone in (("DEPOSIT_OVERDUE", "deposits", "bad"), ("BALANCE_DUE", "balances", "warn")):
+            refs = sorted(a["ref"] for a in (bank or {}).get("assessments") or [] if a.get("state") == state)
+            if refs:
+                rows.append({"kind": kind, "count": len(refs), "tone": tone, "refs": refs, "state": state})
+    for p in value("proposals") or []:
+        if not p.get("applied") and not p.get("problem"):
+            rows.append({"kind": "approval", "count": 1, "tone": "warn", "item": p})
+    books_import = value("books_import")
+    if books_import and books_import.get("state") == "waiting":
+        rows.append({"kind": "books-import", "count": 1, "tone": "warn"})
+    inbox = value("drafts")
+    open_drafts = (inbox or {}).get("open") or []
+    if open_drafts:
+        rows.append({"kind": "drafts", "count": len(open_drafts), "tone": "warn", "items": open_drafts})
+    for f in value("books_flags") or []:
+        rows.append({"kind": "books", "count": 1, "tone": f.get("tone") or "warn", "item": f})
+    bill_flags = value("bill_flags") or []
+    for f in bill_flags:
+        rows.append({"kind": "bill", "count": 1, "tone": f.get("tone") or "warn", "item": f})
+    paid_in_books = {f["key"] for f in bill_flags if f.get("key")}
+    pay = [s for s in singers if not s.get("ring_first") and s.get("key") not in paid_in_books]
+    if pay:
+        rows.append({"kind": "pay", "count": len(pay), "tone": "warn", "items": pay,
+                     "total": round(sum(s.get("amount") or 0 for s in pay), 2)})
+    due = value("followups") or []
+    if due:
+        rows.append({"kind": "followups", "count": len(due), "tone": "warn", "items": due})
+    runs = value("runs")
+    # a file that has never been written is a run not set up yet (Health says so); one that stopped is a failure
+    stale = [r for r in (runs[0] if runs else []) if r.get("stale") and r.get("when") is not None]
+    if stale:
+        rows.append({"kind": "runs", "count": len(stale), "tone": "bad", "items": stale})
+    backup = value("backup")
+    if backup and backup.get("configured") and backup.get("stale"):
+        rows.append({"kind": "backup", "count": 1, "tone": "bad", "item": backup})
+    return rows, missing
 
 
 def margin_map(margins):

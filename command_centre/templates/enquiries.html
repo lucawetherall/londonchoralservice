@@ -6,6 +6,7 @@
   {% set items = due.value if due.ok else (due.stale or []) %}
   <article class="card{% if items %} card-warn{% endif %}">
     <h2>Follow-ups due</h2>
+    {{ m.failed(due) }}
     {% if due.ok or due.stale %}
     {% if items %}
     <ul class="plain">

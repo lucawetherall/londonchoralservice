@@ -408,9 +408,13 @@ def test_a_bad_books_cache_breaks_only_its_panel():
     fixtures()
     write(CACHE / "books.json", json.dumps({"invoices": "nope"}))
     c = make(FakeBank())
-    for path in ("/", "/money", "/bookings/0310"):
+    for path in ("/money", "/bookings/0310"):
         out = text_of(page(c, path))
         assert "couldn't load (ValueError)" in out, (path, out[:1500])
+    # Today names it, and its count is a floor, never a green 0
+    out = text_of(page(c, "/"))
+    assert "Some sources didn't load: the Books cache (ValueError)." in out, out[:1500]
+    assert re.search(r"at least \d+ things? needs? you", out) and "Nothing needs you" not in out, out[:1500]
     out = text_of(page(c, "/money"))
     assert "£2,030.00" in out  # the season margin still renders
     write(CACHE / "books.json", "{not json")
@@ -907,6 +911,330 @@ def test_refresh_job_loop_stops_and_survives_a_bad_pass():
 
     asyncio.run(go())
     assert len(calls) == 3
+
+
+# ---------------------------------------------------------------- reliability: the thread pool, Today, refresh
+
+
+class CountingBank(FakeBank):
+    def __init__(self):
+        self.calls = 0
+
+    def feed(self, since, until, direction):
+        self.calls += 1
+        return []
+
+
+def needs_rows(html):
+    return [(k, int(n)) for k, n in re.findall(r'<li class="need[^"]*" data-kind="([^"]+)" data-count="(\d+)">', html)]
+
+
+def lede_number(html):
+    m = re.search(r'<span class="count[^"]*">\s*(?:at least )?(\d+|\?)\s*<', html)
+    return m.group(1) if m else None
+
+
+def blocks_nothing(patch_owner, name, request):
+    """Patch patch_owner.name to wait until released, start `request(c)` in a thread, and check that /healthz and
+    another page still answer meanwhile (the slow work runs in the thread pool, not on the event loop)."""
+    import time
+    started, release = threading.Event(), threading.Event()
+    real = getattr(patch_owner, name)
+
+    def slow(*a, **kw):
+        started.set()
+        release.wait(10)
+        return real(*a, **kw)
+
+    setattr(patch_owner, name, slow)
+    got = []
+    try:
+        app = create_app(client_factory=lambda: FakeBank(), now=lambda: NOW, clock=Clock(), checkout=lambda: "main")
+        with TestClient(app, base_url=ORIGIN, client=LOCAL) as c:
+            t = threading.Thread(target=lambda: got.append(request(c).status_code))
+            t.start()
+            assert started.wait(5), name
+            t0 = time.monotonic()
+            assert c.get("/healthz").status_code == 200
+            assert c.get("/passkeys", headers=HEADERS).status_code == 200
+            assert time.monotonic() - t0 < 3 and not got, (name, got)  # answered while the slow one waited
+            release.set()
+            t.join(10)
+    finally:
+        release.set()
+        setattr(patch_owner, name, real)
+    return got
+
+
+def test_pages_exports_and_previews_run_in_the_thread_pool():
+    fixtures()
+    assert blocks_nothing(data.Data, "money_page", lambda c: c.get("/money", headers=HEADERS)) == [200]
+    assert blocks_nothing(data.Data, "today_page", lambda c: c.get("/", headers=HEADERS)) == [200]
+    assert blocks_nothing(data.Data, "export", lambda c: c.get("/exports/bookings.csv", headers=HEADERS)) == [200]
+    assert blocks_nothing(actions, "list_proposals", lambda c: c.get("/marketing", headers=HEADERS)) == [200]
+    assert blocks_nothing(actions, "fields", lambda c: c.post("/actions/refresh-data/preview", json={"input": {}},
+                                                               headers=POST_HEADERS)) == [200]
+
+
+def test_refresh_post_drops_the_bank_cache_and_no_get_does():
+    fixtures()
+    bank = CountingBank()
+    c = make(bank)
+    page(c, "/money")
+    first = bank.calls
+    page(c, "/money")
+    assert bank.calls == first  # cached
+    assert c.get("/refresh", headers=HEADERS).status_code == 405  # a GET changes nothing
+    assert c.post("/refresh", headers=HEADERS).status_code == 403  # same-origin, like every POST
+    r = c.post("/refresh", headers=POST_HEADERS)
+    assert r.status_code == 204 and r.content == b""
+    page(c, "/money")
+    assert bank.calls > first  # read afresh
+    base = page(c, "/")
+    link = re.search(r'<a class="button quiet cc-refresh"[^>]*>Refresh</a>', base).group(0)
+    assert 'hx-trigger="cc-refresh"' in link and 'hx-get="/"' in link and 'href="/"' in link
+    assert '<script src="/static/swap.js" defer></script>' in base and 'id="cc-swap-error"' in base
+    js = (Path(ROOT) / "command_centre" / "static" / "swap.js").read_text()
+    assert 'fetch("/refresh", { method: "POST"' in js and 'htmx.trigger(link, "cc-refresh")' in js
+    assert "htmx:responseError" in js and "htmx:sendError" in js
+    assert "/static/swap.js" in (Path(ROOT) / "command_centre" / "static" / "sw.js").read_text()
+
+
+def test_scripts_survive_a_refresh_swap():
+    """The Refresh link swaps #main, so a listener bound to an element inside it at load would be lost: the page
+    scripts listen on the document instead."""
+    static = Path(ROOT) / "command_centre" / "static"
+    passkey = (static / "passkey.js").read_text()
+    assert 'document.addEventListener("click"' in passkey and 'closest("#pk-register, #pk-test")' in passkey
+    assert "reg.addEventListener" not in passkey and "test.addEventListener" not in passkey
+    push_js = (static / "push.js").read_text()
+    assert 'document.addEventListener("click"' in push_js and 'document.addEventListener("htmx:load"' in push_js
+    assert not re.search(r"(enable|approve|off|clearButton)\.addEventListener", push_js)
+    todo_js = (static / "todo.js").read_text()
+    assert 'document.addEventListener("submit"' in todo_js and "querySelectorAll" not in todo_js
+    for name in ("passkey.js", "push.js", "todo.js", "swap.js"):
+        assert "https:" not in (static / name).read_text() and "eval(" not in (static / name).read_text(), name
+
+
+def test_manual_refresh_waits_for_a_background_pass_then_says_so():
+    fixtures()
+    c = make(FakeBank())
+    saved = actions.REFRESH_WAIT
+    actions.REFRESH_WAIT = 0.2
+    lock = actions._LOCKS["refresh"]
+    assert lock.acquire(timeout=1)
+    try:
+        actions.BACKGROUND_REFRESH.set()
+        r = c.post("/actions/refresh-data/run", json={"input": {}}, headers=POST_HEADERS)
+        assert r.status_code == 409 and r.json()["error"] == actions.BACKGROUND_BUSY, r.text
+        assert audit_lines()[-1]["result"] == "refused: a background refresh is running"
+        actions.BACKGROUND_REFRESH.clear()  # another manual refresh holds it: the usual answer
+        r = c.post("/actions/refresh-data/run", json={"input": {}}, headers=POST_HEADERS)
+        assert r.status_code == 409 and r.json()["error"].startswith("another action is running"), r.text
+    finally:
+        actions.BACKGROUND_REFRESH.clear()
+        lock.release()
+        actions.REFRESH_WAIT = saved
+    assert saved == 20 and actions.RUN_WAIT == 5
+    # the wait is real: a pass that ends within it lets the manual refresh run
+    ran = []
+    saved_runner = actions.RUNNER
+    actions.RUNNER = lambda argv, **kw: ran.append(argv) or subprocess.CompletedProcess(argv, 0, b"", b"")
+    assert lock.acquire(timeout=1)
+    actions.BACKGROUND_REFRESH.set()
+
+    def finish():
+        actions.BACKGROUND_REFRESH.clear()
+        lock.release()
+    timer = threading.Timer(0.5, finish)
+    timer.start()
+    try:
+        r = c.post("/actions/refresh-data/run", json={"input": {}}, headers=POST_HEADERS)
+        assert r.status_code == 200 and r.json()["ok"] and len(ran) == 2, r.text
+    finally:
+        timer.join()
+        actions.RUNNER = saved_runner
+
+
+def test_refresh_job_flags_its_pass_and_tidies_the_mirror():
+    clean()
+    seen, tidied = [], []
+
+    def runner(argv, **kw):
+        seen.append(actions.BACKGROUND_REFRESH.is_set())
+        return subprocess.CompletedProcess(argv, 0, b"", b"")
+    job = jobs.RefreshJob(clear=lambda: None, runner=runner, tidy=lambda: tidied.append(1))
+    assert job.run_once() == "ok"
+    assert seen == [True, True, True] and tidied == [1] and not actions.BACKGROUND_REFRESH.is_set()
+
+    def boom():
+        raise OSError("/Users/someone/private")
+    assert jobs.RefreshJob(clear=lambda: None, runner=runner, tidy=boom).run_once() == "failed"
+    assert audit_lines()[-1]["summary"] == "Background refresh: tidy the Ads mirror"
+    assert audit_lines()[-1]["result"] == "failed: OSError" and not actions.BACKGROUND_REFRESH.is_set()
+    # the real tidy: no mirror yet, nothing made; the default job uses it
+    assert actions.tidy_mirror() == "none" and not actions.mirror_dir().exists()
+    assert jobs.RefreshJob(clear=lambda: None).tidy is actions.tidy_mirror
+
+
+def test_today_lists_drafts_follow_ups_runs_and_a_stale_backup():
+    fixtures()
+    c = make(FakeBank())
+    base = needs_rows(page(c, "/"))
+    new = {"drafts", "followups", "runs", "backup"}
+    assert not new & {k for k, _ in base}, base
+    # two drafts, one marked sent: one to review
+    write(CACHE / "drafts.json", json.dumps([draft(thread_id="T1"), draft(thread_id="T2", created="2026-09-27")]))
+    key = drafts.draft_key(draft(thread_id="T2", created="2026-09-27"))
+    write(Path(TMP) / "command-centre" / "drafts-marks.json", json.dumps({key: {"state": "sent", "at": "x"}}))
+    # a follow-up due (quoted 8 days ago, never chased) and one not yet due
+    lm.write_csv(pl.ENQUIRIES, [
+        {"enquiry_id": "e1", "first_seen": "2026-09-19", "status": "quoted", "last_contact": "2026-09-20",
+         "followups": "0", "occasion": "wedding", "event_date": "2027-06-01", "source": "email"},
+        {"enquiry_id": "e2", "first_seen": "2026-09-26", "status": "quoted", "last_contact": "2026-09-27",
+         "followups": "0", "occasion": "wedding", "event_date": "2027-06-01", "source": "email"}], pl.COLUMNS)
+    # the static dashboard last written 40 hours ago; the Ads summary never (not set up: Health's business)
+    write(Path(TMP) / "dashboard.html", "<p>old</p>")
+    old = (NOW - datetime.timedelta(hours=40)).timestamp()
+    os.utime(Path(TMP) / "dashboard.html", (old, old))
+    # a backup key, and the last backup two days ago
+    cfg = auth.load_config()
+    auth.save_config(dict(cfg, backup={"recipient": "age1example", "target": "/tmp/x"}))
+    write(Path(TMP) / "command-centre" / "backup-state.json",
+          json.dumps({"at": (NOW - datetime.timedelta(hours=50)).isoformat(), "name": "b.tar.gz.age", "size": 1}))
+    html = page(c, "/")
+    rows = needs_rows(html)
+    assert [r for r in rows if r[0] in new] == [("drafts", 1), ("followups", 1), ("runs", 1), ("backup", 1)], rows
+    assert [r for r in rows if r[0] not in new] == base, (rows, base)
+    assert lede_number(html) == str(sum(n for _, n in rows)) and sum(n for _, n in rows) == sum(n for _, n in base) + 4
+    out = text_of(html)
+    assert "1 draft to review and send" in out and "1 follow-up due" in out
+    assert "1 run hasn't written on time" in out and "Static dashboard" in out, out[:3000]
+    assert "The last backup is over 36 hours old" in out
+    assert "Ads summary" not in out  # never written: not a failure
+    # a backup that isn't set up yet is the Health page's business, not Today's
+    auth.save_config(cfg)
+    assert ("backup", 1) not in needs_rows(page(c, "/"))
+
+
+def test_needs_you_rules():
+    P = data.Panel
+    singer = lambda key, first, amount, ring=False: {"key": key, "first_name": first, "amount": amount,  # noqa: E731
+                                                     "ring_first": ring}
+    panels = {
+        "singers": P(value=[singer("aaa", "Ann", 100.0), singer("bbb", "Bob", 50.0, ring=True),
+                            singer("ccc", "Cy", 70.0)]),
+        "hand": P(value=[{"ref": "0107", "state": "PAST_UNMATCHED", "label": "past, unpaid"}]),
+        "bank": P(value={"assessments": [{"ref": "1", "state": "DEPOSIT_OVERDUE"}, {"ref": "2", "state": "BALANCE_DUE"},
+                                         {"ref": "3", "state": "BALANCE_DUE"}, {"ref": "4", "state": "AWAITING_DEPOSIT"},
+                                         {"ref": "5", "state": "ARRANGED"}]}),
+        "proposals": P(value=[{"id": "a", "title": "A", "applied": False, "problem": None},
+                              {"id": "b", "title": "B", "applied": True, "problem": None},
+                              {"id": "c", "title": "C", "applied": False, "problem": "can't"}]),
+        "books_import": P(value={"state": "stale"}),
+        "bill_flags": P(value=[{"ref": "X Cy", "text": "bill paid in Books, invoice open here", "tone": "warn",
+                                "href": "/singers", "key": "ccc"}]),
+        "books": P(value={"invoices": []}),
+    }
+    rows, missing = models.needs_you(panels)
+    assert [(r["kind"], r["count"]) for r in rows] == [("ring", 1), ("hand", 1), ("deposits", 1), ("balances", 2),
+                                                       ("approval", 1), ("bill", 1), ("pay", 1)], rows
+    pay = rows[-1]
+    assert [s["first_name"] for s in pay["items"]] == ["Ann"] and pay["total"] == 100.0  # not Bob (ring), not Cy
+    assert rows[3]["refs"] == ["2", "3"] and missing == []
+    # the import only while it waits for approval
+    rows, _ = models.needs_you(dict(panels, books_import=P(value={"state": "waiting"})))
+    assert ("books-import", 1) in [(r["kind"], r["count"]) for r in rows]
+    # Starling unreachable: the payment guesses go, and the bank is named
+    rows, missing = models.needs_you(panels, bank_unreachable=True)
+    assert not {"hand", "deposits", "balances"} & {r["kind"] for r in rows} and missing == ["the bank (Starling)"]
+    # a failed root names the root once, with its error type, and its categories list nothing
+    rows, missing = models.needs_you(dict(panels, singer_store=P(error="PermissionError"),
+                                          singers=P(error="PermissionError")))
+    assert missing == ["the singer invoices (PermissionError)"], missing
+    assert not {"ring", "pay"} & {r["kind"] for r in rows}
+    rows, missing = models.needs_you(dict(panels, ledger=P(error="OSError"), hand=P(error="OSError"),
+                                          bank=P(error="OSError")))
+    assert missing == ["the bookings ledger (OSError)"], missing
+    # Books not synced (None) is information, not a failure
+    rows, missing = models.needs_you(dict(panels, books=P(value=None), books_flags=P(value=None),
+                                          bill_flags=P(value=None)))
+    assert missing == [] and "bill" not in {r["kind"] for r in rows}
+
+
+def test_health_marks_an_old_static_dashboard_stale():
+    from command_centre import sources
+    fixtures()
+    write(Path(TMP) / "dashboard.html", "x")
+    for hours, stale in ((30, False), (37, True)):
+        t = (NOW - datetime.timedelta(hours=hours)).timestamp()
+        os.utime(Path(TMP) / "dashboard.html", (t, t))
+        row = {r["label"]: r for r in sources.run_proxies(NOW)[0]}["Static dashboard"]
+        assert row["stale"] is stale, (hours, row)
+
+
+def test_activity_filters_the_refresh_job_and_timeouts():
+    fixtures()
+    actions.write_audit("refresh-job", "Background refresh: books", jobs.SYSTEM_USER, "failed: NonZeroExit")
+    actions.write_audit("refresh-data", "Refresh data now", {"login": LOGIN}, "timed out")
+    actions.write_audit("todo-tick", "tick", {"login": LOGIN}, "ok")
+    c = make(FakeBank())
+    html = page(c, "/activity")
+    assert '<option value="refresh-job"' in html and '<option value="timed out"' in html
+    out = text_of(page(c, "/activity?action=refresh-job"))
+    assert "Background refresh: books" in out and "tick" not in out.split("Filter")[-1], out[-1500:]
+    out = text_of(page(c, "/activity?result=timed+out"))
+    assert "Refresh data now" in out.split("Filter")[-1] and "Background refresh" not in out.split("Filter")[-1]
+
+
+def test_quote_page_without_an_organist_row():
+    fixtures()
+    real = quote.load_lists
+
+    def no_organist(root=quote.REPO):
+        lists = real(root)
+        for v in lists.values():
+            v["organist"], v["organist_name"], v["soloist_organist"] = None, "", None
+        return lists
+    data.quote.load_lists = no_organist
+    try:
+        c = make(FakeBank())
+        out = text_of(page(c, "/quote?list=standard&package=small-choir"))
+        assert "No organist price on this page" in out and "£1,150" in out, out[:2000]
+        assert 'name="organist"' not in page(c, "/quote")
+        assert page(c, "/quote?list=standard&package=small-choir&organist=yes")  # refused quietly, no crash
+    finally:
+        data.quote.load_lists = real
+
+
+def test_enquiries_follow_ups_card_shows_its_own_failure():
+    fixtures()
+    real = pl.followups_due
+    pl.followups_due = lambda rows, today: (_ for _ in ()).throw(KeyError("e1 private"))
+    try:
+        out = text_of(page(make(FakeBank()), "/enquiries"))
+        card = out[out.index("Follow-ups due"):]
+        assert card.startswith("Follow-ups due couldn't load (KeyError)"), card[:200]
+        assert "private" not in out
+    finally:
+        pl.followups_due = real
+
+
+def test_dead_code_and_stale_text_are_gone():
+    import inspect
+    from command_centre import app as app_module
+    assert not hasattr(app_module, "SOON") and not hasattr(actions, "archived")
+    assert "cache" not in inspect.signature(models.enquiry_items).parameters
+    assert "cache" not in inspect.signature(models.enquiry_timeline).parameters
+    assert "cache" not in inspect.signature(models.booking_enquiries).parameters
+    root = Path(ROOT) / "command_centre"
+    assert "soon" not in (root / "templates" / "base.html").read_text()
+    assert ".soon" not in (root / "static" / "app.css").read_text()
+    for name in ("calendar.html", "marketing.html", "passkeys.html"):
+        text = (root / "templates" / name).read_text()
+        assert not re.search(r"phase \d", text), name
+    src = inspect.getsource(app_module.create_app)
+    assert src.count("models.hand_check_prompt(") == 1  # built once per ref
 
 
 if __name__ == "__main__":

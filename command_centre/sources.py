@@ -29,7 +29,8 @@ ASSISTANT_STALE = datetime.timedelta(hours=3)
 WEEKLY_STALE = datetime.timedelta(days=8)
 BOOKS_STALE = datetime.timedelta(hours=24)  # the refresh job writes it every 30 minutes, 07:00-22:00
 CACHE_STALE = datetime.timedelta(hours=36)  # the daily pass writes the diary and syncs the drafts once a day
-#                                             (and the refresh job the marketing cache)
+DASHBOARD_STALE = datetime.timedelta(hours=36)  # the refresh job rewrites it every 30 minutes, and the daily pass
+#                                             (the refresh job also writes the marketing cache daily)
 
 
 def private():
@@ -196,7 +197,7 @@ def run_proxies(now):
         ("Enquiry assistant state", p / "assistant-state.json", ASSISTANT_STALE if daytime else None),
         ("Ads summary (Monday review)", p / "ads-summary.json", WEEKLY_STALE),
         ("Newest Monday report", newest, WEEKLY_STALE),
-        ("Static dashboard", p / "dashboard.html", None),
+        ("Static dashboard", p / "dashboard.html", DASHBOARD_STALE),
         ("Bookings ledger", Path(os.environ.get("LCS_BOOKINGS_CSV") or p / "bookings.csv"), None),
         ("Singer invoices", p / "singer-invoices.csv", None),
         ("Enquiry pipeline", p / "enquiries.csv", None),

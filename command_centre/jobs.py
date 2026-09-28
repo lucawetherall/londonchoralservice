@@ -11,10 +11,14 @@ skipped as busy), it also runs `scripts/reports/cc_sync.py marketing` (flagged s
 shortlist and GA4 leads, through weekly_review's read-only functions): a script whose SCRIPTS entry has daily=True.
 A daily script that fails is logged and not retried until the next day. Each is an
 argv list, never a shell, with the actions' clean environment (no CC_* variable, LCS_PRIVATE_DIR set explicitly),
-stdin /dev/null and a timeout. Then it clears the app's bank cache, so the next page load reads Starling afresh.
+stdin /dev/null and a timeout. Then it puts the Ads mirror's fixed config back (actions.tidy_mirror: only an existing
+mirror, and only when no action is running; the pages read the proposals without writing), and clears the app's bank
+cache, so the next page load reads Starling afresh.
 
 - It has its own lock, and it takes the manual refresh's lock (actions._LOCKS["refresh"]) without waiting, so a pass
-  never overlaps a "Refresh data now" or another pass: a slot that finds either busy is skipped.
+  never overlaps a "Refresh data now" or another pass: a slot that finds either busy is skipped. While it holds that
+  lock it sets actions.BACKGROUND_REFRESH, so a manual refresh waits up to 20 seconds and then says a background
+  refresh is running, rather than "another action is running".
 - A clean pass writes nothing to the audit log. A failure (a timeout, a non-zero exit, a script that won't start,
   a failing cache clear) is logged as "refresh-job" with its exception's type name only, never the output or the
   message, which could hold private data. One failing script never stops the other.
@@ -64,10 +68,11 @@ def slot(now):
 
 
 class RefreshJob:
-    def __init__(self, clear, runner=subprocess.run, python=sys.executable):
+    def __init__(self, clear, runner=subprocess.run, python=sys.executable, tidy=None):
         self.clear = clear
         self.runner = runner
         self.python = python
+        self.tidy = tidy or actions.tidy_mirror
         self.last_slot = None
         self.last_daily = None  # the London date the daily scripts last ran
         self._lock = threading.Lock()
@@ -108,6 +113,7 @@ class RefreshJob:
             refresh = actions._LOCKS["refresh"]
             if not refresh.acquire(blocking=False):
                 return "skipped"
+            actions.BACKGROUND_REFRESH.set()  # a manual "Refresh data now" waits, then says a pass is running
             try:
                 ok = True
                 day = now.astimezone(LONDON).date() if now is not None else None
@@ -123,12 +129,18 @@ class RefreshJob:
                         ok = False
                         self._fail(what, e)
                 try:
+                    self.tidy()
+                except Exception as e:
+                    ok = False
+                    self._fail("tidy the Ads mirror", e)
+                try:
                     self.clear()
                 except Exception as e:
                     ok = False
                     self._fail("clear the bank cache", e)
                 return "ok" if ok else "failed"
             finally:
+                actions.BACKGROUND_REFRESH.clear()
                 refresh.release()
         finally:
             self._lock.release()
