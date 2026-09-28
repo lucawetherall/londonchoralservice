@@ -1,8 +1,38 @@
 // This device's notifications (/device). Enable: ask permission and subscribe (one tap), then approve the new
 // device with Face ID or Touch ID (a second tap: the server's summary, bound to a passkey challenge). Turn off:
-// unsubscribe here and remove the device on the server (no passkey: it only narrows who is told).
+// unsubscribe here and remove the device on the server (no passkey: it only narrows who is told), and clear the
+// saved offline pages. "Clear offline copies" asks the service worker to delete the saved Today and Money pages.
 (function () {
   "use strict";
+
+  // Ask the service worker to delete the saved pages; resolves true once it confirms.
+  function clearOffline() {
+    if (!("serviceWorker" in navigator)) return Promise.resolve(false);
+    return navigator.serviceWorker.ready.then(function (reg) {
+      var worker = navigator.serviceWorker.controller || reg.active;
+      if (!worker) return false;
+      return new Promise(function (resolve) {
+        var channel = new MessageChannel();
+        var timer = setTimeout(function () { resolve(false); }, 3000);
+        channel.port1.onmessage = function () { clearTimeout(timer); resolve(true); };
+        worker.postMessage({ type: "clear-offline" }, [channel.port2]);
+      });
+    });
+  }
+  window.LCSClearOffline = clearOffline;
+
+  var clearButton = document.getElementById("offline-clear");
+  var clearStatus = document.getElementById("offline-status");
+  if (clearButton) {
+    clearButton.addEventListener("click", function () {
+      clearButton.disabled = true;
+      clearOffline().then(function (ok) {
+        clearStatus.textContent = ok ? "Offline copies cleared on this device." : "Nothing to clear on this device.";
+      }, function () {
+        clearStatus.textContent = "Couldn't clear the offline copies.";
+      }).then(function () { clearButton.disabled = false; });
+    });
+  }
 
   var box = document.getElementById("push-box");
   if (!box || !window.LCSPasskey) return;
@@ -114,6 +144,7 @@
         }
         await sub.unsubscribe();
       }
+      await clearOffline().catch(function () { return false; });  // turning off also clears the saved pages
       window.location.reload();
     } catch (e) {
       say("Not turned off: " + (e && e.message ? e.message : "no answer"));

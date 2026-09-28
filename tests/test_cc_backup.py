@@ -140,6 +140,94 @@ def test_retention_keeps_14_days_and_only_touches_its_own_files():
     assert (Path(TARGET) / r["name"]).exists()
 
 
+def test_stale_part_files_are_pruned_after_a_day():
+    ident, rcpt = make_key()
+    fresh(rcpt)
+    now = datetime.datetime(2026, 9, 28, 2, 30, tzinfo=LONDON)
+    old = Path(TARGET) / ".lcs-backup-20260926-023000.tar.gz.age.0123abcd.part"
+    new = Path(TARGET) / ".lcs-backup-20260928-011500.tar.gz.age.89abcdef.part"
+    other = Path(TARGET) / ".something.part"
+    for f, hours in ((old, 49), (new, 2), (other, 100)):
+        f.write_text("x")
+        t = (now - datetime.timedelta(hours=hours)).timestamp()
+        os.utime(f, (t, t))
+    cc_backup.run(now=now)
+    assert not old.exists() and new.exists() and other.exists()
+
+
+class NoTempFiles:
+    """Stands in for the tempfile module: any temp file is a failure (the plaintext must never be on disk)."""
+
+    def __getattr__(self, name):
+        raise AssertionError(f"tempfile.{name} used")
+
+
+def test_the_plaintext_never_touches_disk_and_a_failure_leaves_nothing():
+    ident, rcpt = make_key()
+    fresh(rcpt)
+    saved_tempfile = getattr(cc_backup, "tempfile", None)
+    cc_backup.tempfile = NoTempFiles()
+    real_open = os.open
+    opened = []
+
+    def watching_open(path, flags, *a, **kw):
+        opened.append(str(path))
+        return real_open(path, flags, *a, **kw)
+
+    os.open = watching_open
+    try:
+        r = cc_backup.run(now=datetime.datetime(2026, 9, 28, 2, 30, tzinfo=LONDON))
+        written = [p for p in opened if p.startswith(os.path.realpath(TARGET)) or p.startswith(TARGET)]
+        assert all(p.endswith(".part") for p in written), written  # only the ciphertext's .part is written
+        path, names = cc_backup.verify(str(ident), Path(TARGET))
+        assert "bookings.csv" in names and os.path.basename(path) == r["name"]
+    finally:
+        os.open = real_open
+        if saved_tempfile is not None:
+            cc_backup.tempfile = saved_tempfile
+        else:
+            del cc_backup.tempfile
+    # the archive side fails part-way: nothing is left in the target, the error comes through
+    real_build = cc_backup.build_archive
+
+    def failing_build(src, fileobj, target=None, stream=False):
+        fileobj.write(b"\x1f\x8b" + b"partial" * 1000)
+        raise OSError("disk went away")
+
+    cc_backup.build_archive = failing_build
+    before = sorted(os.listdir(TARGET))
+    try:
+        cc_backup.run(now=datetime.datetime(2026, 9, 28, 3, 30, tzinfo=LONDON))
+    except OSError as e:
+        assert "disk went away" in str(e)
+    else:
+        raise AssertionError("a failed archive was kept")
+    finally:
+        cc_backup.build_archive = real_build
+    assert sorted(os.listdir(TARGET)) == before
+    # the age side fails: the writer thread isn't left blocked, and nothing is kept
+    real_pyrage = cc_backup.pyrage
+
+    class FailingAge:
+        x25519 = pyrage.x25519
+
+        @staticmethod
+        def encrypt_io(reader, writer, recipients):
+            reader.read(10)
+            raise RuntimeError("age failed")
+
+    cc_backup.pyrage = lambda: FailingAge
+    try:
+        cc_backup.run(now=datetime.datetime(2026, 9, 28, 4, 30, tzinfo=LONDON))
+    except RuntimeError as e:
+        assert "age failed" in str(e)
+    else:
+        raise AssertionError("a failed encryption was kept")
+    finally:
+        cc_backup.pyrage = real_pyrage
+    assert sorted(os.listdir(TARGET)) == before
+
+
 def test_run_needs_a_key():
     fresh()
     try:
@@ -157,16 +245,64 @@ def all_files(*bases):
                 yield os.path.join(dirpath, f)
 
 
+def run_tty(args, env):
+    """Run the script with stdout and stderr on a pseudo-terminal (as in Terminal). Returns (code, output)."""
+    import pty, select
+    master, slave = pty.openpty()
+    proc = subprocess.Popen([sys.executable, SCRIPT, *args], stdin=subprocess.DEVNULL, stdout=slave, stderr=slave,
+                            env=env)
+    os.close(slave)
+    out = b""
+    while True:
+        ready, _, _ = select.select([master], [], [], 30)
+        if not ready:
+            proc.kill()
+            raise AssertionError("no output from the script")
+        try:
+            chunk = os.read(master, 4096)
+        except OSError:  # EIO: the child closed the terminal
+            break
+        if not chunk:
+            break
+        out += chunk
+    os.close(master)
+    return proc.wait(timeout=30), out.decode().replace("\r\n", "\n")
+
+
+def test_init_refuses_without_a_terminal():
+    fresh()
+    env = dict(os.environ, HOME=tempfile.mkdtemp())
+    for how in ({"capture_output": True}, {"stdout": subprocess.PIPE, "stderr": subprocess.DEVNULL}):
+        r = subprocess.run([sys.executable, SCRIPT, "init"], text=True, env=env, **how)
+        assert r.returncode == 1 and "AGE-SECRET" not in (r.stdout or ""), r.stdout
+        assert "backup" not in auth.load_config() or not auth.load_config()["backup"].get("recipient")
+    r = subprocess.run([sys.executable, SCRIPT, "init"], capture_output=True, text=True, env=env)
+    assert "terminal" in r.stderr
+
+
+def test_claude_is_denied_cc_backup_init():
+    sys.path.insert(0, os.path.join(ROOT, "tests"))
+    import test_prompt_allowlist as tpa
+    deny, pats = tpa.deny_patterns()
+    assert "Bash(*cc_backup.py init*)" in deny
+    for cmd in (".venv/bin/python scripts/reports/cc_backup.py init", "python3 scripts/reports/cc_backup.py init",
+                ".venv/bin/python scripts/reports/cc_backup.py init --replace",
+                "cd /x && .venv/bin/python scripts/reports/cc_backup.py init | cat"):
+        assert any(p.fullmatch(cmd) for _, p in pats), cmd
+    for cmd in (".venv/bin/python scripts/reports/cc_backup.py run", ".venv/bin/python scripts/reports/cc_backup.py verify"):
+        assert not any(p.fullmatch(cmd) for _, p in pats), cmd
+
+
 def test_init_prints_the_identity_once_and_never_stores_it():
     fresh()
     env = dict(os.environ, HOME=tempfile.mkdtemp())
-    r = subprocess.run([sys.executable, SCRIPT, "init"], capture_output=True, text=True, env=env)
-    assert r.returncode == 0, r.stderr
-    secret = [line.strip() for line in r.stdout.splitlines() if line.strip().startswith("AGE-SECRET-KEY-1")]
-    assert len(secret) == 1 and r.stdout.count("AGE-SECRET-KEY-1") == 1
+    code, output = run_tty(["init"], env)
+    assert code == 0, output
+    secret = [line.strip() for line in output.splitlines() if line.strip().startswith("AGE-SECRET-KEY-1")]
+    assert len(secret) == 1 and output.count("AGE-SECRET-KEY-1") == 1
     cfg = auth.load_config()
     rcpt = cfg["backup"]["recipient"]
-    assert rcpt.startswith("age1") and rcpt in r.stdout
+    assert rcpt.startswith("age1") and rcpt in output
     ident = pyrage.x25519.Identity.from_str(secret[0])
     assert str(ident.to_public()) == rcpt
     for path in all_files(TMP, TARGET, env["HOME"]):
@@ -176,8 +312,8 @@ def test_init_prints_the_identity_once_and_never_stores_it():
         except (PermissionError, IsADirectoryError, OSError):
             continue
     # a second init is refused, --replace makes a new one
-    r2 = subprocess.run([sys.executable, SCRIPT, "init"], capture_output=True, text=True, env=env)
-    assert r2.returncode == 1 and "exists already" in r2.stderr and "AGE-SECRET" not in r2.stdout
+    code2, out2 = run_tty(["init"], env)
+    assert code2 == 1 and "exists already" in out2 and "AGE-SECRET" not in out2
     # verify: the key from stdin opens the newest backup and lists it; a wrong key doesn't
     r3 = subprocess.run([sys.executable, SCRIPT, "run"], capture_output=True, text=True, env=env)
     assert r3.returncode == 0 and r3.stdout.startswith("backup written: lcs-backup-"), r3.stderr
@@ -188,8 +324,8 @@ def test_init_prints_the_identity_once_and_never_stores_it():
     assert r5.returncode == 1 and "doesn't open" in r5.stderr
     r6 = subprocess.run([sys.executable, SCRIPT, "verify", secret[0]], capture_output=True, text=True, env=env)
     assert r6.returncode == 2  # never on the command line
-    r7 = subprocess.run([sys.executable, SCRIPT, "init", "--replace"], capture_output=True, text=True, env=env)
-    assert r7.returncode == 0 and auth.load_config()["backup"]["recipient"] != rcpt
+    code7, _ = run_tty(["init", "--replace"], env)
+    assert code7 == 0 and auth.load_config()["backup"]["recipient"] != rcpt
 
 
 def test_health_shows_the_backup_age_and_warns_after_36_hours():

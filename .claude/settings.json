@@ -59,6 +59,7 @@
       "Bash(git update-ref *)",
       "Bash(git remote set-url *)",
       "Bash(git config *)",
+      "Bash(*cc_backup.py init*)",
       "Edit(.git/**)"
     ]
   },

@@ -232,11 +232,16 @@ The phone app (Tailscale only; the phone doesn't keep the VPN on):
   4. In the app: More -> This device -> Enable notifications, then Approve this device (Face ID). macOS may
      ask once whether python may use the "lcs-command-centre-vapid" Keychain item: Always Allow.
      Notifications arrive with the VPN off, through Apple's push service (the Mac sends them over its normal
-     internet connection). With the VPN off the app shows the last Today and Money pages, marked
-     "Offline, as of <time>"; actions need the VPN.
+     internet connection). They show on the lock screen: turn off lock-screen previews for this app in
+     iOS Settings if you prefer. With the VPN off the app shows the last Today and Money pages, marked
+     "Couldn't reach the Mac (showing the copy from <time>)", for up to 7 days; actions need the VPN.
+     This device -> Clear offline copies deletes them (so does turning notifications off).
 
-Backups (once): .venv/bin/python scripts/reports/cc_backup.py init  (store the printed AGE-SECRET-KEY line
-in your password manager; it is shown once), then: bash command_centre/install.sh --backup
+Backups (once, in Terminal: init refuses to print the key anywhere else):
+  .venv/bin/python scripts/reports/cc_backup.py init  (store the printed AGE-SECRET-KEY line in your password
+  manager; it is shown once), then: bash command_centre/install.sh --backup
+The next morning, check that Health shows the backup and that the file has reached iCloud Drive (macOS can
+hold back a background job's writes there); if not, set backup.target in the config to a local folder.
 EOF
 if [ -n "$BOOTSTRAP_MSG" ]; then
   echo

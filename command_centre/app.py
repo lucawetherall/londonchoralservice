@@ -150,7 +150,12 @@ def create_app(client_factory=data.default_client, now=None, clock=None, passkey
     """The app. `bind_host`, `port` and `uds` say how __main__ serves it. CC_DEV_LOGIN is honoured only on
     127.0.0.1, on a port other than the service's 8765, and never on the Unix socket. `checkout` returns the
     serving checkout's branch (default: read from .git). `watch` starts the push watcher (push.watch) with the
-    app: __main__ turns it on for the service only (port 8765 or the socket), never for a local check."""
+    app: __main__ turns it on for the service only (port 8765 or the socket), never for a local check. The service
+    (watch, the socket or port 8765) refuses CC_VAPID_STORE=file."""
+    live = watch or bool(uds) or (port is not None and int(port) == auth.SERVICE_PORT)
+    if live and push.file_store():
+        raise SystemExit("CC_VAPID_STORE=file is for the tests and a local check only: unset it for the service "
+                         "(the VAPID key belongs in the Keychain)")
     env = make_env()
     reader = data.Data(client_factory, now=now, **({"clock": clock} if clock else {}))
     keys = passkeys or auth.Passkeys()

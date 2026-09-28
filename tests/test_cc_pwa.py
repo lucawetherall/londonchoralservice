@@ -104,8 +104,16 @@ def test_the_worker_falls_back_fast_with_an_offline_stamp():
     page = js_body("async function pageFirst", text)
     assert "withTimeout(fetch(request), TIMEOUT_MS)" in page and "offlineCopy(path)" in page
     offline = js_body("async function offlineCopy", text)
-    assert "Offline, as of " in offline and "X-CC-Saved-At" in offline
+    assert "Couldn't reach the Mac (showing the copy from " in offline and "Offline, as of" not in text
+    assert "savedAge(saved)" in offline and "age > MAX_AGE_MS" in offline and "cache.delete(path)" in offline
+    assert "var MAX_AGE_MS = 7 * 24 * 3600 * 1000;" in text and "X-CC-Saved-At" in js_body("function savedAge", text)
     assert "Content-Security-Policy" in offline  # the saved copy keeps the page's policy
+    # a 401 or 403 for either page deletes the saved pages
+    assert "res.status === 401 || res.status === 403" in page and "await clearPages()" in page
+    assert "caches.delete(PAGE_CACHE)" in js_body("function clearPages", text)
+    # the clear message: only {type: "clear-offline"}, only from a window of this origin
+    msg = js_body('addEventListener("message"', text)
+    assert 'd.type !== "clear-offline"' in msg and "self.location.origin" in msg and "clearPages()" in msg
     # a notification tap only opens a same-origin path
     assert "safePath" in js_body('addEventListener("notificationclick"', text)
 
@@ -144,6 +152,130 @@ def test_base_template_links_the_manifest_worker_and_install_hint():
     assert 'href="/device"' in page
     pwa_js = (Path(ROOT) / "command_centre" / "static" / "pwa.js").read_text()
     assert 'register("/sw.js", { scope: "/" })' in pwa_js
+
+
+NODE_HARNESS = r'''
+// Runs sw.js in a vm context with fake caches, fetch and clients; prints one JSON line of results.
+const vm = require("vm"), fs = require("fs");
+const src = fs.readFileSync(process.argv[2], "utf8");
+const ORIGIN = "https://mac.example-tailnet.ts.net";
+const stores = new Map();
+function store(name) {
+  if (!stores.has(name)) stores.set(name, new Map());
+  const m = stores.get(name);
+  return {
+    match: async (k) => { const r = m.get(k); return r ? r.clone() : undefined; },
+    put: async (k, r) => { m.set(k, r); },
+    delete: async (k) => m.delete(k),
+  };
+}
+const caches = {
+  open: async (n) => store(n), delete: async (n) => stores.delete(n), keys: async () => [...stores.keys()],
+};
+let next = null;  // what the fake network does next: a function returning a Response, or throwing
+async function fakeFetch(req) { return next(req); }
+function page(status, body) {
+  const r = new Response(body || "<html><body class=x><h1>Today</h1></body></html>",
+    { status, headers: { "Content-Type": "text/html; charset=utf-8", "Content-Security-Policy": "default-src 'self'" } });
+  Object.defineProperty(r, "type", { value: "basic" });
+  return r;
+}
+const handlers = {};
+const self = {
+  location: { origin: ORIGIN }, addEventListener: (t, f) => { handlers[t] = f; },
+  registration: {}, clients: {}, skipWaiting: () => {},
+};
+let now = Date.parse("2026-09-28T12:00:00Z");
+class FakeDate extends Date {
+  constructor(...a) { if (a.length === 0) { super(now); } else { super(...a); } }
+  static now() { return now; }
+}
+const ctx = { self, caches, fetch: fakeFetch, Response, URL, setTimeout, clearTimeout, Promise, Date: FakeDate, console };
+vm.createContext(ctx);
+vm.runInContext(src, ctx);
+const PAGES = "lcs-cc-v2-pages";
+
+async function nav(path) {
+  let out;
+  handlers.fetch({ request: { method: "GET", url: ORIGIN + path, mode: "navigate" }, respondWith: (p) => { out = p; } });
+  const res = await out;
+  return { status: res.status, text: await res.text() };
+}
+function has(path) { return stores.has(PAGES) && stores.get(PAGES).has(path); }
+async function message(data, url) {
+  let waited; const got = [];
+  handlers.message({ data, source: { url }, ports: [{ postMessage: (m) => got.push(m) }], waitUntil: (p) => { waited = p; } });
+  if (waited) await waited;
+  return got.length;
+}
+
+(async () => {
+  const r = {};
+  next = () => page(200);
+  r.live = await nav("/");
+  r.savedAfterLive = has("/");
+  await nav("/money");
+  next = () => { throw new TypeError("offline"); };
+  now += 3600 * 1000;
+  r.offline = await nav("/");
+  r.offlineMoney = await nav("/money");
+  next = () => page(401, "no");
+  r.unauth = await nav("/money");
+  r.savedAfter401 = has("/") || has("/money");
+  next = () => page(200); await nav("/");
+  next = () => page(403, "no"); await nav("/");
+  r.savedAfter403 = has("/");
+  next = () => page(200); await nav("/");
+  now += 8 * 24 * 3600 * 1000;
+  next = () => { throw new TypeError("offline"); };
+  r.stale = await nav("/");
+  r.savedAfterStale = has("/");
+  now -= 8 * 24 * 3600 * 1000;
+  next = () => page(200); await nav("/"); await nav("/money");
+  r.foreignClear = await message({ type: "clear-offline" }, "https://evil.example/");
+  r.savedAfterForeign = has("/");
+  r.otherMessage = await message({ type: "something" }, ORIGIN + "/device");
+  r.clear = await message({ type: "clear-offline" }, ORIGIN + "/device");
+  r.savedAfterClear = has("/") || has("/money");
+  console.log(JSON.stringify(r));
+})().catch((e) => { console.error(e && e.stack || e); process.exit(1); });
+'''
+
+
+def test_the_worker_logic_runs_in_node():
+    """sw.js itself, in node's vm with fake caches and network: the copy, its banner, the 401/403 wipe, the 7-day
+    expiry and the clear message. Skipped (the static checks above still run) when node isn't installed."""
+    import shutil, subprocess
+    node = shutil.which("node")
+    if not node:
+        print("SKIP test_the_worker_logic_runs_in_node: node not found")
+        return
+    harness = Path(tempfile.mkdtemp()) / "sw_harness.js"
+    harness.write_text(NODE_HARNESS)
+    r = subprocess.run([node, str(harness), str(SW)], capture_output=True, text=True, timeout=60)
+    assert r.returncode == 0, r.stderr
+    got = json.loads(r.stdout.strip().splitlines()[-1])
+    assert got["live"]["status"] == 200 and got["savedAfterLive"] is True
+    assert got["offline"]["status"] == 200
+    assert "Couldn't reach the Mac (showing the copy from " in got["offline"]["text"]
+    assert "<h1>Today</h1>" in got["offline"]["text"] and got["offlineMoney"]["status"] == 200
+    assert got["unauth"]["status"] == 401 and got["savedAfter401"] is False
+    assert got["savedAfter403"] is False
+    assert got["stale"]["status"] == 503 and "no copy of this page from the last 7 days" in got["stale"]["text"]
+    assert got["savedAfterStale"] is False
+    assert got["foreignClear"] == 0 and got["savedAfterForeign"] is True and got["otherMessage"] == 0
+    assert got["clear"] == 1 and got["savedAfterClear"] is False
+
+
+def test_device_page_has_the_clear_button_and_turning_off_clears():
+    c = client()
+    page = c.get("/device", headers=HEADERS).text
+    assert 'id="offline-clear"' in page and "Clear offline copies" in page
+    assert "lock-screen previews" in page
+    js = (Path(ROOT) / "command_centre" / "static" / "push.js").read_text()
+    assert 'postMessage({ type: "clear-offline" }' in js
+    off = js[js.index('off.addEventListener("click"'):]
+    assert "await clearOffline()" in off
 
 
 if __name__ == "__main__":

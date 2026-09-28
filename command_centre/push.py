@@ -5,20 +5,28 @@
   process: added through `security -i` with the command on stdin (so the key never appears in a process list),
   read with `find-generic-password -w`. Claude never reads it (.claude/settings.json denies
   `security find-generic-password`). For the tests and a local visual check only, CC_VAPID_STORE=file keeps it
-  in <private>/command-centre/vapid-test.json (mode 600) instead.
+  in <private>/command-centre/vapid-test.json (mode 600) instead; the live service (port 8765, the socket or the
+  watcher) refuses to start with it set.
 - **Subscriptions** are in the config's `push_subscriptions`: {id, endpoint, p256dh, auth, added, login,
-  passkey}. The endpoint must be https on a known push service (Apple, Google, Mozilla, Microsoft), with no port,
-  user info, query or fragment, so the app can't be made to POST anywhere else. Adding one is the registry action
-  `push-subscribe` (a passkey: a new device receiving business information); removing one is `push-unsubscribe`.
+  passkey}. The endpoint must be https on a known push service (Apple, Google, Mozilla, Microsoft), so the app
+  can't be made to POST anywhere else (endpoint_ok): ASCII only; no whitespace anywhere; no backslash, %, ; or @
+  in the host part; a host of dotted DNS labels (never an IP literal, an empty label or a trailing dot); no port
+  but 443, user info, query or fragment; and urllib3 (what requests sends with) must read the same host as
+  urlsplit. It is checked again before every send, and the push session follows no redirect. Adding one is the
+  registry action `push-subscribe` (a passkey: a new device receiving business information); removing one is
+  `push-unsubscribe`.
 - **Events** come from scripts/reports/cc_event.py (the scheduled prompts), one JSON line each in
-  <private>/command-centre/events.jsonl. The watcher reads new lines every POLL seconds (from the end of the file
-  the first time, so history is never replayed), and pushes each to every subscription.
-- **Payloads** are {"title", "body", "url"} and nothing else. The title and the page come from the kind (a fixed
-  table); the body is the event's text, cleaned again (no email, link, phone number or long digit run) with every
-  known client and singer surname removed, at most 80 characters. First names only.
+  <private>/command-centre/events.jsonl: a kind and validated fields, never free text. The watcher reads new lines
+  every POLL seconds (from the end of the file the first time, so history is never replayed; a line longer than
+  READ_MAX is skipped), and pushes each to every subscription: at most PASS_MAX per pass plus one "And N more",
+  and at most HOUR_MAX in any hour.
+- **Payloads** are {"title", "body", "url"} and nothing else, built from a fixed template per kind (TEMPLATES).
+  The fields are validated again here (cc_event.validate), so a line that didn't come from the CLI still can't
+  put anything on the lock screen but a first name, a booking ref, a date and words from fixed lists.
 - **Sending** goes over the Mac's normal internet connection to the public push service (Apple's, for the iPhone),
   never through the tailnet, so a phone with the VPN off still gets it. The requests session ignores proxy
-  settings from the environment; each push has a 10-second timeout. A 404 or 410 answer drops that subscription.
+  settings from the environment, follows no redirect and refuses any URL endpoint_ok refuses; each push has a
+  10-second timeout. A 404 or 410 answer drops that subscription.
 - **Stale run.** Between 08:00 and 21:00 London time, if the enquiry assistant's state file hasn't changed for
   more than 3 daytime hours (the hours from 21:00 to 08:00 don't count, so the first run of the morning is never
   late), one push says so; it isn't repeated until the file changes again.
@@ -29,6 +37,7 @@ import contextlib
 import datetime
 import fcntl
 import hashlib
+import ipaddress
 import json
 import logging
 import os
@@ -60,7 +69,9 @@ BODY_MAX = 80
 TITLE_MAX = 60
 DAY_START, DAY_END = 8, 21  # London hours in which the enquiry assistant should be running
 STALE_AFTER = datetime.timedelta(hours=3)
-READ_MAX = 256 * 1024  # bytes of new events read per look
+READ_MAX = 256 * 1024  # bytes of new events read per look; a longer line is skipped
+PASS_MAX = 5  # pushes per watcher pass, then one "And N more"
+HOUR_MAX = 20  # pushes in any hour, the summary included
 KINDS = {  # kind -> (title, the page a tap opens)
     "enquiry": ("New enquiry", "/enquiries"),
     "deposit": ("Payment arrived", "/money"),
@@ -72,10 +83,21 @@ KINDS = {  # kind -> (title, the page a tap opens)
     "run-stale": ("Enquiry assistant not seen", "/health"),
 }
 assert set(KINDS) - {"run-stale"} == set(cc_event.KINDS)
+STATE_WORDS = {
+    "CHECK_PAYMENT": "check a payment", "CHECK_VALUE": "check the booking value", "NOTED_PAID": "noted as paid",
+    "PAST_UNMATCHED": "past, payment not matched", "PAST_PART_PAID": "past, part paid",
+    "PAYMENT_ON_CANCELLED": "payment on a cancelled booking", "PAYMENT_AFTER_CLOSE": "payment after closing",
+    "ARRANGED": "collect the cash or cheque"}
+assert set(STATE_WORDS) == set(cc_event.STATES)
+AGENT_WORDS = {"reply-drafter": "Reply drafter", "singer-clerk": "Singer clerk", "daily-pass": "Daily pass",
+               "monday": "Monday review"}
+assert set(AGENT_WORDS) == set(cc_event.AGENTS)
 PUSH_HOSTS = {"web.push.apple.com", "fcm.googleapis.com", "android.googleapis.com",
               "updates.push.services.mozilla.com"}
 PUSH_SUFFIXES = (".push.apple.com", ".notify.windows.com")
 ENDPOINT_MAX = 1024
+HOST_RE = re.compile(r"^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}$")
+NETLOC_BAD = set("\\%;@[]")
 KEY_RE = re.compile(r"^[A-Za-z0-9_-]{16,128}$")  # a base64url p256dh (87 characters) or auth secret (22)
 SUB_ID_RE = re.compile(r"^[0-9a-f]{16}$")
 
@@ -177,19 +199,45 @@ def _vapid():
 # ---------------------------------------------------------------- subscriptions
 
 
+def _is_ip(host):
+    try:
+        ipaddress.ip_address(host)
+        return True
+    except ValueError:
+        return False
+
+
 def endpoint_ok(endpoint):
-    """True for an https URL on a known push service, with no port, user info, query or fragment."""
-    if not isinstance(endpoint, str) or not endpoint or len(endpoint) > ENDPOINT_MAX or any(c.isspace() for c in endpoint):
+    """True for an https URL on a known push service, and nothing that two URL parsers could read differently:
+    ASCII only, no whitespace or backslash anywhere, no %, ;, @ or brackets in the host part, a host of DNS labels
+    (lower case, no IP literal, empty label or trailing dot), no port but 443, no user info, query or fragment, and
+    urllib3's host (what requests connects to) equal to urlsplit's."""
+    if not isinstance(endpoint, str) or not endpoint or len(endpoint) > ENDPOINT_MAX or not endpoint.isascii():
+        return False
+    if any(c.isspace() or c == "\\" or ord(c) < 32 or ord(c) == 127 for c in endpoint):
+        return False
+    if not endpoint.startswith("https://"):
         return False
     try:
         u = urllib.parse.urlsplit(endpoint)
         port = u.port
     except ValueError:
         return False
-    host = (u.hostname or "").lower()
-    if u.scheme != "https" or port is not None or u.username or u.password or u.fragment or u.query:
+    netloc = u.netloc
+    if u.scheme != "https" or not netloc or any(c in NETLOC_BAD for c in netloc):
         return False
-    if "@" in u.netloc or u.netloc.lower() != host:
+    if u.username is not None or u.password is not None or u.fragment or u.query or "?" in endpoint or "#" in endpoint:
+        return False
+    host = u.hostname or ""
+    if port not in (None, 443) or netloc not in (host, f"{host}:443"):
+        return False
+    if not HOST_RE.fullmatch(host) or _is_ip(host):
+        return False
+    try:
+        from urllib3.util import parse_url
+        if (parse_url(endpoint).host or "") != host:
+            return False
+    except Exception:
         return False
     return host in PUSH_HOSTS or any(host.endswith(s) and len(host) > len(s) for s in PUSH_SUFFIXES)
 
@@ -262,37 +310,63 @@ def device_list():
 # ---------------------------------------------------------------- payloads
 
 
-def _name_words():
-    """Every client's and singer's surname words (the words after the first), from the ledger and singer store."""
-    from . import data  # imported late: data imports the scripts
-    words = set()
-    for path, col in ((data.lm.LEDGER, "client_name"), (data.si.STORE, "singer_name")):
-        try:
-            rows = data.lm.read_csv(path)
-        except (OSError, ValueError):
-            continue
-        for r in rows:
-            parts = re.findall(r"[^\W\d_][\w'’-]*", str(r.get(col) or ""))
-            words.update(p for p in parts[1:] if len(p) >= 2)
-    return words
+def _date_words(value):
+    if value == "tbc":
+        return "date tbc"
+    d = datetime.date.fromisoformat(value)
+    return f"{d.day} {d:%b %Y}"
 
 
-def first_names_only(text, surnames=None):
-    words = _name_words() if surnames is None else surnames
-    for w in sorted(words, key=len, reverse=True):
-        text = re.sub(rf"(?i)(?<![\w'’-]){re.escape(w)}(?![\w'’-])", "", text)
-    return re.sub(r"\s+", " ", text).replace(" ,", ",").replace(" :", ":").strip(" ,;:-")
+def _stale_words(value):
+    if value == "never":
+        return "never seen"
+    when = datetime.datetime.fromisoformat(value)
+    if when.tzinfo is None:
+        raise ValueError("naive time")
+    return f"last seen {when.astimezone(LONDON):%a %H:%M}"
 
 
-def payload(event, surnames=None):
-    """The notification for one event: {"title", "body", "url"} only, or None for an unknown kind."""
+TEMPLATES = {  # kind -> the body, from validated fields only
+    "enquiry": lambda f: f"{f['first']}: {f['occasion'].replace('-', ' ')}, {_date_words(f['date'])}",
+    "deposit": lambda f: f"{f['first']}: {f['ref']} payment arrived",
+    "hand-check": lambda f: f"{f['ref']}: {STATE_WORDS[f['state']]}",
+    "bank-change": lambda f: f"{f['first']}: ring them before paying",
+    "guard-denied": lambda f: f"{AGENT_WORDS[f['agent']]}: the reason is in its summary",
+    "run-failed": lambda f: "Open Health for the details.",
+    "monday-ready": lambda f: "Changes are waiting for your approval.",
+    "run-stale": lambda f: f"Not run for 3 daytime hours ({_stale_words(f['last'])}).",
+}
+assert set(TEMPLATES) == set(KINDS)
+
+
+def _fields(kind, fields):
+    """The event's fields, validated again at push time (the CLI's rules), or ValueError."""
+    if kind == "run-stale":
+        if not isinstance(fields, dict) or set(fields) != {"last"} or not isinstance(fields["last"], str):
+            raise ValueError("run-stale takes last")
+        _stale_words(fields["last"])
+        return {"last": fields["last"]}
+    return cc_event.validate(kind, fields)
+
+
+def payload(event):
+    """The notification for one event: {"title", "body", "url"} only, from the kind's fixed template, or None for
+    an unknown kind or fields that fail validation (free text never passes)."""
     kind = event.get("kind") if isinstance(event, dict) else None
     if kind not in KINDS:
         return None
+    try:
+        fields = _fields(kind, event.get("fields", {}))
+        body = TEMPLATES[kind](fields)
+    except (ValueError, KeyError, TypeError):
+        return None
     title, url = KINDS[kind]
-    body = first_names_only(cc_event.clean_text(event.get("text") or "", most=400), surnames)
-    body = cc_event.clean_text(body, most=BODY_MAX)
-    return {"title": title[:TITLE_MAX], "body": body, "url": url}
+    return {"title": title[:TITLE_MAX], "body": body[:BODY_MAX], "url": url}
+
+
+def summary(more):
+    return {"title": f"And {more} more", "body": "More notifications than fit at once: open Activity.",
+            "url": "/activity"}
 
 
 # ---------------------------------------------------------------- sending
@@ -307,9 +381,23 @@ def _webpush():
 
 
 def _session():
+    """A requests session that posts to push endpoints only: no proxy from the environment (straight out over the
+    Mac's own internet connection), no redirect followed, and any URL endpoint_ok refuses is refused here too."""
     import requests
-    s = requests.Session()
-    s.trust_env = False  # no proxy from the environment: straight out over the Mac's own internet connection
+
+    class PushSession(requests.Session):
+        def request(self, method, url, *args, **kw):
+            if not endpoint_ok(url):
+                raise PushError("not a known push service")
+            kw["allow_redirects"] = False
+            return super().request(method, url, *args, **kw)
+
+        def get_redirect_target(self, resp):
+            return None  # belt and braces: never a redirect, whatever calls resolve_redirects
+
+    s = PushSession()
+    s.trust_env = False
+    s.max_redirects = 0
     return s
 
 
@@ -330,10 +418,17 @@ def send(message, subs=None):
     if not subs:
         return result
     body = json.dumps(message, ensure_ascii=False, separators=(",", ":"))
+    if not any(endpoint_ok(s.get("endpoint")) for s in subs):
+        result["failed"] = len(subs)
+        return result
     vapid = _vapid()
     push = _webpush()
     session = _session() if push.__module__.startswith("pywebpush") else None
     for s in subs:
+        if not endpoint_ok(s.get("endpoint")):
+            result["failed"] += 1  # checked again at send time, whatever the config says
+            log.warning("push refused: a stored endpoint is not a known push service")
+            continue
         info = {"endpoint": s["endpoint"], "keys": {"p256dh": s["p256dh"], "auth": s["auth"]}}
         kw = {"vapid_private_key": vapid, "vapid_claims": claims(), "ttl": TTL, "timeout": PUSH_TIMEOUT}
         if session is not None:
@@ -389,30 +484,44 @@ def save_state(st):
 
 def new_events(st):
     """Events appended since the last look (and the state updated in place). The first look, a new file (another
-    inode) or a shorter file starts from the end or the start as appropriate; history is never replayed."""
+    inode) or a shorter file starts from the end or the start as appropriate; history is never replayed. A line
+    longer than READ_MAX is skipped (st["skip"] until its newline), so one bad line can't stall the watcher."""
     path = events_path()
     try:
         fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW)
     except FileNotFoundError:
-        st.update(inode=None, offset=0)
+        st.update(inode=None, offset=0, skip=False)
         return []
     with os.fdopen(fd, "rb") as f:
         info = os.fstat(f.fileno())
         if "offset" not in st:  # the watcher's first start: skip what's already there
-            st.update(inode=info.st_ino, offset=info.st_size)
+            st.update(inode=info.st_ino, offset=info.st_size, skip=False)
             return []
         offset = int(st.get("offset") or 0)
+        skip = bool(st.get("skip"))
         if st.get("inode") != info.st_ino or info.st_size < offset:
-            offset = 0  # a new file since the last look: read it from the start
+            offset, skip = 0, False  # a new file since the last look: read it from the start
         f.seek(offset)
         chunk = f.read(READ_MAX)
+    if skip:
+        nl = chunk.find(b"\n")
+        if nl < 0:
+            st.update(inode=info.st_ino, offset=offset + len(chunk), skip=True)
+            return []
+        offset, chunk, skip = offset + nl + 1, chunk[nl + 1:], False
     end = chunk.rfind(b"\n")
     if end < 0:
-        st.update(inode=info.st_ino, offset=offset)
+        if len(chunk) >= READ_MAX:
+            st.update(inode=info.st_ino, offset=offset + len(chunk), skip=True)  # too long: skip to its end
+            log.warning("push watcher: skipped an event line longer than %d bytes", READ_MAX)
+        else:
+            st.update(inode=info.st_ino, offset=offset, skip=False)  # a line still being written
         return []
-    st.update(inode=info.st_ino, offset=offset + end + 1)
+    st.update(inode=info.st_ino, offset=offset + end + 1, skip=False)
     out = []
     for line in chunk[:end].splitlines():
+        if len(line) > READ_MAX:
+            continue
         try:
             event = json.loads(line.decode("utf-8"))
         except (UnicodeDecodeError, ValueError):
@@ -452,15 +561,31 @@ def stale_run(now, st):
     if st.get("stale_for") == mark:
         return None
     st["stale_for"] = mark
-    when = "never seen" if changed is None else f"last seen {changed:%a %H:%M}"
-    return {"kind": "run-stale", "text": f"The enquiry assistant hasn't run in 3 daytime hours ({when})."}
+    return {"kind": "run-stale", "fields": {"last": "never" if changed is None else changed.isoformat()}}
 
 
-_LOOK_LOCK = None
+def capped(messages, st, now_ts):
+    """The messages to send now: at most PASS_MAX, then one "And N more" in place of the rest, and never more than
+    HOUR_MAX in the hour before now_ts (st["sent"] keeps those times; updated in place)."""
+    recent = [t for t in st.get("sent") or [] if isinstance(t, (int, float)) and 0 <= now_ts - t < 3600]
+    budget = max(0, HOUR_MAX - len(recent))
+    if len(messages) <= min(PASS_MAX, budget):
+        out = list(messages)
+    elif budget == 0:
+        out = []
+    else:
+        direct = messages[:min(PASS_MAX, budget - 1)]
+        out = direct + [summary(len(messages) - len(direct))]
+    if len(out) < len(messages):
+        log.warning("push watcher: %d of %d notifications held back by the caps", len(messages) - len(out),
+                    len(messages))
+    st["sent"] = recent + [now_ts] * len(out)
+    return out
 
 
-def look(now=None, surnames=None):
-    """One pass of the watcher: new events, then the stale-run check. Returns the payloads it pushed."""
+def look(now=None):
+    """One pass of the watcher: new events, then the stale-run check, capped. Returns the payloads it pushed."""
+    now = now or datetime.datetime.now(LONDON)
     lock_path = auth.config_dir() / "push.lock"
     auth.config_dir().mkdir(mode=0o700, parents=True, exist_ok=True)
     fd = os.open(lock_path, os.O_RDWR | os.O_CREAT, 0o600)
@@ -468,23 +593,17 @@ def look(now=None, surnames=None):
         fcntl.flock(fd, fcntl.LOCK_EX)
         st = load_state()
         events = new_events(st)
-        stale = stale_run(now or datetime.datetime.now(LONDON), st)
+        stale = stale_run(now, st)
         if stale:
             events.append(stale)
+        messages = [m for m in (payload(e) for e in events) if m is not None]
+        messages = capped(messages, st, now.timestamp())
         save_state(st)
     finally:
         os.close(fd)
-    pushed = []
-    names = None
-    for event in events:
-        if names is None:
-            names = _name_words() if surnames is None else surnames
-        message = payload(event, names)
-        if message is None:
-            continue
+    for message in messages:
         send(message)
-        pushed.append(message)
-    return pushed
+    return messages
 
 
 async def watch(stop_event=None, poll=POLL):

@@ -8,17 +8,20 @@
 - **init** makes an age X25519 key pair (pyrage). The recipient (the public key, "age1…") goes in the Command
   Centre's config (~/lcs-private/command-centre/config.json, `backup.recipient`); the identity (the private key,
   "AGE-SECRET-KEY-1…") is printed once, for the owner to keep in his password manager, and is never written to
-  disk. Refused when a recipient exists already, unless --replace (older backups still need the older key).
+  disk. Refused when a recipient exists already, unless --replace (older backups still need the older key), and
+  refused when stdout isn't a terminal, so the key can't land in a pipe, a log or a tool's transcript (Claude's
+  Bash tool is denied `cc_backup.py init` in .claude/settings.json as well).
 - **run** writes a tar.gz of the private folder, encrypted to the recipient, as
   lcs-backup-YYYYMMDD-HHMMSS.tar.gz.age (mode 600) in the target folder: the config's `backup.target`, by default
   ~/Library/Mobile Documents/com~apple~CloudDocs/LCS-backups (iCloud Drive). Left out: the backups themselves,
   command-centre/runs/, command-centre/cache/ and command-centre/mirror.git (large and re-creatable), and
-  anything that isn't a regular file, folder or symlink (sockets). The archive is built in an unlinked temp file
-  (never in the target), then encrypted through a .part file and renamed. Backups older than 14 days are removed
-  afterwards (only files with that exact name, never the newest). command-centre/backup-state.json records the
+  anything that isn't a regular file, folder or symlink (sockets). The tar.gz is streamed through an os.pipe
+  into age by a second thread, so no plaintext copy is ever written to disk; the ciphertext goes to a .part file
+  that is renamed when complete. Backups older than 14 days are removed afterwards (only files with that exact
+  name, never the newest), and so are .part files left by an interrupted run more than a day ago. command-centre/backup-state.json records the
   time, name, size and sha256 for the Health page. One run at a time.
-- **verify** reads the identity from stdin (hidden when typed), decrypts the newest backup in memory or an
-  unlinked temp file, and prints how many entries it holds and their paths. Nothing is extracted.
+- **verify** reads the identity from stdin (hidden when typed), decrypts the newest backup through a pipe (never
+  to disk), and prints how many entries it holds and their paths. Nothing is extracted.
 
 Restore: `brew install age`, then `age -d -i key.txt lcs-backup-….tar.gz.age | tar -xz -C ~/restore-check`, with
 key.txt holding the identity from the password manager (delete it afterwards).
@@ -35,7 +38,7 @@ import secrets
 import stat
 import sys
 import tarfile
-import tempfile
+import threading
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
@@ -46,7 +49,9 @@ from command_centre import auth  # noqa: E402  the config (read, locked write) a
 LONDON = ZoneInfo("Europe/London")
 DEFAULT_TARGET = "~/Library/Mobile Documents/com~apple~CloudDocs/LCS-backups"
 NAME_RE = re.compile(r"^lcs-backup-(\d{8})-(\d{6})\.tar\.gz\.age$")
+PART_RE = re.compile(r"^\.lcs-backup-\d{8}-\d{6}\.tar\.gz\.age\.[0-9a-f]{8}\.part$")
 KEEP = datetime.timedelta(days=14)
+PART_KEEP = datetime.timedelta(days=1)
 EXCLUDE = ("command-centre/runs", "command-centre/cache", "command-centre/mirror.git", "command-centre/backups")
 LIST_MAX = 200  # paths printed by verify
 
@@ -122,8 +127,9 @@ def excluded(rel, target_rel):
     return False
 
 
-def build_archive(src, fileobj, target=None):
-    """Write a tar.gz of `src` into `fileobj`. Returns (entries, skipped)."""
+def build_archive(src, fileobj, target=None, stream=False):
+    """Write a tar.gz of `src` into `fileobj` (`stream`: a pipe, written strictly forwards). Returns (entries,
+    skipped)."""
     src = Path(src)
     target_rel = None
     if target is not None:
@@ -132,7 +138,7 @@ def build_archive(src, fileobj, target=None):
         except ValueError:
             target_rel = None
     entries = skipped = 0
-    with tarfile.open(fileobj=fileobj, mode="w:gz", format=tarfile.PAX_FORMAT) as tar:
+    with tarfile.open(fileobj=fileobj, mode="w|gz" if stream else "w:gz", format=tarfile.PAX_FORMAT) as tar:
         for dirpath, dirnames, filenames in os.walk(src, followlinks=False):
             rel_dir = os.path.relpath(dirpath, src)
             rel_dir = "" if rel_dir == "." else rel_dir
@@ -181,9 +187,15 @@ def name_time(name):
 
 
 def prune(target, now, keep_name):
-    """Remove backups (exact name pattern, regular files) older than KEEP, never `keep_name`. Returns the count."""
+    """Remove backups (exact name pattern, regular files) older than KEEP, never `keep_name`, and .part files (exact
+    name pattern, regular files) last written more than PART_KEEP ago. Returns the count of backups removed."""
     removed = 0
     for entry in os.scandir(target):
+        if PART_RE.fullmatch(entry.name) and entry.is_file(follow_symlinks=False):
+            written = datetime.datetime.fromtimestamp(entry.stat(follow_symlinks=False).st_mtime, LONDON)
+            if now - written > PART_KEEP:
+                os.unlink(entry.path)
+            continue
         when = name_time(entry.name)
         if when is None or entry.name == keep_name or not entry.is_file(follow_symlinks=False):
             continue
@@ -191,6 +203,32 @@ def prune(target, now, keep_name):
             os.unlink(entry.path)
             removed += 1
     return removed
+
+
+def encrypt_stream(p, rcpt, private, target, out):
+    """tar.gz `private` into age-encrypted `out` through an os.pipe: a thread writes the archive into the pipe
+    while age reads the other end, so the plaintext is never on disk. Returns (entries, skipped); an error on
+    either side is raised here (the caller discards `out`)."""
+    rfd, wfd = os.pipe()
+    box = {}
+
+    def produce():
+        try:
+            with os.fdopen(wfd, "wb") as w:
+                box["counts"] = build_archive(private, w, target, stream=True)
+        except BaseException as e:  # noqa: BLE001  handed to the main thread
+            box["error"] = e
+
+    worker = threading.Thread(target=produce, name="cc-backup-tar", daemon=True)
+    worker.start()
+    try:
+        with os.fdopen(rfd, "rb") as r:  # closing it (even on an age error) ends the writer with a broken pipe
+            p.encrypt_io(r, out, [rcpt])
+    finally:
+        worker.join()
+    if "error" in box:
+        raise box["error"]
+    return box["counts"]
 
 
 def run(now=None, private=None):
@@ -219,19 +257,16 @@ def run(now=None, private=None):
         name = backup_name(now)
         final = target / name
         part = target / f".{name}.{secrets.token_hex(4)}.part"
-        with tempfile.TemporaryFile() as plain:  # unlinked at once: the plaintext never has a name
-            entries, skipped = build_archive(private, plain, target)
-            plain.seek(0)
-            fd = os.open(part, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
-            try:
-                with os.fdopen(fd, "wb") as out:
-                    p.encrypt_io(plain, out, [rcpt])
-                    out.flush()
-                    os.fsync(out.fileno())
-                os.replace(part, final)
-            except BaseException:
-                part.unlink(missing_ok=True)
-                raise
+        fd = os.open(part, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
+        try:
+            with os.fdopen(fd, "wb") as out:
+                entries, skipped = encrypt_stream(p, rcpt, private, target, out)
+                out.flush()
+                os.fsync(out.fileno())
+            os.replace(part, final)
+        except BaseException:
+            part.unlink(missing_ok=True)
+            raise
         digest = hashlib.sha256()
         with open(final, "rb") as f:
             for block in iter(lambda: f.read(1 << 20), b""):
@@ -280,14 +315,35 @@ def verify(identity_text, target=None):
     path = newest(target)
     if path is None:
         raise BackupError("no backup found")
-    with open(path, "rb") as enc, tempfile.SpooledTemporaryFile(max_size=64 * 1024 * 1024) as plain:
+    rfd, wfd = os.pipe()
+    box = {}
+
+    def produce(enc):
         try:
-            p.decrypt_io(enc, plain, [identity])
-        except Exception:
-            raise BackupError("this key doesn't open the newest backup") from None
-        plain.seek(0)
-        with tarfile.open(fileobj=plain, mode="r:gz") as tar:
-            names = tar.getnames()
+            with os.fdopen(wfd, "wb") as w:
+                p.decrypt_io(enc, w, [identity])
+        except BaseException as e:  # noqa: BLE001  a wrong key, or the reader stopped
+            box["error"] = e
+
+    names, tar_error = [], None
+    with open(path, "rb") as enc:
+        worker = threading.Thread(target=produce, args=(enc,), name="cc-backup-verify", daemon=True)
+        worker.start()
+        try:
+            with os.fdopen(rfd, "rb") as r:  # streamed: the plaintext is never on disk
+                try:
+                    with tarfile.open(fileobj=r, mode="r|gz") as tar:
+                        names = [m.name for m in tar]
+                except Exception as e:  # noqa: BLE001  a truncated or foreign stream
+                    tar_error = e
+                while r.read(1 << 16):  # let the writer finish
+                    pass
+        finally:
+            worker.join()
+    if "error" in box:
+        raise BackupError("this key doesn't open the newest backup")
+    if tar_error is not None:
+        raise BackupError("the newest backup opens but isn't a readable archive")
     return path, names
 
 
@@ -304,6 +360,9 @@ def main(argv=None):
     args = ap.parse_args(argv)
     try:
         if args.cmd == "init":
+            if not sys.stdout.isatty():
+                raise BackupError("init prints the key once, so it runs only in a terminal (not through a pipe, a "
+                                  "log or a tool): open Terminal and run it there")
             identity, recipient = init(args.replace)
             print("Backup key made. The recipient (public) is saved in the Command Centre's config:")
             print(f"  {recipient}")
