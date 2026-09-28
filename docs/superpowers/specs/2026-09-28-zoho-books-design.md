@@ -28,7 +28,7 @@ There are two MCP servers, set up at project level in the main checkout:
 | `zoho-books` (accounting) | 222 | 92 |
 | `zoho-books-invoices` (invoices) | 115 | 34 |
 
-`.claude/hooks/zoho_books_guard.py` allows exactly the 121 read-only tool names and denies everything else. The two exceptions it also denies are `get_bank_statement_import_encryption_key` and `generate_invoice_payment_link`.
+`.claude/hooks/zoho_books_guard.py` accepts only these two server names. It allows 117 of the read-only tool names plus the approved write tools below, and denies everything else. The read-only tools it also denies are `get_bank_statement_import_encryption_key`, `generate_invoice_payment_link`, `convert_purchase_order_to_bill`, the invoice payment QR tools, and the contact bank-account and card tools.
 
 The owner enabled the Bills tools on 28 Sep 2026; the accounting server now has 241 tools, including create, update, get and list for bills. There is no bill-attachment tool, but `create_bill` takes `documents`. `convert_purchase_order_to_bill` is marked read-only but creates a bill, so it stays denied: the guard trusts exact names, not labels.
 
@@ -46,23 +46,39 @@ These add to the programme's rules.
 
 ## Approved write tools
 
-| Tool | Why | Argument checks in the guard |
+A write call must fit its tool's allowlist exactly. `tool_input` holds only `body`, `query_params` and `path_variables`. Every key, at any depth, must be on the tool's list below. Keys are compared regardless of case, so a differently-cased duplicate (`send` and `Send`) is denied, and so is a duplicate key in the JSON. Tax fields (`tax_id`, `tax_treatment`, `vat_treatment` and so on) are on no list.
+
+Every string or number in a write call is also checked for bank details and VAT, in any field and at any depth. The guard denies:
+- a sort code (`12-34-56`, `12 34 56`);
+- an eight-digit run;
+- a GB IBAN;
+- the words "sort code", "account number", "acc no", "IBAN", "SWIFT", "BIC" and "VAT".
+
+ISO dates are exempt, and so are `invoice_number` and `bill_number` when they match their own patterns (`^[0-9]{4}[A-Z]?$`; a bill number is one run of letters, digits and `/._-`, up to 30 characters). The exemption covers the digit rules only.
+
+| Tool | Why | Allowed keys and checks |
 |---|---|---|
-| `ZohoBooks_create_contact` (invoices server) | New client, or new singer as a vendor | `contact_type` is `customer` or `vendor`. No portal (`is_portal_enabled` absent or false, and no contact person with `enable_portal`). No `opening_balances`, and no bank or card fields. |
-| `ZohoBooks_create_invoice` | Draft invoice on a quote acceptance, and the 2026 import | `send` absent or false, in both the body and `query_params`. `invoice_number` matches `^\d{4}[A-Z]?$` with `ignore_auto_number_generation=true`. No `batch_payments` and no `payment_options.payment_gateways`. `customer_id` present. |
-| `ZohoBooks_add_invoice_document` / `ZohoBooks_upload_invoice_document` | Attach the booking confirmation to the draft | `invoice_id` present. How the file is passed over MCP is still unknown: test it on the first real booking. If it can't carry a local file, the owner attaches the confirmation in Books (one click). |
-| `ZohoBooks_update_contact` | Correct a client's or singer's name or email | The same checks as `create_contact`. |
-| `ZohoBooks_update_invoice` | Fix a draft before the owner sends it | The same body checks as `create_invoice`, and `invoice_id` present. |
-| `ZohoBooks_add_invoice_comment` | An internal note (e.g. "booking confirmation to attach") | `show_comment_to_clients` absent or false. |
-| `ZohoBooks_create_bill`, `ZohoBooks_update_bill` | Singer invoices as bills | `vendor_id` present; `bill_number` present on create; no `approvers`, `purchaseorder_ids` or payment fields. |
-| `ZohoBooks_add_bill_comment` | An internal note on a bill | None. |
+| `ZohoBooks_create_contact` | New client, or new singer as a vendor | body: `contact_name`, `company_name`, `contact_type`, `contact_persons`, `billing_address`, `payment_terms`, `payment_terms_label`, `notes`. Each contact person: `first_name`, `last_name`, `email`, `phone`, `mobile`, `is_primary_contact`, `salutation`. Billing address: `address`, `street2`, `city`, `state`, `zip`, `country`, `attention`. `contact_type` is required and is `customer` or `vendor`. query: `organization_id`. |
+| `ZohoBooks_update_contact` | Correct a client's or singer's name | body: `contact_name`, `company_name` only. path: `contact_id` (required). query: `organization_id`. No email, phone, notes, contact persons or anything else. The live schema marks `contact_type` as required, and this list forbids it: if Books rejects a names-only update, the owner makes the change in Books. |
+| `ZohoBooks_create_invoice` | Draft invoice on a quote acceptance, and the 2026 import | body: `customer_id` (required), `invoice_number` (required, `^[0-9]{4}[A-Z]?$`), `date`, `due_date`, `payment_terms`, `payment_terms_label`, `line_items`, `notes`, `terms`, `reference_number`, `allow_partial_payments`, `template_id`. Each line item: `name`, `description`, `rate`, `quantity`, `item_order`, `item_id`. query: `organization_id`, `ignore_auto_number_generation` (must be true), `send` (absent or false). |
+| `ZohoBooks_add_invoice_document` | Attach the booking confirmation to the draft | path: `invoice_id` (required), `document_id`. query: `organization_id`. How the file is passed over MCP is still unknown: test it on the first real booking. If it can't carry a local file, the owner attaches the confirmation in Books (one click). |
+| `ZohoBooks_upload_invoice_document` | The same | path: `invoice_id` (required), `document_id`. query: `organization_id`, `attachment`. |
+| `ZohoBooks_add_invoice_comment` | An internal note (e.g. "booking confirmation to attach") | body: `description`. path: `invoice_id` (required). query: `organization_id`. `show_comment_to_clients` is denied with any value. The schema gives it no default, so the owner confirms on the first comment that Books keeps it internal. |
+| `ZohoBooks_create_bill` | Singer invoices as bills | body: `vendor_id` and `bill_number` (both required), `date`, `due_date`, `reference_number`, `notes`, `line_items`, `payment_terms`, `payment_terms_label`, `documents`. Each line item: `name`, `description`, `rate`, `quantity`, `account_id`, `item_order`. Each document: `document_id`, `file_name`. query: `organization_id`. |
+| `ZohoBooks_update_bill` | Correct a bill | As `create_bill` without `documents`. `vendor_id` is required, and path `bill_id` is required. |
+| `ZohoBooks_add_bill_comment` | An internal note on a bill | body: `description`. path: `bill_id` (required). query: `organization_id`. |
 
 Still denied:
+- `ZohoBooks_update_invoice`: the owner edits drafts in Books;
 - every email, SMS, reminder, portal or payment-link tool, and `mark_invoice_sent` (the owner's click);
 - every delete, void, write-off, refund or credit application;
 - customer and vendor payments, and bank matching or categorising (the owner does these in Books);
 - `approve_bill`, `submit_bill`, `mark_bill_open`, `convert_purchase_order_to_bill`;
-- contact bank accounts and cards.
+- contact bank accounts and cards, including reading them, and the invoice payment QR tools;
+- any other key on an approved tool, including tax fields, the client portal, payment options, `status`, and the bill `attachment` query parameter;
+- any tool on a server other than `zoho-books` and `zoho-books-invoices`.
+
+The security review of PR #147 (28 Sep 2026) found that `update_invoice` and `update_contact` could redirect a draft or a client's email, that keys outside a few named ones went unchecked, and that free text could carry bank details. This section is the result.
 
 ## Flows
 
@@ -89,7 +105,7 @@ Today the assistant builds a PDF invoice and a `.docx` confirmation and saves a 
 
 - `singer_invoices.py scan` runs as now, with the fraud checks.
 - Then the vendor is found or created (`create_contact`, vendor, no bank details) and `create_bill` is called with the amount, the singer's invoice number and date, and the booking ref in the notes.
-- The PDF is attached to the bill if the upload works.
+- The guard denies `create_bill`'s `attachment` query parameter, so the owner attaches the singer's PDF in Books.
 - The bill's paid status comes from the owner's bank-feed matching in Books. `singer_invoices.py paid` stays as the source of the "Paid!" draft.
 
 ### D. Import 2026 (one-off, owner-approved batch)
