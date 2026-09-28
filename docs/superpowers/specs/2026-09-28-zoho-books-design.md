@@ -28,7 +28,7 @@ There are two MCP servers, set up at project level in the main checkout:
 | `zoho-books` (accounting) | 222 | 92 |
 | `zoho-books-invoices` (invoices) | 115 | 34 |
 
-`.claude/hooks/zoho_books_guard.py` accepts only these two server names. It allows 117 of the read-only tool names plus the approved write tools below, and denies everything else. The read-only tools it also denies are `get_bank_statement_import_encryption_key`, `generate_invoice_payment_link`, `convert_purchase_order_to_bill`, the invoice payment QR tools, and the contact bank-account and card tools.
+`.claude/hooks/zoho_books_guard.py` accepts only these two server names. It allows 115 of the read-only tool names plus the approved write tools below, and denies everything else. The read-only tools it also denies are `get_bank_statement_import_encryption_key`, `generate_invoice_payment_link`, `convert_purchase_order_to_bill`, the invoice payment QR tools, `get_invoice_qr_code`, `list_contact_autobill_recurring_invoices`, and the contact bank-account and card tools.
 
 The owner enabled the Bills tools on 28 Sep 2026; the accounting server now has 241 tools, including create, update, get and list for bills. There is no bill-attachment tool, but `create_bill` takes `documents`. `convert_purchase_order_to_bill` is marked read-only but creates a bill, so it stays denied: the guard trusts exact names, not labels.
 
@@ -46,26 +46,33 @@ These add to the programme's rules.
 
 ## Approved write tools
 
-A write call must fit its tool's allowlist exactly. `tool_input` holds only `body`, `query_params` and `path_variables`. Every key, at any depth, must be on the tool's list below. Keys are compared regardless of case, so a differently-cased duplicate (`send` and `Send`) is denied, and so is a duplicate key in the JSON. Tax fields (`tax_id`, `tax_treatment`, `vat_treatment` and so on) are on no list.
+A write call must fit its tool's allowlist exactly. `tool_input` holds only `body`, `query_params` and `path_variables`. Every key, at any depth, must be on the tool's list below, spelt exactly: keys are lower case, and a key with any upper-case letter (`Send`, `Body`, `Contact_ID`) is denied, as is a duplicate key in the JSON. Tax fields (`tax_id`, `tax_treatment`, `vat_treatment` and so on) are on no list.
 
-Every string or number in a write call is also checked for bank details and VAT, in any field and at any depth. The guard denies:
-- a sort code (`12-34-56`, `12 34 56`);
-- an eight-digit run;
-- a GB IBAN;
-- the words "sort code", "account number", "acc no", "IBAN", "SWIFT", "BIC" and "VAT".
+Every string or number in a write call is also checked for bank details and VAT, in any field and at any depth. Singer invoices carry real bank details, and foreign IBANs are plausible, so the check covers any format. The text is first NFKC-normalised (fullwidth digits and letters become plain ones), and invisible format characters (zero-width space, soft hyphen) and accents are stripped. Real dates and clock times are then removed: ISO dates (`2026-11-21`), day/month/year dates (`21/11/2026`, `21.11.2026`, `21-11-2026`, `21 11 2026`), dates with a month name (`1 December 2026`, `Nov 2026`, `December 12, 2026`) and times (`11:00`, `14.30`; a dotted sort code such as `04.00.04` is not read as a time). The guard denies:
+- a run of 6 to 10 digits, or of 14 or more, where the digits are joined by at most one separator each (space, `.`, `/`, `-`, `_`, the Unicode dashes U+2010 to U+2015, or the minus sign). This covers a sort code in any layout (`04-00-04`, `04/00/04`, `04.00.04`, `040004`), an account number (`1234 5678`, `1234-5678`) and the two together (`04000412345678`);
+- a run of 11 to 13 digits, unless it looks like a phone number: 11 digits starting with 0 (`020 7946 0958`), or directly after a `+` or `+ ` (`+44 20 7946 0958`);
+- an IBAN from any country (two letters, two check digits, then 11 to 30 letters or digits, grouped or not) with at least ten digits in it;
+- the words "sort code" (also run together, "Sortcode"), "s/c", "a/c", "acct", "account number", "account no", "account #", "acc no", "IBAN", "SWIFT" and "BIC";
+- "VAT" in any spacing or punctuation ("V.A.T.", "V A T", "VAT20", "20%VAT"), "VATable" and "value added tax";
+- any Greek or Cyrillic letter, since these can pass for Latin ones ("ВАТ");
+- in invoice and bill calls only, the word "tax" or "taxes". Alma Consort Ltd is not VAT-registered, so its invoices and bills never mention tax. Contacts may (a client can be a tax adviser).
 
-ISO dates are exempt, and so are `invoice_number` and `bill_number` when they match their own patterns (`^[0-9]{4}[A-Z]?$`; a bill number is one run of letters, digits and `/._-`, up to 30 characters). The exemption covers the digit rules only.
+Two exemptions cover the digit rules only. `invoice_number` is exempt when it matches `^[0-9]{4}[A-Z]?$`: four digits, below the run threshold anyway. A key ending `_id` is exempt when its whole value is 9 to 20 digits, the shape of a Books record id. `bill_number` has no exemption, so a singer's invoice number with six or more joined digits (`20260928`, `2026/17`) is denied; Claude puts such a number in the notes or leaves it for the owner.
+
+What still passes: phone numbers in 11-digit or `+` form, UK postcodes, `21 November 2026 11:00`, `2026-11-21`, `11.00–12.30`, `Small choir (4 singers)`, `£1,150.00`. What is denied as a false positive: short lists of numbers (`10 20 30`), `£1150.00` without the comma, a 10-digit phone number, and `+44 (0)20 …` (write `+44 20 …`).
+
+What the check can't catch: digits spelt out in words, or a number split across two fields.
 
 | Tool | Why | Allowed keys and checks |
 |---|---|---|
 | `ZohoBooks_create_contact` | New client, or new singer as a vendor | body: `contact_name`, `company_name`, `contact_type`, `contact_persons`, `billing_address`, `payment_terms`, `payment_terms_label`, `notes`. Each contact person: `first_name`, `last_name`, `email`, `phone`, `mobile`, `is_primary_contact`, `salutation`. Billing address: `address`, `street2`, `city`, `state`, `zip`, `country`, `attention`. `contact_type` is required and is `customer` or `vendor`. query: `organization_id`. |
-| `ZohoBooks_update_contact` | Correct a client's or singer's name | body: `contact_name`, `company_name` only. path: `contact_id` (required). query: `organization_id`. No email, phone, notes, contact persons or anything else. The live schema marks `contact_type` as required, and this list forbids it: if Books rejects a names-only update, the owner makes the change in Books. |
+| `ZohoBooks_update_contact` | Correct a client's or singer's name | body: `contact_name`, `company_name`, `contact_type`. path: `contact_id` (required). query: `organization_id`. The live schema marks `contact_type` as required, so it may be restated, but only as `customer` or `vendor`. No email, phone, notes, contact persons or anything else. |
 | `ZohoBooks_create_invoice` | Draft invoice on a quote acceptance, and the 2026 import | body: `customer_id` (required), `invoice_number` (required, `^[0-9]{4}[A-Z]?$`), `date`, `due_date`, `payment_terms`, `payment_terms_label`, `line_items`, `notes`, `terms`, `reference_number`, `allow_partial_payments`, `template_id`. Each line item: `name`, `description`, `rate`, `quantity`, `item_order`, `item_id`. query: `organization_id`, `ignore_auto_number_generation` (must be true), `send` (absent or false). |
 | `ZohoBooks_add_invoice_document` | Attach the booking confirmation to the draft | path: `invoice_id` (required), `document_id`. query: `organization_id`. How the file is passed over MCP is still unknown: test it on the first real booking. If it can't carry a local file, the owner attaches the confirmation in Books (one click). |
-| `ZohoBooks_upload_invoice_document` | The same | path: `invoice_id` (required), `document_id`. query: `organization_id`, `attachment`. |
+| `ZohoBooks_upload_invoice_document` | The same | path: `invoice_id` (required), `document_id`. query: `organization_id`, `attachment`. The attachment must be a path ending `.pdf` or `.docx`, written `~/…` or absolute, with no `..` and no control characters, whose real path (after `~` is expanded and symlinks are resolved) is inside `~/lcs-private/invoices/`, where `make_booking_docs.py` writes. Any other path, a URL or file contents (base64) is denied. |
 | `ZohoBooks_add_invoice_comment` | An internal note (e.g. "booking confirmation to attach") | body: `description`. path: `invoice_id` (required). query: `organization_id`. `show_comment_to_clients` is denied with any value. The schema gives it no default, so the owner confirms on the first comment that Books keeps it internal. |
 | `ZohoBooks_create_bill` | Singer invoices as bills | body: `vendor_id` and `bill_number` (both required), `date`, `due_date`, `reference_number`, `notes`, `line_items`, `payment_terms`, `payment_terms_label`, `documents`. Each line item: `name`, `description`, `rate`, `quantity`, `account_id`, `item_order`. Each document: `document_id`, `file_name`. query: `organization_id`. |
-| `ZohoBooks_update_bill` | Correct a bill | As `create_bill` without `documents`. `vendor_id` is required, and path `bill_id` is required. |
+| `ZohoBooks_update_bill` | Correct a bill's notes, dates or reference | body: `notes`, `date`, `due_date`, `reference_number` only. path: `bill_id` (required). query: `organization_id`. No `vendor_id`, `bill_number`, `line_items` or payment terms: a wrong vendor or amount is the owner's to fix in Books. |
 | `ZohoBooks_add_bill_comment` | An internal note on a bill | body: `description`. path: `bill_id` (required). query: `organization_id`. |
 
 Still denied:
@@ -76,9 +83,11 @@ Still denied:
 - `approve_bill`, `submit_bill`, `mark_bill_open`, `convert_purchase_order_to_bill`;
 - contact bank accounts and cards, including reading them, and the invoice payment QR tools;
 - any other key on an approved tool, including tax fields, the client portal, payment options, `status`, and the bill `attachment` query parameter;
+- a bill update that changes the vendor, the bill number or the line items;
+- an invoice attachment from anywhere but `~/lcs-private/invoices/`;
 - any tool on a server other than `zoho-books` and `zoho-books-invoices`.
 
-The security review of PR #147 (28 Sep 2026) found that `update_invoice` and `update_contact` could redirect a draft or a client's email, that keys outside a few named ones went unchecked, and that free text could carry bank details. This section is the result.
+The security review of PR #147 (28 Sep 2026) found that `update_invoice` and `update_contact` could redirect a draft or a client's email, that keys outside a few named ones went unchecked, and that free text could carry bank details. Its re-review the same day found that bank details still got through in other layouts (`a/c`, `acct`, en dashes, fullwidth digits, foreign IBANs, a zip code and a bill number), that VAT got through as "V.A.T." or Cyrillic "ВАТ", that the attachment could be any local file, and that a bill update could swap the vendor or the line items. This section is the result.
 
 ## Flows
 

@@ -12,15 +12,15 @@ SERVERS = ("zoho-books", "zoho-books-invoices")
 NON_READ_ONLY = [ "ZohoBooks_add_bank_reconciliation_attachment", "ZohoBooks_add_contact_address", "ZohoBooks_add_contact_attachment", "ZohoBooks_add_contact_bank_account", "ZohoBooks_add_contact_card", "ZohoBooks_add_contact_comment", "ZohoBooks_add_contact_tax_info", "ZohoBooks_add_invoice_comment", "ZohoBooks_add_invoice_digital_signature", "ZohoBooks_add_invoice_document", "ZohoBooks_add_invoice_online_payment_bank_account", "ZohoBooks_apply_credits_to_invoice", "ZohoBooks_apply_invoice_substatus", "ZohoBooks_apply_pricebook_to_invoice", "ZohoBooks_approve_contact_bank_account", "ZohoBooks_approve_invoice", "ZohoBooks_approve_invoices", "ZohoBooks_assign_contact_owner", "ZohoBooks_assign_owner_to_contacts", "ZohoBooks_bulk_invoice_reminder", "ZohoBooks_bulk_mark_item_masters_active", "ZohoBooks_bulk_mark_item_masters_inactive", "ZohoBooks_bulk_mark_item_variants_active", "ZohoBooks_bulk_mark_item_variants_inactive", "ZohoBooks_bulk_update_bank_account_rules", "ZohoBooks_cancel_einvoice_invoice", "ZohoBooks_cancel_invoice", "ZohoBooks_cancel_invoice_einvoice", "ZohoBooks_cancel_invoices_einvoice", "ZohoBooks_cancel_scheduled_invoice_email", "ZohoBooks_cancel_write_off_invoice", "ZohoBooks_categorize_as_credit_note_refunds", "ZohoBooks_categorize_as_vendor_credit_refunds", "ZohoBooks_categorize_as_vendor_payment_refund", "ZohoBooks_categorize_bank_transaction", "ZohoBooks_categorize_bank_transaction_as_customer_payment", "ZohoBooks_categorize_bank_transaction_as_expense", "ZohoBooks_categorize_bank_transaction_as_payment_refund", "ZohoBooks_categorize_bank_transaction_as_vendor_payment", "ZohoBooks_create_bank_account", "ZohoBooks_create_bank_account_match_filter", "ZohoBooks_create_bank_account_rule", "ZohoBooks_create_bank_reconciliation", "ZohoBooks_create_bank_transaction", "ZohoBooks_create_contact", "ZohoBooks_create_contact_person", "ZohoBooks_create_customer_payment", "ZohoBooks_create_customer_payment_refund", "ZohoBooks_create_employee", "ZohoBooks_create_expense", "ZohoBooks_create_invoice", "ZohoBooks_create_invoice_asynchronous_online_payment", "ZohoBooks_create_invoice_from_salesorder", "ZohoBooks_create_invoice_synchronous_online_payment", "ZohoBooks_create_invoices_from_estimates", "ZohoBooks_create_invoices_from_projects", "ZohoBooks_create_item", "ZohoBooks_create_item_master", "ZohoBooks_create_item_variant", "ZohoBooks_create_pricebook", "ZohoBooks_create_recurring_bill", "ZohoBooks_create_tax", "ZohoBooks_create_tax_authority", "ZohoBooks_create_tax_exemption", "ZohoBooks_create_tax_group", "ZohoBooks_decline_contact_bank_account", "ZohoBooks_delete_invoice", "ZohoBooks_delete_invoice_applied_credit", "ZohoBooks_delete_invoice_comment", "ZohoBooks_delete_invoice_document", "ZohoBooks_delete_invoice_einvoice_status", "ZohoBooks_delete_invoice_expense_receipt", "ZohoBooks_delete_invoice_line_item", "ZohoBooks_delete_invoice_payment", "ZohoBooks_delete_invoice_substatus", "ZohoBooks_delete_invoices", "ZohoBooks_delete_recurring_bill", "ZohoBooks_disable_contact_payment_reminder", "ZohoBooks_disable_contact_person_sms", "ZohoBooks_disable_contact_portal", "ZohoBooks_disable_invoice_payment_reminder", "ZohoBooks_email_contact", "ZohoBooks_email_contact_statement", "ZohoBooks_email_invoice", "ZohoBooks_email_invoices", "ZohoBooks_enable_contact_payment_reminder", "ZohoBooks_enable_contact_person_sms", "ZohoBooks_enable_contact_portal", "ZohoBooks_enable_invoice_payment_reminder", "ZohoBooks_exclude_bank_transaction", "ZohoBooks_fetch_invoice_einvoice", "ZohoBooks_finalize_invoice_approval", "ZohoBooks_force_pay_invoice", "ZohoBooks_generate_invoice_payment_link", "ZohoBooks_get_bank_statement_import_encryption_key", "ZohoBooks_import_bank_statements", "ZohoBooks_invite_contact_person_to_portal", "ZohoBooks_mail_invoice_pdf", "ZohoBooks_map_invoice_with_salesorder", "ZohoBooks_mark_bank_account_active", "ZohoBooks_mark_bank_account_inactive", "ZohoBooks_mark_contact_active", "ZohoBooks_mark_contact_address_as_billing", "ZohoBooks_mark_contact_address_as_shipping", "ZohoBooks_mark_contact_inactive", "ZohoBooks_mark_contact_person_primary", "ZohoBooks_mark_contacts_for_1099_tracking", "ZohoBooks_mark_invoice_draft", "ZohoBooks_mark_invoice_einvoice_cancelled", "ZohoBooks_mark_invoice_einvoice_pushed", "ZohoBooks_mark_invoice_ready_to_push", "ZohoBooks_mark_invoice_sent", "ZohoBooks_mark_invoice_void", "ZohoBooks_mark_invoices_sent", "ZohoBooks_mark_invoices_shipped", "ZohoBooks_mark_item_active", "ZohoBooks_mark_item_inactive", "ZohoBooks_mark_item_master_as_active", "ZohoBooks_mark_item_master_as_inactive", "ZohoBooks_mark_item_variant_as_active", "ZohoBooks_mark_item_variant_as_inactive", "ZohoBooks_mark_pricebook_active", "ZohoBooks_mark_pricebook_inactive", "ZohoBooks_match_bank_transaction", "ZohoBooks_merge_contact", "ZohoBooks_move_item_variant", "ZohoBooks_preview_invoice_coupons", "ZohoBooks_push_invoice_einvoice", "ZohoBooks_push_invoices_einvoice", "ZohoBooks_recall_invoice_einvoice_status", "ZohoBooks_reject_invoice", "ZohoBooks_remind_customer_for_invoice_payment", "ZohoBooks_reorder_bank_account_rules", "ZohoBooks_resend_contact_person_portal_invite", "ZohoBooks_restore_bank_transaction", "ZohoBooks_restore_contact_documents", "ZohoBooks_resume_recurring_bill", "ZohoBooks_save_bank_reconciliation_draft", "ZohoBooks_schedule_invoice_email", "ZohoBooks_send_contact_client_review_email", "ZohoBooks_send_contact_payment_method_email", "ZohoBooks_send_contact_sms", "ZohoBooks_send_contact_vendor_statement_email", "ZohoBooks_send_contacts_sms", "ZohoBooks_send_invoice_dunning_notifications", "ZohoBooks_send_invoice_retry_sms", "ZohoBooks_send_invoice_sms", "ZohoBooks_send_invoice_via_snail_mail", "ZohoBooks_skip_suggested_bank_account_rule", "ZohoBooks_stop_recurring_bill", "ZohoBooks_submit_invoice", "ZohoBooks_submit_invoices", "ZohoBooks_track_contact_1099", "ZohoBooks_uncategorize_bank_transaction", "ZohoBooks_ungroup_item_variants", "ZohoBooks_unmap_invoices_from_salesorders", "ZohoBooks_unmatch_bank_transaction", "ZohoBooks_unship_invoices", "ZohoBooks_untrack_contact_1099", "ZohoBooks_update_bank_account", "ZohoBooks_update_bank_account_match_filter", "ZohoBooks_update_bank_account_preferences", "ZohoBooks_update_bank_account_rule", "ZohoBooks_update_bank_reconciliation", "ZohoBooks_update_bank_transaction", "ZohoBooks_update_contact", "ZohoBooks_update_contact_address", "ZohoBooks_update_contact_bank_account", "ZohoBooks_update_contact_card", "ZohoBooks_update_contact_document", "ZohoBooks_update_contact_person", "ZohoBooks_update_contact_tags", "ZohoBooks_update_contact_tax_info", "ZohoBooks_update_contact_trn_status", "ZohoBooks_update_contact_using_custom_field", "ZohoBooks_update_custom_fields_in_customer_payment", "ZohoBooks_update_custom_fields_in_invoice", "ZohoBooks_update_custom_fields_in_item", "ZohoBooks_update_customer_payment", "ZohoBooks_update_customer_payment_refund", "ZohoBooks_update_customer_payment_using_custom_field", "ZohoBooks_update_expense", "ZohoBooks_update_expense_using_custom_field", "ZohoBooks_update_invoice", "ZohoBooks_update_invoice_advanced_tracking_details", "ZohoBooks_update_invoice_billing_address", "ZohoBooks_update_invoice_cfdi_status", "ZohoBooks_update_invoice_comment", "ZohoBooks_update_invoice_einvoice_payment_status", "ZohoBooks_update_invoice_metadata", "ZohoBooks_update_invoice_shipping_address", "ZohoBooks_update_invoice_template", "ZohoBooks_update_invoice_using_custom_field", "ZohoBooks_update_item", "ZohoBooks_update_item_master", "ZohoBooks_update_item_using_custom_field", "ZohoBooks_update_item_variant", "ZohoBooks_update_pricebook", "ZohoBooks_update_recurring_bill", "ZohoBooks_update_recurring_bill_using_custom_field", "ZohoBooks_update_tax", "ZohoBooks_update_tax_authority", "ZohoBooks_update_tax_exemption", "ZohoBooks_update_tax_group", "ZohoBooks_upload_invoice_digital_signature", "ZohoBooks_upload_invoice_document", "ZohoBooks_verify_contact_address_by_id", "ZohoBooks_verify_contact_bank_account", "ZohoBooks_verify_contact_einvoice", "ZohoBooks_void_invoices", "ZohoBooks_write_off_invoice", "ZohoBooks_write_off_invoices" ]
 
 
-def raw(stdin):
+def raw(stdin, env=None):
     """Run the guard on raw stdin; its decision ("allow" when it prints nothing)."""
-    p = subprocess.run([sys.executable, GUARD], input=stdin, capture_output=True, text=True)
+    p = subprocess.run([sys.executable, GUARD], input=stdin, capture_output=True, text=True, env=env)
     assert p.returncode == 0, (p.returncode, p.stderr)
     return json.loads(p.stdout)["hookSpecificOutput"]["permissionDecision"] if p.stdout.strip() else "allow"
 
 
-def decide(server, tool, tool_input=None):
-    return raw(json.dumps({"tool_name": f"mcp__{server}__{tool}", "tool_input": tool_input or {}}))
+def decide(server, tool, tool_input=None, env=None):
+    return raw(json.dumps({"tool_name": f"mcp__{server}__{tool}", "tool_input": tool_input or {}}), env)
 
 
 def guard_module():
@@ -73,7 +73,8 @@ def test_payment_qr_and_contact_bank_or_card_reads_are_denied():
     removed = {"ZohoBooks_get_invoice_payment_qr", "ZohoBooks_get_invoice_payment_qr_status",
                "ZohoBooks_get_contact_bank_account", "ZohoBooks_list_contact_bank_accounts",
                "ZohoBooks_list_all_contact_bank_accounts", "ZohoBooks_get_contact_card",
-               "ZohoBooks_list_contact_cards", "ZohoBooks_get_contact_card_count"}
+               "ZohoBooks_list_contact_cards", "ZohoBooks_get_contact_card_count",
+               "ZohoBooks_list_contact_autobill_recurring_invoices", "ZohoBooks_get_invoice_qr_code"}
     assert not removed & guard_module().READ_ALLOW
     for server in SERVERS:
         for name in removed:
@@ -90,6 +91,7 @@ APPROVED_WRITES = {
     "ZohoBooks_create_bill", "ZohoBooks_update_bill", "ZohoBooks_add_bill_comment",
 }
 ORG = {"organization_id": "941014440"}
+CONFIRMATION = "~/lcs-private/invoices/2111 - A Client/Booking Confirmation - A Client - 21 Nov 2026.docx"
 
 
 def good_inputs():
@@ -122,13 +124,15 @@ def good_inputs():
                                      "query_params": dict(ORG, ignore_auto_number_generation=True, send=False)},
         "ZohoBooks_add_invoice_document": {"query_params": ORG,
                                            "path_variables": {"invoice_id": "444", "document_id": "555"}},
-        "ZohoBooks_upload_invoice_document": {"query_params": dict(ORG, attachment="/tmp/Booking Confirmation.docx"),
+        "ZohoBooks_upload_invoice_document": {"query_params": dict(ORG, attachment=CONFIRMATION),
                                               "path_variables": {"invoice_id": "444", "document_id": "555"}},
         "ZohoBooks_add_invoice_comment": {"body": {"description": "Booking confirmation to attach"},
                                           "query_params": ORG, "path_variables": {"invoice_id": "444"}},
         "ZohoBooks_create_bill": {"body": dict(bill, documents=[{"document_id": "777", "file_name": "S-17.pdf"}]),
                                   "query_params": ORG},
-        "ZohoBooks_update_bill": {"body": bill, "query_params": ORG, "path_variables": {"bill_id": "666"}},
+        "ZohoBooks_update_bill": {"body": {"notes": "Booking 2111", "reference_number": "2111", "date": "2026-09-28",
+                                           "due_date": "2026-10-12"},
+                                  "query_params": ORG, "path_variables": {"bill_id": "666"}},
         "ZohoBooks_add_bill_comment": {"body": {"description": "Booking 2111"}, "query_params": ORG,
                                        "path_variables": {"bill_id": "666"}},
     }
@@ -165,7 +169,7 @@ def test_minimal_good_calls_are_allowed():
                                           "query_params": dict(ORG, ignore_auto_number_generation="true")}),
             ("ZohoBooks_create_bill", {"body": {"vendor_id": "1", "bill_number": "S1", "line_items": [{"rate": 100}]},
                                        "query_params": ORG}),
-            ("ZohoBooks_update_bill", {"body": {"vendor_id": "1"}, "query_params": ORG,
+            ("ZohoBooks_update_bill", {"body": {"notes": "Booking 2111"}, "query_params": ORG,
                                        "path_variables": {"bill_id": "1"}}),
             ("ZohoBooks_add_invoice_document", {"path_variables": {"invoice_id": "1"}})):
         assert decide("zoho-books", tool, ti) == "allow", tool
@@ -252,6 +256,9 @@ def test_unlisted_keys_are_denied_in_every_section():
             ("path_variables", "bill_id", "1")],
         "ZohoBooks_update_bill": [
             ("body", "documents", [{"document_id": "1"}]), ("body", "is_paid", True),
+            ("body", "vendor_id", "460000000022222"), ("body", "line_items", []),
+            ("body", "line_items", [{"name": "x", "rate": 1}]), ("body", "bill_number", "S-18"),
+            ("body", "payment_terms", 14), ("body", "payment_terms_label", "Net 14"),
             ("query_params", "attachment", "x"), ("path_variables", "vendor_id", "1")],
         "ZohoBooks_add_bill_comment": [
             ("body", "show_comment_to_clients", True), ("body", "send", True), ("query_params", "send", True),
@@ -291,21 +298,25 @@ def test_values_must_have_the_listed_shape():
     assert denied(B, with_(B, "body", documents=["777"]))
 
 
-def test_keys_are_compared_case_insensitively():
-    I, C = "ZohoBooks_create_invoice", "ZohoBooks_create_contact"
-    # a differently-cased duplicate of an allowed key is denied, whatever the values
-    assert denied(I, with_(I, "query_params", Send=False))  # send=False is already there
-    assert denied(I, with_(I, "query_params", SEND="false"))
-    assert denied(I, with_(I, "body", Customer_ID="1"))
-    assert denied(C, with_(C, "body", Contact_Name="B"))
-    # a differently-cased key on its own is read as the allowed key and checked as such
-    ti = with_(I, "query_params", send=None, Send=True)
-    assert denied(I, ti)
-    ti = with_(I, "query_params", send=None, SEND="true")
-    assert denied(I, ti)
-    assert denied(I, with_(I, "body", Send=True))  # body never takes send
-    assert denied(C, with_(C, "body", contact_type=None, Contact_Type="employee"))
-    assert decide("zoho-books", I, with_(I, "query_params", send=None, Send=False)) == "allow"
+def test_keys_must_be_exactly_lower_case():
+    I, C, U = "ZohoBooks_create_invoice", "ZohoBooks_create_contact", "ZohoBooks_update_contact"
+    # an upper-case letter anywhere in a key is denied, whatever the value and at any depth
+    assert denied(I, with_(I, "query_params", send=None, Send=False))
+    assert denied(I, with_(I, "query_params", Send=False))  # beside send=False
+    assert denied(I, with_(I, "query_params", send=None, SEND="false"))
+    assert denied(I, with_(I, "query_params", ignore_auto_number_generation=None,
+                           IGNORE_AUTO_NUMBER_GENERATION=True))
+    assert denied(I, with_(I, "body", customer_id=None, Customer_ID="1"))
+    assert denied(I, with_(I, "body", Send=True))
+    assert denied(I, with_(I, "body", line_items=[{"Name": "Choir", "rate": 1}]))
+    assert denied(C, with_(C, "body", contact_type=None, Contact_Type="vendor"))
+    assert denied(C, with_(C, "body", billing_address={"City": "London"}))
+    assert denied(U, with_(U, "path_variables", contact_id=None, Contact_ID="333"))
+    ti = good_inputs()[U]
+    assert denied(U, {"Body": ti["body"], "query_params": ORG, "path_variables": ti["path_variables"]})
+    assert denied(U, {"body": ti["body"], "query_params": ORG, "PATH_VARIABLES": ti["path_variables"]})
+    # a Kelvin sign lower-cases to k; it is still not the key "k"
+    assert denied(I, with_(I, "body", line_items=[{"name": "x", "ran\u212a": 1}]))
 
 
 def test_duplicate_json_keys_are_denied():
@@ -377,11 +388,16 @@ def test_bill_create_needs_vendor_and_bill_number():
             assert denied(B, with_(B, "body", **{key: v})), (key, v)
 
 
-def test_bill_update_needs_bill_id_and_vendor_id():
+def test_bill_update_needs_bill_id_and_changes_notes_dates_and_reference_only():
     U = "ZohoBooks_update_bill"
     assert denied(U, with_(U, "path_variables", bill_id=None))
-    assert denied(U, with_(U, "body", vendor_id=None))
-    assert denied(U, {"body": {"notes": "x"}, "query_params": ORG, "path_variables": {"bill_id": "1"}})
+    assert set(guard_module().WRITE_TOOLS[U][0]) == {"notes", "due_date", "date", "reference_number"}
+    for body in ({"notes": "x"}, {"due_date": "2026-10-12"}, {"date": "2026-09-28"}, {"reference_number": "2111"}):
+        ti = {"body": body, "query_params": ORG, "path_variables": {"bill_id": "1"}}
+        assert decide("zoho-books", U, ti) == "allow", body
+    for key, val in (("vendor_id", "1"), ("line_items", []), ("line_items", [{"rate": 1}]), ("bill_number", "S-1"),
+                     ("payment_terms", 7), ("documents", []), ("account_id", "1")):
+        assert denied(U, with_(U, "body", **{key: val})), key
 
 
 def test_bill_comment_needs_bill_id():
@@ -407,11 +423,29 @@ BANK_TEXT = ("Pay to 12-34-56", "sort code 04 00 04", "Account 12345678", "Sort 
              "account number 1234", "Acc no 1234", "IBAN please", "GB29 NWBK 6016 1331 9268 19",
              "GB29NWBK60161331926819", "SWIFT: NWBKGB2L", "BIC NWBKGB2L", "our bic is x")
 VAT_TEXT = ("Plus VAT", "VAT at 20%", "vat included", "Not VAT-registered", "(VAT)")
+# The PR #147 re-review (28 Sep 2026): each of these got through the first scanner.
+REVIEW_BANK_TEXT = (
+    "Pay to 040004 a/c 1234 5678", "04/00/04 acct 1234 5678", "Account: 1234 5678", "Acct # 1234-5678",
+    "Please transfer: 04\u201300\u201304, 1234\u20135678", "Ref 04000412345678", "Sortcode040004",
+    "IBAN-free: DE89 3704 0044 0532 0130 00", "FR76 3000 6000 0112 3456 7890 189", "fr7630006000011234567890189",
+    "GB 29 NWBK 6016 1331 9268 19", "gb29 nwbk 6016 1331 9268 19", "Pay to 04.00.04 12345678",
+    "Payee s/c 04-00-04", "a/c 1", "acct no 1", "account no. 1", "Account # 1", "acc. no. 1",
+    "\uff10\uff14-\uff10\uff10-\uff10\uff14",  # fullwidth 04-00-04
+    "04\u200b00\u200b04", "1234\u00ad5678", "Bank: Monzo 04-00-04", "account 12 34 56 78",
+    "code guichet 04 00 04 num\u00e9ro de compte 1234-5678", "12345678 999", "Pay 04000412345678901",
+    "04.00.04", "04.00.04 12.34.56.78", "Nov 2026 040004", "21 Nov 2026 1234 5678", "11:00 040004",
+)
+REVIEW_VAT_TEXT = ("Plus Value Added Tax at 20%", "value-added tax", "V.A.T. included", "VAT20", "20%VAT", "incl.VAT",
+                   "vat-inclusive", "V A T", "v. a. t.", "VATable", "V\u200bAT",
+                   "\u0412\u0410\u0422 included")  # Cyrillic ВАТ
+TAX_TEXT = ("Tax (20%) included", "plus tax", "Taxes included", "tax20", "20%tax", "TAX")
+LOOKALIKE_TEXT = ("\u0455ort code", "Choir \u03bf", "\u0410 Client")  # Cyrillic dze, Greek omicron, Cyrillic A
 
 
 def test_bank_details_and_vat_are_denied_in_any_text():
     I, C, B = "ZohoBooks_create_invoice", "ZohoBooks_create_contact", "ZohoBooks_create_bill"
-    for text in BANK_TEXT + VAT_TEXT:
+    U = "ZohoBooks_upload_invoice_document"
+    for text in BANK_TEXT + VAT_TEXT + REVIEW_BANK_TEXT + REVIEW_VAT_TEXT + LOOKALIKE_TEXT:
         assert denied(I, with_(I, "body", notes=text)), text
         assert denied(I, with_(I, "body", terms=text)), text
         assert denied(I, with_(I, "body", line_items=[{"name": "Choir", "description": text, "rate": 1}])), text
@@ -419,33 +453,140 @@ def test_bank_details_and_vat_are_denied_in_any_text():
         assert denied(C, with_(C, "body", contact_persons=[{"first_name": text}])), text
         assert denied(C, with_(C, "body", billing_address={"address": text})), text
         assert denied(B, with_(B, "body", notes=text)), text
+        assert denied(B, with_(B, "body", bill_number=text)), text
+        assert denied("ZohoBooks_update_bill", with_("ZohoBooks_update_bill", "body", notes=text)), text
         assert denied("ZohoBooks_add_bill_comment",
                       with_("ZohoBooks_add_bill_comment", "body", description=text)), text
         assert denied("ZohoBooks_add_invoice_comment",
                       with_("ZohoBooks_add_invoice_comment", "body", description=text)), text
         assert denied("ZohoBooks_update_contact", with_("ZohoBooks_update_contact", "body", company_name=text)), text
-        assert denied("ZohoBooks_upload_invoice_document",
-                      with_("ZohoBooks_upload_invoice_document", "query_params", attachment=f"/tmp/{text}.pdf")), text
+        assert denied(U, with_(U, "query_params", attachment=f"~/lcs-private/invoices/{text}.pdf")), text
     # a number is scanned as well as a string
     assert denied(I, with_(I, "body", line_items=[{"name": "Choir", "rate": 12345678}]))
+    assert denied(I, with_(I, "body", line_items=[{"name": "Choir", "rate": 40000412345678}]))
+
+
+def test_bank_digits_are_denied_in_address_fields():
+    C = "ZohoBooks_create_contact"
+    assert denied(C, with_(C, "body", billing_address={"zip": "040004"}))
+    assert denied(C, with_(C, "body", billing_address={"street2": "1234 5678"}))
+    assert denied(C, with_(C, "body", billing_address={"zip": "040004", "street2": "1234 5678"}))
+    assert denied(C, with_(C, "body", contact_persons=[{"phone": "1234 5678"}]))
+
+
+def test_tax_is_denied_in_invoice_and_bill_text_only():
+    I, B, C = "ZohoBooks_create_invoice", "ZohoBooks_create_bill", "ZohoBooks_create_contact"
+    for text in TAX_TEXT:
+        assert denied(I, with_(I, "body", notes=text)), text
+        assert denied(I, with_(I, "body", line_items=[{"name": text, "rate": 1}])), text
+        assert denied(B, with_(B, "body", notes=text)), text
+        assert denied("ZohoBooks_update_bill", with_("ZohoBooks_update_bill", "body", notes=text)), text
+        assert denied("ZohoBooks_add_invoice_comment",
+                      with_("ZohoBooks_add_invoice_comment", "body", description=text)), text
+        assert denied("ZohoBooks_add_bill_comment", with_("ZohoBooks_add_bill_comment", "body", description=text)), text
+    # a client may be a tax adviser; "tax" inside a word is fine everywhere
+    assert decide("zoho-books", C, with_(C, "body", company_name="Smith Tax Advisers Ltd")) == "allow"
+    for text in ("Taxi from the station", "Syntax of the order of service"):
+        assert decide("zoho-books", I, with_(I, "body", notes=text)) == "allow", text
+
+
+ORDINARY_TEXT = ("Wedding at St Bride's, 21 Nov 2026, 14:00", "Dates: 2026-11-21 and 2026-12-05",
+                 "Invoice 2111, ref 2111B", "Tel 020 7946 0958", "Mobile 07700 900123", "Music for 150 guests",
+                 "Arabic and Bicester", "Private vatican tour", "+44 20 7946 0958", "+44 7700 900123",
+                 "21 November 2026", "2026-11-21", "Small choir (4 singers)", "\u00a31,150.00",
+                 "Total \u00a312,500 for 2 services", "SW1A 1AA", "EC4Y 8AU", "W1K 7TN",
+                 "Wedding on 21 November 2026 at St Mary's, Oxford OX1 4AH", "Service on 21/11/2026 at 11:00",
+                 "Service on 21.11.2026", "Rehearsal 5 11 2026", "Café Rouge, Zoë Brontë", "Accountant: J Smith",
+                 "Account manager: Ann", "Access code for the vestry: 4321",
+                 "Tuesday 1 December 2026 11:00 \u2013 12:30", "Wedding, 21 Nov 2026 14:00", "21 November 2026 11am",
+                 "December 12, 2026 2pm", "Service 11.00\u201312.30", "2026-11-21 14:00", "21/11/2026 14.30")
 
 
 def test_ordinary_text_passes_the_bank_check():
     I = "ZohoBooks_create_invoice"
-    for text in ("Wedding at St Bride's, 21 Nov 2026, 14:00", "Dates: 2026-11-21 and 2026-12-05",
-                 "Invoice 2111, ref 2111B", "Tel 020 7946 0958", "Mobile 07700 900123", "Music for 150 guests",
-                 "Arabic and Bicester", "Private vatican tour"):
+    for text in ORDINARY_TEXT:
         assert decide("zoho-books", I, with_(I, "body", notes=text)) == "allow", text
+    for text in ("Tel +442079460958", "+44 20 7946 0958", "+ 44 20 7946 0958", "+12125550123"):
+        assert decide("zoho-books", I, with_(I, "body", notes=text)) == "allow", text
+    for text in ("Tel 442079460958", "+x 44 20 7946 0958", "12125550123", "+  44 20 7946 0958"):
+        assert denied(I, with_(I, "body", notes=text)), text
+    C = "ZohoBooks_create_contact"
+    assert decide("zoho-books", C, with_(C, "body", contact_persons=[{"phone": "020 7946 0958",
+                                                                       "mobile": "+44 7700 900123"}])) == "allow"
 
 
-def test_invoice_and_bill_numbers_are_exempt_from_the_digit_rule_only_when_they_match():
-    B = "ZohoBooks_create_bill"
-    for ok in ("20260928", "INV-12345678", "12-34-56"):
-        assert decide("zoho-books", B, with_(B, "body", bill_number=ok)) == "allow", ok
-    for bad in ("Acc 12345678 please", "sort code 12-34-56", "VAT 1", "GB29 NWBK 1"):
+def test_long_text_is_scanned_quickly():
+    # a slow scan could run past the hook's 10-second timeout; this must stay well under it
+    import time
+    I = "ZohoBooks_create_invoice"
+    for text in ("+12345678901 " * 80000, "a " * 500000, "+ " * 500000 + "1"):
+        start = time.time()
+        assert decide("zoho-books", I, with_(I, "body", notes=text)) == "allow"
+        assert time.time() - start < 3, text[:20]
+
+
+def test_record_ids_are_exempt_from_the_digit_rule_only_as_whole_digit_ids():
+    I, B = "ZohoBooks_create_invoice", "ZohoBooks_create_bill"
+    for v in ("460000000026049", "123456789", "12345678901234567890"):
+        assert decide("zoho-books", I, with_(I, "body", customer_id=v)) == "allow", v
+    for v in ("12345678", "123456789012345678901", "04-00-04", "a12345678901", "0400 0412345678"):
+        assert denied(I, with_(I, "body", customer_id=v)), v
+    # the same digits outside an _id field are denied
+    for key in ("notes", "reference_number", "terms"):
+        assert denied(I, with_(I, "body", **{key: "460000000026049"})), key
+    assert denied(B, with_(B, "body", line_items=[{"rate": 1, "description": "460000000033333"}]))
+
+
+def test_only_the_invoice_number_is_exempt_from_the_digit_rule():
+    B, I = "ZohoBooks_create_bill", "ZohoBooks_create_invoice"
+    assert decide("zoho-books", I, with_(I, "body", invoice_number="2111B")) == "allow"
+    # bill_number has no exemption: a singer's invoice number carrying bank digits is denied
+    for bad in ("20260928", "12-34-56", "SC040004-AC12345678", "04-00-04", "Acc 12345678 please",
+                "sort code 12-34-56", "VAT 1", "GB29 NWBK 6016 1331 9268 19"):
         assert denied(B, with_(B, "body", bill_number=bad)), bad
-    # the exemption is for the field itself: the same digits elsewhere are still denied
+    for ok in ("S-17", "INV-017", "LW 42"):
+        assert decide("zoho-books", B, with_(B, "body", bill_number=ok)) == "allow", ok
     assert denied(B, with_(B, "body", reference_number="20260928"))
+
+
+# --- attachments come only from the private invoices folder ---------------------------
+
+def test_attachment_must_be_a_pdf_or_docx_in_the_private_invoices_folder():
+    U = "ZohoBooks_upload_invoice_document"
+    home = os.path.expanduser("~")
+    for ok in (CONFIRMATION, "~/lcs-private/invoices/2111 - A Client/Invoice 2111 - A Client.pdf",
+               os.path.join(home, "lcs-private", "invoices", "Invoice 2111 - A Client.pdf")):
+        assert decide("zoho-books-invoices", U, with_(U, "query_params", attachment=ok)) == "allow", ok
+    for bad in ("/tmp/Booking Confirmation.docx", "/Users/luca/.config/lcs/google-ads.yaml",
+                "~/.config/gcloud/application_default_credentials.json", "~/lcs-private/bookings.csv",
+                "~/lcs-private/invoices/../bookings.csv", "~/lcs-private/invoices/../invoices/a.pdf",
+                "~/lcs-private/invoices/a/../../x.pdf", "~/lcs-private/invoicesX/a.pdf", "~/lcs-private/invoices",
+                "~/lcs-private/invoices/", "~/lcs-private/invoices/a.txt", "~/lcs-private/invoices/a.pdf.exe",
+                "~/lcs-private/invoices/a.PDF", "~/lcs-private/invoices/a.pdf\n", "~/lcs-private/invoices/a\u0000.pdf",
+                "lcs-private/invoices/a.pdf", "~root/lcs-private/invoices/a.pdf", "~/.ssh/id_ed25519",
+                "../../etc/passwd", "https://evil.test/a.pdf", "file:///Users/luca/lcs-private/invoices/a.pdf",
+                "JVBERi0xLjQKJcfsj6IKNSAwIG9iago8PC9MZW5ndGggNiAwIFI+PgpzdHJlYW0K", "data:application/pdf;base64,JVBERi0=",
+                json.dumps({"send": True}), "", 1, True, ["a.pdf"]):
+        assert denied(U, with_(U, "query_params", attachment=bad), "zoho-books-invoices"), bad
+
+
+def test_attachment_path_is_resolved_through_symlinks():
+    U = "ZohoBooks_upload_invoice_document"
+    home = tempfile.mkdtemp()
+    inv = os.path.join(home, "lcs-private", "invoices")
+    os.makedirs(inv)
+    os.symlink("/etc", os.path.join(inv, "etc"))
+    open(os.path.join(home, "secret.pdf"), "w").close()
+    os.symlink(os.path.join(home, "secret.pdf"), os.path.join(inv, "link.pdf"))
+    env = dict(os.environ, HOME=home)
+    ok = with_(U, "query_params", attachment="~/lcs-private/invoices/Invoice 2111 - A Client.pdf")
+    assert decide("zoho-books-invoices", U, ok, env) == "allow"
+    for bad in ("~/lcs-private/invoices/etc/passwd.pdf", "~/lcs-private/invoices/link.pdf"):
+        assert denied_env(U, with_(U, "query_params", attachment=bad), env), bad
+
+
+def denied_env(tool, ti, env):
+    return decide("zoho-books-invoices", tool, ti, env) == "deny"
 
 
 # --- L2: exact server names ----------------------------------------------------------
@@ -528,6 +669,15 @@ def test_settings_json_is_valid_and_registers_the_guard():
     matchers = [entry["matcher"] for entry in cfg["hooks"]["PreToolUse"]]
     assert "mcp__zoho-mail__.*" in matchers
     assert "mcp__zoho-books.*" in matchers
+    # both Zoho guards fail closed: a guard that can't run exits 2, which blocks the call
+    cmds = {entry["matcher"]: [h["command"] for h in entry["hooks"]] for entry in cfg["hooks"]["PreToolUse"]}
+    for matcher, script in (("mcp__zoho-mail__.*", "zoho_guard.py"), ("mcp__zoho-books.*", "zoho_books_guard.py")):
+        assert len(cmds[matcher]) == 1, matcher
+        assert script in cmds[matcher][0] and cmds[matcher][0].endswith("|| exit 2"), cmds[matcher]
+    # Claude may not read the Starling token or dump the Keychain
+    security = sorted(d for d in cfg["permissions"]["deny"] if d.startswith("Bash(security"))
+    assert security == ["Bash(security dump-keychain *)", "Bash(security dump-keychain)",
+                        "Bash(security find-generic-password *)"], security
     # both servers are pre-approved so scheduled tasks don't stall; the guard decides what runs
     for server in SERVERS:
         assert f"mcp__{server}" in cfg["permissions"]["allow"], server

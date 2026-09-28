@@ -10,9 +10,12 @@ denied.
 
 A write call must fit its tool's allowlist exactly: tool_input holds only
 body / query_params / path_variables, and every key at every depth must be on
-the tool's list (compared case-insensitively; a differently-cased duplicate is
+the tool's list, spelt exactly (lower case; a key with any upper-case letter is
 denied, and so is a duplicate key in the JSON). On top of that, no string or
-number anywhere in a write call may carry bank details or the word "VAT".
+number anywhere in a write call may carry bank details (in any format, any
+country), VAT wording or Greek/Cyrillic lookalike letters, and no invoice or bill
+text may mention tax. An attachment must be a .pdf or .docx inside
+~/lcs-private/invoices/.
 Claude never emails, reminds, deletes, voids, records a payment or matches a
 bank transaction in Books, and never updates an invoice: those stay the owner's
 job. Invoices are created as drafts (`send` absent or false) and carry the DDMM
@@ -21,8 +24,10 @@ of the wrong shape, denies the call.
 Design: docs/superpowers/specs/2026-09-28-zoho-books-design.md
 """
 import json
+import os
 import re
 import sys
+import unicodedata
 
 SERVERS = {"zoho-books", "zoho-books-invoices"}
 
@@ -34,7 +39,9 @@ SERVERS = {"zoho-books", "zoho-books-invoices"}
 #   get_invoice_payment_qr and get_invoice_payment_qr_status (payment QR codes);
 #   get_contact_bank_account, list_contact_bank_accounts and
 #   list_all_contact_bank_accounts (contacts' bank details);
-#   get_contact_card, list_contact_cards and get_contact_card_count (stored cards).
+#   get_contact_card, list_contact_cards and get_contact_card_count (stored cards);
+#   list_contact_autobill_recurring_invoices (card autobilling) and
+#   get_invoice_qr_code (it can carry payment details).
 # Unknown or new tools are denied.
 READ_ALLOW = {
     "ZohoBooks_bulk_export_invoices_as_pdf",
@@ -88,7 +95,6 @@ READ_ALLOW = {
     "ZohoBooks_get_invoice_email",
     "ZohoBooks_get_invoice_metadata",
     "ZohoBooks_get_invoice_packing_slips",
-    "ZohoBooks_get_invoice_qr_code",
     "ZohoBooks_get_invoice_signature_template",
     "ZohoBooks_get_invoice_sms",
     "ZohoBooks_get_item",
@@ -116,7 +122,6 @@ READ_ALLOW = {
     "ZohoBooks_list_bill_payments",
     "ZohoBooks_list_bills",
     "ZohoBooks_list_contact_addresses",
-    "ZohoBooks_list_contact_autobill_recurring_invoices",
     "ZohoBooks_list_contact_comments",
     "ZohoBooks_list_contact_credit_note_refunds",
     "ZohoBooks_list_contact_payment_refunds",
@@ -184,9 +189,10 @@ BILL_LINE = obj("name", "description", "rate", "quantity", "account_id", "item_o
 BILL_DOCUMENT = obj("document_id", "file_name")  # the keys the create_bill schema lists for documents
 BILL_FIELDS = ("vendor_id", "bill_number", "date", "due_date", "reference_number", "notes",
                "payment_terms", "payment_terms_label")
+BILL_UPDATE_FIELDS = ("notes", "due_date", "date", "reference_number")  # never the vendor or the amounts
 
 INVOICE_NUMBER = re.compile(r"[0-9]{4}[A-Z]?")  # the DDMM booking ref, e.g. 2111 or 2111B
-BILL_NUMBER = re.compile(r"[A-Za-z0-9][A-Za-z0-9/._-]{0,29}")  # a singer's own invoice number, e.g. S-17
+INVOICES_DIR = os.path.join("~", "lcs-private", "invoices")  # where make_booking_docs.py writes
 
 
 def _present(v):
@@ -225,6 +231,22 @@ def check_create_invoice(body, query, path):
 
 def check_invoice_document(body, query, path):
     _need(path, "invoice_id", "path_variables")
+    if "attachment" in query:
+        _check_attachment(query["attachment"])
+
+
+def _check_attachment(value):
+    """A .pdf or .docx the booking scripts wrote: its real path must be inside ~/lcs-private/invoices/."""
+    bad = Deny(P + "query_params.attachment must be a .pdf or .docx file inside ~/lcs-private/invoices/ "
+               "(a local path, not a URL or file contents).")
+    if not (isinstance(value, str) and value.startswith(("~/", "/")) and value.endswith((".pdf", ".docx"))):
+        raise bad
+    if ".." in value or any(unicodedata.category(c).startswith("C") for c in value):
+        raise bad
+    root = os.path.realpath(os.path.expanduser(INVOICES_DIR))
+    real = os.path.realpath(os.path.expanduser(value))
+    if not root.startswith("/") or os.path.commonpath([root, real]) != root or real == root:
+        raise bad
 
 
 # show_comment_to_clients is not on the list, so it is denied with any value. The live
@@ -242,7 +264,6 @@ def check_create_bill(body, query, path):
 
 def check_update_bill(body, query, path):
     _need(path, "bill_id", "path_variables")
-    _need(body, "vendor_id", "body")
 
 
 def check_bill_comment(body, query, path):
@@ -272,14 +293,14 @@ WRITE_TOOLS = {
     "ZohoBooks_create_bill": (
         obj(*BILL_FIELDS, line_items=[BILL_LINE], documents=[BILL_DOCUMENT]), ORG_ONLY, NOTHING, check_create_bill),
     "ZohoBooks_update_bill": (
-        obj(*BILL_FIELDS, line_items=[BILL_LINE]), ORG_ONLY, obj("bill_id"), check_update_bill),
+        obj(*BILL_UPDATE_FIELDS), ORG_ONLY, obj("bill_id"), check_update_bill),
     "ZohoBooks_add_bill_comment": (
         obj("description"), ORG_ONLY, obj("bill_id"), check_bill_comment),
 }
 
 
 def _fit(value, spec, where):
-    """`value` checked against `spec`, with every dict key lower-cased; raises Deny."""
+    """`value` checked against `spec`; every key must be spelt exactly as listed. Raises Deny."""
     if spec == VALUE:
         if isinstance(value, (dict, list)):
             raise Deny(f"{P}{where} must be a single value, not an object or a list.")
@@ -290,47 +311,91 @@ def _fit(value, spec, where):
         return [_fit(v, spec[0], f"{where}[{i}]") for i, v in enumerate(value)]
     if not isinstance(value, dict):
         raise Deny(f"{P}{where} must be an object.")
-    out = {}
     for key, v in value.items():
-        low = str(key).lower()
-        if low in out:
-            raise Deny(f"{P}{where} has {key!r} twice (keys are compared regardless of case).")
-        if low not in spec:
+        if not isinstance(key, str) or key != key.lower() or any(c.isupper() for c in key):
+            raise Deny(f"{P}{where}.{key} isn't allowed: keys are lower case only.")
+        if key not in spec:
             raise Deny(f"{P}{where}.{key} isn't allowed here. Allowed: {', '.join(sorted(spec)) or 'nothing'}.")
-        out[low] = _fit(v, spec[low], f"{where}.{key}")
-    return out
+        _fit(v, spec[key], f"{where}.{key}")
+    return value
 
 
-# --- no bank details, no VAT ---------------------------------------------------------
-ISO_DATE = re.compile(r"(?<![0-9-])[0-9]{4}-[0-9]{2}-[0-9]{2}(?![0-9-])")
-DIGIT_RULES = (re.compile(r"\b\d{2}[- ]\d{2}[- ]\d{2}\b"),  # a sort code
-               re.compile(r"(?<!\d)\d{8}(?!\d)"))  # an account number
-TEXT_RULES = (re.compile(r"GB\d{2}\s?[A-Z]{4}", re.I),  # a GB IBAN
-              re.compile(r"\b(?:sort[\s-]*code|account[\s-]*(?:number|no)|acc[\s.]*no|a/c[\s.]*no|iban|swift|bic)\b",
-                         re.I),
-              re.compile(r"\bvat\b", re.I))  # Alma Consort Ltd is not VAT-registered
-OWN_PATTERN = {"invoice_number": INVOICE_NUMBER, "bill_number": BILL_NUMBER}
+# --- no bank details, no VAT, no tax -------------------------------------------------
+# Text is NFKC-normalised (fullwidth digits and letters become ASCII) and stripped of
+# invisible format characters and accents before it is scanned. Real dates and clock
+# times are removed first, so that "2026-11-21", "21/11/2026", "1 December 2026 11:00"
+# and "11.00-12.30" don't count as digit runs. The lookarounds keep a dotted sort code
+# (04.00.04) from being read as a time.
+ISO_DATE = re.compile(r"(?<![0-9])(?:19|20)[0-9]{2}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12][0-9]|3[01])(?![0-9])")
+DMY_DATE = re.compile(r"(?<![0-9])(?:0?[1-9]|[12][0-9]|3[01])([ ./-])(?:0?[1-9]|1[0-2])\1(?:19|20)[0-9]{2}(?![0-9])")
+MONTH_DATE = re.compile(r"(?<![a-z])(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|june?|july?|aug(?:ust)?|"
+                        r"sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)(?![a-z])\.?"
+                        r"(?:\s+[0-9]{1,2}(?:st|nd|rd|th)?)?,?\s+(?:19|20)[0-9]{2}(?![0-9])", re.I)
+CLOCK_TIME = re.compile(r"(?<![0-9.:])(?:[01]?[0-9]|2[0-3])[:.][0-5][0-9](?![0-9.:])")
+# Digits joined by single separators (space . / - _ and the Unicode dashes and minus).
+DIGIT_RUN = re.compile(r"\d(?:[\s./_\-\u2010-\u2015\u2212]?\d)*")
+# A generic IBAN: country code, check digits, 11-30 letters or digits, optionally grouped.
+IBAN = re.compile(r"(?<![a-z0-9])[a-z]{2}\s?[0-9]{2}(?:\s?[a-z0-9]){11,30}(?![a-z0-9])", re.I)
+BANK_WORDS = re.compile(r"(?<![a-z])(?:sort\W*code|s/c|a/c|acct|acc(?:oun)?t\W*(?:number|no|#)|acc\W*no|iban|swift|bic)"
+                        r"(?![a-z])", re.I)
+VAT_WORDS = re.compile(r"(?<![a-z])(?:v\W{0,2}a\W{0,2}t(?![a-z])|vatable|value\W*added\W*tax)", re.I)
+TAX_WORD = re.compile(r"(?<![a-z])tax(?:es)?(?![a-z])", re.I)  # invoice and bill text only
+RECORD_ID = re.compile(r"[0-9]{9,20}")  # a Books record id, in a key ending _id
+OWN_PATTERN = {"invoice_number": INVOICE_NUMBER}
+BANK_OR_VAT = (P + "{where} looks like bank details or mentions VAT. Claude never puts bank details in Books, "
+               "and Alma Consort Ltd is not VAT-registered.")
 
 
-def _scan(value, key, where):
-    """Deny bank details or VAT in any string or number of a write call."""
+def _plain(text):
+    """NFKC text without format characters (zero-width, soft hyphen) or combining accents."""
+    text = unicodedata.normalize("NFKC", text)
+    return "".join(c for c in unicodedata.normalize("NFKD", text) if unicodedata.category(c) not in ("Cf", "Mn"))
+
+
+def _bank_digits(text):
+    """True if a run of joined digits could be a sort code, account number or card/IBAN body."""
+    for m in DIGIT_RUN.finditer(text):
+        run = m.group()
+        n = sum(c.isdigit() for c in run)
+        if 6 <= n <= 10 or n >= 14:
+            return True
+        # 11-13 digits pass only as a phone number: 11 digits from 0 (UK), or after "+" (international)
+        if 11 <= n <= 13 and not ((n == 11 and run[0] == "0") or _after_plus(text, m.start())):
+            return True
+    return False
+
+
+def _after_plus(text, i):
+    """True if text[i] follows "+", or "+" and one space."""
+    return text[i - 1:i] == "+" or (text[i - 1:i] == " " and text[i - 2:i - 1] == "+")
+
+
+def _lookalike(text):
+    return any(unicodedata.name(c, "").startswith(("GREEK", "CYRILLIC")) for c in text)
+
+
+def _scan(value, key, where, tax):
+    """Deny bank details, VAT, lookalike letters or (if `tax`) the word tax in any value of a write call."""
     if isinstance(value, dict):
         for k, v in value.items():
-            _scan(v, k, f"{where}.{k}")
+            _scan(v, k, f"{where}.{k}", tax)
     elif isinstance(value, list):
         for i, v in enumerate(value):
-            _scan(v, key, f"{where}[{i}]")
+            _scan(v, key, f"{where}[{i}]", tax)
     elif isinstance(value, (str, int, float)) and not isinstance(value, bool):
-        text = str(value)
-        rules = TEXT_RULES
+        text = _plain(str(value))
         own = OWN_PATTERN.get(key)
-        if not (own and isinstance(value, str) and own.fullmatch(value)):
-            rules = DIGIT_RULES + rules
-        bare = ISO_DATE.sub(" ", text)
-        for rule in rules:
-            if rule.search(bare):
-                raise Deny(f"{P}{where} looks like bank details or mentions VAT. Claude never puts bank details "
-                           "in Books, and Alma Consort Ltd is not VAT-registered.")
+        exempt = (own is not None and isinstance(value, str) and own.fullmatch(value)) or (
+            isinstance(key, str) and key.endswith("_id") and RECORD_ID.fullmatch(text))
+        bare = text
+        for pattern in (ISO_DATE, DMY_DATE, MONTH_DATE, CLOCK_TIME):
+            bare = pattern.sub(" ", bare)
+        if ((not exempt and _bank_digits(bare)) or BANK_WORDS.search(bare) or VAT_WORDS.search(bare)
+                or _lookalike(text) or any(sum(c.isdigit() for c in m.group()) >= 10 for m in IBAN.finditer(bare))):
+            raise Deny(BANK_OR_VAT.format(where=where))
+        if tax and TAX_WORD.search(bare):
+            raise Deny(f"{P}{where} mentions tax. Alma Consort Ltd is not VAT-registered, so its invoices and "
+                       "bills never mention tax.")
     elif value is not None and not isinstance(value, bool):
         raise Deny(f"{P}{where} has an unexpected value.")
 
@@ -342,7 +407,7 @@ def check_write(name, tool_input):
     ti = _fit(tool_input, {"body": body_spec, "query_params": query_spec, "path_variables": path_spec}, "tool_input")
     body, query, path = ti.get("body", {}), ti.get("query_params", {}), ti.get("path_variables", {})
     check(body, query, path)
-    _scan(ti, None, "tool_input")
+    _scan(ti, None, "tool_input", tax="invoice" in name or "bill" in name)
 
 
 def decide(tool, tool_input):
