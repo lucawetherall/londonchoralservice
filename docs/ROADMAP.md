@@ -325,7 +325,7 @@ print('duplicate price-ladder constructions:', len(dupes))  # → 0
 
 ---
 
-## R16 — `check_payments.py` can misread an unpaid arrangement as fully paid  [P3] [ready]
+## R16 — `check_payments.py` can misread an unpaid arrangement as fully paid  [P3] [done 2026-09-28 — tests/test_check_payments.py]
 
 **Why:** `full_paid()` (via the `REST_PAID` regex) flags a clause as "the whole fee is paid" whenever a rest-of-fee word (`balance`, `rest`, `remainder`, `remaining`, `total`) sits within 30 characters of `paid`/`received`/`settled`, with no check that the clause is actually past tense. A note like "rest will be paid by the best man on the day" matches `REST_PAID` (`rest … will be paid`) and returns `True` from `full_paid()`, landing the booking in `NOTED_PAID` rather than `ARRANGED`. `arranged_notes()` already does the harder version of this (it treats "will be", "to be", "payable", "due" as not-yet-paid and only a genuine `paid` word as done); `full_paid()`/`REST_PAID` never learned the same distinction. Not urgent: `NOTED_PAID`, like `ARRANGED`, always stays on the Monday hand-check list (`money_report.py`), so nothing is silently dropped or chased wrongly, but the label undersells that the money hasn't actually arrived yet, and a future-tense note happens to read identically to a genuine "balance paid in cash" one.
 

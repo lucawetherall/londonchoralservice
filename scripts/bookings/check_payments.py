@@ -72,8 +72,14 @@ silences nothing), PAYMENT_AFTER_CLOSE (a payment dated
 after a "paid in full YYYY-MM-DD" note; received_since leaves it out) and ARRANGED
 (the notes say the balance will come in cash or by cheque: "balance to be paid in
 cash", "will pay balance in cash", "balance payable in cash on the day", "rest will
-be paid in cash", "cheque on the day"; not when the clause has a paid word ("balance
-paid in cash on the day" is NOTED_PAID) or a negation, refusal or doubt anywhere in
+be paid in cash", "cheque on the day"; or a future-tense note of the balance/rest/
+remainder with no cash or cheque mentioned at all: "rest will be paid by the father",
+"balance will be paid by her parents", "remainder to be paid by the church", "is
+paying the rest", "going to pay the balance" — a future-tense phrase never reads as
+paid, whatever the wording, and with no mention of the balance/rest/remainder it is
+chased normally instead; not when the clause has a paid word ("balance
+paid in cash on the day" is NOTED_PAID, and so is a past-tense "rest paid by the
+father 5 Sep") or a negation, refusal or doubt anywhere in
 it ("told bank transfer only", "by transfer not cash", "going to pay cash but will
 transfer"), and a note of the whole fee paid still wins. Never chased or thanked; on the Monday
 hand check from 7 days before the event, or every week when no deposit is in the bank
@@ -137,7 +143,7 @@ NOT_PAID = re.compile(
     r"|\bto be (paid|received|settled)\b" + _gap()
     + r"|\bif\b" + _gap(15) + r"\bpaid\b"
     r"|\b(asked|says|said)\b" + _gap(20) + r"\bpaid\b"
-    r"|\bwill\s+(have\s+)?(pay|paid)\b" + _gap()
+    r"|\bwill\s+(be\s+|have\s+)?(pay|paid)\b" + _gap()
     + r"|\b(deposit|balance|payment)\s+in\s+by\b", re.I)  # "deposit in by Friday please" is a deadline
 # "deposit seen <date>;" is what the enquiry assistant writes by hand (handover Appendix E)
 PAID_WORD = re.compile(r"\b(paid|received|settled)\b|\bdeposit\s+(seen|in)\b", re.I)
@@ -392,10 +398,19 @@ def hand_notes(notes):
 
 # A balance the client will pay in cash or by cheque, on the day or later ("balance to be paid in cash", "will pay
 # balance in cash", "balance payable in cash on the day", "rest will be paid in cash", "cheque on the day").
+# Also a future-tense note of the balance/rest/remainder with no cash/cheque mentioned at all ("rest will be paid
+# by the father", "balance will be paid by her parents", "remainder to be paid by the church", "is paying the
+# rest", "going to pay the balance"): this is still an arrangement, not a payment, whoever ends up paying it
+# (R16). A future-tense phrase with no balance/rest/remainder mention ("will be paid by Friday") is neither
+# NOTED_PAID nor ARRANGED: it is just chased normally.
+FUTURE_PAY = r"(?:will\s+be\s+paid|to\s+be\s+paid|will\s+pay|is\s+paying|are\s+paying|going\s+to\s+pay)"
+REST_WORDS = r"(?:balance|rest|remainder|remaining)"
 ARRANGED_NOTE = re.compile(
     r"\b(?:to be|will be|payable|due)\b(?:(?![;.,]).){0,20}?\b(?:cash|cheque)\b"
     r"|\b(?:will|to|going to)\s+(?:pay|bring)\b(?:(?![;.,]).){0,25}?\b(?:cash|cheque)\b"
-    r"|\b(?:cash|cheque)\s+on\s+the\s+day\b", re.I)
+    r"|\b(?:cash|cheque)\s+on\s+the\s+day\b"
+    r"|\b" + REST_WORDS + r"\b(?:(?![;.,]).){0,30}?\b" + FUTURE_PAY + r"\b"
+    r"|\b" + FUTURE_PAY + r"\b(?:(?![;.,]).){0,30}?\b" + REST_WORDS + r"\b", re.I)
 NEGATION = {"not", "no", "never", "longer", "wont", "cant"}
 # A clause with a paid word ("balance paid in cash on the day" is a note of payment, not an arrangement; "to be
 # paid" and "will be paid" still arrange), or with a negation, refusal or doubt anywhere in it ("told bank transfer

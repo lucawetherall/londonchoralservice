@@ -1453,6 +1453,41 @@ def test_owner_note_keeps_the_single_line_rules():
         assert p.returncode != 0 and notes == "PENDING: invoiced", text
 
 
+# --- round 7: a future-tense payment note is arranged, never paid (R16) -----------------------
+
+def test_a_future_tense_rest_note_is_arranged_not_paid():
+    dep = [("2026-09-20", 575.0, "reference")]
+    for n in ("rest will be paid by the father", "balance will be paid by her parents",
+              "remainder to be paid by the church", "will pay the balance next week",
+              "is paying the rest", "are paying the remainder", "going to pay the balance"):
+        for event in ("2026-09-30", "2026-12-12", "2026-09-20"):
+            a = cp.assess(row("2111", 1150, "2026-09-01", event, "deposit seen 2026-09-20 (Starling); " + n), dep, T)
+            assert a["state"] == "ARRANGED" and a["just_received"] is False, (n, event, a["state"])
+        # with nothing in the bank and no note of a deposit, the deposit is still what is owed
+        a = cp.assess(row("2111", 1150, "2026-09-01", "2026-12-12", "PENDING: invoiced; " + n), [], T)
+        assert a["state"] == "ARRANGED", (n, a["state"])
+
+
+def test_a_future_tense_note_with_no_rest_word_is_chased_normally():
+    # future tense but no mention of the balance/rest/remainder: neither ARRANGED nor NOTED_PAID
+    for n in ("will be paid by Friday", "to be paid next week", "client will pay soon",
+              "is paying next week", "going to pay on the day", "deposit to be paid by 5 Oct"):
+        a = cp.assess(row("2111", 1150, "2026-09-01", "2026-12-12", "PENDING: invoiced; " + n), [], T)
+        assert a["state"] == "DEPOSIT_OVERDUE", (n, a["state"])
+
+
+def test_a_past_tense_rest_note_still_counts_as_paid():
+    dep = [("2026-09-05", 575.0, "reference")]
+    for n in ("rest paid by the father 5 Sep", "balance paid by parents"):
+        a = cp.assess(row("2111", 1150, "2026-09-01", "2026-09-30", "deposit seen 2026-09-05 (Starling); " + n), dep, T)
+        assert a["state"] == "NOTED_PAID", (n, a["state"])
+    # the existing ARRANGED (cash/cheque) and NOTED_PAID cases must still hold
+    for n in ARRANGED_NOTES:
+        a = cp.assess(row("2111", 1150, "2026-09-01", "2026-09-30", "deposit seen 2026-09-05 (Starling); " + n), dep, T)
+        assert a["state"] == "ARRANGED", (n, a["state"])
+    assert cp.assess(row("X", 500, "2026-09-01", "2026-10-30", "paid 14 Sep"), [], T)["state"] == "NOTED_PAID"
+
+
 if __name__ == "__main__":
     failures = 0
     for name, fn in sorted(globals().items()):
