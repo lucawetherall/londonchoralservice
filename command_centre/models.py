@@ -310,7 +310,7 @@ def books_timeline(ref, invoices):
 def books_flags(invoices, ledger_rows, bookings, today, bank_checked):
     """The Appendix A step 6g disagreements, for Today: [{ref, text, tone}].
 
-    - a Books draft more than 2 days old: "Books draft not sent (>2 days)";
+    - a Books draft more than 2 days old: "Invoice email not sent (>2 days): check Zoho Drafts";
     - Books paid, but Starling hasn't matched the full fee (the state isn't PAID_IN_FULL and the notes have no
       "paid in full" date): "Books paid, Starling not matched";
     - Starling matched a payment (DEPOSIT_SEEN, PAID_IN_FULL, or a "paid in full" note) but Books shows the invoice
@@ -347,7 +347,7 @@ def books_flags(invoices, ledger_rows, bookings, today, bank_checked):
             flag(number, "in Books, not in the ledger", "warn")
         if status == "draft":
             if made and (today - made).days > DRAFT_DAYS:
-                flag(number, "Books draft not sent (>2 days)", "warn")
+                flag(number, "Invoice email not sent (>2 days): check Zoho Drafts", "warn")
             continue
         if not bank_checked or key not in rows:
             continue

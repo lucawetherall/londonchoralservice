@@ -189,12 +189,12 @@ def test_books_flags_follow_appendix_a_6g():
         ("2001", "Books paid, Starling not matched"),
         ("2003", "Starling matched, Books unpaid"),
         ("2004", "Starling paid in full, Books part-paid"),
-        ("2005", "Books draft not sent (>2 days)"),
+        ("2005", "Invoice email not sent (>2 days): check Zoho Drafts"),
         ("2010", "Starling matched, Books unpaid"),
     }, got
     # Starling not checked: the two comparisons are skipped, as 6g skips them; the draft rule stays
     flags = models.books_flags(invoices, ledger, bookings, TODAY, False)
-    assert {(f["ref"], f["text"]) for f in flags} == {("2005", "Books draft not sent (>2 days)")}
+    assert {(f["ref"], f["text"]) for f in flags} == {("2005", "Invoice email not sent (>2 days): check Zoho Drafts")}
     # INV-prefixed numbers match the ledger ref (check_payments.norm_ref)
     inv = books_invoice("INV2001", "paid", "2026-09-01", 100.0, 0.0)
     assert models.books_flags([inv], [{"booking_ref": "2001", "notes": ""}], [{"ref": "2001", "state": "DEPOSIT_SEEN"}],
@@ -248,7 +248,7 @@ def test_today_flags_books_disagreements():
     fixtures()
     c = make(FakeBank())
     base = text_of(page(c, "/"))
-    assert "1212" in base and "Books draft not sent (>2 days)" in base, base[:3000]
+    assert "1212" in base and "Invoice email not sent (>2 days): check Zoho Drafts" in base, base[:3000]
     m = re.search(r"(\d+) things? needs? you", base)
     fixtures(books=False)
     without = text_of(page(make(FakeBank()), "/"))
@@ -286,7 +286,7 @@ def test_books_flags_compare_the_ledger_with_books():
     # the existing rules link to the ledger's own ref, not the Books number
     inv = books_invoice("INV2001", "draft", "2026-09-01", 100.0, 100.0)
     f = models.books_flags([inv], [row("2001", "2026-09-01")], [], TODAY, False)
-    assert f == [{"ref": "INV2001", "text": "Books draft not sent (>2 days)", "tone": "warn",
+    assert f == [{"ref": "INV2001", "text": "Invoice email not sent (>2 days): check Zoho Drafts", "tone": "warn",
                   "href": "/bookings/2001"}], f
 
 

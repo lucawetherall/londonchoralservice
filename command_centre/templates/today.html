@@ -56,7 +56,7 @@
       {% for f in items or [] %}<li>{{ m.ref_link(f.ref, f.href) }} <span class="badge {{ f.tone }}">{{ f.text }}</span></li>{% endfor %}
       {% for f in bills or [] %}<li>{{ m.ref_link(f.ref, f.href) }} <span class="badge {{ f.tone }}">{{ f.text }}</span></li>{% endfor %}
     </ul>
-    <p class="muted">The Monday review's rules (Appendix A, 6g), the ledger against Books, and the singer bills against the singer invoices. Send drafts and confirm payments in Books.</p>
+    <p class="muted">The Monday review's rules (Appendix A, 6g), the ledger against Books, and the singer bills against the singer invoices. Invoices go out attached to your reply in Zoho Drafts; the daily pass then marks them sent in Books and records the confident payments.</p>
     {% elif books_flags.ok and items is none %}<p class="muted">Books not synced yet: the half-hourly refresh and the daily pass run <span class="mono">cc_sync.py books</span>. If this stays, check the Books cache on the <a href="/health">Health</a> page.</p>
     {% elif books_flags.ok %}<p class="muted">Books and Starling agree{% if not (bank.ok and bank.value.bank_checked) %} (drafts only: the bank wasn't checked){% endif %}.</p>{% endif %}
     {% if synced %}
