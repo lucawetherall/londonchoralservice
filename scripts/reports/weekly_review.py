@@ -519,12 +519,41 @@ def budget_section(q, today, write=False, git_runner=None, now=None):
     except Exception as e:
         print(f"   seasonal budget rules failed: {type(e).__name__}")
         return
+    try:
+        for line in value_check_lines(q, today):
+            print("   " + line)
+    except Exception as e:  # type name only
+        print(f"   Christmas value check failed: {type(e).__name__}")
     if write:
         try:
             for line in write_proposals(items, today, git_runner=git_runner, now=now):
                 print("   " + line)
         except Exception as e:  # type name only
             print(f"   Command Centre proposals not written: {type(e).__name__}")
+
+
+XMAS_ID, XMAS_FROM, XMAS_CHECK_BY, XMAS_EXTRA_LIMIT = 24295921372, datetime.date(2026, 9, 28), \
+    datetime.date(2026, 11, 2), 60.0
+
+
+def value_check_lines(q, today):
+    """The stop rule for the Christmas £8 cap (scripts/ads/budget_cap.py): spend above the £5/day level since
+    28 Sep 2026, and whether it has passed £60. Enquiries and the hiring share are judged by the Monday review."""
+    if today < XMAS_FROM:
+        return []
+    extra = spent = 0.0
+    for r in q(f"""SELECT segments.date, metrics.cost_micros FROM campaign WHERE campaign.id = {XMAS_ID}
+                   AND segments.date BETWEEN '{XMAS_FROM}' AND '{today}'"""):
+        cost = r.metrics.cost_micros / 1e6
+        spent += cost
+        extra += max(0.0, cost - 5.0)
+    line = (f"Christmas value check: £{spent:,.2f} spent since {XMAS_FROM:%d %b}, £{extra:,.2f} of it above the "
+            f"£5/day level")
+    if extra > XMAS_EXTRA_LIMIT:
+        line += (f" — PAST £{XMAS_EXTRA_LIMIT:.0f}: back to £5 unless a real enquiry came from the campaign"
+                 f"{' (checked from ' + XMAS_CHECK_BY.strftime('%d %b') + ')' if today < XMAS_CHECK_BY else ''}")
+    return [line, "stop rule: back to £5 if the extra passes £60 by 2 Nov with no real enquiry, "
+                  "or if under 90% of a week's spend went on hiring searches"]
 
 
 # ---------- 12b. Command Centre proposals (--write-proposals) ----------
@@ -534,7 +563,8 @@ def budget_section(q, today, write=False, git_runner=None, now=None):
 # talks to Google or changes the account.
 
 SET_BUDGET = "scripts/ads/set_budget.py"
-PROPOSAL_CAP_GBP = 5.0  # CLAUDE.md: never above £5/day (set_budget.py refuses it too)
+PROPOSAL_CAP_GBP = 5.0  # the base cap; budget_cap.py may raise it for one campaign on set dates (set_budget.py
+#                        checks the same module)
 SHA_RE = re.compile(r"^(?:[0-9a-f]{40}|[0-9a-f]{64})$")
 AMOUNT_RE = re.compile(r"^\d{1,4}\.\d{2}$")
 
@@ -643,6 +673,16 @@ def _supersede_older(pdir, cid, new_pid):
             tmp.unlink(missing_ok=True)
 
 
+def budget_cap_gbp(cid, today):
+    """The campaign's cap on `today` from scripts/ads/budget_cap.py; the base £5 if the module can't load."""
+    try:
+        sys.path.insert(0, str(REPO / "scripts" / "ads"))
+        import budget_cap
+        return budget_cap.cap_gbp(cid, today)
+    except Exception:
+        return PROPOSAL_CAP_GBP
+
+
 def write_proposals(items, today, git_runner=None, now=None):
     """Write one Command Centre proposal per "propose" item; returns the lines to print. Never above £5/day, and
     never a second proposal while one with the same script blob and args is still waiting (no .applied record)."""
@@ -664,8 +704,9 @@ def write_proposals(items, today, git_runner=None, now=None):
         if not cid.isdigit():
             lines.append(f"not written ({name}): no campaign id")
             continue
-        if not (0 < new <= PROPOSAL_CAP_GBP):
-            lines.append(f"not written ({name}): £{new:,.2f}/day is outside £0–£5")
+        cap = budget_cap_gbp(cid, today)
+        if not (0 < new <= cap):
+            lines.append(f"not written ({name}): £{new:,.2f}/day is outside £0–£{cap:g}")
             continue
         amount = f"{new:.2f}"
         if not AMOUNT_RE.fullmatch(amount):
@@ -682,7 +723,7 @@ def write_proposals(items, today, git_runner=None, now=None):
             "id": "", "kind": "ads", "title": f"Budget: {shown} £{cur:.2f} → £{new:.2f}/day",
             "summary": (f"Seasonal window {i.get('window', '?')} (data/budget-windows.yml): set the daily budget of "
                         f"{name} (campaign {cid}) from £{cur:.2f} to £{new:.2f}. From the Monday review of {today}. "
-                        f"Runs {SET_BUDGET} {cid} {amount}, validate-only first; never above £5/day.")[:1000],
+                        f"Runs {SET_BUDGET} {cid} {amount}, validate-only first; never above £{cap:g}/day.")[:1000],
             "script_path": SET_BUDGET, "created": created, "commit": commit, "script_blob": blob, "args": args}
         base = f"budget-{cid}-{int(round(new * 100))}-{today:%Y%m%d}"
         for n in range(1, 10):

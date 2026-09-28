@@ -57,7 +57,7 @@ def test_writes_a_proposal_the_app_accepts():
                  "summary": p["summary"], "script_path": "scripts/ads/set_budget.py",
                  "created": "2026-10-05T09:05:00+01:00", "commit": COMMIT, "script_blob": BLOB,
                  "args": ["24295921372", "5.00"]}, p
-    assert "window carols" in p["summary"] and "never above £5/day" in p["summary"]
+    assert "window carols" in p["summary"] and "never above £8/day" in p["summary"]
     f = PDIR / "budget-24295921372-500-20261005.json"
     assert stat.S_IMODE(f.stat().st_mode) == 0o600 and stat.S_IMODE(PDIR.stat().st_mode) == 0o700
     assert stat.S_IMODE(PDIR.parent.stat().st_mode) == 0o700
@@ -109,11 +109,13 @@ def test_a_new_amount_supersedes_the_older_waiting_proposal_for_the_same_campaig
 
 def test_never_above_five_pounds_and_needs_a_campaign_id():
     clear()
-    lines = wr.write_proposals([item(new=5.01), item(new=6), item(new=0), item(cid=None), item(cid="12a")], MON,
+    lines = wr.write_proposals([item(cid="1", new=5.01), item(cid="1", new=6), item(cid="1", new=0),
+                                item(new=8.01), item(cid=None), item(cid="12a")], MON,
                                git_runner=FakeGit(), now=NOW)
     assert lines == ["not written (Christmas carol singers – events 2026): £5.01/day is outside £0–£5",
                      "not written (Christmas carol singers – events 2026): £6.00/day is outside £0–£5",
                      "not written (Christmas carol singers – events 2026): £0.00/day is outside £0–£5",
+                     "not written (Christmas carol singers – events 2026): £8.01/day is outside £0–£8",
                      "not written (Christmas carol singers – events 2026): no campaign id",
                      "not written (Christmas carol singers – events 2026): no campaign id"], lines
     assert not written()
@@ -157,11 +159,11 @@ def run_section(write, git):
 def test_section_12_writes_only_with_the_flag():
     clear()
     out = run_section(False, FakeGit())
-    assert "PROPOSE: Christmas carol singers – events 2026 £4.00 → £5.00/day (window carols)" in out, out
+    assert "PROPOSE: Christmas carol singers – events 2026 £4.00 → £8.00/day (window carols)" in out, out
     assert "proposal" not in out.split("(window carols)")[1] and not written()
     out = run_section(True, FakeGit())
-    assert "   proposal written: budget-24295921372-500-20261005" in out.splitlines(), out
-    assert list(written()) == ["budget-24295921372-500-20261005"]
+    assert "   proposal written: budget-24295921372-800-20261005" in out.splitlines(), out
+    assert list(written()) == ["budget-24295921372-800-20261005"]
     out = run_section(True, FakeGit(code=1))
     assert "   Command Centre proposals not written: RuntimeError" in out.splitlines(), out
 
@@ -188,6 +190,17 @@ def test_flag_is_parsed():
     finally:
         wr.run_sections, sys.argv = saved
     assert seen["write_proposals"] is True and seen["save_report"] is False
+
+
+def test_christmas_value_check_flags_extra_spend_past_sixty_pounds():
+    from types import SimpleNamespace as N
+    rows = lambda costs: (lambda query: [N(metrics=N(cost_micros=int(c * 1e6))) for c in costs])
+    lines = wr.value_check_lines(rows([8, 8, 2]), datetime.date(2026, 10, 5))
+    assert lines[0] == "Christmas value check: £18.00 spent since 28 Sep, £6.00 of it above the £5/day level", lines
+    lines = wr.value_check_lines(rows([8] * 21), datetime.date(2026, 11, 2))
+    assert "PAST £60: back to £5 unless a real enquiry came from the campaign" in lines[0], lines
+    assert "(checked from" not in lines[0]
+    assert wr.value_check_lines(rows([8]), datetime.date(2026, 9, 27)) == []
 
 
 if __name__ == "__main__":
