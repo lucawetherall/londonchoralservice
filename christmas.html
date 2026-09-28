@@ -117,12 +117,21 @@
         var attr = lcsAttribution();
         var ad = attr.gclid || attr.gbraid || attr.wbraid || attr.utm_medium === 'cpc' ? ', via a Google ad' : '';
         var source = 'your \u201c' + page + '\u201d page' + ad;
+        // With cookie consent, the ad click reference rides along too, so a
+        // booking that starts on WhatsApp or email can be reported to Google Ads.
+        var ref = '';
+        try {
+          if (localStorage.getItem('lcs-consent') === 'granted') {
+            ref = attr.gclid || (attr.gbraid ? 'gbraid:' + attr.gbraid : '') || (attr.wbraid ? 'wbraid:' + attr.wbraid : '');
+          }
+        } catch (e) {}
         if (method === 'whatsapp') {
           var url = new URL(original);
           var text = url.searchParams.get('text') || 'Hello, I\u2019d like to ask about a booking.';
-          a.setAttribute('href', original.split('?')[0] + '?text=' + encodeURIComponent(text + ' (Sent from ' + source + '.)'));
+          a.setAttribute('href', original.split('?')[0] + '?text=' + encodeURIComponent(text + ' (Sent from ' + source + '.' + (ref ? ' Ad ref: ' + ref : '') + ')'));
         } else if (original.indexOf('?') === -1) {
-          a.setAttribute('href', original + '?subject=' + encodeURIComponent('Enquiry from ' + source));
+          a.setAttribute('href', original + '?subject=' + encodeURIComponent('Enquiry from ' + source) +
+            (ref ? '&body=' + encodeURIComponent('\r\n\r\n\r\nAd ref: ' + ref) : ''));
         }
       } catch (e) {}
     }
@@ -2712,7 +2721,7 @@
           <p class="guide-meta">By Luca Wetherall, Artistic Director &amp; Tutor in Music, University of Oxford</p>
           <p class="guide-meta">Last updated: July 2026</p>
           <p class="lede">Offices and companies book us first: the annual carol service, the gala dinner, the client drinks reception. The same choirs sing in hotels, at residents&rsquo; Christmas evenings, in livery halls, at charity carol concerts, and at private parties. Carol bookings start with four voices in full harmony, and run up to twelve, unaccompanied or with an organist.</p>
-          <p class="text-sm text-mid">This page covers structured carol services and concerts. If you want singers moving through a party or a lobby instead, <a href="carol-singers.html">hire carol singers</a>.</p>
+          <p class="text-sm text-mid">This page covers structured carol services and concerts. If you want singers moving through an office party or a hotel lobby instead, you can <a href="carol-singers.html">hire Christmas carol singers in London</a> or anywhere in the UK.</p>
           <p class="text-sm text-mid">Trusted by law firms, banks, charities, and City livery companies. Musicians from the Royal Academy, Royal College, and Britain&rsquo;s leading conservatoires.</p>
           <p><a href="#enquiry" class="btn-link">Tell us about your event</a></p>
         </div>

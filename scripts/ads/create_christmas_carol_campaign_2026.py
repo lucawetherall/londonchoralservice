@@ -14,6 +14,7 @@ enabled separately, once christmas-pricing.html is live.
     python scripts/ads/create_christmas_carol_campaign_2026.py --apply    # after approval
 """
 
+import os
 import argparse
 import datetime
 from pathlib import Path
@@ -280,7 +281,7 @@ def main():
     parser.add_argument("--apply", action="store_true")
     args = parser.parse_args()
     check_limits()
-    client = GoogleAdsClient.load_from_storage()
+    client = GoogleAdsClient.load_from_storage(os.environ.get("GOOGLE_ADS_CONFIGURATION_FILE_PATH", os.path.expanduser("~/.config/lcs/google-ads.yaml")))
     ops = build(client)
     print(("APPLYING" if args.apply else "VALIDATE ONLY") + f" — {len(ops)} operations\n")
     summary()

@@ -50,6 +50,39 @@ def jsonld(slug, name, title, desc, faqs):
                              indent=2, ensure_ascii=False).replace('\n', '\n  ')
 
 
+READING = ('<p>Reading: <a href="/music-guides/destination-wedding-choir.html">hiring a UK choir for a '
+           'destination wedding</a>, <a href="/music-guides/wedding-ceremony-music.html">a complete guide to '
+           'wedding ceremony music</a>, and <a href="/music-guides/wedding-music-costs.html">what wedding music '
+           'costs</a>. For a ceremony at home, see <a href="/weddings.html">wedding choirs in the United '
+           'Kingdom</a>; planners, venues and estates have <a href="/planners-and-venues.html">a page of their '
+           'own</a>.</p>')
+
+
+def nearby(slug, shade):
+    """The sibling countries in the page's own group, so no country page is a dead end."""
+    group, countries = next((g, cs) for g, cs in D.GROUPS if any(c[0] == slug for c in cs))
+    heading = group[0].lower() + group[1:] if group.startswith('The ') else group
+    items = '\n'.join(
+        f'            <li><a href="/destinations/{s}.html"><span class="n">{n}</span>'
+        f'<span class="r">{D.regions_phrase(r)}</span></a></li>'
+        for s, n, r, _ in countries if s != slug)
+    return f'''
+    <!-- Nearby -->
+    <section class="pe-section pe-section--{shade}">
+      <div class="pe-rail">
+        <p class="pe-rail-label" aria-hidden="true">Nearby</p>
+        <div class="pe-body" data-fade>
+          <h2>Other destinations: {heading}</h2>
+          <ul class="pe-dests" role="list">
+{items}
+          </ul>
+          {READING}
+        </div>
+      </div>
+    </section>
+'''
+
+
 def build(slug, name, title, desc, hero_h1, hero_sub, sections, regions, faqs,
           nav_prev=None, nav_next=None):
     """sections: list of (rail_label, heading, [paragraph_html, ...])
@@ -129,6 +162,7 @@ def build(slug, name, title, desc, hero_h1, hero_sub, sections, regions, faqs,
       </div>
     </section>
 '''
+    body += nearby(slug, shade[(i + 1) % 2])
     html = B.page(
         title=title, description=desc, path=f'destinations/{slug}.html',
         jsonld=jsonld(slug, name, title, desc, faqs),

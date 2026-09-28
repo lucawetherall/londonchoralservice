@@ -1144,7 +1144,7 @@ git commit -m "chore(barbershop): sitemap, llms.txt, and llms-full.txt entries"
 At the end of `docs/ROADMAP.md`, matching the style of the existing "Competitive capture" entry:
 
 ```markdown
-## R15 — Barbershop Grams product line  [P1] [done 2026-09-03]
+## R21 — Barbershop Grams product line  [P1] [done 2026-09-03]
 
 **What shipped:** a second product line at `/barbershop-grams/` (hub + repertoire page) in its own visual register, priced to match Barbershop-o-gram's £600 ten-minute gram on that tier only. New `pricing.html` section, Services-dropdown entry, `barbershop-gram` occasion option, and `barbershop-grams/*.html` added to both claim validators, which previously could not see the directory.
 
@@ -1500,6 +1500,6 @@ git commit -m "feat(barbershop): listen page with barbershop recordings"
 
 **Spec coverage.** Every spec section maps to a task: §Product → 5, 7; §Architecture (directory, partials, register, tokens) → 1, 2; §Architecture (validators) → 3; §Architecture (linking) → 9, 14.7; §Page 1 → 4, 5; §Page 2 → 6; §Page 3 → 14; §Claims integrity → 13; §Go-to-market Phase 0 → owner actions, gate on Task 13; §Go-to-market search/ads/partnerships/directories/PR → `MANUAL-ACTIONS-REQUIRED.md`, outside this plan; §Measurement → the gram-specific WhatsApp pre-fill (Task 2) and the occasion option (Task 8); §Sequencing → task order and the Task 12 gate.
 
-**Deliberately not in this plan.** The OG image (`og-barbershop-grams.png`) is an owner action; pages ship with `og-image.png` until it exists. GBP re-anchoring is `MANUAL-ACTIONS-REQUIRED.md` §17. Phase 3 occasion pages need Search Console evidence that does not exist yet, and inventing their content now would be building on speculation.
+**Deliberately not in this plan.** The OG image (`og-barbershop-grams.png`) is an owner action; pages ship with `og-image.png` until it exists. GBP re-anchoring is `MANUAL-ACTIONS-REQUIRED.md` §27. Phase 3 occasion pages need Search Console evidence that does not exist yet, and inventing their content now would be building on speculation.
 
 **Fixed in Task 13, not tolerated.** An earlier draft of this plan accepted that `allowed_figures()` would derive a phantom £720 from the declared £600, on the grounds that nothing would use it. Dry-running the change surfaced something worse: the function reads `pkg["price_ex_vat"]` unconditionally, so a `price_inc_vat`-only package raises `KeyError` and breaks `./build.sh` outright — the build stops working, it does not merely allow a wrong figure. Task 13 Step 3 fixes both, Step 3b is the regression test, and the funeral-singers figures (£275 allowed, £330 allowed, £720 rejected) were verified unchanged under the patch.

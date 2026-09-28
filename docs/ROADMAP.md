@@ -313,7 +313,75 @@ print('duplicate price-ladder constructions:', len(dupes))  # → 0
 
 ---
 
-## R15 — Barbershop Grams product line  [P1] [done 2026-09-03]
+## R15 — Run the 2026 Zoho Books import  [P2] [BLOCKED-ON-HUMAN]
+
+**Why:** the Zoho Books design (`docs/superpowers/specs/2026-09-28-zoho-books-design.md`, flow D) prepared a private dry-run list of this year's bookings at `~/lcs-private/books-import-2026.json` (seven bookings), ready to become draft invoices in Books. It has not run: the owner has to look at the list and say the word first (see `MANUAL-ACTIONS-REQUIRED.md` §20).
+
+**Do:** once the owner says "approve the Books import" in chat, create one draft invoice per booking in Books via `ZohoBooks_create_invoice`, dated at each booking's own invoice date, following the allowlisted keys and checks in the Zoho Books design's "Approved write tools" table. Leave `send` absent/false: the owner sends from Books himself.
+
+**Do not:** create anything before the owner's explicit approval line, or touch any of the still-denied tools (payments, `mark_invoice_sent`, anything that emails a client).
+
+**Skills:** none beyond what the guard already enforces
+
+---
+
+## R16 — `check_payments.py` can misread an unpaid arrangement as fully paid  [P3] [ready]
+
+**Why:** `full_paid()` (via the `REST_PAID` regex) flags a clause as "the whole fee is paid" whenever a rest-of-fee word (`balance`, `rest`, `remainder`, `remaining`, `total`) sits within 30 characters of `paid`/`received`/`settled`, with no check that the clause is actually past tense. A note like "rest will be paid by the best man on the day" matches `REST_PAID` (`rest … will be paid`) and returns `True` from `full_paid()`, landing the booking in `NOTED_PAID` rather than `ARRANGED`. `arranged_notes()` already does the harder version of this (it treats "will be", "to be", "payable", "due" as not-yet-paid and only a genuine `paid` word as done); `full_paid()`/`REST_PAID` never learned the same distinction. Not urgent: `NOTED_PAID`, like `ARRANGED`, always stays on the Monday hand-check list (`money_report.py`), so nothing is silently dropped or chased wrongly, but the label undersells that the money hasn't actually arrived yet, and a future-tense note happens to read identically to a genuine "balance paid in cash" one.
+
+**Files & anchors:** `grep -n 'REST_PAID = re.compile' scripts/bookings/check_payments.py`; `def full_paid` in the same file; `tests/test_check_payments.py`.
+
+**Do:** give `REST_PAID` the same future-tense/negation discipline `ARRANGED_NOTE`/`ARRANGED_PAID` already use, so a clause only counts as "the whole fee is paid" when the paid word is not itself inside a "will be"/"to be"/"payable"/"due" construction. Add a case to `tests/test_check_payments.py` for "rest will be paid by the best man" (expect `ARRANGED`, not `NOTED_PAID`) alongside the existing genuine "balance paid in cash" case (still `NOTED_PAID`).
+
+**Skills:** systematic-debugging
+
+---
+
+## R17 — Dashboard should read invoice status from Zoho Books, not Starling alone  [P3] [ready]
+
+**Why:** `scripts/reports/dashboard.py` (`gather()`) currently builds every payment state from `check_payments.assess()` against the Starling feed only. Since Books is now the system of record for invoice status (the owner confirms bank-feed matches in Books, per the Zoho Books design's flow B), the dashboard can show a stale or disagreeing picture next to what the owner sees in Books. The Monday report already gets a Books line for this (design §"Flows", flow E, section 11: receivables, overdue invoices, unpaid bills, disagreements with the Starling check); the dashboard never picked up the equivalent.
+
+**Files & anchors:** `scripts/reports/dashboard.py` (`gather`/`render`); the read-only `zoho-books`/`zoho-books-invoices` MCP tools (`list_invoices`, `list_bills`) already used by the Monday review for the same purpose.
+
+**Do:** add a Books-sourced invoice/bill status pull to `gather()`, alongside the existing Starling-derived state, and show both on the dashboard when they disagree (mirroring the Monday report's "needs a hand check" treatment) rather than only the Starling view. Read-only calls only; the dashboard writes nothing back to Books.
+
+**Skills:** none beyond the existing dashboard test pattern (`tests/test_dashboard.py`)
+
+---
+
+## R18 — Automation Phase 4 is now mostly covered by Zoho Books  [P3] [done by Books except per-event margin]
+
+**Why:** `docs/superpowers/specs/2026-09-28-zoho-books-design.md` states plainly that it "replaces most of [the business-automation spec's] Phase 4 (per-event margin, bookkeeping export), which Books now provides": Books' own reports give the monthly bookkeeping export (feature 15 of the business-automation spec) for free once invoices and bills live there, so that half of Phase 4 needs no bespoke script. **Feature 14, per-event margin, is not covered yet**: Books has no native concept of "this booking's client invoice minus this booking's singer bills", because that link runs through the booking ref, which lives in the private ledger and in bill/invoice notes, not as a first-class Books field.
+
+**Do:** mark Phase 4 done-by-Books in `docs/superpowers/specs/2026-09-28-business-automation-design.md`'s phase table (a one-line note, not a rewrite) and write the per-event margin piece as its own small plan: pull each booking's client invoice total and its linked singer/organist bills (matched on event date and `booking_ref`, per the original feature-14 description), compute margin, and surface it once R17's dashboard work lands. The owner confirms any ambiguous booking-ref link, as the original spec already says.
+
+**Skills:** none yet; write a plan under `docs/superpowers/plans/` before starting
+
+---
+
+## R19 — Lint that the Monday review and enquiry-assistant prompts only use allowlisted commands  [P4] [ready]
+
+**Why:** the Monday review (Appendix A) and enquiry assistant (Appendix E) prompts in `docs/HANDOVER-2026-09-27-ads-analytics.md` are free text describing which scripts to run; the actual permission boundary is the `Bash(...)` entries under `.claude/settings.json`'s `allow` list. Nothing currently checks that every command the two prompts tell Claude to run is actually on that list, or flags a prompt edit that introduces a command the settings file doesn't cover (or a settings entry for a command the prompt no longer uses). Today the two happen to agree; there's no test guarding that they keep agreeing as both documents change.
+
+**Files & anchors:** `docs/HANDOVER-2026-09-27-ads-analytics.md` §"Appendix A" and §"Appendix E"; `.claude/settings.json` `permissions.allow`.
+
+**Do:** add a small stdlib test (e.g. `tests/test_appendix_commands_allowlisted.py`) that extracts each literal shell command named in Appendix A and Appendix E (parsing fenced code blocks / backtick-quoted commands for the known script paths), normalises it the way `Bash(...)` patterns do (exact match or the trailing-`*` wildcard form), and asserts each one matches an entry in `.claude/settings.json`'s allow list. Fail loudly, naming the missing command, rather than silently skipping anything unparseable.
+
+**Skills:** none
+
+---
+
+## R20 — Back-fill enquiries from before the pipeline existed  [P4] [DECISION-NEEDED]
+
+**Why:** per `docs/superpowers/plans/2026-09-28-automation-phase-2-pipeline.md` ("Older threads") and `MANUAL-ACTIONS-REQUIRED.md` §26, only enquiries first seen from 28 September 2026 are tracked in `~/lcs-private/enquiries.csv`; anything older gets no automatic follow-up, quote-chase, or loss marking. This was a deliberate scope cut for the initial rollout, not an oversight, so whether it's worth doing is the owner's call, not an agent's.
+
+**Do:** nothing until the owner asks for a back-fill and gives a start date. If asked, write a one-off script that scans Zoho Mail threads before 28 Sep 2026 for enquiry-shaped messages, seeds `enquiries.csv` rows at whatever status the thread history shows (quoted/confirmed/lost), and never re-drafts a reply for a thread that already got a human one.
+
+**Skills:** none yet
+
+---
+
+## R21 — Barbershop Grams product line  [P1] [done 2026-09-03]
 
 **What shipped:** a second product line at `/barbershop-grams/` (hub + repertoire page), a self-contained mini-site in its own visual register — a scoped `bs-` stylesheet plus its own nav and footer partials, insulated from the main site's CSS bundle and never including `partials/nav.html` or `partials/footer.html`. A `barbershop-gram` `<option>` on `contact.html` wiring the enquiry pre-fill, and `barbershop-grams/*.html` added to both claim validators (`validate_jsonld.py`, `validate_house_claims.py`), which previously could not see the directory at all. Sitemap and `llms.txt` entries for both pages.
 
@@ -322,9 +390,9 @@ Inbound links from the main site: `services.html` gets a note after the ensemble
 **Deliberately not done, and why:**
 - **No gram prices on `pricing.html`.** A section was added there (`a3dad63`) and reverted by owner decision (`10abc0d`): barbershop is sold separately from the choral service and its bookings are almost always a quartet, so listing its rates in the choral price table works against the separation the mini-site exists to maintain. `barbershop-grams/index.html` is the source of truth for the five gram prices; `pricing.html` stays the source of truth for choral prices. The `CLAUDE.md` convention was rewritten to carve this out.
 - **No nav entry.** The original plan (and the task's own first draft) added a Services-dropdown item. It shipped in `e4ebdad`, then was **removed by owner decision** in `28e0e83`: `partials/nav.html` expands into every page via the build, so a dropdown item for a birthday-gram product appeared on `funerals.html`, every funeral music guide, all three `for-*.html` B2B pages, and `compare/london-funeral-singers.html` — a birthday-gift product surfaced to a bereaved visitor or a corporate buyer mid-funeral-enquiry. The spec's "dropdown only, never on funeral pages" constraint is unsatisfiable with one shared nav partial. The spec and plan were corrected in `c757d31` to record this rather than leave the stale intent standing.
-- Comparison page (`compare/barbershopogram.html`) and a barbershop listen page — Phase 2, gated on a barbershop recording existing (`MANUAL-ACTIONS-REQUIRED.md` §18.1).
+- Comparison page (`compare/barbershopogram.html`) and a barbershop listen page — Phase 2, gated on a barbershop recording existing (`MANUAL-ACTIONS-REQUIRED.md` §28.1).
 - Per-occasion pages — Phase 3, gated on Search Console evidence after a season live.
-- Ads, directories, partnerships, and PR — Phase 4, human-only (`MANUAL-ACTIONS-REQUIRED.md` §18).
+- Ads, directories, partnerships, and PR — Phase 4, human-only (`MANUAL-ACTIONS-REQUIRED.md` §28).
 
 **Spec:** `docs/superpowers/specs/2026-09-03-barbershop-grams-design.md`
 **Plan:** `docs/superpowers/plans/2026-09-03-barbershop-grams.md`

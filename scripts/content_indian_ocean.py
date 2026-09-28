@@ -35,7 +35,7 @@ BALI_COST = (
  'we will say what we would bring.')
 
 n = build('mauritius', 'Mauritius',
-  'A Wedding Choir in Mauritius &mdash; Belle Mare, Le Morne | Alma Consort',
+  'A Wedding Choir in Mauritius &mdash; Belle Mare, Le Morne',
   'A British consort at Mauritian weddings: beach and resort ceremonies, colonial churches, and what '
   'a long flight and tropical humidity ask of singers.',
   'A long way to bring a choir, and a real church at the end of it.',
@@ -101,7 +101,7 @@ n = build('mauritius', 'Mauritius',
 print(f'mauritius {n}')
 
 n = build('maldives', 'Maldives',
-  'A Wedding Choir in the Maldives &mdash; Mal&eacute; and Ari Atolls | Alma Consort',
+  'A Wedding Choir in the Maldives &mdash; Mal&eacute; and Ari Atolls',
   'A British consort at Maldivian weddings: island resort ceremonies, seaplane logistics, and an '
   'honest account of what bringing twelve singers this far involves.',
   'The furthest we go, and the one that needs the plainest talking.',
@@ -176,7 +176,7 @@ n = build('maldives', 'Maldives',
 print(f'maldives {n}')
 
 n = build('seychelles', 'Seychelles',
-  'A Wedding Choir in the Seychelles &mdash; Mah&eacute;, Praslin, La Digue | Alma Consort',
+  'A Wedding Choir in the Seychelles &mdash; Mah&eacute;, Praslin, La Digue',
   'A British consort at Seychellois weddings: granite island ceremonies, Catholic churches on '
   'Mah&eacute;, and inter-island logistics for a group of twelve.',
   'Granite islands, a Catholic tradition, and three separate journeys.',
@@ -242,7 +242,7 @@ n = build('seychelles', 'Seychelles',
 print(f'seychelles {n}')
 
 n = build('thailand', 'Thailand',
-  'A Wedding Choir in Thailand &mdash; Phuket and Koh Samui | Alma Consort',
+  'A Wedding Choir in Thailand &mdash; Phuket and Koh Samui',
   'A British consort at Thai weddings: villa and beach ceremonies, a Buddhist blessing alongside a '
   'Western one, and what a twelve-hour flight asks of singers.',
   'A Western ceremony in a country with its own ideas about ritual.',
@@ -305,7 +305,7 @@ n = build('thailand', 'Thailand',
 print(f'thailand {n}')
 
 n = build('indonesia', 'Bali',
-  'A Wedding Choir in Bali &mdash; Uluwatu, Ubud, Seminyak | Alma Consort',
+  'A Wedding Choir in Bali &mdash; Uluwatu, Ubud, Seminyak',
   'A British consort at Balinese weddings: clifftop chapels, jungle ceremonies, and the glass '
   'chapels that turn out to be the best rooms on the island.',
   'The island where the wedding venues built themselves a chapel.',
@@ -381,7 +381,7 @@ n = build('indonesia', 'Bali',
 print(f'indonesia {n}')
 
 n = build('south-africa', 'South Africa',
-  'A Wedding Choir in South Africa &mdash; Cape Town, Franschhoek | Alma Consort',
+  'A Wedding Choir in South Africa &mdash; Cape Town, Franschhoek',
   'A British consort at South African weddings: Cape Dutch wine estates, Anglican cathedrals, barrel '
   'cellars, and a country with a choral tradition of its own.',
   'A country that takes choral singing as seriously as we do.',

@@ -236,6 +236,10 @@ What this means, in priority order:
 
 The competitor everyone outranks us with — The London Funeral Singers — is the one `compare/london-funeral-singers.html` already addresses. Once citations and GBP exist, that page and the two "best X in London" guides are positioned to capture comparison-shopping and AI-recommendation queries; they were de-orphaned and internally linked on 2026-08-19.
 
+**Weekly review, 2026-09-27 (Search Console, 18–24 Sep vs 11–17 Sep):** 61 clicks (was 43), 2,419 impressions (was 1,954), average position 6.8 (was 7.0). Music guides carry the clicks (nine-lessons-and-carols 9, the guides hub 6, be-thou-my-vision 5); the homepage has 5. Hiring queries still sit off page one: "christmas carol singers london" 18 (first seen), "carol singers for hire london" 26, "hire a choir" 24, "how to book a choir" 12.9, "funeral singers near me" 15; "choir for funeral" rose to 1.5 on 2 impressions. "wedding choir" fell from 13.5 to 29.5.
+
+**Weekly review, 2026-09-28 (Search Console, 19–25 Sep vs 12–18 Sep):** 60 clicks (was 48), 2,416 impressions (was 2,094), average position 7.0 (was 6.8). Music guides still carry the clicks (nine-lessons-and-carols 12, be-thou-my-vision 5, the guides hub 4); the homepage has 5. Hiring queries still off page one: "christmas carol singers london" 18, "funeral singers near me" 10 (was 15.8), "how to book a choir" 13, "hire a choir" 24 (first seen), "carol singers for hire london" 26. "choir for funeral" holds at 1.5 on 2 impressions. Sitemap resubmitted 27 Sep, not yet re-read by Google; all three ad landing pages indexed.
+
 ---
 
 ## 13. Private events page launch follow-ups, 2026-08-26
@@ -298,13 +302,13 @@ Spec: `docs/superpowers/specs/2026-08-29-international-luxury-weddings-design.md
 
 ## 15. www subdomain serves a broken TLS certificate, 2026-08-30
 
-A full SEO audit found `https://www.londonchoralservice.com` fails the TLS handshake outright (`SSL: no alternative certificate subject name matches target host name`) rather than redirecting to the apex domain. DNS for `www` already resolves to GitHub Pages' anycast IPs, but the certificate GitHub serves only covers `*.github.io` — it doesn't cover the `www` host because the `CNAME` file in this repo only declares the apex (`londonchoralservice.com`), and GitHub Pages only provisions/serves a matching cert for whichever custom domain is configured in the repo's own Settings → Pages.
+A full SEO audit found `https://www.londonchoralservice.com` fails the TLS handshake outright (`SSL: no alternative certificate subject name matches target host name`) rather than redirecting to the apex domain. DNS for `www` already resolves to GitHub Pages' anycast IPs, but the certificate GitHub serves only covers `*.github.io` — it doesn't cover the `www` host because the custom domain configured in the repo's Settings → Pages is only the apex (`londonchoralservice.com`), and GitHub Pages only provisions/serves a matching cert for the configured custom domain. (The site deploys through GitHub Actions, which ignores the repo's `CNAME` file; the Settings value is what counts.)
 
 Anyone who types `www.` from habit, or any inbound backlink built to the `www` host, hits a browser security interstitial instead of a clean redirect. This is a dashboard/DNS-panel action, not something fixable from the repo.
 
 What to do:
 
-1. In the repo's GitHub Settings → Pages, add `www.londonchoralservice.com` as an alternate custom domain alongside the existing apex domain. This provisions a certificate covering both hosts and makes GitHub auto-redirect `www` → apex per the `CNAME` file's value.
+1. In the repo's GitHub Settings → Pages, add `www.londonchoralservice.com` as an alternate custom domain alongside the existing apex domain. This provisions a certificate covering both hosts and makes GitHub auto-redirect `www` → apex, the domain configured there.
 2. Alternatively, if `www` was never meant to resolve at all, remove its DNS record at the registrar/DNS panel instead of leaving a broken host reachable.
 3. Once fixed, confirm with `curl -I https://www.londonchoralservice.com/` — expect a `301` to the apex, not a TLS error.
 
@@ -321,7 +325,105 @@ What to do:
 
 ---
 
-## 17. Re-anchor the Google Business Profile to London, 2026-09-03
+## 17. Zoho Books plan
+
+The Books organisation "Alma Consort Ltd" (id `941014440`) is on a Premium trial. Once the trial ends, the MCP tools and the invoice flow described in §18 to §20 stop working.
+
+What to do:
+
+1. Sign in to Zoho Books and open Settings → Subscription.
+2. Choose a paid plan before the trial expiry date shown there. Premium is the plan the automation was designed against; a lower tier may be missing a feature the scripts use, so check the plan comparison against what you actually need (multi-currency and Starling banking are not needed here, GBP only).
+
+---
+
+## 18. Zoho Books set-up
+
+A handful of one-off settings need choosing before invoices go out through Books. None of these can be set by Claude: the write tools available to Claude do not cover organisation settings, and the bank details point below is deliberately blocked in code.
+
+What to do:
+
+1. **Manual invoice numbering.** Settings → Preferences → Invoices, turn off auto-numbering. The assistant uses the existing DDMM reference style (e.g. `2111`) as the invoice number, and Books must not overwrite it with its own sequence.
+2. **Invoice sender.** Set the invoice email sender to `office@londonchoralservice.com`, so a client sees the address they already know, not a Zoho default.
+3. **Bank details on the template.** Add the Alma Consort Starling account details to the invoice template's payment instructions. Claude is blocked, in the guard hook, from ever writing bank details into Books, so this line has to be typed in by hand once.
+4. **VAT status.** Confirm the organisation is marked "not VAT-registered" in Books' tax settings, matching the site and CLAUDE.md.
+5. **Template and branding.** Set the invoice template layout, logo and colours to match the LCS house style.
+6. **Automatic payment reminders.** Decide whether to turn Books' own reminder emails on. If you turn them on, tell Claude (in chat, next session is fine), because the enquiry assistant currently drafts its own balance reminders too, and a client should never get two reminders for the same invoice.
+
+---
+
+## 19. Connect Starling to Zoho Books
+
+Books → Banking → Add bank, and connect the Alma Consort Starling account. Once connected, confirm the bank-feed matches against each invoice yourself in Books as payments come in. Claude never records a payment; it only reads invoice and bill status.
+
+---
+
+## 20. Approve the 2026 import
+
+Claude prepared a private dry-run list of this year's bookings so far at `~/lcs-private/books-import-2026.json` (seven bookings, not in the repo). Nothing has been created in Books yet.
+
+What to do:
+
+1. Open the file (or ask Claude to summarise it) and check the seven bookings look right.
+2. Tell Claude, in chat, "approve the Books import". It will then create one draft invoice per booking in Books, dated at each booking's own invoice date.
+3. In Books, mark each of those invoices as sent and match its payment against the Starling bank feed, the same way you will for new bookings going forward.
+
+---
+
+## 21. Back up ~/lcs-private/fingerprint.key
+
+This key turns a singer's bank sort code and account number into the fingerprint the singer-invoice tracker uses to spot a changed bank detail. It lives outside the repo at `~/lcs-private/fingerprint.key`.
+
+Back it up as part of your normal `~/lcs-private` backup routine (whatever you already use for `bookings.csv` and the rest of that folder). If it's lost, the tracker refuses to run until it's restored, since it can no longer tell whether a singer's bank details have changed. Never commit it to the repo and never share it outside your own backup.
+
+---
+
+## 22. Singer bank details changed
+
+When the assistant's summary carries a warning like "BANK DETAILS CHANGED" or "DIFFER" against a singer invoice, that means the bank details on the new invoice don't match what's on file for that singer.
+
+What to do:
+
+1. Ring the singer on a number you already hold for them, not a number from the new invoice, and confirm the new bank details by voice.
+2. Once confirmed, run `.venv/bin/python scripts/bookings/singer_invoices.py confirm <message id>` yourself. Claude never runs `confirm`: this check exists specifically so a changed bank detail always gets a human phone call before the invoice is treated as genuine.
+
+---
+
+## 23. Google review link
+
+Optional. If you want post-event review requests to go straight to the review-writing form rather than the general Maps listing, find the Business Profile's "Ask for reviews" short link (Google Business Profile → Home → "Ask for reviews", copy the link) and add it to `data/seo-fix-discovered-urls.yml` as `gbp_review_url`.
+
+Until this is added, review requests link to the Maps listing instead, which works but takes one extra click. Either way, review requests are never sent after a funeral booking.
+
+---
+
+## 24. Seasonal budgets
+
+The Monday marketing review can propose seasonal daily-budget changes (carols in the run-up to Christmas, weddings in spring, and so on), but only once you've set the windows it should use.
+
+What to do:
+
+1. Edit `data/budget-windows.yml` with the seasonal daily budgets you want.
+2. Keep every figure at or below the £5/day cap in CLAUDE.md. If you want to go higher for a window, raise the CLAUDE.md cap first and say so to Claude; the scripts refuse anything above it.
+
+Until this file is filled in, the Monday report proposes no seasonal changes.
+
+---
+
+## 25. Confirm the pinned git origin
+
+In the Claude app, open Help → Troubleshooting → Review Pinned Git Origins and confirm this repository's origin is pinned there. This lets Claude sync branches against `main` using the app's own git tool, rather than asking you to run `git fetch`/`git switch` by hand each time.
+
+---
+
+## 26. Old enquiries are not in the pipeline
+
+The enquiry pipeline (follow-ups, "lost" marking, review requests) only tracks threads first seen from 28 September 2026 onward, when the wiring went live. Anything older is not in `~/lcs-private/enquiries.csv` and gets no automatic follow-up.
+
+If you want those older threads chased too, tell Claude you want a back-fill and which date range to start from; nothing happens to them otherwise.
+
+---
+
+## 27. Re-anchor the Google Business Profile to London, 2026-09-03
 
 Requested by the owner. The site's `LocalBusiness` schema in `index.html` already gives London (N1 7GU, Greater London); the Maps listing is anchored "The London Choral Service, Maidenhead" (§1). The two disagree, and the Barbershop Grams launch (`docs/superpowers/specs/2026-09-03-barbershop-grams-design.md`) needs "barbershop quartet London" local-pack visibility. This is a dashboard edit; nothing in the repo can make it.
 
@@ -339,11 +441,11 @@ Afterwards:
 
 ---
 
-## 18. Barbershop Grams launch — owner actions, 2026-09-03
+## 28. Barbershop Grams launch — owner actions, 2026-09-03
 
-Spec: `docs/superpowers/specs/2026-09-03-barbershop-grams-design.md` §Go-to-market. Plan: `docs/superpowers/plans/2026-09-03-barbershop-grams.md`. The pages ship without these, but the product does not really launch until 18.1 and 18.2 are done.
+Spec: `docs/superpowers/specs/2026-09-03-barbershop-grams-design.md` §Go-to-market. Plan: `docs/superpowers/plans/2026-09-03-barbershop-grams.md`. The pages ship without these, but the product does not really launch until 28.1 and 28.2 are done.
 
-**18.1 — Record a barbershop demo. This is the critical path.** Happy Birthday in four parts plus one standard, filmed, two to three minutes. Two things depend on it and neither can proceed without it:
+**28.1 — Record a barbershop demo. This is the critical path.** Happy Birthday in four parts plus one standard, filmed, two to three minutes. Two things depend on it and neither can proceed without it:
 
 - The **comparison page** (`compare/barbershopogram.html`, plan Task 14) is deliberately gated on it. A page whose job is to beat a competitor matched on price, whose only proof is a funeral hymn, would hurt more than no page.
 - The **hub page has no proof of sound at all** today. A quality review put this plainly: a buyer with our tab and the competitor's tab open, at the identical £600, currently has no way to hear what we sound like. The competitor has a YouTube channel and video on their homepage.
@@ -352,16 +454,16 @@ Deliberately not worked around: `listen.html` is hymns and service music, so lin
 
 Once it exists, add the YouTube id, upload date and duration to `data/seo-fix-discovered-urls.yml` (never invent these — see §1) and the gated tasks can run.
 
-**18.2 — Confirm the repertoire list. DONE 2026-09-04.** The owner confirmed the drafted 43-title list on `barbershop-grams/repertoire.html` is accurate for what the quartet sings, so the page ships indexed and in the sitemap. Re-check it if the line-up or the arrangements change.
+**28.2 — Confirm the repertoire list. DONE 2026-09-04.** The owner confirmed the drafted 43-title list on `barbershop-grams/repertoire.html` is accurate for what the quartet sings, so the page ships indexed and in the sitemap. Re-check it if the line-up or the arrangements change.
 
 Arrangement rights for the in-copyright titles on that list, and for the "any song from £200" offer, were raised and the owner confirmed they are already handled. No action outstanding.
 
-**18.3 — Seed one or two grams.** Colleagues or friends. Produces real footage, the first honest client quote, and a rehearsal of the logistics against reality before a paying customer meets them.
+**28.3 — Seed one or two grams.** Colleagues or friends. Produces real footage, the first honest client quote, and a rehearsal of the logistics against reality before a paying customer meets them.
 
-**18.4 — Consent wording for filming.** The buyer confirms on enquiry whether we may film; the recipient is asked *after* the surprise, before anything is posted. Belongs in the FAQ and the booking agreement. Short-form video of surprise reactions is the product's strongest organic channel, and it cannot run without a clean consent routine.
+**28.4 — Consent wording for filming.** The buyer confirms on enquiry whether we may film; the recipient is asked *after* the surprise, before anything is posted. Belongs in the FAQ and the booking agreement. Short-form video of surprise reactions is the product's strongest organic channel, and it cannot run without a clean consent routine.
 
-**18.5 — `assets/og-barbershop-grams.png`. DONE 2026-09-04.** Made as a typographic card in the barbershop register — the site's own Cormorant Garamond and Source Serif 4, the mini-site palette, carrying the product name, the one-line description, and £600 / Greater London / 48 hours' notice. Both gram pages point at it. Replace it if you get a photograph or a still from the recording (18.1); a real image of four singers mid-surprise would outperform a typographic card, particularly on WhatsApp, where grams get shared person to person.
+**28.5 — `assets/og-barbershop-grams.png`. DONE 2026-09-04.** Made as a typographic card in the barbershop register — the site's own Cormorant Garamond and Source Serif 4, the mini-site palette, carrying the product name, the one-line description, and £600 / Greater London / 48 hours' notice. Both gram pages point at it. Replace it if you get a photograph or a still from the recording (28.1); a real image of four singers mid-surprise would outperform a typographic card, particularly on WhatsApp, where grams get shared person to person.
 
-**18.6 — Directory listings.** Last Minute Musicians, Add to Event, Poptop, Encore, Bark. This is where "barbershop quartet hire" buyers who never reach Google's organic results go. Extend `docs/off-site-listings-pack.md` with a Barbershop Grams profile: the £600 figure, the 48-hour notice line, the repertoire link. House rules apply off-site too — no roster-scale claims, no VAT claims, no star ratings, no incentivised reviews.
+**28.6 — Directory listings.** Last Minute Musicians, Add to Event, Poptop, Encore, Bark. This is where "barbershop quartet hire" buyers who never reach Google's organic results go. Extend `docs/off-site-listings-pack.md` with a Barbershop Grams profile: the £600 figure, the 48-hour notice line, the repertoire link. House rules apply off-site too — no roster-scale claims, no VAT claims, no star ratings, no incentivised reviews.
 
-**18.7 — Ads.** Held until 18.1 and 18.3 are done; see the spec's §Go-to-market for the five campaigns. Before any spend, confirm the WhatsApp-click conversion actually fires — gram enquiries arrive by WhatsApp more than by form, and the gram links carry a distinct `?text=` pre-fill so they can be told apart in GA4.
+**28.7 — Ads.** Held until 28.1 and 28.3 are done; see the spec's §Go-to-market for the five campaigns. Before any spend, confirm the WhatsApp-click conversion actually fires — gram enquiries arrive by WhatsApp more than by form, and the gram links carry a distinct `?text=` pre-fill so they can be told apart in GA4.

@@ -10,6 +10,7 @@ bookings have been uploaded to steer bidding. Validate_only by default.
     python scripts/ads/create_booked_job_action_2026_09.py --apply    # after approval
 """
 
+import os
 import argparse
 import datetime
 from pathlib import Path
@@ -27,7 +28,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--apply", action="store_true")
     args = parser.parse_args()
-    c = GoogleAdsClient.load_from_storage()
+    c = GoogleAdsClient.load_from_storage(os.environ.get("GOOGLE_ADS_CONFIGURATION_FILE_PATH", os.path.expanduser("~/.config/lcs/google-ads.yaml")))
     ga = c.get_service("GoogleAdsService")
     E = c.enums
     existing = list(ga.search(customer_id=CUSTOMER_ID, query=(
