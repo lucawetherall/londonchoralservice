@@ -27,6 +27,11 @@
       "Bash(.venv/bin/python scripts/bookings/check_payments.py --apply)",
       "Bash(.venv/bin/python scripts/bookings/check_payments.py --selftest)",
       "Bash(.venv/bin/python scripts/bookings/check_payments.py --reminded *)"
+    ],
+    "deny": [
+      "Bash(security find-generic-password *)",
+      "Bash(security dump-keychain)",
+      "Bash(security dump-keychain *)"
     ]
   },
   "hooks": {
