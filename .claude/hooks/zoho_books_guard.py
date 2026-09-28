@@ -313,6 +313,32 @@ def check_create_vendor_payment(body, query, path):
         raise Deny(P + "amount must equal the bill's amount_applied (more than £0, at most £10,000).")
 
 
+# Client payments (owner decision, 28 Sep 2026, the evening after the singer rule): a payment
+# check_payments.py matched confidently (its "record_in_books" list), recorded against that booking's one
+# invoice, through the Starling account, never with contact_persons (Books would email a thank-you).
+def check_create_customer_payment(body, query, path):
+    for key in ("customer_id", "date", "invoice_id"):
+        _need(body, key, "body")
+    if body.get("account_id") != STARLING_BOOKS_ACCOUNT_ID:
+        raise Deny(P + f"account_id must be the Starling Business account in Books (\"{STARLING_BOOKS_ACCOUNT_ID}\").")
+    if body.get("payment_mode") != "banktransfer":
+        raise Deny(P + "payment_mode must be \"banktransfer\".")
+    ref = body.get("reference_number")
+    if ref is not None and not (isinstance(ref, str) and INVOICE_NUMBER.fullmatch(ref)):
+        raise Deny(P + "reference_number may only be the booking's DDMM ref (e.g. 2111 or 2111B).")
+    invoices = body.get("invoices")
+    if not (isinstance(invoices, list) and len(invoices) == 1 and isinstance(invoices[0], dict)):
+        raise Deny(P + "a payment settles exactly one invoice: invoices must list one {invoice_id, amount_applied}.")
+    line = invoices[0]
+    amounts = (body.get("amount"), body.get("amount_applied"), line.get("amount_applied"))
+    if not all(isinstance(v, (int, float)) and not isinstance(v, bool) for v in amounts):
+        raise Deny(P + "amount, amount_applied and invoices[0].amount_applied must be plain numbers.")
+    if line.get("invoice_id") != body.get("invoice_id") or len({round(v, 2) for v in amounts}) != 1:
+        raise Deny(P + "invoice_id and every amount must agree: one invoice, the whole payment applied to it.")
+    if not 0 < amounts[0] <= 10000:
+        raise Deny(P + "amount must be more than £0 and at most £10,000.")
+
+
 def check_create_item(body, query, path):
     _need(body, "name", "body")
     if body.get("item_type") != "purchases":
@@ -355,6 +381,10 @@ WRITE_TOOLS = {
         obj("vendor_id", "amount", "date", "payment_mode", "paid_through_account_id", "description",
             bills=[obj("bill_id", "amount_applied")]),
         ORG_ONLY, NOTHING, check_create_vendor_payment),
+    "ZohoBooks_create_customer_payment": (
+        obj("customer_id", "date", "amount", "amount_applied", "invoice_id", "payment_mode", "account_id",
+            "reference_number", "description", invoices=[obj("invoice_id", "amount_applied")]),
+        ORG_ONLY, NOTHING, check_create_customer_payment),
     "ZohoBooks_create_item": (
         obj("name", "rate", "description", "item_type", "product_type", "purchase_rate", "purchase_description"),
         ORG_ONLY, NOTHING, check_create_item),
@@ -503,7 +533,7 @@ def decide(tool, tool_input):
     if name == "ZohoBooks_update_invoice":
         return P + "Claude doesn't update invoices. The owner edits drafts in Books."
     return (f"{P}{name} isn't allowed. Claude may read Books and make draft invoices, contacts and bills; "
-            "it never emails, reminds, deletes, voids, records client payments or matches bank transactions.")
+            "it never emails, reminds, deletes, voids, refunds, writes off or matches bank transactions.")
 
 
 def _no_duplicate_keys(pairs):
