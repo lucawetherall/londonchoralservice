@@ -259,8 +259,15 @@ def create_app(client_factory=data.default_client, now=None, clock=None, passkey
         try:
             actions.REGISTRY["todo-tick"].execute(form, user(request))
         except actions.ActionError as e:
+            if wants_json(request):
+                return JSONResponse({"error": e.reason}, status_code=e.status)
             return PlainTextResponse(e.reason, status_code=e.status)
+        if wants_json(request):  # todo.js posts the form with fetch(), which sends the real Origin (see todo.js)
+            return JSONResponse({"url": "/todo"})
         return RedirectResponse("/todo", status_code=303)
+
+    def wants_json(request):
+        return request.headers.get("accept", "").split(",")[0].strip() == "application/json"
 
     async def exports(request):
         return render(request, "exports.html", title="Exports", stamp=data.stamp(reader.now()),
