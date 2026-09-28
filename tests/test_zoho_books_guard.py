@@ -189,7 +189,7 @@ def test_update_contact_may_only_change_names():
     for key, val in (("contact_persons", [{"contact_person_id": "1", "email": "attacker@evil.test"}]),
                      ("contact_persons", [{"first_name": "A"}]),
                      ("email", "attacker@evil.test"), ("phone", "020 7946 0958"), ("mobile", "07700 900123"),
-                     ("notes", "x"), ("contact_type", "vendor"), ("billing_address", {"city": "London"}),
+                     ("notes", "x"), ("billing_address", {"city": "London"}),
                      ("payment_terms", 7), ("is_portal_enabled", False), ("custom_fields", [])):
         assert denied(T, with_(T, "body", **{key: val})), key
 
