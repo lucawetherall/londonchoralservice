@@ -84,6 +84,57 @@ def test_settings_json_is_valid_and_keeps_the_guard_matcher():
     assert hook_command() == 'python3 "$CLAUDE_PROJECT_DIR/.claude/hooks/zoho_guard.py" || exit 2'
 
 
+# --- Cc, recipients and bank details in drafts -----------------------------------------------------
+
+def office(**kw):
+    return dict(draft("office@londonchoralservice.com"), **kw)
+
+
+def test_cc_is_denied():
+    assert decide("sendReplyEmail", office(ccAddress="other@example.com")) == "deny"
+    assert decide("sendReplyEmail", office(ccAddress="")) == "allow"
+    assert decide("sendReplyEmail", office(ccAddress=["x@example.com"])) == "deny"
+
+
+def test_one_recipient_only():
+    assert decide("sendReplyEmail", office(toAddress="a@example.com,b@example.com")) == "deny"
+    assert decide("sendReplyEmail", office(toAddress="a@example.com; b@example.com")) == "deny"
+    assert decide("sendReplyEmail", office(toAddress="Ann Smith <ann@example.com>")) == "allow"
+
+
+QUOTE = ("<p>Dear Ann,</p><p>Thank you so much for getting in touch about your wedding on Saturday 21 November 2026 "
+         "at St Mary&rsquo;s, Barnes (ceremony 14:00&ndash;15:00, 2pm). I&rsquo;d recommend:</p>"
+         "<p>Small Choir (4 singers) &mdash; &pound;1,150<br>Small Choir with an organist &mdash; £1,400<br>"
+         "Full Choir (8 singers) — £2,000.00</p><p>We&rsquo;re not VAT-registered, so no VAT is added. "
+         "A deposit of £575.00 secures the date, with the balance of £575.00 due on 20/11/2026 or 2026-11-20. "
+         "Invoice 2111 will follow.</p><p>Do give me a ring on 07356 042468, +44 7356 042468, +44 (0)7356 042468 "
+         "or WhatsApp https://wa.me/447356042468.</p>"
+         "<p style=\"color:#123456\">Best wishes,<br>Luca</p>")
+
+
+def test_an_ordinary_quote_passes():
+    assert decide("sendReplyEmail", office(subject="Re: Wedding 21/11/2026", content=QUOTE)) == "allow"
+
+
+def test_bank_details_in_a_draft_are_denied():
+    for text in ("Please pay to sort code 04-00-04, account 12345678.",
+                 "Our bank: 04-00-04 12345678",
+                 "Account number: 12345678",
+                 "IBAN GB33 BUKB 2020 1555 5555 55",
+                 "the balance to GB33BUKB20201555555555 please",
+                 "SWIFT/BIC: BUKBGB22",
+                 "s/c 040004 a/c 12345678",
+                 "the bank details are 04 00 04 / 1234 5678"):
+        assert decide("sendReplyEmail", office(content=f"<p>{text}</p>")) == "deny", text
+    assert decide("sendReplyEmail", office(subject="sort code 04-00-04", content="<p>Hello</p>")) == "deny"
+    # the house wording, with no numbers, is fine
+    assert decide("sendReplyEmail", office(content="<p>The bank details are on your invoice.</p>")) == "allow"
+
+
+def test_bank_scan_fails_closed_on_a_non_text_content():
+    assert decide("sendReplyEmail", office(content={"html": "x"})) == "deny"
+
+
 if __name__ == "__main__":
     failures = 0
     for name, fn in sorted(globals().items()):

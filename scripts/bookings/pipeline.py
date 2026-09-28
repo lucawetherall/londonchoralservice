@@ -25,6 +25,12 @@ report and the dashboard import summary_dict().
         JSON [{booking_ref, event_date}] from the bookings ledger
     .venv/bin/python scripts/bookings/pipeline.py reviewed <booking_ref> <YYYY-MM-DD>
         appends "review request drafted <date>" to that ledger row's notes
+    .venv/bin/python scripts/bookings/pipeline.py review-skipped <booking_ref> <reason word>
+        appends "review request skipped <today> (<reason>)" to that ledger row's notes, so
+        reviews-due stops listing it (a planner, an unresolved problem); the reason is one
+        lower-case word, never a name
+    .venv/bin/python scripts/bookings/pipeline.py thread <booking_ref>
+        prints the enquiry_id (the Zoho thread id) booked under that ref, or "no thread"
     .venv/bin/python scripts/bookings/pipeline.py done-due [--today YYYY-MM-DD]
         JSON [{enquiry_id, booking_ref}]: booked enquiries whose ledger row is paid in full
         with the event past, not cancelled and not yet done (funerals included)
@@ -63,11 +69,11 @@ SOURCES = {"web form", "email", "whatsapp", "phone", "referral"}
 STATUSES = {"new", "quoted", "confirmed", "deposit_paid", "done", "lost", "cancelled"}
 STATUS_ORDER = ["new", "quoted", "confirmed", "deposit_paid", "done", "lost", "cancelled"]
 BOOKED = {"confirmed", "deposit_paid", "done"}
-DATE_FIELDS = ("first_seen", "event_date", "last_contact")
 FIRST_AFTER, SECOND_AFTER, LOST_AFTER = 5, 10, 10  # days since last_contact (the quote, then each chase)
 REVIEW_FROM, REVIEW_UNTIL = 3, 14  # days after the event
 QUOTED_NOTE = re.compile(r"\bquoted (\d{4}-\d{2}-\d{2})\b")
-REVIEW_NOTE = re.compile(r"review request drafted", re.I)
+REVIEW_NOTE = cp.REVIEW_NOTE  # "review request drafted|skipped": one pattern, which check_payments --note refuses
+REASON_RE = re.compile(r"^[a-z][a-z-]{0,19}$")
 ID_RE = re.compile(r"^[A-Za-z0-9._:-]{1,64}$")
 FUNERAL = re.compile(r"\b(funeral|memorial|requiem|burial|interment|committal|cremation|thanksgiving"
                      r"|celebration of life)\b", re.I)
@@ -103,12 +109,10 @@ def iso(s, field):
 
 
 def gbp(s):
-    text = str(s).replace("£", "").replace(",", "").strip()
-    try:
-        v = float(text)
-    except ValueError:
+    v = lm.parse_gbp(s)
+    if v is None:  # unreadable, nan or inf
         raise SystemExit("quoted_gbp must be an amount in pounds, such as 1150")
-    if not v > 0 or round(v, 2) == 0:  # also nan
+    if not v > 0 or round(v, 2) == 0:
         raise SystemExit("quoted_gbp must be more than zero")
     if v > MAX_GBP:
         raise SystemExit(f"quoted_gbp must be at most {MAX_GBP}")
@@ -253,24 +257,16 @@ def summary_dict(rows, since=None):
 
 # --- file access ---------------------------------------------------------------------------------
 
-def columns_of(path):
-    """The file's own header (so a rewrite never drops a column), plus any of ours it lacks."""
-    have = cp.header(path)
-    return have + [c for c in COLUMNS if c not in have] if have else list(COLUMNS)
-
-
 def change(enquiry_id, fn):
     """Read-modify-write one enquiry under enquiries.csv's own lock. fn(row) edits the row in place."""
-    # lm.ledger_lock is not re-entrant: never nest it, or call another writer of this file inside it.
-    with lm.ledger_lock(ENQUIRIES):
-        rows = lm.read_csv(ENQUIRIES)
-        for r in rows:
+    # lm.locked_rows is not re-entrant: never nest it, or call another writer of this file inside it.
+    with lm.locked_rows(ENQUIRIES, COLUMNS) as t:
+        for r in t.rows:
             if r.get("enquiry_id") == enquiry_id:
                 fn(r)
                 break
         else:
             raise SystemExit(f"no enquiry {enquiry_id}")
-        lm.write_csv(ENQUIRIES, rows, columns_of(ENQUIRIES))
 
 
 def clean_row(data):
@@ -326,11 +322,10 @@ def cmd_add(args):
     except json.JSONDecodeError:
         raise SystemExit("add needs one JSON object")
     row = clean_row(data)
-    with lm.ledger_lock(ENQUIRIES):
-        rows = lm.read_csv(ENQUIRIES)
-        if any(r.get("enquiry_id") == row["enquiry_id"] for r in rows):
+    with lm.locked_rows(ENQUIRIES, COLUMNS) as t:
+        if any(r.get("enquiry_id") == row["enquiry_id"] for r in t.rows):
             raise SystemExit(f"duplicate enquiry_id {row['enquiry_id']}; nothing written")
-        lm.write_csv(ENQUIRIES, rows + [row], columns_of(ENQUIRIES))
+        t.rows.append(row)
     print(f"enquiry {row['enquiry_id']}: added")
 
 
@@ -341,8 +336,8 @@ def cmd_quoted(args):
         raise SystemExit("package must be one line, at most 80 characters, with no ';'")
 
     def edit(r):
-        if r.get("status") in BOOKED or r.get("status") == "cancelled":
-            raise SystemExit(f"enquiry {r['enquiry_id']} is {r['status']}; not re-quoted")
+        if status_of(r) in BOOKED or status_of(r) == "cancelled":
+            raise SystemExit(f"enquiry {r['enquiry_id']} is {status_of(r)}; not re-quoted")
         not_before_last_contact(r, when)
         if when in QUOTED_NOTE.findall(r.get("notes") or ""):
             raise SystemExit(f"enquiry {r['enquiry_id']} already has a quote on {when}; nothing changed")
@@ -400,8 +395,8 @@ def cmd_followed(args):
     n, when = int(args.number), iso(args.date, "date")
 
     def edit(r):
-        if r.get("status") != "quoted":
-            raise SystemExit(f"enquiry {r['enquiry_id']} is {r.get('status') or 'blank'}, not quoted")
+        if status_of(r) != "quoted":
+            raise SystemExit(f"enquiry {r['enquiry_id']} is {status_of(r) or 'blank'}, not quoted")
         if followups_of(r) != n - 1:
             raise SystemExit(f"enquiry {r['enquiry_id']} already has {r.get('followups')} follow-up(s); "
                              f"follow-up {n} not recorded")
@@ -412,29 +407,43 @@ def cmd_followed(args):
 
 def cmd_reviewed(args):
     when = iso(args.date, "date")
+    note_review(args.booking_ref, f"review request drafted {when}")
+
+
+def cmd_review_skipped(args):
+    reason = args.reason.strip()
+    if not REASON_RE.fullmatch(reason):
+        raise SystemExit("the reason must be one lower-case word, such as planner or unresolved")
+    note_review(args.booking_ref, f"review request skipped {lm.today().isoformat()} ({reason})")
+
+
+def cmd_thread(args):
+    ref = args.booking_ref.strip()
+    ids = [r["enquiry_id"] for r in lm.read_csv(ENQUIRIES) if (r.get("booking_ref") or "").strip() == ref]
+    print("\n".join(ids) if ids else "no thread")
+
+
+def note_review(booking_ref, text):
+    """Append a review note to one ledger row, under the ledger lock; refuses a second one."""
     ledger = lm.LEDGER
     if not ledger.exists():
         raise SystemExit("no bookings ledger")
     # The same lock as check_payments and assistant_io; not re-entrant, so nothing else writes inside it.
-    with lm.ledger_lock(ledger):
-        rows = lm.read_csv(ledger)
-        cols = cp.header(ledger)
-        if any(None in r for r in rows):  # a row wider than the header: a rewrite would drop its extra fields
-            raise SystemExit("the bookings ledger has a row with more fields than its header; nothing written")
-        for r in rows:
-            if r.get("booking_ref") == args.booking_ref:
+    # locked_rows refuses a row wider than the header (a rewrite would drop its extra fields).
+    with lm.locked_rows(ledger) as t:
+        for r in t.rows:
+            if r.get("booking_ref") == booking_ref:
                 if REVIEW_NOTE.search(r.get("notes") or ""):
-                    raise SystemExit(f"{args.booking_ref}: review request already drafted; nothing written")
-                r["notes"] = add_note(r.get("notes"), f"review request drafted {when}")
+                    raise SystemExit(f"{booking_ref}: review request already drafted or skipped; nothing written")
+                r["notes"] = add_note(r.get("notes"), text)
                 break
         else:
-            raise SystemExit(f"no booking {args.booking_ref}")
-        lm.write_csv(ledger, rows, cols)
-    print(f"{args.booking_ref}: review request drafted {when}")
+            raise SystemExit(f"no booking {booking_ref}")
+    print(f"{booking_ref}: {text}")
 
 
 def today_arg(args):
-    return to_date(args.today) if args.today else datetime.date.today()
+    return to_date(args.today) if args.today else lm.today()
 
 
 def main(argv=None):
@@ -465,6 +474,11 @@ def main(argv=None):
     p = sub.add_parser("reviewed")
     p.add_argument("booking_ref")
     p.add_argument("date")
+    p = sub.add_parser("review-skipped")
+    p.add_argument("booking_ref")
+    p.add_argument("reason")
+    p = sub.add_parser("thread")
+    p.add_argument("booking_ref")
     p = sub.add_parser("summary")
     p.add_argument("--since", type=lambda s: iso(s, "--since"))
     args = ap.parse_args(argv)
@@ -489,6 +503,10 @@ def main(argv=None):
         print(json.dumps(done_due(lm.read_csv(ENQUIRIES), lm.read_csv(lm.LEDGER), today_arg(args))))
     elif args.cmd == "reviewed":
         cmd_reviewed(args)
+    elif args.cmd == "review-skipped":
+        cmd_review_skipped(args)
+    elif args.cmd == "thread":
+        cmd_thread(args)
     elif args.cmd == "summary":
         print(json.dumps(summary_dict(lm.read_csv(ENQUIRIES), args.since)))
 

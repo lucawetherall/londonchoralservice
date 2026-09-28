@@ -28,7 +28,7 @@ There are two MCP servers, set up at project level in the main checkout:
 | `zoho-books` (accounting) | 222 | 92 |
 | `zoho-books-invoices` (invoices) | 115 | 34 |
 
-`.claude/hooks/zoho_books_guard.py` accepts only these two server names. It allows 115 of the read-only tool names plus the approved write tools below, and denies everything else. The read-only tools it also denies are `get_bank_statement_import_encryption_key`, `generate_invoice_payment_link`, `convert_purchase_order_to_bill`, the invoice payment QR tools, `get_invoice_qr_code`, `list_contact_autobill_recurring_invoices`, and the contact bank-account and card tools.
+`.claude/hooks/zoho_books_guard.py` accepts only these two server names. It allows 91 of the read-only tool names plus the approved write tools below, and denies everything else. The read-only tools it also denies are `get_bank_statement_import_encryption_key`, `generate_invoice_payment_link`, `convert_purchase_order_to_bill`, the invoice payment QR tools, `get_invoice_qr_code`, `list_contact_autobill_recurring_invoices`, the contact bank-account and card tools, and (since the whole-code review, M16) every read of the business's own bank accounts, bank transactions, statements and reconciliations: no prompt uses them.
 
 The owner enabled the Bills tools on 28 Sep 2026; the accounting server now has 241 tools, including create, update, get and list for bills. There is no bill-attachment tool, but `create_bill` takes `documents`. `convert_purchase_order_to_bill` is marked read-only but creates a bill, so it stays denied: the guard trusts exact names, not labels.
 
@@ -82,6 +82,7 @@ Still denied:
 - customer and vendor payments, and bank matching or categorising (the owner does these in Books);
 - `approve_bill`, `submit_bill`, `mark_bill_open`, `convert_purchase_order_to_bill`;
 - contact bank accounts and cards, including reading them, and the invoice payment QR tools;
+- reading Books bank accounts, bank transactions, bank statements and reconciliations;
 - any other key on an approved tool, including tax fields, the client portal, payment options, `status`, and the bill `attachment` query parameter;
 - a bill update that changes the vendor, the bill number or the line items;
 - an invoice attachment from anywhere but `~/lcs-private/invoices/`;
@@ -125,7 +126,7 @@ Today the assistant builds a PDF invoice and a `.docx` confirmation and saves a 
 
 ### E. Monday review
 
-Section 11 of the report adds a Books line, with totals and invoice numbers only:
+The Monday review prompt (handover Appendix A, step 6g) adds a Books line, read from Books by Claude with the read tools, with totals and invoice numbers only (the report script itself makes no Books calls; its section 11 is the true cost per booking):
 - receivables;
 - overdue invoices;
 - unpaid bills;

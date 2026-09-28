@@ -4,9 +4,13 @@ Alma Consort Starling account, READ-ONLY (see lcs_money.StarlingReadOnly).
 
     .venv/bin/python scripts/bookings/check_payments.py                  # report
     .venv/bin/python scripts/bookings/check_payments.py --apply          # also update ledger notes
-    .venv/bin/python scripts/bookings/check_payments.py --apply --json   # machine-readable, for the assistant
+    .venv/bin/python scripts/bookings/check_payments.py --apply --json   # machine-readable, for the assistant;
+        each item's "action" is receipt | deposit_reminder | balance_reminder | hand_check | none (action_for)
     .venv/bin/python scripts/bookings/check_payments.py --reminded 2111 [--kind deposit|balance|receipt]
     .venv/bin/python scripts/bookings/check_payments.py --note 2111 "paid per client email 2026-09-28"
+        (one line, at most 120 characters, no ';'; refuses the scripts' own phrases and the owner's hand-written
+        ones: paid in full, deposit seen … (Starling), reminder/receipt drafted, deposit kept, refunded,
+        payment checked, reinstated and the like, review request …, and anything starting PENDING)
     .venv/bin/python scripts/bookings/check_payments.py --selftest       # token, account and permissions
 
 Matching (against every ledger row, closed ones too, so a payment is never
@@ -22,14 +26,14 @@ the payer's surname contradicts it only when it fits another open booking whose
 window and fee or half-fee fit the payment, while the named client's surname is
 absent from the payer's name (then both are unconfirmed). Parents and funeral
 directors paying under another name are normal. Surnames are the last real word
-of each party ("Ann Smith & Tom Jones": Smith or Jones; "T Cribb & Sons": Cribb).
+of each party ("Ann Smith & Tom Jones": Smith or Jones; "T Brackenwold & Sons": Brackenwold).
 Failing a reference, when its amount is the deposit or full fee, the payer's name
 contains the client's surname as a whole word, and it falls inside that
 booking's invoice-to-event window. Failing that, when its amount is the deposit
 or fee of open bookings inside their window: an "amount only" match, on each
 booking it fits, which is unconfirmed and never counts as paid. Failing that too,
 when the payer's name has an open booking's surname as a whole word inside its
-window (a split or odd amount: £300 then £275 from "K NASH"): "name only, amount
+window (a split or odd amount: £300 then £275 from "K FARROW"): "name only, amount
 differs", on each such booking, also unconfirmed. A payment with no reference from a
 cancelled booking's client (surname, inside its window) is "name, cancelled booking"
 before any amount-only match, so it never lands on another client's live booking.
@@ -83,8 +87,6 @@ it writes "deposit seen … (Starling)". Output shows invoice numbers and amount
 
 import argparse
 import datetime
-import contextlib
-import csv
 import json
 import math
 import re
@@ -149,7 +151,7 @@ REST_PAID = re.compile(
     r"|\b(paid|received|settled)\b(?:(?!\bdeposit\b).){0,30}?\b(in\s+full|in\s+total|the\s+(balance|rest|remainder))\b", re.I)
 OTHER_PART = re.compile(r"\b(balance|rest|remainder|remaining)\b", re.I)
 POUNDS = re.compile(r"£\s*(\d[\d,]*(?:\.\d+)?)")
-# Not surnames: the last real word of each party is ("T Cribb & Sons" is Cribb).
+# Not surnames: the last real word of each party is ("T Brackenwold & Sons" is Brackenwold).
 GENERIC = {"son", "sons", "ltd", "limited", "funeral", "funerals", "director", "directors", "church", "parish", "and",
            "co", "plc", "llp", "mr", "mrs", "ms", "miss", "dr", "rev", "revd"}
 PREFIX = r"(INVOICE|INV|LCS)"
@@ -157,8 +159,7 @@ REF_TOKEN = re.compile(r"(?:" + PREFIX + r"\s*[-#:]?\s*(?=\d))?([A-Z0-9]+)")
 
 
 def money(row):
-    v = lm.money(row.get("value_gbp"))
-    return v if math.isfinite(v) else 0.0  # "nan"/"inf" are unreadable, not a price
+    return lm.money(row.get("value_gbp"))  # 0.0 when unreadable, "nan" and "inf" included
 
 
 def date_or_none(s):
@@ -287,6 +288,18 @@ SETTLED_NOTE = re.compile(
     r"(?<!not )\b(?:deposit kept|refunded|(?:payment|refund|deposit) checked)\s+(\d{4}-\d{2}-\d{2})\b", re.I)
 
 
+# The pipeline's own note on a ledger row (pipeline.py reviewed / review-skipped).
+REVIEW_NOTE = re.compile(r"review request (drafted|skipped)", re.I)
+# Phrases --note never writes: the scripts' own notes, and the ones the owner writes by hand in the ledger
+# (paid in full, deposit kept / refunded / checked, reinstated), which close, settle or reopen a booking.
+RESERVED_NOTES = (FULL_NOTE, AUTO_NOTE, MARK_NOTE, SETTLED_NOTE, RESUMED, REVIEW_NOTE)
+
+
+def reserved_note(text):
+    """True when --note must refuse this text: a reserved phrase, or anything starting with PENDING."""
+    return is_pending(text) or any(p.search(text) for p in RESERVED_NOTES)
+
+
 def cancel_settled_on(r, today):
     days = [date_or_none(m.group(1)) for m in SETTLED_NOTE.finditer(r.get("notes") or "")]
     return max((d for d in days if d and d <= today), default=None)
@@ -355,7 +368,7 @@ def match(rows, items, today):
         if not refs:
             refs = [r["booking_ref"] for r in live if fits_amount(amount, r) and in_window(r, when, today)]
             how = "amount only" if len(refs) == 1 else "amount only, several bookings"
-        if not refs:  # a split or odd amount from the client ("K NASH" £300 then £275): unconfirmed, a hand check
+        if not refs:  # a split or odd amount from the client ("K FARROW" £300 then £275): unconfirmed, a hand check
             refs = [r["booking_ref"] for r in live if in_window(r, when, today) and payer_is(r, payer)]
             how = "name only, amount differs"
         for ref in dict.fromkeys(refs):
@@ -491,9 +504,9 @@ def assess(r, paid, today):
                 "balance": bool(re.search(r"balance reminder drafted", notes, re.I)),
                 "receipt": bool(re.search(r"receipt drafted", notes, re.I))}
     first_day = date_or_none(first)
-    receipt_due = bool(first_day and datetime.timedelta(0) <= today - first_day <= datetime.timedelta(days=RECEIPT_DAYS)
+    just_received = bool(first_day and datetime.timedelta(0) <= today - first_day <= datetime.timedelta(days=RECEIPT_DAYS)
                        and not reminded["receipt"] and upcoming and state in RECEIPT_STATES)
-    return {
+    out = {
         "ref": r["booking_ref"], "state": state, "received": total, "value": value,
         "balance": round(max(value - total, 0), 2), "first": first,
         "how": sure[0][2] if sure else (maybe[0][2] if state == "CHECK_PAYMENT" else ""),
@@ -506,9 +519,35 @@ def assess(r, paid, today):
         "deposit_due": deposit_due.isoformat() if deposit_due else None,
         "short_notice": bool(invoice and event and (event - invoice).days <= SHORT_NOTICE_DAYS),
         "reminded": reminded,
-        "receipt_due": receipt_due,
-        "just_received": receipt_due,  # old name, same meaning: draft a thank-you
+        "just_received": just_received,  # draft a thank-you (action "receipt"); the one key for it
     }
+    out["action"] = action_for(out, today)
+    return out
+
+
+ACTIONS = ("receipt", "deposit_reminder", "balance_reminder", "hand_check", "none")
+HAND_CHECK_STATES = {"CHECK_PAYMENT", "CHECK_VALUE", "NOTED_PAID", "PAST_UNMATCHED", "PAST_PART_PAID",
+                     "PAYMENT_ON_CANCELLED", "PAYMENT_AFTER_CLOSE"}
+ARRANGED_CHECK_DAYS = 7
+
+
+def action_for(a, today):
+    """What the enquiry assistant does with one assessed booking (handover Appendix E, step 5a):
+    receipt (a thank-you for a fresh confident payment), deposit_reminder or balance_reminder (once each),
+    hand_check (listed under "Money to check by hand") or none."""
+    reminded = a.get("reminded") or {}
+    if a.get("just_received"):
+        return "receipt"
+    if a["state"] == "DEPOSIT_OVERDUE" and not reminded.get("deposit"):
+        return "deposit_reminder"
+    if a["state"] == "BALANCE_DUE" and not reminded.get("balance"):
+        return "balance_reminder"
+    if a["state"] in HAND_CHECK_STATES:
+        return "hand_check"
+    event = date_or_none(a.get("event_date"))
+    if a["state"] == "ARRANGED" and event and (event - today).days <= ARRANGED_CHECK_DAYS:
+        return "hand_check"  # so Luca remembers to collect the cash or cheque
+    return "none"
 
 
 def describe(a):
@@ -601,15 +640,6 @@ def received_since(client, rows, since, today):
             and not (live[ref] and d > live[ref].isoformat())]
 
 
-def header(path):
-    """The ledger's own column names, from its header line, so a rewrite never adds or drops a column."""
-    try:
-        with open(path, newline="") as f:
-            return next(csv.reader(f), [])
-    except FileNotFoundError:
-        return []
-
-
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--apply", action="store_true")
@@ -619,39 +649,23 @@ def main():
     ap.add_argument("--kind", choices=sorted(MARK_TEXT), default="deposit")
     ap.add_argument("--note", nargs=2, metavar=("REF", "TEXT"))
     args = ap.parse_args()
-    today = datetime.date.today()
+    today = lm.today()
 
-    # lm.ledger_lock is an flock on a fresh descriptor: NOT re-entrant. Never nest it, or call another
-    # ledger writer while holding it, in one process: the second acquire deadlocks.
+    # lm.locked_rows holds lm.ledger_lock, an flock on a fresh descriptor: NOT re-entrant. Never nest it, or
+    # call another ledger writer while holding it, in one process: the second acquire deadlocks.
     if args.note:
         ref, text = args.note
         if "\n" in text or "\r" in text or len(text) > 120 or ";" in text:
             raise SystemExit("note text must be a single line, at most 120 characters, with no ';'")
-        with lm.ledger_lock(LEDGER):
-            rows = lm.read_csv(LEDGER)
-            cols = header(LEDGER)
-            for r in rows:
-                if r["booking_ref"] == ref:
-                    notes = r.get("notes") or ""
-                    r["notes"] = (f"{notes}; " if notes.strip() else "") + text
-                    break
-            else:
-                raise SystemExit(f"no booking {ref}")
-            lm.write_csv(LEDGER, rows, cols)
+        if reserved_note(text):
+            raise SystemExit("that phrase is the scripts' own or the owner's (he writes it in the ledger by hand); "
+                             "nothing written")
+        append_note(ref, text)
         print(f"{ref}: note added")
         return
 
     if args.reminded:
-        with lm.ledger_lock(LEDGER):
-            rows = lm.read_csv(LEDGER)
-            cols = header(LEDGER)
-            for r in rows:
-                if r["booking_ref"] == args.reminded:
-                    r["notes"] = (f"{r['notes']}; " if (r.get("notes") or "").strip() else "") + f"{MARK_TEXT[args.kind]} {today}"
-                    break
-            else:
-                raise SystemExit(f"no booking {args.reminded}")
-            lm.write_csv(LEDGER, rows, cols)
+        append_note(args.reminded, f"{MARK_TEXT[args.kind]} {today}")
         print(f"{args.reminded}: {MARK_TEXT[args.kind]} noted")
         return
 
@@ -664,11 +678,21 @@ def main():
         return
     client = lm.StarlingReadOnly(tok)
     try:
-        with lm.ledger_lock(LEDGER) if args.apply else contextlib.nullcontext():
-            rows = lm.read_csv(LEDGER)
-            run(args, client, rows, header(LEDGER), today)
+        run(args, client, lm.read_csv(LEDGER), today)  # --apply takes the lock only after the Starling calls
     except lm.StarlingError as e:
         raise SystemExit(str(e))
+
+
+def append_note(ref, text):
+    """Append "; <text>" to one booking's notes, under the ledger lock."""
+    with lm.locked_rows(LEDGER) as t:
+        for r in t.rows:
+            if r["booking_ref"] == ref:
+                notes = r.get("notes") or ""
+                r["notes"] = (f"{notes}; " if notes.strip() else "") + text
+                break
+        else:
+            raise SystemExit(f"no booking {ref}")
 
 
 def starling_unavailable(args, e):
@@ -679,7 +703,10 @@ def starling_unavailable(args, e):
     print(f"Starling unavailable ({type(e).__name__}{code})", file=sys.stderr)
 
 
-def run(args, client, rows, cols, today):
+def run(args, client, rows, today):
+    """Report (and with --apply, note) payments. All Starling calls happen first, on `rows` read without the
+    lock; --apply then takes the lock, re-reads the ledger, and reassesses each booking from its fresh row
+    (the same payments, no network) before writing, so an edit made meanwhile is kept."""
     if args.selftest:
         try:
             scopes = sorted(client.get("/api/v2/identity/token").get("scopes", []))
@@ -693,8 +720,8 @@ def run(args, client, rows, cols, today):
         print("Token permissions: " + ", ".join(scopes))
         risky = [x for x in scopes if not x.startswith("(") and not x.endswith(":read")]
         if risky:
-            print("WARNING: this token can do more than read: " + ", ".join(risky)
-                  + ". Revoke it in the Starling developer portal and create one with only account-list:read and transaction:read.")
+            print("Note: this token can do more than read: " + ", ".join(risky)
+                  + ". The owner chose to keep it (CLAUDE.md, Payments); these scripts only ever send GET requests.")
         return
 
     try:
@@ -704,20 +731,30 @@ def run(args, client, rows, cols, today):
     if not results:
         print("[]" if args.json else "No open bookings to check.")
         return
-    changed = False
-    for r, paid, a in results:
+    for _, _, a in results:
         if not args.json:
             print(describe(a))
-        if args.apply:
-            new = updated_notes(r.get("notes") or "", a, paid)
-            if new != (r.get("notes") or ""):
-                r["notes"], changed = new, True
     if args.json:
         print(json.dumps([a for _, _, a in results]))
-    if args.apply and changed:
-        lm.write_csv(LEDGER, rows, cols)
-        if not args.json:
-            print("Ledger notes updated.")
+    if args.apply and apply_notes(results, today) and not args.json:
+        print("Ledger notes updated.")
+
+
+def apply_notes(results, today):
+    """Write updated_notes for each assessed booking under the lock, from the ledger as it is now. True if
+    anything changed."""
+    paid_by_ref = {r["booking_ref"]: paid for r, paid, _ in results}
+    changed = False
+    with lm.locked_rows(LEDGER) as t:
+        for r in t.rows:
+            if r.get("booking_ref") not in paid_by_ref:
+                continue
+            paid = paid_by_ref[r["booking_ref"]]
+            notes = r.get("notes") or ""
+            new = updated_notes(notes, assess(r, paid, today), paid)
+            if new != notes:
+                r["notes"], changed = new, True
+    return changed
 
 
 if __name__ == "__main__":

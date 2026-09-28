@@ -760,20 +760,20 @@ def unpaid(mid, name, amount, received, payee="NEW: add as a payee in the Starli
 
 
 def test_match_paid_by_amount_and_surname():
-    rows = [unpaid("m1", "Laura Penhallow", 200, "2026-09-19")]
-    assert si.match_paid(rows, [out(200, "2026-09-19", "LAURA PENHALLOW")]) == {"m1": ("2026-09-19", 200.0)}
+    rows = [unpaid("m1", "Laura Pembury", 200, "2026-09-19")]
+    assert si.match_paid(rows, [out(200, "2026-09-19", "LAURA PEMBURY")]) == {"m1": ("2026-09-19", 200.0)}
 
 
 def test_match_paid_uses_payee_name():
-    rows = [unpaid("m1", "Maddy Kessell", 160, "2026-09-01", payee="existing: M M Kessell")]
-    assert si.match_paid(rows, [out(160, "2026-09-02", "M M KESSELL")]) == {"m1": ("2026-09-02", 160.0)}
+    rows = [unpaid("m1", "Tilly Thorne", 160, "2026-09-01", payee="existing: T T Thorne")]
+    assert si.match_paid(rows, [out(160, "2026-09-02", "T T THORNE")]) == {"m1": ("2026-09-02", 160.0)}
 
 
 def test_match_paid_rejects_wrong_amount_early_date_and_double_use():
-    rows = [unpaid("m1", "Laura Penhallow", 200, "2026-09-19"), unpaid("m2", "Laura Penhallow", 200, "2026-09-20")]
-    assert si.match_paid(rows, [out(150, "2026-09-21", "LAURA PENHALLOW")]) == {}
-    assert si.match_paid(rows[:1], [out(200, "2026-09-10", "LAURA PENHALLOW")]) == {}
-    assert si.match_paid(rows, [out(200, "2026-09-21", "LAURA PENHALLOW")]) == {"m1": ("2026-09-21", 200.0)}
+    rows = [unpaid("m1", "Laura Pembury", 200, "2026-09-19"), unpaid("m2", "Laura Pembury", 200, "2026-09-20")]
+    assert si.match_paid(rows, [out(150, "2026-09-21", "LAURA PEMBURY")]) == {}
+    assert si.match_paid(rows[:1], [out(200, "2026-09-10", "LAURA PEMBURY")]) == {}
+    assert si.match_paid(rows, [out(200, "2026-09-21", "LAURA PEMBURY")]) == {"m1": ("2026-09-21", 200.0)}
 
 
 def test_summary_counts():

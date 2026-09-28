@@ -44,7 +44,19 @@ def test_read_only_tools_are_allowed_on_both_servers():
     for server in ("zoho-books", "zoho-books-invoices"):
         for name in ("ZohoBooks_list_invoices", "ZohoBooks_get_invoice", "ZohoBooks_list_contacts"):
             assert decide(server, name) == "allow", (server, name)
-    assert decide("zoho-books", "ZohoBooks_list_bank_transactions") == "allow"
+    assert decide("zoho-books", "ZohoBooks_list_bills") == "allow"
+
+
+def test_bank_account_and_transaction_reads_are_denied():
+    assert not [n for n in guard_module().READ_ALLOW if "bank_" in n]
+    for server in SERVERS:
+        for name in ("ZohoBooks_list_bank_transactions", "ZohoBooks_get_bank_transaction", "ZohoBooks_get_bank_account",
+                     "ZohoBooks_list_bank_accounts", "ZohoBooks_get_matching_bank_transactions",
+                     "ZohoBooks_list_bank_account_statements", "ZohoBooks_get_bank_reconciliation"):
+            assert decide(server, name) == "deny", (server, name)
+    for name in ("ZohoBooks_list_invoices", "ZohoBooks_get_invoice", "ZohoBooks_list_bills", "ZohoBooks_get_bill",
+                 "ZohoBooks_list_contacts", "ZohoBooks_get_contact", "ZohoBooks_list_vendors"):
+        assert name in guard_module().READ_ALLOW, name
 
 
 def test_send_and_write_tools_are_denied():

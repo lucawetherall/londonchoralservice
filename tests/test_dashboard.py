@@ -45,9 +45,9 @@ def fake_data(**over):
                      "bank_changed": True, "ring_first": True, "last4": "5678"}],
         "pipeline": {"season_start": "2026-09-01",
                      "windows": [{"label": "Season", "counts": {"new": 2, "quoted": 3, "confirmed": 1},
-                                  "total": 6, "quoted": 4, "confirmed": 1},
+                                  "total": 6, "quoted": 4, "confirmed": 1, "rate": 0.167},
                                  {"label": "Last 30 days", "counts": {"quoted": 1}, "total": 1, "quoted": 1,
-                                  "confirmed": 0}]},
+                                  "confirmed": 0, "rate": 0.0}]},
         "ads": {"generated": "2026-09-28", "weeks": [
             {"week_start": "2026-09-21", "spend": 30.5, "clicks": 12, "enquiries": 2, "cpe": 15.25},
             {"week_start": "2026-09-14", "spend": 20.0, "clicks": 9, "enquiries": 0, "cpe": None}]},
@@ -64,7 +64,7 @@ def test_render_has_every_section():
         assert f">{h}</h2>" in out, h
     for bit in ["0310", "Ann", "Small Choir", "£1,150.00", "deposit overdue", "£575.00 (1 payment)", "0909",
                 "noted paid, not in bank", "Ben", "£120.00", "••••5678", "ring before paying", "Season",
-                "Last 30 days", "1 confirmed of 4 quoted (25%)", "£30.50", "£15.25", "£1,234.56", "£1,200.00",
+                "Last 30 days", "6 enquiries, 4 quoted, 1 booked (17%)", "£30.50", "£15.25", "£1,234.56", "£1,200.00",
                 "28 September 2026"]:
         assert bit in out, bit
     assert "prefers-color-scheme: dark" in out and 'name="viewport"' in out
@@ -167,7 +167,7 @@ def test_pipeline_and_ads_from_files():
     assert weeks[1]["enquiries"] == 2 and weeks[1]["cpe"] == 15.0
     assert weeks[2]["enquiries"] == 0 and weeks[2]["cpe"] is None
     out = dash.render(data)
-    assert "1 confirmed of 2 quoted (50%)" in out and "£15.00" in out and "no enquiries" in out
+    assert "3 enquiries, 2 quoted, 1 booked (33%)" in out and "£15.00" in out and "no enquiries" in out
 
 
 def test_ads_without_pipeline_has_no_cost_per_enquiry():
@@ -286,6 +286,46 @@ def test_payee_status_never_shows_the_payee_full_name():
     assert "Fenwick" not in dash.payee_status("name matches payee Ben Fenwick but with different bank details")
     assert "Fenwick" not in dash.payee_status("probably existing: Ben Fenwick (no bank details on the invoice)")
     assert dash.payee_status("NEW: add as a payee in the Starling app").startswith("NEW")
+
+
+# --- review I2: the dashboard's pipeline and hand check agree with the Monday report ------------
+
+def test_pipeline_figures_are_the_pipeline_scripts_own():
+    import pipeline as pl
+    reset()
+    enq = [
+        {"enquiry_id": "e1", "first_seen": "2026-09-02", "status": "deposit_paid", "quoted_gbp": "1150", "booking_ref": "1"},
+        {"enquiry_id": "e2", "first_seen": "2026-09-03", "status": "Quoted", "quoted_gbp": "650"},
+        {"enquiry_id": "e3", "first_seen": "2026-09-04", "status": "new"},
+        {"enquiry_id": "e4", "first_seen": "2026-09-05", "status": "cancelled", "booking_ref": "2"},
+    ]
+    lm.write_csv(os.path.join(TMP, "enquiries.csv"), enq, ENQ_COLS)
+    windows = os.path.join(TMP, "budget-windows.yml")
+    with open(windows, "w") as f:
+        f.write("season_start: 2026-08-15\nwindows: []\n")
+    saved = dash.BUDGET_WINDOWS
+    dash.BUDGET_WINDOWS = windows
+    try:
+        p = dash.gather(None, T)["pipeline"]
+    finally:
+        dash.BUDGET_WINDOWS = saved
+    assert p["season_start"] == "2026-08-15", p  # from data/budget-windows.yml, not a hard-coded September
+    season = p["windows"][0]
+    want = pl.summary_dict(lm.read_csv(os.path.join(TMP, "enquiries.csv")), "2026-08-15")
+    assert (season["total"], season["quoted"], season["confirmed"], season["rate"]) == \
+        (want["enquiries"], want["quoted"], want["confirmed"], want["conversion_rate"]) == (4, 2, 2, 0.5), (season, want)
+    assert season["counts"] == {"deposit_paid": 1, "quoted": 1, "new": 1, "cancelled": 1}, season
+    out = dash.render(dict(fake_data(), pipeline=p))
+    assert "4 enquiries, 2 quoted, 2 booked (50%)" in out, out
+
+
+def test_hand_check_follows_the_monday_rule_for_arranged_balances():
+    def a(ref, event, state="ARRANGED"):
+        return {"ref": ref, "state": state, "event_date": event, "value": 650.0, "received": 325.0,
+                "arranged_no_deposit": False}
+    got = dash.hand_check([a("soon", "2026-10-01"), a("later", "2026-12-12"), a("x", "2026-10-30", "CHECK_VALUE")], T)
+    assert [h["ref"] for h in got] == ["soon", "x"], got
+    assert "ARRANGED" in dash.STATES
 
 
 if __name__ == "__main__":

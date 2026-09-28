@@ -41,24 +41,15 @@ SERVERS = {"zoho-books", "zoho-books-invoices"}
 #   list_all_contact_bank_accounts (contacts' bank details);
 #   get_contact_card, list_contact_cards and get_contact_card_count (stored cards);
 #   list_contact_autobill_recurring_invoices (card autobilling) and
-#   get_invoice_qr_code (it can carry payment details).
+#   get_invoice_qr_code (it can carry payment details);
+#   every bank account, bank transaction, bank statement and reconciliation read
+#   (get_bank_*, list_bank_*, get_matching_bank_transactions and the like): no
+#   prompt uses them, and they hold the business's own bank data (review M16).
 # Unknown or new tools are denied.
 READ_ALLOW = {
     "ZohoBooks_bulk_export_invoices_as_pdf",
     "ZohoBooks_bulk_fetch_pricebooks",
     "ZohoBooks_bulk_print_invoices",
-    "ZohoBooks_get_bank_account",
-    "ZohoBooks_get_bank_account_balance",
-    "ZohoBooks_get_bank_account_balances",
-    "ZohoBooks_get_bank_account_insights",
-    "ZohoBooks_get_bank_account_overview",
-    "ZohoBooks_get_bank_account_preferences",
-    "ZohoBooks_get_bank_account_rule",
-    "ZohoBooks_get_bank_account_statement_summary",
-    "ZohoBooks_get_bank_accounts_overview",
-    "ZohoBooks_get_bank_reconciliation",
-    "ZohoBooks_get_bank_reconciliation_document",
-    "ZohoBooks_get_bank_transaction",
     "ZohoBooks_get_bill",
     "ZohoBooks_get_bill_comments",
     "ZohoBooks_get_contact",
@@ -100,8 +91,6 @@ READ_ALLOW = {
     "ZohoBooks_get_item",
     "ZohoBooks_get_item_master",
     "ZohoBooks_get_item_variant",
-    "ZohoBooks_get_last_imported_bank_statement",
-    "ZohoBooks_get_matching_bank_transactions",
     "ZohoBooks_get_payment_reminder_mail_content_for_invoice",
     "ZohoBooks_get_recurring_bill",
     "ZohoBooks_get_tax",
@@ -110,15 +99,6 @@ READ_ALLOW = {
     "ZohoBooks_get_tax_group",
     "ZohoBooks_get_unused_retainer_payments",
     "ZohoBooks_list_all_contact_persons",
-    "ZohoBooks_list_bank_account_balances",
-    "ZohoBooks_list_bank_account_match_filters",
-    "ZohoBooks_list_bank_account_rules",
-    "ZohoBooks_list_bank_account_statements",
-    "ZohoBooks_list_bank_account_subaccounts",
-    "ZohoBooks_list_bank_account_transactions",
-    "ZohoBooks_list_bank_accounts",
-    "ZohoBooks_list_bank_reconciliations",
-    "ZohoBooks_list_bank_transactions",
     "ZohoBooks_list_bill_payments",
     "ZohoBooks_list_bills",
     "ZohoBooks_list_contact_addresses",
@@ -153,7 +133,6 @@ READ_ALLOW = {
     "ZohoBooks_list_tax_authorities",
     "ZohoBooks_list_tax_exemptions",
     "ZohoBooks_list_taxes",
-    "ZohoBooks_list_unreviewed_bank_statements",
     "ZohoBooks_list_vendor_payments",
     "ZohoBooks_list_vendors",
     "ZohoBooks_print_invoice_delivery_note",
@@ -370,6 +349,22 @@ def _after_plus(text, i):
     return text[i - 1:i] == "+" or (text[i - 1:i] == " " and text[i - 2:i - 1] == "+")
 
 
+def strip_dates(text):
+    """`text` with real dates and clock times blanked, so they don't count as digit runs."""
+    for pattern in (ISO_DATE, DMY_DATE, MONTH_DATE, CLOCK_TIME):
+        text = pattern.sub(" ", text)
+    return text
+
+
+def bank_details_in(text):
+    """True if plain text carries bank details: a sort-code or account-length digit run, a bank keyword
+    (sort code, account number, IBAN, SWIFT, BIC) or an IBAN. Shared with zoho_guard.py (Mail drafts);
+    VAT wording and lookalike letters are the Books guard's own extra checks, not part of this."""
+    bare = strip_dates(_plain(text))
+    return bool(_bank_digits(bare) or BANK_WORDS.search(bare)
+                or any(sum(c.isdigit() for c in m.group()) >= 10 for m in IBAN.finditer(bare)))
+
+
 def _lookalike(text):
     return any(unicodedata.name(c, "").startswith(("GREEK", "CYRILLIC")) for c in text)
 
@@ -387,9 +382,7 @@ def _scan(value, key, where, tax):
         own = OWN_PATTERN.get(key)
         exempt = (own is not None and isinstance(value, str) and own.fullmatch(value)) or (
             isinstance(key, str) and key.endswith("_id") and RECORD_ID.fullmatch(text))
-        bare = text
-        for pattern in (ISO_DATE, DMY_DATE, MONTH_DATE, CLOCK_TIME):
-            bare = pattern.sub(" ", bare)
+        bare = strip_dates(text)
         if ((not exempt and _bank_digits(bare)) or BANK_WORDS.search(bare) or VAT_WORDS.search(bare)
                 or _lookalike(text) or any(sum(c.isdigit() for c in m.group()) >= 10 for m in IBAN.finditer(bare))):
             raise Deny(BANK_OR_VAT.format(where=where))

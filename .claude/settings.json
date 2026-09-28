@@ -30,12 +30,20 @@
       "Bash(.venv/bin/python scripts/bookings/check_payments.py --selftest)",
       "Bash(.venv/bin/python scripts/bookings/check_payments.py --reminded *)",
       "Bash(.venv/bin/python scripts/bookings/check_payments.py --apply --json)",
+      "Bash(.venv/bin/python scripts/bookings/check_payments.py --json)",
       "Bash(.venv/bin/python scripts/bookings/check_payments.py --note *)",
       "Bash(.venv/bin/python scripts/bookings/singer_invoices.py scan *)",
       "Bash(.venv/bin/python scripts/bookings/singer_invoices.py rescan *)",
       "Bash(.venv/bin/python scripts/bookings/singer_invoices.py paid --apply)",
       "Bash(.venv/bin/python scripts/bookings/singer_invoices.py status)",
-      "Bash(.venv/bin/python scripts/bookings/singer_invoices.py thanked *)"
+      "Bash(.venv/bin/python scripts/bookings/singer_invoices.py thanked *)",
+      "Bash(.venv/bin/python scripts/bookings/singer_invoices.py withdrawn *)",
+      "Bash(.venv/bin/python scripts/bookings/pipeline.py *)",
+      "Bash(.venv/bin/python scripts/reports/dashboard.py)",
+      "mcp__caefd5da-81a5-4eb0-993a-dfeaa5b9d7c1__list_calendars",
+      "mcp__caefd5da-81a5-4eb0-993a-dfeaa5b9d7c1__list_events",
+      "mcp__caefd5da-81a5-4eb0-993a-dfeaa5b9d7c1__search_events",
+      "mcp__caefd5da-81a5-4eb0-993a-dfeaa5b9d7c1__get_event"
     ],
     "deny": [
       "Bash(security find-generic-password *)",
@@ -61,6 +69,16 @@
           {
             "type": "command",
             "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/zoho_books_guard.py\" || exit 2",
+            "timeout": 10
+          }
+        ]
+      },
+      {
+        "matcher": "mcp__caefd5da-81a5-4eb0-993a-dfeaa5b9d7c1__.*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/calendar_guard.py\" || exit 2",
             "timeout": 10
           }
         ]
