@@ -655,25 +655,39 @@ MONTH_WORD = (r"(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|june?|july
 YEAR = r"((?:19|20)\d{2})"
 DATE_FORMS = [  # (pattern, the groups' order: y m d, with m a number or a month word)
     (re.compile(r"(?<!\d)" + YEAR + r"-(\d{1,2})-(\d{1,2})(?!\d)"), "ymd"),
-    (re.compile(r"(?<![\d/.\-])(\d{1,2})[/.\-](\d{1,2})[/.\-]((?:19|20)?\d{2})(?![\d/.\-]?\d)"), "dmy"),
+    (re.compile(r"(?<![\d/.\-])(\d{1,2})([/.\-])(\d{1,2})\2((?:19|20)?\d{2})(?![\d/.\-]?\d)"), "dmy"),
     (re.compile(r"(?<![\w])(\d{1,2})(?:st|nd|rd|th)?(?:\s+of)?\s+" + MONTH_WORD + r"(?![a-z])(?:,?\s+" + YEAR
                 + r"(?!\d))?", re.I), "dMy"),
     (re.compile(r"(?<![a-z])" + MONTH_WORD + r"(?![a-z])\s+(\d{1,2})(?:st|nd|rd|th)?(?!\d)(?:,?\s+" + YEAR
                 + r"(?!\d))?", re.I), "Mdy"),
 ]
+# A date right after one of these is the invoice's own metadata (when it was issued, is due, or was paid), not
+# necessarily the event: never a link candidate. ~20 characters is enough for "Invoice date: ", "Due: " etc.
+INVOICE_META_RE = re.compile(r"(?:invoice\s+date|date\s*:|issued|due|payment)", re.I)
+INVOICE_META_WINDOW = 20
+# A date near one of these is almost certainly the event, not incidental (an invoice date, a "valid until", etc).
+EVENT_WORD_RE = re.compile(r"\b(?:wedding|funeral|service|event|concert|carol|recording|rehearsal|performance)",
+                           re.I)
+EVENT_WORD_WINDOW = 30
 
 
-def mentioned_dates(text):
-    """Dates the text mentions, as (year or None, month, day): 2026-11-21, 21/11/2026, 21.11.26, 21 November
-    (2026), 21st Nov, November 21(, 2026). Impossible dates are dropped; the order is first seen."""
-    out = []
+def _iter_dates(text):
+    """Every (key, start, end) the text mentions, key = (year or None, month, day): 2026-11-21, 21/11/2026,
+    21.11.26, 21 November (2026), 21st Nov, November 21(, 2026). Impossible dates are dropped, and so is the
+    dd-dd-dd form with a two-digit year (a sort code's own shape, e.g. 20-11-26) and any date within about
+    INVOICE_META_WINDOW characters after "invoice date", "date:", "issued", "due" or "payment" (the invoice's own
+    metadata, not the event)."""
+    text = text or ""
+    meta_ends = [m.end() for m in INVOICE_META_RE.finditer(text)]
     for pattern, order in DATE_FORMS:
-        for m in pattern.finditer(text or ""):
+        for m in pattern.finditer(text):
             g = m.groups()
             if order == "ymd":
                 y, mo, d = g
             elif order == "dmy":
-                d, mo, y = g
+                d, sep, mo, y = g
+                if sep == "-" and len(y) == 2:
+                    continue  # the sort-code shape, dd-dd-dd
                 y = y if len(y) == 4 else "20" + y
             elif order == "dMy":
                 d, mo, y = g
@@ -685,10 +699,37 @@ def mentioned_dates(text):
                 datetime.date(year or 2000, month, int(d))  # 2000: a leap year, so 29 February without a year passes
             except ValueError:
                 continue
-            key = (year, month, int(d))
-            if key not in out:
-                out.append(key)
+            if any(e <= m.start() <= e + INVOICE_META_WINDOW for e in meta_ends):
+                continue
+            yield (year, month, int(d)), m.start(), m.end()
+
+
+def mentioned_dates(text):
+    """Dates the text mentions, as (year or None, month, day), first seen; see _iter_dates for what's excluded."""
+    out = []
+    for key, _, _ in _iter_dates(text):
+        if key not in out:
+            out.append(key)
     return out
+
+
+def event_word_dates(text):
+    """The subset of mentioned_dates(text) that has an event word (wedding, funeral, service, event, concert,
+    carol, recording, rehearsal, performance) within about EVENT_WORD_WINDOW characters either side."""
+    text = text or ""
+    out = set()
+    for key, start, end in _iter_dates(text):
+        lo, hi = max(0, start - EVENT_WORD_WINDOW), min(len(text), end + EVENT_WORD_WINDOW)
+        if EVENT_WORD_RE.search(text[lo:hi]):
+            out.add(key)
+    return out
+
+
+def linkable_dates(dates, event_dates):
+    """The dates worth trying to auto-link on: all of them when it's the only one left after exclusions, else
+    only the ones near an event word — so an invoice with several dates doesn't link on the wrong one."""
+    dates = list(dates)
+    return dates if len(dates) == 1 else [d for d in dates if d in event_dates]
 
 
 YEARLESS_WINDOW = 200  # days: a date without a year matches an event this close to the invoice's received date
@@ -733,13 +774,14 @@ def read_invoice(path=None, raw=None):
     has both numbers (else the first source that does); when sources give different details, or one gives
     unclear details while another is clear, `sources_disagree` is set and DIFFER is warned."""
     found = {"amount": 0.0, "invoice_ref": "", "sort_code": "", "account_number": "", "warnings": [],
-             "sources_disagree": False, "dates": []}
+             "sources_disagree": False, "dates": [], "event_dates": set()}
     details, unclear = [], False  # details: (is a pdf, sort code, account number)
     for label, text, problem in message_texts(path, raw=raw):
         if text is None:
             found["warnings"].append(f"could not read {label} (.doc): check by hand")
             continue
         found["dates"] += [d for d in mentioned_dates(text) if d not in found["dates"]]
+        found["event_dates"] |= event_word_dates(text)
         if problem:
             found["warnings"].append(f"could not read {label} ({problem}): check it by hand")
         elif label != "email body" and not text.strip():
@@ -954,7 +996,8 @@ def cmd_scan(args, client):
     raw = load_raw(args)
     inv = read_invoice(None, raw=raw)
     payees = payee_info(client)
-    link = auto_link(inv.get("dates") or [], lm.read_csv(lm.LEDGER), args.received)
+    link = auto_link(linkable_dates(inv.get("dates") or [], inv.get("event_dates") or set()),
+                      lm.read_csv(lm.LEDGER), args.received)
     with lm.locked_rows(STORE, COLUMNS) as t:  # after the fetch: never hold the lock over the network
         rows = t.rows  # read again: a fetch can take a while
         if already_recorded(rows, args.message_id):
@@ -1014,7 +1057,8 @@ def cmd_rescan(args, client):
     first = find(lm.read_csv(STORE))
     inv = load_invoice(args)
     payees = payee_info(client)
-    guess = auto_link(inv.get("dates") or [], lm.read_csv(lm.LEDGER), first.get("received"))
+    guess = auto_link(linkable_dates(inv.get("dates") or [], inv.get("event_dates") or set()),
+                       lm.read_csv(lm.LEDGER), first.get("received"))
     with lm.locked_rows(STORE, COLUMNS) as t:  # after the fetch: never hold the lock over the network
         rows = t.rows  # read again: a fetch can take a while
         row = find(rows)
@@ -1234,10 +1278,12 @@ def margins(ledger_rows, singer_rows):
             costs[ref] = costs.get(ref, 0.0) + lm.money(s.get("amount_gbp"))
             counts[ref] = counts.get(ref, 0) + 1
     out = []
+    seen = set()
     for r in ledger_rows:
         ref = (r.get("booking_ref") or "").strip()
-        if not ref:
+        if not ref or ref in seen:  # a duplicated ledger row must never double-count a booking
             continue
+        seen.add(ref)
         fee = round(lm.money(r.get("value_gbp")), 2)
         cost = round(costs.get(ref, 0.0), 2)
         margin = round(fee - cost, 2)

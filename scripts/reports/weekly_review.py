@@ -616,6 +616,33 @@ def _write_new(pdir, pid, record):
         tmp.unlink(missing_ok=True)
 
 
+def _supersede_older(pdir, cid, new_pid):
+    """Mark every other still-waiting set_budget proposal for the same campaign `cid` as superseded by `new_pid`
+    (a "superseded_by" field the Command Centre hides), so the list doesn't pile up with stale amounts."""
+    for p in sorted(pdir.glob("*.json")):
+        if p.stem == new_pid:
+            continue
+        try:
+            rec = json.loads(p.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        if not (isinstance(rec, dict) and rec.get("script_path") == SET_BUDGET
+                and list(rec.get("args") or [])[:1] == [cid] and not rec.get("superseded_by")
+                and not (pdir / f"{p.stem}.applied").exists()):
+            continue
+        rec["superseded_by"] = new_pid
+        tmp = pdir / f".{p.stem}.{os.getpid()}.{os.urandom(4).hex()}.tmp"
+        fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
+        try:
+            with os.fdopen(fd, "w", encoding="utf-8") as f:
+                json.dump(rec, f, ensure_ascii=False, indent=1)
+                f.flush()
+                os.fsync(f.fileno())
+            os.replace(tmp, p)
+        finally:
+            tmp.unlink(missing_ok=True)
+
+
 def write_proposals(items, today, git_runner=None, now=None):
     """Write one Command Centre proposal per "propose" item; returns the lines to print. Never above £5/day, and
     never a second proposal while one with the same script blob and args is still waiting (no .applied record)."""
@@ -664,6 +691,7 @@ def write_proposals(items, today, git_runner=None, now=None):
                 _write_new(pdir, pid, dict(record, id=pid))
             except FileExistsError:
                 continue
+            _supersede_older(pdir, cid, pid)
             lines.append(f"proposal written: {pid}")
             break
         else:

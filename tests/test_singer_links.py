@@ -83,9 +83,25 @@ def stored(mid):
 
 
 def test_mentioned_dates_shapes():
-    got = si.mentioned_dates("Funeral 21 September £100\nDate: 25/09/2026\nWedding 2026-11-21, "
+    got = si.mentioned_dates("Funeral 21 September £100\nAlso 25/09/2026\nWedding 2026-11-21, "
                              "Sat 3rd Oct 2026, December 5, 2026, 7.12.26, 31/02/2026, sort 12-34-56")
     assert got == [(2026, 11, 21), (2026, 9, 25), (2026, 12, 7), (None, 9, 21), (2026, 10, 3), (2026, 12, 5)], got
+
+
+def test_mentioned_dates_drops_the_sort_code_shape():
+    """A real sort code, XX-XX-XX, is never mistaken for a dd-mm-yy date (the reviewer's case)."""
+    assert si.mentioned_dates("Sort code: 20-11-26") == []
+    assert si.mentioned_dates("Sort code: 20-11-2026") == [(2026, 11, 20)]  # a 4-digit year isn't a sort code
+
+
+def test_mentioned_dates_ignores_invoice_metadata_dates():
+    """A date right after "invoice date", "date:", "issued", "due" or "payment" is the invoice's own metadata,
+    not the event (the reviewer's case)."""
+    assert si.mentioned_dates("Invoice date: 21 Nov 2026. Event: Saturday 14th") == []
+    assert si.mentioned_dates("Issued 21 Nov 2026") == []
+    assert si.mentioned_dates("Due 21 Nov 2026") == []
+    assert si.mentioned_dates("Payment 21 Nov 2026") == []
+    assert si.mentioned_dates("Wedding 21 Nov 2026") == [(2026, 11, 21)]
 
 
 def test_auto_link_needs_exactly_one_booking():
@@ -97,6 +113,32 @@ def test_auto_link_needs_exactly_one_booking():
     assert si.auto_link([(2025, 9, 21)], rows) == ""  # wrong year
     assert si.auto_link([(None, 9, 21)], rows, "2027-09-25") == ""  # a year-less date far from the event
     assert si.auto_link([], rows) == ""
+
+
+def test_linkable_dates_needs_an_event_word_unless_its_the_only_date_left():
+    dates = [(2026, 9, 21), (2026, 11, 21)]
+    assert si.linkable_dates(dates, {(2026, 9, 21)}) == [(2026, 9, 21)]  # only the one near an event word
+    assert si.linkable_dates(dates, set()) == []  # neither is: nothing to link on
+    assert si.linkable_dates([(2026, 9, 21)], set()) == [(2026, 9, 21)]  # the only date left: kept anyway
+
+
+def test_scan_does_not_link_on_a_second_date_with_no_event_word():
+    """Two real (non-metadata) dates are mentioned, matching two different bookings; only one is near an event
+    word, so the auto-link picks that one rather than refusing outright or guessing."""
+    fresh()
+    ledger([booking("2109", "2026-09-21"), booking("2111", "2026-11-21")])
+    out = scan("308", "Reference ABC\nFuneral 21 September\nAlso mentioned 21 November 2026\nTotal £100.00" + BANK)
+    assert "linked: 2109" in out.splitlines(), out  # links on the funeral date (event word), not the other one
+    assert stored("308")["booking_ref"] == "2109"
+
+
+def test_scan_links_on_the_only_date_left_after_exclusions():
+    fresh()
+    ledger([booking("2109", "2026-09-21")])
+    out = scan("309", "Invoice date: 21 November 2026. Thank you for your business, much appreciated indeed.\n"
+                      "21 September\nTotal £100.00" + BANK)
+    assert "linked: 2109" in out.splitlines(), out  # the invoice date is excluded; 21 Sep is the only date left
+    assert stored("309")["booking_ref"] == "2109"
 
 
 # ---------------------------------------------------------------- scan, rescan, link
@@ -180,6 +222,15 @@ def test_margins_pure():
     assert got["2109"]["costs"] == 0 and got["2109"]["margin_pct"] == 100.0
     assert got["2201"]["margin_pct"] is None
     assert got["2202"]["cancelled"] is True and got["2111"]["cancelled"] is False
+
+
+def test_margins_dedupes_a_repeated_booking_ref():
+    """A booking_ref appearing twice in the ledger (a duplicated or corrected row) is never counted twice."""
+    ledger_rows = [booking("2111", "2026-11-21", "1150"), booking("2111", "2026-11-21", "1150")]
+    singer_rows = [{"booking_ref": "2111", "amount_gbp": "180.00", "withdrawn": ""}]
+    got = si.margins(ledger_rows, singer_rows)
+    assert [m["ref"] for m in got] == ["2111"]
+    assert got[0]["costs"] == 180.0
 
 
 def test_margins_command():

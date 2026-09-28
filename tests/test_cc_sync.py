@@ -192,6 +192,21 @@ def test_calendar_put_from_stdin_and_file():
     assert code == 2 and "not a symlink" in out, out
 
 
+def test_read_input_file_refuses_a_fifo_without_blocking():
+    """A FIFO must be refused by lstat before the (blocking) open call, so a hostile --file can't hang the process."""
+    clear()
+    fifo = Path(TMP) / "evil.fifo"
+    os.mkfifo(fifo)
+    try:
+        try:
+            cc_sync.read_input_file(str(fifo))
+            raise AssertionError("no error")
+        except cc_sync.Refused as e:
+            assert "plain file" in str(e), e
+    finally:
+        fifo.unlink()
+
+
 def refused(value, why):
     clear()
     (CACHE.mkdir(parents=True, exist_ok=True), (CACHE / "calendar.json").write_text("[]"))

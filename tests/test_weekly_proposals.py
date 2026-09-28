@@ -85,6 +85,28 @@ def test_never_twice_while_waiting_but_again_after_it_was_applied():
     assert later == ["proposal written: budget-24295921372-500-20261005-3"], later
 
 
+def test_a_new_amount_supersedes_the_older_waiting_proposal_for_the_same_campaign():
+    """A repeated Monday review that proposes a new amount for a campaign already waiting must not leave the old
+    amount sitting in the Command Centre's list too: the older one is marked superseded_by and hidden there."""
+    clear()
+    first_lines = wr.write_proposals([item(new=5.0)], MON, git_runner=FakeGit(), now=NOW)
+    first = "budget-24295921372-500-20261005"
+    assert first_lines == [f"proposal written: {first}"], first_lines
+    second_lines = wr.write_proposals([item(new=4.0)], MON, git_runner=FakeGit(), now=NOW)
+    second = "budget-24295921372-400-20261005"
+    assert second_lines == [f"proposal written: {second}"], second_lines
+    data = written()
+    assert data[first]["superseded_by"] == second, data[first]
+    assert "superseded_by" not in data[second], data[second]
+    # a different campaign is never touched, and an already-superseded proposal keeps its original superseded_by
+    wr.write_proposals([item(cid="1", new=3.0)], MON, git_runner=FakeGit(), now=NOW)
+    wr.write_proposals([item(cid="1", new=2.0)], MON, git_runner=FakeGit(), now=NOW)
+    assert written()[first]["superseded_by"] == second
+    from command_centre import actions
+    listed = {p["id"] for p in actions.list_proposals()}
+    assert second in listed and first not in listed
+
+
 def test_never_above_five_pounds_and_needs_a_campaign_id():
     clear()
     lines = wr.write_proposals([item(new=5.01), item(new=6), item(new=0), item(cid=None), item(cid="12a")], MON,

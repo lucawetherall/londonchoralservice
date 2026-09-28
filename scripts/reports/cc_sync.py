@@ -252,6 +252,14 @@ def read_input_file(path):
     if os.path.commonpath([root, real]) != root or real == root:
         raise Refused("--file must be inside the private folder (~/lcs-private)")
     try:
+        st = os.lstat(os.path.expanduser(path))
+    except OSError:
+        raise Refused("--file must be a readable plain file (not a symlink)") from None
+    if stat.S_ISLNK(st.st_mode):
+        raise Refused("--file must be a readable plain file (not a symlink)")
+    if not stat.S_ISREG(st.st_mode):
+        raise Refused("--file must be a plain file")  # checked before opening: a FIFO must never block this
+    try:
         fd = os.open(os.path.expanduser(path), os.O_RDONLY | os.O_NOFOLLOW)
     except OSError:
         raise Refused("--file must be a readable plain file (not a symlink)") from None
