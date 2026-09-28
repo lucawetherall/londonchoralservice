@@ -406,6 +406,64 @@ The reviewer showed that an Ads validate could run code that wasn't the committe
 
 ---
 
+## Phase 6: final wiring (this PR)
+
+**Goal:** the data the scheduled runs already cache reaches the pages (Books, margins, the diary), and the three features deferred from phase 5 land: the drafts inbox, the quote calculator and the 30-minute background refresh. Nothing new writes outside `~/lcs-private/command-centre/`, and nothing new needs a passkey: the only new write is a local draft mark.
+
+**Files:**
+- `command_centre/models.py`: pure builders for the Books panel, the Books/Starling flags, a booking's Books and singer lines, the margin columns and the season total.
+- `command_centre/data.py`: the new panels (`books`, `books_flags`, `margins`, `season_margin`, `drafts`), each failing on its own.
+- `command_centre/drafts.py`: reads `cache/drafts.json` and the local marks (`drafts-marks.json`).
+- `command_centre/quote.py`: the calculator over `assistant_io.PriceParser`'s rows.
+- `command_centre/jobs.py`: the background refresh job.
+- `command_centre/actions.py`: `draft-mark` (a LocalAction, no passkey, same-origin, audited).
+- `command_centre/app.py`, `templates/`: Money's Books panel and season total, Today's Books flags, the Bookings margin columns, the timeline's Books status, singers and margin, `GET /drafts`, `GET /quote`.
+- `scripts/reports/cc_sync.py`: `drafts-put '<json>'`. `scripts/bookings/assistant_io.py`: `PriceParser` also keeps structured rows (its text output is unchanged).
+- `.claude/agents/lcs-reply-drafter.md`, `lcs-daily-pass.md`, `lcs-singer-clerk.md`: one `cc_sync.py drafts-put` line per saved draft (already allowlisted by `cc_sync.py *`).
+- `tests/test_cc_final.py`.
+
+### Task 6.1: Books on the pages (R17)
+
+- [x] **Money:** a Books panel from `cache/books.json` (`books_cache.books_cache()`): receivables (count and £), overdue, drafts not yet sent (invoice numbers), unpaid bills (count and £), and "Books as of <generated_at>". No cache yet says "Books not synced yet: the daily pass runs `cc_sync.py books`".
+- [x] **Timeline:** the booking's Books invoice, matched by invoice number = booking ref: its status, total and balance, dated by the invoice date. None: "Not in Books".
+- [x] **Today:** the Appendix A step 6g rules, as flags in "Needs you" (and in the attention count): a Books draft more than 2 days old ("Books draft not sent (>2 days)"); Books paid but Starling hasn't matched the full fee (the state isn't PAID_IN_FULL and there is no "paid in full" note); Starling matched (DEPOSIT_SEEN, PAID_IN_FULL or a "paid in full" note) but Books unpaid or overdue with nothing paid, or part-paid when Starling says paid in full. The two Starling comparisons are skipped when the bank wasn't checked, as 6g skips them.
+
+### Task 6.2: Margins (R18)
+
+- [x] Bookings list and timeline: fee, singer costs, margin and margin % from `singer_invoices.margins()` over the same ledger and store the pages read.
+- [x] Money: the season total (bookings from `season_start`, cancelled ones left out): fee, singer costs, margin, margin %.
+- [x] Timeline: the singers linked to the booking (the store's `booking_ref`), first names only, with each invoice's amount and paid state.
+
+### Task 6.3: Calendar
+
+- [x] `cc_sync.py calendar-put` writes `<private>/command-centre/cache/calendar.json`, a JSON list of `{start, end, summary, calendar}`; `sources.calendar_cache()` reads that path and `models.diary_items()` that shape. A round-trip test pins it.
+
+### Task 6.4: Drafts inbox
+
+- [x] `cc_sync.py drafts-put '<json>'`: one object or a list of at most 50, each exactly `{thread_id, kind, first_name, subject, created}`: a thread id of 1 to 40 letters and digits, a kind from a fixed list, a first name as `cc_event.py` takes it, a subject of at most 80 characters with no control characters, a created date YYYY-MM-DD. Anything else refuses the whole input and writes nothing. Merged into `cache/drafts.json` (same thread and kind replaces), newest 500 kept, under an flock, atomically at mode 600.
+- [x] The reply drafter, the daily pass and the singer clerk run it once per saved draft.
+- [x] `GET /drafts`: the open drafts (newest first) and the marked ones, with "Open Zoho Mail drafts" (`https://mail.zoho.com/zm/#mail/folder/drafts`: the owner's account is on Zoho's .com data centre, per the handover's Appendix C and the MCP hosts on zohomcp.com).
+- [x] `draft-mark` (sent or discarded): a local record in `<private>/command-centre/drafts-marks.json`, no passkey, same-origin, audited. A draft is named by a 12-letter hash of its thread, kind and date, so no thread id reaches a form.
+
+### Task 6.5: Quote calculator
+
+- [x] `GET /quote` (a GET form: nothing is written). The packages, the organist add-on and the soloist-with-organist combination come only from `pricing.html` and `christmas-pricing.html`, parsed by `assistant_io.PriceParser`. Pick the price list, a package (its number of singers shown), an organist and whether the venue is outside Greater London (travel "confirmed with the quote", no figure), and for Christmas Eve or Christmas Day the page's premium sentence (no figure added).
+- [x] The output: the total and copyable wording in the house style: UK English, "No VAT is added." and no other VAT wording, no roster size.
+- [x] Tests: the parsed figures equal the pages' (Small Choir £1,150, organist £250, Small Choir + organist £1,400, soloist + organist £450).
+
+### Task 6.6: Background refresh
+
+- [x] `command_centre/jobs.py`: in the service's lifespan (never on a dev port, and off when `CC_NO_REFRESH_JOB` is set), every 30 minutes from 07:00 to 22:00 London time: `dashboard.py` then `cc_sync.py books` as subprocesses (argv, no shell, the actions' clean environment, a timeout each), then the bank cache is cleared. Its own lock, and it takes the manual refresh's lock without waiting, so the two never overlap (a slot that finds either busy is skipped). A failure goes to the audit log as `refresh-job` with its type name only.
+
+### Task 6.7: Roadmap, tests, visual check, PR
+
+- [x] R17 and R18 marked done; anything newly deferred added.
+- [x] `tests/test_cc_final.py`; every `tests/test_*.py` with temp env vars.
+- [x] Visual check on `127.0.0.1:8791` with fake data at 390px and 1280px, light and dark; stop the server.
+- [x] Commit, PR, don't merge.
+
+---
+
 ## Self-review (done while writing)
 
 - **Spec coverage:** binding rule 1 (Task 1.2, Task 1.4), rule 2 (Task 1.2's machinery, Phase 3's use of it), rules 3 and 4 (Phase 3), rule 5 (Read this before starting, Task 1.4), rule 6 (Phase 4). Pages 1 and 4 in phase 1, pages 2, 3, 5, 6, 8, 10 to 13 and 15 in phases 2 and 3, 7 and 9 in phase 5, 14 in phase 4.
