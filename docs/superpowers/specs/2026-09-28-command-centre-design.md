@@ -130,7 +130,7 @@ Each action has:
 - a preview showing exactly what will run;
 - the command (argv) that runs it.
 
-It needs a passkey and is logged.
+It needs a passkey (except the local records below) and is logged.
 
 | Action | Runs |
 |---|---|
@@ -139,7 +139,7 @@ It needs a passkey and is logged.
 | Settle or withdraw a singer invoice | `singer_invoices.py settled <id> <date>` / `withdrawn <id> <reason>` |
 | Approve an Ads change set | Run the generated `scripts/ads/*.py` validate-only, show the output, then apply after a second tap, then write to `logs/ads-changes.md` via the script. It never goes above £5/day (the script refuses). |
 | Approve the 2026 Books import / a proposed page fix | Queue it for Claude Code (chat) with the approved instruction. The chat runs it under its guards. |
-| Mark a draft sent or discarded; tick a to-do | Local record only |
+| Mark a draft sent or discarded; tick a to-do | Local record only. **Exception: no passkey.** These write only the app's own files in `~/lcs-private/command-centre/` (never the ledger, the singer store, email, Books or the bank), so the owner's Tailscale identity, the Host check and the same-origin check are enough. They are still registered actions, with a server-built summary and an `audit.jsonl` entry. |
 | Run a scheduled task now | Triggers the task (headless `claude -p` with the task prompt in the repo folder, the same as the scheduled run) |
 | Refresh data now | Refresh jobs, read-only |
 | Back up now | The backup job |
@@ -203,10 +203,10 @@ Not in the app: sending email, payments, payees, deletes, and Books sends or voi
 ## Build order (phases)
 
 1. **Skeleton:** the app, auth (Tailscale identity and passkey), LaunchAgent, install script, and Today and Money read-only.
-2. **Data pages:** Bookings, Enquiries, Singers, Marketing, Calendar, Search, Reports, Runs and health, To-do.
+2. **Data pages:** Bookings, Enquiries, Singers, Marketing, Calendar, Search, Reports, Runs and health, To-do, CSV exports.
 3. **Actions:** the registry with passkey; hand checks, singer confirm/settle/withdraw, Ads approve, run now, refresh, backup.
 4. **Chat:** the Agent SDK, streaming, approval cards, quick prompts.
-5. **PWA and push, drafts inbox, quote calculator, exports, backups.**
+5. **PWA and push, drafts inbox, quote calculator, backups.**
 
 Each phase is reviewed and merged before the next. The static `dashboard.py` stays as a fallback until phase 2 ships.
 
