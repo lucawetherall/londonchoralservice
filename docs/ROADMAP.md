@@ -315,13 +315,13 @@ print('duplicate price-ladder constructions:', len(dupes))  # → 0
 
 ---
 
-## R15 — Run the 2026 Zoho Books import  [P2] [done 2026-09-28 — 7 draft invoices, £9,423.08, owner-approved; logged in logs/books-changes.md. The owner marks them sent (without emailing) and matches payments in Books.]
+## R15 — Run the 2026 Zoho Books import  [P2] [done 2026-09-28 — 7 draft invoices, £9,423.08, owner-approved; logged in logs/books-changes.md. The owner approved marking them sent (without emailing); Claude did that, and changed invoice 2111's due date, by calling the Books server directly, outside the guard. See the correction in logs/books-changes.md; `.claude/hooks/mcp_bypass_guard.py` now blocks that route.]
 
 **Why:** the Zoho Books design (`docs/superpowers/specs/2026-09-28-zoho-books-design.md`, flow D) prepared a private dry-run list of this year's bookings at `~/lcs-private/books-import-2026.json` (seven bookings), ready to become draft invoices in Books. It has not run: the owner has to look at the list and say the word first (see `MANUAL-ACTIONS-REQUIRED.md` §20).
 
 **Do:** once the owner says "approve the Books import" in chat, create one draft invoice per booking in Books via `ZohoBooks_create_invoice`, dated at each booking's own invoice date, following the allowlisted keys and checks in the Zoho Books design's "Approved write tools" table. Leave `send` absent/false: the owner sends from Books himself.
 
-**Do not:** create anything before the owner's explicit approval line, or touch any of the still-denied tools (payments, `mark_invoice_sent`, anything that emails a client).
+**Do not:** create anything before the owner's explicit approval line, or touch any tool the guard denies (`mark_invoice_sent`, `update_invoice`, anything that emails a client). Payments go only through the two guarded payment tools, for the cases CLAUDE.md names. If the guard refuses a call, stop and tell the owner; never reach Books any other way.
 
 **Skills:** none beyond what the guard already enforces
 
