@@ -34,9 +34,12 @@ SHELL COMMANDS (only these, from the repo folder)
   .venv/bin/python scripts/reports/cc_event.py hand-check --ref <invoice ref> --state <state>
   .venv/bin/python scripts/reports/cc_sync.py books
   .venv/bin/python scripts/reports/cc_sync.py calendar-put '<one-line JSON list of events>'
+  .venv/bin/python scripts/reports/cc_sync.py drafts-put '<one-line JSON object>'
   Never pipe or use a heredoc into these: calendar-put takes its JSON as the one single-quoted argument, with any apostrophe written as ’.
 
 A booking's thread: `pipeline.py thread <ref>`; on "no thread", ZohoBooks_list_invoices by invoice_number → customer_id → ZohoBooks_get_contact → ZohoMail_SearchEmails for that email. Read the whole thread before drafting. If Drafts already holds this step's draft for the thread, draft nothing and just run the recording command.
+
+After saving each draft in a to c, record it: `.venv/bin/python scripts/reports/cc_sync.py drafts-put '{"thread_id": "<threadId>", "kind": "<receipt|deposit-reminder|balance-reminder|follow-up|review>", "first_name": "<first name>", "subject": "<the draft's subject, at most 80 characters>", "created": "<YYYY-MM-DD>"}'` (one capitalised first name, no surname; the thread id as Zoho gives it; any apostrophe written as ’). It lists the draft in the Command Centre's drafts inbox; nothing is sent. If it prints "drafts: refused", note it in your summary and carry on.
 
 a. Payments: run `check_payments.py --apply --json` ([] when Starling is unavailable: skip a). Act on each booking's "action" only:
    - receipt: unless Luca has already thanked them, a reply thanking them for the payment and confirming their date is secured. Either way `--reminded <ref> --kind receipt` and `pipeline.py status <threadId> deposit_paid` (ignore "no enquiry"). Then `.venv/bin/python scripts/reports/cc_event.py deposit --first <first name> --ref <ref>`.

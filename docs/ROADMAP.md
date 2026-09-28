@@ -337,9 +337,9 @@ print('duplicate price-ladder constructions:', len(dupes))  # → 0
 
 ---
 
-## R17 — Dashboard should read invoice status from Zoho Books, not Starling alone  [P3] [done 2026-09-28 script side; UI wiring pending]
+## R17 — Dashboard should read invoice status from Zoho Books, not Starling alone  [P3] [done 2026-09-28 — Command Centre phase 6]
 
-**Status:** `scripts/reports/cc_sync.py books` (run by the enquiry assistant's daily pass, `.claude/agents/lcs-daily-pass.md`) writes `~/lcs-private/command-centre/cache/books.json` through `lcs_mcp`'s Books read client (only the tools on the guard's READ_ALLOW); `command_centre/books_cache.py` reads it. UI wiring pending: the Command Centre pages (and `dashboard.py`, if still wanted) should show it beside the Starling state.
+**Status:** `scripts/reports/cc_sync.py books` (run by the enquiry assistant's daily pass, `.claude/agents/lcs-daily-pass.md`) writes `~/lcs-private/command-centre/cache/books.json` through `lcs_mcp`'s Books read client (only the tools on the guard's READ_ALLOW); `command_centre/books_cache.py` reads it. **Done (phase 6):** the Command Centre's Money page has a Books panel (receivables, overdue, drafts not yet sent, unpaid bills, freshness); each booking's timeline shows its Books invoice by number; Today flags a Books draft more than 2 days old and Books/Starling disagreements by Appendix A step 6g's rules (`models.books_flags`, `tests/test_cc_final.py`); a background job refreshes the cache every 30 minutes from 07:00 to 22:00. The static `dashboard.py` is left without Books: the Command Centre replaces it (R21).
 
 **Why:** `scripts/reports/dashboard.py` (`gather()`) currently builds every payment state from `check_payments.assess()` against the Starling feed only. Since Books is now the system of record for invoice status (the owner confirms bank-feed matches in Books, per the Zoho Books design's flow B), the dashboard can show a stale or disagreeing picture next to what the owner sees in Books. The Monday report already gets a Books line for this (design §"Flows", flow E, section 11: receivables, overdue invoices, unpaid bills, disagreements with the Starling check); the dashboard never picked up the equivalent.
 
@@ -351,9 +351,9 @@ print('duplicate price-ladder constructions:', len(dupes))  # → 0
 
 ---
 
-## R18 — Automation Phase 4 is now mostly covered by Zoho Books  [P3] [done 2026-09-28 script side; UI wiring pending]
+## R18 — Automation Phase 4 is now mostly covered by Zoho Books  [P3] [done 2026-09-28 — Command Centre phase 6]
 
-**Status:** Phase 4 marked done-by-Books in the business-automation spec. Per-event margin: `singer_invoices.py link <message id> <booking ref>` (and an automatic link at scan/rescan when the invoice's date matches exactly one ledger booking) writes a `booking_ref` column; `singer_invoices.py margins` and the pure `margins(ledger_rows, singer_rows)` (also `command_centre/books_cache.margins()`) give fee, singer costs, margin and margin % per booking. UI wiring pending.
+**Status:** Phase 4 marked done-by-Books in the business-automation spec. Per-event margin: `singer_invoices.py link <message id> <booking ref>` (and an automatic link at scan/rescan when the invoice's date matches exactly one ledger booking) writes a `booking_ref` column; `singer_invoices.py margins` and the pure `margins(ledger_rows, singer_rows)` (also `command_centre/books_cache.margins()`) give fee, singer costs, margin and margin % per booking. **Done (phase 6):** the Bookings list and each timeline show fee, singer costs, margin and margin %, the timeline lists the linked singers (first names), and Money shows the season total from `season_start` (`tests/test_cc_final.py`).
 
 **Why:** `docs/superpowers/specs/2026-09-28-zoho-books-design.md` states plainly that it "replaces most of [the business-automation spec's] Phase 4 (per-event margin, bookkeeping export), which Books now provides": Books' own reports give the monthly bookkeeping export (feature 15 of the business-automation spec) for free once invoices and bills live there, so that half of Phase 4 needs no bespoke script. **Feature 14, per-event margin, is not covered yet**: Books has no native concept of "this booking's client invoice minus this booking's singer bills", because that link runs through the booking ref, which lives in the private ledger and in bill/invoice notes, not as a first-class Books field.
 
@@ -382,3 +382,18 @@ print('duplicate price-ladder constructions:', len(dupes))  # → 0
 **Do:** nothing until the owner asks for a back-fill and gives a start date. If asked, write a one-off script that scans Zoho Mail threads before 28 Sep 2026 for enquiry-shaped messages, seeds `enquiries.csv` rows at whatever status the thread history shows (quoted/confirmed/lost), and never re-drafts a reply for a thread that already got a human one.
 
 **Skills:** none yet
+
+---
+
+## R21 — Command Centre loose ends after phase 6  [P4]
+
+**Why:** phase 6 (`docs/superpowers/plans/2026-09-28-command-centre.md`) wired Books, margins, the diary, the drafts inbox, the quote calculator and the background refresh. These pieces were left out on purpose and are recorded here so they aren't lost.
+
+**Do (each is small and independent):**
+- *Drafts from Zoho itself.* The inbox lists only the drafts the assistant records (`cc_sync.py drafts-put`). A read-only Zoho Mail drafts listing (folder 6133510000000008016) in the daily pass would also catch drafts saved by hand and drop ones deleted in Zoho. Needs a tool on the zoho-mail read allowlist and a `drafts-sync` writer that replaces rather than merges.
+- *Per-draft "open in Zoho".* The page links to the Drafts folder (`https://mail.zoho.com/zm/#mail/folder/drafts`, the .com data centre). A per-message link needs Zoho's message URL form confirmed on the owner's account first.
+- *Static dashboard.* `scripts/reports/dashboard.py` shows no Books panel or margins. Only worth doing if the owner still opens the static page; otherwise retire it once the Command Centre has run a month.
+- *Unlinked singer invoices.* Margins count only invoices linked to a booking; `singer_invoices.py margins` prints the unlinked total, the pages don't. Add an "unlinked: n, £x" line to Money's season margin.
+- *Quote extras.* The calculator states the Christmas Eve/Day premium and leaves longer programmes and keyboard hire "quoted upfront", as the pages do; it never prices them.
+
+**Skills:** none

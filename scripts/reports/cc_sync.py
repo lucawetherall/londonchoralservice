@@ -5,6 +5,7 @@
     .venv/bin/python scripts/reports/cc_sync.py calendar-put '<one-line JSON list of events>'
     .venv/bin/python scripts/reports/cc_sync.py calendar-put --file <path inside ~/lcs-private>
     <JSON on stdin> | .venv/bin/python scripts/reports/cc_sync.py calendar-put
+    .venv/bin/python scripts/reports/cc_sync.py drafts-put '<one-line JSON object, or a list of them>'
 
 books reads Zoho Books (organization_id 941014440) through lcs_mcp, which allows only the read tools on the Books
 guard's READ_ALLOW list (ZohoBooks_list_invoices on zoho-books-invoices, ZohoBooks_list_bills on zoho-books), and
@@ -22,12 +23,21 @@ command_centre/sources.calendar_cache() reads. The scheduled prompt passes the J
 Write tool is denied in ~/lcs-private/command-centre/, so --file (any regular file inside ~/lcs-private, never
 through a symlink) and stdin are there for hand use.
 
-Both caches are written atomically (a temp file in the same folder, then os.replace) at mode 600, in folders made
+drafts-put records the drafts the scheduled assistant saved in Zoho Mail, for the Command Centre's drafts inbox:
+one JSON object or a list of at most 50, each exactly {thread_id, kind, first_name, subject, created}: a thread id
+of 1 to 40 letters and digits, a kind from DRAFT_KINDS, one capitalised first name (cc_event.py's rule), a subject
+of at most 80 characters with no control character, and the created date as YYYY-MM-DD. Anything else refuses the
+whole input and writes nothing. The drafts are merged into ~/lcs-private/command-centre/cache/drafts.json (a new
+one with the same thread and kind replaces the old), newest first, at most 500 kept, under an flock. The owner's
+sent/discarded marks live elsewhere (drafts-marks.json, written by the app), so a re-recorded draft keeps its mark.
+
+All caches are written atomically (a temp file in the same folder, then os.replace) at mode 600, in folders made
 mode 700. LCS_PRIVATE_DIR moves the private tree (the tests use a temp dir).
 """
 
 import argparse
 import datetime
+import fcntl
 import json
 import math
 import os
@@ -53,6 +63,12 @@ DATETIME_RE = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d{1,6})?
 HONORIFICS = {"dr", "mr", "mrs", "ms", "miss", "mx", "prof", "rev", "revd", "the"}
 NOT_OPEN_INVOICE = {"draft", "void", "paid"}
 NOT_OPEN_BILL = {"void", "paid"}
+DRAFT_KINDS = ("reply", "confirmation", "holding", "follow-up", "deposit-reminder", "balance-reminder", "receipt",
+               "review", "paid-thanks", "other")
+DRAFT_KEYS = {"thread_id", "kind", "first_name", "subject", "created"}
+DRAFTS_PER_CALL, DRAFTS_KEPT, DRAFT_SUBJECT_MAX = 50, 500, 80
+THREAD_RE = re.compile(r"^[A-Za-z0-9]{1,40}$")
+FIRST_RE = re.compile(r"^[A-Z][a-z'’-]{1,20}$")  # cc_event.py's first-name rule
 
 
 def private_dir():
@@ -295,6 +311,94 @@ def cmd_calendar_put(text=None, file=None, stdin=None):
     return 0
 
 
+# ---------------------------------------------------------------- drafts
+
+
+def validate_drafts(value):
+    """The checked draft list, or Refused naming the first problem."""
+    items = value if isinstance(value, list) else [value]
+    if not items:
+        raise Refused("no drafts given")
+    if len(items) > DRAFTS_PER_CALL:
+        raise Refused(f"more than {DRAFTS_PER_CALL} drafts")
+    out = []
+    for i, d in enumerate(items):
+        where = f"draft {i}"
+        if not isinstance(d, dict) or set(d) != DRAFT_KEYS:
+            raise Refused(f"{where} must have exactly thread_id, kind, first_name, subject and created")
+        if not isinstance(d["thread_id"], str) or not THREAD_RE.fullmatch(d["thread_id"]):
+            raise Refused(f"{where} thread_id must be 1 to 40 letters and digits")
+        if d["kind"] not in DRAFT_KINDS:
+            raise Refused(f"{where} kind must be one of {', '.join(DRAFT_KINDS)}")
+        if not isinstance(d["first_name"], str) or not FIRST_RE.fullmatch(d["first_name"]):
+            raise Refused(f"{where} first_name must be one capitalised first name")
+        subject = _text(d["subject"], DRAFT_SUBJECT_MAX, f"{where} subject", blank_ok=False)
+        if not isinstance(d["created"], str) or not DATE_RE.fullmatch(d["created"]):
+            raise Refused(f"{where} created must be YYYY-MM-DD")
+        try:
+            datetime.date.fromisoformat(d["created"])
+        except ValueError:
+            raise Refused(f"{where} created is not a real date") from None
+        out.append({"thread_id": d["thread_id"], "kind": d["kind"], "first_name": d["first_name"],
+                    "subject": subject, "created": d["created"]})
+    return out
+
+
+def merge_drafts(old, new):
+    """`new` over `old` (the same thread and kind replaces), newest first, at most DRAFTS_KEPT."""
+    by = {}
+    for d in (old if isinstance(old, list) else []):
+        if isinstance(d, dict) and isinstance(d.get("thread_id"), str) and isinstance(d.get("kind"), str):
+            by[(d["thread_id"], d["kind"])] = d
+    for d in new:
+        by[(d["thread_id"], d["kind"])] = d
+    return sorted(by.values(), key=lambda d: (str(d.get("created", "")), d["thread_id"], d["kind"]),
+                  reverse=True)[:DRAFTS_KEPT]
+
+
+def make_private_dirs(path):
+    """The folders above `path`, each made mode 700 if missing."""
+    missing = []
+    d = Path(path).parent
+    while not d.exists():
+        missing.append(d)
+        d = d.parent
+    for d in reversed(missing):
+        d.mkdir(mode=0o700, exist_ok=True)
+
+
+def cmd_drafts_put(text):
+    try:
+        raw = text.encode("utf-8")
+        if len(raw) > MAX_INPUT:
+            raise Refused(f"the drafts input is over {MAX_INPUT} bytes")
+        try:
+            value = json.loads(raw.decode("utf-8"))
+        except (UnicodeDecodeError, ValueError):
+            raise Refused("the drafts input isn't valid JSON") from None
+        new = validate_drafts(value)
+    except Refused as e:
+        print(f"drafts: refused ({e}); nothing written")
+        return 2
+    path = cache_dir() / "drafts.json"
+    lock = cache_dir() / ".drafts.lock"
+    make_private_dirs(lock)
+    fd = os.open(lock, os.O_RDWR | os.O_CREAT | os.O_NOFOLLOW, 0o600)
+    try:
+        fcntl.flock(fd, fcntl.LOCK_EX)  # one writer at a time: the read, merge and write happen under it
+        try:
+            with open(path, encoding="utf-8") as f:
+                old = json.load(f)
+        except (FileNotFoundError, ValueError):
+            old = []
+        merged = merge_drafts(old, new)
+        write_private_json(path, merged)
+    finally:
+        os.close(fd)
+    print(f"drafts: {len(new)} recorded, {len(merged)} in the inbox")
+    return 0
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description="Command Centre cache writers")
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -302,9 +406,13 @@ def main(argv=None):
     c = sub.add_parser("calendar-put", help="cache the diary from a JSON list (argument, --file or stdin)")
     c.add_argument("json", nargs="?", help="the JSON list itself, as one argument")
     c.add_argument("--file", help="a JSON file inside ~/lcs-private")
+    d = sub.add_parser("drafts-put", help="record drafts saved in Zoho Mail (one JSON object or a list)")
+    d.add_argument("json", help="the JSON itself, as one argument")
     args = ap.parse_args(argv)
     if args.cmd == "books":
         return cmd_books()
+    if args.cmd == "drafts-put":
+        return cmd_drafts_put(args.json)
     if args.json is not None and args.file is not None:
         ap.error("calendar-put: give the JSON or --file, not both")
     return cmd_calendar_put(args.json, args.file)
