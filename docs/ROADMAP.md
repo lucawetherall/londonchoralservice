@@ -254,7 +254,7 @@ grep -rn 'over 150\|150 auditioned' --include='*.html' --include='*.txt' .   # e
 
 ---
 
-## R12 — Testimonial pool reused across geographically mismatched pages  [P2] [DECISION-NEEDED]
+## R12 — Testimonial pool reused across geographically mismatched pages  [P2] [done 2026-09-28 — owner decision: keep the place names; pronouns corrected]
 
 **Update 2026-09-28:** the owner confirmed the "Pamela, Richmond" and "Helen, Wimbledon" quotes are about him, so "she" is now "he" on all 13 pages. Still open: whether to strip place names from attributions that don't match the page.
 
@@ -397,7 +397,7 @@ print('duplicate price-ladder constructions:', len(dupes))  # → 0
 - *Static dashboard.* `scripts/reports/dashboard.py` has a Books panel (receivables, overdue, unpaid bills, drafts not yet sent, overdue invoice numbers), the season margin and unlinked singer invoices, reusing `command_centre/books_cache.py` read-only, exactly as R17 said it would. "Books not synced yet." when the cache doesn't exist. Tests: `tests/test_dashboard.py`.
 
 **Left out, on purpose:**
-- *Per-draft "open in Zoho".* The page still links only to the Drafts folder (`https://mail.zoho.com/zm/#mail/folder/drafts`, the .com data centre); a per-message link needs Zoho's message URL form confirmed on the owner's account first, which is a manual check, not something to guess at from a script.
+- *Per-draft "open in Zoho".* **Won't do (owner, 2026-09-28): Zoho doesn't expose a URL for a single draft.** The page still links only to the Drafts folder (`https://mail.zoho.com/zm/#mail/folder/drafts`, the .com data centre); a per-message link needs Zoho's message URL form confirmed on the owner's account first, which is a manual check, not something to guess at from a script.
 - *Quote extras.* The calculator still states the Christmas Eve/Day premium and leaves longer programmes and keyboard hire "quoted upfront", as the pages do; it never prices them. Pricing those needs the owner's rules for what they cost, not just wiring.
 
 **Skills:** none
@@ -413,9 +413,9 @@ Inbound links from the main site: `services.html` gets a note after the ensemble
 **Deliberately not done, and why:**
 - **No gram prices on `pricing.html`.** A section was added there (`a3dad63`) and reverted by owner decision (`10abc0d`): barbershop is sold separately from the choral service and its bookings are almost always a quartet, so listing its rates in the choral price table works against the separation the mini-site exists to maintain. `barbershop-grams/index.html` is the source of truth for the five gram prices; `pricing.html` stays the source of truth for choral prices. The `CLAUDE.md` convention was rewritten to carve this out.
 - **No nav entry.** The original plan (and the task's own first draft) added a Services-dropdown item. It shipped in `e4ebdad`, then was **removed by owner decision** in `28e0e83`: `partials/nav.html` expands into every page via the build, so a dropdown item for a birthday-gram product appeared on `funerals.html`, every funeral music guide, all three `for-*.html` B2B pages, and `compare/london-funeral-singers.html` — a birthday-gift product surfaced to a bereaved visitor or a corporate buyer mid-funeral-enquiry. The spec's "dropdown only, never on funeral pages" constraint is unsatisfiable with one shared nav partial. The spec and plan were corrected in `c757d31` to record this rather than leave the stale intent standing.
-- Comparison page (`compare/barbershopogram.html`) and a barbershop listen page — Phase 2, gated on a barbershop recording existing (`MANUAL-ACTIONS-REQUIRED.md` §28.1).
+- Comparison page (`compare/barbershopogram.html`) and a barbershop listen page — Phase 2, gated on a barbershop recording existing (`MANUAL-ACTIONS-REQUIRED.md` §30.1).
 - Per-occasion pages — Phase 3, gated on Search Console evidence after a season live.
-- Ads, directories, partnerships, and PR — Phase 4, human-only (`MANUAL-ACTIONS-REQUIRED.md` §28).
+- Ads, directories, partnerships, and PR — Phase 4, human-only (`MANUAL-ACTIONS-REQUIRED.md` §30).
 
 **Spec:** `docs/superpowers/specs/2026-09-03-barbershop-grams-design.md`
 **Plan:** `docs/superpowers/plans/2026-09-03-barbershop-grams.md`

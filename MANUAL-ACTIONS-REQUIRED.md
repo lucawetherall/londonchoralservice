@@ -338,6 +338,8 @@ What to do:
 
 ## 18. Zoho Books set-up
 
+**Changed 2026-09-29:** invoices now reach clients as a PDF attached to your own email from Zoho Mail (made from your private template, which already carries the bank details), not from Books. Only points 1 (manual numbering) and 4 (VAT status) still matter; 2, 3, 5 and 6 are no longer needed, because Books emails nobody.
+
 A handful of one-off settings need choosing before invoices go out through Books. None of these can be set by Claude: the write tools available to Claude do not cover organisation settings, and the bank details point below is deliberately blocked in code.
 
 What to do:
@@ -353,7 +355,7 @@ What to do:
 
 ## 19. Connect Starling to Zoho Books
 
-Books → Banking → Add bank, and connect the Alma Consort Starling account. Once connected, confirm the bank-feed matches against each invoice yourself in Books as payments come in. Claude never records a payment; it only reads invoice and bill status.
+**Not needed (2026-09-29):** the free Books plan has no bank feeds. The daily pass records confident Starling payments against their Books invoices itself (the read-only Starling check), and anything uncertain comes to you on the Monday "needs a hand check" line.
 
 ---
 
@@ -367,7 +369,7 @@ What to do:
 
 1. Open the file (or ask Claude to summarise it) and check the seven bookings look right.
 2. Tell Claude, in chat, "approve the Books import". It will then create one draft invoice per booking in Books, dated at each booking's own invoice date.
-3. In Books, mark each of those invoices as sent and match its payment against the Starling bank feed, the same way you will for new bookings going forward.
+3. In Books, mark each of those invoices as sent and record its payments. (Done 28 Sep: Claude marked them sent, with no email, and recorded the Starling payments. From 29 Sep the free plan has no bank feed, and the daily pass records confident payments itself.)
 
 ---
 
@@ -427,7 +429,31 @@ If you want those older threads chased too, tell Claude you want a back-fill and
 
 ---
 
-## 27. Re-anchor the Google Business Profile to London, 2026-09-03
+## 27. Move Zoho Books to the free plan
+
+Decision 2026-09-29: no Premium. Before the trial ends, in Books → Settings → Subscription (or the trial banner), choose the **Free** plan. It keeps what the automation uses: invoices, contacts, customer payments and API access (1,000 calls a day). It has no bills and no bank feeds, so the singer clerk no longer makes bills (singer invoices stay in the private tracker) and the daily pass records client payments itself. Bills made during the trial may become read-only; nothing depends on them.
+
+Also check, while you're in Books: Settings → Reminders → **automated payment reminders off**. The daily pass marks an invoice "sent" once your email carrying it has gone; with reminders on, Books would start emailing clients itself about overdue instalments, on top of the assistant's own reminder drafts. The free plan is for businesses under Zoho's revenue limit for the UK; check the figure on the plan page.
+
+---
+
+## 28. Zoho app password for drafts with attachments
+
+The assistant saves each confirmation email with the invoice PDF and booking confirmation already attached, straight into Zoho Drafts over IMAP. It can only add drafts; it cannot send. It needs, once:
+
+1. Zoho Mail → Settings → Mail Accounts → office@londonchoralservice.com → **IMAP Access: on**. (IMAP needs Mail Lite or above. On Forever Free the assistant falls back to a plain draft and tells you which two files to attach from iCloud Drive/LCS-invoices.)
+2. accounts.zoho.com → Security → **App Passwords** → generate one called "LCS drafts", and copy it.
+3. In Terminal, store it in the Keychain. It asks for the password: paste it there, never into a chat.
+   ```bash
+   security add-generic-password -s lcs-zoho-imap -a office@londonchoralservice.com -w
+   ```
+4. Tell Claude "IMAP password added". Claude runs `imap_draft.py check` (sign-in, folders, and that iCloud Drive/LCS-invoices is writable; if macOS asks whether Claude may use iCloud Drive, allow it) and `imap_draft.py test`: a test draft to luca@almaconsort.com, with a small PDF attached, appears in Drafts. Open it to check the attachment shows and the draft can be edited, then delete it.
+
+Invoices and booking confirmations are saved in iCloud Drive → LCS-invoices → "<ref> - <client>".
+
+---
+
+## 29. Re-anchor the Google Business Profile to London, 2026-09-03
 
 Requested by the owner. The site's `LocalBusiness` schema in `index.html` already gives London (N1 7GU, Greater London); the Maps listing is anchored "The London Choral Service, Maidenhead" (§1). The two disagree, and the Barbershop Grams launch (`docs/superpowers/specs/2026-09-03-barbershop-grams-design.md`) needs "barbershop quartet London" local-pack visibility. This is a dashboard edit; nothing in the repo can make it.
 
@@ -445,11 +471,11 @@ Afterwards:
 
 ---
 
-## 28. Barbershop Grams launch — owner actions, 2026-09-03
+## 30. Barbershop Grams launch — owner actions, 2026-09-03
 
-Spec: `docs/superpowers/specs/2026-09-03-barbershop-grams-design.md` §Go-to-market. Plan: `docs/superpowers/plans/2026-09-03-barbershop-grams.md`. The pages ship without these, but the product does not really launch until 28.1 and 28.2 are done.
+Spec: `docs/superpowers/specs/2026-09-03-barbershop-grams-design.md` §Go-to-market. Plan: `docs/superpowers/plans/2026-09-03-barbershop-grams.md`. The pages ship without these, but the product does not really launch until 30.1 and 30.2 are done.
 
-**28.1 — Record a barbershop demo. This is the critical path.** Happy Birthday in four parts plus one standard, filmed, two to three minutes. Two things depend on it and neither can proceed without it:
+**30.1 — Record a barbershop demo. This is the critical path.** Happy Birthday in four parts plus one standard, filmed, two to three minutes. Two things depend on it and neither can proceed without it:
 
 - The **comparison page** (`compare/barbershopogram.html`, plan Task 14) is deliberately gated on it. A page whose job is to beat a competitor matched on price, whose only proof is a funeral hymn, would hurt more than no page.
 - The **hub page has no proof of sound at all** today. A quality review put this plainly: a buyer with our tab and the competitor's tab open, at the identical £600, currently has no way to hear what we sound like. The competitor has a YouTube channel and video on their homepage.
@@ -458,16 +484,16 @@ Deliberately not worked around: `listen.html` is hymns and service music, so lin
 
 Once it exists, add the YouTube id, upload date and duration to `data/seo-fix-discovered-urls.yml` (never invent these — see §1) and the gated tasks can run.
 
-**28.2 — Confirm the repertoire list. DONE 2026-09-04.** The owner confirmed the drafted 43-title list on `barbershop-grams/repertoire.html` is accurate for what the quartet sings, so the page ships indexed and in the sitemap. Re-check it if the line-up or the arrangements change.
+**30.2 — Confirm the repertoire list. DONE 2026-09-04.** The owner confirmed the drafted 43-title list on `barbershop-grams/repertoire.html` is accurate for what the quartet sings, so the page ships indexed and in the sitemap. Re-check it if the line-up or the arrangements change.
 
 Arrangement rights for the in-copyright titles on that list, and for the "any song from £200" offer, were raised and the owner confirmed they are already handled. No action outstanding.
 
-**28.3 — Seed one or two grams.** Colleagues or friends. Produces real footage, the first honest client quote, and a rehearsal of the logistics against reality before a paying customer meets them.
+**30.3 — Seed one or two grams.** Colleagues or friends. Produces real footage, the first honest client quote, and a rehearsal of the logistics against reality before a paying customer meets them.
 
-**28.4 — Consent wording for filming.** The buyer confirms on enquiry whether we may film; the recipient is asked *after* the surprise, before anything is posted. Belongs in the FAQ and the booking agreement. Short-form video of surprise reactions is the product's strongest organic channel, and it cannot run without a clean consent routine.
+**30.4 — Consent wording for filming.** The buyer confirms on enquiry whether we may film; the recipient is asked *after* the surprise, before anything is posted. Belongs in the FAQ and the booking agreement. Short-form video of surprise reactions is the product's strongest organic channel, and it cannot run without a clean consent routine.
 
-**28.5 — `assets/og-barbershop-grams.png`. DONE 2026-09-04.** Made as a typographic card in the barbershop register — the site's own Cormorant Garamond and Source Serif 4, the mini-site palette, carrying the product name, the one-line description, and £600 / Greater London / 48 hours' notice. Both gram pages point at it. Replace it if you get a photograph or a still from the recording (28.1); a real image of four singers mid-surprise would outperform a typographic card, particularly on WhatsApp, where grams get shared person to person.
+**30.5 — `assets/og-barbershop-grams.png`. DONE 2026-09-04.** Made as a typographic card in the barbershop register — the site's own Cormorant Garamond and Source Serif 4, the mini-site palette, carrying the product name, the one-line description, and £600 / Greater London / 48 hours' notice. Both gram pages point at it. Replace it if you get a photograph or a still from the recording (30.1); a real image of four singers mid-surprise would outperform a typographic card, particularly on WhatsApp, where grams get shared person to person.
 
-**28.6 — Directory listings.** Last Minute Musicians, Add to Event, Poptop, Encore, Bark. This is where "barbershop quartet hire" buyers who never reach Google's organic results go. Extend `docs/off-site-listings-pack.md` with a Barbershop Grams profile: the £600 figure, the 48-hour notice line, the repertoire link. House rules apply off-site too — no roster-scale claims, no VAT claims, no star ratings, no incentivised reviews.
+**30.6 — Directory listings.** Last Minute Musicians, Add to Event, Poptop, Encore, Bark. This is where "barbershop quartet hire" buyers who never reach Google's organic results go. Extend `docs/off-site-listings-pack.md` with a Barbershop Grams profile: the £600 figure, the 48-hour notice line, the repertoire link. House rules apply off-site too — no roster-scale claims, no VAT claims, no star ratings, no incentivised reviews.
 
-**28.7 — Ads.** Held until 28.1 and 28.3 are done; see the spec's §Go-to-market for the five campaigns. Before any spend, confirm the WhatsApp-click conversion actually fires — gram enquiries arrive by WhatsApp more than by form, and the gram links carry a distinct `?text=` pre-fill so they can be told apart in GA4.
+**30.7 — Ads.** Held until 30.1 and 30.3 are done; see the spec's §Go-to-market for the five campaigns. Before any spend, confirm the WhatsApp-click conversion actually fires — gram enquiries arrive by WhatsApp more than by form, and the gram links carry a distinct `?text=` pre-fill so they can be told apart in GA4.

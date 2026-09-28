@@ -250,6 +250,7 @@ def books_summary(cache):
         when = None
     invoices = [i for i in cache.get("invoices") or [] if isinstance(i, dict)]
     return {"totals": cache.get("totals") or {}, "generated_at": when,
+            "bills_read": cache.get("bills_read") is not False,  # false on the free Books plan (no bills)
             "drafts": sorted(str(i.get("number", "")) for i in invoices if i.get("status") == "draft"),
             "overdue": sorted(str(i.get("number", "")) for i in invoices
                               if i.get("status") == "overdue" and float(i.get("balance") or 0) > 0)}

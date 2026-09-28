@@ -34,6 +34,9 @@ NEVER = [
     f"{PY} scripts/ads/set_budget.py 24295921372 4.50 --apply",
     f"{PY} scripts/ads/set_budget.py 24295921372 4.50 --validate-only",
     f"{PY} scripts/bookings/singer_invoices.py confirm X --expect-fp a1b2c3d4e5f60718",
+    # imap_draft.py: the assistant only saves drafts; the sign-in check and the test draft are the owner's
+    f"{PY} scripts/bookings/imap_draft.py check",
+    f"{PY} scripts/bookings/imap_draft.py test",
 ]
 # Owner-only forms the allowlist can't exclude (a glob can't forbid a flag): `--note *` and `--reminded *` match
 # them, so check_payments.py itself refuses --owner without the Command Centre's one-time nonce on a pipe
