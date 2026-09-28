@@ -26,7 +26,13 @@
       "Bash(.venv/bin/python scripts/bookings/check_payments.py)",
       "Bash(.venv/bin/python scripts/bookings/check_payments.py --apply)",
       "Bash(.venv/bin/python scripts/bookings/check_payments.py --selftest)",
-      "Bash(.venv/bin/python scripts/bookings/check_payments.py --reminded *)"
+      "Bash(.venv/bin/python scripts/bookings/check_payments.py --reminded *)",
+      "Bash(.venv/bin/python scripts/bookings/check_payments.py --apply --json)",
+      "Bash(.venv/bin/python scripts/bookings/check_payments.py --note *)",
+      "Bash(.venv/bin/python scripts/bookings/singer_invoices.py scan *)",
+      "Bash(.venv/bin/python scripts/bookings/singer_invoices.py paid --apply)",
+      "Bash(.venv/bin/python scripts/bookings/singer_invoices.py status)",
+      "Bash(.venv/bin/python scripts/bookings/singer_invoices.py thanked *)"
     ],
     "deny": [
       "Bash(security find-generic-password *)",
@@ -41,7 +47,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/zoho_guard.py\"",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/zoho_guard.py\" || exit 2",
             "timeout": 10
           }
         ]

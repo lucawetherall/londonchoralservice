@@ -23,15 +23,18 @@ import os
 import sys
 from pathlib import Path
 
-PRIVATE = Path.home() / "lcs-private"
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import lcs_money as lm  # noqa: E402
+
+PRIVATE = lm.PRIVATE  # $LCS_PRIVATE_DIR (default ~/lcs-private), like the ledger
 STATE = PRIVATE / "assistant-state.json"
 STYLE = PRIVATE / "email-style.md"
-LEDGER = Path(os.environ.get("LCS_BOOKINGS_CSV", PRIVATE / "bookings.csv"))
+LEDGER = lm.LEDGER  # $LCS_BOOKINGS_CSV, else bookings.csv in $LCS_PRIVATE_DIR (default ~/lcs-private)
 INVOICES = PRIVATE / "invoices"
 
 
 def private_write(path, text):
-    PRIVATE.mkdir(mode=0o700, exist_ok=True)
+    PRIVATE.mkdir(mode=0o700, parents=True, exist_ok=True)
     path.write_text(text)
     os.chmod(path, 0o600)
 
@@ -73,17 +76,20 @@ def main():
         row = json.loads(args[0])
         if not LEDGER.exists():
             raise SystemExit("no ledger yet: run scripts/ads/upload_bookings.py once to create it")
-        with open(LEDGER, newline="") as f:
-            reader = csv.DictReader(f)
-            cols, rows = reader.fieldnames, list(reader)
-        unknown = set(row) - set(cols)
-        if unknown:
-            raise SystemExit(f"unknown columns: {', '.join(sorted(unknown))}")
-        if not row.get("booking_ref") or any(r["booking_ref"] == row["booking_ref"] for r in rows):
-            raise SystemExit("missing or duplicate booking_ref; nothing written")
-        with open(LEDGER, "a", newline="") as f:
-            csv.DictWriter(f, fieldnames=cols).writerow({c: row.get(c, "") for c in cols})
-        os.chmod(LEDGER, 0o600)
+        # The same lock as check_payments and upload_bookings, around the whole read-check-append.
+        # lm.ledger_lock is not re-entrant: never nest it or call another ledger writer inside it.
+        with lm.ledger_lock(LEDGER):
+            with open(LEDGER, newline="") as f:
+                reader = csv.DictReader(f)
+                cols, rows = reader.fieldnames, list(reader)
+            unknown = set(row) - set(cols)
+            if unknown:
+                raise SystemExit(f"unknown columns: {', '.join(sorted(unknown))}")
+            if not row.get("booking_ref") or any(r["booking_ref"] == row["booking_ref"] for r in rows):
+                raise SystemExit("missing or duplicate booking_ref; nothing written")
+            with open(LEDGER, "a", newline="") as f:
+                csv.DictWriter(f, fieldnames=cols).writerow({c: row.get(c, "") for c in cols})
+            os.chmod(LEDGER, 0o600)
         print(f"ledger: added {row['booking_ref']}")
     else:
         raise SystemExit(__doc__)

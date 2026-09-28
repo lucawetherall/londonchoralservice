@@ -12,6 +12,7 @@ Sections:
   7. Search Console coverage: sitemap freshness, index status of every ad landing page
   8. Tracking wiring: live tags and labels, Ads account settings, GA4 key events and links
   9. Bookings ledger: counts and totals only (no personal data)
+  10. Money: client receipts, deposits overdue, balances due, singer invoices (totals only)
 
 Uses google-ads.yaml for Ads and Application Default Credentials (the
 analytics.readonly and webmasters.readonly scopes) for GA4 and Search Console.
@@ -25,6 +26,7 @@ import argparse
 import datetime
 import os
 import re
+import sys
 from collections import defaultdict
 
 import csv
@@ -45,7 +47,8 @@ LEAD_EVENTS = ["generate_lead", "contact_click", "contact_message", "form_error"
 MONEY_TERMS = re.compile(r"funeral|wedding|carol|choir|choral", re.I)
 SITE = "https://londonchoralservice.com"
 REPO = Path(__file__).resolve().parents[2]
-LEDGER = Path(os.environ.get("LCS_BOOKINGS_CSV", Path.home() / "lcs-private" / "bookings.csv"))
+# the same ledger as scripts/bookings/lcs_money.py, so sections 9 and 10 always agree
+LEDGER = Path(os.environ.get("LCS_BOOKINGS_CSV", Path(os.environ.get("LCS_PRIVATE_DIR", Path.home() / "lcs-private")) / "bookings.csv"))
 EXPECTED_KEY_EVENTS = {"generate_lead", "contact_message"}
 
 
@@ -348,6 +351,30 @@ def ledger_section():
     print("   by occasion: " + " · ".join(f"{k} {n} (£{v:,.0f})" for k, (n, v) in sorted(by.items())))
 
 
+def money_section():
+    print("\n== 10. Money (totals and invoice numbers only)")
+    try:
+        sys.path.insert(0, str(REPO / "scripts" / "bookings"))
+        import check_payments
+        import lcs_money
+        import money_report
+        import singer_invoices
+        today = datetime.date.today()
+        tok = lcs_money.keychain_token()
+        if not tok:
+            print("   no Starling token in the Keychain: money check skipped")
+            return
+        client = lcs_money.StarlingReadOnly(tok)
+        rows = lcs_money.read_csv(check_payments.LEDGER)
+        assessments = [a for _, _, a in check_payments.collect(client, rows, today)]
+        receipts = check_payments.received_since(client, rows, today - datetime.timedelta(days=6), today)  # today and six days before
+        singer = singer_invoices.summary(lcs_money.read_csv(singer_invoices.STORE), today)
+        for line in money_report.summary_lines(assessments, receipts, singer, today):
+            print("   " + line)
+    except Exception as e:  # type name only: the message could carry ledger or bank data
+        print(f"   money check failed: {type(e).__name__}")
+
+
 def main():
     p = argparse.ArgumentParser()
     p.add_argument("--since", type=datetime.date.fromisoformat, default=datetime.date(2026, 9, 26))
@@ -360,6 +387,7 @@ def main():
     coverage_section(s, landing)
     wiring_section(s, ads_settings)
     ledger_section()
+    money_section()
 
 
 if __name__ == "__main__":
