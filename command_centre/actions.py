@@ -1290,15 +1290,19 @@ def books_approval_path():
 
 
 def books_status():
-    """{"dry_run": bool, "approved_at": str or None} for Today."""
-    approved = None
+    """{"dry_run": bool, "approved_at": str or None, "dry_run_sha256": str or None} for Today. The sha256 is
+    the approval record's own fingerprint of the dry run (not the dry run's content), so Today's handoff
+    prompt can name it without carrying any record's own text (client names, amounts, refs)."""
+    approved = sha = None
     try:
         with open(books_approval_path(), encoding="utf-8") as f:
-            approved = str(json.load(f).get("approved_at") or "") or None
+            record = json.load(f)
+        approved = str(record.get("approved_at") or "") or None
+        sha = str(record.get("dry_run_sha256") or "") or None
     except (OSError, ValueError, AttributeError):
-        approved = None
+        approved = sha = None
     path = books_dry_run()
-    return {"dry_run": path.is_file() and not path.is_symlink(), "approved_at": approved}
+    return {"dry_run": path.is_file() and not path.is_symlink(), "approved_at": approved, "dry_run_sha256": sha}
 
 
 def _books_validate(raw):
@@ -1359,9 +1363,10 @@ def _books_preview(c):
     total = f"£{c['total']:,.2f} in total" if c["total"] is not None else "no total (some entries carry no amount)"
     span = f"first {c['first_ref']}, last {c['last_ref']}" if c["entries"] else "no entries"
     return (f"Approve the {BOOKS_YEAR} Books import: the dry run at ~/lcs-private/books-import-{BOOKS_YEAR}.json "
-            f"({c['entries']} entries, {total}; {span}; sha256 {c['sha256'][:16]}). This writes an approval record only; the chat "
-            f"(phase 4) or a session you start creates the draft invoices in Books, and only while the dry run is "
-            f"unchanged. The app never calls Books.\n"
+            f"({c['entries']} entries, {total}; {span}; sha256 {c['sha256'][:16]}). This writes an approval record "
+            f"only; a Claude Code Remote Control session (start it from Today's handoff prompt, once approved) "
+            f"creates the draft invoices in Books, and only while the dry run is unchanged. The app never calls "
+            f"Books.\n"
             f"Writes: ~/lcs-private/command-centre/approvals/books-import-{BOOKS_YEAR}.json")
 
 

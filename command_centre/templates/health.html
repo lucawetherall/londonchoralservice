@@ -49,7 +49,16 @@
     {% endfor %}
   </ul>
   {% elif tasks.ok %}<p class="muted">No scheduled tasks found.</p>{% endif %}
-  <p class="muted">Starting a task from here arrives with the chat (phase 4).</p>
+  <p class="muted">There's no run-now trigger in this app. Use <strong>Run now</strong> on the task in the Claude app (Routines).</p>
+</section>
+
+<section class="card">
+  <h2>Handoffs</h2>
+  <p class="muted">Copy a prompt for Claude Code Remote Control on your phone. Nothing runs from this page.</p>
+  <ul class="lines">
+    <li>{{ m.copy_button(handoffs.whats_owed, "What's owed this week?") }}</li>
+    <li>{{ m.copy_button(handoffs.summarise_today, "Summarise today's business") }}</li>
+  </ul>
 </section>
 
 <section class="card">

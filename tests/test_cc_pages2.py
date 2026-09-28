@@ -318,6 +318,20 @@ def test_enquiries_board_followups_conversion_sources():
         assert c.get("/enquiries/bad%20id", headers=HEADERS).status_code == 404
 
 
+def test_enquiries_offers_a_reply_handoff_picker():
+    # No in-app chat: each enquiry needing a follow-up gets an option in a "Draft a reply to" picker, built
+    # server-side from the enquiries the pipeline already flagged as due — never a free-text thread id.
+    with Patched():
+        c = make(FakeBank())
+        out = page(c, "/enquiries")
+        assert '<select id="reply-handoff-select"' in out
+        opt = re.search(r'<option value="ENQ-B" data-prompt="([^"]*)">ENQ-B</option>', out)
+        assert opt, out
+        assert "ENQ-B" in opt.group(1) and "scripts/bookings/pipeline.py" in opt.group(1)
+        assert "Zoho draft only" in opt.group(1) and "never send it" in opt.group(1)
+        assert '<script src="/static/handoffs.js" defer></script>' in out
+
+
 def test_next_followup_uses_the_pipeline_rules():
     today = datetime.date(2026, 9, 28)
     row = {"enquiry_id": "x", "status": "quoted", "occasion": "wedding", "last_contact": "2026-09-25",
@@ -470,7 +484,8 @@ def test_health_checks_and_runs():
         assert "zoho-mail" in t and "zoho-books" in t and "not configured" in t
         assert "fingerprint" in t.lower() and "backup" in t.lower()
         assert "disk" in t.lower() and "main" in t
-        assert "Run now" not in t
+        assert "Run now" in t and "Routines" in t  # explains the Claude app's own trigger; no button here
+        assert "cc-copy" in out and "What&#39;s owed this week?" in out and "Summarise today&#39;s business" in out
         for bad in [SECRET_URL, ADC_SECRET, "SECRET PROMPT", "acc-1"]:
             assert bad not in out, bad
         calls = bank.calls
