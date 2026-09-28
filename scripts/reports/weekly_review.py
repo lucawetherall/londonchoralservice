@@ -23,11 +23,17 @@ analytics.readonly and webmasters.readonly scopes) for GA4 and Search Console.
 Reads the private bookings ledger for counts only; prints no names or emails.
 
     source .venv/bin/activate
-    python scripts/reports/weekly_review.py [--since 2026-09-26] [--gsc-shortlist]
+    python scripts/reports/weekly_review.py [--since 2026-09-26] [--gsc-shortlist] [--save-report]
+
+--save-report also archives everything printed to ~/lcs-private/reports/<today, Europe/London>.txt
+(LCS_PRIVATE_DIR respected), mode 600 in a mode-700 directory, written atomically. A same-day rerun
+overwrites the file. It still prints to stdout as normal.
 """
 
 import argparse
+import contextlib
 import datetime
+import io
 import os
 import re
 import sys
@@ -56,6 +62,48 @@ SITE = "https://londonchoralservice.com"
 LEDGER = lm.LEDGER  # the same ledger as every bookings script, so sections 9 and 10 always agree
 EXPECTED_KEY_EVENTS = {"generate_lead", "contact_message"}
 BUDGET_WINDOWS = REPO / "data" / "budget-windows.yml"
+
+
+class _Tee(io.TextIOBase):
+    """Writes to the original stream and also into an in-memory buffer, so a report can be printed as
+    normal and archived at the same time."""
+
+    def __init__(self, original, buffer):
+        self._original = original
+        self._buffer = buffer
+
+    def write(self, s):
+        self._original.write(s)
+        self._buffer.write(s)
+        return len(s)
+
+    def flush(self):
+        self._original.flush()
+
+
+@contextlib.contextmanager
+def tee_to(path):
+    """Mirror everything printed to stdout inside the block into `path`, mode 600, written atomically
+    (a temp file in the same directory, then os.replace), in addition to printing as normal. The
+    directory is created mode 700 if missing. A same-day rerun (same `path`) overwrites the file."""
+    path = Path(path)
+    buffer = io.StringIO()
+    original = sys.stdout
+    sys.stdout = _Tee(original, buffer)
+    try:
+        yield
+    finally:
+        sys.stdout = original
+        path.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
+        tmp = path.with_name(f".{path.name}.{os.getpid()}.{os.urandom(4).hex()}.tmp")
+        fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+        try:
+            with os.fdopen(fd, "w", encoding="utf-8") as f:
+                f.write(buffer.getvalue())
+            os.replace(tmp, path)
+        except BaseException:
+            tmp.unlink(missing_ok=True)
+            raise
 
 
 def gbp(micros):
@@ -485,11 +533,7 @@ def shortlist_section(s, today, force):
         print(f"   Search Console shortlist failed: {type(e).__name__}")
 
 
-def main():
-    p = argparse.ArgumentParser()
-    p.add_argument("--since", type=datetime.date.fromisoformat, default=datetime.date(2026, 9, 26))
-    p.add_argument("--gsc-shortlist", action="store_true", help="run section 13 even if it isn't the first Monday")
-    args = p.parse_args()
+def run_sections(args):
     q = ads_query()
     landing, ads_settings = ads_sections(args.since, q)
     import google.auth
@@ -506,6 +550,25 @@ def main():
     cost_section(q, today)
     budget_section(q, today)
     shortlist_section(s, today, args.gsc_shortlist)
+
+
+def report_path(today=None):
+    """~/lcs-private/reports/<today, Europe/London>.txt (LCS_PRIVATE_DIR respected via lcs_money.PRIVATE)."""
+    return lm.PRIVATE / "reports" / f"{today or lm.today()}.txt"
+
+
+def main():
+    p = argparse.ArgumentParser()
+    p.add_argument("--since", type=datetime.date.fromisoformat, default=datetime.date(2026, 9, 26))
+    p.add_argument("--gsc-shortlist", action="store_true", help="run section 13 even if it isn't the first Monday")
+    p.add_argument("--save-report", action="store_true",
+                   help="also archive everything printed to ~/lcs-private/reports/<today>.txt (mode 600)")
+    args = p.parse_args()
+    if args.save_report:
+        with tee_to(report_path()):
+            run_sections(args)
+    else:
+        run_sections(args)
 
 
 if __name__ == "__main__":
