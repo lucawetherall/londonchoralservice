@@ -1144,7 +1144,7 @@ git commit -m "chore(barbershop): sitemap, llms.txt, and llms-full.txt entries"
 At the end of `docs/ROADMAP.md`, matching the style of the existing "Competitive capture" entry:
 
 ```markdown
-## R21 — Barbershop Grams product line  [P1] [done 2026-09-03]
+## R22 — Barbershop Grams product line  [P1] [done 2026-09-03]
 
 **What shipped:** a second product line at `/barbershop-grams/` (hub + repertoire page) in its own visual register, priced to match Barbershop-o-gram's £600 ten-minute gram on that tier only. New `pricing.html` section, Services-dropdown entry, `barbershop-gram` occasion option, and `barbershop-grams/*.html` added to both claim validators, which previously could not see the directory.
 

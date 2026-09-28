@@ -38,8 +38,16 @@
       "Bash(.venv/bin/python scripts/bookings/singer_invoices.py status)",
       "Bash(.venv/bin/python scripts/bookings/singer_invoices.py thanked *)",
       "Bash(.venv/bin/python scripts/bookings/singer_invoices.py withdrawn *)",
+      "Bash(.venv/bin/python scripts/bookings/singer_invoices.py pdf *)",
+      "Bash(.venv/bin/python scripts/bookings/singer_invoices.py link *)",
+      "Bash(.venv/bin/python scripts/bookings/singer_invoices.py margins)",
+      "Bash(.venv/bin/python scripts/reports/cc_sync.py *)",
+      "Agent(lcs-reply-drafter)",
+      "Agent(lcs-singer-clerk)",
+      "Agent(lcs-daily-pass)",
       "Bash(.venv/bin/python scripts/bookings/pipeline.py *)",
       "Bash(.venv/bin/python scripts/reports/dashboard.py)",
+      "Bash(.venv/bin/python scripts/reports/cc_event.py *)",
       "mcp__caefd5da-81a5-4eb0-993a-dfeaa5b9d7c1__list_calendars",
       "mcp__caefd5da-81a5-4eb0-993a-dfeaa5b9d7c1__list_events",
       "mcp__caefd5da-81a5-4eb0-993a-dfeaa5b9d7c1__search_events",
@@ -48,7 +56,14 @@
     "deny": [
       "Bash(security find-generic-password *)",
       "Bash(security dump-keychain)",
-      "Bash(security dump-keychain *)"
+      "Bash(security dump-keychain *)",
+      "Write(~/lcs-private/command-centre/**)",
+      "Edit(~/lcs-private/command-centre/**)",
+      "Bash(git update-ref *)",
+      "Bash(git remote set-url *)",
+      "Bash(git config *)",
+      "Bash(*cc_backup.py init*)",
+      "Edit(.git/**)"
     ]
   },
   "hooks": {

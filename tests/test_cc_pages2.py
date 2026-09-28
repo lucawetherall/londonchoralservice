@@ -318,6 +318,20 @@ def test_enquiries_board_followups_conversion_sources():
         assert c.get("/enquiries/bad%20id", headers=HEADERS).status_code == 404
 
 
+def test_enquiries_offers_a_reply_handoff_picker():
+    # No in-app chat: each enquiry needing a follow-up gets an option in a "Draft a reply to" picker, built
+    # server-side from the enquiries the pipeline already flagged as due — never a free-text thread id.
+    with Patched():
+        c = make(FakeBank())
+        out = page(c, "/enquiries")
+        assert '<select id="reply-handoff-select"' in out
+        opt = re.search(r'<option value="ENQ-B" data-prompt="([^"]*)">ENQ-B</option>', out)
+        assert opt, out
+        assert "ENQ-B" in opt.group(1) and "scripts/bookings/pipeline.py" in opt.group(1)
+        assert "Zoho draft only" in opt.group(1) and "never send it" in opt.group(1)
+        assert '<script src="/static/handoffs.js" defer></script>' in out
+
+
 def test_next_followup_uses_the_pipeline_rules():
     today = datetime.date(2026, 9, 28)
     row = {"enquiry_id": "x", "status": "quoted", "occasion": "wedding", "last_contact": "2026-09-25",
@@ -470,7 +484,8 @@ def test_health_checks_and_runs():
         assert "zoho-mail" in t and "zoho-books" in t and "not configured" in t
         assert "fingerprint" in t.lower() and "backup" in t.lower()
         assert "disk" in t.lower() and "main" in t
-        assert "Run now" not in t
+        assert "Run now" in t and "Routines" in t  # explains the Claude app's own trigger; no button here
+        assert "cc-copy" in out and "What&#39;s owed this week?" in out and "Summarise today&#39;s business" in out
         for bad in [SECRET_URL, ADC_SECRET, "SECRET PROMPT", "acc-1"]:
             assert bad not in out, bad
         calls = bank.calls
@@ -549,6 +564,44 @@ def test_todo_tick_needs_the_right_origin_and_host():
         assert tick(c, key, headers=dict(POST_HEADERS, Host="evil.example")).status_code == 403
         assert tick(c, key, headers={"Origin": ORIGIN}).status_code == 403                       # no identity
         assert not (Path(TMP) / "command-centre" / "todo.json").exists()
+
+
+def test_todo_tick_posts_with_fetch_not_a_plain_form():
+    # Referrer-Policy: no-referrer makes a browser send "Origin: null" on a plain form POST, which the same-origin
+    # check refuses (it did, in a real browser). todo.js posts the form with fetch(), which sends the real Origin,
+    # and the route answers JSON with the page to load.
+    static = Path(ROOT) / "command_centre" / "static"
+    js = (static / "todo.js").read_text()
+    assert 'querySelectorAll("form.todo-tick")' in js and '"Accept": "application/json"' in js
+    assert "preventDefault" in js and "fetch(f.action" in js
+    with Patched():
+        c = make(FakeBank())
+        out = page(c, "/todo")
+        forms = re.findall(r"<form\b[^>]*>", out)
+        assert forms and all('class="todo-tick"' in f for f in forms if 'method="post"' in f), forms
+        assert '<script src="/static/todo.js" defer></script>' in out and "<script>" not in out
+        assert c.get("/static/todo.js", headers=HEADERS).status_code == 200
+        key = todo.parse(MANUAL)[1]["key"]
+        assert tick(c, key, headers=dict(POST_HEADERS, Origin="null")).status_code == 403   # what a plain form sends
+        js_headers = dict(POST_HEADERS, Accept="application/json")
+        r = tick(c, key, headers=js_headers)
+        assert r.status_code == 200 and r.json() == {"url": "/todo"}, (r.status_code, r.text)
+        assert json.loads((Path(TMP) / "command-centre" / "todo.json").read_text())[key]["done"] is True
+        r = tick(c, "99-made-up", headers=js_headers)
+        assert r.status_code == 400 and set(r.json()) == {"error"}, r.text
+
+
+def test_every_post_form_in_the_templates_is_sent_by_a_script():
+    # A plain <form method="post"> would be refused in a browser (see above); each one needs a class that a static
+    # script intercepts. The action forms (class cc-action) have no method and are sent by actions.js.
+    handled = {"todo-tick": "todo.js"}
+    templates = Path(ROOT) / "command_centre" / "templates"
+    for f in sorted(templates.glob("*.html")):
+        for form in re.findall(r"<form\b[^>]*>", f.read_text()):
+            if re.search(r'method="?post', form, re.I):
+                cls = re.search(r'class="([^"]*)"', form)
+                names = set(cls.group(1).split()) if cls else set()
+                assert names & set(handled), (f.name, form)
 
 
 def test_todo_tick_is_a_registered_local_action_without_a_passkey():

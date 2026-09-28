@@ -10,6 +10,7 @@ Privacy, as on the phase-1 pages: client and singer first names only, emails nev
 """
 
 import datetime
+import hashlib
 import re
 import sys
 from pathlib import Path
@@ -32,6 +33,21 @@ FOLLOWUP_GAP = {0: pl.FIRST_AFTER, 1: pl.SECOND_AFTER, 2: pl.LOST_AFTER}
 
 
 # ---------------------------------------------------------------- small helpers
+
+
+def invoice_key(message_id):
+    """A singer invoice's handle for the action forms: 12 lower-case letters from sha256 of its message id, so a
+    page never carries the id (a long digit run) and the server looks the invoice up again from the store."""
+    digest = hashlib.sha256(("lcs-cc-invoice:" + str(message_id or "")).encode("utf-8")).digest()
+    return "".join(chr(97 + b % 26) for b in digest[:12])
+
+
+def singer_actions(r):
+    """Which singer-invoice actions a store row allows (the validators in actions.py check again)."""
+    open_ = si.is_open(r)
+    return {"key": invoice_key(r.get("message_id")),
+            "can_confirm": bool(r.get("bank_fp")) and r.get("bank_confirmed") != "yes" and not si.is_withdrawn(r),
+            "can_settle": open_, "can_withdraw": open_}
 
 
 def to_date(value):
@@ -185,18 +201,133 @@ def booking_enquiries(ref, enquiries, cache, today):
             for x in enquiry_items(r, cache, today)]
 
 
-def booking_singers(event_date, singer_rows):
-    """Singer invoices linked to a booking by the store's event_date field, when the store has one."""
-    if not event_date:
-        return []
+def linked_singer_rows(ref, event_date, singer_rows):
+    """The singer invoices linked to a booking: the store's booking_ref (singer_invoices.py link, or the automatic
+    link at scan), or an event_date column when a store has one. Withdrawn invoices are left out."""
     out = []
     for r in singer_rows:
-        if to_date(r.get("event_date")) == event_date and not si.is_withdrawn(r):
-            paid = f", paid {r['paid_on']}" if r.get("paid_on") else ", unpaid"
-            out.append(item(si.received_date(r), "singer",
-                            f"Singer invoice from {si.first_name(r.get('singer_name'))}: "
-                            f"£{lm.money(r.get('amount_gbp')):,.2f}{paid}"))
+        if si.is_withdrawn(r):
+            continue
+        by_ref = bool(ref) and (r.get("booking_ref") or "").strip() == ref
+        by_date = bool(event_date) and to_date(r.get("event_date")) == event_date
+        if by_ref or by_date:
+            out.append(r)
     return out
+
+
+def booking_singers(event_date, singer_rows, ref=None):
+    """The timeline items for the singer invoices linked to a booking (linked_singer_rows)."""
+    out = []
+    for r in linked_singer_rows(ref, event_date, singer_rows):
+        paid = f", paid {r['paid_on']}" if r.get("paid_on") else ", unpaid"
+        out.append(item(si.received_date(r), "singer",
+                        f"Singer invoice from {si.first_name(r.get('singer_name'))}: "
+                        f"£{lm.money(r.get('amount_gbp')):,.2f}{paid}"))
+    return out
+
+
+def booking_singer_list(ref, event_date, singer_rows):
+    """[{first_name, amount, paid_on}] for the booking's linked singers, first names only."""
+    return [{"first_name": si.first_name(r.get("singer_name")), "amount": lm.money(r.get("amount_gbp")),
+             "paid_on": (r.get("paid_on") or "").strip()}
+            for r in sorted(linked_singer_rows(ref, event_date, singer_rows), key=lambda r: r.get("received") or "")]
+
+
+# ---------------------------------------------------------------- Books (R17) and margins (R18)
+
+
+BOOKS_UNPAID = {"sent", "viewed", "unpaid", "overdue"}
+STARLING_MATCHED = {"DEPOSIT_SEEN", "PAID_IN_FULL"}
+DRAFT_DAYS = 2  # Appendix A step 6g: a Books draft more than 2 days old
+
+
+def books_summary(cache):
+    """The Money page's Books panel from books.json: totals, draft and overdue invoice numbers, and when it was
+    synced (an aware datetime, or None when the stamp is unreadable)."""
+    try:
+        when = datetime.datetime.fromisoformat(str(cache.get("generated_at")))
+    except ValueError:
+        when = None
+    invoices = [i for i in cache.get("invoices") or [] if isinstance(i, dict)]
+    return {"totals": cache.get("totals") or {}, "generated_at": when,
+            "drafts": sorted(str(i.get("number", "")) for i in invoices if i.get("status") == "draft"),
+            "overdue": sorted(str(i.get("number", "")) for i in invoices
+                              if i.get("status") == "overdue" and float(i.get("balance") or 0) > 0)}
+
+
+def books_invoice(ref, invoices):
+    """The Books invoice whose number is this booking ref (check_payments.norm_ref on both), or None."""
+    key = cp.norm_ref(ref)
+    return next((i for i in invoices or [] if isinstance(i, dict) and key and cp.norm_ref(str(i.get("number"))) == key),
+                None)
+
+
+def books_timeline(ref, invoices):
+    """The booking's Books invoice as a timeline item (status, total and balance), or [] when it isn't in Books."""
+    i = books_invoice(ref, invoices)
+    if i is None:
+        return []
+    status = str(i.get("status") or "?")
+    tone = "bad" if status == "overdue" else "warn" if status == "draft" else "ok" if status == "paid" else ""
+    return [item(to_date(i.get("date")), "books",
+                 f"Books invoice {i.get('number')}: {status}, £{float(i.get('total') or 0):,.2f}"
+                 f" (balance £{float(i.get('balance') or 0):,.2f})", tone=tone)]
+
+
+def books_flags(invoices, ledger_rows, bookings, today, bank_checked):
+    """The Appendix A step 6g disagreements, for Today: [{ref, text, tone}].
+
+    - a Books draft more than 2 days old: "Books draft not sent (>2 days)";
+    - Books paid, but Starling hasn't matched the full fee (the state isn't PAID_IN_FULL and the notes have no
+      "paid in full" date): "Books paid, Starling not matched";
+    - Starling matched a payment (DEPOSIT_SEEN, PAID_IN_FULL, or a "paid in full" note) but Books shows the invoice
+      unpaid or overdue with nothing paid: "Starling matched, Books unpaid"; or part-paid when Starling says paid in
+      full: "Starling paid in full, Books part-paid".
+    The two Starling comparisons are skipped when the bank wasn't checked, as 6g skips them."""
+    rows = {cp.norm_ref(r.get("booking_ref")): r for r in ledger_rows if (r.get("booking_ref") or "").strip()}
+    states = {cp.norm_ref(b.get("ref")): b.get("state") for b in bookings}
+    out = []
+    for i in invoices or []:
+        if not isinstance(i, dict):
+            continue
+        number = str(i.get("number") or "")
+        key = cp.norm_ref(number)
+        status = str(i.get("status") or "")
+        made = to_date(i.get("date"))
+        if status == "draft":
+            if made and (today - made).days > DRAFT_DAYS:
+                out.append({"ref": number, "text": "Books draft not sent (>2 days)", "tone": "warn"})
+            continue
+        if not bank_checked or key not in rows:
+            continue
+        state = states.get(key)
+        full = state == "PAID_IN_FULL" or bool(cp.closed_on(rows[key]))
+        matched = full or state in STARLING_MATCHED
+        total, balance = float(i.get("total") or 0), float(i.get("balance") or 0)
+        if status == "paid" and not full:
+            out.append({"ref": number, "text": "Books paid, Starling not matched", "tone": "bad"})
+        elif status in BOOKS_UNPAID and matched and total > 0 and balance >= total - 0.005:
+            out.append({"ref": number, "text": "Starling matched, Books unpaid", "tone": "warn"})
+        elif status == "partially_paid" and full:
+            out.append({"ref": number, "text": "Starling paid in full, Books part-paid", "tone": "warn"})
+    return sorted(out, key=lambda f: (f["ref"], f["text"]))
+
+
+def margin_map(margins):
+    """singer_invoices.margins() keyed by booking ref."""
+    return {m["ref"]: m for m in margins}
+
+
+def season_margin(margins, start):
+    """The season's totals from `start` (a date): bookings with an event date on or after it, cancelled ones left
+    out. {fee, costs, margin, margin_pct, count, start}."""
+    rows = [m for m in margins if not m["cancelled"] and to_date(m.get("event_date")) and
+            to_date(m["event_date"]) >= start]
+    fee = round(sum(m["fee"] for m in rows), 2)
+    costs = round(sum(m["costs"] for m in rows), 2)
+    margin = round(fee - costs, 2)
+    return {"fee": fee, "costs": costs, "margin": margin, "margin_pct": round(100 * margin / fee, 1) if fee else None,
+            "count": len(rows), "start": start}
 
 
 def campaign_for(r, cache):
@@ -279,7 +410,8 @@ def singer_directory(rows, today):
         invoices = [{"received": si.received_date(r), "bill_number": si.bill_number(r.get("invoice_ref"), r.get("message_id")),
                      "amount": lm.money(r.get("amount_gbp")), "paid_on": to_date(r.get("paid_on")),
                      "paid_amount": lm.parse_gbp(r.get("paid_amount")), "open": si.is_open(r),
-                     "ring_first": si.ring_first(r), "last4": dash.digits4(r.get("bank_last4"))} for r in live]
+                     "ring_first": si.ring_first(r), "last4": dash.digits4(r.get("bank_last4")),
+                     **singer_actions(r)} for r in live]
         withdrawn = [{"received": si.received_date(r), "bill_number": si.bill_number(r.get("invoice_ref"), r.get("message_id")),
                       "amount": lm.money(r.get("amount_gbp")), "on": to_date(r.get("withdrawn"))}
                      for r in group if si.is_withdrawn(r)]
@@ -556,3 +688,77 @@ def export_pipeline(enquiries, cache):
     cols = [c for c in pl.COLUMNS if c not in ("notes", "gclid")]
     rows = [[r.get(c, "") for c in cols] + [campaign_for(r, cache) or ""] for r in enquiries]
     return cols + ["campaign"], rows
+
+
+# ---------------------------------------------------------------- handoff prompts (Claude Code Remote Control)
+#
+# There is no in-app chat and the app never runs Claude Code itself (see docs/superpowers/specs/
+# 2026-09-28-command-centre-design.md, binding rule 6). These build the fixed text a "Copy prompt for Remote
+# Control" button puts on the clipboard: plain templates plus a ref/thread id already on the page, never free
+# text typed into the app. Copying needs no passkey, because nothing runs until the owner pastes the prompt
+# into Claude Code Remote Control on his phone.
+
+BOOKS_IMPORT_PROMPT = (
+    "Run the owner-approved Zoho Books 2026 import: read ~/lcs-private/books-import-2026.json and "
+    "~/lcs-private/command-centre/approvals/books-import-2026.json{approval}, check the approval's dry-run "
+    "sha256 still matches the dry run, then create each invoice as a draft in Zoho Books under the guard "
+    "(see docs/superpowers/specs/2026-09-28-zoho-books-design.md) — never send, void or record a payment — "
+    "then report."
+)
+
+
+def books_import_handoff(approval):
+    """The fixed Books-import handoff prompt, or None while there's nothing approved to hand off. `approval` is
+    actions.books_status()'s dict. The prompt never carries any record's own text (client names, amounts,
+    refs): only the file paths, the guard doc, and the approval's own sha256 prefix, which is a fingerprint of
+    the record, not its content, and is already shown on the page."""
+    if not approval or not approval.get("approved_at"):
+        return None
+    sha = approval.get("dry_run_sha256")
+    detail = f" (approval hash {sha[:16]}…)" if sha else ""
+    return BOOKS_IMPORT_PROMPT.format(approval=detail)
+
+
+def whats_owed_prompt():
+    return (
+        "What's owed this week? Read the ledger and the Starling balance the way "
+        "scripts/reports/dashboard.py and scripts/bookings/money_report.py do, and scripts/bookings/"
+        "check_payments.py for anything on the hand check. Summarise what's due this week, what's overdue, "
+        "and what's outstanding from singers (scripts/bookings/singer_invoices.py). Read only; don't change "
+        "anything."
+    )
+
+
+def summarise_today_prompt():
+    return (
+        "Summarise today's business: today's and this week's events from the ledger "
+        "(scripts/reports/dashboard.py), anything on the hand check (scripts/bookings/check_payments.py), "
+        "enquiries needing a follow-up (scripts/bookings/pipeline.py) and anything flagged on the Command "
+        "Centre's Runs and health page. A few lines, read only."
+    )
+
+
+def hand_check_prompt(ref, label=""):
+    """`ref` must already be a value the hand-check panel produced (REF_RE); the caller only offers refs
+    currently on the hand check, so this never becomes a way to name an arbitrary ledger row from free text."""
+    if not isinstance(ref, str) or not REF_RE.fullmatch(ref):
+        return None
+    why = f" (currently: {label})" if label else ""
+    return (
+        f"Why is {ref} on the hand check{why}? Read scripts/bookings/check_payments.py's assessment for {ref} "
+        f"against the ledger (scripts/bookings/money_report.py) and, if the Starling token is available, the "
+        f"bank transactions, and explain what would resolve it. Read only; don't change anything."
+    )
+
+
+def draft_reply_prompt(thread_id):
+    """`thread_id` must be an enquiry id the caller already has (pl.ID_RE) — an enquiry the pipeline knows
+    about, not a value typed into the app."""
+    if not isinstance(thread_id, str) or not pl.ID_RE.fullmatch(thread_id):
+        return None
+    return (
+        f"Draft a reply to {thread_id}: read the Zoho thread for enquiry {thread_id} "
+        f"(scripts/bookings/pipeline.py), Luca's quote style (~/lcs-private/email-style.md) and his most "
+        f"recent sent replies for the same kind of booking, checked against the stop-slop skill. Prices from "
+        f"pricing.html/christmas-pricing.html. Save the reply as a Zoho draft only — never send it."
+    )

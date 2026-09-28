@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% import "macros.html" as m %}
+{% block content %}
+<section class="card-group">
+  <article class="card">
+    <h2>Install on the iPhone</h2>
+    <ol class="steps">
+      <li>With Tailscale connected, open this page's address in Safari.</li>
+      <li>Tap Share, then <strong>Add to Home Screen</strong>.</li>
+      <li>In the Shortcuts app, make a shortcut called "LCS": Tailscale → Connect, then Open URL <span class="mono">{{ origin or "https://<mac>.<tailnet>.ts.net" }}/</span>. Add it to the Home Screen and open the app with it.</li>
+    </ol>
+    <p class="muted">With the VPN off, the app shows the last Today and Money pages it saw, marked "Couldn't reach the Mac (showing the copy from …)". Actions need the VPN. A copy older than 7 days isn't shown, and signing out clears them.</p>
+    <p class="status" id="offline-status" role="status" aria-live="polite"></p>
+    <div class="actions">
+      <button type="button" class="button quiet" id="offline-clear">Clear offline copies</button>
+    </div>
+  </article>
+
+  <article class="card" id="push-box" data-key="{{ vapid_key.value or '' }}" data-ids="{{ devices.value|map(attribute='id')|join(',') if devices.ok else '' }}">
+    <h2>Notifications</h2>
+    {% if not vapid_key.ok %}<p class="fail">Notification key: couldn't load ({{ vapid_key.error }})</p>{% endif %}
+    <p>A new enquiry, a payment, a singer's bank details changing, a guard refusing a call, a run failing or not seen, the Monday review and a new hand check. Each shows a title and one short line, first names only; tap it to open the page.</p>
+    <p class="muted">They arrive with the VPN off, through Apple's push service. They show on the lock screen: turn off lock-screen previews for this app in iOS Settings if you prefer. Turning notifications off here also clears the offline copies.</p>
+    <p class="status" id="push-status" role="status" aria-live="polite">Checking this device…</p>
+    <p class="dialog-summary" id="push-summary" hidden></p>
+    <div class="actions">
+      <button type="button" class="button" id="push-enable" hidden>Enable notifications</button>
+      <button type="button" class="button" id="push-approve" hidden>Approve this device with Face ID or Touch ID</button>
+      <button type="button" class="button quiet" id="push-off" hidden>Turn off on this device</button>
+    </div>
+  </article>
+</section>
+
+<section class="card">
+  <h2>Devices told</h2>
+  {{ m.failed(devices) }}
+  {% if devices.ok and devices.value %}
+  <ul class="results">
+    {% for d in devices.value %}
+    <li><span class="mono">{{ d.id }}</span> <span class="muted">{{ d.service }}{% if d.added %}, added {{ d.added|when }}{% endif %}</span>
+      {{ m.action_button("push-unsubscribe", "Remove", {"id": d.id}, quiet=true) }}</li>
+    {% endfor %}
+  </ul>
+  {% elif devices.ok %}<p class="muted">No device gets notifications yet.</p>{% endif %}
+</section>
+{% endblock %}
+{% block scripts %}<script src="/static/push.js" defer></script>{% endblock %}

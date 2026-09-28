@@ -7,7 +7,7 @@
 **Architecture:** `command_centre/` is a Starlette app served by uvicorn on `127.0.0.1:8765` only (or, optionally, a Unix socket in a mode-700 directory), and published to the tailnet by `tailscale serve`. Every request must come from a loopback peer with `Host` equal to the Mac's tailnet name (DNS rebinding); every request except `/healthz` must also carry the Tailscale identity headers for an allowed login; every write (from phase 3) also needs a WebAuthn assertion made in the last 60 seconds over a challenge bound to that action's summary. The data layer imports the existing read functions (`dashboard.py`, `check_payments`, `money_report`, `singer_invoices`, `pipeline`, `economics`, `weekly_review`) and never shells out to read. Pages are Jinja2 templates (autoescape on) with htmx served from `static/`, and nothing is loaded from any other origin.
 
 **Tech Stack:**
-- Python 3 in the repo's `.venv`: `starlette`, `jinja2`, `uvicorn`, `webauthn` (py_webauthn), pinned to exact versions with their dependencies in `scripts/requirements.txt`. Test-only: `httpx2` (Starlette's TestClient) in `scripts/requirements-dev.txt`, which `install.sh` never installs. Later, also pinned: `pywebpush` (phase 5), `claude-agent-sdk` (phase 4).
+- Python 3 in the repo's `.venv`: `starlette`, `jinja2`, `uvicorn`, `webauthn` (py_webauthn), pinned to exact versions with their dependencies in `scripts/requirements.txt`. Test-only: `httpx2` (Starlette's TestClient) in `scripts/requirements-dev.txt`, which `install.sh` never installs. Later, also pinned: `pywebpush` (phase 5). No `claude-agent-sdk`: Claude work is done through Claude Code Remote Control from the owner's phone, not an in-app chat (owner decision, 2026-09-28; PR #161 closed unmerged).
 - htmx 2.0.11, vendored as `command_centre/static/htmx.min.js` (from the npm package `htmx.org@2.0.11`, tarball integrity `sha512-Thx/WtpeOQqSrqBCw/A1cwGJGg4UrVa3+sW0GmrM3p4gJgO89ecH4qtbnyzDDWFvBTqjnIMCgELTNt636dtamA==`; file SHA-256 `d6fdc75f204e6bdefa99b69bf1e6d4ac69b8a364f77929f45c13476b4000f717`).
 - Tests are stdlib-only scripts in the repo's style, with Starlette's `TestClient`: `.venv/bin/python tests/test_cc_auth.py`.
 
@@ -40,8 +40,8 @@
 | `command_centre/install.sh` | LaunchAgent, config, the `tailscale serve` command to run | 1 |
 | `command_centre/models.py`, `sources.py`, `todo.py` | Pure page builders; cache, report and health readers; the to-do parser and tick store | 2 |
 | `command_centre/actions.py` | The action registry: validated input, preview, fixed argv, audit log | 2 (the to-do tick), 3 |
-| `command_centre/jobs.py` | Refresh jobs and caches, backups | 3, 5 |
-| `command_centre/chat.py` | Claude Agent SDK session, streaming, approval cards | 4 |
+| `command_centre/jobs.py` | Refresh jobs and caches, backups | 5 |
+| `command_centre/static/handoffs.js` | Copy-to-clipboard handoff prompts for Claude Code Remote Control (no server-side execution) | 4 |
 | `command_centre/push.py` | Web Push, events watcher | 5 |
 | `tests/test_cc_*.py` | One test file per module | all |
 
@@ -226,33 +226,241 @@ Config, `~/lcs-private/command-centre/config.json` (mode 600):
 - [x] Every `tests/test_*.py`; commit; PR; don't merge.
 - **Task 2.13 (after merge)** Retire `dashboard.py` from the scheduled prompts (Appendices A and E) once the owner has used the app for a week.
 
-## Phase 3: actions (expand before building)
+## Phase 3: passkey-gated actions and the activity log (this PR)
 
-**Goal:** the action registry, every write behind a passkey, append-only audit log.
+**Goal:** the action registry, every write behind a passkey (the to-do tick and "refresh data now" excepted), fixed argv lists with no shell, an append-only audit log, and an Activity page. These are the app's first writes to the ledger, the singer store and Google Ads, so each step below is test-first and the owner-only operations are closed to anything Claude can run unprompted.
 
-- **Task 3.0 Refresh job (moved from phase 2).** `jobs.py`: every 30 minutes, 07:00 to 22:00, writes `cache/{ads,ga4,gsc,books,drafts,calendar}.json` (calendar in phase 2's shape) from `weekly_review`'s and `economics`' functions and a Books read client mirroring `lcs_mcp`'s allowlisted reads; each entry stores `as_of` and the last error type. Tests: a failing refresher keeps the last good file and records the type.
-- **Task 3.1 `actions.py`.** Phase 2 created the registry with `todo-tick`. Each action: a name, a validator for its input, `preview(input) -> str` (the exact summary the passkey challenge binds), `argv(input) -> list[str]` (fixed script path, no shell). Runs with `subprocess.run(argv, shell=False, cwd=REPO, timeout=...)`; stderr trimmed and scrubbed with `lcs_mcp`'s rules; `audit.jsonl` appended (mode 600) before and after. Tests: exact argv per action, bad input refused, no `shell=True` anywhere (AST check).
-- **Task 3.2 Routes.** `POST /actions/<name>/preview` returns the summary and assertion options; `POST /actions/<name>` needs `require_fresh_assertion(credential, action)`, where `action` is an `auth.Action` the registry built from the validated input (never text from the request), and the same-origin check. Tests: refused without, with a stale, a replayed, or another action's assertion.
-- **Task 3.3 The actions.** Hand-check resolutions (`check_payments.py --note <ref> "<phrase> <date>" --owner`: add the `--owner` flag to `check_payments.py` first, test-first); singer confirm, settle and withdraw (`singer_invoices.py`); Ads approve (validate-only run, show output, second tap to apply; the scripts' £5 cap stays); run a scheduled task now (headless `claude -p` with the task prompt); refresh now; back up now; local records (draft sent or discarded, to-do ticks).
-- **Task 3.4 Activity log page.** Every action and run from `audit.jsonl`, filterable.
+**Scope changes from the outline:**
+- **Run a scheduled task now** moves to phase 4. There is no reliable local trigger for a scheduled task (the task metadata has no run command, and a headless `claude -p` started from the app would sit outside the scheduler's own bookkeeping). Phase 4 has no chat to ask, so the app just explains: use Run now on the task in the Claude app (Routines).
+- **Back up now** moves to phase 5 with the backup job itself.
+- **Task 3.0, the 30-minute refresh job** (`jobs.py` writing `cache/{ads,ga4,gsc,books,drafts,calendar}.json`), moves to phase 5 with the other background jobs. Phase 3's "Refresh data now" re-runs `scripts/reports/dashboard.py` and clears the app's in-memory caches (the 10-minute bank cache and the Starling health check).
+- **Approve the 2026 Books import** writes an approval record only. The app never calls Books.
 
-## Phase 4: chat (expand before building)
+**Files:**
+- `command_centre/actions.py`: the registry (`LocalAction`, `ScriptAction`), validation, previews, argv lists, the runner, output scrubbing, the owner nonce, the audit log, the ads proposal checks.
+- `command_centre/app.py`: `POST /actions/<name>/preview`, `POST /actions/<name>/run`, `GET /activity`.
+- `command_centre/data.py`, `models.py`: invoice keys on singer rows, proposals and the Books approval on Today and Marketing, the activity reader.
+- `command_centre/templates/*.html`, `static/actions.js`, `static/passkey.js`, `static/app.css`: action buttons, the preview dialog, the Activity page.
+- `scripts/bookings/check_payments.py`: `--owner` (test-first).
+- `tests/test_cc_actions.py` (new), `tests/test_check_payments.py`, `tests/test_prompt_allowlist.py`.
 
-**Goal:** Claude Code in the app under the repo's own guards.
+### Task 3.1: Owner-only protection, test-first
 
-- **Task 4.1 `chat.py`.** `claude-agent-sdk` with `cwd=REPO` and the repo's `.claude/settings.json` and hooks; a permission callback that turns any tool call outside the allowlist into an approve/deny card; approving needs a passkey bound to the card's summary.
-- **Task 4.2 Streaming.** Server-sent events to `static/chat.js`; a stop button; a conversation list stored under `~/lcs-private/command-centre/chats/`.
-- **Task 4.3 Quick prompts** and the queue for approved instructions (Books import, page fixes) from phase 3.
-- Tests: a crashed chat leaves the other pages working; a denied card never runs the tool.
+The allowlist entry `Bash(.venv/bin/python scripts/bookings/check_payments.py --note *)` also matches `--note X "paid in full …" --owner`, and `--reminded *` matches `--reminded X --note Y "…" --owner`. A glob can't exclude a flag, so the refusal lives in the script.
 
-## Phase 5: PWA, push, drafts inbox, quote calculator, backups (expand before building)
+**Design: a one-time owner nonce, hashed on disk, delivered over a pipe.**
 
-- **Task 5.1 PWA.** Manifest, service worker (no caching of data pages), icons.
-- **Task 5.2 Push.** VAPID keys in the Keychain; `events.jsonl` watcher; `scripts/bookings/cc_event.py` (allowlisted) for the scheduled prompts; payload has a title and a first name only (tested).
-- **Task 5.3 Drafts inbox.** From run summaries and a Zoho drafts read; "open in Zoho"; local sent/discarded marks.
-- **Task 5.4 Quote calculator.** Prices parsed as `assistant_io.py prices` does; copyable wording in Luca's style.
-- **Task 5.5 Backups.** Nightly `tar` + `age` of `~/lcs-private`, 14 kept, to iCloud Drive `LCS-backups/`; the health page warns after 36 hours; a documented restore.
-- **Task 5.6 Security review** by a separate agent, adversarially, before go-live of the actions.
+- Before the app runs `check_payments.py --note <ref> "<phrase> <date>" --owner`, it makes 32 random bytes (the nonce, hex), writes `sha256(nonce)` to `~/lcs-private/command-centre/owner-nonce` (`O_CREAT|O_EXCL|O_NOFOLLOW`, mode 600, directory 700) and passes the nonce itself on the child's stdin (a pipe). It deletes the file afterwards, whatever happened. Actions run one at a time (a lock), so there is only ever one nonce.
+- `check_payments.py --owner` writes nothing unless all of these hold:
+  - stdin is a pipe (`S_ISFIFO`), not a terminal and not a redirected file;
+  - the nonce file is a regular file (opened with `O_NOFOLLOW`, so not a symlink), owned by this user, mode 600 with no group or other bits, and written in the last 60 seconds;
+  - `sha256(first line of stdin)` equals the file's contents (constant-time compare).
+  On a match it deletes the file (single use) before writing, and appends ` (owner)` to the note. Without `--owner` nothing changes: the owner-only phrases are still refused.
+- **Why this design.** The barrier is the nonce file, not the pipe. A pipe on its own proves nothing (an allowlisted `*` pattern may match a piped command, and we don't rely on how compound commands are matched). What an allowlisted command can't do is produce the file: sha256 of a fresh nonce, mode 600, under 60 seconds old, in `~/lcs-private/command-centre/`. No allowlisted command writes there, and `.claude/settings.json` denies Claude's Write and Edit tools that folder (`Write(~/lcs-private/command-centre/**)`, `Edit(~/lcs-private/command-centre/**)`). Redirecting the nonce file itself (`< owner-nonce`) gives a regular file, not a pipe, and holds only the hash, whose hash doesn't match. With `--owner` the script also refuses `LCS_BOOKINGS_CSV` and a ledger outside the nonce's private folder, and the app sets `LCS_PRIVATE_DIR` explicitly, so the note lands in the ledger the app read. The nonce exists only in the app's memory and the pipe, for under a second. An environment token (`CC_OWNER_TOKEN`) was the alternative, but the script would still need a stored secret to compare it with, and an env prefix on the command line is easier to forge than a pipe plus a file. **Residual risk (accepted, as in the threat model):** a command the owner approves at a prompt, or any process running as the owner, can write its own nonce file and pipe the matching nonce. Such a process could edit the ledger directly anyway.
+- **Singer confirm and settle, Ads apply:** no allowlist entry matches `singer_invoices.py confirm|settled` or any `scripts/ads/*.py --apply`, and no allowlisted command reaches them (argparse subcommands; no allowlisted script calls them). `tests/test_prompt_allowlist.py`'s NEVER list grows to cover them, and the `--owner` forms that the allowlist can't exclude are listed as SCRIPT_GUARDED, each tested to be refused by the script without the nonce.
+- **The app's own argv lists** (`tests/test_cc_actions.py`): each registered action's argv, written as Claude would type it, must not be allowlisted, unless the action is on an explicit list with its reason: `refresh-data` (read-only; `dashboard.py` is allowlisted for the scheduled prompts), `singer-withdrawn` (the enquiry assistant may already withdraw a mis-sent invoice) and `resolve-hand-check` (allowlisted by `--note *`, refused by the script without the nonce).
+
+- [x] **Step 1: Tests first** (`tests/test_check_payments.py`): `--owner` with no nonce file, a nonce file but stdin from `/dev/null` or a redirected file (even the nonce file itself), the wrong nonce, an old file (over 60 seconds), a group-readable file or a symlink are all refused and leave the ledger unchanged; the right nonce over a pipe writes `"<text> (owner)"` once and deletes the file; a second use is refused. Without `--owner`, the owner-only phrases are still refused.
+- [x] **Step 2: Implement** `owner_confirmed()` in `check_payments.py`, and `--owner` in `main()`.
+- [x] **Step 3:** Extend `tests/test_prompt_allowlist.py`: NEVER gains `singer_invoices.py confirm` and `settled` forms and three `scripts/ads/*.py --apply` forms; SCRIPT_GUARDED lists `--note X "paid in full 2026-09-28" --owner` and `--reminded X --note X "refunded 2026-09-28" --owner`.
+
+### Task 3.2: The registry (`command_centre/actions.py`), test-first
+
+- Each action: `name`, `validate(raw) -> cleaned` (strict: a dict of strings, unknown keys refused, every field checked against a pattern or a fixed choice and against the current private data), `preview(cleaned) -> str` (plain English, then `Runs: <argv as shown>`; this is the `auth.Action` summary the passkey challenge binds, so the challenge covers the exact command), `argv(cleaned) -> list[str]` (`sys.executable`, a fixed absolute script path under the repo, validated arguments), `passkey` (True for all but `todo-tick` and `refresh-data`), `timeout`.
+- **Runner:** `subprocess.run(argv, shell=False, cwd=REPO, env=os.environ minus every CC_* variable with LCS_PRIVATE_DIR set explicitly (and LCS_BOOKINGS_CSV removed for the hand check), capture_output=True, timeout=…)`, stdin `/dev/null` except for the owner nonce. One action at a time: the lock is taken before validation, so every check is made under it; `refresh-data` has its own lock. No retries. Ads scripts run differently (Task 3.5).
+- **Output:** stdout and stderr joined, scrubbed (lcs_mcp's approach: URLs become `<url>`; plus `token=…`-style values and long token-shaped strings become `<redacted>`, and any run of six or more digits becomes `••••••`), and trimmed to the last 6,000 characters. The audit keeps only the sha256 of the raw output.
+- **Audit:** `audit.jsonl` (mode 600, append-only, written under an flock) gets a `started` line before a script runs and a result line after: `at`, `login`, `action`, `summary`, `input` (the cleaned fields), `result` (`ok`, `failed`, `refused: <reason>`), `exit_code`, `output_sha256`, `passkey` (the first 8 characters of the credential id), and `prev`, the sha256 of the line before (a hash chain; `verify_audit()` names any line that breaks it). A refused passkey is logged too, and so is a refusal before a summary exists (bad input, busy), with the action name and `input_sha256`. If the result line can't be written after a run, the output starts "ran, but the audit write failed".
+- **Routes:** `POST /actions/<name>/preview` (JSON `{input}`) validates and returns `{summary, argv, passkey, options}`, where `options` are assertion options bound to `auth.Action(name, summary)`. `POST /actions/<name>/run` (JSON `{input, credential}`) validates again, rebuilds the summary from the data as it is now, calls `require_fresh_assertion(credential, action)`, then runs. Both pass the identity middleware's Host and same-origin checks. `todo-tick` keeps its form route; a registry action with no passkey (refresh) needs no credential.
+- [x] **Step 1: Tests first** (`tests/test_cc_actions.py`): valid and invalid input for every action; the exact argv; no `shell=True` and no `os.system`/`os.popen` anywhere in `command_centre/` (AST check); a passkey is required, and a stale (over 60 seconds), replayed, other action's or other input's assertion is refused and nothing runs; audit lines written; output scrubbed; a timeout reported.
+- [x] **Step 2: Implement.**
+
+### Task 3.3: The actions
+
+| Action | Input | argv | Passkey |
+|---|---|---|---|
+| `resolve-hand-check` | `ref` (in the ledger), `choice` (paid-in-full, deposit-kept, refunded, reinstated, cancelled, payment-checked, arranged-cash, arranged-cheque), `date` (ISO, not after today, not over two years back) | `check_payments.py --note <ref> "<phrase> <date>" --owner`, nonce on stdin. Phrases: `paid in full D`, `deposit kept D`, `refunded D`, `reinstated D`, `cancelled D`, `payment checked D`, `balance payable in cash on the day (arranged D)`, `balance payable by cheque on the day (arranged D)`, each tested against `check_payments` for what it means | yes |
+| `singer-confirm` | `invoice` (a 12-letter key derived from the message id, so no long digit run reaches a page; must name one stored invoice with bank details not yet confirmed) | `singer_invoices.py confirm <message id> --expect-fp <bank_fp, all 16 characters>` (the summary shows the same 16; the script refuses anything but an exact match) | yes |
+| `singer-settled` | `invoice` (open), `date` (ISO, not after today) | `singer_invoices.py settled <message id> <date>` | yes |
+| `singer-withdrawn` | `invoice` (unpaid, not withdrawn), `reason` (`^[a-z][a-z-]{0,19}$`) | `singer_invoices.py withdrawn <message id> <reason>` | yes |
+| `refresh-data` | none | `scripts/reports/dashboard.py`, then the app clears its bank and Starling caches | no (same-origin only) |
+| `ads-validate` | `proposal` (an id in `proposals/`) | `python -E -s -B <run folder>/scripts/ads/<name>.py <args> --validate-only`, from its commit on GitHub's main, via the app's mirror (Task 3.5) | yes |
+| `ads-apply` | `proposal` | the same, `--apply`, from the same commit | yes, a second tap |
+| `approve-books-import` | none | no script: writes `approvals/books-import-2026.json` | yes |
+| `todo-tick` | as phase 2 | local record | no |
+
+- **Ads proposals:** `~/lcs-private/command-centre/proposals/<id>.json`, `{id, kind: "ads", title, summary, script_path, created, commit, script_blob, args?}`, written by the Monday review in future. Refused unless: the file is a regular file (no symlink), owned by this user, mode exactly 600, has no other field, its `id` matches the file name (`^[a-z0-9][a-z0-9-]{0,63}$`), `kind` is `ads`, `script_path` matches `^scripts/ads/[a-z0-9_]+\.py$`, `commit` and `script_blob` are full ids, and `args` (optional) is at most 12 simple tokens (`^[A-Za-z0-9][A-Za-z0-9._]{0,63}$`: never a flag, a path or a space). The commit, blob and running are Task 3.5. `ads-validate` records `{commit, blob, args, sha256 of the raw output}` (exit 0 only, kept 15 minutes, in memory); `ads-apply` is refused without that record or when any of the four changed, takes the record atomically when it starts (one apply per validate), and its summary names the commit, the blob and the validate output's hash, so the second passkey tap is bound to the output the owner saw. After a successful apply the app writes `proposals/<id>.applied` (mode 600: commit, blob, args, hashes, login, passkey); that proposal, and any other with the same blob and args, is no longer offered. The scripts keep their own £5 cap and write `logs/ads-changes.md` themselves.
+- **Books import approval:** refused unless `~/lcs-private/books-import-2026.json` (the dry run, MANUAL-ACTIONS §20) exists; the summary names its sha256, entry count, total and first and last refs; the record `{approved_at, approved_by, passkey, dry_run_sha256, entries, total_gbp, first_ref, last_ref, instruction}` is written once (mode 600, directory 700). Phase 4's handoff prompt points a Claude Code Remote Control session at it, and that session must check the dry run's hash still matches.
+- **Where:** hand checks on Today, Money and each booking's timeline; singer confirm, settle and withdraw on Singers and on the singer rows of Today and Money; ads proposals on Marketing, counted on Today with the Books approval; Refresh data now on Health.
+- [x] Tests: every action's valid and invalid input and exact argv; the ads path checks (outside `scripts/ads/`, a symlink, untracked, modified, wrong mode, id mismatch: each refused); apply without a validate, after the blob changed, or twice: refused; one real run of `check_payments.py --note … --owner` through the full route against a temp ledger.
+
+### Task 3.5: Adversarial review fixes (PR #158)
+
+The reviewer showed that an Ads validate could run code that wasn't the committed script: an untracked module shadowing the stdlib in `scripts/ads/`, an uncommitted edit to a tracked helper, an ignored unchecked-hash `.pyc`, an edit hidden by `--skip-worktree` or `--assume-unchanged`, and a file swapped between the check and the run. Each proof of concept is now a regression test in `tests/test_cc_actions.py`.
+
+- [x] **Immutable copy, from GitHub.** The app keeps a bare mirror at `~/lcs-private/command-centre/mirror.git` (mode 700, fixed config) and fetches `main` into it from the hard-coded `GITHUB_URL` at the preview and again at the run (https only, `protocol.file.allow=never`; a failure refuses: "couldn't verify against GitHub"). The commit must be an ancestor of that `main` (`git merge-base --is-ancestor`, in the mirror). The run folder is written from `git ls-tree -r <commit> -- scripts/` plus `git cat-file --batch` (no archive or checkout, so no filters), each file checked against its blob id, regular files only, into a fresh mode-700 folder under `~/lcs-private/command-centre/runs/`; the script runs with `python -E -s -B -X pycache_prefix=<empty folder>`, cwd that folder, and only HOME, PATH, LANG, TZ, GOOGLE_ADS_CONFIGURATION_FILE_PATH, LCS_PRIVATE_DIR, LCS_ADS_LOG (plus PYTHONNOUSERSITE=1, PYTHONDONTWRITEBYTECODE=1 and PYTHONPYCACHEPREFIX at that empty folder). The folder is removed afterwards. Every git call: `GIT_CONFIG_GLOBAL=/dev/null`, `GIT_CONFIG_NOSYSTEM=1`, no caller `GIT_*`, `-c core.fsmonitor=false -c core.hooksPath=/dev/null`. Tests redirect the fetch with the module variable `actions.TEST_UPSTREAM`, never an environment variable.
+- [x] **The change log.** `scripts/ads/ads_log.py` resolves `logs/ads-changes.md` from `LCS_ADS_LOG` (the app sets the repo's log) or relative to itself, and refuses to apply when the log has no table.
+- [x] **Proposal-aware scripts only.** Validate passes `--validate-only`; old scripts fail at argparse, the natural allowlist. `scripts/ads/set_budget.py` is the first: a campaign id or exact name and a daily amount, refused above £5 before Google is called, validate-only by default, `--apply` logs (`tests/test_set_budget.py`, a fake client).
+- [x] **The preview shows git's facts and the code**: the script's last change on main as a diff (6,000 characters at most, its sha256 in the signed summary) and a GitHub link to the file at that commit; path, commit, on main at GitHub, who last changed the script and when, and its docstring; Claude's title and summary labelled "Claude's description" (also on Marketing). The action hash now covers the action's name as well as its summary.
+- [x] **Ads output** is shown unmasked (secrets still redacted): the first and last 3,000 characters.
+- [x] **Owner nonce:** `check_payments.py --owner` refuses `LCS_BOOKINGS_CSV` and a ledger outside the nonce's private folder; deny rules for Claude's Write and Edit tools on `~/lcs-private/command-centre/**`.
+- [x] **Locking:** the action lock before validation; `.applied` re-checked inside it; the validate record popped atomically; refresh on its own lock.
+- [x] **Audit:** refusals at the run step logged with the action name and an input hash; a hash-chained log; "ran, but the audit write failed" when the result line can't be written.
+- [x] **Singer confirm** bound to the fingerprint (`--expect-fp`, tested in `tests/test_singer_invoices.py`); `confirm` stays off the allowlist.
+- [x] **Books:** the preview shows the total and the first and last refs; the record carries the login and passkey.
+
+### Task 3.4: UI
+
+- [x] `static/actions.js` (no inline code): a button in a `form.cc-action` posts the form's fields to `/actions/<name>/preview`, shows a `<dialog>` with the plain-English summary and the argv, then **Approve with Face ID or Touch ID** (`navigator.credentials.get` with the returned options, through `passkey.js`'s helpers, which it now exposes as `window.LCSPasskey`), then the result: exit code and the scrubbed output. A result may offer a next step (validate, then apply).
+- [x] `GET /activity`: `audit.jsonl`, newest first, the last 1,000 lines, filterable by action, result and text; any six-digit run masked; a malformed line skipped.
+
+### Task 3.5: Visual check and PR
+
+- [x] Fake data on `127.0.0.1:8795` with the dev login: the dialogs up to the passkey step (a dev browser has no passkey), at 390px and 1280px; the assertion is covered by the unit tests with a software authenticator. Stop the server.
+- [x] Every `tests/test_*.py`; commit; PR; don't merge.
+
+## Phase 4: Handoffs (done)
+
+**Goal:** no in-app chat and no server-side execution of Claude tool calls. Claude work is done through Claude Code Remote Control from the owner's phone; the app's job is only to put a correct, useful prompt on the clipboard.
+
+- **Task 4.1 Books import handoff.** When `~/lcs-private/command-centre/approvals/books-import-2026.json` exists and its `dry_run_sha256` still matches the current dry-run list, Today and Marketing show a "Copy prompt for Remote Control" button. It copies a fixed, server-written instruction naming the two files, the approval hash and the guard doc (`docs/superpowers/specs/2026-09-28-zoho-books-design.md`), asking Claude Code to check the hash, create each invoice as a draft under the guard, and report. It never includes any record's own text (client names, amounts, refs).
+- **Task 4.2 Run a scheduled task now.** Not an app action: Runs and health explains "Use Run now on the task in the Claude app (Routines)". No button, nothing to copy.
+- **Task 4.3 Quick prompts.** Fixed copy-to-clipboard buttons naming the relevant scripts and files: "What's owed this week?", "Summarise today's business", "Why is `<ref>` on the hand check?" (with a ref picker filled from the current hand-check list), "Draft a reply to `<thread>`" (from Bookings/Enquiries thread ids). Each prompt is built entirely server-side from fixed templates plus the chosen ref/thread id; no free text from the page reaches the prompt.
+- **Task 4.4 UI.** `static/handoffs.js` (no inline code, CSP self-only): `navigator.clipboard.writeText`, with a fallback that selects a `<textarea>`/`<pre>` holding the text for a manual copy when the Clipboard API is unavailable or refuses (not a secure context, permission denied). Copying needs no passkey and is not a registered action: nothing runs, nothing is sent to the server beyond the page load that rendered the fixed text.
+- Tests: each quick prompt's exact text for known fixtures; the Books import button appears only when the approval file exists and its hash matches, and disappears (or shows why) when the dry run has moved on; the ref picker only offers refs currently on the hand check; no handoff route accepts free text from the client into the copied prompt; `handoffs.js` contains no `eval`, inline handler or non-`self` fetch.
+
+## Phase 5: installable app, push notifications, encrypted nightly backups (this PR)
+
+**Goal:** the app installs on the iPhone's Home Screen and shows Today and Money offline; the owner gets a push notification for the events that need him; `~/lcs-private` is backed up every night, encrypted, with 14 days kept.
+
+**Access (owner decision):** Tailscale only, and the phone does not keep the VPN on. The owner opens the app with an iPhone Shortcut that connects Tailscale and then opens the ts.net URL. Web Push reaches the phone through Apple's push service with the VPN off; the Mac sends it over its normal internet connection, never through the tailnet. With the VPN off the Home Screen app shows the cached Today and Money pages, marked "Couldn't reach the Mac (showing the copy from <time>)", after at most a 4-second wait (copies over 7 days old are refused; a 401/403, "Clear offline copies" or turning notifications off deletes them).
+
+**Scope changes from the outline:**
+- The drafts inbox (5.3), the quote calculator (5.4) and the 30-minute refresh job (5.0) move to a later PR; this one is the PWA, push and backups.
+- The service worker caches the last Today and Money pages for offline viewing (the outline said no data pages): the owner wants them with the VPN off. Nothing else is cached, and no write.
+- The backup recipient (a public key, not a secret) lives in the config rather than the Keychain, so the nightly run from launchd needs no Keychain prompt. The identity (the private key) is printed once by `init` and never stored.
+
+**Files:**
+- `command_centre/push.py`: VAPID keys (Keychain), subscriptions (config), the payload builder, the `events.jsonl` watcher and the stale-run check.
+- `command_centre/pwa.py`: the manifest and the icons (pure-Python PNG: Pillow isn't in the venv); `static/sw.js`, `pwa.js`, `push.js`, `icons/*.png`.
+- `command_centre/app.py`: `GET /manifest.webmanifest`, `GET /sw.js`, `GET /device`; the watcher in the app's lifespan (the service only). `auth.py`: `worker-src 'self'` in the CSP.
+- `command_centre/actions.py`: `push-subscribe` (passkey), `push-unsubscribe` and `backup-now` (no passkey, same-origin), each on its own lock.
+- `command_centre/sources.py`, `data.py`, `templates/health.html`: the backup age.
+- `scripts/reports/cc_event.py` (allowlisted), `scripts/reports/cc_backup.py` (not allowlisted).
+- `command_centre/install.sh`: `--backup` installs the `com.lcs.backup` LaunchAgent (02:30 nightly); the owner steps for Tailscale, the Shortcut and notifications in its output.
+- Handover Appendices A and E: one `cc_event.py` line where each event happens. `.claude/settings.json`: the allowlist entry.
+- Tests: `tests/test_cc_pwa.py`, `tests/test_cc_push.py`, `tests/test_cc_backup.py`; `tests/test_prompt_allowlist.py` keeps passing.
+
+### Task 5.1: PWA
+
+- [x] `GET /manifest.webmanifest` (`application/manifest+json`): name "LCS Command Centre", short name "LCS", `display: standalone`, start URL and scope `/`, theme `#8B3A3A`, background `#F7F3EE`, icons 180, 192, 512 and a maskable 512, PNG files in `static/icons/` drawn by `pwa.py` (a drift test redraws them). No external asset.
+- [x] `GET /sw.js` (`application/javascript`, `Service-Worker-Allowed: /`, `no-store`), scope `/`. It caches the app shell (CSS, JS, icons) and the last copy of `/` and `/money` (exact paths, no query, a 200 HTML answer only). Those two pages are fetched with a 4-second timeout; when the network fails or is slow (Tailscale off) the saved copy is served with a banner "Couldn't reach the Mac (showing the copy from <time>)"; a copy over 7 days old is deleted instead, a 401 or 403 deletes both, and a same-origin `{type: "clear-offline"}` message deletes them. Any method but GET returns before the worker touches it, so it never sees, caches or replays a POST; `/actions/`, `/auth/`, exports and every other page are never cached. On push it shows the title and body (truncated); a tap opens the payload's path when it is a same-origin path, else `/`.
+- [x] `base.html`: the manifest link, `theme-color`, the Apple touch icon, `pwa.js` (registers the worker) and an install hint in iOS Safari when the app isn't installed yet.
+- [x] CSP: `worker-src 'self'` and `manifest-src 'self'`; the rest unchanged.
+
+### Task 5.2: Push
+
+- [x] `pywebpush==2.5.0` pinned with its dependencies. **VAPID keys:** a P-256 key made once with `cryptography`, its private scalar (hex) stored with the `security` CLI under the Keychain service `lcs-command-centre-vapid` (added through `security -i` on stdin, so the key never appears in a process list; read with `find-generic-password -w` from the app's own process, never by Claude). For tests and the local visual check only, `CC_VAPID_STORE=file` switches to `<private>/command-centre/vapid-test.json` (mode 600).
+- [x] **Subscribe** is `push-subscribe` in the registry: input `endpoint`, `p256dh`, `auth`. The endpoint must be `https://` on a known push service (Apple, Google, Mozilla, Microsoft) with no port, user info or fragment, so the app can't be made to POST anywhere else. The summary names the push service and a hash of the device key; the owner approves it with a passkey (a new device receiving business information). Stored in the config's `push_subscriptions` (id = the first 16 hex characters of sha256(endpoint), when, login, passkey id). **Unsubscribe** is `push-unsubscribe` (input `id`), no passkey: it only narrows who is told. Both pass the Host and same-origin checks and are audited.
+- [x] **Events:** `scripts/reports/cc_event.py <kind> --<field> <value> …` appends `{"at", "kind", "fields"}` to `~/lcs-private/command-centre/events.jsonl` (mode 600, directory 700, under an flock). Kinds and fields: `enquiry --first --occasion --date`, `deposit --first --ref`, `hand-check --ref --state`, `bank-change --first`, `guard-denied --agent`, `run-failed`, `monday-ready`; no free text. A first name is `^[A-Z][a-z'’-]{1,20}$`, a ref `^[A-Z0-9-]{3,20}$`, the rest fixed lists or an ISO date. The app re-validates and builds each notification from a fixed template (security review fixes).
+- [x] **Payload:** `{"title", "body", "url"}` only. The title and the page come from the kind (a fixed table); the body is the event's text, scrubbed again, with every known client and singer surname removed (ledger, pipeline, singer store), at most 80 characters.
+- [x] **Sending:** pywebpush over the Mac's normal internet connection (a `requests` session with no proxy from the environment and a 10-second timeout; the push services are public hosts, never tailnet addresses).
+- [x] **Watcher** (the service only, never on a dev port): every 20 seconds it reads new lines from `events.jsonl` (from the end of the file on its first start, so history isn't replayed; the offset lives in `push-state.json`), pushes each to every subscription (a 404 or 410 drops that subscription) and runs the stale-run check.
+- [x] **Stale run:** between 08:00 and 21:00 London time, if `assistant-state.json` hasn't changed for more than 3 daytime hours (21:00 to 08:00 doesn't count, so the first run of the morning isn't late), push "Enquiry assistant not seen" once per stale file.
+- [x] **This device** (`/device`, from More and the footer): the install steps (Shortcut included), this device's notification state, **Enable notifications** (asks permission and subscribes; a second tap approves it with Face ID or Touch ID), **Turn off on this device**, and the subscribed devices with a remove button each.
+
+### Task 5.3: Backups
+
+- [x] `pyrage==1.4.0` (the age format; no CLI needed to make or check a backup). `scripts/reports/cc_backup.py`:
+  - `init`: makes an age X25519 identity, saves the recipient (public key) in the config's `backup.recipient`, and prints the identity once for the password manager. It never writes the identity anywhere. Refused if a recipient exists, unless `--replace`.
+  - `run` (the LaunchAgent and "Back up now"): a tar.gz of `~/lcs-private` without the backups themselves, `command-centre/runs/`, `command-centre/cache/` and `command-centre/mirror.git`, nor sockets or other special files, built in an unlinked temp file, encrypted to the recipient, written as `lcs-backup-YYYYMMDD-HHMMSS.tar.gz.age` (mode 600) through a `.part` file and a rename. Then backups older than 14 days go (only files with that exact name pattern, regular files, never the newest). `command-centre/backup-state.json` records the time, name, size and sha256. One run at a time (flock).
+  - `verify`: reads the identity from stdin (hidden when typed), decrypts the newest backup in memory and prints its listing. Nothing is extracted.
+  - Target: the config's `backup.target`, default `~/Library/Mobile Documents/com~apple~CloudDocs/LCS-backups`.
+- [x] Health shows the last backup's age and warns after 36 hours (or when there is none, or no recipient); the fingerprint key row points at it.
+- [x] `backup-now` in the registry: `cc_backup.py run`, no passkey, same-origin (CSRF) required, its own lock, a 15-minute timeout.
+- [x] `install.sh --backup` writes and loads `com.lcs.backup` (02:30 daily), refused until `init` has set a recipient.
+- **Restore:** `brew install age`, then `age -d -i key.txt lcs-backup-….tar.gz.age | tar -xz -C ~/restore-check` (key.txt holds the identity, typed from the password manager and deleted afterwards). `cc_backup.py verify` checks a backup without extracting it.
+
+### Task 5.4: Wiring
+
+- [x] `.claude/settings.json` allows `Bash(.venv/bin/python scripts/reports/cc_event.py *)`.
+- [x] Appendix E: a new enquiry recorded (3a), a receipt drafted (5a), a bank-change warning (4), a Books guard denial (3.iii and 4a), a hand check (5a); Appendix A: the Monday review ready. One `cc_event.py` line each; Appendix E's command list names each kind it uses. `tests/test_prompt_allowlist.py` passes.
+
+### Task 5.5: Tests, visual check, PR
+
+- [x] `tests/test_cc_pwa.py`: manifest and worker served with their headers; the CSP; the worker's GET-only early return, its cache list and its 4-second timeout (a static check of `sw.js`); the icons valid and in step with `pwa.py`; the base template's links.
+- [x] `tests/test_cc_push.py`: subscribe needs a passkey (refused without one, with a stale one or another action's); the endpoint allowlist; unsubscribe; the payload has only title, body and url and no surname, email or long number; events → pushes (a fake pywebpush); a 410 drops the subscription; no replay of history; the stale-run window; `cc_event.py` kinds, length and file mode; the VAPID file store and the Keychain calls (a fake `security`).
+- [x] `tests/test_cc_backup.py`: excludes, retention, an encryption round trip with a test key, `verify` from stdin, the identity never on disk, Health's age and warning, `backup-now` with no passkey.
+- [x] Visual check on `127.0.0.1:8792` with fake data (the manifest link, the install hint, Health's backup line); stop the server.
+- [x] Every `tests/test_*.py`; commit; PR; don't merge.
+- **Task 5.6 (next):** a security review by a separate agent, adversarially, before relying on push.
+
+### Owner steps after merge (phase 5)
+
+1. `git pull` in the main checkout, then `bash command_centre/install.sh` (it installs the new pinned packages and restarts the app).
+2. **Tailscale admin console → DNS:** turn on MagicDNS and HTTPS certificates. The Home Screen app and Web Push need the real ts.net certificate.
+3. **Install:** on the iPhone, with Tailscale connected, open `https://<mac>.<tailnet>.ts.net/` in Safari, Share → Add to Home Screen.
+4. **Shortcut "LCS":** in the Shortcuts app, a new shortcut with two actions: Tailscale → Connect, then Open URL `https://<mac>.<tailnet>.ts.net/`. Add it to the Home Screen: it is the main way to open the app. Optional second shortcut: Tailscale → Disconnect.
+5. **Notifications:** open the installed app, More → This device, tap **Enable notifications**, allow them, then **Approve this device** with Face ID. macOS may ask once whether python may use the `lcs-command-centre-vapid` Keychain item: Always Allow. Notifications arrive with the VPN off, through Apple's push service; tapping one opens the app (connect Tailscale first, or use the Shortcut, to see live data).
+6. **Offline:** with the VPN off, the Home Screen app shows the last Today and Money pages it saw, marked "Couldn't reach the Mac (showing the copy from <time>)". Actions need the VPN.
+7. **Backups:** `.venv/bin/python scripts/reports/cc_backup.py init`; store the printed `AGE-SECRET-KEY-…` line in the password manager (shown once, kept nowhere else). Then `bash command_centre/install.sh --backup` for the 02:30 LaunchAgent. Tap **Back up now** on Health once, and check it with `.venv/bin/python scripts/reports/cc_backup.py verify` (paste the key). If the run says "Operation not permitted", macOS is blocking iCloud Drive for background processes: give `.venv/bin/python` Full Disk Access, or set `backup.target` in the config to another folder.
+
+---
+
+## Phase 6: final wiring (this PR)
+
+**Goal:** the data the scheduled runs already cache reaches the pages (Books, margins, the diary), and the three features deferred from phase 5 land: the drafts inbox, the quote calculator and the 30-minute background refresh. Nothing new writes outside `~/lcs-private/command-centre/`, and nothing new needs a passkey: the only new write is a local draft mark.
+
+**Files:**
+- `command_centre/models.py`: pure builders for the Books panel, the Books/Starling flags, a booking's Books and singer lines, the margin columns and the season total.
+- `command_centre/data.py`: the new panels (`books`, `books_flags`, `margins`, `season_margin`, `drafts`), each failing on its own.
+- `command_centre/drafts.py`: reads `cache/drafts.json` and the local marks (`drafts-marks.json`).
+- `command_centre/quote.py`: the calculator over `assistant_io.PriceParser`'s rows.
+- `command_centre/jobs.py`: the background refresh job.
+- `command_centre/actions.py`: `draft-mark` (a LocalAction, no passkey, same-origin, audited).
+- `command_centre/app.py`, `templates/`: Money's Books panel and season total, Today's Books flags, the Bookings margin columns, the timeline's Books status, singers and margin, `GET /drafts`, `GET /quote`.
+- `scripts/reports/cc_sync.py`: `drafts-put '<json>'`. `scripts/bookings/assistant_io.py`: `PriceParser` also keeps structured rows (its text output is unchanged).
+- `.claude/agents/lcs-reply-drafter.md`, `lcs-daily-pass.md`, `lcs-singer-clerk.md`: one `cc_sync.py drafts-put` line per saved draft (already allowlisted by `cc_sync.py *`).
+- `tests/test_cc_final.py`.
+
+### Task 6.1: Books on the pages (R17)
+
+- [x] **Money:** a Books panel from `cache/books.json` (`books_cache.books_cache()`): receivables (count and £), overdue, drafts not yet sent (invoice numbers), unpaid bills (count and £), and "Books as of <generated_at>". No cache yet says "Books not synced yet: the daily pass runs `cc_sync.py books`".
+- [x] **Timeline:** the booking's Books invoice, matched by invoice number = booking ref: its status, total and balance, dated by the invoice date. None: "Not in Books".
+- [x] **Today:** the Appendix A step 6g rules, as flags in "Needs you" (and in the attention count): a Books draft more than 2 days old ("Books draft not sent (>2 days)"); Books paid but Starling hasn't matched the full fee (the state isn't PAID_IN_FULL and there is no "paid in full" note); Starling matched (DEPOSIT_SEEN, PAID_IN_FULL or a "paid in full" note) but Books unpaid or overdue with nothing paid, or part-paid when Starling says paid in full. The two Starling comparisons are skipped when the bank wasn't checked, as 6g skips them.
+
+### Task 6.2: Margins (R18)
+
+- [x] Bookings list and timeline: fee, singer costs, margin and margin % from `singer_invoices.margins()` over the same ledger and store the pages read.
+- [x] Money: the season total (bookings from `season_start`, cancelled ones left out): fee, singer costs, margin, margin %.
+- [x] Timeline: the singers linked to the booking (the store's `booking_ref`), first names only, with each invoice's amount and paid state.
+
+### Task 6.3: Calendar
+
+- [x] `cc_sync.py calendar-put` writes `<private>/command-centre/cache/calendar.json`, a JSON list of `{start, end, summary, calendar}`; `sources.calendar_cache()` reads that path and `models.diary_items()` that shape. A round-trip test pins it.
+
+### Task 6.4: Drafts inbox
+
+- [x] `cc_sync.py drafts-put '<json>'`: one object or a list of at most 50, each exactly `{thread_id, kind, first_name, subject, created}`: a thread id of 1 to 40 letters and digits, a kind from a fixed list, a first name as `cc_event.py` takes it, a subject of at most 80 characters with no control characters, a created date YYYY-MM-DD. Anything else refuses the whole input and writes nothing. Merged into `cache/drafts.json` (same thread and kind replaces), newest 500 kept, under an flock, atomically at mode 600.
+- [x] The reply drafter, the daily pass and the singer clerk run it once per saved draft.
+- [x] `GET /drafts`: the open drafts (newest first) and the marked ones, with "Open Zoho Mail drafts" (`https://mail.zoho.com/zm/#mail/folder/drafts`: the owner's account is on Zoho's .com data centre, per the handover's Appendix C and the MCP hosts on zohomcp.com).
+- [x] `draft-mark` (sent or discarded): a local record in `<private>/command-centre/drafts-marks.json`, no passkey, same-origin, audited. A draft is named by a 12-letter hash of its thread, kind and date, so no thread id reaches a form.
+
+### Task 6.5: Quote calculator
+
+- [x] `GET /quote` (a GET form: nothing is written). The packages, the organist add-on and the soloist-with-organist combination come only from `pricing.html` and `christmas-pricing.html`, parsed by `assistant_io.PriceParser`. Pick the price list, a package (its number of singers shown), an organist and whether the venue is outside Greater London (travel "confirmed with the quote", no figure), and for Christmas Eve or Christmas Day the page's premium sentence (no figure added).
+- [x] The output: the total and copyable wording in the house style: UK English, "No VAT is added." and no other VAT wording, no roster size.
+- [x] Tests: the parsed figures equal the pages' (Small Choir £1,150, organist £250, Small Choir + organist £1,400, soloist + organist £450).
+
+### Task 6.6: Background refresh
+
+- [x] `command_centre/jobs.py`: in the service's lifespan (never on a dev port, and off when `CC_NO_REFRESH_JOB` is set), every 30 minutes from 07:00 to 22:00 London time: `dashboard.py` then `cc_sync.py books` as subprocesses (argv, no shell, the actions' clean environment, a timeout each), then the bank cache is cleared. Its own lock, and it takes the manual refresh's lock without waiting, so the two never overlap (a slot that finds either busy is skipped). A failure goes to the audit log as `refresh-job` with its type name only.
+
+### Task 6.7: Roadmap, tests, visual check, PR
+
+- [x] R17 and R18 marked done; anything newly deferred added.
+- [x] `tests/test_cc_final.py`; every `tests/test_*.py` with temp env vars.
+- [x] Visual check on `127.0.0.1:8791` with fake data at 390px and 1280px, light and dark; stop the server.
+- [x] Commit, PR, don't merge.
 
 ---
 

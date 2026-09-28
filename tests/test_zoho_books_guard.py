@@ -101,7 +101,10 @@ APPROVED_WRITES = {
     "ZohoBooks_add_invoice_document", "ZohoBooks_upload_invoice_document",
     "ZohoBooks_add_invoice_comment",
     "ZohoBooks_create_bill", "ZohoBooks_update_bill", "ZohoBooks_add_bill_comment",
+    "ZohoBooks_create_item", "ZohoBooks_create_bank_account", "ZohoBooks_create_vendor_payment",
+    "ZohoBooks_create_customer_payment",
 }
+STARLING = "1534218000000095168"
 ORG = {"organization_id": "941014440"}
 CONFIRMATION = "~/lcs-private/invoices/2111 - A Client/Booking Confirmation - A Client - 21 Nov 2026.docx"
 
@@ -127,7 +130,7 @@ def good_inputs():
             "due_date": "2026-10-12", "reference_number": "2111", "notes": "Booking 2111",
             "payment_terms": 14, "payment_terms_label": "Net 14",
             "line_items": [{"name": "Wedding, 2111", "description": "Tenor", "rate": 180, "quantity": 1,
-                            "account_id": "460000000033333", "item_order": 1}]}
+                            "account_id": "1534218000000034003", "item_order": 1}]}
     return {
         "ZohoBooks_create_contact": {"body": contact, "query_params": ORG},
         "ZohoBooks_update_contact": {"body": {"contact_name": "A Client", "company_name": "A Client Ltd"},
@@ -147,6 +150,29 @@ def good_inputs():
                                   "query_params": ORG, "path_variables": {"bill_id": "666"}},
         "ZohoBooks_add_bill_comment": {"body": {"description": "Booking 2111"}, "query_params": ORG,
                                        "path_variables": {"bill_id": "666"}},
+        "ZohoBooks_create_vendor_payment": {"body": {"vendor_id": "1534218000000100001", "amount": 100,
+                                                     "date": "2026-09-28", "payment_mode": "Bank Transfer",
+                                                     "paid_through_account_id": STARLING,
+                                                     "description": "Starling transfer",
+                                                     "bills": [{"bill_id": "1534218000000102002",
+                                                                "amount_applied": 100}]},
+                                            "query_params": ORG},
+        "ZohoBooks_create_customer_payment": {"body": {"customer_id": "1534218000000100010", "date": "2026-09-27",
+                                                       "amount": 575, "amount_applied": 575,
+                                                       "invoice_id": "1534218000000100020",
+                                                       "payment_mode": "banktransfer", "account_id": STARLING,
+                                                       "reference_number": "2111",
+                                                       "description": "Starling transfer, reference 2111",
+                                                       "invoices": [{"invoice_id": "1534218000000100020",
+                                                                     "amount_applied": 575}]},
+                                              "query_params": ORG},
+        "ZohoBooks_create_bank_account": {"body": {"account_name": "Starling Business", "account_type": "bank",
+                                                   "currency_code": "GBP", "description": "Business account"},
+                                          "query_params": ORG},
+        "ZohoBooks_create_item": {"body": {"name": "Singing fee", "rate": 0, "description": "Singer's fee",
+                                           "item_type": "purchases", "product_type": "service",
+                                           "purchase_rate": "0", "purchase_description": "Singer's fee"},
+                                  "query_params": ORG},
     }
 
 
@@ -410,6 +436,95 @@ def test_bill_update_needs_bill_id_and_changes_notes_dates_and_reference_only():
     for key, val in (("vendor_id", "1"), ("line_items", []), ("line_items", [{"rate": 1}]), ("bill_number", "S-1"),
                      ("payment_terms", 7), ("documents", []), ("account_id", "1")):
         assert denied(U, with_(U, "body", **{key: val})), key
+
+
+def test_bill_attachment_is_only_a_saved_singer_pdf():
+    B = "ZohoBooks_create_bill"
+    home = tempfile.mkdtemp()
+    os.makedirs(os.path.join(home, "lcs-private", "singer-invoices"))
+    os.makedirs(os.path.join(home, "lcs-private", "invoices"))
+    env = dict(os.environ, HOME=home)
+    ok = "~/lcs-private/singer-invoices/1790614912727141700.pdf"
+    def run(att):
+        return decide("zoho-books", B, with_(B, "query_params", attachment=att), env=env)
+    assert run(ok) == "allow"
+    assert run(os.path.join(home, "lcs-private", "singer-invoices", "1790614912727141700.pdf")) == "allow"
+    for bad in ("~/lcs-private/invoices/2111.pdf", "~/lcs-private/singer-invoices/x.docx",
+                "~/lcs-private/singer-invoices/../invoices/a.pdf", "~/lcs-private/singer-invoices/a b.pdf",
+                "~/lcs-private/singer-invoices/sub/a.pdf", "https://example.com/a.pdf", "~/Desktop/a.pdf"):
+        assert run(bad) == "deny", bad
+    # the long digit run is exempt only as that file name, never in bill text
+    assert decide("zoho-books", B, with_(B, "body", notes="1790614912727141700"), env=env) == "deny"
+
+
+def test_bill_lines_may_only_use_the_singer_fees_account():
+    B = "ZohoBooks_create_bill"
+    line = {"name": "Singing fee", "rate": 100, "quantity": 1}
+    assert not denied(B, with_(B, "body", line_items=[line]))
+    assert not denied(B, with_(B, "body", line_items=[dict(line, account_id="1534218000000034003")]))
+    assert denied(B, with_(B, "body", line_items=[dict(line, account_id="1534218000000000373")]))
+
+
+def test_vendor_payment_is_one_bill_in_full_through_starling():
+    V = "ZohoBooks_create_vendor_payment"
+    bill = {"bill_id": "1534218000000102002", "amount_applied": 100}
+    assert denied(V, with_(V, "body", paid_through_account_id="1534218000000117002"))
+    assert denied(V, with_(V, "body", paid_through_account_id=None))
+    assert denied(V, with_(V, "body", payment_mode="Cash"))
+    assert not denied(V, with_(V, "body", payment_mode=None))
+    assert denied(V, with_(V, "body", amount=90))
+    assert denied(V, with_(V, "body", amount=0, bills=[dict(bill, amount_applied=0)]))
+    assert denied(V, with_(V, "body", amount=20000, bills=[dict(bill, amount_applied=20000)]))
+    assert denied(V, with_(V, "body", amount="100"))
+    assert denied(V, with_(V, "body", bills=[]))
+    assert denied(V, with_(V, "body", bills=[bill, bill]))
+    assert denied(V, with_(V, "body", vendor_id=None))
+    for key in ("reference_number", "check_details", "exchange_rate", "location_id"):
+        assert denied(V, with_(V, "body", **{key: "x"})), key
+    assert denied(V, with_(V, "body", description="Paid to sort code 12-34-56"))
+    for tool in ("ZohoBooks_email_vendor_payment", "ZohoBooks_create_customer_payment_refund",
+                 "ZohoBooks_write_off_invoice", "ZohoBooks_apply_credits_to_invoice"):
+        assert decide("zoho-books", tool, {"query_params": ORG}) == "deny", tool
+
+
+def test_customer_payment_is_one_invoice_through_starling_with_no_thank_you_email():
+    C = "ZohoBooks_create_customer_payment"
+    inv = {"invoice_id": "1534218000000100020", "amount_applied": 575}
+    assert denied(C, with_(C, "body", account_id="1534218000000117002"))
+    assert denied(C, with_(C, "body", payment_mode="cash"))
+    assert denied(C, with_(C, "body", amount=600))
+    assert denied(C, with_(C, "body", amount_applied=500))
+    assert denied(C, with_(C, "body", invoices=[dict(inv, amount_applied=500)]))
+    assert denied(C, with_(C, "body", invoices=[dict(inv, invoice_id="999999999")]))
+    assert denied(C, with_(C, "body", invoices=[inv, inv]))
+    assert denied(C, with_(C, "body", amount=0, amount_applied=0, invoices=[dict(inv, amount_applied=0)]))
+    assert denied(C, with_(C, "body", reference_number="INV 2111 Smith"))
+    assert not denied(C, with_(C, "body", reference_number=None))
+    for key in ("contact_persons", "bank_charges", "exchange_rate", "retainerinvoice_id", "custom_fields", "tags"):
+        assert denied(C, with_(C, "body", **{key: "1"})), key
+    assert denied(C, with_(C, "body", description="Paid from 12-34-56 12345678"))
+
+
+def test_bank_account_is_a_named_gbp_bank_with_no_numbers():
+    A = "ZohoBooks_create_bank_account"
+    assert denied(A, with_(A, "body", account_type="credit_card"))
+    assert denied(A, with_(A, "body", currency_code="EUR"))
+    assert denied(A, with_(A, "body", account_name=None))
+    for key in ("account_number", "routing_number", "account_code", "bank_name", "is_primary_account"):
+        assert denied(A, with_(A, "body", **{key: "12345678"})), key
+    assert denied(A, with_(A, "body", description="Sort code 12-34-56"))
+
+
+def test_item_create_is_a_purchase_service_with_no_account_or_tax_keys():
+    T = "ZohoBooks_create_item"
+    assert denied(T, with_(T, "body", item_type=None))
+    for bad in ("sales", "sales_and_purchases", "inventory"):
+        assert denied(T, with_(T, "body", item_type=bad)), bad
+    assert denied(T, with_(T, "body", product_type="goods"))
+    assert not denied(T, with_(T, "body", product_type=None))
+    assert denied(T, with_(T, "body", name=None))
+    for key in ("account_id", "purchase_account_id", "inventory_account_id", "tax_id", "vendor_id", "sku"):
+        assert denied(T, with_(T, "body", **{key: "460000000033333"})), key
 
 
 def test_bill_comment_needs_bill_id():

@@ -5,12 +5,16 @@ Alma Consort Starling account, READ-ONLY (see lcs_money.StarlingReadOnly).
     .venv/bin/python scripts/bookings/check_payments.py                  # report
     .venv/bin/python scripts/bookings/check_payments.py --apply          # also update ledger notes
     .venv/bin/python scripts/bookings/check_payments.py --apply --json   # machine-readable, for the assistant;
-        each item's "action" is receipt | deposit_reminder | balance_reminder | hand_check | none (action_for)
+        each item's "action" is receipt | deposit_reminder | balance_reminder | hand_check | none (action_for),
+        and "record_in_books" lists its confident payments [[date, amount]] for the Books invoice (BOOKS_STATES)
     .venv/bin/python scripts/bookings/check_payments.py --reminded 2111 [--kind deposit|balance|receipt]
     .venv/bin/python scripts/bookings/check_payments.py --note 2111 "paid per client email 2026-09-28"
         (one line, at most 120 characters, no ';'; refuses the scripts' own phrases and the owner's hand-written
         ones: paid in full, deposit seen … (Starling), reminder/receipt drafted, deposit kept, refunded,
         payment checked, reinstated and the like, review request …, and anything starting PENDING)
+    … --note 2111 "paid in full 2026-09-28" --owner
+        (the Command Centre only, after the owner's passkey: allows the owner's phrases and records "(owner)";
+        refused unless stdin is a pipe carrying the app's one-time nonce, see owner_confirmed)
     .venv/bin/python scripts/bookings/check_payments.py --selftest       # token, account and permissions
 
 Matching (against every ledger row, closed ones too, so a payment is never
@@ -69,8 +73,14 @@ silences nothing), PAYMENT_AFTER_CLOSE (a payment dated
 after a "paid in full YYYY-MM-DD" note; received_since leaves it out) and ARRANGED
 (the notes say the balance will come in cash or by cheque: "balance to be paid in
 cash", "will pay balance in cash", "balance payable in cash on the day", "rest will
-be paid in cash", "cheque on the day"; not when the clause has a paid word ("balance
-paid in cash on the day" is NOTED_PAID) or a negation, refusal or doubt anywhere in
+be paid in cash", "cheque on the day"; or a future-tense note of the balance/rest/
+remainder with no cash or cheque mentioned at all: "rest will be paid by the father",
+"balance will be paid by her parents", "remainder to be paid by the church", "is
+paying the rest", "going to pay the balance" — a future-tense phrase never reads as
+paid, whatever the wording, and with no mention of the balance/rest/remainder it is
+chased normally instead; not when the clause has a paid word ("balance
+paid in cash on the day" is NOTED_PAID, and so is a past-tense "rest paid by the
+father 5 Sep") or a negation, refusal or doubt anywhere in
 it ("told bank transfer only", "by transfer not cash", "going to pay cash but will
 transfer"), and a note of the whole fee paid still wins. Never chased or thanked; on the Monday
 hand check from 7 days before the event, or every week when no deposit is in the bank
@@ -87,10 +97,16 @@ it writes "deposit seen … (Starling)". Output shows invoice numbers and amount
 
 import argparse
 import datetime
+import hashlib
+import hmac
 import json
 import math
+import os
 import re
+import select
+import stat
 import sys
+import time
 import urllib.error
 from pathlib import Path
 
@@ -104,6 +120,9 @@ RECEIPT_DAYS = 14
 SHORT_NOTICE_DAYS = 10
 # A thank-you is only ever drafted in these states; notes are never rewritten in the others.
 RECEIPT_STATES = {"PAID_IN_FULL", "DEPOSIT_SEEN", "BALANCE_DUE", "NOTED_PAID"}
+# States whose confident payments the assistant records against the Books invoice (owner decision, 28 Sep 2026).
+# Every CHECK_*, PAST_*, NOTED_PAID, PAYMENT_* and CANCELLED state stays with the owner.
+BOOKS_STATES = {"PAID_IN_FULL", "DEPOSIT_SEEN", "BALANCE_DUE", "ARRANGED"}
 NEVER_WRITTEN = {"CANCELLED", "PAYMENT_ON_CANCELLED", "PAYMENT_AFTER_CLOSE"}
 # URLError and HTTPError are OSErrors too; a non-JSON 200 body (an outage page) is a JSONDecodeError
 STARLING_DOWN = (urllib.error.URLError, TimeoutError, OSError, json.JSONDecodeError)
@@ -128,7 +147,7 @@ NOT_PAID = re.compile(
     r"|\bto be (paid|received|settled)\b" + _gap()
     + r"|\bif\b" + _gap(15) + r"\bpaid\b"
     r"|\b(asked|says|said)\b" + _gap(20) + r"\bpaid\b"
-    r"|\bwill\s+(have\s+)?(pay|paid)\b" + _gap()
+    r"|\bwill\s+(be\s+|have\s+)?(pay|paid)\b" + _gap()
     + r"|\b(deposit|balance|payment)\s+in\s+by\b", re.I)  # "deposit in by Friday please" is a deadline
 # "deposit seen <date>;" is what the enquiry assistant writes by hand (handover Appendix E)
 PAID_WORD = re.compile(r"\b(paid|received|settled)\b|\bdeposit\s+(seen|in)\b", re.I)
@@ -383,10 +402,19 @@ def hand_notes(notes):
 
 # A balance the client will pay in cash or by cheque, on the day or later ("balance to be paid in cash", "will pay
 # balance in cash", "balance payable in cash on the day", "rest will be paid in cash", "cheque on the day").
+# Also a future-tense note of the balance/rest/remainder with no cash/cheque mentioned at all ("rest will be paid
+# by the father", "balance will be paid by her parents", "remainder to be paid by the church", "is paying the
+# rest", "going to pay the balance"): this is still an arrangement, not a payment, whoever ends up paying it
+# (R16). A future-tense phrase with no balance/rest/remainder mention ("will be paid by Friday") is neither
+# NOTED_PAID nor ARRANGED: it is just chased normally.
+FUTURE_PAY = r"(?:will\s+be\s+paid|to\s+be\s+paid|will\s+pay|is\s+paying|are\s+paying|going\s+to\s+pay)"
+REST_WORDS = r"(?:balance|rest|remainder|remaining)"
 ARRANGED_NOTE = re.compile(
     r"\b(?:to be|will be|payable|due)\b(?:(?![;.,]).){0,20}?\b(?:cash|cheque)\b"
     r"|\b(?:will|to|going to)\s+(?:pay|bring)\b(?:(?![;.,]).){0,25}?\b(?:cash|cheque)\b"
-    r"|\b(?:cash|cheque)\s+on\s+the\s+day\b", re.I)
+    r"|\b(?:cash|cheque)\s+on\s+the\s+day\b"
+    r"|\b" + REST_WORDS + r"\b(?:(?![;.,]).){0,30}?\b" + FUTURE_PAY + r"\b"
+    r"|\b" + FUTURE_PAY + r"\b(?:(?![;.,]).){0,30}?\b" + REST_WORDS + r"\b", re.I)
 NEGATION = {"not", "no", "never", "longer", "wont", "cant"}
 # A clause with a paid word ("balance paid in cash on the day" is a note of payment, not an arrangement; "to be
 # paid" and "will be paid" still arrange), or with a negation, refusal or doubt anywhere in it ("told bank transfer
@@ -520,6 +548,10 @@ def assess(r, paid, today):
         "short_notice": bool(invoice and event and (event - invoice).days <= SHORT_NOTICE_DAYS),
         "reminded": reminded,
         "just_received": just_received,  # draft a thank-you (action "receipt"); the one key for it
+        # confident payments to record against the Books invoice: [[date, amount]], oldest first; empty unless
+        # the state is settled enough and the confident payments don't exceed the booking's value
+        "record_in_books": ([[d, a] for d, a, _ in sorted(sure)]
+                            if state in BOOKS_STATES and total <= value + 0.01 else []),
     }
     out["action"] = action_for(out, today)
     return out
@@ -648,16 +680,29 @@ def main():
     ap.add_argument("--reminded", metavar="REF")
     ap.add_argument("--kind", choices=sorted(MARK_TEXT), default="deposit")
     ap.add_argument("--note", nargs=2, metavar=("REF", "TEXT"))
+    ap.add_argument("--owner", action="store_true", help="the Command Centre only: needs its one-time nonce on stdin")
     args = ap.parse_args()
     today = lm.today()
 
     # lm.locked_rows holds lm.ledger_lock, an flock on a fresh descriptor: NOT re-entrant. Never nest it, or
     # call another ledger writer while holding it, in one process: the second acquire deadlocks.
+    if args.owner and not args.note:
+        raise SystemExit("--owner goes with --note only; nothing written")
     if args.note:
         ref, text = args.note
         if "\n" in text or "\r" in text or len(text) > 120 or ";" in text:
             raise SystemExit("note text must be a single line, at most 120 characters, with no ';'")
-        if reserved_note(text):
+        if args.owner:
+            if is_pending(text):
+                raise SystemExit("a note never starts with PENDING; nothing written")
+            where = owner_ledger_problem()
+            if where:
+                raise SystemExit(f"--owner {where}; nothing written")
+            if not owner_confirmed():
+                raise SystemExit("--owner needs the Command Centre's one-time owner nonce (the owner's passkey "
+                                 "approval); nothing written")
+            text = f"{text} (owner)"
+        elif reserved_note(text):
             raise SystemExit("that phrase is the scripts' own or the owner's (he writes it in the ledger by hand); "
                              "nothing written")
         append_note(ref, text)
@@ -681,6 +726,69 @@ def main():
         run(args, client, lm.read_csv(LEDGER), today)  # --apply takes the lock only after the Starling calls
     except lm.StarlingError as e:
         raise SystemExit(str(e))
+
+
+OWNER_NONCE_TTL = 60  # seconds: the Command Centre writes the file moments before it runs this script
+
+
+def owner_nonce_path():
+    """<private dir>/command-centre/owner-nonce (LCS_PRIVATE_DIR read at call time)."""
+    return Path(os.environ.get("LCS_PRIVATE_DIR", Path.home() / "lcs-private")) / "command-centre" / "owner-nonce"
+
+
+def owner_ledger_problem(environ=None):
+    """None when an --owner note would land in the ledger beside the nonce, else the reason. The nonce proves the
+    app asked; this proves the note goes to the ledger the app read: LCS_BOOKINGS_CSV must be unset (the app never
+    sets it for its subprocesses) and the ledger must sit directly in the nonce's private dir."""
+    environ = os.environ if environ is None else environ
+    if environ.get("LCS_BOOKINGS_CSV"):
+        return "refuses LCS_BOOKINGS_CSV (the ledger must be the one in the private folder)"
+    private = owner_nonce_path().parent.parent
+    try:
+        if Path(LEDGER).resolve().parent != private.resolve():
+            return "needs the ledger in the same private folder as the nonce"
+    except OSError:
+        return "couldn't resolve the ledger's folder"
+    return None
+
+
+def owner_confirmed(stdin_fd=0):
+    """True only when the Command Centre ran this --owner note after the owner's passkey approval: stdin is a pipe
+    (not a terminal, not a redirected file) whose first line hashes (sha256) to the contents of the one-time nonce
+    file, and that file is a regular file (never followed through a symlink), this user's, mode 600 with no group
+    or other bits, and under OWNER_NONCE_TTL seconds old. The file is deleted on a match, so a nonce works once.
+    The nonce itself lives only in the app's memory and the pipe; the file holds its hash, so redirecting the
+    file into stdin fails twice over. No allowlisted command can pipe or write that file (plan, Task 3.1)."""
+    try:
+        if not stat.S_ISFIFO(os.fstat(stdin_fd).st_mode):
+            return False
+        path = owner_nonce_path()
+        fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | getattr(os, "O_NONBLOCK", 0))
+    except OSError:
+        return False
+    try:
+        st = os.fstat(fd)
+        if (not stat.S_ISREG(st.st_mode) or st.st_uid != os.getuid() or st.st_mode & 0o077
+                or not -5 <= time.time() - st.st_mtime <= OWNER_NONCE_TTL or st.st_size > 200):
+            return False
+        want = os.read(fd, 200).decode("ascii", "replace").strip()
+    finally:
+        os.close(fd)
+    if not re.fullmatch(r"[0-9a-f]{64}", want):
+        return False
+    ready, _, _ = select.select([stdin_fd], [], [], 2.0)  # an idle, open pipe never hangs the script
+    if not ready:
+        return False
+    line = os.read(stdin_fd, 200).decode("ascii", "replace").split("\n", 1)[0].strip()
+    if not re.fullmatch(r"[0-9a-f]{64}", line):
+        return False
+    if not hmac.compare_digest(hashlib.sha256(line.encode("ascii")).hexdigest(), want):
+        return False
+    try:
+        os.unlink(path)  # single use: burnt before the note is written
+    except OSError:
+        return False
+    return True
 
 
 def append_note(ref, text):

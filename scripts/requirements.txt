@@ -24,3 +24,20 @@ pycparser==3.0
 pyOpenSSL==26.4.0
 pyasn1==0.6.4
 pyasn1_modules==0.4.2
+# Phase 5: Web Push (pywebpush) and the encrypted backups (pyrage, the age format), with what they pull in
+pywebpush==2.5.0
+py-vapid==1.9.4
+http-ece==1.2.1
+requests==2.34.2
+certifi==2026.7.22
+charset-normalizer==3.5.1
+urllib3==2.8.0
+aiohttp==3.14.3
+aiohappyeyeballs==2.7.1
+aiosignal==1.4.0
+attrs==26.1.0
+frozenlist==1.8.0
+multidict==6.9.1
+propcache==0.5.4
+yarl==1.25.1
+pyrage==1.4.0

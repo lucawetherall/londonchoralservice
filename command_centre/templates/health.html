@@ -49,6 +49,38 @@
     {% endfor %}
   </ul>
   {% elif tasks.ok %}<p class="muted">No scheduled tasks found.</p>{% endif %}
-  <p class="muted">Starting a task from here arrives in phase 3.</p>
+  <p class="muted">There's no run-now trigger in this app. Use <strong>Run now</strong> on the task in the Claude app (Routines).</p>
+</section>
+
+<section class="card">
+  <h2>Handoffs</h2>
+  <p class="muted">Copy a prompt for Claude Code Remote Control on your phone. Nothing runs from this page.</p>
+  <ul class="lines">
+    <li>{{ m.copy_button(handoffs.whats_owed, "What's owed this week?") }}</li>
+    <li>{{ m.copy_button(handoffs.summarise_today, "Summarise today's business") }}</li>
+  </ul>
+</section>
+
+<section class="card">
+  <h2>Refresh data now</h2>
+  <p>Rebuilds the static dashboard (read-only) and clears the ten-minute bank cache, so the next page shows the bank as it is now.</p>
+  {{ m.action_button("refresh-data", "Refresh data now") }}
+</section>
+
+{% set b = backup.value if backup.ok else backup.stale %}
+<section class="card" id="backup">
+  <h2>Backup</h2>
+  {{ m.failed(backup) }}
+  {% if b %}
+    {% if not b.configured %}
+    <p><span class="badge bad">check</span> No backup key yet. On the Mac: <span class="mono">.venv/bin/python scripts/reports/cc_backup.py init</span>, and keep the key it prints in the password manager.</p>
+    {% elif b.at is none %}
+    <p><span class="badge bad">check</span> No backup yet.</p>
+    {% else %}
+    <p><span class="badge {{ 'bad' if b.stale else 'ok' }}">{{ 'over 36 hours' if b.stale else 'ok' }}</span> Last backup {{ b.at|when }}{% if b.age %} ({{ (b.age.total_seconds() // 3600)|int }} hours ago){% endif %}.</p>
+    {% endif %}
+  {% endif %}
+  <p class="muted">Every night at 02:30: all of ~/lcs-private (the mirror, runs and caches left out), encrypted with age, 14 days kept. Only the key in your password manager opens it.</p>
+  {{ m.action_button("backup-now", "Back up now") }}
 </section>
 {% endblock %}

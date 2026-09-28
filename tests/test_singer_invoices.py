@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Tests for scripts/bookings/singer_invoices.py. Stdlib only. Uses a temp private dir."""
-import argparse, base64, contextlib, datetime, io, os, sys, tempfile, zipfile
+import argparse, base64, contextlib, datetime, io, os, re, subprocess, sys, tempfile, zipfile
+from pathlib import Path
 
 TMP = tempfile.mkdtemp()
 os.environ["LCS_PRIVATE_DIR"] = TMP
@@ -140,6 +141,24 @@ def eml(body, sender="Ben Fenwick <ben@example.com>"):
 class Args:
     def __init__(self, **kw):
         self.__dict__.update(kw)
+
+
+def pdf_mail(payload=b"%PDF-1.4 test", name="Invoice 1020.pdf"):
+    b64 = base64.b64encode(payload).decode()
+    return ("From: Ben Fenwick <ben@example.com>\nSubject: Invoice\nMIME-Version: 1.0\n"
+            "Content-Type: multipart/mixed; boundary=XX\n\n--XX\nContent-Type: text/plain\n\nHi\n"
+            f"--XX\nContent-Type: application/pdf\nContent-Disposition: attachment; filename=\"{name}\"\n"
+            f"Content-Transfer-Encoding: base64\n\n{b64}\n--XX--\n")
+
+
+def test_save_pdf_writes_a_private_copy_named_by_message_id():
+    path = si.save_pdf(pdf_mail(), "1790/614912727141700")
+    assert path == si.PDF_DIR / "1790614912727141700.pdf", path
+    assert path.read_bytes() == b"%PDF-1.4 test"
+    assert oct(path.stat().st_mode & 0o777) == "0o600" and oct(si.PDF_DIR.stat().st_mode & 0o777) == "0o700"
+    assert si.save_pdf(pdf_mail(b"not a pdf"), "m2") is None  # a .pdf name on something else
+    assert si.save_pdf(pdf_mail(name="notes.txt"), "m3") is None
+    assert si.save_pdf(pdf_mail(), "../") is None
 
 
 def test_store_lifecycle():
@@ -732,6 +751,37 @@ def test_confirm_command():
         pass
 
 
+def test_confirm_expect_fp_is_bound_to_the_fingerprint():
+    fresh_store()
+    scan(GEN.format(n=1), "g1", "2026-08-01")
+    fp = rows_by_id()["g1"]["bank_fp"]
+    assert re.fullmatch(r"[0-9a-f]{16}", fp), fp
+    other = fp[:15] + ("0" if fp[15] != "0" else "1")  # differs only in the last character
+    for bad in (other, fp[:8], fp[:15], fp.upper(), "abc", "-x", fp[:14] + "zz", fp + "0"):
+        try:
+            si.cmd_confirm(Args(message_id="g1", expect_fp=bad))
+            raise AssertionError(f"confirmed with --expect-fp {bad}")
+        except SystemExit:
+            pass
+        assert rows_by_id()["g1"]["bank_confirmed"] == "", bad
+    buf = io.StringIO()
+    with contextlib.redirect_stdout(buf):
+        si.cmd_confirm(Args(message_id="g1", expect_fp=fp))
+    assert rows_by_id()["g1"]["bank_confirmed"] == "yes"
+    # the real command line: argparse takes the option
+    fresh_store()
+    scan(GEN.format(n=1), "g1", "2026-08-01")
+    env = dict(os.environ)
+    p = subprocess.run([sys.executable, str(Path(si.__file__)), "confirm", "g1", "--expect-fp", other], env=env,
+                       capture_output=True, text=True, timeout=30, stdin=subprocess.DEVNULL)
+    assert p.returncode != 0 and "changed since you approved" in p.stderr, (p.stdout, p.stderr)
+    assert rows_by_id()["g1"]["bank_confirmed"] == ""
+    p = subprocess.run([sys.executable, str(Path(si.__file__)), "confirm", "g1", "--expect-fp", fp], env=env,
+                       capture_output=True, text=True, timeout=30, stdin=subprocess.DEVNULL)
+    assert p.returncode == 0, p.stderr
+    assert rows_by_id()["g1"]["bank_confirmed"] == "yes"
+
+
 def test_payee_name_check_needs_the_first_name():
     payees = [{"payeeName": "Tom Fenwick", "accounts": [{"bankIdentifier": "123456", "accountIdentifier": "99990000"}]}]
     fps = lm.payee_fingerprints(payees)
@@ -860,6 +910,8 @@ def test_newly_paid_by_name_says_check_before_thanking():
     lines = [x for x in got.splitlines() if x.startswith("NEWLY PAID")]
     assert lines == ["NEWLY PAID g1: Ben £100.00 on 2026-08-03 (matched by name, check before thanking)",
                      "NEWLY PAID g2: Ben £100.00 on 2026-08-04 (bank details match)"], lines
+    books = [x for x in got.splitlines() if x.startswith("   books:")]
+    assert len(books) == 1 and books[0].startswith("   books: bill_number ") and "amount 100.00 · date 2026-08-04" in books[0], books
 
 
 # --- round 6: what the first live backfill showed: .docx, fetching by id, rescan, refs --------------

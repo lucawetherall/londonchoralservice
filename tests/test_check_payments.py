@@ -1281,6 +1281,230 @@ def test_note_still_takes_the_prompts_phrases():
         assert p.returncode == 0 and notes == "PENDING: invoiced; " + text, (text, p.stderr, notes)
 
 
+# ---------------------------------------------------------------- --owner (the Command Centre's hand-check resolutions)
+# check_payments.py --note REF TEXT --owner writes an owner-only phrase only with the app's one-time nonce: sha256(nonce)
+# in <private>/command-centre/owner-nonce (a regular file, this user's, mode 600, under 60 seconds old) and the nonce
+# itself on stdin, which must be a pipe. See docs/superpowers/plans/2026-09-28-command-centre.md, Task 3.1.
+
+import hashlib, time  # noqa: E402
+
+NONCE = "ab" * 32
+
+
+def owner_ledger(notes="PENDING: invoiced"):
+    d = tempfile.mkdtemp()
+    path = os.path.join(d, "bookings.csv")
+    cols = ["booking_ref", "value_gbp", "invoice_date", "event_date", "notes", "client_name"]
+    with open(path, "w", newline="") as f:
+        w = csv.DictWriter(f, fieldnames=cols)
+        w.writeheader()
+        w.writerow(row("2111", 650, "2026-08-22", "2026-11-21", notes))
+    return d, path
+
+
+def nonce_file(d, content=None, mode=0o600, age=0):
+    cc = os.path.join(d, "command-centre")
+    os.makedirs(cc, mode=0o700, exist_ok=True)
+    path = os.path.join(cc, "owner-nonce")
+    fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+    with os.fdopen(fd, "w") as f:
+        f.write(hashlib.sha256(NONCE.encode()).hexdigest() if content is None else content)
+    os.chmod(path, mode)
+    if age:
+        t = time.time() - age
+        os.utime(path, (t, t))
+    return path
+
+
+def run_owner(d, path, args, stdin_text=None, stdin=None, env_extra=None):
+    env = {k: v for k, v in os.environ.items() if k != "LCS_BOOKINGS_CSV"}  # the ledger is <d>/bookings.csv
+    env["LCS_PRIVATE_DIR"] = d
+    env.update(env_extra or {})
+    kw = {"input": stdin_text} if stdin_text is not None else {"stdin": stdin if stdin is not None else subprocess.DEVNULL}
+    p = subprocess.run([PY, SCRIPT, *args], env=env, capture_output=True, text=True, timeout=30, **kw)
+    with open(path, newline="") as f:
+        return p, list(csv.DictReader(f))[0]["notes"]
+
+
+OWNER_ARGS = ["--note", "2111", "paid in full 2026-09-28", "--owner"]
+
+
+def test_owner_note_with_the_nonce_over_a_pipe_is_written_once():
+    d, path = owner_ledger()
+    nf = nonce_file(d)
+    p, notes = run_owner(d, path, OWNER_ARGS, stdin_text=NONCE + "\n")
+    assert p.returncode == 0, p.stderr
+    assert notes == "PENDING: invoiced; paid in full 2026-09-28 (owner)", notes
+    assert not os.path.exists(nf), "the nonce file is single use"
+    assert cp.closed_on({"notes": notes}) == datetime.date(2026, 9, 28)
+    p, notes2 = run_owner(d, path, OWNER_ARGS, stdin_text=NONCE + "\n")  # replay: the file is gone
+    assert p.returncode != 0 and notes2 == notes
+
+
+def test_owner_note_is_refused_without_the_nonce():
+    """Every way an allowlisted command could try it: no file, no pipe, the wrong nonce, the file's own contents."""
+    cases = []
+    d, path = owner_ledger()
+    cases.append(("no nonce file", d, path, {"stdin_text": NONCE + "\n"}))
+    d, path = owner_ledger()
+    nonce_file(d)
+    cases.append(("stdin /dev/null", d, path, {}))
+    d, path = owner_ledger()
+    nonce_file(d)
+    cases.append(("wrong nonce", d, path, {"stdin_text": "cd" * 32 + "\n"}))
+    d, path = owner_ledger()
+    nonce_file(d)
+    cases.append(("empty pipe", d, path, {"stdin_text": ""}))
+    d, path = owner_ledger()
+    nonce_file(d)
+    cases.append(("the hash itself over the pipe", d, path,
+                  {"stdin_text": hashlib.sha256(NONCE.encode()).hexdigest() + "\n"}))
+    d, path = owner_ledger()
+    nonce_file(d, age=120)
+    cases.append(("stale file", d, path, {"stdin_text": NONCE + "\n"}))
+    d, path = owner_ledger()
+    nonce_file(d, mode=0o644)
+    cases.append(("group-readable file", d, path, {"stdin_text": NONCE + "\n"}))
+    for label, d, path, kw in cases:
+        p, notes = run_owner(d, path, OWNER_ARGS, **kw)
+        assert p.returncode != 0, label
+        assert notes == "PENDING: invoiced", (label, notes)
+        assert "nothing written" in (p.stderr + p.stdout), (label, p.stderr)
+
+
+def test_owner_note_refuses_a_redirected_file_even_the_nonce_file():
+    d, path = owner_ledger()
+    nf = nonce_file(d)
+    other = os.path.join(d, "nonce.txt")  # a regular file holding the real nonce is still not a pipe
+    with open(other, "w") as f:
+        f.write(NONCE + "\n")
+    for src in (nf, other):
+        with open(src) as f:
+            p, notes = run_owner(d, path, OWNER_ARGS, stdin=f)
+        assert p.returncode != 0 and notes == "PENDING: invoiced", (src, p.stderr)
+
+
+def test_owner_note_refuses_a_symlinked_nonce_file():
+    d, path = owner_ledger()
+    real = nonce_file(tempfile.mkdtemp())
+    cc = os.path.join(d, "command-centre")
+    os.makedirs(cc, mode=0o700, exist_ok=True)
+    os.symlink(real, os.path.join(cc, "owner-nonce"))
+    p, notes = run_owner(d, path, OWNER_ARGS, stdin_text=NONCE + "\n")
+    assert p.returncode != 0 and notes == "PENDING: invoiced", p.stderr
+    assert os.path.exists(real)
+
+
+def test_the_allowlisted_forms_with_owner_are_refused_without_the_nonce():
+    """`--note *` and `--reminded *` on the allowlist also match these; the script refuses them."""
+    for args in (["--note", "2111", "refunded 2026-09-28", "--owner"],
+                 ["--reminded", "2111", "--note", "2111", "deposit kept 2026-09-28", "--owner"],
+                 ["--owner", "--note", "2111", "reinstated 2026-09-28"]):
+        d, path = owner_ledger()
+        p, notes = run_owner(d, path, args)
+        assert p.returncode != 0 and notes == "PENDING: invoiced", (args, p.stderr)
+
+
+def test_owner_needs_note():
+    d, path = owner_ledger()
+    nonce_file(d)
+    p, notes = run_owner(d, path, ["--owner"], stdin_text=NONCE + "\n")
+    assert p.returncode != 0 and notes == "PENDING: invoiced"
+
+
+def test_without_owner_the_owner_phrases_are_still_refused():
+    for text in ("paid in full 2026-09-28", "deposit kept 2026-09-28", "refunded 2026-09-28", "reinstated 2026-09-28",
+                 "payment checked 2026-09-28"):
+        d, path = owner_ledger()
+        nonce_file(d)  # even with a valid nonce waiting, no --owner means the normal rules
+        p, notes = run_owner(d, path, ["--note", "2111", text], stdin_text=NONCE + "\n")
+        assert p.returncode != 0 and notes == "PENDING: invoiced", text
+
+
+def test_owner_note_refuses_a_ledger_outside_the_nonce_folder():
+    """The nonce proves the app asked; the ledger must be the one beside it. LCS_BOOKINGS_CSV is refused outright,
+    even pointing at the same file, and the nonce is left unburnt."""
+    d, path = owner_ledger()
+    nf = nonce_file(d)
+    p, notes = run_owner(d, path, OWNER_ARGS, stdin_text=NONCE + "\n", env_extra={"LCS_BOOKINGS_CSV": path})
+    assert p.returncode != 0 and "LCS_BOOKINGS_CSV" in p.stderr and notes == "PENDING: invoiced", p.stderr
+    assert os.path.exists(nf)
+    other, other_path = owner_ledger()
+    p, _ = run_owner(d, path, OWNER_ARGS, stdin_text=NONCE + "\n", env_extra={"LCS_BOOKINGS_CSV": other_path})
+    with open(other_path, newline="") as f:
+        assert p.returncode != 0 and list(csv.DictReader(f))[0]["notes"] == "PENDING: invoiced"
+    # in-process: a ledger in another folder than the nonce's private dir
+    saved = cp.LEDGER
+    try:
+        cp.LEDGER = other_path
+        assert "same private folder" in cp.owner_ledger_problem({})
+        cp.LEDGER = os.path.join(os.environ["LCS_PRIVATE_DIR"], "bookings.csv")
+        assert cp.owner_ledger_problem({}) is None
+        assert "LCS_BOOKINGS_CSV" in cp.owner_ledger_problem({"LCS_BOOKINGS_CSV": "x"})
+    finally:
+        cp.LEDGER = saved
+
+
+def test_owner_note_keeps_the_single_line_rules():
+    for text in ("paid; in full", "x" * 121, "paid\nin full", "PENDING again"):
+        d, path = owner_ledger()
+        nonce_file(d)
+        p, notes = run_owner(d, path, ["--note", "2111", text, "--owner"], stdin_text=NONCE + "\n")
+        assert p.returncode != 0 and notes == "PENDING: invoiced", text
+
+
+# --- round 7: a future-tense payment note is arranged, never paid (R16) -----------------------
+
+def test_a_future_tense_rest_note_is_arranged_not_paid():
+    dep = [("2026-09-20", 575.0, "reference")]
+    for n in ("rest will be paid by the father", "balance will be paid by her parents",
+              "remainder to be paid by the church", "will pay the balance next week",
+              "is paying the rest", "are paying the remainder", "going to pay the balance"):
+        for event in ("2026-09-30", "2026-12-12", "2026-09-20"):
+            a = cp.assess(row("2111", 1150, "2026-09-01", event, "deposit seen 2026-09-20 (Starling); " + n), dep, T)
+            assert a["state"] == "ARRANGED" and a["just_received"] is False, (n, event, a["state"])
+        # with nothing in the bank and no note of a deposit, the deposit is still what is owed
+        a = cp.assess(row("2111", 1150, "2026-09-01", "2026-12-12", "PENDING: invoiced; " + n), [], T)
+        assert a["state"] == "ARRANGED", (n, a["state"])
+
+
+def test_a_future_tense_note_with_no_rest_word_is_chased_normally():
+    # future tense but no mention of the balance/rest/remainder: neither ARRANGED nor NOTED_PAID
+    for n in ("will be paid by Friday", "to be paid next week", "client will pay soon",
+              "is paying next week", "going to pay on the day", "deposit to be paid by 5 Oct"):
+        a = cp.assess(row("2111", 1150, "2026-09-01", "2026-12-12", "PENDING: invoiced; " + n), [], T)
+        assert a["state"] == "DEPOSIT_OVERDUE", (n, a["state"])
+
+
+def test_a_past_tense_rest_note_still_counts_as_paid():
+    dep = [("2026-09-05", 575.0, "reference")]
+    for n in ("rest paid by the father 5 Sep", "balance paid by parents"):
+        a = cp.assess(row("2111", 1150, "2026-09-01", "2026-09-30", "deposit seen 2026-09-05 (Starling); " + n), dep, T)
+        assert a["state"] == "NOTED_PAID", (n, a["state"])
+    # the existing ARRANGED (cash/cheque) and NOTED_PAID cases must still hold
+    for n in ARRANGED_NOTES:
+        a = cp.assess(row("2111", 1150, "2026-09-01", "2026-09-30", "deposit seen 2026-09-05 (Starling); " + n), dep, T)
+        assert a["state"] == "ARRANGED", (n, a["state"])
+    assert cp.assess(row("X", 500, "2026-09-01", "2026-10-30", "paid 14 Sep"), [], T)["state"] == "NOTED_PAID"
+
+
+
+def test_record_in_books_lists_only_confident_payments_in_settled_states():
+    sure = [("2026-09-27", 325.0, "reference")]
+    a = cp.assess(row("X", 650, "2026-09-20", "2026-11-21"), sure + [("2026-09-28", 100.0, "amount only")], T)
+    assert a["state"] == "CHECK_PAYMENT" and a["record_in_books"] == [], a  # an unconfirmed payment: owner checks
+    a = cp.assess(row("X", 650, "2026-09-20", "2026-11-21"), sure, T)
+    assert a["state"] == "DEPOSIT_SEEN" and a["record_in_books"] == [["2026-09-27", 325.0]], a
+    both = [("2026-09-28", 325.0, "name and amount"), ("2026-09-21", 325.0, "reference")]
+    a = cp.assess(row("X", 650, "2026-09-20", "2026-11-21"), both, T)
+    assert a["state"] == "PAID_IN_FULL" and a["record_in_books"] == [["2026-09-21", 325.0], ["2026-09-28", 325.0]]
+    a = cp.assess(row("X", 650, "2026-09-20", "2026-11-21"), both + [("2026-09-28", 50.0, "reference")], T)
+    assert a["record_in_books"] == [], a  # more than the booking's value: owner checks
+    a = cp.assess(row("X", 650, "2026-09-20", "2026-11-21", "cancelled 27 Sep"), sure, T)
+    assert a["record_in_books"] == [], a
+    a = cp.assess(row("X", 650, "2026-09-20", "2026-11-21"), [("2026-09-27", 325.0, "amount only")], T)
+    assert a["record_in_books"] == [], a
+
 if __name__ == "__main__":
     failures = 0
     for name, fn in sorted(globals().items()):

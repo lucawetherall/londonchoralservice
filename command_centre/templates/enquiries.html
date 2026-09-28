@@ -16,6 +16,7 @@
     <p class="muted">The enquiry assistant drafts these on its next run (never for funerals).</p>
     {% else %}<p class="muted">No follow-ups due today.</p>{% endif %}
     {% endif %}
+    {{ m.handoff_picker("reply-handoff", "Draft a reply to", handoffs.reply) }}
   </article>
 
   {% set wins = windows.value if windows.ok else (windows.stale or []) %}

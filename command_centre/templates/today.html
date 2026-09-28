@@ -16,7 +16,7 @@
     {{ m.failed(warnings) }}
     {% if items %}
     <p>Ring the singer on a number you already have before paying.</p>
-    {{ m.singers_table(items) }}
+    {{ m.singers_table(items, action_day) }}
     {% elif warnings.ok %}<p class="muted">No changed bank details waiting.</p>{% endif %}
   </article>
 
@@ -24,8 +24,44 @@
   <article class="card{% if items %} card-warn{% endif %}">
     <h3>Needs a hand check</h3>
     {{ m.failed(hand) }}
-    {% if items %}{{ m.hand_table(items, bank.ok and bank.value.bank_checked) }}
+    {% if items %}{{ m.hand_table(items, bank.ok and bank.value.bank_checked, action_day) }}
     {% elif hand.ok %}<p class="muted">Nothing needs a hand check.</p>{% endif %}
+  </article>
+
+  <article class="card{% if waiting or (books.dry_run and not books.approved_at) %} card-warn{% endif %}">
+    <h3>Approvals waiting</h3>
+    {{ m.failed(proposals) }}
+    {% if waiting %}
+    <ul class="lines">
+      {% for p in waiting %}<li><a href="/marketing#proposals">{{ p.title }}</a> <span class="muted">(Ads change set{% if p.validated %}, checked with Google{% endif %})</span></li>{% endfor %}
+    </ul>
+    {% endif %}
+    {% if books.dry_run and not books.approved_at %}
+    <p>The 2026 Books import: a dry run is waiting in <span class="mono">~/lcs-private/books-import-2026.json</span>.</p>
+    {{ m.action_button("approve-books-import", "Approve the Books import") }}
+    {% elif books.approved_at %}
+    <p class="muted">Books import approved {{ books.approved_at[:10]|day }}.</p>
+    {% if handoffs.books %}
+    <p>Claude Code Remote Control carries it out under the guard.</p>
+    {{ m.copy_button(handoffs.books) }}
+    {% else %}
+    <p class="muted">The dry run has moved on since it was approved: re-check before handing it off.</p>
+    {% endif %}
+    {% endif %}
+    {% if not waiting and not (books.dry_run and not books.approved_at) %}<p class="muted">Nothing waiting for approval.</p>{% endif %}
+  </article>
+
+  {% set items = books_flags.value if books_flags.ok else books_flags.stale %}
+  <article class="card{% if items %} card-warn{% endif %}">
+    <h3>Books and Starling</h3>
+    {{ m.failed(books_flags) }}
+    {% if items %}
+    <ul class="lines">
+      {% for f in items %}<li><a class="mono" href="/bookings/{{ f.ref }}">{{ f.ref }}</a> <span class="badge {{ f.tone }}">{{ f.text }}</span></li>{% endfor %}
+    </ul>
+    <p class="muted">The Monday review's rules (Appendix A, 6g). Send drafts and confirm payments in Books.</p>
+    {% elif books_flags.ok and items is none %}<p class="muted">Books not synced yet: the daily pass runs <span class="mono">cc_sync.py books</span>.</p>
+    {% elif books_flags.ok %}<p class="muted">Books and Starling agree{% if not (bank.ok and bank.value.bank_checked) %} (drafts only: the bank wasn't checked){% endif %}.</p>{% endif %}
   </article>
 
   {% set items = singers.value if singers.ok else (singers.stale or []) %}
@@ -34,7 +70,7 @@
     {{ m.failed(singers) }}
     {% if items %}
     <p>{{ items|length }} unpaid, {{ items|sum(attribute="amount")|gbp }}</p>
-    {{ m.singers_table(items) }}
+    {{ m.singers_table(items, action_day) }}
     {% elif singers.ok %}<p class="muted">No unpaid singer invoices.</p>{% endif %}
   </article>
 </section>
@@ -54,6 +90,18 @@
     {{ m.failed(later) }}
     {% if items %}{{ m.events_table(items) }}
     {% elif later.ok %}<p class="muted">Nothing further ahead in the ledger.</p>{% endif %}
+  </article>
+</section>
+
+<section class="card-group" aria-labelledby="handoffs">
+  <h2 id="handoffs" class="group-title">Handoffs</h2>
+  <article class="card card-wide">
+    <p class="muted">Copy a prompt for Claude Code Remote Control on your phone. Nothing runs from this page.</p>
+    <ul class="lines">
+      <li>{{ m.copy_button(handoffs.whats_owed, "What's owed this week?") }}</li>
+      <li>{{ m.copy_button(handoffs.summarise_today, "Summarise today's business") }}</li>
+    </ul>
+    {{ m.handoff_picker("hand-handoff", "Why is this on the hand check?", handoffs.hand) }}
   </article>
 </section>
 

@@ -134,6 +134,7 @@ READ_ALLOW = {
     "ZohoBooks_list_tax_exemptions",
     "ZohoBooks_list_taxes",
     "ZohoBooks_list_vendor_payments",
+    "ZohoBooks_get_vendor_payment",
     "ZohoBooks_list_vendors",
     "ZohoBooks_print_invoice_delivery_note",
     "ZohoBooks_print_invoice_packing_slip",
@@ -172,6 +173,8 @@ BILL_UPDATE_FIELDS = ("notes", "due_date", "date", "reference_number")  # never 
 
 INVOICE_NUMBER = re.compile(r"[0-9]{4}[A-Z]?")  # the DDMM booking ref, e.g. 2111 or 2111B
 INVOICES_DIR = os.path.join("~", "lcs-private", "invoices")  # where make_booking_docs.py writes
+SINGER_PDF_DIR = os.path.join("~", "lcs-private", "singer-invoices")  # where singer_invoices.py saves PDFs
+SINGER_PDF_NAME = re.compile(r"[0-9A-Za-z]{1,40}\.pdf")  # <Zoho message id>.pdf
 
 
 def _present(v):
@@ -214,18 +217,30 @@ def check_invoice_document(body, query, path):
         _check_attachment(query["attachment"])
 
 
-def _check_attachment(value):
-    """A .pdf or .docx the booking scripts wrote: its real path must be inside ~/lcs-private/invoices/."""
-    bad = Deny(P + "query_params.attachment must be a .pdf or .docx file inside ~/lcs-private/invoices/ "
+def _check_attachment(value, folder=INVOICES_DIR, exts=(".pdf", ".docx")):
+    """A file the booking scripts wrote: its real path must be inside `folder` (default ~/lcs-private/invoices/)."""
+    shown = folder.replace(os.sep, "/") + "/"
+    bad = Deny(P + f"query_params.attachment must be a {' or '.join(exts)} file inside {shown} "
                "(a local path, not a URL or file contents).")
-    if not (isinstance(value, str) and value.startswith(("~/", "/")) and value.endswith((".pdf", ".docx"))):
+    if not (isinstance(value, str) and value.startswith(("~/", "/")) and value.endswith(exts)):
         raise bad
     if ".." in value or any(unicodedata.category(c).startswith("C") for c in value):
         raise bad
-    root = os.path.realpath(os.path.expanduser(INVOICES_DIR))
+    root = os.path.realpath(os.path.expanduser(folder))
     real = os.path.realpath(os.path.expanduser(value))
     if not root.startswith("/") or os.path.commonpath([root, real]) != root or real == root:
         raise bad
+    return real
+
+
+def _singer_pdf(value):
+    """True for the path of a PDF singer_invoices.py saved: ~/lcs-private/singer-invoices/<message id>.pdf."""
+    try:
+        real = _check_attachment(value, SINGER_PDF_DIR, (".pdf",))
+    except Deny:
+        return False
+    return (os.path.dirname(real) == os.path.realpath(os.path.expanduser(SINGER_PDF_DIR))
+            and bool(SINGER_PDF_NAME.fullmatch(os.path.basename(real))))
 
 
 # show_comment_to_clients is not on the list, so it is denied with any value. The live
@@ -236,9 +251,20 @@ def check_invoice_comment(body, query, path):
     _need(path, "invoice_id", "path_variables")
 
 
+# The expense account every singer and organist bill line goes to: "Cost of Goods Sold", the
+# account Books gave the "Singing fee" and "Organ fee" purchase items on 28 Sep 2026.
+SINGER_FEES_ACCOUNT_ID = "1534218000000034003"
+
+
 def check_create_bill(body, query, path):
     _need(body, "vendor_id", "body")
     _need(body, "bill_number", "body")
+    if "attachment" in query and not _singer_pdf(query["attachment"]):
+        raise Deny(P + "a bill's query_params.attachment must be a singer invoice PDF that singer_invoices.py "
+                   "saved: ~/lcs-private/singer-invoices/<message id>.pdf.")
+    for line in body.get("line_items") or []:
+        if isinstance(line, dict) and "account_id" in line and line["account_id"] != SINGER_FEES_ACCOUNT_ID:
+            raise Deny(f"{P}bill lines go to Cost of Goods Sold: account_id must be \"{SINGER_FEES_ACCOUNT_ID}\".")
 
 
 def check_update_bill(body, query, path):
@@ -247,6 +273,78 @@ def check_update_bill(body, query, path):
 
 def check_bill_comment(body, query, path):
     _need(path, "bill_id", "path_variables")
+
+
+# Purchase items ("Singing fee", "Organ fee") set up the singer bills' expense account: the
+# connector has no chart-of-accounts tool, and Books files a purchase item under its default
+# expense account, which get_item then shows. No account key is allowed, so Books picks it.
+# The Books bank account singer payments are recorded against ("Starling Business"): a name and GBP only,
+# never an account number or sort code (those keys aren't allowed, and the bank-details scan still runs).
+def check_create_bank_account(body, query, path):
+    _need(body, "account_name", "body")
+    if body.get("account_type") != "bank":
+        raise Deny(P + "account_type must be \"bank\".")
+    if body.get("currency_code") not in (None, "GBP"):
+        raise Deny(P + "currency_code must be \"GBP\" or absent.")
+
+
+# Singer bills only (owner decision, 28 Sep 2026): a payment Starling shows was made to the singer's own bank
+# details, recorded against that one bill, in full, through the owner's "Starling Business" account in Books.
+# Client payments stay the owner's: Books' customer-payment tools are still denied.
+STARLING_BOOKS_ACCOUNT_ID = "1534218000000095168"  # the owner's Starling Business account in Books
+
+
+def check_create_vendor_payment(body, query, path):
+    for key in ("vendor_id", "date"):
+        _need(body, key, "body")
+    if not STARLING_BOOKS_ACCOUNT_ID or body.get("paid_through_account_id") != STARLING_BOOKS_ACCOUNT_ID:
+        raise Deny(P + "paid_through_account_id must be the Starling Business account in Books"
+                   + (f" (\"{STARLING_BOOKS_ACCOUNT_ID}\")." if STARLING_BOOKS_ACCOUNT_ID else ", and it isn't set yet."))
+    if body.get("payment_mode") not in (None, "Bank Transfer"):
+        raise Deny(P + "payment_mode must be \"Bank Transfer\" or absent.")
+    bills = body.get("bills")
+    if not (isinstance(bills, list) and len(bills) == 1 and isinstance(bills[0], dict)):
+        raise Deny(P + "a payment settles exactly one bill: bills must list one {bill_id, amount_applied}.")
+    _need(bills[0], "bill_id", "body.bills[0]")
+    amount, applied = body.get("amount"), bills[0].get("amount_applied")
+    if not all(isinstance(v, (int, float)) and not isinstance(v, bool) for v in (amount, applied)):
+        raise Deny(P + "amount and amount_applied must be plain numbers.")
+    if not (0 < amount <= 10000 and round(amount, 2) == round(applied, 2)):
+        raise Deny(P + "amount must equal the bill's amount_applied (more than £0, at most £10,000).")
+
+
+# Client payments (owner decision, 28 Sep 2026, the evening after the singer rule): a payment
+# check_payments.py matched confidently (its "record_in_books" list), recorded against that booking's one
+# invoice, through the Starling account, never with contact_persons (Books would email a thank-you).
+def check_create_customer_payment(body, query, path):
+    for key in ("customer_id", "date", "invoice_id"):
+        _need(body, key, "body")
+    if body.get("account_id") != STARLING_BOOKS_ACCOUNT_ID:
+        raise Deny(P + f"account_id must be the Starling Business account in Books (\"{STARLING_BOOKS_ACCOUNT_ID}\").")
+    if body.get("payment_mode") != "banktransfer":
+        raise Deny(P + "payment_mode must be \"banktransfer\".")
+    ref = body.get("reference_number")
+    if ref is not None and not (isinstance(ref, str) and INVOICE_NUMBER.fullmatch(ref)):
+        raise Deny(P + "reference_number may only be the booking's DDMM ref (e.g. 2111 or 2111B).")
+    invoices = body.get("invoices")
+    if not (isinstance(invoices, list) and len(invoices) == 1 and isinstance(invoices[0], dict)):
+        raise Deny(P + "a payment settles exactly one invoice: invoices must list one {invoice_id, amount_applied}.")
+    line = invoices[0]
+    amounts = (body.get("amount"), body.get("amount_applied"), line.get("amount_applied"))
+    if not all(isinstance(v, (int, float)) and not isinstance(v, bool) for v in amounts):
+        raise Deny(P + "amount, amount_applied and invoices[0].amount_applied must be plain numbers.")
+    if line.get("invoice_id") != body.get("invoice_id") or len({round(v, 2) for v in amounts}) != 1:
+        raise Deny(P + "invoice_id and every amount must agree: one invoice, the whole payment applied to it.")
+    if not 0 < amounts[0] <= 10000:
+        raise Deny(P + "amount must be more than £0 and at most £10,000.")
+
+
+def check_create_item(body, query, path):
+    _need(body, "name", "body")
+    if body.get("item_type") != "purchases":
+        raise Deny(P + "item_type must be \"purchases\": items are only for singer and organist bills.")
+    if body.get("product_type") not in (None, "service"):
+        raise Deny(P + "product_type must be \"service\" or absent.")
 
 
 # Write tools the owner approved on 28 Sep 2026, as tool name -> (allowed keys of body,
@@ -270,11 +368,26 @@ WRITE_TOOLS = {
     "ZohoBooks_add_invoice_comment": (
         obj("description"), ORG_ONLY, obj("invoice_id"), check_invoice_comment),
     "ZohoBooks_create_bill": (
-        obj(*BILL_FIELDS, line_items=[BILL_LINE], documents=[BILL_DOCUMENT]), ORG_ONLY, NOTHING, check_create_bill),
+        obj(*BILL_FIELDS, line_items=[BILL_LINE], documents=[BILL_DOCUMENT]), obj("organization_id", "attachment"),
+        NOTHING, check_create_bill),
     "ZohoBooks_update_bill": (
         obj(*BILL_UPDATE_FIELDS), ORG_ONLY, obj("bill_id"), check_update_bill),
     "ZohoBooks_add_bill_comment": (
         obj("description"), ORG_ONLY, obj("bill_id"), check_bill_comment),
+    "ZohoBooks_create_bank_account": (
+        obj("account_name", "account_type", "currency_code", "description"), ORG_ONLY, NOTHING,
+        check_create_bank_account),
+    "ZohoBooks_create_vendor_payment": (
+        obj("vendor_id", "amount", "date", "payment_mode", "paid_through_account_id", "description",
+            bills=[obj("bill_id", "amount_applied")]),
+        ORG_ONLY, NOTHING, check_create_vendor_payment),
+    "ZohoBooks_create_customer_payment": (
+        obj("customer_id", "date", "amount", "amount_applied", "invoice_id", "payment_mode", "account_id",
+            "reference_number", "description", invoices=[obj("invoice_id", "amount_applied")]),
+        ORG_ONLY, NOTHING, check_create_customer_payment),
+    "ZohoBooks_create_item": (
+        obj("name", "rate", "description", "item_type", "product_type", "purchase_rate", "purchase_description"),
+        ORG_ONLY, NOTHING, check_create_item),
 }
 
 
@@ -381,7 +494,8 @@ def _scan(value, key, where, tax):
         text = _plain(str(value))
         own = OWN_PATTERN.get(key)
         exempt = (own is not None and isinstance(value, str) and own.fullmatch(value)) or (
-            isinstance(key, str) and key.endswith("_id") and RECORD_ID.fullmatch(text))
+            isinstance(key, str) and key.endswith("_id") and RECORD_ID.fullmatch(text)) or (
+            key == "attachment" and _singer_pdf(value))  # the file name is the Zoho message id
         bare = strip_dates(text)
         if ((not exempt and _bank_digits(bare)) or BANK_WORDS.search(bare) or VAT_WORDS.search(bare)
                 or _lookalike(text) or any(sum(c.isdigit() for c in m.group()) >= 10 for m in IBAN.finditer(bare))):
@@ -419,7 +533,7 @@ def decide(tool, tool_input):
     if name == "ZohoBooks_update_invoice":
         return P + "Claude doesn't update invoices. The owner edits drafts in Books."
     return (f"{P}{name} isn't allowed. Claude may read Books and make draft invoices, contacts and bills; "
-            "it never emails, reminds, deletes, voids, records payments or matches bank transactions.")
+            "it never emails, reminds, deletes, voids, refunds, writes off or matches bank transactions.")
 
 
 def _no_duplicate_keys(pairs):

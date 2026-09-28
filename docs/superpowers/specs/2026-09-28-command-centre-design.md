@@ -13,7 +13,7 @@
 
 ## Goal
 
-One private web app, on any of the owner's devices, that shows everything about the business and lets him act on it: approve proposals, resolve checks, confirm singer bank details, and talk to Claude Code. It is not tied to Claude: the chat is one module that can be swapped out.
+One private web app, on any of the owner's devices, that shows everything about the business and lets him act on it: approve proposals, resolve checks, confirm singer bank details. Claude work is done through Claude Code Remote Control from his phone, not an in-app chat: the app offers copy-to-clipboard handoff prompts that carry the right context and files across.
 
 ## Binding rules
 
@@ -26,7 +26,7 @@ These are the programme's rules, plus:
 3. **Actions reuse the guarded paths.** Each action calls an existing script or guarded tool with fixed arguments, never a new path. It shows exactly what will happen first, and it is logged, append-only, in `~/lcs-private/command-centre/audit.jsonl`.
 4. **Money never moves from the app.** It never sends email, never makes a payment or payee, and never deletes. The owner still presses Send in Zoho or Books, and pays in Starling.
 5. **Private data stays on the Mac.** It lives in `~/lcs-private` only (mode 600 files, 700 directories). The repo holds code only, never data, and nothing is published. The app stores no credentials of its own: it uses the Keychain, the existing MCP config and ADC.
-6. **Claude Code chat keeps the repo's guards.** It runs with the repo's `.claude/settings.json`, hooks and allowlist. Tool calls outside the allowlist become approve/deny cards, and approving one needs a passkey.
+6. **Claude work is done through Claude Code Remote Control from his phone.** The app offers copy-to-clipboard handoff prompts; it never executes Claude tool calls itself, so a handoff prompt needs no passkey to copy (nothing has run yet).
 
 
 ## Threat model
@@ -37,6 +37,26 @@ These are the programme's rules, plus:
   - a stolen or forged Tailscale identity: writes still need a passkey;
   - someone who reaches the page before the owner registers: the first passkey needs a one-time bootstrap code that `install.sh` prints (sha256 stored, 30 minutes, deleted on use).
 - **Accepted risk: other processes on the Mac.** This is a single-user Mac. Any process running as the owner can connect to 127.0.0.1:8765 and send any headers, so it can read the pages as the owner. It can't make a write, because that needs a passkey assertion from the owner's Face ID or Touch ID. Such a process could already read `~/lcs-private` directly, so the app adds no new exposure. The optional Unix socket (`python -m command_centre --uds`, in a mode-700 directory) narrows this to processes of the same user, which are the same set; it is offered in `install.sh` as an alternative to verify, not the default.
+- **Claude sessions in this repo (the adversarial review of phase 3).** A Claude session can write anywhere in the working tree, write proposal files, and run the allowlisted commands without a prompt. None of that may turn into a write the owner didn't approve:
+  - *Ads scripts run from the app's own mirror of GitHub's main.* A proposal pins a commit, the script's blob at that commit and its arguments (simple tokens only). The app keeps a bare mirror, `~/lcs-private/command-centre/mirror.git` (mode 700; its config rewritten to a fixed one and any alternates, grafts or attributes removed each time), and fetches `main` into it from a hard-coded URL, `https://github.com/lucawetherall/londonchoralservice.git`, at the preview and again at the run, with only https allowed (`protocol.file.allow=never`). A failed fetch refuses ("couldn't verify against GitHub"). The commit must be an ancestor of that freshly fetched `main`. The working repo is never read: not its refs (a local commit with `git update-ref refs/remotes/origin/main` changes nothing), not its config (no smudge filter or attributes apply), not its remote URL. The run folder is written from `git ls-tree -r <commit> -- scripts/` and `git cat-file --batch` in the mirror, with no checkout or archive and so no filters; each file's bytes are checked against its blob id; only regular files are written (no symlinks, no submodules), exclusively and never through a symlink, into a fresh mode-700 folder. The script runs with `python -E -s -B`, no bytecode from anywhere else and an allowlisted environment (HOME, PATH, LANG, TZ, the Ads config path, LCS_PRIVATE_DIR, LCS_ADS_LOG). Every git call runs with `GIT_CONFIG_GLOBAL=/dev/null`, `GIT_CONFIG_NOSYSTEM=1`, `GIT_NO_REPLACE_OBJECTS=1`, none of the caller's `GIT_*`, and `-c core.fsmonitor=false -c core.hooksPath=/dev/null`. The reviewers' proofs of concept (untracked shadows, uncommitted or hidden edits, `__pycache__`, a swapped file, smudge filters, a moved origin ref, a fork's URL, a committed symlink) are regression tests. `ads_log.py` refuses a log that isn't a repo's own `logs/ads-changes.md` or is reached through a symlink.
+  - *Proposal-aware scripts only.* Validate passes `--validate-only`, which old scripts refuse at argparse, so only scripts written for the app (the first is `scripts/ads/set_budget.py`) can reach apply. Apply runs from the same commit, blob and arguments as the validate run and is bound to its output hash; the validate record is taken atomically, once. A blob and arguments once applied are refused under any proposal id.
+  - *The owner sees git's facts, not only Claude's words.* The preview is written by the server from git: path, commit, who last changed the script and when, whether the commit is on main at GitHub, and the script's own docstring, plus the script's last change on main as a diff (`git diff <commit>^ <commit> -- <path>` from the mirror, up to 6,000 characters, its sha256 in the signed summary) and a link to the file at that commit on GitHub. Claude may merge its own pull requests, so the owner reads the code, not a description of it. Claude's title and summary appear labelled "Claude's description".
+  - *The owner nonce.* The barrier for `check_payments.py --owner` is the nonce file (sha256 of the nonce, mode 600, under 60 seconds old, in `~/lcs-private/command-centre/`): no allowlisted command writes there and `.claude/settings.json` denies Claude's Write and Edit tools that folder. A pipe on its own is not the barrier. With `--owner`, the script also refuses `LCS_BOOKINGS_CSV` and any ledger outside the nonce's private folder; the app sets `LCS_PRIVATE_DIR` explicitly for its subprocesses.
+  - *Singer confirm is bound to the bank details.* The summary shows the whole 16-character bank fingerprint and the app passes it as `--expect-fp`, which must match exactly; `singer_invoices.py confirm` refuses on a mismatch, so a rescan between approval and run confirms nothing. `confirm` stays off the allowlist.
+  - *Checks under one lock, and a tamper-evident log.* The action lock is taken before validation, so the `.applied` check and the validate record are read under it. Refusals at the run step are logged with the action name and a hash of the input. Each audit line carries the sha256 of the line before it; Activity shows whether the chain is whole, its line count and the last line's hash, and each `.applied` record stores that hash as it stood after the apply. If the `.applied` record can't be written after a successful apply, the result says "applied, but the record couldn't be saved: DO NOT re-apply" and an in-memory marker refuses the change set until the app restarts. `.claude/settings.json` denies `git update-ref`, `git remote set-url`, `git config` and edits under `.git/`.
+  - **Residual risk (accepted):** code on GitHub's `main` is trusted. Getting a script there takes a merged pull request, and Claude may merge its own; the owner's passkey tap, after reading the diff and git facts in the preview, is the last check. The preview shows the script's own last change only: a change to a sibling module in `scripts/` that the script imports is not in that diff, so the link to the commit is there to read further.
+  - **Residual risk (accepted): the interpreter and its site-packages.** The app runs Ads scripts with its own Python (the repo's `.venv`), and that venv's site-packages, including any `.pth` file (which Python executes at start-up even with `-E -s`), the installed `google-ads` library, the `git` binary, the mirror and the private folder are all trusted. They belong to the same macOS user as the app, and a process running as that user could alter any of them. The mirror and the run folder stop the working tree and its git state from changing what runs; they do not stop that user. A process running as the owner outside Claude's tools (a command the owner approves at a prompt) can still write a nonce file or edit the ledger directly, as before.
+- **Phone and push (the security review of phase 5):**
+  - *Push endpoints can't be turned into requests elsewhere (SSRF).* A subscription's endpoint must be ASCII https on a known push service host (Apple, Google, Mozilla, Microsoft), with no whitespace or backslash anywhere, no `%`, `;`, `@` or brackets in the host part, a host of DNS labels (`^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}$`, so no IP literal, empty label or trailing dot), no port but 443, and no user info, query or fragment; and urllib3's reading of the host (what requests connects to) must equal urlsplit's, which closes the `https://127.0.0.1\.push.apple.com/` parser differential. The check runs at subscribe time and again before every send, and the push session follows no redirect (`max_redirects = 0`, `allow_redirects=False` forced) and refuses any URL the check refuses.
+  - *Nothing a prompt or an email says reaches the lock screen.* `cc_event.py` takes a kind and validated fields only (a first name matching `^[A-Z][a-z'’-]{1,20}$`, a booking ref matching `^[A-Z0-9-]{3,20}$`, an ISO date or "tbc", and words from fixed lists), and the app builds each notification from a fixed template, validating the stored fields again at push time. Notifications still show on the lock screen: turn off lock-screen previews for this app in iOS Settings if you prefer.
+  - *A flood can't bury the phone.* At most 5 pushes per watcher pass plus one "And N more", and at most 20 in any hour. A line in `events.jsonl` longer than 256 KB is skipped rather than stalling the watcher.
+  - *Offline copies expire.* The service worker deletes its saved Today and Money pages when either returns 401 or 403, refuses a copy more than 7 days old (its `X-CC-Saved-At` stamp), and deletes them on "Clear offline copies" (/device) and when notifications are turned off. The banner says "Couldn't reach the Mac (showing the copy from <time>)".
+  - *The test key store stays in the tests.* `CC_VAPID_STORE=file` is refused by the live service (the watcher, the socket or port 8765).
+- **Backups:**
+  - `cc_backup.py init` prints the age identity once and only to a terminal: it refuses when stdout isn't a TTY, and `.claude/settings.json` denies Claude `Bash(*cc_backup.py init*)`, so the key can't end up in a pipe, a log or a transcript.
+  - `run` streams the tar.gz through an `os.pipe` into age (a second thread writes the archive), and `verify` decrypts through a pipe the same way, so no plaintext copy of the private folder is written to disk. FileVault stays on as the backstop for everything else in `~/lcs-private`. Interrupted runs' `.part` files are removed after a day.
+  - *iCloud background writes (check once).* macOS can hold back or delay a LaunchAgent's writes into iCloud Drive (a privacy prompt, "Optimise Mac Storage", or iCloud being signed out). After installing the nightly job, check the next morning that Health shows a backup under 36 hours old and that the file has reached iCloud (it appears on another device or on iCloud.com). If it doesn't, set `backup.target` in the config to a local folder and copy it off the Mac another way.
+- **Keychain ACL (accepted).** Choosing "Always Allow" for the `lcs-starling-read` and `lcs-command-centre-vapid` items adds the repo's `.venv` python to each item's access list, so any script that python runs as the owner can read them without a prompt, including a script a Claude session runs with `.venv/bin/python`. The `security find-generic-password` deny covers the CLI only, not a Python call into the Security framework. This is the same-user risk above; "Allow" (once) instead of "Always Allow" narrows it at the cost of a prompt on each service start.
 - **Out of the model:** a compromised macOS account, or root. Those own the Keychain and the private files anyway.
 
 ## Architecture
@@ -47,7 +67,7 @@ iPhone / iPad / laptop ──Tailscale (WireGuard, HTTPS via tailscale serve)─
                                                               ├─ data layer ──▶ scripts/bookings/*, scripts/reports/* (import, no shell)
                                                               ├─ cache ──────▶ ~/lcs-private/command-centre/cache/*.json (written by scheduled runs + refresh jobs)
                                                               ├─ actions ────▶ fixed script invocations (subprocess, argv lists, allowlisted)
-                                                              ├─ chat ───────▶ Claude Agent SDK (repo cwd, repo settings/hooks)
+                                                              ├─ handoffs ───▶ copy-to-clipboard prompts for Claude Code Remote Control (no execution)
                                                               ├─ push ───────▶ Web Push (VAPID keys in Keychain)
                                                               └─ audit log, backups, health
 ```
@@ -55,16 +75,20 @@ iPhone / iPad / laptop ──Tailscale (WireGuard, HTTPS via tailscale serve)─
 - **Stack:**
   - Python 3 in the repo `.venv`.
   - Starlette or FastAPI plus uvicorn.
-  - Jinja2 templates with htmx for partial updates, no JS build step. A small vanilla JS file handles the passkey, the chat stream and push.
+  - Jinja2 templates with htmx for partial updates, no JS build step. Small vanilla JS files handle the passkey, copy-to-clipboard handoffs and push.
   - `webauthn` (py_webauthn) and `pywebpush`.
-  - `claude-agent-sdk`.
   - Tests use the stdlib runner, as elsewhere in the repo, with Starlette's TestClient.
 - **Code:**
-  - `command_centre/` in the repo: `app.py` (routes), `auth.py` (Tailscale identity and passkeys), `data.py` (read models), `actions.py` (the action registry), `chat.py`, `push.py`, `jobs.py` (refresh and backup), `templates/`, `static/`.
+  - `command_centre/` in the repo: `app.py` (routes), `auth.py` (Tailscale identity and passkeys), `data.py` (read models), `actions.py` (the action registry), `push.py`, `jobs.py` (refresh and backup), `templates/`, `static/`.
   - Each module has one job, with its own tests in `tests/test_cc_*.py`.
 - **Service:**
   - A LaunchAgent `com.lcs.command-centre.plist`, started at login and restarted on crash, with logs to `~/lcs-private/command-centre/logs/`.
   - A one-time `tailscale serve --bg --https=443 http://127.0.0.1:8765` makes it reachable at `https://<mac>.<tailnet>.ts.net`.
+- **Access from the phone (owner decision, phase 5):** Tailscale only, and the phone doesn't keep the VPN on.
+  - In the Tailscale admin console (DNS), MagicDNS and HTTPS certificates are on: the Home Screen app and Web Push need the real ts.net certificate.
+  - An iPhone Shortcut "LCS" (Tailscale → Connect, then Open URL `https://<mac>.<tailnet>.ts.net/`) on the Home Screen is the main way in; an optional second Shortcut disconnects.
+  - Web Push arrives with the VPN off, through Apple's push service. The Mac sends it over its normal internet connection, never through the tailnet.
+  - With the VPN off, the installed app shows the last Today and Money pages it saw, marked "Couldn't reach the Mac (showing the copy from <time>)", after a fetch timeout of at most 4 seconds. A copy more than 7 days old isn't shown; a 401 or 403, "Clear offline copies" on /device and turning notifications off delete them. Nothing that writes works offline.
   - Both steps are scripted in `command_centre/install.sh`. The owner runs it once; it is idempotent and needs no secrets.
 - **Config:** `~/lcs-private/command-centre/config.json`. It holds the allowed Tailscale login(s), the passkey credentials (public keys only), the push subscriptions and the backup target.
 
@@ -109,17 +133,16 @@ All pages are mobile-first, with dark and light modes and the LCS brand colours.
 9. **Quote calculator:** packages, organist and travel taken from `pricing.html` and `christmas-pricing.html` (parsed the same way as `assistant_io.py prices`), with copyable wording in Luca's style.
 10. **Reports:** every Monday review archived (the scheduled task writes its report to `~/lcs-private/reports/YYYY-MM-DD.txt`), plus trend charts drawn as inline SVG with no external library.
 11. **Runs and health:**
-    - scheduled-task runs (last run, result, failures, and a **Run now** button that triggers the task);
+    - scheduled-task runs (last run, result, failures); the app has no local trigger for a task, so it explains: "Use Run now on the task in the Claude app (Routines)";
     - Starling selftest, Google ADC, the Zoho Mail and Books MCPs, Tailscale status and disk;
     - the fingerprint-key backup age;
     - the last backup.
 12. **To-do:** the owner-only items from `MANUAL-ACTIONS-REQUIRED.md` (parsed), with ticks stored locally.
 13. **Search:** one box across bookings, clients, singers, enquiries, invoice numbers and refs.
-14. **Chat:** Claude Code.
-    - Quick prompts: "what's owed this week", "draft a reply to …", "summarise today", "why is <ref> on the hand check".
-    - Streamed replies and a conversation list.
-    - Approve/deny cards (passkey).
-    - A "stop" button.
+14. **Handoffs (done):** copy-to-clipboard prompts for Claude Code Remote Control — no in-app chat, no server-side execution.
+    - Quick prompts: "what's owed this week", "summarise today's business", "why is <ref> on the hand check" (with a ref picker), "draft a reply to <thread>".
+    - The approved Books import: a fixed instruction naming the approval file and its hash, copied once the approval record exists and matches.
+    - Copying needs no passkey: nothing runs until the owner pastes the prompt into Remote Control on his phone.
 15. **Activity log:** every action and every run, filterable.
 
 ## Actions (the registry)
@@ -135,14 +158,15 @@ It needs a passkey (except the local records below) and is logged.
 | Action | Runs |
 |---|---|
 | Resolve hand check: paid in full / deposit kept / refunded / reinstated / cancelled / arranged | `check_payments.py --note <ref> "<fixed phrase> <date>"`. The owner-only phrases are allowed here, because the owner is the one acting. This path passes `--owner` and records the owner as the author. |
-| Confirm singer bank details | `singer_invoices.py confirm <id>` |
+| Confirm singer bank details | `singer_invoices.py confirm <id> --expect-fp <the whole 16-character fingerprint>` (refused if the details changed) |
 | Settle or withdraw a singer invoice | `singer_invoices.py settled <id> <date>` / `withdrawn <id> <reason>` |
-| Approve an Ads change set | Run the generated `scripts/ads/*.py` validate-only, show the output, then apply after a second tap, then write to `logs/ads-changes.md` via the script. It never goes above £5/day (the script refuses). |
-| Approve the 2026 Books import / a proposed page fix | Queue it for Claude Code (chat) with the approved instruction. The chat runs it under its guards. |
+| Approve an Ads change set | Run a proposal-aware `scripts/ads/*.py` from its commit on GitHub's main (the app's own mirror) with `--validate-only`, show the output (its first and last 3,000 characters, unmasked), then `--apply` from the same commit after a second tap; the script writes `logs/ads-changes.md` (`LCS_ADS_LOG`). It never goes above £5/day (the script refuses). |
+| Approve the 2026 Books import | Writes an approval record only (no script runs). Its handoff prompt, once the approval matches, tells the owner to open Claude Code Remote Control and run the owner-approved import under the guard. |
 | Mark a draft sent or discarded; tick a to-do | Local record only. **Exception: no passkey.** These write only the app's own files in `~/lcs-private/command-centre/` (never the ledger, the singer store, email, Books or the bank), so the owner's Tailscale identity, the Host check and the same-origin check are enough. They are still registered actions, with a server-built summary and an `audit.jsonl` entry. |
-| Run a scheduled task now | Triggers the task (headless `claude -p` with the task prompt in the repo folder, the same as the scheduled run) |
+| Run a scheduled task now | Not an app action: Runs and health explains to use **Run now** on the task in the Claude app (Routines) |
 | Refresh data now | Refresh jobs, read-only |
 | Back up now | The backup job |
+| Copy a handoff prompt | **Exception: no passkey, and it is not a registered action.** The client copies server-written, fixed text to the clipboard; nothing runs, and nothing is sent anywhere. The owner pastes it into Claude Code Remote Control himself. |
 
 Not in the app: sending email, payments, payees, deletes, and Books sends or voids.
 
@@ -157,8 +181,8 @@ Not in the app: sending email, payments, payees, deletes, and Books sends or voi
   - a scheduled run failed or wasn't seen for more than 3 hours in the daytime;
   - the Monday review is ready;
   - a hand check was added.
-- **Sources:** hooks and scripts append events to `~/lcs-private/command-centre/events.jsonl`, and the app watches the file and pushes. The scheduled prompts also add one line each: "append an event" via a tiny `cc_event.py` CLI, which is allowlisted.
-- **Content:** a short title and a first name only. Full detail opens in the app.
+- **Sources:** hooks and scripts append events to `~/lcs-private/command-centre/events.jsonl`, and the app watches the file and pushes. The scheduled prompts also add one line each via a tiny `cc_event.py` CLI, which is allowlisted. It takes a kind and validated fields, never free text: `enquiry --first <Name> --occasion <fixed list> --date <ISO|tbc>`, `deposit --first <Name> --ref <ref>`, `hand-check --ref <ref> --state <fixed list>`, `bank-change --first <Name>`, `guard-denied --agent <reply-drafter|singer-clerk|daily-pass|monday>`, `run-failed`, `monday-ready`.
+- **Content:** a short title and a body from a fixed template per kind: a first name, a booking ref, a date and fixed words only. Full detail opens in the app. At most 5 per watcher pass (then one "And N more") and 20 an hour. They show on the lock screen: turn off lock-screen previews for this app in iOS Settings if you prefer.
 
 ## Data freshness
 
@@ -175,7 +199,7 @@ Not in the app: sending email, payments, payees, deletes, and Books sends or voi
 ## Backups
 
 - A nightly encrypted archive of `~/lcs-private`, keeping 14 days, in `tar` + `age` format.
-- The recipient key is in the Keychain; the identity key is printed once for the owner to store in his password manager.
+- The recipient (public) key is in the config (it is not a secret, and the nightly run needs no Keychain prompt); the identity key is printed once for the owner to store in his password manager, and never stored on the Mac.
 - The target is iCloud Drive `LCS-backups/` by default (config).
 - A restore procedure is documented.
 - The health page warns if the last backup is more than 36 hours old.
@@ -184,7 +208,7 @@ Not in the app: sending email, payments, payees, deletes, and Books sends or voi
 
 - Every data source is wrapped: on failure the panel shows its stale data and the reason, and the page still renders.
 - An action failure shows the command's stderr, trimmed and with secrets scrubbed (`lcs_mcp` scrub rules), and is logged. There are no automatic retries for actions.
-- If the chat crashes, it doesn't affect the rest of the app.
+- A failed clipboard write (an unsupported or non-secure-context browser) falls back to a selectable text box; nothing about a handoff prompt reaches the server beyond the fixed text it was built from.
 
 ## Testing
 
@@ -204,8 +228,8 @@ Not in the app: sending email, payments, payees, deletes, and Books sends or voi
 
 1. **Skeleton:** the app, auth (Tailscale identity and passkey), LaunchAgent, install script, and Today and Money read-only.
 2. **Data pages:** Bookings, Enquiries, Singers, Marketing, Calendar, Search, Reports, Runs and health, To-do, CSV exports.
-3. **Actions:** the registry with passkey; hand checks, singer confirm/settle/withdraw, Ads approve, run now, refresh, backup.
-4. **Chat:** the Agent SDK, streaming, approval cards, quick prompts.
+3. **Actions:** the registry with passkey; hand checks, singer confirm/settle/withdraw, Ads approve, refresh, backup.
+4. **Handoffs (done):** copy-to-clipboard prompts for Claude Code Remote Control — the Books import handoff, and quick prompts for money, summaries, hand checks and draft replies.
 5. **PWA and push, drafts inbox, quote calculator, backups.**
 
 Each phase is reviewed and merged before the next. The static `dashboard.py` stays as a fallback until phase 2 ships.
@@ -215,4 +239,5 @@ Each phase is reviewed and merged before the next. The static `dashboard.py` sta
 - Public access.
 - Multiple users.
 - Sending email or moving money from the app.
-- Editing site pages from the app (the chat can propose; the owner approves in chat).
+- An in-app chat, or any server-side execution of Claude tool calls. Claude work happens through Claude Code Remote Control, started by the owner from his phone; the app only prepares the prompt.
+- Editing site pages from the app (a handoff prompt can ask Claude Code to propose a fix; the owner still reviews and approves it there).

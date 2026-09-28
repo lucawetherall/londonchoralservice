@@ -9,6 +9,12 @@
 <meta name="htmx-config" content='{{ HTMX_CONFIG|safe }}'>
 <title>{{ title }} · LCS Command Centre</title>
 <link rel="stylesheet" href="/static/app.css">
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#8B3A3A">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="LCS">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="apple-touch-icon" href="/static/icons/icon-180.png">
 <script src="/static/htmx.min.js" defer></script>
 {% block head %}{% endblock %}
 </head>
@@ -28,6 +34,7 @@
   </div>
 </header>
 <main id="main" class="main">
+  <p class="install-hint" id="cc-install-hint" hidden>Add this app to your Home Screen: in Safari, tap Share, then Add to Home Screen. <a href="/device">More on this device</a> <button type="button" class="button quiet small" id="cc-install-close">Not now</button></p>
   <div class="page-head">
     <div>
       <h1>{{ title }}</h1>
@@ -41,6 +48,7 @@
 <footer class="foot">
   <span>Private to the owner · reached over Tailscale only</span>
   <a href="/passkeys"{% if path == "/passkeys" %} aria-current="page"{% endif %}>Passkeys</a>
+  <a href="/device"{% if path == "/device" %} aria-current="page"{% endif %}>This device</a>
 </footer>
 {% set ns = namespace(tabbed=false) %}
 {% for label, href in TABS %}{% if current(href, path) %}{% set ns.tabbed = true %}{% endif %}{% endfor %}
@@ -50,6 +58,27 @@
   {% endfor %}
   <a class="tab" href="/more"{% if not ns.tabbed %} aria-current="page"{% endif %}><span class="tab-dot" aria-hidden="true"></span>More</a>
 </nav>
+<dialog id="cc-dialog" class="dialog" aria-labelledby="cc-title">
+  <h2 id="cc-title">Check before you approve</h2>
+  <p id="cc-summary" class="dialog-summary"></p>
+  <p class="dialog-label">Command</p>
+  <pre id="cc-command" class="command"></pre>
+  <div id="cc-code" hidden>
+    <p class="muted">The script's last change on main, as git shows it (<span id="cc-code-head"></span>). <a id="cc-code-link" rel="noopener noreferrer" target="_blank">Open the file on GitHub</a></p>
+    <pre id="cc-diff" class="output"></pre>
+  </div>
+  <p id="cc-status" class="status" role="status" aria-live="polite"></p>
+  <pre id="cc-output" class="output" hidden></pre>
+  <div class="actions">
+    <button type="button" class="button" id="cc-approve">Approve with Face ID or Touch ID</button>
+    <button type="button" class="button" id="cc-next" hidden>Next</button>
+    <button type="button" class="button quiet" id="cc-close">Close</button>
+  </div>
+</dialog>
+<script src="/static/passkey.js" defer></script>
+<script src="/static/actions.js" defer></script>
+<script src="/static/handoffs.js" defer></script>
+<script src="/static/pwa.js" defer></script>
 {% block scripts %}{% endblock %}
 </body>
 </html>
