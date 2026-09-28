@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% import "macros.html" as m %}
+{% block content %}
+<section class="card-group">
+  <article class="card">
+    <h2>Checks</h2>
+    <ul class="checks">
+      {% for p in checks %}
+      {% if p.ok %}
+        {% if p.value is mapping %}{{ m.check_row(p.value) }}{% else %}{% for c in p.value %}{{ m.check_row(c) }}{% endfor %}{% endif %}
+      {% else %}
+      <li class="check"><span class="badge bad">check</span> <span class="fail">couldn't load ({{ p.error }})</span></li>
+      {% endif %}
+      {% endfor %}
+    </ul>
+    <p class="muted">Credentials are checked for existence only and never read. Tailscale status isn't checked from here: if this page loads over the tailnet, it is up.</p>
+  </article>
+
+  {% set pr = proxies.value if proxies.ok else proxies.stale %}
+  <article class="card">
+    <h2>Last runs</h2>
+    {{ m.failed(proxies) }}
+    {% if pr %}
+    <table class="table">
+      <thead><tr><th>What the runs write</th><th>Last changed</th></tr></thead>
+      <tbody>
+      {% for r in pr[0] %}
+        <tr>
+          <td data-label="File">{{ r.label }}</td>
+          <td data-label="Changed">{{ r.when|when }}{% if r.stale %} <span class="badge warn">stale</span>{% endif %}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    {% if pr[1] %}<p class="muted">The enquiry assistant last checked mail at {{ pr[1]|when }}.</p>{% endif %}
+    <p class="muted">The scheduled tasks keep no run history the app can read, so these files' times stand in for it.</p>
+    {% endif %}
+  </article>
+</section>
+
+{% set ts = tasks.value if tasks.ok else (tasks.stale or []) %}
+<section class="card">
+  <h2>Scheduled tasks</h2>
+  {{ m.failed(tasks) }}
+  {% if ts %}
+  <ul class="results">
+    {% for t in ts %}
+    <li><span class="mono">{{ t.name }}</span> <span class="muted">{{ t.description }}</span></li>
+    {% endfor %}
+  </ul>
+  {% elif tasks.ok %}<p class="muted">No scheduled tasks found.</p>{% endif %}
+  <p class="muted">Starting a task from here arrives in phase 3.</p>
+</section>
+{% endblock %}

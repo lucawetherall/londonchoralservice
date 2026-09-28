@@ -246,10 +246,11 @@ def test_chrome_nav_and_freshness():
         assert '<html lang="en-GB"' in out, path
         assert 'name="viewport"' in out and 'name="color-scheme" content="light dark"' in out
         assert "As of Monday 28 September 2026, 09:30" in out, path
-        for soon in ["Bookings", "Enquiries", "Singers", "Marketing", "Calendar", "Search", "Reports", "Health",
-                     "To-do"]:
-            assert re.search(rf'aria-disabled="true"[^>]*>\s*{soon}\s*<span class="soon">soon</span>', out), (path, soon)
-        assert 'href="/"' in out and 'href="/money"' in out
+        # phase 2: every page is live (no "soon" items); tests/test_cc_pages2.py checks the nav and the tab bar
+        assert 'aria-disabled="true"' not in out, path
+        for href in ["/", "/money", "/bookings", "/enquiries", "/singers", "/marketing", "/calendar", "/search",
+                     "/reports", "/health", "/todo", "/more"]:
+            assert f'href="{href}"' in out, (path, href)
     assert 'aria-current="page"' in page(c, "/money").split('href="/money"')[1][:40]
 
 
@@ -344,7 +345,7 @@ def test_a_crash_is_a_500_with_headers_and_no_detail():
 
 def test_unknown_page_is_404_with_headers():
     c, _ = make(FakeBank())
-    r = c.get("/bookings", headers=HEADERS)
+    r = c.get("/no-such-page", headers=HEADERS)
     assert r.status_code == 404
     assert "no-store" in r.headers["cache-control"]
 

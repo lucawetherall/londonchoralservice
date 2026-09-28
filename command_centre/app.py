@@ -2,33 +2,43 @@
 
     create_app()  ->  Starlette app (python -m command_centre serves it on 127.0.0.1:8765, or on a Unix socket)
 
-Phase 1 is read-only: Today, Money and Passkeys pages, the passkey endpoints and /healthz. See
+Phase 1: Today, Money and Passkeys pages, the passkey endpoints and /healthz. Phase 2: the read-only data
+pages (Bookings, Enquiries, Singers, Marketing, Calendar, Search, Reports, Health, To-do, Exports, More) and
+one local write, POST /todo/tick (actions.REGISTRY["todo-tick"], no passkey: see actions.py). No GET route
+has a side effect. See
 docs/superpowers/specs/2026-09-28-command-centre-design.md and docs/superpowers/plans/2026-09-28-command-centre.md.
 """
 
+import csv
 import datetime
+import io
 import json
 import logging
 import os
+import urllib.parse
 from pathlib import Path
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 from starlette.applications import Starlette
 from starlette.middleware import Middleware
 from starlette.requests import Request
-from starlette.responses import HTMLResponse, JSONResponse, PlainTextResponse
+from starlette.responses import HTMLResponse, JSONResponse, PlainTextResponse, RedirectResponse, Response
 from starlette.routing import Mount, Route
 from starlette.staticfiles import StaticFiles
 
-from . import auth, data
+from . import actions, auth, data, models
 
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parent
 LOOPBACK = "127.0.0.1"
 log = logging.getLogger("command_centre")
 
-NAV = [("Today", "/"), ("Money", "/money")]
-SOON = ["Bookings", "Enquiries", "Singers", "Marketing", "Calendar", "Search", "Reports", "Health", "To-do"]
+NAV = [("Today", "/"), ("Bookings", "/bookings"), ("Enquiries", "/enquiries"), ("Money", "/money"),
+       ("Singers", "/singers"), ("Marketing", "/marketing"), ("Calendar", "/calendar"), ("Search", "/search"),
+       ("Reports", "/reports"), ("Health", "/health"), ("To-do", "/todo"), ("Exports", "/exports")]
+TABS = [("Today", "/"), ("Bookings", "/bookings"), ("Enquiries", "/enquiries"), ("Money", "/money")]
+SOON = []  # every page up to phase 2 is live; chat, drafts and the quote calculator come later
+FORM_MAX = 4096  # bytes of a urlencoded POST body
 HTMX_CONFIG = json.dumps({"includeIndicatorStyles": False, "allowEval": False, "allowScriptTags": False,
                           "selfRequestsOnly": True, "historyCacheSize": 0}, separators=(",", ":"))
 
@@ -92,12 +102,30 @@ def london_day(value):
     return day(value.isoformat() if hasattr(value, "isoformat") else value)
 
 
+def gbp_or_dash(value):
+    return "–" if value is None else gbp(value)
+
+
+def when(value):
+    """A datetime as "Mon 28 Sep 2026, 09:30" (London), or "never"."""
+    if not isinstance(value, datetime.datetime):
+        return "never" if value is None else str(value)
+    if value.tzinfo is not None:
+        value = value.astimezone(data.LONDON)
+    return f"{day(value.date().isoformat())}, {value:%H:%M}"
+
+
+def current(href, path):
+    """Whether the nav item `href` is the section `path` is in."""
+    return path == "/" if href == "/" else (path == href or path.startswith(href + "/"))
+
+
 def make_env():
     env = Environment(loader=FileSystemLoader(HERE / "templates"), autoescape=select_autoescape(default=True),
                       trim_blocks=True, lstrip_blocks=True)
     env.filters.update(gbp=gbp, day=day, london_day=london_day, last4=last4, state_words=state_words,
-                       state_tone=state_tone)
-    env.globals.update(NAV=NAV, SOON=SOON, HTMX_CONFIG=HTMX_CONFIG)
+                       state_tone=state_tone, gbp_or_dash=gbp_or_dash, when=when, pct=models.rate)
+    env.globals.update(NAV=NAV, TABS=TABS, SOON=SOON, HTMX_CONFIG=HTMX_CONFIG, current=current)
     return env
 
 
@@ -121,7 +149,8 @@ def create_app(client_factory=data.default_client, now=None, clock=None, passkey
         dev_login = None
     if dev_login:
         log.warning("CC_DEV_LOGIN is set: requests are treated as %s (local check only)", dev_login)
-    warning = checkout_warning((checkout or checkout_branch)())
+    checkout_now = checkout or checkout_branch
+    warning = checkout_warning(checkout_now())
 
     def passkey_info():
         try:
@@ -147,6 +176,94 @@ def create_app(client_factory=data.default_client, now=None, clock=None, passkey
         info = passkey_info()
         return render(request, "passkeys.html", title="Passkeys", count=info["count"], passkey_info=info,
                       register_action=auth.REGISTER.name, check_action=auth.CHECK.name, stamp=data.stamp(reader.now()))
+
+    def page_or_404(request, name, ctx, **extra):
+        if ctx is None:
+            return PlainTextResponse("Not found", status_code=404)
+        return render(request, name, **extra, **ctx)
+
+    async def bookings(request):
+        q = request.query_params
+        return render(request, "bookings.html", title="Bookings",
+                      **reader.bookings_page(q.get("when", "upcoming"), q.get("state", "")))
+
+    async def booking(request):
+        ref = request.path_params["ref"]
+        return page_or_404(request, "booking.html", reader.booking_page(ref), title=f"Booking {ref}")
+
+    async def enquiries(request):
+        return render(request, "enquiries.html", title="Enquiries", **reader.enquiries_page())
+
+    async def enquiry(request):
+        eid = request.path_params["eid"]
+        return page_or_404(request, "enquiry.html", reader.enquiry_page(eid), title=f"Enquiry {eid}")
+
+    async def singers(request):
+        return render(request, "singers.html", title="Singers", **reader.singers_page())
+
+    async def marketing(request):
+        return render(request, "marketing.html", title="Marketing", **reader.marketing_page())
+
+    async def calendar(request):
+        q = request.query_params
+        return render(request, "calendar.html", title="Calendar", **reader.calendar_page(q.get("view", "month"),
+                                                                                        q.get("date")))
+
+    async def search(request):
+        return render(request, "search.html", title="Search", **reader.search_page(request.query_params.get("q", "")))
+
+    async def reports(request):
+        return render(request, "reports.html", title="Reports", **reader.reports_page())
+
+    async def report(request):
+        name = request.path_params["name"]
+        return page_or_404(request, "report.html", reader.report_page(name), title=f"Report {name[:10]}")
+
+    async def health(request):
+        return render(request, "health.html", title="Runs and health", **reader.health_page(checkout_now()))
+
+    async def todo_list(request):
+        return render(request, "todo.html", title="To-do", **reader.todo_page())
+
+    async def todo_tick(request):
+        if request.headers.get("content-type", "").split(";")[0].strip() != "application/x-www-form-urlencoded":
+            return PlainTextResponse("Bad request", status_code=400)
+        raw = await request.body()
+        if len(raw) > FORM_MAX:
+            return PlainTextResponse("Bad request", status_code=400)
+        try:
+            fields = urllib.parse.parse_qs(raw.decode("utf-8"), max_num_fields=4, strict_parsing=True)
+        except (UnicodeDecodeError, ValueError):
+            return PlainTextResponse("Bad request", status_code=400)
+        form = {k: v[0] for k, v in fields.items() if len(v) == 1}
+        try:
+            actions.REGISTRY["todo-tick"].execute(form, user(request))
+        except actions.ActionError as e:
+            return PlainTextResponse(e.reason, status_code=e.status)
+        return RedirectResponse("/todo", status_code=303)
+
+    async def exports(request):
+        return render(request, "exports.html", title="Exports", stamp=data.stamp(reader.now()),
+                      names=reader.EXPORTS)
+
+    async def export(request):
+        try:
+            found = reader.export(request.path_params["name"])
+        except RuntimeError as e:
+            return PlainTextResponse(f"couldn't load ({e})", status_code=503)
+        if found is None:
+            return PlainTextResponse("Not found", status_code=404)
+        filename, head, rows = found
+        out = io.StringIO()
+        w = csv.writer(out, lineterminator="\r\n")
+        w.writerow(head)
+        for r in rows:
+            w.writerow([models.csv_safe(v) for v in r])
+        return Response(out.getvalue().encode("utf-8"), media_type="text/csv; charset=utf-8",
+                        headers={"Content-Disposition": f'attachment; filename="{filename}"'})
+
+    async def more(request):
+        return render(request, "more.html", title="More", stamp=data.stamp(reader.now()))
 
     async def body(request):
         try:
@@ -193,6 +310,22 @@ def create_app(client_factory=data.default_client, now=None, clock=None, passkey
         Route("/", today),
         Route("/money", money),
         Route("/passkeys", passkeys_page),
+        Route("/bookings", bookings),
+        Route("/bookings/{ref}", booking),
+        Route("/enquiries", enquiries),
+        Route("/enquiries/{eid}", enquiry),
+        Route("/singers", singers),
+        Route("/marketing", marketing),
+        Route("/calendar", calendar),
+        Route("/search", search),
+        Route("/reports", reports),
+        Route("/reports/{name}", report),
+        Route("/health", health),
+        Route("/todo", todo_list),
+        Route("/todo/tick", todo_tick, methods=["POST"]),
+        Route("/exports", exports),
+        Route("/exports/{name}.csv", export),
+        Route("/more", more),
         Route("/auth/passkey/register/options", register_options, methods=["POST"]),
         Route("/auth/passkey/register", register, methods=["POST"]),
         Route("/auth/passkey/assert/options", assert_options, methods=["POST"]),

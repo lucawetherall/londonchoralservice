@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% import "macros.html" as m %}
+{% block content %}
+<form class="search" method="get" action="/search" role="search">
+  <label class="visually-hidden" for="q">Search</label>
+  <input id="q" name="q" type="search" value="{{ q }}" maxlength="80" autocomplete="off" autocapitalize="off" spellcheck="false"
+         placeholder="Ref, client, enquiry, singer, invoice or bill number">
+  <button class="button" type="submit">Search</button>
+</form>
+
+{% if q and q|length < min %}
+<p class="muted">Type at least {{ min }} characters.</p>
+{% elif q %}
+<p class="muted">Results for “{{ q }}”.</p>
+{% set ns = namespace(n=0) %}
+{% for label, p in results %}
+<section class="card">
+  <h2>{{ label }}</h2>
+  {{ m.failed(p) }}
+  {% if p.ok %}
+  {% set ns.n = ns.n + p.value|length %}
+  {% if p.value %}
+  <ul class="results">
+    {% for r in p.value %}
+    <li><span class="badge">{{ r.kind }}</span> {% if r.href %}<a href="{{ r.href }}">{{ r.label }}</a>{% else %}{{ r.label }}{% endif %} <span class="muted">{{ r.detail }}</span></li>
+    {% endfor %}
+  </ul>
+  {% else %}<p class="muted">No match.</p>{% endif %}
+  {% endif %}
+</section>
+{% endfor %}
+{% else %}
+<p class="muted">Search bookings (ref or client name), enquiries (id or occasion), singers (name), and invoice and bill numbers. Names show as first names only.</p>
+{% endif %}
+{% endblock %}

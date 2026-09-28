@@ -67,4 +67,24 @@
 </table>
 {% endmacro %}
 
+{% macro timeline(items) %}
+<ol class="timeline">
+  {% for i in items %}
+  <li class="tl-item tl-{{ i.kind }}{% if i.tone %} tl-{{ i.tone }}{% endif %}">
+    <span class="tl-date">{% if i.date %}{{ i.date|day }}{% else %}undated{% endif %}</span>
+    <span class="tl-kind">{{ i.kind }}</span>
+    <span class="tl-text">{% if i.href %}<a href="{{ i.href }}">{{ i.text }}</a>{% else %}{{ i.text }}{% endif %}</span>
+  </li>
+  {% endfor %}
+</ol>
+{% endmacro %}
+
+{% macro check_row(c) %}
+<li class="check">
+  <span class="badge {{ 'ok' if c.ok else ('' if c.ok is none else 'bad') }}">{{ 'ok' if c.ok else ('note' if c.ok is none else 'check') }}</span>
+  <span class="check-name">{{ c.name }}</span>
+  <span class="check-detail muted">{{ c.detail }}</span>
+</li>
+{% endmacro %}
+
 {% macro passkey_line(info) %}{% if info.count %}{{ info.count }} passkey{{ "" if info.count == 1 else "s" }}{% if info.last_added %}, last added {{ info.last_added|london_day }}{% endif %}.{% else %}No passkeys yet.{% endif %}{% endmacro %}

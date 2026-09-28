@@ -38,8 +38,9 @@
 | `command_centre/data.py` | Read models per page, each source wrapped, the 10-minute bank cache | 1, grows in 2 |
 | `command_centre/templates/`, `static/` | Jinja2 pages, `app.css`, `htmx.min.js`, `passkey.js` | 1 |
 | `command_centre/install.sh` | LaunchAgent, config, the `tailscale serve` command to run | 1 |
-| `command_centre/actions.py` | The action registry: validated input, preview, fixed argv, audit log | 3 |
-| `command_centre/jobs.py` | Refresh jobs and caches, backups | 2, 5 |
+| `command_centre/models.py`, `sources.py`, `todo.py` | Pure page builders; cache, report and health readers; the to-do parser and tick store | 2 |
+| `command_centre/actions.py` | The action registry: validated input, preview, fixed argv, audit log | 2 (the to-do tick), 3 |
+| `command_centre/jobs.py` | Refresh jobs and caches, backups | 3, 5 |
 | `command_centre/chat.py` | Claude Agent SDK session, streaming, approval cards | 4 |
 | `command_centre/push.py` | Web Push, events watcher | 5 |
 | `tests/test_cc_*.py` | One test file per module | all |
@@ -135,24 +136,102 @@ Config, `~/lcs-private/command-centre/config.json` (mode 600):
 
 ---
 
-## Phase 2: data pages (expand before building)
+## Phase 2: read-only data pages, the to-do tick and exports (this PR)
 
-**Goal:** Bookings, Enquiries, Singers, Marketing, Calendar, Search, Reports, Runs and health, To-do; the static dashboard retires.
+**Goal:** Bookings, Enquiries, Singers, Marketing, Calendar, Search, Reports, Runs and health, To-do and Exports, all read-only apart from the to-do tick (a local record). Every page has the freshness stamp, every source is a `data.Panel` (a failing one shows `couldn't load (<TypeName>)` and the rest render), every value goes through Jinja's autoescape, and there is still no GET route with a side effect.
 
-- **Task 2.1 `jobs.py` and the cache.** A refresh job (every 30 minutes, 07:00 to 22:00, in-process scheduler) writes `cache/{ads,ga4,gsc,books,drafts,calendar}.json` from `weekly_review`'s and `economics`' functions and a Books read client that mirrors `lcs_mcp`'s allowlisted read tools. Each cache entry stores `as_of` and the last error type. Tests: a failing refresher keeps the last good file and records the type.
-- **Task 2.2 Bookings.** List with filters (upcoming, past, state) from the ledger and `check_payments.collect`; a timeline per booking (enquiry, quote, follow-ups, invoice, payments, singers, singer bills, review request, notes) and links to the Zoho thread and Books invoice. Tests: fixtures cover every state in `dashboard.STATES`.
-- **Task 2.3 Enquiries.** Board by status (`pipeline.STATUS_ORDER`), follow-ups due, conversion (`pipeline.summary_dict`), source mix, timeline.
-- **Task 2.4 Singers.** Directory from `singer-invoices.csv`: payee status (`singer_invoices.payee_status`), `••••last4`, invoices, total paid, last booking, warnings.
-- **Task 2.5 Marketing.** Ads by campaign, cost per enquiry and booking (`economics.cost_table`), budget proposals, flagged search terms, the Search Console shortlist, GA4 leads, trends as inline SVG from `static/`-free markup.
-- **Task 2.6 Calendar.** Month and week views: Google Calendar (cached, read-only), bookings, deposit and balance due dates (`check_payments.deposit_due_date`), follow-up dates.
-- **Task 2.7 Search, Reports, Runs and health, To-do.** Search across bookings, clients, singers, enquiries, invoice numbers and refs; the archived Monday reports; the health checks (Starling selftest, ADC, MCPs, Tailscale status, disk, fingerprint-key backup age, last backup); `MANUAL-ACTIONS-REQUIRED.md` parsed, with ticks in a local file.
-- **Task 2.8** Retire `dashboard.py` from the scheduled prompts (Appendices A and E) once the owner has used the app for a week.
+**Scope change from the first outline:** the refresh job (`jobs.py`, cache writers for Ads, GA4, Search Console, Books, drafts and the calendar) moves to phase 3, with "Refresh now". Phase 2 only *reads* caches that already exist (`ads-summary.json` and `gclid-campaigns.json`, which the Monday review writes) or that the later job will write (`command-centre/cache/calendar.json`). CSV exports move here from phase 5. Links to the Zoho thread and the Books invoice wait for the Books read client: phase 2 shows the thread id as text, and no page carries an external URL.
+
+**Files:**
+- `command_centre/models.py`: pure builders, no I/O (booking list and timeline, enquiry board and timeline, next follow-up date, singer directory, calendar, search, CSV rows, SVG chart geometry).
+- `command_centre/sources.py`: the file readers (caches, reports, scheduled-task metadata, health checks), each reading at call time from `auth.private_dir()`.
+- `command_centre/todo.py`: `MANUAL-ACTIONS-REQUIRED.md` parser and the tick store.
+- `command_centre/actions.py`: the registry's first entry. `LocalAction(name, validate, preview, run, passkey=False)`; phase 3 adds the passkey actions to the same registry.
+- `command_centre/data.py`: one `Data.<page>_page()` per page, wrapping the builders in panels.
+- `command_centre/app.py`, `templates/*.html`, `static/app.css`: routes, pages, the bottom tab bar.
+- `tests/test_cc_pages2.py`, with fake fixtures in a temp `LCS_PRIVATE_DIR`. `tests/test_cc_pages.py` loses its "soon" nav assertions.
+
+### Task 2.1: Navigation
+
+- [x] Every page is linked from the header nav (wide screens) and from `/more`. Below 720px the header nav hides and a fixed bottom tab bar shows Today, Bookings, Enquiries, Money and More; `/more` lists every page. The current page has `aria-current="page"` in both.
+
+### Task 2.2: Bookings (`/bookings`, `/bookings/<ref>`)
+
+- [x] **List:** every ledger row. Filters by query string: `when` = `upcoming` (default: event today or later, or no event date), `past` or `all`; `state` = one of `data.STATES` (unknown values are ignored). Each row: event date, ref, client first name, occasion, ensemble, value, payment state. The state comes from the phase-1 bank cache (`check_payments.collect` through `dashboard.payments`); a row it doesn't cover is `CANCELLED` (`cp.is_cancelled`), `CLOSED` (`cp.closed_on`) or its notes-only `cp.assess(row, [], today)` state, as `dashboard.upcoming` does.
+- [x] **Timeline** (`ref` must match `^[A-Za-z0-9-]{1,20}$`, else 404), oldest first, undated items last:
+  - enquiry rows with this `booking_ref` (`pipeline`): first seen (source), each `quoted YYYY-MM-DD` note with the package and amount, follow-ups sent, the thread id;
+  - the invoice (ledger `invoice_date`, value);
+  - the deposit due date (the assessment's `deposit_due`, from `cp.deposit_due_date`);
+  - payments from the assessment (first confident payment, total received, each unconfirmed or flagged payment with its date);
+  - ledger notes, split on `;`, dated when a clause holds a `YYYY-MM-DD`; review marks (`cp.REVIEW_NOTE`) are tagged "review"; emails and the client's other name words are masked (first names only);
+  - singer invoices whose `event_date` field (when the store has one) equals the booking's event date; the store has no such field yet, so this shows "none linked" until it does;
+  - "review request due" when `pipeline.reviews_due` lists the ref;
+  - the event itself.
+
+### Task 2.3: Enquiries (`/enquiries`, `/enquiries/<id>`)
+
+- [x] Board: one column per `pipeline.STATUS_ORDER` status (id, occasion, event date, source, quote). Follow-ups due: `pipeline.followups_due(rows, today)`. Conversion: `dashboard.window` (so `pipeline.summary_dict`) for the season and the last 30 days. Sources: `summary_dict(...)["by_source"]`.
+- [x] Timeline (`id` must match `pipeline.ID_RE`): first seen, quotes, follow-ups (count and last contact), the next follow-up date, the event, the status, the booking ref (linked), the campaign from `gclid-campaigns.json` when the click id is cached there (no Google call).
+- [x] `models.next_followup(row, today)`: the date the next follow-up (or mark-lost) falls due, found by asking `pipeline.followups_due([row], day)` itself about the candidate day (last contact plus `FIRST_AFTER`/`SECOND_AFTER`/`LOST_AFTER`, or the event date if sooner), so the rules live in one place.
+
+### Task 2.4: Singers (`/singers`)
+
+- [x] Grouped by `singer_invoices.normalise_name`: first name, invoices (withdrawn ones listed apart), total paid (`paid_amount`, else `amount_gbp`, of rows with `paid_on`), unpaid total, last invoice date, payee status (`payee_status` of the newest row), bank `••••last4` of the newest row and its check (`is_trusted`: paid to verifiably or confirmed by phone; else not yet verified), warnings (`ring_first`, plus note clauses outside `KEEP_NOTES`), each invoice's bill number (`bill_number`, never a long digit run). Any run of six or more digits in shown text is masked.
+
+### Task 2.5: Marketing (`/marketing`)
+
+- [x] From `ads-summary.json`: "data as of" its `generated`; the last four weeks via `dashboard.ads` (spend, clicks, enquiries, cost per enquiry); the season per campaign (`season.campaigns`, `unattributed`, `total`: spend, clicks, enquiries, bookings, booked, cost per enquiry and per booking); an inline SVG bar chart of weekly spend with clicks as a line, drawn server-side (`models.bar_chart`), classes only, no `style=`, no library.
+- [x] From `gclid-campaigns.json`: click ids traced per campaign (misses, keyed `gclid@date/days`, are left out).
+- [x] Budget proposals, search terms, the Search Console shortlist and GA4 leads say "arrives with the refresh job (phase 3)".
+
+### Task 2.6: Calendar (`/calendar?view=month|week&date=YYYY-MM-DD`)
+
+- [x] Items: booking events (not cancelled), deposit due dates (open bookings still awaiting a deposit), balance due dates (three days before the event, check_payments' `BALANCE_DUE` rule, while a balance is outstanding), follow-up dates (`next_followup`), unbooked enquiries' event dates, and diary entries.
+- [x] Month view: a Monday-first grid from 720px, an agenda list below it. Week view: seven days. Previous/next/today links; a bad `date` or `view` falls back to today/month.
+- [x] **Calendar cache** (written by the phase-3 sync job; read-only here): `~/lcs-private/command-centre/cache/calendar.json`, mode 600:
+
+  ```json
+  [{"start": "2026-10-03T14:00:00+01:00", "end": "2026-10-03T16:00:00+01:00", "summary": "Wedding, St Mary's", "calendar": "LCS"},
+   {"start": "2026-10-05", "end": "2026-10-06", "summary": "Day off", "calendar": "Personal"}]
+  ```
+
+  `start`/`end` are ISO dates (all-day, `end` exclusive) or ISO datetimes with an offset; `summary` and `calendar` are strings (trimmed to 120 and 40 characters). Invalid entries are skipped. No file: "diary not synced yet". The file's mtime is the "synced at" stamp.
+
+### Task 2.7: Search (`/search?q=`)
+
+- [x] Server-side, case-insensitive substring, `q` trimmed to 80 characters, at least 2. Across bookings (ref, the client's name, shown as the first name only), enquiries (id, occasion), singers (name, shown as the first name), singer invoice refs and bill numbers, ledger invoice numbers (the ref, with or without `INV`). Output escaped; the query is echoed escaped.
+
+### Task 2.8: Reports (`/reports`, `/reports/<name>`)
+
+- [x] `~/lcs-private/reports/*.txt` whose names match `^\d{4}-\d{2}-\d{2}\.txt$`, newest first. One report in a `<pre>`. A name that doesn't match, a symlink, anything that resolves outside the folder, or a file over 2 MB is a 404.
+
+### Task 2.9: Runs and health (`/health`)
+
+- [x] Scheduled tasks: the names and descriptions from the frontmatter of `~/.claude/scheduled-tasks/*/SKILL.md` (`CC_SCHEDULED_TASKS_DIR` overrides; read-only). That metadata has no run history, so the last-run proxies are the mtimes of `assistant-state.json` (with its `last_checked`), `ads-summary.json`, the newest report, `dashboard.html`, the ledger, the singer store and `enquiries.csv`; stale ones are flagged (assistant over 3 hours in the daytime, Monday review over 8 days).
+- [x] Checks: Starling (`client.account()` only, cached 10 minutes, "not checked" without a token; the token is never read into the page), Google ADC (the file exists; never opened), the Zoho Mail and Books MCP servers (the server names exist under this repo's project in `~/.claude.json` or in `.mcp.json`; values are never kept or shown), `fingerprint.key` present and its backup age (a placeholder until phase 5's backups), free disk space, and the serving checkout's git branch. No "Run now" (phase 3).
+
+### Task 2.10: To-do (`/todo`, `POST /todo/tick`)
+
+- [x] `MANUAL-ACTIONS-REQUIRED.md`'s `## N. Title` sections, each with its first paragraph as plain text (markdown marks stripped). Ticks in `~/lcs-private/command-centre/todo.json` (mode 600, atomic, under a lock): `{"<N>-<slug>": {"done": true, "at": "<iso>"}}`.
+- [x] The tick is the registry's first action, `todo-tick` (`actions.LocalAction`, `passkey=False`): the form posts only `key` and `done`; the key must be a section the parser finds now; the summary is built by the server ("tick to-do 21: Back up …"); the run writes `todo.json` and appends to `audit.jsonl` (mode 600). It passes the identity middleware's Host and same-origin (`Origin`, `Sec-Fetch-Site`) checks like any POST, and answers 303 to `/todo`. No passkey: it is low risk and touches private data only (the spec's actions table says so). `GET /todo/tick` is 405.
+
+### Task 2.11: Exports (`/exports`, `/exports/<name>.csv`)
+
+- [x] `bookings.csv` (ref, dates, first name, occasion, ensemble, value, state, received, balance), `singer-invoices.csv` (received, first name, bill number, amount, payee status, `••••last4`, flags, paid on and amount, withdrawn) and `pipeline.csv` (every `enquiries.csv` column except notes and gclid, plus the cached campaign). `Content-Disposition: attachment`, `Cache-Control: no-store`, cells starting `= + - @` prefixed with `'`. Any other name is a 404.
+
+### Task 2.12: Tests, visual check, PR
+
+- [x] `tests/test_cc_pages2.py`: each page renders with fixtures; filters; timelines; search escapes its input; report traversal refused; the CSVs carry no full bank number; the to-do tick needs the right Origin and Host (and GET is 405); a failing source is isolated on every page; the calendar without and with its cache; health prints no secret and never opens the ADC file.
+- [x] Visual check on `127.0.0.1:8796` with fake data and the dev login, at 390px and 1280px, light and dark; screenshots in the scratchpad only; stop the server.
+- [x] Every `tests/test_*.py`; commit; PR; don't merge.
+- **Task 2.13 (after merge)** Retire `dashboard.py` from the scheduled prompts (Appendices A and E) once the owner has used the app for a week.
 
 ## Phase 3: actions (expand before building)
 
 **Goal:** the action registry, every write behind a passkey, append-only audit log.
 
-- **Task 3.1 `actions.py`.** Each action: a name, a validator for its input, `preview(input) -> str` (the exact summary the passkey challenge binds), `argv(input) -> list[str]` (fixed script path, no shell). Runs with `subprocess.run(argv, shell=False, cwd=REPO, timeout=...)`; stderr trimmed and scrubbed with `lcs_mcp`'s rules; `audit.jsonl` appended (mode 600) before and after. Tests: exact argv per action, bad input refused, no `shell=True` anywhere (AST check).
+- **Task 3.0 Refresh job (moved from phase 2).** `jobs.py`: every 30 minutes, 07:00 to 22:00, writes `cache/{ads,ga4,gsc,books,drafts,calendar}.json` (calendar in phase 2's shape) from `weekly_review`'s and `economics`' functions and a Books read client mirroring `lcs_mcp`'s allowlisted reads; each entry stores `as_of` and the last error type. Tests: a failing refresher keeps the last good file and records the type.
+- **Task 3.1 `actions.py`.** Phase 2 created the registry with `todo-tick`. Each action: a name, a validator for its input, `preview(input) -> str` (the exact summary the passkey challenge binds), `argv(input) -> list[str]` (fixed script path, no shell). Runs with `subprocess.run(argv, shell=False, cwd=REPO, timeout=...)`; stderr trimmed and scrubbed with `lcs_mcp`'s rules; `audit.jsonl` appended (mode 600) before and after. Tests: exact argv per action, bad input refused, no `shell=True` anywhere (AST check).
 - **Task 3.2 Routes.** `POST /actions/<name>/preview` returns the summary and assertion options; `POST /actions/<name>` needs `require_fresh_assertion(credential, action)`, where `action` is an `auth.Action` the registry built from the validated input (never text from the request), and the same-origin check. Tests: refused without, with a stale, a replayed, or another action's assertion.
 - **Task 3.3 The actions.** Hand-check resolutions (`check_payments.py --note <ref> "<phrase> <date>" --owner`: add the `--owner` flag to `check_payments.py` first, test-first); singer confirm, settle and withdraw (`singer_invoices.py`); Ads approve (validate-only run, show output, second tap to apply; the scripts' £5 cap stays); run a scheduled task now (headless `claude -p` with the task prompt); refresh now; back up now; local records (draft sent or discarded, to-do ticks).
 - **Task 3.4 Activity log page.** Every action and run from `audit.jsonl`, filterable.
@@ -166,7 +245,7 @@ Config, `~/lcs-private/command-centre/config.json` (mode 600):
 - **Task 4.3 Quick prompts** and the queue for approved instructions (Books import, page fixes) from phase 3.
 - Tests: a crashed chat leaves the other pages working; a denied card never runs the tool.
 
-## Phase 5: PWA, push, drafts inbox, quote calculator, exports, backups (expand before building)
+## Phase 5: PWA, push, drafts inbox, quote calculator, backups (expand before building)
 
 - **Task 5.1 PWA.** Manifest, service worker (no caching of data pages), icons.
 - **Task 5.2 Push.** VAPID keys in the Keychain; `events.jsonl` watcher; `scripts/bookings/cc_event.py` (allowlisted) for the scheduled prompts; payload has a title and a first name only (tested).

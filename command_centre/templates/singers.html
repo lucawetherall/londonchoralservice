@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% import "macros.html" as m %}
+{% block content %}
+{% set groups = directory.value if directory.ok else (directory.stale or []) %}
+{{ m.failed(directory) }}
+{% if groups %}
+<p class="muted">{{ groups|length }} singer{{ "" if groups|length == 1 else "s" }}, grouped by name. Bank accounts show the last four digits only.</p>
+<div class="singer-list">
+  {% for g in groups %}
+  <article class="card singer{% if g.warnings %} card-bad{% endif %}">
+    <div class="singer-head">
+      <h2>{{ g.first_name }}</h2>
+      <span class="muted">{{ g.count }} invoice{{ "" if g.count == 1 else "s" }}{% if g.last_invoice %}, last {{ g.last_invoice|day }}{% endif %}</span>
+    </div>
+    <dl class="facts">
+      <div><dt>Paid</dt><dd class="num">{{ g.total_paid|gbp }}</dd></div>
+      <div><dt>Unpaid</dt><dd class="num">{{ g.unpaid_total|gbp }}{% if g.unpaid %} ({{ g.unpaid }}){% endif %}</dd></div>
+      <div><dt>Payee</dt><dd>{{ g.payee }}</dd></div>
+      <div><dt>Bank</dt><dd><span class="mono">{{ g.last4|last4 }}</span> · {{ g.bank_check }}</dd></div>
+    </dl>
+    {% if g.warnings %}
+    <ul class="warnings">
+      {% for w in g.warnings %}<li><span class="badge bad">{{ w }}</span></li>{% endfor %}
+    </ul>
+    {% endif %}
+    <details>
+      <summary>Invoices</summary>
+      <table class="table">
+        <thead><tr><th>Received</th><th>Bill number</th><th class="num">Amount</th><th>Paid</th><th>Bank</th></tr></thead>
+        <tbody>
+        {% for i in g.invoices %}
+          <tr>
+            <td data-label="Received">{{ i.received|day if i.received else "?" }}</td>
+            <td data-label="Bill number" class="mono">{{ i.bill_number }}</td>
+            <td data-label="Amount" class="num">{{ i.amount|gbp }}</td>
+            <td data-label="Paid">{% if i.paid_on %}{{ i.paid_on|day }}{% if i.paid_amount %}, {{ i.paid_amount|gbp }}{% endif %}{% else %}<span class="badge warn">unpaid</span>{% endif %}</td>
+            <td data-label="Bank"><span class="mono">{{ i.last4|last4 }}</span>{% if i.ring_first %} <span class="badge bad">ring before paying</span>{% endif %}</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+      {% if g.withdrawn %}
+      <p class="muted">Withdrawn (sent to us by mistake):
+        {% for w in g.withdrawn %}{{ w.bill_number }}, {{ w.amount|gbp }}{% if w.on %} on {{ w.on|day }}{% endif %}{{ "; " if not loop.last }}{% endfor %}</p>
+      {% endif %}
+    </details>
+  </article>
+  {% endfor %}
+</div>
+{% elif directory.ok %}<p class="muted">No singer invoices recorded yet.</p>{% endif %}
+{% endblock %}

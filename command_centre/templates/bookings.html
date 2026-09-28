@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% import "macros.html" as m %}
+{% block content %}
+<form class="filters" method="get" action="/bookings">
+  <div class="seg" role="group" aria-label="When">
+    {% for w, label in [("upcoming", "Upcoming"), ("past", "Past"), ("all", "All")] %}
+    <a class="seg-item" href="/bookings?when={{ w }}{% if state %}&amp;state={{ state }}{% endif %}"{% if when == w %} aria-current="page"{% endif %}>{{ label }}</a>
+    {% endfor %}
+  </div>
+  <input type="hidden" name="when" value="{{ when }}">
+  <label class="field-inline">State
+    <select name="state">
+      <option value="">any</option>
+      {% for key, words in states %}
+      <option value="{{ key }}"{% if state == key %} selected{% endif %}>{{ words[0] }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <button class="button quiet" type="submit">Filter</button>
+</form>
+
+<p class="muted">{% if bank.ok and bank.value.bank_checked %}Payment states checked against Starling at {{ bank.value.as_of }}.{% else %}Bank not checked: payment states come from the ledger notes.{% endif %}</p>
+
+{% set items = bookings.value if bookings.ok else (bookings.stale or []) %}
+<section class="card">
+  {{ m.failed(bookings) }}
+  {% if items %}
+  <table class="table">
+    <thead><tr><th>Event</th><th>Ref</th><th>Client</th><th>Occasion</th><th>Ensemble</th><th class="num">Value</th><th>Payment</th></tr></thead>
+    <tbody>
+    {% for b in items %}
+      <tr>
+        <td data-label="Event">{% if b.event_date %}{{ b.event_date|day }}{% else %}no date{% endif %}</td>
+        <td data-label="Ref" class="mono"><a href="/bookings/{{ b.ref }}">{{ b.ref }}</a></td>
+        <td data-label="Client">{{ b.first_name }}</td>
+        <td data-label="Occasion">{{ b.occasion }}</td>
+        <td data-label="Ensemble">{{ b.ensemble }}</td>
+        <td data-label="Value" class="num">{{ b.value|gbp }}</td>
+        <td data-label="Payment"><span class="badge {{ b.state|state_tone }}">{{ b.state|state_words }}</span></td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  <p class="muted">{{ items|length }} booking{{ "" if items|length == 1 else "s" }}.</p>
+  {% elif bookings.ok %}<p class="muted">No bookings match.</p>{% endif %}
+</section>
+{% endblock %}
