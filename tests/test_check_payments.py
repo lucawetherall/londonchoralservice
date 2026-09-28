@@ -604,8 +604,9 @@ def test_negated_or_future_paid_notes_are_still_chased():
 
 def test_a_deposit_sized_paid_note_never_stops_a_balance_chase():
     paid = [("2026-09-05", 575.0, "reference")]
+    # ("balance to be paid in cash on the day" and "will pay balance in cash" are ARRANGED since round 5)
     for n in ("deposit of £575 paid 5 Sep", "£575 paid 5 Sep", "deposit (£575) paid by bank transfer", "deposit paid by card",
-              "balance to be paid in cash on the day", "will pay balance in cash", "balance not paid in full"):
+              "balance not paid in full"):
         a = cp.assess(row("2111", 1150, "2026-09-01", "2026-09-30", "deposit seen 2026-09-05 (Starling); " + n), paid, T)
         assert a["state"] == "BALANCE_DUE", (n, a["state"])
     for n in ("£1,150 paid 5 Sep", "balance of £575 paid in cash", "£575 paid 5 Sep; balance paid in cash 29 Sep",
@@ -898,6 +899,136 @@ def test_assistant_paths_follow_the_private_dir():
     p = subprocess.run([PY, "-c", code], env=env, capture_output=True, text=True)
     assert p.stdout.split() == [os.path.join(d, "assistant-state.json"), os.path.join(d, "invoices"),
                                 os.path.join(d, "bookings.csv")], (p.stdout, p.stderr[-300:])
+
+
+# --- round 5: resumed cancellations -------------------------------------------------------------
+
+def test_a_resumed_or_conditional_cancellation_is_not_cancelled():
+    for n in ("cancellation requested, then withdrawn", "cancelled then rebooked", "rain date if cancelled",
+              "Cancellation requested 20 Sep; going ahead after all", "cancelled 20 Sep, reinstated 25 Sep",
+              "if it is cancelled the deposit is kept"):
+        assert not cp.is_cancelled(row("X", 500, "2026-09-01", "2026-10-30", n)), n
+    for n in ("cancelled 5 Oct", "rebooked for 2027; cancelled 5 Oct", "cancelled, not going ahead", "client cancelled after all",
+              "cancellation requested, may be withdrawn", "Cancelled; deposit withdrawn from escrow"):
+        assert cp.is_cancelled(row("X", 500, "2026-09-01", "2026-10-30", n)), n
+
+
+def test_a_resumed_booking_is_chased_again():
+    r = row("X", 500, "2026-09-01", "2026-10-30", "PENDING: invoiced; cancellation requested, then withdrawn")
+    assert cp.open_rows([r]) == [r] and cp.assess(r, [], T)["state"] == "DEPOSIT_OVERDUE"
+
+
+# --- round 5: silencing a payment on a cancelled booking --------------------------------------
+
+def test_a_kept_deposit_note_silences_earlier_payments_on_a_cancelled_booking():
+    import money_report as mr
+    paid = [("2026-08-05", 575.0, "reference")]
+    for n in ("Cancelled 15 Sep; deposit kept 2026-09-15", "cancelled; refunded 2026-09-20", "Cancelled; checked 2026-09-28",
+              "cancelled; Deposit Kept 2026-08-05"):
+        r = row("4003", 1150, "2026-08-01", "2027-04-01", n, name="Gil Hart")
+        a = cp.assess(r, paid, T)
+        assert a["state"] == "CANCELLED" and a["hand_check_payments"] == [], (n, a["state"])
+        got = cp.collect(FakeClient([pay(575, "2026-08-05", "INV4003", "G HART")]), [r], T)
+        assert got == [], (n, got)
+        assert mr.summary_lines([a for _, _, a in got], [], QUIET, T)[3] == "needs a hand check: 0"
+
+
+def test_a_payment_after_the_kept_deposit_note_still_reaches_the_hand_check():
+    r = row("4003", 1150, "2026-08-01", "2027-04-01", "Cancelled 15 Sep; deposit kept 2026-09-15", name="Gil Hart")
+    paid = [("2026-08-05", 575.0, "reference"), ("2026-09-20", 575.0, "reference")]
+    a = cp.assess(r, paid, T)
+    assert a["state"] == "PAYMENT_ON_CANCELLED" and a["hand_check_payments"] == [["2026-09-20", 575.0]], a
+    assert "2026-08-05" not in cp.describe(a).split(" · ", 1)[1]
+    got = cp.collect(FakeClient([pay(575, "2026-08-05", "INV4003", "G HART"), pay(575, "2026-09-20", "INV4003", "G HART")]), [r], T)
+    assert [a["state"] for _, _, a in got] == ["PAYMENT_ON_CANCELLED"]
+    # without a date the note silences nothing
+    r2 = row("4003", 1150, "2026-08-01", "2027-04-01", "Cancelled 15 Sep, deposit kept", name="Gil Hart")
+    assert cp.assess(r2, paid[:1], T)["state"] == "PAYMENT_ON_CANCELLED"
+
+
+# --- round 5: a balance arranged in cash or by cheque on the day -------------------------------
+
+ARRANGED_NOTES = ("balance to be paid in cash", "will pay balance in cash", "balance payable in cash on the day",
+                  "rest will be paid in cash", "cheque on the day", "balance to be paid in cash on the day",
+                  "rest will be paid in cash on the day", "balance in cash on the day", "balance will be paid by cheque")
+
+
+def test_an_arranged_cash_balance_is_never_chased_or_thanked():
+    dep = [("2026-09-20", 575.0, "reference")]
+    for n in ARRANGED_NOTES:
+        for event in ("2026-09-30", "2026-12-12", "2026-09-20"):
+            a = cp.assess(row("2111", 1150, "2026-09-01", event, "deposit seen 2026-09-20 (Starling); " + n), dep, T)
+            assert a["state"] == "ARRANGED" and a["receipt_due"] is False and a["just_received"] is False, (n, event, a["state"])
+    # with nothing in the bank and no note of a deposit, the deposit is still what is owed
+    for n in ARRANGED_NOTES:
+        a = cp.assess(row("2111", 1150, "2026-09-01", "2026-12-12", "PENDING: invoiced; " + n), [], T)
+        assert a["state"] == "ARRANGED", (n, a["state"])
+    # a note of the whole fee paid still wins, and a negated arrangement is chased as before
+    a = cp.assess(row("2111", 1150, "2026-09-01", "2026-09-30",
+                      "deposit seen 2026-09-20 (Starling); balance to be paid in cash on the day; balance paid in cash 29 Sep"), dep, T)
+    assert a["state"] == "NOTED_PAID", a["state"]
+    for n in ("won't pay cash on the day", "not paying cheque on the day"):
+        a = cp.assess(row("2111", 1150, "2026-09-01", "2026-09-30", "deposit seen 2026-09-20 (Starling); " + n), dep, T)
+        assert a["state"] == "BALANCE_DUE", (n, a["state"])
+
+
+def test_an_arranged_balance_reaches_the_hand_check_only_near_or_after_the_event():
+    import money_report as mr
+    dep = [("2026-09-20", 575.0, "reference")]
+    note = "deposit seen 2026-09-20 (Starling); rest will be paid in cash on the day"
+    near = cp.assess(row("0510", 1150, "2026-09-01", "2026-10-05", note), dep, T)
+    past = cp.assess(row("2009", 1150, "2026-09-01", "2026-09-20", note), dep, T)
+    far = cp.assess(row("1212", 1150, "2026-09-01", "2026-12-12", note), dep, T)
+    assert [a["state"] for a in (near, past, far)] == ["ARRANGED"] * 3
+    lines = mr.summary_lines([near, past, far], [], QUIET, T)
+    assert lines[2] == "balances due in the next 7 days: 0, £0.00", lines[2]
+    assert lines[3] == ("needs a hand check: 2 (0510 balance arranged (cash/cheque on the day); "
+                        "2009 balance arranged (cash/cheque on the day))"), lines[3]
+    assert "never chase" in cp.describe(near)
+    # nothing in the bank and no deposit noted: on the hand check every week
+    bare = cp.assess(row("1313", 1150, "2026-09-01", "2026-12-12", "PENDING: invoiced; cheque on the day"), [], T)
+    assert mr.summary_lines([bare], [], QUIET, T)[3].startswith("needs a hand check: 1 (1313 balance arranged"), bare
+
+
+# --- round 5: split or odd-amount payments from the client ------------------------------------
+
+def test_split_payments_from_the_client_are_a_hand_check_not_an_overdue_deposit():
+    r = row("4009", 1150, "2026-09-01", "2027-01-09", "PENDING: invoiced", name="Kim Nash")
+    found = cp.match([r], [pay(300, "2026-09-10", "", "K NASH"), pay(275, "2026-09-11", "", "K NASH")], T)
+    assert found["4009"] == [("2026-09-10", 300.0, "name only, amount differs"),
+                             ("2026-09-11", 275.0, "name only, amount differs")], found
+    a = cp.assess(r, found["4009"], T)
+    assert a["state"] == "CHECK_PAYMENT" and a["received"] == 0 and a["receipt_due"] is False, a
+    assert "matched by name only, amount differs: confirm by hand" in cp.describe(a)
+    # a name that fits no open booking, or falls outside the window, is still nobody's
+    assert cp.match([r], [pay(300, "2026-09-10", "", "J BLOGGS")], T)["4009"] == []
+    assert cp.match([r], [pay(300, "2026-03-10", "", "K NASH")], T)["4009"] == []
+    # a whole-word surname only
+    assert cp.match([r], [pay(300, "2026-09-10", "", "K NASHE")], T)["4009"] == []
+    # never on a cancelled or closed booking
+    for n in ("cancelled 5 Sep", "paid in full 2026-09-05"):
+        assert cp.match([dict(r, notes=n)], [pay(300, "2026-09-10", "", "K NASH")], T)["4009"] == [], n
+
+
+def test_an_odd_amount_after_the_deposit_is_a_possible_balance():
+    r = row("4009", 1150, "2026-09-01", "2026-09-30", "deposit seen 2026-09-05 (Starling)", name="Kim Nash")
+    found = cp.match([r], [pay(575, "2026-09-05", "INV4009", "K NASH"), pay(500, "2026-09-26", "", "K NASH")], T)
+    a = cp.assess(r, found["4009"], T)
+    assert a["state"] == "CHECK_PAYMENT" and a["possible_balance"] == [["2026-09-26", 500.0]], a
+
+
+# --- round 5: tidy notes ----------------------------------------------------------------------
+
+def test_updated_notes_drop_a_leftover_deposit_not_yet_seen():
+    paid = [("2026-09-22", 575.0, "reference")]
+    for before, after in (
+            ("PENDING: invoiced by enquiry assistant, deposit not yet seen",
+             "deposit seen 2026-09-22 (Starling); invoiced by enquiry assistant"),
+            ("PENDING; deposit not yet seen; from quote", "deposit seen 2026-09-22 (Starling); from quote"),
+            ("PENDING: deposit not yet seen in the bank", "deposit seen 2026-09-22 (Starling)")):
+        r = row("4001", 1150, "2026-09-10", "2027-05-01", before)
+        a = cp.assess(r, paid, T)
+        assert cp.updated_notes(r["notes"], a, paid) == after, (before, cp.updated_notes(r["notes"], a, paid))
 
 
 if __name__ == "__main__":

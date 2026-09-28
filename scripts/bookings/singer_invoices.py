@@ -7,6 +7,7 @@ Starling. Records live in ~/lcs-private/singer-invoices.csv (mode 600).
     singer_invoices.py status              # unpaid invoices and totals
     singer_invoices.py thanked <message id>  # note that the "Paid!" reply was drafted
     singer_invoices.py confirm <message id>  # the owner rang the singer: trust these bank details
+    singer_invoices.py settled <message id> YYYY-MM-DD  # the owner paid it outside the feed's reach: mark it paid
 
 Bank details are stored as a keyed fingerprint (lcs_money.bank_fingerprint) plus
 the last four digits, and only "••••1234" is ever printed. This script never
@@ -19,8 +20,13 @@ warning to ring before paying. A payment is matched by the bank's own evidence
 where it can: a feed item carrying the recipient's sort code and account number
 settles only the invoice with the same fingerprint (paid_verified=yes). Only when
 one side lacks bank details does the name decide (surname and first name or
-initial). A payment settles one invoice once: its feed item id is stored, and a
-payment that fits several singers, or predates the invoice, is only reported.
+initial), and never when the payment's own details are trusted for another singer
+or held on a Starling payee under another name (reported as PAYMENT TO ANOTHER
+SINGER'S ACCOUNT). A payment settles one invoice once: its feed item id is stored, and
+a payment that fits several singers, or predates the invoice, is only reported. A
+name-only match prints "(matched by name, check before thanking)": the assistant
+drafts "Paid!" only for a match on the bank details. `settled` is the owner's own
+command; it marks the invoice paid (paid_verified=no) and never trusts its details.
 """
 
 import argparse
@@ -285,7 +291,7 @@ def match_paid(unpaid, out_items, report=None, history=None, payee_fps=None):
         paid = (it.get("amount") or {}).get("minorUnits", 0) / 100
         when = lm.local_date(it.get("transactionTime"))
         who, ifp = it.get("counterPartyName") or "", lm.feed_item_fingerprint(it)
-        fits, verified, wrong_bank = [], [], []
+        fits, verified, wrong_bank, blocked = [], [], [], []
         for r in open_:
             if (r["message_id"] in hits or abs(paid - lm.money(r["amount_gbp"])) >= 0.01
                     or when < (received_date(r) - LOOKBACK).isoformat()):
@@ -299,7 +305,9 @@ def match_paid(unpaid, out_items, report=None, history=None, payee_fps=None):
                 if r["message_id"] not in too_short:
                     too_short.append(r["message_id"])
             elif ifp and fp_belongs_to_someone_else(r, ifp):
-                pass  # this payment's own fingerprint is already someone else's: a name match alone won't do
+                # this payment's own fingerprint is already someone else's: a name match alone won't do
+                if any(names_agree(n, who) for n in payer_names(r)):
+                    blocked.append(r)
             elif any(names_agree(n, who) for n in payer_names(r)):
                 fits.append(r)
         pool = verified or fits
@@ -312,6 +320,11 @@ def match_paid(unpaid, out_items, report=None, history=None, payee_fps=None):
                 report.append(f"PAID TO DIFFERENT BANK DETAILS £{paid:,.2f} on {when} to ••••{item_last4} fits "
                               f"{wr['message_id']} ({first_name(wr.get('singer_name'))}, "
                               f"invoice ••••{wr.get('bank_last4', '')}): check by hand")
+            if blocked:
+                br = blocked[0]
+                item_last4 = lm.last4(it.get("counterPartySubEntitySubIdentifier"))
+                report.append(f"PAYMENT TO ANOTHER SINGER'S ACCOUNT £{paid:,.2f} on {when} ••••{item_last4} not matched to "
+                              f"{br['message_id']} ({first_name(br.get('singer_name'))}): check by hand")
             continue
         if len({normalise_name(r.get("singer_name")) or r["message_id"] for r in pool}) > 1:
             names = ", ".join(f"{r['message_id']} ({first_name(r.get('singer_name'))})" for r in pool)
@@ -493,7 +506,7 @@ def cmd_paid(args, client):
         if r["message_id"] in hits:
             when, amount, uid, verified = hits[r["message_id"]]
             print(f"NEWLY PAID {r['message_id']}: {first_name(r['singer_name'])} £{amount:,.2f} on {when}"
-                  + (" (bank details match)" if verified else " (matched by name)"))
+                  + (" (bank details match)" if verified else " (matched by name, check before thanking)"))
             if args.apply:
                 r["paid_on"], r["paid_amount"], r["paid_ref"] = when, f"{amount:.2f}", uid
                 r["paid_verified"] = "yes" if verified else "no"
@@ -545,6 +558,33 @@ def cmd_confirm(args, client=None):
     raise SystemExit(f"no invoice {args.message_id}")
 
 
+def cmd_settled(args, client=None):
+    """The owner's hand command: an invoice paid outside the feed's reach. Marks it paid for its own amount,
+    unverified; never trusts its bank details (bank_confirmed is left alone)."""
+    day = strict_date(args.date)
+    rows = lm.read_csv(STORE)
+    for r in rows:
+        if r["message_id"] == args.message_id:
+            if r.get("paid_on"):
+                raise SystemExit(f"{args.message_id}: already paid on {r['paid_on']}")
+            r["paid_on"], r["paid_amount"], r["paid_verified"] = day, f"{lm.money(r['amount_gbp']):.2f}", "no"
+            note(r, "settled by hand")
+            lm.write_csv(STORE, rows, COLUMNS)
+            print(f"{args.message_id}: settled by hand")
+            return
+    raise SystemExit(f"no invoice {args.message_id}")
+
+
+def strict_date(value):
+    """YYYY-MM-DD only; anything else is refused (SystemExit), so a typo never marks a wrong day."""
+    try:
+        if len(value) == 10:
+            return datetime.date.fromisoformat(value).isoformat()
+    except ValueError:
+        pass
+    raise SystemExit(f"not a YYYY-MM-DD date: {value!r}")
+
+
 def main():
     ap = argparse.ArgumentParser()
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -561,12 +601,15 @@ def main():
     t.add_argument("message_id")
     c = sub.add_parser("confirm")
     c.add_argument("message_id")
+    st = sub.add_parser("settled")
+    st.add_argument("message_id")
+    st.add_argument("date")
     args = ap.parse_args()
     tok = lm.keychain_token() if args.cmd in ("scan", "paid") else None
     client = lm.StarlingReadOnly(tok) if tok else None
     try:
         {"scan": cmd_scan, "paid": cmd_paid, "status": cmd_status, "thanked": cmd_thanked,
-         "confirm": cmd_confirm}[args.cmd](args, client)
+         "confirm": cmd_confirm, "settled": cmd_settled}[args.cmd](args, client)
     except (lm.StarlingError, urllib.error.URLError, TimeoutError, ConnectionError) as e:  # type name only
         print(f"Starling unavailable ({type(e).__name__}); {args.cmd} skipped")
 

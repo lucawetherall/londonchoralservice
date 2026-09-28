@@ -542,7 +542,8 @@ def test_match_paid_blocks_name_match_when_fp_is_trusted_for_a_different_singer(
     item = fp_out(150, "2026-09-02", "B FENWICK", "x9", "112233", "99990000")  # but this payment carries Ben's fp
     report = []
     assert si.match_paid([bella], [item], report, history=[ben, bella]) == {}
-    assert report == []
+    assert report == ["PAYMENT TO ANOTHER SINGER'S ACCOUNT £150.00 on 2026-09-02 ••••0000 not matched to bella1 (Bella): "
+                      "check by hand"], report  # round 5: the blocked payment is reported, once
     # without the guard (no history passed) the initial+surname alone would have matched Bella
     assert si.match_paid([bella], [item]) == {"bella1": ("2026-09-02", 150.0, "x9", False)}
 
@@ -752,6 +753,99 @@ def test_legacy_filter_is_per_singer():
                                  payee=si.NEW_PAYEE, bank_changed="no")], si.COLUMNS)
     got = paid(FakeClient(out=[out(100, "2026-09-10", "BEN FENWICK", "pb"), out(100, "2026-09-10", "ANNA SMITH", "pa")]))
     assert "NEWLY PAID A" in got and rows_by_id()["A"]["paid_ref"] == "pa"
+
+
+# --- round 5: hand-settled invoices, guard-blocked payments, "Paid!" only on verified matches ----
+
+def settle(mid, day):
+    buf = io.StringIO()
+    with contextlib.redirect_stdout(buf):
+        si.cmd_settled(Args(message_id=mid, date=day))
+    return buf.getvalue()
+
+
+def test_settled_command():
+    fresh_store()
+    scan(GEN.format(n=1), "g1", "2026-08-01")
+    assert settle("g1", "2026-08-03").splitlines() == ["g1: settled by hand"]
+    r = rows_by_id()["g1"]
+    assert (r["paid_on"], r["paid_amount"], r["paid_verified"], r["bank_confirmed"], r["paid_ref"]) == \
+        ("2026-08-03", "100.00", "no", "", ""), r
+    assert r["notes"].endswith("settled by hand"), r["notes"]
+    try:  # a paid invoice is never settled over
+        settle("g1", "2026-08-09")
+        raise AssertionError("settled a paid invoice again")
+    except SystemExit:
+        assert rows_by_id()["g1"]["paid_on"] == "2026-08-03"
+    assert si.summary(lm.read_csv(si.STORE), datetime.date(2026, 9, 28))["unpaid"] == 0
+    # a hand settlement is never trust: the same details on the next invoice are still unverified
+    assert "NOT YET VERIFIED" in scan(GEN.format(n=2), "g2", "2026-08-20")
+    assert "BANK DETAILS CHANGED" in scan(FRAUD.format(n=4), "f1", "2026-09-20")
+    # the payment itself, once in the feed, is recognised as g1's and settles or flags nothing else
+    got = paid(FakeClient(out=[out(100, "2026-08-03", "BEN FENWICK", "late")]))
+    assert "NEWLY PAID" not in got and "POSSIBLY ALREADY PAID" not in got, got
+
+
+def test_settled_command_errors():
+    fresh_store()
+    scan(GEN.format(n=1), "g1", "2026-08-01")
+    for mid, day in (("nope", "2026-08-03"), ("g1", "3 Aug")):
+        before = si.STORE.read_text()
+        try:
+            settle(mid, day)
+            raise AssertionError(f"settled {mid} {day}")
+        except (SystemExit, argparse.ArgumentTypeError):
+            pass
+        assert si.STORE.read_text() == before
+
+
+def test_settled_cli():
+    fresh_store()
+    scan(GEN.format(n=1), "g1", "2026-08-01")
+    saved = sys.argv
+    try:
+        buf = io.StringIO()
+        with contextlib.redirect_stdout(buf):
+            sys.argv = ["singer_invoices.py", "settled", "g1", "2026-08-04"]
+            si.main()
+        assert buf.getvalue().strip() == "g1: settled by hand" and rows_by_id()["g1"]["paid_on"] == "2026-08-04"
+        sys.argv = ["singer_invoices.py", "settled", "zz", "2026-08-04"]
+        try:
+            with contextlib.redirect_stdout(io.StringIO()):
+                si.main()
+            raise AssertionError("settled an unknown invoice")
+        except SystemExit as e:
+            assert e.code and "zz" in str(e.code), e.code
+    finally:
+        sys.argv = saved
+
+
+def test_a_payment_blocked_by_the_guard_is_reported_once():
+    fp = lm.bank_fingerprint("112233", "99990000")
+    bella = unpaid("bella1", "Bella Fenwick", 150, "2026-09-01")
+    bella2 = unpaid("bella2", "Bella Fenwick", 150, "2026-09-05")
+    item = fp_out(150, "2026-09-06", "B FENWICK", "x9", "112233", "99990000")
+    report = []
+    assert si.match_paid([bella, bella2], [item], report, history=[bella, bella2], payee_fps={fp: "Priya Kaur"}) == {}
+    assert report == ["PAYMENT TO ANOTHER SINGER'S ACCOUNT £150.00 on 2026-09-06 ••••0000 not matched to bella1 (Bella): "
+                      "check by hand"], report
+    # a payment that settles another invoice by its own bank details is not reported
+    priya = fp_unpaid("p1", "Priya Kaur", 150, "2026-09-02", sc="112233", acc="99990000")
+    report = []
+    assert si.match_paid([bella, priya], [item], report, history=[bella, priya], payee_fps={fp: "Priya Kaur"}) == \
+        {"p1": ("2026-09-06", 150.0, "x9", True)}
+    assert report == [], report
+
+
+def test_newly_paid_by_name_says_check_before_thanking():
+    fresh_store()
+    scan(GEN.format(n=1), "g1", "2026-08-01")
+    scan(GEN.format(n=2), "g2", "2026-08-02")
+    got = paid(FakeClient(out=[out(100, "2026-08-03", "BEN FENWICK", "p0"),
+                               fp_out(100, "2026-08-04", "BW MUSIC", "p1", "123456", "11112222")]))
+    lines = [x for x in got.splitlines() if x.startswith("NEWLY PAID")]
+    assert lines == ["NEWLY PAID g1: Ben £100.00 on 2026-08-03 (matched by name, check before thanking)",
+                     "NEWLY PAID g2: Ben £100.00 on 2026-08-04 (bank details match)"], lines
 
 
 if __name__ == "__main__":

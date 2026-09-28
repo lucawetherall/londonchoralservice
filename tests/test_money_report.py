@@ -121,6 +121,19 @@ def test_payments_on_cancelled_or_closed_bookings_are_hand_checks_not_balances()
                         "3009 possible balance payment)"), lines[3]
 
 
+def test_an_arranged_balance_is_a_hand_check_only_within_seven_days_or_past():
+    def a(ref, event, no_deposit=False):
+        return {"ref": ref, "state": "ARRANGED", "balance": 575.0, "received": 575.0, "event_date": event,
+                "arranged_no_deposit": no_deposit}
+    got = [a("in7", "2026-10-05"), a("in8", "2026-10-06"), a("past", "2026-09-01"), a("none", None),
+           a("bare", "2026-12-12", True)]
+    lines = mr.summary_lines(got, [], QUIET_SINGERS, T)
+    assert lines[2] == "balances due in the next 7 days: 0, £0.00", lines[2]
+    assert lines[3] == ("needs a hand check: 4 (in7 balance arranged (cash/cheque on the day); "
+                        "past balance arranged (cash/cheque on the day); none balance arranged (cash/cheque on the day); "
+                        "bare balance arranged (cash/cheque on the day), no deposit seen)"), lines[3]
+
+
 if __name__ == "__main__":
     failures = 0
     for name, fn in sorted(globals().items()):

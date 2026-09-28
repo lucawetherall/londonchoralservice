@@ -5,12 +5,22 @@ import datetime
 
 # Never in the balances line: settled, cancelled, uncertain or past bookings.
 NOT_DUE = {"PAID_IN_FULL", "NOTED_PAID", "CANCELLED", "CHECK_PAYMENT", "CHECK_VALUE",
-           "PAYMENT_ON_CANCELLED", "PAYMENT_AFTER_CLOSE"}
+           "PAYMENT_ON_CANCELLED", "PAYMENT_AFTER_CLOSE", "ARRANGED"}
 # NOTED_PAID stays here until the owner writes "paid in full YYYY-MM-DD" in the notes (the booking then closes).
 HAND_CHECK = {"CHECK_PAYMENT": "possible payment", "CHECK_VALUE": "unreadable value or date",
               "PAST_UNMATCHED": "past, unpaid", "PAST_PART_PAID": "past, part paid",
               "NOTED_PAID": "noted paid, not in bank",
-              "PAYMENT_ON_CANCELLED": "payment on a cancelled booking", "PAYMENT_AFTER_CLOSE": "payment after paid in full"}
+              "PAYMENT_ON_CANCELLED": "payment on a cancelled booking", "PAYMENT_AFTER_CLOSE": "payment after paid in full",
+              "ARRANGED": "balance arranged (cash/cheque on the day)"}
+ARRANGED_DAYS = 7  # an arranged cash or cheque balance is a hand check from 7 days before the event
+
+
+def needs_hand_check(a, today):
+    """ARRANGED only from ARRANGED_DAYS before the event (or with no event date, or no deposit seen at all)."""
+    if a["state"] != "ARRANGED":
+        return a["state"] in HAND_CHECK
+    horizon = (today + datetime.timedelta(days=ARRANGED_DAYS)).isoformat()
+    return not a.get("event_date") or a["event_date"] <= horizon or bool(a.get("arranged_no_deposit"))
 
 
 def hand_check_label(a):
@@ -19,6 +29,8 @@ def hand_check_label(a):
         return f"noted paid, £{received:,.2f} in bank"
     if a["state"] == "CHECK_PAYMENT" and received:  # a deposit is in; the unconfirmed one may be the balance
         return "possible balance payment"
+    if a["state"] == "ARRANGED" and a.get("arranged_no_deposit"):
+        return HAND_CHECK["ARRANGED"] + ", no deposit seen"
     return HAND_CHECK[a["state"]]
 NO_DEPOSIT = {"DEPOSIT_OVERDUE", "AWAITING_DEPOSIT"}
 
@@ -42,7 +54,7 @@ def summary_lines(assessments, receipts, singer, today):
     lines.append(f"balances due in the next 7 days: {len(soon)}, £{sum(a['balance'] for a in soon):,.2f}"
                  + (f" ({', '.join(a['ref'] for a in soon)})" if soon else "")
                  + (f" (includes {bare} with no deposit)" if bare else ""))
-    hand = [a for a in assessments if a["state"] in HAND_CHECK]
+    hand = [a for a in assessments if needs_hand_check(a, today)]
     lines.append(f"needs a hand check: {len(hand)}"
                  + (f" ({'; '.join(a['ref'] + ' ' + hand_check_label(a) for a in hand)})" if hand else ""))
     line = f"singer invoices unpaid: {singer['unpaid']}, £{singer['unpaid_total']:,.2f}"
