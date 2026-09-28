@@ -313,7 +313,7 @@ print('duplicate price-ladder constructions:', len(dupes))  # → 0
 
 ---
 
-## R15 — Run the 2026 Zoho Books import  [P2] [BLOCKED-ON-HUMAN]
+## R15 — Run the 2026 Zoho Books import  [P2] [done 2026-09-28 — 7 draft invoices, £9,423.08, owner-approved; logged in logs/books-changes.md. The owner marks them sent (without emailing) and matches payments in Books.]
 
 **Why:** the Zoho Books design (`docs/superpowers/specs/2026-09-28-zoho-books-design.md`, flow D) prepared a private dry-run list of this year's bookings at `~/lcs-private/books-import-2026.json` (seven bookings), ready to become draft invoices in Books. It has not run: the owner has to look at the list and say the word first (see `MANUAL-ACTIONS-REQUIRED.md` §20).
 
@@ -375,7 +375,7 @@ print('duplicate price-ladder constructions:', len(dupes))  # → 0
 
 ---
 
-## R20 — Back-fill enquiries from before the pipeline existed  [P4] [DECISION-NEEDED]
+## R20 — Back-fill enquiries from before the pipeline existed  [P4] [done 2026-09-28 — owner approved; 5 enquiries since 1 Sep 2026 added, older quotes pre-marked so they aren't chased]
 
 **Why:** per `docs/superpowers/plans/2026-09-28-automation-phase-2-pipeline.md` ("Older threads") and `MANUAL-ACTIONS-REQUIRED.md` §26, only enquiries first seen from 28 September 2026 are tracked in `~/lcs-private/enquiries.csv`; anything older gets no automatic follow-up, quote-chase, or loss marking. This was a deliberate scope cut for the initial rollout, not an oversight, so whether it's worth doing is the owner's call, not an agent's.
 
