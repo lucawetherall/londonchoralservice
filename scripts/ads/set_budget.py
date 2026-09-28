@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Set one campaign's daily budget. Refuses anything above the £5 cap before calling Google.
+"""Set one campaign's daily budget. Refuses anything above its cap before calling Google: £5, or a dated
+exception in budget_cap.py (which needs the campaign's numeric id).
 
 Validate-only by default (--validate-only says so explicitly); --apply changes the budget and adds a row to
 logs/ads-changes.md (LCS_ADS_LOG overrides the path). The campaign is its numeric id or its exact name.
@@ -24,29 +25,30 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import ads_log  # noqa: E402
+import budget_cap  # noqa: E402
 
 CUSTOMER_ID = "8733881378"
-MAX_DAILY_BUDGET_MICROS = 5_000_000
+MAX_DAILY_BUDGET_MICROS = budget_cap.BASE_CAP_MICROS
 SCRIPT = "scripts/ads/set_budget.py"
 NAME_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9 ._&'()–-]{0,99}$")
 
 
-def budget_micros(text):
-    """Pounds (up to two decimal places) as micros, or SystemExit: never above the £5 cap, never zero or less."""
+def budget_micros(text, cap=MAX_DAILY_BUDGET_MICROS):
+    """Pounds (up to two decimal places) as micros, or SystemExit: never above the cap, never zero or less."""
     if not re.fullmatch(r"\d{1,4}(\.\d{1,2})?", text or ""):
         raise SystemExit(f"the daily budget must be pounds like 4.50, not {text!r}; nothing changed")
     micros = int(decimal.Decimal(text) * 1_000_000)
     if micros <= 0:
         raise SystemExit("the daily budget must be more than £0; nothing changed")
-    if micros > MAX_DAILY_BUDGET_MICROS:
-        raise SystemExit(f"Refusing: £{decimal.Decimal(text):.2f} a day is above the £5 cap; nothing changed")
+    if micros > cap:
+        raise SystemExit(f"Refusing: £{decimal.Decimal(text):.2f} a day is above the £{cap / 1e6:g} cap; nothing changed")
     return micros
 
 
 def parse(argv=None):
-    p = argparse.ArgumentParser(description="Set one campaign's daily budget (never above £5).")
+    p = argparse.ArgumentParser(description="Set one campaign's daily budget (never above its cap).")
     p.add_argument("campaign", help="the campaign id (digits) or its exact name")
-    p.add_argument("daily", help="the new daily budget in pounds, at most 5.00")
+    p.add_argument("daily", help="the new daily budget in pounds, at most the cap (5.00 unless budget_cap.py says otherwise)")
     p.add_argument("--reason", default="approved in the Command Centre")
     mode = p.add_mutually_exclusive_group()
     mode.add_argument("--validate-only", action="store_true", help="the default: Google checks it, nothing changes")
@@ -87,7 +89,9 @@ def is_google_ads_error(e):
 
 def main(argv=None, client=None, now=None):
     args = parse(argv)
-    new = budget_micros(args.daily)  # the cap is checked before anything talks to Google
+    today = (now or datetime.datetime.now().astimezone()).date()
+    cap = budget_cap.cap_micros(args.campaign if args.campaign.isdigit() else None, today)
+    new = budget_micros(args.daily, cap)  # the cap is checked before anything talks to Google
     if args.apply:
         ads_log.check_log()
     client = client or load_client()

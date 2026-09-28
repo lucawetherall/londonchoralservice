@@ -1100,7 +1100,7 @@ def _apply_validate(raw):
 def _apply_describe(c):
     return (f"Apply this Ads change set for real. It is the run you validated: the same commit, blob and arguments "
             f"(the validate output's sha256 began {c['validated_sha'][:16]}).\n{_facts_text(c)}\n"
-            f"The script keeps its £5 daily cap and logs the change in logs/ads-changes.md.")
+            f"The script keeps its daily cap (£5, or a dated exception in budget_cap.py) and logs the change in logs/ads-changes.md.")
 
 
 def _apply_claim(c):

@@ -75,6 +75,26 @@ def test_the_cap_is_checked_before_google_is_called():
         assert client.searches == [] and client.mutations == [], bad
 
 
+def test_the_christmas_exception_allows_eight_pounds_by_id_on_its_dates_only():
+    temp_log()
+    xmas = dict(cid=24295921372, amount=5_000_000, name="Christmas carol singers – events 2026")
+    client = FakeClient([campaign(**xmas)])
+    code, out = run(["24295921372", "8"], client)  # run() uses 1 Oct 2026
+    assert code == 0 and "£5.00 → £8.00" in out, out
+    assert client.mutations[0].operations[0].update.amount_micros == 8_000_000
+    for argv, when in ((["24295921372", "8.01"], None), (["Christmas carol singers – events 2026", "8"], None),
+                       (["24295921372", "8"], datetime.datetime(2026, 12, 14, 9, 0)),
+                       (["111", "8"], None)):
+        client = FakeClient([campaign(**xmas)])
+        out = io.StringIO()
+        try:
+            with contextlib.redirect_stdout(out):
+                code = sb.main(argv, client=client, now=when or datetime.datetime(2026, 10, 1, 9, 30))
+        except SystemExit as e:
+            code = e.code
+        assert code not in (0, None) and client.searches == [] and client.mutations == [], (argv, when, code)
+
+
 def test_validate_only_is_the_default_and_explicit():
     log = temp_log()
     for extra in ([], ["--validate-only"]):

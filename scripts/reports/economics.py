@@ -5,7 +5,8 @@ plus two private-file helpers; weekly_review.py does every Google call.
   11. True cost per booking: Ads spend by campaign joined to the ledger's
       bookings and the pipeline's enquiries through each gclid.
   12. Seasonal budget rules: data/budget-windows.yml turned into proposals,
-      never above the £5/day cap.
+      never above the campaign's cap (£5/day, or a dated exception in
+      scripts/ads/budget_cap.py).
   13. Search Console shortlist: hiring-intent queries at positions 8-20, each
       with one page and one suggested fix.
 
@@ -26,12 +27,14 @@ from urllib.parse import urlparse
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "bookings"))
 import lcs_money  # noqa: E402  PRIVATE, LEDGER, read_csv, money
 import check_payments  # noqa: E402  is_cancelled: one cancelled rule for the ledger
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "ads"))
+import budget_cap  # noqa: E402  the £5 cap and its dated exceptions
 
 PRIVATE = lcs_money.PRIVATE
 GCLID_CACHE = PRIVATE / "gclid-campaigns.json"
 ADS_SUMMARY = PRIVATE / "ads-summary.json"
 ENQUIRIES = PRIVATE / "enquiries.csv"
-BUDGET_CAP_GBP = 5.0
+BUDGET_CAP_GBP = budget_cap.BASE_CAP_MICROS / 1_000_000
 LOOKBACK_DAYS = 30      # a booking's click is looked for from its enquiry date back this many days
 CLICK_VIEW_DAYS = 90    # Google keeps click_view for the last 90 days only
 SETTLE_DAYS = 2         # click_view for a date is complete once it is this many days old
@@ -282,7 +285,8 @@ def in_window(day, start, end):
 
 def proposals(campaigns, windows, today):
     """campaigns: [{name, status, budget_gbp, id (optional)}]. Returns items with kind error / propose / note.
-    Only ENABLED campaigns get proposals, and no proposal is ever above £5/day."""
+    Only ENABLED campaigns get proposals, and no proposal is ever above the campaign's cap (budget_cap.py:
+    £5/day unless a dated exception names the campaign's id)."""
     items, valid = [], []
     for w in windows:
         name = w.get("name", "?")
@@ -302,10 +306,8 @@ def proposals(campaigns, windows, today):
         if any(not c.strip() for c in w["campaigns"]):
             items.append({"kind": "error", "text": f"window {name} has a blank campaign name: skipped"})
             continue
-        if daily > BUDGET_CAP_GBP:
-            items.append({"kind": "error", "text": f"window {name} asks for £{daily:,.2f}/day, above the £5 cap: "
-                                                   f"capped at £{BUDGET_CAP_GBP:,.2f}"})
-        valid.append({**w, "daily": min(daily, BUDGET_CAP_GBP)})
+        valid.append({**w, "daily": daily})
+    flagged = set()
     for c in campaigns:
         if c.get("status") != "ENABLED":
             continue
@@ -320,10 +322,16 @@ def proposals(campaigns, windows, today):
                                                    f"({', '.join(w['name'] for w in active)}): no proposal"})
             continue
         w = active[0]
-        if abs(w["daily"] - c["budget_gbp"]) >= 0.005:
+        cap = budget_cap.cap_gbp(c.get("id"), today)
+        daily = min(w["daily"], cap)
+        if w["daily"] > cap and (w["name"], cap) not in flagged:
+            flagged.add((w["name"], cap))
+            items.append({"kind": "error", "text": f"window {w['name']} asks for £{w['daily']:,.2f}/day, above the "
+                                                   f"£{cap:g} cap: capped at £{cap:,.2f}"})
+        if abs(daily - c["budget_gbp"]) >= 0.005:
             items.append({"kind": "propose", "campaign": c["name"], "campaign_id": c.get("id"),
-                          "current": c["budget_gbp"], "proposed": w["daily"], "window": w["name"],
-                          "text": f"{c['name']} £{c['budget_gbp']:,.2f} → £{w['daily']:,.2f}/day (window {w['name']})"})
+                          "current": c["budget_gbp"], "proposed": daily, "window": w["name"],
+                          "text": f"{c['name']} £{c['budget_gbp']:,.2f} → £{daily:,.2f}/day (window {w['name']})"})
     return items
 
 
