@@ -143,6 +143,24 @@ class Args:
         self.__dict__.update(kw)
 
 
+def pdf_mail(payload=b"%PDF-1.4 test", name="Invoice 1020.pdf"):
+    b64 = base64.b64encode(payload).decode()
+    return ("From: Ben Fenwick <ben@example.com>\nSubject: Invoice\nMIME-Version: 1.0\n"
+            "Content-Type: multipart/mixed; boundary=XX\n\n--XX\nContent-Type: text/plain\n\nHi\n"
+            f"--XX\nContent-Type: application/pdf\nContent-Disposition: attachment; filename=\"{name}\"\n"
+            f"Content-Transfer-Encoding: base64\n\n{b64}\n--XX--\n")
+
+
+def test_save_pdf_writes_a_private_copy_named_by_message_id():
+    path = si.save_pdf(pdf_mail(), "1790/614912727141700")
+    assert path == si.PDF_DIR / "1790614912727141700.pdf", path
+    assert path.read_bytes() == b"%PDF-1.4 test"
+    assert oct(path.stat().st_mode & 0o777) == "0o600" and oct(si.PDF_DIR.stat().st_mode & 0o777) == "0o700"
+    assert si.save_pdf(pdf_mail(b"not a pdf"), "m2") is None  # a .pdf name on something else
+    assert si.save_pdf(pdf_mail(name="notes.txt"), "m3") is None
+    assert si.save_pdf(pdf_mail(), "../") is None
+
+
 def test_store_lifecycle():
     """scan -> repeat scan -> paid --apply -> thanked, in order (one test: the runner sorts by name)."""
     if si.STORE.exists():
