@@ -14,9 +14,12 @@ This script reads it from the Keychain at run time and never prints it.
     .venv/bin/python scripts/bookings/check_payments.py --selftest # token and account check
 
 Matching: an incoming payment belongs to a booking when its reference contains
-the invoice number (e.g. "INV 2111", "2111"), or, failing that, when its amount
-is the deposit or the full fee and the payer's name contains the client's
-surname. Output shows invoice numbers, amounts and dates only: never payer names,
+the invoice number (e.g. "INV 2111", "2111"); failing that, when its amount is
+the deposit or the full fee and the payer's name contains the client's surname;
+failing that, when its amount is exactly the deposit or the full fee of one open
+booking and of no other, inside that booking's invoice-to-event window.
+Only bookings still to come are ever reported as overdue: a past event, or a
+ledger note saying it was paid, is never chased. Output shows invoice numbers, amounts and dates only: never payer names,
 balances or unrelated transactions. --apply turns "PENDING…" notes into
 "deposit seen <date> (Starling)" and adds "paid in full <date>" when covered.
 """
@@ -73,6 +76,12 @@ def money(row):
         return 0.0
 
 
+def window(r):
+    start = datetime.date.fromisoformat(r["invoice_date"][:10]) - datetime.timedelta(days=3)
+    end = (datetime.date.fromisoformat(r["event_date"][:10]) if r.get("event_date") else TODAY) + datetime.timedelta(days=14)
+    return start, end
+
+
 def match(rows, items):
     """booking_ref -> list of (date, amount, how)."""
     found = {r["booking_ref"]: [] for r in rows}
@@ -94,6 +103,13 @@ def match(rows, items):
                 if surname and len(surname) > 2 and surname in payer and any(abs(amount - x) < 0.01 for x in (v, v / 2)):
                     hit = (r["booking_ref"], "name and amount")
                     break
+        if not hit and when:
+            day = datetime.date.fromisoformat(when)
+            fits = [r for r in rows if any(abs(amount - x) < 0.01 for x in (money(r), money(r) / 2))
+                    and window(r)[0] <= day <= window(r)[1]]
+            same_value = [r for r in rows if abs(money(r) - money(fits[0])) < 0.01] if len(fits) == 1 else []
+            if len(fits) == 1 and len(same_value) == 1:
+                hit = (fits[0]["booking_ref"], "amount only")
         if hit:
             found[hit[0]].append((when, amount, hit[1]))
     return found
@@ -141,7 +157,7 @@ def main():
     acct = account(tok)
 
     open_rows = [r for r in rows if not (r.get("notes") or "").upper().startswith("CANCELLED")
-                 and "paid in full" not in (r.get("notes") or "")]
+                 and not re.search(r"paid in full \d{4}-\d{2}-\d{2}", r.get("notes") or "")]
     if not open_rows:
         print("No open bookings to check.")
         return
@@ -159,10 +175,19 @@ def main():
         line = f"{ref}: £{total:,.2f} of £{value:,.2f} received"
         if first:
             line += f" (first {first}, matched by {how})"
+        manual = re.search(r"\b(paid|deposit seen)\b", notes, re.I) and not notes.upper().startswith("PENDING")
+        upcoming = event is None or event >= TODAY
         if total + 0.01 >= value > 0:
             line += " · PAID IN FULL"
+        elif not upcoming:
+            if not paid:
+                line += " · event has passed; no matching payment in the bank feed" + (
+                    " (ledger notes say it was paid)" if manual else " (check by hand; never chase automatically)")
         elif not paid and TODAY > deposit_due:
-            line += f" · DEPOSIT OVERDUE since {deposit_due}" + (" (reminder already drafted)" if "reminder drafted" in notes else "")
+            if manual:
+                line += " · no matching payment in the bank feed, but the ledger notes say it was paid (check by hand)"
+            else:
+                line += f" · DEPOSIT OVERDUE since {deposit_due}" + (" (reminder already drafted)" if "reminder drafted" in notes else "")
         elif paid and event and TODAY >= event - datetime.timedelta(days=1):
             line += f" · BALANCE £{value - total:,.2f} DUE BY {event - datetime.timedelta(days=1)}"
         print(line)
