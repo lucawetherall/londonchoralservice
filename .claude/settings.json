@@ -3,6 +3,8 @@
     "allow": [
       "mcp__google-ads",
       "mcp__analytics-mcp",
+      "mcp__zoho-books",
+      "mcp__zoho-books-invoices",
       "mcp__zoho-mail__ZohoMail_SearchEmails",
       "mcp__zoho-mail__ZohoMail_listEmails",
       "mcp__zoho-mail__ZohoMail_getMessageContent",

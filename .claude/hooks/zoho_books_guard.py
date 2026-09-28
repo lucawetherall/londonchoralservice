@@ -1,20 +1,48 @@
 #!/usr/bin/env python3
 """PreToolUse guard for the Zoho Books MCP servers (matcher mcp__zoho-books.*).
 
-\1It allows only the exact tool names in READ_ALLOW (the tools the servers
-mark read-only) and WRITE_ALLOW (tools the owner has approved by name); every
-other tool, including any the servers add later, is denied. Claude never sends, deletes or voids an invoice
-through these servers: that stays the owner's job in Zoho Books until they
-approve specific write tools by name below. This holds whatever tools the
-Zoho Books MCP console exposes, and it fails closed: any error denies the
-call.
+This hook is the only barrier between unattended Claude runs and the live Books
+account. It accepts only `mcp__zoho-books__<name>` and
+`mcp__zoho-books-invoices__<name>`, and within those only the exact tool names
+in READ_ALLOW (read-only tools) and WRITE_TOOLS (write tools the owner approved
+on 28 Sep 2026). Every other tool, including any the servers add later, is
+denied.
+
+A write call must fit its tool's allowlist exactly: tool_input holds only
+body / query_params / path_variables, and every key at every depth must be on
+the tool's list, spelt exactly (lower case; a key with any upper-case letter is
+denied, and so is a duplicate key in the JSON). On top of that, no string or
+number anywhere in a write call may carry bank details (in any format, any
+country), VAT wording or Greek/Cyrillic lookalike letters, and no invoice or bill
+text may mention tax. An attachment must be a .pdf or .docx inside
+~/lcs-private/invoices/.
+Claude never emails, reminds, deletes, voids, records a payment or matches a
+bank transaction in Books, and never updates an invoice: those stay the owner's
+job. Invoices are created as drafts (`send` absent or false) and carry the DDMM
+booking ref as their number. The guard fails closed: any error, or a tool_input
+of the wrong shape, denies the call.
+Design: docs/superpowers/specs/2026-09-28-zoho-books-design.md
 """
 import json
+import os
+import re
 import sys
+import unicodedata
+
+SERVERS = {"zoho-books", "zoho-books-invoices"}
 
 # Exact names of the tools the Zoho Books servers mark read-only (tools/list,
-# readOnlyHint), taken on 28 Sep 2026, minus get_bank_statement_import_encryption_key
-# and generate_invoice_payment_link. Unknown or new tools are denied.
+# readOnlyHint), taken on 28 Sep 2026 plus the bill tools listed after the owner
+# enabled Bills that day. Left out although labelled read-only:
+#   get_bank_statement_import_encryption_key, generate_invoice_payment_link and
+#   convert_purchase_order_to_bill (it creates a bill);
+#   get_invoice_payment_qr and get_invoice_payment_qr_status (payment QR codes);
+#   get_contact_bank_account, list_contact_bank_accounts and
+#   list_all_contact_bank_accounts (contacts' bank details);
+#   get_contact_card, list_contact_cards and get_contact_card_count (stored cards);
+#   list_contact_autobill_recurring_invoices (card autobilling) and
+#   get_invoice_qr_code (it can carry payment details).
+# Unknown or new tools are denied.
 READ_ALLOW = {
     "ZohoBooks_bulk_export_invoices_as_pdf",
     "ZohoBooks_bulk_fetch_pricebooks",
@@ -31,12 +59,11 @@ READ_ALLOW = {
     "ZohoBooks_get_bank_reconciliation",
     "ZohoBooks_get_bank_reconciliation_document",
     "ZohoBooks_get_bank_transaction",
+    "ZohoBooks_get_bill",
+    "ZohoBooks_get_bill_comments",
     "ZohoBooks_get_contact",
     "ZohoBooks_get_contact_address",
-    "ZohoBooks_get_contact_bank_account",
     "ZohoBooks_get_contact_by_reference",
-    "ZohoBooks_get_contact_card",
-    "ZohoBooks_get_contact_card_count",
     "ZohoBooks_get_contact_client_review_email",
     "ZohoBooks_get_contact_contact_person",
     "ZohoBooks_get_contact_document",
@@ -68,9 +95,6 @@ READ_ALLOW = {
     "ZohoBooks_get_invoice_email",
     "ZohoBooks_get_invoice_metadata",
     "ZohoBooks_get_invoice_packing_slips",
-    "ZohoBooks_get_invoice_payment_qr",
-    "ZohoBooks_get_invoice_payment_qr_status",
-    "ZohoBooks_get_invoice_qr_code",
     "ZohoBooks_get_invoice_signature_template",
     "ZohoBooks_get_invoice_sms",
     "ZohoBooks_get_item",
@@ -85,7 +109,6 @@ READ_ALLOW = {
     "ZohoBooks_get_tax_exemption",
     "ZohoBooks_get_tax_group",
     "ZohoBooks_get_unused_retainer_payments",
-    "ZohoBooks_list_all_contact_bank_accounts",
     "ZohoBooks_list_all_contact_persons",
     "ZohoBooks_list_bank_account_balances",
     "ZohoBooks_list_bank_account_match_filters",
@@ -96,10 +119,9 @@ READ_ALLOW = {
     "ZohoBooks_list_bank_accounts",
     "ZohoBooks_list_bank_reconciliations",
     "ZohoBooks_list_bank_transactions",
+    "ZohoBooks_list_bill_payments",
+    "ZohoBooks_list_bills",
     "ZohoBooks_list_contact_addresses",
-    "ZohoBooks_list_contact_autobill_recurring_invoices",
-    "ZohoBooks_list_contact_bank_accounts",
-    "ZohoBooks_list_contact_cards",
     "ZohoBooks_list_contact_comments",
     "ZohoBooks_list_contact_credit_note_refunds",
     "ZohoBooks_list_contact_payment_refunds",
@@ -139,22 +161,286 @@ READ_ALLOW = {
     "ZohoBooks_verify_contact_address",
 }
 
-# Add exact tool names here only after the owner approves them (see
-# docs/superpowers/specs/*zoho-books*).
-WRITE_ALLOW = set()
+P = "Zoho Books guard: "
+
+
+class Deny(Exception):
+    """A call that breaks a rule; the message is the reason Claude sees."""
+
+
+# --- allowlists ----------------------------------------------------------------------
+# A spec is VALUE (one string, number, boolean or null: never an object or a list),
+# a dict of allowed (lower-case) keys to specs, or a one-element list [item spec].
+VALUE = "value"
+
+
+def obj(*keys, **nested):
+    spec = {k: VALUE for k in keys}
+    spec.update(nested)
+    return spec
+
+
+ORG_ONLY = obj("organization_id")
+NOTHING = obj()
+CONTACT_PERSON = obj("first_name", "last_name", "email", "phone", "mobile", "is_primary_contact", "salutation")
+BILLING_ADDRESS = obj("address", "street2", "city", "state", "zip", "country", "attention")
+INVOICE_LINE = obj("name", "description", "rate", "quantity", "item_order", "item_id")
+BILL_LINE = obj("name", "description", "rate", "quantity", "account_id", "item_order")
+BILL_DOCUMENT = obj("document_id", "file_name")  # the keys the create_bill schema lists for documents
+BILL_FIELDS = ("vendor_id", "bill_number", "date", "due_date", "reference_number", "notes",
+               "payment_terms", "payment_terms_label")
+BILL_UPDATE_FIELDS = ("notes", "due_date", "date", "reference_number")  # never the vendor or the amounts
+
+INVOICE_NUMBER = re.compile(r"[0-9]{4}[A-Z]?")  # the DDMM booking ref, e.g. 2111 or 2111B
+INVOICES_DIR = os.path.join("~", "lcs-private", "invoices")  # where make_booking_docs.py writes
+
+
+def _present(v):
+    return (isinstance(v, str) and v.strip() != "") or (isinstance(v, int) and not isinstance(v, bool))
+
+
+def _need(sec, key, where):
+    if not _present(sec.get(key)):
+        raise Deny(f"{P}this call needs {where}.{key}.")
+
+
+def check_create_contact(body, query, path):
+    if body.get("contact_type") not in ("customer", "vendor"):
+        raise Deny(P + "contact_type must be \"customer\" or \"vendor\".")
+
+
+def check_update_contact(body, query, path):
+    _need(path, "contact_id", "path_variables")
+    # Books' schema requires contact_type on update; it may only restate customer or vendor.
+    if "contact_type" in body and body["contact_type"] not in ("customer", "vendor"):
+        raise Deny(P + "contact_type must be \"customer\" or \"vendor\".")
+
+
+def check_create_invoice(body, query, path):
+    send = query.get("send")
+    if not (send is None or send is False or (isinstance(send, str) and send.lower() == "false")):
+        raise Deny(P + "invoices are saved as drafts: `send` must be absent or false. The owner sends from Books.")
+    auto = query.get("ignore_auto_number_generation")
+    if not (auto is True or (isinstance(auto, str) and auto.lower() == "true")):
+        raise Deny(P + "set query_params.ignore_auto_number_generation=true so Books keeps the DDMM invoice number.")
+    num = body.get("invoice_number")
+    if not (isinstance(num, str) and INVOICE_NUMBER.fullmatch(num)):
+        raise Deny(P + "invoice_number must be the booking's DDMM ref (e.g. 2111 or 2111B).")
+    _need(body, "customer_id", "body")
+
+
+def check_invoice_document(body, query, path):
+    _need(path, "invoice_id", "path_variables")
+    if "attachment" in query:
+        _check_attachment(query["attachment"])
+
+
+def _check_attachment(value):
+    """A .pdf or .docx the booking scripts wrote: its real path must be inside ~/lcs-private/invoices/."""
+    bad = Deny(P + "query_params.attachment must be a .pdf or .docx file inside ~/lcs-private/invoices/ "
+               "(a local path, not a URL or file contents).")
+    if not (isinstance(value, str) and value.startswith(("~/", "/")) and value.endswith((".pdf", ".docx"))):
+        raise bad
+    if ".." in value or any(unicodedata.category(c).startswith("C") for c in value):
+        raise bad
+    root = os.path.realpath(os.path.expanduser(INVOICES_DIR))
+    real = os.path.realpath(os.path.expanduser(value))
+    if not root.startswith("/") or os.path.commonpath([root, real]) != root or real == root:
+        raise bad
+
+
+# show_comment_to_clients is not on the list, so it is denied with any value. The live
+# schema (28 Sep 2026) describes it only as "Boolean to check if the comment to be shown
+# to the clients" and gives no default; leaving it out lets Books apply its own default
+# (internal). The owner confirms that on the first comment Claude adds.
+def check_invoice_comment(body, query, path):
+    _need(path, "invoice_id", "path_variables")
+
+
+def check_create_bill(body, query, path):
+    _need(body, "vendor_id", "body")
+    _need(body, "bill_number", "body")
+
+
+def check_update_bill(body, query, path):
+    _need(path, "bill_id", "path_variables")
+
+
+def check_bill_comment(body, query, path):
+    _need(path, "bill_id", "path_variables")
+
+
+# Write tools the owner approved on 28 Sep 2026, as tool name -> (allowed keys of body,
+# query_params and path_variables, the check on their values). Any key not listed, at any
+# depth, is denied. See the design's "Approved write tools".
+WRITE_TOOLS = {
+    "ZohoBooks_create_contact": (
+        obj("contact_name", "company_name", "contact_type", "payment_terms", "payment_terms_label", "notes",
+            contact_persons=[CONTACT_PERSON], billing_address=BILLING_ADDRESS),
+        ORG_ONLY, NOTHING, check_create_contact),
+    "ZohoBooks_update_contact": (
+        obj("contact_name", "company_name", "contact_type"), ORG_ONLY, obj("contact_id"), check_update_contact),
+    "ZohoBooks_create_invoice": (
+        obj("customer_id", "invoice_number", "date", "due_date", "payment_terms", "payment_terms_label", "notes",
+            "terms", "reference_number", "allow_partial_payments", "template_id", line_items=[INVOICE_LINE]),
+        obj("organization_id", "ignore_auto_number_generation", "send"), NOTHING, check_create_invoice),
+    "ZohoBooks_add_invoice_document": (
+        NOTHING, ORG_ONLY, obj("invoice_id", "document_id"), check_invoice_document),
+    "ZohoBooks_upload_invoice_document": (
+        NOTHING, obj("organization_id", "attachment"), obj("invoice_id", "document_id"), check_invoice_document),
+    "ZohoBooks_add_invoice_comment": (
+        obj("description"), ORG_ONLY, obj("invoice_id"), check_invoice_comment),
+    "ZohoBooks_create_bill": (
+        obj(*BILL_FIELDS, line_items=[BILL_LINE], documents=[BILL_DOCUMENT]), ORG_ONLY, NOTHING, check_create_bill),
+    "ZohoBooks_update_bill": (
+        obj(*BILL_UPDATE_FIELDS), ORG_ONLY, obj("bill_id"), check_update_bill),
+    "ZohoBooks_add_bill_comment": (
+        obj("description"), ORG_ONLY, obj("bill_id"), check_bill_comment),
+}
+
+
+def _fit(value, spec, where):
+    """`value` checked against `spec`; every key must be spelt exactly as listed. Raises Deny."""
+    if spec == VALUE:
+        if isinstance(value, (dict, list)):
+            raise Deny(f"{P}{where} must be a single value, not an object or a list.")
+        return value
+    if isinstance(spec, list):
+        if not isinstance(value, list):
+            raise Deny(f"{P}{where} must be a list.")
+        return [_fit(v, spec[0], f"{where}[{i}]") for i, v in enumerate(value)]
+    if not isinstance(value, dict):
+        raise Deny(f"{P}{where} must be an object.")
+    for key, v in value.items():
+        if not isinstance(key, str) or key != key.lower() or any(c.isupper() for c in key):
+            raise Deny(f"{P}{where}.{key} isn't allowed: keys are lower case only.")
+        if key not in spec:
+            raise Deny(f"{P}{where}.{key} isn't allowed here. Allowed: {', '.join(sorted(spec)) or 'nothing'}.")
+        _fit(v, spec[key], f"{where}.{key}")
+    return value
+
+
+# --- no bank details, no VAT, no tax -------------------------------------------------
+# Text is NFKC-normalised (fullwidth digits and letters become ASCII) and stripped of
+# invisible format characters and accents before it is scanned. Real dates and clock
+# times are removed first, so that "2026-11-21", "21/11/2026", "1 December 2026 11:00"
+# and "11.00-12.30" don't count as digit runs. The lookarounds keep a dotted sort code
+# (04.00.04) from being read as a time.
+ISO_DATE = re.compile(r"(?<![0-9])(?:19|20)[0-9]{2}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12][0-9]|3[01])(?![0-9])")
+DMY_DATE = re.compile(r"(?<![0-9])(?:0?[1-9]|[12][0-9]|3[01])([ ./-])(?:0?[1-9]|1[0-2])\1(?:19|20)[0-9]{2}(?![0-9])")
+MONTH_DATE = re.compile(r"(?<![a-z])(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|june?|july?|aug(?:ust)?|"
+                        r"sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)(?![a-z])\.?"
+                        r"(?:\s+[0-9]{1,2}(?:st|nd|rd|th)?)?,?\s+(?:19|20)[0-9]{2}(?![0-9])", re.I)
+CLOCK_TIME = re.compile(r"(?<![0-9.:])(?:[01]?[0-9]|2[0-3])[:.][0-5][0-9](?![0-9.:])")
+# Digits joined by single separators (space . / - _ and the Unicode dashes and minus).
+DIGIT_RUN = re.compile(r"\d(?:[\s./_\-\u2010-\u2015\u2212]?\d)*")
+# A generic IBAN: country code, check digits, 11-30 letters or digits, optionally grouped.
+IBAN = re.compile(r"(?<![a-z0-9])[a-z]{2}\s?[0-9]{2}(?:\s?[a-z0-9]){11,30}(?![a-z0-9])", re.I)
+BANK_WORDS = re.compile(r"(?<![a-z])(?:sort\W*code|s/c|a/c|acct|acc(?:oun)?t\W*(?:number|no|#)|acc\W*no|iban|swift|bic)"
+                        r"(?![a-z])", re.I)
+VAT_WORDS = re.compile(r"(?<![a-z])(?:v\W{0,2}a\W{0,2}t(?![a-z])|vatable|value\W*added\W*tax)", re.I)
+TAX_WORD = re.compile(r"(?<![a-z])tax(?:es)?(?![a-z])", re.I)  # invoice and bill text only
+RECORD_ID = re.compile(r"[0-9]{9,20}")  # a Books record id, in a key ending _id
+OWN_PATTERN = {"invoice_number": INVOICE_NUMBER}
+BANK_OR_VAT = (P + "{where} looks like bank details or mentions VAT. Claude never puts bank details in Books, "
+               "and Alma Consort Ltd is not VAT-registered.")
+
+
+def _plain(text):
+    """NFKC text without format characters (zero-width, soft hyphen) or combining accents."""
+    text = unicodedata.normalize("NFKC", text)
+    return "".join(c for c in unicodedata.normalize("NFKD", text) if unicodedata.category(c) not in ("Cf", "Mn"))
+
+
+def _bank_digits(text):
+    """True if a run of joined digits could be a sort code, account number or card/IBAN body."""
+    for m in DIGIT_RUN.finditer(text):
+        run = m.group()
+        n = sum(c.isdigit() for c in run)
+        if 6 <= n <= 10 or n >= 14:
+            return True
+        # 11-13 digits pass only as a phone number: 11 digits from 0 (UK), or after "+" (international)
+        if 11 <= n <= 13 and not ((n == 11 and run[0] == "0") or _after_plus(text, m.start())):
+            return True
+    return False
+
+
+def _after_plus(text, i):
+    """True if text[i] follows "+", or "+" and one space."""
+    return text[i - 1:i] == "+" or (text[i - 1:i] == " " and text[i - 2:i - 1] == "+")
+
+
+def _lookalike(text):
+    return any(unicodedata.name(c, "").startswith(("GREEK", "CYRILLIC")) for c in text)
+
+
+def _scan(value, key, where, tax):
+    """Deny bank details, VAT, lookalike letters or (if `tax`) the word tax in any value of a write call."""
+    if isinstance(value, dict):
+        for k, v in value.items():
+            _scan(v, k, f"{where}.{k}", tax)
+    elif isinstance(value, list):
+        for i, v in enumerate(value):
+            _scan(v, key, f"{where}[{i}]", tax)
+    elif isinstance(value, (str, int, float)) and not isinstance(value, bool):
+        text = _plain(str(value))
+        own = OWN_PATTERN.get(key)
+        exempt = (own is not None and isinstance(value, str) and own.fullmatch(value)) or (
+            isinstance(key, str) and key.endswith("_id") and RECORD_ID.fullmatch(text))
+        bare = text
+        for pattern in (ISO_DATE, DMY_DATE, MONTH_DATE, CLOCK_TIME):
+            bare = pattern.sub(" ", bare)
+        if ((not exempt and _bank_digits(bare)) or BANK_WORDS.search(bare) or VAT_WORDS.search(bare)
+                or _lookalike(text) or any(sum(c.isdigit() for c in m.group()) >= 10 for m in IBAN.finditer(bare))):
+            raise Deny(BANK_OR_VAT.format(where=where))
+        if tax and TAX_WORD.search(bare):
+            raise Deny(f"{P}{where} mentions tax. Alma Consort Ltd is not VAT-registered, so its invoices and "
+                       "bills never mention tax.")
+    elif value is not None and not isinstance(value, bool):
+        raise Deny(f"{P}{where} has an unexpected value.")
+
+
+def check_write(name, tool_input):
+    body_spec, query_spec, path_spec, check = WRITE_TOOLS[name]
+    if tool_input is None:
+        tool_input = {}
+    ti = _fit(tool_input, {"body": body_spec, "query_params": query_spec, "path_variables": path_spec}, "tool_input")
+    body, query, path = ti.get("body", {}), ti.get("query_params", {}), ti.get("path_variables", {})
+    check(body, query, path)
+    _scan(ti, None, "tool_input", tax="invoice" in name or "bill" in name)
 
 
 def decide(tool, tool_input):
-    name = tool.split("__")[-1]
-    if name in READ_ALLOW or name in WRITE_ALLOW:
+    parts = tool.split("__")
+    if len(parts) != 3 or parts[0] != "mcp" or parts[1] not in SERVERS or not parts[2]:
+        return f"{P}{tool!r} is not a tool of the zoho-books or zoho-books-invoices server."
+    name = parts[2]
+    if name in READ_ALLOW:
         return None  # allowed; normal permission rules apply
-    return (f"Zoho Books guard: {name} isn't allowed. Claude has read-only access to "
-            "Zoho Books until the owner approves specific write tools.")
+    if name in WRITE_TOOLS:
+        try:
+            check_write(name, tool_input)
+        except Deny as e:
+            return str(e)
+        return None
+    if name == "ZohoBooks_update_invoice":
+        return P + "Claude doesn't update invoices. The owner edits drafts in Books."
+    return (f"{P}{name} isn't allowed. Claude may read Books and make draft invoices, contacts and bills; "
+            "it never emails, reminds, deletes, voids, records payments or matches bank transactions.")
+
+
+def _no_duplicate_keys(pairs):
+    out = {}
+    for key, value in pairs:
+        if key in out:
+            raise ValueError(f"duplicate key {key!r}")
+        out[key] = value
+    return out
 
 
 def main():
     try:
-        event = json.load(sys.stdin)
+        event = json.load(sys.stdin, object_pairs_hook=_no_duplicate_keys)
         tool = event.get("tool_name")
         if not isinstance(tool, str) or not tool:
             raise ValueError("missing or invalid tool_name")
