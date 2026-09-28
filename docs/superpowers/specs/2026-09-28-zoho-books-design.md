@@ -19,6 +19,15 @@ Zoho Books becomes the system of record for invoices, client payments and singer
 3. **Singer and organist invoices become Books bills.** Each singer is a vendor, and each bill has the singer's PDF attached. The bank-change warnings stay in the private tracker (`singer_invoices.py`).
 4. **Import 2026 so far.** This year's ledger bookings go into Books as invoices, with their paid or part-paid status.
 
+## Change, 29 Sep 2026: the free plan, and invoices sent from Zoho Mail
+
+The owner chose not to pay for Books Premium. The free plan keeps invoices, contacts, customer payments and the API (1,000 calls a day), but not bills or bank feeds. So:
+
+1. **Invoices reach the client attached to Luca's own email.** When a client accepts, the reply drafter still creates the draft Books invoice (the accounting record, same DDMM number and figures), then makes the invoice PDF and booking confirmation from the owner's private templates (`make_booking_docs.py`, into iCloud Drive/LCS-invoices/<ref> - <client>/) and saves the confirmation email with both attached into Zoho Drafts with `scripts/bookings/imap_draft.py` (IMAP APPEND to Drafts only; no sending code; one recipient, no Cc or Bcc; attachments only from LCS-invoices; the Zoho Mail guard's bank-details scan on the text; an app password in the Keychain, service `lcs-zoho-imap`). Luca checks and sends it from Zoho Mail. This replaces decision 1: nothing is sent from Books.
+2. **Mark sent.** Once that email (to the invoice's customer, with "Invoice <ref> - …pdf" attached) is in Sent, the daily pass calls `ZohoBooks_mark_invoice_sent` (the guard allows only the invoice id; Books emails nobody), so payments can be recorded against it.
+3. **Payments.** No bank feed on the free plan, so decision 2 is replaced by the evening-of-28-Sep rule already in place: the daily pass records confident Starling matches against the invoice; the rest go to the owner's hand-check list.
+4. **No bills.** Decision 3 is dropped: singer and organist invoices stay in the private tracker (`singer_invoices.py`, with the PDF saved), which the per-event margin already reads. The bill tools stay on the guard's list, unused. `cc_sync.py books` reads bills best effort and marks `"bills_read": false` when the plan has none.
+
 ## What is connected
 
 There are two MCP servers, set up at project level in the main checkout:

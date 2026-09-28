@@ -5,6 +5,7 @@ import csv, datetime, json, os, shutil, subprocess, sys, tempfile
 _HOME = tempfile.mkdtemp()  # never the real ~/lcs-private
 os.environ["LCS_PRIVATE_DIR"] = _HOME
 os.environ["LCS_BOOKINGS_CSV"] = os.path.join(_HOME, "bookings.csv")
+os.environ["LCS_INVOICES_DIR"] = os.path.join(_HOME, "LCS-invoices")  # never the real iCloud folder
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, "scripts", "bookings"))
@@ -22,7 +23,7 @@ def run(*args):
     return p.returncode, p.stdout, p.stderr
 
 
-def fresh(refs=(), folders=()):
+def fresh(refs=(), folders=(), icloud=()):
     for name in os.listdir(_HOME):
         path = os.path.join(_HOME, name)
         shutil.rmtree(path) if os.path.isdir(path) else os.remove(path)
@@ -33,6 +34,8 @@ def fresh(refs=(), folders=()):
             w.writerow({c: "" for c in LEDGER_COLS} | {"booking_ref": ref})
     for name in folders:
         os.makedirs(os.path.join(_HOME, "invoices", name))
+    for name in icloud:
+        os.makedirs(os.path.join(_HOME, "LCS-invoices", name))
 
 
 # --- state / daily-done -------------------------------------------------------------------------
@@ -73,6 +76,13 @@ def test_next_ref_takes_the_first_free_suffix_and_the_checker_due_dates():
     today = aio.london_today()
     assert got["instalment_1_due"] == cp.deposit_due_date(today, datetime.date(2026, 11, 21)).isoformat()
     assert got["instalment_2_due"] == "2026-11-20"
+
+
+def test_next_ref_counts_the_icloud_invoice_folders_too():
+    fresh(refs=["2111"], folders=["2111A - Smith"], icloud=["2111B - Jones"])
+    code, out, err = run("next-ref", "2026-11-21")
+    assert code == 0, err
+    assert json.loads(out)["ref"] == "2111C", out
 
 
 def test_next_ref_with_nothing_taken_is_plain_ddmm():

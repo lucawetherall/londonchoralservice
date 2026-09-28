@@ -338,6 +338,8 @@ What to do:
 
 ## 18. Zoho Books set-up
 
+**Changed 2026-09-29:** invoices now reach clients as a PDF attached to your own email from Zoho Mail (made from your private template, which already carries the bank details), not from Books. Only points 1 (manual numbering) and 4 (VAT status) still matter; 2, 3, 5 and 6 are no longer needed, because Books emails nobody.
+
 A handful of one-off settings need choosing before invoices go out through Books. None of these can be set by Claude: the write tools available to Claude do not cover organisation settings, and the bank details point below is deliberately blocked in code.
 
 What to do:
@@ -353,7 +355,7 @@ What to do:
 
 ## 19. Connect Starling to Zoho Books
 
-Books → Banking → Add bank, and connect the Alma Consort Starling account. Once connected, confirm the bank-feed matches against each invoice yourself in Books as payments come in. Claude never records a payment; it only reads invoice and bill status.
+**Not needed (2026-09-29):** the free Books plan has no bank feeds. The daily pass records confident Starling payments against their Books invoices itself (the read-only Starling check), and anything uncertain comes to you on the Monday "needs a hand check" line.
 
 ---
 
@@ -425,3 +427,24 @@ The enquiry pipeline (follow-ups, "lost" marking, review requests) only tracks t
 
 If you want those older threads chased too, tell Claude you want a back-fill and which date range to start from; nothing happens to them otherwise.
 
+---
+
+## 27. Move Zoho Books to the free plan
+
+Decision 2026-09-29: no Premium. Before the trial ends, in Books → Settings → Subscription (or the trial banner), choose the **Free** plan. It keeps what the automation uses: invoices, contacts, customer payments and API access (1,000 calls a day). It has no bills and no bank feeds, so the singer clerk no longer makes bills (singer invoices stay in the private tracker) and the daily pass records client payments itself. Bills made during the trial may become read-only; nothing depends on them. The free plan is for businesses under Zoho's revenue limit for the UK; check the figure on the plan page.
+
+---
+
+## 28. Zoho app password for drafts with attachments
+
+The assistant saves each confirmation email with the invoice PDF and booking confirmation already attached, straight into Zoho Drafts over IMAP. It can only add drafts; it cannot send. It needs, once:
+
+1. Zoho Mail → Settings → Mail Accounts → office@londonchoralservice.com → **IMAP Access: on**. (IMAP needs Mail Lite or above. On Forever Free the assistant falls back to a plain draft and tells you which two files to attach from iCloud Drive/LCS-invoices.)
+2. accounts.zoho.com → Security → **App Passwords** → generate one called "LCS drafts", and copy it.
+3. In Terminal, store it in the Keychain. It asks for the password: paste it there, never into a chat.
+   ```bash
+   security add-generic-password -s lcs-zoho-imap -a office@londonchoralservice.com -w
+   ```
+4. Tell Claude "IMAP password added". Claude runs `imap_draft.py check` and `imap_draft.py test`, and a test draft addressed to luca@almaconsort.com appears in Drafts. Delete it.
+
+Invoices and booking confirmations are saved in iCloud Drive → LCS-invoices → "<ref> - <client>".

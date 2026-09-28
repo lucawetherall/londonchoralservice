@@ -16,7 +16,7 @@ prompts). Private data stays in ~/lcs-private/; this file holds none.
     .venv/bin/python scripts/bookings/assistant_io.py prices
         print only the price tables of pricing.html and christmas-pricing.html, as short text
     .venv/bin/python scripts/bookings/assistant_io.py refs
-        print invoice refs already used (ledger and ~/lcs-private/invoices/)
+        print invoice refs already used (ledger, iCloud Drive/LCS-invoices and the older ~/lcs-private/invoices/)
     .venv/bin/python scripts/bookings/assistant_io.py next-ref <YYYY-MM-DD event date> [--taken 2111,2111A]
         JSON {ref, instalment_1_due, instalment_2_due, short_notice}: the event's DDMM plus the first
         free suffix (refs from the ledger, the invoices folder and --taken), the first instalment due
@@ -45,7 +45,8 @@ PRIVATE = lm.PRIVATE  # $LCS_PRIVATE_DIR (default ~/lcs-private), like the ledge
 STATE = PRIVATE / "assistant-state.json"
 STYLE = PRIVATE / "email-style.md"
 LEDGER = lm.LEDGER  # $LCS_BOOKINGS_CSV, else bookings.csv in $LCS_PRIVATE_DIR (default ~/lcs-private)
-INVOICES = PRIVATE / "invoices"
+INVOICES = PRIVATE / "invoices"  # before 29 Sep 2026
+ICLOUD_INVOICES = Path(os.environ.get("LCS_INVOICES_DIR", lm.ICLOUD_INVOICES))  # make_booking_docs.py writes here
 REPO = Path(__file__).resolve().parents[2]
 PRICE_PAGES = ("pricing.html", "christmas-pricing.html")
 OCCASIONS = ("wedding", "funeral", "christmas", "corporate", "private event", "other")
@@ -88,8 +89,9 @@ def daily_due(state, now=None):
 
 def taken_refs():
     refs = {(r.get("booking_ref") or "").strip() for r in lm.read_csv(LEDGER)}
-    if INVOICES.exists():
-        refs |= {p.name.split(" - ")[0].strip() for p in INVOICES.iterdir() if p.is_dir()}
+    for folder in (INVOICES, ICLOUD_INVOICES):
+        if folder.exists():
+            refs |= {p.name.split(" - ")[0].strip() for p in folder.iterdir() if p.is_dir()}
     return {r for r in refs if r}
 
 

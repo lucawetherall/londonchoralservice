@@ -15,11 +15,14 @@ denied, and so is a duplicate key in the JSON). On top of that, no string or
 number anywhere in a write call may carry bank details (in any format, any
 country), VAT wording or Greek/Cyrillic lookalike letters, and no invoice or bill
 text may mention tax. An attachment must be a .pdf or .docx inside
-~/lcs-private/invoices/.
-Claude never emails, reminds, deletes, voids, records a payment or matches a
-bank transaction in Books, and never updates an invoice: those stay the owner's
-job. Invoices are created as drafts (`send` absent or false) and carry the DDMM
-booking ref as their number. The guard fails closed: any error, or a tool_input
+iCloud Drive/LCS-invoices/ (~/Library/Mobile Documents/com~apple~CloudDocs/LCS-invoices).
+Claude never emails, reminds, deletes, voids or writes off anything in Books, never
+matches a bank transaction and never updates an invoice. It records only the
+payments the owner approved (a confident client payment against its invoice, a
+singer payment against its bill, both through the Starling account), and marks an
+invoice sent (a status change: Books emails nobody) only once Luca's own email
+carrying that invoice is in the Sent folder. Invoices are created as drafts (`send`
+absent or false) and carry the DDMM booking ref as their number. The guard fails closed: any error, or a tool_input
 of the wrong shape, denies the call.
 Design: docs/superpowers/specs/2026-09-28-zoho-books-design.md
 """
@@ -172,7 +175,8 @@ BILL_FIELDS = ("vendor_id", "bill_number", "date", "due_date", "reference_number
 BILL_UPDATE_FIELDS = ("notes", "due_date", "date", "reference_number")  # never the vendor or the amounts
 
 INVOICE_NUMBER = re.compile(r"[0-9]{4}[A-Z]?")  # the DDMM booking ref, e.g. 2111 or 2111B
-INVOICES_DIR = os.path.join("~", "lcs-private", "invoices")  # where make_booking_docs.py writes
+# where make_booking_docs.py writes (iCloud Drive, since 29 Sep 2026)
+INVOICES_DIR = os.path.join("~", "Library", "Mobile Documents", "com~apple~CloudDocs", "LCS-invoices")
 SINGER_PDF_DIR = os.path.join("~", "lcs-private", "singer-invoices")  # where singer_invoices.py saves PDFs
 SINGER_PDF_NAME = re.compile(r"[0-9A-Za-z]{1,40}\.pdf")  # <Zoho message id>.pdf
 
@@ -218,7 +222,7 @@ def check_invoice_document(body, query, path):
 
 
 def _check_attachment(value, folder=INVOICES_DIR, exts=(".pdf", ".docx")):
-    """A file the booking scripts wrote: its real path must be inside `folder` (default ~/lcs-private/invoices/)."""
+    """A file the booking scripts wrote: its real path must be inside `folder` (default iCloud Drive/LCS-invoices/)."""
     shown = folder.replace(os.sep, "/") + "/"
     bad = Deny(P + f"query_params.attachment must be a {' or '.join(exts)} file inside {shown} "
                "(a local path, not a URL or file contents).")
@@ -247,6 +251,14 @@ def _singer_pdf(value):
 # schema (28 Sep 2026) describes it only as "Boolean to check if the comment to be shown
 # to the clients" and gives no default; leaving it out lets Books apply its own default
 # (internal). The owner confirms that on the first comment Claude adds.
+# Mark sent (owner decision, 29 Sep 2026, with the move to the free Books plan): the invoice PDF now goes
+# out attached to Luca's own email from Zoho Mail, so the Books invoice is only the accounting record.
+# Once that email is in the Sent folder the daily pass marks the Books invoice sent, a status change
+# only (Books emails nobody), so payments can be recorded against it. Only the invoice id is allowed.
+def check_mark_invoice_sent(body, query, path):
+    _need(path, "invoice_id", "path_variables")
+
+
 def check_invoice_comment(body, query, path):
     _need(path, "invoice_id", "path_variables")
 
@@ -365,6 +377,8 @@ WRITE_TOOLS = {
         NOTHING, ORG_ONLY, obj("invoice_id", "document_id"), check_invoice_document),
     "ZohoBooks_upload_invoice_document": (
         NOTHING, obj("organization_id", "attachment"), obj("invoice_id", "document_id"), check_invoice_document),
+    "ZohoBooks_mark_invoice_sent": (
+        NOTHING, ORG_ONLY, obj("invoice_id"), check_mark_invoice_sent),
     "ZohoBooks_add_invoice_comment": (
         obj("description"), ORG_ONLY, obj("invoice_id"), check_invoice_comment),
     "ZohoBooks_create_bill": (
