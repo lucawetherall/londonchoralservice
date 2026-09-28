@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="card-group">
+  <article class="card" id="passkeys" data-has-keys="{{ 'yes' if count else 'no' }}" data-register-summary="register a new passkey">
+    <h2>Passkeys</h2>
+    {% if count %}
+    <p>{{ count }} passkey{{ "" if count == 1 else "s" }} registered. Every action from phase 3 onwards asks for one (Face ID or Touch ID), and the check lasts 60 seconds for that one action only.</p>
+    <p>Adding another device asks for a passkey you already have first.</p>
+    <div class="actions">
+      <button type="button" class="button" id="pk-test">Test a passkey</button>
+      <button type="button" class="button quiet" id="pk-register">Register this device</button>
+    </div>
+    {% else %}
+    <p>No passkeys yet. Register this device first: from then on, adding another needs one of your passkeys.</p>
+    <div class="actions">
+      <button type="button" class="button" id="pk-register">Register this device</button>
+    </div>
+    {% endif %}
+    <p class="status" id="pk-status" role="status" aria-live="polite"></p>
+    <p class="muted">Only each passkey's public key is stored, in the private config on the Mac.</p>
+  </article>
+</section>
+{% endblock %}
+{% block scripts %}
+<script src="/static/passkey.js" defer></script>
+{% endblock %}

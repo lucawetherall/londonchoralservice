@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% import "macros.html" as m %}
+{% block content %}
+<p class="lede">
+  {% if attention %}<span class="count">{{ attention }}</span> {{ "thing needs" if attention == 1 else "things need" }} you.
+  {% else %}<span class="count ok">0</span> Nothing needs you right now.{% endif %}
+  <span class="muted">{% if bank.ok and bank.value.bank_checked %}Bank checked at {{ bank.value.as_of }}.{% else %}Bank not checked: payment states come from the ledger notes.{% endif %}</span>
+</p>
+
+<section class="card-group" aria-labelledby="needs-you">
+  <h2 id="needs-you" class="group-title">Needs you</h2>
+
+  {% set items = warnings.value if warnings.ok else (warnings.stale or []) %}
+  <article class="card{% if items %} card-bad{% endif %}">
+    <h3>Bank details changed</h3>
+    {{ m.failed(warnings) }}
+    {% if items %}
+    <p>Ring the singer on a number you already have before paying.</p>
+    {{ m.singers_table(items) }}
+    {% elif warnings.ok %}<p class="muted">No changed bank details waiting.</p>{% endif %}
+  </article>
+
+  {% set items = hand.value if hand.ok else (hand.stale or []) %}
+  <article class="card{% if items %} card-warn{% endif %}">
+    <h3>Needs a hand check</h3>
+    {{ m.failed(hand) }}
+    {% if items %}{{ m.hand_table(items, bank.ok and bank.value.bank_checked) }}
+    {% elif hand.ok %}<p class="muted">Nothing needs a hand check.</p>{% endif %}
+  </article>
+
+  {% set items = singers.value if singers.ok else (singers.stale or []) %}
+  <article class="card card-wide">
+    <h3>Singer invoices unpaid</h3>
+    {{ m.failed(singers) }}
+    {% if items %}
+    <p>{{ items|length }} unpaid, {{ items|sum(attribute="amount")|gbp }}</p>
+    {{ m.singers_table(items) }}
+    {% elif singers.ok %}<p class="muted">No unpaid singer invoices.</p>{% endif %}
+  </article>
+</section>
+
+<section class="card-group" aria-labelledby="upcoming">
+  <h2 id="upcoming" class="group-title">Upcoming events</h2>
+  {% set items = week.value if week.ok else (week.stale or []) %}
+  <article class="card card-wide">
+    <h3>This week</h3>
+    {{ m.failed(week) }}
+    {% if items %}{{ m.events_table(items) }}
+    {% elif week.ok %}<p class="muted">No events in the next seven days.</p>{% endif %}
+  </article>
+  {% set items = later.value if later.ok else (later.stale or []) %}
+  <article class="card card-wide">
+    <h3>Later</h3>
+    {{ m.failed(later) }}
+    {% if items %}{{ m.events_table(items) }}
+    {% elif later.ok %}<p class="muted">Nothing further ahead in the ledger.</p>{% endif %}
+  </article>
+</section>
+{% endblock %}

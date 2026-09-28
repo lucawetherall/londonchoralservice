@@ -3,3 +3,9 @@
 google-ads
 pypdf
 pyyaml
+# The Command Centre (command_centre/): web app, passkeys, and Starlette's TestClient for its tests
+starlette
+jinja2
+uvicorn
+webauthn
+httpx2

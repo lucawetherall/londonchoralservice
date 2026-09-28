@@ -1,0 +1,68 @@
+{% macro failed(p) %}
+{% if not p.ok %}
+<p class="fail">couldn't load ({{ p.error }}){% if p.stale is not none %}: showing the last data that loaded{% endif %}</p>
+{% endif %}
+{% endmacro %}
+
+
+{% macro state_badge(item) %}
+{% if item.bank_checked %}
+<span class="badge {{ item.state|state_tone }}">{{ item.state|state_words }}</span>
+{% else %}
+<span class="badge">notes: {{ item.state|state_words }}</span>
+{% endif %}
+{% endmacro %}
+
+{% macro events_table(items) %}
+<table class="table">
+  <thead><tr><th>Date</th><th>Ref</th><th>Client</th><th>Occasion</th><th>Ensemble</th><th class="num">Value</th><th>Payment</th></tr></thead>
+  <tbody>
+  {% for u in items %}
+    <tr>
+      <td data-label="Date">{{ u.date|day }}</td>
+      <td data-label="Ref" class="mono">{{ u.ref }}</td>
+      <td data-label="Client">{{ u.first_name }}</td>
+      <td data-label="Occasion">{{ u.occasion }}</td>
+      <td data-label="Ensemble">{{ u.ensemble }}</td>
+      <td data-label="Value" class="num">{{ u.value|gbp }}</td>
+      <td data-label="Payment">{{ state_badge(u) }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endmacro %}
+
+{% macro hand_table(items, bank_checked) %}
+<table class="table">
+  <thead><tr><th>Ref</th><th>Why</th><th class="num">Value</th><th class="num">Received</th></tr></thead>
+  <tbody>
+  {% for h in items %}
+    <tr>
+      <td data-label="Ref" class="mono">{{ h.ref }}</td>
+      <td data-label="Why"><span class="badge {{ (h.state|state_tone) or 'warn' }}">{{ h.label }}</span></td>
+      <td data-label="Value" class="num">{{ h.value|gbp }}</td>
+      <td data-label="Received" class="num">{% if bank_checked %}{{ h.received|gbp }}{% else %}not checked{% endif %}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endmacro %}
+
+{% macro singers_table(items) %}
+<table class="table">
+  <thead><tr><th>Received</th><th>Singer</th><th class="num">Amount</th><th>Payee</th><th>Bank</th></tr></thead>
+  <tbody>
+  {% for s in items %}
+    <tr>
+      <td data-label="Received">{{ s.received|day }}</td>
+      <td data-label="Singer">{{ s.first_name }}</td>
+      <td data-label="Amount" class="num">{{ s.amount|gbp }}</td>
+      <td data-label="Payee">{{ s.payee or "new payee" }}</td>
+      <td data-label="Bank"><span class="mono">{{ s.last4|last4 }}</span>
+        {% if s.ring_first %} <span class="badge bad">changed: ring before paying</span>
+        {% elif s.bank_changed %} <span class="badge warn">changed, confirmed by phone</span>{% endif %}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endmacro %}
