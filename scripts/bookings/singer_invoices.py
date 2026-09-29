@@ -597,8 +597,10 @@ def is_open(r, facts=None):
 def summary(rows, today, facts=None):
     unpaid = [r for r in rows if is_open(r, facts)]
     ages = [(today - d).days for d in map(received_date, unpaid) if d]
+    held_ids = {r["message_id"] for r in unpaid if held(rows, r, facts)}  # counted apart: a hand check, not a ring
     return {"unpaid": len(unpaid), "unpaid_total": round(sum(lm.money(r["amount_gbp"]) for r in unpaid), 2),
-            "oldest_days": max(ages, default=0), "bank_changed": sum(1 for r in unpaid if ring_first_in(rows, r, facts))}
+            "oldest_days": max(ages, default=0), "held": len(held_ids),
+            "bank_changed": sum(1 for r in unpaid if r["message_id"] not in held_ids and ring_first_in(rows, r, facts))}
 
 
 BANK_ALARMS = ("BANK DETAILS", "NEW BANK DETAILS")  # CHANGED, DIFFER, NOT_YET_VERIFIED, NEW_DETAILS all start so
@@ -1590,7 +1592,8 @@ def cmd_status(args, client=None):
                      if bank_changed(r) else ""))
     s = summary(rows, today)
     print(f"{s['unpaid']} unpaid, £{s['unpaid_total']:,.2f}, oldest {s['oldest_days']} days"
-          + (f", {s['bank_changed']} with changed bank details" if s["bank_changed"] else ""))
+          + (f", {s['bank_changed']} with changed bank details" if s["bank_changed"] else "")
+          + (f", {s['held']} held (notes and recorded facts disagree)" if s["held"] else ""))
 
 
 def update_invoice(message_id, fn):

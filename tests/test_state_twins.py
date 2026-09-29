@@ -419,6 +419,16 @@ def test_an_unclaimed_singer_note_that_contradicts_a_family_holds_the_invoice():
         assert si.stored_bill(rows, r, facts=facts) == "no (held)", family
 
 
+def test_a_held_singer_invoice_is_counted_as_held_not_as_changed_bank_details():
+    # the Monday line (money_report.singer_line) reads summary(): a held invoice is a hand check, not a ring-first
+    rows, facts = singer_held_rows(SINGER_HOLDS[0][1])
+    s = si.summary(rows, T, facts)
+    assert s["unpaid"] == 1 and s["held"] == 1 and s["bank_changed"] == 0, s
+    plain = dict(rows[0], message_id="b", notes=state_cases.CHANGED, bank_changed="yes")
+    s = si.summary([plain], T)
+    assert s["held"] == 0 and s["bank_changed"] == 1, s
+
+
 def test_singer_held_readings_give_both_readings_and_the_clauses_to_confirm():
     want = {"bank warnings": ("details changed", "no bank alarm"), "withdrawal": ("withdrawn", "not withdrawn"),
             "settlement": ("paid by hand", "not paid by hand")}
