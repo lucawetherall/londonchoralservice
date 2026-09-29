@@ -23,6 +23,7 @@
       "Bash(.venv/bin/python scripts/reports/account_audit.py)",
       "Bash(.venv/bin/python scripts/bookings/invoice_text.py *)",
       "Bash(.venv/bin/python scripts/ads/upload_bookings.py)",
+      "Bash(.venv/bin/python scripts/ads/lookup_ref.py *)",
       "Bash(.venv/bin/python scripts/gsc/submit_sitemap.py)",
       "Bash(.venv/bin/python scripts/bookings/make_booking_docs.py *)",
       "Bash(.venv/bin/python scripts/bookings/imap_draft.py save *)",
