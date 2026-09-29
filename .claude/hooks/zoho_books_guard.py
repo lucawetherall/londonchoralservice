@@ -333,11 +333,11 @@ def check_create_vendor_payment(body, query, path):
 # Client payments (owner decision, 28 Sep 2026, the evening after the singer rule): a payment
 # check_payments.py matched confidently (its "record_in_books" list), recorded against that booking's one
 # invoice, through the Starling account, never with contact_persons (Books would email a thank-you).
-# `amount` is the money received. A shortfall the owner accepted as transfer fees (owner decision, 28 Sep 2026:
-# "short by fees £X accepted", at most £40 a booking since 29 Sep 2026) rides on the last payment as
-# `bank_charges`, a plain number more than £0 and at most FEE_CAP; the invoice is then credited with
-# amount + bank_charges, so both amount_applied values must equal that sum. Without bank_charges all three
-# amounts are equal.
+# amount, amount_applied and invoices[0].amount_applied are always equal: Books credits the invoice with
+# `amount`. A shortfall the owner accepted as transfer fees (owner decision, 28 Sep 2026: "short by fees £X
+# accepted", at most £40 a booking since 29 Sep 2026) rides on the last payment as `bank_charges`, a plain number
+# more than £0, at most FEE_CAP and less than amount; Books then deposits amount - bank_charges (the money that
+# reached Starling). Books refuses an amount_applied above amount (checked against Books on 29 Sep 2026).
 FEE_CAP = 40.00  # check_payments.FEE_CAP
 
 
@@ -365,12 +365,13 @@ def check_create_customer_payment(body, query, path):
                 and math.isfinite(charges) and 0 < charges <= FEE_CAP):
             raise Deny(P + f"bank_charges must be a plain number, more than £0 and at most £{FEE_CAP:.0f} "
                        "(a shortfall the owner accepted as transfer fees).")
-    applied = round(amounts[0] + charges, 2)
-    if line.get("invoice_id") != body.get("invoice_id") or {round(v, 2) for v in amounts[1:]} != {applied}:
+    if line.get("invoice_id") != body.get("invoice_id") or len({round(v, 2) for v in amounts}) != 1:
         raise Deny(P + "invoice_id and every amount must agree: one invoice, the whole payment applied to it "
-                   "(both amount_applied values equal amount, plus bank_charges when there are any).")
+                   "(amount and both amount_applied values equal; bank_charges, if any, is part of amount).")
     if not (math.isfinite(amounts[0]) and 0 < amounts[0] <= 10000):
         raise Deny(P + "amount must be more than £0 and at most £10,000.")
+    if charges and not charges < amounts[0]:
+        raise Deny(P + "bank_charges must be less than amount.")
 
 
 # ONE-OFF (owner request, 29 Sep 2026; CLAUDE.md: "a one-off exception is a committed, reviewed guard change
@@ -382,7 +383,7 @@ ONE_OFF_2408_PAYMENT = "1534218000000117016"
 ONE_OFF_2408_UNTIL = "2026-09-30"
 ONE_OFF_2408_BODY = {
     "customer_id": "1534218000000102011", "invoice_id": "1534218000000111001", "date": "2026-08-24",
-    "amount": 696.93, "bank_charges": 36.15, "amount_applied": 733.08, "payment_mode": "banktransfer",
+    "amount": 733.08, "bank_charges": 36.15, "amount_applied": 733.08, "payment_mode": "banktransfer",
     "account_id": STARLING_BOOKS_ACCOUNT_ID, "reference_number": "2408",
     "description": "Starling transfer, matched to invoice 2408 (£36.15 bank charges accepted by the owner)",
     "invoices": [{"invoice_id": "1534218000000111001", "amount_applied": 733.08}],
@@ -396,8 +397,8 @@ def check_one_off_2408_charges(body, query, path):
     if path.get("payment_id") != ONE_OFF_2408_PAYMENT:
         raise Deny(P + "update_customer_payment is allowed only for invoice 2408's payment (a one-off).")
     if body != ONE_OFF_2408_BODY or any(isinstance(v, bool) for v in body.values()):
-        raise Deny(P + "the one-off change to invoice 2408's payment must be exactly the approved figures: £696.93 "
-                   "received, £36.15 bank charges, £733.08 applied.")
+        raise Deny(P + "the one-off change to invoice 2408's payment must be exactly the approved figures: £733.08 "
+                   "applied, of which £36.15 bank charges (£696.93 reached the bank).")
 
 
 def check_create_item(body, query, path):
