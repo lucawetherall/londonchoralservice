@@ -1022,6 +1022,17 @@ def test_a_hand_set_bank_confirmed_counts_after_a_rescan_voided_the_fact():
     assert si.confirmed(r) and not si.ring_first_in([r], r) and si.held([r], r) == []
 
 
+def test_a_stored_warning_never_tells_the_owner_to_run_confirm_in_a_terminal():
+    """Invoices scanned before confirm moved to the Command Centre keep the old hint in their notes: it is shown
+    with the new one."""
+    r = dict(unpaid("o1", "Ben Fenwick", 100, "2026-09-20"), bank_fp=lm.bank_fingerprint("123456", "11112222"),
+             notes=f"{si.NEW_DETAILS}, then run singer_invoices.py confirm 1789828736363141700; "
+                   f"{si.NOT_YET_VERIFIED}, then run singer_invoices.py confirm o1")
+    shown = si.live_warnings([r], r, facts={})
+    assert shown == [si.NEW_DETAILS + si.CONFIRM_HINT, si.NOT_YET_VERIFIED + si.CONFIRM_HINT], shown
+    assert not any("singer_invoices.py" in w for w in shown)
+
+
 def test_a_legacy_row_with_an_odd_fingerprint_never_stops_a_scan():
     fresh_store()
     base = {c: "" for c in si.COLUMNS}

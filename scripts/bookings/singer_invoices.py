@@ -102,6 +102,8 @@ NEW_DETAILS = "NEW BANK DETAILS: confirm them by phone on a number you already h
 NOT_YET_VERIFIED = "BANK DETAILS NOT YET VERIFIED (seen on an earlier invoice): confirm by phone"
 # confirm is the Command Centre's (owner decision, 29 Sep 2026: it needs the owner's passkey nonce)
 CONFIRM_HINT = ", then confirm them in the Command Centre (Singers)"
+# the hint older invoices carry in their notes: shown as CONFIRM_HINT (the notes themselves are never rewritten)
+LEGACY_HINT = re.compile(r", then run singer_invoices\.py confirm \S+$")
 LOOKBACK = datetime.timedelta(days=14)  # a payment up to 14 days before an invoice arrived is reported, not applied
 INVOICING_DOMAINS = ("intuit.com", "quickbooks.com", "xero.com", "freeagent.com", "zohoinvoice.com", "zoho.com",
                      "sumup.com", "paypal.com", "stripe.com", "invoice2go.com", "wave.com", "waveapps.com")
@@ -673,7 +675,7 @@ def live_warnings(rows, r, facts=None):
                 continue
             shown.add(code)
         if not (trusted and n.startswith(BANK_ALARMS)):
-            out.append(n)
+            out.append(LEGACY_HINT.sub(CONFIRM_HINT, n))
     for code in lcs_events.CODES if codes is not None else ():
         if code in codes and code not in shown and not (trusted and CODE_TEXT[code].startswith(BANK_ALARMS)):
             out.append(CODE_TEXT[code])
