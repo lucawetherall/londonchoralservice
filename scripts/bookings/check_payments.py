@@ -121,7 +121,7 @@ RECEIPT_DAYS = 14
 SHORT_NOTICE_DAYS = 10
 # The most a booking may be short by transfer fees and still read paid in full, once the owner accepts it
 # ("short by fees £12.40 accepted 2026-09-28", written only through the Command Centre; owner decision, 28 Sep 2026).
-FEE_CAP = 40.00  # owner decision, 29 Sep 2026 (was £25; 2408 was £36.15 short)
+FEE_CAP = lm.FEE_CAP  # £40, owner decision, 29 Sep 2026; defined in lcs_money so the state log's schema shares it
 # A thank-you is only ever drafted in these states; notes are never rewritten in the others.
 RECEIPT_STATES = {"PAID_IN_FULL", "DEPOSIT_SEEN", "BALANCE_DUE", "NOTED_PAID"}
 # States whose confident payments the assistant records against the Books invoice (owner decision, 28 Sep 2026).
