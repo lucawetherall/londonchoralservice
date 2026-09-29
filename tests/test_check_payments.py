@@ -1791,6 +1791,8 @@ def test_before_the_migration_the_writers_write_their_notes_exactly_as_before():
                          (["--reminded", "2111"], f"reminder drafted {TD}")):
         p, notes, log = run_fact("PENDING: invoiced", *args, migrated=False)
         assert p.returncode == 0 and notes == f"PENDING: invoiced; {clause}" and log == [], (args, p.stderr)
+        if args[0] == "--fact":  # never "recorded": nothing is, until the migration
+            assert p.stdout.strip() == "2111: cancelled noted; facts start after the migration", p.stdout
 
 
 def test_reminded_records_its_marker():

@@ -1071,7 +1071,9 @@ def main():
                 raise SystemExit("--owner needs the Command Centre's one-time owner nonce (the owner's passkey "
                                  "approval); nothing written")
         append_note(ref, fact_phrase(kind, fields, day, by), [(kind, fields, by, day)])
-        print(f"{ref}: {kind} recorded")
+        lcs_events.clear_cache()  # read the log afresh: was the fact recorded, or only its note?
+        print(f"{ref}: {kind} recorded" if lcs_events.migration_applied()
+              else f"{ref}: {kind} noted; facts start after the migration")
         return
     if args.note:
         ref, text = args.note
