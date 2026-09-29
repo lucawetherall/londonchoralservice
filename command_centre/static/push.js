@@ -8,12 +8,25 @@
 (function () {
   "use strict";
 
-  // Ask the service worker to delete the saved pages; resolves true once it confirms.
+  var READY_WAIT = 3000;  // ms: navigator.serviceWorker.ready never settles when no service worker is active
+
+  // The active service worker's registration, or null when none is active within READY_WAIT (a browser tab that
+  // never installed the app, or a private window): never waits forever.
+  function ready() {
+    if (!("serviceWorker" in navigator)) return Promise.resolve(null);
+    return Promise.race([
+      navigator.serviceWorker.ready,
+      new Promise(function (resolve) { setTimeout(function () { resolve(null); }, READY_WAIT); })
+    ]);
+  }
+
+  // Ask the service worker to delete the saved pages; resolves true once it confirms, null when there is no
+  // service worker to ask (so nothing was saved here), false when it didn't answer.
   function clearOffline() {
-    if (!("serviceWorker" in navigator)) return Promise.resolve(false);
-    return navigator.serviceWorker.ready.then(function (reg) {
+    return ready().then(function (reg) {
+      if (!reg) return null;
       var worker = navigator.serviceWorker.controller || reg.active;
-      if (!worker) return false;
+      if (!worker) return null;
       return new Promise(function (resolve) {
         var channel = new MessageChannel();
         var timer = setTimeout(function () { resolve(false); }, 3000);
@@ -53,8 +66,8 @@
   }
 
   async function current() {
-    var reg = await navigator.serviceWorker.ready;
-    return reg.pushManager.getSubscription();
+    var reg = await ready();
+    return reg ? reg.pushManager.getSubscription() : null;
   }
 
   // Show this device's state (the page's buttons start hidden).
@@ -89,8 +102,12 @@
   function clearCopies(button) {
     var status = el("offline-status");
     button.disabled = true;
+    if (status) status.textContent = "Clearing…";
     clearOffline().then(function (ok) {
-      if (status) status.textContent = ok ? "Offline copies cleared on this device." : "Nothing to clear on this device.";
+      if (!status) return;
+      status.textContent = ok ? "Offline copies cleared on this device." :
+        ok === null ? "Nothing to clear: this browser keeps no offline copies (the app isn't installed here, or its offline helper isn't running)." :
+        "The offline helper didn't answer. Close the app, open it again and retry.";
     }, function () {
       if (status) status.textContent = "Couldn't clear the offline copies.";
     }).then(function () { button.disabled = false; });
@@ -103,7 +120,8 @@
     try {
       var perm = await Notification.requestPermission();
       if (perm !== "granted") { say("Notifications weren't allowed."); return; }
-      var reg = await navigator.serviceWorker.ready;
+      var reg = await ready();
+      if (!reg) { say("The app's offline helper isn't running here: open the app from the Home Screen and try again."); return; }
       var sub = await reg.pushManager.getSubscription() ||
         await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: keyBytes(box.dataset.key) });
       var j = sub.toJSON();

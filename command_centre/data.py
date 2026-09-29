@@ -166,7 +166,7 @@ class Data:
         bank = self.panel("bank", lambda rows: self.bank(rows, today), ledger)
         store = self.panel("singer_store", lambda: lm.read_csv(si.STORE))
         singers = self.panel("singers", open_singers, store)
-        hand = self.panel("hand_check", lambda b: dash.hand_check(b["assessments"], today), bank)
+        hand = self.panel("hand_check", lambda b: models.hand_rows(b["assessments"], today, b["bank_checked"]), bank)
         return now, today, ledger, bank, store, singers, hand
 
     def clear_caches(self):
@@ -341,22 +341,32 @@ class Data:
                                                         key=lambda kv: (-kv[1], kv[0])), enq)
         return {"stamp": stamp(now), "enquiries": enq, "board": board, "due": due, "windows": windows, "sources": mix}
 
-    def enquiry_page(self, eid):
-        """None when the id is malformed or not in the (readable) pipeline: the route answers 404."""
-        if not isinstance(eid, str) or not pl.ID_RE.fullmatch(eid):
+    def enquiry_page(self, key):
+        """One enquiry by its key (models.enquiry_key). None when it is malformed or not in the (readable) pipeline:
+        the route answers 404. An old URL naming the raw enquiry id gives {"redirect": the key's URL} (the route
+        redirects; nothing is written)."""
+        if not isinstance(key, str):
+            return None
+        is_key = bool(models.ENQUIRY_KEY_RE.fullmatch(key))
+        if not is_key and not pl.ID_RE.fullmatch(key):
             return None
         now = self.now()
         today = lm.today(now)
         enq = self._enquiries()
         row = None
         if enq.ok:
-            row = next((r for r in enq.value if r.get("enquiry_id") == eid), None)
+            if is_key:
+                row = next((r for r in enq.value if models.enquiry_key(r.get("enquiry_id", "")) == key), None)
             if row is None:
+                if any(r.get("enquiry_id") == key for r in enq.value):
+                    return {"redirect": models.enquiry_href(key)}
                 return None
+        elif not is_key:
+            return {"redirect": models.enquiry_href(key)}
         timeline = self.panel("enquiry_timeline", lambda rows: models.enquiry_timeline(row, today), enq,
                               keep=False)
         campaign = self.panel("campaign", lambda c: models.campaign_for(row or {}, c), self._gclids(), keep=False)
-        return {"stamp": stamp(now), "eid": eid, "row": row, "enquiries": enq, "timeline": timeline,
+        return {"stamp": stamp(now), "key": key, "row": row, "enquiries": enq, "timeline": timeline,
                 "campaign": campaign, "status": pl.status_of(row) if row else "",
                 "next": models.next_followup(row, today) if row else None}
 

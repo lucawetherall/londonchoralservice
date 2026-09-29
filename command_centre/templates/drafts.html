@@ -3,10 +3,10 @@
 {% macro mark_forms(d) %}
 <div class="mark-forms">
   {% if d.state == "open" %}
-  {{ m.action_button("draft-mark", "Mark sent", {"key": d.key, "state": "sent"}) }}
-  {{ m.action_button("draft-mark", "Discarded", {"key": d.key, "state": "discarded"}, quiet=true) }}
+  {{ m.action_button("draft-mark", "Mark sent", {"key": d.key, "state": "sent"}, aria="Mark sent: " ~ d.first_name ~ ", " ~ d.kind_words) }}
+  {{ m.action_button("draft-mark", "Discarded", {"key": d.key, "state": "discarded"}, quiet=true, aria="Discarded: " ~ d.first_name ~ ", " ~ d.kind_words) }}
   {% else %}
-  {{ m.action_button("draft-mark", "Reopen", {"key": d.key, "state": "open"}, quiet=true) }}
+  {{ m.action_button("draft-mark", "Reopen", {"key": d.key, "state": "open"}, quiet=true, aria="Reopen: " ~ d.first_name ~ ", " ~ d.kind_words) }}
   {% endif %}
 </div>
 {% endmacro %}
@@ -25,16 +25,16 @@
   <h2 id="open-drafts" class="group-title">To review ({{ box.open|length }})</h2>
   <article class="card card-wide">
     {% if box.open %}
-    <table class="table">
-      <thead><tr><th>Saved</th><th>Kind</th><th>To</th><th>Subject</th><th>Mark</th></tr></thead>
-      <tbody>
+    <table class="table" role="table">
+      <thead role="rowgroup"><tr role="row"><th role="columnheader">Saved</th><th role="columnheader">Kind</th><th role="columnheader">To</th><th role="columnheader">Subject</th><th role="columnheader">Mark</th></tr></thead>
+      <tbody role="rowgroup">
       {% for d in box.open %}
-        <tr>
-          <td data-label="Saved">{{ d.created|day }}</td>
-          <td data-label="Kind">{{ d.kind_words }}{% if d.saved_by_you %} <span class="badge">Saved by you</span>{% endif %}</td>
-          <td data-label="To">{{ d.first_name }}</td>
-          <td data-label="Subject">{{ d.subject|masked }}</td>
-          <td data-label="Mark">{{ mark_forms(d) }}</td>
+        <tr role="row">
+          <td role="cell" data-label="Saved">{{ d.created|day }}</td>
+          <td role="cell" data-label="Kind">{{ d.kind_words }}{% if d.saved_by_you %} <span class="badge">Saved by you</span>{% endif %}</td>
+          <td role="cell" data-label="To">{{ d.first_name }}</td>
+          <td role="cell" data-label="Subject">{{ d.subject|masked }}</td>
+          <td role="cell" data-label="Mark">{{ mark_forms(d) }}</td>
         </tr>
       {% endfor %}
       </tbody>
@@ -46,17 +46,17 @@
 {% if box.marked %}
 <details class="card">
   <summary>Marked ({{ box.marked|length }})</summary>
-  <table class="table">
-    <thead><tr><th>Saved</th><th>Kind</th><th>To</th><th>Subject</th><th>State</th><th></th></tr></thead>
-    <tbody>
+  <table class="table" role="table">
+    <thead role="rowgroup"><tr role="row"><th role="columnheader">Saved</th><th role="columnheader">Kind</th><th role="columnheader">To</th><th role="columnheader">Subject</th><th role="columnheader">State</th><th role="columnheader">Change</th></tr></thead>
+    <tbody role="rowgroup">
     {% for d in box.marked %}
-      <tr>
-        <td data-label="Saved">{{ d.created|day }}</td>
-        <td data-label="Kind">{{ d.kind_words }}{% if d.saved_by_you %} <span class="badge">Saved by you</span>{% endif %}</td>
-        <td data-label="To">{{ d.first_name }}</td>
-        <td data-label="Subject">{{ d.subject|masked }}</td>
-        <td data-label="State"><span class="badge {{ 'ok' if d.state == 'sent' else '' }}">Marked {{ d.state }}</span>{% if d.marked_at %} <span class="muted">{{ d.marked_at|day }}</span>{% endif %}</td>
-        <td data-label="">{{ mark_forms(d) }}</td>
+      <tr role="row">
+        <td role="cell" data-label="Saved">{{ d.created|day }}</td>
+        <td role="cell" data-label="Kind">{{ d.kind_words }}{% if d.saved_by_you %} <span class="badge">Saved by you</span>{% endif %}</td>
+        <td role="cell" data-label="To">{{ d.first_name }}</td>
+        <td role="cell" data-label="Subject">{{ d.subject|masked }}</td>
+        <td role="cell" data-label="State"><span class="badge {{ 'ok' if d.state == 'sent' else '' }}">Marked {{ d.state }}</span>{% if d.marked_at %} <span class="muted">{{ d.marked_at|day }}</span>{% endif %}</td>
+        <td role="cell" data-label="Change">{{ mark_forms(d) }}</td>
       </tr>
     {% endfor %}
     </tbody>

@@ -94,14 +94,15 @@ iPhone / iPad / laptop ──Tailscale (WireGuard, HTTPS via tailscale serve)─
 
 ## Pages
 
-All pages are mobile-first, with dark and light modes and the LCS brand colours. Every page has a freshness stamp.
+All pages are mobile-first, with dark and light modes and the LCS brand colours. Every page has a freshness stamp. No page scrolls sideways at 375 px (labels and badges wrap); touch targets are at least 44×44 px; the side gutters clear the notch (`viewport-fit=cover` and the safe-area insets); a row that scrolls sideways (the header nav on medium widths, the sync strip) shows an edge shade; stacked phone tables keep their table roles, and each control's name says what it acts on ("Resolve 2408", "Act on Maddy's invoice", "Mark sent: Maddy").
 
 Under the header, every page has the **sync strip**: one line of chips (Bank, Books, Drafts, Diary, Ads, Marketing), each with its last good time ("Books 07:30") and a tone. Bank is failed while Starling is unreachable, off with no token (or before a page has read it) and otherwise ok; it is never stale, since the pages read it when they need it. A cache is failed when the app's latest attempt at it failed after its last good write, stale past its limit (Books 24 hours, Drafts, Diary and Marketing 36 hours, Ads 8 days) or when never written, else ok. A failed or stale Bank, Books or Marketing chip is a `sync-now` button; Drafts, Diary and Ads come from the scheduled runs (the daily pass's Mail and Calendar reads, the Monday review), so theirs link to Health, which says so. On a phone the strip scrolls sideways inside itself; the page never does.
 
 1. **Today (home)**
    - What needs the owner, in priority order:
      - bank-detail warnings;
-     - hand checks;
+     - hand checks, each saying why in plain words with the amounts ("£36.15 short of £733.08; the event has passed");
+     - transfer-fee shortfalls: a booking in DEPOSIT_SEEN, BALANCE_DUE, PAST_PART_PAID or NOTED_PAID whose confident payments leave a gap of £0.01 up to `check_payments.FEE_CAP` that is its whole balance, with at least 90% of the fee in (so never a deposit-only booking): "<ref>: £x short of £y — accept as transfer fees?", with the short-by-fees form. A hand check that qualifies stays one row with the form folded in, and a balance asked about this way isn't also in the balances row;
      - approvals waiting;
      - enquiries waiting over a day for a reply (status new, first seen more than 24 hours ago counting from the midnight that starts its first-seen date, London time, and no draft for its thread in the drafts cache), one grouped row with no names;
      - drafts to review and send;
@@ -114,6 +115,7 @@ Under the header, every page has the **sync strip**: one line of chips (Bank, Bo
    - Each booking has a timeline: enquiry, quote, follow-ups, invoice (ledger and Books), payments (Starling), singers booked, singer bills, review request, and notes.
    - Links open the Zoho thread and the Books invoice.
 3. **Enquiries (pipeline):** a board by status, follow-ups due, conversion rate, source mix, and a timeline per enquiry.
+   - An enquiry's URL and page name it by a 12-letter hash of its id (`models.enquiry_key`, as drafts are named), never the Zoho thread id; an old `/enquiries/<thread id>` URL redirects (301, GET only, no side effect). Only a copied "draft a reply" handoff prompt carries the thread id, since Claude needs it.
 4. **Money:**
    - the Starling balance and the last 30 days in and out;
    - client money due and overdue;
