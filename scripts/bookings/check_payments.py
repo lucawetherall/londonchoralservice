@@ -989,6 +989,50 @@ def held(r, today=None, facts=None):
     return out
 
 
+def _day_words(d):
+    return f"{d.day} {d:%b %Y}"
+
+
+def reading_words(family, value):
+    """One family's reading (family_readings' shape) in fixed words for the owner's pages: never note text."""
+    if family == "cancellation":
+        return "cancelled" if value else "not cancelled"
+    if family == "close":
+        closed, fees = value
+        if not closed:
+            return "open"
+        return f"closed on {_day_words(closed)}" + "".join(f", £{x:,.2f} fees accepted on {_day_words(d)}"
+                                                           for d, x in fees)
+    if family == "cancel settlement":
+        return f"settled on {_day_words(value)}" if value else "not settled"
+    if family == "arrangement":
+        return "balance arranged" if value else "nothing arranged"
+    part, full = value  # noted paid
+    return "noted paid in full" if full else "noted part paid" if part else "nothing noted paid"
+
+
+def held_readings(r, today=None, facts=None):
+    """held()'s families, each with both readings side by side for the owner: [{family, notes, facts, clauses}], the
+    readings in fixed words (reading_words) and `clauses` the note hashes of the loose (unclaimed, not set aside)
+    clauses that speak to that family, the ones "The recorded facts are right" (events.py notes-checked) claims. A
+    family held only because a claimed clause was deleted by hand has no clause to confirm: [] (undo the fact, or
+    record what the notes now say). [] when the booking isn't held."""
+    today = today or lm.today()
+    f = facts_for(r, today, facts)
+    families = held(r, today, f)
+    if not families:
+        return []
+    readings, value = family_readings(r, today, f), money(r)
+    loose = [c for c in clauses(lcs_events.set_aside(r.get("notes"), f)) if lcs_events.note_hash(c) not in f.claims]
+    out = []
+    for fam in families:
+        notes_say, facts_say = readings[fam]
+        out.append({"family": fam, "notes": reading_words(fam, notes_say), "facts": reading_words(fam, facts_say),
+                    "clauses": [lcs_events.note_hash(c) for c in loose
+                                if assertions(c, value, today)[fam] is not None]})
+    return out
+
+
 def collect(client, rows, today):
     """[(row, paid, assessment)] in ledger order for every open booking, and for every cancelled or closed
     ("paid in full YYYY-MM-DD", "short by fees … accepted YYYY-MM-DD") booking with a payment that needs a hand

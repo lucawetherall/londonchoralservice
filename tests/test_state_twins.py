@@ -184,6 +184,33 @@ def test_notes_checked_releases_a_held_booking():
         assert cp.held(r, T, facts=facts) == [], family
 
 
+def test_held_readings_give_both_readings_and_the_clauses_to_confirm():
+    """Each held family with the notes' reading and the recorded one in plain words (never note text), and the hashes
+    of the loose clauses behind it: the ones "The recorded facts are right" (notes-checked) would claim."""
+    want = {0: ("not cancelled", "cancelled"), 1: ("cancelled", "not cancelled"), 2: ("closed on 22 Sep 2026", "open"),
+            3: ("settled on 20 Sep 2026", "not settled"), 5: ("noted paid in full", "noted part paid")}
+    for i, (family, clauses, _) in enumerate(HOLDS):
+        r, facts = held_row(clauses)
+        got = cp.held_readings(r, T, facts=facts)
+        loose = [ev.note_hash(t) for t, _, claimed in clauses if not claimed]
+        assert [x["family"] for x in got] == [family] and got[0]["clauses"] == loose, (family, got)
+        assert got[0]["notes"] != got[0]["facts"], got
+        if i in want:
+            assert (got[0]["notes"], got[0]["facts"]) == want[i], (i, got)
+        for text, _, _ in clauses:
+            assert text not in str(got), text
+    r, facts = held_row([("deposit seen 2026-09-05 (Starling)", f("deposit-seen", "2026-09-05"), True)])
+    assert cp.held_readings(r, T, facts=facts) == []
+
+
+def test_held_readings_of_a_deleted_claimed_note_offer_no_clause():
+    clauses = [("PENDING: invoiced", None, False), ("cancelled 2026-09-20 by client email", f("cancelled", "2026-09-20"), True)]
+    r, facts = held_row(clauses)
+    r["notes"] = "PENDING: invoiced"  # the owner deleted the cancellation by hand: nothing to confirm, only to undo
+    got = cp.held_readings(r, T, facts=facts)
+    assert got == [{"family": "cancellation", "notes": "not cancelled", "facts": "cancelled", "clauses": []}], got
+
+
 def test_markers_and_families_without_facts_never_hold():
     r, facts = held_row([("deposit seen 2026-09-05 (Starling)", f("deposit-seen", "2026-09-05"), True),
                          ("reminder drafted 2026-09-20", None, False), ("cancelled 20 Sep", None, False),
@@ -390,6 +417,18 @@ def test_an_unclaimed_singer_note_that_contradicts_a_family_holds_the_invoice():
         assert si.held(rows, r, facts=facts) == [family], (family, si.held(rows, r, facts=facts))
         assert si.ring_first_in(rows, r, facts=facts) and si.ring_first(r, facts=facts), family
         assert si.stored_bill(rows, r, facts=facts) == "no (held)", family
+
+
+def test_singer_held_readings_give_both_readings_and_the_clauses_to_confirm():
+    want = {"bank warnings": ("details changed", "no bank alarm"), "withdrawal": ("withdrawn", "not withdrawn"),
+            "settlement": ("paid by hand", "not paid by hand")}
+    for family, clauses in SINGER_HOLDS:
+        rows, facts = singer_held_rows(clauses)
+        got = si.held_readings(rows, rows[0], facts=facts)
+        loose = [ev.note_hash(t) for t, _, c in clauses if not c]
+        assert got == [{"family": family, "notes": want[family][0], "facts": want[family][1], "clauses": loose}], got
+    rows, facts = singer_held_rows([c for c in SINGER_HOLDS[1][1] if c[2]])
+    assert si.held_readings(rows, rows[0], facts=facts) == []
 
 
 def test_a_trusted_account_never_holds_on_a_bank_alarm():
