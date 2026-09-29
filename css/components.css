@@ -779,8 +779,7 @@ td.compare-us .compare-saving {
 /* ── Responsive Video Embed ── */
 .video-embed {
   position: relative;
-  padding-bottom: 56.25%; /* 16:9 */
-  height: 0;
+  aspect-ratio: 16 / 9;
   overflow: hidden;
 }
 
@@ -811,19 +810,40 @@ td.compare-us .compare-saving {
   display: block;
 }
 
+/* A plain circle in the corner, clear of any title burned into the film. */
 .play-btn {
   position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 68px;
-  height: 48px;
-  transform: translate(-50%, -50%);
-  transition: opacity 0.2s;
+  left: var(--space-md);
+  bottom: var(--space-md);
+  width: 3.5rem;
+  height: 3.5rem;
+  overflow: visible;
 }
 
-.video-thumb:hover .play-btn,
-.video-thumb:focus-visible .play-btn {
-  opacity: 0.85;
+.play-btn circle {
+  fill: rgba(28, 22, 20, 0.45);
+  stroke: var(--color-bg);
+  stroke-width: 1.5;
+  transition: fill var(--transition-fast), stroke var(--transition-fast);
+}
+
+.play-btn path {
+  fill: var(--color-bg);
+}
+
+.video-thumb:hover .play-btn circle,
+.video-thumb:focus-visible .play-btn circle {
+  fill: var(--color-accent);
+  stroke: var(--color-accent);
+}
+
+@media (max-width: 599px) {
+  .play-btn {
+    left: var(--space-sm);
+    bottom: var(--space-sm);
+    width: 3rem;
+    height: 3rem;
+  }
 }
 
 /* .video-embed clips overflow, so the global outline (drawn outside) is
