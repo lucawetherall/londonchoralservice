@@ -184,6 +184,33 @@ def test_notes_checked_releases_a_held_booking():
         assert cp.held(r, T, facts=facts) == [], family
 
 
+def test_held_readings_give_both_readings_and_the_clauses_to_confirm():
+    """Each held family with the notes' reading and the recorded one in plain words (never note text), and the hashes
+    of the loose clauses behind it: the ones "The recorded facts are right" (notes-checked) would claim."""
+    want = {0: ("not cancelled", "cancelled"), 1: ("cancelled", "not cancelled"), 2: ("closed on 22 Sep 2026", "open"),
+            3: ("settled on 20 Sep 2026", "not settled"), 5: ("noted paid in full", "noted part paid")}
+    for i, (family, clauses, _) in enumerate(HOLDS):
+        r, facts = held_row(clauses)
+        got = cp.held_readings(r, T, facts=facts)
+        loose = [ev.note_hash(t) for t, _, claimed in clauses if not claimed]
+        assert [x["family"] for x in got] == [family] and got[0]["clauses"] == loose, (family, got)
+        assert got[0]["notes"] != got[0]["facts"], got
+        if i in want:
+            assert (got[0]["notes"], got[0]["facts"]) == want[i], (i, got)
+        for text, _, _ in clauses:
+            assert text not in str(got), text
+    r, facts = held_row([("deposit seen 2026-09-05 (Starling)", f("deposit-seen", "2026-09-05"), True)])
+    assert cp.held_readings(r, T, facts=facts) == []
+
+
+def test_held_readings_of_a_deleted_claimed_note_offer_no_clause():
+    clauses = [("PENDING: invoiced", None, False), ("cancelled 2026-09-20 by client email", f("cancelled", "2026-09-20"), True)]
+    r, facts = held_row(clauses)
+    r["notes"] = "PENDING: invoiced"  # the owner deleted the cancellation by hand: nothing to confirm, only to undo
+    got = cp.held_readings(r, T, facts=facts)
+    assert got == [{"family": "cancellation", "notes": "not cancelled", "facts": "cancelled", "clauses": []}], got
+
+
 def test_markers_and_families_without_facts_never_hold():
     r, facts = held_row([("deposit seen 2026-09-05 (Starling)", f("deposit-seen", "2026-09-05"), True),
                          ("reminder drafted 2026-09-20", None, False), ("cancelled 20 Sep", None, False),
@@ -392,6 +419,28 @@ def test_an_unclaimed_singer_note_that_contradicts_a_family_holds_the_invoice():
         assert si.stored_bill(rows, r, facts=facts) == "no (held)", family
 
 
+def test_a_held_singer_invoice_is_counted_as_held_not_as_changed_bank_details():
+    # the Monday line (money_report.singer_line) reads summary(): a held invoice is a hand check, not a ring-first
+    rows, facts = singer_held_rows(SINGER_HOLDS[0][1])
+    s = si.summary(rows, T, facts)
+    assert s["unpaid"] == 1 and s["held"] == 1 and s["bank_changed"] == 0, s
+    plain = dict(rows[0], message_id="b", notes=state_cases.CHANGED, bank_changed="yes")
+    s = si.summary([plain], T)
+    assert s["held"] == 0 and s["bank_changed"] == 1, s
+
+
+def test_singer_held_readings_give_both_readings_and_the_clauses_to_confirm():
+    want = {"bank warnings": ("details changed", "no bank alarm"), "withdrawal": ("withdrawn", "not withdrawn"),
+            "settlement": ("paid by hand", "not paid by hand")}
+    for family, clauses in SINGER_HOLDS:
+        rows, facts = singer_held_rows(clauses)
+        got = si.held_readings(rows, rows[0], facts=facts)
+        loose = [ev.note_hash(t) for t, _, c in clauses if not c]
+        assert got == [{"family": family, "notes": want[family][0], "facts": want[family][1], "clauses": loose}], got
+    rows, facts = singer_held_rows([c for c in SINGER_HOLDS[1][1] if c[2]])
+    assert si.held_readings(rows, rows[0], facts=facts) == []
+
+
 def test_a_trusted_account_never_holds_on_a_bank_alarm():
     rows, facts = singer_held_rows(SINGER_HOLDS[0][1] + [(state_cases.CONFIRMED[0], state_cases.CONFIRMED[1], True)])
     assert si.held(rows, rows[0], facts=facts) == [] and not si.ring_first_in(rows, rows[0], facts=facts)
@@ -526,7 +575,9 @@ def test_a_held_booking_is_never_chased_or_offered_as_a_fee_on_today():
     assert [r["item"]["ref"] for r in rows if r["kind"] == "hand"] == ["H1", "H2"], rows
     assert kinds["deposits"]["refs"] == ["D1"] and "balances" not in kinds, rows  # B1 is asked about as a fee
     assert [r["item"]["ref"] for r in rows if r["kind"] == "fee"] == ["B1"], rows
-    assert models.hand_reason(got[0], True) == "notes and recorded facts disagree: cancellation"
+    # the badge (money_report's label) names the family; the reason says what holding it means
+    assert mr.hand_check_label(got[0]) == "notes and recorded facts disagree: cancellation"
+    assert models.hand_reason(got[0], True) == models.HELD_REASON
 
 
 def test_the_monday_overdue_and_balances_lines_skip_held_bookings():

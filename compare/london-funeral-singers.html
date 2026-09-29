@@ -2578,7 +2578,7 @@
             "name": "Do you charge VAT?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "No. Your invoice comes from Alma Consort Ltd, the operating company behind The London Choral Service. It is not VAT-registered, so the price we quote is the price you pay."
+              "text": "No. We are not VAT-registered, so the price we quote is the price you pay."
             }
           },
           {
@@ -2746,7 +2746,7 @@
             <dt>Price</dt>
             <dd>You save &pound;80 on a soloist, rising to &pound;1,800 on a twelve-voice chorus.</dd>
             <dt>VAT</dt>
-            <dd>Their prices are quoted plus VAT. We invoice as Alma Consort Ltd, trading as The London Choral Service, and are not VAT-registered, so the figure we quote is the figure on the invoice.</dd>
+            <dd>Their prices are quoted plus VAT. We are not VAT-registered, so the figure we quote is the figure on the invoice.</dd>
             <dt>Music</dt>
             <dd>Our choirs of four to eight sing up to three performance pieces and every hymn. Their equivalent packages publish one piece and up to three hymns.</dd>
           </dl>
@@ -2984,7 +2984,7 @@
           <h3>Why are your prices lower?</h3>
           <p>We are not VAT-registered, so nothing is added at the end. We keep a small team rather than a large agency book. Travel within Greater London, sheet music, and rehearsal are already in the quoted figure.</p>
           <h3>Do you charge VAT?</h3>
-          <p>No. Your invoice comes from Alma Consort Ltd, the operating company behind The London Choral Service. It is not VAT-registered, so the price we quote is the price you pay.</p>
+          <p>No. We are not VAT-registered, so the price we quote is the price you pay.</p>
           <h3>What is included in the price?</h3>
           <p>Rehearsal and preparation, sheet music, a music director, coordination with your funeral director and the venue, and travel within Greater London.</p>
           <h3>How many pieces will the choir sing?</h3>
@@ -3089,21 +3089,6 @@
     <a href="/funerals.html" class="mobile-cta-enquire">Enquire</a>
   </div>
   <script src="../js/nav.js" defer></script>
-  <script>
-    document.querySelectorAll('.video-thumb').forEach(function(btn) {
-      btn.addEventListener('click', function() {
-        var id = btn.getAttribute('data-video');
-        var wrap = btn.closest('.video-embed');
-        var iframe = document.createElement('iframe');
-        iframe.src = 'https://www.youtube-nocookie.com/embed/' + id + '?autoplay=1';
-        iframe.title = (btn.getAttribute('aria-label') || 'The London Choral Service').replace(/^Play /, '') + ' — The London Choral Service';
-        iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
-        iframe.allowFullscreen = true;
-        iframe.style.border = '0';
-        wrap.innerHTML = '';
-        wrap.appendChild(iframe);
-      });
-    });
-  </script>
+  <script src="../js/video.js" defer></script>
 </body>
 </html>

@@ -92,6 +92,33 @@ def live_facts(subject, id_):
              "kind": e["kind"]} for e in f.live if e["kind"] not in ("retract", "notes-checked", "bank-warning")]  # a warning: confirm, not undo
 
 
+def fact_items(subject, id_, today):
+    """A booking's or invoice's recorded facts as timeline items (spec, "Command Centre: Reads"), oldest first, and
+    the note hashes they claim: ({date: on, kind: "fact", text: "<Words> (<who>)"}, claimed). A fact undone as a
+    mistake stays, marked "undone on D" (history); the undo itself, and a write-failed fact (it never happened), are
+    left out. "The recorded facts are right" shows as its own item; the clauses it confirmed stay as notes."""
+    if not id_ or not cp.lcs_events.loggable(subject, id_):
+        return [], set()
+    f = cp.lcs_events.facts(subject, id_, today)
+    undone = {e["fields"]["target"]: e["on"] for e in f.events if e["kind"] == "retract"}
+    out, claimed = [], set()
+    for e in f.events:
+        if e.get("retracted") == "write-failed":
+            continue
+        if e.get("note"):
+            claimed.add(e["note"])
+        if e["kind"] == "retract":
+            continue
+        words = ("Notes checked: the recorded facts are right" if e["kind"] == "notes-checked"
+                 else FACT_WORDS.get(e["kind"], e["kind"]))
+        text = f"{words[:1].upper()}{words[1:]} ({fact_who(e)})"
+        if e.get("retracted") == "mistake":
+            d = to_date(undone.get(e["eid"]))
+            text += f", undone on {d.day} {d:%b %Y}" if d else ", undone"
+        out.append(item(to_date(e["on"]), "fact", text, tone="" if not e.get("retracted") else "muted"))
+    return out, claimed
+
+
 RING_REASON = "bank details changed since their last invoice: ring them on a number you already hold"
 NEW_REASON = "bank details not confirmed yet: ring them on a number you already hold, then confirm"
 NO_BANK_REASON = "no bank details on the invoice: ask them for their details"
@@ -108,13 +135,51 @@ def singer_trust(store_rows, r):
     Never trusted while ring_first_in says to ring (the details changed since the trusted ones)."""
     fp = r.get("bank_fp") or ""
     ring = si.ring_first_in(store_rows, r)
-    label = si.trust_label(store_rows, r) if fp else ""
+    held = si.held_readings(store_rows, r)
+    label = trust_words(store_rows, r) if fp else ""
     if not label and fp and (r.get("payee") or "").startswith("existing: ") and r.get("bank_changed") != "yes":
         label = "Starling payee"
     trusted = bool(label) and not ring
-    reason = "" if trusted else RING_REASON if ring else NEW_REASON if fp else NO_BANK_REASON
-    return {"trusted": trusted, "trust": label if trusted else "", "reason": reason,
+    reason = ("" if trusted else held_reason(held) if held else RING_REASON if ring else NEW_REASON if fp
+              else NO_BANK_REASON)
+    return {"trusted": trusted, "trust": label if trusted else "", "reason": reason, "held": held,
             "bill_number": mask_digits(si.bill_number(r.get("invoice_ref"), r.get("message_id")))}
+
+
+def held_reason(held):
+    """Why a held invoice or booking waits: "notes and recorded facts disagree: <families>" (money_report's words)."""
+    return "notes and recorded facts disagree: " + ", ".join(x["family"] for x in held)
+
+
+CONFIRMED_ON = re.compile(r"^bank details confirmed by phone (\d{4}-\d{2}-\d{2})")
+
+
+def confirmed_on(store_rows, r):
+    """The latest day this account (r's fingerprint) was confirmed by phone on any invoice that vouches for it: the
+    recorded bank-confirmed facts for these details, else the notes' "bank details confirmed by phone D". None when
+    no date is known (a hand-set bank_confirmed, say)."""
+    fp = r.get("bank_fp") or ""
+    days = []
+    for x in [r] + [x for x in store_rows if x is not r and x.get("bank_fp") == fp]:
+        if not fp or not si.confirmed(x):
+            continue
+        mid = (x.get("message_id") or "").strip()
+        if mid and cp.lcs_events.loggable("singer_invoice", mid):
+            days += [to_date(e["on"]) for e in cp.lcs_events.invoice_facts(mid, lm.today()).of("bank-confirmed")
+                     if e["fields"]["fp8"] == fp[:8]]
+        for c in (x.get("notes") or "").split(";"):
+            m = CONFIRMED_ON.match(c.strip())
+            if m:
+                days.append(to_date(m.group(1)))
+    days = [d for d in days if d]
+    return max(days) if days else None
+
+
+def trust_words(store_rows, r):
+    """singer_invoices.trust_label, with the day for a phone confirmation: "confirmed by phone on 21 Sep 2026"."""
+    label = si.trust_label(store_rows, r)
+    d = confirmed_on(store_rows, r) if label == "confirmed by phone" else None
+    return f"{label} on {d.day} {d:%b %Y}" if d else label
 
 
 def singer_pay_list(singers, bill_flags=None):
@@ -266,7 +331,11 @@ def ledger_timeline(row, booking, today):
                        ("hand_check_payments", "Payment to check by hand")):
         for d, amount in a.get(key) or []:
             out.append(item(to_date(d), "money", f"{words}: £{amount:,.2f}", tone="warn"))
+    items, claimed = fact_items("booking", booking["ref"], today)
+    out += items
     for clause in [c.strip() for c in (row.get("notes") or "").split(";") if c.strip()]:
+        if cp.lcs_events.note_hash(clause) in claimed:
+            continue  # shown once, as its recorded fact
         m = ISO_DAY.search(clause)
         kind = "review" if cp.REVIEW_NOTE.search(clause) else "note"
         out.append(item(to_date(m.group(1)) if m else None, kind, mask_note(clause, row.get("client_name"))))
@@ -554,13 +623,16 @@ def fee_shortfall(a, bank_checked):
             "state": a.get("state")}
 
 
+HELD_REASON = "nothing is chased, receipted, recorded in Books or uploaded until you settle which is right"
+
+
 def hand_reason(a, bank_checked):
     """Why a booking is on the hand check, in plain words with the amounts (the facts check_payments.describe
     gives, shortened for a phone): "£36.15 short of £733.08; the event has passed"."""
     state, value = a.get("state"), float(a.get("value") or 0)
     received, balance = float(a.get("received") or 0), float(a.get("balance") or 0)
-    if a.get("held"):  # whatever its state, the question is the disagreement
-        return mr.hand_check_label(a)
+    if a.get("held"):  # whatever its state, the question is the disagreement (the label names the families)
+        return HELD_REASON
     if not bank_checked:
         return f"{_gbp(value)} booking; this comes from the ledger notes, as the bank isn't checked"
 
@@ -593,16 +665,26 @@ def hand_reason(a, bank_checked):
     return mr.hand_check_label(a)
 
 
-def hand_rows(assessments, today, bank_checked):
+def hand_rows(assessments, today, bank_checked, ledger=None):
     """The hand-check list (dashboard.hand_check: money_report.needs_hand_check, one row each), each with its
-    plain-words `reason`, its `event_date` and, when it qualifies, its transfer-fee question (`fee`)."""
+    plain-words `reason`, its `event_date`, when it qualifies its transfer-fee question (`fee`) and, for a held
+    booking (its notes and recorded facts disagree), `held`: check_payments.held_readings from its ledger row (each
+    family with the notes' reading, the recorded one and the loose clauses "The recorded facts are right" would
+    confirm), [] otherwise."""
     by_ref = {a["ref"]: a for a in assessments}
+    rows = {(r.get("booking_ref") or "").strip(): r for r in ledger or []}
     out = []
     for h in dash.hand_check(assessments, today):
         a = by_ref.get(h["ref"]) or {}
+        held = cp.held_readings(rows[h["ref"]], today) if a.get("held") and h["ref"] in rows else []
         out.append(dict(h, reason=hand_reason(a, bank_checked), event_date=a.get("event_date"),
-                        fee=fee_shortfall(a, bank_checked)))
+                        fee=fee_shortfall(a, bank_checked), held=held))
     return out
+
+
+def held_words(held):
+    """"the notes say X; the recorded facts say Y" for each held family, joined: the two readings side by side."""
+    return "; ".join(f"{x['family']}: the notes say {x['notes']}; the recorded facts say {x['facts']}" for x in held)
 
 
 NEEDS_SOURCES = {  # panel name -> how "Some sources didn't load" names it
@@ -825,20 +907,25 @@ def singer_directory(rows, today):
         latest = live[0] if live else group[0]
         paid = [r for r in live if r.get("paid_on")]
         warnings = []
-        if any(si.ring_first_in(rows, r) for r in live if si.is_open(r)):
+        held = {id(r): si.held_readings(rows, r) for r in live}
+        if any(si.ring_first_in(rows, r) and not held[id(r)] for r in live if si.is_open(r)):
             warnings.append("Bank details changed: ring on a number you already have before paying")
+        for r in live:
+            if held[id(r)]:  # held whether open or not: the notes and the recorded facts disagree on it
+                w = f"{held_reason(held[id(r)])} ({held_words(held[id(r)])}): check it before paying"
+                warnings += [w] if w not in warnings else []
         for r in live:
             if si.is_open(r):
                 warnings += [w for w in _warnings(rows, r) if w not in warnings]
         if not latest.get("bank_fp"):
             check = "no bank details on file"
         else:  # the account, not just this row: confirmed or paid to verifiably on any invoice with the same details
-            check = si.trust_label(rows, latest) or "not yet verified"
+            check = trust_words(rows, latest) or "not yet verified"
         invoices = [{"received": si.received_date(r), "bill_number": si.bill_number(r.get("invoice_ref"), r.get("message_id")),
                      "amount": lm.money(r.get("amount_gbp")), "paid_on": to_date(r.get("paid_on")),
                      "paid_amount": lm.parse_gbp(r.get("paid_amount")), "open": si.is_open(r),
                      "ring_first": si.ring_first_in(rows, r), "last4": dash.digits4(r.get("bank_last4")),
-                     **singer_actions(r)} for r in live]
+                     "held": held[id(r)], **singer_actions(r)} for r in live]
         withdrawn = [{"received": si.received_date(r), "bill_number": si.bill_number(r.get("invoice_ref"), r.get("message_id")),
                       "amount": lm.money(r.get("amount_gbp")), "on": to_date(r.get("withdrawn")),
                       "key": invoice_key(r.get("message_id")),

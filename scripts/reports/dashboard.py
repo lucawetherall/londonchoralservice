@@ -87,7 +87,8 @@ def first_name(name):
 
 
 def payments(client, rows, today):
-    """(assessments, receipts or None, bank_checked). Without a working bank: each open row's notes-only state."""
+    """(assessments, receipts or None, bank_checked). Without a working bank: each open row's notes-only state, and
+    each closed or cancelled row whose notes and recorded facts disagree (held: a hand check, as collect reports)."""
     if client is not None:
         try:
             assessments = [a for _, _, a in cp.collect(client, rows, today)]
@@ -95,7 +96,9 @@ def payments(client, rows, today):
             return assessments, receipts, True
         except BANK_DOWN:
             pass
-    return [cp.assess(r, [], today) for r in cp.open_rows(rows)], None, False
+    live = cp.open_rows(rows)
+    shown = [r for r in rows if any(r is x for x in live) or cp.held(r, today)]
+    return [cp.assess(r, [], today) for r in shown], None, False
 
 
 def upcoming(rows, assessments, bank_checked, today):

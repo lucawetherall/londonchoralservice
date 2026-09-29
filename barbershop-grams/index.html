@@ -763,6 +763,21 @@
     }
     .bs-form-error[data-visible="true"] { display: block; }
     .h-captcha { margin-top: 2rem; }
+    /* hCaptcha's checkbox is a fixed 302px iframe, wider than the 280px form
+       column on a 320px phone (the rail's 1.25rem padding each side keeps the
+       column under 302px up to a 341px viewport). This register loads no script
+       that can ask for the compact widget, so the full-size one is shrunk to
+       fit. The line box keeps the unscaled width, so the wrapper clips it
+       (nothing visible). Same fix as ce8900ee for the private register. */
+    @media (max-width: 341px) {
+      .h-captcha:not([data-size="compact"]) {
+        overflow: hidden;
+      }
+      .h-captcha:not([data-size="compact"]) iframe {
+        transform: scale(.92);
+        transform-origin: 0 0;
+      }
+    }
     #bs-form-success {
       margin-top: 2.25rem;
       padding: 1rem 1.25rem;

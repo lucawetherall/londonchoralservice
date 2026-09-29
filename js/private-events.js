@@ -228,6 +228,17 @@
     // custom flow below takes over.
     form.setAttribute('novalidate', '');
 
+    // hCaptcha's normal checkbox is a fixed 302px iframe; on a 320px phone the
+    // form is narrower and the page scrolls sideways. Ask for the compact
+    // widget (158px) wherever the normal one won't fit. hCaptcha reads
+    // data-size when it renders, so set it only while its script has yet to
+    // run; the private-register CSS shrinks a full-size widget that got there
+    // first. (Same fix as js/form.js.)
+    var captchaBox = form.querySelector('.h-captcha');
+    if (captchaBox && !window.hcaptcha && captchaBox.clientWidth < 302) {
+      captchaBox.setAttribute('data-size', 'compact');
+    }
+
     var successBox = document.getElementById('pe-form-success');
     var errorBox = document.querySelector('.pe-form-error:not(.pe-captcha-error)');
     var captchaError = document.getElementById('captcha-error');

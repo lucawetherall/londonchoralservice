@@ -97,6 +97,7 @@ Notes conventions in `bookings.csv`:
 - PENDING is a prefix: a row whose notes start with it waits for its deposit before any upload.
 - A cancellation is not a prefix: it is usually appended ("…; cancelled 2026-10-05 by client email"). Every script uses `check_payments.is_cancelled`, which finds "cancelled", "cancellation confirmed/received/requested" or "cancelling" anywhere in the notes (not after "if" or "unless"), undone only by a later explicit "reinstated", "cancellation withdrawn", "going ahead after all" or "back on". A cancelled row is never uploaded, chased, counted as a booking or asked for a review (tests/test_cancel_contract.py).
 - The suffixes "reminder drafted", "balance reminder drafted", "receipt drafted" and "review request drafted" each carry a date, so nothing is sent twice.
+- Since 29 September 2026 these facts are also structured records: each one is a validated line in the state log, `~/lcs-private/events.jsonl`, written with its note by the same script under the same lock, and the readers read the log first and the notes only where the log has nothing ([structured-state design](2026-09-29-structured-state-design.md)). The assistant records a cancellation, a client's "we've paid" and a balance arrangement with `check_payments.py --fact <ref> <kind>`, which writes the phrases above itself; `--note` takes free text only and refuses those. A hand-typed phrase that contradicts a recorded fact holds the booking for the owner (a hand check) instead of acting by itself.
 
 ## Order and dependencies
 

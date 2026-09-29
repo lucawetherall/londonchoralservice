@@ -50,6 +50,10 @@
 <section class="card">
   <h2>Resolve a hand check</h2>
   <p class="muted">Adds your note (paid in full, short by transfer fees, deposit kept, refunded and so on) to this booking's ledger notes, after Face ID or Touch ID.</p>
+  {% if held.ok and held.value %}
+  <p><span class="badge bad">held</span> Its notes and its recorded facts disagree: nothing is chased, receipted, recorded in Books or uploaded until you settle which is right.</p>
+  {{ m.held_panel(held.value, "booking", ref) }}
+  {% endif %}
   {{ m.resolve_form(ref, action_day, fee=b.balance if (booking.ok and b and b.bank_checked and b.state in FEE.states and b.received) else none) }}
   {% if facts.ok and facts.value %}
   <p class="muted">A fact recorded by mistake can be undone: it stays in the log as history, and the booking reads as if it had never been recorded.</p>

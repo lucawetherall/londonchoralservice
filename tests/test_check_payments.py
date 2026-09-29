@@ -272,14 +272,14 @@ def test_cli_reminded_unknown_ref_fails():
 
 
 def test_cli_note_is_appended():
-    p, notes = run_cli("PENDING: invoiced", "--note", "2111", "paid per client email 2026-09-28")
-    assert p.returncode == 0 and notes == "PENDING: invoiced; paid per client email 2026-09-28", notes
+    p, notes = run_cli("PENDING: invoiced", "--note", "2111", "4 singers, London")
+    assert p.returncode == 0 and notes == "PENDING: invoiced; 4 singers, London", notes
     assert p.stdout.strip() == "2111: note added"
 
 
 def test_cli_note_on_empty_notes_has_no_leading_separator():
-    p, notes = run_cli("", "--note", "2111", "cancelled 2026-09-28")
-    assert p.returncode == 0 and notes == "cancelled 2026-09-28", notes
+    p, notes = run_cli("", "--note", "2111", "client asked about parking")
+    assert p.returncode == 0 and notes == "client asked about parking", notes
 
 
 def test_cli_note_unknown_ref_fails():
@@ -914,7 +914,7 @@ def test_every_ledger_writer_refuses_a_row_wider_than_the_header():
     path, _ = _ragged_ledger()
     before = open(path).read()
     attempts = [("check_payments", ["check_payments.py", "--reminded", "0512"], cp.main),
-                ("check_payments", ["check_payments.py", "--note", "0512", "paid per client email 2026-09-28"], cp.main),
+                ("check_payments", ["check_payments.py", "--note", "0512", "4 singers, London"], cp.main),
                 ("assistant_io", ["assistant_io.py", "ledger-add", json.dumps({"booking_ref": "0612", "occasion": "wedding"})], aio.main)]
     for name, argv, fn in attempts:
         saved = (sys.argv, cp.LEDGER, aio.LEDGER)
@@ -1279,10 +1279,21 @@ def test_note_refuses_the_reserved_phrases():
         assert "by hand" in p.stderr, (text, p.stderr)
 
 
-def test_note_still_takes_the_prompts_phrases():
-    for text in ("cancelled 2026-09-28 by client email", "paid per client email 2026-09-28"):
+def test_note_refuses_the_old_prompt_phrases_and_names_the_fact_form():
+    for text, form in (("cancelled 2026-09-28 by client email", "--fact 2111 cancelled"),
+                       ("paid per client email 2026-09-28", "--fact 2111 noted-paid --scope part")):
         p, notes = run_cli("PENDING: invoiced", "--note", "2111", text)
-        assert p.returncode == 0 and notes == "PENDING: invoiced; " + text, (text, p.stderr, notes)
+        assert p.returncode != 0 and notes == "PENDING: invoiced" and form in p.stderr, (text, p.stderr, notes)
+
+
+def test_the_owners_note_is_not_refused_and_records_what_it_states():
+    d, path = owner_ledger()
+    nonce_file(d)
+    p, notes = run_owner(d, path, ["--note", "2111", "cancelled 2026-09-28 by phone", "--owner"],
+                         stdin_text=NONCE + "\n")
+    assert p.returncode == 0 and notes == "PENDING: invoiced; cancelled 2026-09-28 by phone (owner)", p.stderr
+    log = [e for e in log_of(d) if e["src"] == "live"]
+    assert [(e["kind"], e["by"]) for e in log] == [("cancelled", "owner")], log
 
 
 # ---------------------------------------------------------------- --owner (the Command Centre's hand-check resolutions)
@@ -1893,24 +1904,25 @@ def test_a_ledger_write_that_fails_after_the_fact_withdraws_it():
     assert [(e["kind"], e["fields"].get("why")) for e in log_of(d)] == [("cancelled", None), ("retract", "write-failed")]
 
 
-def test_note_keeps_its_text_and_records_the_fact_it_states_until_the_refusal_is_switched_on():
-    """Until the prompts use --fact (plan, Task 18), the assistant's fact-shaped --note lines still work, and record
-    the fact they state claiming the note, so a later fact in that family never holds the booking."""
-    assert cp.NOTE_REFUSES_FACTS is False
-    for text, facts in (("cancelled 2026-09-28 by client email", [("cancelled", {})]),
-                        ("paid per client email 2026-09-28", [("noted-paid", {"scope": "part"})]),
-                        ("balance to be paid in cash", [("arranged", {"method": "cash"})]),
-                        ("4 singers, London", [])):
-        p, notes, log = run_fact("PENDING: invoiced", "--note", "2111", text)
-        assert p.returncode == 0 and notes == "PENDING: invoiced; " + text and p.stdout.strip() == "2111: note added", \
-            (text, p.stderr)
-        assert [(e["kind"], e["fields"]) for e in log] == facts, (text, log)
-        assert all(e["by"] == "script" and e["on"] == TD and e["note"] == ev.note_hash(text) for e in log), log
-        p, notes, log = run_fact("PENDING: invoiced", "--note", "2111", text, migrated=False)
-        assert p.returncode == 0 and notes == "PENDING: invoiced; " + text and log == [], (text, p.stderr)
+def test_note_refuses_fact_shaped_text_naming_the_fact_form_and_records_nothing():
+    """Owner decision, 29 Sep 2026 (question 3): the prompts use --fact, so --note refuses text that states a
+    cancellation, an arrangement or a payment the client reported, naming the --fact form so the assistant corrects
+    itself in the same run; before and after the migration alike. Free text still passes and records no fact."""
+    assert cp.NOTE_REFUSES_FACTS is True
+    for text, form in (("cancelled 2026-09-28 by client email", "--fact 2111 cancelled"),
+                       ("cancelled 2026-09-28", "--fact 2111 cancelled"),
+                       ("paid per client email 2026-09-28", "--fact 2111 noted-paid --scope part"),
+                       ("balance paid per client email 2026-09-28", "--fact 2111 noted-paid --scope full"),
+                       ("balance to be paid in cash", "--fact 2111 arranged --method cash|cheque|third-party")):
+        for migrated in (True, False):
+            p, notes, log = run_fact("PENDING: invoiced", "--note", "2111", text, migrated=migrated)
+            assert p.returncode != 0 and notes == "PENDING: invoiced" and log == [], (text, p.stderr)
+            assert f"record it with {form}; nothing written" in p.stderr, (text, p.stderr)
+    p, notes, log = run_fact("PENDING: invoiced", "--note", "2111", "4 singers, London")
+    assert p.returncode == 0 and notes == "PENDING: invoiced; 4 singers, London" and log == [], (p.stderr, log)
 
 
-def test_a_noted_cancellation_then_the_owners_reinstatement_reads_reinstated_and_is_never_held():
+def test_a_recorded_cancellation_then_the_owners_reinstatement_reads_reinstated_and_is_never_held():
     def go(d):
         path = os.path.join(d, "bookings.csv")
         cp.lm.write_csv(path, [row("2111", 650, "2026-08-22", "2026-11-21", "PENDING: invoiced")],
@@ -1919,7 +1931,7 @@ def test_a_noted_cancellation_then_the_owners_reinstatement_reads_reinstated_and
                  os.environ.pop("LCS_BOOKINGS_CSV"))
         try:
             cp.LEDGER = path
-            for argv in (["--note", "2111", "cancelled 2026-09-20 by client email"],
+            for argv in (["--fact", "2111", "cancelled", "--on", "2026-09-20"],
                          ["--fact", "2111", "reinstated", "--owner"]):
                 cp.lcs_owner.owner_confirmed, cp.lcs_owner._PROVEN = (lambda *a: True), "--owner" in argv
                 sys.argv = ["check_payments.py", *argv]
@@ -1935,7 +1947,7 @@ def test_a_noted_cancellation_then_the_owners_reinstatement_reads_reinstated_and
     assert (cancelled, held, by_notes) == (False, [], False), (r["notes"], cancelled, held)
 
 
-def test_note_refuses_fact_shaped_text_once_switched_on():
+def test_note_refusal_names_each_fact_form_and_passes_free_text():
     want = {"cancelled 2026-09-28 by client email": "--fact 2111 cancelled",
             "client cancelling": "--fact 2111 cancelled",
             "paid per client email 2026-09-28": "--fact 2111 noted-paid --scope part",
@@ -1951,10 +1963,10 @@ def test_note_refuses_fact_shaped_text_once_switched_on():
         path = os.path.join(d, "bookings.csv")
         cp.lm.write_csv(path, [row("2111", 650, "2026-08-22", "2026-11-21", "PENDING: invoiced")],
                         list(row("a", 1, "", "").keys()))
-        saved = (sys.argv, cp.LEDGER, cp.NOTE_REFUSES_FACTS)
+        saved = (sys.argv, cp.LEDGER)
         out = []
         try:
-            cp.LEDGER, cp.NOTE_REFUSES_FACTS = path, True
+            cp.LEDGER = path
             for text in ("cancelled 2026-09-28 by client email", "4 singers, London"):
                 sys.argv = ["check_payments.py", "--note", "2111", text]
                 try:
@@ -1964,7 +1976,7 @@ def test_note_refuses_fact_shaped_text_once_switched_on():
                 except SystemExit as e:
                     out.append(str(e))
         finally:
-            sys.argv, cp.LEDGER, cp.NOTE_REFUSES_FACTS = saved
+            sys.argv, cp.LEDGER = saved
         return out, cp.lm.read_csv(path)[0]["notes"]
     _, (out, notes) = in_private(go)
     assert out[0] == "record it with --fact 2111 cancelled; nothing written" and out[1] == "written", out

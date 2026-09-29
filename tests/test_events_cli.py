@@ -395,6 +395,79 @@ def test_retract_of_a_singer_fact_puts_its_column_back():
     assert not si.is_withdrawn(rows["m1"]) and not si.confirmed(rows["m2"]) and si.is_open(rows["m3"])
 
 
+# --- notes-checked: "The recorded facts are right" (Command Centre only) --------------------------------------------
+
+def test_notes_checked_confirms_the_recorded_facts_and_releases_a_held_booking():
+    import check_payments as cp
+    d = fresh()
+    clause, loose = "cancelled 2026-09-20 by client email", "client says back on 2026-09-25"
+    write_ledger(d, {"2111": f"4 singers; {clause}; {loose}"})
+    migrated(d)
+    ev.append("booking", "2111", "cancelled", {}, "script", on="2026-09-20", note=ev.note_hash(clause))
+    row = lambda: {"booking_ref": "2111", "notes": ledger_notes(d), "value_gbp": "650",  # noqa: E731
+                   "invoice_date": "2026-09-01", "event_date": "2026-12-12"}
+    ev.clear_cache()
+    assert cp.held(row()) == ["cancellation"], cp.held(row())
+    h = ev.note_hash(loose)
+    for args, nonce in ((("notes-checked", "booking", "2111", h), True),
+                        (("notes-checked", "booking", "2111", h, "--owner"), False),
+                        (("notes-checked", "booking", "2111", ev.note_hash(clause), "--owner"), True),  # claimed
+                        (("notes-checked", "booking", "2111", "0123456789ab", "--owner"), True),  # no such clause
+                        (("notes-checked", "booking", "2111", "XYZ", "--owner"), True),
+                        (("notes-checked", "booking", "2111", h, h, "--owner"), True),
+                        (("notes-checked", "booking", "9999", h, "--owner"), True),
+                        (("notes-checked", "booking", "bad ref", h, "--owner"), True),
+                        (("notes-checked", "enquiry", "2111", h, "--owner"), True)):
+        code, out = run_owner(*args, nonce=nonce)
+        assert code != 0 and ("nothing written" in out or "invalid choice" in out), (args, out)
+    assert ledger_notes(d) == f"4 singers; {clause}; {loose}"
+    code, out = run_owner("notes-checked", "booking", "2111", h, "--owner")
+    assert code == 0 and out.strip() == "booking 2111: 1 note clause confirmed as read by the recorded facts", out
+    today = ev.lm.today().isoformat()
+    assert ledger_notes(d) == f"4 singers; {clause}; {loose}; notes checked {today} (owner)"
+    ev.clear_cache()
+    last = ev.read()[0][-1]
+    assert (last["kind"], last["fields"], last["by"], last["note"]) == (
+        "notes-checked", {"clauses": [h]}, "owner", ev.note_hash(f"notes checked {today} (owner)"))
+    assert cp.held(row()) == [] and cp.is_cancelled(row()), "the recorded cancellation stands, nothing held"
+    assert cp.fact_shaped(f"notes checked {today} (owner)") is None and not cp.reserved_note("x")
+    code, out = run_owner("notes-checked", "booking", "2111", h, "--owner")  # now claimed: refused
+    assert code != 0 and "nothing written" in out, out
+    code, out = run("verify")
+    assert code == 0, out
+
+
+def test_notes_checked_before_the_migration_writes_nothing():
+    d = fresh()
+    write_ledger(d, {"2111": "4 singers; reinstated 2026-09-25"})
+    code, out = run_owner("notes-checked", "booking", "2111", ev.note_hash("reinstated 2026-09-25"), "--owner")
+    assert code != 0 and "nothing written" in out and ledger_notes(d) == "4 singers; reinstated 2026-09-25", out
+
+
+def test_notes_checked_releases_a_held_singer_invoice_and_is_never_a_warning():
+    import singer_invoices as si
+    d = fresh()
+    write_ledger(d, {})
+    migrated(d)
+    loose = "withdrawn 2026-09-17 (duplicate)"
+    write_store(d, [{"message_id": "m1", "received": "2026-09-01", "amount_gbp": "100.00", "notes": loose}])
+    lcs = __import__("lcs_owner")
+    saved, lcs._PROVEN = lcs._PROVEN, True
+    try:  # a withdrawal recorded and undone: the loose note contradicts the family
+        eid = ev.append("singer_invoice", "m1", "withdrawn", {"reason": "not-ours"}, "script", on="2026-09-15")
+        ev.append("singer_invoice", "m1", "retract", {"target": eid, "why": "mistake"}, "owner", on="2026-09-16")
+    finally:
+        lcs._PROVEN = saved
+    ev.clear_cache()
+    rows, r = store_row(d, "m1")
+    assert si.held(rows, r) == ["withdrawal"], si.held(rows, r)
+    code, out = run_owner("notes-checked", "singer_invoice", "m1", ev.note_hash(loose), "--owner")
+    assert code == 0 and out.strip().startswith("singer invoice m1: 1 note clause confirmed"), out
+    ev.clear_cache()
+    rows, r = store_row(d, "m1")
+    assert si.held(rows, r) == [] and not any("notes checked" in w for w in si.live_warnings(rows, r)), r["notes"]
+
+
 def test_the_log_is_never_committed():
     lines = open(os.path.join(ROOT, ".gitignore"), encoding="utf-8").read().splitlines()
     assert "events*.jsonl" in lines
