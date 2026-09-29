@@ -31,6 +31,12 @@
 - **Stale run.** Between 08:00 and 21:00 London time, if the enquiry assistant's state file hasn't changed for
   more than 3 daytime hours (the hours from 21:00 to 08:00 don't count, so the first run of the morning is never
   late), one push says so; it isn't repeated until the file changes again.
+- **Alerts on silence**, built from the app's own state (never from events.jsonl, whose lines of these kinds are
+  dropped): `sync-stale` when the Books cache or the static dashboard hasn't been written for more than 3 hours of
+  the refresh job's day (07:00 to 22:00 London), "Books sync has stopped" (or "Dashboard refresh has stopped"),
+  "Last good sync HH:MM. Open Health."; and `books-disagree` when one of Today's Books flags has been there for
+  more than 24 hours, naming only the booking ref and a fixed phrase. Each at most once per London day per subject
+  (st["alerts"] in push-state.json), only between 07:00 and 22:00, and through the same caps and endpoint checks.
 """
 
 import asyncio
@@ -82,8 +88,17 @@ KINDS = {  # kind -> (title, the page a tap opens)
     "monday-ready": ("Monday review ready", "/reports"),
     "hand-check": ("Hand check added", "/money"),
     "run-stale": ("Enquiry assistant not seen", "/health"),
+    "sync-stale": ("Books sync has stopped", "/health"),
+    "books-disagree": ("Books disagreement", "/"),
 }
-assert set(KINDS) - {"run-stale"} == set(cc_event.KINDS)
+APP_KINDS = {"run-stale", "sync-stale", "books-disagree"}  # built here from the app's own state, never from events.jsonl
+assert set(KINDS) - APP_KINDS == set(cc_event.KINDS)
+SYNC_TITLES = {"books": "Books sync has stopped", "dashboard": "Dashboard refresh has stopped"}
+SYNC_START, SYNC_END = 7, 22  # London hours in which the refresh job runs (and the silence alerts may fire)
+SYNC_STALE_AFTER = datetime.timedelta(hours=3)  # daytime hours without a good write
+SYNC_GRACE = 30  # minutes after 07:00 before a sync-stale alert: the day's first pass runs at 07:00
+DISAGREE_AFTER = datetime.timedelta(hours=24)  # a books_flags item present this long
+FLAGS_EVERY = 30 * 60  # seconds between the watcher's looks at the Books flags (each may read the bank cache)
 STATE_WORDS = {
     "CHECK_PAYMENT": "check a payment", "CHECK_VALUE": "check the booking value", "NOTED_PAID": "noted as paid",
     "PAST_UNMATCHED": "past, payment not matched", "PAST_PART_PAID": "past, part paid",
@@ -342,8 +357,23 @@ TEMPLATES = {  # kind -> the body, from validated fields only
     "run-failed": lambda f: "Open Health for the details.",
     "monday-ready": lambda f: "Changes are waiting for your approval.",
     "run-stale": lambda f: f"Not run for 3 daytime hours ({_stale_words(f['last'])}).",
+    "sync-stale": lambda f: f"Last good sync {_clock_words(f['last'], f['at'])}. Open Health.",
+    "books-disagree": lambda f: f"{f['ref']}: Books has disagreed for over a day. Open Today.",
 }
 assert set(TEMPLATES) == set(KINDS)
+
+
+def _aware(value):
+    when = datetime.datetime.fromisoformat(value)
+    if when.tzinfo is None:
+        raise ValueError("naive time")
+    return when.astimezone(LONDON)
+
+
+def _clock_words(last, at):
+    """"07:30" when the last good sync was on the day of the alert, else "Sat 07:30"."""
+    last, at = _aware(last), _aware(at)
+    return f"{last:%H:%M}" if last.date() == at.date() else f"{last:%a %H:%M}"
 
 
 def _fields(kind, fields):
@@ -353,6 +383,17 @@ def _fields(kind, fields):
             raise ValueError("run-stale takes last")
         _stale_words(fields["last"])
         return {"last": fields["last"]}
+    if kind == "sync-stale":
+        if not isinstance(fields, dict) or set(fields) != {"subject", "last", "at"} \
+                or fields["subject"] not in SYNC_TITLES or not all(isinstance(v, str) for v in fields.values()):
+            raise ValueError("sync-stale takes subject, last and at")
+        _clock_words(fields["last"], fields["at"])
+        return dict(fields)
+    if kind == "books-disagree":
+        if not isinstance(fields, dict) or set(fields) != {"ref"} or not isinstance(fields["ref"], str) \
+                or not cc_event.REF_RE.fullmatch(fields["ref"]):
+            raise ValueError("books-disagree takes a booking ref")
+        return {"ref": fields["ref"]}
     return cc_event.validate(kind, fields)
 
 
@@ -368,6 +409,8 @@ def payload(event):
     except (ValueError, KeyError, TypeError):
         return None
     title, url = KINDS[kind]
+    if kind == "sync-stale":
+        title = SYNC_TITLES[fields["subject"]]
     return {"title": title[:TITLE_MAX], "body": body[:BODY_MAX], "url": url}
 
 
@@ -543,14 +586,15 @@ def new_events(st):
     return out
 
 
-def daytime_between(start, end):
-    """How much of [start, end) falls between DAY_START and DAY_END, London time."""
+def daytime_between(start, end, first=DAY_START, last=DAY_END):
+    """How much of [start, end) falls between the hours `first` and `last` (default DAY_START and DAY_END), London
+    time."""
     start, end = start.astimezone(LONDON), end.astimezone(LONDON)
     total = datetime.timedelta(0)
     day = start.date()
     while day <= end.date():
-        lo = datetime.datetime.combine(day, datetime.time(DAY_START), LONDON)
-        hi = datetime.datetime.combine(day, datetime.time(DAY_END), LONDON)
+        lo = datetime.datetime.combine(day, datetime.time(first), LONDON)
+        hi = datetime.datetime.combine(day, datetime.time(last), LONDON)
         a, b = max(lo, start), min(hi, end)
         if b > a:
             total += b - a
@@ -576,6 +620,100 @@ def stale_run(now, st):
     return {"kind": "run-stale", "fields": {"last": "never" if changed is None else changed.isoformat()}}
 
 
+def _mtime(path):
+    try:
+        return datetime.datetime.fromtimestamp(Path(path).stat().st_mtime, LONDON)
+    except FileNotFoundError:
+        return None
+
+
+def sync_paths():
+    """The files whose last write is each sync's last good run: cc_sync.py books keeps the last cache when Books
+    can't be read, and dashboard.py writes the page only when it works."""
+    return {"books": auth.config_dir() / "cache" / "books.json", "dashboard": auth.private_dir() / "dashboard.html"}
+
+
+def _alert_key(kind, subject, now):
+    return f"{kind}:{subject}", now.date().isoformat()
+
+
+def _due_today(st, kind, subject, now):
+    """True when no alert of this kind and subject went out on this London day (st["alerts"])."""
+    key, day = _alert_key(kind, subject, now)
+    return (st.get("alerts") or {}).get(key) != day
+
+
+def mark_sent(st, event, now):
+    """Record an app alert as sent today, and forget the days before (st["alerts"] stays small)."""
+    key, day = _alert_key(event["kind"], event["subject"], now)
+    alerts = {k: v for k, v in (st.get("alerts") or {}).items() if v == day}
+    alerts[key] = day
+    st["alerts"] = alerts
+
+
+def sync_stale(now, st):
+    """sync-stale events due now: the Books cache or the static dashboard not written for more than 3 hours of the
+    refresh job's day (07:00 to 22:00 London, so the night never counts), checked from 07:30 (the day's first pass
+    has had time to run) to 22:00, at most once per London day per subject. A file never written is a sync not set
+    up yet: no alert (Health says so)."""
+    now = now.astimezone(LONDON)
+    if not SYNC_START <= now.hour < SYNC_END or (now.hour == SYNC_START and now.minute < SYNC_GRACE):
+        return []
+    out = []
+    for subject, path in sync_paths().items():
+        changed = _mtime(path)
+        if changed is None or daytime_between(changed, now, SYNC_START, SYNC_END) <= SYNC_STALE_AFTER:
+            continue
+        if _due_today(st, "sync-stale", subject, now):
+            out.append({"kind": "sync-stale", "subject": subject,
+                        "fields": {"subject": subject, "last": changed.isoformat(), "at": now.isoformat()}})
+    return out
+
+
+def books_disagree(now, st, flags):
+    """books-disagree events due now. `flags` is the app's reader (data.Data.books_flags_now): (Today's books_flags,
+    complete) or None when Books isn't synced. Looked at every FLAGS_EVERY seconds between 07:00 and 22:00 London;
+    st["flags_seen"] keeps when each flag (ref and text) was first seen, so one present for more than 24 hours
+    alerts, at most once per London day per booking ref. A flag gone from a complete list is forgotten; while the
+    bank isn't checked (incomplete) nothing is forgotten, since the Starling comparisons are left out then."""
+    now = now.astimezone(LONDON)
+    if flags is None or not SYNC_START <= now.hour < SYNC_END:
+        return []
+    if now.timestamp() - float(st.get("flags_at") or 0) < FLAGS_EVERY:
+        return []
+    st["flags_at"] = now.timestamp()
+    try:
+        found = flags()
+    except Exception as e:  # the type only: a failing read never stops the watcher's other pushes
+        log.warning("push watcher: books flags: %s", type(e).__name__)
+        return []
+    if found is None:
+        return []
+    items, complete = found
+    seen = st.get("flags_seen") if isinstance(st.get("flags_seen"), dict) else {}
+    current = {}
+    for f in items or []:
+        ref = str(f.get("ref") or "")
+        current[f"{ref}|{f.get('text') or ''}"] = ref
+    for key in current:
+        seen.setdefault(key, now.isoformat())
+    if complete:
+        seen = {k: v for k, v in seen.items() if k in current}
+    st["flags_seen"] = seen
+    out, refs = [], set()
+    for key, ref in sorted(current.items()):
+        try:
+            first = _aware(seen[key])
+        except (ValueError, TypeError):
+            seen[key] = now.isoformat()
+            continue
+        if now - first <= DISAGREE_AFTER or ref in refs or not _due_today(st, "books-disagree", ref, now):
+            continue
+        refs.add(ref)
+        out.append({"kind": "books-disagree", "subject": ref, "fields": {"ref": ref}})
+    return out
+
+
 def capped(messages, st, now_ts):
     """The messages to send now: at most PASS_MAX, then one "And N more" in place of the rest, and never more than
     HOUR_MAX in the hour before now_ts (st["sent"] keeps those times; updated in place)."""
@@ -595,8 +733,10 @@ def capped(messages, st, now_ts):
     return out
 
 
-def look(now=None):
-    """One pass of the watcher: new events, then the stale-run check, capped. Returns the payloads it pushed."""
+def look(now=None, flags=None):
+    """One pass of the watcher: new events, then the app's own checks (the stale run, a stopped sync, a lasting
+    Books disagreement), capped. Returns the payloads it pushed. `flags` is the app reader's books_flags_now (None:
+    no books-disagree check). An app alert that the caps hold back isn't marked sent, so it can go later that day."""
     now = now or datetime.datetime.now(LONDON)
     lock_path = auth.config_dir() / "push.lock"
     auth.config_dir().mkdir(mode=0o700, parents=True, exist_ok=True)
@@ -604,12 +744,18 @@ def look(now=None):
     try:
         fcntl.flock(fd, fcntl.LOCK_EX)
         st = load_state()
-        events = new_events(st)
+        # the app's own kinds are built here from its own state, never taken from the events file
+        events = [e for e in new_events(st) if e.get("kind") not in APP_KINDS]
         stale = stale_run(now, st)
         if stale:
             events.append(stale)
-        messages = [m for m in (payload(e) for e in events) if m is not None]
-        messages = capped(messages, st, now.timestamp())
+        events += sync_stale(now, st) + books_disagree(now, st, flags)
+        pairs = [(e, payload(e)) for e in events]
+        messages = capped([m for _, m in pairs if m is not None], st, now.timestamp())
+        sent = {id(m) for m in messages}
+        for e, m in pairs:
+            if m is not None and id(m) in sent and e.get("subject") is not None:
+                mark_sent(st, e, now)
         save_state(st)
     finally:
         os.close(fd)
@@ -618,12 +764,13 @@ def look(now=None):
     return messages
 
 
-async def watch(stop_event=None, poll=POLL):
-    """The service's background loop (started in the app's lifespan). A failing pass is logged by type only."""
+async def watch(stop_event=None, poll=POLL, flags=None):
+    """The service's background loop (started in the app's lifespan). A failing pass is logged by type only.
+    `flags`: the app reader's books_flags_now, for the books-disagree alert."""
     from starlette.concurrency import run_in_threadpool
     while not (stop_event and stop_event.is_set()):
         try:
-            await run_in_threadpool(look)
+            await run_in_threadpool(look, None, flags)
         except Exception as e:
             log.warning("push watcher: %s", type(e).__name__)
         with contextlib.suppress(asyncio.TimeoutError):

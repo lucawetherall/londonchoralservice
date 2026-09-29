@@ -235,9 +235,10 @@ def test_registry_and_passkey_flags():
     assert set(actions.REGISTRY) == {"todo-tick", "resolve-hand-check", "singer-confirm", "singer-settled",
                                      "singer-withdrawn", "refresh-data", "ads-validate", "ads-apply",
                                      "approve-books-import", "books-import-done", "push-subscribe",
-                                     "push-unsubscribe", "backup-now", "draft-mark"}
+                                     "push-unsubscribe", "backup-now", "draft-mark", "sync-now"}
     no_passkey = {n for n, a in actions.REGISTRY.items() if not a.passkey}
-    assert no_passkey == {"todo-tick", "refresh-data", "push-unsubscribe", "backup-now", "draft-mark"}, no_passkey
+    assert no_passkey == {"todo-tick", "refresh-data", "push-unsubscribe", "backup-now", "draft-mark",
+                          "sync-now"}, no_passkey
     assert "todo-tick" not in actions.ROUTED
 
 
@@ -578,6 +579,119 @@ def test_refresh_reports_a_failed_books_sync():
     assert r.status_code == 200 and body["ok"] is False and body["exit_code"] == 1, body
     assert "wrote dashboard" in body["output"] and "books: not updated (McpError)" in body["output"], body
     assert audit_lines()[-1]["result"] == "failed" and audit_lines()[-1]["exit_code"] == 1
+
+
+# ---------------------------------------------------------------- sync now (the strip's chips)
+
+
+def test_sync_now_refuses_unknown_sources_and_free_text():
+    c, a, _ = setup()
+    with Runner(Recorder()) as rec:
+        for bad, reason in (({"source": "everything"}, "unknown source"),
+                            ({"source": "books; rm -rf ~"}, "unknown source"),
+                            ({"source": "--help"}, "unknown source"),
+                            ({"source": "BOOKS"}, "unknown source"),
+                            ({"source": "drafts"}, "that source comes from a scheduled run, not the app: see Health"),
+                            ({"source": "diary"}, "that source comes from a scheduled run, not the app: see Health"),
+                            ({"source": "ads"}, "that source comes from a scheduled run, not the app: see Health"),
+                            ({}, "source is required"),
+                            ({"source": "books", "extra": "x"}, "unexpected field"),
+                            ({"source": ["books"]}, "bad source")):
+            r = preview(c, "sync-now", bad)
+            assert r.status_code == 400 and r.json()["error"] == reason, (bad, r.text)
+            r = post(c, "/actions/sync-now/run", {"input": bad})
+            assert r.status_code == 400 and r.json()["error"] == reason, (bad, r.text)
+            last = audit_lines()[-1]
+            assert last["action"] == "sync-now" and last["result"] == f"refused: {reason}", last
+            assert last["input_sha256"] == actions.input_sha256(bad) and "input" not in last
+    assert rec.calls == []  # nothing ran
+    # same-origin like every POST; no passkey is asked for
+    assert post(c, "/actions/sync-now/run", {"input": {"source": "books"}},
+                origin="https://evil.example").status_code == 403
+    assert actions.REGISTRY["sync-now"].passkey is False and "sync-now" in actions.ROUTED
+
+
+def test_sync_now_runs_the_fixed_argv_and_writes_the_audit():
+    c, a, _ = setup()
+    sources.forget_outcomes()
+    for source in ("books", "marketing"):
+        with Runner(Recorder(out=b"wrote the cache\n")) as rec:
+            p = preview(c, "sync-now", {"source": source})
+            assert p.status_code == 200 and p.json()["passkey"] is False and "options" not in p.json(), p.text
+            assert p.json()["command"] == f".venv/bin/python scripts/reports/cc_sync.py {source}"
+            assert p.json()["summary"].endswith(f"Runs: .venv/bin/python scripts/reports/cc_sync.py {source}")
+            r = post(c, "/actions/sync-now/run", {"input": {"source": source}})
+        assert r.status_code == 200 and r.json()["ok"] is True, r.text
+        assert [call[0] for call in rec.calls] == [[PYX, CC_SYNC, source]], rec.calls
+        kw = rec.calls[0][1]
+        assert kw["shell"] is False and kw["stdin"] == subprocess.DEVNULL and kw["env"]["LCS_PRIVATE_DIR"] == TMP
+        assert not any(k.startswith("CC_") for k in kw["env"])
+        lines = audit_lines()[-2:]
+        assert [e["result"] for e in lines] == ["started", "ok"] and all(e["action"] == "sync-now" for e in lines)
+        assert lines[-1]["input"] == {"source": source} and "passkey" not in lines[-1]
+        assert lines[-1]["login"] == LOGIN and lines[-1]["exit_code"] == 0
+        assert sources.outcomes()[source]["ok"] is True
+    # a failed sync is reported, audited and noted for the strip
+    with Runner(Recorder(code=1, out=b"books: not updated (McpError); the last cache is kept\n")):
+        r = post(c, "/actions/sync-now/run", {"input": {"source": "books"}})
+    assert r.json()["ok"] is False and r.json()["exit_code"] == 1 and "McpError" in r.json()["output"]
+    assert audit_lines()[-1]["result"] == "failed" and sources.outcomes()["books"]["ok"] is False
+    sources.forget_outcomes()
+
+
+def test_sync_now_bank_clears_the_cache_and_runs_nothing():
+    c, a, _ = setup()
+    cleared = []
+    saved = data.Data.clear_caches
+    data.Data.clear_caches = lambda self: cleared.append(True)
+    try:
+        with Runner(Recorder()) as rec:
+            p = preview(c, "sync-now", {"source": "bank"})
+            assert p.status_code == 200 and p.json()["command"] is None and "Runs:" not in p.json()["summary"]
+            assert "bank cache" in p.json()["summary"] and p.json()["passkey"] is False
+            r = post(c, "/actions/sync-now/run", {"input": {"source": "bank"}})
+    finally:
+        data.Data.clear_caches = saved
+    assert r.status_code == 200 and r.json()["ok"] is True and r.json()["exit_code"] is None, r.text
+    assert rec.calls == [] and cleared == [True]
+    last = audit_lines()[-1]
+    assert last["action"] == "sync-now" and last["result"] == "ok" and last["input"] == {"source": "bank"}
+    try:
+        actions.SYNC_NOW.argv({"source": "bank", "input": {"source": "bank"}})
+    except actions.ActionError:
+        pass
+    else:
+        raise AssertionError("the bank has no argv")
+
+
+def test_sync_now_shares_the_refresh_lock_and_waits_for_a_background_pass():
+    c, a, _ = setup()
+    lock = actions._LOCKS["refresh"]
+    assert actions.SYNC_NOW.lock == "refresh"
+    assert lock.acquire(timeout=1)
+    saved = actions.REFRESH_WAIT
+    actions.REFRESH_WAIT = 0.05
+    actions.BACKGROUND_REFRESH.set()
+    try:
+        with Runner(Recorder()) as rec:
+            r = post(c, "/actions/sync-now/run", {"input": {"source": "books"}})
+        assert r.status_code == 409 and r.json()["error"] == actions.BACKGROUND_BUSY, r.text
+        assert audit_lines()[-1]["result"] == "refused: a background refresh is running" and rec.calls == []
+        actions.BACKGROUND_REFRESH.clear()
+        with Runner(Recorder()) as rec:
+            r = post(c, "/actions/sync-now/run", {"input": {"source": "books"}})
+        assert r.status_code == 409 and "another action is running" in r.json()["error"] and rec.calls == []
+    finally:
+        actions.BACKGROUND_REFRESH.clear()
+        actions.REFRESH_WAIT = saved
+        lock.release()
+    # a write holding the action lock doesn't block it
+    assert actions._RUN_LOCK.acquire(timeout=1)
+    try:
+        with Runner(Recorder()):
+            assert post(c, "/actions/sync-now/run", {"input": {"source": "books"}}).json()["ok"] is True
+    finally:
+        actions._RUN_LOCK.release()
 
 
 # ---------------------------------------------------------------- the Books approval
@@ -1695,6 +1809,7 @@ def claude_form(argv):
 
 SAFE_ON_ALLOWLIST = {
     "refresh-data": "read-only; dashboard.py is allowlisted for the scheduled prompts",
+    "sync-now": "read-only; cc_sync.py books and marketing are the refresh job's and the daily pass's own commands",
     "singer-withdrawn": "the enquiry assistant already withdraws a mis-sent invoice (Appendix E)",
     "resolve-hand-check": "matched by --note *; check_payments.py refuses --owner without the app's nonce",
 }
@@ -1710,6 +1825,7 @@ def test_the_apps_own_commands_are_not_allowlisted_unless_safe():
         "singer-settled": {"invoice": key, "date": D},
         "singer-withdrawn": {"invoice": key, "reason": "not-ours"},
         "refresh-data": {},
+        "sync-now": {"source": "books"},
         "backup-now": {},
     }
     write_config(backup={"recipient": "age1test", "target": TMP})

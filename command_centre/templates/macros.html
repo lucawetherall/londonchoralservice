@@ -163,6 +163,50 @@
 </table>
 {% endmacro %}
 
+{#- A value to copy for the Starling app (an amount, a bill number): the handoffs.js copy button, no passkey, nothing
+    sent to the server. `value` is the server's own text. #}
+{% macro copy_value(value, shown, what) %}
+<button type="button" class="button quiet small cc-copy copy-value" data-prompt="{{ value }}" aria-label="Copy {{ what }} {{ shown }}">{{ shown }}</button>
+{% endmacro %}
+
+{#- The pay list: open invoices to a trusted account, oldest first (models.singer_pay_list's "pay"). #}
+{% macro pay_table(items, total, day) %}
+<table class="table pay-table">
+  <thead><tr><th>Received</th><th>Singer</th><th class="num">Amount</th><th>Bill number</th><th>Account</th><th>Action</th></tr></thead>
+  <tbody>
+  {% for s in items %}
+    <tr>
+      <td data-label="Received">{{ s.received|day }}</td>
+      <td data-label="Singer">{{ s.first_name }}</td>
+      <td data-label="Amount" class="num">{{ copy_value("%.2f"|format(s.amount), s.amount|gbp, "amount") }}</td>
+      <td data-label="Bill number">{{ copy_value(s.bill_number, s.bill_number, "bill number") }}</td>
+      <td data-label="Account"><span class="mono">{{ s.last4|last4 }}</span> <span class="badge ok">{{ s.trust }}</span></td>
+      <td data-label="Action">{{ singer_forms(s, day) }}</td>
+    </tr>
+  {% endfor %}
+    <tr class="total">
+      <td class="pay-total-label" colspan="2">Total, {{ items|length }} {{ "invoice" if items|length == 1 else "invoices" }}</td>
+      <td data-label="Amount" class="num">{{ copy_value("%.2f"|format(total), total|gbp, "total") }}</td>
+      <td class="pay-blank" colspan="3"></td>
+    </tr>
+  </tbody>
+</table>
+{% endmacro %}
+
+{#- Open invoices that wait on the owner before they can be paid (ring first, or details not confirmed yet), each
+    with its reason; nothing to copy, so nothing is paid by mistake. #}
+{% macro waiting_singers(items, day, tone) %}
+<ul class="plain waiting-list">
+  {% for s in items %}
+  <li>
+    <p><strong>{{ s.first_name }}</strong>, {{ s.amount|gbp }}, received {{ s.received|day }}{% if s.last4 %}, account <span class="mono">{{ s.last4|last4 }}</span>{% endif %}{% if s.payee %} <span class="muted">({{ s.payee }})</span>{% endif %}</p>
+    <p><span class="badge {{ tone }}">{{ s.reason }}</span></p>
+    {{ singer_forms(s, day) }}
+  </li>
+  {% endfor %}
+</ul>
+{% endmacro %}
+
 {% macro timeline(items) %}
 <ol class="timeline">
   {% for i in items %}

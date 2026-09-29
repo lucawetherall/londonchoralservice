@@ -61,6 +61,17 @@
   </ul>
 </section>
 
+<section class="card" id="syncs">
+  <h2>Where the strip's data comes from</h2>
+  <ul class="lines">
+    <li><strong>Bank</strong>: Starling, read-only, whenever a page shows the bank (a ten-minute cache). When a read fails, its chip clears the cache so the next page tries again.</li>
+    <li><strong>Books</strong>: <span class="mono">cc_sync.py books</span>, every 30 minutes from 07:00 to 22:00. A stale or failed chip runs it now.</li>
+    <li><strong>Drafts</strong> and <strong>Diary</strong>: the enquiry assistant's daily pass reads Zoho Drafts and Google Calendar and writes them here. The app can't read Mail or the calendar itself, so it can't sync them: use <strong>Run now</strong> on the enquiry assistant in the Claude app (Routines).</li>
+    <li><strong>Ads</strong>: the Monday review writes the Ads summary once a week. Use <strong>Run now</strong> on the weekly review in the Claude app if it is late.</li>
+    <li><strong>Marketing</strong>: <span class="mono">cc_sync.py marketing</span>, once a day from 07:00. A stale or failed chip runs it now.</li>
+  </ul>
+</section>
+
 <section class="card">
   <h2>Refresh data now</h2>
   <p>Rebuilds the static dashboard and the Books cache (both read-only) and clears the ten-minute bank cache, so the next page shows the bank as it is now.</p>

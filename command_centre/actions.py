@@ -3,8 +3,9 @@ preview that builds the summary on the server (auth.Action), and either a fixed 
 write (LocalAction). Each run is logged, append-only, in ~/lcs-private/command-centre/audit.jsonl (mode 600).
 
 Binding rules (docs/superpowers/specs/2026-09-28-command-centre-design.md, and the plan's phase 3):
-- Every action except `todo-tick`, `draft-mark`, `refresh-data`, `push-unsubscribe` and `backup-now` (low risk: they write only
-  the app's own files or an encrypted copy, and still need the same-origin POST) needs a fresh passkey assertion over a challenge bound to the
+- Every action except `todo-tick`, `draft-mark`, `refresh-data`, `sync-now`, `push-unsubscribe` and `backup-now` (low
+  risk: they write only the app's own files, a read-only cache or an encrypted copy, and still need the same-origin
+  POST) needs a fresh passkey assertion over a challenge bound to the
   summary that preview() writes from the validated input. The summary ends with the exact command ("Runs: …"), so
   the owner's Face ID or Touch ID approves that command and nothing else. run_action() rebuilds the summary from
   the data as it is at run time: if anything it depends on changed since the preview, the assertion no longer
@@ -13,8 +14,8 @@ Binding rules (docs/superpowers/specs/2026-09-28-command-centre-design.md, and t
   arguments (none may start with "-" unless it is a fixed flag), cwd the repo, the environment minus every CC_*
   variable with LCS_PRIVATE_DIR set explicitly (and LCS_BOOKINGS_CSV removed), stdin /dev/null (or the owner
   nonce), a timeout, one action at a time, and no retries. run_action() takes the action lock before it validates,
-  so every check (an .applied record, a validate record) is re-read under the lock; refresh-data has its own lock,
-  shared with the background refresh (jobs.py), and waits up to REFRESH_WAIT seconds for a pass to finish.
+  so every check (an .applied record, a validate record) is re-read under the lock; refresh-data and sync-now have
+  their own lock, shared with the background refresh (jobs.py), and wait up to REFRESH_WAIT seconds for a pass.
 - Output is scrubbed (lcs_mcp's approach: URLs, token-like values; plus any run of six or more digits) and trimmed
   before it reaches the page; the audit keeps only its sha256. Ads output is not masked: its first and last 3,000
   characters are shown, secrets still redacted.
@@ -764,6 +765,8 @@ class RefreshAction(ScriptAction):
     def execute_script(self, cleaned):
         env = clean_env()
         runs = [run_argv(self.argv(cleaned), self.timeout, env=env), run_argv(self.then_argv(), self.timeout, env=env)]
+        if self.then[1:] == ("books",):  # the strip's Books chip says "failed" when this sync failed
+            data.sources.record_outcome("books", runs[1][0] == 0)
         code = next((c for c, _ in runs if c != 0), 0)
         return code, b"\n".join(out.rstrip(b"\n") for _, out in runs)
 
@@ -774,6 +777,84 @@ REFRESH = RefreshAction(
                "app's ten-minute bank cache."),
     lambda c: [], passkey=False, timeout=300, clears_cache=True, title="Refresh data now", lock="refresh",
     then=(CC_SYNC, "books"))
+
+
+# ---------------------------------------------------------------- sync now (the strip's chips, no passkey)
+
+
+SYNC_SOURCES = {  # source -> the fixed cc_sync.py subcommand, or None for the bank (no script: a cache to drop)
+    "bank": None,
+    "books": "books",
+    "marketing": "marketing",
+}
+SYNC_ELSEWHERE = {"drafts", "diary", "ads"}  # written by the scheduled runs only: their chips link to Health
+SYNC_WORDS = {
+    "bank": ("Read the bank afresh: clear the app's ten-minute bank cache, so the next page that shows the bank "
+             "reads Starling (read-only) again."),
+    "books": "Sync the Books cache now: read Zoho Books through the read-only client and rewrite books.json.",
+    "marketing": ("Sync the marketing cache now: read Google Ads, Search Console and GA4 through the Monday "
+                  "review's read-only functions and rewrite marketing.json."),
+}
+
+
+def _sync_validate(raw):
+    f = fields(raw, ("source",))
+    source = f["source"]
+    if source in SYNC_ELSEWHERE:
+        raise ActionError("that source comes from a scheduled run, not the app: see Health")
+    if source not in SYNC_SOURCES:
+        raise ActionError("unknown source")
+    return {"source": source, "input": {"source": source}}
+
+
+@dataclasses.dataclass(frozen=True)
+class SyncAction(ScriptAction):
+    """`sync-now`: one fixed source. books and marketing run `cc_sync.py <source>` (read-only, the refresh job's
+    own commands); bank runs nothing and drops the app's bank cache (as POST /refresh does). Each run notes its
+    outcome for the strip (sources.record_outcome). Under the refresh lock, so it waits REFRESH_WAIT seconds for
+    a background pass, like refresh-data."""
+
+    def argv(self, cleaned):
+        if SYNC_SOURCES[cleaned["source"]] is None:
+            raise ActionError("the bank sync runs no script")
+        return [sys.executable, str(Path(REPO) / self.script), *self.args(cleaned)]
+
+    def shown(self, cleaned):
+        return [PY_SHOWN, self.script, *self.args(cleaned)]
+
+    def command(self, cleaned):
+        return None if SYNC_SOURCES[cleaned["source"]] is None else shlex.join(self.shown(cleaned))
+
+    def preview(self, cleaned):
+        words = SYNC_WORDS[cleaned["source"]]
+        cmd = self.command(cleaned)
+        return f"{words}\nRuns: {cmd}" if cmd else words
+
+    def perform(self, cleaned, action, user, passkey_id=None):
+        source = cleaned["source"]
+        if SYNC_SOURCES[source] is None:
+            try:
+                if BANK_SOURCE is not None:
+                    BANK_SOURCE.clear_caches()
+            except Exception as e:
+                audit(action, user, f"failed: {type(e).__name__}", input=public(cleaned))
+                raise
+            warning = audit_after_run(action, user, "ok", input=public(cleaned))
+            return Result(True, None, join_warning(warning, "bank cache cleared: the next page reads Starling"),
+                          action.summary)
+        result = ScriptAction.perform(self, cleaned, action, user, passkey_id)
+        data.sources.record_outcome(source, result.ok)
+        return result
+
+
+def _sync_args(c):
+    """The fixed cc_sync.py subcommand for the source (none for the bank)."""
+    sub = SYNC_SOURCES[c["source"]]
+    return [sub] if sub else []
+
+
+SYNC_NOW = SyncAction("sync-now", CC_SYNC, _sync_validate, lambda c: SYNC_WORDS[c["source"]], _sync_args,
+                      passkey=False, timeout=300, title="Sync now", lock="refresh")
 
 
 # ---------------------------------------------------------------- Google Ads change sets
@@ -1681,7 +1762,7 @@ def _todo_run(c, who=None):
 
 TODO_TICK = LocalAction("todo-tick", _todo_validate, _todo_preview, _todo_run, passkey=False, title="Tick a to-do")
 REGISTRY = {a.name: a for a in (TODO_TICK, RESOLVE_HAND_CHECK, SINGER_CONFIRM, SINGER_SETTLED, SINGER_WITHDRAWN,
-                                REFRESH, ADS_VALIDATE, ADS_APPLY, BOOKS_IMPORT, BOOKS_IMPORT_DONE)}
+                                REFRESH, SYNC_NOW, ADS_VALIDATE, ADS_APPLY, BOOKS_IMPORT, BOOKS_IMPORT_DONE)}
 ROUTED = {n for n in REGISTRY if n != "todo-tick"}  # the JSON routes; the tick keeps its own form route
 
 

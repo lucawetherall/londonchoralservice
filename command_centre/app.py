@@ -191,8 +191,18 @@ def create_app(client_factory=data.default_client, now=None, clock=None, passkey
         except (OSError, ValueError):
             return auth.passkey_summary({})
 
+    def sync_strip():
+        """The chips under the header (reader.sync_strip), built after the page's own reads so the Bank chip
+        reflects them; a failure drops the strip and never the page."""
+        try:
+            return reader.sync_strip()
+        except Exception as e:  # the type only
+            log.warning("sync strip: %s", type(e).__name__)
+            return None
+
     def render(request, name, **ctx):
         ctx.setdefault("action_day", data.lm.today(reader.now()).isoformat())  # the date fields' default and max
+        ctx.setdefault("sync", sync_strip())
         page = env.get_template(name).render(request=request, path=request.url.path, **ctx)
         return HTMLResponse(page)
 
@@ -572,7 +582,9 @@ def create_app(client_factory=data.default_client, now=None, clock=None, passkey
         @contextlib.asynccontextmanager
         async def lifespan(app):
             stop = asyncio.Event()
-            tasks = [asyncio.create_task(make_push_key()), asyncio.create_task(push.watch(stop))]
+            # the watcher's books-disagree alert reads the same flags Today shows, through this reader's bank cache
+            tasks = [asyncio.create_task(make_push_key()),
+                     asyncio.create_task(push.watch(stop, flags=reader.books_flags_now))]
             if refresh_job is not None:
                 tasks.append(asyncio.create_task(jobs.loop(refresh_job, stop)))
             try:

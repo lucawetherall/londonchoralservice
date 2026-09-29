@@ -51,11 +51,13 @@ def stamp(when):
 
 
 def open_singers(rows):
-    """dash.singers (the unpaid invoices, oldest first) with each row's action handle and allowed actions."""
+    """dash.singers (the unpaid invoices, oldest first) with each row's action handle and allowed actions, and what
+    the pay list needs (models.singer_trust): whether the account is trusted, how, the Books bill number, and why
+    an untrusted one waits."""
     out = []
     for r in sorted(rows, key=lambda r: r.get("received") or ""):
         for s in dash.singers([r], rows):  # the whole store: an account trusted on one invoice is on all
-            out.append(dict(s, **models.singer_actions(r)))
+            out.append(dict(s, **models.singer_actions(r), **models.singer_trust(rows, r)))
     return out
 
 
@@ -76,6 +78,7 @@ class Data:
         self.now = now or (lambda: datetime.datetime.now(LONDON))
         self.clock = clock
         self._bank = None  # (expires, key, value)
+        self._bank_seen = {"good": None, "failed": None, "connected": None}  # the strip's Bank chip; never cleared
         self._starling = None  # (expires, value): the health page's account check
         self._last_good = {}
         self._lock = threading.Lock()
@@ -124,7 +127,37 @@ class Data:
                  "as_of": at if checked else None, "unreachable": at if failed else None}
         with self._lock:
             self._bank = (self.clock() + (BANK_FAIL_TTL if failed else BANK_TTL), key, value)
+            seen = self._bank_seen
+            seen["connected"] = client is not None
+            if checked:
+                seen["good"], seen["failed"] = self.now(), None
+            elif failed:
+                seen["failed"] = self.now()
         return value
+
+    def bank_status(self):
+        """The Bank chip's facts, from the reads the pages made (the strip never reads Starling itself): the time
+        of the last good read, the time of the latest read when it failed, and whether there is a client."""
+        with self._lock:
+            return dict(self._bank_seen)
+
+    def sync_strip(self):
+        """The chips under the header on every page (sources.sync_chips)."""
+        return sources.sync_chips(self.now(), self.bank_status())
+
+    def books_flags_now(self):
+        """For the push watcher's books-disagree alert: (models.books_flags as Today shows them, complete), or None
+        when Books isn't synced. `complete` is False while the bank isn't checked (the Starling comparisons are then
+        left out, so a flag missing from the list may still be there). Failures propagate (the watcher logs the type)."""
+        now = self.now()
+        today = lm.today(now)
+        cache = books_cache.books_cache()
+        if cache is None:
+            return None
+        rows = lm.read_csv(cp.LEDGER)
+        b = self.bank(rows, today)
+        bookings = models.booking_rows(rows, b["assessments"], b["bank_checked"], today)
+        return models.books_flags(cache["invoices"], rows, bookings, today, b["bank_checked"]), bool(b["bank_checked"])
 
     def _common(self):
         now = self.now()
@@ -163,13 +196,14 @@ class Data:
         synced = self.panel("books_synced", lambda c: None if c is None else models.books_synced(c, now), books)
         enq = self._enquiries()
         due = self.panel("followups_due", lambda rows: pl.followups_due(rows, today), enq)
-        inbox = self.panel("drafts_inbox", drafts.inbox, self.panel("drafts", drafts.read_drafts),
-                           self.panel("draft_marks", drafts.load_marks))
+        found = self.panel("drafts", drafts.read_drafts)
+        inbox = self.panel("drafts_inbox", drafts.inbox, found, self.panel("draft_marks", drafts.load_marks))
+        waiting = self.panel("enquiries_waiting", lambda rows, d: models.enquiries_waiting(rows, d, now), enq, found)
         runs = self.panel("proxies", lambda: sources.run_proxies(now))
         backup = self.panel("backup", lambda: sources.backup_status(now))
         panels = {"ledger": ledger, "singer_store": store, "books": books, "enquiries": enq, "singers": singers,
                   "hand": hand, "bank": bank, "drafts": inbox, "books_flags": flags, "bill_flags": bill_flags,
-                  "followups": due, "runs": runs, "backup": backup}
+                  "followups": due, "waiting": waiting, "runs": runs, "backup": backup}
         if proposals is not None:
             panels["proposals"] = proposals
         if books_import is not None:
@@ -192,8 +226,15 @@ class Data:
         margins = self.margins(ledger, store)
         season = self.panel("season_margin", lambda m: models.season_margin(m, dash.season_start()), margins)
         unlinked = self.panel("unlinked_singer_invoices", si.unlinked_invoices, store)
+        # the pay list: the same split Today's Needs you makes (models.singer_pay_list), so its count and total
+        # are the "Pay N singer invoices" row's; a Books cache that won't load only drops the "paid in Books" check
+        bill_flags = self.panel("singer_bill_flags", lambda c, s: None if c is None else models.singer_bill_flags(
+            s, c["bills"]), books, store)
+        pay = self.panel("singer_pay_list", lambda s: models.singer_pay_list(
+            s, bill_flags.value if bill_flags.ok else None), singers)
         return {"stamp": stamp(now), "today": today, "bank": bank, "balance": balance, "lines": lines, "hand": hand,
-                "singers": singers, "singer_total": total, "books": summary, "season": season, "unlinked": unlinked}
+                "singers": singers, "singer_total": total, "books": summary, "season": season, "unlinked": unlinked,
+                "pay": pay, "pay_books_checked": bill_flags.ok and bill_flags.value is not None}
 
     # ------------------------------------------------------------ phase 6: Books, margins, drafts, quotes
 

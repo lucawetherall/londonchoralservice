@@ -22,6 +22,8 @@ cache, so the next page load reads Starling afresh.
 - A clean pass writes nothing to the audit log. A failure (a timeout, a non-zero exit, a script that won't start,
   a failing cache clear) is logged as "refresh-job" with its exception's type name only, never the output or the
   message, which could hold private data. One failing script never stops the other.
+- Each script's outcome is noted in memory (sources.record_outcome), so the sync strip's Books and Marketing chips
+  say "failed" when the latest attempt failed after the cache's last good write.
 - create_app starts it only for the service (watch=True: the LaunchAgent on port 8765 or the socket), never on a
   dev port or in the tests, and never when CC_NO_REFRESH_JOB is set.
 """
@@ -37,7 +39,7 @@ import threading
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
-from . import actions
+from . import actions, sources
 
 REPO = Path(__file__).resolve().parent.parent
 LONDON = ZoneInfo("Europe/London")
@@ -125,8 +127,10 @@ class RefreshJob:
                         continue
                     try:
                         self.run_script(args, timeout)
+                        sources.record_outcome(what, True)
                     except Exception as e:  # the type only
                         ok = False
+                        sources.record_outcome(what, False)  # the strip's chip says "failed" until a good sync
                         self._fail(what, e)
                 try:
                     self.tidy()

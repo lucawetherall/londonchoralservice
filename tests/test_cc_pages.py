@@ -88,7 +88,7 @@ def fixtures():
          "bank_changed": "yes", "paid_on": ""},
         {"message_id": "m2", "received": "2026-09-22", "singer_name": "Dora Quillfeather",
          "singer_email": "dora@example.org", "amount_gbp": "150", "bank_fp": "def", "bank_last4": "1111",
-         "payee": "", "bank_changed": "no", "paid_on": ""},
+         "payee": "", "bank_changed": "no", "bank_confirmed": "yes", "paid_on": ""},
         {"message_id": "m3", "received": "2026-09-01", "singer_name": "Eve Paidup", "singer_email": "eve@example.org",
          "amount_gbp": "99", "bank_fp": "ghi", "bank_last4": "2222", "payee": "", "bank_changed": "no",
          "paid_on": "2026-09-05"},

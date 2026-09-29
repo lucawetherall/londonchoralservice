@@ -436,3 +436,39 @@ details summary { cursor: pointer; font-weight: 600; margin: 6px 0; min-height: 
 }
 .mark-forms { display: flex; flex-wrap: wrap; gap: 0 4px; }
 .mark-forms .cc-action.inline { margin: 2px 4px 2px 0; }
+
+/* The sync strip under the header: one line of chips that scrolls sideways inside itself on a phone */
+.sync-strip { width: 100%; max-width: 72rem; margin: 0 auto; padding: 8px 16px 0; min-width: 0; overflow: hidden; }
+.sync-chips {
+  list-style: none; margin: 0; padding: 0 0 2px; display: flex; flex-wrap: nowrap; gap: 6px;
+  overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch;
+  position: relative;  /* the containing block of the chips' visually-hidden words, so they scroll with it */
+}
+.sync-chips::-webkit-scrollbar { display: none; }
+.sync-chips li { flex: 0 0 auto; }
+.chip-form.cc-action.inline { margin: 0; display: block; }
+.chip {
+  display: inline-flex; align-items: center; gap: 5px; min-height: 30px; padding: 3px 10px; border-radius: 999px;
+  font: inherit; font-size: .8rem; font-variant-numeric: tabular-nums; white-space: nowrap; text-decoration: none;
+  border: 1px solid var(--rule); background: var(--card); color: var(--muted);
+}
+.chip::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--muted); flex: 0 0 auto; }
+.chip-label { font-weight: 600; color: var(--text); }
+.chip-ok::before { background: var(--ok); }
+.chip-stale { border-color: var(--warn); background: var(--warn-bg); color: var(--warn); }
+.chip-stale::before { background: var(--warn); }
+.chip-failed { border-color: var(--bad); background: var(--bad-bg); color: var(--bad); }
+.chip-failed::before { background: var(--bad); }
+.chip-stale .chip-label, .chip-failed .chip-label { color: inherit; }
+button.chip, a.chip { cursor: pointer; }
+button.chip:hover, a.chip:hover { filter: brightness(1.03); }
+button.chip:focus-visible, a.chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* The pay list on Money */
+.copy-value { min-height: 32px; padding: 3px 10px; font-variant-numeric: tabular-nums; font-family: var(--mono); font-size: .86rem; }
+.pay-table .total td { border-bottom: 0; }
+.pay-table td.pay-blank::before, .pay-table td.pay-total-label::before { content: none; }
+.waiting-list li { padding: 8px 0; border-top: 1px solid var(--rule); overflow-wrap: anywhere; }
+.waiting-list li:first-child { border-top: 0; }
+.waiting-list .badge { white-space: normal; }
+#singer-invoices h3 { margin-top: 14px; }
