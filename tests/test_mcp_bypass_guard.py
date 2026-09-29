@@ -132,6 +132,10 @@ def test_a_heredoc_body_is_data_not_a_search_root():
     expect("deny", bash("grep -r https ~ <<'EOF'\nx\nEOF"), "grep of ~ beside a heredoc")
     expect("deny", bash("cat <<'EOF'\nmcp-remote\nEOF"), "a marker inside the body")
     expect("deny", bash("cat <<'EOF'\n~/.claude.json\nEOF"), "the config named inside the body")
+    # a quoted phrase is one argument: a commit message with " / " next to tail is fine; "/" on its own is not
+    expect("allow", bash("git commit -qam \"fix: ok / stale / failed\" && git log -1 | tail -1"), "a quoted phrase")
+    expect("deny", bash("cat \"/\""), "a quoted /")
+    expect("deny", bash("grep -r https \"$HOME\" ~"), "~ unquoted beside a quoted variable")
     link = os.path.join(SCRATCH, "innocent-name")
     os.symlink(os.path.join(HOME, ".claude.json"), link)
     expect("deny", run("Read", {"file_path": link}), "Read through a symlink")
