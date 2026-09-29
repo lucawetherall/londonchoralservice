@@ -73,8 +73,10 @@ def sent_message(to, filename, date="Tue, 29 Sep 2026 10:00:00 +0100"):
 
 
 class FakeIMAP:
+    capabilities = ("IMAP4REV1", "MOVE", "UIDPLUS")
+
     def __init__(self, drafts=(), sent=()):
-        self.boxes = {"Drafts": list(drafts), "Sent": list(sent)}
+        self.boxes = {"Drafts": list(drafts), "Sent": list(sent), "Trash": []}
         self.calls, self.box = [], None
 
     def login(self, user, pw):
@@ -111,6 +113,23 @@ class FakeIMAP:
                 rows.append((f"{i} (BODY[])".encode(), raw))
             rows.append(b")")
         return "OK", rows
+
+    def uid(self, command, *args):
+        self.calls.append(("uid", self.box, command) + args)
+        msgs = self.boxes[self.box]
+        if command == "FETCH":
+            rows = []
+            for i, raw in enumerate(msgs, 1):
+                names = re.search(r"HEADER\.FIELDS \(([^)]*)\)", args[1]).group(1).split()
+                msg = email.message_from_bytes(raw)
+                head = "".join(f"{n}: {msg.get(n)}\r\n" for n in names if msg.get(n))
+                rows += [(f"{i} (UID {100 + i} BODY[HEADER.FIELDS])".encode(), (head + "\r\n").encode()), b")"]
+            return "OK", rows
+        if command == "MOVE":
+            uid, box = args
+            self.boxes[box].append(msgs.pop(int(uid) - 101))
+            return "OK", [None]
+        raise AssertionError(f"unexpected UID {command}")
 
     def close(self):
         self.calls.append(("close",))
@@ -380,10 +399,13 @@ def test_attach_saves_a_copy_of_lucas_draft_with_both_files_and_leaves_the_origi
     original = luca_draft()
     imap = FakeIMAP(drafts=[original])
     rc, out = run_main(["attach", LUCA_ID, attach_spec()], imap)
-    assert rc == 0 and "copy saved in Zoho Drafts" in out and "deletes his original draft" in out, out
-    assert imap.boxes["Drafts"][0] == original and len(imap.boxes["Drafts"]) == 2
+    assert rc == 0, out
+    moves = [c for c in imap.calls if c[0] == "uid" and c[2] == "MOVE"]
+    assert moves == [("uid", "Drafts", "MOVE", "101", "Trash")], moves
+    assert imap.boxes["Trash"] == [original] and len(imap.boxes["Drafts"]) == 1, "original moved to Trash, not deleted"
+    assert "draft updated" in out and "the earlier version is in Trash" in out, out
     old = email.message_from_bytes(original, policy=email.policy.default)
-    new = email.message_from_bytes(imap.boxes["Drafts"][1], policy=email.policy.default)
+    new = email.message_from_bytes(imap.boxes["Drafts"][0], policy=email.policy.default)
     for h in ("From", "To", "Subject", "In-Reply-To", "References"):
         assert new[h] == old[h], h
     assert new["Message-ID"] != old["Message-ID"] and new[d.KEY_HEADER] == "2111-confirmation"
@@ -394,6 +416,27 @@ def test_attach_saves_a_copy_of_lucas_draft_with_both_files_and_leaves_the_origi
     assert new["Cc"] is None and new["Bcc"] is None
     rc, out = run_main(["attach", LUCA_ID, attach_spec()], FakeIMAP(drafts=[original]))
     assert rc == 0 and "already saved earlier" in out, out
+
+
+def test_the_original_stays_unless_the_copy_checks_out_and_can_be_moved():
+    class NoMove(FakeIMAP):
+        capabilities = ("IMAP4REV1",)
+
+    class Mangling(FakeIMAP):  # the server alters the saved copy's attachment
+        def append(self, box, flags, when, data):
+            return super().append(box, flags, when, data.replace(b"JVBERi0xLjQgZmFrZSBpbnZvaWNl", b"QlJPS0VO"))
+    for server, why in ((NoMove, "couldn't be moved to Trash"), (Mangling, "couldn't be checked")):
+        clear_saved()
+        original = luca_draft()
+        imap = server(drafts=[original])
+        rc, out = run_main(["attach", LUCA_ID, attach_spec()], imap)
+        assert rc == 0 and why in out and "deletes his draft" in out, (why, out)
+        assert imap.boxes["Drafts"][0] == original and imap.boxes["Trash"] == [], why
+        assert not [c for c in imap.calls if c[0] == "uid" and c[2] == "MOVE"], why
+    clear_saved()  # two drafts with the same Message-ID: touch neither
+    imap = FakeIMAP(drafts=[luca_draft(), luca_draft()])
+    rc, out = run_main(["attach", LUCA_ID, attach_spec()], imap)
+    assert rc == 0 and imap.boxes["Trash"] == [] and len(imap.boxes["Drafts"]) == 3, out
 
 
 def test_attach_refuses_anything_but_a_plain_draft_to_that_client():
@@ -442,8 +485,15 @@ def test_sent_matches_the_exact_invoice_to_the_client():
 def test_the_script_has_no_sending_code():
     src = (ROOT / "scripts" / "bookings" / "imap_draft.py").read_text()
     for word in ("smtplib", "SMTP(", "sendmail", "send_message", ".store(", ".copy(", ".move(", "expunge",
-                 ".uid(", ".delete(", ".create("):
+                 "EXPUNGE", "STORE", "COPY", ".delete(", ".create(", "Deleted"):
         assert word not in src, word
+    # UID commands only in retire_original: a FETCH of headers and one MOVE, to Trash
+    retire = src[src.index("def retire_original"):src.index("def attach(")]
+    rest = src.replace(retire, "")
+    assert ".uid(" not in rest and "conn.select(DRAFTS)" not in rest.replace("conn.select(DRAFTS, readonly=True)", "")
+    assert re.findall(r'\.uid\("(\w+)"', retire) == ["FETCH", "MOVE"], re.findall(r'\.uid\("(\w+)"', retire)
+    assert 'conn.uid("MOVE", uids[0], TRASH)' in retire and "len(uids) != 1" in retire
+    assert "conn.close()" not in retire, "CLOSE on a writable folder would expunge"
     assert len(re.findall(r"\.append\(DRAFTS", src)) == 1
     assert len(re.findall(r"conn\.append\(", src)) == 1
 
