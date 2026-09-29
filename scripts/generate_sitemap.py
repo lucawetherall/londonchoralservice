@@ -7,10 +7,15 @@ Run by build.sh after partial expansion and CSS inlining. Rules:
   carrying <meta name="robots" content="noindex…"> are excluded.
 - lastmod comes from data/page-dates.json, keyed by URL path. Each entry
   stores a hash of the page's *content* (body with the inlined <style>,
-  the @include regions and the date markers stripped) and the date that
-  content last changed. When the hash changes the date becomes today.
-  A page not yet in the file is seeded from git: the date of the oldest
-  commit whose version has the same content hash (today if uncommitted).
+  the @include regions, the date markers and the click-to-play film script
+  stripped) and the date that content last changed. When the hash changes
+  the date becomes today. A page not yet in the file is seeded from git:
+  the date of the oldest commit whose version has the same content hash
+  (today if uncommitted).
+- A change to STRIP changes the hash of every page it matches. Re-key those
+  pages' stored hashes in the same commit (lastmod unchanged, and only where
+  the stored hash still equals the old rule's hash of the committed page),
+  or the next build dates them today although no copy changed.
 - changefreq and priority are carried over from the existing sitemap.xml;
   new pages get defaults by directory.
 
@@ -49,6 +54,10 @@ STRIP = [
     re.compile(r'"dateModified":\s*"[^"]*"'),
     re.compile(r'<meta property="article:modified_time" content="[^"]*">'),
     re.compile(r'<time datetime="[^"]*">[^<]*</time>'),
+    # The film script is behaviour, not copy: js/video.js and the inline
+    # copies it replaced.
+    re.compile(r'<script src="[^"]*js/video\.js" defer></script>'),
+    re.compile(r"<script>\s*document\.querySelectorAll\('\.video-thumb'\).*?</script>", re.S),
 ]
 
 
