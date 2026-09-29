@@ -1079,14 +1079,18 @@ td.compare-us .compare-saving {
   position: relative;
 }
 
+/* Two borders of a 0.4em box, rotated. The lift raises the closed chevron to
+   the middle of the capitals. Open, the stroke is the box's top half, so the
+   open rule adds back half the diagonal (0.28em) to keep it in the same place. */
 .dropdown-caret {
+  --caret-lift: -0.3em;
   display: inline-block;
   width: 0.4em;
   height: 0.4em;
-  margin-left: 0.55em;
+  margin-left: 0.3em;
   border-right: 1px solid currentColor;
   border-bottom: 1px solid currentColor;
-  transform: translateY(-0.3em) rotate(45deg);
+  transform: translateY(var(--caret-lift)) rotate(45deg);
   transition: transform var(--transition-fast);
 }
 
@@ -1151,9 +1155,7 @@ td.compare-us .compare-saving {
 .has-dropdown:hover > .dropdown-trigger .dropdown-caret,
 .has-dropdown:focus-within > .dropdown-trigger .dropdown-caret,
 .has-dropdown[data-open="true"] > .dropdown-trigger .dropdown-caret {
-  /* Pointing up, the stroke is the top half of the rotated box: drop it by
-     half the diagonal (0.28em) so it sits where the closed chevron sat. */
-  transform: translateY(-0.02em) rotate(225deg);
+  transform: translateY(calc(var(--caret-lift) + 0.28em)) rotate(225deg);
 }
 
 /* ESC dismisses a desktop dropdown even while hover/focus is still inside (nav.js) */
@@ -1162,7 +1164,7 @@ td.compare-us .compare-saving {
 }
 
 .has-dropdown[data-dismissed] > .dropdown-trigger .dropdown-caret {
-  transform: translateY(-0.3em) rotate(45deg);
+  transform: translateY(var(--caret-lift)) rotate(45deg);
 }
 
 /* Mobile: dropdown becomes an inline expandable block inside the hamburger */

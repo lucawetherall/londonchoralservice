@@ -90,6 +90,14 @@
   margin: 0;
 }
 
+/* Narrow desktop: at 1.6vw the menu runs past the page edge below ~1110px
+   (with a 15px scrollbar); a tighter gap keeps it inside down to 1081px. */
+@media (min-width: 1081px) and (max-width: 1199px) {
+  .nav-links {
+    gap: 0.8rem;
+  }
+}
+
 /* Base li margins would hang below the baseline and grow the header. */
 .nav-links li {
   margin-bottom: 0;
@@ -128,7 +136,6 @@
   width: 2.5rem;
   height: 2.5rem;
   position: relative;
-  align-self: center;
 }
 
 .nav-toggle:hover,
@@ -207,10 +214,6 @@
     display: flex;
   }
 
-  .nav-links li {
-    margin-bottom: 0;
-  }
-
   .nav-links a {
     display: block;
     padding: var(--space-md) 0;
@@ -222,8 +225,10 @@
     border-bottom: none;
   }
 
+  /* The menu is out of flow here: centre the name on the toggle instead. */
   .site-nav {
     position: relative;
+    align-items: center;
   }
 
 }
