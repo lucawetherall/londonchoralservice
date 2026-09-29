@@ -565,7 +565,9 @@ def test_a_held_booking_is_never_chased_or_offered_as_a_fee_on_today():
     assert [r["item"]["ref"] for r in rows if r["kind"] == "hand"] == ["H1", "H2"], rows
     assert kinds["deposits"]["refs"] == ["D1"] and "balances" not in kinds, rows  # B1 is asked about as a fee
     assert [r["item"]["ref"] for r in rows if r["kind"] == "fee"] == ["B1"], rows
-    assert models.hand_reason(got[0], True) == "notes and recorded facts disagree: cancellation"
+    # the badge (money_report's label) names the family; the reason says what holding it means
+    assert mr.hand_check_label(got[0]) == "notes and recorded facts disagree: cancellation"
+    assert models.hand_reason(got[0], True) == models.HELD_REASON
 
 
 def test_the_monday_overdue_and_balances_lines_skip_held_bookings():

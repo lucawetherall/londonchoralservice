@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-"""Cross-script contract: a cancellation written with `check_payments.py --note <ref> "cancelled …"` (appended to
-the notes, never a prefix) must count as cancelled everywhere that reads the ledger: the Google Ads upload, the
+"""Cross-script contract: a cancellation written with `check_payments.py --fact <ref> cancelled --on D` (its note
+"cancelled D by client email" appended to the notes, never a prefix; `--note` refuses that text) must count as cancelled everywhere that reads the ledger: the Google Ads upload, the
 Monday report's section 9, section 11 (economics), the pipeline's reviews-due and done-due, and the dashboard.
 Each check is run before the note too, so a test can't pass because the row was never eligible.
 Stdlib only: .venv/bin/python tests/test_cancel_contract.py"""
@@ -55,9 +55,12 @@ def fresh():
 
 
 def note_cancelled(ref):
-    p = subprocess.run([PY, os.path.join(ROOT, "scripts", "bookings", "check_payments.py"), "--note", ref, NOTE],
-                       capture_output=True, text=True, cwd=ROOT,
-                       env=dict(os.environ, LCS_PRIVATE_DIR=_HOME, LCS_BOOKINGS_CSV=LEDGER))
+    script = os.path.join(ROOT, "scripts", "bookings", "check_payments.py")
+    env = dict(os.environ, LCS_PRIVATE_DIR=_HOME, LCS_BOOKINGS_CSV=LEDGER)
+    p = subprocess.run([PY, script, "--note", ref, NOTE], capture_output=True, text=True, cwd=ROOT, env=env)
+    assert p.returncode != 0 and f"--fact {ref} cancelled" in p.stderr, (p.stdout, p.stderr)  # fact-shaped: refused
+    p = subprocess.run([PY, script, "--fact", ref, "cancelled", "--on", "2026-09-28"], capture_output=True, text=True,
+                       cwd=ROOT, env=env)
     assert p.returncode == 0, p.stderr
     notes = {r["booking_ref"]: r["notes"] for r in lm.read_csv(LEDGER)}
     assert notes[ref].endswith("; " + NOTE), notes  # appended, not a prefix: the case the rule must handle
