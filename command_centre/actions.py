@@ -1995,6 +1995,64 @@ REGISTRY[UNDO_FACT.name] = UNDO_FACT
 ROUTED.add(UNDO_FACT.name)
 
 
+# ---------------------------------------------------------------- the recorded facts are right (events.py notes-checked)
+
+
+HELD_FAMILIES = set(cp.HELD_FAMILIES) | {"bank warnings", "bank trust", "withdrawal", "settlement"}
+
+
+def _checked_validate(raw):
+    """One held family of a held booking (ref) or singer invoice (its key) with loose clauses to confirm: the summary
+    shows the two readings in fixed words (never a note), and the run passes the clauses' hashes, which the script
+    checks again under the row's lock."""
+    f = fields(raw, ("subject", "key", "family"))
+    if f["subject"] not in ("booking", "singer_invoice"):
+        raise ActionError("unknown subject")
+    if f["family"] not in HELD_FAMILIES:
+        raise ActionError("unknown family")
+    day = today()
+    if f["subject"] == "booking":
+        if not REF_RE.fullmatch(f["key"]):
+            raise ActionError("unknown booking")
+        if Path(cp.LEDGER).resolve() != (auth.private_dir() / "bookings.csv").resolve():
+            raise ActionError("the ledger isn't the one in the private folder (LCS_BOOKINGS_CSV moves it)")
+        row = next((r for r in lm.read_csv(cp.LEDGER) if (r.get("booking_ref") or "").strip() == f["key"]), None)
+        if row is None:
+            raise ActionError("unknown booking")
+        id_, label = f["key"], f"booking {f['key']} ({data.dash.first_name(row.get('client_name'))})"
+        held = cp.held_readings(row, day)
+    else:
+        r = _singer_row(f["key"])
+        facts = _singer_facts(r)
+        id_ = r["message_id"]
+        label = f"{facts['first_name']}'s invoice of £{facts['amount']:,.2f} received {facts['received']}"
+        held = si.held_readings(lm.read_csv(si.STORE), r)
+    x = next((x for x in held if x["family"] == f["family"]), None)
+    if x is None:
+        raise ActionError("that isn't held on this family now")
+    if not x["clauses"]:
+        raise ActionError("no note clause to confirm (a recorded fact's own note was deleted): undo the fact, or "
+                          "record what the notes say")
+    return {"input": {"subject": f["subject"], "key": f["key"], "family": f["family"]}, "subject": f["subject"],
+            "id": id_, "label": label, "family": f["family"], "notes": x["notes"], "facts": x["facts"],
+            "clauses": list(x["clauses"]), "day": day.isoformat()}
+
+
+def _checked_describe(c):
+    n = len(c["clauses"])
+    return (f"The recorded facts are right on {c['label']}: {c['family']}, the notes say {c['notes']}; the recorded "
+            f"facts say {c['facts']}. The {n} note clause{'' if n == 1 else 's'} behind the notes' reading stay in the "
+            f"notes but are read no more, so nothing is held on them; \"notes checked {c['day']} (owner)\" is added "
+            f"to its notes.")
+
+
+NOTES_CHECKED = ScriptAction("notes-checked", EVENTS, _checked_validate, _checked_describe,
+                             lambda c: ["notes-checked", c["subject"], c["id"], *c["clauses"], "--owner"],
+                             owner_nonce=True, timeout=30, title="The recorded facts are right")
+REGISTRY[NOTES_CHECKED.name] = NOTES_CHECKED
+ROUTED.add(NOTES_CHECKED.name)
+
+
 # ---------------------------------------------------------------- phase 6: mark a draft (no passkey)
 
 

@@ -1581,6 +1581,13 @@ def test_today_and_money_show_a_held_booking_with_both_readings():
         assert 'data-action="notes-checked"' in html and 'value="0915"' in html, path
         assert "client says" not in out and "Cancelwood" not in out, path  # never the note text or a surname
     assert text_of(page(c, "/")).count("notes and recorded facts disagree: cancellation") == 1, "a held row once"
+    html = page(c, "/bookings/0915")  # its own page says so too, by the resolve form
+    assert "the notes say not cancelled; the recorded facts say cancelled" in text_of(html)
+    assert 'data-action="notes-checked"' in html
+    assert 'data-action="notes-checked"' not in page(c, "/bookings/0310")
+    # without the bank the held booking (cancelled by its recorded fact, so not open) is still a hand check
+    out = text_of(page(make(None), "/"))
+    assert "the notes say not cancelled; the recorded facts say cancelled" in out, out
 
 
 def test_today_names_a_held_singer_invoice_as_held_not_as_changed_details():
