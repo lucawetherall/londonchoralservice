@@ -1,7 +1,7 @@
 # Structured state for bookings and singer invoices: design
 
 **Date:** 2026-09-29
-**Status:** Draft for the owner's review.
+**Status:** Approved by the owner, 29 Sep 2026: yes to all three questions at the end.
 **Related:**
 - [Business automation programme](2026-09-28-business-automation-design.md): its "Notes conventions" are the rules this design moves into structured records.
 - [Command Centre](2026-09-28-command-centre-design.md): the owner nonce, the action registry, backups, and the push feed (a different file, see below).
@@ -293,7 +293,9 @@ Each step is its own pull request, reviewed and merged before the next.
 5. **Command Centre.** Timelines, the held panel, Health, and the undo and notes-checked actions.
 6. **Prompts.** The reply drafter and the Monday review (handover Appendix A, step e) use `--fact` for cancellations, arrangements and "the client says they have paid"; `--note` then refuses fact-shaped text. CLAUDE.md, the handover's Appendix E and the business-automation spec's notes conventions point here.
 
-## Open questions for the owner
+## Owner decisions (29 Sep 2026)
+
+The owner answered yes to each question below: hold on disagreement; singer confirm and settle from the Command Centre only; `--note` refuses fact-shaped text.
 
 1. **Hold on disagreement.** Once a booking has recorded facts in a family, a phrase typed into the ledger by hand no longer acts by itself: the booking is held for you to confirm in the Command Centre. *Recommendation:* yes. The alternative (the recorded facts win silently) would ignore your hand edits without telling you.
 2. **Singer confirm and settle from the Command Centre only.** They would need the nonce, so `singer_invoices.py confirm` in a terminal stops working (CLAUDE.md now says you run it by hand after ringing the singer), and Claude is denied both commands. *Recommendation:* yes. The Command Centre action already binds the whole fingerprint; if the app is down, setting `bank_confirmed` to yes in the CSV still works through the fallback while that invoice has no `bank-confirmed` event.

@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Status:** Draft for the owner's review. Tasks 14, 15 and 18 depend on his answers to the spec's questions 2 and 3.
+**Status:** Approved, 29 Sep 2026. The owner answered yes to the spec's three questions, so tasks 14, 15 and 18 go ahead as written.
 
 **Goal:** Record each fact about a booking or a singer invoice as one validated line in an append-only log, `~/lcs-private/events.jsonl`, and have every reader use it before the notes, without changing any behaviour on the day it ships.
 
