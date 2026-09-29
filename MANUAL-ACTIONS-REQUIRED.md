@@ -240,6 +240,8 @@ The competitor everyone outranks us with — The London Funeral Singers — is t
 
 **Weekly review, 2026-09-28 (Search Console, 19–25 Sep vs 12–18 Sep):** 60 clicks (was 48), 2,416 impressions (was 2,094), average position 7.0 (was 6.8). Music guides still carry the clicks (nine-lessons-and-carols 12, be-thou-my-vision 5, the guides hub 4); the homepage has 5. Hiring queries still off page one: "christmas carol singers london" 18, "funeral singers near me" 10 (was 15.8), "how to book a choir" 13, "hire a choir" 24 (first seen), "carol singers for hire london" 26. "choir for funeral" holds at 1.5 on 2 impressions. Sitemap resubmitted 27 Sep, not yet re-read by Google; all three ad landing pages indexed.
 
+**Weekly review, 2026-09-29 (Search Console, 20–26 Sep vs 13–19 Sep):** 56 clicks (was 51), 2,346 impressions (was 2,207), average position 7.3 (was 6.5). Music guides carry the clicks (nine-lessons-and-carols 12, be-thou-my-vision 5, guides hub); homepage has 5. Hiring queries still off page one: "christmas carol singers london" 18, "funeral singers near me" 10, "how to book a choir" 13. Sitemap last read 2026-09-28; all ad landing pages indexed.
+
 ---
 
 ## 13. Private events page launch follow-ups, 2026-08-26
