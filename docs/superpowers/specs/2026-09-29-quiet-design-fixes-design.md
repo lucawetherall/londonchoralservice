@@ -74,16 +74,15 @@ Markup: in each hero, the `nav.breadcrumb` and the `h1` move out of `.hero-text`
 - No visible text. The button's `aria-label` carries the name, as today.
 - Out of scope: the private register (private-events.html, planners-and-venues.html, destinations/) has its own stylesheet and player markup (`partials/private-register.css.html`, `js/private-events.js`) and does not load the main CSS. It keeps its current player.
 
-**Caption.** Each hero film gets a one-line caption under it, `<p class="video-caption">`, set in `--text-sm` italic, `--color-text-mid`, `margin-top: var(--space-sm)`:
+**Caption.** A hero film that plays a named piece gets a one-line caption under it, `<p class="video-caption">`, set in `--text-sm` italic, `--color-text-mid`, `margin-top: var(--space-sm)`:
 
 | Film | Caption |
 |---|---|
-| `Lov_NegzVhM` (promo) | A 43-second film of our singers |
 | `G9-R6k5n7Io` | Abide With Me, sung by our full choir |
 | `-GQaQEGhYEs` | Ubi Caritas by Ola Gjeilo, sung by a quintet |
 | `dGYqQf6BDAk` | Carol of the Bells, sung by our full choir |
 
-Running times are stated only where `data/seo-fix-discovered-urls.yml` holds a verified duration (the promo's PT43S); Carol of the Bells has none, so no caption gives a time.
+The promo film `Lov_NegzVhM` has no caption (owner decision, 29 Sep 2026: "A 43-second film of our singers" was dropped). Its title is burned into the film itself. No caption gives a running time.
 
 **The right film per page.** Pages whose body already has a "Hear our musicians" list (funerals, weddings, christmas, carol-singers) keep their current hero film, so the hero does not repeat a track below it. Two B2B pages with no other film change:
 

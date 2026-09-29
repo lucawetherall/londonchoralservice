@@ -35,8 +35,9 @@ HERO_FILMS = {
     'for-wedding-planners.html': UBI,
 }
 
+# The promo film carries no caption (owner decision, 29 Sep 2026).
 CAPTIONS = {
-    PROMO: 'A 43-second film of our singers',
+    PROMO: None,
     ABIDE: 'Abide With Me, sung by our full choir',
     UBI: 'Ubi Caritas by Ola Gjeilo, sung by a quintet',
     BELLS: 'Carol of the Bells, sung by our full choir',
@@ -120,8 +121,11 @@ def check_heroes():
 
         check(f'data-video="{film}"' in video, f'{page}: hero film should be {film}')
         check(f'/vi/{film}/maxresdefault.jpg' in video, f'{page}: hero thumbnail should be {film}')
-        caption = f'<p class="video-caption">{CAPTIONS[film]}</p>'
-        check(video.count(caption) == 1, f'{page}: needs exactly one caption "{CAPTIONS[film]}"')
+        if CAPTIONS[film] is None:
+            check('class="video-caption"' not in video, f'{page}: the {film} film takes no caption')
+        else:
+            caption = f'<p class="video-caption">{CAPTIONS[film]}</p>'
+            check(video.count(caption) == 1, f'{page}: needs exactly one caption "{CAPTIONS[film]}"')
 
 
 def main():

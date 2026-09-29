@@ -15,6 +15,7 @@
 - From 1081 to 1119px the menu gap is 0.8rem, and below 1081px `.site-nav` centres its items (Task 2 listing updated).
 - In each hero the film comes before the text in the markup (breadcrumb, h1, `.hero-video`, `.hero-text`), so the tab order matches the phone layout. `.hero-text` and `.hero-video` carry no `min-width` (the `minmax(0, …)` tracks cover it).
 - The test's check functions are named `check_*`, it guards against missing hero markup, counts at least 72 play buttons, and skips every dot-directory and `command_centre`.
+- The promo film (`Lov_NegzVhM`) carries no caption: the owner dropped "A 43-second film of our singers" after review, so the listings' `PROMO` caption no longer applies and the test expects none.
 
 **Spec:** [docs/superpowers/specs/2026-09-29-quiet-design-fixes-design.md](../specs/2026-09-29-quiet-design-fixes-design.md).
 
