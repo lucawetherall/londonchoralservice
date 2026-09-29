@@ -254,7 +254,7 @@
 
 .footer-name {
   font-family: var(--font-heading);
-  font-size: var(--text-xl);
+  font-size: var(--text-lg);
   font-weight: 300;
   margin-bottom: var(--space-md);
 }
