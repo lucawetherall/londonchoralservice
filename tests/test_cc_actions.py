@@ -259,17 +259,21 @@ def test_hand_check_argv_and_summary():
     fixtures()
     a = actions.RESOLVE_HAND_CHECK
     c = a.validate({"ref": "2111", "choice": "paid-in-full", "date": D})
-    assert a.argv(c) == [PYX, CHECK, "--note", "2111", f"paid in full {D}", "--owner"]
+    assert a.argv(c) == [PYX, CHECK, "--fact", "2111", "paid-in-full", "--on", D, "--owner"]
     s = a.preview(c)
-    assert s.endswith(f"Runs: .venv/bin/python scripts/bookings/check_payments.py --note 2111 'paid in full {D}' --owner")
+    assert s.endswith(f"Runs: .venv/bin/python scripts/bookings/check_payments.py --fact 2111 paid-in-full --on {D} --owner")
     assert "Ann" in s and "Smithfield" not in s and f"\"paid in full {D} (owner)\"" in s
     assert a.owner_nonce and a.passkey
-    for choice, phrase in [("deposit-kept", f"deposit kept {D}"), ("refunded", f"refunded {D}"),
-                           ("reinstated", f"reinstated {D}"), ("cancelled", f"cancelled {D}"),
-                           ("payment-checked", f"payment checked {D}"),
-                           ("arranged-cash", f"balance payable in cash on the day (arranged {D})"),
-                           ("arranged-cheque", f"balance payable by cheque on the day (arranged {D})")]:
-        assert a.argv(a.validate({"ref": "0310", "choice": choice, "date": D}))[4] == phrase
+    for choice, phrase, args in [
+            ("deposit-kept", f"deposit kept {D}", ["deposit-kept"]), ("refunded", f"refunded {D}", ["refunded"]),
+            ("reinstated", f"reinstated {D}", ["reinstated"]), ("cancelled", f"cancelled {D}", ["cancelled"]),
+            ("payment-checked", f"payment checked {D}", ["payment-checked"]),
+            ("arranged-cash", f"balance payable in cash on the day (arranged {D})", ["arranged", "--method", "cash"]),
+            ("arranged-cheque", f"balance payable by cheque on the day (arranged {D})",
+             ["arranged", "--method", "cheque"])]:
+        c = a.validate({"ref": "0310", "choice": choice, "date": D})
+        assert c["phrase"] == phrase and f"\"{phrase} (owner)\"" in a.preview(c), (choice, c["phrase"])
+        assert a.argv(c) == [PYX, CHECK, "--fact", "0310", args[0], "--on", D, *args[1:], "--owner"], a.argv(c)
 
 
 def test_hand_check_refuses_bad_input():
@@ -292,8 +296,8 @@ def test_each_hand_phrase_means_what_it_says_to_check_payments():
     day = datetime.date.fromisoformat(D)
 
     def notes(choice, before="PENDING: invoiced"):
-        phrase = actions.HAND_CHOICES[choice][1].format(d=D)
-        return f"{before}; {phrase} (owner)"
+        _, kind, fields = actions.HAND_CHOICES[choice]
+        return f"{before}; {cp.fact_phrase(kind, fields, day, 'owner')}"
     assert cp.closed_on({"notes": notes("paid-in-full")}) == day
     for choice in ("deposit-kept", "refunded", "payment-checked"):
         assert cp.cancel_settled_on({"notes": "cancelled 2026-09-01; " + notes(choice, "x")}, day) == day, choice
@@ -309,15 +313,18 @@ def test_singer_actions_argv_and_refusals():
     key, paid, nobank, confirmed = (models.invoice_key(m) for m in (MSG, MSG_PAID, MSG_NOBANK, MSG_CONFIRMED))
     assert re.fullmatch(r"[a-z]{12}", key)
     c = actions.SINGER_CONFIRM.validate({"invoice": key})
-    assert actions.SINGER_CONFIRM.argv(c) == [PYX, SINGER, "confirm", MSG, "--expect-fp", FP_A]
+    assert actions.SINGER_CONFIRM.argv(c) == [PYX, SINGER, "confirm", MSG, "--expect-fp", FP_A, "--owner"]
     s = actions.SINGER_CONFIRM.preview(c)
     assert "Jane" in s and "Fenwickson" not in s and "••••4321" in s and "£120.00" in s
     assert f"fingerprint {FP_A})" in s  # all 16 characters, the same ones --expect-fp passes
-    assert s.endswith(f"Runs: .venv/bin/python scripts/bookings/singer_invoices.py confirm {MSG} --expect-fp {FP_A}")
+    assert s.endswith(f"Runs: .venv/bin/python scripts/bookings/singer_invoices.py confirm {MSG} --expect-fp {FP_A} "
+                      "--owner")
     c = actions.SINGER_SETTLED.validate({"invoice": key, "date": D})
-    assert actions.SINGER_SETTLED.argv(c) == [PYX, SINGER, "settled", MSG, D]
+    assert actions.SINGER_SETTLED.argv(c) == [PYX, SINGER, "settled", MSG, D, "--owner"]
     c = actions.SINGER_WITHDRAWN.validate({"invoice": key, "reason": "not-ours"})
-    assert actions.SINGER_WITHDRAWN.argv(c) == [PYX, SINGER, "withdrawn", MSG, "not-ours"]
+    assert actions.SINGER_WITHDRAWN.argv(c) == [PYX, SINGER, "withdrawn", MSG, "not-ours", "--owner"]
+    # confirm, settle and withdraw carry the owner nonce (owner decision, 29 Sep 2026, question 2)
+    assert actions.SINGER_CONFIRM.owner_nonce and actions.SINGER_SETTLED.owner_nonce and actions.SINGER_WITHDRAWN.owner_nonce
     future = (TODAY + datetime.timedelta(days=1)).isoformat()
     for defn, bad, why in [
             (actions.SINGER_CONFIRM, {"invoice": "abc"}, "unknown invoice"),
@@ -379,7 +386,7 @@ def test_preview_shows_summary_and_command_and_binds_the_challenge():
     assert r.status_code == 200, r.text
     body = r.json()
     assert body["passkey"] is True and body["title"] == "Resolve a hand check"
-    assert body["command"] == f".venv/bin/python scripts/bookings/check_payments.py --note 2111 'paid in full {D}' --owner"
+    assert body["command"] == f".venv/bin/python scripts/bookings/check_payments.py --fact 2111 paid-in-full --on {D} --owner"
     challenge = unb64(body["options"]["challenge"])
     assert challenge[16:] == auth.action_hash("assert", body["summary"], "resolve-hand-check")
     assert challenge[16:] != auth.action_hash("assert", body["summary"], "singer-confirm")  # the name is bound too
@@ -400,7 +407,7 @@ def test_a_valid_assertion_runs_the_exact_argv_once_and_is_audited():
     assert r.json()["ok"] is True and r.json()["exit_code"] == 0 and r.json()["output"] == "2111: note added"
     assert len(rec.calls) == 1
     argv, kw = rec.calls[0]
-    assert argv == [PYX, CHECK, "--note", "2111", f"refunded {D}", "--owner"]
+    assert argv == [PYX, CHECK, "--fact", "2111", "refunded", "--on", D, "--owner"]
     assert kw["shell"] is False and kw["cwd"] == str(actions.REPO) and kw["timeout"] == 30
     assert not any(k.startswith("CC_") for k in kw["env"])
     assert len(kw["input"]) == 65 and kw["input"].endswith(b"\n")  # the nonce, over a pipe
@@ -511,10 +518,12 @@ def test_the_owner_nonce_is_hashed_on_disk_and_gone_afterwards():
     assert re.fullmatch(r"[0-9a-f]{64}", seen["stdin"])
     assert seen["file"] == hashlib.sha256(seen["stdin"].encode()).hexdigest() != seen["stdin"]
     assert not (Path(TMP) / "command-centre" / "owner-nonce").exists()
-    # only the hand check gets a nonce: the singer actions read /dev/null
+    # the singer actions get one too (owner decision, 29 Sep 2026); an action without owner facts reads /dev/null
     with Runner(Recorder()) as rec:
         run(c, a, "singer-confirm", {"invoice": models.invoice_key(MSG)})
-    assert rec.calls[0][1]["stdin"] == subprocess.DEVNULL and "input" not in rec.calls[0][1]
+        post(c, "/actions/refresh-data/run", {"input": {}})
+    assert re.fullmatch(rb"[0-9a-f]{64}\n", rec.calls[0][1]["input"]) and "stdin" not in rec.calls[0][1]
+    assert rec.calls[1][1]["stdin"] == subprocess.DEVNULL and "input" not in rec.calls[1][1]
 
 
 def test_real_check_payments_owner_note_through_the_full_route():
@@ -522,8 +531,11 @@ def test_real_check_payments_owner_note_through_the_full_route():
     r = run(c, a, "resolve-hand-check", {"ref": "2111", "choice": "paid-in-full", "date": D})
     assert r.status_code == 200, r.text
     assert r.json()["ok"] is True, r.json()
-    assert r.json()["output"] == "2111: note added"
+    assert r.json()["output"] == "2111: paid-in-full recorded"
     assert ledger_notes("2111") == f"PENDING: invoiced; paid in full {D} (owner)"
+    (e,) = log_lines()  # the fact, the owner's, claiming the note it wrote
+    assert (e["kind"], e["fields"], e["by"], e["on"]) == ("paid-in-full", {"basis": "owner"}, "owner", D), e
+    assert e["note"] == cp.lcs_events.note_hash(f"paid in full {D} (owner)")
     assert not (Path(TMP) / "command-centre" / "owner-nonce").exists()
     assert [e["result"] for e in audit_lines()] == ["started", "ok"]
     # and the same script refuses the same note without the app's nonce (as an allowlisted Claude call would)
@@ -1779,7 +1791,7 @@ def test_the_hand_check_child_gets_the_private_dir_and_no_ledger_override():
         run(c, a, "singer-settled", {"invoice": models.invoice_key(MSG), "date": D})
     hand, singer = rec.calls[0][1]["env"], rec.calls[1][1]["env"]
     assert hand["LCS_PRIVATE_DIR"] == TMP and "LCS_BOOKINGS_CSV" not in hand
-    assert singer["LCS_PRIVATE_DIR"] == TMP
+    assert singer["LCS_PRIVATE_DIR"] == TMP and "LCS_BOOKINGS_CSV" not in singer
     # a ledger moved elsewhere by LCS_BOOKINGS_CSV: the app won't ask check_payments to write beside the nonce
     saved = cp.LEDGER
     try:
@@ -1797,6 +1809,16 @@ def test_real_singer_confirm_through_the_route_is_bound_to_the_fingerprint():
     assert r.status_code == 200 and r.json()["ok"], r.json()
     row = next(x for x in lm.read_csv(si.STORE) if x["message_id"] == MSG)
     assert row["bank_confirmed"] == "yes"
+    (e,) = log_lines()
+    assert (e["kind"], e["fields"], e["by"], e["id"]) == ("bank-confirmed", {"fp8": FP_A[:8]}, "owner", MSG), e
+    # settle and withdraw through the real script too: both need the nonce the app passes
+    clear_log()
+    r = run(c, a, "singer-settled", {"invoice": models.invoice_key(MSG_CONFIRMED), "date": D})
+    assert r.status_code == 200 and r.json()["ok"], r.json()
+    r = run(c, a, "singer-withdrawn", {"invoice": models.invoice_key(MSG_NOBANK), "reason": "not-ours"})
+    assert r.status_code == 200 and r.json()["ok"], r.json()
+    assert [(e["kind"], e["by"]) for e in log_lines()] == [("settled", "owner"), ("withdrawn", "owner")], log_lines()
+    clear_log()
     # the details changed after the preview: the rebuilt summary no longer matches the signed one
     fixtures()
     p = preview(c, "singer-confirm", {"invoice": key}).json()
@@ -1864,11 +1886,15 @@ def test_the_apps_own_commands_are_not_allowlisted_unless_safe():
     seen |= {"approve-books-import", "books-import-done", "todo-tick", "push-subscribe", "push-unsubscribe",
              "draft-mark"}  # no subprocess
     assert seen == set(actions.REGISTRY)
-    # the guarded one really is matched, and its refusal is tested in test_check_payments.py
-    cmd = claude_form(actions.RESOLVE_HAND_CHECK.argv(actions.RESOLVE_HAND_CHECK.validate(samples["resolve-hand-check"])))
-    assert allowlist.allowed(cmd, pats) and cmd.endswith("--owner")
-    head = re.sub(r"--note \S+ ", "--note X ", cmd.split('"')[0])
-    assert any(g.startswith(head) for g in allowlist.SCRIPT_GUARDED), head
+    # the guarded ones, once the allowlist matches them (`--fact *`, `withdrawn *`), are listed as script-guarded:
+    # their refusal without the app's nonce is tested in test_check_payments.py and test_singer_invoices.py
+    for name in ("resolve-hand-check", "singer-withdrawn"):
+        defn = actions.REGISTRY[name]
+        cmd = claude_form(defn.argv(defn.validate(samples[name])))
+        assert cmd.endswith("--owner"), cmd
+        if allowlist.allowed(cmd, pats):
+            head = " ".join(cmd.split()[:3])
+            assert any(g.startswith(head) and g.endswith("--owner") for g in allowlist.SCRIPT_GUARDED), head
 
 
 # ---------------------------------------------------------------- pages
@@ -2004,15 +2030,16 @@ def test_short_by_fees_preview_and_argv():
     c, _, _ = fee_setup()
     act = actions.RESOLVE_HAND_CHECK
     cleaned = act.validate(FEE_INPUT)
-    assert act.argv(cleaned) == [PYX, CHECK, "--note", "2408", f"short by fees £12.40 accepted {D}", "--owner"]
+    assert act.argv(cleaned) == [PYX, CHECK, "--fact", "2408", "fees-accepted", "--on", D, "--amount", "12.40", "--owner"]
+    assert cleaned["phrase"] == f"short by fees £12.40 accepted {D}"
     s = act.preview(cleaned)
     for part in ("booking 2408 (Bea)", "£937.60 received of £950.00", "short by £12.40 in transfer fees",
                  "will read paid in full", f"\"short by fees £12.40 accepted {D} (owner)\""):
         assert part in s, (part, s)
     assert "Feeworthy" not in s and "example.org" not in s
     assert cleaned["input"] == FEE_INPUT
-    assert act.argv(act.validate(dict(FEE_INPUT, amount="12.4")))[4] == f"short by fees £12.40 accepted {D}"
-    assert act.argv(act.validate(dict(FEE_INPUT, amount="12.41")))[4] == f"short by fees £12.40 accepted {D}"  # 1p
+    assert act.validate(dict(FEE_INPUT, amount="12.4"))["phrase"] == f"short by fees £12.40 accepted {D}"
+    assert act.argv(act.validate(dict(FEE_INPUT, amount="12.41")))[8] == "12.40"  # 1p: the assessed balance
     r = preview(c, "resolve-hand-check", FEE_INPUT)
     assert r.status_code == 200 and r.json()["summary"] == s, r.text
     # the owner-only phrase stays out of the ordinary select

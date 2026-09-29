@@ -19,9 +19,11 @@ Binding rules (docs/superpowers/specs/2026-09-28-command-centre-design.md, and t
 - Output is scrubbed (lcs_mcp's approach: URLs, token-like values; plus any run of six or more digits) and trimmed
   before it reaches the page; the audit keeps only its sha256. Ads output is not masked: its first and last 3,000
   characters are shown, secrets still redacted.
-- The owner-only hand-check phrases go through `check_payments.py --note … --owner`, which refuses unless it gets
-  the one-time owner nonce written here (owner_nonce(): the file holds sha256(nonce), the nonce goes over the pipe),
-  and unless the ledger sits beside that nonce (LCS_BOOKINGS_CSV unset).
+- The hand-check resolutions go through `check_payments.py --fact REF KIND … --owner`, and singer confirm, settle
+  and withdraw through `singer_invoices.py … --owner` (structured-state design: each records its fact in the state
+  log with its note), which refuse unless they get the one-time owner nonce written here (owner_nonce(): the file
+  holds sha256(nonce), the nonce goes over the pipe), and unless the ledger or store and the state log sit beside
+  that nonce (LCS_BOOKINGS_CSV unset). So does the events migration's apply (events.py migrate --apply).
 - Ads change sets come from ~/lcs-private/command-centre/proposals/<id>.json (mode 600). A proposal pins a commit,
   the script's blob at that commit and its arguments (simple tokens). The app keeps its own bare mirror,
   ~/lcs-private/command-centre/mirror.git (mode 700, its config rewritten to a fixed one each time), and fetches
@@ -79,7 +81,8 @@ RUN_WAIT = 5  # seconds to wait for another action to finish before refusing
 VALIDATION_TTL = 15 * 60  # seconds an ads validate run stays good for its apply
 RUNNER = subprocess.run  # the tests replace this with a recorder
 # the only arguments that may start with "-"; the rest are validated values
-FIXED_FLAGS = {"--note", "--owner", "--apply", "--validate-only", "--expect-fp", "--expect"}
+FIXED_FLAGS = {"--note", "--owner", "--apply", "--validate-only", "--expect-fp", "--expect", "--fact", "--on",
+               "--amount", "--method"}
 lm, cp, si = data.lm, data.cp, data.si
 
 
@@ -547,18 +550,20 @@ def today():
 # ---------------------------------------------------------------- resolve a hand check
 
 
-HAND_CHOICES = {  # choice -> (the owner's words in the preview, the ledger phrase; {d} is the date, {a} the fee)
-    "paid-in-full": ("paid in full", "paid in full {d}"),
-    "deposit-kept": ("deposit kept on a cancelled booking", "deposit kept {d}"),
-    "refunded": ("refunded", "refunded {d}"),
-    "reinstated": ("reinstated: the booking is back on", "reinstated {d}"),
-    "cancelled": ("cancelled", "cancelled {d}"),
-    "payment-checked": ("payment checked by hand", "payment checked {d}"),
-    "arranged-cash": ("balance arranged in cash on the day", "balance payable in cash on the day (arranged {d})"),
-    "arranged-cheque": ("balance arranged by cheque on the day", "balance payable by cheque on the day (arranged {d})"),
+# choice -> (the owner's words in the preview, the state-log kind check_payments.py --fact records, its fields). The
+# script writes the kind's phrase (check_payments.fact_phrase) to the notes with " (owner)"; the preview shows it.
+HAND_CHOICES = {
+    "paid-in-full": ("paid in full", "paid-in-full", {"basis": "owner"}),
+    "deposit-kept": ("deposit kept on a cancelled booking", "deposit-kept", {}),
+    "refunded": ("refunded", "refunded", {}),
+    "reinstated": ("reinstated: the booking is back on", "reinstated", {}),
+    "cancelled": ("cancelled", "cancelled", {}),
+    "payment-checked": ("payment checked by hand", "payment-checked", {}),
+    "arranged-cash": ("balance arranged in cash on the day", "arranged", {"method": "cash"}),
+    "arranged-cheque": ("balance arranged by cheque on the day", "arranged", {"method": "cheque"}),
     # a balance lost to transfer fees, accepted (owner decision, 28 Sep 2026): the booking reads paid in full, and
     # record_in_books lists the fee as bank charges on the last payment. Only with `amount` (_fee_facts).
-    "short-by-fees": ("short by transfer fees", "short by fees £{a} accepted {d}"),
+    "short-by-fees": ("short by transfer fees", "fees-accepted", {}),
 }
 FEE_CHOICE = "short-by-fees"
 # States in which the balance can be a transfer-fee shortfall: a confident payment in, the rest not in the bank
@@ -620,16 +625,25 @@ def _hand_validate(raw):
     row = next((r for r in rows if (r.get("booking_ref") or "").strip() == f["ref"]), None)
     if row is None:
         raise ActionError("unknown booking")
-    words, phrase = HAND_CHOICES[f["choice"]]
+    words, kind, values = HAND_CHOICES[f["choice"]]
+    values = dict(values)
     cleaned = {"input": {"ref": f["ref"], "choice": f["choice"], "date": day}, "ref": f["ref"], "words": words,
                "first_name": data.dash.first_name(row.get("client_name"))}
     if f["choice"] == FEE_CHOICE:
         facts = _fee_facts(f["ref"], rows, f["amount"], day)
         cleaned["input"]["amount"] = f["amount"]
-        cleaned.update(facts, phrase=phrase.format(a=facts["fee"], d=day))
-    else:
-        cleaned["phrase"] = phrase.format(d=day)
+        cleaned.update(facts)
+        values["amount"] = facts["fee"]
+    # the note check_payments.py --fact writes, less its " (owner)" (the preview adds it)
+    cleaned.update(kind=kind, fields=values,
+                   phrase=cp.fact_phrase(kind, values, datetime.date.fromisoformat(day), "owner").removesuffix(" (owner)"))
     return cleaned
+
+
+def _hand_args(c):
+    """check_payments.py --fact REF KIND --on D [--method M | --amount X] --owner (paid-in-full's basis is implied)."""
+    extra = [a for k in ("method", "amount") if k in c["fields"] for a in (f"--{k}", c["fields"][k])]
+    return ["--fact", c["ref"], c["kind"], "--on", c["input"]["date"], *extra, "--owner"]
 
 
 def _hand_describe(c):
@@ -643,8 +657,7 @@ def _hand_describe(c):
 
 
 RESOLVE_HAND_CHECK = ScriptAction(
-    "resolve-hand-check", CHECK_PAYMENTS, _hand_validate, _hand_describe,
-    lambda c: ["--note", c["ref"], c["phrase"], "--owner"], owner_nonce=True, timeout=30,
+    "resolve-hand-check", CHECK_PAYMENTS, _hand_validate, _hand_describe, _hand_args, owner_nonce=True, timeout=30,
     title="Resolve a hand check")
 
 
@@ -658,6 +671,9 @@ def invoice_key(message_id):
 def _singer_row(key):
     if not isinstance(key, str) or not INVOICE_KEY_RE.fullmatch(key):
         raise ActionError("unknown invoice")
+    # singer_invoices.py --owner writes only to <private dir>/singer-invoices.csv: the store this preview reads
+    if Path(si.STORE).resolve() != (auth.private_dir() / "singer-invoices.csv").resolve():
+        raise ActionError("the singer store isn't the one in the private folder")
     rows = [r for r in lm.read_csv(si.STORE) if invoice_key(r.get("message_id")) == key]
     if len(rows) != 1:
         raise ActionError("unknown invoice")
@@ -685,7 +701,7 @@ def _confirm_validate(raw):
         raise ActionError("no bank details recorded on that invoice")
     if not FP_RE.fullmatch(r["bank_fp"]):
         raise ActionError("that invoice's bank fingerprint isn't in the expected form")
-    if r.get("bank_confirmed") == "yes":
+    if si.confirmed(r):
         raise ActionError("already confirmed")
     if si.is_withdrawn(r):
         raise ActionError("that invoice was withdrawn")
@@ -706,6 +722,8 @@ def _settled_validate(raw):
         raise ActionError("already paid")
     if si.is_withdrawn(r):
         raise ActionError("that invoice was withdrawn")
+    if round(lm.money(r.get("amount_gbp")), 2) <= 0:
+        raise ActionError("no amount recorded on that invoice")
     day = iso_date(f["date"], today(), 366)
     return dict(_singer_facts(r), date=day, input={"invoice": f["invoice"], "date": day})
 
@@ -732,13 +750,16 @@ def _withdrawn_describe(c):
             f"by mistake ({c['reason']}): it leaves the unpaid list, the money line and the bills.")
 
 
+# confirm and settle are the Command Centre's only (owner decision, 29 Sep 2026, question 2): each passes --owner
+# with the one-time nonce, and so does a withdrawal here (the fact is then the owner's)
 SINGER_CONFIRM = ScriptAction("singer-confirm", SINGER_INVOICES, _confirm_validate, _confirm_describe,
-                              lambda c: ["confirm", c["message_id"], "--expect-fp", c["fp"]],
-                              title="Confirm bank details")
+                              lambda c: ["confirm", c["message_id"], "--expect-fp", c["fp"], "--owner"],
+                              owner_nonce=True, title="Confirm bank details")
 SINGER_SETTLED = ScriptAction("singer-settled", SINGER_INVOICES, _settled_validate, _settled_describe,
-                              lambda c: ["settled", c["message_id"], c["date"]], title="Mark a singer invoice paid")
+                              lambda c: ["settled", c["message_id"], c["date"], "--owner"], owner_nonce=True,
+                              title="Mark a singer invoice paid")
 SINGER_WITHDRAWN = ScriptAction("singer-withdrawn", SINGER_INVOICES, _withdrawn_validate, _withdrawn_describe,
-                                lambda c: ["withdrawn", c["message_id"], c["reason"]],
+                                lambda c: ["withdrawn", c["message_id"], c["reason"], "--owner"], owner_nonce=True,
                                 title="Withdraw a singer invoice")
 
 

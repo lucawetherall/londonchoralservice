@@ -49,6 +49,9 @@ NEVER = [
 SCRIPT_GUARDED = [
     f"{PY} scripts/bookings/check_payments.py --note X \"paid in full 2026-09-28\" --owner",
     f"{PY} scripts/bookings/check_payments.py --reminded X --note X \"refunded 2026-09-28\" --owner",
+    # `withdrawn *` matches the Command Centre's owner form: singer_invoices.py refuses --owner without the nonce
+    # (tests/test_singer_invoices.py, test_thanked_and_withdrawn_record_their_facts)
+    f"{PY} scripts/bookings/singer_invoices.py withdrawn X not-ours --owner",
 ]
 # Script mentions that are references or prohibitions, not commands to run.
 NOT_RUN = re.compile(r"^(singer_invoices\.py (confirm|settled)|scripts/gsc/submit_sitemap\.py --apply)\b")
