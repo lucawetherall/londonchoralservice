@@ -1892,9 +1892,9 @@ def test_short_by_fees_refusals():
     fee_setup()
     v = actions.RESOLVE_HAND_CHECK.validate
     reasons = {
-        "25.01": "the amount must be more than £0 and at most £25.00",
-        "30": "the amount must be more than £0 and at most £25.00",
-        "0": "the amount must be more than £0 and at most £25.00",
+        "40.01": "the amount must be more than £0 and at most £40.00",
+        "45": "the amount must be more than £0 and at most £40.00",
+        "0": "the amount must be more than £0 and at most £40.00",
         "12.42": "the amount isn't that booking's balance (£12.40)",
         "5": "the amount isn't that booking's balance (£12.40)",
     }
