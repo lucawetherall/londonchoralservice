@@ -414,10 +414,14 @@ def compare(ledger_rows, store_rows, today, events):
     out = []
     for r in ledger_rows:
         ref = (r.get("booking_ref") or "").strip()
-        a, b = booking_readings(r, today, {}), booking_readings(r, today, books)
+        bare = dict(r, notes=lcs_events.set_aside(r.get("notes"), books.get(ref) or lcs_events.Facts("booking")))
+        a, b = booking_readings(bare, today, {}), booking_readings(r, today, books)
         out += [f"booking {ref} {fam}: {shown(a[fam])} → {shown(b[fam])}" for fam in a if a[fam] != b[fam]]
     for r in store_rows:
         mid = (r.get("message_id") or "").strip()
-        a, b = invoice_readings(store_rows, r, {}), invoice_readings(store_rows, r, invoices)
+        bare_rows = [dict(x, notes=lcs_events.set_aside(x.get("notes"), invoices.get((x.get("message_id") or "").strip())
+                                                         or lcs_events.Facts("singer_invoice"))) for x in store_rows]
+        bare = bare_rows[store_rows.index(r)]
+        a, b = invoice_readings(bare_rows, bare, {}), invoice_readings(store_rows, r, invoices)
         out += [f"singer_invoice {mid} {fam}: {shown(a[fam])} → {shown(b[fam])}" for fam in a if a[fam] != b[fam]]
     return out

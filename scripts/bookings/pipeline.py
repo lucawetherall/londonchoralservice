@@ -190,7 +190,9 @@ def reviews_due(ledger_rows, today, facts=None):
         if not REVIEW_FROM <= (today - event).days <= REVIEW_UNTIL:
             continue
         f = cp.facts_for(r, today, facts)
-        if not cp.closed_on(r, today, f) or cp.is_cancelled(r, f) or REVIEW_NOTE.search(notes) or f.review:
+        # (a review marker the owner undid is set aside: the booking is due again)
+        if (not cp.closed_on(r, today, f) or cp.is_cancelled(r, f) or f.review
+                or REVIEW_NOTE.search(cp.lcs_events.set_aside(notes, f))):
             continue
         if cp.held(r, today, f):
             continue
@@ -448,7 +450,8 @@ def note_review(booking_ref, text, fact):
     with cp.lcs_events.recording(ledger) as t:
         for r in t.rows:
             if r.get("booking_ref") == booking_ref:
-                if REVIEW_NOTE.search(r.get("notes") or "") or cp.facts_for(r, lm.today()).review:
+                f = cp.facts_for(r, lm.today())
+                if REVIEW_NOTE.search(cp.lcs_events.set_aside(r.get("notes"), f)) or f.review:
                     raise SystemExit(f"{booking_ref}: review request already drafted or skipped; nothing written")
                 r["notes"] = add_note(r.get("notes"), text)
                 kind, fields, on = fact

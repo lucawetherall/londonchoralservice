@@ -623,10 +623,10 @@ def warning_codes(r, facts=None):
     """The bank-warning family's codes for r's current details: the latest recorded bank-warning's, only while its
     fp8 is bank_fp[:8] (else none), or None when r has no bank-warning facts (read the notes and columns)."""
     f = facts_for(r, facts)
-    if not f.has("bank warnings"):
+    w = f.warning  # the latest LIVE bank-warning: with none left (undone), the notes and column say it
+    if not f.has("bank warnings") or w is None:
         return None
-    w = f.warning
-    return set(w[1]) if w and w[0] == (r.get("bank_fp") or "")[:8] else set()
+    return set(w[1]) if w[0] == (r.get("bank_fp") or "")[:8] else set()
 
 
 def bank_changed(r, facts=None):
@@ -693,8 +693,8 @@ def held(rows, r, facts=None):
     loose = [c.strip() for c in (r.get("notes") or "").split(";")
              if c.strip() and lcs_events.note_hash(c.strip()) not in f.claims]
     out = []
-    if f.has("bank warnings"):
-        codes = warning_codes(r, f)
+    codes = warning_codes(r, f)
+    if codes is not None:  # (no live warning left: the notes and column are the reading, nothing to disagree with)
         if (any(c.startswith(BANK_ALARMS) and warning_code(c) not in codes for c in loose)
                 and not trusted_here(rows, r, facts)):
             out.append("bank warnings")
@@ -1220,11 +1220,17 @@ def print_books_due(rows, skip=(), today=None, facts=None):
         paid = iso_or_none(r.get("paid_on"))
         notes = r.get("notes") or ""
         if (paid is None or (today - paid).days > THANKS_DAYS or THANKS_MARK not in notes
-                or "paid reply drafted" in notes or facts_for(r, facts).thanked):
+                or thanked(r, facts)):
             continue
         amount = lm.parse_gbp(r.get("paid_amount")) or lm.money(r.get("amount_gbp"))
         print(f"THANKS DUE {r['message_id']}: {first_name(r['singer_name'])} £{amount:,.2f} paid {r['paid_on']}, "
               f"no \"Paid!\" reply yet")
+
+
+def thanked(r, facts=None):
+    """The "Paid!" reply marker: its note (unless the owner undid it: lcs_events.set_aside) or its recorded fact."""
+    f = facts_for(r, facts)
+    return "paid reply drafted" in lcs_events.set_aside(r.get("notes"), f) or f.thanked
 
 
 def iso_or_none(value):

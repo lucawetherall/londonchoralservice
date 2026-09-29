@@ -190,6 +190,25 @@ def test_ledger_add_records_the_facts_its_notes_state_once_the_migration_is_appl
     ev.clear_cache()
 
 
+def test_ledger_add_skips_a_fact_dated_after_today_and_still_adds_the_row():
+    import lcs_events as ev
+    for i, notes in enumerate(("cancelled 2027-01-05 by client email", "paid per client email 2027-01-05",
+                               "balance to be paid in cash (arranged 2027-01-05)")):
+        fresh(refs=["0110"])
+        ev.clear_cache()
+        ev.append("booking", "0000", "deposit-seen", {}, "script", on="2026-01-01", src="migration", eid="00000000000000aa")
+        row = {"booking_ref": f"22{i:02d}", "occasion": "wedding", "value_gbp": 1150, "invoice_date": "2026-09-01",
+               "event_date": "2027-02-12", "notes": notes}
+        code, out, err = run("ledger-add", json.dumps(row))
+        assert code == 0 and out.strip() == f"ledger: added 22{i:02d}", (notes, out, err)
+        ev.clear_cache()
+        assert [e for e in ev.read()[0] if e["src"] == "live"] == [], notes
+        r = next(x for x in cp.lm.read_csv(os.path.join(_HOME, "bookings.csv")) if x["booking_ref"] == f"22{i:02d}")
+        assert r["notes"] == notes
+    fresh()
+    ev.clear_cache()
+
+
 def test_state_file_is_private_and_done_moves_last_checked_to_the_run_start():
     fresh()
     state = json.loads(run("state")[1])

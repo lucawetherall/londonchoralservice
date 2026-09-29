@@ -693,9 +693,11 @@ def noted_facts(f):
 
 def note_readings(r, today=None, facts=None):
     """assess's reading of the arrangement, noted paid and marker families for one row: {arranged, noted_hand,
-    noted_full, noted_auto, reminded}. A family with recorded facts is read from them; markers are a union."""
-    value, notes = money(r), r.get("notes") or ""
+    noted_full, noted_auto, reminded}. A family with recorded facts is read from them; markers are a union. The notes
+    are read without the clauses the owner set aside (an undone fact's, lcs_events.set_aside): an undone marker
+    un-marks."""
     f = facts_for(r, today, facts)
+    value, notes = money(r), lcs_events.set_aside(r.get("notes"), f)
     arranged, rest = arranged_notes(notes)  # "rest will be paid in cash" is not a note of payment
     if f.has("arrangement"):
         arranged = f.arranged
@@ -942,9 +944,7 @@ def family_readings(r, today, f):
     (part, full). The notes are read without the clauses the owner set aside: those a fact he withdrew as a mistake
     claims, and those a live notes-checked confirms (the recorded facts are right there)."""
     none = lcs_events.Facts("booking")
-    aside = ({e["note"] for e in f.events if e.get("retracted") == "mistake" and e.get("note")}
-             | {c for e in f.of("notes-checked") for c in e["fields"]["clauses"]})
-    bare = dict(r, notes="; ".join(c for c in clauses(r.get("notes")) if lcs_events.note_hash(c) not in aside))
+    bare = dict(r, notes=lcs_events.set_aside(r.get("notes"), f))
     read = note_readings(bare, today, none)
     return {"cancellation": (is_cancelled(bare, none), f.cancelled),
             "close": ((closed_on(bare, today, none), sorted(fee_notes(bare, today, none))), (f.closed_on, sorted(f.fees))),

@@ -72,8 +72,8 @@ def note_problems(events):
     for (subject, id_), es in lcs_events.index(events, lm.today()).items():
         have = {lcs_events.note_hash(c.strip()) for c in notes.get((subject, id_), "").split(";") if c.strip()}
         for e in es:
-            if e["retracted"] == "write-failed":
-                continue
+            if e["retracted"] or e["kind"] == "retract":
+                continue  # a withdrawn fact, an undone one or the undo itself: its note is only a record
             if e.get("note") and e["note"] not in have:
                 out.append(f"fact without its note: {subject} {id_} {e['kind']} on {e['on']} [{e['eid']}]")
             if e["kind"] == "notes-checked" and not e["retracted"]:
@@ -237,11 +237,18 @@ def cmd_retract(args):
     if not args.owner:
         raise SystemExit("retract runs from the Command Centre only (--owner, the owner's passkey); nothing written")
     today = lm.today()
-    events, _ = lcs_events.read()
-    target = next((e for es in lcs_events.index(events, today).values() for e in es if e["eid"] == args.eid), None)
+
+    def live_target():
+        lcs_events.clear_cache()
+        events, _ = lcs_events.read()
+        return next((e for es in lcs_events.index(events, today).values() for e in es if e["eid"] == args.eid), None)
+
+    target = live_target()
     if target is None or target["kind"] == "retract" or target["retracted"]:
         raise SystemExit("no live recorded fact with that id (unknown, already undone, or an undo itself); "
                          "nothing written")
+    if target["kind"] == "bank-warning":
+        raise SystemExit("a bank warning is cleared by confirming the bank details, not undone; nothing written")
     subject, id_ = target["subject"], target["id"]
     path, cols, key = ((cp.LEDGER, None, "booking_ref") if subject == "booking"
                        else (si.STORE, si.COLUMNS, "message_id"))
@@ -253,6 +260,9 @@ def cmd_retract(args):
                          "nothing written")
     clause = UNDONE.format(d=today.isoformat())
     with lcs_events.recording(path, cols) as t:
+        again = live_target()  # read again under the row's lock: another undo may have landed meanwhile
+        if again is None or again["retracted"]:
+            raise SystemExit("that fact was undone meanwhile; nothing written")
         r = next((x for x in t.rows if (x.get(key) or "").strip() == id_), None)
         if r is None:
             raise SystemExit(f"no {subject.replace('_', ' ')} {id_}; nothing written")

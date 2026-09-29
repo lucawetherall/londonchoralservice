@@ -215,6 +215,144 @@ def test_retract_undoes_a_fact_as_a_mistake_and_notes_it():
         assert code != 0 and "nothing written" in out, (bad, out)
 
 
+def write_store(d, rows):
+    import csv
+    import singer_invoices as si
+    base = {c: "" for c in si.COLUMNS}
+    with open(os.path.join(d, "singer-invoices.csv"), "w", newline="") as f:
+        w = csv.DictWriter(f, fieldnames=si.COLUMNS)
+        w.writeheader()
+        for r in rows:
+            w.writerow(dict(base, **r))
+
+
+def store_row(d, mid):
+    import csv
+    with open(os.path.join(d, "singer-invoices.csv"), newline="") as f:
+        rows = list(csv.DictReader(f))
+    return rows, next(r for r in rows if r["message_id"] == mid)
+
+
+CHANGED = "BANK DETAILS CHANGED since their last invoice (was ••••1111, now ••••5678): ring them before paying"
+
+
+def test_a_bank_warning_is_never_undone_and_an_undone_one_leaves_the_alarm_to_the_notes():
+    import singer_invoices as si
+    d = fresh()
+    write_ledger(d, {})
+    migrated(d)
+    write_store(d, [{"message_id": "m2", "received": "2026-09-20", "amount_gbp": "150.00", "bank_fp": "a1b2c3d4e5f60718",
+                     "bank_changed": "yes", "notes": CHANGED}])
+    eid = ev.append("singer_invoice", "m2", "bank-warning", {"fp8": "a1b2c3d4", "codes": ["changed"]}, "script",
+                    note=ev.note_hash(CHANGED))
+    code, out = run_owner("retract", eid, "--owner")
+    assert code != 0 and "confirm" in out and "nothing written" in out, out
+    import sys as _s
+    _s.path.insert(0, os.path.join(ROOT))
+    from command_centre import models
+    assert models.live_facts("singer_invoice", "m2") == []  # never offered
+    # an undone warning (by an earlier build, or by hand) leaves the notes and the column to say it: still rung first
+    lcs = __import__("lcs_owner")
+    saved, lcs._PROVEN = lcs._PROVEN, True
+    try:
+        ev.append("singer_invoice", "m2", "retract", {"target": eid, "why": "mistake"}, "owner")
+    finally:
+        lcs._PROVEN = saved
+    ev.clear_cache()
+    rows, r = store_row(d, "m2")
+    assert si.warning_codes(r) is None and si.bank_changed(r) and si.ring_first_in(rows, r)
+
+
+def marker_case(d, ref, notes, kind, fields, clause):
+    write_ledger(d, {ref: f"{notes}; {clause}"})
+    return ev.append("booking", ref, kind, fields, "script", note=ev.note_hash(clause))
+
+
+def test_undoing_a_marker_really_unmarks_it():
+    import datetime as dt
+    import check_payments as cp
+    import pipeline as pl
+    today = ev.lm.today()
+    td = today.isoformat()
+    row = lambda d, ref: {"booking_ref": ref, "notes": ledger_notes(d, ref), "value_gbp": "650",  # noqa: E731
+                          "invoice_date": "2026-09-01", "event_date": "2026-12-12", "occasion": "wedding"}
+    for kind, fields, clause, read in (
+            ("reminder-drafted", {"what": "deposit"}, f"reminder drafted {td}",
+             lambda r: cp.note_readings(r, today)["reminded"]["deposit"]),
+            ("reminder-drafted", {"what": "balance"}, f"balance reminder drafted {td}",
+             lambda r: cp.note_readings(r, today)["reminded"]["balance"]),
+            ("reminder-drafted", {"what": "receipt"}, f"receipt drafted {td}",
+             lambda r: cp.note_readings(r, today)["reminded"]["receipt"]),
+            ("deposit-seen", {}, "deposit seen 2026-09-03 (Starling)", lambda r: cp.note_readings(r, today)["noted_auto"])):
+        d = fresh()
+        migrated(d)
+        eid = marker_case(d, "2111", "4 singers", kind, fields, clause)
+        assert read(row(d, "2111")), (kind, clause)
+        code, out = run_owner("retract", eid, "--owner")
+        assert code == 0, out
+        ev.clear_cache()
+        assert not read(row(d, "2111")), (kind, clause, "undo must un-mark")
+    # the review markers: reviews-due lists the booking again
+    event = (today - dt.timedelta(days=5)).isoformat()
+    for kind, fields, clause in (("review-drafted", {}, f"review request drafted {td}"),
+                                 ("review-skipped", {"reason": "planner"}, f"review request skipped {td} (planner)")):
+        d = fresh()
+        migrated(d)
+        write_ledger(d, {})
+        import csv
+        with open(os.path.join(d, "bookings.csv"), "w", newline="") as f:
+            w = csv.DictWriter(f, fieldnames=["booking_ref", "notes", "event_date", "occasion", "value_gbp"])
+            w.writeheader()
+            w.writerow({"booking_ref": "2111", "notes": f"paid in full {event}; {clause}", "event_date": event,
+                        "occasion": "wedding", "value_gbp": "650"})
+        lcs = __import__("lcs_owner")
+        saved, lcs._PROVEN = lcs._PROVEN, True
+        try:
+            ev.append("booking", "2111", "paid-in-full", {"basis": "owner"}, "owner", on=event,
+                      note=ev.note_hash(f"paid in full {event}"))
+        finally:
+            lcs._PROVEN = saved
+        eid = ev.append("booking", "2111", kind, fields, "script", note=ev.note_hash(clause))
+        rows = lambda: ev.lm.read_csv(os.path.join(d, "bookings.csv"))  # noqa: E731
+        assert pl.reviews_due(rows(), today) == [], kind
+        code, out = run_owner("retract", eid, "--owner")
+        assert code == 0, out
+        ev.clear_cache()
+        assert [x["booking_ref"] for x in pl.reviews_due(rows(), today)] == ["2111"], kind
+    # the singer's "Paid!" marker: THANKS DUE again
+    import singer_invoices as si
+    d = fresh()
+    write_ledger(d, {})
+    migrated(d)
+    write_store(d, [{"message_id": "m5", "received": "2026-09-20", "amount_gbp": "150.00", "paid_on": td,
+                     "paid_amount": "150.00", "paid_verified": "yes", "notes": f"thanks due {td}; paid reply drafted {td}"}])
+    eid = ev.append("singer_invoice", "m5", "paid-reply-drafted", {}, "script", note=ev.note_hash(f"paid reply drafted {td}"))
+    assert si.thanked(store_row(d, "m5")[1])
+    code, out = run_owner("retract", eid, "--owner")
+    assert code == 0, out
+    ev.clear_cache()
+    assert not si.thanked(store_row(d, "m5")[1])
+
+
+def test_after_an_undo_verify_and_compare_report_nothing():
+    d = fresh()
+    clause = "cancelled 2026-09-20 by client email"
+    write_ledger(d, {"2111": f"4 singers; {clause}"})
+    write_store(d, [])
+    migrated(d)
+    eid = ev.append("booking", "2111", "cancelled", {}, "script", on="2026-09-20", note=ev.note_hash(clause))
+    assert run_owner("retract", eid, "--owner")[0] == 0
+    code, out = run("verify")
+    assert code == 0 and "without its note" not in out, out
+    code, out = run("compare")
+    assert code == 0 and "no difference" in out, out
+    write_ledger(d, {"2111": "4 singers"})  # the owner tidies both clauses away by hand
+    code, out = run("verify")
+    assert code == 0 and "without its note" not in out, out
+    code, out = run("compare")
+    assert code == 0 and "no difference" in out, out
+
+
 def test_retract_of_a_singer_fact_puts_its_column_back():
     import csv
     import singer_invoices as si
