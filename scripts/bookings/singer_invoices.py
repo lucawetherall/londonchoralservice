@@ -1168,6 +1168,10 @@ def print_books_due(rows, skip=(), today=None, facts=None):
     today = today or lm.today()
     done = [r for r in rows if r.get("paid_on") and r.get("paid_verified") == "yes" and not is_withdrawn(r, facts)
             and r["message_id"] not in skip]
+    # a held invoice (its notes and recorded facts disagree) gets one HELD line and no BOOKS DUE or THANKS DUE
+    for r in [r for r in done if held(rows, r, facts)]:
+        print(f"HELD {r['message_id']}: check by hand")
+        done.remove(r)
     bills = read_books_bills()
     if bills is None:
         print("books-due: no Books cache")
@@ -1418,6 +1422,11 @@ def match_and_record(args, client):
     hits = match_paid(unpaid, items, report, history=rows, payee_fps=payee_fps)
     for line in report:
         print(line)
+    # a held invoice (its notes and recorded facts disagree) is never NEWLY PAID, thanked or billed, nor recorded
+    for r in rows:
+        if r["message_id"] in hits and held(rows, r):
+            print(f"HELD {r['message_id']}: check by hand")
+            del hits[r["message_id"]]
     for r in rows:
         if r["message_id"] in hits:
             when, amount, uid, verified = hits[r["message_id"]]

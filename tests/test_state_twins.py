@@ -426,6 +426,64 @@ def test_the_trust_history_only_names_rows_on_the_same_account():
     assert len(calls) <= 3 * 10 * len(rows), len(calls)  # the same-account group, not the whole store, per row
 
 
+def test_a_held_singer_invoice_gets_no_thanks_due_line():
+    import contextlib, io
+    held_clauses = SINGER_HOLDS[2][1]  # settlement: a verified payment trusts the account, so no bank-alarm hold here
+    rows, facts = singer_held_rows(held_clauses, {"paid_on": "2026-09-25", "paid_amount": "100.00", "paid_verified": "yes"})
+    assert si.held(rows, rows[0], facts=facts) == ["settlement"]
+    rows[0]["notes"] += "; thanks due 2026-09-25"
+    with contextlib.redirect_stdout(io.StringIO()) as out:
+        si.print_books_due(rows, today=T, facts=facts)
+    assert "HELD a: check by hand" in out.getvalue() and "THANKS DUE" not in out.getvalue(), out.getvalue()
+    with contextlib.redirect_stdout(io.StringIO()) as out:
+        si.print_books_due(rows, today=T, facts={})  # no facts: thanked as before
+    assert "THANKS DUE a:" in out.getvalue() and "HELD" not in out.getvalue(), out.getvalue()
+
+
+class OutClient:
+    def __init__(self, items):
+        self.items = items
+
+    def feed(self, since, until, direction):
+        return self.items if direction == "OUT" else []
+
+    def payees(self):
+        return []
+
+
+def test_a_held_singer_invoice_is_never_newly_paid_or_recorded():
+    import argparse, contextlib, io
+    d = fresh_log()
+    try:
+        rows = []
+        for mid, acct in (("held1", state_cases.BEN), ("fine1", state_cases.OTHER)):
+            fp = lm.bank_fingerprint(*acct)
+            r = dict(state_cases.inv(mid, "2026-09-01", singer_name=f"Ben Fenwick{mid[0]}",
+                                     singer_email=f"{mid}@example.org"), bank_fp=fp, bank_last4=acct[1][-4:],
+                     notes="rescanned 2026-09-14" + ("; " + state_cases.CHANGED if mid == "held1" else ""))
+            del r["acct"], r["clauses"]
+            rows.append(r)
+            ev.append("singer_invoice", mid, "bank-warning", {"fp8": fp[:8], "codes": []}, "script", on="2026-09-14",
+                      note=ev.note_hash("rescanned 2026-09-14"))
+        lm.write_csv(si.STORE, rows, si.COLUMNS)
+        feed = [{"feedItemUid": f"u-{r['message_id']}", "amount": {"minorUnits": 10000},
+                 "transactionTime": "2026-09-20T10:00:00Z", "counterPartyName": r["singer_name"],
+                 "counterPartySubEntityIdentifier": acct[0], "counterPartySubEntitySubIdentifier": acct[1]}
+                for r, acct in zip(rows, (state_cases.BEN, state_cases.OTHER))]
+        assert si.held(rows, rows[0]) == ["bank warnings"] and si.held(rows, rows[1]) == []
+        with contextlib.redirect_stdout(io.StringIO()) as out:
+            hits = si.match_and_record(argparse.Namespace(apply=True), OutClient(feed))
+        text = out.getvalue()
+        assert "HELD held1: check by hand" in text and "NEWLY PAID held1" not in text, text
+        assert "NEWLY PAID fine1" in text and set(hits) == {"fine1"}, text
+        after = {r["message_id"]: r for r in lm.read_csv(si.STORE)}
+        assert after["held1"]["paid_on"] == "" and after["fine1"]["paid_on"] == "2026-09-20", after
+    finally:
+        si.STORE.unlink(missing_ok=True)
+        os.environ["LCS_PRIVATE_DIR"] = _HOME
+        ev.clear_cache()
+
+
 def test_with_no_log_the_singer_readers_are_todays():
     ev.clear_cache()
     for name, invoices, today in SINGER_CASES:
