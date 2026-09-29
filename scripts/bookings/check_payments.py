@@ -103,21 +103,16 @@ it writes "deposit seen … (Starling)". Output shows invoice numbers and amount
 
 import argparse
 import datetime
-import hashlib
-import hmac
 import json
 import math
-import os
 import re
-import select
-import stat
 import sys
-import time
 import urllib.error
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import lcs_money as lm  # noqa: E402
+import lcs_owner  # noqa: E402
 
 LEDGER = lm.LEDGER
 MARK_TEXT = {"deposit": "reminder drafted", "balance": "balance reminder drafted", "receipt": "receipt drafted"}
@@ -784,67 +779,22 @@ def main():
         raise SystemExit(str(e))
 
 
-OWNER_NONCE_TTL = 60  # seconds: the Command Centre writes the file moments before it runs this script
-
-
-def owner_nonce_path():
-    """<private dir>/command-centre/owner-nonce (LCS_PRIVATE_DIR read at call time)."""
-    return Path(os.environ.get("LCS_PRIVATE_DIR", Path.home() / "lcs-private")) / "command-centre" / "owner-nonce"
+# The owner barrier lives in lcs_owner (shared with the singer store and the state log); kept here under the old
+# names, so the Command Centre and the tests need no change.
+OWNER_NONCE_TTL = lcs_owner.OWNER_NONCE_TTL
+owner_nonce_path = lcs_owner.owner_nonce_path
 
 
 def owner_ledger_problem(environ=None):
-    """None when an --owner note would land in the ledger beside the nonce, else the reason. The nonce proves the
-    app asked; this proves the note goes to the ledger the app read: LCS_BOOKINGS_CSV must be unset (the app never
-    sets it for its subprocesses) and the ledger must sit directly in the nonce's private dir."""
-    environ = os.environ if environ is None else environ
-    if environ.get("LCS_BOOKINGS_CSV"):
-        return "refuses LCS_BOOKINGS_CSV (the ledger must be the one in the private folder)"
-    private = owner_nonce_path().parent.parent
-    try:
-        if Path(LEDGER).resolve().parent != private.resolve():
-            return "needs the ledger in the same private folder as the nonce"
-    except OSError:
-        return "couldn't resolve the ledger's folder"
-    return None
+    """None when an --owner note would land in the ledger beside the nonce, else the reason (lcs_owner.
+    owner_folder_problem for LEDGER, read at call time)."""
+    return lcs_owner.owner_folder_problem([LEDGER], environ)
 
 
 def owner_confirmed(stdin_fd=0):
-    """True only when the Command Centre ran this --owner note after the owner's passkey approval: stdin is a pipe
-    (not a terminal, not a redirected file) whose first line hashes (sha256) to the contents of the one-time nonce
-    file, and that file is a regular file (never followed through a symlink), this user's, mode 600 with no group
-    or other bits, and under OWNER_NONCE_TTL seconds old. The file is deleted on a match, so a nonce works once.
-    The nonce itself lives only in the app's memory and the pipe; the file holds its hash, so redirecting the
-    file into stdin fails twice over. No allowlisted command can pipe or write that file (plan, Task 3.1)."""
-    try:
-        if not stat.S_ISFIFO(os.fstat(stdin_fd).st_mode):
-            return False
-        path = owner_nonce_path()
-        fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | getattr(os, "O_NONBLOCK", 0))
-    except OSError:
-        return False
-    try:
-        st = os.fstat(fd)
-        if (not stat.S_ISREG(st.st_mode) or st.st_uid != os.getuid() or st.st_mode & 0o077
-                or not -5 <= time.time() - st.st_mtime <= OWNER_NONCE_TTL or st.st_size > 200):
-            return False
-        want = os.read(fd, 200).decode("ascii", "replace").strip()
-    finally:
-        os.close(fd)
-    if not re.fullmatch(r"[0-9a-f]{64}", want):
-        return False
-    ready, _, _ = select.select([stdin_fd], [], [], 2.0)  # an idle, open pipe never hangs the script
-    if not ready:
-        return False
-    line = os.read(stdin_fd, 200).decode("ascii", "replace").split("\n", 1)[0].strip()
-    if not re.fullmatch(r"[0-9a-f]{64}", line):
-        return False
-    if not hmac.compare_digest(hashlib.sha256(line.encode("ascii")).hexdigest(), want):
-        return False
-    try:
-        os.unlink(path)  # single use: burnt before the note is written
-    except OSError:
-        return False
-    return True
+    """True only when the Command Centre ran this --owner note after the owner's passkey approval (lcs_owner.
+    owner_confirmed: the one-time nonce over a pipe, burnt on a match)."""
+    return lcs_owner.owner_confirmed(stdin_fd)
 
 
 def append_note(ref, text):
