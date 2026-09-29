@@ -517,7 +517,7 @@ def test_one_off_2408_bank_charges_allows_exactly_one_call():
     g = guard_module()
     ok = good_inputs()[U]
     assert not denied(U, ok) and not denied(U, ok, server="zoho-books-invoices")
-    for key, value in (("bank_charges", 40.0), ("amount", 733.08), ("amount_applied", 700.0), ("date", "2026-08-25"),
+    for key, value in (("bank_charges", 40.0), ("amount", 696.93), ("amount_applied", 700.0), ("date", "2026-08-25"),
                        ("account_id", "1"), ("description", "x")):
         assert denied(U, dict(ok, body=dict(ok["body"], **{key: value}))), key
     assert denied(U, dict(ok, path_variables={"payment_id": "1534218000000117017"}))
@@ -532,31 +532,36 @@ def test_one_off_2408_bank_charges_allows_exactly_one_call():
 
 
 def test_customer_payment_may_carry_the_owners_accepted_fee_as_bank_charges():
-    """A shortfall the owner accepted as transfer fees (at most £40): amount is the money received, and the
-    invoice is credited with amount + bank_charges."""
+    """A shortfall the owner accepted as transfer fees (at most £40). Books credits the invoice with `amount` and
+    deposits amount - bank_charges, so amount and both amount_applied values are the money received plus the
+    charges (Books refused amount_applied above amount on 29 Sep 2026)."""
     C = "ZohoBooks_create_customer_payment"
     inv = {"invoice_id": "1534218000000100020"}
 
-    def pay(amount, charges, applied=None, line=None):
-        applied = round(amount + charges, 2) if applied is None else applied
+    def pay(received, charges, amount=None, applied=None, line=None):
+        amount = round(received + charges, 2) if amount is None else amount
+        applied = amount if applied is None else applied
         return with_(C, "body", amount=amount, bank_charges=charges, amount_applied=applied,
                      description="Starling transfer, matched to invoice 2111 (£12.40 bank charges accepted by the owner)",
                      invoices=[dict(inv, amount_applied=applied if line is None else line)])
-    assert not denied(C, pay(462.6, 12.4))  # 475.00 applied
+    assert not denied(C, pay(462.6, 12.4))  # 475.00 credited, 462.60 deposited
     assert not denied(C, pay(535, 40))  # at the cap
     assert not denied(C, pay(696.93, 36.15))  # 2408's shortfall
     assert not denied(C, pay(574.99, 0.01))
     assert denied(C, pay(534.99, 40.01))  # over the cap
-    assert denied(C, pay(575, 0, applied=575))  # a charge of nothing is left out, never 0
-    assert denied(C, pay(575, -5, applied=570))
-    assert denied(C, with_(C, "body", bank_charges="12.40", amount=562.6, amount_applied=575,
+    assert denied(C, pay(575, 0))  # a charge of nothing is left out, never 0
+    assert denied(C, pay(575, -5))
+    assert not denied(C, pay(20, 20))  # 40 credited, 20 deposited
+    assert denied(C, with_(C, "body", bank_charges=40, amount=40, amount_applied=40,
+                           invoices=[dict(inv, amount_applied=40)]))  # nothing reached the bank
+    assert denied(C, with_(C, "body", bank_charges="12.40", amount=575, amount_applied=575,
                            invoices=[dict(inv, amount_applied=575)]))  # a string
-    assert denied(C, with_(C, "body", bank_charges=True, amount=574, amount_applied=575,
+    assert denied(C, with_(C, "body", bank_charges=True, amount=575, amount_applied=575,
                            invoices=[dict(inv, amount_applied=575)]))  # a bool
-    assert denied(C, pay(462.6, 12.4, applied=462.6, line=462.6))  # the charge not applied to the invoice
+    assert denied(C, pay(462.6, 12.4, amount=462.6, applied=475, line=475))  # the old reading: applied above amount
     assert denied(C, pay(462.6, 12.4, applied=475, line=462.6))  # the two amount_applied disagree
     assert denied(C, pay(462.6, 12.4, applied=462.6, line=475))
-    assert denied(C, pay(462.6, 12.4, applied=480, line=480))  # more than amount + charges
+    assert denied(C, pay(462.6, 12.4, applied=480, line=480))  # more than amount
     assert denied(C, with_(C, "body", bank_charges=[12.4]))
     # without bank_charges, all three amounts must still be equal
     assert not denied(C, with_(C, "body"))
