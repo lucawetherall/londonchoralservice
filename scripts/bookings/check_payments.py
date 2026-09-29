@@ -428,6 +428,8 @@ def note_refusal(ref, text):
 def fact_input(args, today):
     """(kind, fields, by, day) for --fact from the parsed arguments, or SystemExit naming what is wrong."""
     ref, kind = args.fact
+    if not lcs_events.loggable("booking", ref):
+        raise SystemExit("--fact needs a booking ref of letters, digits and '-' (the state log's); nothing written")
     if kind not in FACT_KINDS:
         raise SystemExit(f"--fact records one of: {', '.join(FACT_KINDS)}; nothing written")
     by = "owner" if args.owner else "script"
@@ -1148,6 +1150,7 @@ def apply_notes(results, today):
             new = updated_notes(notes, assess(r, paid, today), paid)
             if new != notes:
                 r["notes"], changed = new, True
+                # (a ref the log can't take gets its note as before and no fact: record() skips it)
                 for clause in [c for c in clauses(new) if c not in clauses(notes)]:
                     if AUTO_NOTE.fullmatch(clause):
                         lcs_events.record(t, "booking", r["booking_ref"], "deposit-seen", {}, "script", clause,

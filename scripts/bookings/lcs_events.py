@@ -302,11 +302,20 @@ def append(subject, id, kind, fields, by, on=None, note=None, src="live", eid=No
 
 # --- writers: a fact and its note under the CSV's lock ---------------------------------------------------------------
 
+def loggable(subject, id):
+    """True when `id` can go in the log for this subject (ID_RE)."""
+    return isinstance(id, str) and bool(ID_RE[subject].fullmatch(id))
+
+
 def record(table, subject, id, kind, fields, by, clause, on=None):
     """Inside a writer's recording() block, once the row it edits carries `clause` (the note clause exactly as
     appended, or None for a fact with no note): append the fact claiming that clause, and have locked_rows withdraw
     it (a write-failed retract by the same writer, still under the CSV's lock) should the rows not be written after
-    all. Returns the eid. Record a fact only after every refusal the writer makes: a refusal after it withdraws it."""
+    all. Returns the eid. Record a fact only after every refusal the writer makes: a refusal after it withdraws it.
+    A legacy id the log can't take (loggable() false: a space, a slash, an "@") records nothing and returns None: no
+    fact can ever exist for it, so its readers keep reading its notes and columns, as before."""
+    if not loggable(subject, id):
+        return None
     try:
         eid = append(subject, id, kind, fields, by, on=on, note=note_hash(clause) if clause else None)
     except (ValueError, OSError):

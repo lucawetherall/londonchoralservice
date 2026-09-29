@@ -741,6 +741,20 @@ def test_a_refusal_after_a_fact_withdraws_it_and_a_failed_retract_says_run_verif
         lm.write_csv, ev.append = real, saved_append
 
 
+def test_a_legacy_id_the_log_cant_take_gets_its_note_and_no_fact():
+    fresh_dir()
+    path = os.path.join(os.environ["LCS_PRIVATE_DIR"], "bookings.csv")
+    with open(path, "w") as f:
+        f.write("booking_ref,notes\n21/11,PENDING\n")
+    with ev.recording(path) as t:
+        t.rows[0]["notes"] += "; reminder drafted 2026-09-28"
+        assert ev.record(t, "booking", "21/11", "reminder-drafted", {"what": "deposit"}, "script",
+                         "reminder drafted 2026-09-28") is None
+    assert lm.read_csv(path)[0]["notes"] == "PENDING; reminder drafted 2026-09-28" and ev.read()[0] == []
+    assert ev.loggable("booking", "2111A") and not ev.loggable("booking", "21 11")
+    assert not ev.loggable("singer_invoice", "<a@b>") and ev.loggable("singer_invoice", "1789828736363141700")
+
+
 def test_a_refused_fact_writes_nothing_at_all():
     fresh_dir()
     path = ledger_file()

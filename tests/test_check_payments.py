@@ -1698,7 +1698,8 @@ def test_fact_refuses_the_owner_kinds_and_bad_input_and_writes_nothing():
                  ["--fact", "2111", "cancelled", "--method", "cash"], ["--fact", "2111", "cancelled", "--amount", "5"],
                  ["--fact", "2111", "cancelled", "--on", future], ["--fact", "2111", "cancelled", "--on", old],
                  ["--fact", "2111", "cancelled", "--on", "28/09/2026"], ["--fact", "2111", "cancelled", "--on", "2026-02-30"],
-                 ["--fact", "9999", "cancelled"], ["--fact", "2111", "cancelled", "--note", "2111", "x"],
+                 ["--fact", "9999", "cancelled"], ["--fact", "ann@example.com", "cancelled"], ["--fact", "21 11", "cancelled"],
+                 ["--fact", "2111", "cancelled", "--note", "2111", "x"],
                  ["--fact", "2111", "cancelled", "--reminded", "2111"], ["--kind", "balance", "--fact", "2111", "cancelled"]):
         p, notes, log = run_fact("PENDING: invoiced", *args)
         assert p.returncode != 0 and notes == "PENDING: invoiced" and log == [], (args, p.stderr)
@@ -1789,6 +1790,27 @@ def test_apply_records_deposit_seen_and_paid_in_full_where_it_writes_them():
     assert got == [("2111", "deposit-seen", {}, "2026-08-26", "script", ev.note_hash("deposit seen 2026-08-26 (Starling)")),
                    ("0512", "paid-in-full", {"basis": "bank"}, "2026-09-20", "script",
                     ev.note_hash("paid in full 2026-09-20"))], got
+
+
+def test_apply_still_writes_the_note_of_a_ref_the_log_cant_take():
+    """A legacy ref the state log's id pattern refuses (a space, a slash) keeps today's behaviour: the note, no fact,
+    and the other rows' facts are still recorded."""
+    def go(d):
+        path = os.path.join(d, "bookings.csv")
+        rows = [row("21 11", 650, "2026-08-22", "2026-11-21", "PENDING: invoiced"),
+                row("0512", 650, "2026-08-22", "2026-11-21", "PENDING: invoiced", name="Bo Jones")]
+        cp.lm.write_csv(path, rows, list(rows[0].keys()))
+        paid = [("2026-08-26", 325.0, "reference")]
+        saved = cp.LEDGER
+        cp.LEDGER = path
+        try:
+            cp.apply_notes([(r, paid, cp.assess(r, paid, T)) for r in rows], T)
+        finally:
+            cp.LEDGER = saved
+        return [r["notes"] for r in cp.lm.read_csv(path)]
+    d, notes = in_private(go)
+    assert notes == ["deposit seen 2026-08-26 (Starling); invoiced"] * 2, notes
+    assert [(e["id"], e["kind"]) for e in log_of(d)] == [("0512", "deposit-seen")]
 
 
 def test_a_ledger_write_that_fails_after_the_fact_withdraws_it():
