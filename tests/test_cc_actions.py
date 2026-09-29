@@ -259,7 +259,7 @@ def test_registry_and_passkey_flags():
                                      "singer-withdrawn", "refresh-data", "ads-validate", "ads-apply",
                                      "approve-books-import", "books-import-done", "push-subscribe",
                                      "push-unsubscribe", "backup-now", "draft-mark", "sync-now", "migrate-events",
-                                     "undo-fact"}
+                                     "undo-fact", "notes-checked"}
     no_passkey = {n for n, a in actions.REGISTRY.items() if not a.passkey}
     assert no_passkey == {"todo-tick", "refresh-data", "push-unsubscribe", "backup-now", "draft-mark",
                           "sync-now"}, no_passkey
@@ -1903,6 +1903,16 @@ def test_the_apps_own_commands_are_not_allowlisted_unless_safe():
     assert not allowlist.allowed(claude_form(undo.argv(undo.validate({"subject": "booking", "key": "2111", "eid": eid}))),
                                  pats)
     seen.add("undo-fact")
+    rows = lm.read_csv(cp.LEDGER)  # a loose "back on" beside the recorded cancellation: held, so notes-checked
+    for r in rows:
+        if r["booking_ref"] == "2111":
+            r["notes"] = f"cancelled {D} by client email; client says back on {D}"
+    write_csv(os.path.join(TMP, "bookings.csv"), LEDGER_COLS, rows)
+    cp.lcs_events.clear_cache()
+    checked = actions.REGISTRY["notes-checked"]
+    cmd = claude_form(checked.argv(checked.validate({"subject": "booking", "key": "2111", "family": "cancellation"})))
+    assert not allowlist.allowed(cmd, pats), cmd
+    seen.add("notes-checked")
     clear_log()
     seen |= {"approve-books-import", "books-import-done", "todo-tick", "push-subscribe", "push-unsubscribe",
              "draft-mark"}  # no subprocess
@@ -2288,6 +2298,86 @@ def test_undo_fact_through_the_real_script_and_the_pages():
     assert "the assistant may draft it again" in s, s
     wid = fact("singer_invoice", MSG, "bank-warning", {"fp8": FP_A[:8], "codes": ["new"]}, "script", D, "x")
     refused(actions.REGISTRY["undo-fact"].validate, {"subject": "singer_invoice", "key": key, "eid": wid})
+    clear_log()
+
+
+# ---------------------------------------------------------------- "The recorded facts are right" (notes-checked)
+
+
+LOOSE = "client says back on 2026-09-25"
+
+
+def held_setup():
+    """2111 holds a recorded cancellation; its notes then say "back on" in a clause no fact claims: held."""
+    c, a, eid = undo_setup()
+    rows = lm.read_csv(cp.LEDGER)
+    for r in rows:
+        if r["booking_ref"] == "2111":
+            r["notes"] = f"PENDING: invoiced; cancelled 2026-09-20 by client email; {LOOSE}"
+    write_csv(os.path.join(TMP, "bookings.csv"), LEDGER_COLS, rows)
+    cp.lcs_events.clear_cache()
+    return c, a
+
+
+def test_notes_checked_argv_summary_and_refusals():
+    c, a = held_setup()
+    act = actions.REGISTRY["notes-checked"]
+    assert act.owner_nonce and act.passkey and act.script == "scripts/bookings/events.py"
+    cleaned = act.validate({"subject": "booking", "key": "2111", "family": "cancellation"})
+    h = cp.lcs_events.note_hash(LOOSE)
+    assert act.argv(cleaned) == [PYX, EVENTS, "notes-checked", "booking", "2111", h, "--owner"]
+    s = act.preview(cleaned)
+    assert "booking 2111 (Ann)" in s and "the notes say not cancelled" in s and "the recorded facts say cancelled" in s, s
+    assert "notes checked" in s and LOOSE not in s and "back on" not in s and "Smithfield" not in s, s
+    for bad in ({"subject": "booking", "key": "2111", "family": "close"},  # not held on that
+                {"subject": "booking", "key": "0310", "family": "cancellation"},  # not held
+                {"subject": "booking", "key": "9999", "family": "cancellation"},
+                {"subject": "booking", "key": "2111", "family": "x"}, {"subject": "enquiry", "key": "2111", "family": "cancellation"},
+                {"subject": "booking", "key": "2111"}):
+        refused(act.validate, bad)
+    clear_log()
+
+
+def test_notes_checked_through_the_real_script_releases_the_held_booking():
+    c, a = held_setup()
+    html = page(c, "/")
+    assert 'data-action="notes-checked"' in html and 'value="cancellation"' in html
+    r = run(c, a, "notes-checked", {"subject": "booking", "key": "2111", "family": "cancellation"})
+    assert r.status_code == 200 and r.json()["ok"], r.json()
+    assert ledger_notes("2111").endswith(f"{LOOSE}; notes checked {D} (owner)")
+    cp.lcs_events.clear_cache()
+    row = next(x for x in lm.read_csv(cp.LEDGER) if x["booking_ref"] == "2111")
+    assert cp.held(row) == [] and cp.is_cancelled(row)
+    assert log_lines()[-1]["kind"] == "notes-checked" and log_lines()[-1]["by"] == "owner"
+    assert 'data-action="notes-checked"' not in page(c, "/")
+    refused(actions.REGISTRY["notes-checked"].validate, {"subject": "booking", "key": "2111", "family": "cancellation"})
+    clear_log()
+
+
+def test_notes_checked_on_a_held_singer_invoice():
+    c, a = held_setup()
+    rows = lm.read_csv(si.STORE)
+    loose = "withdrawn 2026-09-17 (duplicate)"
+    for x in rows:
+        if x["message_id"] == MSG:
+            x["notes"] = loose
+    write_csv(str(si.STORE), si.COLUMNS, rows)
+    eid = fact("singer_invoice", MSG, "withdrawn", {"reason": "not-ours"}, "script", "2026-09-15", "x")
+    fact("singer_invoice", MSG, "retract", {"target": eid, "why": "mistake"}, "owner", "2026-09-16", "y")
+    cp.lcs_events.clear_cache()
+    key = models.invoice_key(MSG)
+    act = actions.REGISTRY["notes-checked"]
+    cleaned = act.validate({"subject": "singer_invoice", "key": key, "family": "withdrawal"})
+    assert act.argv(cleaned) == [PYX, EVENTS, "notes-checked", "singer_invoice", MSG,
+                                 cp.lcs_events.note_hash(loose), "--owner"]
+    s = act.preview(cleaned)
+    assert "the notes say withdrawn; the recorded facts say not withdrawn" in s and loose not in s, s
+    assert MSG not in s.split("\nRuns:")[0], s
+    r = run(c, a, "notes-checked", {"subject": "singer_invoice", "key": key, "family": "withdrawal"})
+    assert r.status_code == 200 and r.json()["ok"], r.json()
+    cp.lcs_events.clear_cache()
+    rows = lm.read_csv(si.STORE)
+    assert si.held(rows, next(x for x in rows if x["message_id"] == MSG)) == []
     clear_log()
 
 

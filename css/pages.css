@@ -23,6 +23,7 @@
   .contact-form,
   .btn,
   .video-embed,
+  .video-caption,
   .mobile-cta {
     display: none !important;
   }

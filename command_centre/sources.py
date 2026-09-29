@@ -322,6 +322,42 @@ def disk_check():
     return check("Disk", free >= DISK_LOW_GB, f"{free:,.1f} GB free of {usage.total / 1e9:,.0f} GB")
 
 
+def state_log_check():
+    """The state log (~/lcs-private/events.jsonl, lcs_events) for the Health page: lines, when it was last written,
+    whether the chain is whole, and events.py verify's problems as counts only (lcs_events.log_problem: unreadable,
+    a broken chain, skipped lines; events.note_problems: facts whose note clause is missing, notes-checked hashes no
+    clause matches). Never an id, a note or a name. "note" (ok None) while there is no log yet."""
+    import sys
+    bookings = str(REPO / "scripts" / "bookings")
+    if bookings not in sys.path:
+        sys.path.insert(0, bookings)
+    import events as state_events
+    import lcs_events
+    events, stats = lcs_events.read()
+    problem = lcs_events.log_problem(stats)
+    if stats.get("unreadable"):
+        return check("State log", False, f"{problem}; run events.py verify")
+    if not stats["lines"] and not stats["skipped"]:
+        return check("State log", None, "no state log yet: the facts are read from the notes until the events "
+                                        "migration is applied")
+    when = "never"
+    if stats["last_at"]:
+        at = datetime.datetime.strptime(stats["last_at"], "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=datetime.timezone.utc)
+        when = f"{at.astimezone(LONDON):%-d %b %Y %H:%M}"
+    chain = "chain whole" if stats["chain_ok"] else f"chain broken at line {stats['broken_at']}"
+    detail = f"{stats['lines']} line{'' if stats['lines'] == 1 else 's'}, {chain}, last written {when}"
+    notes = state_events.note_problems(events)
+    missing = sum(1 for n in notes if n.startswith("fact without its note"))
+    stale = len(notes) - missing
+    extra = [x for x in (
+        f"{stats['skipped']} line{'' if stats['skipped'] == 1 else 's'} skipped" if stats["skipped"] else "",
+        f"{missing} fact{'' if missing == 1 else 's'} without {'its' if missing == 1 else 'their'} note" if missing else "",
+        f"{stale} notes-checked hash{'' if stale == 1 else 'es'} no clause matches" if stale else "") if x]
+    if extra:
+        return check("State log", False, f"{detail}; {', '.join(extra)}: run events.py verify")
+    return check("State log", not problem, detail)
+
+
 def branch_check(branch):
     return check("Git branch", branch == "main", f"serving checkout on {branch or 'a detached HEAD'}")
 

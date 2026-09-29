@@ -384,7 +384,7 @@ def test_confirmed_bank_details_clear_the_singers_card_and_today():
         finally:
             lcs_owner._PROVEN, lcs_owner.owner_confirmed, os.environ["LCS_BOOKINGS_CSV"] = saved
         g = ben()
-        assert g["warnings"] == [] and g["bank_check"] == "confirmed by phone", g
+        assert g["warnings"] == [] and g["bank_check"].startswith("confirmed by phone on "), g  # the day it was
         assert not any(i["ring_first"] for i in g["invoices"]), g["invoices"]
         assert "BANK DETAILS CHANGED" in next(r for r in lm.read_csv(si.STORE) if r["message_id"] == "m1")["notes"]
         c = TestClient(create_app(client_factory=(lambda: FakeBank()), now=lambda: NOW, clock=Clock(),

@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Status:** Approved, 29 Sep 2026. The owner answered yes to the spec's three questions, so tasks 14, 15 and 18 go ahead as written.
+**Status:** Approved, 29 Sep 2026. The owner answered yes to the spec's three questions, so tasks 14, 15 and 18 go ahead as written. PRs 1–4 are merged (#209, #216); PRs 5 and 6 (tasks 16–18) are on `feat/structured-state-final`. Task 11 (the owner applies the migration) is still the owner's. Task 18's agent prompts (`.claude/agents/`) and CLAUDE.md sentences are applied by the owner, since Claude may not edit those files.
 
 **Goal:** Record each fact about a booking or a singer invoice as one validated line in an append-only log, `~/lcs-private/events.jsonl`, and have every reader use it before the notes, without changing any behaviour on the day it ships.
 
