@@ -19,7 +19,7 @@ iCloud Drive/LCS-invoices/ (~/Library/Mobile Documents/com~apple~CloudDocs/LCS-i
 Claude never emails, reminds, deletes, voids or writes off anything in Books, never
 matches a bank transaction and never updates an invoice. It records only the
 payments the owner approved (a confident client payment against its invoice, with any
-shortfall the owner accepted as transfer fees, at most £25, as its bank_charges; and a
+shortfall the owner accepted as transfer fees, at most £40, as its bank_charges; and a
 singer payment against its bill, unused on the free plan, both through the Starling
 account), and marks an invoice sent (a status change; Books emails nobody as long as
 its automatic payment reminders are off) only once Luca's own email carrying that
@@ -334,10 +334,11 @@ def check_create_vendor_payment(body, query, path):
 # check_payments.py matched confidently (its "record_in_books" list), recorded against that booking's one
 # invoice, through the Starling account, never with contact_persons (Books would email a thank-you).
 # `amount` is the money received. A shortfall the owner accepted as transfer fees (owner decision, 28 Sep 2026:
-# "short by fees £X accepted", at most £25 a booking) rides on the last payment as `bank_charges`, a plain
-# number more than £0 and at most FEE_CAP; the invoice is then credited with amount + bank_charges, so both
-# amount_applied values must equal that sum. Without bank_charges all three amounts are equal.
-FEE_CAP = 25.00  # check_payments.FEE_CAP
+# "short by fees £X accepted", at most £40 a booking since 29 Sep 2026) rides on the last payment as
+# `bank_charges`, a plain number more than £0 and at most FEE_CAP; the invoice is then credited with
+# amount + bank_charges, so both amount_applied values must equal that sum. Without bank_charges all three
+# amounts are equal.
+FEE_CAP = 40.00  # check_payments.FEE_CAP
 
 
 def check_create_customer_payment(body, query, path):

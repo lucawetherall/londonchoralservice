@@ -507,7 +507,7 @@ def test_customer_payment_is_one_invoice_through_starling_with_no_thank_you_emai
 
 
 def test_customer_payment_may_carry_the_owners_accepted_fee_as_bank_charges():
-    """A shortfall the owner accepted as transfer fees (at most £25): amount is the money received, and the
+    """A shortfall the owner accepted as transfer fees (at most £40): amount is the money received, and the
     invoice is credited with amount + bank_charges."""
     C = "ZohoBooks_create_customer_payment"
     inv = {"invoice_id": "1534218000000100020"}
@@ -518,9 +518,10 @@ def test_customer_payment_may_carry_the_owners_accepted_fee_as_bank_charges():
                      description="Starling transfer, matched to invoice 2111 (£12.40 bank charges accepted by the owner)",
                      invoices=[dict(inv, amount_applied=applied if line is None else line)])
     assert not denied(C, pay(462.6, 12.4))  # 475.00 applied
-    assert not denied(C, pay(550, 25))  # at the cap
+    assert not denied(C, pay(535, 40))  # at the cap
+    assert not denied(C, pay(696.93, 36.15))  # 2408's shortfall
     assert not denied(C, pay(574.99, 0.01))
-    assert denied(C, pay(549.99, 25.01))  # over the cap
+    assert denied(C, pay(534.99, 40.01))  # over the cap
     assert denied(C, pay(575, 0, applied=575))  # a charge of nothing is left out, never 0
     assert denied(C, pay(575, -5, applied=570))
     assert denied(C, with_(C, "body", bank_charges="12.40", amount=562.6, amount_applied=575,
