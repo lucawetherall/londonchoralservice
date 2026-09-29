@@ -16,6 +16,7 @@ Every value is a date, an amount, an id, a hash or a word from a fixed list: no 
 email or bank number can reach the log. validate() runs on every write and every read.
 """
 
+import contextlib
 import datetime
 import hashlib
 import json
@@ -299,6 +300,73 @@ def append(subject, id, kind, fields, by, on=None, note=None, src="live", eid=No
     return obj["eid"]
 
 
+# --- writers: a fact and its note under the CSV's lock ---------------------------------------------------------------
+
+def loggable(subject, id):
+    """True when `id` can go in the log for this subject (ID_RE)."""
+    return isinstance(id, str) and bool(ID_RE[subject].fullmatch(id))
+
+
+def migration_applied(events=None):
+    """True once the log holds the events migration's lines (src migration, not withdrawn as write-failed). The
+    writers record facts only from then on (record()): the migration runs before them (spec, "Migration"), so no
+    live fact ever lands in a family whose legacy note clauses nobody has claimed, which would hold the booking.
+    Renaming the log away turns them off again with the readers (a full rollback)."""
+    if events is None:
+        idx = _indexed(lm.today())[0]
+    else:
+        idx = index(events, lm.today())
+    return any(e["src"] == "migration" and e["retracted"] != "write-failed" for es in idx.values() for e in es)
+
+
+def record(table, subject, id, kind, fields, by, clause, on=None):
+    """Inside a writer's recording() block, once the row it edits carries `clause` (the note clause exactly as
+    appended, or None for a fact with no note): append the fact claiming that clause, and have locked_rows withdraw
+    it (a write-failed retract by the same writer, still under the CSV's lock) should the rows not be written after
+    all. Returns the eid. Record a fact only after every refusal the writer makes: a refusal after it withdraws it.
+    A legacy id the log can't take (loggable() false: a space, a slash, an "@") records nothing and returns None: no
+    fact can ever exist for it, so its readers keep reading its notes and columns, as before. Nor does anything
+    before the events migration is applied (migration_applied): the writers then write their notes exactly as
+    before."""
+    if not loggable(subject, id) or not migration_applied():
+        return None
+    try:
+        eid = append(subject, id, kind, fields, by, on=on, note=note_hash(clause) if clause else None)
+    except (ValueError, OSError):
+        table.log_refused = True
+        raise
+
+    def undo():
+        try:
+            append(subject, id, "retract", {"target": eid, "why": "write-failed"}, by)
+        except Exception:  # the note is not written and the fact stands: events.py verify lists it
+            table.undo_failed = True
+    table.if_unwritten.append(undo)
+    return eid
+
+
+@contextlib.contextmanager
+def recording(path, columns=None):
+    """lm.locked_rows for a writer that records facts (record()): the CSV's lock first, the log's inside each append.
+    If the rows are not written after a fact was recorded (the block raised, or the CSV write failed), the facts are
+    withdrawn and this ends in SystemExit: "nothing written (<error type>) …", or, when a withdrawal failed too,
+    "fact recorded, note not written …: run events.py verify" (the fact decides; the note is the human record).
+    A fact the log refuses (a bad value, an owner fact without the owner's proof, an unsafe log file) ends in
+    SystemExit too, with nothing written anywhere."""
+    table = None
+    try:
+        with lm.locked_rows(path, columns) as table:
+            yield table
+    except (ValueError, OSError) as e:
+        if table is not None and table.if_unwritten:
+            if getattr(table, "undo_failed", False):
+                raise SystemExit(f"fact recorded, note not written ({type(e).__name__}): run events.py verify") from None
+            raise SystemExit(f"nothing written ({type(e).__name__}): the recorded fact was withdrawn") from None
+        if table is not None and getattr(table, "log_refused", False):
+            raise SystemExit(f"the state log refused it ({e}); nothing written") from None
+        raise
+
+
 _CACHE = {}
 
 
@@ -466,6 +534,13 @@ class Facts:
     def has(self, family):
         return family in self.families
 
+    @property
+    def aside(self):
+        """Note hashes the owner set aside: the clauses facts he undid as a mistake claim, and those a live
+        notes-checked confirms. The notes are read without them (set_aside), so an undone marker is un-marked."""
+        return ({e["note"] for e in self.events if e.get("retracted") == "mistake" and e.get("note")}
+                | {c for e in self.of("notes-checked") for c in e["fields"]["clauses"]})
+
     def of(self, *kinds):
         """Live events of these kinds, in file order."""
         return [e for e in self.live if e["kind"] in kinds]
@@ -543,6 +618,14 @@ class Facts:
     @property
     def thanked(self):
         return bool(self.of("paid-reply-drafted"))
+
+
+def set_aside(notes, f):
+    """The notes without the clauses f sets aside (Facts.aside), rejoined with "; "; unchanged when there are none."""
+    aside = f.aside
+    if not aside:
+        return notes or ""
+    return "; ".join(c.strip() for c in (notes or "").split(";") if c.strip() and note_hash(c.strip()) not in aside)
 
 
 _INDEXED = {}

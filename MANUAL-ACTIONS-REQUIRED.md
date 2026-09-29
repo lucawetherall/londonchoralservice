@@ -390,7 +390,8 @@ When the assistant's summary carries a warning like "BANK DETAILS CHANGED" or "D
 What to do:
 
 1. Ring the singer on a number you already hold for them, not a number from the new invoice, and confirm the new bank details by voice.
-2. Once confirmed, run `.venv/bin/python scripts/bookings/singer_invoices.py confirm <message id>` yourself. Claude never runs `confirm`: this check exists specifically so a changed bank detail always gets a human phone call before the invoice is treated as genuine.
+2. Once confirmed, open the Command Centre's Singers page, choose "Act on <name>'s invoice", then "Confirm bank details", and approve with Face ID or Touch ID. The terminal command no longer works on its own: `confirm` needs the app's passkey approval. Claude never confirms bank details: this check exists specifically so a changed bank detail always gets a human phone call before the invoice is treated as genuine.
+3. If the Command Centre is down, set `bank_confirmed` to `yes` for that invoice in `~/lcs-private/singer-invoices.csv` by hand. It counts until a rescan changes the details.
 
 ---
 

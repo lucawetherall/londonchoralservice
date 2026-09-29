@@ -24,11 +24,11 @@ report and the dashboard import summary_dict().
     .venv/bin/python scripts/bookings/pipeline.py reviews-due [--today YYYY-MM-DD]
         JSON [{booking_ref, event_date}] from the bookings ledger
     .venv/bin/python scripts/bookings/pipeline.py reviewed <booking_ref> <YYYY-MM-DD>
-        appends "review request drafted <date>" to that ledger row's notes
-    .venv/bin/python scripts/bookings/pipeline.py review-skipped <booking_ref> <reason word>
-        appends "review request skipped <today> (<reason>)" to that ledger row's notes, so
-        reviews-due stops listing it (a planner, an unresolved problem); the reason is one
-        lower-case word, never a name
+        appends "review request drafted <date>" to that ledger row's notes and records review-drafted
+        in the state log (lcs_events), under the ledger lock; the date is never after today
+    .venv/bin/python scripts/bookings/pipeline.py review-skipped <booking_ref> <planner|unresolved>
+        appends "review request skipped <today> (<reason>)" to that ledger row's notes and records
+        review-skipped {reason}, so reviews-due stops listing it (a planner, an unresolved problem)
     .venv/bin/python scripts/bookings/pipeline.py thread <booking_ref>
         prints the enquiry_id (the Zoho thread id) booked under that ref, or "no thread"
     .venv/bin/python scripts/bookings/pipeline.py done-due [--today YYYY-MM-DD]
@@ -190,7 +190,9 @@ def reviews_due(ledger_rows, today, facts=None):
         if not REVIEW_FROM <= (today - event).days <= REVIEW_UNTIL:
             continue
         f = cp.facts_for(r, today, facts)
-        if not cp.closed_on(r, today, f) or cp.is_cancelled(r, f) or REVIEW_NOTE.search(notes) or f.review:
+        # (a review marker the owner undid is set aside: the booking is due again)
+        if (not cp.closed_on(r, today, f) or cp.is_cancelled(r, f) or f.review
+                or REVIEW_NOTE.search(cp.lcs_events.set_aside(notes, f))):
             continue
         if cp.held(r, today, f):
             continue
@@ -413,14 +415,22 @@ def cmd_followed(args):
 
 def cmd_reviewed(args):
     when = iso(args.date, "date")
-    note_review(args.booking_ref, f"review request drafted {when}")
+    if when > lm.today().isoformat():  # a review request is drafted today or earlier, never ahead
+        raise SystemExit(f"{args.booking_ref}: {when} is after today; nothing written")
+    note_review(args.booking_ref, f"review request drafted {when}", ("review-drafted", {}, when))
+
+
+SKIP_REASONS = ("planner", "unresolved")  # the state log's review-skipped reasons, the only ones the daily pass uses
 
 
 def cmd_review_skipped(args):
     reason = args.reason.strip()
     if not REASON_RE.fullmatch(reason):
         raise SystemExit("the reason must be one lower-case word, such as planner or unresolved")
-    note_review(args.booking_ref, f"review request skipped {lm.today().isoformat()} ({reason})")
+    if reason not in SKIP_REASONS:
+        raise SystemExit("the reason must be planner or unresolved; nothing written")
+    today = lm.today().isoformat()
+    note_review(args.booking_ref, f"review request skipped {today} ({reason})", ("review-skipped", {"reason": reason}, today))
 
 
 def cmd_thread(args):
@@ -429,19 +439,23 @@ def cmd_thread(args):
     print("\n".join(ids) if ids else "no thread")
 
 
-def note_review(booking_ref, text):
-    """Append a review note to one ledger row, under the ledger lock; refuses a second one."""
+def note_review(booking_ref, text, fact):
+    """Append a review note to one ledger row and record its marker in the state log (fact = (kind, fields, on)),
+    both under the ledger lock (lcs_events.recording); refuses a second one, in the notes or the recorded facts."""
     ledger = lm.LEDGER
     if not ledger.exists():
         raise SystemExit("no bookings ledger")
     # The same lock as check_payments and assistant_io; not re-entrant, so nothing else writes inside it.
     # locked_rows refuses a row wider than the header (a rewrite would drop its extra fields).
-    with lm.locked_rows(ledger) as t:
+    with cp.lcs_events.recording(ledger) as t:
         for r in t.rows:
             if r.get("booking_ref") == booking_ref:
-                if REVIEW_NOTE.search(r.get("notes") or ""):
+                f = cp.facts_for(r, lm.today())
+                if REVIEW_NOTE.search(cp.lcs_events.set_aside(r.get("notes"), f)) or f.review:
                     raise SystemExit(f"{booking_ref}: review request already drafted or skipped; nothing written")
                 r["notes"] = add_note(r.get("notes"), text)
+                kind, fields, on = fact
+                cp.lcs_events.record(t, "booking", booking_ref, kind, fields, "script", text, on=on)
                 break
         else:
             raise SystemExit(f"no booking {booking_ref}")
