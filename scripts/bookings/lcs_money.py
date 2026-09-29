@@ -242,10 +242,14 @@ def ledger_lock(path):
 
 
 class LockedTable:
-    """What locked_rows yields: .rows (list of dicts, edit or append in place) and .columns (the header)."""
+    """What locked_rows yields: .rows (list of dicts, edit or append in place) and .columns (the header).
+    .if_unwritten: callables locked_rows runs, still under the lock, when the rows are not written back (the block
+    raised, or the write failed): a writer that recorded a fact in the state log withdraws it there
+    (lcs_events.record)."""
 
     def __init__(self, rows, columns):
         self.rows, self.columns = rows, columns
+        self.if_unwritten = []
 
 
 @contextlib.contextmanager
@@ -254,7 +258,8 @@ def locked_rows(path, columns=None):
     header (plus any of `columns` it lacks, appended), and refuses (SystemExit, nothing written) a row with
     more fields than the header, since a rewrite would drop them. On a clean exit, if the rows changed, it
     writes them back atomically at mode 600 (write_csv); after an exception, SystemExit included, it writes
-    nothing. ledger_lock is not re-entrant: never nest this, or call another writer of the file inside it."""
+    nothing. Either way, when the rows are not written it runs the table's if_unwritten callables before the lock
+    goes. ledger_lock is not re-entrant: never nest this, or call another writer of the file inside it."""
     path = Path(path)
     with ledger_lock(path):
         header, rows = [], []
@@ -268,6 +273,11 @@ def locked_rows(path, columns=None):
         cols = header + [c for c in (columns or []) if c not in header]
         before = [dict(r) for r in rows]
         table = LockedTable(rows, cols)
-        yield table
-        if table.rows != before:
-            write_csv(path, table.rows, table.columns)
+        try:
+            yield table
+            if table.rows != before:
+                write_csv(path, table.rows, table.columns)
+        except BaseException:
+            for undo in table.if_unwritten:
+                undo()
+            raise

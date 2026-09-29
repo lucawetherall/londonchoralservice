@@ -16,6 +16,7 @@ Every value is a date, an amount, an id, a hash or a word from a fixed list: no 
 email or bank number can reach the log. validate() runs on every write and every read.
 """
 
+import contextlib
 import datetime
 import hashlib
 import json
@@ -297,6 +298,44 @@ def append(subject, id, kind, fields, by, on=None, note=None, src="live", eid=No
         finally:
             os.close(fd)
     return obj["eid"]
+
+
+# --- writers: a fact and its note under the CSV's lock ---------------------------------------------------------------
+
+def record(table, subject, id, kind, fields, by, clause, on=None):
+    """Inside a writer's recording() block, once the row it edits carries `clause` (the note clause exactly as
+    appended, or None for a fact with no note): append the fact claiming that clause, and have locked_rows withdraw
+    it (a write-failed retract by the same writer, still under the CSV's lock) should the rows not be written after
+    all. Returns the eid. Record a fact only after every refusal the writer makes: a refusal after it withdraws it."""
+    eid = append(subject, id, kind, fields, by, on=on, note=note_hash(clause) if clause else None)
+
+    def undo():
+        try:
+            append(subject, id, "retract", {"target": eid, "why": "write-failed"}, by)
+        except Exception:  # the note is not written and the fact stands: events.py verify lists it
+            table.undo_failed = True
+    table.if_unwritten.append(undo)
+    return eid
+
+
+@contextlib.contextmanager
+def recording(path, columns=None):
+    """lm.locked_rows for a writer that records facts (record()): the CSV's lock first, the log's inside each append.
+    If the rows are not written after a fact was recorded (the block raised, or the CSV write failed), the facts are
+    withdrawn and this ends in SystemExit: "nothing written (<error type>) …", or, when a withdrawal failed too,
+    "fact recorded, note not written …: run events.py verify" (the fact decides; the note is the human record).
+    A fact the log refuses (a bad value, an owner fact without the owner's proof, an unsafe log file) ends in
+    SystemExit too, with nothing written anywhere."""
+    table = None
+    try:
+        with lm.locked_rows(path, columns) as table:
+            yield table
+    except (ValueError, OSError) as e:
+        if table is not None and table.if_unwritten:
+            if getattr(table, "undo_failed", False):
+                raise SystemExit(f"fact recorded, note not written ({type(e).__name__}): run events.py verify") from None
+            raise SystemExit(f"nothing written ({type(e).__name__}): the recorded fact was withdrawn") from None
+        raise SystemExit(f"the state log refused it ({e}); nothing written") from None
 
 
 _CACHE = {}
