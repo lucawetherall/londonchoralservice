@@ -169,6 +169,7 @@ def setup(clock=None, client_factory=lambda: None):
     """A registered passkey, the fixtures, a fresh audit log; returns (client, authenticator, clock)."""
     for p in ("audit.jsonl",):
         (Path(TMP) / "command-centre" / p).unlink(missing_ok=True)
+    clear_log()
     write_config()
     fixtures()
     actions.reset_validations()
@@ -182,6 +183,18 @@ def setup(clock=None, client_factory=lambda: None):
     r = post(c, "/auth/passkey/register", {"credential": a.register(opts), "bootstrap": code})
     assert r.status_code == 200, r.text
     return c, a, clock
+
+
+def clear_log():
+    """No state log (the real scripts the routes run append to <TMP>/events.jsonl)."""
+    for name in ("events.jsonl", "events.jsonl.lock"):
+        (Path(TMP) / name).unlink(missing_ok=True)
+    cp.lcs_events.clear_cache()
+
+
+def log_lines():
+    path = Path(TMP) / "events.jsonl"
+    return [json.loads(x) for x in path.read_text().splitlines()] if path.exists() else []
 
 
 def post(c, path, body, origin=ORIGIN):
@@ -235,7 +248,7 @@ def test_registry_and_passkey_flags():
     assert set(actions.REGISTRY) == {"todo-tick", "resolve-hand-check", "singer-confirm", "singer-settled",
                                      "singer-withdrawn", "refresh-data", "ads-validate", "ads-apply",
                                      "approve-books-import", "books-import-done", "push-subscribe",
-                                     "push-unsubscribe", "backup-now", "draft-mark", "sync-now"}
+                                     "push-unsubscribe", "backup-now", "draft-mark", "sync-now", "migrate-events"}
     no_passkey = {n for n, a in actions.REGISTRY.items() if not a.passkey}
     assert no_passkey == {"todo-tick", "refresh-data", "push-unsubscribe", "backup-now", "draft-mark",
                           "sync-now"}, no_passkey
@@ -1817,6 +1830,7 @@ SAFE_ON_ALLOWLIST = {
 
 def test_the_apps_own_commands_are_not_allowlisted_unless_safe():
     fixtures()
+    clear_log()
     pats = allowlist.allow_patterns()
     key = models.invoice_key(MSG)
     samples = {
@@ -1827,6 +1841,7 @@ def test_the_apps_own_commands_are_not_allowlisted_unless_safe():
         "refresh-data": {},
         "sync-now": {"source": "books"},
         "backup-now": {},
+        "migrate-events": {},
     }
     write_config(backup={"recipient": "age1test", "target": TMP})
     seen = set()
@@ -2066,6 +2081,84 @@ def test_hand_check_list_offers_short_by_fees_on_a_past_part_paid_booking():
     assert 'name="amount" value="12.40"' in page(c, "/")
     cleaned = actions.RESOLVE_HAND_CHECK.validate({"ref": "0909", "choice": "short-by-fees", "date": D, "amount": "9"})
     assert cleaned["phrase"] == f"short by fees £9.00 accepted {D}"
+
+
+# ---------------------------------------------------------------- the events migration (structured state, Task 10)
+
+
+EVENTS = str(Path(ROOT) / "scripts" / "bookings" / "events.py")
+
+
+def migration_plan():
+    import lcs_migrate
+    ledger, store = lm.read_csv(cp.LEDGER), lm.read_csv(si.STORE)
+    return lcs_migrate.plan(ledger, store, TODAY, cp.lcs_events.read()[0])
+
+
+def test_migrate_events_argv_and_summary():
+    fixtures()
+    clear_log()
+    act = actions.REGISTRY["migrate-events"]
+    assert act.owner_nonce and act.passkey and act.script == "scripts/bookings/events.py"
+    cleaned = act.validate({})
+    sha = migration_plan()["sha256"]
+    assert act.argv(cleaned) == [PYX, EVENTS, "migrate", "--apply", "--expect", sha, "--owner"]
+    s = act.preview(cleaned)
+    assert "Apply the events migration" in s and sha in s and "events" in s and "flags:" in s, s
+    assert s.endswith(f"Runs: .venv/bin/python scripts/bookings/events.py migrate --apply --expect {sha} --owner")
+    for secret in ("cancelled 2026-09-10", "PENDING", "Ann", "Smithfield", "Jane", "example.org"):
+        assert secret not in s, secret
+    assert cleaned["input"] == {}
+    refused(act.validate, {"x": "y"})
+
+
+def test_migrate_events_is_refused_while_compare_differs_and_after_a_migration():
+    fixtures()
+    clear_log()
+    act = actions.REGISTRY["migrate-events"]
+    saved, csv_env = cp.lcs_events.lcs_owner._PROVEN, os.environ.pop("LCS_BOOKINGS_CSV")
+    try:
+        cp.lcs_events.lcs_owner._PROVEN = True  # a recorded fact the notes contradict: 0310's notes say cancelled
+        cp.lcs_events.append("booking", "0310", "reinstated", {}, "owner", on="2026-09-20")
+    finally:
+        cp.lcs_events.lcs_owner._PROVEN, os.environ["LCS_BOOKINGS_CSV"] = saved, csv_env
+    assert refused(act.validate, {}).startswith("compare finds 1 booking or invoice reading differently"), \
+        refused(act.validate, {})
+    clear_log()
+    cp.lcs_events.append("booking", "2111", "deposit-seen", {}, "script", on="2026-09-01", src="migration",
+                         eid="0123456789abcdef")
+    assert refused(act.validate, {}) == "the events migration has already been applied"
+    clear_log()
+    with open(Path(TMP) / "events.jsonl", "w") as f:
+        f.write("{}\n")
+    os.chmod(Path(TMP) / "events.jsonl", 0o644)
+    assert "state log" in refused(act.validate, {})
+    clear_log()
+
+
+def test_migrate_events_through_the_route_runs_the_real_apply_once():
+    c, a, _ = setup()
+    want = len(migration_plan()["proposals"])
+    assert want >= 1
+    r = run(c, a, "migrate-events", {})
+    assert r.status_code == 200 and r.json()["ok"] is True, r.text
+    assert r.json()["output"] == f"{want} new events", r.json()
+    lines = log_lines()
+    assert len(lines) == want and {e["src"] for e in lines} == {"migration"}
+    assert any(e["id"] == "0310" and e["kind"] == "cancelled" for e in lines), lines
+    assert not (Path(TMP) / "command-centre" / "owner-nonce").exists()
+    cp.lcs_events.clear_cache()
+    assert refused(actions.REGISTRY["migrate-events"].validate, {}) == "the events migration has already been applied"
+    clear_log()
+
+
+def test_health_offers_the_migration_until_it_is_applied():
+    c, a, _ = setup()
+    assert 'data-action="migrate-events"' in page(c, "/health")
+    cp.lcs_events.append("booking", "2111", "deposit-seen", {}, "script", on="2026-09-01", src="migration",
+                         eid="0123456789abcdef")
+    assert 'data-action="migrate-events"' not in page(c, "/health")
+    clear_log()
 
 
 if __name__ == "__main__":

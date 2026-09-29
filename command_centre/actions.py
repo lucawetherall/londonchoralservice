@@ -78,7 +78,8 @@ ADS_HEAD = ADS_TAIL = 3000  # Ads output: its first and last characters, unmaske
 RUN_WAIT = 5  # seconds to wait for another action to finish before refusing
 VALIDATION_TTL = 15 * 60  # seconds an ads validate run stays good for its apply
 RUNNER = subprocess.run  # the tests replace this with a recorder
-FIXED_FLAGS = {"--note", "--owner", "--apply", "--validate-only", "--expect-fp"}  # the only arguments that may start with "-"; the rest are validated values
+# the only arguments that may start with "-"; the rest are validated values
+FIXED_FLAGS = {"--note", "--owner", "--apply", "--validate-only", "--expect-fp", "--expect"}
 lm, cp, si = data.lm, data.cp, data.si
 
 
@@ -1852,6 +1853,59 @@ _LOCKS.update(push=threading.Lock(), backup=threading.Lock())  # neither waits o
 for _a in (PUSH_SUBSCRIBE, PUSH_UNSUBSCRIBE, BACKUP_NOW):
     REGISTRY[_a.name] = _a
     ROUTED.add(_a.name)
+
+
+# ---------------------------------------------------------------- the events migration (structured state, Task 10)
+
+
+EVENTS = "scripts/bookings/events.py"
+
+
+def migration_applied(events):
+    return any(e.get("src") == "migration" for e in events)
+
+
+def _migrate_validate(raw):
+    """The migration's dry run and compare --proposed, in-process (lcs_migrate, the same code events.py runs). Refuses
+    a moved ledger or store, an unreadable or broken log, a migration already applied, nothing to migrate, and any
+    booking or invoice the proposed events would read differently from its notes. The hash binds the passkey to
+    this dry run: the script re-runs it under the CSVs' locks and refuses a different one."""
+    import lcs_migrate
+    fields(raw, ())
+    private = auth.private_dir()
+    if (Path(cp.LEDGER).resolve() != (private / "bookings.csv").resolve()
+            or Path(si.STORE).resolve() != (private / "singer-invoices.csv").resolve()):
+        raise ActionError("the ledger or the singer store isn't the one in the private folder")
+    events, stats = cp.lcs_events.read()
+    if cp.lcs_events.log_problem(stats):
+        raise ActionError("the state log can't be read whole: see events.py verify")
+    if migration_applied(events):
+        raise ActionError("the events migration has already been applied")
+    day = today()
+    ledger, store = lm.read_csv(cp.LEDGER), lm.read_csv(si.STORE)
+    plan = lcs_migrate.plan(ledger, store, day, events)
+    if not plan["proposals"]:
+        raise ActionError("nothing to migrate")
+    diffs = lcs_migrate.compare(ledger, store, day, list(events) + lcs_migrate.proposed_events(plan["proposals"]))
+    if diffs:
+        n = len({" ".join(d.split()[:2]) for d in diffs})
+        raise ActionError(f"compare finds {n} booking or invoice reading differently: run events.py compare --proposed")
+    return {"input": {}, "sha": plan["sha256"], "totals": lcs_migrate.totals(plan), "day": day.isoformat()}
+
+
+def _migrate_describe(c):
+    return (f"Apply the events migration (dry run of {c['day']}): {c['totals']}. Each fact the ledger's and the "
+            f"singer store's notes already say goes into the state log, marked as migrated; the notes stay as they "
+            f"are, and compare finds no booking or invoice reading differently. Report hash {c['sha']}: if anything "
+            f"changed since, it refuses.")
+
+
+MIGRATE_EVENTS = ScriptAction(
+    "migrate-events", EVENTS, _migrate_validate, _migrate_describe,
+    lambda c: ["migrate", "--apply", "--expect", c["sha"], "--owner"], owner_nonce=True, timeout=120,
+    title="Apply the events migration")
+REGISTRY[MIGRATE_EVENTS.name] = MIGRATE_EVENTS
+ROUTED.add(MIGRATE_EVENTS.name)
 
 
 # ---------------------------------------------------------------- phase 6: mark a draft (no passkey)
