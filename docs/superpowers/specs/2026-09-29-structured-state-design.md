@@ -51,7 +51,7 @@ Every rule that reads or writes `notes` to decide something, and the event that 
 | B3 | `NOT_YET_SEEN` "deposit not yet seen" | assistant, by hand | Dropped when the deposit is seen; a negation for B7 | None (note hygiene) |
 | B4 | `MARK_NOTE` and `assess`'s `reminded`: "reminder drafted", "balance reminder drafted", "receipt drafted" | `--reminded REF --kind` | One deposit and one balance reminder, one receipt; `just_received` | `reminder-drafted {what}` (union) |
 | B5 | `FULL_NOTE` "paid in full YYYY-MM-DD" | `--apply` (the bank covers it); the owner in the Command Centre or by hand | Closes: `open_rows`, `closed_on`, PAYMENT_AFTER_CLOSE, `received_since`, `fee_pending`; CLOSED in the Command Centre and the dashboard | `paid-in-full {basis}` |
-| B6 | `FEES_NOTE` "short by fees £X accepted YYYY-MM-DD", at most £25, not after today: `fee_notes`, `fees_accepted`, `fee_pending` | The owner, `--note … --owner` | PAID_IN_FULL with `balance` 0; the fee as Books bank charges on the last payment; closes like B5 | `fees-accepted {amount}` |
+| B6 | `FEES_NOTE` "short by fees £X accepted YYYY-MM-DD", at most £40 (`FEE_CAP`; owner decision, 29 Sep 2026: was £25), not after today: `fee_notes`, `fees_accepted`, `fee_pending` | The owner, `--note … --owner` | PAID_IN_FULL with `balance` 0; the fee as Books bank charges on the last payment; closes like B5 | `fees-accepted {amount}` |
 | B7 | `NOT_PAID`, `PAID_WORD`, `hand_notes` → `noted_hand` | The Monday review (`--note "paid per client email D"`), the assistant's handwritten "deposit seen D", the owner by hand | NOTED_PAID (a hand check) when nothing confident is in the bank | `noted-paid {scope: part}` |
 | B8 | `FULL_PAID`, `REST_PAID`, `CLAUSE`, `REST_WORD`, `OTHER_PART`, `POUNDS`, `full_paid` → `noted_full` | The same | With a deposit in the bank, only a note of the whole fee stops the balance chase | `noted-paid {scope: full}` |
 | B9 | `CANCEL_WORD`, `CANCELLING`, `IF_WORDS`, `MAYBE_WORDS` in `is_cancelled` | The reply drafter (`--note "cancelled D by client email"`), the Monday review (`--note "cancelled D"`), the owner | The row drops out of chasing, uploads, reviews and counts; "name, cancelled booking" matching; PAYMENT_ON_CANCELLED | `cancelled` |
@@ -119,7 +119,7 @@ The note phrase is the one written today, so the pattern readers read the same f
 | Kind | Fields | By | Written by | Note phrase |
 |---|---|---|---|---|
 | `paid-in-full` | `basis`: `bank` or `owner` | script (`bank`, from `--apply` only), owner (`owner`) | `--apply`; Command Centre "paid in full" | "paid in full D"; "paid in full D (owner)" |
-| `fees-accepted` | `amount`: at most `25.00` (`FEE_CAP`) | owner | Command Centre "short by transfer fees" | "short by fees £X accepted D (owner)" |
+| `fees-accepted` | `amount`: at most `40.00` (`FEE_CAP`, owner decision 29 Sep 2026; checked when written, so a later lower cap never reopens a booking) | owner | Command Centre "short by transfer fees" | "short by fees £X accepted D (owner)" |
 | `noted-paid` | `scope`: `part` or `full` | script, owner | `--fact` (the Monday review, from the client's own message) | "paid per client email D" (the Monday review's phrase today); "balance paid per client email D" |
 | `arranged` | `method`: `cash`, `cheque` or `third-party` | script, owner | `--fact`; Command Centre | "balance payable in cash on the day (arranged D)", "… by cheque …", "balance to be paid by another payer (arranged D)" |
 | `cancelled` | none | script, owner | The reply drafter (`--fact`); Command Centre | "cancelled D by client email"; "cancelled D (owner)" |
@@ -177,7 +177,7 @@ The existing functions stay the only way in, so every script and page that uses 
 ### Precedence when events and notes disagree
 
 1. **A family with no events for this subject** is read from the notes, exactly as today. Before the migration, that is every family of every row, so nothing changes on day one.
-2. **A family with events** (retracted ones count: they are history) is read from the events. The notes are then read only for disagreement (rule 4).
+2. **A family with events** (ones retracted by mistake count: they are history, and keep their note claims) is read from the events. A fact undone by a write-failed retract (its own writer, in the same run) never happened: it counts for nothing and claims no note, so a note that landed after all is read or held as usual. The notes are then read only for disagreement (rule 4).
 3. **Markers are a union.** A reminder, receipt, review, deposit-seen or "Paid!" marker counts if either side has it. A marker only stops a repeat, so the union can never cause a chase.
 4. **Disagreement holds the subject.** The notes' *unclaimed* clauses (clauses no event claims by its `note` hash, so hand edits and legacy text) are read with today's patterns, per family, as an assertion or nothing: "cancelled" or "reinstated"; "closed"; "settled"; "arranged"; "paid (part or full)"; for a singer invoice, "a bank alarm". When a family has events and its unclaimed clauses assert something the events don't say, the booking or invoice is **held**:
    - a held booking's `action` is `hand_check` with the reason "notes and recorded facts disagree: <family>"; it gets no reminder, receipt, `record_in_books` entry, review request, `done-due` line or Ads upload until the owner resolves it;

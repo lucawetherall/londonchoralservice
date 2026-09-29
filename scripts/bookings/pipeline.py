@@ -175,9 +175,11 @@ def followups_due(rows, today):
     return out
 
 
-def reviews_due(ledger_rows, today):
-    """[{booking_ref, event_date}] for paid-in-full, uncancelled bookings 3 to 14 days after the event,
-    with no review request drafted yet. Never a funeral, or a booking whose occasion is blank."""
+def reviews_due(ledger_rows, today, facts=None):
+    """[{booking_ref, event_date}] for closed (check_payments.closed_on: paid in full, or a counting accepted fee),
+    uncancelled bookings 3 to 14 days after the event, with no review request drafted or skipped yet (in the notes
+    or the recorded facts). Never a funeral, a booking whose occasion is blank, or a held booking (its notes and
+    recorded facts disagree). `facts`: None (the state log), or a mapping ref -> lcs_events.Facts."""
     today = to_date(today)
     out = []
     for r in ledger_rows:
@@ -187,15 +189,18 @@ def reviews_due(ledger_rows, today):
             continue
         if not REVIEW_FROM <= (today - event).days <= REVIEW_UNTIL:
             continue
-        if not cp.FULL_NOTE.search(notes) or cp.is_cancelled(r) or REVIEW_NOTE.search(notes):
+        f = cp.facts_for(r, today, facts)
+        if not cp.closed_on(r, today, f) or cp.is_cancelled(r, f) or REVIEW_NOTE.search(notes) or f.review:
+            continue
+        if cp.held(r, today, f):
             continue
         out.append({"booking_ref": r["booking_ref"], "event_date": event.isoformat()})
     return out
 
 
-def done_due(rows, ledger_rows, today):
+def done_due(rows, ledger_rows, today, facts=None):
     """[{enquiry_id, booking_ref}] for enquiries with a booking_ref, not yet done, lost or cancelled, whose
-    ledger row is paid in full ("paid in full YYYY-MM-DD"), not cancelled, with the event before today."""
+    ledger row is closed (check_payments.closed_on), not cancelled and not held, with the event before today."""
     today = to_date(today)
     ledger = {(r.get("booking_ref") or "").strip(): r for r in ledger_rows if (r.get("booking_ref") or "").strip()}
     out = []
@@ -207,7 +212,8 @@ def done_due(rows, ledger_rows, today):
         event = to_date(b.get("event_date")) or to_date(r.get("event_date"))
         if event is None or event >= today:
             continue
-        if not cp.FULL_NOTE.search(b.get("notes") or "") or cp.is_cancelled(b):
+        f = cp.facts_for(b, today, facts)
+        if not cp.closed_on(b, today, f) or cp.is_cancelled(b, f) or cp.held(b, today, f):
             continue
         out.append({"enquiry_id": r["enquiry_id"], "booking_ref": ref})
     return out
