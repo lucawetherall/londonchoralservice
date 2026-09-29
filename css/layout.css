@@ -62,7 +62,7 @@
 
 .site-nav {
   display: flex;
-  align-items: center;
+  align-items: baseline;
   justify-content: space-between;
   padding-block: var(--space-lg);
   gap: var(--space-lg);
@@ -90,6 +90,20 @@
   margin: 0;
 }
 
+/* Narrow desktop: at 1.6vw the menu runs past the content edge, into the
+   page gutter, below ~1110px (with a 15px scrollbar); a tighter gap keeps it
+   inside down to 1081px. */
+@media (min-width: 1081px) and (max-width: 1119px) {
+  .nav-links {
+    gap: 0.8rem;
+  }
+}
+
+/* Base li margins would hang below the baseline and grow the header. */
+.nav-links li {
+  margin-bottom: 0;
+}
+
 .nav-links a {
   font-family: var(--font-heading);
   font-size: var(--text-sm);
@@ -98,7 +112,6 @@
   text-transform: uppercase;
   color: var(--color-text);
   text-decoration: none;
-  padding-bottom: 2px;
   transition: color var(--transition-fast);
   white-space: nowrap;
 }
@@ -108,7 +121,10 @@
 }
 
 .nav-links a[aria-current="page"] {
-  border-bottom: 2px solid var(--color-accent);
+  text-decoration-line: underline;
+  text-decoration-thickness: 1px;
+  text-decoration-color: var(--color-accent);
+  text-underline-offset: 0.45em;
 }
 
 /* ── Hamburger Toggle ── */
@@ -199,10 +215,6 @@
     display: flex;
   }
 
-  .nav-links li {
-    margin-bottom: 0;
-  }
-
   .nav-links a {
     display: block;
     padding: var(--space-md) 0;
@@ -214,8 +226,10 @@
     border-bottom: none;
   }
 
+  /* The menu is out of flow here: centre the name on the toggle instead. */
   .site-nav {
     position: relative;
+    align-items: center;
   }
 
 }
@@ -241,7 +255,7 @@
 
 .footer-name {
   font-family: var(--font-heading);
-  font-size: var(--text-xl);
+  font-size: var(--text-lg);
   font-weight: 300;
   margin-bottom: var(--space-md);
 }
