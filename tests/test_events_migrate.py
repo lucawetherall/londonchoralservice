@@ -399,6 +399,29 @@ def test_a_migration_that_stops_part_way_withdraws_what_it_wrote_and_runs_again(
     assert mig.compare(ledger, store, lm.today(), events) == []
 
 
+def test_a_withdrawal_that_would_not_count_is_never_reported_as_done():
+    """A write-failed retract counts only within RUN_SECONDS of its target: past that (a very slow run), the apply
+    must say it couldn't withdraw, not that it did."""
+    in_home(*sample())
+    _, out = main_out(["migrate"])
+    real_write, calls = ev._write, []
+
+    def failing(fd, data):
+        calls.append(1)
+        if len(calls) == 3:
+            raise OSError("disk full")
+        return real_write(fd, data)
+    saved = (lcs_owner.owner_confirmed, lcs_owner._PROVEN, ev.RUN_SECONDS)
+    lcs_owner.owner_confirmed, lcs_owner._PROVEN, ev.RUN_SECONDS = (lambda *a: True), True, -1
+    try:
+        ev._write = failing
+        msg, _ = main_out(["migrate", "--apply", "--expect", sha_of(out), "--owner"])
+    finally:
+        ev._write = real_write
+        lcs_owner.owner_confirmed, lcs_owner._PROVEN, ev.RUN_SECONDS = saved
+    assert "couldn't withdraw" in msg and "events.py verify" in msg and "was withdrawn" not in msg, msg
+
+
 def test_a_fact_dated_after_today_stops_the_apply_naming_its_row():
     """A clause dated after today can't become a fact yet (the readers ignore it until that day, then the notes and
     the facts would disagree): the apply refuses, naming the ref, kind and date, until the note is corrected."""

@@ -199,6 +199,10 @@ def apply_migration(args, today):
                                       p["by"])
                 except (OSError, ValueError):
                     undone = False
+            # a write-failed retract counts only within RUN_SECONDS of its target: check each really undid it
+            lcs_events.clear_cache()
+            now = {e["eid"]: e["retracted"] for es in lcs_events.index(lcs_events.read()[0], today).values() for e in es}
+            undone = undone and all(now.get(p["eid"]) == "write-failed" for p in written)
             if undone:
                 raise SystemExit(f"the migration stopped ({type(e).__name__}); what it wrote was withdrawn: run it "
                                  "again; nothing written") from None
