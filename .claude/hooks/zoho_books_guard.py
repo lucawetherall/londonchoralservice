@@ -373,6 +373,33 @@ def check_create_customer_payment(body, query, path):
         raise Deny(P + "amount must be more than £0 and at most £10,000.")
 
 
+# ONE-OFF (owner request, 29 Sep 2026; CLAUDE.md: "a one-off exception is a committed, reviewed guard change
+# naming the exact records, reverted afterwards"). Invoice 2408's only payment (£696.93 on 24 Aug) was recorded in
+# Books before the owner accepted the £36.15 shortfall as transfer fees, so the invoice still shows £36.15 owed.
+# This allows exactly one call: that payment, with those figures, adding £36.15 of bank_charges. Nothing else about
+# the payment may change, and the rule lapses after 30 Sep 2026 even if the revert is late.
+ONE_OFF_2408_PAYMENT = "1534218000000117016"
+ONE_OFF_2408_UNTIL = "2026-09-30"
+ONE_OFF_2408_BODY = {
+    "customer_id": "1534218000000102011", "invoice_id": "1534218000000111001", "date": "2026-08-24",
+    "amount": 696.93, "bank_charges": 36.15, "amount_applied": 733.08, "payment_mode": "banktransfer",
+    "account_id": STARLING_BOOKS_ACCOUNT_ID, "reference_number": "2408",
+    "description": "Starling transfer, matched to invoice 2408 (£36.15 bank charges accepted by the owner)",
+    "invoices": [{"invoice_id": "1534218000000111001", "amount_applied": 733.08}],
+}
+
+
+def check_one_off_2408_charges(body, query, path):
+    import datetime
+    if datetime.date.today().isoformat() > ONE_OFF_2408_UNTIL:
+        raise Deny(P + "the one-off change to invoice 2408's payment lapsed on " + ONE_OFF_2408_UNTIL + ".")
+    if path.get("payment_id") != ONE_OFF_2408_PAYMENT:
+        raise Deny(P + "update_customer_payment is allowed only for invoice 2408's payment (a one-off).")
+    if body != ONE_OFF_2408_BODY or any(isinstance(v, bool) for v in body.values()):
+        raise Deny(P + "the one-off change to invoice 2408's payment must be exactly the approved figures: £696.93 "
+                   "received, £36.15 bank charges, £733.08 applied.")
+
+
 def check_create_item(body, query, path):
     _need(body, "name", "body")
     if body.get("item_type") != "purchases":
@@ -421,6 +448,10 @@ WRITE_TOOLS = {
         obj("customer_id", "date", "amount", "amount_applied", "bank_charges", "invoice_id", "payment_mode",
             "account_id", "reference_number", "description", invoices=[obj("invoice_id", "amount_applied")]),
         ORG_ONLY, NOTHING, check_create_customer_payment),
+    "ZohoBooks_update_customer_payment": (  # ONE-OFF: see check_one_off_2408_charges; revert after use
+        obj("customer_id", "date", "amount", "amount_applied", "bank_charges", "invoice_id", "payment_mode",
+            "account_id", "reference_number", "description", invoices=[obj("invoice_id", "amount_applied")]),
+        ORG_ONLY, obj("payment_id"), check_one_off_2408_charges),
     "ZohoBooks_create_item": (
         obj("name", "rate", "description", "item_type", "product_type", "purchase_rate", "purchase_description"),
         ORG_ONLY, NOTHING, check_create_item),

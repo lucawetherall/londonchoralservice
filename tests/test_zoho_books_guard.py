@@ -103,6 +103,7 @@ APPROVED_WRITES = {
     "ZohoBooks_create_bill", "ZohoBooks_update_bill", "ZohoBooks_add_bill_comment",
     "ZohoBooks_create_item", "ZohoBooks_create_bank_account", "ZohoBooks_create_vendor_payment",
     "ZohoBooks_create_customer_payment",
+    "ZohoBooks_update_customer_payment",  # ONE-OFF (29 Sep 2026): invoice 2408's bank charges; remove with the rule
 }
 STARLING = "1534218000000095168"
 ORG = {"organization_id": "941014440"}
@@ -174,6 +175,10 @@ def good_inputs():
                                            "item_type": "purchases", "product_type": "service",
                                            "purchase_rate": "0", "purchase_description": "Singer's fee"},
                                   "query_params": ORG},
+        # ONE-OFF (29 Sep 2026): the only call the rule allows; remove with the rule
+        "ZohoBooks_update_customer_payment": {"body": json.loads(json.dumps(guard_module().ONE_OFF_2408_BODY)),
+                                              "query_params": ORG,
+                                              "path_variables": {"payment_id": "1534218000000117016"}},
     }
 
 
@@ -504,6 +509,26 @@ def test_customer_payment_is_one_invoice_through_starling_with_no_thank_you_emai
     for key in ("contact_persons", "bank_charges", "exchange_rate", "retainerinvoice_id", "custom_fields", "tags"):
         assert denied(C, with_(C, "body", **{key: "1"})), key
     assert denied(C, with_(C, "body", description="Paid from 12-34-56 12345678"))
+
+
+def test_one_off_2408_bank_charges_allows_exactly_one_call():
+    """ONE-OFF (29 Sep 2026): invoice 2408's payment gains the £36.15 the owner accepted as fees. Remove with the rule."""
+    U = "ZohoBooks_update_customer_payment"
+    g = guard_module()
+    ok = good_inputs()[U]
+    assert not denied(U, ok) and not denied(U, ok, server="zoho-books-invoices")
+    for key, value in (("bank_charges", 40.0), ("amount", 733.08), ("amount_applied", 700.0), ("date", "2026-08-25"),
+                       ("account_id", "1"), ("description", "x")):
+        assert denied(U, dict(ok, body=dict(ok["body"], **{key: value}))), key
+    assert denied(U, dict(ok, path_variables={"payment_id": "1534218000000117017"}))
+    assert denied(U, dict(ok, body=dict(ok["body"], invoices=[{"invoice_id": "1", "amount_applied": 733.08}])))
+    assert denied(U, dict(ok, body=dict(ok["body"], contact_persons=["x"])))
+    g.ONE_OFF_2408_UNTIL = "2026-01-01"  # lapsed (a fresh module copy: the hook itself is untouched)
+    try:
+        g.check_one_off_2408_charges(ok["body"], ok["query_params"], ok["path_variables"])
+        raise AssertionError("a lapsed one-off still allowed the call")
+    except g.Deny:
+        pass
 
 
 def test_customer_payment_may_carry_the_owners_accepted_fee_as_bank_charges():
