@@ -64,7 +64,7 @@ def site_pages():
                 yield os.path.relpath(os.path.join(dirpath, name), ROOT)
 
 
-def test_nav_carets_are_empty():
+def check_nav_carets():
     nav = read('partials/nav.html')
     check('&#9662;' not in nav, 'partials/nav.html still has the ▾ glyph')
     carets = re.findall(r'<span class="dropdown-caret" aria-hidden="true">(.*?)</span>', nav)
@@ -72,12 +72,11 @@ def test_nav_carets_are_empty():
     check(all(c == '' for c in carets), 'dropdown carets must be empty spans')
 
 
-def test_play_buttons():
-    old = new = 0
+def check_play_buttons():
+    new = 0
     for rel in site_pages():
         html = read(rel)
         if 'M66.52' in html:
-            old += 1
             failures.append(f'{rel}: old YouTube play pill still present')
         new += html.count(NEW_PLAY_BTN)
         check(html.count('class="play-btn"') == html.count(NEW_PLAY_BTN),
@@ -85,7 +84,7 @@ def test_play_buttons():
     check(new == 72, f'expected 72 new play buttons, found {new}')
 
 
-def test_hero_order_caption_and_film():
+def check_heroes():
     for page, film in HERO_FILMS.items():
         html = read(page)
         start = html.find('<div class="page-wrap hero">')
@@ -95,6 +94,9 @@ def test_hero_order_caption_and_film():
         text_at = html.find('<div class="hero-text">', start)
         video_at = html.find('<div class="hero-video">', start)
         section_end = html.find('</section>', start)
+        check(-1 not in (text_at, video_at, section_end), f'{page}: hero markup not found')
+        if -1 in (text_at, video_at, section_end):
+            continue
         head = html[start:text_at]
         text = html[text_at:video_at]
         video = html[video_at:section_end]
@@ -114,9 +116,9 @@ def test_hero_order_caption_and_film():
 
 
 def main():
-    test_nav_carets_are_empty()
-    test_play_buttons()
-    test_hero_order_caption_and_film()
+    check_nav_carets()
+    check_play_buttons()
+    check_heroes()
     if failures:
         print(f'FAIL: {len(failures)} problem(s)')
         for f in failures[:40]:
