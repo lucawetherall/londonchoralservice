@@ -193,7 +193,7 @@
   <meta property="og:image:height" content="630">
   <meta property="og:image:alt" content="The London Choral Service: wedding choirs and singers">
   <meta property="article:published_time" content="2026-03-18">
-  <meta property="article:modified_time" content="2026-08-30">
+  <meta property="article:modified_time" content="2026-09-29">
 
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Why Be Thou My Vision Is the Best Wedding Hymn | LCS">
@@ -2424,7 +2424,7 @@
         "url": "https://londonchoralservice.com/music-guides/be-thou-my-vision-wedding-hymn.html",
         "inLanguage": "en-GB",
         "datePublished": "2026-03-18",
-        "dateModified": "2026-08-30",
+        "dateModified": "2026-09-29",
         "description": "Be Thou My Vision is the finest wedding hymn you can choose. Here's why this ancient Irish hymn moves guests, suits every ceremony, and sounds glorious with a choir.",
         "author": [
           {
@@ -2532,6 +2532,19 @@
             }
           }
         ]
+      },
+      {
+        "@type": "VideoObject",
+        "name": "Be Thou My Vision — Full Choir",
+        "description": "Live performance by The London Choral Service.",
+        "thumbnailUrl": "https://img.youtube.com/vi/SaLTS_-I-q4/maxresdefault.jpg",
+        "uploadDate": "2026-03-18",
+        "duration": "PT43S",
+        "contentUrl": "https://www.youtube.com/watch?v=SaLTS_-I-q4",
+        "embedUrl": "https://www.youtube-nocookie.com/embed/SaLTS_-I-q4",
+        "publisher": {
+          "@id": "https://londonchoralservice.com/#organization"
+        }
       }
     ]
   }
@@ -2611,7 +2624,7 @@
           </nav>
           <h1>Why Be Thou My Vision is the best wedding hymn</h1>
           <p class="guide-meta">By Luca Wetherall, Artistic Director &amp; Tutor in Music, University of Oxford</p>
-          <p class="guide-meta">Published <time datetime="2026-03-18">18 March 2026</time> &middot; Updated <time datetime="2026-08-30">30 August 2026</time></p>
+          <p class="guide-meta">Published <time datetime="2026-03-18">18 March 2026</time> &middot; Updated <time datetime="2026-09-29">29 September 2026</time></p>
           <hr class="rule">
         </div>
       </section>
@@ -2619,6 +2632,16 @@
       <section class="section" style="padding-block-start: var(--space-2xl)">
         <div class="prose">
           <p class="lede">There are wedding hymns that fill a church with sound, and there are wedding hymns that fill a church with feeling. Be Thou My Vision does both&thinsp;&mdash;&thinsp;and does it with a quiet, ancient authority.</p>
+          <div class="video-embed" style="margin-block-start: var(--space-lg)">
+            <button class="video-thumb" aria-label="Play Be Thou My Vision" data-video="SaLTS_-I-q4">
+              <img src="https://img.youtube.com/vi/SaLTS_-I-q4/maxresdefault.jpg" alt="Be Thou My Vision &mdash; The London Choral Service" loading="lazy" width="1280" height="720">
+              <svg class="play-btn" viewBox="0 0 68 48" aria-hidden="true">
+                <path d="M66.52 7.74c-.78-2.93-2.49-5.41-5.42-6.19C55.79.13 34 0 34 0S12.21.13 6.9 1.55c-2.93.78-4.63 3.26-5.42 6.19C.06 13.05 0 24 0 24s.06 10.95 1.48 16.26c.78 2.93 2.49 5.41 5.42 6.19C12.21 47.87 34 48 34 48s21.79-.13 27.1-1.55c2.93-.78 4.63-3.26 5.42-6.19C67.94 34.95 68 24 68 24s-.06-10.95-1.48-16.26z" fill="rgba(0,0,0,.7)"/>
+                <path d="M45 24 27 14v20z" fill="#fff"/>
+              </svg>
+            </button>
+          </div>
+          <p class="text-sm text-mid">Our choir performing Be Thou My Vision. <a href="../listen.html">Hear more recordings</a>.</p>
         </div>
       </section>
 
@@ -2816,5 +2839,21 @@
     <a href="/weddings.html" class="mobile-cta-enquire">Enquire</a>
   </div>
   <script src="../js/nav.js" defer></script>
+  <script>
+    document.querySelectorAll('.video-thumb').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var id = btn.getAttribute('data-video');
+        var wrap = btn.closest('.video-embed');
+        var iframe = document.createElement('iframe');
+        iframe.src = 'https://www.youtube-nocookie.com/embed/' + id + '?autoplay=1';
+        iframe.title = (btn.getAttribute('aria-label') || 'The London Choral Service').replace(/^Play /, '') + ' \u2014 The London Choral Service';
+        iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
+        iframe.allowFullscreen = true;
+        iframe.style.border = '0';
+        wrap.innerHTML = '';
+        wrap.appendChild(iframe);
+      });
+    });
+  </script>
 </body>
 </html>
