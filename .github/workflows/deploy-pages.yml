@@ -37,6 +37,8 @@ jobs:
           persist-credentials: false
       - name: Test the staging script
         run: python3 tests/test_stage_site.py
+      - name: Test the short ad ref (site code and lookup script agree)
+        run: python3 tests/test_lookup_ref.py
       - name: Check the allowlist and stage the site
         run: python3 scripts/stage_site.py --out "$RUNNER_TEMP/site"
       - name: Upload the Pages artifact
