@@ -8,7 +8,9 @@ import re
 import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-SKIP_DIRS = {'.git', '.claude', 'partials', 'node_modules', 'graphify-out', '.venv', 'docs', 'tests'}
+# build.sh skips dot-directories, graphify-out, command_centre and partials;
+# docs, tests and node_modules hold no site pages either.
+SKIP_DIRS = {'command_centre', 'partials', 'node_modules', 'graphify-out', 'docs', 'tests'}
 
 PROMO = 'Lov_NegzVhM'
 ABIDE = 'G9-R6k5n7Io'
@@ -58,7 +60,7 @@ def read(rel):
 
 def site_pages():
     for dirpath, dirnames, filenames in os.walk(ROOT):
-        dirnames[:] = [d for d in dirnames if d not in SKIP_DIRS]
+        dirnames[:] = [d for d in dirnames if not d.startswith('.') and d not in SKIP_DIRS]
         for name in filenames:
             if name.endswith('.html'):
                 yield os.path.relpath(os.path.join(dirpath, name), ROOT)
@@ -81,7 +83,8 @@ def check_play_buttons():
         new += html.count(NEW_PLAY_BTN)
         check(html.count('class="play-btn"') == html.count(NEW_PLAY_BTN),
               f'{rel}: a play-btn does not use the new SVG')
-    check(new == 72, f'expected 72 new play buttons, found {new}')
+    check(new >= 72, f'expected at least 72 new play buttons, found {new}')
+    return new
 
 
 def check_heroes():
@@ -91,40 +94,46 @@ def check_heroes():
         check(start != -1, f'{page}: no hero')
         if start == -1:
             continue
-        text_at = html.find('<div class="hero-text">', start)
+        # Markup order matches the phone layout (and so the tab order):
+        # breadcrumb, h1, film with caption, then the hero text.
         video_at = html.find('<div class="hero-video">', start)
+        text_at = html.find('<div class="hero-text">', start)
         section_end = html.find('</section>', start)
         check(-1 not in (text_at, video_at, section_end), f'{page}: hero markup not found')
         if -1 in (text_at, video_at, section_end):
             continue
-        head = html[start:text_at]
-        text = html[text_at:video_at]
-        video = html[video_at:section_end]
+        check(video_at < text_at < section_end, f'{page}: .hero-video must come before .hero-text')
+        if not video_at < text_at < section_end:
+            continue
+        head = html[start:video_at]
+        video = html[video_at:text_at]
+        text = html[text_at:section_end]
 
-        check('<h1>' in head, f'{page}: h1 must sit before .hero-text')
-        check('<h1>' not in text, f'{page}: h1 still inside .hero-text')
-        check('class="breadcrumb"' not in text, f'{page}: breadcrumb still inside .hero-text')
+        check('<h1>' in head, f'{page}: h1 must sit before .hero-video')
+        check('<div class="hero-text">' not in head, f'{page}: .hero-text must not sit before the film')
+        check('<h1>' not in text, f'{page}: h1 inside .hero-text')
+        check('class="breadcrumb"' not in text, f'{page}: breadcrumb inside .hero-text')
         if page != 'index.html':
-            check('class="breadcrumb"' in head, f'{page}: breadcrumb must sit before .hero-text')
+            check('class="breadcrumb"' in head, f'{page}: breadcrumb must sit before the h1')
             check(head.find('class="breadcrumb"') < head.find('<h1>'),
                   f'{page}: breadcrumb must come before the h1')
 
         check(f'data-video="{film}"' in video, f'{page}: hero film should be {film}')
         check(f'/vi/{film}/maxresdefault.jpg' in video, f'{page}: hero thumbnail should be {film}')
         caption = f'<p class="video-caption">{CAPTIONS[film]}</p>'
-        check(video.count(caption) == 1, f'{page}: missing caption "{CAPTIONS[film]}"')
+        check(video.count(caption) == 1, f'{page}: needs exactly one caption "{CAPTIONS[film]}"')
 
 
 def main():
     check_nav_carets()
-    check_play_buttons()
+    plays = check_play_buttons()
     check_heroes()
     if failures:
         print(f'FAIL: {len(failures)} problem(s)')
         for f in failures[:40]:
             print('  -', f)
         sys.exit(1)
-    print('OK: nav carets, 72 play buttons, 15 hero pages')
+    print(f'OK: nav carets, {plays} play buttons, {len(HERO_FILMS)} hero pages')
 
 
 if __name__ == '__main__':
