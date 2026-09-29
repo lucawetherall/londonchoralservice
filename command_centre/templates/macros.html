@@ -103,6 +103,18 @@
 </form>
 {% endmacro %}
 
+{#- The live recorded facts of one booking or invoice, each with "Undo" (events.py retract, after the passkey). #}
+{% macro undo_facts(facts, subject, key) %}
+{% if facts %}
+<details class="act">
+  <summary>Recorded facts ({{ facts|length }})</summary>
+  <ul class="lines">
+    {% for x in facts %}<li>{{ x.on|day if x.on else "?" }} · {{ x.words }} · {{ x.who }} {{ action_button("undo-fact", "Undo", {"subject": subject, "key": key, "eid": x.eid}, quiet=true, aria="Undo: " ~ x.words) }}</li>{% endfor %}
+  </ul>
+</details>
+{% endif %}
+{% endmacro %}
+
 {#- `name`: the singer's first name when `s` has none of its own (a Singers-page invoice row). #}
 {% macro singer_forms(s, day, name=none) %}
 {% set who = name or s.first_name or "the singer" %}
@@ -132,6 +144,7 @@
   {% endif %}
 </details>
 {% endif %}
+{{ undo_facts(s.facts, "singer_invoice", s.key) if s.key else "" }}
 {% endmacro %}
 
 {% macro hand_table(items, bank_checked, day) %}

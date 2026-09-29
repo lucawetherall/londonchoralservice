@@ -9,6 +9,7 @@ os.environ["LCS_BOOKINGS_CSV"] = os.path.join(_HOME, "bookings.csv")
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, "scripts", "bookings"))
 import pipeline as pl  # noqa: E402
+lm = pl.lm
 
 PY, SCRIPT = sys.executable, os.path.join(ROOT, "scripts", "bookings", "pipeline.py")
 T = datetime.date(2026, 9, 28)
@@ -651,6 +652,68 @@ def test_quoted_and_followed_read_the_status_whatever_its_case():
     p = cli(d, "quoted", "c1", "Small Choir", "1150", "2026-09-26")
     assert p.returncode != 0 and "is confirmed; not re-quoted" in p.stderr, p.stderr
     assert enquiries(d)["c1"]["status"] == "CONFIRMED"
+
+
+def log_of(d):
+    """The live lines of <d>/events.jsonl (the migration's seed line left out)."""
+    path = os.path.join(d, "events.jsonl")
+    lines = [json.loads(x) for x in open(path).read().splitlines()] if os.path.exists(path) else []
+    return [e for e in lines if e["src"] == "live"]
+
+
+def migrated_home():
+    """home() whose state log holds one migration line: the writers record facts only once it is applied."""
+    import lcs_events as ev
+    d = home()
+    now = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    obj = {"v": 1, "eid": "00000000000000aa", "prev": "", "at": now, "on": "2026-01-01", "subject": "booking",
+           "id": "0000", "kind": "deposit-seen", "fields": {}, "by": "script", "src": "migration"}
+    fd = os.open(os.path.join(d, "events.jsonl"), os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+    os.write(fd, (ev.dumps(ev.validate(obj)) + "\n").encode())
+    os.close(fd)
+    return d
+
+
+def test_reviewed_and_review_skipped_record_their_markers():
+    import lcs_events as ev
+    d = migrated_home()
+    write_ledger(d, [booking("2009", "2026-09-20", "paid in full 2026-09-19"),
+                     booking("2010", "2026-09-20", "paid in full 2026-09-19")])
+    p = cli(d, "reviewed", "2009", "2026-09-28")
+    assert p.returncode == 0, p.stderr
+    today = lm.today().isoformat()
+    p = cli(d, "review-skipped", "2010", "unresolved")
+    assert p.returncode == 0, p.stderr
+    got = [(e["id"], e["kind"], e["fields"], e["on"], e["by"], e["note"]) for e in log_of(d)]
+    assert got == [("2009", "review-drafted", {}, "2026-09-28", "script", ev.note_hash("review request drafted 2026-09-28")),
+                   ("2010", "review-skipped", {"reason": "unresolved"}, today, "script",
+                    ev.note_hash(f"review request skipped {today} (unresolved)"))], got
+    for args in (("reviewed", "2009", "2026-09-29"), ("review-skipped", "2010", "planner")):
+        p = cli(d, *args)
+        assert p.returncode != 0 and "already" in p.stderr, (args, p.stderr)
+    assert len(log_of(d)) == 2, "a refused second one records nothing"
+
+
+def test_review_skipped_takes_only_the_reasons_the_log_records():
+    d = home()
+    path = write_ledger(d, [booking("2009", "2026-09-20", "paid in full 2026-09-19")])
+    for word in ("duplicate", "other", "not-ours"):
+        p = cli(d, "review-skipped", "2009", word)
+        assert p.returncode != 0 and "planner or unresolved" in p.stderr, (word, p.stderr)
+    with open(path, newline="") as f:
+        assert next(csv.DictReader(f))["notes"] == "paid in full 2026-09-19"
+    assert log_of(d) == []
+
+
+def test_a_review_date_after_today_is_refused_before_and_after_the_migration():
+    for d in (home(), migrated_home()):
+        path = write_ledger(d, [booking("2009", "2026-09-20", "paid in full 2026-09-19")])
+        ahead = (lm.today() + datetime.timedelta(days=2)).isoformat()
+        p = cli(d, "reviewed", "2009", ahead)
+        assert p.returncode != 0 and "after today" in p.stderr and "nothing written" in p.stderr, p.stderr
+        with open(path, newline="") as f:
+            assert next(csv.DictReader(f))["notes"] == "paid in full 2026-09-19"
+        assert log_of(d) == []
 
 
 if __name__ == "__main__":

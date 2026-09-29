@@ -120,7 +120,10 @@ BOOKING_CASES = [
      [seen("2026-08-26"), ("balance paid by cash at the rehearsal", f("noted-paid", "2026-09-26", scope="full"))],
      DEP_0826, T),
     ("paid per client email (the Monday review's phrase)", 1150, "2026-09-01", "2026-12-12",
-     [PENDING, ("paid per client email 2026-09-27", f("noted-paid", "2026-09-27", scope="full"))], [], T),
+     [PENDING, ("paid per client email 2026-09-27", f("noted-paid", "2026-09-27", scope="part"))], [], T),
+    ("the whole fee per client email (--fact noted-paid --scope full)", 1150, "2026-09-01", "2026-12-12",
+     [seen("2026-09-04"), ("balance paid per client email 2026-09-27", f("noted-paid", "2026-09-27", scope="full"))],
+     [("2026-09-04", 575.0, "reference")], T),
     ("a negated paid note is chased", 1150, "2026-09-01", "2026-12-12", [PENDING, ("no payment received", None)], [], T),
     # --- markers (B2, B4) ------------------------------------------------------------------------------------------
     ("a stale auto note with nothing in the feed", 1150, "2026-09-01", "2026-12-12", [seen("2026-09-05")], [], T),

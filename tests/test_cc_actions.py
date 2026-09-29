@@ -169,6 +169,7 @@ def setup(clock=None, client_factory=lambda: None):
     """A registered passkey, the fixtures, a fresh audit log; returns (client, authenticator, clock)."""
     for p in ("audit.jsonl",):
         (Path(TMP) / "command-centre" / p).unlink(missing_ok=True)
+    clear_log()
     write_config()
     fixtures()
     actions.reset_validations()
@@ -182,6 +183,28 @@ def setup(clock=None, client_factory=lambda: None):
     r = post(c, "/auth/passkey/register", {"credential": a.register(opts), "bootstrap": code})
     assert r.status_code == 200, r.text
     return c, a, clock
+
+
+def clear_log():
+    """No state log (the real scripts the routes run append to <TMP>/events.jsonl)."""
+    for name in ("events.jsonl", "events.jsonl.lock"):
+        (Path(TMP) / name).unlink(missing_ok=True)
+    cp.lcs_events.clear_cache()
+
+
+def log_lines():
+    path = Path(TMP) / "events.jsonl"
+    return [json.loads(x) for x in path.read_text().splitlines()] if path.exists() else []
+
+
+def live_lines():
+    return [e for e in log_lines() if e["src"] == "live"]
+
+
+def seed_migration():
+    """The state log holding one migration line: the scripts record facts only once the migration is applied."""
+    cp.lcs_events.append("booking", "0000", "deposit-seen", {}, "script", on="2026-01-01", src="migration",
+                         eid="00000000000000aa")
 
 
 def post(c, path, body, origin=ORIGIN):
@@ -235,7 +258,8 @@ def test_registry_and_passkey_flags():
     assert set(actions.REGISTRY) == {"todo-tick", "resolve-hand-check", "singer-confirm", "singer-settled",
                                      "singer-withdrawn", "refresh-data", "ads-validate", "ads-apply",
                                      "approve-books-import", "books-import-done", "push-subscribe",
-                                     "push-unsubscribe", "backup-now", "draft-mark", "sync-now"}
+                                     "push-unsubscribe", "backup-now", "draft-mark", "sync-now", "migrate-events",
+                                     "undo-fact"}
     no_passkey = {n for n, a in actions.REGISTRY.items() if not a.passkey}
     assert no_passkey == {"todo-tick", "refresh-data", "push-unsubscribe", "backup-now", "draft-mark",
                           "sync-now"}, no_passkey
@@ -246,17 +270,21 @@ def test_hand_check_argv_and_summary():
     fixtures()
     a = actions.RESOLVE_HAND_CHECK
     c = a.validate({"ref": "2111", "choice": "paid-in-full", "date": D})
-    assert a.argv(c) == [PYX, CHECK, "--note", "2111", f"paid in full {D}", "--owner"]
+    assert a.argv(c) == [PYX, CHECK, "--fact", "2111", "paid-in-full", "--on", D, "--owner"]
     s = a.preview(c)
-    assert s.endswith(f"Runs: .venv/bin/python scripts/bookings/check_payments.py --note 2111 'paid in full {D}' --owner")
+    assert s.endswith(f"Runs: .venv/bin/python scripts/bookings/check_payments.py --fact 2111 paid-in-full --on {D} --owner")
     assert "Ann" in s and "Smithfield" not in s and f"\"paid in full {D} (owner)\"" in s
     assert a.owner_nonce and a.passkey
-    for choice, phrase in [("deposit-kept", f"deposit kept {D}"), ("refunded", f"refunded {D}"),
-                           ("reinstated", f"reinstated {D}"), ("cancelled", f"cancelled {D}"),
-                           ("payment-checked", f"payment checked {D}"),
-                           ("arranged-cash", f"balance payable in cash on the day (arranged {D})"),
-                           ("arranged-cheque", f"balance payable by cheque on the day (arranged {D})")]:
-        assert a.argv(a.validate({"ref": "0310", "choice": choice, "date": D}))[4] == phrase
+    for choice, phrase, args in [
+            ("deposit-kept", f"deposit kept {D}", ["deposit-kept"]), ("refunded", f"refunded {D}", ["refunded"]),
+            ("reinstated", f"reinstated {D}", ["reinstated"]), ("cancelled", f"cancelled {D}", ["cancelled"]),
+            ("payment-checked", f"payment checked {D}", ["payment-checked"]),
+            ("arranged-cash", f"balance payable in cash on the day (arranged {D})", ["arranged", "--method", "cash"]),
+            ("arranged-cheque", f"balance payable by cheque on the day (arranged {D})",
+             ["arranged", "--method", "cheque"])]:
+        c = a.validate({"ref": "0310", "choice": choice, "date": D})
+        assert c["phrase"] == phrase and f"\"{phrase} (owner)\"" in a.preview(c), (choice, c["phrase"])
+        assert a.argv(c) == [PYX, CHECK, "--fact", "0310", args[0], "--on", D, *args[1:], "--owner"], a.argv(c)
 
 
 def test_hand_check_refuses_bad_input():
@@ -279,8 +307,8 @@ def test_each_hand_phrase_means_what_it_says_to_check_payments():
     day = datetime.date.fromisoformat(D)
 
     def notes(choice, before="PENDING: invoiced"):
-        phrase = actions.HAND_CHOICES[choice][1].format(d=D)
-        return f"{before}; {phrase} (owner)"
+        _, kind, fields = actions.HAND_CHOICES[choice]
+        return f"{before}; {cp.fact_phrase(kind, fields, day, 'owner')}"
     assert cp.closed_on({"notes": notes("paid-in-full")}) == day
     for choice in ("deposit-kept", "refunded", "payment-checked"):
         assert cp.cancel_settled_on({"notes": "cancelled 2026-09-01; " + notes(choice, "x")}, day) == day, choice
@@ -296,15 +324,18 @@ def test_singer_actions_argv_and_refusals():
     key, paid, nobank, confirmed = (models.invoice_key(m) for m in (MSG, MSG_PAID, MSG_NOBANK, MSG_CONFIRMED))
     assert re.fullmatch(r"[a-z]{12}", key)
     c = actions.SINGER_CONFIRM.validate({"invoice": key})
-    assert actions.SINGER_CONFIRM.argv(c) == [PYX, SINGER, "confirm", MSG, "--expect-fp", FP_A]
+    assert actions.SINGER_CONFIRM.argv(c) == [PYX, SINGER, "confirm", MSG, "--expect-fp", FP_A, "--owner"]
     s = actions.SINGER_CONFIRM.preview(c)
     assert "Jane" in s and "Fenwickson" not in s and "••••4321" in s and "£120.00" in s
     assert f"fingerprint {FP_A})" in s  # all 16 characters, the same ones --expect-fp passes
-    assert s.endswith(f"Runs: .venv/bin/python scripts/bookings/singer_invoices.py confirm {MSG} --expect-fp {FP_A}")
+    assert s.endswith(f"Runs: .venv/bin/python scripts/bookings/singer_invoices.py confirm {MSG} --expect-fp {FP_A} "
+                      "--owner")
     c = actions.SINGER_SETTLED.validate({"invoice": key, "date": D})
-    assert actions.SINGER_SETTLED.argv(c) == [PYX, SINGER, "settled", MSG, D]
+    assert actions.SINGER_SETTLED.argv(c) == [PYX, SINGER, "settled", MSG, D, "--owner"]
     c = actions.SINGER_WITHDRAWN.validate({"invoice": key, "reason": "not-ours"})
-    assert actions.SINGER_WITHDRAWN.argv(c) == [PYX, SINGER, "withdrawn", MSG, "not-ours"]
+    assert actions.SINGER_WITHDRAWN.argv(c) == [PYX, SINGER, "withdrawn", MSG, "not-ours", "--owner"]
+    # confirm, settle and withdraw carry the owner nonce (owner decision, 29 Sep 2026, question 2)
+    assert actions.SINGER_CONFIRM.owner_nonce and actions.SINGER_SETTLED.owner_nonce and actions.SINGER_WITHDRAWN.owner_nonce
     future = (TODAY + datetime.timedelta(days=1)).isoformat()
     for defn, bad, why in [
             (actions.SINGER_CONFIRM, {"invoice": "abc"}, "unknown invoice"),
@@ -366,7 +397,7 @@ def test_preview_shows_summary_and_command_and_binds_the_challenge():
     assert r.status_code == 200, r.text
     body = r.json()
     assert body["passkey"] is True and body["title"] == "Resolve a hand check"
-    assert body["command"] == f".venv/bin/python scripts/bookings/check_payments.py --note 2111 'paid in full {D}' --owner"
+    assert body["command"] == f".venv/bin/python scripts/bookings/check_payments.py --fact 2111 paid-in-full --on {D} --owner"
     challenge = unb64(body["options"]["challenge"])
     assert challenge[16:] == auth.action_hash("assert", body["summary"], "resolve-hand-check")
     assert challenge[16:] != auth.action_hash("assert", body["summary"], "singer-confirm")  # the name is bound too
@@ -387,7 +418,7 @@ def test_a_valid_assertion_runs_the_exact_argv_once_and_is_audited():
     assert r.json()["ok"] is True and r.json()["exit_code"] == 0 and r.json()["output"] == "2111: note added"
     assert len(rec.calls) == 1
     argv, kw = rec.calls[0]
-    assert argv == [PYX, CHECK, "--note", "2111", f"refunded {D}", "--owner"]
+    assert argv == [PYX, CHECK, "--fact", "2111", "refunded", "--on", D, "--owner"]
     assert kw["shell"] is False and kw["cwd"] == str(actions.REPO) and kw["timeout"] == 30
     assert not any(k.startswith("CC_") for k in kw["env"])
     assert len(kw["input"]) == 65 and kw["input"].endswith(b"\n")  # the nonce, over a pipe
@@ -498,19 +529,25 @@ def test_the_owner_nonce_is_hashed_on_disk_and_gone_afterwards():
     assert re.fullmatch(r"[0-9a-f]{64}", seen["stdin"])
     assert seen["file"] == hashlib.sha256(seen["stdin"].encode()).hexdigest() != seen["stdin"]
     assert not (Path(TMP) / "command-centre" / "owner-nonce").exists()
-    # only the hand check gets a nonce: the singer actions read /dev/null
+    # the singer actions get one too (owner decision, 29 Sep 2026); an action without owner facts reads /dev/null
     with Runner(Recorder()) as rec:
         run(c, a, "singer-confirm", {"invoice": models.invoice_key(MSG)})
-    assert rec.calls[0][1]["stdin"] == subprocess.DEVNULL and "input" not in rec.calls[0][1]
+        post(c, "/actions/refresh-data/run", {"input": {}})
+    assert re.fullmatch(rb"[0-9a-f]{64}\n", rec.calls[0][1]["input"]) and "stdin" not in rec.calls[0][1]
+    assert rec.calls[1][1]["stdin"] == subprocess.DEVNULL and "input" not in rec.calls[1][1]
 
 
 def test_real_check_payments_owner_note_through_the_full_route():
     c, a, _ = setup()
+    seed_migration()
     r = run(c, a, "resolve-hand-check", {"ref": "2111", "choice": "paid-in-full", "date": D})
     assert r.status_code == 200, r.text
     assert r.json()["ok"] is True, r.json()
-    assert r.json()["output"] == "2111: note added"
+    assert r.json()["output"] == "2111: paid-in-full recorded"
     assert ledger_notes("2111") == f"PENDING: invoiced; paid in full {D} (owner)"
+    (e,) = live_lines()  # the fact, the owner's, claiming the note it wrote
+    assert (e["kind"], e["fields"], e["by"], e["on"]) == ("paid-in-full", {"basis": "owner"}, "owner", D), e
+    assert e["note"] == cp.lcs_events.note_hash(f"paid in full {D} (owner)")
     assert not (Path(TMP) / "command-centre" / "owner-nonce").exists()
     assert [e["result"] for e in audit_lines()] == ["started", "ok"]
     # and the same script refuses the same note without the app's nonce (as an allowlisted Claude call would)
@@ -1766,7 +1803,7 @@ def test_the_hand_check_child_gets_the_private_dir_and_no_ledger_override():
         run(c, a, "singer-settled", {"invoice": models.invoice_key(MSG), "date": D})
     hand, singer = rec.calls[0][1]["env"], rec.calls[1][1]["env"]
     assert hand["LCS_PRIVATE_DIR"] == TMP and "LCS_BOOKINGS_CSV" not in hand
-    assert singer["LCS_PRIVATE_DIR"] == TMP
+    assert singer["LCS_PRIVATE_DIR"] == TMP and "LCS_BOOKINGS_CSV" not in singer
     # a ledger moved elsewhere by LCS_BOOKINGS_CSV: the app won't ask check_payments to write beside the nonce
     saved = cp.LEDGER
     try:
@@ -1779,11 +1816,23 @@ def test_the_hand_check_child_gets_the_private_dir_and_no_ledger_override():
 
 def test_real_singer_confirm_through_the_route_is_bound_to_the_fingerprint():
     c, a, _ = setup()
+    seed_migration()
     key = models.invoice_key(MSG)
     r = run(c, a, "singer-confirm", {"invoice": key})
     assert r.status_code == 200 and r.json()["ok"], r.json()
     row = next(x for x in lm.read_csv(si.STORE) if x["message_id"] == MSG)
     assert row["bank_confirmed"] == "yes"
+    (e,) = live_lines()
+    assert (e["kind"], e["fields"], e["by"], e["id"]) == ("bank-confirmed", {"fp8": FP_A[:8]}, "owner", MSG), e
+    # settle and withdraw through the real script too: both need the nonce the app passes
+    clear_log()
+    seed_migration()
+    r = run(c, a, "singer-settled", {"invoice": models.invoice_key(MSG_CONFIRMED), "date": D})
+    assert r.status_code == 200 and r.json()["ok"], r.json()
+    r = run(c, a, "singer-withdrawn", {"invoice": models.invoice_key(MSG_NOBANK), "reason": "not-ours"})
+    assert r.status_code == 200 and r.json()["ok"], r.json()
+    assert [(e["kind"], e["by"]) for e in live_lines()] == [("settled", "owner"), ("withdrawn", "owner")], log_lines()
+    clear_log()
     # the details changed after the preview: the rebuilt summary no longer matches the signed one
     fixtures()
     p = preview(c, "singer-confirm", {"invoice": key}).json()
@@ -1817,6 +1866,7 @@ SAFE_ON_ALLOWLIST = {
 
 def test_the_apps_own_commands_are_not_allowlisted_unless_safe():
     fixtures()
+    clear_log()
     pats = allowlist.allow_patterns()
     key = models.invoice_key(MSG)
     samples = {
@@ -1827,6 +1877,7 @@ def test_the_apps_own_commands_are_not_allowlisted_unless_safe():
         "refresh-data": {},
         "sync-now": {"source": "books"},
         "backup-now": {},
+        "migrate-events": {},
     }
     write_config(backup={"recipient": "age1test", "target": TMP})
     seen = set()
@@ -1846,14 +1897,25 @@ def test_the_apps_own_commands_are_not_allowlisted_unless_safe():
                         f"{allowlist.PY} scripts/ads/set_budget.py 111 4.50 {flag}"):
                 assert not allowlist.allowed(cmd, pats), cmd
             seen.add(name)
+    seed_migration()  # undo needs a recorded fact, so after the migration's check above
+    undo = actions.REGISTRY["undo-fact"]
+    eid = fact("booking", "2111", "cancelled", {}, "script", D, f"cancelled {D} by client email")
+    assert not allowlist.allowed(claude_form(undo.argv(undo.validate({"subject": "booking", "key": "2111", "eid": eid}))),
+                                 pats)
+    seen.add("undo-fact")
+    clear_log()
     seen |= {"approve-books-import", "books-import-done", "todo-tick", "push-subscribe", "push-unsubscribe",
              "draft-mark"}  # no subprocess
     assert seen == set(actions.REGISTRY)
-    # the guarded one really is matched, and its refusal is tested in test_check_payments.py
-    cmd = claude_form(actions.RESOLVE_HAND_CHECK.argv(actions.RESOLVE_HAND_CHECK.validate(samples["resolve-hand-check"])))
-    assert allowlist.allowed(cmd, pats) and cmd.endswith("--owner")
-    head = re.sub(r"--note \S+ ", "--note X ", cmd.split('"')[0])
-    assert any(g.startswith(head) for g in allowlist.SCRIPT_GUARDED), head
+    # the guarded ones, once the allowlist matches them (`--fact *`, `withdrawn *`), are listed as script-guarded:
+    # their refusal without the app's nonce is tested in test_check_payments.py and test_singer_invoices.py
+    for name in ("resolve-hand-check", "singer-withdrawn"):
+        defn = actions.REGISTRY[name]
+        cmd = claude_form(defn.argv(defn.validate(samples[name])))
+        assert cmd.endswith("--owner"), cmd
+        if allowlist.allowed(cmd, pats):
+            head = " ".join(cmd.split()[:3])
+            assert any(g.startswith(head) and g.endswith("--owner") for g in allowlist.SCRIPT_GUARDED), head
 
 
 # ---------------------------------------------------------------- pages
@@ -1989,15 +2051,16 @@ def test_short_by_fees_preview_and_argv():
     c, _, _ = fee_setup()
     act = actions.RESOLVE_HAND_CHECK
     cleaned = act.validate(FEE_INPUT)
-    assert act.argv(cleaned) == [PYX, CHECK, "--note", "2408", f"short by fees £12.40 accepted {D}", "--owner"]
+    assert act.argv(cleaned) == [PYX, CHECK, "--fact", "2408", "fees-accepted", "--on", D, "--amount", "12.40", "--owner"]
+    assert cleaned["phrase"] == f"short by fees £12.40 accepted {D}"
     s = act.preview(cleaned)
     for part in ("booking 2408 (Bea)", "£937.60 received of £950.00", "short by £12.40 in transfer fees",
                  "will read paid in full", f"\"short by fees £12.40 accepted {D} (owner)\""):
         assert part in s, (part, s)
     assert "Feeworthy" not in s and "example.org" not in s
     assert cleaned["input"] == FEE_INPUT
-    assert act.argv(act.validate(dict(FEE_INPUT, amount="12.4")))[4] == f"short by fees £12.40 accepted {D}"
-    assert act.argv(act.validate(dict(FEE_INPUT, amount="12.41")))[4] == f"short by fees £12.40 accepted {D}"  # 1p
+    assert act.validate(dict(FEE_INPUT, amount="12.4"))["phrase"] == f"short by fees £12.40 accepted {D}"
+    assert act.argv(act.validate(dict(FEE_INPUT, amount="12.41")))[8] == "12.40"  # 1p: the assessed balance
     r = preview(c, "resolve-hand-check", FEE_INPUT)
     assert r.status_code == 200 and r.json()["summary"] == s, r.text
     # the owner-only phrase stays out of the ordinary select
@@ -2066,6 +2129,166 @@ def test_hand_check_list_offers_short_by_fees_on_a_past_part_paid_booking():
     assert 'name="amount" value="12.40"' in page(c, "/")
     cleaned = actions.RESOLVE_HAND_CHECK.validate({"ref": "0909", "choice": "short-by-fees", "date": D, "amount": "9"})
     assert cleaned["phrase"] == f"short by fees £9.00 accepted {D}"
+
+
+# ---------------------------------------------------------------- the events migration (structured state, Task 10)
+
+
+EVENTS = str(Path(ROOT) / "scripts" / "bookings" / "events.py")
+
+
+def migration_plan():
+    import lcs_migrate
+    ledger, store = lm.read_csv(cp.LEDGER), lm.read_csv(si.STORE)
+    return lcs_migrate.plan(ledger, store, TODAY, cp.lcs_events.read()[0])
+
+
+def test_migrate_events_argv_and_summary():
+    fixtures()
+    clear_log()
+    act = actions.REGISTRY["migrate-events"]
+    assert act.owner_nonce and act.passkey and act.script == "scripts/bookings/events.py"
+    cleaned = act.validate({})
+    sha = migration_plan()["sha256"]
+    assert act.argv(cleaned) == [PYX, EVENTS, "migrate", "--apply", "--expect", sha, "--owner"]
+    s = act.preview(cleaned)
+    assert "Apply the events migration" in s and sha in s and "events" in s and "flags:" in s, s
+    assert s.endswith(f"Runs: .venv/bin/python scripts/bookings/events.py migrate --apply --expect {sha} --owner")
+    for secret in ("cancelled 2026-09-10", "PENDING", "Ann", "Smithfield", "Jane", "example.org"):
+        assert secret not in s, secret
+    assert cleaned["input"] == {}
+    refused(act.validate, {"x": "y"})
+
+
+def test_migrate_events_is_refused_while_compare_differs_and_after_a_migration():
+    fixtures()
+    clear_log()
+    act = actions.REGISTRY["migrate-events"]
+    saved, csv_env = cp.lcs_events.lcs_owner._PROVEN, os.environ.pop("LCS_BOOKINGS_CSV")
+    try:
+        cp.lcs_events.lcs_owner._PROVEN = True  # a recorded fact the notes contradict: 0310's notes say cancelled
+        cp.lcs_events.append("booking", "0310", "reinstated", {}, "owner", on="2026-09-20")
+    finally:
+        cp.lcs_events.lcs_owner._PROVEN, os.environ["LCS_BOOKINGS_CSV"] = saved, csv_env
+    assert refused(act.validate, {}) == ("these read differently from their notes: booking 0310 (cancellation, held); "
+                                         "run events.py compare --proposed"), refused(act.validate, {})
+    clear_log()
+    cp.lcs_events.append("booking", "2111", "deposit-seen", {}, "script", on="2026-09-01", src="migration",
+                         eid="0123456789abcdef")
+    assert refused(act.validate, {}) == "the events migration has already been applied"
+    clear_log()
+    rows = lm.read_csv(cp.LEDGER)
+    rows[0]["notes"] = "PENDING: invoiced; paid in full 2099-01-01"
+    write_csv(os.path.join(TMP, "bookings.csv"), LEDGER_COLS, rows)
+    assert refused(act.validate, {}) == ("dated after today, so not yet a fact: booking 2111 paid-in-full (2099-01-01); "
+                                         "correct those notes first"), refused(act.validate, {})
+    fixtures()
+    with open(Path(TMP) / "events.jsonl", "w") as f:
+        f.write("{}\n")
+    os.chmod(Path(TMP) / "events.jsonl", 0o644)
+    assert "state log" in refused(act.validate, {})
+    clear_log()
+
+
+def test_migrate_events_through_the_route_runs_the_real_apply_once():
+    c, a, _ = setup()
+    want = len(migration_plan()["proposals"])
+    assert want >= 1
+    r = run(c, a, "migrate-events", {})
+    assert r.status_code == 200 and r.json()["ok"] is True, r.text
+    assert r.json()["output"] == f"{want} new events", r.json()
+    lines = log_lines()
+    assert len(lines) == want and {e["src"] for e in lines} == {"migration"}
+    assert any(e["id"] == "0310" and e["kind"] == "cancelled" for e in lines), lines
+    assert not (Path(TMP) / "command-centre" / "owner-nonce").exists()
+    cp.lcs_events.clear_cache()
+    assert refused(actions.REGISTRY["migrate-events"].validate, {}) == "the events migration has already been applied"
+    clear_log()
+
+
+def test_health_offers_the_migration_until_it_is_applied():
+    c, a, _ = setup()
+    assert 'data-action="migrate-events"' in page(c, "/health")
+    cp.lcs_events.append("booking", "2111", "deposit-seen", {}, "script", on="2026-09-01", src="migration",
+                         eid="0123456789abcdef")
+    assert 'data-action="migrate-events"' not in page(c, "/health")
+    clear_log()
+
+
+# ---------------------------------------------------------------- undo a recorded fact (the owner's, with the passkey)
+
+
+def fact(subject, id_, kind, fields, by, on, clause):
+    saved, csv_env = cp.lcs_events.lcs_owner._PROVEN, os.environ.pop("LCS_BOOKINGS_CSV")
+    try:
+        cp.lcs_events.lcs_owner._PROVEN = True
+        return cp.lcs_events.append(subject, id_, kind, fields, by, on=on, note=cp.lcs_events.note_hash(clause))
+    finally:
+        cp.lcs_events.lcs_owner._PROVEN, os.environ["LCS_BOOKINGS_CSV"] = saved, csv_env
+
+
+def undo_setup():
+    c, a, clock = setup()
+    seed_migration()
+    rows = lm.read_csv(cp.LEDGER)
+    for r in rows:
+        if r["booking_ref"] == "2111":
+            r["notes"] = "PENDING: invoiced; cancelled 2026-09-20 by client email"
+    write_csv(os.path.join(TMP, "bookings.csv"), LEDGER_COLS, rows)
+    eid = fact("booking", "2111", "cancelled", {}, "script", "2026-09-20", "cancelled 2026-09-20 by client email")
+    return c, a, eid
+
+
+def test_a_hand_check_cancellation_dated_before_the_latest_one_is_refused():
+    c, a, eid = undo_setup()  # 2111 carries a recorded cancellation of 20 Sep 2026
+    v = actions.RESOLVE_HAND_CHECK.validate
+    assert refused(v, {"ref": "2111", "choice": "reinstated", "date": "2026-09-15"}) == (
+        "that date is before the booking's latest recorded cancellation or reinstatement (20 Sep 2026): "
+        "use that day or later"), refused(v, {"ref": "2111", "choice": "reinstated", "date": "2026-09-15"})
+    assert v({"ref": "2111", "choice": "reinstated", "date": D})["kind"] == "reinstated"
+    assert v({"ref": "2111", "choice": "refunded", "date": "2026-09-15"})  # another family: any date
+    clear_log()
+
+
+def test_undo_fact_argv_summary_and_refusals():
+    c, a, eid = undo_setup()
+    act = actions.REGISTRY["undo-fact"]
+    assert act.owner_nonce and act.passkey and act.script == "scripts/bookings/events.py"
+    cleaned = act.validate({"subject": "booking", "key": "2111", "eid": eid})
+    assert act.argv(cleaned) == [PYX, EVENTS, "retract", eid, "--owner"]
+    s = act.preview(cleaned)
+    assert "booking 2111 (Ann)" in s and "cancelled" in s and "20 Sep 2026" in s and "the assistant" in s, s
+    assert "client email" not in s and "Smithfield" not in s
+    for bad in ({"subject": "booking", "key": "0310", "eid": eid}, {"subject": "booking", "key": "2111", "eid": "0" * 16},
+                {"subject": "booking", "key": "2111", "eid": "x"}, {"subject": "enquiry", "key": "2111", "eid": eid},
+                {"subject": "singer_invoice", "key": models.invoice_key(MSG), "eid": eid}, {"subject": "booking", "key": "2111"}):
+        refused(act.validate, bad)
+    clear_log()
+
+
+def test_undo_fact_through_the_real_script_and_the_pages():
+    c, a, eid = undo_setup()
+    assert 'data-action="undo-fact"' in page(c, "/bookings/2111") and f'value="{eid}"' in page(c, "/bookings/2111")
+    r = run(c, a, "undo-fact", {"subject": "booking", "key": "2111", "eid": eid})
+    assert r.status_code == 200 and r.json()["ok"], r.json()
+    assert ledger_notes("2111").endswith(f"earlier entry undone {D} (owner)")
+    cp.lcs_events.clear_cache()
+    row = next(x for x in lm.read_csv(cp.LEDGER) if x["booking_ref"] == "2111")
+    assert not cp.is_cancelled(row) and cp.held(row) == []
+    assert f'value="{eid}"' not in page(c, "/bookings/2111")
+    refused(actions.REGISTRY["undo-fact"].validate, {"subject": "booking", "key": "2111", "eid": eid})
+    # a singer invoice's fact is offered on the Singers page, by its invoice key
+    key = models.invoice_key(MSG)
+    seid = fact("singer_invoice", MSG, "paid-reply-drafted", {}, "script", D, f"paid reply drafted {D}")
+    out = page(c, "/singers")
+    assert 'data-action="undo-fact"' in out and f'value="{seid}"' in out and MSG not in out
+    cleaned = actions.REGISTRY["undo-fact"].validate({"subject": "singer_invoice", "key": key, "eid": seid})
+    assert actions.REGISTRY["undo-fact"].argv(cleaned) == [PYX, EVENTS, "retract", seid, "--owner"]
+    s = actions.REGISTRY["undo-fact"].preview(cleaned)  # a marker: the summary says what undoing it does
+    assert "the assistant may draft it again" in s, s
+    wid = fact("singer_invoice", MSG, "bank-warning", {"fp8": FP_A[:8], "codes": ["new"]}, "script", D, "x")
+    refused(actions.REGISTRY["undo-fact"].validate, {"subject": "singer_invoice", "key": key, "eid": wid})
+    clear_log()
 
 
 if __name__ == "__main__":

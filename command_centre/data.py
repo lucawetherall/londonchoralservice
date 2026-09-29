@@ -50,6 +50,12 @@ def stamp(when):
     return dash.stamp(when)
 
 
+def state_log_migrated():
+    """True once the state log holds the events migration's lines (lcs_events.migration_applied): Health offers
+    "Apply the events migration" only before then."""
+    return cp.lcs_events.migration_applied()
+
+
 def open_singers(rows):
     """dash.singers (the unpaid invoices, oldest first) with each row's action handle and allowed actions, and what
     the pay list needs (models.singer_trust): whether the account is trusted, how, the Books bill number, and why
@@ -324,8 +330,9 @@ class Data:
             ref, b["event_date"], rows), booking, store, keep=False)
         margin = self.panel("booking_margin", lambda m: next((x for x in m if x["ref"] == ref), None),
                             self.margins(ledger, store), keep=False)
+        facts = self.panel("booking_facts", lambda: models.live_facts("booking", ref), keep=False)
         return {"stamp": stamp(now), "ref": ref, "booking": booking, "bank": bank, "parts": parts, "timeline": items,
-                "ledger": ledger, "books": books, "singer_list": singer_list, "margin": margin}
+                "ledger": ledger, "books": books, "singer_list": singer_list, "margin": margin, "facts": facts}
 
     def enquiries_page(self):
         now = self.now()
@@ -466,7 +473,9 @@ class Data:
                   self.panel("check_disk", sources.disk_check),
                   self.panel("check_branch", lambda: sources.branch_check(branch))]
         backup = self.panel("backup", lambda: sources.backup_status(now))
-        return {"stamp": stamp(now), "tasks": tasks, "proxies": proxies, "checks": checks, "backup": backup}
+        migration = self.panel("migration", state_log_migrated, keep=False)
+        return {"stamp": stamp(now), "tasks": tasks, "proxies": proxies, "checks": checks, "backup": backup,
+                "migration": migration}
 
     def todo_page(self):
         items = self.panel("todo", lambda: todo.todo_items(todo.read_items(), todo.load_ticks()))

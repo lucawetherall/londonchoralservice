@@ -143,10 +143,10 @@ def fixtures(calendar=None):
     ], pl.COLUMNS)
     lm.write_csv(si.STORE, [
         {"message_id": "m1", "received": "2026-09-20", "singer_name": "Ben Fenwickson", "singer_email": "ben@example.org",
-         "invoice_ref": "BF-12", "amount_gbp": "120", "bank_fp": "abc", "bank_last4": "87654321",
+         "invoice_ref": "BF-12", "amount_gbp": "120", "bank_fp": "abcabcabcabc0001", "bank_last4": "87654321",
          "payee": "existing: Ben Fenwickson", "bank_changed": "yes", "paid_on": "", "notes": "BANK DETAILS CHANGED: ring them"},
         {"message_id": "m0", "received": "2026-08-10", "singer_name": "Fenwickson, Ben (tenor)",
-         "singer_email": "ben@example.org", "invoice_ref": "123456789", "amount_gbp": "100", "bank_fp": "abc0",
+         "singer_email": "ben@example.org", "invoice_ref": "123456789", "amount_gbp": "100", "bank_fp": "abcabcabcabc0000",
          "bank_last4": "5555", "payee": "existing: Ben Fenwickson", "bank_changed": "no", "paid_on": "2026-08-12",
          "paid_amount": "100", "paid_verified": "yes"},
         {"message_id": "m2", "received": "2026-09-22", "singer_name": "Dora Quillfeather",
@@ -375,8 +375,14 @@ def test_confirmed_bank_details_clear_the_singers_card_and_today():
         c = make(FakeBank())
         assert 'data-kind="ring"' in page(c, "/")
         assert ben()["warnings"] and ben()["bank_check"] == "not yet verified"
-        with contextlib.redirect_stdout(io.StringIO()):
-            si.cmd_confirm(argparse.Namespace(message_id="m1"))
+        import lcs_owner  # confirm is the Command Centre's: this process stands in for its owner run
+        saved = (lcs_owner._PROVEN, lcs_owner.owner_confirmed, os.environ.pop("LCS_BOOKINGS_CSV"))
+        lcs_owner._PROVEN, lcs_owner.owner_confirmed = True, lambda *a: True
+        try:
+            with contextlib.redirect_stdout(io.StringIO()):
+                si.cmd_confirm(argparse.Namespace(message_id="m1", owner=True))
+        finally:
+            lcs_owner._PROVEN, lcs_owner.owner_confirmed, os.environ["LCS_BOOKINGS_CSV"] = saved
         g = ben()
         assert g["warnings"] == [] and g["bank_check"] == "confirmed by phone", g
         assert not any(i["ring_first"] for i in g["invoices"]), g["invoices"]

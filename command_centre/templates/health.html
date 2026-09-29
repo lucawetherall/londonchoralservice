@@ -94,4 +94,12 @@
   <p class="muted">Every night at 02:30: all of ~/lcs-private (the mirror, runs and caches left out), encrypted with age, 14 days kept. Only the key in your password manager opens it.</p>
   {{ m.action_button("backup-now", "Back up now") }}
 </section>
+
+{% if migration.ok and not migration.value %}
+<section class="card" id="state-log">
+  <h2>State log</h2>
+  <p>The facts in the ledger's and the singer store's notes aren't in the state log yet. The preview shows what the migration would record and its report hash; nothing changes in the notes.</p>
+  {{ m.action_button("migrate-events", "Apply the events migration") }}
+</section>
+{% endif %}
 {% endblock %}

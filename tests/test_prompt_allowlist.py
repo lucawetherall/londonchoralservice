@@ -34,6 +34,11 @@ NEVER = [
     f"{PY} scripts/ads/set_budget.py 24295921372 4.50 --apply",
     f"{PY} scripts/ads/set_budget.py 24295921372 4.50 --validate-only",
     f"{PY} scripts/bookings/singer_invoices.py confirm X --expect-fp a1b2c3d4e5f60718",
+    # the state log's owner commands: the Command Centre runs them after a passkey tap (structured-state design)
+    f"{PY} scripts/bookings/events.py migrate --apply --expect {'a' * 64} --owner",
+    f"{PY} scripts/bookings/events.py migrate --apply",
+    f"{PY} scripts/bookings/events.py retract a1b2c3d4e5f60718 --owner",
+    f"{PY} scripts/bookings/events.py notes-checked booking 2111 a1b2c3d4e5f6 --owner",
     # imap_draft.py: the assistant only saves drafts; the sign-in check and the test draft are the owner's
     f"{PY} scripts/bookings/imap_draft.py check",
     f"{PY} scripts/bookings/imap_draft.py test",
@@ -44,6 +49,11 @@ NEVER = [
 SCRIPT_GUARDED = [
     f"{PY} scripts/bookings/check_payments.py --note X \"paid in full 2026-09-28\" --owner",
     f"{PY} scripts/bookings/check_payments.py --reminded X --note X \"refunded 2026-09-28\" --owner",
+    # `withdrawn *` matches the Command Centre's owner form: singer_invoices.py refuses --owner without the nonce
+    # (tests/test_singer_invoices.py, test_thanked_and_withdrawn_record_their_facts)
+    f"{PY} scripts/bookings/singer_invoices.py withdrawn X not-ours --owner",
+    # `--fact *` matches the owner kinds: check_payments.py refuses them without --owner and the nonce
+    f"{PY} scripts/bookings/check_payments.py --fact X refunded --owner",
 ]
 # Script mentions that are references or prohibitions, not commands to run.
 NOT_RUN = re.compile(r"^(singer_invoices\.py (confirm|settled)|scripts/gsc/submit_sitemap\.py --apply)\b")
@@ -253,8 +263,22 @@ def test_helper_commands_the_prompts_rely_on_are_covered():
                 f"{PY} scripts/bookings/singer_invoices.py margins",
                 f"{PY} scripts/reports/cc_sync.py books",
                 f"{PY} scripts/reports/cc_sync.py calendar-put 'X'",
-                f"{PY} scripts/reports/weekly_review.py --save-report --write-proposals"):
+                f"{PY} scripts/reports/weekly_review.py --save-report --write-proposals",
+                f"{PY} scripts/bookings/check_payments.py --fact 2111 cancelled",
+                f"{PY} scripts/bookings/events.py verify",
+                f"{PY} scripts/bookings/events.py show booking 2111",
+                f"{PY} scripts/bookings/events.py migrate",
+                f"{PY} scripts/bookings/events.py compare",
+                f"{PY} scripts/bookings/events.py compare --proposed"):
         assert allowed(cmd, pats), cmd
+
+
+def test_owner_only_state_commands_are_denied_to_claude():
+    deny = json.load(open(os.path.join(ROOT, ".claude", "settings.json"), encoding="utf-8"))["permissions"]["deny"]
+    for rule in ("Bash(*events.py migrate*--apply*)", "Bash(*events.py retract*)", "Bash(*events.py notes-checked*)",
+                 "Bash(*singer_invoices.py confirm*)", "Bash(*singer_invoices.py settled*)",
+                 "Write(~/lcs-private/events.jsonl)", "Edit(~/lcs-private/events.jsonl)"):
+        assert rule in deny, rule
 
 
 def test_the_command_centre_caches_and_proposals_are_in_the_prompts():

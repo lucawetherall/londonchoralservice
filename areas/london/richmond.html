@@ -108,6 +108,19 @@
     // WhatsApp messages and emails carry the page they came from (and "via a
     // Google ad" when known), so each message shows its source. The visitor sees
     // the text and can change it before sending.
+    // Four characters from a 32-bit FNV-1a hash of the click ID, in an alphabet
+    // without 0/O or 1/I. scripts/ads/lookup_ref.py computes the same value.
+    function lcsShortRef(id) {
+      if (!id) return '';
+      var h = 0x811c9dc5;
+      for (var i = 0; i < id.length; i++) {
+        h ^= id.charCodeAt(i) & 0xff;
+        h = Math.imul(h, 0x01000193) >>> 0;
+      }
+      var abc = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789', out = '';
+      for (var j = 0; j < 4; j++) { out += abc[h & 31]; h >>>= 5; }
+      return out;
+    }
     function lcsLabelMessage(a, method) {
       try {
         var original = a.getAttribute('data-lcs-href') || a.getAttribute('href');
@@ -117,21 +130,22 @@
         var attr = lcsAttribution();
         var ad = attr.gclid || attr.gbraid || attr.wbraid || attr.utm_medium === 'cpc' ? ', via a Google ad' : '';
         var source = 'your \u201c' + page + '\u201d page' + ad;
-        // With cookie consent, the ad click reference rides along too, so a
-        // booking that starts on WhatsApp or email can be reported to Google Ads.
+        // With cookie consent, a short reference to the ad click rides along too,
+        // so a booking that starts on WhatsApp or email can be reported to Google
+        // Ads: scripts/ads/lookup_ref.py finds the click whose ID gives this ref.
         var ref = '';
         try {
           if (localStorage.getItem('lcs-consent') === 'granted') {
-            ref = attr.gclid || (attr.gbraid ? 'gbraid:' + attr.gbraid : '') || (attr.wbraid ? 'wbraid:' + attr.wbraid : '');
+            ref = lcsShortRef(attr.gclid || attr.gbraid || attr.wbraid || '');
           }
         } catch (e) {}
         if (method === 'whatsapp') {
           var url = new URL(original);
           var text = url.searchParams.get('text') || 'Hello, I\u2019d like to ask about a booking.';
-          a.setAttribute('href', original.split('?')[0] + '?text=' + encodeURIComponent(text + ' (Sent from ' + source + '.' + (ref ? ' Ad ref: ' + ref : '') + ')'));
+          a.setAttribute('href', original.split('?')[0] + '?text=' + encodeURIComponent(text + ' (Sent from ' + source + '.' + (ref ? ' Ref: ' + ref : '') + ')'));
         } else if (original.indexOf('?') === -1) {
           a.setAttribute('href', original + '?subject=' + encodeURIComponent('Enquiry from ' + source) +
-            (ref ? '&body=' + encodeURIComponent('\r\n\r\n\r\nAd ref: ' + ref) : ''));
+            (ref ? '&body=' + encodeURIComponent('\r\n\r\n\r\nRef: ' + ref) : ''));
         }
       } catch (e) {}
     }
@@ -564,7 +578,7 @@
     
     .site-nav {
       display: flex;
-      align-items: center;
+      align-items: baseline;
       justify-content: space-between;
       padding-block: var(--space-lg);
       gap: var(--space-lg);
@@ -592,6 +606,20 @@
       margin: 0;
     }
     
+    /* Narrow desktop: at 1.6vw the menu runs past the content edge, into the
+       page gutter, below ~1110px (with a 15px scrollbar); a tighter gap keeps it
+       inside down to 1081px. */
+    @media (min-width: 1081px) and (max-width: 1119px) {
+      .nav-links {
+        gap: 0.8rem;
+      }
+    }
+    
+    /* Base li margins would hang below the baseline and grow the header. */
+    .nav-links li {
+      margin-bottom: 0;
+    }
+    
     .nav-links a {
       font-family: var(--font-heading);
       font-size: var(--text-sm);
@@ -600,7 +628,6 @@
       text-transform: uppercase;
       color: var(--color-text);
       text-decoration: none;
-      padding-bottom: 2px;
       transition: color var(--transition-fast);
       white-space: nowrap;
     }
@@ -610,7 +637,10 @@
     }
     
     .nav-links a[aria-current="page"] {
-      border-bottom: 2px solid var(--color-accent);
+      text-decoration-line: underline;
+      text-decoration-thickness: 1px;
+      text-decoration-color: var(--color-accent);
+      text-underline-offset: 0.45em;
     }
     
     /* ── Hamburger Toggle ── */
@@ -701,10 +731,6 @@
         display: flex;
       }
     
-      .nav-links li {
-        margin-bottom: 0;
-      }
-    
       .nav-links a {
         display: block;
         padding: var(--space-md) 0;
@@ -716,8 +742,10 @@
         border-bottom: none;
       }
     
+      /* The menu is out of flow here: centre the name on the toggle instead. */
       .site-nav {
         position: relative;
+        align-items: center;
       }
     
     }
@@ -743,7 +771,7 @@
     
     .footer-name {
       font-family: var(--font-heading);
-      font-size: var(--text-xl);
+      font-size: var(--text-lg);
       font-weight: 300;
       margin-bottom: var(--space-md);
     }
@@ -1570,28 +1598,50 @@
        Hero Banner Layout
        ═══════════════════════════════════ */
     .hero {
-      display: flex;
+      display: grid;
+      grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+      grid-template-areas:
+        "crumb crumb"
+        "head  video"
+        "body  video";
+      grid-template-rows: auto auto 1fr;
+      column-gap: var(--space-3xl);
       align-items: start;
-      gap: var(--space-3xl);
+    }
+    
+    .hero > .breadcrumb {
+      grid-area: crumb;
+    }
+    
+    .hero > h1 {
+      grid-area: head;
     }
     
     .hero-text {
-      flex: 2;
-      min-width: 0;
+      grid-area: body;
     }
     
     .hero-video {
-      flex: 3;
-      min-width: 0;
+      grid-area: video;
       position: sticky;
       top: var(--space-2xl);
+      /* Top edge level with the h1's capitals: at the h1's line-height
+         (var(--leading-tight)), Cormorant Garamond's cap top sits 0.28 of the
+         font size below the top of its line box. Change either and re-measure. */
+      margin-top: calc(var(--text-display) * 0.28);
+    }
+    
+    .video-caption {
+      margin-top: var(--space-sm);
+      font-size: var(--text-sm);
+      font-style: italic;
+      color: var(--color-text-mid);
     }
     
     /* ── Responsive Video Embed ── */
     .video-embed {
       position: relative;
-      padding-bottom: 56.25%; /* 16:9 */
-      height: 0;
+      aspect-ratio: 16 / 9;
       overflow: hidden;
     }
     
@@ -1622,19 +1672,40 @@
       display: block;
     }
     
+    /* A plain circle in the corner, clear of any title burned into the film. */
     .play-btn {
       position: absolute;
-      top: 50%;
-      left: 50%;
-      width: 68px;
-      height: 48px;
-      transform: translate(-50%, -50%);
-      transition: opacity 0.2s;
+      left: var(--space-md);
+      bottom: var(--space-md);
+      width: 3.5rem;
+      height: 3.5rem;
+      overflow: visible;
     }
     
-    .video-thumb:hover .play-btn,
-    .video-thumb:focus-visible .play-btn {
-      opacity: 0.85;
+    .play-btn circle {
+      fill: rgba(28, 22, 20, 0.45);
+      stroke: var(--color-bg);
+      stroke-width: 1.5;
+      transition: fill var(--transition-fast), stroke var(--transition-fast);
+    }
+    
+    .play-btn path {
+      fill: var(--color-bg);
+    }
+    
+    .video-thumb:hover .play-btn circle,
+    .video-thumb:focus-visible .play-btn circle {
+      fill: var(--color-accent);
+      stroke: var(--color-accent);
+    }
+    
+    @media (max-width: 599px) {
+      .play-btn {
+        left: var(--space-sm);
+        bottom: var(--space-sm);
+        width: 3rem;
+        height: 3rem;
+      }
     }
     
     /* .video-embed clips overflow, so the global outline (drawn outside) is
@@ -1645,16 +1716,22 @@
       box-shadow: inset 0 0 0 3px var(--color-accent);
     }
     
+    /* Phones and portrait tablets: the film comes straight after the heading. */
     @media (max-width: 805px) {
       .hero {
-        flex-direction: column;
-        gap: var(--space-2xl);
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-areas:
+          "crumb"
+          "head"
+          "video"
+          "body";
+        grid-template-rows: none;
       }
     
       .hero-video {
-        flex: none;
-        width: 100%;
         position: static;
+        margin-top: 0;
+        margin-bottom: var(--space-xl);
       }
     }
     
@@ -1890,10 +1967,18 @@
       position: relative;
     }
     
+    /* Two borders of a 0.4em box, rotated. The lift raises the closed chevron to
+       the middle of the capitals. Open, the stroke is the box's top half, so the
+       open rule adds back half the diagonal (0.28em) to keep it in the same place. */
     .dropdown-caret {
+      --caret-lift: -0.3em;
       display: inline-block;
-      margin-left: 0.25em;
-      font-size: 0.75em;
+      width: 0.4em;
+      height: 0.4em;
+      margin-left: 0.3em;
+      border-right: 1px solid currentColor;
+      border-bottom: 1px solid currentColor;
+      transform: translateY(var(--caret-lift)) rotate(45deg);
       transition: transform var(--transition-fast);
     }
     
@@ -1901,7 +1986,9 @@
       display: none;
       position: absolute;
       top: 100%;
-      left: 0;
+      /* Items are padded --space-lg inside a 1px border: pull the menu left so
+         their text starts under the trigger's first letter. */
+      left: calc(-1 * (var(--space-lg) + 1px));
       min-width: 12rem;
       list-style: none;
       padding: var(--space-sm) 0;
@@ -1956,7 +2043,7 @@
     .has-dropdown:hover > .dropdown-trigger .dropdown-caret,
     .has-dropdown:focus-within > .dropdown-trigger .dropdown-caret,
     .has-dropdown[data-open="true"] > .dropdown-trigger .dropdown-caret {
-      transform: rotate(180deg);
+      transform: translateY(calc(var(--caret-lift) + 0.28em)) rotate(225deg);
     }
     
     /* ESC dismisses a desktop dropdown even while hover/focus is still inside (nav.js) */
@@ -1965,7 +2052,7 @@
     }
     
     .has-dropdown[data-dismissed] > .dropdown-trigger .dropdown-caret {
-      transform: none;
+      transform: translateY(var(--caret-lift)) rotate(45deg);
     }
     
     /* Mobile: dropdown becomes an inline expandable block inside the hamburger */
@@ -2351,6 +2438,7 @@
       .contact-form,
       .btn,
       .video-embed,
+      .video-caption,
       .mobile-cta {
         display: none !important;
       }
@@ -2519,7 +2607,7 @@
       <ul id="nav-menu" class="nav-links" role="list">
         <li><a href="/about.html">About</a></li>
         <li class="has-dropdown">
-          <a href="/services.html" aria-expanded="false" class="dropdown-trigger">Services<span class="dropdown-caret" aria-hidden="true">&#9662;</span></a>
+          <a href="/services.html" aria-expanded="false" class="dropdown-trigger">Services<span class="dropdown-caret" aria-hidden="true"></span></a>
           <ul class="dropdown-menu">
             <li><a href="/weddings.html">Weddings</a></li>
             <li><a href="/funerals.html">Funerals</a></li>
@@ -2533,7 +2621,7 @@
           </ul>
         </li>
         <li class="has-dropdown">
-          <a href="/professionals.html" aria-expanded="false" class="dropdown-trigger">Professionals<span class="dropdown-caret" aria-hidden="true">&#9662;</span></a>
+          <a href="/professionals.html" aria-expanded="false" class="dropdown-trigger">Professionals<span class="dropdown-caret" aria-hidden="true"></span></a>
           <ul class="dropdown-menu">
             <li><a href="/for-funeral-directors.html">Funeral Directors</a></li>
             <li><a href="/for-wedding-planners.html">Wedding Planners</a></li>
@@ -2549,7 +2637,7 @@
         </li>
         <li><a href="/listen.html">Listen</a></li>
         <li class="has-dropdown">
-          <a href="/music-guides/" aria-expanded="false" class="dropdown-trigger">Music Guides<span class="dropdown-caret" aria-hidden="true">&#9662;</span></a>
+          <a href="/music-guides/" aria-expanded="false" class="dropdown-trigger">Music Guides<span class="dropdown-caret" aria-hidden="true"></span></a>
           <ul class="dropdown-menu">
             <li><a href="/music-guides/?category=weddings">Weddings</a></li>
             <li><a href="/music-guides/?category=funerals">Funerals</a></li>
