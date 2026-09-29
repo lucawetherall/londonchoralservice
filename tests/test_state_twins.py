@@ -16,7 +16,10 @@ sys.path.insert(0, os.path.join(ROOT, "scripts", "bookings"))
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import check_payments as cp  # noqa: E402
 import lcs_events as ev  # noqa: E402
-from state_cases import BOOKING_CASES, T, seen  # noqa: E402
+import lcs_money as lm  # noqa: E402
+import singer_invoices as si  # noqa: E402
+import state_cases  # noqa: E402
+from state_cases import BOOKING_CASES, SINGER_CASES, T, seen  # noqa: E402
 
 REF = "2111"
 
@@ -250,6 +253,142 @@ def test_a_held_booking_is_neither_review_due_nor_done_due_nor_uploaded():
     assert [x[0]["booking_ref"] for x in ready] == [REF] and skipped == [], (ready, skipped)
     ready, skipped = upload_bookings.select_ready([dict(r, **extra)], facts={REF: facts})
     assert ready == [] and skipped == [(REF, "held: notes and recorded facts disagree")], skipped
+
+
+# --- Task 7: singer invoices -------------------------------------------------------------------------------------
+
+REPLACED = {"bank-warning": ("bank_changed", "no"), "bank-confirmed": ("bank_confirmed", ""), "withdrawn": ("withdrawn", "")}
+
+
+def singer_rows(invoices, mode):
+    """(store rows, {message id: Facts}) for one reading: "notes", "events" or "both"."""
+    rows, facts = [], {}
+    for spec in invoices:
+        fp = lm.bank_fingerprint(*spec["acct"]) if spec["acct"] else None
+        r = {k: v for k, v in spec.items() if k not in ("acct", "clauses")}
+        r.update(bank_fp=fp or "", bank_last4=spec["acct"][1][-4:] if fp else "")
+        clauses = []
+        for text, fs in spec["clauses"]:
+            filled = [(k, {**fl, "fp8": fp[:8] if fp else ""} if fl.get("fp8") == "*" else fl, on, by)
+                      for k, fl, on, by in facts_list(fs)]
+            clauses.append((text, filled or None))
+        with_text = [t for t, fs in clauses if t is not None]
+        neutral = [t for t, fs in clauses if t is not None and fs is None]
+        r["notes"] = "; ".join(neutral if mode == "events" else with_text)
+        if mode == "events":
+            for _, fs in clauses:
+                for k, *_ in facts_list(fs):
+                    if k in REPLACED:
+                        r[REPLACED[k][0]] = REPLACED[k][1]
+        events = [] if mode == "notes" else build_events(r["message_id"], [(t or "", fs, t is not None and mode == "both")
+                                                                            for t, fs in clauses], False, "singer_invoice")
+        facts[r["message_id"]] = ev.invoice_facts(r["message_id"], T, events=events)
+        rows.append(r)
+    return rows, facts
+
+
+def code_of(w):
+    return si.warning_code(w) or w
+
+
+def singer_reading(rows, facts, today):
+    out = {}
+    for r in rows:
+        out[r["message_id"]] = {
+            "ring_first": si.ring_first(r, facts=facts), "ring_first_in": si.ring_first_in(rows, r, facts=facts),
+            "trusted": si.is_trusted(r, facts=facts), "account_trusted": si.account_trusted(rows, r, facts=facts),
+            "trust_label": si.trust_label(rows, r, facts=facts), "withdrawn": si.is_withdrawn(r, facts=facts),
+            "open": si.is_open(r, facts=facts), "changed": si.bank_changed(r, facts=facts),
+            "warnings": sorted(code_of(w) for w in si.live_warnings(rows, r, facts=facts)),
+            "bill": si.stored_bill(rows, r, facts=facts), "held": si.held(rows, r, facts=facts)}
+    import contextlib, io
+    with contextlib.redirect_stdout(io.StringIO()) as printed:
+        si.print_books_due(rows, today=today, facts=facts)
+    out["summary"] = si.summary(rows, today, facts=facts)
+    out["books_due"] = printed.getvalue()
+    return out
+
+
+def test_every_singer_case_reads_the_same_three_ways():
+    for name, invoices, today in SINGER_CASES:
+        got = {mode: singer_reading(*singer_rows(invoices, mode), today) for mode in ("notes", "events", "both")}
+        assert all(v["held"] == [] for x in got.values() for k, v in x.items() if k not in ("summary", "books_due")), \
+            (name, got)
+        assert got["events"] == got["notes"], (name, got["notes"], got["events"])
+        assert got["both"] == got["notes"], (name, got["notes"], got["both"])
+
+
+def test_the_singer_cases_say_what_their_names_say():
+    got = {name: singer_reading(*singer_rows(invoices, "events"), today) for name, invoices, today in SINGER_CASES}
+    assert got["two invoices to a changed account, neither confirmed"]["summary"]["bank_changed"] == 2
+    ok = got["a confirmation clears every alarm on every invoice to that account (50f2429d)"]
+    assert not ok["a"]["ring_first_in"] and not ok["b"]["ring_first_in"] and ok["b"]["trust_label"] == "confirmed by phone"
+    assert ok["b"]["warnings"] == ["amount not found: check the invoice by hand"] and ok["a"]["bill"] == "yes"
+    assert ok["b"]["bill"] == "no (amount not found)", ok["b"]  # the bank alarm is cleared; the missing amount isn't
+    assert got["a verified payment trusts the account on the next invoice"]["b"]["trust_label"] == "paid to verifiably"
+    assert got["a different account for the same singer is still flagged"]["b"]["ring_first_in"]
+    void = got["a rescan to new details voids the confirmation"]["a"]
+    assert void["ring_first_in"] and void["trust_label"] == "" and void["bill"] == "no (bank warning)", void
+    assert got["no bank details on the invoice"]["a"]["warnings"] == ["no-details"]
+    assert got["withdrawn"]["a"]["withdrawn"] and not got["withdrawn"]["a"]["open"]
+    assert got["withdrawn"]["summary"]["unpaid"] == 1
+    settled = got["settled by hand is paid, never trusted"]["a"]
+    assert not settled["open"] and not settled["trusted"]
+    assert "THANKS DUE" not in got["a verified payment thanked"]["books_due"]
+    assert "THANKS DUE a:" in got["a verified payment not yet thanked"]["books_due"]
+
+
+def singer_held_rows(clauses, cols=None, acct=state_cases.BEN):
+    """One invoice "a" with these (text, facts, claimed) clauses, read events first."""
+    fp = lm.bank_fingerprint(*acct)
+    r = dict(state_cases.inv("a", "2026-09-01", **(cols or {})), bank_fp=fp, bank_last4=acct[1][-4:])
+    del r["acct"], r["clauses"]
+    filled = [(t, [(k, {**fl, "fp8": fp[:8]} if fl.get("fp8") == "*" else fl, on, by) for k, fl, on, by in facts_list(fs)]
+               or None, c) for t, fs, c in clauses]
+    r["notes"] = "; ".join(t for t, _, _ in filled)
+    return [r], {"a": ev.invoice_facts("a", T, events=build_events("a", filled, True, "singer_invoice"))}
+
+
+SINGER_HOLDS = [
+    ("bank warnings", [("rescanned 2026-09-14", state_cases.warn("2026-09-14"), True),
+                       (state_cases.CHANGED, None, False)]),
+    ("withdrawal", [("withdrawn 2026-09-15 (not-ours)", f("withdrawn", "2026-09-15", reason="not-ours"), True),
+                    ("earlier entry undone 2026-09-16 (owner)", UNDO, True),
+                    ("withdrawn 2026-09-17 (duplicate)", None, False)]),
+    ("settlement", [("settled by hand", f("settled", "2026-09-15", "owner", amount="100.00"), True),
+                    ("earlier entry undone 2026-09-21 (owner)", UNDO, True), ("settled by hand again", None, False)]),
+]
+
+
+def test_an_unclaimed_singer_note_that_contradicts_a_family_holds_the_invoice():
+    for family, clauses in SINGER_HOLDS:
+        rows, facts = singer_held_rows(clauses)
+        r = rows[0]
+        assert si.held(rows, r, facts=facts) == [family], (family, si.held(rows, r, facts=facts))
+        assert si.ring_first_in(rows, r, facts=facts) and si.ring_first(r, facts=facts), family
+        assert si.stored_bill(rows, r, facts=facts) == "no (held)", family
+
+
+def test_a_trusted_account_never_holds_on_a_bank_alarm():
+    rows, facts = singer_held_rows(SINGER_HOLDS[0][1] + [(state_cases.CONFIRMED[0], state_cases.CONFIRMED[1], True)])
+    assert si.held(rows, rows[0], facts=facts) == [] and not si.ring_first_in(rows, rows[0], facts=facts)
+
+
+def test_claimed_or_checked_singer_notes_never_hold():
+    for family, clauses in SINGER_HOLDS:
+        rows, facts = singer_held_rows([c for c in clauses if c[2]])
+        assert si.held(rows, rows[0], facts=facts) == [], family
+        loose = [ev.note_hash(t) for t, _, c in clauses if not c]
+        rows, facts = singer_held_rows(clauses + [("notes checked 2026-09-28 (owner)",
+                                                   f("notes-checked", "2026-09-28", "owner", clauses=loose), True)])
+        assert si.held(rows, rows[0], facts=facts) == [], family
+
+
+def test_with_no_log_the_singer_readers_are_todays():
+    ev.clear_cache()
+    for name, invoices, today in SINGER_CASES:
+        rows, facts = singer_rows(invoices, "notes")
+        assert singer_reading(rows, None, today) == singer_reading(rows, facts, today), name
 
 
 class FakeClient:

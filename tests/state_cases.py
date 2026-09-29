@@ -2,6 +2,11 @@
 test_check_payments.py, test_cancel_contract.py, test_pipeline.py and test_singer_invoices.py, each as its note
 clauses, with the recorded fact each clause is worth (None for neutral text: "PENDING: invoiced", "from quote").
 
+A singer case (SINGER_CASES) is (name, invoices, today): each invoice a dict of its store columns plus "acct" (sort
+code, account number, or None) and "clauses" as above; a fact's fp8 of "*" is filled with the invoice's own
+bank_fp[:8], and a clause text of None is a fact with no note (a rescan dropped it). The facts-only reading also
+clears the columns a fact replaces: bank_changed (bank-warning), bank_confirmed (bank-confirmed), withdrawn.
+
 A booking case is (name, value, invoice date, event date, clauses, paid, today) with clauses
 [(text, fact or None)] and fact (kind, fields, on, by). The twin test reads each case three ways: the notes
 alone (no facts), the facts alone (neutral clauses only), and both (each fact claiming its clause), and asserts
@@ -138,4 +143,76 @@ BOOKING_CASES = [
      [seen("2026-09-04"), ("paid in full 2026-09-20", f("paid-in-full", "2026-09-20", basis="bank")),
       ("review request drafted 2026-09-25", f("review-drafted", "2026-09-25"))],
      [("2026-09-04", 575.0, "reference"), ("2026-09-20", 575.0, "reference")], T),
+]
+
+# --- singer invoices (S1–S12) -----------------------------------------------------------------------------------
+
+BEN = ("123456", "11112222")
+OTHER = ("654321", "99998888")
+CHANGED = "BANK DETAILS CHANGED since their last invoice (was ••••9999, now ••••2222): ring them before paying"
+DIFFER = "BANK DETAILS DIFFER between the attachment and the email: ring them before paying"
+NEW = ("NEW BANK DETAILS: confirm them by phone on a number you already hold before adding the payee, "
+       "then run singer_invoices.py confirm a")
+NYV = "BANK DETAILS NOT YET VERIFIED (seen on an earlier invoice): confirm by phone, then run singer_invoices.py confirm b"
+NO_DETAILS = "no bank details found on the invoice"
+
+
+def warn(on, *codes):
+    return f("bank-warning", on, fp8="*", codes=list(codes))
+
+
+def inv(mid, received, acct=BEN, clauses=(), **cols):
+    base = {"message_id": mid, "received": received, "singer_name": "Ben Fenwick", "singer_email": "ben@example.com",
+            "invoice_ref": "1020", "amount_gbp": "100.00", "payee": "", "bank_changed": "no", "bank_confirmed": "",
+            "paid_on": "", "paid_amount": "", "paid_ref": "", "paid_verified": "", "withdrawn": "", "booking_ref": ""}
+    return dict(base, acct=acct, clauses=list(clauses), **cols)
+
+
+CONFIRMED = ("bank details confirmed by phone 2026-09-12", f("bank-confirmed", "2026-09-12", "owner", fp8="*"))
+
+SINGER_CASES = [
+    ("two invoices to a changed account, neither confirmed",
+     [inv("a", "2026-09-01", clauses=[(CHANGED, warn("2026-09-01", "changed"))], bank_changed="yes"),
+      inv("b", "2026-09-10", clauses=[(CHANGED, warn("2026-09-10", "changed"))], bank_changed="yes")], T),
+    ("a confirmation clears every alarm on every invoice to that account (50f2429d)",
+     [inv("a", "2026-09-01", clauses=[(CHANGED, warn("2026-09-01", "changed")), CONFIRMED], bank_changed="yes",
+          bank_confirmed="yes"),
+      inv("b", "2026-09-10", clauses=[(CHANGED, warn("2026-09-10", "changed")),
+                                      ("amount not found: check the invoice by hand", None)], bank_changed="yes")], T),
+    ("a verified payment trusts the account on the next invoice",
+     [inv("a", "2026-09-01", clauses=[(CHANGED, warn("2026-09-01", "changed"))], bank_changed="yes",
+          paid_on="2026-09-05", paid_verified="yes"),
+      inv("b", "2026-09-10", clauses=[(CHANGED, warn("2026-09-10", "changed"))], bank_changed="yes")], T),
+    ("a different account for the same singer is still flagged",
+     [inv("a", "2026-09-01", clauses=[CONFIRMED], bank_confirmed="yes"),
+      inv("b", "2026-09-10", OTHER, clauses=[(CHANGED, warn("2026-09-10", "changed"))], bank_changed="yes")], T),
+    ("a rescan to new details voids the confirmation",
+     [inv("a", "2026-09-01", OTHER, clauses=[
+         (None, f("bank-confirmed", "2026-09-12", "owner", fp8="0123abcd")),
+         (CHANGED, warn("2026-09-14", "changed")), ("rescanned 2026-09-14", None)], bank_changed="yes")], T),
+    ("details that differ between attachment and email",
+     [inv("a", "2026-09-01", clauses=[(DIFFER, warn("2026-09-01", "differ", "new")), (NEW, None)],
+          bank_changed="yes")], T),
+    ("new details, not yet verified on a second invoice",
+     [inv("a", "2026-09-01", clauses=[(NEW, warn("2026-09-01", "new"))]),
+      inv("b", "2026-09-10", clauses=[(NYV, warn("2026-09-10", "not-yet-verified"))])], T),
+    ("no bank details on the invoice",
+     [inv("a", "2026-09-01", None, clauses=[(NO_DETAILS, warn("2026-09-01", "no-details"))])], T),
+    ("a clean scan", [inv("a", "2026-09-01", clauses=[(None, warn("2026-09-01"))])], T),
+    ("withdrawn",
+     [inv("a", "2026-09-01", clauses=[(NEW, warn("2026-09-01", "new")),
+                                      ("withdrawn 2026-09-15 (not-ours)", f("withdrawn", "2026-09-15", reason="not-ours"))],
+          withdrawn="2026-09-15"),
+      inv("b", "2026-09-10", clauses=[(NYV, warn("2026-09-10", "not-yet-verified"))])], T),
+    ("settled by hand is paid, never trusted",
+     [inv("a", "2026-09-01", clauses=[(NEW, warn("2026-09-01", "new")),
+                                      ("settled by hand", f("settled", "2026-09-20", "owner", amount="100.00"))],
+          paid_on="2026-09-20", paid_amount="100.00", paid_verified="no")], T),
+    ("a verified payment thanked",
+     [inv("a", "2026-09-20", clauses=[("thanks due 2026-09-25", None),
+                                      ("paid reply drafted 2026-09-26", f("paid-reply-drafted", "2026-09-26"))],
+          paid_on="2026-09-25", paid_amount="100.00", paid_verified="yes")], T),
+    ("a verified payment not yet thanked",
+     [inv("a", "2026-09-20", clauses=[("thanks due 2026-09-25", None)], paid_on="2026-09-25", paid_amount="100.00",
+          paid_verified="yes")], T),
 ]
