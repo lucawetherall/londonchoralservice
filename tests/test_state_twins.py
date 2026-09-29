@@ -433,6 +433,53 @@ def test_with_no_log_the_singer_readers_are_todays():
         assert singer_reading(rows, None, today) == singer_reading(rows, facts, today), name
 
 
+# --- held bookings on Today and the Monday line (review item 4) ------------------------------------------------
+
+class P:
+    def __init__(self, value):
+        self.value, self.error, self.ok = value, None, True
+
+
+def held_assessments():
+    """A held booking that reads BALANCE_DUE with a fee-sized gap, one that reads DEPOSIT_OVERDUE, and the same two
+    unheld: [held balance, held deposit, balance, deposit]."""
+    base =[("cancelled 20 Sep", [f("cancelled", "2026-09-20"), f("reinstated", "2026-09-21", "owner")], True)]
+    paid = [("2026-09-01", 1137.60, "reference")]  # £12.40 short of £1,150
+    out = []
+    for ref, clauses, pay, event in (("H1", base + [("cancelled again 22 Sep", None, False)], paid, "2026-10-01"),
+                                     ("H2", base + [("cancelled again 22 Sep", None, False)], [], "2026-12-12"),
+                                     ("B1", base, paid, "2026-10-01"), ("D1", base, [], "2026-12-12")):
+        r, facts = held_row(clauses, 1150, "2026-08-20", event)
+        out.append(dict(cp.assess(dict(r, booking_ref=ref), pay, T, facts=facts), ref=ref))
+    assert [a["state"] for a in out] == ["BALANCE_DUE", "DEPOSIT_OVERDUE", "BALANCE_DUE", "DEPOSIT_OVERDUE"]
+    assert [bool(a.get("held")) for a in out] == [True, True, False, False], out
+    return out
+
+
+def test_a_held_booking_is_never_chased_or_offered_as_a_fee_on_today():
+    sys.path.insert(0, ROOT)
+    from command_centre import models
+    import money_report as mr
+    got = held_assessments()
+    assert models.fee_shortfall(got[0], True) is None and models.fee_shortfall(got[2], True) is not None
+    hand = [{"ref": a["ref"], "state": a["state"], "label": mr.hand_check_label(a)} for a in got if mr.needs_hand_check(a, T)]
+    rows, _ = models.needs_you({"bank": P({"assessments": got, "bank_checked": True}), "hand": P(hand)})
+    kinds = {r["kind"]: r for r in rows}
+    assert [r["item"]["ref"] for r in rows if r["kind"] == "hand"] == ["H1", "H2"], rows
+    assert kinds["deposits"]["refs"] == ["D1"] and "balances" not in kinds, rows  # B1 is asked about as a fee
+    assert [r["item"]["ref"] for r in rows if r["kind"] == "fee"] == ["B1"], rows
+    assert models.hand_reason(got[0], True) == "notes and recorded facts disagree: cancellation"
+
+
+def test_the_monday_overdue_and_balances_lines_skip_held_bookings():
+    import money_report as mr
+    got = held_assessments()
+    lines = mr.summary_lines(got, [], {"unpaid": 0, "unpaid_total": 0, "oldest_days": 0, "bank_changed": 0}, T)
+    assert lines[1] == "deposits overdue: 1 (D1)", lines[1]
+    assert lines[2].startswith("balances due in the next 7 days: 1, £12.40 (B1)"), lines[2]
+    assert lines[3].startswith("needs a hand check: 2 (H1 notes and recorded facts disagree"), lines[3]
+
+
 class FakeClient:
     def __init__(self, items):
         self.items = items

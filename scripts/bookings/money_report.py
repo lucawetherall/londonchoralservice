@@ -48,11 +48,12 @@ def summary_lines(assessments, receipts, singer, today):
     week_start = (today - datetime.timedelta(days=6)).isoformat()  # today and the six days before
     week = [r for r in receipts if r[1] >= week_start]
     lines = [f"received from clients, last 7 days: £{sum(a for _, _, a in week):,.2f} ({plural(len(week), 'payment')})"]
-    overdue = [a["ref"] for a in assessments if a["state"] == "DEPOSIT_OVERDUE"]
+    # a held booking (notes and recorded facts disagree) is on the hand check line only, never chased
+    overdue = [a["ref"] for a in assessments if a["state"] == "DEPOSIT_OVERDUE" and not a.get("held")]
     lines.append(f"deposits overdue: {len(overdue)}" + (f" ({', '.join(overdue)})" if overdue else ""))
     start, horizon = today.isoformat(), (today + datetime.timedelta(days=7)).isoformat()
     soon = [a for a in assessments if a.get("event_date") and start <= a["event_date"] <= horizon and a["balance"] > 0
-            and a["state"] not in NOT_DUE and not a["state"].startswith("PAST_")]
+            and a["state"] not in NOT_DUE and not a["state"].startswith("PAST_") and not a.get("held")]
     # An unpaid booking this week is listed here too (its whole fee is due); say so, so the total isn't read
     # as balances alone. The deposits line gives a count only, so no money is counted twice.
     bare = sum(a["state"] in NO_DEPOSIT for a in soon)

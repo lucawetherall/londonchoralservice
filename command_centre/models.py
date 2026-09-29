@@ -513,8 +513,9 @@ def fee_shortfall(a, bank_checked):
     """The transfer-fee question for one assessment (check_payments.assess), or None: the bank was checked, the
     state is one of FEE_STATES, the confident payments leave a gap of £0.01 up to check_payments.FEE_CAP that is
     the whole remaining balance (value - received), and at least FEE_SHARE of the fee is in. {ref, gap, value,
-    received, state}."""
-    if not bank_checked or not a or a.get("state") not in FEE_STATES:
+    received, state}. Never for a held booking (its notes and recorded facts disagree): the owner resolves that
+    first."""
+    if not bank_checked or not a or a.get("state") not in FEE_STATES or a.get("held"):
         return None
     value, received = float(a.get("value") or 0), float(a.get("received") or 0)
     gap, balance = round(value - received, 2), round(float(a.get("balance") or 0), 2)
@@ -531,6 +532,8 @@ def hand_reason(a, bank_checked):
     gives, shortened for a phone): "£36.15 short of £733.08; the event has passed"."""
     state, value = a.get("state"), float(a.get("value") or 0)
     received, balance = float(a.get("received") or 0), float(a.get("balance") or 0)
+    if a.get("held"):  # whatever its state, the question is the disagreement
+        return mr.hand_check_label(a)
     if not bank_checked:
         return f"{_gbp(value)} booking; this comes from the ledger notes, as the bank isn't checked"
 
@@ -669,9 +672,10 @@ def needs_you(panels, bank_unreachable=False):
             rows.append({"kind": "fee", "count": 1, "tone": "warn", "item": fees[ref]})
         asked = {r["item"]["ref"] for r in rows if r["kind"] == "fee"}
         for state, kind, tone in (("DEPOSIT_OVERDUE", "deposits", "bad"), ("BALANCE_DUE", "balances", "warn")):
-            # a balance that is only a fee shortfall is asked about above, not chased here as well
+            # a balance that is only a fee shortfall is asked about above, not chased here as well; a held booking
+            # is a hand check, never chased
             refs = sorted(a["ref"] for a in (bank or {}).get("assessments") or []
-                          if a.get("state") == state and a["ref"] not in asked)
+                          if a.get("state") == state and a["ref"] not in asked and not a.get("held"))
             if refs:
                 rows.append({"kind": kind, "count": len(refs), "tone": tone, "refs": refs, "state": state})
     for p in value("proposals") or []:
