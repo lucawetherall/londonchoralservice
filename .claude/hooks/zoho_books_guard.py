@@ -386,7 +386,9 @@ ONE_OFF_2408_BODY = {
     "amount": 733.08, "bank_charges": 36.15, "amount_applied": 733.08, "payment_mode": "banktransfer",
     "account_id": STARLING_BOOKS_ACCOUNT_ID, "reference_number": "2408",
     "description": "Starling transfer, matched to invoice 2408 (£36.15 bank charges accepted by the owner)",
-    "invoices": [{"invoice_id": "1534218000000111001", "amount_applied": 733.08}],
+    # the payment's existing link to the invoice: without it Books adds a second application on top of £696.93
+    "invoices": [{"invoice_id": "1534218000000111001", "invoice_payment_id": "1534218000000117020",
+                  "amount_applied": 733.08}],
 }
 
 
@@ -451,7 +453,8 @@ WRITE_TOOLS = {
         ORG_ONLY, NOTHING, check_create_customer_payment),
     "ZohoBooks_update_customer_payment": (  # ONE-OFF: see check_one_off_2408_charges; revert after use
         obj("customer_id", "date", "amount", "amount_applied", "bank_charges", "invoice_id", "payment_mode",
-            "account_id", "reference_number", "description", invoices=[obj("invoice_id", "amount_applied")]),
+            "account_id", "reference_number", "description",
+            invoices=[obj("invoice_id", "invoice_payment_id", "amount_applied")]),
         ORG_ONLY, obj("payment_id"), check_one_off_2408_charges),
     "ZohoBooks_create_item": (
         obj("name", "rate", "description", "item_type", "product_type", "purchase_rate", "purchase_description"),
