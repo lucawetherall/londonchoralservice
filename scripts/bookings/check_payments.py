@@ -932,21 +932,61 @@ def assertions(text, value, today):
             "noted paid": noted}
 
 
+HELD_FAMILIES = ("cancellation", "close", "cancel settlement", "arrangement", "noted paid")
+FAMILY_OF = {k: fam for fam, kinds in lcs_events.FAMILIES["booking"].items() for k in kinds}
+
+
+def family_readings(r, today, f):
+    """Per family, (its reading from the notes alone, its reading from the recorded facts), whole: the cancellation;
+    the close date and every counting fee (date, amount); the cancel-settlement date; the arrangement; noted paid
+    (part, full). The notes are read without the clauses the owner set aside: those a fact he withdrew as a mistake
+    claims, and those a live notes-checked confirms (the recorded facts are right there)."""
+    none = lcs_events.Facts("booking")
+    aside = ({e["note"] for e in f.events if e.get("retracted") == "mistake" and e.get("note")}
+             | {c for e in f.of("notes-checked") for c in e["fields"]["clauses"]})
+    bare = dict(r, notes="; ".join(c for c in clauses(r.get("notes")) if lcs_events.note_hash(c) not in aside))
+    read = note_readings(bare, today, none)
+    return {"cancellation": (is_cancelled(bare, none), f.cancelled),
+            "close": ((closed_on(bare, today, none), sorted(fee_notes(bare, today, none))), (f.closed_on, sorted(f.fees))),
+            "cancel settlement": (cancel_settled_on(bare, today, none), f.settled_on),
+            "arrangement": (read["arranged"], f.arranged),
+            "noted paid": ((read["noted_hand"], read["noted_full"]), noted_facts(f))}
+
+
 def held(r, today=None, facts=None):
-    """The families whose recorded facts the notes' unclaimed clauses contradict, in a fixed order ([] when none):
-    the booking is then held for the owner (a hand check, no reminder, receipt, Books line, review or upload)."""
+    """The families whose recorded facts the notes contradict, in a fixed order ([] when none): the booking is then
+    held for the owner (a hand check, no reminder, receipt, Books line, review or upload). A family with facts is
+    checked when the notes speak to it outside the facts: an unclaimed clause asserts something in it, or a clause
+    one of its live facts claims is gone from the notes (deleted by hand); it is held when its whole reading from the
+    notes then differs from the facts' (a hand-typed later fee, a refund after a kept deposit, a deleted
+    cancellation). The cancellation family is held too when its latest fact by date and its latest written differ
+    (a backdated cancellation written after a later reinstatement): the order the notes were written in no longer
+    says the same thing as the dates."""
     today = today or lm.today()
     f = facts_for(r, today, facts)
     if not f.families - {"markers"}:
         return []
     said = assertions(unclaimed(r.get("notes"), f.claims), money(r), today)
-    part, full = noted_facts(f)
-    differs = {"cancellation": lambda c: c != f.cancelled,
-               "close": lambda c: f.closed_on is None,
-               "cancel settlement": lambda c: f.settled_on is None,
-               "arrangement": lambda c: not f.arranged,
-               "noted paid": lambda c: not part or (c == "full" and not full)}
-    return [fam for fam, claim in said.items() if claim is not None and f.has(fam) and differs[fam](claim)]
+    present = {lcs_events.note_hash(c) for c in clauses(r.get("notes"))}
+    gone = {FAMILY_OF[e["kind"]] for e in f.live if e.get("note") and e["note"] not in present
+            and FAMILY_OF.get(e["kind"]) in HELD_FAMILIES}
+    order = f.of("cancelled", "reinstated")
+    backdated = bool(order) and order[-1]["kind"] != ("cancelled" if f.cancelled else "reinstated")
+    readings = None
+    out = []
+    for fam in HELD_FAMILIES:
+        if not f.has(fam):
+            continue
+        if fam == "cancellation" and backdated:
+            out.append(fam)
+            continue
+        if said[fam] is None and fam not in gone:
+            continue
+        readings = readings or family_readings(r, today, f)
+        notes_say, facts_say = readings[fam]
+        if notes_say != facts_say:
+            out.append(fam)
+    return out
 
 
 def collect(client, rows, today):
@@ -1107,7 +1147,15 @@ def append_note(ref, text, facts=None):
             if r["booking_ref"] == ref:
                 notes = r.get("notes") or ""
                 r["notes"] = (f"{notes}; " if notes.strip() else "") + text
-                for kind, fields, by, day in (facts(r) if callable(facts) else facts or ()):
+                todo = facts(r) if callable(facts) else facts or ()
+                have = facts_for(r, lm.today()) if todo else None
+                for kind, fields, by, day in todo:
+                    fam = FAMILY_OF[kind]
+                    latest = max((lcs_events._date(e["on"]) for e in have.live if FAMILY_OF.get(e["kind"]) == fam),
+                                 default=None)
+                    if by == "script" and latest and day < latest:
+                        raise SystemExit(f"{ref}: {day} is earlier than the booking's latest recorded {fam} fact "
+                                         f"({latest}): only the owner may backdate one; nothing written")
                     lcs_events.record(t, "booking", ref, kind, fields, by, text, on=day)
                 break
         else:

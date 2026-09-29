@@ -587,6 +587,52 @@ def test_collect_reports_a_held_closed_or_cancelled_booking_from_the_log():
         ev.clear_cache()
 
 
+# --- review of PR 3/4: backdated facts, full family readings, a claimed note removed --------------------------------
+
+def test_a_backdated_cancellation_written_after_a_later_reinstatement_holds_the_booking():
+    """The review's repro: migrated "cancelled 10 Sep" and "reinstated 20 Sep", then a cancellation dated 18 Sep. By
+    date it reads reinstated, by what was written last cancelled: never chased either way, held for the owner."""
+    clauses = [("cancelled 2026-09-10 by client email", f("cancelled", "2026-09-10"), True),
+               ("reinstated 2026-09-20 (owner)", f("reinstated", "2026-09-20", "owner"), True),
+               ("cancelled 2026-09-18 (owner)", f("cancelled", "2026-09-18", "owner"), True)]
+    r, facts = held_row(clauses)
+    assert cp.held(r, T, facts=facts) == ["cancellation"], cp.held(r, T, facts=facts)
+    a = cp.assess(r, [], T, facts=facts)
+    assert a["action"] == "hand_check" and a["held"] == ["cancellation"], a
+    r, facts = held_row(clauses[:2] + [("cancelled 2026-09-25 (owner)", f("cancelled", "2026-09-25", "owner"), True)])
+    assert cp.held(r, T, facts=facts) == [] and cp.is_cancelled(r, facts=facts)
+
+
+def test_held_compares_the_whole_family_reading_not_just_closed_or_not():
+    fee = ("short by fees £20.00 accepted 2026-09-20 (owner)", f("fees-accepted", "2026-09-20", "owner", amount="20.00"), True)
+    r, facts = held_row([fee, ("short by fees £35 accepted 2026-09-25", None, False)])
+    assert cp.held(r, T, facts=facts) == ["close"], cp.held(r, T, facts=facts)
+    kept = [("Cancelled 15 Sep", f("cancelled", "2026-09-15"), True),
+            ("deposit kept 2026-09-15 (owner)", f("deposit-kept", "2026-09-15", "owner"), True)]
+    r, facts = held_row(kept + [("refunded 2026-09-20", None, False)])
+    assert cp.held(r, T, facts=facts) == ["cancel settlement"], cp.held(r, T, facts=facts)
+    r, facts = held_row(kept + [("deposit kept 2026-09-15", None, False)])  # says what the facts say: no hold
+    assert cp.held(r, T, facts=facts) == []
+
+
+def test_a_fact_whose_note_was_removed_holds_only_when_the_notes_now_read_otherwise():
+    wrong = [("4 singers", None, False), ("cancelled 2026-09-29 by client email", f("cancelled", "2026-09-28"), True)]
+    events = build_events(REF, wrong, True)
+    r = row(1150, "2026-09-01", "2026-12-12", "4 singers")  # the owner deleted the clause by hand
+    facts = ev.booking_facts(REF, T, events=events)
+    assert cp.held(r, T, facts=facts) == ["cancellation"], cp.held(r, T, facts=facts)
+    assert cp.assess(r, [], T, facts=facts)["action"] == "hand_check"
+    # --apply rewrites a PENDING clause a fact claimed; the notes still say the same thing: no hold
+    pend = [("PENDING: client paid by cash 5 Sep", f("noted-paid", "2026-09-05", scope="full"), True)]
+    facts = ev.booking_facts(REF, T, events=build_events(REF, pend, True))
+    r = row(1150, "2026-09-01", "2026-12-12", "deposit seen 2026-09-06 (Starling); client paid by cash 5 Sep")
+    assert cp.held(r, T, facts=facts) == []
+    # a marker's note gone never holds (markers are a union)
+    facts = ev.booking_facts(REF, T, events=build_events(REF, [("receipt drafted 2026-09-20",
+                                                                 f("reminder-drafted", "2026-09-20", what="receipt"), True)], True))
+    assert cp.held(row(1150, "2026-09-01", "2026-12-12", "4 singers"), T, facts=facts) == []
+
+
 if __name__ == "__main__":
     failures = 0
     for name, fn in sorted(globals().items()):

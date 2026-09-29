@@ -1722,6 +1722,35 @@ def test_fact_refuses_the_owner_kinds_and_bad_input_and_writes_nothing():
     assert p.returncode == 0 and notes == "PENDING: invoiced; cancelled 2026-09-10 by client email" and log[0]["on"] == "2026-09-10"
 
 
+def run_facts(*commands, owner=()):
+    """Several check_payments.py runs against one migrated private folder (commands whose index is in `owner` run
+    with the nonce): ([(returncode, stderr)], notes, live log lines)."""
+    d, path = owner_ledger()
+    out = []
+    for n, args in enumerate(commands):
+        if n in owner:
+            nonce_file(d)
+            p, _ = run_owner(d, path, [*args, "--owner"], stdin_text=NONCE + "\n")
+        else:
+            p, _ = run_owner(d, path, list(args))
+        out.append((p.returncode, p.stderr))
+    with open(path, newline="") as f:
+        return out, list(csv.DictReader(f))[0]["notes"], log_of(d)
+
+
+def test_the_script_may_not_backdate_a_fact_before_its_familys_latest():
+    earlier = (TODAY - datetime.timedelta(days=5)).isoformat()
+    runs, notes, log = run_facts(["--fact", "2111", "cancelled"], ["--fact", "2111", "cancelled", "--on", earlier])
+    assert runs[0][0] == 0 and runs[1][0] != 0 and "earlier than" in runs[1][1], runs
+    assert len(log) == 1 and notes.count("cancelled") == 1, (notes, log)
+    runs, notes, log = run_facts(["--fact", "2111", "cancelled"], ["--fact", "2111", "reinstated", "--on", earlier],
+                                 owner=(1,))
+    assert [c for c, _ in runs] == [0, 0], runs  # the owner may: the booking is then held for him to settle
+    runs, notes, log = run_facts(["--fact", "2111", "noted-paid", "--scope", "part"],
+                                 ["--fact", "2111", "cancelled", "--on", earlier])  # another family: fine
+    assert [c for c, _ in runs] == [0, 0], runs
+
+
 def test_owner_facts_need_the_nonce_and_write_owner_phrases():
     cases = [(["paid-in-full"], f"paid in full {TD} (owner)", "paid-in-full", {"basis": "owner"}),
              (["fees-accepted", "--amount", "12.4"], f"short by fees £12.40 accepted {TD} (owner)", "fees-accepted",
