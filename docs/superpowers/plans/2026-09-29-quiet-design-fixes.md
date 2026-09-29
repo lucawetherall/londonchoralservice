@@ -269,10 +269,10 @@ Replace the `.dropdown-caret` rule:
 }
 ```
 
-In `css/layout.css`, next to the nav rules, keep the wider chevrons from pushing the menu past the page between the breakpoint and 1200px:
+In `css/layout.css`, next to the nav rules, keep the wider chevrons from pushing the menu past the content edge between the breakpoint and 1120px (the default gap fits from about 1110px with a 15px scrollbar):
 
 ```css
-@media (min-width: 1081px) and (max-width: 1199px) {
+@media (min-width: 1081px) and (max-width: 1119px) {
   .nav-links {
     gap: 0.8rem;
   }

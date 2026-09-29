@@ -90,9 +90,10 @@
   margin: 0;
 }
 
-/* Narrow desktop: at 1.6vw the menu runs past the page edge below ~1110px
-   (with a 15px scrollbar); a tighter gap keeps it inside down to 1081px. */
-@media (min-width: 1081px) and (max-width: 1199px) {
+/* Narrow desktop: at 1.6vw the menu runs past the content edge, into the
+   page gutter, below ~1110px (with a 15px scrollbar); a tighter gap keeps it
+   inside down to 1081px. */
+@media (min-width: 1081px) and (max-width: 1119px) {
   .nav-links {
     gap: 0.8rem;
   }
