@@ -156,6 +156,107 @@ def test_verify_lists_facts_whose_note_is_missing_and_stale_notes_checked_hashes
     assert "2112" not in out, "a withdrawn fact never had a note to lose"
 
 
+# --- retract: the owner's undo (Command Centre only) ----------------------------------------------------------------
+
+NONCE = "ab" * 32
+
+
+def nonce_file(d):
+    import hashlib
+    cc = os.path.join(d, "command-centre")
+    os.makedirs(cc, mode=0o700, exist_ok=True)
+    fd = os.open(os.path.join(cc, "owner-nonce"), os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+    with os.fdopen(fd, "w") as f:
+        f.write(hashlib.sha256(NONCE.encode()).hexdigest())
+
+
+def run_owner(*args, nonce=True):
+    d = os.environ["LCS_PRIVATE_DIR"]
+    if nonce:
+        nonce_file(d)
+    kw = {"input": NONCE + "\n"} if nonce else {"stdin": subprocess.DEVNULL}
+    p = subprocess.run([PY, SCRIPT, *args], capture_output=True, text=True, timeout=30, env=dict(os.environ), **kw)
+    return p.returncode, p.stdout + p.stderr
+
+
+def migrated(d):
+    ev.append("booking", "0000", "deposit-seen", {}, "script", on="2026-01-01", src="migration", eid="00000000000000aa")
+
+
+def ledger_notes(d, ref="2111"):
+    import csv
+    with open(os.path.join(d, "bookings.csv"), newline="") as f:
+        return next(r for r in csv.DictReader(f) if r["booking_ref"] == ref)["notes"]
+
+
+def test_retract_undoes_a_fact_as_a_mistake_and_notes_it():
+    import check_payments as cp
+    d = fresh()
+    clause = "cancelled 2026-09-20 by client email"
+    write_ledger(d, {"2111": f"4 singers; {clause}"})
+    migrated(d)
+    eid = ev.append("booking", "2111", "cancelled", {}, "script", on="2026-09-20", note=ev.note_hash(clause))
+    for args, nonce in ((("retract", eid), True), (("retract", eid, "--owner"), False)):
+        code, out = run_owner(*args, nonce=nonce)
+        assert code != 0 and "nothing written" in out, out
+    code, out = run_owner("retract", eid, "--owner")
+    assert code == 0 and out.strip() == "booking 2111: cancelled of 2026-09-20 undone", out
+    today = ev.lm.today().isoformat()
+    assert ledger_notes(d) == f"4 singers; {clause}; earlier entry undone {today} (owner)"
+    ev.clear_cache()
+    last = ev.read()[0][-1]
+    assert (last["kind"], last["fields"], last["by"], last["note"]) == (
+        "retract", {"target": eid, "why": "mistake"}, "owner", ev.note_hash(f"earlier entry undone {today} (owner)"))
+    r = {"booking_ref": "2111", "notes": ledger_notes(d), "value_gbp": "650", "invoice_date": "2026-09-01",
+         "event_date": "2026-12-12"}
+    assert not cp.is_cancelled(r) and cp.held(r) == [], "undone: its clause is set aside, nothing is held"
+    for bad in (eid, last["eid"], "0123456789abcdef", "nothex"):  # twice, a retract, unknown, malformed
+        code, out = run_owner("retract", bad, "--owner")
+        assert code != 0 and "nothing written" in out, (bad, out)
+
+
+def test_retract_of_a_singer_fact_puts_its_column_back():
+    import csv
+    import singer_invoices as si
+    d = fresh()
+    write_ledger(d, {})
+    migrated(d)
+    base = {c: "" for c in si.COLUMNS}
+    with open(os.path.join(d, "singer-invoices.csv"), "w", newline="") as f:
+        w = csv.DictWriter(f, fieldnames=si.COLUMNS)
+        w.writeheader()
+        w.writerow(dict(base, message_id="m1", received="2026-09-01", amount_gbp="100.00", withdrawn="2026-09-20",
+                        notes="withdrawn 2026-09-20 (not-ours)"))
+        w.writerow(dict(base, message_id="m2", received="2026-09-01", amount_gbp="100.00", bank_fp="a1b2c3d4e5f60718",
+                        bank_confirmed="yes", notes="bank details confirmed by phone 2026-09-21"))
+        w.writerow(dict(base, message_id="m3", received="2026-09-01", amount_gbp="100.00", paid_on="2026-09-22",
+                        paid_amount="100.00", paid_verified="no", notes="settled by hand"))
+    lcs = __import__("lcs_owner")
+    saved, lcs._PROVEN = lcs._PROVEN, True
+    try:
+        eids = [ev.append("singer_invoice", "m1", "withdrawn", {"reason": "not-ours"}, "script", on="2026-09-20",
+                          note=ev.note_hash("withdrawn 2026-09-20 (not-ours)")),
+                ev.append("singer_invoice", "m2", "bank-confirmed", {"fp8": "a1b2c3d4"}, "owner", on="2026-09-21",
+                          note=ev.note_hash("bank details confirmed by phone 2026-09-21")),
+                ev.append("singer_invoice", "m3", "settled", {"amount": "100.00"}, "owner", on="2026-09-22",
+                          note=ev.note_hash("settled by hand"))]
+    finally:
+        lcs._PROVEN = saved
+    for eid in eids:
+        code, out = run_owner("retract", eid, "--owner")
+        assert code == 0, out
+    with open(os.path.join(d, "singer-invoices.csv"), newline="") as f:
+        rows = {r["message_id"]: r for r in csv.DictReader(f)}
+    assert rows["m1"]["withdrawn"] == "" and rows["m2"]["bank_confirmed"] == "", rows
+    assert (rows["m3"]["paid_on"], rows["m3"]["paid_amount"], rows["m3"]["paid_verified"]) == ("", "", ""), rows["m3"]
+    assert all("earlier entry undone" in r["notes"] for r in rows.values())
+    ev.clear_cache()
+    for r in rows.values():  # the undo line is a record, never a warning, and nothing is held
+        assert not any("undone" in w for w in si.live_warnings(list(rows.values()), r)), r["message_id"]
+        assert si.held(list(rows.values()), r) == [], r["message_id"]
+    assert not si.is_withdrawn(rows["m1"]) and not si.confirmed(rows["m2"]) and si.is_open(rows["m3"])
+
+
 def test_the_log_is_never_committed():
     lines = open(os.path.join(ROOT, ".gitignore"), encoding="utf-8").read().splitlines()
     assert "events*.jsonl" in lines

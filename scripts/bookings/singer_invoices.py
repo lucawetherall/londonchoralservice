@@ -1365,6 +1365,7 @@ def cmd_scan(args, client):
 
 
 KEEP_NOTES = ("bank details confirmed by phone", "paid reply drafted", "settled by hand", "rescanned", "withdrawn",
+              "earlier entry undone",
               THANKS_MARK)
 
 

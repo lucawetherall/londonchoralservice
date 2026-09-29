@@ -203,6 +203,59 @@ def apply_migration(args, today):
     return 0
 
 
+UNDONE = "earlier entry undone {d} (owner)"  # no kind's words in it, so the notes read no fact from it
+
+
+def undo_columns(r, kind):
+    """A singer store row's columns put back when its fact is undone (a booking's state is all in its notes)."""
+    if kind == "withdrawn":
+        r["withdrawn"] = ""
+    elif kind == "bank-confirmed":
+        r["bank_confirmed"] = ""
+    elif kind == "settled" and r.get("paid_verified") == "no" and not r.get("paid_ref"):
+        r["paid_on"] = r["paid_amount"] = r["paid_verified"] = ""
+
+
+def cmd_retract(args):
+    """The owner's undo (the Command Centre's "Undo a recorded fact", after the passkey): retract {target, why:
+    mistake}, by owner, claiming "earlier entry undone D (owner)" appended to the row's notes, both under the row's
+    CSV lock; a singer invoice's columns go back (undo_columns). The fact stays in the log as history, its clause
+    set aside, so the subject reads as if it had never been recorded."""
+    import lcs_migrate
+    cp, si = lcs_migrate.cp, lcs_migrate.si
+    if not lcs_events.HEX16.fullmatch(args.eid or ""):
+        raise SystemExit("not a recorded fact's id (16 hex); nothing written")
+    if not args.owner:
+        raise SystemExit("retract runs from the Command Centre only (--owner, the owner's passkey); nothing written")
+    today = lm.today()
+    events, _ = lcs_events.read()
+    target = next((e for es in lcs_events.index(events, today).values() for e in es if e["eid"] == args.eid), None)
+    if target is None or target["kind"] == "retract" or target["retracted"]:
+        raise SystemExit("no live recorded fact with that id (unknown, already undone, or an undo itself); "
+                         "nothing written")
+    subject, id_ = target["subject"], target["id"]
+    path, cols, key = ((cp.LEDGER, None, "booking_ref") if subject == "booking"
+                       else (si.STORE, si.COLUMNS, "message_id"))
+    where = lcs_owner.owner_folder_problem([path, lcs_events.log_path()])
+    if where:
+        raise SystemExit(f"--owner {where}; nothing written")
+    if not lcs_owner.owner_confirmed():
+        raise SystemExit("--owner needs the Command Centre's one-time owner nonce (the owner's passkey approval); "
+                         "nothing written")
+    clause = UNDONE.format(d=today.isoformat())
+    with lcs_events.recording(path, cols) as t:
+        r = next((x for x in t.rows if (x.get(key) or "").strip() == id_), None)
+        if r is None:
+            raise SystemExit(f"no {subject.replace('_', ' ')} {id_}; nothing written")
+        r["notes"] = (f"{r['notes']}; " if (r.get("notes") or "").strip() else "") + clause
+        if subject == "singer_invoice":
+            undo_columns(r, target["kind"])
+        if not lcs_events.record(t, subject, id_, "retract", {"target": args.eid, "why": "mistake"}, "owner", clause):
+            raise SystemExit("the state log isn't recording facts (no migration applied); nothing written")
+    print(f"{subject} {id_}: {target['kind']} of {target['on']} undone")
+    return 0
+
+
 def cmd_compare(args):
     import lcs_migrate
     today = lm.today()
@@ -231,6 +284,10 @@ def main(argv=None):
     p.add_argument("--expect", metavar="SHA256")
     p.add_argument("--owner", action="store_true", help="the Command Centre only: needs its one-time nonce on stdin")
     p.set_defaults(fn=cmd_migrate)
+    p = sub.add_parser("retract")
+    p.add_argument("eid")
+    p.add_argument("--owner", action="store_true", help="the Command Centre only: needs its one-time nonce on stdin")
+    p.set_defaults(fn=cmd_retract)
     p = sub.add_parser("compare")
     p.add_argument("--proposed", action="store_true", help="add the migration dry run's proposed events")
     p.set_defaults(fn=cmd_compare)
