@@ -8,8 +8,12 @@ one local write, POST /todo/tick (actions.REGISTRY["todo-tick"], no passkey: see
 actions (POST /actions/<name>/preview, then POST /actions/<name>/run with a passkey assertion bound to the
 server-built summary; see actions.py) and the Activity page. Phase 6: Books and margins on the pages, the drafts
 inbox (/drafts, marked through the draft-mark action), the quote calculator (/quote, a GET form) and the
-background refresh job (jobs.py, the service only). No GET route has a side effect. See
-docs/superpowers/specs/2026-09-28-command-centre-design.md and docs/superpowers/plans/2026-09-28-command-centre.md.
+background refresh job (jobs.py, the service only). No GET route has a side effect: the pages read the proposals
+without touching the Ads mirror (the refresh job and the Ads actions tidy it), and the VAPID key is made at the
+service's start-up, never by /device. Every page builder, export and action preview or run goes through
+run_in_threadpool (threaded()), so a slow Starling read, Keychain prompt or git call never stalls the event loop, the
+other requests or the background loops. See docs/superpowers/specs/2026-09-28-command-centre-design.md and
+docs/superpowers/plans/2026-09-28-command-centre.md.
 """
 
 import csv
@@ -44,11 +48,10 @@ NAV = [("Today", "/"), ("Bookings", "/bookings"), ("Enquiries", "/enquiries"), (
 # the resolve form's select; short by fees has its own form, with the balance as its amount (macros.resolve_form)
 HAND_CHOICES = [(k, v[0]) for k, v in actions.HAND_CHOICES.items() if k != actions.FEE_CHOICE]
 FEE = {"cap": data.cp.FEE_CAP, "states": actions.FEE_STATES}
-ACTIVITY_RESULTS = ("ok", "failed", "refused", "started")
+ACTIVITY_RESULTS = ("ok", "failed", "refused", "started", "timed out")
+ACTIVITY_EXTRA = ("refresh-job",)  # audit names that aren't registry actions: the background refresh's failures
 JSON_MAX = 16384  # bytes of an action request (a passkey assertion is about 1 KB)
 TABS = [("Today", "/"), ("Bookings", "/bookings"), ("Enquiries", "/enquiries"), ("Money", "/money")]
-SOON = []  # every page is live (no in-app chat: see docs/superpowers/specs/2026-09-28-command-centre-design.md,
-           # binding rule 6)
 FORM_MAX = 4096  # bytes of a urlencoded POST body
 HTMX_CONFIG = json.dumps({"includeIndicatorStyles": False, "allowEval": False, "allowScriptTags": False,
                           "selfRequestsOnly": True, "historyCacheSize": 0}, separators=(",", ":"))
@@ -137,9 +140,18 @@ def make_env():
     env.filters.update(gbp=gbp, day=day, london_day=london_day, last4=last4, state_words=state_words,
                        state_tone=state_tone, gbp_or_dash=gbp_or_dash, when=when, pct=models.rate)
     env.filters.update(masked=lambda v: actions.DIGITS_RE.sub("••••••", str(v)))
-    env.globals.update(NAV=NAV, TABS=TABS, SOON=SOON, HTMX_CONFIG=HTMX_CONFIG, current=current,
+    env.globals.update(NAV=NAV, TABS=TABS, HTMX_CONFIG=HTMX_CONFIG, current=current,
                        HAND_CHOICES=HAND_CHOICES, FEE=FEE)
     return env
+
+
+def threaded(build):
+    """An async endpoint that runs the sync `build(request)` in the thread pool: page builders read files, Starling
+    (through the Keychain), git and subprocesses, none of which may block the event loop."""
+    async def endpoint(request):
+        return await run_in_threadpool(build, request)
+    endpoint.__name__ = getattr(build, "__name__", "endpoint")
+    return endpoint
 
 
 class CommandCentre(Starlette):
@@ -179,44 +191,59 @@ def create_app(client_factory=data.default_client, now=None, clock=None, passkey
         except (OSError, ValueError):
             return auth.passkey_summary({})
 
+    def sync_strip():
+        """The chips under the header (reader.sync_strip), built after the page's own reads so the Bank chip
+        reflects them; a failure drops the strip and never the page."""
+        try:
+            return reader.sync_strip()
+        except Exception as e:  # the type only
+            log.warning("sync strip: %s", type(e).__name__)
+            return None
+
     def render(request, name, **ctx):
         ctx.setdefault("action_day", data.lm.today(reader.now()).isoformat())  # the date fields' default and max
+        ctx.setdefault("sync", sync_strip())
         page = env.get_template(name).render(request=request, path=request.url.path, **ctx)
         return HTMLResponse(page)
 
     def proposals():
+        """The Ads proposals as the pages list them (actions.list_proposals: reads only, the mirror untouched)."""
         try:
             return data.Panel(value=actions.list_proposals())
+        except Exception as e:  # the type only
+            return data.Panel(error=type(e).__name__)
+
+    def books_import():
+        try:
+            return data.Panel(value=actions.books_status())
         except Exception as e:  # the type only
             return data.Panel(error=type(e).__name__)
 
     async def healthz(request):
         return PlainTextResponse("ok")
 
-    async def today(request):
-        props = proposals()
-        waiting = [p for p in (props.value or []) if not p["applied"] and not p["problem"]] if props.ok else []
-        books = actions.books_status()
-        ctx = reader.today_page()
-        # an import waiting for approval, or one whose dry run moved on since, needs the owner; an approved one is a
-        # handoff (like the others) and a done one needs nothing
-        ctx["attention"] += len(waiting) + (1 if books["state"] in ("waiting", "stale") else 0)
-        hand_panel = ctx.get("hand")
-        hand_items = (hand_panel.value if hand_panel.ok else hand_panel.stale) or [] if hand_panel else []
+    def today(request):
+        books_panel = books_import()
+        books = books_panel.value if books_panel.ok else {"state": "none"}
+        # an import waiting for approval is under Needs you (models.needs_you); an approved or stale one is a
+        # handoff below it, and a done one needs nothing
+        ctx = reader.today_page(proposals=proposals(), books_import=books_panel)
+        hand_panel = ctx["hand"]
+        hand_items = (hand_panel.value if hand_panel.ok else hand_panel.stale) or []
+        hand_prompts = [(h["ref"], models.hand_check_prompt(h["ref"], h.get("label", ""))) for h in hand_items]
         handoffs = {
             "books": models.books_import_handoff(books),
             "whats_owed": models.whats_owed_prompt(),
             "summarise_today": models.summarise_today_prompt(),
-            "hand": [(h["ref"], models.hand_check_prompt(h["ref"], h.get("label", ""))) for h in hand_items
-                     if models.hand_check_prompt(h["ref"], h.get("label", ""))],
+            "hand": [(ref, prompt) for ref, prompt in hand_prompts if prompt],
         }
         return render(request, "today.html", title="Today", passkey_info=passkey_info(), checkout_warning=warning,
-                      proposals=props, waiting=waiting, books=books, handoffs=handoffs, **ctx)
+                      books=books, handoffs=handoffs, **ctx)
 
-    async def money(request):
+    def money(request):
         return render(request, "money.html", title="Money", **reader.money_page())
 
-    async def passkeys_page(request):
+    def passkeys_page(request):
         info = passkey_info()
         return render(request, "passkeys.html", title="Passkeys", count=info["count"], passkey_info=info,
                       register_action=auth.REGISTER.name, check_action=auth.CHECK.name, stamp=data.stamp(reader.now()))
@@ -226,16 +253,16 @@ def create_app(client_factory=data.default_client, now=None, clock=None, passkey
             return PlainTextResponse("Not found", status_code=404)
         return render(request, name, **extra, **ctx)
 
-    async def bookings(request):
+    def bookings(request):
         q = request.query_params
         return render(request, "bookings.html", title="Bookings",
                       **reader.bookings_page(q.get("when", "upcoming"), q.get("state", "")))
 
-    async def booking(request):
+    def booking(request):
         ref = request.path_params["ref"]
         return page_or_404(request, "booking.html", reader.booking_page(ref), title=f"Booking {ref}")
 
-    async def enquiries(request):
+    def enquiries(request):
         ctx = reader.enquiries_page()
         due_panel = ctx.get("due")
         due_items = (due_panel.value if due_panel.ok else due_panel.stale) or [] if due_panel else []
@@ -251,37 +278,37 @@ def create_app(client_factory=data.default_client, now=None, clock=None, passkey
         return render(request, "enquiries.html", title="Enquiries",
                       handoffs={"reply": reply_prompts}, **ctx)
 
-    async def enquiry(request):
+    def enquiry(request):
         eid = request.path_params["eid"]
         return page_or_404(request, "enquiry.html", reader.enquiry_page(eid), title=f"Enquiry {eid}")
 
-    async def singers(request):
+    def singers(request):
         return render(request, "singers.html", title="Singers", **reader.singers_page())
 
-    async def marketing(request):
+    def marketing(request):
         return render(request, "marketing.html", title="Marketing", proposals=proposals(), **reader.marketing_page())
 
-    async def calendar(request):
+    def calendar(request):
         q = request.query_params
         return render(request, "calendar.html", title="Calendar", **reader.calendar_page(q.get("view", "month"),
                                                                                         q.get("date")))
 
-    async def search(request):
+    def search(request):
         return render(request, "search.html", title="Search", **reader.search_page(request.query_params.get("q", "")))
 
-    async def reports(request):
+    def reports(request):
         return render(request, "reports.html", title="Reports", **reader.reports_page())
 
-    async def report(request):
+    def report(request):
         name = request.path_params["name"]
         return page_or_404(request, "report.html", reader.report_page(name), title=f"Report {name[:10]}")
 
-    async def health(request):
+    def health(request):
         handoffs = {"whats_owed": models.whats_owed_prompt(), "summarise_today": models.summarise_today_prompt()}
         return render(request, "health.html", title="Runs and health", handoffs=handoffs,
                       **reader.health_page(checkout_now()))
 
-    async def todo_list(request):
+    def todo_list(request):
         return render(request, "todo.html", title="To-do", **reader.todo_page())
 
     async def todo_tick(request):
@@ -296,7 +323,7 @@ def create_app(client_factory=data.default_client, now=None, clock=None, passkey
             return PlainTextResponse("Bad request", status_code=400)
         form = {k: v[0] for k, v in fields.items() if len(v) == 1}
         try:
-            actions.REGISTRY["todo-tick"].execute(form, user(request))
+            await run_in_threadpool(actions.REGISTRY["todo-tick"].execute, form, user(request))
         except actions.ActionError as e:
             if wants_json(request):
                 return JSONResponse({"error": e.reason}, status_code=e.status)
@@ -308,11 +335,11 @@ def create_app(client_factory=data.default_client, now=None, clock=None, passkey
     def wants_json(request):
         return request.headers.get("accept", "").split(",")[0].strip() == "application/json"
 
-    async def exports(request):
+    def exports(request):
         return render(request, "exports.html", title="Exports", stamp=data.stamp(reader.now()),
                       names=reader.EXPORTS)
 
-    async def export(request):
+    def export(request):
         try:
             found = reader.export(request.path_params["name"])
         except RuntimeError as e:
@@ -328,16 +355,16 @@ def create_app(client_factory=data.default_client, now=None, clock=None, passkey
         return Response(out.getvalue().encode("utf-8"), media_type="text/csv; charset=utf-8",
                         headers={"Content-Disposition": f'attachment; filename="{filename}"'})
 
-    async def drafts_page(request):
+    def drafts_page(request):
         return render(request, "drafts.html", title="Drafts", **reader.drafts_page())
 
-    async def quote_page(request):
+    def quote_page(request):
         q = request.query_params
         return render(request, "quote.html", title="Quote calculator",
                       **reader.quote_page(q.get("list", "standard"), q.get("package", "")[:40],
                                           q.get("organist") == "yes", q.get("travel") == "yes", q.get("day") == "yes"))
 
-    async def more(request):
+    def more(request):
         return render(request, "more.html", title="More", stamp=data.stamp(reader.now()))
 
     async def manifest(request):
@@ -348,9 +375,11 @@ def create_app(client_factory=data.default_client, now=None, clock=None, passkey
         body = (HERE / "static" / "sw.js").read_bytes()
         return Response(body, media_type="application/javascript", headers={"Service-Worker-Allowed": "/"})
 
-    async def device(request):
+    def device(request):
+        # read only: the key is made at the service's start-up (the lifespan), so a GET never writes the Keychain;
+        # None (no key yet) shows "not set up yet"
         try:
-            vapid_key = data.Panel(value=await run_in_threadpool(push.public_key_b64))
+            vapid_key = data.Panel(value=push.public_key_b64(create=False))
         except Exception as e:  # the type only (the Keychain unreadable, say)
             log.warning("push key: %s", type(e).__name__)
             vapid_key = data.Panel(error=type(e).__name__)
@@ -365,10 +394,11 @@ def create_app(client_factory=data.default_client, now=None, clock=None, passkey
         return render(request, "device.html", title="This device", stamp=data.stamp(reader.now()),
                       vapid_key=vapid_key, devices=devices, origin=origin)
 
-    async def activity(request):
+    def activity(request):
         q = request.query_params
+        names = sorted([*actions.REGISTRY, *ACTIVITY_EXTRA])
         name = q.get("action", "")
-        name = name if name in actions.REGISTRY else ""
+        name = name if name in names else ""
         result = q.get("result", "")
         result = result if result in ACTIVITY_RESULTS else ""
         text = q.get("q", "").strip()[:80]
@@ -390,7 +420,7 @@ def create_app(client_factory=data.default_client, now=None, clock=None, passkey
                 continue
             shown.append(e)
         return render(request, "activity.html", title="Activity", stamp=data.stamp(reader.now()), entries=entries,
-                      shown=shown, names=sorted(actions.REGISTRY), results=ACTIVITY_RESULTS, action_name=name,
+                      shown=shown, names=names, results=ACTIVITY_RESULTS, action_name=name,
                       result=result, text=text, chain=chain)
 
     def guarded(fn, *args):
@@ -423,15 +453,19 @@ def create_app(client_factory=data.default_client, now=None, clock=None, passkey
         """The server-built summary (plain English plus the exact command) and, for a passkey action, assertion
         options whose challenge is bound to that summary. Nothing runs."""
         defn, payload = await action_payload(request, request.path_params["name"])
-        cleaned = await run_in_threadpool(guarded, defn.validate, payload.get("input"))
-        action = auth.Action(defn.name, defn.preview(cleaned))
-        body = {"action": defn.name, "title": defn.title, "summary": action.summary, "command": defn.command(cleaned),
-                "passkey": defn.passkey}
-        if hasattr(defn, "code"):  # an Ads change set: the script's code change, bound to the summary by its sha256
-            body["code"] = defn.code(cleaned)
-        if defn.passkey:
-            body["options"] = keys.assertion_options(action)
-        return JSONResponse(body)
+
+        def build():  # in the thread pool: validating may fetch from GitHub or read the ledger and the bank
+            cleaned = guarded(defn.validate, payload.get("input"))
+            action = auth.Action(defn.name, guarded(defn.preview, cleaned))
+            body = {"action": defn.name, "title": defn.title, "summary": action.summary,
+                    "command": defn.command(cleaned), "passkey": defn.passkey}
+            if hasattr(defn, "code"):  # an Ads change set: the script's code change, bound to the summary by its sha256
+                body["code"] = defn.code(cleaned)
+            if defn.passkey:
+                body["options"] = keys.assertion_options(action)
+            return body
+
+        return JSONResponse(await run_in_threadpool(build))
 
     async def action_run(request):
         defn, payload = await action_payload(request, request.path_params["name"])
@@ -440,6 +474,14 @@ def create_app(client_factory=data.default_client, now=None, clock=None, passkey
         if getattr(defn, "clears_cache", False):
             reader.clear_caches()
         return JSONResponse(result.as_json())
+
+    async def refresh_cache(request):
+        """POST /refresh, from the Refresh link (swap.js), before it re-renders the page: drops the app's in-memory
+        bank cache (and the health page's Starling check), so the page it then loads reads Starling afresh. A POST,
+        not a GET flag, so no GET changes anything; same-origin like every POST (IdentityMiddleware), and no
+        passkey: it writes no file and runs nothing."""
+        reader.clear_caches()
+        return Response(status_code=204)
 
     async def action_error(request, exc):
         return JSONResponse({"error": exc.reason}, status_code=exc.status)
@@ -484,33 +526,35 @@ def create_app(client_factory=data.default_client, now=None, clock=None, passkey
     async def not_found(request, exc):
         return PlainTextResponse("Not found", status_code=404)
 
+    t = threaded
     routes = [
         Route("/healthz", healthz),
-        Route("/", today),
-        Route("/money", money),
-        Route("/passkeys", passkeys_page),
-        Route("/bookings", bookings),
-        Route("/bookings/{ref}", booking),
-        Route("/enquiries", enquiries),
-        Route("/enquiries/{eid}", enquiry),
-        Route("/singers", singers),
-        Route("/marketing", marketing),
-        Route("/calendar", calendar),
-        Route("/search", search),
-        Route("/reports", reports),
-        Route("/reports/{name}", report),
-        Route("/health", health),
-        Route("/todo", todo_list),
+        Route("/", t(today)),
+        Route("/money", t(money)),
+        Route("/passkeys", t(passkeys_page)),
+        Route("/bookings", t(bookings)),
+        Route("/bookings/{ref}", t(booking)),
+        Route("/enquiries", t(enquiries)),
+        Route("/enquiries/{eid}", t(enquiry)),
+        Route("/singers", t(singers)),
+        Route("/marketing", t(marketing)),
+        Route("/calendar", t(calendar)),
+        Route("/search", t(search)),
+        Route("/reports", t(reports)),
+        Route("/reports/{name}", t(report)),
+        Route("/health", t(health)),
+        Route("/todo", t(todo_list)),
         Route("/todo/tick", todo_tick, methods=["POST"]),
-        Route("/exports", exports),
-        Route("/exports/{name}.csv", export),
-        Route("/more", more),
-        Route("/drafts", drafts_page),
-        Route("/quote", quote_page),
+        Route("/exports", t(exports)),
+        Route("/exports/{name}.csv", t(export)),
+        Route("/more", t(more)),
+        Route("/drafts", t(drafts_page)),
+        Route("/quote", t(quote_page)),
         Route("/manifest.webmanifest", manifest),
         Route("/sw.js", service_worker),
-        Route("/device", device),
-        Route("/activity", activity),
+        Route("/device", t(device)),
+        Route("/activity", t(activity)),
+        Route("/refresh", refresh_cache, methods=["POST"]),
         Route("/actions/{name}/preview", action_preview, methods=["POST"]),
         Route("/actions/{name}/run", action_run, methods=["POST"]),
         Route("/auth/passkey/register/options", register_options, methods=["POST"]),
@@ -527,10 +571,20 @@ def create_app(client_factory=data.default_client, now=None, clock=None, passkey
         import asyncio
         import contextlib
 
+        async def make_push_key():
+            """The VAPID key, made (once) at start-up in the thread pool, never by a page: a Keychain prompt then
+            holds up nothing but this task."""
+            try:
+                await run_in_threadpool(push.private_key)
+            except Exception as e:  # the type only
+                log.warning("push key: %s", type(e).__name__)
+
         @contextlib.asynccontextmanager
         async def lifespan(app):
             stop = asyncio.Event()
-            tasks = [asyncio.create_task(push.watch(stop))]
+            # the watcher's books-disagree alert reads the same flags Today shows, through this reader's bank cache
+            tasks = [asyncio.create_task(make_push_key()),
+                     asyncio.create_task(push.watch(stop, flags=reader.books_flags_now))]
             if refresh_job is not None:
                 tasks.append(asyncio.create_task(jobs.loop(refresh_job, stop)))
             try:

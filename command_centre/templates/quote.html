@@ -19,7 +19,11 @@
           {% for p in all[list_key].packages %}<option value="{{ p.key }}"{% if p.key == package %} selected{% endif %}>{{ p.label }}: £{{ "{:,}".format(p.price) }}</option>{% endfor %}
         </select>
       </label>
+      {% if all[list_key].organist is not none %}
       <label class="check-field"><input type="checkbox" name="organist" value="yes"{% if organist %} checked{% endif %}> An organist or pianist (£{{ "{:,}".format(all[list_key].organist) }}{% if all[list_key].soloist_organist %}; with a soloist, £{{ "{:,}".format(all[list_key].soloist_organist) }} for both{% endif %})</label>
+      {% else %}
+      <p class="muted">No organist price on this page: quote an organist separately.</p>
+      {% endif %}
       <label class="check-field"><input type="checkbox" name="travel" value="yes"{% if travel %} checked{% endif %}> Venue beyond Greater London (travel confirmed with the quote)</label>
       <label class="check-field"><input type="checkbox" name="day" value="yes"{% if premium_day %} checked{% endif %}> Christmas Eve or Christmas Day (the page's premium, stated, not added)</label>
       <button class="button" type="submit">Work it out</button>

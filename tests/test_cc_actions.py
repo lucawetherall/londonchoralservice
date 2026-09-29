@@ -235,9 +235,10 @@ def test_registry_and_passkey_flags():
     assert set(actions.REGISTRY) == {"todo-tick", "resolve-hand-check", "singer-confirm", "singer-settled",
                                      "singer-withdrawn", "refresh-data", "ads-validate", "ads-apply",
                                      "approve-books-import", "books-import-done", "push-subscribe",
-                                     "push-unsubscribe", "backup-now", "draft-mark"}
+                                     "push-unsubscribe", "backup-now", "draft-mark", "sync-now"}
     no_passkey = {n for n, a in actions.REGISTRY.items() if not a.passkey}
-    assert no_passkey == {"todo-tick", "refresh-data", "push-unsubscribe", "backup-now", "draft-mark"}, no_passkey
+    assert no_passkey == {"todo-tick", "refresh-data", "push-unsubscribe", "backup-now", "draft-mark",
+                          "sync-now"}, no_passkey
     assert "todo-tick" not in actions.ROUTED
 
 
@@ -580,6 +581,119 @@ def test_refresh_reports_a_failed_books_sync():
     assert audit_lines()[-1]["result"] == "failed" and audit_lines()[-1]["exit_code"] == 1
 
 
+# ---------------------------------------------------------------- sync now (the strip's chips)
+
+
+def test_sync_now_refuses_unknown_sources_and_free_text():
+    c, a, _ = setup()
+    with Runner(Recorder()) as rec:
+        for bad, reason in (({"source": "everything"}, "unknown source"),
+                            ({"source": "books; rm -rf ~"}, "unknown source"),
+                            ({"source": "--help"}, "unknown source"),
+                            ({"source": "BOOKS"}, "unknown source"),
+                            ({"source": "drafts"}, "that source comes from a scheduled run, not the app: see Health"),
+                            ({"source": "diary"}, "that source comes from a scheduled run, not the app: see Health"),
+                            ({"source": "ads"}, "that source comes from a scheduled run, not the app: see Health"),
+                            ({}, "source is required"),
+                            ({"source": "books", "extra": "x"}, "unexpected field"),
+                            ({"source": ["books"]}, "bad source")):
+            r = preview(c, "sync-now", bad)
+            assert r.status_code == 400 and r.json()["error"] == reason, (bad, r.text)
+            r = post(c, "/actions/sync-now/run", {"input": bad})
+            assert r.status_code == 400 and r.json()["error"] == reason, (bad, r.text)
+            last = audit_lines()[-1]
+            assert last["action"] == "sync-now" and last["result"] == f"refused: {reason}", last
+            assert last["input_sha256"] == actions.input_sha256(bad) and "input" not in last
+    assert rec.calls == []  # nothing ran
+    # same-origin like every POST; no passkey is asked for
+    assert post(c, "/actions/sync-now/run", {"input": {"source": "books"}},
+                origin="https://evil.example").status_code == 403
+    assert actions.REGISTRY["sync-now"].passkey is False and "sync-now" in actions.ROUTED
+
+
+def test_sync_now_runs_the_fixed_argv_and_writes_the_audit():
+    c, a, _ = setup()
+    sources.forget_outcomes()
+    for source in ("books", "marketing"):
+        with Runner(Recorder(out=b"wrote the cache\n")) as rec:
+            p = preview(c, "sync-now", {"source": source})
+            assert p.status_code == 200 and p.json()["passkey"] is False and "options" not in p.json(), p.text
+            assert p.json()["command"] == f".venv/bin/python scripts/reports/cc_sync.py {source}"
+            assert p.json()["summary"].endswith(f"Runs: .venv/bin/python scripts/reports/cc_sync.py {source}")
+            r = post(c, "/actions/sync-now/run", {"input": {"source": source}})
+        assert r.status_code == 200 and r.json()["ok"] is True, r.text
+        assert [call[0] for call in rec.calls] == [[PYX, CC_SYNC, source]], rec.calls
+        kw = rec.calls[0][1]
+        assert kw["shell"] is False and kw["stdin"] == subprocess.DEVNULL and kw["env"]["LCS_PRIVATE_DIR"] == TMP
+        assert not any(k.startswith("CC_") for k in kw["env"])
+        lines = audit_lines()[-2:]
+        assert [e["result"] for e in lines] == ["started", "ok"] and all(e["action"] == "sync-now" for e in lines)
+        assert lines[-1]["input"] == {"source": source} and "passkey" not in lines[-1]
+        assert lines[-1]["login"] == LOGIN and lines[-1]["exit_code"] == 0
+        assert sources.outcomes()[source]["ok"] is True
+    # a failed sync is reported, audited and noted for the strip
+    with Runner(Recorder(code=1, out=b"books: not updated (McpError); the last cache is kept\n")):
+        r = post(c, "/actions/sync-now/run", {"input": {"source": "books"}})
+    assert r.json()["ok"] is False and r.json()["exit_code"] == 1 and "McpError" in r.json()["output"]
+    assert audit_lines()[-1]["result"] == "failed" and sources.outcomes()["books"]["ok"] is False
+    sources.forget_outcomes()
+
+
+def test_sync_now_bank_clears_the_cache_and_runs_nothing():
+    c, a, _ = setup()
+    cleared = []
+    saved = data.Data.clear_caches
+    data.Data.clear_caches = lambda self: cleared.append(True)
+    try:
+        with Runner(Recorder()) as rec:
+            p = preview(c, "sync-now", {"source": "bank"})
+            assert p.status_code == 200 and p.json()["command"] is None and "Runs:" not in p.json()["summary"]
+            assert "bank cache" in p.json()["summary"] and p.json()["passkey"] is False
+            r = post(c, "/actions/sync-now/run", {"input": {"source": "bank"}})
+    finally:
+        data.Data.clear_caches = saved
+    assert r.status_code == 200 and r.json()["ok"] is True and r.json()["exit_code"] is None, r.text
+    assert rec.calls == [] and cleared == [True]
+    last = audit_lines()[-1]
+    assert last["action"] == "sync-now" and last["result"] == "ok" and last["input"] == {"source": "bank"}
+    try:
+        actions.SYNC_NOW.argv({"source": "bank", "input": {"source": "bank"}})
+    except actions.ActionError:
+        pass
+    else:
+        raise AssertionError("the bank has no argv")
+
+
+def test_sync_now_shares_the_refresh_lock_and_waits_for_a_background_pass():
+    c, a, _ = setup()
+    lock = actions._LOCKS["refresh"]
+    assert actions.SYNC_NOW.lock == "refresh"
+    assert lock.acquire(timeout=1)
+    saved = actions.REFRESH_WAIT
+    actions.REFRESH_WAIT = 0.05
+    actions.BACKGROUND_REFRESH.set()
+    try:
+        with Runner(Recorder()) as rec:
+            r = post(c, "/actions/sync-now/run", {"input": {"source": "books"}})
+        assert r.status_code == 409 and r.json()["error"] == actions.BACKGROUND_BUSY, r.text
+        assert audit_lines()[-1]["result"] == "refused: a background refresh is running" and rec.calls == []
+        actions.BACKGROUND_REFRESH.clear()
+        with Runner(Recorder()) as rec:
+            r = post(c, "/actions/sync-now/run", {"input": {"source": "books"}})
+        assert r.status_code == 409 and "another action is running" in r.json()["error"] and rec.calls == []
+    finally:
+        actions.BACKGROUND_REFRESH.clear()
+        actions.REFRESH_WAIT = saved
+        lock.release()
+    # a write holding the action lock doesn't block it
+    assert actions._RUN_LOCK.acquire(timeout=1)
+    try:
+        with Runner(Recorder()):
+            assert post(c, "/actions/sync-now/run", {"input": {"source": "books"}}).json()["ok"] is True
+    finally:
+        actions._RUN_LOCK.release()
+
+
 # ---------------------------------------------------------------- the Books approval
 
 
@@ -650,12 +764,14 @@ def books_files(dry=BOOKS_DRY, record=None, cache=None):
 
 
 def attention(out):
-    m = re.search(r'<span class="count">(\d+)</span>', out)
+    m = re.search(r'<span class="count[^"]*">(?:at least )?(\d+)</span>', out)
     return int(m.group(1)) if m else 0
 
 
-def approvals_card(out):
-    return re.search(r"<h3>Approvals waiting</h3>(.*?)</article>", out, re.S).group(1)
+def needs_section(out):
+    """Today's "Needs you" list ("" when nothing needs the owner: the section isn't there)."""
+    m = re.search(r'<ul class="needs">(.*?)</ul>\s*</section>', out, re.S)
+    return m.group(1) if m else ""
 
 
 def handoffs_section(out):
@@ -671,28 +787,28 @@ def test_books_import_states_on_today():
     assert actions.books_status()["state"] == "none"
     out = page(c, "/")
     base = attention(out)
-    assert "Nothing waiting for approval." in approvals_card(out)
-    assert approvals_card(out).count("Nothing waiting for approval.") == 1
+    assert 'data-kind="books-import"' not in out and "approve-books-import" not in out
     assert "Books import" not in handoffs_section(out) and "books-import-done" not in out
-    # waiting: a dry run, no approval — the only Books state under Approvals waiting
+    # waiting: a dry run, no approval: the only Books import state under Needs you
     books_files()
     st = actions.books_status()
     assert st["state"] == "waiting" and st["dry_run"] and st["approved_at"] is None
     out = page(c, "/")
-    assert 'data-action="approve-books-import"' in approvals_card(out) and attention(out) == base + 1
-    assert "Nothing waiting for approval." not in out and "books-import-done" not in out
-    # approved: the approval matches the dry run and the import isn't done — a handoff, not an approval
+    assert 'data-action="approve-books-import"' in needs_section(out) and attention(out) == base + 1
+    assert needs_section(out).count('data-kind="books-import" data-count="1"') == 1
+    assert "books-import-done" not in out
+    # approved: the approval matches the dry run and the import isn't done: a handoff, not an approval
     books_files(record=True)
     st = actions.books_status()
     assert st["state"] == "approved" and st["approved_at"].startswith("2026-09-28") and st["imported_at"] is None
     assert st["dry_run_sha256"] and st["dry_run"]  # the old keys stay
     out = page(c, "/")
-    card, hand = approvals_card(out), handoffs_section(out)
-    assert "Nothing waiting for approval." in card and "Books import" not in card and attention(out) == base
+    hand = handoffs_section(out)
+    assert "Books import" not in needs_section(out) and attention(out) == base
     assert "Copy prompt for Remote Control" in hand and "skip any invoice number that already exists" in hand
     assert 'data-action="books-import-done"' in hand and "approved Mon 28 Sep 2026" in hand
     assert models.books_import_handoff(st) is not None
-    # stale: the dry run changed since — a warning, no prompt, and it needs you
+    # stale: the dry run changed since: a warning, no prompt; information (the owner's rule), not under Needs you
     Path(TMP, "books-import-2026.json").write_text(json.dumps(BOOKS_DRY + [{"ref": "1111", "total": 1}]))
     st = actions.books_status()
     assert st["state"] == "stale" and models.books_import_handoff(st) is None
@@ -700,7 +816,8 @@ def test_books_import_states_on_today():
     hand = handoffs_section(out)
     assert "the dry run has moved on" in hand and 'data-action="books-import-done"' in hand
     assert "never send, void or record a payment" not in out  # no import prompt to copy
-    assert "Nothing waiting for approval." in approvals_card(out) and attention(out) == base + 1
+    assert "Books import" not in needs_section(out) and attention(out) == base
+    assert "dry run has changed since it was approved" in out  # the For information line
     Path(TMP, "books-import-2026.json").unlink()  # a dry run that's gone is stale too
     assert actions.books_status()["state"] == "stale"
     # imported, by the record: nothing about the import on Today
@@ -986,6 +1103,60 @@ class GitCalls:
 
     def __exit__(self, *exc):
         actions.GIT_RUNNER = self.saved
+
+
+def test_pages_read_the_proposals_without_touching_the_mirror():
+    """No GET has a side effect: the pages list the proposals without making, rewriting or fetching the mirror, and
+    run git in it only when it is exactly as ensure_mirror() left it. The refresh job (tidy_mirror) and the Ads
+    actions put it back."""
+    c, a, _ = setup()
+    clear_applied()
+    with AdsRepo() as repo:
+        proposal(repo=repo)
+        # never checked against GitHub: listed, no mirror made, no git run
+        with GitCalls() as g:
+            page(c, "/marketing")
+            page(c, "/")
+        assert g.calls == [] and not actions.mirror_dir().exists()
+        assert {p["id"]: p for p in actions.list_proposals()}["neg-2026-10"]["problem"] is None
+        assert actions.tidy_mirror() == "none" and not actions.mirror_dir().exists()  # the job never makes one
+        # checked once (validate fetches into the mirror): a page reads it as it is and rewrites nothing
+        actions.ADS_VALIDATE.validate({"proposal": "neg-2026-10"})
+        assert actions.mirror_intact()
+        cfg = actions.mirror_dir() / "config"
+        before = (cfg.read_bytes(), cfg.stat().st_mtime_ns)
+        with GitCalls() as g:
+            page(c, "/marketing")
+        assert g.calls and (cfg.read_bytes(), cfg.stat().st_mtime_ns) == before
+        assert not any(word in argv for argv, _ in g.calls for word in ("init", "fetch", "config", "gc"))
+        # a config changed behind the app's back: the page runs no git at all and leaves the file alone
+        cfg.write_text(actions.MIRROR_CONFIG + "[log]\n\tshowSignature = true\n")
+        assert not actions.mirror_intact()
+        with GitCalls() as g:
+            page(c, "/marketing")
+            listed = {p["id"]: p for p in actions.list_proposals()}
+        assert g.calls == [] and "showSignature" in cfg.read_text()
+        assert listed["neg-2026-10"]["problem"] is None  # checked against GitHub when the owner opens it
+        assert actions.tidy_mirror() == "tidied" and actions.mirror_intact()
+        # an alternates file: the same
+        alt = actions.mirror_dir() / "objects" / "info" / "alternates"
+        alt.parent.mkdir(exist_ok=True)
+        alt.write_text("/tmp/elsewhere\n")
+        assert not actions.mirror_intact()
+        with GitCalls() as g:
+            page(c, "/")
+        assert g.calls == [] and alt.exists()
+        # the job's tidy never waits on (or runs beside) an action
+        assert actions._RUN_LOCK.acquire(timeout=1)
+        try:
+            assert actions.tidy_mirror() == "busy" and alt.exists()
+        finally:
+            actions._RUN_LOCK.release()
+        assert actions.tidy_mirror() == "tidied" and not alt.exists() and actions.mirror_intact()
+        os.chmod(actions.mirror_dir(), 0o755)  # a loosened folder isn't the app's own either
+        assert not actions.mirror_intact()
+        actions.ensure_mirror()
+        assert actions.mirror_intact()
 
 
 def test_poc3_every_git_call_is_hardened_and_runs_in_the_mirror():
@@ -1638,6 +1809,7 @@ def claude_form(argv):
 
 SAFE_ON_ALLOWLIST = {
     "refresh-data": "read-only; dashboard.py is allowlisted for the scheduled prompts",
+    "sync-now": "read-only; cc_sync.py books and marketing are the refresh job's and the daily pass's own commands",
     "singer-withdrawn": "the enquiry assistant already withdraws a mis-sent invoice (Appendix E)",
     "resolve-hand-check": "matched by --note *; check_payments.py refuses --owner without the app's nonce",
 }
@@ -1653,6 +1825,7 @@ def test_the_apps_own_commands_are_not_allowlisted_unless_safe():
         "singer-settled": {"invoice": key, "date": D},
         "singer-withdrawn": {"invoice": key, "reason": "not-ours"},
         "refresh-data": {},
+        "sync-now": {"source": "books"},
         "backup-now": {},
     }
     write_config(backup={"recipient": "age1test", "target": TMP})
@@ -1835,9 +2008,9 @@ def test_short_by_fees_refusals():
     fee_setup()
     v = actions.RESOLVE_HAND_CHECK.validate
     reasons = {
-        "25.01": "the amount must be more than £0 and at most £25.00",
-        "30": "the amount must be more than £0 and at most £25.00",
-        "0": "the amount must be more than £0 and at most £25.00",
+        "40.01": "the amount must be more than £0 and at most £40.00",
+        "45": "the amount must be more than £0 and at most £40.00",
+        "0": "the amount must be more than £0 and at most £40.00",
         "12.42": "the amount isn't that booking's balance (£12.40)",
         "5": "the amount isn't that booking's balance (£12.40)",
     }

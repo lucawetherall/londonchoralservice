@@ -7,8 +7,9 @@ money_report.needs_hand_check/hand_check_label/summary_lines and singer_invoices
 
 - Private files come from ~/lcs-private (LCS_PRIVATE_DIR), through lcs_money's paths.
 - Starling is read through lcs_money.StarlingReadOnly (GET only) with the Keychain token, and those reads
-  (the payments feed and the balance) are cached for BANK_TTL seconds; the ledger and the singer store are
-  read on every page load.
+  (the payments feed and the balance) are cached for BANK_TTL seconds, a failed read for BANK_FAIL_TTL only (a
+  blip is retried a minute later, and Today says "Bank unreachable at HH:MM (retrying)"); the ledger and the
+  singer store are read on every page load.
 - Every source is a Panel: its value, or the failing exception's type name (never its message, which could
   carry private data), plus the last good value when there was one. A failing source never breaks a page.
 - Client and singer first names only; bank accounts as ••••last4 only.
@@ -31,6 +32,7 @@ from . import books_cache, drafts, models, quote, sources, todo  # noqa: E402  t
 cp, lm, mr, si, pl = dash.cp, dash.lm, dash.mr, dash.si, dash.pl
 LONDON = ZoneInfo("Europe/London")
 BANK_TTL = 600  # seconds: the spec's 10-minute cache for the check_payments collect (and the health check)
+BANK_FAIL_TTL = 60  # seconds a failed Starling read is kept before the next page load tries again
 STATES = dict(dash.STATES, CANCELLED=("cancelled", ""))
 WEEK_DAYS = 6  # "this week" is today and the next six days
 
@@ -49,11 +51,13 @@ def stamp(when):
 
 
 def open_singers(rows):
-    """dash.singers (the unpaid invoices, oldest first) with each row's action handle and allowed actions."""
+    """dash.singers (the unpaid invoices, oldest first) with each row's action handle and allowed actions, and what
+    the pay list needs (models.singer_trust): whether the account is trusted, how, the Books bill number, and why
+    an untrusted one waits."""
     out = []
     for r in sorted(rows, key=lambda r: r.get("received") or ""):
         for s in dash.singers([r], rows):  # the whole store: an account trusted on one invoice is on all
-            out.append(dict(s, **models.singer_actions(r)))
+            out.append(dict(s, **models.singer_actions(r), **models.singer_trust(rows, r)))
     return out
 
 
@@ -74,6 +78,7 @@ class Data:
         self.now = now or (lambda: datetime.datetime.now(LONDON))
         self.clock = clock
         self._bank = None  # (expires, key, value)
+        self._bank_seen = {"good": None, "failed": None, "connected": None}  # the strip's Bank chip; never cleared
         self._starling = None  # (expires, value): the health page's account check
         self._last_good = {}
         self._lock = threading.Lock()
@@ -103,8 +108,11 @@ class Data:
             return None
 
     def bank(self, rows, today):
-        """The Starling-backed reads, cached BANK_TTL seconds (and redone when the ledger changes):
-        {"assessments", "receipts", "bank_checked", "balance", "as_of"}."""
+        """The Starling-backed reads, cached BANK_TTL seconds (a failed read BANK_FAIL_TTL seconds), and redone when
+        the ledger changes: {"assessments", "receipts", "bank_checked", "balance", "as_of", "unreachable"}.
+        `unreachable` is the HH:MM of a failed read (there is a client, but Starling didn't answer, so
+        dashboard.payments fell back to the ledger notes); None when the read worked or there is no client at all
+        (no Keychain token, or CC_NO_BANK)."""
         key = (self._ledger_key(), today)
         with self._lock:
             cached = self._bank
@@ -113,11 +121,43 @@ class Data:
         client = self.client_factory()
         assessments, receipts, checked = dash.payments(client, rows, today)
         balance = dash.bank_balance(client) if checked else None
+        at = self.now().strftime("%H:%M")
+        failed = client is not None and not checked
         value = {"assessments": assessments, "receipts": receipts, "bank_checked": checked, "balance": balance,
-                 "as_of": self.now().strftime("%H:%M") if checked else None}
+                 "as_of": at if checked else None, "unreachable": at if failed else None}
         with self._lock:
-            self._bank = (self.clock() + BANK_TTL, key, value)
+            self._bank = (self.clock() + (BANK_FAIL_TTL if failed else BANK_TTL), key, value)
+            seen = self._bank_seen
+            seen["connected"] = client is not None
+            if checked:
+                seen["good"], seen["failed"] = self.now(), None
+            elif failed:
+                seen["failed"] = self.now()
         return value
+
+    def bank_status(self):
+        """The Bank chip's facts, from the reads the pages made (the strip never reads Starling itself): the time
+        of the last good read, the time of the latest read when it failed, and whether there is a client."""
+        with self._lock:
+            return dict(self._bank_seen)
+
+    def sync_strip(self):
+        """The chips under the header on every page (sources.sync_chips)."""
+        return sources.sync_chips(self.now(), self.bank_status())
+
+    def books_flags_now(self):
+        """For the push watcher's books-disagree alert: (models.books_flags as Today shows them, complete), or None
+        when Books isn't synced. `complete` is False while the bank isn't checked (the Starling comparisons are then
+        left out, so a flag missing from the list may still be there). Failures propagate (the watcher logs the type)."""
+        now = self.now()
+        today = lm.today(now)
+        cache = books_cache.books_cache()
+        if cache is None:
+            return None
+        rows = lm.read_csv(cp.LEDGER)
+        b = self.bank(rows, today)
+        bookings = models.booking_rows(rows, b["assessments"], b["bank_checked"], today)
+        return models.books_flags(cache["invoices"], rows, bookings, today, b["bank_checked"]), bool(b["bank_checked"])
 
     def _common(self):
         now = self.now()
@@ -137,9 +177,11 @@ class Data:
 
     # ------------------------------------------------------------ pages
 
-    def today_page(self):
+    def today_page(self, proposals=None, books_import=None):
+        """Today. `proposals` (actions.list_proposals) and `books_import` (actions.books_status) are Panels the app
+        passes in (this module doesn't import actions). "Needs you" is models.needs_you over every source it names:
+        `attention` is its count, `missing` the sources that didn't load (the count is then a floor)."""
         now, today, ledger, bank, store, singers, hand = self._common()
-        warnings = self.panel("bank_warnings", lambda s: [x for x in s if x["ring_first"]], singers)
         upcoming = self.panel("upcoming", lambda rows, b: dash.upcoming(rows, b["assessments"], b["bank_checked"],
                                                                         today), ledger, bank)
         horizon = (today + datetime.timedelta(days=WEEK_DAYS)).isoformat()
@@ -152,11 +194,25 @@ class Data:
         bill_flags = self.panel("singer_bill_flags", lambda c, s: None if c is None else models.singer_bill_flags(
             s, c["bills"]), books, store)
         synced = self.panel("books_synced", lambda c: None if c is None else models.books_synced(c, now), books)
-        count = sum(len(p.value) for p in (hand, singers) if p.ok)  # a bank warning is one of the singer invoices
-        count += sum(len(p.value or []) for p in (flags, bill_flags) if p.ok)
-        return {"stamp": stamp(now), "today": today, "warnings": warnings, "hand": hand, "singers": singers,
-                "week": week, "later": later, "bank": bank, "attention": count, "books_flags": flags,
-                "singer_bill_flags": bill_flags, "books_synced": synced}
+        enq = self._enquiries()
+        due = self.panel("followups_due", lambda rows: pl.followups_due(rows, today), enq)
+        found = self.panel("drafts", drafts.read_drafts)
+        inbox = self.panel("drafts_inbox", drafts.inbox, found, self.panel("draft_marks", drafts.load_marks))
+        waiting = self.panel("enquiries_waiting", lambda rows, d: models.enquiries_waiting(rows, d, now), enq, found)
+        runs = self.panel("proxies", lambda: sources.run_proxies(now))
+        backup = self.panel("backup", lambda: sources.backup_status(now))
+        panels = {"ledger": ledger, "singer_store": store, "books": books, "enquiries": enq, "singers": singers,
+                  "hand": hand, "bank": bank, "drafts": inbox, "books_flags": flags, "bill_flags": bill_flags,
+                  "followups": due, "waiting": waiting, "runs": runs, "backup": backup}
+        if proposals is not None:
+            panels["proposals"] = proposals
+        if books_import is not None:
+            panels["books_import"] = books_import
+        unreachable = bool(bank.ok and bank.value.get("unreachable"))
+        needs, missing = models.needs_you(panels, bank_unreachable=unreachable)
+        return {"stamp": stamp(now), "today": today, "hand": hand, "singers": singers, "week": week, "later": later,
+                "bank": bank, "needs": needs, "missing": missing, "attention": sum(r["count"] for r in needs),
+                "books_flags": flags, "singer_bill_flags": bill_flags, "books_synced": synced}
 
     def money_page(self):
         now, today, ledger, bank, store, singers, hand = self._common()
@@ -170,8 +226,15 @@ class Data:
         margins = self.margins(ledger, store)
         season = self.panel("season_margin", lambda m: models.season_margin(m, dash.season_start()), margins)
         unlinked = self.panel("unlinked_singer_invoices", si.unlinked_invoices, store)
+        # the pay list: the same split Today's Needs you makes (models.singer_pay_list), so its count and total
+        # are the "Pay N singer invoices" row's; a Books cache that won't load only drops the "paid in Books" check
+        bill_flags = self.panel("singer_bill_flags", lambda c, s: None if c is None else models.singer_bill_flags(
+            s, c["bills"]), books, store)
+        pay = self.panel("singer_pay_list", lambda s: models.singer_pay_list(
+            s, bill_flags.value if bill_flags.ok else None), singers)
         return {"stamp": stamp(now), "today": today, "bank": bank, "balance": balance, "lines": lines, "hand": hand,
-                "singers": singers, "singer_total": total, "books": summary, "season": season, "unlinked": unlinked}
+                "singers": singers, "singer_total": total, "books": summary, "season": season, "unlinked": unlinked,
+                "pay": pay, "pay_books_checked": bill_flags.ok and bill_flags.value is not None}
 
     # ------------------------------------------------------------ phase 6: Books, margins, drafts, quotes
 
@@ -248,8 +311,8 @@ class Data:
         store = self.panel("singer_store", lambda: lm.read_csv(si.STORE))
         parts = {
             "ledger": self.panel("tl_ledger", lambda b: models.ledger_timeline(row, b, today), booking, keep=False),
-            "enquiries": self.panel("tl_enquiries", lambda rows, cache: models.booking_enquiries(ref, rows, cache, today),
-                                    self._enquiries(), self._gclids(), keep=False),
+            "enquiries": self.panel("tl_enquiries", lambda rows: models.booking_enquiries(ref, rows, today),
+                                    self._enquiries(), keep=False),
             "singers": self.panel("tl_singers", lambda b, rows: models.booking_singers(b["event_date"], rows, ref),
                                   booking, store, keep=False),
         }
@@ -290,7 +353,7 @@ class Data:
             row = next((r for r in enq.value if r.get("enquiry_id") == eid), None)
             if row is None:
                 return None
-        timeline = self.panel("enquiry_timeline", lambda rows: models.enquiry_timeline(row, None, today), enq,
+        timeline = self.panel("enquiry_timeline", lambda rows: models.enquiry_timeline(row, today), enq,
                               keep=False)
         campaign = self.panel("campaign", lambda c: models.campaign_for(row or {}, c), self._gclids(), keep=False)
         return {"stamp": stamp(now), "eid": eid, "row": row, "enquiries": enq, "timeline": timeline,
@@ -317,8 +380,10 @@ class Data:
                 generated = datetime.datetime.fromisoformat(str(summary.value.get("generated")))
             except ValueError:
                 generated = None
+        cache = self.panel("marketing_cache", sources.marketing_cache)
+        market = self.panel("marketing_view", lambda c: models.marketing_view(c, now) if c else None, cache)
         return {"stamp": stamp(now), "summary": summary, "weeks": weeks, "chart": chart, "season": season,
-                "traced": traced, "generated": generated}
+                "traced": traced, "generated": generated, "market": market}
 
     def calendar_page(self, view="month", date=None):
         now = self.now()
@@ -373,9 +438,10 @@ class Data:
                 client.account()
                 value = sources.check("Starling", True, f"account readable (read-only), checked at {self.now():%H:%M}")
             except Exception as e:  # the type only
-                value = sources.check("Starling", False, f"account read failed ({type(e).__name__})")
+                value = sources.check("Starling", False, f"account read failed ({type(e).__name__}) at "
+                                                         f"{self.now():%H:%M}; retrying")
         with self._lock:
-            self._starling = (self.clock() + BANK_TTL, value)
+            self._starling = (self.clock() + (BANK_FAIL_TTL if value["ok"] is False else BANK_TTL), value)
         return value
 
     def health_page(self, branch):

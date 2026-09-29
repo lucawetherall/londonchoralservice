@@ -419,6 +419,19 @@ def row(query, page, impressions, position, clicks=0):
 SITE = "https://londonchoralservice.com"
 
 
+def test_search_term_flag_follows_the_targeting_rule():
+    for term, word in (("wedding singer london", "singer"), ("Funeral SOLOIST", "soloist"), ("solo violin", "solo"),
+                       ("female vocalists for hire", "vocalists"), ("carol singer hire", "singer")):
+        assert ec.search_term_flag(term) == f"solo-singer search ('{word}'): choirs of four or more only", term
+    assert ec.search_term_flag("choir lyrics") == "not a hiring search ('lyrics')"
+    assert ec.search_term_flag("join a choir") == "not a hiring search ('join')"
+    assert ec.search_term_flag("funeral songs") == "no choir or hiring word"
+    for term in ("wedding singers london", "christmas carol singers", "hire a choir", "london choral service",
+                 "carols in the city", "funeral quartet"):
+        assert ec.search_term_flag(term) is None, term
+    assert ec.search_term_flag("") == "no choir or hiring word" and ec.search_term_flag(None) == "no choir or hiring word"
+
+
 def test_hiring_intent_keeps_singers_and_drops_singer():
     assert ec.hiring_intent("wedding singers london")
     assert not ec.hiring_intent("wedding singer london")

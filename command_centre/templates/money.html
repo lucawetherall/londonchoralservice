@@ -33,7 +33,7 @@
 <section class="card-group">
   {% set items = hand.value if hand.ok else (hand.stale or []) %}
   <article class="card card-wide{% if items %} card-warn{% endif %}">
-    <h2>Needs a hand check</h2>
+    <h2 id="hand-check">Needs a hand check</h2>
     {{ m.failed(hand) }}
     {% if items %}{{ m.hand_table(items, bank.ok and bank.value.bank_checked, action_day) }}
     <p class="muted">Resolve adds your note to the ledger through check_payments, after Face ID or Touch ID.</p>
@@ -80,13 +80,36 @@
     {% endif %}
   </article>
 
+  {#- The pay list (models.singer_pay_list): the same split as Today's Needs you, so "Pay N singer invoices, £X"
+      there is exactly the list under "Ready to pay" here. Nothing is paid from the app. #}
   {% set items = singers.value if singers.ok else (singers.stale or []) %}
-  <article class="card card-wide">
+  {% set pl_ = pay.value if pay.ok else none %}
+  <article class="card card-wide" id="singer-invoices">
     <h2>Singer invoices unpaid</h2>
     {{ m.failed(singers) }}
     {% if items %}
-    <p>{{ items|length }} unpaid, {% if singer_total.ok %}{{ singer_total.value|gbp }}{% else %}{{ items|sum(attribute="amount")|gbp }}{% endif %}</p>
+    <p>{{ items|length }} unpaid, {% if singer_total.ok %}{{ singer_total.value|gbp }}{% else %}{{ items|sum(attribute="amount")|gbp }}{% endif %}.</p>
+    {% if pl_ %}
+    <h3>Ready to pay</h3>
+    {% if pl_.pay %}
+    <p class="muted">Pay in the Starling app. Tap an amount or a bill number to copy it.</p>
+    {{ m.pay_table(pl_.pay, pl_.total, action_day) }}
+    {% else %}<p class="muted">Nothing to a trusted account yet.</p>{% endif %}
+    {% if pl_.ring %}
+    <h3 id="singer-ring">Ring first</h3>
+    {{ m.waiting_singers(pl_.ring, action_day, "bad") }}
+    {% endif %}
+    {% if pl_.confirm %}
+    <h3 id="singer-confirm">Confirm before paying</h3>
+    {{ m.waiting_singers(pl_.confirm, action_day, "warn") }}
+    {% endif %}
+    {% if pl_.books_paid %}
+    <p class="muted">Not listed: {{ pl_.books_paid|map(attribute="first_name")|join(", ") }}. Books already shows {{ "that bill" if pl_.books_paid|length == 1 else "those bills" }} paid; check on the <a href="/singers">Singers</a> page before paying.</p>
+    {% endif %}
+    {% else %}
+    {{ m.failed(pay) }}
     {{ m.singers_table(items, action_day) }}
+    {% endif %}
     {% elif singers.ok %}<p class="muted">No unpaid singer invoices.</p>{% endif %}
   </article>
 </section>

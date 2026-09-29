@@ -1,79 +1,73 @@
 {% extends "base.html" %}
 {% import "macros.html" as m %}
 {% block content %}
+{#- "Needs you" lists only what the owner must act on (models.needs_you): one row each, a grouped row saying its
+    own number. The lede's count is the sum of the rows' counts; when a source didn't load it is a floor. #}
+{% set checked = bank.ok and bank.value.bank_checked %}
 <p class="lede">
-  {% if attention %}<span class="count">{{ attention }}</span> {{ "thing needs" if attention == 1 else "things need" }} you.
-  {% else %}<span class="count ok">0</span> Nothing needs you right now.{% endif %}
-  <span class="muted">{% if bank.ok and bank.value.bank_checked %}Bank checked at {{ bank.value.as_of }}.{% else %}Bank not checked: payment states come from the ledger notes.{% endif %}</span>
+  {% if missing %}
+    {% if attention %}<span class="count unknown">at least {{ attention }}</span> {{ "thing needs" if attention == 1 else "things need" }} you.
+    {% else %}<span class="count unknown">?</span> Nothing listed, but not every source loaded.{% endif %}
+  {% elif attention %}<span class="count">{{ attention }}</span> {{ "thing needs" if attention == 1 else "things need" }} you.
+  {% else %}<span class="count ok">0</span> Nothing needs you.{% endif %}
+  {% if bank.ok %}<span class="muted">{% if checked %}Bank checked at {{ bank.value.as_of }}.{% elif bank.value.unreachable %}Bank unreachable at {{ bank.value.unreachable }} (retrying).{% else %}Bank not connected (no Starling token): payment states come from the ledger notes.{% endif %}</span>{% endif %}
 </p>
+{% if missing %}<p class="fail sources-missing">Some sources didn't load: {{ missing|join(", ") }}.</p>{% endif %}
 
-<section class="card-group" aria-labelledby="needs-you">
+{% if needs %}
+<section aria-labelledby="needs-you">
   <h2 id="needs-you" class="group-title">Needs you</h2>
-
-  {% set items = warnings.value if warnings.ok else (warnings.stale or []) %}
-  <article class="card{% if items %} card-bad{% endif %}">
-    <h3>Bank details changed</h3>
-    {{ m.failed(warnings) }}
-    {% if items %}
-    <p>Ring the singer on a number you already have before paying.</p>
-    {{ m.singers_table(items, action_day) }}
-    {% elif warnings.ok %}<p class="muted">No changed bank details waiting.</p>{% endif %}
-  </article>
-
-  {% set items = hand.value if hand.ok else (hand.stale or []) %}
-  <article class="card{% if items %} card-warn{% endif %}">
-    <h3>Needs a hand check</h3>
-    {{ m.failed(hand) }}
-    {% if items %}{{ m.hand_table(items, bank.ok and bank.value.bank_checked, action_day) }}
-    {% elif hand.ok %}<p class="muted">Nothing needs a hand check.</p>{% endif %}
-  </article>
-
-  {% set books_waiting = books.state == "waiting" %}
-  <article class="card{% if waiting or books_waiting %} card-warn{% endif %}">
-    <h3>Approvals waiting</h3>
-    {{ m.failed(proposals) }}
-    {% if waiting %}
-    <ul class="lines">
-      {% for p in waiting %}<li><a href="/marketing#proposals">{{ p.title }}</a> <span class="muted">(Ads change set{% if p.validated %}, checked with Google{% endif %})</span></li>{% endfor %}
-    </ul>
+  <ul class="needs">
+  {% for r in needs %}
+    <li class="need need-{{ r.tone }}" data-kind="{{ r.kind }}" data-count="{{ r.count }}">
+    {% if r.kind == "ring" %}{% set s = r.item %}
+      <p class="need-text"><span class="badge bad">ring first</span> <strong>{{ s.first_name }}</strong>'s bank details changed (<span class="mono">{{ s.last4|last4 }}</span>): ring them on a number you already have before paying {{ s.amount|gbp }}.</p>
+      {{ m.singer_forms(s, action_day) }}
+    {% elif r.kind == "hand" %}{% set h = r.item %}
+      <p class="need-text"><span class="badge {{ (h.state|state_tone) or 'warn' }}">{{ h.label }}</span> <a class="mono" href="/bookings/{{ h.ref }}">{{ h.ref }}</a>, {{ h.value|gbp }}{% if checked %}, {{ h.received|gbp }} received{% endif %}: check it by hand.</p>
+      {{ m.resolve_form(h.ref, action_day, fee=h.balance if (checked and h.state in FEE.states and h.received) else none) }}
+    {% elif r.kind in ("deposits", "balances") %}
+      <p class="need-text"><a href="/bookings?when=all&amp;state={{ r.state }}">{{ r.count }} {{ ("deposit" if r.count == 1 else "deposits") ~ " overdue" if r.kind == "deposits" else ("balance" if r.count == 1 else "balances") ~ " due" }}</a>: {% for ref in r.refs %}<a class="mono" href="/bookings/{{ ref }}">{{ ref }}</a>{{ ", " if not loop.last }}{% endfor %}. <span class="muted">The daily pass drafts the reminder; send it from Zoho.</span></p>
+    {% elif r.kind == "approval" %}{% set p = r.item %}
+      <p class="need-text"><a href="/marketing#proposals">Approve or leave: {{ p.title }}</a> <span class="muted">(Ads change set{% if p.validated %}, checked with Google{% endif %})</span></p>
+    {% elif r.kind == "books-import" %}
+      <p class="need-text">Approve the 2026 Books import: a dry run is waiting in <span class="mono">~/lcs-private/books-import-2026.json</span>.</p>
+      {{ m.action_button("approve-books-import", "Approve the Books import") }}
+    {% elif r.kind == "waiting" %}
+      <p class="need-text"><a href="/enquiries">{{ r.count }} {{ "enquiry" if r.count == 1 else "enquiries" }} waiting over a day for a reply</a> <span class="muted">(no draft yet; the oldest came in {{ r["items"][0].first_seen|day }})</span></p>
+    {% elif r.kind == "drafts" %}
+      <p class="need-text"><a href="/drafts">{{ r.count }} {{ "draft" if r.count == 1 else "drafts" }} to review and send</a> <span class="muted">in Zoho</span></p>
+    {% elif r.kind in ("books", "bill") %}{% set f = r.item %}
+      <p class="need-text">{{ m.ref_link(f.ref, f.href) }} <span class="badge {{ f.tone }}">{{ f.text }}</span></p>
+    {% elif r.kind == "pay" %}
+      <p class="need-text"><a href="/money#singer-invoices">Pay {{ r.count }} singer {{ "invoice" if r.count == 1 else "invoices" }}, {{ r.total|gbp }}</a> <span class="muted">({{ r["items"]|map(attribute="first_name")|join(", ") }})</span></p>
+    {% elif r.kind == "confirm" %}
+      <p class="need-text"><a href="/money#singer-confirm">Confirm the bank details on {{ r.count }} singer {{ "invoice" if r.count == 1 else "invoices" }} before paying</a> <span class="muted">({{ r["items"]|map(attribute="first_name")|join(", ") }})</span></p>
+    {% elif r.kind == "followups" %}
+      <p class="need-text"><a href="/enquiries">{{ r.count }} {{ "follow-up" if r.count == 1 else "follow-ups" }} due</a> <span class="muted">(the enquiry assistant drafts them on its next run)</span></p>
+    {% elif r.kind == "runs" %}
+      <p class="need-text"><a href="/health">{{ r.count }} {{ "run hasn't" if r.count == 1 else "runs haven't" }} written on time</a>: <span class="muted">{{ r["items"]|map(attribute="label")|join(", ") }}</span></p>
+    {% elif r.kind == "backup" %}{% set b = r.item %}
+      <p class="need-text"><a href="/health#backup">{% if b.at is none %}No backup yet{% else %}The last backup is over 36 hours old ({{ b.at|when }}){% endif %}</a>: check the nightly job, or tap Back up now.</p>
     {% endif %}
-    {% if books_waiting %}
-    <p>The 2026 Books import: a dry run is waiting in <span class="mono">~/lcs-private/books-import-2026.json</span>.</p>
-    {{ m.action_button("approve-books-import", "Approve the Books import") }}
-    {% endif %}
-    {% if proposals.ok and not waiting and not books_waiting %}<p class="muted">Nothing waiting for approval.</p>{% endif %}
-  </article>
+    </li>
+  {% endfor %}
+  </ul>
+</section>
+{% endif %}
 
-  {% set items = books_flags.value if books_flags.ok else books_flags.stale %}
-  {% set bills = singer_bill_flags.value if singer_bill_flags.ok else singer_bill_flags.stale %}
-  {% set synced = books_synced.value if books_synced.ok else books_synced.stale %}
-  <article class="card{% if items or bills or (synced and synced.stale) %} card-warn{% endif %}">
-    <h3>Books and Starling</h3>
-    {{ m.failed(books_flags) }}
-    {% if books_flags.ok %}{{ m.failed(singer_bill_flags) }}{% endif %}
-    {% if items or bills %}
-    <ul class="lines">
-      {% for f in items or [] %}<li>{{ m.ref_link(f.ref, f.href) }} <span class="badge {{ f.tone }}">{{ f.text }}</span></li>{% endfor %}
-      {% for f in bills or [] %}<li>{{ m.ref_link(f.ref, f.href) }} <span class="badge {{ f.tone }}">{{ f.text }}</span></li>{% endfor %}
-    </ul>
-    <p class="muted">The Monday review's rules (Appendix A, 6g), the ledger against Books, and the singer bills against the singer invoices. Invoices go out attached to your reply in Zoho Drafts; the daily pass then marks them sent in Books and records the confident payments.</p>
-    {% elif books_flags.ok and items is none %}<p class="muted">Books not synced yet: the half-hourly refresh and the daily pass run <span class="mono">cc_sync.py books</span>. If this stays, check the Books cache on the <a href="/health">Health</a> page.</p>
-    {% elif books_flags.ok %}<p class="muted">Books and Starling agree{% if not (bank.ok and bank.value.bank_checked) %} (drafts only: the bank wasn't checked){% endif %}.</p>{% endif %}
+{% set synced = books_synced.value if books_synced.ok else books_synced.stale %}
+<section aria-labelledby="for-info">
+  <h2 id="for-info" class="group-title">For information</h2>
+  <ul class="info-lines">
     {% if synced %}
-    <p class="muted">Books as of {{ synced.generated_at|when }}.</p>
-    {% if synced.stale %}<p><span class="badge warn">stale</span> The Books cache is more than 24 hours old: see the refresh job on the <a href="/health">Health</a> page.</p>{% endif %}
+    <li>Books as of {{ synced.generated_at|when }}.{% if synced.stale %} <span class="badge warn">stale</span> The Books cache is more than 24 hours old: see the refresh job on the <a href="/health">Health</a> page.{% endif %}{% if books_flags.ok and not checked %} The Books comparisons with Starling wait for the bank.{% endif %}</li>
+    {% elif books_flags.ok and books_flags.value is none %}
+    <li>Books not synced yet: the half-hourly refresh and the daily pass run <span class="mono">cc_sync.py books</span>. If this stays, check the Books cache on the <a href="/health">Health</a> page.</li>
     {% endif %}
-  </article>
-
-  {% set items = singers.value if singers.ok else (singers.stale or []) %}
-  <article class="card card-wide">
-    <h3>Singer invoices unpaid</h3>
-    {{ m.failed(singers) }}
-    {% if items %}
-    <p>{{ items|length }} unpaid, {{ items|sum(attribute="amount")|gbp }}</p>
-    {{ m.singers_table(items, action_day) }}
-    {% elif singers.ok %}<p class="muted">No unpaid singer invoices.</p>{% endif %}
-  </article>
+    {% if books.state == "stale" %}<li>The 2026 Books import's dry run has changed since it was approved: see Handoffs below.</li>{% endif %}
+    <li><a href="/passkeys">{{ m.passkey_line(passkey_info) }}</a></li>
+  </ul>
 </section>
 
 <section class="card-group" aria-labelledby="upcoming">
@@ -116,10 +110,10 @@
   </article>
 </section>
 
+{% if checkout_warning %}
 <section class="health" aria-labelledby="health">
   <h2 id="health" class="group-title">Health</h2>
-  <p class="health-line{% if checkout_warning %} health-warn{% endif %}">
-    {% if checkout_warning %}<span class="fail">{{ checkout_warning }}</span> {% endif %}<a href="/passkeys">{{ m.passkey_line(passkey_info) }}</a>
-  </p>
+  <p class="health-line health-warn"><span class="fail">{{ checkout_warning }}</span></p>
 </section>
+{% endif %}
 {% endblock %}

@@ -12,6 +12,7 @@ import os
 import re
 import shutil
 import stat
+import threading
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
@@ -29,6 +30,8 @@ ASSISTANT_STALE = datetime.timedelta(hours=3)
 WEEKLY_STALE = datetime.timedelta(days=8)
 BOOKS_STALE = datetime.timedelta(hours=24)  # the refresh job writes it every 30 minutes, 07:00-22:00
 CACHE_STALE = datetime.timedelta(hours=36)  # the daily pass writes the diary and syncs the drafts once a day
+DASHBOARD_STALE = datetime.timedelta(hours=36)  # the refresh job rewrites it every 30 minutes, and the daily pass
+#                                             (the refresh job also writes the marketing cache daily)
 
 
 def private():
@@ -84,6 +87,21 @@ def calendar_cache():
     if not isinstance(entries, list):
         raise ValueError("calendar.json is not a list")
     return entries, when
+
+
+def marketing_path():
+    return auth.config_dir() / "cache" / "marketing.json"
+
+
+def marketing_cache():
+    """The marketing cache (cc_sync.py marketing, once a day from the refresh job), or None: not synced yet."""
+    found = read_json(marketing_path())
+    if found is None:
+        return None
+    value, _ = found
+    if not isinstance(value, dict):
+        raise ValueError("marketing.json is not an object")
+    return value
 
 
 # ---------------------------------------------------------------- reports
@@ -180,13 +198,14 @@ def run_proxies(now):
         ("Enquiry assistant state", p / "assistant-state.json", ASSISTANT_STALE if daytime else None),
         ("Ads summary (Monday review)", p / "ads-summary.json", WEEKLY_STALE),
         ("Newest Monday report", newest, WEEKLY_STALE),
-        ("Static dashboard", p / "dashboard.html", None),
+        ("Static dashboard", p / "dashboard.html", DASHBOARD_STALE),
         ("Bookings ledger", Path(os.environ.get("LCS_BOOKINGS_CSV") or p / "bookings.csv"), None),
         ("Singer invoices", p / "singer-invoices.csv", None),
         ("Enquiry pipeline", p / "enquiries.csv", None),
         ("Books cache (cc_sync.py books)", auth.config_dir() / "cache" / "books.json", BOOKS_STALE),
         ("Diary cache (the daily pass)", calendar_path(), CACHE_STALE),
         ("Drafts cache (the assistant)", auth.config_dir() / "cache" / "drafts.json", CACHE_STALE),
+        ("Marketing cache (cc_sync.py marketing, daily)", marketing_path(), CACHE_STALE),
     ]
     out = []
     for label, path, limit in rows:
@@ -305,3 +324,107 @@ def disk_check():
 
 def branch_check(branch):
     return check("Git branch", branch == "main", f"serving checkout on {branch or 'a detached HEAD'}")
+
+
+# ---------------------------------------------------------------- the sync strip (every page)
+
+
+_OUTCOMES = {}  # sync name -> {"ok": bool, "at": aware datetime}: the latest attempt in this process
+_OUTCOMES_LOCK = threading.Lock()
+
+
+def record_outcome(name, ok, at=None):
+    """The refresh job and the sync-now action note each attempt at a sync (books, marketing, dashboard), so the
+    strip can say "failed" when the latest attempt failed after the last good one. In memory only: a restart
+    forgets it, and the file times still say how old the data is."""
+    with _OUTCOMES_LOCK:
+        _OUTCOMES[name] = {"ok": bool(ok), "at": at or datetime.datetime.now(LONDON)}
+
+
+def outcomes():
+    with _OUTCOMES_LOCK:
+        return {k: dict(v) for k, v in _OUTCOMES.items()}
+
+
+def forget_outcomes():
+    """Tests only."""
+    with _OUTCOMES_LOCK:
+        _OUTCOMES.clear()
+
+
+def books_cache_path():
+    return auth.config_dir() / "cache" / "books.json"
+
+
+def drafts_cache_path():
+    return auth.config_dir() / "cache" / "drafts.json"
+
+
+def dashboard_path():
+    return private() / "dashboard.html"
+
+
+# (key, label, the file whose time is the last good sync, stale after, what a stale or failed chip does: a sync-now
+# source the app can run, or None when only a scheduled run writes it and the chip links to Health instead)
+SYNCS = (
+    ("books", "Books", books_cache_path, BOOKS_STALE, "books"),
+    ("drafts", "Drafts", drafts_cache_path, CACHE_STALE, None),
+    ("diary", "Diary", calendar_path, CACHE_STALE, None),
+    ("ads", "Ads", lambda: private() / "ads-summary.json", WEEKLY_STALE, None),
+    ("marketing", "Marketing", marketing_path, CACHE_STALE, "marketing"),
+)
+SYNC_WHY = {  # the chip's title: where the data comes from
+    "bank": "Starling, read-only, on the pages that show the bank (ten-minute cache)",
+    "books": "cc_sync.py books, every 30 minutes from 07:00 to 22:00",
+    "drafts": "the enquiry assistant's daily pass reads Zoho Drafts; the app can't read Mail",
+    "diary": "the enquiry assistant's daily pass reads Google Calendar; the app can't read the calendar",
+    "ads": "the Monday review writes the Ads summary",
+    "marketing": "cc_sync.py marketing, once a day from 07:00",
+}
+
+
+def short_time(when, now):
+    """"07:30" today, "Sat 07:30" within the last week, else "12 Sep"."""
+    when = when.astimezone(LONDON)
+    now = now.astimezone(LONDON) if now.tzinfo else now.replace(tzinfo=LONDON)
+    if when.date() == now.date():
+        return f"{when:%H:%M}"
+    if now - when < datetime.timedelta(days=6):
+        return f"{when:%a %H:%M}"
+    return f"{when.day} {when:%b}"
+
+
+def sync_chips(now, bank):
+    """The strip's chips, in order: Bank, Books, Drafts, Diary, Ads, Marketing. Each {"key", "label", "shown" (the
+    last good time, short), "tone" ("ok", "stale", "failed" or "off"), "sync" (a sync-now source, or None), "why"}.
+
+    `bank` is data.Data.bank_status(): {"good" (a datetime or None), "failed" (a datetime or None, only when the
+    latest read failed), "connected"}. The bank is "failed" while its latest read failed (Bank unreachable), "off"
+    with no Starling token or before any page has read it, else "ok"; it is never "stale" (the pages read it when
+    they need it). A cache is "failed" when this process's latest attempt at it failed after its last good write,
+    "stale" past its limit (sources' BOOKS_STALE, CACHE_STALE, WEEKLY_STALE) or when it was never written, else "ok"."""
+    now = now if now.tzinfo else now.replace(tzinfo=LONDON)
+    chips = []
+    good, failed = bank.get("good"), bank.get("failed")
+    if failed is not None:
+        tone = "failed"
+    elif good is not None:
+        tone = "ok"
+    else:
+        tone = "off"
+    shown = short_time(good, now) if good else ("not connected" if bank.get("connected") is False else "not read yet")
+    chips.append({"key": "bank", "label": "Bank", "shown": shown, "tone": tone,
+                  "sync": "bank" if tone == "failed" else None, "why": SYNC_WHY["bank"]})
+    tried = outcomes()
+    for key, label, path, limit, sync in SYNCS:
+        when = mtime(path())
+        last = tried.get(key)
+        if last is not None and not last["ok"] and (when is None or last["at"] > when):
+            tone = "failed"
+        elif when is None or now - when > limit:
+            tone = "stale"
+        else:
+            tone = "ok"
+        chips.append({"key": key, "label": label, "shown": short_time(when, now) if when else "never", "tone": tone,
+                      "sync": sync if tone != "ok" else None, "why": SYNC_WHY[key]})
+    return chips

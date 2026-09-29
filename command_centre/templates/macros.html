@@ -60,6 +60,36 @@
 </details>
 {% endmacro %}
 
+{#- An inline SVG of bars and a line (models.bar_line_chart's geometry); no external library. #}
+{% macro bar_line_chart(c, id, title, desc, zero, bar_word, line_word) %}
+<figure class="chart">
+  <svg viewBox="0 0 {{ c.width }} {{ c.height }}" role="img" aria-labelledby="{{ id }}-title {{ id }}-desc" preserveAspectRatio="xMidYMid meet">
+    <title id="{{ id }}-title">{{ title }}</title>
+    <desc id="{{ id }}-desc">{{ desc }}</desc>
+    <line class="axis" x1="{{ c.left }}" y1="{{ c.base }}" x2="{{ c.right }}" y2="{{ c.base }}"></line>
+    <line class="grid" x1="{{ c.left }}" y1="{{ c.top }}" x2="{{ c.right }}" y2="{{ c.top }}"></line>
+    <text class="tick" x="{{ c.left - 6 }}" y="{{ c.top + 4 }}" text-anchor="end">{{ c.top_label }}</text>
+    <text class="tick" x="{{ c.left - 6 }}" y="{{ c.base + 4 }}" text-anchor="end">{{ zero }}</text>
+    {% for b in c.bars %}
+    <rect class="bar" x="{{ b.x }}" y="{{ b.y }}" width="{{ b.w }}" height="{{ b.h }}" rx="3"><title>{{ b.title }}</title></rect>
+    <text class="tick" x="{{ b.lx }}" y="{{ c.label_y }}" text-anchor="middle">{{ b.label }}</text>
+    {% endfor %}
+    <polyline class="line" points="{{ c.line }}"></polyline>
+  </svg>
+  <figcaption class="legend"><span class="key key-bar"></span> {{ bar_word }} <span class="key key-line"></span> {{ line_word }}</figcaption>
+</figure>
+{% endmacro %}
+
+{#- The "as of" line of a panel from the daily marketing cache (models.marketing_view), with its stale warning. #}
+{% macro marketing_synced(mk) %}
+<p class="muted">As of {{ mk.generated_at|when if mk.generated_at else "an unknown time" }} (the refresh job's daily <span class="mono">cc_sync.py marketing</span>).</p>
+{% if mk.stale %}<p><span class="badge warn">stale</span> More than 36 hours old: see the marketing cache on the <a href="/health">Health</a> page.</p>{% endif %}
+{% endmacro %}
+
+{% macro marketing_not_synced() %}
+<p class="muted">Not synced yet: the refresh job writes this once a day, in its first run after 07:00 (<span class="mono">cc_sync.py marketing</span>). Until then it is in the Monday report.</p>
+{% endmacro %}
+
 {% macro action_button(name, label, fields={}, quiet=false) %}
 <form class="cc-action inline" data-action="{{ name }}">
   {% for k, v in fields.items() %}<input type="hidden" name="{{ k }}" value="{{ v }}">{% endfor %}
@@ -131,6 +161,50 @@
   {% endfor %}
   </tbody>
 </table>
+{% endmacro %}
+
+{#- A value to copy for the Starling app (an amount, a bill number): the handoffs.js copy button, no passkey, nothing
+    sent to the server. `value` is the server's own text. #}
+{% macro copy_value(value, shown, what) %}
+<button type="button" class="button quiet small cc-copy copy-value" data-prompt="{{ value }}" aria-label="Copy {{ what }} {{ shown }}">{{ shown }}</button>
+{% endmacro %}
+
+{#- The pay list: open invoices to a trusted account, oldest first (models.singer_pay_list's "pay"). #}
+{% macro pay_table(items, total, day) %}
+<table class="table pay-table">
+  <thead><tr><th>Received</th><th>Singer</th><th class="num">Amount</th><th>Bill number</th><th>Account</th><th>Action</th></tr></thead>
+  <tbody>
+  {% for s in items %}
+    <tr>
+      <td data-label="Received">{{ s.received|day }}</td>
+      <td data-label="Singer">{{ s.first_name }}</td>
+      <td data-label="Amount" class="num">{{ copy_value("%.2f"|format(s.amount), s.amount|gbp, "amount") }}</td>
+      <td data-label="Bill number">{{ copy_value(s.bill_number, s.bill_number, "bill number") }}</td>
+      <td data-label="Account"><span class="mono">{{ s.last4|last4 }}</span> <span class="badge ok">{{ s.trust }}</span></td>
+      <td data-label="Action">{{ singer_forms(s, day) }}</td>
+    </tr>
+  {% endfor %}
+    <tr class="total">
+      <td class="pay-total-label" colspan="2">Total, {{ items|length }} {{ "invoice" if items|length == 1 else "invoices" }}</td>
+      <td data-label="Amount" class="num">{{ copy_value("%.2f"|format(total), total|gbp, "total") }}</td>
+      <td class="pay-blank" colspan="3"></td>
+    </tr>
+  </tbody>
+</table>
+{% endmacro %}
+
+{#- Open invoices that wait on the owner before they can be paid (ring first, or details not confirmed yet), each
+    with its reason; nothing to copy, so nothing is paid by mistake. #}
+{% macro waiting_singers(items, day, tone) %}
+<ul class="plain waiting-list">
+  {% for s in items %}
+  <li>
+    <p><strong>{{ s.first_name }}</strong>, {{ s.amount|gbp }}, received {{ s.received|day }}{% if s.last4 %}, account <span class="mono">{{ s.last4|last4 }}</span>{% endif %}{% if s.payee %} <span class="muted">({{ s.payee }})</span>{% endif %}</p>
+    <p><span class="badge {{ tone }}">{{ s.reason }}</span></p>
+    {{ singer_forms(s, day) }}
+  </li>
+  {% endfor %}
+</ul>
 {% endmacro %}
 
 {% macro timeline(items) %}

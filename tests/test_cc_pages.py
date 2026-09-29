@@ -88,7 +88,7 @@ def fixtures():
          "bank_changed": "yes", "paid_on": ""},
         {"message_id": "m2", "received": "2026-09-22", "singer_name": "Dora Quillfeather",
          "singer_email": "dora@example.org", "amount_gbp": "150", "bank_fp": "def", "bank_last4": "1111",
-         "payee": "", "bank_changed": "no", "paid_on": ""},
+         "payee": "", "bank_changed": "no", "bank_confirmed": "yes", "paid_on": ""},
         {"message_id": "m3", "received": "2026-09-01", "singer_name": "Eve Paidup", "singer_email": "eve@example.org",
          "amount_gbp": "99", "bank_fp": "ghi", "bank_last4": "2222", "payee": "", "bank_changed": "no",
          "paid_on": "2026-09-05"},
@@ -111,14 +111,30 @@ def page(c, path):
 # ---------------------------------------------------------------- Today
 
 
+def needs_rows(out):
+    """Today's "Needs you" rows: [(kind, count, text)]."""
+    return [(k, int(n), re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", body)).strip())
+            for k, n, body in re.findall(r'<li class="need[^"]*" data-kind="([^"]+)" data-count="(\d+)">(.*?)</li>',
+                                         out, re.S)]
+
+
+def plain(out):
+    return re.sub(r"\s+", " ", re.sub(r"<[^>]+>", "", out))
+
+
+def lede_count(out):
+    m = re.search(r'<span class="count[^"]*">\s*(?:at least )?(\d+|\?)\s*<', out)
+    return m.group(1) if m else None
+
+
 def test_today_puts_attention_first_in_priority_order():
     c, _ = make(FakeBank())
     out = page(c, "/")
-    marks = ["Bank details changed", "Needs a hand check", "Singer invoices unpaid", "This week", "Later"]
+    marks = ['data-kind="ring"', 'data-kind="hand"', 'data-kind="deposits"', 'data-kind="pay"', "This week", "Later"]
     pos = [out.find(m) for m in marks]
     assert all(p >= 0 for p in pos), list(zip(marks, pos))
     assert pos == sorted(pos), list(zip(marks, pos))
-    assert "ring before paying" in out and "••••4321" in out
+    assert "ring first" in out and "before paying" in out and "••••4321" in out
     assert "0107" in out and "past, unpaid" in out          # hand check from money_report.needs_hand_check
     assert "Dora" in out and "£150.00" in out                # unpaid singer invoice
     assert "Eve" not in out                                  # paid invoices aren't shown
@@ -129,7 +145,62 @@ def test_today_puts_attention_first_in_priority_order():
 def test_today_counts_what_needs_attention():
     c, _ = make(FakeBank())
     out = page(c, "/")
-    assert re.search(r'class="count[^"]*">\s*4\s*<', out), "4 things: 2 hand checks and 2 unpaid invoices (the bank warning is one of those invoices)"
+    rows = needs_rows(out)
+    # Ben's changed bank details (ring first), two hand checks, 1212's overdue deposit, and Dora's invoice to pay:
+    # Ben's invoice is its own row, never also in the pay group
+    assert [(k, n) for k, n, _ in rows] == [("ring", 1), ("hand", 1), ("hand", 1), ("deposits", 1), ("pay", 1)], rows
+    assert lede_count(out) == "5" and "5 things need you." in plain(out)
+    assert "Pay 1 singer invoice, £150.00" in rows[-1][2] and "Ben" not in rows[-1][2]
+
+
+def test_today_count_equals_the_rows_and_no_empty_category_shows():
+    """The owner's rule: only what needs him is under Needs you, the count is the sum of the rows' own numbers, and
+    a category with nothing in it adds no row and no "nothing here" text."""
+    empty = ["No changed bank details waiting", "Nothing needs a hand check", "Nothing waiting for approval",
+             "Books and Starling agree", "No unpaid singer invoices", "No follow-ups due"]
+    c, _ = make(FakeBank())
+    out = page(c, "/")
+    rows = needs_rows(out)
+    assert rows and int(lede_count(out)) == sum(n for _, n, _ in rows)
+    assert not any(e in out for e in empty), [e for e in empty if e in out]
+    # a grouped row counts its items, and says so: three open invoices to pay are 3
+    store = lm.read_csv(si.STORE)
+    for i, name in enumerate(["Fay Extraone", "Gil Extratwo"]):
+        store.append(dict(store[1], message_id=f"x{i}", singer_name=name, singer_email=f"x{i}@example.org"))
+    lm.write_csv(si.STORE, store, si.COLUMNS)
+    out = page(c, "/")
+    rows = needs_rows(out)
+    pay =[r for r in rows if r[0] == "pay"]
+    assert pay and pay[0][1] == 3 and "Pay 3 singer invoices, £450.00" in pay[0][2], pay
+    assert int(lede_count(out)) == sum(n for _, n, _ in rows) == 7
+    # nothing needs him: one line, no Needs you section, no empty cards
+    lm.write_csv(lm.LEDGER, [], LEDGER_COLS)
+    lm.write_csv(si.STORE, [], si.COLUMNS)
+    out = page(c, "/")
+    assert needs_rows(out) == [] and 'id="needs-you"' not in out
+    assert '<span class="count ok">0</span> Nothing needs you.' in out
+    assert not any(e in out for e in empty)
+
+
+def test_today_leaves_out_what_is_not_yet_due():
+    """A deposit not yet due, an ARRANGED balance more than 7 days out and a follow-up not yet due never show."""
+    c, _ = make(FakeBank())
+    lm.write_csv(lm.LEDGER, [
+        {"booking_ref": "2001", "invoice_date": "2026-09-27", "event_date": "2026-12-01", "client_name": "Ivy New",
+         "client_email": "ivy@example.org", "occasion": "wedding", "ensemble": "Quartet", "value_gbp": "650",
+         "notes": ""},
+        {"booking_ref": "2002", "invoice_date": "2026-08-01", "event_date": "2026-11-01", "client_name": "Jo Cash",
+         "client_email": "jo@example.org", "occasion": "wedding", "ensemble": "Quartet", "value_gbp": "650",
+         "notes": "deposit paid 2026-08-05 (Starling); balance to be paid in cash on the day"},
+    ], LEDGER_COLS)
+    lm.write_csv(si.STORE, [], si.COLUMNS)
+    lm.write_csv(data.pl.ENQUIRIES, [
+        {"enquiry_id": "t1", "first_seen": "2026-09-25", "status": "quoted", "last_contact": "2026-09-26",
+         "notes": "quoted 2026-09-26", "occasion": "wedding", "event_date": "2027-05-01", "source": "web"},
+    ], list(data.pl.COLUMNS))
+    out = page(c, "/")
+    assert needs_rows(out) == [], needs_rows(out)
+    assert "Nothing needs you." in out
 
 
 def test_today_offers_handoff_prompts_instead_of_a_chat():
@@ -170,8 +241,59 @@ def test_bank_errors_mean_not_checked_not_a_crash():
     c, _ = make(FakeBank(fail=urllib.error.URLError("down")))
     for path in ["/", "/money"]:
         out = page(c, path)
-        assert "not checked" in out, path
+        assert "not checked" in out or path == "/", path
         assert "down" not in re.sub(r"<[^>]+>", " ", out).split(), path
+    # Today says the bank is unreachable (not a setting), leaves out the notes-only payment guesses, and its count
+    # is a floor with the bank named
+    out = page(c, "/")
+    assert "Bank unreachable at 09:30 (retrying)." in out and "Bank not" not in out
+    assert "Some sources didn't load: the bank (Starling)." in out
+    assert [k for k, _, _ in needs_rows(out)] == ["ring", "pay"], needs_rows(out)
+    assert lede_count(out) == "2" and "at least 2 things need you." in plain(out)
+
+
+def test_health_starling_check_retries_a_failure_after_a_minute():
+    clock = Clock()
+    bank = FakeBank(fail=urllib.error.URLError("down"))
+    c, _ = make(bank, clock)
+    assert "account read failed (URLError) at 09:30; retrying" in page(c, "/health")
+    n = bank.calls
+    clock.t += 30
+    page(c, "/health")
+    assert bank.calls == n
+    clock.t += 31
+    bank.fail = None
+    assert "account readable" in page(c, "/health") and bank.calls > n
+    n = bank.calls
+    clock.t += 300
+    page(c, "/health")
+    assert bank.calls == n  # a good check is kept for ten minutes
+
+
+def test_no_bank_client_is_a_setting_not_a_failure():
+    c, _ = make(None)
+    out = page(c, "/")
+    assert "Bank not connected (no Starling token): payment states come from the ledger notes." in out
+    assert "didn't load" not in out and "at least" not in out
+
+
+def test_a_failed_bank_read_is_retried_after_a_minute():
+    clock = Clock()
+    bank = FakeBank(fail=urllib.error.URLError("down"))
+    c, _ = make(bank, clock)
+    page(c, "/")
+    first = bank.calls
+    clock.t += 30
+    page(c, "/")
+    assert bank.calls == first  # kept for a minute
+    clock.t += 31
+    bank.fail = None
+    out = page(c, "/")
+    assert bank.calls > first and "Bank checked at 09:30." in out and "unreachable" not in out
+    after = bank.calls
+    clock.t += 300
+    page(c, "/")
+    assert bank.calls == after  # a good read is kept for ten minutes
 
 
 def test_bank_reads_are_cached_for_ten_minutes():
@@ -203,7 +325,10 @@ def test_a_failing_source_is_isolated():
     try:
         for path in ["/", "/money"]:
             out = page(c, path)
-            assert "couldn&#39;t load (ValueError)" in out or "couldn't load (ValueError)" in out, path
+            if path == "/":
+                assert "Some sources didn't load: the singer invoices (ValueError)." in out, out
+            else:
+                assert "couldn&#39;t load (ValueError)" in out or "couldn't load (ValueError)" in out, path
             assert "secret message" not in out and "Fenwickson" not in out
             assert "0107" in out, path  # the hand checks still render
     finally:
