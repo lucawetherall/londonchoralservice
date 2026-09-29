@@ -780,16 +780,15 @@ td.compare-us .compare-saving {
 
 .hero-text {
   grid-area: body;
-  min-width: 0;
 }
 
 .hero-video {
   grid-area: video;
-  min-width: 0;
   position: sticky;
   top: var(--space-2xl);
-  /* Top edge level with the h1's capitals: Cormorant Garamond's cap top
-     sits 0.28 of the font size below the top of an h1 line box. */
+  /* Top edge level with the h1's capitals: at the h1's line-height
+     (var(--leading-tight)), Cormorant Garamond's cap top sits 0.28 of the
+     font size below the top of its line box. Change either and re-measure. */
   margin-top: calc(var(--text-display) * 0.28);
 }
 
@@ -878,7 +877,7 @@ td.compare-us .compare-saving {
   box-shadow: inset 0 0 0 3px var(--color-accent);
 }
 
-/* Phones: the film comes straight after the heading. */
+/* Phones and portrait tablets: the film comes straight after the heading. */
 @media (max-width: 805px) {
   .hero {
     grid-template-columns: minmax(0, 1fr);
