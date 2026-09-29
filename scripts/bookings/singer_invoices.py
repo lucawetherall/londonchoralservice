@@ -724,6 +724,52 @@ def held(rows, r, facts=None):
     return out
 
 
+CODE_WORDS = {"changed": "details changed", "differ": "details differ", "new": "new details",
+              "not-yet-verified": "details not yet verified", "no-details": "no details on the invoice"}
+
+
+def held_readings(rows, r, facts=None):
+    """held()'s families, each with both readings for the owner's pages: [{family, notes, facts, clauses}], in fixed
+    words (never note text), `clauses` the note hashes of the loose clauses behind it (what events.py notes-checked
+    claims when the owner says the recorded facts are right; [] when a claimed clause was deleted by hand)."""
+    facts = per_row(facts, r)
+    f = facts_for(r, facts)
+    families = held(rows, r, facts)
+    if not families:
+        return []
+    loose = [c.strip() for c in (r.get("notes") or "").split(";")
+             if c.strip() and lcs_events.note_hash(c.strip()) not in f.claims]
+    codes = warning_codes(r, f) or set()
+
+    def said(words, default):
+        return ", ".join(words) or default
+
+    out = []
+    for fam in families:
+        if fam == "bank warnings":
+            mine = [c for c in loose if c.startswith(BANK_ALARMS) and warning_code(c) not in codes]
+            noted = sorted({warning_code(c) for c in mine if warning_code(c)}, key=lcs_events.CODES.index)
+            if not mine and r.get("bank_changed") == "yes":
+                noted = ["changed"]
+            notes, facts_say = said([CODE_WORDS[c] for c in noted], "no bank alarm"), \
+                said([CODE_WORDS[c] for c in lcs_events.CODES if c in codes], "no bank alarm")
+        elif fam == "withdrawal":
+            mine = [c for c in loose if c.startswith("withdrawn")]
+            notes = "withdrawn" if mine or (r.get("withdrawn") or "").strip() else "not withdrawn"
+            facts_say = "withdrawn" if f.withdrawn_on else "not withdrawn"
+        elif fam == "settlement":
+            mine = [c for c in loose if c.startswith("settled by hand")]
+            notes = "paid by hand" if mine or "settled by hand" in (r.get("notes") or "") else "not paid by hand"
+            facts_say = "paid by hand" if f.settled else "not paid by hand"
+        else:  # bank trust: a claimed confirmation's note deleted by hand
+            mine = []
+            notes = "confirmed by phone" if r.get("bank_confirmed") == "yes" else "not confirmed"
+            facts_say = "confirmed by phone"
+        out.append({"family": fam, "notes": notes, "facts": facts_say,
+                    "clauses": [lcs_events.note_hash(c) for c in mine]})
+    return out
+
+
 def _docx_runs(el):
     """Text of a paragraph: w:t runs, w:tab as a tab, w:br/w:cr as a line break."""
     bits = []
@@ -1373,7 +1419,7 @@ def cmd_scan(args, client):
 
 
 KEEP_NOTES = ("bank details confirmed by phone", "paid reply drafted", "settled by hand", "rescanned", "withdrawn",
-              "earlier entry undone",
+              "earlier entry undone", "notes checked",
               THANKS_MARK)
 
 

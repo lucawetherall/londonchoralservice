@@ -101,7 +101,7 @@ Under the header, every page has the **sync strip**: one line of chips (Bank, Bo
 1. **Today (home)**
    - What needs the owner, in priority order:
      - bank-detail warnings;
-     - hand checks, each saying why in plain words with the amounts ("£36.15 short of £733.08; the event has passed");
+     - hand checks, each saying why in plain words with the amounts ("£36.15 short of £733.08; the event has passed"). A held booking or singer invoice (its notes and its recorded facts in the state log disagree: [structured-state design](2026-09-29-structured-state-design.md)) is one of these rows, named by the family ("notes and recorded facts disagree: cancellation"), with both readings side by side in fixed words ("the notes say not cancelled; the recorded facts say cancelled"), never the note text, and "The recorded facts are right" where loose note clauses stand behind the notes' reading. It is listed even with the bank unreachable, and a held invoice is a "held" row, not "bank details changed";
      - transfer-fee shortfalls: a booking in DEPOSIT_SEEN, BALANCE_DUE, PAST_PART_PAID or NOTED_PAID whose confident payments leave a gap of £0.01 up to `check_payments.FEE_CAP` that is its whole balance, with at least 90% of the fee in (so never a deposit-only booking): "<ref>: £x short of £y — accept as transfer fees?", with the short-by-fees form. A hand check that qualifies stays one row with the form folded in, and a balance asked about this way isn't also in the balances row;
      - approvals waiting;
      - enquiries waiting over a day for a reply (status new, first seen more than 24 hours ago counting from the midnight that starts its first-seen date, London time, and no draft for its thread in the drafts cache), one grouped row with no names;
@@ -113,6 +113,7 @@ Under the header, every page has the **sync strip**: one line of chips (Bank, Bo
    - Also: today's and this week's events, with diary entries and money deadlines.
 2. **Bookings:** a list and filters (upcoming, past, state).
    - Each booking has a timeline: enquiry, quote, follow-ups, invoice (ledger and Books), payments (Starling), singers booked, singer bills, review request, and notes.
+   - Each recorded fact from the state log is a timeline item with its date, fixed words per kind and who recorded it ("you", "the assistant", "the migration"); one undone as a mistake stays, marked "undone on D"; the note clause a fact claims isn't shown again, and unclaimed clauses show as notes. A held booking shows its two readings by the resolve form, and its live facts each have "Undo".
    - Links open the Zoho thread and the Books invoice.
 3. **Enquiries (pipeline):** a board by status, follow-ups due, conversion rate, source mix, and a timeline per enquiry.
    - An enquiry's URL and page name it by a 12-letter hash of its id (`models.enquiry_key`, as drafts are named), never the Zoho thread id; an old `/enquiries/<thread id>` URL redirects (301, GET only, no side effect). Only a copied "draft a reply" handoff prompt carries the thread id, since Claude needs it.
@@ -123,7 +124,7 @@ Under the header, every page has the **sync strip**: one line of chips (Bank, Bo
    - singer invoices unpaid, as a pay list (`#singer-invoices`): the open invoices to a trusted account (confirmed by phone or paid to verifiably on any of the singer's invoices, or a Starling payee that already holds exactly these details), oldest first, with first name, amount, received date, Books bill number and ••••last4, each amount and bill number a copy button (no passkey), and the total; "Pay in the Starling app", once. Below it, "Ring first" (changed details) and "Confirm before paying" (new details, or none on the invoice), each with its reason; one Books already shows paid is named, not listed. Withdrawn and paid invoices never appear. Today's "Pay N singer invoices, £X" is exactly this list; ring-first invoices are their own rows, and the ones to confirm one grouped row;
    - Books receivables and bills;
    - monthly income against costs.
-5. **Singers:** a directory of name, payee status, bank check (••••last4 only), invoices, total paid, last booking and warnings.
+5. **Singers:** a directory of name, payee status, bank check (••••last4 only; "confirmed by phone on D", the day from the recorded fact or the note), invoices, total paid, last booking and warnings. A held invoice says so, with both readings.
 6. **Marketing:**
    - Ads spend by campaign;
    - cost per enquiry and per booking;
@@ -143,7 +144,8 @@ Under the header, every page has the **sync strip**: one line of chips (Bank, Bo
     - scheduled-task runs (last run, result, failures); the app has no local trigger for a task, so it explains: "Use Run now on the task in the Claude app (Routines)";
     - Starling selftest, Google ADC, the Zoho Mail and Books MCPs, Tailscale status and disk;
     - the fingerprint-key backup age;
-    - the last backup.
+    - the last backup;
+    - the state log (`~/lcs-private/events.jsonl`): its lines, when it was last written and whether its chain is whole, or what `events.py verify` would flag (unreadable, skipped lines, facts without their note, stale notes-checked hashes), as counts with no ids; "Apply the events migration" until it is applied.
 12. **To-do:** the owner-only items from `MANUAL-ACTIONS-REQUIRED.md` (parsed), with ticks stored locally.
 13. **Search:** one box across bookings, clients, singers, enquiries, invoice numbers and refs.
 14. **Handoffs (done):** copy-to-clipboard prompts for Claude Code Remote Control — no in-app chat, no server-side execution.
@@ -164,9 +166,12 @@ It needs a passkey (except the local records below) and is logged.
 
 | Action | Runs |
 |---|---|
-| Resolve hand check: paid in full / deposit kept / refunded / reinstated / cancelled / arranged | `check_payments.py --note <ref> "<fixed phrase> <date>"`. The owner-only phrases are allowed here, because the owner is the one acting. This path passes `--owner` and records the owner as the author. |
-| Confirm singer bank details | `singer_invoices.py confirm <id> --expect-fp <the whole 16-character fingerprint>` (refused if the details changed) |
-| Settle or withdraw a singer invoice | `singer_invoices.py settled <id> <date>` / `withdrawn <id> <reason>` |
+| Resolve hand check: paid in full / short by transfer fees / deposit kept / refunded / reinstated / cancelled / payment checked / arranged | `check_payments.py --fact <ref> <kind> --on <date> [--amount X / --method M] --owner` (structured state): the fact goes to the state log and its fixed phrase, with "(owner)", to the notes. The owner-only kinds are allowed here, because the owner is the one acting (the one-time nonce). |
+| Confirm singer bank details | `singer_invoices.py confirm <id> --expect-fp <the whole 16-character fingerprint> --owner` (refused if the details changed; the Command Centre's only, owner decision of 29 Sep 2026) |
+| Settle or withdraw a singer invoice | `singer_invoices.py settled <id> <date> --owner` / `withdrawn <id> <reason> --owner` |
+| Undo a recorded fact | `events.py retract <eid> --owner`: the fact stays in the state log as history and reads as never recorded; "earlier entry undone D (owner)" goes to the notes. Offered for each live fact on the booking and Singers pages (never a bank warning: confirm the details instead). |
+| The recorded facts are right | `events.py notes-checked <booking\|singer_invoice> <id> <clause hash>… --owner`, on a held booking or invoice, per family: the loose note clauses behind the notes' reading are claimed, so they stay in the notes but are read no more; "notes checked D (owner)" goes to the notes. Offered only where there are such clauses (a deleted claimed note is settled by Undo or by recording what the notes say). |
+| Apply the events migration | `events.py migrate --apply --expect <the dry run's sha256> --owner`, on Health, until it is applied. |
 | Approve an Ads change set | Run a proposal-aware `scripts/ads/*.py` from its commit on GitHub's main (the app's own mirror) with `--validate-only`, show the output (its first and last 3,000 characters, unmasked), then `--apply` from the same commit after a second tap; the script writes `logs/ads-changes.md` (`LCS_ADS_LOG`). It never goes above £5/day (the script refuses). |
 | Approve the 2026 Books import | Writes an approval record only (no script runs). Its handoff prompt, once the approval matches, tells the owner to open Claude Code Remote Control and run the owner-approved import under the guard. |
 | Mark the Books import done | Rewrites the approval record (atomically, every field kept) with `imported_at` and `status: "imported"`; only while the import is approved (or its dry run has moved on). No script runs and nothing reaches Books. |

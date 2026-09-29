@@ -115,6 +115,21 @@
 {% endif %}
 {% endmacro %}
 
+{#- A held booking or invoice (its notes and recorded facts disagree): each family's two readings side by side, and
+    "The recorded facts are right" (events.py notes-checked, after the passkey) where there are loose clauses to
+    confirm. `key`: the booking ref, or the invoice key. Never note text. #}
+{% macro held_panel(held, subject, key) %}
+{% if held %}
+<div class="held">
+  <ul class="plain held-readings">
+    {% for x in held %}<li><span class="badge warn">{{ x.family }}</span> the notes say {{ x.notes }}; the recorded facts say {{ x.facts }}
+      {% if x.clauses %}{{ action_button("notes-checked", "The recorded facts are right", {"subject": subject, "key": key, "family": x.family}, quiet=true, aria="The recorded facts are right: " ~ x.family) }}{% endif %}</li>{% endfor %}
+  </ul>
+  <p class="muted">If the notes are right instead, record what they say{% if subject == "booking" %} (Resolve){% endif %}, or undo the recorded fact.</p>
+</div>
+{% endif %}
+{% endmacro %}
+
 {#- `name`: the singer's first name when `s` has none of its own (a Singers-page invoice row). #}
 {% macro singer_forms(s, day, name=none) %}
 {% set who = name or s.first_name or "the singer" %}
@@ -154,7 +169,7 @@
   {% for h in items %}
     <tr role="row">
       <td role="cell" data-label="Ref" class="mono"><a href="/bookings/{{ h.ref }}">{{ h.ref }}</a></td>
-      <td role="cell" data-label="Why"><span class="badge {{ (h.state|state_tone) or 'warn' }}">{{ h.label }}</span>{% if h.reason %} <span class="why">{{ h.reason }}</span>{% endif %}</td>
+      <td role="cell" data-label="Why"><span class="badge {{ (h.state|state_tone) or 'warn' }}">{{ h.label }}</span>{% if h.reason %} <span class="why">{{ h.reason }}</span>{% endif %}{{ held_panel(h.held, "booking", h.ref) }}</td>
       <td role="cell" data-label="Value" class="num">{{ h.value|gbp }}</td>
       <td role="cell" data-label="Received" class="num">{% if bank_checked %}{{ h.received|gbp }}{% else %}not checked{% endif %}</td>
       <td role="cell" data-label="Action">{{ resolve_form(h.ref, day, fee=h.balance if (bank_checked and h.state in FEE.states and h.received) else none) }}</td>
@@ -222,6 +237,7 @@
   <li>
     <p><strong>{{ s.first_name }}</strong>, {{ s.amount|gbp }}, received {{ s.received|day }}{% if s.last4 %}, account <span class="mono">{{ s.last4|last4 }}</span>{% endif %}{% if s.payee %} <span class="muted">({{ s.payee }})</span>{% endif %}</p>
     <p><span class="badge {{ tone }}">{{ s.reason }}</span></p>
+    {{ held_panel(s.held, "singer_invoice", s.key) }}
     {{ singer_forms(s, day) }}
   </li>
   {% endfor %}
