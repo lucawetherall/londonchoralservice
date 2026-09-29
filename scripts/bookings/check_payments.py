@@ -19,13 +19,13 @@ Alma Consort Starling account, READ-ONLY (see lcs_money.StarlingReadOnly).
         to today (never after it, at most 730 days back). The owner's kinds (paid-in-full, fees-accepted --amount
         X, reinstated, deposit-kept, refunded, payment-checked) need --owner and the Command Centre's nonce, and
         write "… (owner)"
-    .venv/bin/python scripts/bookings/check_payments.py --note 2111 "paid per client email 2026-09-28"
-        (one line, at most 120 characters, no ';'; refuses the scripts' own phrases and the owner's hand-written
-        ones: paid in full, short by fees … accepted, deposit seen … (Starling), reminder/receipt drafted, deposit kept, refunded,
-        payment checked, reinstated and the like, review request …, and anything starting PENDING). Until the
-        prompts use --fact (NOTE_REFUSES_FACTS, plan Task 18), a note that states a cancellation, an arrangement or a
-        payment the client reported also records that fact, claiming the note (note_facts); then it refuses them
-        instead, naming the --fact form
+    .venv/bin/python scripts/bookings/check_payments.py --note 2111 "4 singers, London"
+        (free text only: one line, at most 120 characters, no ';'; refuses the scripts' own phrases and the owner's
+        hand-written ones: paid in full, short by fees … accepted, deposit seen … (Starling), reminder/receipt drafted, deposit kept, refunded,
+        payment checked, reinstated and the like, review request …, and anything starting PENDING. It also refuses
+        text that states a cancellation, an arrangement or a payment the client reported (NOTE_REFUSES_FACTS, owner
+        decision 29 Sep 2026), naming the --fact form to use instead: "record it with --fact 2111 cancelled;
+        nothing written")
     … --note 2111 "paid in full 2026-09-28" --owner
         (the Command Centre only, after the owner's passkey: allows the owner's phrases and records "(owner)";
         refused unless stdin is a pipe carrying the app's one-time nonce, see owner_confirmed)
@@ -394,9 +394,10 @@ PHRASES = {"paid-in-full": "paid in full {d}", "fees-accepted": "short by fees �
            ("arranged", "cheque"): "balance payable by cheque on the day (arranged {d})",
            ("arranged", "third-party"): "balance to be paid by another payer (arranged {d})"}
 AMOUNT_ARG = re.compile(r"\d{1,5}(?:\.\d{1,2})?")
-# question 3 (owner decision, 29 Sep 2026): --note refuses fact-shaped text, naming the --fact form. Off until the
-# prompts use --fact (plan, Task 18), so the assistant's --note lines keep working until then.
-NOTE_REFUSES_FACTS = False
+# question 3 (owner decision, 29 Sep 2026): --note refuses fact-shaped text, naming the --fact form, now that the
+# prompts use --fact (plan, Task 18); not the owner's --note. False would let the assistant's fact-shaped notes
+# through again, each recorded with the facts it states (note_facts), as in the interim.
+NOTE_REFUSES_FACTS = True
 
 
 def fact_phrase(kind, fields, day, by):
@@ -424,10 +425,10 @@ def fact_shaped(text):
 
 def note_facts(text, row, by, today):
     """The facts a --note's text states in the families --fact records (cancellation, arrangement, noted paid), read
-    with today's patterns against the row's value, each dated today: [(kind, fields, by, day)]. Until the prompts
-    use --fact (NOTE_REFUSES_FACTS off), --note records them claiming its note, so a later fact in the same family
-    never finds this clause unclaimed and holds the booking. Reinstated only for the owner (--note refuses it
-    otherwise)."""
+    with today's patterns against the row's value, each dated today: [(kind, fields, by, day)]. --note records them
+    claiming its note, so a later fact in the same family never finds this clause unclaimed and holds the booking:
+    the owner's --note (the assistant's fact-shaped text is refused while NOTE_REFUSES_FACTS is on). Reinstated only
+    for the owner (--note refuses it otherwise)."""
     said = assertions(text, money(row), today)
     out = []
     if said["cancellation"] is True:
@@ -989,6 +990,50 @@ def held(r, today=None, facts=None):
     return out
 
 
+def _day_words(d):
+    return f"{d.day} {d:%b %Y}"
+
+
+def reading_words(family, value):
+    """One family's reading (family_readings' shape) in fixed words for the owner's pages: never note text."""
+    if family == "cancellation":
+        return "cancelled" if value else "not cancelled"
+    if family == "close":
+        closed, fees = value
+        if not closed:
+            return "open"
+        return f"closed on {_day_words(closed)}" + "".join(f", £{x:,.2f} fees accepted on {_day_words(d)}"
+                                                           for d, x in fees)
+    if family == "cancel settlement":
+        return f"settled on {_day_words(value)}" if value else "not settled"
+    if family == "arrangement":
+        return "balance arranged" if value else "nothing arranged"
+    part, full = value  # noted paid
+    return "noted paid in full" if full else "noted part paid" if part else "nothing noted paid"
+
+
+def held_readings(r, today=None, facts=None):
+    """held()'s families, each with both readings side by side for the owner: [{family, notes, facts, clauses}], the
+    readings in fixed words (reading_words) and `clauses` the note hashes of the loose (unclaimed, not set aside)
+    clauses that speak to that family, the ones "The recorded facts are right" (events.py notes-checked) claims. A
+    family held only because a claimed clause was deleted by hand has no clause to confirm: [] (undo the fact, or
+    record what the notes now say). [] when the booking isn't held."""
+    today = today or lm.today()
+    f = facts_for(r, today, facts)
+    families = held(r, today, f)
+    if not families:
+        return []
+    readings, value = family_readings(r, today, f), money(r)
+    loose = [c for c in clauses(lcs_events.set_aside(r.get("notes"), f)) if lcs_events.note_hash(c) not in f.claims]
+    out = []
+    for fam in families:
+        notes_say, facts_say = readings[fam]
+        out.append({"family": fam, "notes": reading_words(fam, notes_say), "facts": reading_words(fam, facts_say),
+                    "clauses": [lcs_events.note_hash(c) for c in loose
+                                if assertions(c, value, today)[fam] is not None]})
+    return out
+
+
 def collect(client, rows, today):
     """[(row, paid, assessment)] in ledger order for every open booking, and for every cancelled or closed
     ("paid in full YYYY-MM-DD", "short by fees … accepted YYYY-MM-DD") booking with a payment that needs a hand
@@ -1080,8 +1125,6 @@ def main():
         by_note = "owner" if args.owner else "script"
         if "\n" in text or "\r" in text or len(text) > 120 or ";" in text:
             raise SystemExit("note text must be a single line, at most 120 characters, with no ';'")
-        if NOTE_REFUSES_FACTS and note_refusal(ref, text):
-            raise SystemExit(note_refusal(ref, text))
         if args.owner:
             if is_pending(text):
                 raise SystemExit("a note never starts with PENDING; nothing written")
@@ -1095,8 +1138,13 @@ def main():
         elif reserved_note(text):
             raise SystemExit("that phrase is the scripts' own or the owner's (he writes it in the ledger by hand); "
                              "nothing written")
-        # until the prompts use --fact, the facts the note states are recorded with it (note_facts)
-        append_note(ref, text, None if NOTE_REFUSES_FACTS else (lambda row: note_facts(text, row, by_note, today)))
+        elif NOTE_REFUSES_FACTS and note_refusal(ref, text):
+            # the assistant records a cancellation, an arrangement or a client's "paid" with --fact (question 3);
+            # the owner's --note (the Command Centre's nonce) is his own record and is not refused
+            raise SystemExit(note_refusal(ref, text))
+        # the facts a note states are recorded with it, claiming it (note_facts), so it never holds the booking: the
+        # owner's own phrases, or (NOTE_REFUSES_FACTS off) the assistant's; a refused text never gets here
+        append_note(ref, text, lambda row: note_facts(text, row, by_note, today))
         print(f"{ref}: note added")
         return
 

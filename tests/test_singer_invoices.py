@@ -116,7 +116,7 @@ def test_summary_counts():
     rows = [dict(unpaid("m1", "A B", 100, "2026-09-20"), bank_changed="yes"),
             dict(unpaid("m2", "C D", 50, "2026-09-26")),
             dict(unpaid("m3", "E F", 70, "2026-09-01"), paid_on="2026-09-02")]
-    assert si.summary(rows, datetime.date(2026, 9, 28)) == {"unpaid": 2, "unpaid_total": 150.0, "oldest_days": 8, "bank_changed": 1}
+    assert si.summary(rows, datetime.date(2026, 9, 28)) == {"unpaid": 2, "unpaid_total": 150.0, "oldest_days": 8, "held": 0, "bank_changed": 1}
 
 
 class FakeClient:

@@ -45,7 +45,7 @@ Whatever address and phone format GBP ends up with is the master. Copy it charac
 
 ## Bark / Add to Event (short bio)
 
-> The London Choral Service supplies professional singers, choirs, and instrumentalists for funerals, weddings, and Christmas events across the UK. Musicians from the Royal Academy and Royal College of Music; £5m public liability cover; a written quote with everything included. Soloist from £250, choirs from £1,150.
+> The London Choral Service supplies professional singers, choirs, and instrumentalists for funerals, weddings, and Christmas events across the UK. Musicians from the Royal Academy and Royal College of Music; public liability insurance; a written quote with everything included. Soloist from £250, choirs from £1,150.
 
 ## Hitched profile (wedding market, §2)
 
@@ -69,7 +69,7 @@ Whatever address and phone format GBP ends up with is the master. Copy it charac
 
 ## Yell listing (§2)
 
-> The London Choral Service provides professional singers, choirs, and instrumentalists for funerals, weddings, memorials, Christmas carol services, and corporate events across the UK. Conservatoire-trained musicians; £5m public liability cover; soloist from £250, choirs from £1,150. The operating name of Alma Consort Ltd.
+> The London Choral Service provides professional singers, choirs, and instrumentalists for funerals, weddings, memorials, Christmas carol services, and corporate events across the UK. Conservatoire-trained musicians; public liability insurance; soloist from £250, choirs from £1,150. The operating name of Alma Consort Ltd.
 
 ## GBP seasonal posts (§9.1)
 

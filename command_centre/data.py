@@ -172,7 +172,8 @@ class Data:
         bank = self.panel("bank", lambda rows: self.bank(rows, today), ledger)
         store = self.panel("singer_store", lambda: lm.read_csv(si.STORE))
         singers = self.panel("singers", open_singers, store)
-        hand = self.panel("hand_check", lambda b: models.hand_rows(b["assessments"], today, b["bank_checked"]), bank)
+        hand = self.panel("hand_check", lambda b, rows: models.hand_rows(b["assessments"], today, b["bank_checked"],
+                                                                         rows), bank, ledger)
         return now, today, ledger, bank, store, singers, hand
 
     def clear_caches(self):
@@ -331,8 +332,10 @@ class Data:
         margin = self.panel("booking_margin", lambda m: next((x for x in m if x["ref"] == ref), None),
                             self.margins(ledger, store), keep=False)
         facts = self.panel("booking_facts", lambda: models.live_facts("booking", ref), keep=False)
+        held = self.panel("booking_held", lambda rows: cp.held_readings(row, today) if row else [], ledger, keep=False)
         return {"stamp": stamp(now), "ref": ref, "booking": booking, "bank": bank, "parts": parts, "timeline": items,
-                "ledger": ledger, "books": books, "singer_list": singer_list, "margin": margin, "facts": facts}
+                "ledger": ledger, "books": books, "singer_list": singer_list, "margin": margin, "facts": facts,
+                "held": held}
 
     def enquiries_page(self):
         now = self.now()
@@ -471,6 +474,7 @@ class Data:
                   self.panel("check_fingerprint", lambda: sources.fingerprint_check(now)),
                   self.panel("check_backup", lambda: sources.backup_check(now)),
                   self.panel("check_disk", sources.disk_check),
+                  self.panel("check_state_log", sources.state_log_check, keep=False),
                   self.panel("check_branch", lambda: sources.branch_check(branch))]
         backup = self.panel("backup", lambda: sources.backup_status(now))
         migration = self.panel("migration", state_log_migrated, keep=False)

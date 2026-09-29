@@ -75,4 +75,7 @@ def singer_line(singer):
         line += f", oldest {plural(singer['oldest_days'], 'day')}"
     if singer["bank_changed"]:
         line += f" · BANK DETAILS CHANGED on {plural(singer['bank_changed'], 'invoice')}: ring before paying"
+    if singer.get("held"):
+        line += (f" · HELD on {plural(singer['held'], 'invoice')}: notes and recorded facts disagree, "
+                 "check in the Command Centre before paying")
     return line

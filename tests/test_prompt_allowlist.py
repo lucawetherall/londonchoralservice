@@ -298,6 +298,47 @@ def test_the_command_centre_caches_and_proposals_are_in_the_prompts():
     assert not allowed(f"{PY} scripts/reports/cc_sync.py calendar-put < /tmp/x | cat", allow_patterns())
 
 
+def check_payments_module():
+    sys.path.insert(0, os.path.join(ROOT, "scripts", "bookings"))
+    import check_payments
+    return check_payments
+
+
+def test_no_prompt_writes_a_fact_with_note():
+    """--note refuses text that states a cancellation, an arrangement or a client's payment (NOTE_REFUSES_FACTS,
+    owner decision 29 Sep 2026): the prompts record those with --fact, and every --fact they name is a kind the
+    script takes without --owner, with its field."""
+    cp = check_payments_module()
+    assert cp.NOTE_REFUSES_FACTS
+    blocks, scripts = appendix_blocks(), script_paths()
+    facts = []
+    for k, b in blocks.items():
+        for c in commands(b, scripts):
+            if " scripts/bookings/check_payments.py --note " in c:
+                m = re.search(r'--note X "([^"]*)"', c)
+                text = m.group(1) if m else "X"
+                assert cp.fact_shaped(text.replace("X", "2026-09-28")) is None, f"{k}: {c} is refused: use --fact"
+            if " scripts/bookings/check_payments.py --fact " in c:
+                facts.append((k, c))
+    kinds = {c.split()[4] for _, c in facts}
+    assert {"cancelled", "noted-paid"} <= kinds, facts
+    for k, c in facts:
+        kind = c.split()[4]
+        assert kind in cp.FACT_KINDS and kind not in cp.OWNER_FACTS and "--owner" not in c, (k, c)
+        want = cp.FACT_FIELDS.get(kind)
+        assert (f"--{want[0]} " in c) if want else not re.search(r"--(scope|method|amount)\b", c), (k, c)
+
+
+def test_the_prompts_name_the_fact_forms_where_the_plan_says():
+    blocks = appendix_blocks()
+    drafter, review = blocks["agent:lcs-reply-drafter"], blocks["agent:lcs-review-bookings"]
+    assert "check_payments.py --fact <invoice ref> cancelled --on <YYYY-MM-DD>" in drafter
+    for form in ("--fact <ref> cancelled --on <YYYY-MM-DD>", "--fact <ref> noted-paid --scope <part|full>",
+                 "--fact <ref> arranged --method <cash|cheque|third-party>"):
+        assert form in review, form
+    assert "--fact <invoice ref> noted-paid --scope <part|full>" in blocks["agent:lcs-daily-pass"]
+
+
 def test_extraction_handles_remarks_placeholders_and_continuations():
     scripts = script_paths()
     block = ("  .venv/bin/python scripts/bookings/singer_invoices.py scan <file> --message-id <id>   (fallback only)\n"
