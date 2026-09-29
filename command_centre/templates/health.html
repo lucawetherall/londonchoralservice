@@ -21,13 +21,13 @@
     <h2>Last runs</h2>
     {{ m.failed(proxies) }}
     {% if pr %}
-    <table class="table">
-      <thead><tr><th>What the runs write</th><th>Last changed</th></tr></thead>
-      <tbody>
+    <table class="table" role="table">
+      <thead role="rowgroup"><tr role="row"><th role="columnheader">What the runs write</th><th role="columnheader">Last changed</th></tr></thead>
+      <tbody role="rowgroup">
       {% for r in pr[0] %}
-        <tr>
-          <td data-label="File">{{ r.label }}</td>
-          <td data-label="Changed">{{ r.when|when }}{% if r.age %} <span class="muted">({{ r.age }})</span>{% endif %}{% if r.stale %} <span class="badge warn">stale</span>{% endif %}</td>
+        <tr role="row">
+          <td role="cell" data-label="File">{{ r.label }}</td>
+          <td role="cell" data-label="Changed">{{ r.when|when }}{% if r.age %} <span class="muted">({{ r.age }})</span>{% endif %}{% if r.stale %} <span class="badge warn">stale</span>{% endif %}</td>
         </tr>
       {% endfor %}
       </tbody>

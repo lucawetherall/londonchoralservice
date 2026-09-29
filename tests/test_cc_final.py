@@ -1377,7 +1377,7 @@ def test_money_pay_list_is_trusted_accounts_only_and_matches_today():
     pay_fixtures()
     c = make(FakeBank())
     card = singer_card(page(c, "/money"))
-    table = re.search(r'<table class="table pay-table">(.*?)</table>', card, re.S).group(1)
+    table = re.search(r'<table class="table pay-table"[^>]*>(.*?)</table>', card, re.S).group(1)
     names = re.findall(r'data-label="Singer">([^<]+)<', table)
     assert names == ["Ben", "Eve", "Ivy"], names  # trusted only, oldest first
     # each amount and bill number is a copy button (handoffs.js: no passkey, not an action form)

@@ -24,8 +24,16 @@
       <p class="need-text"><span class="badge bad">ring first</span> <strong>{{ s.first_name }}</strong>'s bank details changed (<span class="mono">{{ s.last4|last4 }}</span>): ring them on a number you already have before paying {{ s.amount|gbp }}.</p>
       {{ m.singer_forms(s, action_day) }}
     {% elif r.kind == "hand" %}{% set h = r.item %}
-      <p class="need-text"><span class="badge {{ (h.state|state_tone) or 'warn' }}">{{ h.label }}</span> <a class="mono" href="/bookings/{{ h.ref }}">{{ h.ref }}</a>, {{ h.value|gbp }}{% if checked %}, {{ h.received|gbp }} received{% endif %}: check it by hand.</p>
+      <p class="need-text"><span class="badge {{ (h.state|state_tone) or 'warn' }}">{{ h.label }}</span> <a class="mono" href="/bookings/{{ h.ref }}">{{ h.ref }}</a>: {{ h.reason or "check it by hand" }}{% if r.fee %}. Accept the {{ r.fee.gap|gbp }} as transfer fees?{% else %}.{% endif %}</p>
+      {% if r.fee %}{#- the likely answer up front; the other outcomes stay one tap away #}
+      {{ m.fee_form(h.ref, action_day, r.fee.gap, primary=true) }}
+      {{ m.resolve_form(h.ref, action_day) }}
+      {% else %}
       {{ m.resolve_form(h.ref, action_day, fee=h.balance if (checked and h.state in FEE.states and h.received) else none) }}
+      {% endif %}
+    {% elif r.kind == "fee" %}{% set f = r.item %}
+      <p class="need-text"><a class="mono" href="/bookings/{{ f.ref }}">{{ f.ref }}</a>: {{ f.gap|gbp }} short of {{ f.value|gbp }} — accept as transfer fees?</p>
+      {{ m.fee_form(f.ref, action_day, f.gap, primary=true) }}
     {% elif r.kind in ("deposits", "balances") %}
       <p class="need-text"><a href="/bookings?when=all&amp;state={{ r.state }}">{{ r.count }} {{ ("deposit" if r.count == 1 else "deposits") ~ " overdue" if r.kind == "deposits" else ("balance" if r.count == 1 else "balances") ~ " due" }}</a>: {% for ref in r.refs %}<a class="mono" href="/bookings/{{ ref }}">{{ ref }}</a>{{ ", " if not loop.last }}{% endfor %}. <span class="muted">The daily pass drafts the reminder; send it from Zoho.</span></p>
     {% elif r.kind == "approval" %}{% set p = r.item %}

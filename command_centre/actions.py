@@ -561,7 +561,7 @@ HAND_CHOICES = {  # choice -> (the owner's words in the preview, the ledger phra
 }
 FEE_CHOICE = "short-by-fees"
 # States in which the balance can be a transfer-fee shortfall: a confident payment in, the rest not in the bank
-FEE_STATES = ("DEPOSIT_SEEN", "BALANCE_DUE", "PAST_PART_PAID", "NOTED_PAID")
+FEE_STATES = models.FEE_STATES
 MONEY_RE = re.compile(r"^\d{1,2}(?:\.\d{1,2})?$")  # a plain amount in pounds: "12.40", "12.4", "5"
 HAND_BACK_DAYS = 730
 BANK_SOURCE = None  # create_app's data.Data reader (use_bank): its cached Starling read, the one the pages show

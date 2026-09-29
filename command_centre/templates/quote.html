@@ -37,9 +37,9 @@
     <div class="figures">
       <div class="figure"><span class="figure-label">Total</span><span class="figure-value">£{{ "{:,}".format(result.total) }}</span><span class="figure-note muted">{{ result.package.singers }} singer{{ "" if result.package.singers == 1 else "s" }}{% if organist %} and an organist{% endif %}</span></div>
     </div>
-    <table class="table">
-      <tbody>
-      {% for label, amount in result.lines %}<tr><td data-label="Item">{{ label }}</td><td data-label="Price" class="num">£{{ "{:,}".format(amount) }}</td></tr>{% endfor %}
+    <table class="table" role="table">
+      <tbody role="rowgroup">
+      {% for label, amount in result.lines %}<tr role="row"><td role="cell" data-label="Item">{{ label }}</td><td role="cell" data-label="Price" class="num">£{{ "{:,}".format(amount) }}</td></tr>{% endfor %}
       </tbody>
     </table>
     <p class="dialog-label">Wording to copy</p>

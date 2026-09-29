@@ -11,7 +11,7 @@
     {% if items %}
     <ul class="plain">
       {% for d in items %}
-      <li><a class="mono" href="/enquiries/{{ d.enquiry_id }}">{{ d.enquiry_id }}</a> · <span class="badge {{ 'bad' if d.kind == 'mark_lost' else 'warn' }}">{{ "mark lost" if d.kind == "mark_lost" else d.kind ~ " follow-up" }}</span></li>
+      <li><a class="mono" href="{{ d.enquiry_id|enquiry_href }}">{{ d.enquiry_id|enquiry_key }}</a> ·<span class="badge {{ 'bad' if d.kind == 'mark_lost' else 'warn' }}">{{ "mark lost" if d.kind == "mark_lost" else d.kind ~ " follow-up" }}</span></li>
       {% endfor %}
     </ul>
     <p class="muted">The enquiry assistant drafts these on its next run (never for funerals).</p>
@@ -25,16 +25,16 @@
     <h2>Conversion</h2>
     {{ m.failed(windows) }}
     {% if wins %}
-    <table class="table">
-      <thead><tr><th>Window</th><th class="num">Enquiries</th><th class="num">Quoted</th><th class="num">Booked</th><th class="num">Rate</th></tr></thead>
-      <tbody>
+    <table class="table" role="table">
+      <thead role="rowgroup"><tr role="row"><th role="columnheader">Window</th><th role="columnheader" class="num">Enquiries</th><th role="columnheader" class="num">Quoted</th><th role="columnheader" class="num">Booked</th><th role="columnheader" class="num">Rate</th></tr></thead>
+      <tbody role="rowgroup">
       {% for w in wins %}
-        <tr>
-          <td data-label="Window">{{ w.label }}</td>
-          <td data-label="Enquiries" class="num">{{ w.total }}</td>
-          <td data-label="Quoted" class="num">{{ w.quoted }}</td>
-          <td data-label="Booked" class="num">{{ w.confirmed }}</td>
-          <td data-label="Rate" class="num">{{ w.rate|pct if w.rate is not none else "–" }}</td>
+        <tr role="row">
+          <td role="cell" data-label="Window">{{ w.label }}</td>
+          <td role="cell" data-label="Enquiries" class="num">{{ w.total }}</td>
+          <td role="cell" data-label="Quoted" class="num">{{ w.quoted }}</td>
+          <td role="cell" data-label="Booked" class="num">{{ w.confirmed }}</td>
+          <td role="cell" data-label="Rate" class="num">{{ w.rate|pct if w.rate is not none else "–" }}</td>
         </tr>
       {% endfor %}
       </tbody>
@@ -66,8 +66,8 @@
   <section class="board-col" aria-label="{{ status }}">
     <h3>{{ status|replace("_", " ") }} <span class="muted">{{ cards|length }}</span></h3>
     {% for r in cards %}
-    <a class="board-card" href="/enquiries/{{ r.enquiry_id }}">
-      <span class="mono">{{ r.enquiry_id }}</span>
+    <a class="board-card" href="{{ r.enquiry_id|enquiry_href }}">
+      <span class="mono">{{ r.enquiry_id|enquiry_key }}</span>
       <span>{{ r.occasion or "occasion?" }}{% if r.event_date %} · {{ r.event_date|day }}{% endif %}</span>
       <span class="muted">{{ r.source or "source?" }}{% if r.quoted_gbp %} · {{ r.quoted_gbp|gbp }}{% endif %}</span>
     </a>

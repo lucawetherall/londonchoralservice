@@ -24,18 +24,18 @@
     </ul>
     {% endif %}
     <details{% if g.warnings %} open{% endif %}>
-      <summary>Invoices</summary>
-      <table class="table">
-        <thead><tr><th>Received</th><th>Bill number</th><th class="num">Amount</th><th>Paid</th><th>Bank</th><th>Action</th></tr></thead>
-        <tbody>
+      <summary>{{ g.first_name }}'s invoices</summary>
+      <table class="table" role="table">
+        <thead role="rowgroup"><tr role="row"><th role="columnheader">Received</th><th role="columnheader">Bill number</th><th role="columnheader" class="num">Amount</th><th role="columnheader">Paid</th><th role="columnheader">Bank</th><th role="columnheader">Action</th></tr></thead>
+        <tbody role="rowgroup">
         {% for i in g.invoices %}
-          <tr>
-            <td data-label="Received">{{ i.received|day if i.received else "?" }}</td>
-            <td data-label="Bill number" class="mono">{{ i.bill_number }}</td>
-            <td data-label="Amount" class="num">{{ i.amount|gbp }}</td>
-            <td data-label="Paid">{% if i.paid_on %}{{ i.paid_on|day }}{% if i.paid_amount %}, {{ i.paid_amount|gbp }}{% endif %}{% else %}<span class="badge warn">unpaid</span>{% endif %}</td>
-            <td data-label="Bank"><span class="mono">{{ i.last4|last4 }}</span>{% if i.ring_first %} <span class="badge bad">ring before paying</span>{% endif %}</td>
-            <td data-label="Action">{{ m.singer_forms(i, action_day) }}</td>
+          <tr role="row">
+            <td role="cell" data-label="Received">{{ i.received|day if i.received else "?" }}</td>
+            <td role="cell" data-label="Bill number" class="mono">{{ i.bill_number }}</td>
+            <td role="cell" data-label="Amount" class="num">{{ i.amount|gbp }}</td>
+            <td role="cell" data-label="Paid">{% if i.paid_on %}{{ i.paid_on|day }}{% if i.paid_amount %}, {{ i.paid_amount|gbp }}{% endif %}{% else %}<span class="badge warn">unpaid</span>{% endif %}</td>
+            <td role="cell" data-label="Bank"><span class="mono">{{ i.last4|last4 }}</span>{% if i.ring_first %} <span class="badge bad">ring before paying</span>{% endif %}</td>
+            <td role="cell" data-label="Action">{{ m.singer_forms(i, action_day, g.first_name) }}</td>
           </tr>
         {% endfor %}
         </tbody>

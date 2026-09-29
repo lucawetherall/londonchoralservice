@@ -14,18 +14,18 @@
 {% endmacro %}
 
 {% macro events_table(items) %}
-<table class="table">
-  <thead><tr><th>Date</th><th>Ref</th><th>Client</th><th>Occasion</th><th>Ensemble</th><th class="num">Value</th><th>Payment</th></tr></thead>
-  <tbody>
+<table class="table" role="table">
+  <thead role="rowgroup"><tr role="row"><th role="columnheader">Date</th><th role="columnheader">Ref</th><th role="columnheader">Client</th><th role="columnheader">Occasion</th><th role="columnheader">Ensemble</th><th role="columnheader" class="num">Value</th><th role="columnheader">Payment</th></tr></thead>
+  <tbody role="rowgroup">
   {% for u in items %}
-    <tr>
-      <td data-label="Date">{{ u.date|day }}</td>
-      <td data-label="Ref" class="mono">{{ u.ref }}</td>
-      <td data-label="Client">{{ u.first_name }}</td>
-      <td data-label="Occasion">{{ u.occasion }}</td>
-      <td data-label="Ensemble">{{ u.ensemble }}</td>
-      <td data-label="Value" class="num">{{ u.value|gbp }}</td>
-      <td data-label="Payment">{{ state_badge(u) }}</td>
+    <tr role="row">
+      <td role="cell" data-label="Date">{{ u.date|day }}</td>
+      <td role="cell" data-label="Ref" class="mono">{{ u.ref }}</td>
+      <td role="cell" data-label="Client">{{ u.first_name }}</td>
+      <td role="cell" data-label="Occasion">{{ u.occasion }}</td>
+      <td role="cell" data-label="Ensemble">{{ u.ensemble }}</td>
+      <td role="cell" data-label="Value" class="num">{{ u.value|gbp }}</td>
+      <td role="cell" data-label="Payment">{{ state_badge(u) }}</td>
     </tr>
   {% endfor %}
   </tbody>
@@ -36,7 +36,8 @@
     £0.01 to FEE.cap it adds the "short by transfer fees" form, its amount prefilled. The server checks it again. #}
 {% macro resolve_form(ref, day, open=false, fee=none) %}
 <details class="act"{% if open %} open{% endif %}>
-  <summary>Resolve</summary>
+  <summary>Resolve {{ ref }}</summary>
+  {% if fee is not none and 0.01 <= fee <= FEE.cap %}{{ fee_form(ref, day, fee) }}{% endif %}
   <form class="cc-action" data-action="resolve-hand-check">
     <input type="hidden" name="ref" value="{{ ref }}">
     <label class="field">What happened
@@ -45,19 +46,23 @@
       </select>
     </label>
     <label class="field">On <input type="date" name="date" value="{{ day }}" max="{{ day }}" required></label>
-    <button type="submit" class="button small">Check, then approve</button>
+    <button type="submit" class="button small" aria-label="Check, then approve: {{ ref }}">Check, then approve</button>
   </form>
-  {% if fee is not none and 0.01 <= fee <= FEE.cap %}
-  <form class="cc-action" data-action="resolve-hand-check">
-    <input type="hidden" name="ref" value="{{ ref }}">
-    <input type="hidden" name="choice" value="short-by-fees">
-    <input type="hidden" name="amount" value="{{ '%.2f'|format(fee) }}">
-    <p class="muted">Only {{ fee|gbp }} is missing: accept it as transfer fees and the booking reads paid in full.</p>
-    <label class="field">On <input type="date" name="date" value="{{ day }}" max="{{ day }}" required></label>
-    <button type="submit" class="button small quiet">Short by transfer fees ({{ fee|gbp }})</button>
-  </form>
-  {% endif %}
 </details>
+{% endmacro %}
+
+{#- The short-by-fees form on its own (the server checks the amount against the bank again: actions._fee_facts). #}
+{% macro fee_form(ref, day, fee, primary=false) %}
+<form class="cc-action fee-form" data-action="resolve-hand-check">
+  <input type="hidden" name="ref" value="{{ ref }}">
+  <input type="hidden" name="choice" value="short-by-fees">
+  <input type="hidden" name="amount" value="{{ '%.2f'|format(fee) }}">
+  <p class="muted">Only {{ fee|gbp }} is missing: accept it as transfer fees and the booking reads paid in full.</p>
+  <div class="form-row">
+    <label class="field">On <input type="date" name="date" value="{{ day }}" max="{{ day }}" required></label>
+    <button type="submit" class="button small{% if not primary %} quiet{% endif %}" aria-label="Short by transfer fees ({{ fee|gbp }}): {{ ref }}">Short by transfer fees ({{ fee|gbp }})</button>
+  </div>
+</form>
 {% endmacro %}
 
 {#- An inline SVG of bars and a line (models.bar_line_chart's geometry); no external library. #}
@@ -90,36 +95,39 @@
 <p class="muted">Not synced yet: the refresh job writes this once a day, in its first run after 07:00 (<span class="mono">cc_sync.py marketing</span>). Until then it is in the Monday report.</p>
 {% endmacro %}
 
-{% macro action_button(name, label, fields={}, quiet=false) %}
+{#- `aria`: the button's accessible name when the label alone lacks context (it starts with the visible label). #}
+{% macro action_button(name, label, fields={}, quiet=false, aria=none) %}
 <form class="cc-action inline" data-action="{{ name }}">
   {% for k, v in fields.items() %}<input type="hidden" name="{{ k }}" value="{{ v }}">{% endfor %}
-  <button type="submit" class="button small{% if quiet %} quiet{% endif %}">{{ label }}</button>
+  <button type="submit" class="button small{% if quiet %} quiet{% endif %}"{% if aria %} aria-label="{{ aria }}"{% endif %}>{{ label }}</button>
 </form>
 {% endmacro %}
 
-{% macro singer_forms(s, day) %}
+{#- `name`: the singer's first name when `s` has none of its own (a Singers-page invoice row). #}
+{% macro singer_forms(s, day, name=none) %}
+{% set who = name or s.first_name or "the singer" %}
 {% if s.key and (s.can_confirm or s.can_settle or s.can_withdraw) %}
 <details class="act">
-  <summary>Act</summary>
+  <summary>Act on {{ who }}'s invoice</summary>
   {% if s.can_confirm %}
   <form class="cc-action" data-action="singer-confirm">
     <input type="hidden" name="invoice" value="{{ s.key }}">
     <p class="muted">Only after ringing them on a number you already hold.</p>
-    <button type="submit" class="button small">Confirm bank details</button>
+    <button type="submit" class="button small" aria-label="Confirm bank details: {{ who }}">Confirm bank details</button>
   </form>
   {% endif %}
   {% if s.can_settle %}
   <form class="cc-action" data-action="singer-settled">
     <input type="hidden" name="invoice" value="{{ s.key }}">
     <label class="field">Paid by you on <input type="date" name="date" value="{{ day }}" max="{{ day }}" required></label>
-    <button type="submit" class="button small quiet">Mark paid</button>
+    <button type="submit" class="button small quiet" aria-label="Mark paid: {{ who }}">Mark paid</button>
   </form>
   {% endif %}
   {% if s.can_withdraw %}
   <form class="cc-action" data-action="singer-withdrawn">
     <input type="hidden" name="invoice" value="{{ s.key }}">
     <label class="field">Reason (one word) <input type="text" name="reason" value="not-ours" pattern="[a-z][a-z\-]{0,19}" required autocapitalize="off" spellcheck="false"></label>
-    <button type="submit" class="button small quiet">Withdraw</button>
+    <button type="submit" class="button small quiet" aria-label="Withdraw: {{ who }}">Withdraw</button>
   </form>
   {% endif %}
 </details>
@@ -127,16 +135,16 @@
 {% endmacro %}
 
 {% macro hand_table(items, bank_checked, day) %}
-<table class="table">
-  <thead><tr><th>Ref</th><th>Why</th><th class="num">Value</th><th class="num">Received</th><th>Action</th></tr></thead>
-  <tbody>
+<table class="table" role="table">
+  <thead role="rowgroup"><tr role="row"><th role="columnheader">Ref</th><th role="columnheader">Why</th><th role="columnheader" class="num">Value</th><th role="columnheader" class="num">Received</th><th role="columnheader">Action</th></tr></thead>
+  <tbody role="rowgroup">
   {% for h in items %}
-    <tr>
-      <td data-label="Ref" class="mono"><a href="/bookings/{{ h.ref }}">{{ h.ref }}</a></td>
-      <td data-label="Why"><span class="badge {{ (h.state|state_tone) or 'warn' }}">{{ h.label }}</span></td>
-      <td data-label="Value" class="num">{{ h.value|gbp }}</td>
-      <td data-label="Received" class="num">{% if bank_checked %}{{ h.received|gbp }}{% else %}not checked{% endif %}</td>
-      <td data-label="Action">{{ resolve_form(h.ref, day, fee=h.balance if (bank_checked and h.state in FEE.states and h.received) else none) }}</td>
+    <tr role="row">
+      <td role="cell" data-label="Ref" class="mono"><a href="/bookings/{{ h.ref }}">{{ h.ref }}</a></td>
+      <td role="cell" data-label="Why"><span class="badge {{ (h.state|state_tone) or 'warn' }}">{{ h.label }}</span>{% if h.reason %} <span class="why">{{ h.reason }}</span>{% endif %}</td>
+      <td role="cell" data-label="Value" class="num">{{ h.value|gbp }}</td>
+      <td role="cell" data-label="Received" class="num">{% if bank_checked %}{{ h.received|gbp }}{% else %}not checked{% endif %}</td>
+      <td role="cell" data-label="Action">{{ resolve_form(h.ref, day, fee=h.balance if (bank_checked and h.state in FEE.states and h.received) else none) }}</td>
     </tr>
   {% endfor %}
   </tbody>
@@ -144,19 +152,19 @@
 {% endmacro %}
 
 {% macro singers_table(items, day) %}
-<table class="table">
-  <thead><tr><th>Received</th><th>Singer</th><th class="num">Amount</th><th>Payee</th><th>Bank</th><th>Action</th></tr></thead>
-  <tbody>
+<table class="table" role="table">
+  <thead role="rowgroup"><tr role="row"><th role="columnheader">Received</th><th role="columnheader">Singer</th><th role="columnheader" class="num">Amount</th><th role="columnheader">Payee</th><th role="columnheader">Bank</th><th role="columnheader">Action</th></tr></thead>
+  <tbody role="rowgroup">
   {% for s in items %}
-    <tr>
-      <td data-label="Received">{{ s.received|day }}</td>
-      <td data-label="Singer">{{ s.first_name }}</td>
-      <td data-label="Amount" class="num">{{ s.amount|gbp }}</td>
-      <td data-label="Payee">{{ s.payee or "new payee" }}</td>
-      <td data-label="Bank"><span class="mono">{{ s.last4|last4 }}</span>
+    <tr role="row">
+      <td role="cell" data-label="Received">{{ s.received|day }}</td>
+      <td role="cell" data-label="Singer">{{ s.first_name }}</td>
+      <td role="cell" data-label="Amount" class="num">{{ s.amount|gbp }}</td>
+      <td role="cell" data-label="Payee">{{ s.payee or "new payee" }}</td>
+      <td role="cell" data-label="Bank"><span class="mono">{{ s.last4|last4 }}</span>
         {% if s.ring_first %} <span class="badge bad">changed: ring before paying</span>
         {% elif s.bank_changed %} <span class="badge ok">changed, {{ s.bank_trust or "confirmed by phone" }}</span>{% endif %}</td>
-      <td data-label="Action">{{ singer_forms(s, day) }}</td>
+      <td role="cell" data-label="Action">{{ singer_forms(s, day) }}</td>
     </tr>
   {% endfor %}
   </tbody>
@@ -171,23 +179,23 @@
 
 {#- The pay list: open invoices to a trusted account, oldest first (models.singer_pay_list's "pay"). #}
 {% macro pay_table(items, total, day) %}
-<table class="table pay-table">
-  <thead><tr><th>Received</th><th>Singer</th><th class="num">Amount</th><th>Bill number</th><th>Account</th><th>Action</th></tr></thead>
-  <tbody>
+<table class="table pay-table" role="table">
+  <thead role="rowgroup"><tr role="row"><th role="columnheader">Received</th><th role="columnheader">Singer</th><th role="columnheader" class="num">Amount</th><th role="columnheader">Bill number</th><th role="columnheader">Account</th><th role="columnheader">Action</th></tr></thead>
+  <tbody role="rowgroup">
   {% for s in items %}
-    <tr>
-      <td data-label="Received">{{ s.received|day }}</td>
-      <td data-label="Singer">{{ s.first_name }}</td>
-      <td data-label="Amount" class="num">{{ copy_value("%.2f"|format(s.amount), s.amount|gbp, "amount") }}</td>
-      <td data-label="Bill number">{{ copy_value(s.bill_number, s.bill_number, "bill number") }}</td>
-      <td data-label="Account"><span class="mono">{{ s.last4|last4 }}</span> <span class="badge ok">{{ s.trust }}</span></td>
-      <td data-label="Action">{{ singer_forms(s, day) }}</td>
+    <tr role="row">
+      <td role="cell" data-label="Received">{{ s.received|day }}</td>
+      <td role="cell" data-label="Singer">{{ s.first_name }}</td>
+      <td role="cell" data-label="Amount" class="num">{{ copy_value("%.2f"|format(s.amount), s.amount|gbp, "amount") }}</td>
+      <td role="cell" data-label="Bill number">{{ copy_value(s.bill_number, s.bill_number, "bill number") }}</td>
+      <td role="cell" data-label="Account"><span class="mono">{{ s.last4|last4 }}</span> <span class="badge ok">{{ s.trust }}</span></td>
+      <td role="cell" data-label="Action">{{ singer_forms(s, day) }}</td>
     </tr>
   {% endfor %}
-    <tr class="total">
-      <td class="pay-total-label" colspan="2">Total, {{ items|length }} {{ "invoice" if items|length == 1 else "invoices" }}</td>
-      <td data-label="Amount" class="num">{{ copy_value("%.2f"|format(total), total|gbp, "total") }}</td>
-      <td class="pay-blank" colspan="3"></td>
+    <tr role="row" class="total">
+      <td role="cell" class="pay-total-label" colspan="2">Total, {{ items|length }} {{ "invoice" if items|length == 1 else "invoices" }}</td>
+      <td role="cell" data-label="Amount" class="num">{{ copy_value("%.2f"|format(total), total|gbp, "total") }}</td>
+      <td role="cell" class="pay-blank" colspan="3"></td>
     </tr>
   </tbody>
 </table>

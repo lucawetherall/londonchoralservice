@@ -39,7 +39,7 @@
   <ul class="results">
     {% for d in devices.value %}
     <li><span class="mono">{{ d.id }}</span> <span class="muted">{{ d.service }}{% if d.added %}, added {{ d.added|when }}{% endif %}</span>
-      {{ m.action_button("push-unsubscribe", "Remove", {"id": d.id}, quiet=true) }}</li>
+      {{ m.action_button("push-unsubscribe", "Remove this device", {"id": d.id}, quiet=true, aria="Remove this device (" ~ d.service ~ ", " ~ d.id ~ ")") }}</li>
     {% endfor %}
   </ul>
   {% elif devices.ok %}<p class="muted">No device gets notifications yet.</p>{% endif %}

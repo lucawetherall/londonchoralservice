@@ -24,16 +24,16 @@
     <h2>Last four weeks</h2>
     {{ m.failed(weeks) }}
     {% if w and w.weeks %}
-    <table class="table">
-      <thead><tr><th>Week of</th><th class="num">Spend</th><th class="num">Clicks</th><th class="num">Enquiries</th><th class="num">Per enquiry</th></tr></thead>
-      <tbody>
+    <table class="table" role="table">
+      <thead role="rowgroup"><tr role="row"><th role="columnheader">Week of</th><th role="columnheader" class="num">Spend</th><th role="columnheader" class="num">Clicks</th><th role="columnheader" class="num">Enquiries</th><th role="columnheader" class="num">Per enquiry</th></tr></thead>
+      <tbody role="rowgroup">
       {% for r in w.weeks %}
-        <tr>
-          <td data-label="Week of">{{ r.week_start|day }}</td>
-          <td data-label="Spend" class="num">{{ r.spend|gbp }}</td>
-          <td data-label="Clicks" class="num">{{ r.clicks }}</td>
-          <td data-label="Enquiries" class="num">{{ "–" if r.enquiries is none else r.enquiries }}</td>
-          <td data-label="Per enquiry" class="num">{{ r.cpe|gbp_or_dash }}</td>
+        <tr role="row">
+          <td role="cell" data-label="Week of">{{ r.week_start|day }}</td>
+          <td role="cell" data-label="Spend" class="num">{{ r.spend|gbp }}</td>
+          <td role="cell" data-label="Clicks" class="num">{{ r.clicks }}</td>
+          <td role="cell" data-label="Enquiries" class="num">{{ "–" if r.enquiries is none else r.enquiries }}</td>
+          <td role="cell" data-label="Per enquiry" class="num">{{ r.cpe|gbp_or_dash }}</td>
         </tr>
       {% endfor %}
       </tbody>
@@ -60,19 +60,19 @@
   <h2>Season by campaign{% if s and s.start %} <span class="muted">since {{ s.start|day }}</span>{% endif %}</h2>
   {{ m.failed(season) }}
   {% if s %}
-  <table class="table">
-    <thead><tr><th>Campaign</th><th class="num">Spend</th><th class="num">Clicks</th><th class="num">Enquiries</th><th class="num">Bookings</th><th class="num">Booked</th><th class="num">Per enquiry</th><th class="num">Per booking</th></tr></thead>
-    <tbody>
+  <table class="table" role="table">
+    <thead role="rowgroup"><tr role="row"><th role="columnheader">Campaign</th><th role="columnheader" class="num">Spend</th><th role="columnheader" class="num">Clicks</th><th role="columnheader" class="num">Enquiries</th><th role="columnheader" class="num">Bookings</th><th role="columnheader" class="num">Booked</th><th role="columnheader" class="num">Per enquiry</th><th role="columnheader" class="num">Per booking</th></tr></thead>
+    <tbody role="rowgroup">
     {% for r in s.campaigns + [s.total] %}
       <tr{% if loop.last %} class="total"{% endif %}>
-        <td data-label="Campaign">{{ r.campaign }}</td>
-        <td data-label="Spend" class="num">{{ r.spend_gbp|gbp_or_dash }}</td>
-        <td data-label="Clicks" class="num">{{ "–" if r.clicks is none else r.clicks|int }}</td>
-        <td data-label="Enquiries" class="num">{{ "–" if r.enquiries is none else r.enquiries|int }}</td>
-        <td data-label="Bookings" class="num">{{ "–" if r.bookings is none else r.bookings|int }}</td>
-        <td data-label="Booked" class="num">{{ r.booked_gbp|gbp_or_dash }}</td>
-        <td data-label="Per enquiry" class="num">{{ r.cost_per_enquiry|gbp_or_dash }}</td>
-        <td data-label="Per booking" class="num">{{ r.cost_per_booking|gbp_or_dash }}</td>
+        <td role="cell" data-label="Campaign">{{ r.campaign }}</td>
+        <td role="cell" data-label="Spend" class="num">{{ r.spend_gbp|gbp_or_dash }}</td>
+        <td role="cell" data-label="Clicks" class="num">{{ "–" if r.clicks is none else r.clicks|int }}</td>
+        <td role="cell" data-label="Enquiries" class="num">{{ "–" if r.enquiries is none else r.enquiries|int }}</td>
+        <td role="cell" data-label="Bookings" class="num">{{ "–" if r.bookings is none else r.bookings|int }}</td>
+        <td role="cell" data-label="Booked" class="num">{{ r.booked_gbp|gbp_or_dash }}</td>
+        <td role="cell" data-label="Per enquiry" class="num">{{ r.cost_per_enquiry|gbp_or_dash }}</td>
+        <td role="cell" data-label="Per booking" class="num">{{ r.cost_per_booking|gbp_or_dash }}</td>
       </tr>
     {% endfor %}
     </tbody>
@@ -96,8 +96,8 @@
       {% if p.applied %}<p><span class="badge ok">applied</span></p>
       {% elif p.problem %}<p><span class="badge bad">can't run</span> {{ p.problem }}</p>
       {% else %}
-      {{ m.action_button("ads-validate", "Check with Google (validate only)", {"proposal": p.id}) }}
-      {% if p.validated %}{{ m.action_button("ads-apply", "Apply this change set", {"proposal": p.id}) }}{% endif %}
+      {{ m.action_button("ads-validate", "Check with Google (validate only)", {"proposal": p.id}, aria="Check with Google (validate only): " ~ p.title) }}
+      {% if p.validated %}{{ m.action_button("ads-apply", "Apply this change set", {"proposal": p.id}, aria="Apply this change set: " ~ p.title) }}{% endif %}
       {% endif %}
     </li>
     {% endfor %}
@@ -112,18 +112,18 @@
   {{ m.failed(market) }}
   {% if mk %}
   {% if mk.terms %}
-  <table class="table">
-    <thead><tr><th>Term</th><th>Campaign</th><th class="num">Clicks 7 days</th><th class="num">Clicks 28 days</th><th class="num">Cost 7 days</th><th class="num">Cost 28 days</th><th>Why flagged</th></tr></thead>
-    <tbody>
+  <table class="table" role="table">
+    <thead role="rowgroup"><tr role="row"><th role="columnheader">Term</th><th role="columnheader">Campaign</th><th role="columnheader" class="num">Clicks 7 days</th><th role="columnheader" class="num">Clicks 28 days</th><th role="columnheader" class="num">Cost 7 days</th><th role="columnheader" class="num">Cost 28 days</th><th role="columnheader">Why flagged</th></tr></thead>
+    <tbody role="rowgroup">
     {% for t in mk.terms %}
-      <tr>
-        <td data-label="Term">{{ t.term }}</td>
-        <td data-label="Campaign">{{ t.campaign }}</td>
-        <td data-label="Clicks 7 days" class="num">{{ t.clicks_7 }}</td>
-        <td data-label="Clicks 28 days" class="num">{{ t.clicks_28 }}</td>
-        <td data-label="Cost 7 days" class="num">{{ t.cost_7|gbp }}</td>
-        <td data-label="Cost 28 days" class="num">{{ t.cost_28|gbp }}</td>
-        <td data-label="Why flagged">{{ t.why }}</td>
+      <tr role="row">
+        <td role="cell" data-label="Term">{{ t.term }}</td>
+        <td role="cell" data-label="Campaign">{{ t.campaign }}</td>
+        <td role="cell" data-label="Clicks 7 days" class="num">{{ t.clicks_7 }}</td>
+        <td role="cell" data-label="Clicks 28 days" class="num">{{ t.clicks_28 }}</td>
+        <td role="cell" data-label="Cost 7 days" class="num">{{ t.cost_7|gbp }}</td>
+        <td role="cell" data-label="Cost 28 days" class="num">{{ t.cost_28|gbp }}</td>
+        <td role="cell" data-label="Why flagged">{{ t.why }}</td>
       </tr>
     {% endfor %}
     </tbody>
@@ -139,17 +139,17 @@
   {{ m.failed(market) }}
   {% if mk %}
   {% if mk.shortlist["items"] %}
-  <table class="table">
-    <thead><tr><th>Query</th><th>Page</th><th class="num">Position</th><th class="num">Impressions</th><th class="num">Clicks</th><th>Suggested fix</th></tr></thead>
-    <tbody>
+  <table class="table" role="table">
+    <thead role="rowgroup"><tr role="row"><th role="columnheader">Query</th><th role="columnheader">Page</th><th role="columnheader" class="num">Position</th><th role="columnheader" class="num">Impressions</th><th role="columnheader" class="num">Clicks</th><th role="columnheader">Suggested fix</th></tr></thead>
+    <tbody role="rowgroup">
     {% for s in mk.shortlist["items"] %}
-      <tr>
-        <td data-label="Query">{{ s.query }}</td>
-        <td data-label="Page" class="mono">{{ s.page }}</td>
-        <td data-label="Position" class="num">{{ "–" if s.position is none else "%.1f"|format(s.position) }}</td>
-        <td data-label="Impressions" class="num">{{ s.impressions }}</td>
-        <td data-label="Clicks" class="num">{{ s.clicks }}</td>
-        <td data-label="Suggested fix">{{ s.fix }}</td>
+      <tr role="row">
+        <td role="cell" data-label="Query">{{ s.query }}</td>
+        <td role="cell" data-label="Page" class="mono">{{ s.page }}</td>
+        <td role="cell" data-label="Position" class="num">{{ "–" if s.position is none else "%.1f"|format(s.position) }}</td>
+        <td role="cell" data-label="Impressions" class="num">{{ s.impressions }}</td>
+        <td role="cell" data-label="Clicks" class="num">{{ s.clicks }}</td>
+        <td role="cell" data-label="Suggested fix">{{ s.fix }}</td>
       </tr>
     {% endfor %}
     </tbody>
@@ -169,16 +169,16 @@
   {{ m.bar_line_chart(lc, "leads", "Weekly form enquiries (bars) and WhatsApp or email taps (line)",
      "The last " ~ (lc.bars|length) ~ " full weeks; the most form enquiries in a week was " ~ lc.top_label ~ ", the most taps " ~ lc.max_line ~ ".",
      "0", "form enquiries", "WhatsApp and email taps (scaled to the busiest week)") }}
-  <table class="table">
-    <thead><tr><th>Week of</th><th class="num">Form</th><th class="num">WhatsApp</th><th class="num">Email</th><th class="num">Call</th></tr></thead>
-    <tbody>
+  <table class="table" role="table">
+    <thead role="rowgroup"><tr role="row"><th role="columnheader">Week of</th><th role="columnheader" class="num">Form</th><th role="columnheader" class="num">WhatsApp</th><th role="columnheader" class="num">Email</th><th role="columnheader" class="num">Call</th></tr></thead>
+    <tbody role="rowgroup">
     {% for w in mk.lead_weeks|reverse %}
-      <tr>
-        <td data-label="Week of">{{ w.week_start|day }}</td>
-        <td data-label="Form" class="num">{{ w.form }}</td>
-        <td data-label="WhatsApp" class="num">{{ w.whatsapp }}</td>
-        <td data-label="Email" class="num">{{ w.email }}</td>
-        <td data-label="Call" class="num">{{ w.call }}</td>
+      <tr role="row">
+        <td role="cell" data-label="Week of">{{ w.week_start|day }}</td>
+        <td role="cell" data-label="Form" class="num">{{ w.form }}</td>
+        <td role="cell" data-label="WhatsApp" class="num">{{ w.whatsapp }}</td>
+        <td role="cell" data-label="Email" class="num">{{ w.email }}</td>
+        <td role="cell" data-label="Call" class="num">{{ w.call }}</td>
       </tr>
     {% endfor %}
     </tbody>

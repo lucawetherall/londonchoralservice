@@ -2061,7 +2061,9 @@ def test_hand_check_list_offers_short_by_fees_on_a_past_part_paid_booking():
     for path in ("/money", "/"):
         out = page(c, path)
         assert "/bookings/0909" in out and 'name="amount" value="9.00"' in out, path
-        assert 'name="amount" value="12.40"' not in out, path  # 2408 isn't a hand check
+    # 2408 isn't a hand check: Money doesn't list it; Today asks about its £12.40 as a fee shortfall (98.7% in)
+    assert 'name="amount" value="12.40"' not in page(c, "/money")
+    assert 'name="amount" value="12.40"' in page(c, "/")
     cleaned = actions.RESOLVE_HAND_CHECK.validate({"ref": "0909", "choice": "short-by-fees", "date": D, "amount": "9"})
     assert cleaned["phrase"] == f"short by fees £9.00 accepted {D}"
 

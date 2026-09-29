@@ -140,6 +140,7 @@ def make_env():
     env.filters.update(gbp=gbp, day=day, london_day=london_day, last4=last4, state_words=state_words,
                        state_tone=state_tone, gbp_or_dash=gbp_or_dash, when=when, pct=models.rate)
     env.filters.update(masked=lambda v: actions.DIGITS_RE.sub("••••••", str(v)))
+    env.filters.update(enquiry_key=models.enquiry_key, enquiry_href=models.enquiry_href)
     env.globals.update(NAV=NAV, TABS=TABS, HTMX_CONFIG=HTMX_CONFIG, current=current,
                        HAND_CHOICES=HAND_CHOICES, FEE=FEE)
     return env
@@ -273,14 +274,19 @@ def create_app(client_factory=data.default_client, now=None, clock=None, passkey
                 continue
             seen.add(eid)
             prompt = models.draft_reply_prompt(eid)
-            if prompt:
-                reply_prompts.append((eid, prompt))
+            if prompt:  # the picker shows the enquiry's key; only the copied prompt names the thread
+                reply_prompts.append((models.enquiry_key(eid), prompt))
         return render(request, "enquiries.html", title="Enquiries",
                       handoffs={"reply": reply_prompts}, **ctx)
 
     def enquiry(request):
-        eid = request.path_params["eid"]
-        return page_or_404(request, "enquiry.html", reader.enquiry_page(eid), title=f"Enquiry {eid}")
+        """/enquiries/<key> (models.enquiry_key). An old URL with the raw thread id redirects to its key's URL: a
+        GET with no side effect, and the thread id never appears in the page."""
+        key = request.path_params["eid"]
+        ctx = reader.enquiry_page(key)
+        if ctx is not None and "redirect" in ctx:
+            return RedirectResponse(ctx["redirect"], status_code=301)
+        return page_or_404(request, "enquiry.html", ctx, title=f"Enquiry {key}")
 
     def singers(request):
         return render(request, "singers.html", title="Singers", **reader.singers_page())

@@ -32,19 +32,22 @@
 {% if g %}
 <h2 class="cal-title">{{ g.title }}</h2>
 {% if view == "month" %}
-<div class="cal-grid" role="grid" aria-label="{{ g.title }}">
-  <div class="cal-row cal-head" role="row">
-    {% for d in ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"] %}<span class="cal-dow" role="columnheader">{{ d }}</span>{% endfor %}
+{#- The month grid (from 720px; the agenda below is the phone's view): plain boxes, not an ARIA grid, since it has no
+    grid keyboard behaviour. Each day number opens that week, and each entry is shown in full; a booking's or an
+    enquiry's entry links to it. #}
+<div class="cal-grid" role="group" aria-label="{{ g.title }}">
+  <div class="cal-row cal-head" aria-hidden="true">
+    {% for d in ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"] %}<span class="cal-dow">{{ d }}</span>{% endfor %}
   </div>
   {% for week in g.weeks %}
-  <div class="cal-row" role="row">
+  <div class="cal-row">
     {% for d in week %}
-    <div class="cal-cell{% if not d.in_range %} cal-out{% endif %}{% if d.today %} cal-today{% endif %}" role="gridcell">
-      <a class="cal-num" href="/calendar?view=week&amp;date={{ d.date.isoformat() }}">{{ d.date.day }}</a>
-      {% for i in d.entries[:4] %}
-      <span class="cal-item k-{{ i.kind }}" title="{{ i.text }}">{{ i.text }}</span>
+    <div class="cal-cell{% if not d.in_range %} cal-out{% endif %}{% if d.today %} cal-today{% endif %}">
+      <a class="cal-num" href="/calendar?view=week&amp;date={{ d.date.isoformat() }}" aria-label="{{ d.date.isoformat()|day }}{% if d.today %}, today{% endif %}{% if d.entries %}, {{ d.entries|length }} {{ 'entry' if d.entries|length == 1 else 'entries' }}{% endif %}: open the week">{{ d.date.day }}</a>
+      {% for i in d.entries %}
+      {% if i.href %}<a class="cal-item k-{{ i.kind }}" href="{{ i.href }}">{{ i.text }}</a>
+      {% else %}<span class="cal-item k-{{ i.kind }}">{{ i.text }}</span>{% endif %}
       {% endfor %}
-      {% if d.entries|length > 4 %}<span class="muted cal-more">+{{ d.entries|length - 4 }} more</span>{% endif %}
     </div>
     {% endfor %}
   </div>

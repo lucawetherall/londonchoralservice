@@ -19,7 +19,7 @@ REPO = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO / "scripts" / "reports"))
 import dashboard as dash  # noqa: E402
 
-cp, lm, pl, si = dash.cp, dash.lm, dash.pl, dash.si
+cp, lm, pl, si, mr = dash.cp, dash.lm, dash.pl, dash.si, dash.mr
 
 BALANCE_DAYS = 3  # check_payments' BALANCE_DUE: the balance falls due three days before the event
 DEPOSIT_STATES = {"AWAITING_DEPOSIT", "DEPOSIT_OVERDUE"}
@@ -40,6 +40,20 @@ def invoice_key(message_id):
     page never carries the id (a long digit run) and the server looks the invoice up again from the store."""
     digest = hashlib.sha256(("lcs-cc-invoice:" + str(message_id or "")).encode("utf-8")).digest()
     return "".join(chr(97 + b % 26) for b in digest[:12])
+
+
+ENQUIRY_KEY_RE = re.compile(r"^[a-z]{12}$")
+
+
+def enquiry_key(enquiry_id):
+    """An enquiry's handle in the app's URLs and pages: 12 lower-case letters from sha256 of its id (the Zoho thread
+    id, a long digit run), as drafts.draft_key does for a draft, so no thread id reaches a URL or a page."""
+    digest = hashlib.sha256(("lcs-cc-enquiry:" + str(enquiry_id or "")).encode("utf-8")).digest()
+    return "".join(chr(97 + b % 26) for b in digest[:12])
+
+
+def enquiry_href(enquiry_id):
+    return f"/enquiries/{enquiry_key(enquiry_id)}"
 
 
 def singer_actions(r):
@@ -236,9 +250,9 @@ def ledger_timeline(row, booking, today):
 def enquiry_items(r, today, prefix=""):
     """An enquiry's timeline items (pipeline row): first seen, quotes, follow-ups, next follow-up, event."""
     eid = r.get("enquiry_id", "")
-    href = f"/enquiries/{eid}"
+    href = enquiry_href(eid)
     out = [item(to_date(r.get("first_seen")), "enquiry",
-                f"{prefix}Enquiry {eid} by {r.get('source') or 'unknown source'}"
+                f"{prefix}Enquiry {enquiry_key(eid)} by {r.get('source') or 'unknown source'}"
                 + (f", {r.get('occasion')}" if r.get("occasion") else ""), href)]
     quotes = sorted({d for d in (to_date(x) for x in pl.QUOTED_NOTE.findall(r.get("notes") or "")) if d})
     for i, d in enumerate(quotes):
@@ -476,6 +490,87 @@ def singer_bill_flags(store_rows, bills):
 
 # ---------------------------------------------------------------- Today: what needs the owner
 
+# States in which the balance can be a transfer-fee shortfall: a confident payment in, the rest not in the bank
+# (actions.FEE_STATES is this tuple: the short-by-fees check and the pages agree)
+FEE_STATES = ("DEPOSIT_SEEN", "BALANCE_DUE", "PAST_PART_PAID", "NOTED_PAID")
+FEE_SHARE = 0.9  # Today asks about a shortfall only once at least 90% of the fee is in (never a deposit-only booking)
+
+
+def _gbp(value):
+    return f"£{float(value or 0):,.2f}"
+
+
+def _on(day):
+    d = to_date(str(day or "")[:10])
+    return f"{d.day} {d:%b}" if d else "an unknown date"
+
+
+def fee_shortfall(a, bank_checked):
+    """The transfer-fee question for one assessment (check_payments.assess), or None: the bank was checked, the
+    state is one of FEE_STATES, the confident payments leave a gap of £0.01 up to check_payments.FEE_CAP that is
+    the whole remaining balance (value - received), and at least FEE_SHARE of the fee is in. {ref, gap, value,
+    received, state}."""
+    if not bank_checked or not a or a.get("state") not in FEE_STATES:
+        return None
+    value, received = float(a.get("value") or 0), float(a.get("received") or 0)
+    gap, balance = round(value - received, 2), round(float(a.get("balance") or 0), 2)
+    if value <= 0 or received <= 0 or abs(gap - balance) > 0.005:
+        return None
+    if not 0.01 <= gap <= cp.FEE_CAP or received + 0.005 < FEE_SHARE * value:
+        return None
+    return {"ref": a.get("ref"), "gap": gap, "value": round(value, 2), "received": round(received, 2),
+            "state": a.get("state")}
+
+
+def hand_reason(a, bank_checked):
+    """Why a booking is on the hand check, in plain words with the amounts (the facts check_payments.describe
+    gives, shortened for a phone): "£36.15 short of £733.08; the event has passed"."""
+    state, value = a.get("state"), float(a.get("value") or 0)
+    received, balance = float(a.get("received") or 0), float(a.get("balance") or 0)
+    if not bank_checked:
+        return f"{_gbp(value)} booking; this comes from the ledger notes, as the bank isn't checked"
+
+    def listed(key):
+        return " and ".join(f"{_gbp(x)} on {_on(d)}" for d, x in a.get(key) or []) or "a payment"
+
+    if state == "PAST_PART_PAID":
+        return f"{_gbp(balance)} short of {_gbp(value)}; the event has passed"
+    if state == "PAST_UNMATCHED":
+        return f"no payment for {_gbp(value)} in the bank; the event has passed"
+    if state == "NOTED_PAID":
+        if received:
+            return f"{_gbp(received)} of {_gbp(value)} in the bank; the ledger notes say the rest was paid"
+        return f"no payment for {_gbp(value)} in the bank; the ledger notes say it was paid"
+    if state == "CHECK_PAYMENT":
+        if received and a.get("possible_balance"):
+            return f"{_gbp(received)} of {_gbp(value)} in; {listed('possible_balance')} may be the balance: confirm it"
+        return f"{listed('unconfirmed')} may be for this {_gbp(value)} booking: confirm it"
+    if state == "CHECK_VALUE":
+        return ("the fee is missing or unreadable in the ledger" if value <= 0
+                else "the invoice or event date is missing or unreadable in the ledger")
+    if state == "PAYMENT_ON_CANCELLED":
+        return f"{listed('hand_check_payments')} paid on a cancelled booking: refund or keep"
+    if state == "PAYMENT_AFTER_CLOSE":
+        return f"{listed('hand_check_payments')} paid after it was paid in full"
+    if state == "ARRANGED":
+        when = f" ({_on(a['event_date'])})" if a.get("event_date") else ""
+        return (f"{_gbp(balance)} to collect in cash or by cheque on the day{when}"
+                + ("; no deposit seen" if a.get("arranged_no_deposit") else ""))
+    return mr.hand_check_label(a)
+
+
+def hand_rows(assessments, today, bank_checked):
+    """The hand-check list (dashboard.hand_check: money_report.needs_hand_check, one row each), each with its
+    plain-words `reason`, its `event_date` and, when it qualifies, its transfer-fee question (`fee`)."""
+    by_ref = {a["ref"]: a for a in assessments}
+    out = []
+    for h in dash.hand_check(assessments, today):
+        a = by_ref.get(h["ref"]) or {}
+        out.append(dict(h, reason=hand_reason(a, bank_checked), event_date=a.get("event_date"),
+                        fee=fee_shortfall(a, bank_checked)))
+    return out
+
+
 NEEDS_SOURCES = {  # panel name -> how "Some sources didn't load" names it
     "ledger": "the bookings ledger", "singer_store": "the singer invoices", "books": "the Books cache",
     "enquiries": "the enquiry pipeline", "singers": "the singer invoices", "hand": "the hand checks",
@@ -496,8 +591,12 @@ def needs_you(panels, bank_unreachable=False):
     `panels` maps a name in NEEDS_SOURCES to a data.Panel (anything with .ok, .value); a missing name is skipped.
     Rows, in the spec's priority order, each {"kind", "count", "tone", ...}:
       ring      a singer invoice whose bank details changed and aren't trusted yet (ring first): one row each;
-      hand      a hand check (money_report.needs_hand_check, so an ARRANGED balance only from 7 days out): one each;
-      deposits  the DEPOSIT_OVERDUE bookings, one grouped row;   balances  the BALANCE_DUE bookings, grouped;
+      hand      a hand check (money_report.needs_hand_check, so an ARRANGED balance only from 7 days out): one each,
+                with its `fee` (fee_shortfall) when it is also a transfer-fee shortfall;
+      fee       a booking whose confident payments leave a gap of £0.01 up to FEE_CAP, the whole balance, with at
+                least 90% of the fee in (fee_shortfall), that isn't a hand check: "accept as transfer fees?", one each;
+      deposits  the DEPOSIT_OVERDUE bookings, one grouped row;   balances  the BALANCE_DUE bookings, grouped
+                (less any asked about as a fee shortfall);
       approval  an Ads change set waiting (not applied, no problem): one each;
       books-import  the 2026 Books import waiting for approval (only "waiting": approved, stale or imported is
                 a handoff or a note, not an approval);
@@ -552,11 +651,23 @@ def needs_you(panels, bank_unreachable=False):
         if BANK_SOURCE not in missing:
             missing.append(BANK_SOURCE)
     else:
-        for h in value("hand") or []:
-            rows.append({"kind": "hand", "count": 1, "tone": "warn", "item": h})
         bank = value("bank")
+        checked = bool((bank or {}).get("bank_checked"))
+        fees = {}
+        for a in (bank or {}).get("assessments") or []:
+            f = fee_shortfall(a, checked)
+            if f:
+                fees[f["ref"]] = f
+        for h in value("hand") or []:
+            # a hand check that is also a fee shortfall stays one row: its fee question is folded into it
+            rows.append({"kind": "hand", "count": 1, "tone": "warn", "item": h, "fee": fees.pop(h["ref"], None)})
+        for ref in sorted(fees):
+            rows.append({"kind": "fee", "count": 1, "tone": "warn", "item": fees[ref]})
+        asked = {r["item"]["ref"] for r in rows if r["kind"] == "fee"}
         for state, kind, tone in (("DEPOSIT_OVERDUE", "deposits", "bad"), ("BALANCE_DUE", "balances", "warn")):
-            refs = sorted(a["ref"] for a in (bank or {}).get("assessments") or [] if a.get("state") == state)
+            # a balance that is only a fee shortfall is asked about above, not chased here as well
+            refs = sorted(a["ref"] for a in (bank or {}).get("assessments") or []
+                          if a.get("state") == state and a["ref"] not in asked)
             if refs:
                 rows.append({"kind": kind, "count": len(refs), "tone": tone, "refs": refs, "state": state})
     for p in value("proposals") or []:
@@ -882,14 +993,15 @@ def enquiry_dates(enquiries, today):
     out = []
     for r in enquiries:
         eid = r.get("enquiry_id", "")
-        href = f"/enquiries/{eid}"
+        key, href = enquiry_key(eid), enquiry_href(eid)
+        what = r.get("occasion") or "event"
         nxt = next_followup(r, today)
         if nxt:
             words = "Mark lost" if nxt[1] == "mark_lost" else f"Follow-up ({nxt[1]})"
-            out.append(item(nxt[0], "followup", f"{words} {eid}", href, "warn"))
+            out.append(item(nxt[0], "followup", f"{words}: {what} enquiry {key}", href, "warn"))
         event = to_date(r.get("event_date"))
         if event and pl.status_of(r) in ("new", "quoted") and not (r.get("booking_ref") or "").strip():
-            out.append(item(event, "enquiry", f"Enquiry {eid}: {r.get('occasion') or 'event'} (not booked)", href))
+            out.append(item(event, "enquiry", f"Enquiry {key}: {what} (not booked)", href))
     return out
 
 
@@ -998,12 +1110,13 @@ def search(q, kind, rows):
                             "href": f"/bookings/{ref}" if REF_RE.fullmatch(ref) else None})
     elif kind == "enquiries":
         for r in rows:
-            fields = [r.get("enquiry_id"), r.get("occasion"), r.get("booking_ref"), r.get("package")]
+            fields = [r.get("enquiry_id"), enquiry_key(r.get("enquiry_id", "")), r.get("occasion"),
+                      r.get("booking_ref"), r.get("package")]
             if any(q in (f or "").casefold() for f in fields):
                 eid = r.get("enquiry_id", "")
-                out.append({"kind": "Enquiry", "label": eid,
+                out.append({"kind": "Enquiry", "label": enquiry_key(eid),
                             "detail": f"{r.get('occasion') or ''} · {pl.status_of(r) or 'no status'}",
-                            "href": f"/enquiries/{eid}" if pl.ID_RE.fullmatch(eid) else None})
+                            "href": enquiry_href(eid) if pl.ID_RE.fullmatch(eid) else None})
     elif kind == "singers":
         rq = _ref_query(q)
         for r in rows:

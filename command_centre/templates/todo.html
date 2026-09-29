@@ -17,7 +17,7 @@
     <form class="todo-tick" method="post" action="/todo/tick">
       <input type="hidden" name="key" value="{{ i.key }}">
       <input type="hidden" name="done" value="yes">
-      <button class="button quiet" type="submit">Mark done</button>
+      <button class="button quiet" type="submit" aria-label="Mark done: {{ i.number }}. {{ i.title }}">Mark done</button>
     </form>
   </li>
   {% endfor %}
@@ -33,7 +33,7 @@
       <form class="todo-tick" method="post" action="/todo/tick">
         <input type="hidden" name="key" value="{{ i.key }}">
         <input type="hidden" name="done" value="no">
-        <button class="button quiet" type="submit">Reopen</button>
+        <button class="button quiet" type="submit" aria-label="Reopen: {{ i.number }}. {{ i.title }}">Reopen</button>
       </form>
     </li>
     {% endfor %}

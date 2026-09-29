@@ -14,7 +14,6 @@
   {% if next %}<p>{{ "Mark lost" if next[1] == "mark_lost" else "Next follow-up (" ~ next[1] ~ ")" }} due {{ next[0]|day }}.</p>{% endif %}
   {% if row.booking_ref %}<p>Booked as <a class="mono" href="/bookings/{{ row.booking_ref }}">{{ row.booking_ref }}</a>.</p>{% endif %}
   <p>Campaign: {% if campaign.ok %}{{ campaign.value or "not traced (no click id, or not in the gclid cache)" }}{% else %}<span class="fail">couldn't load ({{ campaign.error }})</span>{% endif %}</p>
-  <p class="muted">Zoho thread id <span class="mono">{{ eid }}</span>.</p>
 </section>
 {% endif %}
 <section class="card">

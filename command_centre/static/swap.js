@@ -39,4 +39,16 @@
   document.addEventListener("htmx:sendError", function () {
     say("Couldn't reach the Mac: what you see is from before.");
   });
+
+  // The header nav scrolls sideways on medium widths: bring the current page's item into view, so a page far down
+  // the list (Activity, say) isn't hidden past the edge.
+  function showCurrent() {
+    var nav = document.querySelector(".top .nav");
+    var item = nav ? nav.querySelector('[aria-current="page"]') : null;
+    if (!item || nav.scrollWidth <= nav.clientWidth) return;
+    var n = nav.getBoundingClientRect(), r = item.getBoundingClientRect();
+    nav.scrollLeft += (r.left + r.width / 2) - (n.left + n.width / 2);
+  }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", showCurrent);
+  else showCurrent();
 })();
