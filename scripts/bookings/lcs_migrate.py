@@ -80,6 +80,16 @@ def derived_eid(subject, id, kind, on, claim):
     return hashlib.sha256(f"migration|{subject}|{id}|{kind}|{on}|{claim or ''}".encode()).hexdigest()[:16]
 
 
+def unused_eid(eid, taken):
+    """The derived eid, or, when the log already holds it (a line an earlier run wrote and withdrew as write-failed:
+    a repeated eid would be skipped as a duplicate), the first of sha256(eid + "|n")[:16], n = 2, 3 … it doesn't."""
+    out, n = eid, 1
+    while out in taken:
+        n += 1
+        out = hashlib.sha256(f"{eid}|{n}".encode()).hexdigest()[:16]
+    return out
+
+
 def _proposal(pos, kind, fields, by, clause, own_date=None, flags=()):
     return {"pos": pos, "kind": kind, "fields": fields, "by": by, "clause": clause, "own": own_date,
             "flags": list(flags)}
@@ -274,7 +284,7 @@ def describe(p):
 def plan(ledger_rows, store_rows, today, events):
     """{"proposals", "left", "report", "sha256"} for the whole ledger and store against the log's `events`."""
     idx = lcs_events.index(events, today)
-    proposals, left, seen = [], [], {e["eid"] for e in events}
+    proposals, left, seen, taken = [], [], set(), {e["eid"] for e in events}
     for subject, rows, propose, key in (("booking", ledger_rows, booking_proposals, "booking_ref"),
                                         ("singer_invoice", store_rows, invoice_proposals, "message_id")):
         for r in rows:
@@ -282,14 +292,16 @@ def plan(ledger_rows, store_rows, today, events):
             got, out = propose(r, today, have)
             left += out
             for p in got:
-                if p["eid"] in seen:
+                if p["eid"] in seen:  # the same fact twice (a duplicated ledger row): once
                     continue
+                seen.add(p["eid"])
+                p["eid"] = unused_eid(p["eid"], taken)
                 try:
                     lcs_events.dumps(lcs_events.validate(_event(p, _now()), write=True))
                 except ValueError as e:
                     left.append(f"left out: {p['subject']} {p['id']} {p['kind']} [{p['rule']}]: {e}")
                     continue
-                seen.add(p["eid"])
+                taken.add(p["eid"])
                 proposals.append(p)
     report = render(proposals, left, today, len(ledger_rows), len(store_rows), len(events))
     return {"proposals": proposals, "left": left, "report": report,

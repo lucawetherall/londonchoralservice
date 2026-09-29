@@ -178,9 +178,27 @@ def apply_migration(args, today):
         if diffs:
             raise SystemExit(f"compare --proposed finds {len(diffs)} difference(s): run it and settle them first; "
                              "nothing written")
-        for p in plan["proposals"]:
-            lcs_events.append(p["subject"], p["id"], p["kind"], p["fields"], p["by"], on=p["on"], note=p["note"],
-                              src="migration", eid=p["eid"])
+        written = []
+        try:
+            for p in plan["proposals"]:
+                lcs_events.append(p["subject"], p["id"], p["kind"], p["fields"], p["by"], on=p["on"], note=p["note"],
+                                  src="migration", eid=p["eid"])
+                written.append(p)
+        except (OSError, ValueError) as e:
+            # never leave a family half-migrated: withdraw this run's lines (write-failed, by their own writer, in
+            # the same run), so the next dry run proposes them again and the log reads as if nothing was written
+            undone = True
+            for p in reversed(written):
+                try:
+                    lcs_events.append(p["subject"], p["id"], "retract", {"target": p["eid"], "why": "write-failed"},
+                                      p["by"])
+                except (OSError, ValueError):
+                    undone = False
+            if undone:
+                raise SystemExit(f"the migration stopped ({type(e).__name__}); what it wrote was withdrawn: run it "
+                                 "again; nothing written") from None
+            raise SystemExit(f"the migration stopped ({type(e).__name__}) part way and couldn't withdraw it: run "
+                             "events.py verify and compare before anything else") from None
     print(f"{len(plan['proposals'])} new events")
     return 0
 

@@ -338,6 +338,67 @@ def test_renaming_the_log_gives_the_notes_reading_back():
         ev.clear_cache()
 
 
+def in_home(ledger, store):
+    """The sample ledger and store in this process's private folder (cp.LEDGER, si.STORE), with no log."""
+    for name, rows, cols in (("bookings.csv", ledger, LEDGER_COLS), ("singer-invoices.csv", store, si.COLUMNS)):
+        with open(os.path.join(_HOME, name), "w", newline="") as f:
+            w = csv.DictWriter(f, fieldnames=cols, extrasaction="ignore")
+            w.writeheader()
+            w.writerows(rows)
+    for name in ("events.jsonl", "events.jsonl.lock"):
+        if os.path.exists(os.path.join(_HOME, name)):
+            os.remove(os.path.join(_HOME, name))
+    ev.clear_cache()
+
+
+def main_out(argv):
+    import contextlib, io
+    import events
+    buf = io.StringIO()
+    try:
+        with contextlib.redirect_stdout(buf):
+            code = events.main(argv)
+    except SystemExit as e:
+        return str(e), buf.getvalue()
+    ev.clear_cache()
+    return code, buf.getvalue()
+
+
+def test_a_migration_that_stops_part_way_withdraws_what_it_wrote_and_runs_again():
+    in_home(*sample())
+    _, out = main_out(["migrate"])
+    total = int(re.search(r"(\d+) events proposed", out).group(1))
+    real_write, calls = ev._write, []
+
+    def failing(fd, data):
+        calls.append(1)
+        if len(calls) == 3:
+            raise OSError("disk full")
+        return real_write(fd, data)
+    saved = (lcs_owner.owner_confirmed, lcs_owner._PROVEN)
+    lcs_owner.owner_confirmed, lcs_owner._PROVEN = (lambda *a: True), True
+    try:
+        ev._write = failing
+        msg, _ = main_out(["migrate", "--apply", "--expect", sha_of(out), "--owner"])
+        ev._write = real_write
+        assert "withdrawn" in msg and "nothing written" in msg and "run it again" in msg, msg
+        events, stats = ev.read()
+        assert [e["kind"] for e in events] == [events[0]["kind"], events[1]["kind"], "retract", "retract"], events
+        assert not ev.migration_applied()
+        _, out = main_out(["migrate"])
+        assert f"{total} events proposed" in out, out
+        code, out2 = main_out(["migrate", "--apply", "--expect", sha_of(out), "--owner"])
+        assert code == 0 and f"{total} new events" in out2, (code, out2)
+    finally:
+        ev._write = real_write
+        lcs_owner.owner_confirmed, lcs_owner._PROVEN = saved
+    events, stats = ev.read()
+    assert stats["skipped"] == 0 and stats["chain_ok"] and len(events) == 4 + total, stats
+    assert ev.migration_applied()
+    ledger, store = lm.read_csv(cp.LEDGER), lm.read_csv(si.STORE)
+    assert mig.compare(ledger, store, lm.today(), events) == []
+
+
 def test_compare_proposed_and_compare_exit_1_on_a_difference():
     ledger, store = sample()
     d = fresh(ledger, store)
