@@ -1194,6 +1194,7 @@
       border: none;
       padding: 0;
       margin: 0;
+      min-width: 0; /* a fieldset otherwise grows to its widest child (the captcha) */
     }
     
     .form-field {
@@ -1291,6 +1292,20 @@
     
     .form-error[data-visible="true"] {
       display: block;
+    }
+    
+    /* hCaptcha's checkbox is a fixed 302px iframe, wider than the 272px form on
+       a 320px phone. js/form.js asks for the compact widget there; if hCaptcha
+       rendered before it could, shrink the full-size one to fit. The line box
+       keeps the unscaled width, so the wrapper clips it (nothing visible). */
+    @media (max-width: 349px) {
+      .h-captcha:not([data-size="compact"]) {
+        overflow: hidden;
+      }
+      .h-captcha:not([data-size="compact"]) iframe {
+        transform: scale(0.9);
+        transform-origin: 0 0;
+      }
     }
     
     .form-status {
