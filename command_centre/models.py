@@ -28,6 +28,7 @@ REF_RE = re.compile(r"^[A-Za-z0-9-]{1,20}$")
 ISO_DAY = re.compile(r"\b(\d{4}-\d{2}-\d{2})\b")
 EMAIL = re.compile(r"[\w.+-]+@[\w-]+(\.[\w-]+)+")
 LONG_DIGITS = re.compile(r"\d(?:[ -]?\d){5,}")
+ISO_DATE = re.compile(r"(?:19|20)\d\d-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12]\d|3[01])")
 SEARCH_MIN, SEARCH_MAX, SEARCH_LIMIT = 2, 80, 50
 FOLLOWUP_GAP = {0: pl.FIRST_AFTER, 1: pl.SECOND_AFTER, 2: pl.LOST_AFTER}
 
@@ -144,8 +145,11 @@ def first_name(name):
 
 
 def mask_digits(text):
-    """Any run of six or more digits (spaces or dashes allowed between them) -> ••••last4."""
-    return LONG_DIGITS.sub(lambda m: "••••" + re.sub(r"\D", "", m.group())[-4:], str(text or ""))
+    """Any run of six or more digits (spaces or dashes allowed between them) -> ••••last4, except an ISO date
+    (YYYY-MM-DD, a 19xx or 20xx year, a real month and day), which notes carry and no bank number looks like."""
+    def mask(m):
+        return m.group() if ISO_DATE.fullmatch(m.group()) else "••••" + re.sub(r"\D", "", m.group())[-4:]
+    return LONG_DIGITS.sub(mask, str(text or ""))
 
 
 def mask_note(text, full_name=""):

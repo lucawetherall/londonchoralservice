@@ -332,6 +332,17 @@ def test_clear_offline_copies_never_waits_forever():
     assert 'querySelector(\'[aria-current="page"]\')' in swap and "scrollLeft" in swap
 
 
+def test_masking_keeps_dates_and_hides_bank_numbers():
+    # 29 Sep: 2408's timeline showed "short by fees £36.15 accepted ••••0929" (the date was masked)
+    assert models.mask_note("short by fees £36.15 accepted 2026-09-29 (owner)") == \
+        "short by fees £36.15 accepted 2026-09-29 (owner)"
+    assert models.mask_digits("paid in full 2026-09-29; deposit seen 2026-08-26") == \
+        "paid in full 2026-09-29; deposit seen 2026-08-26"
+    for raw, shown in (("account 12345678", "account ••••5678"), ("sort code 12-34-56", "sort code ••••3456"),
+                       ("1234 5678", "••••5678"), ("2026-13-01", "••••1301"), ("20260929", "••••0929")):
+        assert models.mask_digits(raw) == shown, (raw, models.mask_digits(raw))
+
+
 if __name__ == "__main__":
     failures = 0
     for name, fn in sorted((n, f) for n, f in globals().items() if n.startswith("test_") and callable(f)):
