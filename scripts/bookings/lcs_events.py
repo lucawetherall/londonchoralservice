@@ -218,6 +218,9 @@ def log_path():
     return Path(os.environ.get("LCS_PRIVATE_DIR", Path.home() / "lcs-private")) / "events.jsonl"
 
 
+_write = os.write  # the one write of a line (tests replace it to cut a write short)
+
+
 def _check(st):
     if not stat.S_ISREG(st.st_mode) or st.st_uid != os.getuid() or st.st_mode & 0o077:
         raise LogRefused("the state log must be a regular file of this user's, mode 600")
@@ -277,9 +280,15 @@ def append(subject, id, kind, fields, by, on=None, note=None, src="live", eid=No
                 os.close(rfd)
             obj["prev"] = chain_hash(last) if last else ""
             data = (b"\n" if cut else b"") + dumps(obj).encode() + b"\n"
-            if os.write(fd, data) != len(data):
-                raise OSError("short write to the state log")
-            os.fsync(fd)
+            try:
+                if _write(fd, data) != len(data):
+                    raise OSError("short write to the state log")
+                os.fsync(fd)
+            except BaseException:
+                # a line cut short (even one missing only its "\n") would be revived by the next append: put the
+                # file back as it was, under the same lock, then report the failure
+                os.ftruncate(fd, rst.st_size)
+                raise
         finally:
             os.close(fd)
     return obj["eid"]

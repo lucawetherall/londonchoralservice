@@ -451,6 +451,53 @@ def test_append_refuses_an_owner_fact_without_the_owner_check():
     assert [e["by"] for e in ev.read()[0]] == ["script", "owner"]
 
 
+def test_a_short_or_failed_write_leaves_the_log_as_it_was():
+    """A write that loses only the final newline would otherwise revive the event once the next append ends the
+    line: append truncates back to the old size and raises."""
+    path = fresh_dir()
+    ev.append("booking", "2111", "cancelled", {}, "script")
+    before = open(path, "rb").read()
+
+    def short(fd, data):
+        return os.write(fd, data[:-1])
+
+    def fails(fd, data):
+        os.write(fd, data[:-1])
+        raise OSError("disk full")
+
+    saved = ev._write
+    for fake in (short, fails):
+        ev._write = fake
+        try:
+            ev.append("booking", "2111", "deposit-seen", {}, "script")
+            assert False, "a short write was accepted"
+        except OSError:
+            pass
+        finally:
+            ev._write = saved
+        assert open(path, "rb").read() == before, fake.__name__
+    ev.append("booking", "2111", "review-drafted", {}, "script")
+    assert [e["kind"] for e in ev.read()[0]] == ["cancelled", "review-drafted"]
+
+
+def test_the_log_lock_is_never_followed_through_a_symlink():
+    path = fresh_dir()
+    elsewhere = os.path.join(tempfile.mkdtemp(), "victim")
+    open(elsewhere, "w").close()
+    os.symlink(elsewhere, path + ".lock")
+    try:
+        ev.append("booking", "2111", "cancelled", {}, "script")
+        assert False, "locked through a symlink"
+    except OSError:
+        pass
+    assert not os.path.exists(path)
+    try:
+        with lm.ledger_lock(path):
+            assert False, "ledger_lock followed a symlinked lock file"
+    except OSError:
+        pass
+
+
 def test_owner_confirmed_marks_the_process_proven():
     import hashlib, lcs_owner, time
     d = os.path.dirname(fresh_dir())

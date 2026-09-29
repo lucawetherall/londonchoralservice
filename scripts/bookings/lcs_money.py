@@ -229,10 +229,11 @@ def write_csv(path, rows, columns):
 
 @contextlib.contextmanager
 def ledger_lock(path):
-    """Exclusive lock for a read-modify-write of a private CSV: flock on "<path>.lock" (mode 600)."""
+    """Exclusive lock for a read-modify-write of a private CSV (or the state log): flock on "<path>.lock" (mode 600),
+    never followed through a symlink (OSError instead)."""
     path = Path(path)
     path.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
-    fd = os.open(f"{path}.lock", os.O_RDWR | os.O_CREAT, 0o600)
+    fd = os.open(f"{path}.lock", os.O_RDWR | os.O_CREAT | os.O_NOFOLLOW, 0o600)
     try:
         fcntl.flock(fd, fcntl.LOCK_EX)
         yield
