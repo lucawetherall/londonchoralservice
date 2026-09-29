@@ -24,8 +24,9 @@ import lcs_money as lm  # noqa: E402
 
 def cmd_verify(args):
     events, stats = lcs_events.read()
+    problem = lcs_events.log_problem(stats)
     if stats.get("unreadable"):
-        print("state log unreadable: it must be a regular file of this user's, mode 600 (read as absent)")
+        print(problem)
         return 1
     if not stats["lines"] and not stats["skipped"]:
         print("no state log yet")
@@ -33,7 +34,7 @@ def cmd_verify(args):
     chain = "chain whole" if stats["chain_ok"] else f"chain broken at line {stats['broken_at']}"
     print(f"state log: {stats['lines']} lines, {stats['skipped']} skipped, {chain}, "
           f"last written {stats['last_at'] or 'never'}")
-    return 1 if stats["skipped"] or not stats["chain_ok"] else 0
+    return 1 if problem else 0
 
 
 def describe(e, today):

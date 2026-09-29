@@ -63,7 +63,12 @@ def test_verify_reports_an_unreadable_log():
     ev.append("booking", "2111", "cancelled", {}, "script")
     os.chmod(os.path.join(d, "events.jsonl"), 0o644)
     code, out = run("verify")
-    assert code == 1 and "unreadable" in out, out
+    assert code == 1 and "can't be read" in out, out
+    os.chmod(os.path.join(d, "events.jsonl"), 0o600)
+    os.rename(os.path.join(d, "events.jsonl"), os.path.join(d, "real.jsonl"))
+    os.symlink(os.path.join(d, "real.jsonl"), os.path.join(d, "events.jsonl"))
+    code, out = run("verify")
+    assert code == 1 and "can't be read" in out, out
 
 
 def test_show_prints_one_line_per_fact_and_never_notes():

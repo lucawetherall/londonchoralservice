@@ -385,6 +385,22 @@ def retracts(t, e):
     return e["by"] == t["by"] and 0 <= gap <= RUN_SECONDS
 
 
+UNREADABLE = ("the state log can't be read (it must be a regular file of this user's, mode 600, never a link): "
+              "every reader treats it as absent")
+
+
+def log_problem(stats=None):
+    """None when the log is whole (or doesn't exist yet), else one line for the Health page and events.py verify:
+    unreadable (which every reader treats as absent, so it must never pass quietly), a broken chain, skipped lines."""
+    stats = read()[1] if stats is None else stats
+    if stats.get("unreadable"):
+        return UNREADABLE
+    parts = [f"the state log's chain is broken at line {stats['broken_at']}"] if not stats["chain_ok"] else []
+    if stats["skipped"]:
+        parts.append(f"{stats['skipped']} line{'' if stats['skipped'] == 1 else 's'} skipped")
+    return "; ".join(parts) or None
+
+
 def index(events, today):
     """{(subject, id): [events in file order]}, each a copy with "retracted" set to the retract's why ("mistake" or
     "write-failed") when a later retract undoes it (retracts()), else False. Events whose `on` is after today are

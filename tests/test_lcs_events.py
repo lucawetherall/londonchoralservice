@@ -528,6 +528,30 @@ def test_the_log_lock_is_never_followed_through_a_symlink():
         pass
 
 
+def test_log_problem_names_an_unreadable_broken_or_skipping_log():
+    """Readers treat an unreadable log as absent; log_problem says so, for the Health page and verify."""
+    path = fresh_dir()
+    assert ev.log_problem() is None  # no log yet is not a problem
+    ev.append("booking", "2111", "cancelled", {}, "script")
+    ev.append("booking", "2111", "deposit-seen", {}, "script")
+    assert ev.log_problem() is None
+    os.chmod(path, 0o640)
+    assert "can't be read" in ev.log_problem()
+    os.chmod(path, 0o600)
+    real = path + ".real"
+    os.rename(path, real)
+    os.symlink(real, path)
+    assert "can't be read" in ev.log_problem()
+    os.remove(path)
+    lines = open(real, "rb").read().split(b"\n")
+    with open(os.open(path, os.O_WRONLY | os.O_CREAT, 0o600), "wb") as f:
+        f.write(lines[1] + b"\n")
+    assert ev.log_problem() == "the state log's chain is broken at line 1"
+    with open(path, "ab") as f:
+        f.write(b"not json\n")
+    assert ev.log_problem() == "the state log's chain is broken at line 1; 1 line skipped"
+
+
 def test_owner_confirmed_marks_the_process_proven():
     import hashlib, lcs_owner, time
     d = os.path.dirname(fresh_dir())
