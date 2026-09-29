@@ -2,8 +2,10 @@
 """Read-only views of the state log, ~/lcs-private/events.jsonl (lcs_events; structured-state design, 29 Sep 2026).
 
     .venv/bin/python scripts/bookings/events.py verify
-        lines, skipped lines, whether the chain is whole ("broken at line N"), when it was last written;
-        exits 1 on a skipped line, a broken chain or an unreadable log
+        lines, skipped lines, whether the chain is whole ("broken at line N"), when it was last written; then
+        each fact whose claimed note clause is missing from its row ("fact without its note: …", the crash window)
+        and each notes-checked hash no clause matches; exits 1 on any of these, a skipped line, a broken chain or
+        an unreadable log
     .venv/bin/python scripts/bookings/events.py show booking 2111
     .venv/bin/python scripts/bookings/events.py show singer_invoice <message id>
         the facts recorded for one booking or invoice, one line each: eid, on, kind, fields, who and src,
@@ -53,7 +55,31 @@ def cmd_verify(args):
     chain = "chain whole" if stats["chain_ok"] else f"chain broken at line {stats['broken_at']}"
     print(f"state log: {stats['lines']} lines, {stats['skipped']} skipped, {chain}, "
           f"last written {stats['last_at'] or 'never'}")
-    return 1 if problem else 0
+    notes = note_problems(events)
+    for line in notes:
+        print(line)
+    return 1 if problem or notes else 0
+
+
+def note_problems(events):
+    """Lines for each fact whose claimed note clause is missing from its row's notes (the crash window: the fact
+    decides, the human record is missing) and each live notes-checked hash that no clause of its row matches. A fact
+    withdrawn as write-failed never had a note, so it isn't listed. Ids, kinds, dates and hashes only."""
+    ledger, store, _, _ = rows()
+    notes = {("booking", (r.get("booking_ref") or "").strip()): r.get("notes") or "" for r in ledger}
+    notes.update({("singer_invoice", (r.get("message_id") or "").strip()): r.get("notes") or "" for r in store})
+    out = []
+    for (subject, id_), es in lcs_events.index(events, lm.today()).items():
+        have = {lcs_events.note_hash(c.strip()) for c in notes.get((subject, id_), "").split(";") if c.strip()}
+        for e in es:
+            if e["retracted"] == "write-failed":
+                continue
+            if e.get("note") and e["note"] not in have:
+                out.append(f"fact without its note: {subject} {id_} {e['kind']} on {e['on']} [{e['eid']}]")
+            if e["kind"] == "notes-checked" and not e["retracted"]:
+                out += [f"notes-checked hash no clause matches: {subject} {id_} {h}" for h in e["fields"]["clauses"]
+                        if h not in have]
+    return out
 
 
 def describe(e, today):

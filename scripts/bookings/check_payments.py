@@ -9,6 +9,16 @@ Alma Consort Starling account, READ-ONLY (see lcs_money.StarlingReadOnly).
         and "record_in_books" lists its confident payments [[date, amount, bank charges]] for the Books invoice
         (BOOKS_STATES; the bank charges are 0.0 except on the last payment of a booking closed by an accepted fee)
     .venv/bin/python scripts/bookings/check_payments.py --reminded 2111 [--kind deposit|balance|receipt]
+        (also records reminder-drafted in the state log; --apply records deposit-seen and paid-in-full, basis bank,
+        where it writes those notes)
+    .venv/bin/python scripts/bookings/check_payments.py --fact 2111 cancelled [--on YYYY-MM-DD]
+    … --fact 2111 noted-paid --scope part|full   … --fact 2111 arranged --method cash|cheque|third-party
+        records the fact in the state log (lcs_events; structured-state design) and appends its phrase to the
+        notes (fact_phrase: "cancelled D by client email", "paid per client email D", "balance paid per client
+        email D", "balance payable in cash on the day (arranged D)" …), both under the ledger lock. --on defaults
+        to today (never after it, at most 730 days back). The owner's kinds (paid-in-full, fees-accepted --amount
+        X, reinstated, deposit-kept, refunded, payment-checked) need --owner and the Command Centre's nonce, and
+        write "… (owner)"
     .venv/bin/python scripts/bookings/check_payments.py --note 2111 "paid per client email 2026-09-28"
         (one line, at most 120 characters, no ';'; refuses the scripts' own phrases and the owner's hand-written
         ones: paid in full, short by fees … accepted, deposit seen … (Starling), reminder/receipt drafted, deposit kept, refunded,
@@ -359,6 +369,92 @@ RESERVED_NOTES = (FULL_NOTE, FEES_NOTE, AUTO_NOTE, MARK_NOTE, SETTLED_NOTE, RESU
 def reserved_note(text):
     """True when --note must refuse this text: a reserved phrase, or anything starting with PENDING."""
     return is_pending(text) or any(p.search(text) for p in RESERVED_NOTES)
+
+
+# --- --fact: a fact recorded in the state log with today's phrase as its note (structured-state design) ---------
+
+# The kinds --fact records. The script may record the first three (the assistant, from a client's own message); the
+# rest are the owner's, with --owner and the Command Centre's nonce. Markers have their own writers (--reminded,
+# --apply, pipeline.py reviewed / review-skipped); retract and notes-checked are events.py's.
+FACT_KINDS = ("cancelled", "noted-paid", "arranged", "paid-in-full", "fees-accepted", "reinstated", "deposit-kept",
+              "refunded", "payment-checked")
+OWNER_FACTS = {"paid-in-full", "fees-accepted", "reinstated", "deposit-kept", "refunded", "payment-checked"}
+FACT_FIELDS = {"noted-paid": ("scope", ("part", "full")), "arranged": ("method", ("cash", "cheque", "third-party")),
+               "fees-accepted": ("amount", None)}
+FACT_BACK_DAYS = 730
+# The phrase each kind writes (the one the pattern readers read, so the notes say the same fact): {d} the date
+PHRASES = {"paid-in-full": "paid in full {d}", "fees-accepted": "short by fees £{amount} accepted {d}",
+           "cancelled": "cancelled {d}", "reinstated": "reinstated {d}", "deposit-kept": "deposit kept {d}",
+           "refunded": "refunded {d}", "payment-checked": "payment checked {d}",
+           ("noted-paid", "part"): "paid per client email {d}", ("noted-paid", "full"): "balance paid per client email {d}",
+           ("arranged", "cash"): "balance payable in cash on the day (arranged {d})",
+           ("arranged", "cheque"): "balance payable by cheque on the day (arranged {d})",
+           ("arranged", "third-party"): "balance to be paid by another payer (arranged {d})"}
+AMOUNT_ARG = re.compile(r"\d{1,5}(?:\.\d{1,2})?")
+# question 3 (owner decision, 29 Sep 2026): --note refuses fact-shaped text, naming the --fact form. Off until the
+# prompts use --fact (plan, Task 18), so the assistant's --note lines keep working until then.
+NOTE_REFUSES_FACTS = False
+
+
+def fact_phrase(kind, fields, day, by):
+    """The note --fact writes for a fact: today's phrase (PHRASES), "cancelled D by client email" for the script's
+    cancellation, and " (owner)" after the owner's."""
+    key = next(((kind, v) for v in fields.values() if (kind, v) in PHRASES), kind)
+    text = PHRASES[key].format(d=day.isoformat(), amount=fields.get("amount", ""))
+    if kind == "cancelled" and by == "script":
+        text += " by client email"
+    return text + (" (owner)" if by == "owner" else "")
+
+
+def fact_shaped(text):
+    """The --fact form a note's text asserts ("cancelled", "noted-paid --scope part", …), or None: the
+    cancellation, arrangement and noted-paid families, read with today's patterns (assertions)."""
+    said = assertions(text, math.inf, lm.today())
+    if said["cancellation"] is not None:
+        return "cancelled" if said["cancellation"] else "reinstated"
+    if said["arrangement"]:
+        return "arranged --method cash|cheque|third-party"
+    if said["noted paid"]:
+        return f"noted-paid --scope {said['noted paid']}"
+    return None
+
+
+def note_refusal(ref, text):
+    """--note's refusal of fact-shaped text (once NOTE_REFUSES_FACTS is on), or None."""
+    form = fact_shaped(text)
+    return f"record it with --fact {ref} {form}; nothing written" if form else None
+
+
+def fact_input(args, today):
+    """(kind, fields, by, day) for --fact from the parsed arguments, or SystemExit naming what is wrong."""
+    ref, kind = args.fact
+    if kind not in FACT_KINDS:
+        raise SystemExit(f"--fact records one of: {', '.join(FACT_KINDS)}; nothing written")
+    by = "owner" if args.owner else "script"
+    if kind in OWNER_FACTS and by != "owner":
+        raise SystemExit(f"{kind} is the owner's: the Command Centre records it with --owner; nothing written")
+    given = {k: getattr(args, k) for k in ("scope", "method", "amount") if getattr(args, k) is not None}
+    want = FACT_FIELDS.get(kind)
+    if set(given) != ({want[0]} if want else set()):
+        need = f"--{want[0]} and nothing else" if want else "no --scope, --method or --amount"
+        raise SystemExit(f"--fact {kind} takes {need}; nothing written")
+    fields = {"basis": "owner"} if kind == "paid-in-full" else {}
+    if want and want[1] is not None:
+        if given[want[0]] not in want[1]:
+            raise SystemExit(f"--{want[0]} is one of: {', '.join(want[1])}; nothing written")
+        fields[want[0]] = given[want[0]]
+    elif want:  # fees-accepted: a plain amount, more than £0 and at most FEE_CAP
+        amount = given["amount"]
+        if not AMOUNT_ARG.fullmatch(amount) or not 0 < float(amount) <= FEE_CAP:
+            raise SystemExit(f"--amount must be a plain amount more than £0 and at most £{FEE_CAP:.2f}; nothing written")
+        fields["amount"] = f"{float(amount):.2f}"
+    day = today
+    if args.on is not None:
+        day = date_or_none(args.on) if re.fullmatch(r"\d{4}-\d{2}-\d{2}", args.on) else None
+        if day is None or day > today or day < today - datetime.timedelta(days=FACT_BACK_DAYS):
+            raise SystemExit(f"--on must be a real date YYYY-MM-DD, not after today and at most {FACT_BACK_DAYS} days "
+                             "back; nothing written")
+    return kind, fields, by, day
 
 
 def cancel_settled_on(r, today, facts=None):
@@ -879,20 +975,44 @@ def main():
     ap.add_argument("--json", action="store_true")
     ap.add_argument("--selftest", action="store_true")
     ap.add_argument("--reminded", metavar="REF")
-    ap.add_argument("--kind", choices=sorted(MARK_TEXT), default="deposit")
+    ap.add_argument("--kind", choices=sorted(MARK_TEXT))
     ap.add_argument("--note", nargs=2, metavar=("REF", "TEXT"))
+    ap.add_argument("--fact", nargs=2, metavar=("REF", "KIND"))
+    ap.add_argument("--on", metavar="YYYY-MM-DD")
+    ap.add_argument("--amount")
+    ap.add_argument("--method")
+    ap.add_argument("--scope")
     ap.add_argument("--owner", action="store_true", help="the Command Centre only: needs its one-time nonce on stdin")
     args = ap.parse_args()
     today = lm.today()
 
     # lm.locked_rows holds lm.ledger_lock, an flock on a fresh descriptor: NOT re-entrant. Never nest it, or
     # call another ledger writer while holding it, in one process: the second acquire deadlocks.
-    if args.owner and not args.note:
-        raise SystemExit("--owner goes with --note only; nothing written")
+    if args.owner and not (args.note or args.fact):
+        raise SystemExit("--owner goes with --note or --fact only; nothing written")
+    if not args.fact and any(getattr(args, k) is not None for k in ("on", "amount", "method", "scope")):
+        raise SystemExit("--on, --amount, --method and --scope go with --fact only; nothing written")
+    if args.fact:
+        if args.note or args.reminded or args.kind or args.apply or args.json or args.selftest:
+            raise SystemExit("--fact goes on its own (with --on, --amount, --method, --scope, --owner); nothing written")
+        ref = args.fact[0]
+        kind, fields, by, day = fact_input(args, today)
+        if by == "owner":
+            where = lcs_owner.owner_folder_problem([LEDGER, lcs_events.log_path()])
+            if where:
+                raise SystemExit(f"--owner {where}; nothing written")
+            if not owner_confirmed():
+                raise SystemExit("--owner needs the Command Centre's one-time owner nonce (the owner's passkey "
+                                 "approval); nothing written")
+        append_note(ref, fact_phrase(kind, fields, day, by), (kind, fields, by, day))
+        print(f"{ref}: {kind} recorded")
+        return
     if args.note:
         ref, text = args.note
         if "\n" in text or "\r" in text or len(text) > 120 or ";" in text:
             raise SystemExit("note text must be a single line, at most 120 characters, with no ';'")
+        if NOTE_REFUSES_FACTS and note_refusal(ref, text):
+            raise SystemExit(note_refusal(ref, text))
         if args.owner:
             if is_pending(text):
                 raise SystemExit("a note never starts with PENDING; nothing written")
@@ -911,9 +1031,12 @@ def main():
         return
 
     if args.reminded:
-        append_note(args.reminded, f"{MARK_TEXT[args.kind]} {today}")
-        print(f"{args.reminded}: {MARK_TEXT[args.kind]} noted")
+        kind = args.kind or "deposit"
+        append_note(args.reminded, f"{MARK_TEXT[kind]} {today}", ("reminder-drafted", {"what": kind}, "script", today))
+        print(f"{args.reminded}: {MARK_TEXT[kind]} noted")
         return
+    if args.kind:
+        raise SystemExit("--kind goes with --reminded only; nothing written")
 
     tok = lm.keychain_token()
     if not tok:
@@ -947,13 +1070,18 @@ def owner_confirmed(stdin_fd=0):
     return lcs_owner.owner_confirmed(stdin_fd)
 
 
-def append_note(ref, text):
-    """Append "; <text>" to one booking's notes, under the ledger lock."""
-    with lm.locked_rows(LEDGER) as t:
+def append_note(ref, text, fact=None):
+    """Append "; <text>" to one booking's notes, under the ledger lock. With fact = (kind, fields, by, day), also
+    record it in the state log claiming that clause, under the same lock (lcs_events.recording: if the ledger isn't
+    written after all, the fact is withdrawn)."""
+    with lcs_events.recording(LEDGER) as t:
         for r in t.rows:
             if r["booking_ref"] == ref:
                 notes = r.get("notes") or ""
                 r["notes"] = (f"{notes}; " if notes.strip() else "") + text
+                if fact:
+                    kind, fields, by, day = fact
+                    lcs_events.record(t, "booking", ref, kind, fields, by, text, on=day)
                 break
         else:
             raise SystemExit(f"no booking {ref}")
@@ -1005,11 +1133,13 @@ def run(args, client, rows, today):
 
 
 def apply_notes(results, today):
-    """Write updated_notes for each assessed booking under the lock, from the ledger as it is now. True if
-    anything changed."""
+    """Write updated_notes for each assessed booking under the lock, from the ledger as it is now, recording in the
+    state log the facts its new clauses state: "deposit seen D (Starling)" (deposit-seen) and "paid in full D"
+    (paid-in-full, basis bank: PAID_IN_FULL from confident payments is the only way updated_notes writes it). True
+    if anything changed."""
     paid_by_ref = {r["booking_ref"]: paid for r, paid, _ in results}
     changed = False
-    with lm.locked_rows(LEDGER) as t:
+    with lcs_events.recording(LEDGER) as t:
         for r in t.rows:
             if r.get("booking_ref") not in paid_by_ref:
                 continue
@@ -1018,6 +1148,13 @@ def apply_notes(results, today):
             new = updated_notes(notes, assess(r, paid, today), paid)
             if new != notes:
                 r["notes"], changed = new, True
+                for clause in [c for c in clauses(new) if c not in clauses(notes)]:
+                    if AUTO_NOTE.fullmatch(clause):
+                        lcs_events.record(t, "booking", r["booking_ref"], "deposit-seen", {}, "script", clause,
+                                          on=clause[len("deposit seen "):][:10])
+                    elif FULL_NOTE.fullmatch(clause):
+                        lcs_events.record(t, "booking", r["booking_ref"], "paid-in-full", {"basis": "bank"}, "script",
+                                          clause, on=clause[-10:])
     return changed
 
 

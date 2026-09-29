@@ -494,6 +494,9 @@ def test_apply_and_reminded_hold_the_ledger_lock():
     @contextlib.contextmanager
     def spy(path):
         with real(path):
+            if str(path).endswith("events.jsonl"):  # the state log's own lock, taken inside the ledger's
+                yield
+                return
             fd = os.open(str(path) + ".lock", os.O_RDWR)
             try:
                 try:
@@ -1613,10 +1616,263 @@ def test_fee_note_is_written_only_with_the_owner_nonce():
     assert cp.fees_accepted({"notes": notes}, datetime.date(2026, 9, 28)) == 12.4
 
 
+# ---------------------------------------------------------------- the writers record facts (structured state, PR 4)
+
+import lcs_events as ev  # noqa: E402
+
+TODAY = cp.lm.today()
+TD = TODAY.isoformat()
+
+
+def log_of(d):
+    path = os.path.join(d, "events.jsonl")
+    return [json.loads(x) for x in open(path).read().splitlines()] if os.path.exists(path) else []
+
+
+def run_fact(notes, *args):
+    """check_payments.py with the ledger and the log in one temp private folder: (process, notes, log lines)."""
+    d = tempfile.mkdtemp()
+    os.chmod(d, 0o700)
+    path = os.path.join(d, "bookings.csv")
+    cols = ["booking_ref", "value_gbp", "invoice_date", "event_date", "notes", "client_name"]
+    with open(path, "w", newline="") as f:
+        w = csv.DictWriter(f, fieldnames=cols)
+        w.writeheader()
+        w.writerow(row("2111", 650, "2026-08-22", "2026-11-21", notes))
+    env = dict(os.environ, LCS_BOOKINGS_CSV=path, LCS_PRIVATE_DIR=d)
+    p = subprocess.run([PY, SCRIPT, *args], env=env, capture_output=True, text=True, stdin=subprocess.DEVNULL)
+    with open(path, newline="") as f:
+        return p, list(csv.DictReader(f))[0]["notes"], log_of(d)
+
+
+SCRIPT_FACTS = [  # (args after the ref, the clause written, kind, fields)
+    (["cancelled"], f"cancelled {TD} by client email", "cancelled", {}),
+    (["noted-paid", "--scope", "part"], f"paid per client email {TD}", "noted-paid", {"scope": "part"}),
+    (["noted-paid", "--scope", "full"], f"balance paid per client email {TD}", "noted-paid", {"scope": "full"}),
+    (["arranged", "--method", "cash"], f"balance payable in cash on the day (arranged {TD})", "arranged", {"method": "cash"}),
+    (["arranged", "--method", "cheque"], f"balance payable by cheque on the day (arranged {TD})", "arranged",
+     {"method": "cheque"}),
+    (["arranged", "--method", "third-party"], f"balance to be paid by another payer (arranged {TD})", "arranged",
+     {"method": "third-party"}),
+]
+
+
+def test_fact_writes_todays_phrase_and_its_event_claiming_it():
+    for extra, clause, kind, fields in SCRIPT_FACTS:
+        p, notes, log = run_fact("PENDING: invoiced", "--fact", "2111", *extra)
+        assert p.returncode == 0 and f"2111: {kind} recorded" in p.stdout, (extra, p.stderr)
+        assert notes == f"PENDING: invoiced; {clause}", (extra, notes)
+        assert len(log) == 1, log
+        e = log[0]
+        assert (e["kind"], e["fields"], e["by"], e["on"], e["src"]) == (kind, fields, "script", TD, "live"), e
+        assert e["note"] == ev.note_hash(clause), e
+
+
+def test_each_fact_phrase_reads_as_its_fact_from_the_notes_alone():
+    """With the log renamed away, the note says the same thing (the pattern readers' fallback)."""
+    for extra, clause, kind, fields in SCRIPT_FACTS:
+        said = cp.assertions(clause, 650.0, TODAY)
+        family = {"cancelled": "cancellation", "noted-paid": "noted paid", "arranged": "arrangement"}[kind]
+        want = {"cancelled": True, "arranged": True, "noted-paid": fields.get("scope")}[kind]
+        assert said[family] == want, (clause, said)
+        assert [f for f, v in said.items() if v is not None] == [family], (clause, said)
+    for kind, fields, want in (("paid-in-full", {"basis": "owner"}, "close"), ("fees-accepted", {"amount": "12.40"}, "close"),
+                               ("reinstated", {}, "cancellation"), ("deposit-kept", {}, "cancel settlement"),
+                               ("refunded", {}, "cancel settlement"), ("payment-checked", {}, "cancel settlement")):
+        clause = cp.fact_phrase(kind, fields, TODAY, "owner")
+        said = cp.assertions(clause, 650.0, TODAY)
+        assert said[want] is not None and said[want] is not False or kind == "reinstated", (clause, said)
+        assert clause.endswith(" (owner)"), clause
+    assert cp.assertions(cp.fact_phrase("reinstated", {}, TODAY, "owner"), 650.0, TODAY)["cancellation"] is False
+
+
+def test_fact_refuses_the_owner_kinds_and_bad_input_and_writes_nothing():
+    future = (TODAY + datetime.timedelta(days=1)).isoformat()
+    old = (TODAY - datetime.timedelta(days=731)).isoformat()
+    for args in (["--fact", "2111", "refunded"], ["--fact", "2111", "paid-in-full"],
+                 ["--fact", "2111", "fees-accepted", "--amount", "12.40"], ["--fact", "2111", "reinstated"],
+                 ["--fact", "2111", "deposit-seen"], ["--fact", "2111", "reminder-drafted"], ["--fact", "2111", "retract"],
+                 ["--fact", "2111", "discount-agreed"], ["--fact", "2111", "sacked"],
+                 ["--fact", "2111", "arranged"], ["--fact", "2111", "arranged", "--method", "card"],
+                 ["--fact", "2111", "noted-paid"], ["--fact", "2111", "noted-paid", "--scope", "all"],
+                 ["--fact", "2111", "cancelled", "--method", "cash"], ["--fact", "2111", "cancelled", "--amount", "5"],
+                 ["--fact", "2111", "cancelled", "--on", future], ["--fact", "2111", "cancelled", "--on", old],
+                 ["--fact", "2111", "cancelled", "--on", "28/09/2026"], ["--fact", "2111", "cancelled", "--on", "2026-02-30"],
+                 ["--fact", "9999", "cancelled"], ["--fact", "2111", "cancelled", "--note", "2111", "x"],
+                 ["--fact", "2111", "cancelled", "--reminded", "2111"], ["--kind", "balance", "--fact", "2111", "cancelled"]):
+        p, notes, log = run_fact("PENDING: invoiced", *args)
+        assert p.returncode != 0 and notes == "PENDING: invoiced" and log == [], (args, p.stderr)
+    p, notes, log = run_fact("PENDING: invoiced", "--fact", "2111", "cancelled", "--on", "2026-09-10")
+    assert p.returncode == 0 and notes == "PENDING: invoiced; cancelled 2026-09-10 by client email" and log[0]["on"] == "2026-09-10"
+
+
+def test_owner_facts_need_the_nonce_and_write_owner_phrases():
+    cases = [(["paid-in-full"], f"paid in full {TD} (owner)", "paid-in-full", {"basis": "owner"}),
+             (["fees-accepted", "--amount", "12.4"], f"short by fees £12.40 accepted {TD} (owner)", "fees-accepted",
+              {"amount": "12.40"}),
+             (["reinstated"], f"reinstated {TD} (owner)", "reinstated", {}),
+             (["deposit-kept"], f"deposit kept {TD} (owner)", "deposit-kept", {}),
+             (["refunded"], f"refunded {TD} (owner)", "refunded", {}),
+             (["payment-checked"], f"payment checked {TD} (owner)", "payment-checked", {}),
+             (["cancelled"], f"cancelled {TD} (owner)", "cancelled", {}),
+             (["arranged", "--method", "cash"], f"balance payable in cash on the day (arranged {TD}) (owner)", "arranged",
+              {"method": "cash"})]
+    for extra, clause, kind, fields in cases:
+        d, path = owner_ledger()
+        args = ["--fact", "2111", *extra, "--owner"]
+        p, notes = run_owner(d, path, args)  # no nonce
+        assert p.returncode != 0 and notes == "PENDING: invoiced" and log_of(d) == [], (extra, p.stderr)
+        assert "nothing written" in p.stderr, p.stderr
+        nonce_file(d)
+        p, notes = run_owner(d, path, args, stdin_text=NONCE + "\n")
+        assert p.returncode == 0 and notes == f"PENDING: invoiced; {clause}", (extra, p.stderr, notes)
+        (e,) = log_of(d)
+        assert (e["kind"], e["fields"], e["by"], e["note"]) == (kind, fields, "owner", ev.note_hash(clause)), e
+    d, path = owner_ledger()
+    nf = nonce_file(d)
+    p, notes = run_owner(d, path, ["--fact", "2111", "refunded", "--owner"], stdin_text=NONCE + "\n",
+                         env_extra={"LCS_BOOKINGS_CSV": path})
+    assert p.returncode != 0 and "LCS_BOOKINGS_CSV" in p.stderr and log_of(d) == [] and os.path.exists(nf)
+    for amount in ("40.01", "0", "12.345", "abc"):
+        d, path = owner_ledger()
+        nonce_file(d)
+        p, notes = run_owner(d, path, ["--fact", "2111", "fees-accepted", "--amount", amount, "--owner"],
+                             stdin_text=NONCE + "\n")
+        assert p.returncode != 0 and notes == "PENDING: invoiced" and log_of(d) == [], amount
+
+
+def test_reminded_records_its_marker():
+    for kind, clause, what in ((None, f"reminder drafted {TD}", "deposit"), ("balance", f"balance reminder drafted {TD}", "balance"),
+                               ("receipt", f"receipt drafted {TD}", "receipt")):
+        p, notes, log = run_fact("PENDING: invoiced", "--reminded", "2111", *(["--kind", kind] if kind else []))
+        assert p.returncode == 0 and notes == f"PENDING: invoiced; {clause}", p.stderr
+        assert [(e["kind"], e["fields"], e["by"], e["note"]) for e in log] == [
+            ("reminder-drafted", {"what": what}, "script", ev.note_hash(clause))], log
+
+
+def in_private(fn):
+    """Run fn with this process's private folder (LCS_PRIVATE_DIR) a fresh temp dir; returns (dir, fn's value)."""
+    d = tempfile.mkdtemp()
+    os.chmod(d, 0o700)
+    saved = os.environ["LCS_PRIVATE_DIR"]
+    os.environ["LCS_PRIVATE_DIR"] = d
+    ev.clear_cache()
+    try:
+        return d, fn(d)
+    finally:
+        os.environ["LCS_PRIVATE_DIR"] = saved
+        ev.clear_cache()
+
+
+def test_apply_records_deposit_seen_and_paid_in_full_where_it_writes_them():
+    def go(d):
+        path = os.path.join(d, "bookings.csv")
+        rows = [row("2111", 650, "2026-08-22", "2026-11-21", "PENDING: invoiced"),
+                row("0512", 650, "2026-08-22", "2026-11-21", "deposit seen 2026-08-26 (Starling)", name="Bo Jones"),
+                row("0513", 650, "2026-08-22", "2026-11-21", "PENDING: invoiced", name="Cy Kerr")]
+        cp.lm.write_csv(path, rows, list(rows[0].keys()))
+        paid = {"2111": [("2026-08-26", 325.0, "reference")],
+                "0512": [("2026-08-26", 325.0, "reference"), ("2026-09-20", 325.0, "reference")],
+                "0513": [("2026-08-26", 325.0, "amount only")]}
+        results = [(r, paid[r["booking_ref"]], cp.assess(r, paid[r["booking_ref"]], T)) for r in rows]
+        saved = cp.LEDGER
+        cp.LEDGER = path
+        try:
+            assert cp.apply_notes(results, T)
+        finally:
+            cp.LEDGER = saved
+        return {r["booking_ref"]: r["notes"] for r in cp.lm.read_csv(path)}
+    d, notes = in_private(go)
+    assert notes["2111"] == "deposit seen 2026-08-26 (Starling); invoiced" and notes["0513"] == "PENDING: invoiced", notes
+    assert notes["0512"] == "deposit seen 2026-08-26 (Starling); paid in full 2026-09-20", notes
+    got = [(e["id"], e["kind"], e["fields"], e["on"], e["by"], e["note"]) for e in log_of(d)]
+    assert got == [("2111", "deposit-seen", {}, "2026-08-26", "script", ev.note_hash("deposit seen 2026-08-26 (Starling)")),
+                   ("0512", "paid-in-full", {"basis": "bank"}, "2026-09-20", "script",
+                    ev.note_hash("paid in full 2026-09-20"))], got
+
+
+def test_a_ledger_write_that_fails_after_the_fact_withdraws_it():
+    def go(d):
+        path = os.path.join(d, "bookings.csv")
+        cp.lm.write_csv(path, [row("2111", 650, "2026-08-22", "2026-11-21", "PENDING: invoiced")],
+                        list(row("a", 1, "", "").keys()))
+        saved, real = (sys.argv, cp.LEDGER), cp.lm.write_csv
+        sys.argv, cp.LEDGER = ["check_payments.py", "--fact", "2111", "cancelled"], path
+
+        def broken(*a, **k):
+            raise OSError("disk full")
+        cp.lm.write_csv = broken
+        try:
+            with contextlib.redirect_stdout(io.StringIO()):
+                cp.main()
+            return "not refused", None
+        except SystemExit as e:
+            return str(e), cp.lm.read_csv(path)[0]["notes"]
+        finally:
+            sys.argv, cp.LEDGER = saved
+            cp.lm.write_csv = real
+    d, (msg, notes) = in_private(go)
+    assert "nothing written" in msg and "withdrawn" in msg and notes == "PENDING: invoiced", (msg, notes)
+    assert [(e["kind"], e["fields"].get("why")) for e in log_of(d)] == [("cancelled", None), ("retract", "write-failed")]
+
+
+def test_note_is_unchanged_while_its_fact_refusal_is_switched_off():
+    assert cp.NOTE_REFUSES_FACTS is False  # switched on with the prompts' change to --fact (plan, Task 18)
+    for text in ("cancelled 2026-09-28 by client email", "paid per client email 2026-09-28", "balance to be paid in cash"):
+        p, notes, log = run_fact("PENDING: invoiced", "--note", "2111", text)
+        assert p.returncode == 0 and notes == "PENDING: invoiced; " + text and log == [], (text, p.stderr)
+
+
+def test_note_refuses_fact_shaped_text_once_switched_on():
+    want = {"cancelled 2026-09-28 by client email": "--fact 2111 cancelled",
+            "client cancelling": "--fact 2111 cancelled",
+            "paid per client email 2026-09-28": "--fact 2111 noted-paid --scope part",
+            "balance paid per client email 2026-09-28": "--fact 2111 noted-paid --scope full",
+            "balance to be paid in cash": "--fact 2111 arranged --method cash|cheque|third-party"}
+    for text, form in want.items():
+        assert cp.fact_shaped(text) and form in cp.note_refusal("2111", text), (text, cp.note_refusal("2111", text))
+    for text in ("4 singers, London", "client asked about parking", "may be cancelling", "no payment received",
+                 "deposit not yet seen"):
+        assert cp.fact_shaped(text) is None and cp.note_refusal("2111", text) is None, text
+
+    def go(d):
+        path = os.path.join(d, "bookings.csv")
+        cp.lm.write_csv(path, [row("2111", 650, "2026-08-22", "2026-11-21", "PENDING: invoiced")],
+                        list(row("a", 1, "", "").keys()))
+        saved = (sys.argv, cp.LEDGER, cp.NOTE_REFUSES_FACTS)
+        out = []
+        try:
+            cp.LEDGER, cp.NOTE_REFUSES_FACTS = path, True
+            for text in ("cancelled 2026-09-28 by client email", "4 singers, London"):
+                sys.argv = ["check_payments.py", "--note", "2111", text]
+                try:
+                    with contextlib.redirect_stdout(io.StringIO()):
+                        cp.main()
+                    out.append("written")
+                except SystemExit as e:
+                    out.append(str(e))
+        finally:
+            sys.argv, cp.LEDGER, cp.NOTE_REFUSES_FACTS = saved
+        return out, cp.lm.read_csv(path)[0]["notes"]
+    _, (out, notes) = in_private(go)
+    assert out[0] == "record it with --fact 2111 cancelled; nothing written" and out[1] == "written", out
+    assert notes == "PENDING: invoiced; 4 singers, London", notes
+
+
+def clear_log():
+    """No state log in this process's private folder: the in-process writers append to it, and a later test's
+    booking with the same ref would read those facts."""
+    for name in ("events.jsonl", "events.jsonl.lock"):
+        if os.path.exists(os.path.join(_HOME, name)):
+            os.remove(os.path.join(_HOME, name))
+    ev.clear_cache()
+
+
 if __name__ == "__main__":
     failures = 0
     for name, fn in sorted(globals().items()):
         if name.startswith("test_") and callable(fn):
+            clear_log()
             try:
                 fn()
                 print(f"PASS {name}")

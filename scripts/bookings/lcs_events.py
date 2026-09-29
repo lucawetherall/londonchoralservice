@@ -307,7 +307,11 @@ def record(table, subject, id, kind, fields, by, clause, on=None):
     appended, or None for a fact with no note): append the fact claiming that clause, and have locked_rows withdraw
     it (a write-failed retract by the same writer, still under the CSV's lock) should the rows not be written after
     all. Returns the eid. Record a fact only after every refusal the writer makes: a refusal after it withdraws it."""
-    eid = append(subject, id, kind, fields, by, on=on, note=note_hash(clause) if clause else None)
+    try:
+        eid = append(subject, id, kind, fields, by, on=on, note=note_hash(clause) if clause else None)
+    except (ValueError, OSError):
+        table.log_refused = True
+        raise
 
     def undo():
         try:
@@ -335,7 +339,9 @@ def recording(path, columns=None):
             if getattr(table, "undo_failed", False):
                 raise SystemExit(f"fact recorded, note not written ({type(e).__name__}): run events.py verify") from None
             raise SystemExit(f"nothing written ({type(e).__name__}): the recorded fact was withdrawn") from None
-        raise SystemExit(f"the state log refused it ({e}); nothing written") from None
+        if table is not None and getattr(table, "log_refused", False):
+            raise SystemExit(f"the state log refused it ({e}); nothing written") from None
+        raise
 
 
 _CACHE = {}

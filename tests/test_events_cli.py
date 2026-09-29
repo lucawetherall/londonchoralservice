@@ -125,6 +125,37 @@ def test_show_refuses_a_bad_subject_or_id():
         assert code != 0, (args, out)
 
 
+def write_ledger(d, notes):
+    with open(os.path.join(d, "bookings.csv"), "w") as f:
+        f.write("booking_ref,notes\n" + "".join(f"{ref},{n}\n" for ref, n in notes.items()))
+
+
+def test_verify_lists_facts_whose_note_is_missing_and_stale_notes_checked_hashes():
+    import lcs_owner
+    d = fresh()
+    write_ledger(d, {"2111": "PENDING: invoiced; cancelled 2026-09-20 by client email", "2112": "PENDING"})
+    ev.append("booking", "2111", "cancelled", {}, "script", on="2026-09-20",
+              note=ev.note_hash("cancelled 2026-09-20 by client email"))
+    code, out = run("verify")
+    assert code == 0 and "missing" not in out, out
+    gone = ev.append("booking", "2112", "cancelled", {}, "script", on="2026-09-21",
+                     note=ev.note_hash("cancelled 2026-09-21 by client email"))  # the ledger write never landed
+    saved, lcs_owner._PROVEN = lcs_owner._PROVEN, True
+    try:
+        ev.append("booking", "2111", "notes-checked", {"clauses": [ev.note_hash("PENDING: invoiced"), "0123456789ab"]},
+                  "owner", on="2026-09-22")
+    finally:
+        lcs_owner._PROVEN = saved
+    code, out = run("verify")
+    assert code == 1, out
+    assert f"fact without its note: booking 2112 cancelled on 2026-09-21 [{gone}]" in out, out
+    assert "notes-checked hash no clause matches: booking 2111 0123456789ab" in out, out
+    assert "PENDING" not in out and "client email" not in out
+    ev.append("booking", "2112", "retract", {"target": gone, "why": "write-failed"}, "script")
+    code, out = run("verify")
+    assert "2112" not in out, "a withdrawn fact never had a note to lose"
+
+
 def test_the_log_is_never_committed():
     lines = open(os.path.join(ROOT, ".gitignore"), encoding="utf-8").read().splitlines()
     assert "events*.jsonl" in lines
