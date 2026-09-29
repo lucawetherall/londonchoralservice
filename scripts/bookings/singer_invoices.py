@@ -369,11 +369,13 @@ def per_row(facts, r):
 
 def confirmed(r, facts=None):
     """Confirmed by phone on this invoice: a recorded bank-confirmed for its current details (bank_fp[:8]; a rescan
-    to other details voids it), else the bank_confirmed column."""
+    to other details voids it), or the bank_confirmed column. The column still counts beside the facts: it is the
+    owner's fallback when the Command Centre is down (a rescan to other details clears it, as it voids the fact),
+    and undoing a recorded confirmation clears it too (events.py retract)."""
     f = facts_for(r, facts)
-    if f.has("bank trust"):
-        fp = r.get("bank_fp") or ""
-        return bool(fp) and fp[:8] in f.confirmed_fp8s
+    fp = r.get("bank_fp") or ""
+    if f.has("bank trust") and fp and fp[:8] in f.confirmed_fp8s:
+        return True
     return r.get("bank_confirmed") == "yes"
 
 
@@ -698,6 +700,25 @@ def held(rows, r, facts=None):
         out.append("withdrawal")
     if f.has("settlement") and not f.settled and any(c.startswith("settled by hand") for c in loose):
         out.append("settlement")
+    # a clause a counting fact claims, deleted by hand: held when the notes and columns now read otherwise
+    present = {lcs_events.note_hash(c.strip()) for c in (r.get("notes") or "").split(";") if c.strip()}
+    fp8 = (r.get("bank_fp") or "")[:8]
+    latest_warning = f.of("bank-warning")[-1:]
+    counting = {"withdrawal": f.of("withdrawn"), "settlement": f.of("settled"),
+                "bank trust": [e for e in f.of("bank-confirmed") if e["fields"]["fp8"] == fp8],
+                "bank warnings": [e for e in latest_warning if e["fields"]["fp8"] == fp8]}
+    for fam, es in counting.items():
+        if fam in out or not any(e.get("note") and e["note"] not in present for e in es):
+            continue
+        notes_say, facts_say = {
+            "withdrawal": (bool((r.get("withdrawn") or "").strip()), f.withdrawn_on is not None),
+            "settlement": (any(c.strip().startswith("settled by hand") for c in (r.get("notes") or "").split(";")),
+                           f.settled),
+            "bank trust": (r.get("bank_confirmed") == "yes", True),
+            "bank warnings": (r.get("bank_changed") == "yes", bank_changed(r, f)),
+        }[fam]
+        if notes_say != facts_say:
+            out.append(fam)
     return out
 
 

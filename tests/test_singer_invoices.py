@@ -985,6 +985,43 @@ def test_the_writers_facts_read_as_their_notes_do():
     assert diffs == [], diffs
 
 
+def hand_edit(mid, **cols):
+    rows = lm.read_csv(si.STORE)
+    for r in rows:
+        if r["message_id"] == mid:
+            r.update(cols)
+    lm.write_csv(si.STORE, rows, si.COLUMNS)
+    si.lcs_events.clear_cache()
+
+
+def test_a_fact_whose_note_was_deleted_by_hand_holds_the_invoice():
+    fresh_store()
+    scan(GEN.format(n=1), "g1", "2026-08-01")
+    _withdraw("g1", "not-ours")
+    r = rows_by_id()["g1"]
+    assert si.held([r], r) == []
+    notes = "; ".join(c for c in r["notes"].split("; ") if not c.startswith("withdrawn"))
+    hand_edit("g1", notes=notes, withdrawn="")  # the owner undoes the withdrawal by hand in the CSV
+    r = rows_by_id()["g1"]
+    assert si.held([r], r) == ["withdrawal"] and si.ring_first_in([r], r), si.held([r], r)
+    assert si.stored_bill([r], r) == "no (withdrawn)" or si.stored_bill([r], r) == "no (held)"
+
+
+def test_a_hand_set_bank_confirmed_counts_after_a_rescan_voided_the_fact():
+    """The app-down fallback: the recorded confirmation was for the old details (a rescan voided it), and the owner
+    sets bank_confirmed to yes by hand for the new ones: it counts, as the column always did."""
+    fresh_store()
+    scan(GEN.format(n=1), "g1", "2026-08-01")
+    with contextlib.redirect_stdout(io.StringIO()):
+        confirm("g1")
+    rescan("g1", file=eml(FRAUD.format(n=1)))
+    r = rows_by_id()["g1"]
+    assert r["bank_confirmed"] == "" and not si.confirmed(r)
+    hand_edit("g1", bank_confirmed="yes")
+    r = rows_by_id()["g1"]
+    assert si.confirmed(r) and not si.ring_first_in([r], r) and si.held([r], r) == []
+
+
 def test_a_legacy_row_with_an_odd_fingerprint_never_stops_a_scan():
     fresh_store()
     base = {c: "" for c in si.COLUMNS}
