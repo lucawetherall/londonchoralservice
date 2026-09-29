@@ -242,13 +242,23 @@ def ledger_add(row):
     # The same lock as check_payments and upload_bookings, around the whole read-check-write; the file is
     # rewritten atomically at mode 600. lm.locked_rows is not re-entrant: never nest it or call another
     # ledger writer inside it.
-    with lm.locked_rows(LEDGER) as t:
+    # Once the events migration is applied, the facts the new row's notes state (read clause by clause as the
+    # migration reads them; the script's kinds only) are recorded too, claiming their clauses, under the same lock.
+    with cp.lcs_events.recording(LEDGER) as t:
         unknown = set(row) - set(t.columns)
         if unknown:
             raise SystemExit(f"unknown columns: {', '.join(sorted(unknown))}")
         if not row.get("booking_ref") or any(r["booking_ref"] == row["booking_ref"] for r in t.rows):
             raise SystemExit("missing or duplicate booking_ref; nothing written")
-        t.rows.append({c: "" if row.get(c) is None else str(row.get(c)) for c in t.columns})
+        new = {c: "" if row.get(c) is None else str(row.get(c)) for c in t.columns}
+        t.rows.append(new)
+        if (new.get("notes") or "").strip() and cp.lcs_events.migration_applied():
+            import lcs_migrate
+            by_hash = {cp.lcs_events.note_hash(c): c for c in cp.clauses(new["notes"])}
+            for p in lcs_migrate.booking_proposals(new, lm.today(), cp.lcs_events.Facts("booking"))[0]:
+                if p["by"] == "script":
+                    cp.lcs_events.record(t, "booking", p["id"], p["kind"], p["fields"], "script",
+                                         by_hash.get(p["note"]), on=p["on"])
     print(f"ledger: added {row['booking_ref']}")
 
 

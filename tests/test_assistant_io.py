@@ -167,6 +167,29 @@ def test_ledger_add_refuses_duplicates_unknown_columns_bad_json_and_no_ledger():
     assert code != 0 and "no ledger yet" in err, err
 
 
+def test_ledger_add_records_the_facts_its_notes_state_once_the_migration_is_applied():
+    import lcs_events as ev
+    notes = "PENDING: invoiced by enquiry assistant; deposit seen 2026-09-20; balance to be paid in cash"
+    row = {"booking_ref": "2111", "occasion": "wedding", "value_gbp": 1150, "invoice_date": "2026-09-01",
+           "event_date": "2026-12-12", "notes": notes}
+    fresh(refs=["0110"])
+    code, out, err = run("ledger-add", json.dumps(row))
+    assert code == 0 and not os.path.exists(os.path.join(_HOME, "events.jsonl")), err  # before: the notes alone
+    fresh(refs=["0110"])
+    ev.clear_cache()
+    ev.append("booking", "0000", "deposit-seen", {}, "script", on="2026-01-01", src="migration", eid="00000000000000aa")
+    code, out, err = run("ledger-add", json.dumps(row))
+    assert code == 0 and out.strip() == "ledger: added 2111", (out, err)
+    ev.clear_cache()
+    got = [(e["kind"], e["fields"], e["by"], e["note"]) for e in ev.read()[0] if e["src"] == "live"]
+    assert got == [("noted-paid", {"scope": "part"}, "script", ev.note_hash("deposit seen 2026-09-20")),
+                   ("arranged", {"method": "cash"}, "script", ev.note_hash("balance to be paid in cash"))], got
+    r = next(x for x in cp.lm.read_csv(os.path.join(_HOME, "bookings.csv")) if x["booking_ref"] == "2111")
+    assert cp.held(r) == [] and cp.assess(r, [], datetime.date(2026, 9, 28))["state"] == "ARRANGED"
+    fresh()
+    ev.clear_cache()
+
+
 def test_state_file_is_private_and_done_moves_last_checked_to_the_run_start():
     fresh()
     state = json.loads(run("state")[1])
