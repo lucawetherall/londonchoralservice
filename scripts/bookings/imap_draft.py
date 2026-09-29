@@ -3,8 +3,9 @@
 
 The Zoho Mail MCP can't attach files to a draft, so this script builds the whole email itself and
 puts it in the Drafts folder of office@londonchoralservice.com over IMAP (APPEND). It never sends:
-there is no SMTP code here, and the only IMAP write is APPEND to Drafts. Luca opens the draft in
-Zoho, checks it and presses Send.
+there is no SMTP code here. The IMAP writes are APPEND to Drafts and, for `attach` only, one MOVE of Luca's
+original draft to Trash once its copy with the attachments has been read back and checked (owner decision,
+29 Sep 2026). Nothing is ever deleted. Luca opens the draft in Zoho, checks it and presses Send.
 
     .venv/bin/python scripts/bookings/imap_draft.py save '<one-line JSON spec>'
     .venv/bin/python scripts/bookings/imap_draft.py attach <Message-ID of Luca's draft> '<one-line JSON spec>'
@@ -34,8 +35,11 @@ attach takes {"key": "<ref>-confirmation", "attachments": [<invoice PDF>, <booki
 file rules as save) and a draft Luca wrote himself in Drafts, found by its Message-ID. It saves a copy of that
 draft with the two files attached: his text, formatting and signature byte for byte, the same To, Subject and
 threading headers, a new Message-ID and the draft key. Only a plain draft from office@ to that booking's client
-in the ledger, with no Cc, Bcc or attachments and no bank details in its text. The original is never touched
-(Claude deletes nothing): Luca sends the copy and deletes his own draft.
+in the ledger, with no Cc, Bcc or attachments and no bank details in its text. Then it reads the copy back and
+checks it: his body parts unchanged, both files byte for byte, the same To and Subject. Only then does it move his
+original draft to Trash (recoverable there; owner decision, 29 Sep 2026), so one draft remains, as if he had
+attached the files himself. If the check fails, the server can't MOVE, or the Message-ID isn't unique in Drafts,
+the original stays and Luca deletes it himself.
 
 sent reads the Sent folder (read-only) for a message to <client email> since <date> with an attachment named
 exactly "Invoice <ref> - <…>.pdf", and prints "sent: yes <YYYY-MM-DD>" or "sent: no". The daily pass marks the
@@ -78,7 +82,7 @@ TEST_TO = "luca@almaconsort.com"
 KEYCHAIN_SERVICE = "lcs-zoho-imap"
 DEFAULT_HOST = "imappro.zoho.com"  # Zoho's IMAP server for organisation mailboxes
 HOST_OK = re.compile(r"imap(?:pro)?\.zoho\.(?:com|eu|in|com\.au|jp|com\.cn|ca|sa)")
-DRAFTS, SENT = "Drafts", "Sent"
+DRAFTS, SENT, TRASH = "Drafts", "Sent", "Trash"
 KEY_HEADER = "X-LCS-Draft-Key"
 INVOICES_ROOT = lm.ICLOUD_INVOICES  # where make_booking_docs.py writes
 SAVED = lm.PRIVATE / "imap-drafts.csv"  # keys of drafts saved before
@@ -446,9 +450,48 @@ def attached_copy(original, key, attachments):
     return to[0], copy.as_bytes()
 
 
+def body_parts(msg):
+    """The message's body (not attachment) parts, text normalised for line endings, other parts by digest."""
+    return [(p.get_content_type(), p.get_content().replace("\r\n", "\n") if p.get_content_maintype() == "text"
+             else digest(p.get_content())) for p in msg.walk() if not p.is_multipart() and not p.is_attachment()]
+
+
+def copy_is_faithful(copy, original, attachments):
+    """True when the saved copy has Luca's body parts unchanged, both files byte for byte, the same To and
+    Subject, and nothing else attached."""
+    if copy is None:
+        return False
+    files = {p.get_filename(): digest(p.get_content()) for p in copy.iter_attachments()}
+    return (body_parts(copy) == body_parts(original) and files == {n: digest(b) for n, _, _, b in attachments}
+            and str(copy.get("To")) == str(original.get("To")) and str(copy.get("Subject")) == str(original.get("Subject")))
+
+
+def retire_original(conn, message_id):
+    """Move Luca's original draft to Trash: the one IMAP change besides APPEND, allowed by the owner on 29 Sep 2026
+    for this case only. Only the single draft in Drafts with exactly this Message-ID and no draft key; only by
+    MOVE (so it stays recoverable in Trash): no flag changes, and no closing a writable folder (that would purge). True when moved."""
+    if "MOVE" not in conn.capabilities:
+        return False
+    typ, _ = conn.select(DRAFTS)
+    if typ != "OK":
+        return False
+    typ, rows = conn.uid("FETCH", "1:*", "(UID BODY.PEEK[HEADER.FIELDS (MESSAGE-ID X-LCS-DRAFT-KEY)])")
+    uids = []
+    for row in rows if typ == "OK" else []:
+        if isinstance(row, tuple) and len(row) > 1:
+            head = email.message_from_bytes(row[1] or b"", policy=email.policy.default)
+            m = re.search(rb"UID (\d+)", row[0] or b"")
+            if m and (head.get("Message-ID") or "").strip() == message_id and not head.get(KEY_HEADER):
+                uids.append(m.group(1).decode())
+    if len(uids) != 1:
+        return False
+    typ, _ = conn.uid("MOVE", uids[0], TRASH)
+    return typ == "OK"
+
+
 def attach(conn, message_id, key, files, root=None):
-    """Save a copy of Luca's draft with booking <ref>'s invoice and booking confirmation attached. Never touches
-    the original: Luca sends the copy and deletes his own draft."""
+    """Save a copy of Luca's draft with booking <ref>'s invoice and booking confirmation attached, check it, then
+    move his original to Trash (see retire_original)."""
     ref = CONFIRMATION_KEY.fullmatch(key).group(1)
     if saved_before(key):
         return f"already saved earlier ({key}): nothing added"
@@ -465,8 +508,14 @@ def attach(conn, message_id, key, files, root=None):
     append_draft(conn, message)
     record_saved(key)
     subject = str(original.get("Subject") or "").replace("\n", " ")[:80]
-    return (f"copy saved in Zoho Drafts with the invoice and booking confirmation attached ({key}): "
-            f"Luca sends the copy and deletes his original draft \"{subject}\"")
+    if not copy_is_faithful(fetch_draft(conn, key), original, attachments):
+        return (f"copy saved in Zoho Drafts with the invoice and booking confirmation attached ({key}), but it couldn't "
+                f"be checked, so the original is still there: Luca sends the copy and deletes his draft \"{subject}\"")
+    if retire_original(conn, message_id):
+        return (f"draft updated ({key}): \"{subject}\" now has the invoice and booking confirmation attached; "
+                f"the earlier version is in Trash")
+    return (f"copy saved in Zoho Drafts with the invoice and booking confirmation attached ({key}); the original "
+            f"couldn't be moved to Trash: Luca sends the copy and deletes his draft \"{subject}\"")
 
 
 def invoice_sent(conn, ref, to, since):
