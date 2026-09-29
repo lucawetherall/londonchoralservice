@@ -343,22 +343,40 @@ def read(path=None):
     return events, stats
 
 
+RUN_SECONDS = 120  # a write-failed retract comes from its target's own run: written within this long after it
+
+
+def _at(e):
+    return datetime.datetime.strptime(e["at"], "%Y-%m-%dT%H:%M:%SZ")
+
+
+def retracts(t, e):
+    """True when retract `e` undoes `t`: an earlier fact (never a retract) of the same subject and id. A mistake is
+    the owner's (validate); a write-failed retract counts only from the target's own writer (the same `by`) in the
+    same run (0 to RUN_SECONDS after it), so a script can never undo an owner fact that way."""
+    if not t or t["kind"] == "retract" or (t["subject"], t["id"]) != (e["subject"], e["id"]):
+        return False
+    if e["fields"]["why"] == "mistake":
+        return True
+    gap = (_at(e) - _at(t)).total_seconds()
+    return e["by"] == t["by"] and 0 <= gap <= RUN_SECONDS
+
+
 def index(events, today):
-    """{(subject, id): [events in file order]}, each a copy with "retracted" set when a later retract of the same
-    subject and id names it (a retract is never itself retracted). Events whose `on` is after today are left out,
-    retracts too. Readers skip retracted events for the reading but count them for "the family has events" and
-    keep their note claims."""
+    """{(subject, id): [events in file order]}, each a copy with "retracted" set to the retract's why ("mistake" or
+    "write-failed") when a later retract undoes it (retracts()), else False. Events whose `on` is after today are
+    left out, retracts too. Readers skip retracted events for the reading. A fact retracted by mistake is history:
+    it still counts for "the family has events" and keeps its note claim (precedence rule 2). A fact retracted as
+    write-failed never happened: it counts for nothing and claims nothing, so a note that did land is read."""
     live = [e for e in events if _date(e["on"]) <= today]
-    seen, gone = {}, set()
+    seen, gone = {}, {}
     for e in live:
-        if e["kind"] == "retract":
-            t = seen.get(e["fields"]["target"])
-            if t and t["kind"] != "retract" and (t["subject"], t["id"]) == (e["subject"], e["id"]):
-                gone.add(t["eid"])
+        if e["kind"] == "retract" and retracts(seen.get(e["fields"]["target"]), e):
+            gone.setdefault(e["fields"]["target"], e["fields"]["why"])
         seen[e["eid"]] = e
     out = {}
     for e in live:
-        out.setdefault((e["subject"], e["id"]), []).append(dict(e, retracted=e["eid"] in gone))
+        out.setdefault((e["subject"], e["id"]), []).append(dict(e, retracted=gone.get(e["eid"], False)))
     return out
 
 
@@ -380,14 +398,15 @@ class Facts:
     """The recorded facts for one booking or singer invoice (its index() list), read per family. Nothing here
     reads notes: check_payments and singer_invoices decide, per family, between these and the notes.
 
-    families: the families with events (retracted ones included); claims: the note hashes of every event
-    (retracted ones included) plus the clauses a live notes-checked confirmed."""
+    families: the families with events (retracted by mistake included: history); claims: the note hashes of those
+    events plus the clauses a live notes-checked confirmed. A fact retracted as write-failed is in neither."""
 
     def __init__(self, subject, events=()):
         self.subject, self.events = subject, list(events)
         self.live = [e for e in self.events if not e.get("retracted")]
-        self.families = {fam for e in self.events for fam, kinds in FAMILIES[subject].items() if e["kind"] in kinds}
-        self.claims = ({e["note"] for e in self.events if e.get("note")}
+        kept = [e for e in self.events if e.get("retracted") != "write-failed"]
+        self.families = {fam for e in kept for fam, kinds in FAMILIES[subject].items() if e["kind"] in kinds}
+        self.claims = ({e["note"] for e in kept if e.get("note")}
                        | {c for e in self.live if e["kind"] == "notes-checked" for c in e["fields"]["clauses"]})
 
     def has(self, family):

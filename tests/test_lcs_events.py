@@ -2,7 +2,7 @@
 """Tests for scripts/bookings/lcs_events.py: the state log's schema, appends, reads and index (structured-state
 design, 29 Sep 2026). Every test uses a temp LCS_PRIVATE_DIR, never ~/lcs-private.
 Stdlib only: .venv/bin/python tests/test_lcs_events.py"""
-import copy, datetime, json, os, subprocess, sys, tempfile
+import contextlib, copy, datetime, json, os, subprocess, sys, tempfile
 
 _HOME = tempfile.mkdtemp()  # never the real ~/lcs-private
 os.environ["LCS_PRIVATE_DIR"] = _HOME
@@ -422,6 +422,56 @@ def test_a_retract_cannot_be_retracted():
     ev.append("booking", "2111", "retract", {"target": r, "why": "mistake"}, "owner", on="2026-09-22")
     one = ev.index(ev.read()[0], T)[("booking", "2111")]
     assert one[0]["retracted"] and not one[1]["retracted"]
+
+
+@contextlib.contextmanager
+def as_owner():
+    """This process as the Command Centre's owner run: the nonce check passed (lcs_owner), no LCS_BOOKINGS_CSV."""
+    import lcs_owner
+    saved, csv_env = lcs_owner._PROVEN, os.environ.pop("LCS_BOOKINGS_CSV", None)
+    lcs_owner._PROVEN = True
+    try:
+        yield
+    finally:
+        lcs_owner._PROVEN = saved
+        if csv_env is not None:
+            os.environ["LCS_BOOKINGS_CSV"] = csv_env
+
+
+def retract_line(target, why, by, at, eid, subject="booking", id_="2111"):
+    return ev.validate(line(subject, "retract", {"target": target["eid"], "why": why}, by, at=at, on=at[:10], eid=eid,
+                            id=id_))
+
+
+def test_a_write_failed_retract_drops_its_target_and_its_claim():
+    """The writer's own retract in the same run: the fact never happened, so it counts for nothing (not even for
+    'the family has facts') and no longer claims its note: a note that did land is read from the notes."""
+    target = ev.validate(line(kind="cancelled", at="2026-09-10T10:00:00Z", on="2026-09-10", note=ev.note_hash("x")))
+    undo = retract_line(target, "write-failed", "script", "2026-09-10T10:00:01Z", "b1b2c3d4e5f60718")
+    one = ev.index([target, undo], T)[("booking", "2111")]
+    assert one[0]["retracted"] == "write-failed", one
+    f = ev.booking_facts("2111", T, events=[target, undo])
+    assert not f.has("cancellation") and ev.note_hash("x") not in f.claims and not f.cancelled
+
+
+def test_a_mistake_retract_keeps_its_target_as_history():
+    target = ev.validate(line(kind="cancelled", at="2026-09-10T10:00:00Z", on="2026-09-10", note=ev.note_hash("x")))
+    undo = retract_line(target, "mistake", "owner", "2026-09-11T10:00:00Z", "b1b2c3d4e5f60718")
+    f = ev.booking_facts("2111", T, events=[target, undo])
+    assert f.has("cancellation") and ev.note_hash("x") in f.claims and not f.cancelled
+
+
+def test_a_write_failed_retract_needs_the_same_writer_and_the_same_run():
+    owner_fee = ev.validate(line(kind="fees-accepted", fields={"amount": "12.40"}, by="owner",
+                                 at="2026-09-10T10:00:00Z", on="2026-09-10"))
+    by_script = retract_line(owner_fee, "write-failed", "script", "2026-09-10T10:00:01Z", "b1b2c3d4e5f60718")
+    f = ev.booking_facts("2111", T, events=[owner_fee, by_script])
+    assert f.closed_on == datetime.date(2026, 9, 10), "a script can't undo an owner fact"
+    cancel = ev.validate(line(kind="cancelled", at="2026-09-10T10:00:00Z", on="2026-09-10"))
+    later = retract_line(cancel, "write-failed", "script", "2026-09-10T10:05:00Z", "c1b2c3d4e5f60718")
+    assert ev.booking_facts("2111", T, events=[cancel, later]).cancelled, "not the same run: ignored"
+    owner_undo = retract_line(owner_fee, "write-failed", "owner", "2026-09-10T10:00:02Z", "d1b2c3d4e5f60718")
+    assert ev.booking_facts("2111", T, events=[owner_fee, owner_undo]).closed_on is None
 
 
 def test_a_future_on_is_ignored_until_that_day():

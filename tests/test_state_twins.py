@@ -153,6 +153,29 @@ def test_the_loose_clause_recorded_as_a_fact_releases_it():
         assert cp.held(r, T, facts=facts) == [], (family, text)
 
 
+def test_a_cancellation_whose_ledger_write_failed_but_landed_is_still_cancelled():
+    """The review's repro: the drafter's `cancelled` fact, a write-failed retract in the same run, and the note in
+    the ledger after all. The note is read: cancelled, never a deposit reminder."""
+    note = "cancelled 2026-09-10 by client email"
+    clauses = [("PENDING: invoiced", None, False),
+               (note, [f("cancelled", "2026-09-10"), f("retract", "2026-09-10", why="write-failed")], True)]
+    r, facts = held_row(clauses, 1150, "2026-09-01", "2026-12-12")
+    a = cp.assess(r, [], T, facts=facts)
+    assert cp.is_cancelled(r, facts=facts) and a["state"] == "CANCELLED" and a["action"] == "none", a
+    assert cp.held(r, T, facts=facts) == []
+    r, facts = held_row(clauses[:1] + [("", clauses[1][1], False)], 1150, "2026-09-01", "2026-12-12")
+    r["notes"] = "PENDING: invoiced"  # the note never landed: nothing happened
+    assert cp.assess(r, [], T, facts=facts)["state"] == "DEPOSIT_OVERDUE"
+
+
+def test_a_script_write_failed_retract_never_reopens_an_owner_close():
+    clauses = [("short by fees £12.40 accepted 2026-09-27 (owner)",
+                [f("fees-accepted", "2026-09-27", "owner", amount="12.40"),
+                 f("retract", "2026-09-27", "script", why="write-failed")], True)]
+    r, facts = held_row(clauses, 950, "2026-08-24", "2026-10-10")
+    assert cp.closed_on(r, T, facts=facts) == datetime.date(2026, 9, 27) and not cp.open_rows([r], T, facts={REF: facts})
+
+
 def test_notes_checked_releases_a_held_booking():
     for family, clauses, _ in HOLDS:
         loose = [ev.note_hash(t) for t, facts, claimed in clauses if not claimed]
