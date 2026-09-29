@@ -275,12 +275,12 @@ def test_new_bank_details_warning():
     assert any(w.startswith(si.NOT_YET_VERIFIED) for w in a2["warnings"])
 
 
-def test_new_bank_details_warning_names_the_confirm_command():
+def test_new_bank_details_warning_points_to_the_command_centre():
     a = si.assess_new(inv(), "b@x.com", "Ben Fenwick", [], {}, [], message_id="m42")
-    assert f"{si.NEW_DETAILS}, then run singer_invoices.py confirm m42" in a["warnings"]
+    assert f"{si.NEW_DETAILS}{si.CONFIRM_HINT}" in a["warnings"]
     history = [hrow("b@x.com", "Ben Fenwick", "123456", "12345678", "2026-08-01")]
     a2 = si.assess_new(inv(), "b@x.com", "Ben Fenwick", history, {}, [], message_id="m43")
-    assert f"{si.NOT_YET_VERIFIED}, then run singer_invoices.py confirm m43" in a2["warnings"]
+    assert f"{si.NOT_YET_VERIFIED}{si.CONFIRM_HINT}" in a2["warnings"]
     # without a message id (old callers), the hint is simply omitted
     assert si.NEW_DETAILS in si.assess_new(inv(), "b@x.com", "Ben Fenwick", [], {}, [])["warnings"]
 
@@ -370,6 +370,39 @@ def test_match_paid_uses_london_date():
 def fresh_store():
     if si.STORE.exists():
         si.STORE.unlink()
+    clear_log()
+
+
+def clear_log():
+    """No state log: the writers append to <TMP>/events.jsonl, and the tests reuse message ids."""
+    for name in ("events.jsonl", "events.jsonl.lock"):
+        if os.path.exists(os.path.join(TMP, name)):
+            os.remove(os.path.join(TMP, name))
+    si.lcs_events.clear_cache()
+
+
+@contextlib.contextmanager
+def as_owner():
+    """This process as the Command Centre's owner run: the nonce check passes (lcs_owner), no LCS_BOOKINGS_CSV."""
+    import lcs_owner
+    saved = (lcs_owner._PROVEN, lcs_owner.owner_confirmed, os.environ.pop("LCS_BOOKINGS_CSV", None))
+    lcs_owner._PROVEN, lcs_owner.owner_confirmed = True, lambda *a: True
+    try:
+        yield
+    finally:
+        lcs_owner._PROVEN, lcs_owner.owner_confirmed = saved[:2]
+        if saved[2] is not None:
+            os.environ["LCS_BOOKINGS_CSV"] = saved[2]
+
+
+def confirm(mid, **kw):
+    with as_owner():
+        si.cmd_confirm(Args(message_id=mid, owner=True, **kw))
+
+
+def settled(mid, day):
+    with as_owner():
+        si.cmd_settled(Args(message_id=mid, date=day, owner=True))
 
 
 def test_paid_never_reuses_a_payment():
@@ -739,13 +772,13 @@ def test_confirm_command():
     scan(GEN.format(n=1), "g1", "2026-08-01")
     buf = io.StringIO()
     with contextlib.redirect_stdout(buf):
-        si.cmd_confirm(Args(message_id="g1"))
+        confirm("g1")
     assert buf.getvalue().splitlines()[0] == "g1: bank details confirmed"
     assert rows_by_id()["g1"]["bank_confirmed"] == "yes"
     assert "NEW BANK DETAILS" not in scan(GEN.format(n=2), "g2", "2026-08-20")
     assert "was ••••2222" in scan(FRAUD.format(n=3), "f1", "2026-09-20")
     try:
-        si.cmd_confirm(Args(message_id="nope"))
+        confirm("nope")
         raise AssertionError("confirmed a missing invoice")
     except SystemExit:
         pass
@@ -759,27 +792,188 @@ def test_confirm_expect_fp_is_bound_to_the_fingerprint():
     other = fp[:15] + ("0" if fp[15] != "0" else "1")  # differs only in the last character
     for bad in (other, fp[:8], fp[:15], fp.upper(), "abc", "-x", fp[:14] + "zz", fp + "0"):
         try:
-            si.cmd_confirm(Args(message_id="g1", expect_fp=bad))
+            confirm("g1", expect_fp=bad)
             raise AssertionError(f"confirmed with --expect-fp {bad}")
         except SystemExit:
             pass
         assert rows_by_id()["g1"]["bank_confirmed"] == "", bad
     buf = io.StringIO()
     with contextlib.redirect_stdout(buf):
-        si.cmd_confirm(Args(message_id="g1", expect_fp=fp))
+        confirm("g1", expect_fp=fp)
     assert rows_by_id()["g1"]["bank_confirmed"] == "yes"
-    # the real command line: argparse takes the option
+    # the real command line, as the Command Centre runs it: --owner, its one-time nonce over a pipe
     fresh_store()
     scan(GEN.format(n=1), "g1", "2026-08-01")
-    env = dict(os.environ)
-    p = subprocess.run([sys.executable, str(Path(si.__file__)), "confirm", "g1", "--expect-fp", other], env=env,
-                       capture_output=True, text=True, timeout=30, stdin=subprocess.DEVNULL)
+    nonce_file()
+    p = cli_owner(["confirm", "g1", "--expect-fp", other, "--owner"])
     assert p.returncode != 0 and "changed since you approved" in p.stderr, (p.stdout, p.stderr)
     assert rows_by_id()["g1"]["bank_confirmed"] == ""
-    p = subprocess.run([sys.executable, str(Path(si.__file__)), "confirm", "g1", "--expect-fp", fp], env=env,
-                       capture_output=True, text=True, timeout=30, stdin=subprocess.DEVNULL)
+    nonce_file()
+    p = cli_owner(["confirm", "g1", "--expect-fp", fp, "--owner"])
     assert p.returncode == 0, p.stderr
     assert rows_by_id()["g1"]["bank_confirmed"] == "yes"
+
+
+NONCE = "ab" * 32
+
+
+def nonce_file():
+    import hashlib
+    cc = os.path.join(TMP, "command-centre")
+    os.makedirs(cc, mode=0o700, exist_ok=True)
+    fd = os.open(os.path.join(cc, "owner-nonce"), os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+    with os.fdopen(fd, "w") as f:
+        f.write(hashlib.sha256(NONCE.encode()).hexdigest())
+
+
+def cli_owner(args, nonce=True):
+    env = {k: v for k, v in os.environ.items() if k != "LCS_BOOKINGS_CSV"}
+    kw = {"input": NONCE + "\n"} if nonce else {"stdin": subprocess.DEVNULL}
+    return subprocess.run([sys.executable, str(Path(si.__file__)), *args], env=env, capture_output=True, text=True,
+                          timeout=30, **kw)
+
+
+def log_lines():
+    import json
+    path = os.path.join(TMP, "events.jsonl")
+    return [json.loads(x) for x in open(path).read().splitlines()] if os.path.exists(path) else []
+
+
+def test_confirm_and_settled_are_the_command_centres_only():
+    fresh_store()
+    scan(GEN.format(n=1), "g1", "2026-08-01")
+    before, events = si.STORE.read_text(), log_lines()
+    for fn, args in ((si.cmd_confirm, Args(message_id="g1")), (si.cmd_settled, Args(message_id="g1", date="2026-08-03")),
+                     (si.cmd_confirm, Args(message_id="g1", owner=True)),  # --owner without the nonce
+                     (si.cmd_settled, Args(message_id="g1", date="2026-08-03", owner=True))):
+        try:
+            with contextlib.redirect_stdout(io.StringIO()):
+                fn(args)
+            raise AssertionError(f"{fn.__name__} ran without the owner")
+        except SystemExit as e:
+            assert "Command Centre" in str(e) and "nothing" in str(e), e
+        assert si.STORE.read_text() == before and log_lines() == events
+    nonce_file()
+    for args, nonce in ((["confirm", "g1"], True), (["settled", "g1", "2026-08-03"], True),  # a nonce waiting, no --owner
+                        (["confirm", "g1", "--owner"], False), (["settled", "g1", "2026-08-03", "--owner"], False)):
+        p = cli_owner(args, nonce=nonce)
+        assert p.returncode != 0 and si.STORE.read_text() == before and log_lines() == events, (args, p.stderr)
+
+
+def test_confirm_records_bank_confirmed_for_the_current_details():
+    fresh_store()
+    scan(GEN.format(n=1), "g1", "2026-08-01")
+    fp = rows_by_id()["g1"]["bank_fp"]
+    with contextlib.redirect_stdout(io.StringIO()):
+        confirm("g1", expect_fp=fp)
+    today = lm.today().isoformat()
+    e = log_lines()[-1]
+    assert (e["kind"], e["fields"], e["by"], e["id"], e["on"]) == ("bank-confirmed", {"fp8": fp[:8]}, "owner", "g1", today), e
+    assert e["note"] == si.lcs_events.note_hash(f"bank details confirmed by phone {today}")
+    assert si.confirmed(rows_by_id()["g1"]) and si.facts_for(rows_by_id()["g1"]).has("bank trust")
+
+
+def test_settled_records_its_amount_and_refuses_a_zero_one():
+    fresh_store()
+    scan(GEN.format(n=1), "g1", "2026-08-01")
+    settle("g1", "2026-08-03")
+    e = log_lines()[-1]
+    assert (e["kind"], e["fields"], e["by"], e["on"], e["note"]) == (
+        "settled", {"amount": "100.00"}, "owner", "2026-08-03", si.lcs_events.note_hash("settled by hand")), e
+    scan("Invoice 7\nThanks", "z1", "2026-08-01")
+    before = si.STORE.read_text()
+    try:
+        settle("z1", "2026-08-03")
+        raise AssertionError("settled an invoice with no amount")
+    except SystemExit as e:
+        assert "no amount" in str(e), e
+    assert si.STORE.read_text() == before
+
+
+def test_scan_and_rescan_record_the_bank_warnings_they_write():
+    fresh_store()
+    scan(GEN.format(n=1), "g1", "2026-08-01")
+    fp = rows_by_id()["g1"]["bank_fp"]
+    (e,) = log_lines()
+    assert (e["kind"], e["id"], e["fields"], e["by"]) == ("bank-warning", "g1", {"fp8": fp[:8], "codes": ["new"]}, "script")
+    assert e["note"] == si.lcs_events.note_hash(rows_by_id()["g1"]["notes"].split("; ")[0])
+    scan(PAYEE_SCAN := "Invoice 9\nTotal £80.00", "c1", "2026-08-02", email="cat@example.com", name="Cat Price")
+    e = log_lines()[-1]
+    assert (e["id"], e["fields"]["codes"], e["fields"]["fp8"]) == ("c1", ["no-details"], ""), e
+    scan(FRAUD.format(n=2), "f1", "2026-09-20")
+    e = log_lines()[-1]
+    assert e["id"] == "f1" and set(e["fields"]["codes"]) == {"changed", "new"}, e
+    # an older invoice scanned after a newer one flags the newer one too, with its own fact
+    fresh_store()
+    scan("Invoice attached", "old", "2026-09-01")
+    scan(FRAUD.format(n=2), "new", "2026-09-20")
+    rescan("old", file=eml(GEN.format(n=1)))
+    by_id = {}
+    for x in log_lines():
+        by_id[x["id"]] = x
+    assert "changed" in by_id["new"]["fields"]["codes"] and by_id["new"]["fields"]["fp8"] == rows_by_id()["new"]["bank_fp"][:8]
+    assert by_id["old"]["fields"]["fp8"] == rows_by_id()["old"]["bank_fp"][:8]
+
+
+def test_thanked_and_withdrawn_record_their_facts():
+    fresh_store()
+    scan(GEN.format(n=1), "g1", "2026-08-01")
+    scan(GEN.format(n=2), "g2", "2026-08-02")
+    with contextlib.redirect_stdout(io.StringIO()):
+        si.cmd_thanked(Args(message_id="g1"))
+    today = lm.today().isoformat()
+    e = log_lines()[-1]
+    assert (e["kind"], e["id"], e["by"], e["note"]) == ("paid-reply-drafted", "g1", "script",
+                                                        si.lcs_events.note_hash(f"paid reply drafted {today}"))
+    _withdraw("g2", "wrong-org")
+    e = log_lines()[-1]
+    assert (e["kind"], e["fields"], e["by"], e["note"]) == (
+        "withdrawn", {"reason": "other"}, "script", si.lcs_events.note_hash(f"withdrawn {today} (wrong-org)")), e
+    scan(GEN.format(n=3), "g3", "2026-08-03")
+    with as_owner(), contextlib.redirect_stdout(io.StringIO()):
+        si.cmd_withdrawn(Args(message_id="g3", reason="not-ours", owner=True))
+    e = log_lines()[-1]
+    assert (e["kind"], e["fields"], e["by"]) == ("withdrawn", {"reason": "not-ours"}, "owner"), e
+    scan(GEN.format(n=4), "g4", "2026-08-04")
+    try:
+        with contextlib.redirect_stdout(io.StringIO()):
+            si.cmd_withdrawn(Args(message_id="g4", reason="not-ours", owner=True))  # --owner without the nonce
+        raise AssertionError("withdrawn by the owner without the nonce")
+    except SystemExit as e:
+        assert "nothing" in str(e), e
+    assert not si.is_withdrawn(rows_by_id()["g4"])
+
+
+def test_the_writers_facts_read_as_their_notes_do():
+    """Every invoice after a run of writes reads the same from its notes alone and from the facts first."""
+    import lcs_migrate
+    fresh_store()
+    scan(GEN.format(n=1), "g1", "2026-08-01")
+    scan(GEN.format(n=2), "g2", "2026-08-20")
+    with contextlib.redirect_stdout(io.StringIO()):
+        confirm("g1")
+    scan(FRAUD.format(n=3), "f1", "2026-09-20")
+    scan("Invoice attached", "old", "2026-09-01")
+    rescan("old", file=eml(GEN.format(n=1)))
+    settle("g2", "2026-08-25")
+    with contextlib.redirect_stdout(io.StringIO()):
+        si.cmd_thanked(Args(message_id="g2"))
+    scan(GEN.format(n=5), "w1", "2026-09-21")
+    _withdraw("w1")
+    rows = lm.read_csv(si.STORE)
+    si.lcs_events.clear_cache()
+    diffs = lcs_migrate.compare([], rows, lm.today(), si.lcs_events.read()[0])
+    assert diffs == [], diffs
+
+
+def test_a_message_id_the_log_cant_take_is_refused_before_anything_is_written():
+    fresh_store()
+    try:
+        scan(GEN.format(n=1), "<abc@mail>", "2026-08-01")
+        raise AssertionError("scanned a message id with an @")
+    except SystemExit as e:
+        assert "message id" in str(e), e
+    assert not si.STORE.exists() and log_lines() == []
 
 
 def test_payee_name_check_needs_the_first_name():
@@ -810,7 +1004,7 @@ def test_legacy_filter_is_per_singer():
 def settle(mid, day):
     buf = io.StringIO()
     with contextlib.redirect_stdout(buf):
-        si.cmd_settled(Args(message_id=mid, date=day))
+        settled(mid, day)
     return buf.getvalue()
 
 
@@ -869,13 +1063,13 @@ def test_settled_cli():
     saved = sys.argv
     try:
         buf = io.StringIO()
-        with contextlib.redirect_stdout(buf):
-            sys.argv = ["singer_invoices.py", "settled", "g1", "2026-08-04"]
+        with contextlib.redirect_stdout(buf), as_owner():
+            sys.argv = ["singer_invoices.py", "settled", "g1", "2026-08-04", "--owner"]
             si.main()
         assert buf.getvalue().strip() == "g1: settled by hand" and rows_by_id()["g1"]["paid_on"] == "2026-08-04"
-        sys.argv = ["singer_invoices.py", "settled", "zz", "2026-08-04"]
+        sys.argv = ["singer_invoices.py", "settled", "zz", "2026-08-04", "--owner"]
         try:
-            with contextlib.redirect_stdout(io.StringIO()):
+            with contextlib.redirect_stdout(io.StringIO()), as_owner():
                 si.main()
             raise AssertionError("settled an unknown invoice")
         except SystemExit as e:
@@ -1207,7 +1401,7 @@ def test_rescan_fills_in_an_unread_invoice():
     got = rescan("h1", file=att_eml(make_docx(**DOCX_INVOICE), "invoice.docx", si.DOCX_TYPE))
     assert got.splitlines()[0] == ("Marnie: £150.00 (ref 018) · payee NEW: add as a payee in the Starling app "
                                    "· bank ••••5678"), got
-    assert f"{si.NEW_DETAILS}, then run singer_invoices.py confirm h1" in got
+    assert f"{si.NEW_DETAILS}{si.CONFIRM_HINT}" in got
     rows = lm.read_csv(si.STORE)
     assert len(rows) == 1
     r = rows[0]
@@ -1245,7 +1439,7 @@ def test_rescan_keeps_a_confirmation_only_for_the_same_details():
     fresh_store()
     scan(GEN.format(n=1), "g1", "2026-08-01")
     with contextlib.redirect_stdout(io.StringIO()):
-        si.cmd_confirm(Args(message_id="g1"))
+        confirm("g1")
     got = rescan("g1", file=eml(GEN.format(n=1)))
     r = rows_by_id()["g1"]
     assert r["bank_confirmed"] == "yes" and r["bank_changed"] == "no" and "NEW BANK DETAILS" not in got, got
@@ -1403,7 +1597,7 @@ def confirmed_row(mid="177"):
     with fake_fetch({mid: raw_mime(GOOD)}):
         run_main(["scan", "--fetch", *SCAN_ARGS])
     with contextlib.redirect_stdout(io.StringIO()):
-        si.cmd_confirm(Args(message_id=mid))
+        confirm(mid)
     return si.STORE.read_text()
 
 
@@ -1463,8 +1657,9 @@ def test_scan_and_rescan_lock_the_store_after_the_fetch():
     with patched(lm, ledger_lock=lock), patched(si, fetch_raw=fetch):
         run_main(["scan", "--fetch", *SCAN_ARGS])
         run_main(["rescan", "177", "--fetch"])
-    store = str(si.STORE)
-    assert events == [("fetch", "177"), ("lock", store), ("unlock", store)] * 2, events
+    store, log = str(si.STORE), str(si.lcs_events.log_path())
+    # the state log's lock only ever inside the store's (its bank-warning fact), never around it
+    assert events == [("fetch", "177"), ("lock", store), ("lock", log), ("unlock", log), ("unlock", store)] * 2, events
 
 
 def test_probe_rescan_row_survives_an_unreadable_fetch():
@@ -1640,8 +1835,8 @@ def test_every_store_writer_holds_the_lock_and_paid_reads_the_bank_first():
     try:
         with contextlib.redirect_stdout(io.StringIO()):
             si.cmd_thanked(Args(message_id="L1"))
-            si.cmd_confirm(Args(message_id="L1"))
-            si.cmd_settled(Args(message_id="L2", date="2026-09-21"))
+            confirm("L1")
+            settled("L2", "2026-09-21")
             si.cmd_paid(Args(apply=True), NetClient(out=[out(100, "2026-09-22", "BEN FENWICK", "pay1")]))
     finally:
         lm.write_csv = real_write
@@ -1652,7 +1847,7 @@ def test_every_store_writer_holds_the_lock_and_paid_reads_the_bank_first():
     # a refused edit writes nothing
     before = open(si.STORE).read()
     try:
-        si.cmd_settled(Args(message_id="L2", date="2026-09-21"))
+        settled("L2", "2026-09-21")
         raise AssertionError("a second settle must be refused")
     except SystemExit:
         pass
@@ -1665,7 +1860,7 @@ def test_paid_apply_never_overwrites_an_invoice_settled_meanwhile():
     class RacingClient(FakeClient):
         def feed(self, since, until, direction):  # the owner settles it by hand while the feed is read
             with contextlib.redirect_stdout(io.StringIO()):
-                si.cmd_settled(Args(message_id="S1", date="2026-09-21"))
+                settled("S1", "2026-09-21")
             return super().feed(since, until, direction)
 
     with contextlib.redirect_stdout(io.StringIO()):
@@ -1764,7 +1959,7 @@ def test_withdrawn_refuses_a_paid_row_a_repeat_and_a_bad_reason():
             raise AssertionError(f"reason {bad!r} accepted")
         except SystemExit:
             pass
-    si.cmd_settled(Args(message_id="w3", date="2026-09-21"))
+    settled("w3", "2026-09-21")
     before = open(si.STORE).read()
     for mid in ("w3", "nope"):
         try:
@@ -1780,7 +1975,7 @@ def test_withdrawn_refuses_a_paid_row_a_repeat_and_a_bad_reason():
         raise AssertionError("withdrawn twice")
     except SystemExit as e:
         assert "already withdrawn" in str(e), e
-    for fn, args in ((si.cmd_settled, Args(message_id="w4", date="2026-09-23")),):
+    for fn, args in ((lambda a: settled(a.message_id, a.date), Args(message_id="w4", date="2026-09-23")),):
         try:
             fn(args)
             raise AssertionError("a withdrawn invoice was settled")
@@ -1898,7 +2093,7 @@ def test_bill_verdict_yes_for_a_trusted_account_with_an_old_warning():
     assert si.NOT_YET_VERIFIED in rows_by_id()["g2"]["notes"]
     assert bill_lines(scan(GEN.format(n=2), "g2", "2026-08-20"))[0] == "bill: no (bank warning)"
     with contextlib.redirect_stdout(io.StringIO()):
-        si.cmd_confirm(Args(message_id="g1"))  # rung once, confirmed on the other invoice
+        confirm("g1")  # rung once, confirmed on the other invoice
     again = scan(GEN.format(n=2), "g2", "2026-08-20")
     assert bill_lines(again)[0] == "bill: yes" and "   ! " not in again, again
     assert si.NOT_YET_VERIFIED in rows_by_id()["g2"]["notes"]  # the record keeps what scan said at the time
@@ -1908,6 +2103,7 @@ if __name__ == "__main__":
     failures = 0
     for name, fn in sorted(globals().items()):
         if name.startswith("test_") and callable(fn):
+            clear_log()
             try:
                 fn()
                 print(f"PASS {name}")

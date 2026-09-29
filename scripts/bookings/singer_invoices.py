@@ -26,14 +26,20 @@ already made.
         minutes, so a payment is often recorded before the enquiry assistant would see it as NEWLY PAID.
     singer_invoices.py status              # unpaid invoices and totals
     singer_invoices.py thanked <message id>  # note that the "Paid!" reply was drafted
-    singer_invoices.py confirm <message id>  # the owner rang the singer: trust these bank details
-    singer_invoices.py confirm <message id> --expect-fp <bank_fp, all 16 hex>  # the Command Centre's form:
-        refused unless the recorded details are still the ones the owner approved
-    singer_invoices.py settled <message id> YYYY-MM-DD  # the owner paid it outside the feed's reach: mark it paid
+    singer_invoices.py confirm <message id> --expect-fp <bank_fp, all 16 hex> --owner  # the owner rang the singer:
+        trust these bank details. The Command Centre's only (its one-time nonce on a pipe; owner decision, 29 Sep
+        2026): refused unless the recorded details are still the ones the owner approved
+    singer_invoices.py settled <message id> YYYY-MM-DD --owner  # the owner paid it outside the feed's reach: mark
+        it paid (the Command Centre's only, as confirm)
     singer_invoices.py pdf <message id> [--fetch | <saved message>]  # save the invoice PDF for the Books bill
         (scan saves it too and ends with "pdf: <path>" or "pdf: none")
-    singer_invoices.py withdrawn <message id> <reason word>  # sent to us by mistake (another organisation's
-        booking): out of unpaid, status, summary, paid matching, the dashboard, the money line and bills
+    singer_invoices.py withdrawn <message id> <reason word> [--owner]  # sent to us by mistake (another
+        organisation's booking): out of unpaid, status, summary, paid matching, the dashboard, the money line and bills
+
+The writers record their facts in the state log (lcs_events; structured-state design), each under the store's
+lock with its note: scan and rescan a bank-warning {fp8, codes} (an empty list for a clean scan, and one for an
+older invoice flagged out of order), confirm bank-confirmed, settled settled, withdrawn withdrawn {reason} (the
+owner's with --owner and the nonce) and thanked paid-reply-drafted.
 
 Bank details are stored as a keyed fingerprint (lcs_money.bank_fingerprint) plus
 the last four digits, and only "••••1234" is ever printed. This script never
@@ -81,6 +87,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import lcs_events  # noqa: E402
 import lcs_mcp  # noqa: E402
 import lcs_money as lm  # noqa: E402
+import lcs_owner  # noqa: E402
 
 STORE = lm.PRIVATE / "singer-invoices.csv"
 PDF_DIR = lm.PRIVATE / "singer-invoices"  # <message id>.pdf, mode 600: attached to the Books bill
@@ -93,6 +100,8 @@ REASON_RE = re.compile(r"^[a-z][a-z-]{0,19}$")  # one lower-case word, such as n
 NEW_PAYEE = "NEW: add as a payee in the Starling app"
 NEW_DETAILS = "NEW BANK DETAILS: confirm them by phone on a number you already hold before adding the payee"
 NOT_YET_VERIFIED = "BANK DETAILS NOT YET VERIFIED (seen on an earlier invoice): confirm by phone"
+# confirm is the Command Centre's (owner decision, 29 Sep 2026: it needs the owner's passkey nonce)
+CONFIRM_HINT = ", then confirm them in the Command Centre (Singers)"
 LOOKBACK = datetime.timedelta(days=14)  # a payment up to 14 days before an invoice arrived is reported, not applied
 INVOICING_DOMAINS = ("intuit.com", "quickbooks.com", "xero.com", "freeagent.com", "zohoinvoice.com", "zoho.com",
                      "sumup.com", "paypal.com", "stripe.com", "invoice2go.com", "wave.com", "waveapps.com")
@@ -415,8 +424,8 @@ def payees_named(sender_name, payee_names, history):
 
 def assess_new(inv, sender_email, sender_name, history, payee_fps, payee_names, payee_last4=None, message_id=""):
     """Payee status and warnings for a new invoice. history = all stored rows; payee_fps None = no Starling token;
-    payee_last4 = {payee name: last four digits}; message_id, when given, is named in the NEW/NOT-YET-VERIFIED
-    warning as the invoice to run `singer_invoices.py confirm` against once the singer is rung."""
+    payee_last4 = {payee name: last four digits}; with a message_id, the NEW/NOT-YET-VERIFIED warning ends with
+    CONFIRM_HINT (confirm them in the Command Centre once the singer is rung)."""
     fp = lm.bank_fingerprint(inv["sort_code"], inv["account_number"])
     now = lm.last4(inv["account_number"])
     by_date = lambda rows: sorted(rows, key=lambda r: r.get("received") or "")  # noqa: E731
@@ -445,7 +454,7 @@ def assess_new(inv, sender_email, sender_name, history, payee_fps, payee_names, 
             was = (payee_last4 or {}).get(named[0], "")
             warnings.append(f"BANK DETAILS CHANGED: Starling payee '{first_name(named[0])}' has different bank details "
                             f"(was ••••{was or '?'}, now ••••{now}): ring them before paying{same_last4_note(was, now)}")
-        confirm_hint = f", then run singer_invoices.py confirm {message_id}" if message_id else ""
+        confirm_hint = CONFIRM_HINT if message_id else ""
         if fp in {r["bank_fp"] for r in known}:  # seen on an earlier invoice from this singer, just never trusted
             warnings.append(f"{NOT_YET_VERIFIED}{confirm_hint}")
         else:
@@ -1268,7 +1277,38 @@ def cmd_pdf(args, client=None):
     print(f"pdf: {path or 'none'}")
 
 
+def bank_codes(r):
+    """(the bank-warning codes r states now, its first warning clause or None): each notes clause's code
+    (warning_code, in note order), plus "changed" when the bank_changed column says so and no clause does."""
+    clauses = [c.strip() for c in (r.get("notes") or "").split(";") if c.strip()]
+    codes = list(dict.fromkeys(code for code in map(warning_code, clauses) if code))
+    if r.get("bank_changed") == "yes" and not set(codes) & RING_CODES:
+        codes.append("changed")
+    return codes, next((c for c in clauses if warning_code(c)), None)
+
+
+def record_warning(t, r, clause=None):
+    """Inside a recording() block, after r's notes and bank columns are written: record bank-warning {fp8, codes}
+    for r as it now stands (an empty list for a clean scan), claiming `clause` (default: its first warning clause)."""
+    codes, first = bank_codes(r)
+    lcs_events.record(t, "singer_invoice", r["message_id"], "bank-warning",
+                      {"fp8": (r.get("bank_fp") or "")[:8], "codes": codes}, "script", clause or first)
+
+
+def record_flagged(t, rows, before):
+    """A bank-warning for each row assess_invoice flagged (its notes changed): the new CHANGED clause claimed."""
+    for r in rows:
+        if id(r) in before and (r.get("notes") or "") != before[id(r)]:
+            record_warning(t, r, (r.get("notes") or "").split("; ")[-1])
+
+
+def check_message_id(message_id):
+    if not lcs_events.ID_RE["singer_invoice"].fullmatch(message_id or ""):
+        raise SystemExit("a message id is letters, digits, '.', '_' or '-' (up to 200); nothing recorded")
+
+
 def cmd_scan(args, client):
+    check_message_id(args.message_id)
     if already_recorded(lm.read_csv(STORE), args.message_id):
         return
     raw = load_raw(args)
@@ -1276,10 +1316,12 @@ def cmd_scan(args, client):
     payees = payee_info(client)
     link = auto_link(linkable_dates(inv.get("dates") or [], inv.get("event_dates") or set()),
                       lm.read_csv(lm.LEDGER), args.received)
-    with lm.locked_rows(STORE, COLUMNS) as t:  # after the fetch: never hold the lock over the network
+    # after the fetch: never hold the lock over the network. recording: the store's lock, each fact under it
+    with lcs_events.recording(STORE, COLUMNS) as t:
         rows = t.rows  # read again: a fetch can take a while
         if already_recorded(rows, args.message_id):
             return
+        before = {id(r): r.get("notes") or "" for r in rows}
         a, changed, flagged = assess_invoice(inv, rows, args.message_id, args.received, args.sender_email,
                                              args.sender_name, payees)
         rows.append({"message_id": args.message_id, "received": args.received, "singer_name": args.sender_name,
@@ -1288,6 +1330,8 @@ def cmd_scan(args, client):
                      "payee": a["payee"], "bank_changed": changed, "bank_confirmed": "", "paid_on": "",
                      "paid_amount": "", "paid_ref": "", "paid_verified": "",
                      "notes": "; ".join(inv["warnings"] + a["warnings"]), "booking_ref": link})
+        record_flagged(t, rows, before)
+        record_warning(t, rows[-1])
     for line in flagged:
         print(line)
     print_result(args.sender_name, inv, a)
@@ -1338,9 +1382,10 @@ def cmd_rescan(args, client):
     payees = payee_info(client)
     guess = auto_link(linkable_dates(inv.get("dates") or [], inv.get("event_dates") or set()),
                        lm.read_csv(lm.LEDGER), first.get("received"))
-    with lm.locked_rows(STORE, COLUMNS) as t:  # after the fetch: never hold the lock over the network
+    with lcs_events.recording(STORE, COLUMNS) as t:  # after the fetch: never hold the lock over the network
         rows = t.rows  # read again: a fetch can take a while
         row = find(rows)
+        before = {id(r): r.get("notes") or "" for r in rows if r is not row}
         link = (row.get("booking_ref") or "").strip() or guess  # a link already made (by hand, too) is kept
         fp = lm.bank_fingerprint(inv["sort_code"], inv["account_number"]) or ""
         if row.get("bank_fp") and not fp:
@@ -1372,6 +1417,8 @@ def cmd_rescan(args, client):
                    bank_last4=a["bank_last4"], payee=a["payee"], bank_changed=changed,
                    notes="; ".join(inv["warnings"] + a["warnings"] + kept + [f"rescanned {lm.today()}"]),
                    booking_ref=link)
+        record_flagged(t, rows, before)
+        record_warning(t, row)
     for line in flagged:
         print(line)
     print_result(row.get("singer_name"), inv, a)
@@ -1468,18 +1515,45 @@ def cmd_status(args, client=None):
 
 
 def update_invoice(message_id, fn):
-    """Read-modify-write one stored invoice under the store's lock (lm.locked_rows). fn(row) edits it in
-    place and may raise SystemExit to refuse, which writes nothing."""
-    with lm.locked_rows(STORE, COLUMNS) as t:
+    """Read-modify-write one stored invoice under the store's lock (lcs_events.recording). fn(row) edits it in
+    place and may raise SystemExit to refuse, which writes nothing; it may return a fact (kind, fields, by, clause,
+    on) for the state log, recorded under the same lock and claiming that clause of the new notes."""
+    with lcs_events.recording(STORE, COLUMNS) as t:
         for r in t.rows:
             if r["message_id"] == message_id:
-                fn(r)
+                fact = fn(r)
+                if fact:
+                    kind, fields, by, clause, on = fact
+                    lcs_events.record(t, "singer_invoice", message_id, kind, fields, by, clause, on=on)
                 return r
         raise SystemExit(f"no invoice {message_id}")
 
 
+def owner_run(args, what, only=False):
+    """The owner barrier for confirm and settled (only=True: they run from the Command Centre alone; owner decision,
+    29 Sep 2026) and for withdrawn --owner: --owner, the store and the state log in the nonce's private folder with no
+    LCS_BOOKINGS_CSV, and the Command Centre's one-time nonce over a pipe (lcs_owner). SystemExit otherwise, with
+    nothing written. Returns "owner", or "script" for a withdrawn without --owner."""
+    if not getattr(args, "owner", False):
+        if only:
+            raise SystemExit(f"{args.message_id}: this runs from the Command Centre only (the owner's passkey); "
+                             f"nothing {what}")
+        return "script"
+    where = lcs_owner.owner_folder_problem([STORE, lcs_events.log_path()])
+    if where:
+        raise SystemExit(f"--owner {where}; nothing {what}")
+    if not lcs_owner.owner_confirmed():
+        raise SystemExit("--owner needs the Command Centre's one-time owner nonce (the owner's passkey approval); "
+                         f"nothing {what}")
+    return "owner"
+
+
 def cmd_thanked(args, client=None):
-    update_invoice(args.message_id, lambda r: note(r, f"paid reply drafted {lm.today()}"))
+    def edit(r):
+        clause = f"paid reply drafted {lm.today()}"
+        note(r, clause)
+        return "paid-reply-drafted", {}, "script", clause, None
+    update_invoice(args.message_id, edit)
     print(f"{args.message_id}: paid reply noted")
 
 
@@ -1487,12 +1561,14 @@ FP_RE = re.compile(r"^[0-9a-f]{16}$")
 
 
 def cmd_confirm(args, client=None):
-    """The owner rang the singer on a number already held: trust this invoice's bank details. With --expect-fp
-    (the Command Centre passes the whole 16-character fingerprint its passkey summary showed), refuses unless the
-    recorded fingerprint is still exactly that, so a rescan between approval and run confirms nothing."""
+    """The owner rang the singer on a number already held: trust this invoice's bank details, and record
+    bank-confirmed {fp8} in the state log. The Command Centre's only (--owner and its nonce; owner decision, 29 Sep
+    2026): it passes --expect-fp, the whole 16-character fingerprint its passkey summary showed, and this refuses
+    unless the recorded fingerprint is still exactly that, so a rescan between approval and run confirms nothing."""
     expect = getattr(args, "expect_fp", None)
     if expect is not None and not FP_RE.fullmatch(expect):
         raise SystemExit(f"{args.message_id}: --expect-fp takes all 16 lower-case hex characters; nothing confirmed")
+    owner_run(args, "confirmed", only=True)
 
     def edit(r):
         if not r.get("bank_fp"):
@@ -1500,36 +1576,50 @@ def cmd_confirm(args, client=None):
         if expect is not None and not hmac.compare_digest(r["bank_fp"], expect):
             raise SystemExit(f"{args.message_id}: the bank details changed since you approved them; nothing confirmed")
         r["bank_confirmed"] = "yes"
-        note(r, f"bank details confirmed by phone {lm.today()}")
+        clause = f"bank details confirmed by phone {lm.today()}"
+        note(r, clause)
+        return "bank-confirmed", {"fp8": r["bank_fp"][:8]}, "owner", clause, None
     r = update_invoice(args.message_id, edit)
     print(f"{args.message_id}: bank details confirmed")
     print(f"   trusted from now on: the account ending ••••{r.get('bank_last4', '')}")
 
 
 def cmd_settled(args, client=None):
-    """The owner's hand command: an invoice paid outside the feed's reach. Marks it paid for its own amount,
-    unverified; never trusts its bank details (bank_confirmed is left alone)."""
+    """The owner's: an invoice paid outside the feed's reach. Marks it paid for its own amount, unverified, and
+    records settled {amount}; never trusts its bank details (bank_confirmed is left alone). The Command Centre's only
+    (--owner and its nonce; owner decision, 29 Sep 2026)."""
     day = strict_date(args.date)
     if day > lm.today().isoformat():  # a typo'd year never marks a payment that hasn't happened
         raise SystemExit(f"{args.message_id}: {day} is after today; settle it on the day it was paid")
+    owner_run(args, "settled", only=True)
 
     def edit(r):
         if r.get("paid_on"):
             raise SystemExit(f"{args.message_id}: already paid on {r['paid_on']}")
         if is_withdrawn(r):
             raise SystemExit(f"{args.message_id}: withdrawn on {r['withdrawn']}; not settled")
-        r["paid_on"], r["paid_amount"], r["paid_verified"] = day, f"{lm.money(r['amount_gbp']):.2f}", "no"
+        amount = round(lm.money(r["amount_gbp"]), 2)
+        if amount <= 0:
+            raise SystemExit(f"{args.message_id}: no amount recorded on that invoice (rescan it first); nothing settled")
+        r["paid_on"], r["paid_amount"], r["paid_verified"] = day, f"{amount:.2f}", "no"
         note(r, "settled by hand")
+        return "settled", {"amount": f"{amount:.2f}"}, "owner", "settled by hand", day
     update_invoice(args.message_id, edit)
     print(f"{args.message_id}: settled by hand")
 
 
+WITHDRAWN_REASONS = ("not-ours", "duplicate", "sent-in-error")  # the state log's; any other word is recorded as other
+
+
 def cmd_withdrawn(args, client=None):
     """An invoice sent to us by mistake (another organisation's booking): mark it withdrawn today, with a
-    one-word reason in the notes. Refuses a paid or already withdrawn invoice."""
+    one-word reason in the notes, and record withdrawn {reason} (not-ours, duplicate, sent-in-error, else other).
+    Refuses a paid or already withdrawn invoice. With --owner (the Command Centre, its nonce) the fact is the
+    owner's."""
     reason = (args.reason or "").strip()
     if not REASON_RE.fullmatch(reason):
         raise SystemExit("the reason must be one lower-case word, such as not-ours")
+    by = owner_run(args, "withdrawn")
 
     def edit(r):
         if r.get("paid_on"):
@@ -1538,7 +1628,9 @@ def cmd_withdrawn(args, client=None):
             raise SystemExit(f"{args.message_id}: already withdrawn on {r['withdrawn']}")
         today = lm.today().isoformat()
         r["withdrawn"] = today
-        note(r, f"withdrawn {today} ({reason})")
+        clause = f"withdrawn {today} ({reason})"
+        note(r, clause)
+        return "withdrawn", {"reason": reason if reason in WITHDRAWN_REASONS else "other"}, by, clause, today
     update_invoice(args.message_id, edit)
     print(f"{args.message_id}: withdrawn ({reason})")
 
@@ -1648,12 +1740,15 @@ def main():
     sub.add_parser("status")
     t = sub.add_parser("thanked")
     t.add_argument("message_id")
+    owner_help = "the Command Centre only: needs its one-time nonce on stdin"
     c = sub.add_parser("confirm")
     c.add_argument("message_id")
     c.add_argument("--expect-fp", metavar="FINGERPRINT", help="refuse unless bank_fp is exactly this (16 hex)")
+    c.add_argument("--owner", action="store_true", help=owner_help)
     st = sub.add_parser("settled")
     st.add_argument("message_id")
     st.add_argument("date")
+    st.add_argument("--owner", action="store_true", help=owner_help)
     pd = sub.add_parser("pdf")
     pd.add_argument("message_id")
     pd.add_argument("file", nargs="?", help="a saved getOriginalMessage result or .eml (not with --fetch)")
@@ -1661,6 +1756,7 @@ def main():
     w = sub.add_parser("withdrawn")
     w.add_argument("message_id")
     w.add_argument("reason")
+    w.add_argument("--owner", action="store_true", help=owner_help)
     lk = sub.add_parser("link")
     lk.add_argument("message_id")
     lk.add_argument("booking_ref")
