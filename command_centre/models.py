@@ -58,11 +58,38 @@ def enquiry_href(enquiry_id):
 
 
 def singer_actions(r):
-    """Which singer-invoice actions a store row allows (the validators in actions.py check again)."""
+    """Which singer-invoice actions a store row allows (the validators in actions.py check again), and its live
+    recorded facts (for "Undo a recorded fact")."""
     open_ = si.is_open(r)
     return {"key": invoice_key(r.get("message_id")),
-            "can_confirm": bool(r.get("bank_fp")) and r.get("bank_confirmed") != "yes" and not si.is_withdrawn(r),
-            "can_settle": open_, "can_withdraw": open_}
+            "can_confirm": bool(r.get("bank_fp")) and not si.confirmed(r) and not si.is_withdrawn(r),
+            "can_settle": open_, "can_withdraw": open_,
+            "facts": live_facts("singer_invoice", (r.get("message_id") or "").strip())}
+
+
+# fixed words for each recorded fact (the state log's kinds), shown on the pages and in the undo summary
+FACT_WORDS = {
+    "paid-in-full": "paid in full", "fees-accepted": "short by transfer fees, accepted", "noted-paid": "paid, per the client",
+    "arranged": "balance arranged", "cancelled": "cancelled", "reinstated": "reinstated", "deposit-kept": "deposit kept",
+    "refunded": "refunded", "payment-checked": "payment checked", "deposit-seen": "deposit seen in the bank",
+    "reminder-drafted": "reminder or receipt drafted", "review-drafted": "review request drafted",
+    "review-skipped": "review request skipped", "bank-warning": "bank details checked on a scan",
+    "bank-confirmed": "bank details confirmed by phone", "settled": "paid by hand", "withdrawn": "withdrawn",
+    "paid-reply-drafted": "\"Paid!\" reply drafted",
+}
+
+
+def fact_who(e):
+    return "the migration" if e["src"] == "migration" else "you" if e["by"] == "owner" else "the assistant"
+
+
+def live_facts(subject, id_):
+    """The live recorded facts of one booking or invoice, oldest first: {eid, on, words, who}. Never notes."""
+    if not id_ or not cp.lcs_events.loggable(subject, id_):
+        return []
+    f = cp.lcs_events.facts(subject, id_, lm.today())
+    return [{"eid": e["eid"], "on": to_date(e["on"]), "words": FACT_WORDS.get(e["kind"], e["kind"]), "who": fact_who(e),
+             "kind": e["kind"]} for e in f.live if e["kind"] not in ("retract", "notes-checked")]
 
 
 RING_REASON = "bank details changed since their last invoice: ring them on a number you already hold"
@@ -813,7 +840,9 @@ def singer_directory(rows, today):
                      "ring_first": si.ring_first_in(rows, r), "last4": dash.digits4(r.get("bank_last4")),
                      **singer_actions(r)} for r in live]
         withdrawn = [{"received": si.received_date(r), "bill_number": si.bill_number(r.get("invoice_ref"), r.get("message_id")),
-                      "amount": lm.money(r.get("amount_gbp")), "on": to_date(r.get("withdrawn"))}
+                      "amount": lm.money(r.get("amount_gbp")), "on": to_date(r.get("withdrawn")),
+                      "key": invoice_key(r.get("message_id")),
+                      "facts": live_facts("singer_invoice", (r.get("message_id") or "").strip())}
                      for r in group if si.is_withdrawn(r)]
         out.append({
             "key": key, "first_name": si.first_name(latest.get("singer_name")), "invoices": invoices,

@@ -51,6 +51,10 @@
   <h2>Resolve a hand check</h2>
   <p class="muted">Adds your note (paid in full, short by transfer fees, deposit kept, refunded and so on) to this booking's ledger notes, after Face ID or Touch ID.</p>
   {{ m.resolve_form(ref, action_day, fee=b.balance if (booking.ok and b and b.bank_checked and b.state in FEE.states and b.received) else none) }}
+  {% if facts.ok and facts.value %}
+  <p class="muted">A fact recorded by mistake can be undone: it stays in the log as history, and the booking reads as if it had never been recorded.</p>
+  {{ m.undo_facts(facts.value, "booking", ref) }}
+  {% endif %}
 </section>
 
 <section class="card">

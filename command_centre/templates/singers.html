@@ -43,6 +43,7 @@
       {% if g.withdrawn %}
       <p class="muted">Withdrawn (sent to us by mistake):
         {% for w in g.withdrawn %}{{ w.bill_number }}, {{ w.amount|gbp }}{% if w.on %} on {{ w.on|day }}{% endif %}{{ "; " if not loop.last }}{% endfor %}</p>
+      {% for w in g.withdrawn %}{{ m.undo_facts(w.facts, "singer_invoice", w.key) }}{% endfor %}
       {% endif %}
     </details>
   </article>

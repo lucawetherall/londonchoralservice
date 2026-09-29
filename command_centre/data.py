@@ -330,8 +330,9 @@ class Data:
             ref, b["event_date"], rows), booking, store, keep=False)
         margin = self.panel("booking_margin", lambda m: next((x for x in m if x["ref"] == ref), None),
                             self.margins(ledger, store), keep=False)
+        facts = self.panel("booking_facts", lambda: models.live_facts("booking", ref), keep=False)
         return {"stamp": stamp(now), "ref": ref, "booking": booking, "bank": bank, "parts": parts, "timeline": items,
-                "ledger": ledger, "books": books, "singer_list": singer_list, "margin": margin}
+                "ledger": ledger, "books": books, "singer_list": singer_list, "margin": margin, "facts": facts}
 
     def enquiries_page(self):
         now = self.now()

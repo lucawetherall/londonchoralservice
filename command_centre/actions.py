@@ -1925,6 +1925,55 @@ REGISTRY[MIGRATE_EVENTS.name] = MIGRATE_EVENTS
 ROUTED.add(MIGRATE_EVENTS.name)
 
 
+# ---------------------------------------------------------------- undo a recorded fact (events.py retract)
+
+
+HEX16_RE = re.compile(r"^[0-9a-f]{16}$")
+
+
+def _undo_validate(raw):
+    """One live recorded fact of this booking (ref) or singer invoice (its invoice key): the summary names it by its
+    fixed words, date and who recorded it (never a note), and the run passes only its id."""
+    f = fields(raw, ("subject", "key", "eid"))
+    if f["subject"] not in ("booking", "singer_invoice"):
+        raise ActionError("unknown subject")
+    if not HEX16_RE.fullmatch(f["eid"]):
+        raise ActionError("unknown fact")
+    if f["subject"] == "booking":
+        if not REF_RE.fullmatch(f["key"]):
+            raise ActionError("unknown booking")
+        if Path(cp.LEDGER).resolve() != (auth.private_dir() / "bookings.csv").resolve():
+            raise ActionError("the ledger isn't the one in the private folder (LCS_BOOKINGS_CSV moves it)")
+        row = next((r for r in lm.read_csv(cp.LEDGER) if (r.get("booking_ref") or "").strip() == f["key"]), None)
+        if row is None:
+            raise ActionError("unknown booking")
+        id_, label = f["key"], f"booking {f['key']} ({data.dash.first_name(row.get('client_name'))})"
+    else:
+        r = _singer_row(f["key"])
+        facts = _singer_facts(r)
+        id_ = r["message_id"]
+        label = f"{facts['first_name']}'s invoice of £{facts['amount']:,.2f} received {facts['received']}"
+    x = next((x for x in models.live_facts(f["subject"], id_) if x["eid"] == f["eid"]), None)
+    if x is None:
+        raise ActionError("that isn't a live recorded fact of this one")
+    return {"input": {"subject": f["subject"], "key": f["key"], "eid": f["eid"]}, "eid": f["eid"], "label": label,
+            "words": x["words"], "on": x["on"].strftime("%-d %b %Y") if x["on"] else "?", "who": x["who"],
+            "day": today().isoformat()}
+
+
+def _undo_describe(c):
+    return (f"Undo the recorded fact on {c['label']}: {c['words']}, dated {c['on']}, recorded by {c['who']}. It stays "
+            f"in the state log as history, and this reads as if it had never been recorded; \"earlier entry undone "
+            f"{c['day']} (owner)\" is added to its notes.")
+
+
+UNDO_FACT = ScriptAction("undo-fact", EVENTS, _undo_validate, _undo_describe,
+                         lambda c: ["retract", c["eid"], "--owner"], owner_nonce=True, timeout=30,
+                         title="Undo a recorded fact")
+REGISTRY[UNDO_FACT.name] = UNDO_FACT
+ROUTED.add(UNDO_FACT.name)
+
+
 # ---------------------------------------------------------------- phase 6: mark a draft (no passkey)
 
 

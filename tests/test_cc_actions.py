@@ -258,7 +258,8 @@ def test_registry_and_passkey_flags():
     assert set(actions.REGISTRY) == {"todo-tick", "resolve-hand-check", "singer-confirm", "singer-settled",
                                      "singer-withdrawn", "refresh-data", "ads-validate", "ads-apply",
                                      "approve-books-import", "books-import-done", "push-subscribe",
-                                     "push-unsubscribe", "backup-now", "draft-mark", "sync-now", "migrate-events"}
+                                     "push-unsubscribe", "backup-now", "draft-mark", "sync-now", "migrate-events",
+                                     "undo-fact"}
     no_passkey = {n for n, a in actions.REGISTRY.items() if not a.passkey}
     assert no_passkey == {"todo-tick", "refresh-data", "push-unsubscribe", "backup-now", "draft-mark",
                           "sync-now"}, no_passkey
@@ -1896,6 +1897,13 @@ def test_the_apps_own_commands_are_not_allowlisted_unless_safe():
                         f"{allowlist.PY} scripts/ads/set_budget.py 111 4.50 {flag}"):
                 assert not allowlist.allowed(cmd, pats), cmd
             seen.add(name)
+    seed_migration()  # undo needs a recorded fact, so after the migration's check above
+    undo = actions.REGISTRY["undo-fact"]
+    eid = fact("booking", "2111", "cancelled", {}, "script", D, f"cancelled {D} by client email")
+    assert not allowlist.allowed(claude_form(undo.argv(undo.validate({"subject": "booking", "key": "2111", "eid": eid}))),
+                                 pats)
+    seen.add("undo-fact")
+    clear_log()
     seen |= {"approve-books-import", "books-import-done", "todo-tick", "push-subscribe", "push-unsubscribe",
              "draft-mark"}  # no subprocess
     assert seen == set(actions.REGISTRY)
@@ -2198,6 +2206,67 @@ def test_health_offers_the_migration_until_it_is_applied():
     cp.lcs_events.append("booking", "2111", "deposit-seen", {}, "script", on="2026-09-01", src="migration",
                          eid="0123456789abcdef")
     assert 'data-action="migrate-events"' not in page(c, "/health")
+    clear_log()
+
+
+# ---------------------------------------------------------------- undo a recorded fact (the owner's, with the passkey)
+
+
+def fact(subject, id_, kind, fields, by, on, clause):
+    saved, csv_env = cp.lcs_events.lcs_owner._PROVEN, os.environ.pop("LCS_BOOKINGS_CSV")
+    try:
+        cp.lcs_events.lcs_owner._PROVEN = True
+        return cp.lcs_events.append(subject, id_, kind, fields, by, on=on, note=cp.lcs_events.note_hash(clause))
+    finally:
+        cp.lcs_events.lcs_owner._PROVEN, os.environ["LCS_BOOKINGS_CSV"] = saved, csv_env
+
+
+def undo_setup():
+    c, a, clock = setup()
+    seed_migration()
+    rows = lm.read_csv(cp.LEDGER)
+    for r in rows:
+        if r["booking_ref"] == "2111":
+            r["notes"] = "PENDING: invoiced; cancelled 2026-09-20 by client email"
+    write_csv(os.path.join(TMP, "bookings.csv"), LEDGER_COLS, rows)
+    eid = fact("booking", "2111", "cancelled", {}, "script", "2026-09-20", "cancelled 2026-09-20 by client email")
+    return c, a, eid
+
+
+def test_undo_fact_argv_summary_and_refusals():
+    c, a, eid = undo_setup()
+    act = actions.REGISTRY["undo-fact"]
+    assert act.owner_nonce and act.passkey and act.script == "scripts/bookings/events.py"
+    cleaned = act.validate({"subject": "booking", "key": "2111", "eid": eid})
+    assert act.argv(cleaned) == [PYX, EVENTS, "retract", eid, "--owner"]
+    s = act.preview(cleaned)
+    assert "booking 2111 (Ann)" in s and "cancelled" in s and "20 Sep 2026" in s and "the assistant" in s, s
+    assert "client email" not in s and "Smithfield" not in s
+    for bad in ({"subject": "booking", "key": "0310", "eid": eid}, {"subject": "booking", "key": "2111", "eid": "0" * 16},
+                {"subject": "booking", "key": "2111", "eid": "x"}, {"subject": "enquiry", "key": "2111", "eid": eid},
+                {"subject": "singer_invoice", "key": models.invoice_key(MSG), "eid": eid}, {"subject": "booking", "key": "2111"}):
+        refused(act.validate, bad)
+    clear_log()
+
+
+def test_undo_fact_through_the_real_script_and_the_pages():
+    c, a, eid = undo_setup()
+    assert 'data-action="undo-fact"' in page(c, "/bookings/2111") and f'value="{eid}"' in page(c, "/bookings/2111")
+    r = run(c, a, "undo-fact", {"subject": "booking", "key": "2111", "eid": eid})
+    assert r.status_code == 200 and r.json()["ok"], r.json()
+    assert ledger_notes("2111").endswith(f"earlier entry undone {D} (owner)")
+    cp.lcs_events.clear_cache()
+    row = next(x for x in lm.read_csv(cp.LEDGER) if x["booking_ref"] == "2111")
+    assert not cp.is_cancelled(row) and cp.held(row) == []
+    assert f'value="{eid}"' not in page(c, "/bookings/2111")
+    refused(actions.REGISTRY["undo-fact"].validate, {"subject": "booking", "key": "2111", "eid": eid})
+    # a singer invoice's fact is offered on the Singers page, by its invoice key
+    key = models.invoice_key(MSG)
+    seid = fact("singer_invoice", MSG, "paid-reply-drafted", {}, "script", D, f"paid reply drafted {D}")
+    out = page(c, "/singers")
+    assert 'data-action="undo-fact"' in out and f'value="{seid}"' in out and MSG not in out
+    cleaned = actions.REGISTRY["undo-fact"].validate({"subject": "singer_invoice", "key": key, "eid": seid})
+    assert actions.REGISTRY["undo-fact"].argv(cleaned) == [PYX, EVENTS, "retract", seid, "--owner"]
     clear_log()
 
 
