@@ -246,23 +246,46 @@ Replace the current-page rule:
 }
 ```
 
-In `.nav-toggle`, add `align-self: center;` after `position: relative;` (a text-less box would otherwise sit its bottom edge on the baseline).
+The hamburger shows only at 1080px and below, where Step 3's mobile rule centres the row, so `.nav-toggle` itself needs no change.
 
 - [ ] **Step 3: Chevron caret and dropdown offset in `css/components.css`**
 
 Replace the `.dropdown-caret` rule:
 
 ```css
+/* Two borders of a 0.4em box, rotated. The lift raises the closed chevron to
+   the middle of the capitals. Open, the stroke is the box's top half, so the
+   open rule adds back half the diagonal (0.28em) to keep it in the same place. */
 .dropdown-caret {
+  --caret-lift: -0.3em;
   display: inline-block;
   width: 0.4em;
   height: 0.4em;
-  margin-left: 0.55em;
+  margin-left: 0.3em;
   border-right: 1px solid currentColor;
   border-bottom: 1px solid currentColor;
-  transform: translateY(-0.3em) rotate(45deg);
+  transform: translateY(var(--caret-lift)) rotate(45deg);
   transition: transform var(--transition-fast);
 }
+```
+
+In `css/layout.css`, next to the nav rules, keep the wider chevrons from pushing the menu past the page between the breakpoint and 1200px:
+
+```css
+@media (min-width: 1081px) and (max-width: 1199px) {
+  .nav-links {
+    gap: 0.8rem;
+  }
+}
+```
+
+In the `@media (max-width: 1080px)` block, the menu is absolutely positioned, so centre the name and toggle there instead of the `align-self` on `.nav-toggle`:
+
+```css
+  .site-nav {
+    position: relative;
+    align-items: center;
+  }
 ```
 
 In `.dropdown-menu`, change `left: 0;` to:
@@ -279,7 +302,7 @@ Replace the open-state caret rule (`transform: rotate(180deg);`):
 .has-dropdown:hover > .dropdown-trigger .dropdown-caret,
 .has-dropdown:focus-within > .dropdown-trigger .dropdown-caret,
 .has-dropdown[data-open="true"] > .dropdown-trigger .dropdown-caret {
-  transform: translateY(-0.3em) rotate(225deg);
+  transform: translateY(calc(var(--caret-lift) + 0.28em)) rotate(225deg);
 }
 ```
 
@@ -287,7 +310,7 @@ Replace the dismissed-state caret rule (`transform: none;`):
 
 ```css
 .has-dropdown[data-dismissed] > .dropdown-trigger .dropdown-caret {
-  transform: translateY(-0.3em) rotate(45deg);
+  transform: translateY(var(--caret-lift)) rotate(45deg);
 }
 ```
 
