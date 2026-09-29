@@ -383,6 +383,23 @@ def search_term_flag(term):
     return None
 
 
+def negative_blocking(term, negatives):
+    """The first campaign negative that blocks this search term now, as (text, match type), or None.
+    negatives: [(text, "BROAD"|"PHRASE"|"EXACT")]. Google's rules, strictly: BROAD needs every word of the
+    negative somewhere in the term, PHRASE the words together in order, EXACT the whole term; no plurals or
+    close variants (so "singer" doesn't block "singers")."""
+    words = re.findall(r"[a-z0-9']+", (term or "").lower())
+    joined = f" {' '.join(words)} "
+    for text, match in negatives:
+        nw = re.findall(r"[a-z0-9']+", (text or "").lower())
+        if not nw:
+            continue
+        if (match == "BROAD" and set(nw) <= set(words)) or (match == "PHRASE" and f" {' '.join(nw)} " in joined) \
+                or (match == "EXACT" and nw == words):
+            return text, match
+    return None
+
+
 def main_term(query):
     words = re.findall(r"[a-z0-9']+", (query or "").lower())
     for w in words:

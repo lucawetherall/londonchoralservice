@@ -268,11 +268,53 @@ All of these are in `CLAUDE.md`, which Claude reads automatically:
 
 ## Appendix A: Weekly review task prompt
 
-Use this verbatim for the scheduled task "Weekly marketing review" (Mondays 09:00). Updated 28 September 2026: it also reads the report's coverage, wiring and ledger sections, records bookings from Zoho invoices (reading the PDF totals), clears PENDING bookings once a deposit shows, and asks about WhatsApp bookings. Later on 28 September it also gained the Zoho Books line (read-only), the enquiry pipeline summary, report sections 11–13 (cost per booking, seasonal budget proposals, the Search Console shortlist) and the private dashboard. Later still it gained the fixes from the final prompt review: the unattended run proposes changes as text only and writes scripts after the owner replies, invoices are searched 10 days back, Books invoices missing from the ledger are recorded, and new bookings move the pipeline to confirmed. Later again (the Command Centre's data gaps) the report runs with `--write-proposals`, so each seasonal budget proposal waits in the Command Centre for the owner's passkey approval instead of a hand-written script. Adjust the repo path if it differs on the new machine.
+Use this verbatim for the scheduled task "Weekly marketing review" (Mondays 09:00). Updated 28 September 2026: it also reads the report's coverage, wiring and ledger sections, records bookings from Zoho invoices (reading the PDF totals), clears PENDING bookings once a deposit shows, and asks about WhatsApp bookings. Later on 28 September it also gained the Zoho Books line (read-only), the enquiry pipeline summary, report sections 11–13 (cost per booking, seasonal budget proposals, the Search Console shortlist) and the private dashboard. Later still it gained the fixes from the final prompt review: the unattended run proposes changes as text only and writes scripts after the owner replies, invoices are searched 10 days back, Books invoices missing from the ledger are recorded, and new bookings move the pipeline to confirmed. Later again (the Command Centre's data gaps) the report runs with `--write-proposals`, so each seasonal budget proposal waits in the Command Centre for the owner's passkey approval instead of a hand-written script. On 29 September 2026 it became a dispatcher: the report runs once with `--quiet`, and three sub-agents in `.claude/agents/` (`lcs-review-ads`, Sonnet; `lcs-review-web`, Haiku; `lcs-review-bookings`, Sonnet) each read only their own sections with `scripts/reports/report_sections.py`, so edit the rules there. Adjust the repo path if it differs on the new machine.
 
 ```text
-Weekly marketing review for The London Choral Service: Google Ads (customer 8733881378), GA4 (property 527915578), Search Console (sc-domain:londonchoralservice.com), Zoho Books (read-only) and the private bookings ledger. You are running unattended. Change NOTHING in Google Ads, GA4, Search Console, Zoho Books or the live site; prepare changes and ask the owner to approve them in one question at the end.
+Weekly marketing review for The London Choral Service, run unattended every Monday in the repo folder (~/Documents/GitHub/londonchoralservice). You are the dispatcher: you run one report, hand its sections to three sub-agents (Agent tool, defined in .claude/agents/) and merge their results into one reply that ends with one approval question. Keep your own context small: never read the report, an email, the ledger or CLAUDE.md yourself; the sub-agents do. Change NOTHING in Google Ads, GA4, Search Console, Zoho Books or the live site in this run.
 
+SAFETY
+- Client and singer names, emails and phone numbers never appear in your reply: booking refs, amounts and dates only.
+- Never read or print ~/.config/lcs/ or ~/.config/gcloud/. Never open the dashboard file.
+- This run writes no repo files, runs no git commands and no scripts but the ones below, and lists every proposed change as text.
+
+SHELL COMMANDS (only these, from the repo folder)
+  .venv/bin/python scripts/reports/weekly_review.py --save-report --quiet --write-proposals
+  .venv/bin/python scripts/reports/cc_event.py monday-ready
+  .venv/bin/python scripts/reports/report_sections.py 1
+  (the last one only if the ads agent failed and you must say what the campaigns did)
+
+EACH RUN
+1. Run the report. It saves everything to ~/lcs-private/reports/<today>.txt and prints only "report saved: <path>", "sections: <ids>" and "problem: <line>" lines (or "problems: none"). --write-proposals also puts each seasonal budget proposal in the Command Centre; it changes nothing in Google Ads.
+   - If the command fails, or a problem line mentions an auth, credential, permission, invalid_grant or unauthenticated error: stop. Reply only "The Monday report couldn't sign in to Google: <the problem line>. Redo the sign-in in CLAUDE.md ("Sign-in scopes"), then run the review again." Don't work around it.
+   - If "sections:" lacks any of 1 to 12, carry on and say which sections are missing.
+2. Start all three sub-agents in ONE message so they run in parallel. Tell each only: "Monday review for <today, YYYY-MM-DD>. The report is saved; read your sections with report_sections.py. Reply with your RESULT block." Add any problem lines that concern that agent.
+   - lcs-review-ads: Google Ads, search terms, negatives, tracking, the Christmas value check, the spend guard.
+   - lcs-review-web: Search Console, coverage, page fixes, the MANUAL-ACTIONS §12 line.
+   - lcs-review-bookings: invoices into the ledger, payments, Books, the pipeline, this week's enquiries, the upload check, economics, budget proposals, the dashboard.
+   If the Agent tool says an agent type isn't found, start a general-purpose agent instead (model "sonnet"; "haiku" for lcs-review-web) and begin its prompt: "Read .claude/agents/<name>.md and follow it exactly: its tools line is the only tools you may use." If an agent fails or returns no RESULT, say "<area>: not checked (<reason>)" and carry on with the others; never redo its work yourself.
+3. Cross-check (the only analysis you do yourself):
+   - Enquiry source: for each ENQUIRIES THIS WEEK line with "ad ref: no", look in AD CLICKS BY DAY for a click the same day or the day before in the matching campaign (wedding → wedding-leads, funeral → funeral expert, christmas or corporate → Christmas). If there is one, mark the enquiry "likely from an ad, cookies declined"; if not, "not from an ad". One line per enquiry.
+   - Christmas: if the ads agent's CHRISTMAS call depends on "no enquiry from Christmas ads", settle it from those lines (a christmas or corporate enquiry with an ad ref, or marked "likely from an ad", is an enquiry from the campaign) and keep or drop that proposal.
+   - Budget: if BUDGET PROPOSALS and a PROPOSED ADS CHANGES item touch the same campaign's budget, the Christmas value check wins for the Christmas campaign; otherwise list both and say they conflict.
+4. Run `cc_event.py monday-ready` (no other arguments; the phone notification is a fixed text).
+5. Reply in the format below. After the owner answers, in a later message: create a worktree (`git -C ~/Documents/GitHub/londonchoralservice fetch -q origin && git -C ~/Documents/GitHub/londonchoralservice worktree add -b claude/weekly-review-<YYYY-MM-DD> .claude/worktrees/weekly-review-<YYYY-MM-DD> origin/main`); write scripts only for exactly what was approved (negatives: copy the latest scripts/ads/add_negatives_*.py, which skips existing negatives; a pause: scripts/ads/set_campaign_status.py; a budget: scripts/ads/set_budget.py, which refuses anything above budget_cap.py's cap); run each validate-only and stop if the output differs from what was approved; apply with --apply (each logs itself to logs/ads-changes.md); add the MANUAL-ACTIONS §12 line if approved; commit on the branch, open a PR and merge it once its check passes, then remove the worktree (docs and scripts only; a site-page fix needs the writing-site-copy and stop-slop skills and goes on its own branch). Run scripts with the main checkout's `.venv/bin/python`. Budget proposals already in the Command Centre are the owner's to apply there, not yours.
+
+REPLY FORMAT (plain English, short, UK spelling, no preamble; built from the sub-agents' RESULT blocks, lightly edited, never padded)
+- Headlines: the ads agent's 3–5 numbers.
+- Search terms: its table, then its NEGATIVES line.
+- Tracking: its TRACKING line (any ALARM first), FLAGS if not "none", and GOOGLE RECOMMENDATIONS.
+- Web: the web agent's WEB paragraph, HIRING QUERIES 8–20 and COVERAGE.
+- Bookings: BOOKINGS, UPLOAD, MONEY, BOOKS, HAND CHECKS, PIPELINE, the step 3 enquiry-source lines, then "dashboard updated" (or the failure).
+- Economics: ECONOMICS, BUDGET PROPOSALS, then the CHRISTMAS line and the SPEND GUARD lines.
+- Proposed changes, one numbered list across all three agents: the ads agent's PROPOSED ADS CHANGES (after step 3's Christmas decision), the web agent's PROPOSED SITE CHANGES, "MANUAL-ACTIONS §12: add the dated line" (quote it), a booking upload if UPLOAD says anything would go (upload_bookings.py with --apply, after approval), and any budget proposal the report couldn't write to the Command Centre (as an Ads change set: campaign budget → amount: £a → £b/day, reason "seasonal window <name>"). Each item "resource → field: current → new — reason".
+- End with ONE question: approve the changes by number (all, some or none), and did any WhatsApp enquiry this week turn into a booking (if so, paste its "Ad ref" line)? If nothing needs changing, say so and ask only the WhatsApp question.
+```
+
+<!-- The pre-29-September single-agent prompt, kept below until the dispatcher has run twice, then delete. -->
+<details><summary>Previous single-agent prompt (superseded 29 Sep 2026)</summary>
+
+```
 SET-UP
 - Repo: ~/Documents/GitHub/londonchoralservice. Read its CLAUDE.md first. Its "Google Ads & GA4" and "Email and invoices" sections are binding: validate_only or dry run first; current → new + reason; explicit approval; pause, never delete; £5/day budget cap; log every applied change (logs/ads-changes.md, logs/ga4-changes.md, logs/gsc-changes.md); never print or read anything in ~/.config/lcs/ or ~/.config/gcloud/. You may read and append ~/lcs-private/bookings.csv (keep it chmod 600), but never copy client names, emails or phone numbers into the repo, commits, PRs, logs/ or your reply.
 - Get the data with ONE command, run from the repo: `.venv/bin/python scripts/reports/weekly_review.py --save-report --write-proposals`. (--write-proposals turns each section 12 PROPOSE line into a Command Centre proposal file in ~/lcs-private/command-centre/proposals/; it changes nothing in Google Ads.) Sections: 1 campaigns (last 7 days and since 26 Sep 2026), 2 search terms with matched keywords, 3 conversions per action, 4 ads with Google's ad-strength advice, 4b Google's open recommendations, 5 GA4 lead events and channels, 6 Search Console queries and pages, 7 Search Console coverage (sitemap freshness, index status of every ad landing page), 8 tracking wiring (live tags and conversion labels, Ads settings, GA4 key events and links), 9 bookings ledger (counts only), 10 money (totals only), 11 true cost per booking by campaign over the season, 12 seasonal budget proposals from data/budget-windows.yml, 13 Search Console shortlist (first Monday of the month only; the report says when it next runs). Use the google-ads or analytics-mcp MCP tools only to drill into something the report leaves unclear.
@@ -343,6 +385,8 @@ Plain English, short, UK spelling, no preamble:
 - Just before you reply, run `.venv/bin/python scripts/reports/cc_event.py monday-ready` (no arguments: the notification is a fixed text), so the owner's phone is told.
 If nothing needs changing, say so and ask only the WhatsApp question. After approval, in a later message: set up the worktree, write the scripts for exactly what was approved, run each validate-only (stop and report if the output differs from the approved change), apply it with --apply, log it, commit on the worktree branch, open a PR, and merge it (docs and scripts only, no site pages).
 ```
+
+</details>
 
 ## Appendix B: How the tracking fits together
 

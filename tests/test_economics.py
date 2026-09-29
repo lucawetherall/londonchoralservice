@@ -419,6 +419,19 @@ def row(query, page, impressions, position, clicks=0):
 SITE = "https://londonchoralservice.com"
 
 
+def test_negative_blocking_follows_googles_match_rules():
+    negs = [("singer", "BROAD"), ("albert hall", "PHRASE"), ("carol singers", "EXACT"), ("brass", "BROAD")]
+    assert ec.negative_blocking("best singer for wedding", negs) == ("singer", "BROAD")
+    assert ec.negative_blocking("wedding singers", negs) is None  # no plurals or close variants
+    assert ec.negative_blocking("carols at the royal albert hall", negs) == ("albert hall", "PHRASE")
+    assert ec.negative_blocking("hall albert carols", negs) is None  # phrase needs the order
+    assert ec.negative_blocking("carol singers", negs) == ("carol singers", "EXACT")
+    assert ec.negative_blocking("hire carol singers", negs) is None  # exact needs the whole term
+    assert ec.negative_blocking("Brass band music for a funeral", negs) == ("brass", "BROAD")
+    assert ec.negative_blocking("st paul's", [("st paul's", "PHRASE")]) == ("st paul's", "PHRASE")
+    assert ec.negative_blocking("", negs) is None and ec.negative_blocking(None, []) is None
+
+
 def test_search_term_flag_follows_the_targeting_rule():
     for term, word in (("wedding singer london", "singer"), ("Funeral SOLOIST", "soloist"), ("solo violin", "solo"),
                        ("female vocalists for hire", "vocalists"), ("carol singer hire", "singer")):

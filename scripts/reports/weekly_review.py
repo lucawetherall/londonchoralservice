@@ -23,11 +23,13 @@ analytics.readonly and webmasters.readonly scopes) for GA4 and Search Console.
 Reads the private bookings ledger for counts only; prints no names or emails.
 
     source .venv/bin/activate
-    python scripts/reports/weekly_review.py [--since 2026-09-26] [--gsc-shortlist] [--save-report] [--write-proposals]
+    python scripts/reports/weekly_review.py [--since 2026-09-26] [--gsc-shortlist] [--save-report [--quiet]] [--write-proposals]
 
 --save-report also archives everything printed to ~/lcs-private/reports/<today, Europe/London>.txt
 (LCS_PRIVATE_DIR respected), mode 600 in a mode-700 directory, written atomically. A same-day rerun
-overwrites the file. It still prints to stdout as normal.
+overwrites the file. It still prints to stdout as normal, unless --quiet: then it prints only the path,
+the sections present and any line that looks like a failure or an alarm (the Monday dispatcher's view;
+its sub-agents read their own sections with scripts/reports/report_sections.py).
 
 --write-proposals also writes each section 12 "PROPOSE" line as a Command Centre proposal,
 ~/lcs-private/command-centre/proposals/<id>.json (mode 600): kind "ads", scripts/ads/set_budget.py with the
@@ -81,23 +83,26 @@ class _Tee(io.TextIOBase):
         self._buffer = buffer
 
     def write(self, s):
-        self._original.write(s)
+        if self._original is not None:
+            self._original.write(s)
         self._buffer.write(s)
         return len(s)
 
     def flush(self):
-        self._original.flush()
+        if self._original is not None:
+            self._original.flush()
 
 
 @contextlib.contextmanager
-def tee_to(path):
+def tee_to(path, echo=True):
     """Mirror everything printed to stdout inside the block into `path`, mode 600, written atomically
-    (a temp file in the same directory, then os.replace), in addition to printing as normal. The
-    directory is created mode 700 if missing. A same-day rerun (same `path`) overwrites the file."""
+    (a temp file in the same directory, then os.replace), in addition to printing as normal (echo=False:
+    the file only). The directory is created mode 700 if missing. A same-day rerun (same `path`)
+    overwrites the file."""
     path = Path(path)
     buffer = io.StringIO()
     original = sys.stdout
-    sys.stdout = _Tee(original, buffer)
+    sys.stdout = _Tee(original if echo else None, buffer)
     try:
         yield
     finally:
@@ -171,15 +176,31 @@ def ads_sections(since, q):
                   f" · lost to rank {pct(m.search_rank_lost_impression_share)}")
 
     print("\n== 2. Search terms, last 7 days (campaign | term | matched keyword | impr clicks cost conv)")
+    import economics as ec
+    negatives = defaultdict(list)
+    for r in q("""SELECT campaign.name, campaign_criterion.keyword.text, campaign_criterion.keyword.match_type
+                  FROM campaign_criterion WHERE campaign_criterion.negative = TRUE
+                  AND campaign_criterion.type = 'KEYWORD' AND campaign.status = 'ENABLED'"""):
+        negatives[r.campaign.name].append((r.campaign_criterion.keyword.text, r.campaign_criterion.keyword.match_type.name))
     rows = search_term_rows(q)
     for r in rows:
         k = r.segments.keyword.info
         why = search_term_flag(r.search_term_view.search_term)
+        blocked = ec.negative_blocking(r.search_term_view.search_term, negatives[r.campaign.name])
         print(f"{r.campaign.name[:22]:22} | {r.search_term_view.search_term} | {k.text} ({k.match_type.name})"
               f" | {r.metrics.impressions} {r.metrics.clicks} {gbp(r.metrics.cost_micros)} {r.metrics.conversions:.1f}"
-              + (f"  !CHECK: {why}" if why else ""))
+              + (f"  !CHECK: {why}" if why else "")
+              + (f"  [now blocked by negative '{blocked[0]}' ({blocked[1]})]" if blocked else ""))
     if not rows:
         print("(none)")
+    print(f"-- negatives in force: " + " · ".join(f"{name} {len(v)}" for name, v in sorted(negatives.items())))
+    print("-- ad clicks by day, last 7 days (date | campaign | clicks | cost)")
+    daily = q("""SELECT campaign.name, segments.date, metrics.clicks, metrics.cost_micros FROM campaign
+                 WHERE segments.date DURING LAST_7_DAYS AND metrics.clicks > 0 ORDER BY segments.date""")
+    for r in daily:
+        print(f"   {r.segments.date} | {r.campaign.name} | {r.metrics.clicks} | {gbp(r.metrics.cost_micros)}")
+    if not daily:
+        print("   (none)")
 
     print("\n== 3. Conversions per action")
     start90 = today - datetime.timedelta(days=90)
@@ -374,13 +395,17 @@ def gsc_section(s):
               f" · CTR {pct(t.get('ctr', 0))} · avg pos {t.get('position', 0):.1f}")
     now = {r["keys"][0]: r for r in query(cur, ["query"])}
     before = {r["keys"][0]: r for r in query(prev, ["query"])}
+    top_page = {}  # query -> the page with the most impressions for it this week (what Google shows)
+    for r in sorted(query(cur, ["query", "page"], 1000), key=lambda r: -r["impressions"]):
+        top_page.setdefault(r["keys"][0], r["keys"][1].replace(SITE, "") or "/")
 
     def line(qry):
         r, b = now.get(qry), before.get(qry)
         pos = f"pos {r['position']:.1f}" if r else "not seen"
         was = f"was {b['position']:.1f}" if b else "new"
+        page = f" → {top_page[qry]}" if qry in top_page else ""
         return (f"   {qry[:48]:48} clicks {r['clicks'] if r else 0:.0f} · impr {r['impressions'] if r else 0:.0f}"
-                f" · {pos} ({was})")
+                f" · {pos} ({was}){page}")
 
     print("-- money queries (funeral, wedding, carol, choir), by impressions")
     money = sorted((q for q in set(now) | set(before) if MONEY_TERMS.search(q)),
@@ -917,14 +942,37 @@ def main():
     p.add_argument("--gsc-shortlist", action="store_true", help="run section 13 even if it isn't the first Monday")
     p.add_argument("--save-report", action="store_true",
                    help="also archive everything printed to ~/lcs-private/reports/<today>.txt (mode 600)")
+    p.add_argument("--quiet", action="store_true",
+                   help="with --save-report: print only where the report is, its sections and any problem lines")
     p.add_argument("--write-proposals", action="store_true",
                    help="write each section 12 PROPOSE line as a Command Centre proposal (mode 600)")
     args = p.parse_args()
+    if args.quiet and not args.save_report:
+        p.error("--quiet needs --save-report (the report has to go somewhere)")
     if args.save_report:
-        with tee_to(report_path()):
+        path = report_path()
+        with tee_to(path, echo=not args.quiet):
             run_sections(args)
+        if args.quiet:
+            print(quiet_summary(path))
     else:
         run_sections(args)
+
+
+PROBLEM_RE = re.compile(r"\b(error|failed|refused|denied|permission|invalid_grant|unauthenticated|not written|"
+                        r"CONFIG ERROR|STOP GUARD|STALE|NOT INDEXED)\b|PAST £", re.I)
+
+
+def quiet_summary(path):
+    """What --quiet prints instead of the report: where it is, which sections it holds and every line that
+    looks like a failure or an alarm, so the Monday dispatcher can stop on an auth error without reading it."""
+    text = Path(path).read_text(encoding="utf-8")
+    heads = re.findall(r"^== (\w+)\.", text, re.M)
+    problems = [l.strip() for l in text.splitlines()
+                if PROBLEM_RE.search(l) and not l.strip().startswith("stop rule:")]
+    out = [f"report saved: {path}", f"sections: {' '.join(heads) or 'none'}"]
+    out += [f"problem: {l}" for l in problems[:20]] or ["problems: none"]
+    return "\n".join(out)
 
 
 if __name__ == "__main__":

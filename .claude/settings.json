@@ -19,6 +19,7 @@
       "mcp__zoho-mail__ZohoMail_sendReplyEmail",
       "Bash(.venv/bin/python scripts/reports/weekly_review.py)",
       "Bash(.venv/bin/python scripts/reports/weekly_review.py *)",
+      "Bash(.venv/bin/python scripts/reports/report_sections.py *)",
       "Bash(.venv/bin/python scripts/reports/account_audit.py)",
       "Bash(.venv/bin/python scripts/bookings/invoice_text.py *)",
       "Bash(.venv/bin/python scripts/ads/upload_bookings.py)",
