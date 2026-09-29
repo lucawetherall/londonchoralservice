@@ -346,6 +346,23 @@ def test_the_cache_follows_the_file():
     assert len(ev.read()[0]) == 2
 
 
+def test_an_unchanged_log_is_neither_reopened_nor_rebuilt():
+    fresh_dir()
+    ev.append("booking", "2111", "cancelled", {}, "script", on="2026-09-20")
+    first = ev.booking_facts("2111", T)
+    assert first.cancelled
+    opened = []
+    saved = ev._open
+    ev._open = lambda *a: opened.append(a) or saved(*a)
+    try:
+        assert ev.read() is ev.read() and ev.booking_facts("2111", T) is first
+        assert opened == [], "an unchanged log was opened again"
+        ev.append("booking", "2111", "deposit-seen", {}, "script", on="2026-09-21")
+        assert ev.booking_facts("2111", T) is not first and ev.booking_facts("2111", T).deposit_seen
+    finally:
+        ev._open = saved
+
+
 def test_a_partial_last_line_is_ignored_and_the_next_append_starts_a_new_line():
     path = fresh_dir()
     ev.append("booking", "2111", "cancelled", {}, "script")

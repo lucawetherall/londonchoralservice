@@ -381,8 +381,9 @@ def trust_label(rows, r, facts=None):
     if not fp:
         return ""
     facts = per_row(facts, r)
-    same = [x for x in [r] + singer_history(rows, r.get("singer_email"), r.get("singer_name"))
-            if x.get("bank_fp") == fp and is_trusted(x, facts)]  # r itself counts even when rows doesn't hold it
+    account = [x for x in rows if x.get("bank_fp") == fp]  # only invoices to this account can vouch: names checked on these
+    same = [x for x in [r] + singer_history(account, r.get("singer_email"), r.get("singer_name"))
+            if is_trusted(x, facts)]  # r itself counts even when rows doesn't hold it
     if any(confirmed(x, facts) for x in same):
         return "confirmed by phone"
     return "paid to verifiably" if same else ""

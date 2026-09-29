@@ -302,6 +302,12 @@ def append(subject, id, kind, fields, by, on=None, note=None, src="live", eid=No
 _CACHE = {}
 
 
+_open = os.open  # opening the log to parse it (tests count the calls)
+# the readings of a missing and of an unreadable log: shared, so the index and Facts caches hold across calls
+_ABSENT = ([], {"lines": 0, "skipped": 0, "chain_ok": True, "broken_at": None, "last_at": None})
+_UNREADABLE = ([], dict(_ABSENT[1], unreadable=True))
+
+
 def clear_cache():
     _CACHE.clear()
     _INDEXED.clear()
@@ -313,24 +319,33 @@ def read(path=None):
     Lines that don't parse, fail validate(), run over LINE_MAX bytes, repeat an eid, or are a last line without
     "\\n" (a write in progress) are skipped and counted. The chain is checked over every complete line: broken_at
     is the first valid line whose prev doesn't fit the line before it. Cached per process on the file's identity,
-    size and mtime; takes no lock. Callers must not modify what it returns."""
+    size, mtime, mode and owner, checked with one lstat per call, so an unchanged log is never reopened or parsed
+    again; takes no lock. Callers must not modify what it returns."""
     path = Path(path or log_path())
+    try:
+        lst = os.lstat(path)
+    except FileNotFoundError:
+        return _ABSENT
+    except OSError:
+        return _UNREADABLE
+    key = (str(path), lst.st_dev, lst.st_ino, lst.st_size, lst.st_mtime_ns, lst.st_mode, lst.st_uid)
+    if key in _CACHE:
+        return _CACHE[key]
     stats = {"lines": 0, "skipped": 0, "chain_ok": True, "broken_at": None, "last_at": None}
     try:
-        fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW)
+        fd = _open(path, os.O_RDONLY | os.O_NOFOLLOW)
     except FileNotFoundError:
-        return [], stats
+        return _ABSENT
     except OSError:
-        return [], dict(stats, unreadable=True)
+        return _UNREADABLE
     try:
         st = os.fstat(fd)
         try:
             _check(st)
+            if (st.st_dev, st.st_ino) != (lst.st_dev, lst.st_ino):
+                raise LogRefused("the state log changed while it was opened")
         except LogRefused:
-            return [], dict(stats, unreadable=True)
-        key = (str(path), st.st_dev, st.st_ino, st.st_size, st.st_mtime_ns)
-        if key in _CACHE:
-            return _CACHE[key]
+            return _UNREADABLE
         chunks = []
         while True:
             b = os.read(fd, 1 << 20)
@@ -534,18 +549,23 @@ _INDEXED = {}
 
 
 def _indexed(today):
-    """index(read()) for today, cached while the log is unchanged (read() returns the same list)."""
+    """(index(read()) for today, its Facts cache), both kept while the log is unchanged (read() then returns the
+    same list), so a reader asking row by row never rebuilds either."""
     events, _ = read()
-    key = (id(events), today)
-    if _INDEXED.get("key") != key or _INDEXED.get("events") is not events:
-        _INDEXED.update(key=key, events=events, index=index(events, today))
-    return _INDEXED["index"]
+    if _INDEXED.get("events") is not events or _INDEXED.get("today") != today:
+        _INDEXED.update(events=events, today=today, index=index(events, today), facts={})
+    return _INDEXED["index"], _INDEXED["facts"]
 
 
 def facts(subject, id, today, events=None):
-    """Facts for one subject: from `events` (a list of validated events, as tests pass) or else the log."""
-    idx = index(events, today) if events is not None else _indexed(today)
-    return Facts(subject, idx.get((subject, id), []))
+    """Facts for one subject: from `events` (a list of validated events, as tests pass) or else the log (cached per
+    log snapshot and day; callers must not modify what they get)."""
+    if events is not None:
+        return Facts(subject, index(events, today).get((subject, id), []))
+    idx, made = _indexed(today)
+    if (subject, id) not in made:
+        made[(subject, id)] = Facts(subject, idx.get((subject, id), []))
+    return made[(subject, id)]
 
 
 def booking_facts(ref, today, events=None):

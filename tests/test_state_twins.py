@@ -407,6 +407,25 @@ def test_claimed_or_checked_singer_notes_never_hold():
         assert si.held(rows, rows[0], facts=facts) == [], family
 
 
+def test_the_trust_history_only_names_rows_on_the_same_account():
+    """trust_label checks names only among invoices to the same fingerprint (only they can vouch), so a page over
+    the whole store stays linear in the rows it compares by name."""
+    rows = []
+    for s in range(30):
+        for i in range(10):
+            rows.append({"message_id": f"m{s}x{i}", "received": "2026-09-01", "singer_name": f"Singer{s} Surname{s}",
+                         "singer_email": f"s{s}@example.org", "bank_fp": f"{s:016x}", "notes": "", "paid_on": "",
+                         "paid_verified": "yes" if i == 0 else "", "bank_confirmed": ""})
+    calls, real = [], si.normalise_name
+    si.normalise_name = lambda n: calls.append(n) or real(n)
+    try:
+        labels = {si.trust_label(rows, r, facts={}) for r in rows}
+    finally:
+        si.normalise_name = real
+    assert labels == {"paid to verifiably"}
+    assert len(calls) <= 3 * 10 * len(rows), len(calls)  # the same-account group, not the whole store, per row
+
+
 def test_with_no_log_the_singer_readers_are_todays():
     ev.clear_cache()
     for name, invoices, today in SINGER_CASES:
