@@ -1081,8 +1081,12 @@ td.compare-us .compare-saving {
 
 .dropdown-caret {
   display: inline-block;
-  margin-left: 0.25em;
-  font-size: 0.75em;
+  width: 0.4em;
+  height: 0.4em;
+  margin-left: 0.55em;
+  border-right: 1px solid currentColor;
+  border-bottom: 1px solid currentColor;
+  transform: translateY(-0.3em) rotate(45deg);
   transition: transform var(--transition-fast);
 }
 
@@ -1090,7 +1094,9 @@ td.compare-us .compare-saving {
   display: none;
   position: absolute;
   top: 100%;
-  left: 0;
+  /* Items are padded --space-lg inside a 1px border: pull the menu left so
+     their text starts under the trigger's first letter. */
+  left: calc(-1 * (var(--space-lg) + 1px));
   min-width: 12rem;
   list-style: none;
   padding: var(--space-sm) 0;
@@ -1145,7 +1151,9 @@ td.compare-us .compare-saving {
 .has-dropdown:hover > .dropdown-trigger .dropdown-caret,
 .has-dropdown:focus-within > .dropdown-trigger .dropdown-caret,
 .has-dropdown[data-open="true"] > .dropdown-trigger .dropdown-caret {
-  transform: rotate(180deg);
+  /* Pointing up, the stroke is the top half of the rotated box: drop it by
+     half the diagonal (0.28em) so it sits where the closed chevron sat. */
+  transform: translateY(-0.02em) rotate(225deg);
 }
 
 /* ESC dismisses a desktop dropdown even while hover/focus is still inside (nav.js) */
@@ -1154,7 +1162,7 @@ td.compare-us .compare-saving {
 }
 
 .has-dropdown[data-dismissed] > .dropdown-trigger .dropdown-caret {
-  transform: none;
+  transform: translateY(-0.3em) rotate(45deg);
 }
 
 /* Mobile: dropdown becomes an inline expandable block inside the hamburger */

@@ -62,7 +62,7 @@
 
 .site-nav {
   display: flex;
-  align-items: center;
+  align-items: baseline;
   justify-content: space-between;
   padding-block: var(--space-lg);
   gap: var(--space-lg);
@@ -90,6 +90,11 @@
   margin: 0;
 }
 
+/* Base li margins would hang below the baseline and grow the header. */
+.nav-links li {
+  margin-bottom: 0;
+}
+
 .nav-links a {
   font-family: var(--font-heading);
   font-size: var(--text-sm);
@@ -98,7 +103,6 @@
   text-transform: uppercase;
   color: var(--color-text);
   text-decoration: none;
-  padding-bottom: 2px;
   transition: color var(--transition-fast);
   white-space: nowrap;
 }
@@ -108,7 +112,10 @@
 }
 
 .nav-links a[aria-current="page"] {
-  border-bottom: 2px solid var(--color-accent);
+  text-decoration-line: underline;
+  text-decoration-thickness: 1px;
+  text-decoration-color: var(--color-accent);
+  text-underline-offset: 0.45em;
 }
 
 /* ── Hamburger Toggle ── */
@@ -121,6 +128,7 @@
   width: 2.5rem;
   height: 2.5rem;
   position: relative;
+  align-self: center;
 }
 
 .nav-toggle:hover,
