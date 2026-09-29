@@ -145,6 +145,8 @@ def cmd_migrate(args):
     plan = lcs_migrate.plan(ledger, store, today, lcs_events.read()[0])
     path = write_report(plan["report"], today)
     print(f"events migration dry run for {today.isoformat()}: {lcs_migrate.totals(plan)}")
+    if plan["future"]:
+        print(f"dated after today: {'; '.join(plan['future'])}: correct those notes before the apply")
     print(f"report: {path}")
     print(f"sha256: {plan['sha256']}")
     return 0
@@ -173,6 +175,9 @@ def apply_migration(args, today):
         if not hashlib.sha256(plan["report"].encode("utf-8")).hexdigest() == args.expect:
             raise SystemExit("the ledger, the singer store or the log changed since the dry run: run it again; "
                              "nothing written")
+        if plan["future"]:
+            raise SystemExit(f"dated after today, so not yet a fact: {'; '.join(plan['future'])}: correct those notes "
+                             "first; nothing written")
         events = lcs_migrate.proposed_events(plan["proposals"])
         diffs = lcs_migrate.compare(ledger, store, today, log + events)
         if diffs:

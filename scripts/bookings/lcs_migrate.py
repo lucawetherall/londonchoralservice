@@ -145,7 +145,7 @@ def booking_proposals(r, today, have):
             left.append(f"left out: booking {ref} {kind} [{RULES[kind]}]: its date isn't a real date")
             return True
         if day > today:
-            left.append(f"left out: booking {ref} {kind} [{RULES[kind]}]: dated after today")
+            left.append(f"left out: booking {ref} {kind} [{RULES[kind]}]: dated after today ({day})")
             return True
         return False
 
@@ -260,8 +260,10 @@ def invoice_proposals(r, today, have):
         day = _date((r.get("withdrawn") or "").strip()[:10])
         hit = next(((s, c, WITHDRAWN_NOTE.match(c)) for s, _, c in parts if WITHDRAWN_NOTE.match(c)), (len(r.get("notes") or ""), None, None))
         word = hit[2].group(2) if hit[2] else ""
-        if day is None or day > today:
-            left.append(f"left out: singer_invoice {mid} withdrawn [S9]: its date isn't a real date up to today")
+        if day is None:
+            left.append(f"left out: singer_invoice {mid} withdrawn [S9]: its date isn't a real date")
+        elif day > today:
+            left.append(f"left out: singer_invoice {mid} withdrawn [S9]: dated after today ({day})")
         else:
             found.append(_proposal(hit[0], "withdrawn", {"reason": word if word in WITHDRAWN_REASONS else "other"},
                                    "script", hit[1], day))
@@ -304,8 +306,17 @@ def plan(ledger_rows, store_rows, today, events):
                 taken.add(p["eid"])
                 proposals.append(p)
     report = render(proposals, left, today, len(ledger_rows), len(store_rows), len(events))
-    return {"proposals": proposals, "left": left, "report": report,
+    return {"proposals": proposals, "left": left, "report": report, "future": future_lines(left),
             "sha256": hashlib.sha256(report.encode("utf-8")).hexdigest()}
+
+
+FUTURE = re.compile(r"^left out: (\S+ \S+ \S+) \[[^\]]*\]: dated after today \((\d{4}-\d{2}-\d{2})\)$")
+
+
+def future_lines(left):
+    """"<subject> <id> <kind> (<date>)" for each fact left out as dated after today: the apply refuses while any is
+    left (the readers would read the note on that day, and the facts would then disagree with it)."""
+    return [f"{m.group(1)} ({m.group(2)})" for m in map(FUTURE.match, left) if m]
 
 
 def flag_counts(proposals):

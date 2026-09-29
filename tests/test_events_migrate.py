@@ -399,6 +399,22 @@ def test_a_migration_that_stops_part_way_withdraws_what_it_wrote_and_runs_again(
     assert mig.compare(ledger, store, lm.today(), events) == []
 
 
+def test_a_fact_dated_after_today_stops_the_apply_naming_its_row():
+    """A clause dated after today can't become a fact yet (the readers ignore it until that day, then the notes and
+    the facts would disagree): the apply refuses, naming the ref, kind and date, until the note is corrected."""
+    ledger, store = sample()
+    ledger.append(booking("2114", "short by fees £12.40 accepted 2027-01-05 (owner)"))
+    plan = mig.plan(ledger, store, T, [])
+    assert plan["future"] == ["booking 2114 fees-accepted (2027-01-05)"], plan["future"]
+    d = fresh(ledger, store)
+    code, out = run(d, "migrate")
+    assert "dated after today: booking 2114 fees-accepted (2027-01-05)" in out, out
+    nonce_file(d)
+    code, out = run(d, "migrate", "--apply", "--expect", sha_of(out), "--owner", stdin_text=NONCE + "\n")
+    assert code != 0 and "booking 2114 fees-accepted (2027-01-05)" in out and "nothing written" in out, out
+    assert not os.path.exists(os.path.join(d, "events.jsonl"))
+
+
 def test_compare_proposed_and_compare_exit_1_on_a_difference():
     ledger, store = sample()
     d = fresh(ledger, store)

@@ -1901,12 +1901,22 @@ def _migrate_validate(raw):
     day = today()
     ledger, store = lm.read_csv(cp.LEDGER), lm.read_csv(si.STORE)
     plan = lcs_migrate.plan(ledger, store, day, events)
+    if plan["future"]:  # a singer invoice's message id is masked, as in every output the app shows
+        listed = DIGITS_RE.sub("••••••", "; ".join(plan["future"][:10]))
+        raise ActionError(f"dated after today, so not yet a fact: {listed}"
+                          f"{' …' if len(plan['future']) > 10 else ''}; correct those notes first")
     if not plan["proposals"]:
         raise ActionError("nothing to migrate")
     diffs = lcs_migrate.compare(ledger, store, day, list(events) + lcs_migrate.proposed_events(plan["proposals"]))
     if diffs:
-        n = len({" ".join(d.split()[:2]) for d in diffs})
-        raise ActionError(f"compare finds {n} booking or invoice reading differently: run events.py compare --proposed")
+        which = {}
+        for d in diffs:  # "subject id family: …" -> subject id (families)
+            head, _, _ = d.partition(":")
+            subject, id_, family = head.split(" ", 2)
+            which.setdefault(f"{subject} {id_}", []).append(family)
+        listed = DIGITS_RE.sub("••••••", "; ".join(f"{k} ({', '.join(v)})" for k, v in list(which.items())[:10]))
+        raise ActionError(f"these read differently from their notes: {listed}{' …' if len(which) > 10 else ''}; "
+                          "run events.py compare --proposed")
     return {"input": {}, "sha": plan["sha256"], "totals": lcs_migrate.totals(plan), "day": day.isoformat()}
 
 

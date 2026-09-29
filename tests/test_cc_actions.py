@@ -2170,13 +2170,19 @@ def test_migrate_events_is_refused_while_compare_differs_and_after_a_migration()
         cp.lcs_events.append("booking", "0310", "reinstated", {}, "owner", on="2026-09-20")
     finally:
         cp.lcs_events.lcs_owner._PROVEN, os.environ["LCS_BOOKINGS_CSV"] = saved, csv_env
-    assert refused(act.validate, {}).startswith("compare finds 1 booking or invoice reading differently"), \
-        refused(act.validate, {})
+    assert refused(act.validate, {}) == ("these read differently from their notes: booking 0310 (cancellation, held); "
+                                         "run events.py compare --proposed"), refused(act.validate, {})
     clear_log()
     cp.lcs_events.append("booking", "2111", "deposit-seen", {}, "script", on="2026-09-01", src="migration",
                          eid="0123456789abcdef")
     assert refused(act.validate, {}) == "the events migration has already been applied"
     clear_log()
+    rows = lm.read_csv(cp.LEDGER)
+    rows[0]["notes"] = "PENDING: invoiced; paid in full 2099-01-01"
+    write_csv(os.path.join(TMP, "bookings.csv"), LEDGER_COLS, rows)
+    assert refused(act.validate, {}) == ("dated after today, so not yet a fact: booking 2111 paid-in-full (2099-01-01); "
+                                         "correct those notes first"), refused(act.validate, {})
+    fixtures()
     with open(Path(TMP) / "events.jsonl", "w") as f:
         f.write("{}\n")
     os.chmod(Path(TMP) / "events.jsonl", 0o644)
