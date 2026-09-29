@@ -55,8 +55,10 @@ def cmd_show(args):
         print("no recorded facts")
         return 0
     today = lm.today()
+    # every fact is listed, future-dated ones too, but only a retract dated up to today undoes its target
+    now = {e["eid"]: e["retracted"] for e in lcs_events.index(events, today).get((args.subject, args.id), [])}
     for e in facts:
-        print(describe(e, today))
+        print(describe(dict(e, retracted=now.get(e["eid"], False)), today))
     return 0
 
 

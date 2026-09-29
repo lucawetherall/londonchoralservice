@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Tests for scripts/bookings/events.py (verify, show): read-only views of the state log. Each test runs the
 script against a temp LCS_PRIVATE_DIR, never ~/lcs-private. Stdlib only: .venv/bin/python tests/test_events_cli.py"""
-import os, subprocess, sys, tempfile
+import datetime, os, subprocess, sys, tempfile
+from zoneinfo import ZoneInfo
 
 os.environ["LCS_PRIVATE_DIR"] = tempfile.mkdtemp()  # never the real ~/lcs-private
 os.environ.pop("LCS_BOOKINGS_CSV", None)
@@ -82,6 +83,28 @@ def test_show_prints_one_line_per_fact_and_never_notes():
     assert lines[0].startswith("2026-09-20 fees-accepted amount=12.40 by owner (live)") and "retracted" in lines[0], out
     assert lines[1].startswith("2026-09-21 retract") and f"target={a}" in lines[1], out
     assert "short by fees" not in out and "2112" not in out
+
+
+def test_show_a_future_dated_retract_leaves_its_target_standing():
+    d = fresh()
+    now = datetime.datetime.now(datetime.timezone.utc)
+    today = now.astimezone(ZoneInfo("Europe/London")).date()
+    ahead = now + datetime.timedelta(hours=20)
+    base = {"v": 1, "prev": "", "subject": "booking", "id": "2111", "by": "script", "src": "live"}
+    target = dict(base, eid="a1b2c3d4e5f60718", at=now.strftime("%Y-%m-%dT%H:%M:%SZ"), on=today.isoformat(),
+                  kind="cancelled", fields={})
+    undo = dict(base, eid="b1b2c3d4e5f60718", at=ahead.strftime("%Y-%m-%dT%H:%M:%SZ"), by="owner",
+                on=ev.at_date(ahead.strftime("%Y-%m-%dT%H:%M:%SZ")).isoformat(), kind="retract",
+                fields={"target": target["eid"], "why": "mistake"})
+    if undo["on"] == target["on"]:
+        return  # late in the London day the retract isn't dated after today: nothing to test right now
+    first = ev.dumps(ev.validate(target)) + "\n"
+    undo["prev"] = ev.chain_hash(first.encode())
+    with open(os.open(os.path.join(d, "events.jsonl"), os.O_WRONLY | os.O_CREAT, 0o600), "w") as f:
+        f.write(first + ev.dumps(ev.validate(undo)) + "\n")
+    code, out = run("show", "booking", "2111")
+    lines = out.strip().splitlines()
+    assert code == 0 and "retracted" not in lines[0] and "dated after today" in lines[1], out
 
 
 def test_show_an_unknown_id():

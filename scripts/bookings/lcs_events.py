@@ -53,11 +53,8 @@ def _word(*choices):
     return lambda x: isinstance(x, str) and x in choices
 
 
-def _amount(cap=None):
-    def ok(x):
-        return (isinstance(x, str) and bool(AMOUNT_RE.fullmatch(x)) and float(x) > 0
-                and (cap is None or float(x) <= cap() + 1e-9))
-    return ok
+def _amount():
+    return lambda x: isinstance(x, str) and bool(AMOUNT_RE.fullmatch(x)) and float(x) > 0
 
 
 def _pattern(rx):
@@ -77,14 +74,13 @@ def _clauses(x):
             and all(isinstance(c, str) and HEX12.fullmatch(c) for c in x))
 
 
-_FEE = _amount(lambda: lm.FEE_CAP)
 RETRACT = {"target": _pattern(HEX16), "why": _word("mistake", "write-failed")}
 CHECKED = {"clauses": _clauses}
 
 # (subject, kind) -> {field: checker}. A new kind of fact is a new line here, not a new pattern.
 KINDS = {
     ("booking", "paid-in-full"): {"basis": _word("bank", "owner")},
-    ("booking", "fees-accepted"): {"amount": _FEE},
+    ("booking", "fees-accepted"): {"amount": _amount()},  # at most FEE_CAP when written (validate, write=True)
     ("booking", "noted-paid"): {"scope": _word("part", "full")},
     ("booking", "arranged"): {"method": _word("cash", "cheque", "third-party")},
     ("booking", "cancelled"): {},
@@ -138,8 +134,13 @@ def at_date(at):
     return lm.today(t)
 
 
-def validate(obj):
-    """obj when it is a well-formed state-log line, else ValueError with a fixed phrase (never the bad value)."""
+AT_AHEAD = datetime.timedelta(days=1)  # an `at` further ahead of now than this is a clock or hand error: refused
+
+
+def validate(obj, write=False):
+    """obj when it is a well-formed state-log line, else ValueError with a fixed phrase (never the bad value).
+    write=True (append) also holds a fees-accepted amount to today's FEE_CAP; a reader takes any fee that was
+    valid when written, so lowering the cap later never reopens a booking it closed."""
     if not isinstance(obj, dict):
         raise ValueError("not an object")
     keys = set(obj)
@@ -154,6 +155,8 @@ def validate(obj):
     day = at_date(obj["at"])
     if day is None:
         raise ValueError("bad at")
+    if _at(obj) - datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None) > AT_AHEAD:
+        raise ValueError("at is in the future")
     on = _date(obj["on"]) if isinstance(obj["on"], str) and ON_RE.fullmatch(obj["on"]) else None
     if on is None or on > day:
         raise ValueError("bad on")
@@ -170,6 +173,8 @@ def validate(obj):
     for name, ok in schema.items():
         if not ok(fields[name]):
             raise ValueError(f"bad {name}")
+    if write and kind == "fees-accepted" and float(fields["amount"]) > lm.FEE_CAP + 1e-9:
+        raise ValueError("bad amount")
     by = obj["by"]
     if by not in BY or obj["src"] not in SRC:
         raise ValueError("bad by or src")
@@ -261,7 +266,7 @@ def append(subject, id, kind, fields, by, on=None, note=None, src="live", eid=No
            "on": on, "subject": subject, "id": id, "kind": kind, "fields": fields, "by": by, "src": src}
     if note is not None:
         obj["note"] = note
-    dumps(validate(obj))
+    dumps(validate(obj, write=True))
     path = log_path()
     if by == "owner" and (not lcs_owner.owner_proven() or lcs_owner.owner_folder_problem([path])):
         raise OwnerRefused("an owner fact needs the Command Centre's owner nonce in this run")

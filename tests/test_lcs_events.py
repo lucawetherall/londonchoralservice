@@ -123,8 +123,9 @@ def line(subject="booking", kind="cancelled", fields=None, by="script", **over):
 
 
 def refused(obj):
+    """Refused as a new line (validate for writing: the fee cap applies too)."""
     try:
-        ev.validate(obj)
+        ev.validate(obj, write=True)
     except ValueError:
         return True
     return False
@@ -182,6 +183,35 @@ def test_on_is_never_after_the_london_date_of_at():
     assert not refused(line(at="2026-09-28T23:30:00Z", on="2026-09-29"))
     assert refused(line(at="2026-09-28T22:30:00Z", on="2026-09-29"))
     assert not refused(line(on="2024-01-01"))
+
+
+def test_the_fee_cap_applies_only_when_writing():
+    """Lowering FEE_CAP later must never reopen a booking closed by a fee that was within the cap when written."""
+    over = line(kind="fees-accepted", fields={"amount": f"{lm.FEE_CAP + 5:.2f}"}, by="owner")
+    assert ev.validate(copy.deepcopy(over)) == over
+    try:
+        ev.validate(copy.deepcopy(over), write=True)
+        assert False, "an over-cap fee was accepted for writing"
+    except ValueError:
+        pass
+    path = fresh_dir()
+    with open(os.open(path, os.O_WRONLY | os.O_CREAT, 0o600), "w") as f:
+        f.write(ev.dumps(over) + "\n")
+    assert [e["fields"]["amount"] for e in ev.read()[0]] == [over["fields"]["amount"]]
+    assert ev.booking_facts("2111", T).closed_on == T
+
+
+def test_an_at_more_than_a_day_ahead_is_refused():
+    now = datetime.datetime.now(datetime.timezone.utc)
+    soon = (now + datetime.timedelta(hours=12)).strftime("%Y-%m-%dT%H:%M:%SZ")
+    later = (now + datetime.timedelta(days=2)).strftime("%Y-%m-%dT%H:%M:%SZ")
+    assert not refused(line(at=soon))
+    assert refused(line(at=later))
+    try:
+        ev.validate(line(at=later))
+        assert False, "read accepted a stamp two days ahead"
+    except ValueError:
+        pass
 
 
 def test_ids_by_subject():
