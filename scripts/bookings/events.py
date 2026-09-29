@@ -9,17 +9,36 @@
         the facts recorded for one booking or invoice, one line each: eid, on, kind, fields, who and src,
         "(retracted)" where undone. Never notes, names or anything from the CSVs.
 
-Both only read. The migration, compare, retract and notes-checked commands come in later changes.
+    .venv/bin/python scripts/bookings/events.py migrate
+        the one-off migration's dry run (lcs_migrate): the facts the ledger's and the singer store's notes imply,
+        family by family where the log has none yet, written as a report to <private>/events-migration-<date>.txt
+        (mode 600: refs, message ids, kinds, dates, amounts, rule names and flags; never note text) with its totals
+        and sha256 printed. Writes nothing else.
+    .venv/bin/python scripts/bookings/events.py migrate --apply --expect <sha256> --owner
+        the Command Centre only, after the owner's passkey (its one-time nonce on a pipe, lcs_owner): re-runs the dry
+        run under the ledger's and the store's locks, refuses a different hash (something changed since) or any
+        difference compare --proposed finds, then appends the events (src migration, derived eids) and prints
+        "N new events". A second apply adds nothing: "0 new events".
+    .venv/bin/python scripts/bookings/events.py compare [--proposed]
+        every ledger and store row read from its notes alone and events first (with the log, or with the dry run's
+        proposed events added), one line per family that reads differently; "no difference" and exit 0, else exit 1.
+
+verify, show, migrate (without --apply) and compare only read (the dry run writes its report). The retract and
+notes-checked commands come in a later change.
 """
 
 import argparse
 import datetime
+import hashlib
+import os
+import re
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import lcs_events  # noqa: E402
 import lcs_money as lm  # noqa: E402
+import lcs_owner  # noqa: E402
 
 
 def cmd_verify(args):
@@ -63,14 +82,114 @@ def cmd_show(args):
     return 0
 
 
+SHA_RE = re.compile(r"[0-9a-f]{64}")
+
+
+def rows():
+    """(ledger rows, singer store rows, the ledger's path, the store's path), read without a lock."""
+    import lcs_migrate
+    ledger, store = lcs_migrate.cp.LEDGER, lcs_migrate.si.STORE
+    return lm.read_csv(ledger), lm.read_csv(store), ledger, store
+
+
+def write_report(text, today):
+    """<private>/events-migration-<date>.txt, mode 600, replaced atomically (never through a symlink)."""
+    path = lcs_events.log_path().parent / f"events-migration-{today.isoformat()}.txt"
+    path.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
+    tmp = path.with_name(f".{path.name}.{os.getpid()}.{os.urandom(4).hex()}.tmp")
+    fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            f.write(text)
+        os.replace(tmp, path)
+    except BaseException:
+        tmp.unlink(missing_ok=True)
+        raise
+    return path
+
+
+def cmd_migrate(args):
+    import lcs_migrate
+    today = lm.today()
+    if args.apply:
+        return apply_migration(args, today)
+    if args.expect or args.owner:
+        raise SystemExit("--expect and --owner go with --apply only; nothing written")
+    ledger, store, _, _ = rows()
+    plan = lcs_migrate.plan(ledger, store, today, lcs_events.read()[0])
+    path = write_report(plan["report"], today)
+    print(f"events migration dry run for {today.isoformat()}: {lcs_migrate.totals(plan)}")
+    print(f"report: {path}")
+    print(f"sha256: {plan['sha256']}")
+    return 0
+
+
+def apply_migration(args, today):
+    """The owner's apply: the nonce, the folder, the same dry run (hash), no compare difference; then the events."""
+    import lcs_migrate
+    if not args.owner:
+        raise SystemExit("--apply needs --owner (the Command Centre's passkey action); nothing written")
+    if not args.expect or not SHA_RE.fullmatch(args.expect):
+        raise SystemExit("--apply needs --expect with the dry run's sha256 (64 hex); nothing written")
+    _, _, ledger_path, store_path = rows()
+    where = lcs_owner.owner_folder_problem([ledger_path, store_path, lcs_events.log_path()])
+    if where:
+        raise SystemExit(f"--owner {where}; nothing written")
+    if not lcs_owner.owner_confirmed():
+        raise SystemExit("--owner needs the Command Centre's one-time owner nonce (the owner's passkey approval); "
+                         "nothing written")
+    # the CSVs' locks, ledger first, so neither changes between the hash check and the last append; the log's own
+    # lock is taken inside each append (lock order: the CSVs', then the log's)
+    with lm.ledger_lock(ledger_path), lm.ledger_lock(store_path):
+        ledger, store = lm.read_csv(ledger_path), lm.read_csv(store_path)
+        log = lcs_events.read()[0]
+        plan = lcs_migrate.plan(ledger, store, today, log)
+        if not hashlib.sha256(plan["report"].encode("utf-8")).hexdigest() == args.expect:
+            raise SystemExit("the ledger, the singer store or the log changed since the dry run: run it again; "
+                             "nothing written")
+        events = lcs_migrate.proposed_events(plan["proposals"])
+        diffs = lcs_migrate.compare(ledger, store, today, log + events)
+        if diffs:
+            raise SystemExit(f"compare --proposed finds {len(diffs)} difference(s): run it and settle them first; "
+                             "nothing written")
+        for p in plan["proposals"]:
+            lcs_events.append(p["subject"], p["id"], p["kind"], p["fields"], p["by"], on=p["on"], note=p["note"],
+                              src="migration", eid=p["eid"])
+    print(f"{len(plan['proposals'])} new events")
+    return 0
+
+
+def cmd_compare(args):
+    import lcs_migrate
+    today = lm.today()
+    ledger, store, _, _ = rows()
+    events = list(lcs_events.read()[0])
+    if args.proposed:
+        events += lcs_migrate.proposed_events(lcs_migrate.plan(ledger, store, today, events)["proposals"])
+    diffs = lcs_migrate.compare(ledger, store, today, events)
+    for line in diffs:
+        print(line)
+    if not diffs:
+        print("no difference")
+    return 1 if diffs else 0
+
+
 def main(argv=None):
-    ap = argparse.ArgumentParser(description="Read-only views of the state log.")
+    ap = argparse.ArgumentParser(description="The state log: verify, show, migrate, compare.")
     sub = ap.add_subparsers(dest="cmd", required=True)
     sub.add_parser("verify").set_defaults(fn=cmd_verify)
     p = sub.add_parser("show")
     p.add_argument("subject", choices=lcs_events.SUBJECTS)
     p.add_argument("id")
     p.set_defaults(fn=cmd_show)
+    p = sub.add_parser("migrate")
+    p.add_argument("--apply", action="store_true")
+    p.add_argument("--expect", metavar="SHA256")
+    p.add_argument("--owner", action="store_true", help="the Command Centre only: needs its one-time nonce on stdin")
+    p.set_defaults(fn=cmd_migrate)
+    p = sub.add_parser("compare")
+    p.add_argument("--proposed", action="store_true", help="add the migration dry run's proposed events")
+    p.set_defaults(fn=cmd_compare)
     args = ap.parse_args(argv)
     return args.fn(args)
 

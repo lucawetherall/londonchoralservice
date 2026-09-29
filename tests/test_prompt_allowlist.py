@@ -34,6 +34,11 @@ NEVER = [
     f"{PY} scripts/ads/set_budget.py 24295921372 4.50 --apply",
     f"{PY} scripts/ads/set_budget.py 24295921372 4.50 --validate-only",
     f"{PY} scripts/bookings/singer_invoices.py confirm X --expect-fp a1b2c3d4e5f60718",
+    # the state log's owner commands: the Command Centre runs them after a passkey tap (structured-state design)
+    f"{PY} scripts/bookings/events.py migrate --apply --expect {'a' * 64} --owner",
+    f"{PY} scripts/bookings/events.py migrate --apply",
+    f"{PY} scripts/bookings/events.py retract a1b2c3d4e5f60718 --owner",
+    f"{PY} scripts/bookings/events.py notes-checked booking 2111 a1b2c3d4e5f6 --owner",
     # imap_draft.py: the assistant only saves drafts; the sign-in check and the test draft are the owner's
     f"{PY} scripts/bookings/imap_draft.py check",
     f"{PY} scripts/bookings/imap_draft.py test",

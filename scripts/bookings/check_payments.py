@@ -298,20 +298,21 @@ def facts_for(r, today=None, facts=None):
     return lcs_events.booking_facts(ref, today or lm.today())
 
 
+def counting_cancels(notes):
+    """Where each counting cancellation phrase starts, in text order ("rain date if cancelled" doesn't count)."""
+    out = [m.start() for m in CANCEL_WORD.finditer(notes) if not IF_WORDS & set(words_before(notes, m.start()))]
+    out += [m.start() for m in CANCELLING.finditer(notes) if not MAYBE_WORDS & set(words_before(notes, m.start()))]
+    return sorted(out)
+
+
 def last_cancel(notes):
     """Where the notes' latest counting cancellation phrase starts, or -1."""
-    last = -1
-    for m in CANCEL_WORD.finditer(notes):
-        if not IF_WORDS & set(words_before(notes, m.start())):
-            last = m.start()
-    for m in CANCELLING.finditer(notes):
-        if not MAYBE_WORDS & set(words_before(notes, m.start())):
-            last = max(last, m.start())
-    return last
+    return max(counting_cancels(notes), default=-1)
 
 
-def resumed_after(notes, start):
-    """True when an explicit, undoubted reversal ("reinstated", "going ahead after all") comes at or after start."""
+def counting_resumes(notes, start=0):
+    """Where each explicit, undoubted reversal ("reinstated", "going ahead after all") at or after start begins."""
+    out = []
     for m in RESUMED.finditer(notes, start):
         before = words_before(notes, m.start(), 4)
         if DOUBT_WORDS & set(before) or any(w.endswith(("n't", "n’t")) for w in before):
@@ -321,8 +322,13 @@ def resumed_after(notes, start):
         after = re.findall(r"[a-z'’]+", notes[m.end():].lower())[:3]
         if ELSEWHERE_WORDS & set(after):
             continue
-        return True
-    return False
+        out.append(m.start())
+    return out
+
+
+def resumed_after(notes, start):
+    """True when an explicit, undoubted reversal ("reinstated", "going ahead after all") comes at or after start."""
+    return bool(counting_resumes(notes, start))
 
 
 def notes_cancelled(notes):
@@ -563,17 +569,11 @@ def noted_facts(f):
     return f.noted_part or full, f.noted_full or full
 
 
-def assess(r, paid, today, facts=None):
+def note_readings(r, today=None, facts=None):
+    """assess's reading of the arrangement, noted paid and marker families for one row: {arranged, noted_hand,
+    noted_full, noted_auto, reminded}. A family with recorded facts is read from them; markers are a union."""
     value, notes = money(r), r.get("notes") or ""
     f = facts_for(r, today, facts)
-    sure = [p for p in paid if p[2] in CONFIDENT]
-    maybe = [p for p in paid if p[2] not in CONFIDENT]
-    total = round(sum(a for _, a, _ in sure), 2)
-    first = min((d for d, _, _ in sure), default=None)
-    invoice = date_or_none(r.get("invoice_date"))
-    event_raw = (r.get("event_date") or "").strip()
-    event = date_or_none(event_raw)
-    deposit_due = deposit_due_date(invoice, event)
     arranged, rest = arranged_notes(notes)  # "rest will be paid in cash" is not a note of payment
     if f.has("arrangement"):
         arranged = f.arranged
@@ -584,7 +584,29 @@ def assess(r, paid, today, facts=None):
         noted_hand, noted_full = f.noted_part, f.noted_full
     if f.has("close") and f.paid_full_on:  # a recorded "paid in full" reads as the notes' own phrase does: paid
         noted_hand = noted_full = True
-    noted_auto = bool(AUTO_NOTE.search(notes)) or f.deposit_seen  # the script saw a deposit on an earlier run (union)
+    marked = f.reminded  # markers are a union: a recorded reminder or receipt counts as the note does
+    return {"arranged": arranged, "noted_hand": noted_hand, "noted_full": noted_full,
+            # the script saw a deposit on an earlier run (union)
+            "noted_auto": bool(AUTO_NOTE.search(notes)) or f.deposit_seen,
+            "reminded": {"deposit": bool(re.search(r"(?<!balance )reminder drafted", notes, re.I)) or marked["deposit"],
+                         "balance": bool(re.search(r"balance reminder drafted", notes, re.I)) or marked["balance"],
+                         "receipt": bool(re.search(r"receipt drafted", notes, re.I)) or marked["receipt"]}}
+
+
+def assess(r, paid, today, facts=None):
+    value = money(r)
+    f = facts_for(r, today, facts)
+    sure = [p for p in paid if p[2] in CONFIDENT]
+    maybe = [p for p in paid if p[2] not in CONFIDENT]
+    total = round(sum(a for _, a, _ in sure), 2)
+    first = min((d for d, _, _ in sure), default=None)
+    invoice = date_or_none(r.get("invoice_date"))
+    event_raw = (r.get("event_date") or "").strip()
+    event = date_or_none(event_raw)
+    deposit_due = deposit_due_date(invoice, event)
+    read = note_readings(r, today, f)
+    arranged, noted_hand, noted_full, noted_auto = (read[k] for k in ("arranged", "noted_hand", "noted_full",
+                                                                       "noted_auto"))
     upcoming = event is None or event >= today
     close = closed_on(r, today, f)
     fees = fees_accepted(r, today, f)  # a shortfall the owner accepted as transfer fees ("short by fees £X accepted …")
@@ -628,10 +650,7 @@ def assess(r, paid, today, facts=None):
         state = "CHECK_PAYMENT"
     else:
         state = "DEPOSIT_OVERDUE" if today > deposit_due else "AWAITING_DEPOSIT"
-    marked = f.reminded  # markers are a union: a recorded reminder or receipt counts as the note does
-    reminded = {"deposit": bool(re.search(r"(?<!balance )reminder drafted", notes, re.I)) or marked["deposit"],
-                "balance": bool(re.search(r"balance reminder drafted", notes, re.I)) or marked["balance"],
-                "receipt": bool(re.search(r"receipt drafted", notes, re.I)) or marked["receipt"]}
+    reminded = read["reminded"]
     hold = held(r, today, f)  # notes and recorded facts disagree: the owner resolves it, nothing acts meanwhile
     # the part of the accepted fee that closes the gap: only in PAID_IN_FULL, never more than what is still owed
     fees_used = round(min(fees, max(value - total, 0)), 2) if state == "PAID_IN_FULL" else 0.0
