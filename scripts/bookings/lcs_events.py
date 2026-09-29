@@ -17,8 +17,12 @@ email or bank number can reach the log. validate() runs on every write and every
 """
 
 import datetime
+import hashlib
 import json
+import os
 import re
+import secrets
+import stat
 import sys
 from pathlib import Path
 
@@ -185,3 +189,173 @@ def dumps(obj):
     if len(text.encode()) + 1 > LINE_MAX:
         raise ValueError("line too long")
     return text
+
+
+def note_hash(clause):
+    """The claim an event makes on the note clause written with it: the first 12 hex of the sha256 of the clause
+    as appended (UTF-8)."""
+    return hashlib.sha256(clause.encode("utf-8")).hexdigest()[:12]
+
+
+def chain_hash(raw):
+    """prev for the line after `raw` (a whole line's bytes, its "\\n" included)."""
+    return hashlib.sha256(raw).hexdigest()[:16]
+
+
+# --- the file ----------------------------------------------------------------------------------------------------
+
+class LogRefused(OSError):
+    """The log is not a regular file of this user's with no group or other bits: nothing is read or written."""
+
+
+def log_path():
+    """<LCS_PRIVATE_DIR or ~/lcs-private>/events.jsonl, read at call time."""
+    return Path(os.environ.get("LCS_PRIVATE_DIR", Path.home() / "lcs-private")) / "events.jsonl"
+
+
+def _check(st):
+    if not stat.S_ISREG(st.st_mode) or st.st_uid != os.getuid() or st.st_mode & 0o077:
+        raise LogRefused("the state log must be a regular file of this user's, mode 600")
+
+
+def _last_line(fd, size):
+    """(the log's last line as bytes with its "\\n", or b"" for an empty file; True when the file doesn't end with
+    "\\n", a write cut short). A cut-short tail counts as the last line: the next append ends it first."""
+    buf, pos = b"", size
+    while pos > 0:
+        step = min(4096, pos)
+        pos -= step
+        buf = os.pread(fd, step, pos) + buf
+        if b"\n" in buf[:-1]:
+            break
+    if not buf:
+        return b"", False
+    cut = not buf.endswith(b"\n")
+    body = buf if cut else buf[:-1]
+    return body[body.rfind(b"\n") + 1:] + b"\n", cut
+
+
+def append(subject, id, kind, fields, by, on=None, note=None, src="live", eid=None):
+    """Validate one fact and append it to the log; returns its eid. `on` (a date or YYYY-MM-DD) defaults to today
+    in London. Refuses (ValueError) a bad line or a reserved kind, and (LogRefused, OSError) a log that is a symlink,
+    another user's or has any group or other bit; either way nothing is written.
+
+    The log's own lock (lm.ledger_lock on events.jsonl.lock) is taken here and only here, and nothing else is
+    called under it. A writer calls this inside its CSV's locked_rows block, never around it (lock order: the
+    CSV's, then the log's). One os.write of the whole line to an O_APPEND descriptor, then fsync."""
+    if kind in RESERVED:
+        raise ValueError("a kind reserved for a later change")
+    now = datetime.datetime.now(datetime.timezone.utc).replace(microsecond=0)
+    on = on.isoformat() if isinstance(on, datetime.date) else (on or lm.today(now).isoformat())
+    obj = {"v": 1, "eid": eid or secrets.token_hex(8), "prev": "", "at": now.strftime("%Y-%m-%dT%H:%M:%SZ"),
+           "on": on, "subject": subject, "id": id, "kind": kind, "fields": fields, "by": by, "src": src}
+    if note is not None:
+        obj["note"] = note
+    dumps(validate(obj))
+    path = log_path()
+    with lm.ledger_lock(path):
+        fd = os.open(path, os.O_WRONLY | os.O_APPEND | os.O_CREAT | os.O_NOFOLLOW, 0o600)
+        try:
+            st = os.fstat(fd)
+            _check(st)
+            rfd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW)
+            try:
+                rst = os.fstat(rfd)
+                if (rst.st_dev, rst.st_ino) != (st.st_dev, st.st_ino):
+                    raise LogRefused("the state log changed while it was opened")
+                last, cut = _last_line(rfd, rst.st_size)
+            finally:
+                os.close(rfd)
+            obj["prev"] = chain_hash(last) if last else ""
+            data = (b"\n" if cut else b"") + dumps(obj).encode() + b"\n"
+            if os.write(fd, data) != len(data):
+                raise OSError("short write to the state log")
+            os.fsync(fd)
+        finally:
+            os.close(fd)
+    return obj["eid"]
+
+
+_CACHE = {}
+
+
+def clear_cache():
+    _CACHE.clear()
+
+
+def read(path=None):
+    """(events in file order, stats) with stats = {lines, skipped, chain_ok, broken_at, last_at} (+ unreadable: True
+    for a log that is a symlink, another user's, group or other readable, or can't be opened; it reads as absent).
+    Lines that don't parse, fail validate(), run over LINE_MAX bytes, repeat an eid, or are a last line without
+    "\\n" (a write in progress) are skipped and counted. The chain is checked over every complete line: broken_at
+    is the first valid line whose prev doesn't fit the line before it. Cached per process on the file's identity,
+    size and mtime; takes no lock. Callers must not modify what it returns."""
+    path = Path(path or log_path())
+    stats = {"lines": 0, "skipped": 0, "chain_ok": True, "broken_at": None, "last_at": None}
+    try:
+        fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW)
+    except FileNotFoundError:
+        return [], stats
+    except OSError:
+        return [], dict(stats, unreadable=True)
+    try:
+        st = os.fstat(fd)
+        try:
+            _check(st)
+        except LogRefused:
+            return [], dict(stats, unreadable=True)
+        key = (str(path), st.st_dev, st.st_ino, st.st_size, st.st_mtime_ns)
+        if key in _CACHE:
+            return _CACHE[key]
+        chunks = []
+        while True:
+            b = os.read(fd, 1 << 20)
+            if not b:
+                break
+            chunks.append(b)
+    finally:
+        os.close(fd)
+    lines = b"".join(chunks).split(b"\n")
+    if lines.pop():  # a last line without "\n"
+        stats["skipped"] += 1
+    events, seen, prev = [], set(), ""
+    for n, raw in enumerate(lines, 1):
+        whole = raw + b"\n"
+        stats["lines"] += 1
+        obj = None
+        if len(whole) <= LINE_MAX:
+            try:
+                obj = validate(json.loads(raw.decode("utf-8")))
+            except (ValueError, UnicodeDecodeError):
+                obj = None
+        if obj is None or obj["eid"] in seen:
+            stats["skipped"] += 1
+        else:
+            if obj["prev"] != prev and stats["chain_ok"]:
+                stats["chain_ok"], stats["broken_at"] = False, n
+            seen.add(obj["eid"])
+            events.append(obj)
+            stats["last_at"] = obj["at"]
+        prev = chain_hash(whole)
+    _CACHE.clear()  # one log per process in practice: keep only the latest reading
+    _CACHE[key] = (events, stats)
+    return events, stats
+
+
+def index(events, today):
+    """{(subject, id): [events in file order]}, each a copy with "retracted" set when a later retract of the same
+    subject and id names it (a retract is never itself retracted). Events whose `on` is after today are left out,
+    retracts too. Readers skip retracted events for the reading but count them for "the family has events" and
+    keep their note claims."""
+    live = [e for e in events if _date(e["on"]) <= today]
+    seen, gone = {}, set()
+    for e in live:
+        if e["kind"] == "retract":
+            t = seen.get(e["fields"]["target"])
+            if t and t["kind"] != "retract" and (t["subject"], t["id"]) == (e["subject"], e["id"]):
+                gone.add(t["eid"])
+        seen[e["eid"]] = e
+    out = {}
+    for e in live:
+        out.setdefault((e["subject"], e["id"]), []).append(dict(e, retracted=e["eid"] in gone))
+    return out

@@ -233,6 +233,204 @@ def test_dumps_refuses_an_over_long_line():
                              id="x" * 200)).encode()) < ev.LINE_MAX
 
 
+# --- Task 3: append, read, index --------------------------------------------------------------------------------
+
+def fresh_dir():
+    """A new private dir for one test, set as LCS_PRIVATE_DIR (read at call time); returns the log's path."""
+    d = tempfile.mkdtemp()
+    os.chmod(d, 0o700)
+    os.environ["LCS_PRIVATE_DIR"] = d
+    ev.clear_cache()
+    return os.path.join(d, "events.jsonl")
+
+
+def sha16(raw):
+    import hashlib
+    return hashlib.sha256(raw).hexdigest()[:16]
+
+
+def test_log_path_follows_the_private_dir_at_call_time():
+    path = fresh_dir()
+    assert str(ev.log_path()) == path
+
+
+def test_note_hash_is_twelve_hex_of_the_clause():
+    import hashlib
+    clause = "paid in full 2026-09-28 (owner)"
+    assert ev.note_hash(clause) == hashlib.sha256(clause.encode("utf-8")).hexdigest()[:12]
+    assert ev.note_hash(" " + clause) != ev.note_hash(clause)
+
+
+def test_a_missing_log_reads_as_empty():
+    fresh_dir()
+    events, stats = ev.read()
+    assert events == [] and stats["lines"] == 0 and stats["chain_ok"] and not stats.get("unreadable")
+
+
+def test_round_trip_and_chain():
+    path = fresh_dir()
+    e1 = ev.append("booking", "2111", "deposit-seen", {}, "script", on="2026-09-20")
+    e2 = ev.append("booking", "2111", "reminder-drafted", {"what": "balance"}, "script", note=ev.note_hash("x"))
+    e3 = ev.append("singer_invoice", "1759123", "bank-warning", {"fp8": "0123abcd", "codes": ["new"]}, "script")
+    assert oct(os.stat(path).st_mode & 0o777) == "0o600"
+    raw = open(path, "rb").read()
+    lines = raw.split(b"\n")[:-1]
+    assert len(lines) == 3 and raw.endswith(b"\n")
+    objs = [json.loads(x) for x in lines]
+    assert [o["eid"] for o in objs] == [e1, e2, e3]
+    assert objs[0]["prev"] == "" and objs[1]["prev"] == sha16(lines[0] + b"\n") and objs[2]["prev"] == sha16(lines[1] + b"\n")
+    assert objs[0]["on"] == "2026-09-20" and objs[1]["on"] == lm.today().isoformat()
+    assert objs[1]["note"] == ev.note_hash("x") and objs[0]["src"] == "live"
+    events, stats = ev.read()
+    assert [e["eid"] for e in events] == [e1, e2, e3]
+    assert stats["lines"] == 3 and stats["skipped"] == 0 and stats["chain_ok"] and stats["broken_at"] is None
+    assert stats["last_at"] == objs[2]["at"]
+
+
+def test_append_refuses_a_bad_line_or_a_reserved_kind_and_writes_nothing():
+    path = fresh_dir()
+    for args in (("booking", "2111", "cancelled", {}, "robot"), ("booking", "a@b", "cancelled", {}, "script"),
+                 ("booking", "2111", "fees-accepted", {"amount": "12.40"}, "script"),
+                 ("booking", "2111", "discount-agreed", {"amount": "50.00"}, "owner")):
+        try:
+            ev.append(*args)
+            assert False, args
+        except ValueError:
+            pass
+    for on in ("2999-01-01", "not a date"):
+        try:
+            ev.append("booking", "2111", "cancelled", {}, "script", on=on)
+            assert False, on
+        except ValueError:
+            pass
+    assert not os.path.exists(path)
+
+
+def test_the_cache_follows_the_file():
+    fresh_dir()
+    ev.append("booking", "2111", "cancelled", {}, "script")
+    first, _ = ev.read()
+    again, _ = ev.read()
+    assert first == again and len(first) == 1
+    ev.append("booking", "2111", "deposit-seen", {}, "script")
+    assert len(ev.read()[0]) == 2
+
+
+def test_a_partial_last_line_is_ignored_and_the_next_append_starts_a_new_line():
+    path = fresh_dir()
+    ev.append("booking", "2111", "cancelled", {}, "script")
+    with open(path, "ab") as f:
+        f.write(b'{"at":"2026-09-28T12:0')  # a write in progress
+    events, stats = ev.read()
+    assert len(events) == 1 and stats["skipped"] == 1 and stats["chain_ok"]
+    eid = ev.append("booking", "2111", "deposit-seen", {}, "script")
+    events, stats = ev.read()
+    assert [e["kind"] for e in events] == ["cancelled", "deposit-seen"] and events[1]["eid"] == eid
+    assert stats["lines"] == 3 and stats["skipped"] == 1 and stats["chain_ok"], stats
+    lines = open(path, "rb").read().split(b"\n")
+    assert json.loads(lines[2])["prev"] == sha16(lines[1] + b"\n")
+
+
+def test_bad_long_and_duplicate_lines_are_skipped_and_counted():
+    path = fresh_dir()
+    ev.append("booking", "2111", "cancelled", {}, "script")
+    good = open(path, "rb").read()
+    obj = json.loads(good)
+    with open(path, "ab") as f:
+        f.write(b"not json\n")
+        f.write(b'{"v":1}\n')
+        f.write(json.dumps(dict(obj, id="Ann Smith")).encode() + b"\n")
+        f.write(b'{"pad":"' + b"x" * 1100 + b'"}\n')
+        f.write(good)  # the same eid again
+    events, stats = ev.read()
+    assert len(events) == 1 and stats["lines"] == 6 and stats["skipped"] == 5, stats
+
+
+def test_an_edited_or_deleted_line_breaks_the_chain():
+    path = fresh_dir()
+    for kind in ("deposit-seen", "cancelled", "review-drafted"):
+        ev.append("booking", "2111", kind, {}, "script")
+    lines = open(path, "rb").read().split(b"\n")[:-1]
+    with open(path, "wb") as f:
+        f.write(lines[0] + b"\n" + lines[2] + b"\n")  # the middle line deleted
+    events, stats = ev.read()
+    assert len(events) == 2 and not stats["chain_ok"] and stats["broken_at"] == 2, stats
+
+
+def test_a_symlinked_or_group_readable_log_is_refused_on_write_and_read():
+    path = fresh_dir()
+    real = os.path.join(tempfile.mkdtemp(), "elsewhere.jsonl")
+    ev.append("booking", "2111", "cancelled", {}, "script")
+    os.rename(path, real)
+    os.symlink(real, path)
+    size = os.path.getsize(real)
+    try:
+        ev.append("booking", "2111", "deposit-seen", {}, "script")
+        assert False, "appended through a symlink"
+    except OSError:
+        pass
+    assert os.path.getsize(real) == size
+    events, stats = ev.read()
+    assert events == [] and stats.get("unreadable"), stats
+    os.remove(path)
+    os.rename(real, path)
+    os.chmod(path, 0o640)
+    ev.clear_cache()
+    try:
+        ev.append("booking", "2111", "deposit-seen", {}, "script")
+        assert False, "appended to a group-readable log"
+    except OSError:
+        pass
+    assert os.path.getsize(path) == size
+    events, stats = ev.read()
+    assert events == [] and stats.get("unreadable"), stats
+    os.chmod(path, 0o600)
+    assert len(ev.read()[0]) == 1
+
+
+def test_two_processes_appending_at_once_keep_every_line_and_the_chain():
+    path = fresh_dir()
+    code = ("import sys; sys.path.insert(0, sys.argv[1]); import lcs_events as ev\n"
+            "for i in range(200):\n"
+            "    ev.append('booking', sys.argv[2], 'reminder-drafted', {'what': 'deposit'}, 'script')\n")
+    env = dict(os.environ)
+    procs = [subprocess.Popen([PY, "-c", code, os.path.join(ROOT, "scripts", "bookings"), ref], env=env)
+             for ref in ("2111", "2112")]
+    assert [p.wait(timeout=120) for p in procs] == [0, 0]
+    events, stats = ev.read()
+    assert len(events) == 400 and stats["skipped"] == 0 and stats["chain_ok"], stats
+    assert sum(1 for e in events if e["id"] == "2111") == 200
+
+
+def test_index_groups_by_subject_and_marks_retracted():
+    fresh_dir()
+    a = ev.append("booking", "2111", "cancelled", {}, "script", on="2026-09-20")
+    ev.append("booking", "2112", "cancelled", {}, "script", on="2026-09-20")
+    ev.append("booking", "2111", "retract", {"target": a, "why": "mistake"}, "owner", on="2026-09-21")
+    ev.append("booking", "2112", "retract", {"target": a, "why": "mistake"}, "owner", on="2026-09-21")  # another id
+    events, _ = ev.read()
+    idx = ev.index(events, T)
+    one, two = idx[("booking", "2111")], idx[("booking", "2112")]
+    assert [e["kind"] for e in one] == ["cancelled", "retract"] and one[0]["retracted"] and not one[1]["retracted"]
+    assert not two[0]["retracted"], "a retract never reaches another booking's fact"
+
+
+def test_a_retract_cannot_be_retracted():
+    fresh_dir()
+    a = ev.append("booking", "2111", "cancelled", {}, "script", on="2026-09-20")
+    r = ev.append("booking", "2111", "retract", {"target": a, "why": "mistake"}, "owner", on="2026-09-21")
+    ev.append("booking", "2111", "retract", {"target": r, "why": "mistake"}, "owner", on="2026-09-22")
+    one = ev.index(ev.read()[0], T)[("booking", "2111")]
+    assert one[0]["retracted"] and not one[1]["retracted"]
+
+
+def test_a_future_on_is_ignored_until_that_day():
+    fresh_dir()
+    events = [ev.validate(line(on="2026-09-29", at="2026-09-29T09:00:00Z"))]
+    assert ev.index(events, T) == {}
+    assert len(ev.index(events, T + datetime.timedelta(days=1))[("booking", "2111")]) == 1
+
+
 if __name__ == "__main__":
     failures = 0
     for name, fn in sorted(globals().items()):
