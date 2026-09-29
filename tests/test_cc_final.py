@@ -1421,7 +1421,7 @@ def test_pay_list_trust_rules():
     rows = [{"message_id": "a", "singer_name": "Ann Test", "singer_email": "a@example.org", "bank_fp": "f1",
              "bank_changed": "no", "payee": "existing: Ann Test", "invoice_ref": "A-1"}]
     t = models.singer_trust(rows, rows[0])
-    assert t == {"trusted": True, "trust": "Starling payee", "reason": "", "bill_number": "A-1"}, t
+    assert t == {"trusted": True, "trust": "Starling payee", "reason": "", "held": [], "bill_number": "A-1"}, t
     # a payee named but the details changed since: never trusted from the payee alone
     changed = dict(rows[0], bank_changed="yes")
     t = models.singer_trust([changed], changed)
@@ -1505,6 +1505,144 @@ def test_dead_code_and_stale_text_are_gone():
         assert not re.search(r"phase \d", text), name
     src = inspect.getsource(app_module.create_app)
     assert src.count("models.hand_check_prompt(") == 1  # built once per ref
+
+
+# ---------------------------------------------------------------- the state log on the pages (structured state, PR 5)
+
+
+def fact(subject, id_, kind, fields, by, on, clause=None, src="live", eid=None):
+    """Append one fact to the temp state log (an owner fact as the Command Centre's owner run would)."""
+    import lcs_owner
+    saved, lcs_owner._PROVEN = lcs_owner._PROVEN, True
+    csv_env = os.environ.pop("LCS_BOOKINGS_CSV")
+    try:
+        return cp.lcs_events.append(subject, id_, kind, fields, by, on=on, src=src, eid=eid,
+                                    note=cp.lcs_events.note_hash(clause) if clause else None)
+    finally:
+        lcs_owner._PROVEN, os.environ["LCS_BOOKINGS_CSV"] = saved, csv_env
+
+
+def set_notes(ref, notes):
+    rows = lm.read_csv(lm.LEDGER)
+    for r in rows:
+        if r["booking_ref"] == ref:
+            r["notes"] = notes
+    lm.write_csv(lm.LEDGER, rows, LEDGER_COLS)
+
+
+def held_fixtures():
+    """0915's notes say cancelled, then "back on": the recorded cancellation claims only the first clause, so the
+    booking is held (cancellation); m4's recorded withdrawal was undone, but a loose "withdrawn" clause is in its
+    notes, so the invoice is held (withdrawal)."""
+    fixtures()
+    set_notes("0915", "cancelled 2026-09-10; client says back on 2026-09-20")
+    fact("booking", "0915", "cancelled", {}, "script", "2026-09-10", "cancelled 2026-09-10", src="migration",
+         eid="0123456789abcdef")
+    rows = lm.read_csv(si.STORE)
+    for r in rows:
+        if r["message_id"] == "m4":
+            r["notes"] = "withdrawn 2026-09-17 (duplicate)"
+    lm.write_csv(si.STORE, rows, si.COLUMNS)
+    eid = fact("singer_invoice", "m4", "withdrawn", {"reason": "not-ours"}, "script", "2026-09-15")
+    fact("singer_invoice", "m4", "retract", {"target": eid, "why": "mistake"}, "owner", "2026-09-16")
+    cp.lcs_events.clear_cache()
+
+
+def test_booking_timeline_shows_each_recorded_fact_once():
+    fixtures()
+    set_notes("0801", "PENDING: invoiced; paid in full 2026-07-20; 4 singers")
+    fact("booking", "0801", "paid-in-full", {"basis": "owner"}, "owner", "2026-07-20", "paid in full 2026-07-20")
+    fact("booking", "0801", "reminder-drafted", {"what": "deposit"}, "script", "2026-07-08")
+    undone = fact("booking", "0801", "reminder-drafted", {"what": "balance"}, "script", "2026-07-15")
+    fact("booking", "0801", "retract", {"target": undone, "why": "mistake"}, "owner", "2026-07-16")
+    cp.lcs_events.clear_cache()
+    row = next(r for r in lm.read_csv(lm.LEDGER) if r["booking_ref"] == "0801")
+    booking = next(b for b in models.booking_rows([row], [], False, TODAY))
+    items = [i for i in models.ledger_timeline(row, booking, TODAY) if i["kind"] in ("fact", "note")]
+    got = [(i["date"].isoformat() if i["date"] else None, i["kind"], i["text"]) for i in items]
+    assert ("2026-07-20", "fact", "Paid in full (you)") in got, got
+    assert ("2026-07-08", "fact", "Reminder or receipt drafted (the assistant)") in got, got
+    assert ("2026-07-15", "fact", "Reminder or receipt drafted (the assistant), undone on 16 Jul 2026") in got, got
+    assert not any("paid in full 2026-07-20" in t for _, _, t in got), "a claimed clause is shown once, as its fact"
+    assert (None, "note", "PENDING: invoiced") in got and (None, "note", "4 singers") in got, got
+    assert not any(k == "fact" and "etract" in t for _, k, t in got), got
+    out = text_of(page(make(FakeBank()), "/bookings/0801"))
+    assert "Paid in full (you)" in out and out.count("paid in full 2026-07-20") == 0, out
+
+
+def test_today_and_money_show_a_held_booking_with_both_readings():
+    held_fixtures()
+    c = make(FakeBank())
+    for path in ("/", "/money"):
+        html = page(c, path)
+        out = text_of(html)
+        assert "notes and recorded facts disagree: cancellation" in out, (path, out)
+        assert "the notes say not cancelled; the recorded facts say cancelled" in out, (path, out)
+        assert 'data-action="notes-checked"' in html and 'value="0915"' in html, path
+        assert "client says" not in out and "Cancelwood" not in out, path  # never the note text or a surname
+    assert text_of(page(c, "/")).count("notes and recorded facts disagree: cancellation") == 1, "a held row once"
+
+
+def test_today_names_a_held_singer_invoice_as_held_not_as_changed_details():
+    held_fixtures()
+    c = make(FakeBank())
+    html = page(c, "/")
+    out = text_of(html)
+    assert "Eve" in out and "notes and recorded facts disagree: withdrawal" in out, out
+    assert "the notes say withdrawn; the recorded facts say not withdrawn" in out, out
+    assert "Eve's bank details changed" not in out, out
+    s = next(x for x in data.open_singers(lm.read_csv(si.STORE)) if x["first_name"] == "Eve")
+    assert s["ring_first"] and s["reason"].startswith("notes and recorded facts disagree: withdrawal"), s
+    assert s["held"] == [{"family": "withdrawal", "notes": "withdrawn", "facts": "not withdrawn",
+                          "clauses": [cp.lcs_events.note_hash("withdrawn 2026-09-17 (duplicate)")]}], s["held"]
+    assert 'data-action="notes-checked"' in html and 'value="singer_invoice"' in html and "m4" not in html
+
+
+def test_health_shows_the_state_log():
+    from command_centre import sources
+    fixtures()
+    c = make(FakeBank())
+    got = sources.state_log_check()
+    assert got["name"] == "State log" and got["ok"] is None and "no state log yet" in got["detail"], got
+    set_notes("0915", "cancelled 2026-09-10")
+    fact("booking", "0915", "cancelled", {}, "script", "2026-09-10", "cancelled 2026-09-10")
+    fact("booking", "0310", "deposit-seen", {}, "script", "2026-09-05")
+    got = sources.state_log_check()
+    assert got["ok"] is True and got["detail"].startswith("2 lines, chain whole, last written "), got
+    assert "State log" in text_of(page(c, "/health"))
+    fact("booking", "1212", "cancelled", {}, "script", "2026-09-12", "cancelled 2026-09-12 by client email")
+    got = sources.state_log_check()  # 1212's notes never got the clause: the fact decides, the record is missing
+    assert got["ok"] is False and "1 fact without its note" in got["detail"] and "events.py verify" in got["detail"], got
+    with open(Path(TMP) / "events.jsonl", "a") as f:
+        f.write("{not json}\n")
+    got = sources.state_log_check()
+    assert got["ok"] is False and "1 line skipped" in got["detail"], got
+    os.chmod(Path(TMP) / "events.jsonl", 0o644)
+    got = sources.state_log_check()
+    assert got["ok"] is False and "can't be read" in got["detail"], got
+    os.chmod(Path(TMP) / "events.jsonl", 0o600)
+    for secret in ("Fay", "client email", "1789"):
+        assert secret not in got["detail"]
+
+
+def test_singer_trust_says_when_the_details_were_confirmed():
+    fixtures()
+    fp = "a1b2c3d4e5f60718"
+    rows = lm.read_csv(si.STORE)
+    for r in rows:
+        if r["message_id"] == "m4":
+            r.update(bank_fp=fp, bank_confirmed="yes", notes="bank details confirmed by phone 2026-09-21")
+    lm.write_csv(si.STORE, rows, si.COLUMNS)
+    eve = lambda: next(g for g in models.singer_directory(lm.read_csv(si.STORE), TODAY)  # noqa: E731
+                       if g["first_name"] == "Eve")
+    assert eve()["bank_check"] == "confirmed by phone on 21 Sep 2026", eve()["bank_check"]
+    fact("singer_invoice", "m4", "bank-confirmed", {"fp8": fp[:8]}, "owner", "2026-09-22",
+         "bank details confirmed by phone 2026-09-22")
+    cp.lcs_events.clear_cache()
+    assert eve()["bank_check"] == "confirmed by phone on 22 Sep 2026", eve()["bank_check"]
+    s = next(x for x in data.open_singers(lm.read_csv(si.STORE)) if x["first_name"] == "Eve")
+    assert s["trust"] == "confirmed by phone on 22 Sep 2026", s
+    assert "confirmed by phone on 22 Sep 2026" in text_of(page(make(FakeBank()), "/singers"))
 
 
 if __name__ == "__main__":
