@@ -121,7 +121,7 @@
 {% macro held_panel(held, subject, key) %}
 {% if held %}
 <div class="held">
-  <ul class="lines held-readings">
+  <ul class="plain held-readings">
     {% for x in held %}<li><span class="badge warn">{{ x.family }}</span> the notes say {{ x.notes }}; the recorded facts say {{ x.facts }}
       {% if x.clauses %}{{ action_button("notes-checked", "The recorded facts are right", {"subject": subject, "key": key, "family": x.family}, quiet=true, aria="The recorded facts are right: " ~ x.family) }}{% endif %}</li>{% endfor %}
   </ul>
