@@ -27,12 +27,35 @@
       {% for label, href in NAV %}
       <a class="nav-item" href="{{ href }}"{% if current(href, path) %} aria-current="page"{% endif %}>{{ label }}</a>
       {% endfor %}
-      {% for label in SOON %}
-      <span class="nav-item nav-soon" aria-disabled="true" title="Coming in a later phase">{{ label }} <span class="soon">soon</span></span>
-      {% endfor %}
     </nav>
   </div>
 </header>
+{#- The sync strip (sources.sync_chips): each source's last good time. A failed or stale one the app can sync is a
+    sync-now button (no passkey, read-only scripts); the others link to Health, which says where they come from. #}
+{% if sync %}
+<div class="sync-strip">
+  <ul class="sync-chips" aria-label="Data syncs">
+    {% for c in sync %}
+    <li>
+      {% set words %}<span class="chip-label">{{ c.label }}</span> {{ c.shown }}{% if c.tone != "ok" %}<span class="visually-hidden">, {{ "failed" if c.tone == "failed" else ("stale" if c.tone == "stale" else "not in use") }}</span>{% endif %}{% endset %}
+      {% if c.tone == "ok" %}
+      <span class="chip chip-ok" title="{{ c.why }}">{{ words }}</span>
+      {% elif c.sync %}
+      <form class="cc-action inline chip-form" data-action="sync-now">
+        <input type="hidden" name="source" value="{{ c.sync }}">
+        <button type="submit" class="chip chip-{{ c.tone }}" title="{{ c.why }}: tap to sync now">{{ words }}</button>
+      </form>
+      {% elif c.tone == "off" %}
+      <span class="chip chip-off" title="{{ c.why }}">{{ words }}</span>
+      {% else %}
+      <a class="chip chip-{{ c.tone }}" href="/health#syncs" title="{{ c.why }}">{{ words }}</a>
+      {% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+</div>
+{% endif %}
+<p class="fail swap-error" id="cc-swap-error" role="alert" hidden></p>
 <main id="main" class="main">
   <p class="install-hint" id="cc-install-hint" hidden>Add this app to your Home Screen: in Safari, tap Share, then Add to Home Screen. <a href="/device">More on this device</a> <button type="button" class="button quiet small" id="cc-install-close">Not now</button></p>
   <div class="page-head">
@@ -41,7 +64,9 @@
       <p class="stamp">As of {{ stamp }}</p>
     </div>
     {% set here = request.url.path ~ ("?" ~ request.url.query if request.url.query else "") %}
-    <a class="button quiet" href="{{ here }}" hx-get="{{ here }}" hx-select="#main" hx-target="#main" hx-swap="outerHTML">Refresh</a>
+    {#- swap.js: POST /refresh (drops the bank cache), then fires cc-refresh, which re-renders #main; without
+        scripts the link is a plain reload #}
+    <a class="button quiet cc-refresh" href="{{ here }}" hx-get="{{ here }}" hx-trigger="cc-refresh" hx-select="#main" hx-target="#main" hx-swap="outerHTML">Refresh</a>
   </div>
 {% block content %}{% endblock %}
 </main>
@@ -79,6 +104,7 @@
 <script src="/static/actions.js" defer></script>
 <script src="/static/handoffs.js" defer></script>
 <script src="/static/pwa.js" defer></script>
+<script src="/static/swap.js" defer></script>
 {% block scripts %}{% endblock %}
 </body>
 </html>

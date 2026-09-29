@@ -27,21 +27,21 @@
   {{ m.failed(bookings) }}
   {% if not margins.ok %}<p class="fail">Margins: couldn't load ({{ margins.error }})</p>{% endif %}
   {% if items %}
-  <table class="table">
-    <thead><tr><th>Event</th><th>Ref</th><th>Client</th><th>Occasion</th><th>Ensemble</th><th class="num">Fee</th><th class="num">Singers</th><th class="num">Margin</th><th>Payment</th></tr></thead>
-    <tbody>
+  <table class="table" role="table">
+    <thead role="rowgroup"><tr role="row"><th role="columnheader">Event</th><th role="columnheader">Ref</th><th role="columnheader">Client</th><th role="columnheader">Occasion</th><th role="columnheader">Ensemble</th><th role="columnheader" class="num">Fee</th><th role="columnheader" class="num">Singers</th><th role="columnheader" class="num">Margin</th><th role="columnheader">Payment</th></tr></thead>
+    <tbody role="rowgroup">
     {% for b in items %}
       {% set mg = mm.get(b.ref) %}
-      <tr>
-        <td data-label="Event">{% if b.event_date %}{{ b.event_date|day }}{% else %}no date{% endif %}</td>
-        <td data-label="Ref" class="mono"><a href="/bookings/{{ b.ref }}">{{ b.ref }}</a></td>
-        <td data-label="Client">{{ b.first_name }}</td>
-        <td data-label="Occasion">{{ b.occasion }}</td>
-        <td data-label="Ensemble">{{ b.ensemble }}</td>
-        <td data-label="Fee" class="num">{{ b.value|gbp }}</td>
-        <td data-label="Singers" class="num">{% if mg %}{{ mg.costs|gbp }}{% else %}–{% endif %}</td>
-        <td data-label="Margin" class="num">{% if mg %}{{ mg.margin|gbp }} <span class="muted">{% if mg.margin_pct is not none %}{{ "%.1f"|format(mg.margin_pct) }}%{% else %}–{% endif %}</span>{% else %}–{% endif %}</td>
-        <td data-label="Payment"><span class="badge {{ b.state|state_tone }}">{{ b.state|state_words }}</span></td>
+      <tr role="row">
+        <td role="cell" data-label="Event">{% if b.event_date %}{{ b.event_date|day }}{% else %}no date{% endif %}</td>
+        <td role="cell" data-label="Ref" class="mono"><a href="/bookings/{{ b.ref }}">{{ b.ref }}</a></td>
+        <td role="cell" data-label="Client">{{ b.first_name }}</td>
+        <td role="cell" data-label="Occasion">{{ b.occasion }}</td>
+        <td role="cell" data-label="Ensemble">{{ b.ensemble }}</td>
+        <td role="cell" data-label="Fee" class="num">{{ b.value|gbp }}</td>
+        <td role="cell" data-label="Singers" class="num">{% if mg %}{{ mg.costs|gbp }}{% else %}–{% endif %}</td>
+        <td role="cell" data-label="Margin" class="num">{% if mg %}{{ mg.margin|gbp }} <span class="muted">{% if mg.margin_pct is not none %}{{ "%.1f"|format(mg.margin_pct) }}%{% else %}–{% endif %}</span>{% else %}–{% endif %}</td>
+        <td role="cell" data-label="Payment"><span class="badge {{ b.state|state_tone }}">{{ b.state|state_words }}</span></td>
       </tr>
     {% endfor %}
     </tbody>

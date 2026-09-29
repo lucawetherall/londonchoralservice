@@ -360,6 +360,46 @@ def hiring_intent(query):
     return bool(INTENT.search(query or "")) and not NOT_INTENT.search(query or "")
 
 
+# Search terms (section 2 and the Command Centre's "Search terms to check"). CLAUDE.md's targeting rule: choir and
+# "carol singers" (plural) bookings only, never solo-singer searches; every campaign carries the negatives singer,
+# soloist, solo and vocalist. A flag is a reason to look, never a change: negatives are proposed in the Monday
+# review and applied only after the owner approves them.
+SOLO_TERMS = re.compile(r"\b(solo|soloists?|singer|vocalists?)\b", re.I)
+CHOIR_WORDS = re.compile(r"\b(choral|chorus|carols?)\b", re.I)  # with INTENT: a term that names what we sell
+
+
+def search_term_flag(term):
+    """Why a search term needs a look, or None: a solo-singer word (the targeting rule), another word that isn't
+    a hiring search (economics.NOT_INTENT), or no choir or hiring word at all."""
+    term = term or ""
+    m = SOLO_TERMS.search(term)
+    if m:
+        return f"solo-singer search ('{m[1].lower()}'): choirs of four or more only"
+    m = NOT_INTENT.search(term)
+    if m:
+        return f"not a hiring search ('{m[1].lower()}')"
+    if not INTENT.search(term) and not CHOIR_WORDS.search(term):
+        return "no choir or hiring word"
+    return None
+
+
+def negative_blocking(term, negatives):
+    """The first campaign negative that blocks this search term now, as (text, match type), or None.
+    negatives: [(text, "BROAD"|"PHRASE"|"EXACT")]. Google's rules, strictly: BROAD needs every word of the
+    negative somewhere in the term, PHRASE the words together in order, EXACT the whole term; no plurals or
+    close variants (so "singer" doesn't block "singers")."""
+    words = re.findall(r"[a-z0-9']+", (term or "").lower())
+    joined = f" {' '.join(words)} "
+    for text, match in negatives:
+        nw = re.findall(r"[a-z0-9']+", (text or "").lower())
+        if not nw:
+            continue
+        if (match == "BROAD" and set(nw) <= set(words)) or (match == "PHRASE" and f" {' '.join(nw)} " in joined) \
+                or (match == "EXACT" and nw == words):
+            return text, match
+    return None
+
+
 def main_term(query):
     words = re.findall(r"[a-z0-9']+", (query or "").lower())
     for w in words:

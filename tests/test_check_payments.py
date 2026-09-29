@@ -1269,7 +1269,8 @@ def test_note_refuses_the_reserved_phrases():
                  "balance reminder drafted", "receipt drafted 2026-09-28", "deposit kept 2026-09-28",
                  "refunded 2026-09-28", "payment checked 2026-09-28", "reinstated 2026-09-28",
                  "cancellation withdrawn", "going ahead after all", "back on", "review request drafted 2026-09-28",
-                 "review request skipped 2026-09-28 (planner)", "PENDING: invoiced", "pending deposit"):
+                 "review request skipped 2026-09-28 (planner)", "PENDING: invoiced", "pending deposit",
+                 "short by fees £12.40 accepted 2026-09-28", "Short by fees £5 accepted 2026-09-28 by phone"):
         p, notes = run_cli("deposit seen 2026-08-26 (Starling)", "--note", "2111", text)
         assert p.returncode != 0 and notes == "deposit seen 2026-08-26 (Starling)", (text, p.returncode, notes)
         assert "by hand" in p.stderr, (text, p.stderr)
@@ -1494,16 +1495,123 @@ def test_record_in_books_lists_only_confident_payments_in_settled_states():
     a = cp.assess(row("X", 650, "2026-09-20", "2026-11-21"), sure + [("2026-09-28", 100.0, "amount only")], T)
     assert a["state"] == "CHECK_PAYMENT" and a["record_in_books"] == [], a  # an unconfirmed payment: owner checks
     a = cp.assess(row("X", 650, "2026-09-20", "2026-11-21"), sure, T)
-    assert a["state"] == "DEPOSIT_SEEN" and a["record_in_books"] == [["2026-09-27", 325.0]], a
+    assert a["state"] == "DEPOSIT_SEEN" and a["record_in_books"] == [["2026-09-27", 325.0, 0.0]], a
     both = [("2026-09-28", 325.0, "name and amount"), ("2026-09-21", 325.0, "reference")]
     a = cp.assess(row("X", 650, "2026-09-20", "2026-11-21"), both, T)
-    assert a["state"] == "PAID_IN_FULL" and a["record_in_books"] == [["2026-09-21", 325.0], ["2026-09-28", 325.0]]
+    assert a["state"] == "PAID_IN_FULL" and a["record_in_books"] == [["2026-09-21", 325.0, 0.0], ["2026-09-28", 325.0, 0.0]]
     a = cp.assess(row("X", 650, "2026-09-20", "2026-11-21"), both + [("2026-09-28", 50.0, "reference")], T)
     assert a["record_in_books"] == [], a  # more than the booking's value: owner checks
     a = cp.assess(row("X", 650, "2026-09-20", "2026-11-21", "cancelled 27 Sep"), sure, T)
     assert a["record_in_books"] == [], a
     a = cp.assess(row("X", 650, "2026-09-20", "2026-11-21"), [("2026-09-27", 325.0, "amount only")], T)
     assert a["record_in_books"] == [], a
+
+
+# ---------------------------------------------------------------- a shortfall accepted as transfer fees (owner, 28 Sep 2026)
+
+FEE_ROW = ("2408", 950, "2026-08-24", "2026-10-10")
+FEE_PAID = [("2026-08-26", 475.0, "reference"), ("2026-09-25", 462.6, "reference")]  # £937.60: £12.40 short
+
+
+def fee_row(notes):
+    return row(*FEE_ROW, notes)
+
+
+def test_fee_short_booking_without_a_note_is_chased_as_now():
+    a = cp.assess(fee_row("deposit seen 2026-08-26 (Starling)"), FEE_PAID, datetime.date(2026, 10, 8))
+    assert a["state"] == "BALANCE_DUE" and a["balance"] == 12.4 and a["fees"] == 0.0, a
+    assert a["action"] == "balance_reminder"
+
+
+def test_accepted_fee_reads_paid_in_full():
+    a = cp.assess(fee_row("deposit seen 2026-08-26 (Starling); short by fees £12.40 accepted 2026-09-27 (owner)"),
+                  FEE_PAID, datetime.date(2026, 10, 8))
+    assert a["state"] == "PAID_IN_FULL" and a["balance"] == 0 and a["fees"] == 12.4, a
+    assert a["action"] != "balance_reminder" and a["fees_on"] == "2026-09-27"
+    assert a["record_in_books"] == [["2026-08-26", 475.0, 0.0], ["2026-09-25", 462.6, 12.4]], a
+    json.dumps(a)  # the --json output
+    assert "PAID IN FULL (£12.40 short by fees, accepted)" in cp.describe(a), cp.describe(a)
+
+
+def test_fee_note_above_the_cap_or_in_the_future_is_ignored():
+    for n in ("short by fees £40.01 accepted 2026-09-27", "short by fees £45 accepted 2026-09-27",
+              "short by fees £12.40 accepted 2026-09-29", "short by fees £0 accepted 2026-09-27"):
+        r = fee_row("deposit seen 2026-08-26 (Starling); " + n + " (owner)")
+        a = cp.assess(r, FEE_PAID, T)
+        assert a["state"] == "DEPOSIT_SEEN" and a["fees"] == 0.0 and a["balance"] == 12.4, (n, a)
+        assert cp.fees_accepted(r, T) == 0.0 and cp.closed_on(r, T) is None and cp.open_rows([r], T) == [r], n
+    r = fee_row("short by fees £40 accepted 2026-09-27 (owner)")  # at the cap
+    assert cp.fees_accepted(r, T) == 40.0 and cp.closed_on(r, T) == datetime.date(2026, 9, 27)
+
+
+def test_the_latest_counting_fee_note_wins():
+    r = fee_row("short by fees £5 accepted 2026-09-20 (owner); short by fees £12.40 accepted 2026-09-27 (owner); "
+                "short by fees £45 accepted 2026-09-28")
+    assert cp.fees_accepted(r, T) == 12.4
+    assert cp.assess(r, FEE_PAID, T)["state"] == "PAID_IN_FULL"
+    r = fee_row("short by fees £5 accepted 2026-09-27 (owner)")  # not enough to close the gap
+    a = cp.assess(r, FEE_PAID, datetime.date(2026, 10, 8))
+    assert a["state"] == "BALANCE_DUE" and a["fees"] == 0.0 and a["record_in_books"][-1][2] == 0.0, a
+
+
+def test_fee_note_never_pays_a_booking_with_nothing_confident():
+    r = row("X", 20, "2026-09-01", "2026-10-30", "short by fees £20 accepted 2026-09-27 (owner)")
+    assert cp.assess(r, [], T)["state"] != "PAID_IN_FULL"
+    assert cp.assess(r, [("2026-09-02", 20.0, "amount only")], T)["state"] != "PAID_IN_FULL"
+
+
+def test_more_fee_than_needed_only_uses_the_gap():
+    paid = FEE_PAID + [("2026-09-26", 10.0, "reference")]  # the client later sent £10 of the £12.40
+    a = cp.assess(fee_row("short by fees £12.40 accepted 2026-09-27 (owner)"), paid, T)
+    assert a["state"] == "PAID_IN_FULL" and a["fees"] == 2.4 and a["record_in_books"][-1] == ["2026-09-26", 10.0, 2.4], a
+
+
+def test_fee_close_is_reported_once_then_closed_like_paid_in_full():
+    notes = "deposit seen 2026-08-26 (Starling); short by fees £12.40 accepted 2026-09-27 (owner)"
+    r = fee_row(notes)
+    feed = [pay(475, "2026-08-26", "INV 2408"), pay(462.6, "2026-09-25", "INV 2408")]
+    assert cp.open_rows([r], T) == [] and cp.fee_pending(r, T) and cp.closed_on(r, T) == datetime.date(2026, 9, 27)
+    client = FakeClient(feed)
+    got = cp.collect(client, [r], T)
+    assert [(x["booking_ref"], a["state"]) for x, _, a in got] == [("2408", "PAID_IN_FULL")], got
+    assert min(c[0] for c in client.calls) <= datetime.date(2026, 8, 21)  # the feed reaches back to the deposit
+    _, paid, a = got[0]
+    assert a["record_in_books"][-1] == ["2026-09-25", 462.6, 12.4] and a["action"] != "balance_reminder"
+    new = cp.updated_notes(notes, a, paid)
+    assert new == notes + "; paid in full 2026-09-27", new  # the same close date: never an earlier one
+    closed = fee_row(new)
+    assert cp.closed_on(closed, T) == datetime.date(2026, 9, 27) and not cp.fee_pending(closed, T)
+    assert cp.collect(FakeClient(feed), [closed], T) == []  # closed: off the list
+    # both payments count as received; none after the close
+    since = cp.received_since(FakeClient(feed), [closed], datetime.date(2026, 9, 21), T)
+    assert since == [("2408", "2026-09-25", 462.6)], since
+
+
+def test_fee_close_keeps_later_payments_flagged():
+    notes = "deposit seen 2026-08-26 (Starling); short by fees £12.40 accepted 2026-09-26 (owner)"
+    feed = [pay(475, "2026-08-26", "INV 2408"), pay(462.6, "2026-09-25", "INV 2408"), pay(12.4, "2026-09-27", "INV 2408")]
+    for n in (notes, notes + "; paid in full 2026-09-26"):
+        got = cp.collect(FakeClient(feed), [fee_row(n)], T)
+        assert [a["state"] for _, _, a in got] == ["PAYMENT_AFTER_CLOSE"], (n, got)
+        a = got[0][2]
+        assert a["hand_check_payments"] == [["2026-09-27", 12.4]] and a["record_in_books"] == [], a
+        assert cp.updated_notes(n, a, got[0][1]) == n  # never rewritten
+        assert cp.received_since(FakeClient(feed), [fee_row(n)], datetime.date(2026, 9, 21), T) == \
+            [("2408", "2026-09-25", 462.6)]
+
+
+def test_fee_note_is_written_only_with_the_owner_nonce():
+    fee = "short by fees £12.40 accepted 2026-09-28"
+    d, path = owner_ledger()
+    p, notes = run_owner(d, path, ["--note", "2111", fee])
+    assert p.returncode != 0 and notes == "PENDING: invoiced", (p.stderr, notes)
+    p, notes = run_owner(d, path, ["--note", "2111", fee, "--owner"])  # no nonce
+    assert p.returncode != 0 and notes == "PENDING: invoiced", (p.stderr, notes)
+    nonce_file(d)
+    p, notes = run_owner(d, path, ["--note", "2111", fee, "--owner"], stdin_text=NONCE + "\n")
+    assert p.returncode == 0 and notes == f"PENDING: invoiced; {fee} (owner)", (p.stderr, notes)
+    assert cp.fees_accepted({"notes": notes}, datetime.date(2026, 9, 28)) == 12.4
+
 
 if __name__ == "__main__":
     failures = 0

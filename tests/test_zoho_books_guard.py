@@ -506,6 +506,52 @@ def test_customer_payment_is_one_invoice_through_starling_with_no_thank_you_emai
     assert denied(C, with_(C, "body", description="Paid from 12-34-56 12345678"))
 
 
+def test_the_2408_one_off_is_gone():
+    """The one-off of 29 Sep 2026 (#204, #207) was used once and removed: updating a payment is refused again."""
+    ti = {"query_params": ORG, "path_variables": {"payment_id": "1534218000000117016"},
+          "body": {"amount": 733.08, "bank_charges": 36.15, "amount_applied": 733.08}}
+    assert denied("ZohoBooks_update_customer_payment", ti)
+    assert not hasattr(guard_module(), "ONE_OFF_2408_BODY")
+
+
+def test_customer_payment_may_carry_the_owners_accepted_fee_as_bank_charges():
+    """A shortfall the owner accepted as transfer fees (at most £40). Books credits the invoice with `amount` and
+    deposits amount - bank_charges, so amount and both amount_applied values are the money received plus the
+    charges (Books refused amount_applied above amount on 29 Sep 2026)."""
+    C = "ZohoBooks_create_customer_payment"
+    inv = {"invoice_id": "1534218000000100020"}
+
+    def pay(received, charges, amount=None, applied=None, line=None):
+        amount = round(received + charges, 2) if amount is None else amount
+        applied = amount if applied is None else applied
+        return with_(C, "body", amount=amount, bank_charges=charges, amount_applied=applied,
+                     description="Starling transfer, matched to invoice 2111 (£12.40 bank charges accepted by the owner)",
+                     invoices=[dict(inv, amount_applied=applied if line is None else line)])
+    assert not denied(C, pay(462.6, 12.4))  # 475.00 credited, 462.60 deposited
+    assert not denied(C, pay(535, 40))  # at the cap
+    assert not denied(C, pay(696.93, 36.15))  # 2408's shortfall
+    assert not denied(C, pay(574.99, 0.01))
+    assert denied(C, pay(534.99, 40.01))  # over the cap
+    assert denied(C, pay(575, 0))  # a charge of nothing is left out, never 0
+    assert denied(C, pay(575, -5))
+    assert not denied(C, pay(20, 20))  # 40 credited, 20 deposited
+    assert denied(C, with_(C, "body", bank_charges=40, amount=40, amount_applied=40,
+                           invoices=[dict(inv, amount_applied=40)]))  # nothing reached the bank
+    assert denied(C, with_(C, "body", bank_charges="12.40", amount=575, amount_applied=575,
+                           invoices=[dict(inv, amount_applied=575)]))  # a string
+    assert denied(C, with_(C, "body", bank_charges=True, amount=575, amount_applied=575,
+                           invoices=[dict(inv, amount_applied=575)]))  # a bool
+    assert denied(C, pay(462.6, 12.4, amount=462.6, applied=475, line=475))  # the old reading: applied above amount
+    assert denied(C, pay(462.6, 12.4, applied=475, line=462.6))  # the two amount_applied disagree
+    assert denied(C, pay(462.6, 12.4, applied=462.6, line=475))
+    assert denied(C, pay(462.6, 12.4, applied=480, line=480))  # more than amount
+    assert denied(C, with_(C, "body", bank_charges=[12.4]))
+    # without bank_charges, all three amounts must still be equal
+    assert not denied(C, with_(C, "body"))
+    assert denied(C, with_(C, "body", amount=562.6))
+    assert denied(C, with_(C, "body", amount=562.6, amount_applied=575, invoices=[dict(inv, amount_applied=575)]))
+
+
 def test_bank_account_is_a_named_gbp_bank_with_no_numbers():
     A = "ZohoBooks_create_bank_account"
     assert denied(A, with_(A, "body", account_type="credit_card"))

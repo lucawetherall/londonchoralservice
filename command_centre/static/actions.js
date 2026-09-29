@@ -62,7 +62,8 @@
       // the signed summary ends with "Runs: <command>"; the command has its own box below
       var tail = p.command ? "\nRuns: " + p.command : "";
       el.summary.textContent = tail && p.summary.slice(-tail.length) === tail ? p.summary.slice(0, -tail.length) : p.summary;
-      el.command.textContent = p.command || "(no script: a record in the app's own folder)";
+      el.command.textContent = p.command || (p.action === "sync-now" ? "(no script: the app drops its bank cache)"
+                                                                     : "(no script: a record in the app's own folder)");
       if (p.code && el.code) {
         // the server's diff and link (the summary carries the diff's sha256, so the tap binds this code)
         el.codeHead.textContent = p.code.head || "";

@@ -7,7 +7,7 @@ Stdlib runner, Starlette's TestClient, fake fixtures in a temp LCS_PRIVATE_DIR (
 emails), a fake Starling client and a fake home folder. Never touches the real private files, the real bank,
 ~/.claude or the Google credentials.
 """
-import datetime, json, os, re, sys, tempfile
+import argparse, contextlib, datetime, io, json, os, re, sys, tempfile
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
@@ -39,8 +39,9 @@ LEDGER_COLS = ["booking_ref", "invoice_date", "event_date", "client_name", "clie
 GCLID = "Cj0KCQabcdefghij1234"
 SECRET_URL = "https://secret-mcp.example.net/zoho/abc123token"
 ADC_SECRET = "adc-refresh-token-do-not-show"
+KEY = {e: models.enquiry_key(e) for e in ("ENQ-A", "ENQ-B", "ENQ-C", "ENQ-D", "ENQ-E")}  # the pages' handle
 PAGES = ["/bookings", "/bookings?when=past", "/bookings?when=all", "/bookings/0310", "/enquiries",
-         "/enquiries/ENQ-A", "/singers", "/marketing", "/calendar", "/calendar?view=week", "/search?q=an",
+         f"/enquiries/{KEY['ENQ-A']}", "/singers", "/marketing", "/calendar", "/calendar?view=week", "/search?q=an",
          "/search", "/reports", "/reports/2026-09-21.txt", "/health", "/todo", "/exports", "/more"]
 MANUAL = """# Manual actions required
 
@@ -288,7 +289,7 @@ def test_booking_timeline():
         c = make(FakeBank())
         out = page(c, "/bookings/0310")
         t = text_of(out.split('class="timeline"', 1)[1])
-        for bit in ["Enquiry", "ENQ-A", "web form", "Quoted", "£1,150.00", "Invoice", "Deposit due", "Event",
+        for bit in ["Enquiry", KEY["ENQ-A"], "web form", "Quoted", "£1,150.00", "Invoice", "Deposit due", "Event",
                     "Tue 1 Sep 2026", "deposit paid"]:
             assert bit in t, bit
         assert "Smithfield" not in out and "ann@example.org" not in out  # notes masked
@@ -308,12 +309,12 @@ def test_enquiries_board_followups_conversion_sources():
         t = text_of(page(c, "/enquiries"))
         for status in pl.STATUS_ORDER:
             assert status.replace("_", " ") in t.lower(), status
-        assert "ENQ-B" in t and "first" in t.lower()           # follow-up due (pipeline.followups_due)
+        assert KEY["ENQ-B"] in t and "ENQ-B" not in t and "first" in t.lower()           # follow-up due (pipeline.followups_due)
         assert "web form" in t and "whatsapp" in t             # sources
         assert "%" in t                                        # conversion rate
-        e = text_of(page(c, "/enquiries/ENQ-A"))
+        e = text_of(page(c, f"/enquiries/{KEY['ENQ-A']}"))
         assert "Weddings London" in e and "0310" in e and "Quoted" in e
-        b = text_of(page(c, "/enquiries/ENQ-E"))
+        b = text_of(page(c, f"/enquiries/{KEY['ENQ-E']}"))
         assert "Next follow-up" in b and "Wed 30 Sep 2026" in b, b
         assert c.get("/enquiries/bad%20id", headers=HEADERS).status_code == 404
 
@@ -325,7 +326,7 @@ def test_enquiries_offers_a_reply_handoff_picker():
         c = make(FakeBank())
         out = page(c, "/enquiries")
         assert '<select id="reply-handoff-select"' in out
-        opt = re.search(r'<option value="ENQ-B" data-prompt="([^"]*)">ENQ-B</option>', out)
+        opt = re.search(r'<option value="' + KEY["ENQ-B"] + r'" data-prompt="([^"]*)">' + KEY["ENQ-B"] + '</option>', out)
         assert opt, out
         assert "ENQ-B" in opt.group(1) and "scripts/bookings/pipeline.py" in opt.group(1)
         assert "Zoho draft only" in opt.group(1) and "never send it" in opt.group(1)
@@ -364,6 +365,30 @@ def test_singers_directory():
         assert len(ben) == 1 and len(ben[0]["invoices"]) == 2, ben   # "Fenwickson, Ben (tenor)" groups with Ben
 
 
+def test_confirmed_bank_details_clear_the_singers_card_and_today():
+    # owner report: after `confirm`, the old CHANGED clause stayed in the row's notes and kept the card red
+    def ben():
+        return next(g for g in models.singer_directory(lm.read_csv(si.STORE), datetime.date(2026, 9, 28))
+                    if g["first_name"] == "Ben")
+
+    with Patched():
+        c = make(FakeBank())
+        assert 'data-kind="ring"' in page(c, "/")
+        assert ben()["warnings"] and ben()["bank_check"] == "not yet verified"
+        with contextlib.redirect_stdout(io.StringIO()):
+            si.cmd_confirm(argparse.Namespace(message_id="m1"))
+        g = ben()
+        assert g["warnings"] == [] and g["bank_check"] == "confirmed by phone", g
+        assert not any(i["ring_first"] for i in g["invoices"]), g["invoices"]
+        assert "BANK DETAILS CHANGED" in next(r for r in lm.read_csv(si.STORE) if r["message_id"] == "m1")["notes"]
+        c = TestClient(create_app(client_factory=(lambda: FakeBank()), now=lambda: NOW, clock=Clock(),
+                                  checkout=lambda: "main"), base_url=ORIGIN, client=LOCAL, follow_redirects=False)
+        assert "card-bad" not in page(c, "/singers")
+        today = page(c, "/")
+        assert 'data-kind="ring"' not in today and "ring first" not in today  # no empty "none waiting" line either
+        assert "No changed bank details waiting" not in today
+
+
 # ---------------------------------------------------------------- marketing
 
 
@@ -397,7 +422,7 @@ def test_calendar_without_the_diary():
         assert "diary not synced yet" in t.lower()
         assert "October 2026" in t and "0310" in t              # the event on 3 Oct
         wk = text_of(page(c, "/calendar?view=week&date=2026-09-28"))
-        assert "Follow-up" in wk and "ENQ-E" in wk              # 30 Sep
+        assert "Follow-up" in wk and KEY["ENQ-E"] in wk              # 30 Sep
         assert "0310" in wk and "Balance due" in wk            # 30 Sep: three days before 3 Oct
         dec = text_of(page(c, "/calendar?date=2026-12-01"))
         assert "1212" in dec and "0915" not in dec             # cancelled bookings aren't shown
@@ -433,7 +458,7 @@ def test_search_finds_and_escapes():
         t = text_of(page(c, "/search?q=INV1212"))
         assert "1212" in t
         t = text_of(page(c, "/search?q=christmas"))
-        assert "ENQ-C" in t
+        assert KEY["ENQ-C"] in t
         t = text_of(page(c, "/search?q=quill"))
         assert "Dora" in t
         t = text_of(page(c, "/search?q=DQ7"))
@@ -572,7 +597,9 @@ def test_todo_tick_posts_with_fetch_not_a_plain_form():
     # and the route answers JSON with the page to load.
     static = Path(ROOT) / "command_centre" / "static"
     js = (static / "todo.js").read_text()
-    assert 'querySelectorAll("form.todo-tick")' in js and '"Accept": "application/json"' in js
+    # one delegated listener on the document, so the forms still work after the Refresh link re-renders #main
+    assert 'document.addEventListener("submit"' in js and 'classList.contains("todo-tick")' in js
+    assert "querySelectorAll" not in js and '"Accept": "application/json"' in js
     assert "preventDefault" in js and "fetch(f.action" in js
     with Patched():
         c = make(FakeBank())

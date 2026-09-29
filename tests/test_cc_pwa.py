@@ -274,8 +274,9 @@ def test_device_page_has_the_clear_button_and_turning_off_clears():
     assert "lock-screen previews" in page
     js = (Path(ROOT) / "command_centre" / "static" / "push.js").read_text()
     assert 'postMessage({ type: "clear-offline" }' in js
-    off = js[js.index('off.addEventListener("click"'):]
-    assert "await clearOffline()" in off
+    off = js[js.index("async function turnOff"):]
+    assert "await clearOffline()" in off[:off.index("\n  }\n")]
+    assert '"push-off": turnOff' in js  # the delegated click listener's table
 
 
 if __name__ == "__main__":

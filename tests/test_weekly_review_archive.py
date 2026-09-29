@@ -129,6 +129,65 @@ def test_without_the_flag_nothing_is_written():
     assert not os.path.isdir(os.path.join(TMP, "reports"))
 
 
+REPORT = ("== 1. Campaigns\ncampaign line\n\n== 2. Search terms, last 7 days\nterm line\n\n"
+          "== 4b. Google's recommendations\nrec line\n\n== 12. Seasonal budget rules\n"
+          "   Christmas value check: £9.00 spent\n   stop rule: back to £5 if …\n"
+          "   Command Centre proposals not written: RuntimeError\n")
+
+
+def test_quiet_saves_the_report_and_prints_only_path_sections_and_problems(monkeypatch):
+    reset()
+    import datetime
+    monkeypatch.setattr(wr, "run_sections", lambda args: print(REPORT, end=""))
+    monkeypatch.setattr(wr.lm, "today", lambda *a, **k: datetime.date(2026, 10, 5))
+    monkeypatch.setattr(sys, "argv", ["weekly_review.py", "--save-report", "--quiet"])
+    out = io.StringIO()
+    with contextlib.redirect_stdout(out):
+        wr.main()
+    path = wr.report_path(datetime.date(2026, 10, 5))
+    with open(path, encoding="utf-8") as f:
+        assert f.read() == REPORT
+    lines = out.getvalue().splitlines()
+    assert lines == [f"report saved: {path}", "sections: 1 2 4b 12",
+                     "problem: Command Centre proposals not written: RuntimeError"], lines
+
+
+def test_quiet_without_save_report_is_refused(monkeypatch):
+    reset()
+    monkeypatch.setattr(sys, "argv", ["weekly_review.py", "--quiet"])
+    try:
+        with contextlib.redirect_stderr(io.StringIO()):
+            wr.main()
+    except SystemExit as e:
+        assert e.code == 2
+    else:
+        raise AssertionError("--quiet alone should be refused")
+    assert not os.path.isdir(os.path.join(TMP, "reports"))
+
+
+def test_report_sections_prints_only_the_chosen_sections(monkeypatch):
+    reset()
+    import datetime
+    sys.path.insert(0, os.path.join(ROOT, "scripts", "reports"))
+    import report_sections as rs
+    monkeypatch.setattr(rs.lm, "today", lambda *a, **k: datetime.date(2026, 10, 5))
+    os.makedirs(os.path.join(TMP, "reports"), exist_ok=True)
+    with open(os.path.join(TMP, "reports", "2026-10-05.txt"), "w", encoding="utf-8") as f:
+        f.write(REPORT)
+    out = io.StringIO()
+    with contextlib.redirect_stdout(out):
+        code = rs.main(["2", "4b"])
+    assert code == 0
+    assert out.getvalue() == ("== 2. Search terms, last 7 days\nterm line\n\n"
+                              "== 4b. Google's recommendations\nrec line\n\n"), repr(out.getvalue())
+    err = io.StringIO()
+    with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(err):
+        assert rs.main(["1", "13"]) == 1
+    assert "not in this report: 13" in err.getvalue()
+    with contextlib.redirect_stderr(io.StringIO()):
+        assert rs.main(["--date", "2026-10-12", "1"]) == 2
+
+
 if __name__ == "__main__":
     import inspect
 

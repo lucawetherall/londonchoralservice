@@ -100,17 +100,22 @@ def hashed_email(raw):
     return hashlib.sha256(f"{local}@{domain}".encode()).hexdigest()
 
 
-def select_ready(rows):
+def select_ready(rows, facts=None):
     """(ready, skipped): ready is [(row, value, event timestamp)] for rows to upload now; skipped is
-    [(booking_ref, reason)]. Rows already uploaded are left out silently. A cancelled booking
-    (check_payments.is_cancelled, so an appended "; cancelled 2026-10-05 by client email" counts) and a
-    PENDING one are never ready, nor is a value that is unreadable, not finite, or not above zero."""
+    [(booking_ref, reason)]. Rows already uploaded are left out silently. A held booking (its notes and recorded
+    facts disagree, check_payments.held), a cancelled one (check_payments.is_cancelled, so an appended
+    "; cancelled 2026-10-05 by client email" counts) and a PENDING one are never ready, nor is a value that is
+    unreadable, not finite, or not above zero. `facts`: None (the state log), or a mapping ref -> Facts (tests)."""
     ready, skipped = [], []
     for r in rows:
         ref = (r.get("booking_ref") or "").strip()
         if (r.get("uploaded_at") or "").strip():
             continue
-        if cp.is_cancelled(r):
+        f = cp.facts_for(r, None, facts)
+        if cp.held(r, None, f):
+            skipped.append((ref, "held: notes and recorded facts disagree"))
+            continue
+        if cp.is_cancelled(r, f):
             skipped.append((ref, "cancelled"))
             continue
         if cp.is_pending(r.get("notes") or ""):

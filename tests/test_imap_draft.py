@@ -73,8 +73,10 @@ def sent_message(to, filename, date="Tue, 29 Sep 2026 10:00:00 +0100"):
 
 
 class FakeIMAP:
+    capabilities = ("IMAP4REV1", "MOVE", "UIDPLUS")
+
     def __init__(self, drafts=(), sent=()):
-        self.boxes = {"Drafts": list(drafts), "Sent": list(sent)}
+        self.boxes = {"Drafts": list(drafts), "Sent": list(sent), "Trash": []}
         self.calls, self.box = [], None
 
     def login(self, user, pw):
@@ -103,13 +105,31 @@ class FakeIMAP:
         rows = []
         for i, raw in picked:
             if "HEADER.FIELDS" in what:
-                key = email.message_from_bytes(raw).get(d.KEY_HEADER)
-                rows.append((f"{i} (BODY[HEADER.FIELDS])".encode(),
-                             (f"{d.KEY_HEADER}: {key}\r\n\r\n" if key else "\r\n").encode()))
+                names = re.search(r"HEADER\.FIELDS \(([^)]*)\)", what).group(1).split()
+                msg = email.message_from_bytes(raw)
+                head = "".join(f"{n}: {msg.get(n)}\r\n" for n in names if msg.get(n))
+                rows.append((f"{i} (BODY[HEADER.FIELDS])".encode(), (head + "\r\n").encode()))
             else:
                 rows.append((f"{i} (BODY[])".encode(), raw))
             rows.append(b")")
         return "OK", rows
+
+    def uid(self, command, *args):
+        self.calls.append(("uid", self.box, command) + args)
+        msgs = self.boxes[self.box]
+        if command == "FETCH":
+            rows = []
+            for i, raw in enumerate(msgs, 1):
+                names = re.search(r"HEADER\.FIELDS \(([^)]*)\)", args[1]).group(1).split()
+                msg = email.message_from_bytes(raw)
+                head = "".join(f"{n}: {msg.get(n)}\r\n" for n in names if msg.get(n))
+                rows += [(f"{i} (UID {100 + i} BODY[HEADER.FIELDS])".encode(), (head + "\r\n").encode()), b")"]
+            return "OK", rows
+        if command == "MOVE":
+            uid, box = args
+            self.boxes[box].append(msgs.pop(int(uid) - 101))
+            return "OK", [None]
+        raise AssertionError(f"unexpected UID {command}")
 
     def close(self):
         self.calls.append(("close",))
@@ -142,10 +162,10 @@ def test_a_good_spec_passes_and_reads_each_file_once():
 def test_only_one_recipient_and_no_cc_bcc_or_from():
     for bad in ("a@example.com, b@example.com", "a@example.com; b@example.com", "a@example.com b@example.com",
                 "Sam <a@example.com>", "not-an-address", "a@example.com\r\nBcc: x@example.com", ""):
-        assert refused(spec(to=bad, attachments=[])), bad
+        assert refused(spec(to=bad, key="2111-reply", attachments=[])), bad
     for key in ("cc", "bcc", "from", "fromAddress", "ccAddress", "send", "mode"):
         assert "not allowed" in (refused(spec(**{key: "x@example.com"})) or ""), key
-    assert refused(spec(to="office@londonchoralservice.com", attachments=[])), "our own address"
+    assert refused(spec(to="office@londonchoralservice.com", key="2111-reply", attachments=[])), "our own address"
 
 
 def test_header_injection_and_control_characters_are_refused():
@@ -158,6 +178,7 @@ def test_header_injection_and_control_characters_are_refused():
         assert refused(spec(references=bad)), repr(bad)
     for key in ("", "a b", "x" * 41, "../x", "k\n"):
         assert refused(spec(key=key, attachments=[])), key
+    assert d.validate(spec(key="2111-reply", attachments=[]))["attachments"] == []  # a plain draft takes none
 
 
 def test_a_long_references_list_is_trimmed_not_refused():
@@ -169,18 +190,27 @@ def test_a_long_references_list_is_trimmed_not_refused():
 
 # --- attachments belong to this booking and this client ----------------------------------------
 
+def test_a_confirmation_carries_both_files_and_nothing_else_carries_any():
+    for files in ([], [str(PDF)], [str(DOCX)]):
+        assert "both files" in (refused(spec(attachments=files)) or ""), files
+    assert "only a confirmation" in refused(spec(key="2111-reply"))
+    assert "only a confirmation" in refused(spec(key="2111-followup", attachments=[str(PDF)]))
+    got = d.validate(spec(attachments=[str(DOCX), str(PDF)]))
+    assert [a[0] for a in got["attachments"]] == [PDF.name, DOCX.name], "the invoice first"
+
+
 def test_attachments_must_be_this_bookings_files_for_this_client():
-    assert "not in booking 2111's folder" in refused(spec(attachments=[str(OTHER_PDF)]))
+    assert "not in booking 2111's folder" in refused(spec(attachments=[str(OTHER_PDF), str(DOCX)]))
     assert "not the client on booking 2111" in refused(spec(to="other@example.com"))
     assert "no client email in the ledger" in refused(spec(key="3112-confirmation"))
-    assert "needs the key <ref>-confirmation" in refused(spec(key="2111-reply"))
     wrong = FOLDER / "Invoice 0512 - A Client.pdf"
     wrong.write_bytes(b"%PDF-1.4")
     notes = FOLDER / "Notes.pdf"
     notes.write_bytes(b"%PDF-1.4")
     for bad in (wrong, notes):
-        assert "only booking 2111's invoice PDF" in refused(spec(attachments=[str(bad)])), bad
+        assert "only booking 2111's invoice PDF" in refused(spec(attachments=[str(bad), str(DOCX)])), bad
     assert refused(spec(attachments=[str(PDF), str(PDF)])), "the same invoice twice"
+    assert refused(spec(attachments=[str(DOCX), str(DOCX)])), "the same confirmation twice"
     assert refused(spec(attachments=[str(PDF), str(DOCX), str(PDF)])), "three files"
 
 
@@ -195,19 +225,19 @@ def test_links_paths_and_contents_are_checked():
     if not hard.exists():
         os.link(outside, hard)
     fake.write_bytes(b"not a pdf")
-    assert refused(spec(attachments=[str(sym)])), "symlink"
-    assert "ordinary file" in refused(spec(attachments=[str(hard)])), "hard link"
-    assert "doesn't look like a .pdf" in refused(spec(attachments=[str(fake)]))
+    assert refused(spec(attachments=[str(sym), str(DOCX)])), "symlink"
+    assert "ordinary file" in refused(spec(attachments=[str(hard), str(DOCX)])), "hard link"
+    assert "doesn't look like a .pdf" in refused(spec(attachments=[str(fake), str(DOCX)]))
     for bad in (str(FOLDER / "Invoice 2111 - Missing.pdf"), str(FOLDER / ".." / "0512 - Someone Else" / OTHER_PDF.name),
                 "relative/Invoice 2111 - A.pdf", "https://evil.test/Invoice 2111 - A.pdf", str(INV),
                 str(FOLDER / "Invoice 2111 - A .pdf")):
-        assert refused(spec(attachments=[bad])), bad
+        assert refused(spec(attachments=[bad, str(DOCX)])), bad
     assert refused(spec(attachments=str(PDF))), "not a list"
 
 
 def test_an_icloud_only_file_says_how_to_fix_it():
     (FOLDER / ".Invoice 2111 - Evicted.pdf.icloud").write_bytes(b"")
-    assert "iCloud only" in refused(spec(attachments=[str(FOLDER / "Invoice 2111 - Evicted.pdf")]))
+    assert "iCloud only" in refused(spec(attachments=[str(FOLDER / "Invoice 2111 - Evicted.pdf"), str(DOCX)]))
 
 
 def test_bank_details_in_the_text_are_refused():
@@ -301,11 +331,135 @@ def test_the_host_must_be_zoho():
 def test_check_and_test_for_the_owner():
     rc, out = run_main(["check"], FakeIMAP(drafts=[b"x"]))
     assert rc == 0 and out.startswith("IMAP ok") and "1 draft(s), 0 sent" in out and "writable" in out, out
-    imap = FakeIMAP()
-    rc, out = run_main(["test"], imap)
-    assert rc == 0 and "draft saved" in out and "header kept by Zoho: yes" in out, out
-    parsed = email.message_from_bytes(imap.boxes["Drafts"][0], policy=email.policy.default)
-    assert parsed["To"] == "luca@almaconsort.com" and [p.get_filename() for p in parsed.iter_attachments()] == ["LCS test.pdf"]
+    docs = [("Invoice 0101 - Test Client.pdf", "application", "pdf", b"%PDF-1.7 real enough"),
+            ("Booking Confirmation - Test Client - 1 Jan 2027.docx", *d.FILES[".docx"][:2], b"PK\x03\x04 docx")]
+    real = d.sample_documents
+    d.sample_documents = lambda: docs
+    try:
+        imap = FakeIMAP()
+        rc, out = run_main(["test"], imap)
+        assert rc == 0 and "draft saved" in out and "header kept by Zoho: yes; attachments intact: yes" in out, out
+        parsed = email.message_from_bytes(imap.boxes["Drafts"][0], policy=email.policy.default)
+        assert parsed["To"] == "luca@almaconsort.com"
+        assert [p.get_filename() for p in parsed.iter_attachments()] == [n for n, *_ in docs]
+
+        class Mangling(FakeIMAP):  # a server that alters an attachment on the way in
+            def append(self, box, flags, when, data):
+                return super().append(box, flags, when, data.replace(b"JVBERi0xLjcgcmVhbCBlbm91Z2g=", b"QlJPS0VO"))  # the PDF's bytes, base64
+        rc, out = run_main(["test"], Mangling())
+        assert rc == 0 and "attachments intact: NO" in out, out
+    finally:
+        d.sample_documents = real
+
+
+def test_the_sample_documents_stop_cleanly_without_the_templates():
+    import make_booking_docs as mbd
+    real = mbd.make_docs
+    def missing(spec, root):
+        raise SystemExit("STOP: /x/invoice.html is missing")
+    mbd.make_docs = missing
+    try:
+        rc, out = run_main(["test"], FakeIMAP())
+        assert rc == 1 and out.startswith("STOP: the sample documents couldn't be made (/x/invoice.html is missing)"), out
+    finally:
+        mbd.make_docs = real
+
+
+# --- attach: a copy of Luca's own draft with the two files -------------------------------------
+
+LUCA_ID = "<luca-draft-1@londonchoralservice.com>"
+
+
+def luca_draft(to="client@example.com", msg_id=LUCA_ID, cc=None, key=None, attach=False,
+               html="<p>Dear Sam,</p><p>Lovely to speak. I've attached the invoice and booking confirmation.</p>"
+                    '<p>Luca<br><img src="cid:sig1"></p>'):
+    m = EmailMessage()
+    m["From"], m["To"], m["Subject"] = d.FROM_HEADER, to, "Re: Wedding enquiry"
+    m["Message-ID"], m["In-Reply-To"], m["References"] = msg_id, "<abc123@mail.example.com>", "<abc123@mail.example.com>"
+    if cc:
+        m["Cc"] = cc
+    if key:
+        m[d.KEY_HEADER] = key
+    m.set_content("Dear Sam, lovely to speak.")
+    m.add_alternative(html, subtype="html")
+    m.get_payload()[1].add_related(b"GIF89a-signature", maintype="image", subtype="gif", cid="<sig1>")
+    if attach:
+        m.add_attachment(b"%PDF-1.4", maintype="application", subtype="pdf", filename="Old.pdf")
+    return m.as_bytes()
+
+
+def attach_spec(**kw):
+    s = {"key": "2111-confirmation", "attachments": [str(PDF), str(DOCX)]}
+    s.update(kw)
+    return json.dumps(s)
+
+
+def test_attach_saves_a_copy_of_lucas_draft_with_both_files_and_leaves_the_original():
+    clear_saved()
+    original = luca_draft()
+    imap = FakeIMAP(drafts=[original])
+    rc, out = run_main(["attach", LUCA_ID, attach_spec()], imap)
+    assert rc == 0, out
+    moves = [c for c in imap.calls if c[0] == "uid" and c[2] == "MOVE"]
+    assert moves == [("uid", "Drafts", "MOVE", "101", "Trash")], moves
+    assert imap.boxes["Trash"] == [original] and len(imap.boxes["Drafts"]) == 1, "original moved to Trash, not deleted"
+    assert "draft updated" in out and "the earlier version is in Trash" in out, out
+    old = email.message_from_bytes(original, policy=email.policy.default)
+    new = email.message_from_bytes(imap.boxes["Drafts"][0], policy=email.policy.default)
+    for h in ("From", "To", "Subject", "In-Reply-To", "References"):
+        assert new[h] == old[h], h
+    assert new["Message-ID"] != old["Message-ID"] and new[d.KEY_HEADER] == "2111-confirmation"
+    assert [p.get_filename() for p in new.iter_attachments()] == [PDF.name, DOCX.name]
+    html = lambda m: m.get_body(("html",)).get_content().replace("\r\n", "\n")
+    assert html(new) == html(old), (html(new), html(old))
+    assert any(p.get("Content-ID") == "<sig1>" for p in new.walk()), "the signature image is kept"
+    assert new["Cc"] is None and new["Bcc"] is None
+    rc, out = run_main(["attach", LUCA_ID, attach_spec()], FakeIMAP(drafts=[original]))
+    assert rc == 0 and "already saved earlier" in out, out
+
+
+def test_the_original_stays_unless_the_copy_checks_out_and_can_be_moved():
+    class NoMove(FakeIMAP):
+        capabilities = ("IMAP4REV1",)
+
+    class Mangling(FakeIMAP):  # the server alters the saved copy's attachment
+        def append(self, box, flags, when, data):
+            return super().append(box, flags, when, data.replace(b"JVBERi0xLjQgZmFrZSBpbnZvaWNl", b"QlJPS0VO"))
+    for server, why in ((NoMove, "couldn't be moved to Trash"), (Mangling, "couldn't be checked")):
+        clear_saved()
+        original = luca_draft()
+        imap = server(drafts=[original])
+        rc, out = run_main(["attach", LUCA_ID, attach_spec()], imap)
+        assert rc == 0 and why in out and "deletes his draft" in out, (why, out)
+        assert imap.boxes["Drafts"][0] == original and imap.boxes["Trash"] == [], why
+        assert not [c for c in imap.calls if c[0] == "uid" and c[2] == "MOVE"], why
+    clear_saved()  # two drafts with the same Message-ID: touch neither
+    imap = FakeIMAP(drafts=[luca_draft(), luca_draft()])
+    rc, out = run_main(["attach", LUCA_ID, attach_spec()], imap)
+    assert rc == 0 and imap.boxes["Trash"] == [] and len(imap.boxes["Drafts"]) == 3, out
+
+
+def test_attach_refuses_anything_but_a_plain_draft_to_that_client():
+    cases = [
+        (luca_draft(cc="planner@example.com"), "Cc or Bcc"),
+        (luca_draft(to="other@example.com"), "not the client on booking 2111"),
+        (luca_draft(attach=True), "already has attachments"),
+        (luca_draft(key="2111-reply"), "saved by the assistant"),
+        (luca_draft(html="<p>Sort code 04-00-04, account 12345678.</p>"), "bank details"),
+        (luca_draft(msg_id="<someone-else@londonchoralservice.com>"), "isn't in Drafts"),
+    ]
+    for raw, why in cases:
+        clear_saved()
+        imap = FakeIMAP(drafts=[raw])
+        rc, out = run_main(["attach", LUCA_ID, attach_spec()], imap)
+        assert rc == 1 and why in out, (why, out)
+        assert len(imap.boxes["Drafts"]) == 1, why
+    for args in ([LUCA_ID, attach_spec(key="2111-reply")], [LUCA_ID, attach_spec(attachments=[str(PDF)])],
+                 ["not-an-id", attach_spec()], [LUCA_ID, json.dumps({"key": "2111-confirmation"})],
+                 [LUCA_ID, attach_spec(to="x@example.com")]):
+        clear_saved()
+        rc, out = run_main(["attach", *args], FakeIMAP(drafts=[luca_draft()]))
+        assert rc == 1 and out.startswith("STOP:"), (args, out)
 
 
 # --- sent: the evidence for marking a Books invoice sent ---------------------------------------
@@ -331,8 +485,15 @@ def test_sent_matches_the_exact_invoice_to_the_client():
 def test_the_script_has_no_sending_code():
     src = (ROOT / "scripts" / "bookings" / "imap_draft.py").read_text()
     for word in ("smtplib", "SMTP(", "sendmail", "send_message", ".store(", ".copy(", ".move(", "expunge",
-                 ".uid(", ".delete(", ".create("):
+                 "EXPUNGE", "STORE", "COPY", ".delete(", ".create(", "Deleted"):
         assert word not in src, word
+    # UID commands only in retire_original: a FETCH of headers and one MOVE, to Trash
+    retire = src[src.index("def retire_original"):src.index("def attach(")]
+    rest = src.replace(retire, "")
+    assert ".uid(" not in rest and "conn.select(DRAFTS)" not in rest.replace("conn.select(DRAFTS, readonly=True)", "")
+    assert re.findall(r'\.uid\("(\w+)"', retire) == ["FETCH", "MOVE"], re.findall(r'\.uid\("(\w+)"', retire)
+    assert 'conn.uid("MOVE", uids[0], TRASH)' in retire and "len(uids) != 1" in retire
+    assert "conn.close()" not in retire, "CLOSE on a writable folder would expunge"
     assert len(re.findall(r"\.append\(DRAFTS", src)) == 1
     assert len(re.findall(r"conn\.append\(", src)) == 1
 

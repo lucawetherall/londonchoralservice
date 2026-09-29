@@ -93,11 +93,9 @@ def pounds(value, what):
     return v
 
 
-def main():
-    if len(sys.argv) != 2:
-        fail("usage: make_booking_docs.py <spec.json | '{json}'>")
-    arg = sys.argv[1].strip()
-    spec = json.loads(arg if arg.startswith("{") else Path(arg).read_text())
+def make_docs(spec, root=OUT_ROOT):
+    """Write the invoice PDF and the booking confirmation for `spec` into root/<ref> - <client>/.
+    Returns {"pdf", "docx", "total", "i1", "i2", "pages"}; STOP (SystemExit) on a bad spec or missing tools."""
     for f in ("ref", "client_name", "service_type", "service_date", "provision", "items",
               "instalment_1_due", "instalment_2_due"):
         if not spec.get(f):
@@ -120,7 +118,7 @@ def main():
     service = spec["service_type"] + (f" — {spec['venue']}" if spec.get("venue") else "")
     client, ref = spec["client_name"].strip(), str(spec["ref"]).strip()
 
-    folder = out_folder(ref, client)
+    folder = out_folder(ref, client, root)
     pdf = folder / f"Invoice {safe_name(ref)} - {safe_name(client)}.pdf"
     short = datetime.date.fromisoformat(spec["service_date"]).strftime("%-d %b %Y")
     docx = folder / f"Booking Confirmation - {safe_name(client)} - {short}.docx"
@@ -158,10 +156,21 @@ def main():
     pages = len(PdfReader(pdf).pages)
     for f in (pdf, docx):
         os.chmod(f, 0o600)
-    print(f"invoice {ref}: total {money(total)} · instalments {money(i1)} + {money(i2)} · {pages} page(s)")
-    print(f"   {pdf}")
-    print(f"   {docx}")
-    if pages != 1:
+    return {"pdf": pdf, "docx": docx, "total": total, "i1": i1, "i2": i2, "pages": pages}
+
+
+def main():
+    if len(sys.argv) != 2:
+        fail("usage: make_booking_docs.py <spec.json | '{json}'>")
+    arg = sys.argv[1].strip()
+    spec = json.loads(arg if arg.startswith("{") else Path(arg).read_text())
+    got = make_docs(spec)
+    ref = str(spec["ref"]).strip()
+    print(f"invoice {ref}: total {money(got['total'])} · instalments {money(got['i1'])} + {money(got['i2'])} · "
+          f"{got['pages']} page(s)")
+    print(f"   {got['pdf']}")
+    print(f"   {got['docx']}")
+    if got["pages"] != 1:
         fail("the invoice runs to more than one page; tighten the template before sending")
 
 

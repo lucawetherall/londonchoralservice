@@ -23,11 +23,13 @@ analytics.readonly and webmasters.readonly scopes) for GA4 and Search Console.
 Reads the private bookings ledger for counts only; prints no names or emails.
 
     source .venv/bin/activate
-    python scripts/reports/weekly_review.py [--since 2026-09-26] [--gsc-shortlist] [--save-report] [--write-proposals]
+    python scripts/reports/weekly_review.py [--since 2026-09-26] [--gsc-shortlist] [--save-report [--quiet]] [--write-proposals]
 
 --save-report also archives everything printed to ~/lcs-private/reports/<today, Europe/London>.txt
 (LCS_PRIVATE_DIR respected), mode 600 in a mode-700 directory, written atomically. A same-day rerun
-overwrites the file. It still prints to stdout as normal.
+overwrites the file. It still prints to stdout as normal, unless --quiet: then it prints only the path,
+the sections present and any line that looks like a failure or an alarm (the Monday dispatcher's view;
+its sub-agents read their own sections with scripts/reports/report_sections.py).
 
 --write-proposals also writes each section 12 "PROPOSE" line as a Command Centre proposal,
 ~/lcs-private/command-centre/proposals/<id>.json (mode 600): kind "ads", scripts/ads/set_budget.py with the
@@ -81,23 +83,26 @@ class _Tee(io.TextIOBase):
         self._buffer = buffer
 
     def write(self, s):
-        self._original.write(s)
+        if self._original is not None:
+            self._original.write(s)
         self._buffer.write(s)
         return len(s)
 
     def flush(self):
-        self._original.flush()
+        if self._original is not None:
+            self._original.flush()
 
 
 @contextlib.contextmanager
-def tee_to(path):
+def tee_to(path, echo=True):
     """Mirror everything printed to stdout inside the block into `path`, mode 600, written atomically
-    (a temp file in the same directory, then os.replace), in addition to printing as normal. The
-    directory is created mode 700 if missing. A same-day rerun (same `path`) overwrites the file."""
+    (a temp file in the same directory, then os.replace), in addition to printing as normal (echo=False:
+    the file only). The directory is created mode 700 if missing. A same-day rerun (same `path`)
+    overwrites the file."""
     path = Path(path)
     buffer = io.StringIO()
     original = sys.stdout
-    sys.stdout = _Tee(original, buffer)
+    sys.stdout = _Tee(original if echo else None, buffer)
     try:
         yield
     finally:
@@ -133,6 +138,23 @@ def ads_query():
     return q
 
 
+def search_term_rows(q, where="segments.date DURING LAST_7_DAYS"):
+    """Section 2's search-term query (read-only): one row per campaign, term and matched keyword, costliest first.
+    The Command Centre's cache (cc_sync.py marketing) runs the same query for 7 and 28 days."""
+    return q(f"""SELECT campaign.name, search_term_view.search_term, segments.keyword.info.text,
+            segments.keyword.info.match_type, metrics.impressions, metrics.clicks, metrics.cost_micros,
+            metrics.conversions
+            FROM search_term_view WHERE {where}
+            ORDER BY metrics.cost_micros DESC, metrics.impressions DESC""")
+
+
+def search_term_flag(term):
+    """economics.search_term_flag, imported here so the pure module stays the one rule (section 2 and the Command
+    Centre flag the same terms)."""
+    import economics as ec
+    return ec.search_term_flag(term)
+
+
 def ads_sections(since, q):
     today = lm.today()
     spans = [("last 7 days", "segments.date DURING LAST_7_DAYS", 7),
@@ -154,17 +176,31 @@ def ads_sections(since, q):
                   f" · lost to rank {pct(m.search_rank_lost_impression_share)}")
 
     print("\n== 2. Search terms, last 7 days (campaign | term | matched keyword | impr clicks cost conv)")
-    rows = q("""SELECT campaign.name, search_term_view.search_term, segments.keyword.info.text,
-            segments.keyword.info.match_type, metrics.impressions, metrics.clicks, metrics.cost_micros,
-            metrics.conversions
-            FROM search_term_view WHERE segments.date DURING LAST_7_DAYS
-            ORDER BY metrics.cost_micros DESC, metrics.impressions DESC""")
+    import economics as ec
+    negatives = defaultdict(list)
+    for r in q("""SELECT campaign.name, campaign_criterion.keyword.text, campaign_criterion.keyword.match_type
+                  FROM campaign_criterion WHERE campaign_criterion.negative = TRUE
+                  AND campaign_criterion.type = 'KEYWORD' AND campaign.status = 'ENABLED'"""):
+        negatives[r.campaign.name].append((r.campaign_criterion.keyword.text, r.campaign_criterion.keyword.match_type.name))
+    rows = search_term_rows(q)
     for r in rows:
         k = r.segments.keyword.info
+        why = search_term_flag(r.search_term_view.search_term)
+        blocked = ec.negative_blocking(r.search_term_view.search_term, negatives[r.campaign.name])
         print(f"{r.campaign.name[:22]:22} | {r.search_term_view.search_term} | {k.text} ({k.match_type.name})"
-              f" | {r.metrics.impressions} {r.metrics.clicks} {gbp(r.metrics.cost_micros)} {r.metrics.conversions:.1f}")
+              f" | {r.metrics.impressions} {r.metrics.clicks} {gbp(r.metrics.cost_micros)} {r.metrics.conversions:.1f}"
+              + (f"  !CHECK: {why}" if why else "")
+              + (f"  [now blocked by negative '{blocked[0]}' ({blocked[1]})]" if blocked else ""))
     if not rows:
         print("(none)")
+    print(f"-- negatives in force: " + " · ".join(f"{name} {len(v)}" for name, v in sorted(negatives.items())))
+    print("-- ad clicks by day, last 7 days (date | campaign | clicks | cost)")
+    daily = q("""SELECT campaign.name, segments.date, metrics.clicks, metrics.cost_micros FROM campaign
+                 WHERE segments.date DURING LAST_7_DAYS AND metrics.clicks > 0 ORDER BY segments.date""")
+    for r in daily:
+        print(f"   {r.segments.date} | {r.campaign.name} | {r.metrics.clicks} | {gbp(r.metrics.cost_micros)}")
+    if not daily:
+        print("   (none)")
 
     print("\n== 3. Conversions per action")
     start90 = today - datetime.timedelta(days=90)
@@ -230,19 +266,80 @@ def ads_sections(since, q):
     return sorted(landing), settings
 
 
-def ga4_section(s):
-    api = f"https://analyticsdata.googleapis.com/v1beta/{GA4_PROPERTY}:runReport"
+GA4_API = f"https://analyticsdata.googleapis.com/v1beta/{GA4_PROPERTY}:runReport"
 
+
+class GA4Error(RuntimeError):
+    """A GA4 report that didn't come back: .status and .detail (Google's message, printed only by section 5)."""
+
+    def __init__(self, status, detail):
+        super().__init__(f"GA4 error {status}")
+        self.status, self.detail = status, detail
+
+
+def ga4_report(s, body):
+    """(rows, thresholded) for one GA4 runReport (read-only). GA4Error when it fails."""
+    r = s.post(GA4_API, json=body)
+    if not r.ok:
+        try:
+            detail = r.json().get("error", {}).get("message")
+        except ValueError:
+            detail = None
+        raise GA4Error(r.status_code, detail)
+    data = r.json()
+    return data.get("rows", []), bool(data.get("metadata", {}).get("subjectToThresholding"))
+
+
+def lead_category(event, method):
+    """The weekly leads bucket for one LEAD_EVENTS event: form (generate_lead), whatsapp, email or call (a
+    contact_click's method), message (contact_message) or form_error."""
+    if event == "generate_lead":
+        return "form"
+    if event == "contact_click":
+        return method if method in ("whatsapp", "email", "call") else "other"
+    return {"contact_message": "message", "form_error": "form_error"}.get(event)
+
+
+def ga4_lead_weeks(s, today, n=8):
+    """The LEAD_EVENTS section 5 counts, by full Monday-Sunday week for the last `n` weeks, oldest first:
+    ([{week_start, form, whatsapp, email, call, other, message, form_error}], thresholded). Counts only."""
+    import economics as ec
+    weeks = ec.full_weeks(today, n)
+    end = weeks[-1] + datetime.timedelta(days=6)
+    rows, thresholded = ga4_report(s, {
+        "dateRanges": [{"startDate": str(weeks[0]), "endDate": str(end)}],
+        "dimensions": [{"name": "date"}, {"name": "eventName"}, {"name": "customEvent:method"}],
+        "metrics": [{"name": "eventCount"}],
+        "dimensionFilter": {"filter": {"fieldName": "eventName", "inListFilter": {"values": LEAD_EVENTS}}},
+        "limit": 10000})
+    keys = ("form", "whatsapp", "email", "call", "other", "message", "form_error")
+    acc = {w: dict.fromkeys(keys, 0) for w in weeks}
+    for row in rows:
+        day_s, event, method = (v.get("value", "") for v in row["dimensionValues"])
+        try:
+            day = datetime.date(int(day_s[:4]), int(day_s[4:6]), int(day_s[6:8]))
+            count = int(float(row["metricValues"][0]["value"]))
+        except (ValueError, KeyError, IndexError):
+            continue
+        week = day - datetime.timedelta(days=day.weekday())
+        cat = lead_category(event, method)
+        if week in acc and cat:
+            acc[week][cat] += count
+    return [{"week_start": w.isoformat(), **acc[w]} for w in weeks], thresholded
+
+
+def ga4_section(s):
     thresholded = []
 
     def report(body):
-        r = s.post(api, json=body)
-        if not r.ok:
-            print(f"GA4 error {r.status_code}: {r.json().get('error', {}).get('message')}")
+        try:
+            rows, held = ga4_report(s, body)
+        except GA4Error as e:
+            print(f"GA4 error {e.status}: {e.detail}")
             return []
-        if r.json().get("metadata", {}).get("subjectToThresholding"):
+        if held:
             thresholded.append(", ".join(d["name"] for d in body.get("dimensions", [])))
-        return r.json().get("rows", [])
+        return rows
 
     week = [{"startDate": "7daysAgo", "endDate": "yesterday"}]
     print("\n== 5. GA4, last 7 days")
@@ -298,13 +395,17 @@ def gsc_section(s):
               f" · CTR {pct(t.get('ctr', 0))} · avg pos {t.get('position', 0):.1f}")
     now = {r["keys"][0]: r for r in query(cur, ["query"])}
     before = {r["keys"][0]: r for r in query(prev, ["query"])}
+    top_page = {}  # query -> the page with the most impressions for it this week (what Google shows)
+    for r in sorted(query(cur, ["query", "page"], 1000), key=lambda r: -r["impressions"]):
+        top_page.setdefault(r["keys"][0], r["keys"][1].replace(SITE, "") or "/")
 
     def line(qry):
         r, b = now.get(qry), before.get(qry)
         pos = f"pos {r['position']:.1f}" if r else "not seen"
         was = f"was {b['position']:.1f}" if b else "new"
+        page = f" → {top_page[qry]}" if qry in top_page else ""
         return (f"   {qry[:48]:48} clicks {r['clicks'] if r else 0:.0f} · impr {r['impressions'] if r else 0:.0f}"
-                f" · {pos} ({was})")
+                f" · {pos} ({was}){page}")
 
     print("-- money queries (funeral, wedding, carol, choir), by impressions")
     money = sorted((q for q in set(now) | set(before) if MONEY_TERMS.search(q)),
@@ -767,6 +868,25 @@ def write_proposals(items, today, git_runner=None, now=None):
     return lines
 
 
+class SearchConsoleError(RuntimeError):
+    def __init__(self, status):
+        super().__init__(f"Search Console error {status}")
+        self.status = status
+
+
+def shortlist_items(s, today, limit=10):
+    """(start, end, items) for section 13 (read-only): economics.shortlist over the last 28 final days of Search
+    Console query x page rows. SearchConsoleError when the query fails. The Command Centre caches it daily."""
+    import economics as ec
+    start, end = ec.gsc_window(today)
+    api = f"https://searchconsole.googleapis.com/webmasters/v3/sites/{GSC_SITE}/searchAnalytics/query"
+    r = s.post(api, json={"startDate": str(start), "endDate": str(end), "dimensions": ["query", "page"],
+                          "rowLimit": 5000, "dataState": "final"})
+    if not r.ok:
+        raise SearchConsoleError(r.status_code)
+    return start, end, ec.shortlist(r.json().get("rows", []), ec.page_h2s_from(REPO), limit=limit)
+
+
 def shortlist_section(s, today, force):
     print("\n== 13. Search Console shortlist (hiring intent, positions 8–20)")
     try:
@@ -775,27 +895,30 @@ def shortlist_section(s, today, force):
             print(f"   runs on the first Monday of the month (next {ec.next_first_monday(today)});"
                   " use --gsc-shortlist to run it now")
             return
-        start, end = ec.gsc_window(today)
-        api = f"https://searchconsole.googleapis.com/webmasters/v3/sites/{GSC_SITE}/searchAnalytics/query"
-        r = s.post(api, json={"startDate": str(start), "endDate": str(end), "dimensions": ["query", "page"],
-                              "rowLimit": 5000, "dataState": "final"})
-        if not r.ok:
-            print(f"   Search Console error {r.status_code}")
+        try:
+            start, end, items = shortlist_items(s, today)
+        except SearchConsoleError as e:
+            print(f"   Search Console error {e.status}")
             return
         print(f"   {start} to {end}, top 10 by impressions")
-        for line in ec.shortlist_lines(ec.shortlist(r.json().get("rows", []), ec.page_h2s_from(REPO))):
+        for line in ec.shortlist_lines(items):
             print("   " + line)
     except Exception as e:
         print(f"   Search Console shortlist failed: {type(e).__name__}")
 
 
-def run_sections(args):
-    q = ads_query()
-    landing, ads_settings = ads_sections(args.since, q)
+def google_session():
+    """An AuthorizedSession on Application Default Credentials (GA4 and Search Console reads)."""
     import google.auth
     from google.auth.transport.requests import AuthorizedSession
     creds, _ = google.auth.default()
-    s = AuthorizedSession(creds)
+    return AuthorizedSession(creds)
+
+
+def run_sections(args):
+    q = ads_query()
+    landing, ads_settings = ads_sections(args.since, q)
+    s = google_session()
     ga4_section(s)
     gsc_section(s)
     coverage_section(s, landing)
@@ -819,14 +942,37 @@ def main():
     p.add_argument("--gsc-shortlist", action="store_true", help="run section 13 even if it isn't the first Monday")
     p.add_argument("--save-report", action="store_true",
                    help="also archive everything printed to ~/lcs-private/reports/<today>.txt (mode 600)")
+    p.add_argument("--quiet", action="store_true",
+                   help="with --save-report: print only where the report is, its sections and any problem lines")
     p.add_argument("--write-proposals", action="store_true",
                    help="write each section 12 PROPOSE line as a Command Centre proposal (mode 600)")
     args = p.parse_args()
+    if args.quiet and not args.save_report:
+        p.error("--quiet needs --save-report (the report has to go somewhere)")
     if args.save_report:
-        with tee_to(report_path()):
+        path = report_path()
+        with tee_to(path, echo=not args.quiet):
             run_sections(args)
+        if args.quiet:
+            print(quiet_summary(path))
     else:
         run_sections(args)
+
+
+PROBLEM_RE = re.compile(r"\b(error|failed|refused|denied|permission|invalid_grant|unauthenticated|not written|"
+                        r"CONFIG ERROR|STOP GUARD|STALE|NOT INDEXED)\b|PAST £", re.I)
+
+
+def quiet_summary(path):
+    """What --quiet prints instead of the report: where it is, which sections it holds and every line that
+    looks like a failure or an alarm, so the Monday dispatcher can stop on an auth error without reading it."""
+    text = Path(path).read_text(encoding="utf-8")
+    heads = re.findall(r"^== (\w+)\.", text, re.M)
+    problems = [l.strip() for l in text.splitlines()
+                if PROBLEM_RE.search(l) and not l.strip().startswith("stop rule:")]
+    out = [f"report saved: {path}", f"sections: {' '.join(heads) or 'none'}"]
+    out += [f"problem: {l}" for l in problems[:20]] or ["problems: none"]
+    return "\n".join(out)
 
 
 if __name__ == "__main__":

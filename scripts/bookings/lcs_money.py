@@ -44,6 +44,10 @@ LONDON = ZoneInfo("Europe/London")
 ICLOUD_INVOICES = Path.home() / "Library" / "Mobile Documents" / "com~apple~CloudDocs" / "LCS-invoices"
 _KEYS = {}
 LEDGER = Path(os.environ.get("LCS_BOOKINGS_CSV", PRIVATE / "bookings.csv"))
+# The most a booking may be short by transfer fees and still read paid in full, once the owner accepts it
+# ("short by fees £12.40 accepted 2026-09-28", written only through the Command Centre). Here so that both
+# check_payments.py (FEE_CAP) and the state log's schema (lcs_events) read the one figure.
+FEE_CAP = 40.00  # owner decision, 29 Sep 2026 (was £25; 2408 was £36.15 short)
 
 
 def keychain_token():
@@ -225,10 +229,11 @@ def write_csv(path, rows, columns):
 
 @contextlib.contextmanager
 def ledger_lock(path):
-    """Exclusive lock for a read-modify-write of a private CSV: flock on "<path>.lock" (mode 600)."""
+    """Exclusive lock for a read-modify-write of a private CSV (or the state log): flock on "<path>.lock" (mode 600),
+    never followed through a symlink (OSError instead)."""
     path = Path(path)
     path.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
-    fd = os.open(f"{path}.lock", os.O_RDWR | os.O_CREAT, 0o600)
+    fd = os.open(f"{path}.lock", os.O_RDWR | os.O_CREAT | os.O_NOFOLLOW, 0o600)
     try:
         fcntl.flock(fd, fcntl.LOCK_EX)
         yield

@@ -3,8 +3,9 @@ preview that builds the summary on the server (auth.Action), and either a fixed 
 write (LocalAction). Each run is logged, append-only, in ~/lcs-private/command-centre/audit.jsonl (mode 600).
 
 Binding rules (docs/superpowers/specs/2026-09-28-command-centre-design.md, and the plan's phase 3):
-- Every action except `todo-tick`, `draft-mark`, `refresh-data`, `push-unsubscribe` and `backup-now` (low risk: they write only
-  the app's own files or an encrypted copy, and still need the same-origin POST) needs a fresh passkey assertion over a challenge bound to the
+- Every action except `todo-tick`, `draft-mark`, `refresh-data`, `sync-now`, `push-unsubscribe` and `backup-now` (low
+  risk: they write only the app's own files, a read-only cache or an encrypted copy, and still need the same-origin
+  POST) needs a fresh passkey assertion over a challenge bound to the
   summary that preview() writes from the validated input. The summary ends with the exact command ("Runs: …"), so
   the owner's Face ID or Touch ID approves that command and nothing else. run_action() rebuilds the summary from
   the data as it is at run time: if anything it depends on changed since the preview, the assertion no longer
@@ -13,7 +14,8 @@ Binding rules (docs/superpowers/specs/2026-09-28-command-centre-design.md, and t
   arguments (none may start with "-" unless it is a fixed flag), cwd the repo, the environment minus every CC_*
   variable with LCS_PRIVATE_DIR set explicitly (and LCS_BOOKINGS_CSV removed), stdin /dev/null (or the owner
   nonce), a timeout, one action at a time, and no retries. run_action() takes the action lock before it validates,
-  so every check (an .applied record, a validate record) is re-read under the lock; refresh-data has its own lock.
+  so every check (an .applied record, a validate record) is re-read under the lock; refresh-data and sync-now have
+  their own lock, shared with the background refresh (jobs.py), and wait up to REFRESH_WAIT seconds for a pass.
 - Output is scrubbed (lcs_mcp's approach: URLs, token-like values; plus any run of six or more digits) and trimmed
   before it reaches the page; the audit keeps only its sha256. Ads output is not masked: its first and last 3,000
   characters are shown, secrets still redacted.
@@ -70,6 +72,7 @@ PY_SHOWN = ".venv/bin/python"
 CHECK_PAYMENTS = "scripts/bookings/check_payments.py"
 SINGER_INVOICES = "scripts/bookings/singer_invoices.py"
 DASHBOARD = "scripts/reports/dashboard.py"
+CC_SYNC = "scripts/reports/cc_sync.py"
 OUTPUT_MAX = 6000  # characters of scrubbed output shown (the tail)
 ADS_HEAD = ADS_TAIL = 3000  # Ads output: its first and last characters, unmasked
 RUN_WAIT = 5  # seconds to wait for another action to finish before refusing
@@ -234,6 +237,9 @@ def join_warning(warning, text):
 
 _RUN_LOCK = threading.Lock()
 _LOCKS = {"action": _RUN_LOCK, "refresh": threading.Lock()}  # refresh-data never waits on (or blocks) a write
+REFRESH_WAIT = 20  # seconds "Refresh data now" waits for a background pass (jobs.py) holding the refresh lock
+BACKGROUND_REFRESH = threading.Event()  # set while jobs.RefreshJob holds the refresh lock
+BACKGROUND_BUSY = "A background refresh is running; the page will show its results when it finishes"
 
 
 def clean_env(drop=()):
@@ -342,8 +348,13 @@ def refuse_early(defn, raw, user, reason):
 def run_action(defn, raw, user, credential=None, passkeys=None):
     """Take the action's lock, then validate (so every check is made under the lock), check the passkey when the
     action needs one, and perform. Raises ActionError or auth.PasskeyError; every refusal is logged."""
-    lock = _LOCKS[getattr(defn, "lock", "action")]
-    if not lock.acquire(timeout=RUN_WAIT):
+    name = getattr(defn, "lock", "action")
+    lock = _LOCKS[name]
+    if not lock.acquire(timeout=REFRESH_WAIT if name == "refresh" else RUN_WAIT):
+        if name == "refresh" and BACKGROUND_REFRESH.is_set():
+            # the half-hourly pass runs the same scripts and clears the bank cache when it ends
+            refuse_early(defn, raw, user, "a background refresh is running")
+            raise ActionError(BACKGROUND_BUSY, status=409)
         refuse_early(defn, raw, user, "another action is running")
         raise ActionError("another action is running; try again in a moment", status=409)
     try:
@@ -535,7 +546,7 @@ def today():
 # ---------------------------------------------------------------- resolve a hand check
 
 
-HAND_CHOICES = {  # choice -> (the owner's words in the preview, the ledger phrase; {d} is the date)
+HAND_CHOICES = {  # choice -> (the owner's words in the preview, the ledger phrase; {d} is the date, {a} the fee)
     "paid-in-full": ("paid in full", "paid in full {d}"),
     "deposit-kept": ("deposit kept on a cancelled booking", "deposit kept {d}"),
     "refunded": ("refunded", "refunded {d}"),
@@ -544,16 +555,61 @@ HAND_CHOICES = {  # choice -> (the owner's words in the preview, the ledger phra
     "payment-checked": ("payment checked by hand", "payment checked {d}"),
     "arranged-cash": ("balance arranged in cash on the day", "balance payable in cash on the day (arranged {d})"),
     "arranged-cheque": ("balance arranged by cheque on the day", "balance payable by cheque on the day (arranged {d})"),
+    # a balance lost to transfer fees, accepted (owner decision, 28 Sep 2026): the booking reads paid in full, and
+    # record_in_books lists the fee as bank charges on the last payment. Only with `amount` (_fee_facts).
+    "short-by-fees": ("short by transfer fees", "short by fees £{a} accepted {d}"),
 }
+FEE_CHOICE = "short-by-fees"
+# States in which the balance can be a transfer-fee shortfall: a confident payment in, the rest not in the bank
+FEE_STATES = models.FEE_STATES
+MONEY_RE = re.compile(r"^\d{1,2}(?:\.\d{1,2})?$")  # a plain amount in pounds: "12.40", "12.4", "5"
 HAND_BACK_DAYS = 730
+BANK_SOURCE = None  # create_app's data.Data reader (use_bank): its cached Starling read, the one the pages show
+
+
+def use_bank(reader):
+    """The app's reader, whose bank(rows, today) the short-by-fees check assesses the booking with."""
+    global BANK_SOURCE
+    BANK_SOURCE = reader
+
+
+def _fee_facts(ref, rows, amount, day):
+    """The short-by-fees check: `amount` is a plain amount, more than £0 and at most check_payments.FEE_CAP, within
+    1p of the booking's balance as assessed from the bank (the app's cached read, the one its pages show), in a
+    state where that balance is what the confident payments left, and `day` is no earlier than the last of them.
+    The note records the assessed balance."""
+    if not isinstance(amount, str) or not MONEY_RE.fullmatch(amount):
+        raise ActionError("the amount must be a plain amount in pounds, like 12.40")
+    fee = round(float(amount), 2)
+    if not 0 < fee <= cp.FEE_CAP:
+        raise ActionError(f"the amount must be more than £0 and at most £{cp.FEE_CAP:.2f}")
+    bank = BANK_SOURCE.bank(rows, today()) if BANK_SOURCE is not None else None
+    if not bank or not bank.get("bank_checked"):
+        raise ActionError("the bank wasn't checked: can't confirm the shortfall")
+    a = next((x for x in bank.get("assessments") or [] if x.get("ref") == ref), None)
+    if a is None or a.get("state") not in FEE_STATES or not a.get("received"):
+        raise ActionError("that booking has no part-paid balance to accept")
+    balance = round(float(a.get("balance") or 0), 2)
+    if round(abs(balance - fee), 2) > 0.01:
+        raise ActionError(f"the amount isn't that booking's balance (£{balance:,.2f})")
+    if not 0 < balance <= cp.FEE_CAP:
+        raise ActionError(f"that booking's balance (£{balance:,.2f}) is more than £{cp.FEE_CAP:.2f}")
+    if a.get("last") and day < a["last"]:
+        raise ActionError(f"the date is before the last payment ({a['last']})")
+    return {"fee": f"{balance:.2f}", "received": round(float(a["received"]), 2),
+            "value": round(float(a.get("value") or 0), 2)}
 
 
 def _hand_validate(raw):
-    f = fields(raw, ("ref", "choice", "date"))
+    f = fields(raw, ("ref", "choice", "date", "amount"), required=("ref", "choice", "date"))
     if not REF_RE.fullmatch(f["ref"]):
         raise ActionError("unknown booking")
     if f["choice"] not in HAND_CHOICES:
         raise ActionError("unknown choice")
+    if f["choice"] == FEE_CHOICE and not f.get("amount"):
+        raise ActionError("amount is required")
+    if f["choice"] != FEE_CHOICE and "amount" in f:
+        raise ActionError("an amount goes only with short by transfer fees")
     day = iso_date(f["date"], today(), HAND_BACK_DAYS)
     # check_payments.py --owner writes only to <private dir>/bookings.csv (it refuses LCS_BOOKINGS_CSV): the
     # ledger this preview reads must be that same file
@@ -564,11 +620,23 @@ def _hand_validate(raw):
     if row is None:
         raise ActionError("unknown booking")
     words, phrase = HAND_CHOICES[f["choice"]]
-    return {"input": {"ref": f["ref"], "choice": f["choice"], "date": day}, "ref": f["ref"],
-            "words": words, "phrase": phrase.format(d=day), "first_name": data.dash.first_name(row.get("client_name"))}
+    cleaned = {"input": {"ref": f["ref"], "choice": f["choice"], "date": day}, "ref": f["ref"], "words": words,
+               "first_name": data.dash.first_name(row.get("client_name"))}
+    if f["choice"] == FEE_CHOICE:
+        facts = _fee_facts(f["ref"], rows, f["amount"], day)
+        cleaned["input"]["amount"] = f["amount"]
+        cleaned.update(facts, phrase=phrase.format(a=facts["fee"], d=day))
+    else:
+        cleaned["phrase"] = phrase.format(d=day)
+    return cleaned
 
 
 def _hand_describe(c):
+    if c["input"]["choice"] == FEE_CHOICE:
+        return (f"Accept the shortfall on booking {c['ref']} ({c['first_name']}): £{c['received']:,.2f} received of "
+                f"£{c['value']:,.2f}, short by £{c['fee']} in transfer fees. The booking will read paid in full, and "
+                f"the £{c['fee']} is listed for Books as bank charges on the last payment. "
+                f"Adds \"{c['phrase']} (owner)\" to its ledger notes.")
     return (f"Resolve the hand check on booking {c['ref']} ({c['first_name']}): {c['words']}. "
             f"Adds \"{c['phrase']} (owner)\" to its ledger notes.")
 
@@ -681,10 +749,112 @@ def _refresh_validate(raw):
     return {"input": {}}
 
 
-REFRESH = ScriptAction(
+@dataclasses.dataclass(frozen=True)
+class RefreshAction(ScriptAction):
+    """The dashboard script, then `then` (a fixed repo-relative script and its fixed arguments), one after the
+    other whatever the first's result. The exit code is the first that isn't 0 (None for a timeout)."""
+    then: tuple = ()
+
+    def then_argv(self):
+        return [sys.executable, str(Path(REPO) / self.then[0]), *self.then[1:]]
+
+    def command(self, cleaned):
+        return (f"{shlex.join(self.shown(cleaned))}, then "
+                f"{shlex.join([PY_SHOWN, *self.then])}")
+
+    def execute_script(self, cleaned):
+        env = clean_env()
+        runs = [run_argv(self.argv(cleaned), self.timeout, env=env), run_argv(self.then_argv(), self.timeout, env=env)]
+        if self.then[1:] == ("books",):  # the strip's Books chip says "failed" when this sync failed
+            data.sources.record_outcome("books", runs[1][0] == 0)
+        code = next((c for c, _ in runs if c != 0), 0)
+        return code, b"\n".join(out.rstrip(b"\n") for _, out in runs)
+
+
+REFRESH = RefreshAction(
     "refresh-data", DASHBOARD, _refresh_validate,
-    lambda c: "Refresh the data now: rebuild the static dashboard (read-only) and clear the app's ten-minute bank cache.",
-    lambda c: [], passkey=False, timeout=180, clears_cache=True, title="Refresh data now", lock="refresh")
+    lambda c: ("Refresh the data now: rebuild the static dashboard and the Books cache (both read-only) and clear the "
+               "app's ten-minute bank cache."),
+    lambda c: [], passkey=False, timeout=300, clears_cache=True, title="Refresh data now", lock="refresh",
+    then=(CC_SYNC, "books"))
+
+
+# ---------------------------------------------------------------- sync now (the strip's chips, no passkey)
+
+
+SYNC_SOURCES = {  # source -> the fixed cc_sync.py subcommand, or None for the bank (no script: a cache to drop)
+    "bank": None,
+    "books": "books",
+    "marketing": "marketing",
+}
+SYNC_ELSEWHERE = {"drafts", "diary", "ads"}  # written by the scheduled runs only: their chips link to Health
+SYNC_WORDS = {
+    "bank": ("Read the bank afresh: clear the app's ten-minute bank cache, so the next page that shows the bank "
+             "reads Starling (read-only) again."),
+    "books": "Sync the Books cache now: read Zoho Books through the read-only client and rewrite books.json.",
+    "marketing": ("Sync the marketing cache now: read Google Ads, Search Console and GA4 through the Monday "
+                  "review's read-only functions and rewrite marketing.json."),
+}
+
+
+def _sync_validate(raw):
+    f = fields(raw, ("source",))
+    source = f["source"]
+    if source in SYNC_ELSEWHERE:
+        raise ActionError("that source comes from a scheduled run, not the app: see Health")
+    if source not in SYNC_SOURCES:
+        raise ActionError("unknown source")
+    return {"source": source, "input": {"source": source}}
+
+
+@dataclasses.dataclass(frozen=True)
+class SyncAction(ScriptAction):
+    """`sync-now`: one fixed source. books and marketing run `cc_sync.py <source>` (read-only, the refresh job's
+    own commands); bank runs nothing and drops the app's bank cache (as POST /refresh does). Each run notes its
+    outcome for the strip (sources.record_outcome). Under the refresh lock, so it waits REFRESH_WAIT seconds for
+    a background pass, like refresh-data."""
+
+    def argv(self, cleaned):
+        if SYNC_SOURCES[cleaned["source"]] is None:
+            raise ActionError("the bank sync runs no script")
+        return [sys.executable, str(Path(REPO) / self.script), *self.args(cleaned)]
+
+    def shown(self, cleaned):
+        return [PY_SHOWN, self.script, *self.args(cleaned)]
+
+    def command(self, cleaned):
+        return None if SYNC_SOURCES[cleaned["source"]] is None else shlex.join(self.shown(cleaned))
+
+    def preview(self, cleaned):
+        words = SYNC_WORDS[cleaned["source"]]
+        cmd = self.command(cleaned)
+        return f"{words}\nRuns: {cmd}" if cmd else words
+
+    def perform(self, cleaned, action, user, passkey_id=None):
+        source = cleaned["source"]
+        if SYNC_SOURCES[source] is None:
+            try:
+                if BANK_SOURCE is not None:
+                    BANK_SOURCE.clear_caches()
+            except Exception as e:
+                audit(action, user, f"failed: {type(e).__name__}", input=public(cleaned))
+                raise
+            warning = audit_after_run(action, user, "ok", input=public(cleaned))
+            return Result(True, None, join_warning(warning, "bank cache cleared: the next page reads Starling"),
+                          action.summary)
+        result = ScriptAction.perform(self, cleaned, action, user, passkey_id)
+        data.sources.record_outcome(source, result.ok)
+        return result
+
+
+def _sync_args(c):
+    """The fixed cc_sync.py subcommand for the source (none for the bank)."""
+    sub = SYNC_SOURCES[c["source"]]
+    return [sub] if sub else []
+
+
+SYNC_NOW = SyncAction("sync-now", CC_SYNC, _sync_validate, lambda c: SYNC_WORDS[c["source"]], _sync_args,
+                      passkey=False, timeout=300, title="Sync now", lock="refresh")
 
 
 # ---------------------------------------------------------------- Google Ads change sets
@@ -788,11 +958,54 @@ def ensure_mirror():
     with os.fdopen(fd, "w", encoding="ascii") as f:
         f.write(MIRROR_CONFIG)
     os.replace(tmp, cfg)
-    for rel in ("objects/info/alternates", "objects/info/http-alternates", "info/grafts", "info/attributes",
-                "shallow"):
+    for rel in MIRROR_DROPPED:
         with contextlib.suppress(FileNotFoundError, IsADirectoryError):
             os.unlink(d / rel)
     return d
+
+
+MIRROR_DROPPED = ("objects/info/alternates", "objects/info/http-alternates", "info/grafts", "info/attributes", "shallow")
+
+
+def mirror_intact():
+    """True when the mirror is exactly as ensure_mirror() leaves it, checked without writing anything (the pages'
+    read of the proposals): a real folder of this user's, mode 700, holding objects/, its config a regular file
+    whose bytes are MIRROR_CONFIG, and none of the files ensure_mirror() drops. False otherwise (missing, never
+    set up, or changed since: git isn't run in it until ensure_mirror() has put it back)."""
+    d = mirror_dir()
+    try:
+        st = os.lstat(d)
+        if not stat.S_ISDIR(st.st_mode) or st.st_uid != os.getuid() or stat.S_IMODE(st.st_mode) != 0o700:
+            return False
+        if not stat.S_ISDIR(os.lstat(d / "objects").st_mode):
+            return False
+        fd = os.open(d / "config", os.O_RDONLY | os.O_NOFOLLOW)
+        try:
+            cst = os.fstat(fd)
+            if not stat.S_ISREG(cst.st_mode) or cst.st_size > 4096:
+                return False
+            if os.read(fd, 4097) != MIRROR_CONFIG.encode("ascii"):
+                return False
+        finally:
+            os.close(fd)
+    except OSError:
+        return False
+    return not any(os.path.lexists(d / rel) for rel in MIRROR_DROPPED)
+
+
+def tidy_mirror():
+    """The refresh job's pass over the mirror: ensure_mirror() when it exists (never creating one: the first Ads
+    check does), under the action lock without waiting (an Ads run in progress tidies it itself). Returns
+    "tidied", "none" (no mirror yet) or "busy"."""
+    if not os.path.lexists(mirror_dir()):
+        return "none"
+    if not _RUN_LOCK.acquire(blocking=False):
+        return "busy"
+    try:
+        ensure_mirror()
+    finally:
+        _RUN_LOCK.release()
+    return "tidied"
 
 
 def fetch_args():
@@ -859,9 +1072,10 @@ def commit_facts(commit, rel, blob, fetch=True):
     if fetch:
         fetch_mirror()
     else:
-        if not (mirror_dir() / "objects").is_dir():
+        # a page (a GET) changes nothing: it reads the mirror only when it is exactly as ensure_mirror() left it
+        # (the refresh job and the Ads actions put it back); anything else waits for the owner's check
+        if not mirror_intact():
             raise NotFetched("not checked against GitHub yet")
-        ensure_mirror()
         if _git("rev-parse", "--verify", "--quiet", MAIN).returncode != 0:
             raise NotFetched("not checked against GitHub yet")
     if _git("cat-file", "-e", f"{commit}^{{commit}}").returncode != 0 or \
@@ -1250,9 +1464,6 @@ def run_folder(commit, rel, blob):
         shutil.rmtree(root, ignore_errors=True)
 
 
-archived = run_folder  # the name the earlier review's proofs of concept call
-
-
 @dataclasses.dataclass(frozen=True)
 class ProposalScriptAction(ScriptAction):
     """Runs the proposal's own script from its pinned commit on GitHub's main, written out of the app's mirror
@@ -1317,28 +1528,17 @@ def books_approval_path():
     return auth.config_dir() / "approvals" / f"books-import-{BOOKS_YEAR}.json"
 
 
-def books_status():
-    """{"dry_run": bool, "approved_at": str or None, "dry_run_sha256": str or None} for Today. The sha256 is
-    the approval record's own fingerprint of the dry run (not the dry run's content), so Today's handoff
-    prompt can name it without carrying any record's own text (client names, amounts, refs)."""
-    approved = sha = None
-    try:
-        with open(books_approval_path(), encoding="utf-8") as f:
-            record = json.load(f)
-        approved = str(record.get("approved_at") or "") or None
-        sha = str(record.get("dry_run_sha256") or "") or None
-    except (OSError, ValueError, AttributeError):
-        approved = sha = None
-    path = books_dry_run()
-    return {"dry_run": path.is_file() and not path.is_symlink(), "approved_at": approved, "dry_run_sha256": sha}
+BOOKS_STATES = ("none", "waiting", "approved", "stale", "imported")
+BOOKS_DRY_RUN_MAX = 5 * 1024 * 1024
 
 
-def _books_validate(raw):
-    fields(raw, ())
+def _books_read_dry_run():
+    """(the dry run's bytes, its entries) or ActionError: missing, a symlink, too big or not JSON. The entries
+    are the top-level list, or the first list value of a top-level object."""
     path = books_dry_run()
     if path.is_symlink() or not path.is_file():
         raise ActionError("no dry run at ~/lcs-private/books-import-2026.json")
-    if path.stat().st_size > 5 * 1024 * 1024:
+    if path.stat().st_size > BOOKS_DRY_RUN_MAX:
         raise ActionError("the dry run is too big")
     blob = path.read_bytes()
     try:
@@ -1352,6 +1552,76 @@ def _books_validate(raw):
         items = lists[0] if lists else []
     else:
         items = []
+    return blob, items
+
+
+def _books_record():
+    """The approval record (a dict), or None when there is none or it can't be read."""
+    try:
+        with open(books_approval_path(), encoding="utf-8") as f:
+            record = json.load(f)
+    except (OSError, ValueError):
+        return None
+    return record if isinstance(record, dict) else None
+
+
+def _books_all_in_books(items):
+    """True when every dry-run entry has a ref and each one is an invoice number in the Books cache
+    (check_payments.norm_ref on both); False when the cache is missing or unreadable, or an entry has no ref."""
+    refs = [_books_ref(i) for i in items]
+    if not refs or "?" in refs:
+        return False
+    try:
+        from . import books_cache  # imported late: it reads the cache folder at call time
+        cache = books_cache.books_cache()
+    except Exception:  # an unreadable cache decides nothing
+        return False
+    if not cache:
+        return False
+    numbers = {cp.norm_ref(str(i.get("number") or "")) for i in cache["invoices"] if isinstance(i, dict)}
+    numbers.discard("")
+    return all(cp.norm_ref(r) in numbers for r in refs)
+
+
+def books_status():
+    """For Today: {"state", "dry_run", "approved_at", "dry_run_sha256", "imported_at"}.
+
+    state is one of BOOKS_STATES:
+    - "none": no dry run and no approval;
+    - "waiting": a dry run and no approval (Today asks for it);
+    - "approved": the approval's sha256 matches the dry run as it is now, and the import isn't done;
+    - "stale": approved, but the dry run has changed (or gone) since;
+    - "imported": the approval record carries imported_at (Mark the Books import done), or every ref in the dry
+      run is already an invoice number in the Books cache.
+    The sha256 is the approval record's own fingerprint of the dry run (not the dry run's content), so Today's
+    handoff prompt can name it without carrying any record's own text (client names, amounts, refs)."""
+    record = _books_record()
+    approved = sha = imported = None
+    if record is not None:
+        approved = str(record.get("approved_at") or "") or None
+        sha = str(record.get("dry_run_sha256") or "") or None
+        imported = str(record.get("imported_at") or "") or None
+    try:
+        blob, items = _books_read_dry_run()
+        current = hashlib.sha256(blob).hexdigest()
+    except (ActionError, OSError):
+        blob = items = current = None
+    path = books_dry_run()
+    if approved and (imported or record.get("status") == "imported"):
+        state = "imported"
+    elif approved and items is not None and _books_all_in_books(items):
+        state = "imported"
+    elif approved:
+        state = "approved" if current is not None and current == sha else "stale"
+    else:
+        state = "waiting" if path.is_file() and not path.is_symlink() else "none"
+    return {"state": state, "dry_run": path.is_file() and not path.is_symlink(), "approved_at": approved,
+            "dry_run_sha256": sha, "imported_at": imported}
+
+
+def _books_validate(raw):
+    fields(raw, ())
+    blob, items = _books_read_dry_run()
     if books_approval_path().exists():
         raise ActionError("already approved")
     refs = [_books_ref(i) for i in items]
@@ -1430,6 +1700,40 @@ BOOKS_IMPORT = LocalAction("approve-books-import", _books_validate, _books_previ
                            title="Approve the Books import")
 
 
+def _books_done_validate(raw):
+    fields(raw, ())
+    status = books_status()
+    if status["state"] == "imported":
+        raise ActionError("the Books import is already marked done")
+    if status["state"] not in ("approved", "stale"):
+        raise ActionError("the Books import isn't approved yet")
+    return {"input": {}, "approved_at": status["approved_at"], "sha256": status["dry_run_sha256"] or "",
+            "stale": status["state"] == "stale"}
+
+
+def _books_done_preview(c):
+    moved = (" The dry run has changed since it was approved: mark it done only if the import really ran."
+             if c["stale"] else "")
+    return (f"Mark the {BOOKS_YEAR} Books import done: the draft invoices it made are in Books. Adds imported_at and "
+            f"status \"imported\" to the approval record (approved {str(c['approved_at'])[:10]}, sha256 "
+            f"{c['sha256'][:16]}), so Today stops offering the handoff prompt. Nothing is sent to Books.{moved}\n"
+            f"Writes: ~/lcs-private/command-centre/approvals/books-import-{BOOKS_YEAR}.json")
+
+
+def _books_done_run(c, who):
+    record = _books_record()
+    if record is None or str(record.get("approved_at") or "") != c["approved_at"]:
+        raise ActionError("the approval record changed; reload Today")
+    record = dict(record, imported_at=datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds"),
+                  status="imported")
+    write_private(books_approval_path(), record)
+    return "Books import marked done"
+
+
+BOOKS_IMPORT_DONE = LocalAction("books-import-done", _books_done_validate, _books_done_preview, _books_done_run,
+                                title="Mark the Books import done")
+
+
 # ---------------------------------------------------------------- todo-tick (phase 2, no passkey)
 
 
@@ -1458,7 +1762,7 @@ def _todo_run(c, who=None):
 
 TODO_TICK = LocalAction("todo-tick", _todo_validate, _todo_preview, _todo_run, passkey=False, title="Tick a to-do")
 REGISTRY = {a.name: a for a in (TODO_TICK, RESOLVE_HAND_CHECK, SINGER_CONFIRM, SINGER_SETTLED, SINGER_WITHDRAWN,
-                                REFRESH, ADS_VALIDATE, ADS_APPLY, BOOKS_IMPORT)}
+                                REFRESH, SYNC_NOW, ADS_VALIDATE, ADS_APPLY, BOOKS_IMPORT, BOOKS_IMPORT_DONE)}
 ROUTED = {n for n in REGISTRY if n != "todo-tick"}  # the JSON routes; the tick keeps its own form route
 
 

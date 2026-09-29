@@ -6,11 +6,12 @@ Alma Consort Starling account, READ-ONLY (see lcs_money.StarlingReadOnly).
     .venv/bin/python scripts/bookings/check_payments.py --apply          # also update ledger notes
     .venv/bin/python scripts/bookings/check_payments.py --apply --json   # machine-readable, for the assistant;
         each item's "action" is receipt | deposit_reminder | balance_reminder | hand_check | none (action_for),
-        and "record_in_books" lists its confident payments [[date, amount]] for the Books invoice (BOOKS_STATES)
+        and "record_in_books" lists its confident payments [[date, amount, bank charges]] for the Books invoice
+        (BOOKS_STATES; the bank charges are 0.0 except on the last payment of a booking closed by an accepted fee)
     .venv/bin/python scripts/bookings/check_payments.py --reminded 2111 [--kind deposit|balance|receipt]
     .venv/bin/python scripts/bookings/check_payments.py --note 2111 "paid per client email 2026-09-28"
         (one line, at most 120 characters, no ';'; refuses the scripts' own phrases and the owner's hand-written
-        ones: paid in full, deposit seen … (Starling), reminder/receipt drafted, deposit kept, refunded,
+        ones: paid in full, short by fees … accepted, deposit seen … (Starling), reminder/receipt drafted, deposit kept, refunded,
         payment checked, reinstated and the like, review request …, and anything starting PENDING)
     … --note 2111 "paid in full 2026-09-28" --owner
         (the Command Centre only, after the owner's passkey: allows the owner's phrases and records "(owner)";
@@ -42,7 +43,12 @@ differs", on each such booking, also unconfirmed. A payment with no reference fr
 cancelled booking's client (surname, inside its window) is "name, cancelled booking"
 before any amount-only match, so it never lands on another client's live booking.
 
-States (assess): PAID_IN_FULL, DEPOSIT_SEEN, BALANCE_DUE (from 3 days before the
+States (assess): PAID_IN_FULL (the confident payments cover the booking's value, or fall short of it by no more
+than a shortfall the owner accepted as transfer fees: "short by fees £12.40 accepted YYYY-MM-DD", at most FEE_CAP
+(£40) and dated no later than today, written only through the Command Centre with --owner; "fees" is the part of
+it used, "balance" is then 0, and the fee rides on the last payment in "record_in_books" as Books' bank charges.
+That note closes the booking like "paid in full YYYY-MM-DD": collect() reports it once more, as PAID_IN_FULL,
+and --apply then adds "paid in full" dated the later of the last payment and the fee note), DEPOSIT_SEEN, BALANCE_DUE (from 3 days before the
 event), AWAITING_DEPOSIT (until the deposit falls due: 7 days after the invoice,
 or 3 days before a short-notice event, never the invoice day), DEPOSIT_OVERDUE
 (future events only), NOTED_PAID (the owner's notes say paid, or an earlier run's
@@ -70,7 +76,7 @@ has dealt with it, "deposit kept YYYY-MM-DD", "refunded YYYY-MM-DD" or "payment
 (refund, deposit) checked YYYY-MM-DD" in the notes limits this to payments dated
 after that day, so with none the row drops off the hand check; a date after today
 silences nothing), PAYMENT_AFTER_CLOSE (a payment dated
-after a "paid in full YYYY-MM-DD" note; received_since leaves it out) and ARRANGED
+after a "paid in full YYYY-MM-DD" or counting "short by fees … accepted YYYY-MM-DD" note; received_since leaves it out) and ARRANGED
 (the notes say the balance will come in cash or by cheque: "balance to be paid in
 cash", "will pay balance in cash", "balance payable in cash on the day", "rest will
 be paid in cash", "cheque on the day"; or a future-tense note of the balance/rest/
@@ -97,27 +103,26 @@ it writes "deposit seen … (Starling)". Output shows invoice numbers and amount
 
 import argparse
 import datetime
-import hashlib
-import hmac
 import json
 import math
-import os
 import re
-import select
-import stat
 import sys
-import time
 import urllib.error
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+import lcs_events  # noqa: E402
 import lcs_money as lm  # noqa: E402
+import lcs_owner  # noqa: E402
 
 LEDGER = lm.LEDGER
 MARK_TEXT = {"deposit": "reminder drafted", "balance": "balance reminder drafted", "receipt": "receipt drafted"}
 CONFIDENT = ("reference", "name and amount")
 RECEIPT_DAYS = 14
 SHORT_NOTICE_DAYS = 10
+# The most a booking may be short by transfer fees and still read paid in full, once the owner accepts it
+# ("short by fees £12.40 accepted 2026-09-28", written only through the Command Centre; owner decision, 28 Sep 2026).
+FEE_CAP = lm.FEE_CAP  # £40, owner decision, 29 Sep 2026; defined in lcs_money so the state log's schema shares it
 # A thank-you is only ever drafted in these states; notes are never rewritten in the others.
 RECEIPT_STATES = {"PAID_IN_FULL", "DEPOSIT_SEEN", "BALANCE_DUE", "NOTED_PAID"}
 # States whose confident payments the assistant records against the Books invoice (owner decision, 28 Sep 2026).
@@ -130,6 +135,8 @@ STARLING_DOWN = (urllib.error.URLError, TimeoutError, OSError, json.JSONDecodeEr
 AUTO_NOTE = re.compile(r"deposit seen \d{4}-\d{2}-\d{2} \(Starling\)", re.I)
 MARK_NOTE = re.compile(r"\b(balance )?reminder drafted( \d{4}-\d{2}-\d{2})?|\breceipt drafted( \d{4}-\d{2}-\d{2})?", re.I)
 FULL_NOTE = re.compile(r"paid in full \d{4}-\d{2}-\d{2}", re.I)
+# The owner's acceptance of a shortfall lost to transfer fees: it closes the booking like "paid in full" (fee_notes)
+FEES_NOTE = re.compile(r"short by fees £(\d+(?:\.\d{1,2})?) accepted (\d{4}-\d{2}-\d{2})", re.I)
 NOT_YET_SEEN = re.compile(r"\s*[,;]?\s*\bdeposit not yet seen\b[^;,]*", re.I)  # dropped once the deposit is seen
 # Negated, conditional or future phrases, removed before looking for a paid word. A bare negation only
 # reaches a paid word across a few listed filler words ("no payment received", "not yet been paid"), so
@@ -276,9 +283,23 @@ def words_before(notes, pos, n=3):
     return re.findall(r"[a-z'’]+", clause.lower())[-n:]
 
 
-def is_cancelled(r):
-    """True when the notes' latest cancellation is not undone by a later resumed phrase."""
-    notes = r.get("notes") or ""
+def facts_for(r, today=None, facts=None):
+    """The recorded facts (lcs_events.Facts) for one ledger row: `facts` itself when it is a Facts (tests pass one),
+    facts[ref] when it is a mapping, else the state log's (lcs_events.booking_facts, cached per process). A row with
+    no ref, or no log, has none, and every family is then read from the notes as before (structured-state design,
+    precedence rule 1)."""
+    if isinstance(facts, lcs_events.Facts):
+        return facts
+    ref = (r.get("booking_ref") or "").strip()
+    if facts is not None:
+        return facts.get(ref) or lcs_events.Facts("booking")
+    if not ref:
+        return lcs_events.Facts("booking")
+    return lcs_events.booking_facts(ref, today or lm.today())
+
+
+def last_cancel(notes):
+    """Where the notes' latest counting cancellation phrase starts, or -1."""
     last = -1
     for m in CANCEL_WORD.finditer(notes):
         if not IF_WORDS & set(words_before(notes, m.start())):
@@ -286,9 +307,12 @@ def is_cancelled(r):
     for m in CANCELLING.finditer(notes):
         if not MAYBE_WORDS & set(words_before(notes, m.start())):
             last = max(last, m.start())
-    if last < 0:
-        return False
-    for m in RESUMED.finditer(notes, last):
+    return last
+
+
+def resumed_after(notes, start):
+    """True when an explicit, undoubted reversal ("reinstated", "going ahead after all") comes at or after start."""
+    for m in RESUMED.finditer(notes, start):
         before = words_before(notes, m.start(), 4)
         if DOUBT_WORDS & set(before) or any(w.endswith(("n't", "n’t")) for w in before):
             continue
@@ -297,8 +321,20 @@ def is_cancelled(r):
         after = re.findall(r"[a-z'’]+", notes[m.end():].lower())[:3]
         if ELSEWHERE_WORDS & set(after):
             continue
-        return False
-    return True
+        return True
+    return False
+
+
+def notes_cancelled(notes):
+    """True when the notes' latest cancellation is not undone by a later resumed phrase."""
+    last = last_cancel(notes)
+    return last >= 0 and not resumed_after(notes, last)
+
+
+def is_cancelled(r, facts=None):
+    """The cancellation family: the recorded cancelled / reinstated facts when there are any, else the notes."""
+    f = facts_for(r, None, facts)
+    return f.cancelled if f.has("cancellation") else notes_cancelled(r.get("notes") or "")
 
 
 # "deposit kept 2026-09-15", "refunded 2026-09-20", "payment checked 2026-09-28" on a cancelled row: payments up to
@@ -310,8 +346,8 @@ SETTLED_NOTE = re.compile(
 # The pipeline's own note on a ledger row (pipeline.py reviewed / review-skipped).
 REVIEW_NOTE = re.compile(r"review request (drafted|skipped)", re.I)
 # Phrases --note never writes: the scripts' own notes, and the ones the owner writes by hand in the ledger
-# (paid in full, deposit kept / refunded / checked, reinstated), which close, settle or reopen a booking.
-RESERVED_NOTES = (FULL_NOTE, AUTO_NOTE, MARK_NOTE, SETTLED_NOTE, RESUMED, REVIEW_NOTE)
+# (paid in full, short by fees, deposit kept / refunded / checked, reinstated), which close, settle or reopen a booking.
+RESERVED_NOTES = (FULL_NOTE, FEES_NOTE, AUTO_NOTE, MARK_NOTE, SETTLED_NOTE, RESUMED, REVIEW_NOTE)
 
 
 def reserved_note(text):
@@ -319,15 +355,63 @@ def reserved_note(text):
     return is_pending(text) or any(p.search(text) for p in RESERVED_NOTES)
 
 
-def cancel_settled_on(r, today):
+def cancel_settled_on(r, today, facts=None):
+    """The cancel-settlement family: the latest deposit kept / refunded / payment checked date up to today."""
+    f = facts_for(r, today, facts)
+    if f.has("cancel settlement"):
+        return f.settled_on
     days = [date_or_none(m.group(1)) for m in SETTLED_NOTE.finditer(r.get("notes") or "")]
     return max((d for d in days if d and d <= today), default=None)
 
 
-def closed_on(r):
-    """The latest "paid in full YYYY-MM-DD" date in the notes, or None: the booking is closed from then."""
+def fee_notes(r, today=None, facts=None):
+    """[(date, amount)] of the owner's "short by fees £X accepted YYYY-MM-DD" notes that count, in note order: more
+    than £0 and at most FEE_CAP, dated no later than today (default lm.today()). The others are ignored. With
+    recorded close facts, the live fees-accepted facts instead (the schema holds them to the cap; later days are
+    left out)."""
+    today = today or lm.today()
+    f = facts_for(r, today, facts)
+    if f.has("close"):
+        return f.fees
+    out = []
+    for m in FEES_NOTE.finditer(r.get("notes") or ""):
+        day, amount = date_or_none(m.group(2)), float(m.group(1))
+        if day and day <= today and 0 < amount <= FEE_CAP:
+            out.append((day, amount))
+    return out
+
+
+def fees_accepted(r, today, facts=None):
+    """The amount of the latest fee note that counts (fee_notes; by date, then the last written), or 0.0."""
+    notes = fee_notes(r, today, facts)
+    return max(enumerate(notes), key=lambda n: (n[1][0], n[0]))[1][1] if notes else 0.0
+
+
+def fee_pending(r, today=None, facts=None):
+    """A booking closed by a fee note that no run has marked "paid in full" yet: collect() still reports it once, so
+    the daily pass records the last payment and the fee in Books, and --apply then writes the "paid in full" note."""
+    f = facts_for(r, today, facts)
+    full = f.paid_full_on if f.has("close") else FULL_NOTE.search(r.get("notes") or "")
+    return not is_cancelled(r, f) and not full and bool(fee_notes(r, today, f))
+
+
+def closed_on(r, today=None, facts=None):
+    """The close family: the latest "paid in full YYYY-MM-DD" or counting "short by fees £X accepted YYYY-MM-DD"
+    date (from the recorded facts when there are any, else the notes), or None: the booking is closed from then."""
+    f = facts_for(r, today, facts)
+    if f.has("close"):
+        return f.closed_on
     days = [date_or_none(m.group(0)[-10:]) for m in FULL_NOTE.finditer(r.get("notes") or "")]
+    days += [d for d, _ in fee_notes(r, today, f)]
     return max((d for d in days if d), default=None)
+
+
+def is_closed(r, today=None, facts=None):
+    """Closed for chasing: a close fact, or else "paid in full YYYY-MM-DD" anywhere or a counting fee note."""
+    f = facts_for(r, today, facts)
+    if f.has("close"):
+        return f.closed_on is not None
+    return bool(FULL_NOTE.search(r.get("notes") or "") or fee_notes(r, today, f))
 
 
 def is_pending(notes):
@@ -352,7 +436,7 @@ def by_reference(keys, by_key, payer, amount, rows, when, today):
     refs = sorted({r["booking_ref"] for r in named})
     if len(refs) > 1:
         return refs, "reference naming several bookings"
-    others = sorted({r["booking_ref"] for r in open_rows(rows) if r["booking_ref"] != refs[0] and payer_is(r, payer)
+    others = sorted({r["booking_ref"] for r in open_rows(rows, today) if r["booking_ref"] != refs[0] and payer_is(r, payer)
                      and in_window(r, when, today) and fits_amount(amount, r)})
     if others and not any(payer_is(r, payer) for r in named):
         return refs + others, "reference, but the payer's name fits another booking"
@@ -367,7 +451,7 @@ def match(rows, items, today):
     by_key = {}
     for r in rows:
         by_key.setdefault(norm_ref(r["booking_ref"]), []).append(r)
-    live = open_rows(rows)
+    live = open_rows(rows, today)
     for it in items:
         amount = (it.get("amount") or {}).get("minorUnits", 0) / 100
         when = lm.local_date(it.get("transactionTime"))
@@ -472,8 +556,16 @@ def deposit_due_date(invoice, event):
     return due
 
 
-def assess(r, paid, today):
+def noted_facts(f):
+    """(noted part, noted full) from the recorded facts: the noted-paid facts, and a recorded "paid in full" close,
+    which the notes' own "paid in full YYYY-MM-DD" says too (its "paid" is a paid word)."""
+    full = bool(f.has("close") and f.paid_full_on)
+    return f.noted_part or full, f.noted_full or full
+
+
+def assess(r, paid, today, facts=None):
     value, notes = money(r), r.get("notes") or ""
+    f = facts_for(r, today, facts)
     sure = [p for p in paid if p[2] in CONFIDENT]
     maybe = [p for p in paid if p[2] not in CONFIDENT]
     total = round(sum(a for _, a, _ in sure), 2)
@@ -483,17 +575,25 @@ def assess(r, paid, today):
     event = date_or_none(event_raw)
     deposit_due = deposit_due_date(invoice, event)
     arranged, rest = arranged_notes(notes)  # "rest will be paid in cash" is not a note of payment
+    if f.has("arrangement"):
+        arranged = f.arranged
     own = hand_notes(rest)
     noted_hand = bool(PAID_WORD.search(own))
-    noted_auto = bool(AUTO_NOTE.search(notes))  # the script saw a deposit on an earlier run
     noted_full = full_paid(own, value)
+    if f.has("noted paid"):
+        noted_hand, noted_full = f.noted_part, f.noted_full
+    if f.has("close") and f.paid_full_on:  # a recorded "paid in full" reads as the notes' own phrase does: paid
+        noted_hand = noted_full = True
+    noted_auto = bool(AUTO_NOTE.search(notes)) or f.deposit_seen  # the script saw a deposit on an earlier run (union)
     upcoming = event is None or event >= today
-    close = closed_on(r)
+    close = closed_on(r, today, f)
+    fees = fees_accepted(r, today, f)  # a shortfall the owner accepted as transfer fees ("short by fees £X accepted …")
+    fee_day = max((d for d, _ in fee_notes(r, today, f)), default=None)
     # an unconfirmed payment after the first confident one, or the size of what is left, may be the balance
     possible_balance = [p for p in maybe if first and (p[0] >= first or abs(p[1] - (value - total)) < 0.01)]
     flagged = []  # payments on a cancelled or closed booking: never chased or thanked, always a hand check
-    if is_cancelled(r):
-        settled = cancel_settled_on(r, today)  # "deposit kept YYYY-MM-DD": payments up to then are dealt with
+    if is_cancelled(r, f):
+        settled = cancel_settled_on(r, today, f)  # "deposit kept YYYY-MM-DD": payments up to then are dealt with
         flagged = [p for p in paid if in_window(r, p[0], today) and not (settled and p[0] <= settled.isoformat())]
         state = "PAYMENT_ON_CANCELLED" if flagged else "CANCELLED"
     elif close and any(d > close.isoformat() for d, _, _ in paid):
@@ -501,7 +601,7 @@ def assess(r, paid, today):
         state = "PAYMENT_AFTER_CLOSE"
     elif not (math.isfinite(value) and value > 0) or invoice is None or (event_raw and event is None):
         state = "CHECK_VALUE"
-    elif total + 0.01 >= value:
+    elif sure and total + fees + 0.01 >= value:  # a fee note never pays a booking with nothing confident in the bank
         state = "PAID_IN_FULL"
     elif sure:
         if noted_full:
@@ -528,15 +628,25 @@ def assess(r, paid, today):
         state = "CHECK_PAYMENT"
     else:
         state = "DEPOSIT_OVERDUE" if today > deposit_due else "AWAITING_DEPOSIT"
-    reminded = {"deposit": bool(re.search(r"(?<!balance )reminder drafted", notes, re.I)),
-                "balance": bool(re.search(r"balance reminder drafted", notes, re.I)),
-                "receipt": bool(re.search(r"receipt drafted", notes, re.I))}
+    marked = f.reminded  # markers are a union: a recorded reminder or receipt counts as the note does
+    reminded = {"deposit": bool(re.search(r"(?<!balance )reminder drafted", notes, re.I)) or marked["deposit"],
+                "balance": bool(re.search(r"balance reminder drafted", notes, re.I)) or marked["balance"],
+                "receipt": bool(re.search(r"receipt drafted", notes, re.I)) or marked["receipt"]}
+    hold = held(r, today, f)  # notes and recorded facts disagree: the owner resolves it, nothing acts meanwhile
+    # the part of the accepted fee that closes the gap: only in PAID_IN_FULL, never more than what is still owed
+    fees_used = round(min(fees, max(value - total, 0)), 2) if state == "PAID_IN_FULL" else 0.0
+    books = [[d, a, 0.0] for d, a, _ in sorted(sure)]  # [date, amount, bank charges]
+    if books and fees_used:
+        books[-1][2] = fees_used  # the fee goes on the last confident payment, as Books' bank charges
     first_day = date_or_none(first)
     just_received = bool(first_day and datetime.timedelta(0) <= today - first_day <= datetime.timedelta(days=RECEIPT_DAYS)
-                       and not reminded["receipt"] and upcoming and state in RECEIPT_STATES)
+                       and not reminded["receipt"] and upcoming and state in RECEIPT_STATES and not hold)
     out = {
         "ref": r["booking_ref"], "state": state, "received": total, "value": value,
-        "balance": round(max(value - total, 0), 2), "first": first,
+        "balance": round(max(value - total - fees_used, 0), 2), "first": first,
+        "last": max((d for d, _, _ in sure), default=None),
+        # the accepted fee that makes it PAID_IN_FULL (0.0 otherwise), and the date of the latest counting fee note
+        "fees": fees_used, "fees_on": fee_day.isoformat() if fees_used and fee_day else None,
         "how": sure[0][2] if sure else (maybe[0][2] if state == "CHECK_PAYMENT" else ""),
         "unconfirmed": [[d, a] for d, a, _ in maybe],
         "possible_balance": [[d, a] for d, a, _ in possible_balance],
@@ -548,12 +658,14 @@ def assess(r, paid, today):
         "short_notice": bool(invoice and event and (event - invoice).days <= SHORT_NOTICE_DAYS),
         "reminded": reminded,
         "just_received": just_received,  # draft a thank-you (action "receipt"); the one key for it
-        # confident payments to record against the Books invoice: [[date, amount]], oldest first; empty unless
-        # the state is settled enough and the confident payments don't exceed the booking's value
-        "record_in_books": ([[d, a] for d, a, _ in sorted(sure)]
-                            if state in BOOKS_STATES and total <= value + 0.01 else []),
+        # confident payments to record against the Books invoice: [[date, amount, bank charges]], oldest first,
+        # the bank charges 0.0 except on the last one when an accepted fee closes the booking ("fees"); empty
+        # unless the state is settled enough and the confident payments don't exceed the booking's value
+        "record_in_books": books if state in BOOKS_STATES and total <= value + 0.01 and not hold else [],
     }
     out["action"] = action_for(out, today)
+    if hold:  # only when held, so an assessment with no recorded facts is exactly as before
+        out["held"], out["action"] = hold, "hand_check"
     return out
 
 
@@ -583,6 +695,13 @@ def action_for(a, today):
 
 
 def describe(a):
+    line = describe_state(a)
+    if a.get("held"):
+        line += f" · notes and recorded facts disagree: {', '.join(a['held'])} (check by hand)"
+    return line
+
+
+def describe_state(a):
     line = f"{a['ref']}: £{a['received']:,.2f} of £{a['value']:,.2f} received"
     if a["first"]:
         line += f" (first {a['first']}, matched by {a['how']})"
@@ -592,7 +711,7 @@ def describe(a):
     if a["state"] == "CHECK_PAYMENT" and a["received"] and a.get("possible_balance"):
         return line + f" · possible balance payment {listed('possible_balance')} (unconfirmed): confirm by hand"
     return line + {
-        "PAID_IN_FULL": " · PAID IN FULL",
+        "PAID_IN_FULL": " · PAID IN FULL" + (f" (£{a['fees']:,.2f} short by fees, accepted)" if a.get("fees") else ""),
         "DEPOSIT_SEEN": "",
         "AWAITING_DEPOSIT": " · awaiting deposit (not yet due)",
         "BALANCE_DUE": f" · BALANCE £{a['balance']:,.2f} DUE" + (" (reminder already drafted)" if a["reminded"]["balance"] else ""),
@@ -624,45 +743,108 @@ def updated_notes(notes, a, paid):
         rest = re.sub(r"^[\s,;]+", "", NOT_YET_SEEN.sub("", rest))  # the deposit has now been seen
         new = f"deposit seen {a['first']} (Starling)" + (f"; {rest}" if rest else "")
     if a["state"] == "PAID_IN_FULL" and sure and not FULL_NOTE.search(new):
-        new = (f"{new}; " if new.strip() else "") + f"paid in full {max(d for d, _, _ in sure)}"
+        # closed by an accepted fee: dated the later of the last payment and the fee note, so the two notes agree
+        # and the booking's close date (closed_on) doesn't move
+        day = max([d for d, _, _ in sure] + ([a["fees_on"]] if a.get("fees") and a.get("fees_on") else []))
+        new = (f"{new}; " if new.strip() else "") + f"paid in full {day}"
     return new
 
 
-def open_rows(rows):
-    return [r for r in rows if not is_cancelled(r) and not FULL_NOTE.search(r.get("notes") or "")]
+def open_rows(rows, today=None, facts=None):
+    """Rows neither cancelled nor closed ("paid in full YYYY-MM-DD", or a counting "short by fees" note, or their
+    recorded facts). `facts`: None (the log), or a mapping ref -> lcs_events.Facts."""
+    out = []
+    for r in rows:
+        f = facts_for(r, today, facts)
+        if not is_cancelled(r, f) and not is_closed(r, today, f):
+            out.append(r)
+    return out
+
+
+# --- recorded facts against the notes (structured-state design, precedence rules 2 and 4) ------------------------
+
+def clauses(notes):
+    """The notes' clauses as the writers append them ("; " between clauses), stripped, empty ones dropped."""
+    return [c.strip() for c in (notes or "").split(";") if c.strip()]
+
+
+def unclaimed(notes, claims):
+    """The notes' clauses that no recorded fact claims (lcs_events.note_hash), rejoined: hand edits and legacy
+    text."""
+    return "; ".join(c for c in clauses(notes) if lcs_events.note_hash(c) not in claims)
+
+
+def assertions(text, value, today):
+    """What this note text asserts, per family, read with today's patterns (or None where it says nothing):
+    cancellation True (cancelled) or False (reinstated); close, cancel settlement and arrangement True;
+    noted paid "part" or "full". Markers assert nothing: they are a union."""
+    last = last_cancel(text)
+    cancel = (not resumed_after(text, last)) if last >= 0 else (False if resumed_after(text, 0) else None)
+    bare = {"notes": text}  # no booking_ref: read from the text alone
+    arranged, rest = arranged_notes(text)
+    own = hand_notes(rest)
+    noted = "full" if full_paid(own, value) else "part" if PAID_WORD.search(own) else None
+    return {"cancellation": cancel,
+            "close": True if FULL_NOTE.search(text) or fee_notes(bare, today) else None,
+            "cancel settlement": True if cancel_settled_on(bare, today) else None,
+            "arrangement": True if arranged else None,
+            "noted paid": noted}
+
+
+def held(r, today=None, facts=None):
+    """The families whose recorded facts the notes' unclaimed clauses contradict, in a fixed order ([] when none):
+    the booking is then held for the owner (a hand check, no reminder, receipt, Books line, review or upload)."""
+    today = today or lm.today()
+    f = facts_for(r, today, facts)
+    if not f.families - {"markers"}:
+        return []
+    said = assertions(unclaimed(r.get("notes"), f.claims), money(r), today)
+    part, full = noted_facts(f)
+    differs = {"cancellation": lambda c: c != f.cancelled,
+               "close": lambda c: f.closed_on is None,
+               "cancel settlement": lambda c: f.settled_on is None,
+               "arrangement": lambda c: not f.arranged,
+               "noted paid": lambda c: not part or (c == "full" and not full)}
+    return [fam for fam, claim in said.items() if claim is not None and f.has(fam) and differs[fam](claim)]
 
 
 def collect(client, rows, today):
     """[(row, paid, assessment)] in ledger order for every open booking, and for every cancelled or closed
-    ("paid in full YYYY-MM-DD") booking with a payment that needs a hand check: on a cancelled booking,
-    any payment inside its window; on a closed one, any payment dated after the close. Payments are
-    matched against every row."""
-    live = open_rows(rows)
-    starts = [d - datetime.timedelta(days=3) for d in (date_or_none(r.get("invoice_date")) for r in live) if d]
+    ("paid in full YYYY-MM-DD", "short by fees … accepted YYYY-MM-DD") booking with a payment that needs a hand
+    check: on a cancelled booking, any payment inside its window; on a closed one, any payment dated after the
+    close. A booking closed by a fee note and not yet marked "paid in full" (fee_pending) is reported too while it
+    reads PAID_IN_FULL, so the daily pass records its fee in Books and --apply marks it. A cancelled or closed
+    booking whose notes and recorded facts disagree (held) is reported too, as a hand check. Payments are matched
+    against every row."""
+    live = open_rows(rows, today)
+    pending = [r for r in rows if fee_pending(r, today)]
+    starts = [d - datetime.timedelta(days=3) for d in (date_or_none(r.get("invoice_date")) for r in live + pending) if d]
     for r in rows:
         w = window(r, today)
         if is_cancelled(r) and w and w[1] >= today:  # a booking still ahead: its deposit may be in the bank
             starts.append(w[0])
-        elif not is_cancelled(r) and closed_on(r):  # a stray payment after the close lands now, not years ago
-            starts.append(max(closed_on(r), today - datetime.timedelta(days=31)))
-    if not starts:  # nothing with a readable invoice date: no feed to read, but still report each open row
-        return [(r, [], assess(r, [], today)) for r in live]
+        elif not is_cancelled(r) and closed_on(r, today):  # a stray payment after the close lands now, not years ago
+            starts.append(max(closed_on(r, today), today - datetime.timedelta(days=31)))
+    shut_held = [r for r in rows if r not in live and held(r, today)]
+    if not starts:  # nothing with a readable invoice date: no feed to read, but still report each open (or held) row
+        return [(r, [], assess(r, [], today)) for r in rows if r in live or r in shut_held]
     found = match(rows, client.feed(min(starts), today + datetime.timedelta(days=1), "IN"), today)
     out = []
     for r in rows:
         paid = found[r["booking_ref"]]
-        if r in live or (paid and (is_cancelled(r) or closed_on(r))):
+        if r in live or r in shut_held or (paid and (is_cancelled(r) or closed_on(r, today))):
             a = assess(r, paid, today)
-            if r in live or a["state"] in ("PAYMENT_ON_CANCELLED", "PAYMENT_AFTER_CLOSE"):
+            if (r in live or r in shut_held or a["state"] in ("PAYMENT_ON_CANCELLED", "PAYMENT_AFTER_CLOSE")
+                    or (r in pending and a["state"] == "PAID_IN_FULL")):
                 out.append((r, paid, a))
     return out
 
 
 def received_since(client, rows, since, today):
     """[(booking_ref, date, amount)] for confident client payments since a date (any non-cancelled booking).
-    A payment on a closed booking dated after its "paid in full" date is left out: collect() puts it on
-    the hand check instead."""
-    live = {r["booking_ref"]: closed_on(r) for r in rows if not is_cancelled(r)}
+    A payment on a closed booking dated after its "paid in full" (or accepted fee) date is left out: collect()
+    puts it on the hand check instead."""
+    live = {r["booking_ref"]: closed_on(r, today) for r in rows if not is_cancelled(r)}
     if not live:
         return []
     # the feed filters by UTC time: start a day early so 00:00-01:00 BST on `since` is included
@@ -728,67 +910,22 @@ def main():
         raise SystemExit(str(e))
 
 
-OWNER_NONCE_TTL = 60  # seconds: the Command Centre writes the file moments before it runs this script
-
-
-def owner_nonce_path():
-    """<private dir>/command-centre/owner-nonce (LCS_PRIVATE_DIR read at call time)."""
-    return Path(os.environ.get("LCS_PRIVATE_DIR", Path.home() / "lcs-private")) / "command-centre" / "owner-nonce"
+# The owner barrier lives in lcs_owner (shared with the singer store and the state log); kept here under the old
+# names, so the Command Centre and the tests need no change.
+OWNER_NONCE_TTL = lcs_owner.OWNER_NONCE_TTL
+owner_nonce_path = lcs_owner.owner_nonce_path
 
 
 def owner_ledger_problem(environ=None):
-    """None when an --owner note would land in the ledger beside the nonce, else the reason. The nonce proves the
-    app asked; this proves the note goes to the ledger the app read: LCS_BOOKINGS_CSV must be unset (the app never
-    sets it for its subprocesses) and the ledger must sit directly in the nonce's private dir."""
-    environ = os.environ if environ is None else environ
-    if environ.get("LCS_BOOKINGS_CSV"):
-        return "refuses LCS_BOOKINGS_CSV (the ledger must be the one in the private folder)"
-    private = owner_nonce_path().parent.parent
-    try:
-        if Path(LEDGER).resolve().parent != private.resolve():
-            return "needs the ledger in the same private folder as the nonce"
-    except OSError:
-        return "couldn't resolve the ledger's folder"
-    return None
+    """None when an --owner note would land in the ledger beside the nonce, else the reason (lcs_owner.
+    owner_folder_problem for LEDGER, read at call time)."""
+    return lcs_owner.owner_folder_problem([LEDGER], environ)
 
 
 def owner_confirmed(stdin_fd=0):
-    """True only when the Command Centre ran this --owner note after the owner's passkey approval: stdin is a pipe
-    (not a terminal, not a redirected file) whose first line hashes (sha256) to the contents of the one-time nonce
-    file, and that file is a regular file (never followed through a symlink), this user's, mode 600 with no group
-    or other bits, and under OWNER_NONCE_TTL seconds old. The file is deleted on a match, so a nonce works once.
-    The nonce itself lives only in the app's memory and the pipe; the file holds its hash, so redirecting the
-    file into stdin fails twice over. No allowlisted command can pipe or write that file (plan, Task 3.1)."""
-    try:
-        if not stat.S_ISFIFO(os.fstat(stdin_fd).st_mode):
-            return False
-        path = owner_nonce_path()
-        fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | getattr(os, "O_NONBLOCK", 0))
-    except OSError:
-        return False
-    try:
-        st = os.fstat(fd)
-        if (not stat.S_ISREG(st.st_mode) or st.st_uid != os.getuid() or st.st_mode & 0o077
-                or not -5 <= time.time() - st.st_mtime <= OWNER_NONCE_TTL or st.st_size > 200):
-            return False
-        want = os.read(fd, 200).decode("ascii", "replace").strip()
-    finally:
-        os.close(fd)
-    if not re.fullmatch(r"[0-9a-f]{64}", want):
-        return False
-    ready, _, _ = select.select([stdin_fd], [], [], 2.0)  # an idle, open pipe never hangs the script
-    if not ready:
-        return False
-    line = os.read(stdin_fd, 200).decode("ascii", "replace").split("\n", 1)[0].strip()
-    if not re.fullmatch(r"[0-9a-f]{64}", line):
-        return False
-    if not hmac.compare_digest(hashlib.sha256(line.encode("ascii")).hexdigest(), want):
-        return False
-    try:
-        os.unlink(path)  # single use: burnt before the note is written
-    except OSError:
-        return False
-    return True
+    """True only when the Command Centre ran this --owner note after the owner's passkey approval (lcs_owner.
+    owner_confirmed: the one-time nonce over a pipe, burnt on a match)."""
+    return lcs_owner.owner_confirmed(stdin_fd)
 
 
 def append_note(ref, text):

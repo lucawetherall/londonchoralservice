@@ -165,7 +165,7 @@ class Runner:
         actions.RUNNER = self.saved
 
 
-def setup(clock=None):
+def setup(clock=None, client_factory=lambda: None):
     """A registered passkey, the fixtures, a fresh audit log; returns (client, authenticator, clock)."""
     for p in ("audit.jsonl",):
         (Path(TMP) / "command-centre" / p).unlink(missing_ok=True)
@@ -174,7 +174,7 @@ def setup(clock=None):
     actions.reset_validations()
     clock = clock or Clock()
     pk = auth.Passkeys(auth.ChallengeStore(clock=clock))
-    app = create_app(client_factory=lambda: None, passkeys=pk, checkout=lambda: "main")
+    app = create_app(client_factory=client_factory, passkeys=pk, checkout=lambda: "main")
     c = TestClient(app, base_url=ORIGIN, client=LOCAL, follow_redirects=False)
     a = Authenticator()
     code = auth.new_bootstrap()
@@ -225,6 +225,7 @@ PYX = sys.executable
 CHECK = str(Path(ROOT) / "scripts" / "bookings" / "check_payments.py")
 SINGER = str(Path(ROOT) / "scripts" / "bookings" / "singer_invoices.py")
 DASH = str(Path(ROOT) / "scripts" / "reports" / "dashboard.py")
+CC_SYNC = str(Path(ROOT) / "scripts" / "reports" / "cc_sync.py")
 
 
 # ---------------------------------------------------------------- the registry
@@ -233,10 +234,11 @@ DASH = str(Path(ROOT) / "scripts" / "reports" / "dashboard.py")
 def test_registry_and_passkey_flags():
     assert set(actions.REGISTRY) == {"todo-tick", "resolve-hand-check", "singer-confirm", "singer-settled",
                                      "singer-withdrawn", "refresh-data", "ads-validate", "ads-apply",
-                                     "approve-books-import", "push-subscribe", "push-unsubscribe", "backup-now",
-                                     "draft-mark"}
+                                     "approve-books-import", "books-import-done", "push-subscribe",
+                                     "push-unsubscribe", "backup-now", "draft-mark", "sync-now"}
     no_passkey = {n for n, a in actions.REGISTRY.items() if not a.passkey}
-    assert no_passkey == {"todo-tick", "refresh-data", "push-unsubscribe", "backup-now", "draft-mark"}, no_passkey
+    assert no_passkey == {"todo-tick", "refresh-data", "push-unsubscribe", "backup-now", "draft-mark",
+                          "sync-now"}, no_passkey
     assert "todo-tick" not in actions.ROUTED
 
 
@@ -324,6 +326,7 @@ def test_singer_actions_argv_and_refusals():
 def test_refresh_and_books_argv():
     c = actions.REFRESH.validate({})
     assert actions.REFRESH.argv(c) == [PYX, DASH] and not actions.REFRESH.passkey
+    assert actions.REFRESH.then_argv() == [PYX, CC_SYNC, "books"]
     refused(actions.REFRESH.validate, {"x": "y"})
     assert actions.BOOKS_IMPORT.command({}) is None
 
@@ -554,8 +557,141 @@ def test_refresh_needs_no_passkey_and_clears_the_caches():
     finally:
         data.Data.clear_caches = saved
     assert r.status_code == 200 and r.json()["ok"], r.text
-    assert rec.calls[0][0] == [PYX, DASH] and cleared == [True]
+    assert [c[0] for c in rec.calls] == [[PYX, DASH], [PYX, CC_SYNC, "books"]] and cleared == [True]
+    assert all(kw["shell"] is False and kw["env"]["LCS_PRIVATE_DIR"] == TMP for _, kw in rec.calls)
+    assert p.json()["command"] == (".venv/bin/python scripts/reports/dashboard.py, then "
+                                   ".venv/bin/python scripts/reports/cc_sync.py books"), p.json()["command"]
+    assert "Books cache" in p.json()["summary"]
     assert audit_lines()[-1]["action"] == "refresh-data" and "passkey" not in audit_lines()[-1]
+
+
+def test_refresh_reports_a_failed_books_sync():
+    """cc_sync.py books exits 1 when Books can't be read: the refresh says it failed, and the dashboard still ran."""
+    c, a, _ = setup()
+
+    def answer(argv, **kw):
+        code = 1 if argv[-1] == "books" else 0
+        out = b"books: not updated (McpError); the last cache is kept\n" if code else b"wrote dashboard\n"
+        return subprocess.CompletedProcess(argv, code, out, b"")
+    with Runner(answer):
+        r = post(c, "/actions/refresh-data/run", {"input": {}})
+    body = r.json()
+    assert r.status_code == 200 and body["ok"] is False and body["exit_code"] == 1, body
+    assert "wrote dashboard" in body["output"] and "books: not updated (McpError)" in body["output"], body
+    assert audit_lines()[-1]["result"] == "failed" and audit_lines()[-1]["exit_code"] == 1
+
+
+# ---------------------------------------------------------------- sync now (the strip's chips)
+
+
+def test_sync_now_refuses_unknown_sources_and_free_text():
+    c, a, _ = setup()
+    with Runner(Recorder()) as rec:
+        for bad, reason in (({"source": "everything"}, "unknown source"),
+                            ({"source": "books; rm -rf ~"}, "unknown source"),
+                            ({"source": "--help"}, "unknown source"),
+                            ({"source": "BOOKS"}, "unknown source"),
+                            ({"source": "drafts"}, "that source comes from a scheduled run, not the app: see Health"),
+                            ({"source": "diary"}, "that source comes from a scheduled run, not the app: see Health"),
+                            ({"source": "ads"}, "that source comes from a scheduled run, not the app: see Health"),
+                            ({}, "source is required"),
+                            ({"source": "books", "extra": "x"}, "unexpected field"),
+                            ({"source": ["books"]}, "bad source")):
+            r = preview(c, "sync-now", bad)
+            assert r.status_code == 400 and r.json()["error"] == reason, (bad, r.text)
+            r = post(c, "/actions/sync-now/run", {"input": bad})
+            assert r.status_code == 400 and r.json()["error"] == reason, (bad, r.text)
+            last = audit_lines()[-1]
+            assert last["action"] == "sync-now" and last["result"] == f"refused: {reason}", last
+            assert last["input_sha256"] == actions.input_sha256(bad) and "input" not in last
+    assert rec.calls == []  # nothing ran
+    # same-origin like every POST; no passkey is asked for
+    assert post(c, "/actions/sync-now/run", {"input": {"source": "books"}},
+                origin="https://evil.example").status_code == 403
+    assert actions.REGISTRY["sync-now"].passkey is False and "sync-now" in actions.ROUTED
+
+
+def test_sync_now_runs_the_fixed_argv_and_writes_the_audit():
+    c, a, _ = setup()
+    sources.forget_outcomes()
+    for source in ("books", "marketing"):
+        with Runner(Recorder(out=b"wrote the cache\n")) as rec:
+            p = preview(c, "sync-now", {"source": source})
+            assert p.status_code == 200 and p.json()["passkey"] is False and "options" not in p.json(), p.text
+            assert p.json()["command"] == f".venv/bin/python scripts/reports/cc_sync.py {source}"
+            assert p.json()["summary"].endswith(f"Runs: .venv/bin/python scripts/reports/cc_sync.py {source}")
+            r = post(c, "/actions/sync-now/run", {"input": {"source": source}})
+        assert r.status_code == 200 and r.json()["ok"] is True, r.text
+        assert [call[0] for call in rec.calls] == [[PYX, CC_SYNC, source]], rec.calls
+        kw = rec.calls[0][1]
+        assert kw["shell"] is False and kw["stdin"] == subprocess.DEVNULL and kw["env"]["LCS_PRIVATE_DIR"] == TMP
+        assert not any(k.startswith("CC_") for k in kw["env"])
+        lines = audit_lines()[-2:]
+        assert [e["result"] for e in lines] == ["started", "ok"] and all(e["action"] == "sync-now" for e in lines)
+        assert lines[-1]["input"] == {"source": source} and "passkey" not in lines[-1]
+        assert lines[-1]["login"] == LOGIN and lines[-1]["exit_code"] == 0
+        assert sources.outcomes()[source]["ok"] is True
+    # a failed sync is reported, audited and noted for the strip
+    with Runner(Recorder(code=1, out=b"books: not updated (McpError); the last cache is kept\n")):
+        r = post(c, "/actions/sync-now/run", {"input": {"source": "books"}})
+    assert r.json()["ok"] is False and r.json()["exit_code"] == 1 and "McpError" in r.json()["output"]
+    assert audit_lines()[-1]["result"] == "failed" and sources.outcomes()["books"]["ok"] is False
+    sources.forget_outcomes()
+
+
+def test_sync_now_bank_clears_the_cache_and_runs_nothing():
+    c, a, _ = setup()
+    cleared = []
+    saved = data.Data.clear_caches
+    data.Data.clear_caches = lambda self: cleared.append(True)
+    try:
+        with Runner(Recorder()) as rec:
+            p = preview(c, "sync-now", {"source": "bank"})
+            assert p.status_code == 200 and p.json()["command"] is None and "Runs:" not in p.json()["summary"]
+            assert "bank cache" in p.json()["summary"] and p.json()["passkey"] is False
+            r = post(c, "/actions/sync-now/run", {"input": {"source": "bank"}})
+    finally:
+        data.Data.clear_caches = saved
+    assert r.status_code == 200 and r.json()["ok"] is True and r.json()["exit_code"] is None, r.text
+    assert rec.calls == [] and cleared == [True]
+    last = audit_lines()[-1]
+    assert last["action"] == "sync-now" and last["result"] == "ok" and last["input"] == {"source": "bank"}
+    try:
+        actions.SYNC_NOW.argv({"source": "bank", "input": {"source": "bank"}})
+    except actions.ActionError:
+        pass
+    else:
+        raise AssertionError("the bank has no argv")
+
+
+def test_sync_now_shares_the_refresh_lock_and_waits_for_a_background_pass():
+    c, a, _ = setup()
+    lock = actions._LOCKS["refresh"]
+    assert actions.SYNC_NOW.lock == "refresh"
+    assert lock.acquire(timeout=1)
+    saved = actions.REFRESH_WAIT
+    actions.REFRESH_WAIT = 0.05
+    actions.BACKGROUND_REFRESH.set()
+    try:
+        with Runner(Recorder()) as rec:
+            r = post(c, "/actions/sync-now/run", {"input": {"source": "books"}})
+        assert r.status_code == 409 and r.json()["error"] == actions.BACKGROUND_BUSY, r.text
+        assert audit_lines()[-1]["result"] == "refused: a background refresh is running" and rec.calls == []
+        actions.BACKGROUND_REFRESH.clear()
+        with Runner(Recorder()) as rec:
+            r = post(c, "/actions/sync-now/run", {"input": {"source": "books"}})
+        assert r.status_code == 409 and "another action is running" in r.json()["error"] and rec.calls == []
+    finally:
+        actions.BACKGROUND_REFRESH.clear()
+        actions.REFRESH_WAIT = saved
+        lock.release()
+    # a write holding the action lock doesn't block it
+    assert actions._RUN_LOCK.acquire(timeout=1)
+    try:
+        with Runner(Recorder()):
+            assert post(c, "/actions/sync-now/run", {"input": {"source": "books"}}).json()["ok"] is True
+    finally:
+        actions._RUN_LOCK.release()
 
 
 # ---------------------------------------------------------------- the Books approval
@@ -586,8 +722,8 @@ def test_books_import_approval_writes_one_record():
     assert oct(os.stat(rec_path.parent).st_mode & 0o777) == "0o700"
     assert preview(c, "approve-books-import", {}).json()["error"] == "already approved"
     assert audit_lines()[-1]["result"] == "ok"
-    # There is no in-app chat and the app never runs Claude Code itself: once approved, Today offers a fixed
-    # copy-to-clipboard handoff prompt for Claude Code Remote Control instead.
+    # There is no in-app chat and the app never runs Claude Code itself: once approved, Today's Handoffs offer a
+    # fixed copy-to-clipboard prompt for Claude Code Remote Control instead.
     out = page(c, "/")
     assert 'class="button quiet cc-copy"' in out and "Copy prompt for Remote Control" in out
     assert "books-import-2026.json" in out and sha[:16] in out
@@ -595,6 +731,155 @@ def test_books_import_approval_writes_one_record():
     assert "never send, void or record a payment" in out
     prompt = re.search(r'data-prompt="([^"]*)"[^>]*>Copy prompt for Remote Control', out).group(1)
     assert "2111" not in prompt and "0310" not in prompt and "650" not in prompt and "1,225" not in prompt
+    assert "skip any invoice number that already exists" in prompt
+
+
+BOOKS_DRY = [{"ref": "2111", "total": 650}, {"ref": "0310", "total": "575.00"}]
+
+
+def books_files(dry=BOOKS_DRY, record=None, cache=None):
+    """The dry run, the approval record (a dict, or True for one matching the dry run) and books.json, each
+    written or removed."""
+    dry_path = Path(TMP) / "books-import-2026.json"
+    rec_path = Path(TMP) / "command-centre" / "approvals" / "books-import-2026.json"
+    cache_path = Path(TMP) / "command-centre" / "cache" / "books.json"
+    for p in (dry_path, rec_path, cache_path):
+        p.unlink(missing_ok=True)
+    if dry is not None:
+        dry_path.write_text(json.dumps(dry))
+    if record is not None:
+        if record is True:
+            record = {"approved_at": "2026-09-28T08:00:00+00:00", "approved_by": LOGIN, "passkey": "abc",
+                      "dry_run": "~/lcs-private/books-import-2026.json",
+                      "dry_run_sha256": hashlib.sha256(dry_path.read_bytes()).hexdigest(), "entries": 2,
+                      "total_gbp": 1225.0, "first_ref": "2111", "last_ref": "0310",
+                      "instruction": actions.BOOKS_INSTRUCTION, "status": "approved"}
+        actions.write_private(rec_path, record)
+    if cache is not None:
+        cache_path.parent.mkdir(parents=True, exist_ok=True)
+        cache_path.write_text(json.dumps({"generated_at": "2026-09-28T07:00:00+01:00", "totals": {}, "bills": [],
+                                          "invoices": [{"number": n, "status": "draft", "date": "2026-09-28",
+                                                        "total": 1.0, "balance": 1.0} for n in cache]}))
+    return dry_path, rec_path
+
+
+def attention(out):
+    m = re.search(r'<span class="count[^"]*">(?:at least )?(\d+)</span>', out)
+    return int(m.group(1)) if m else 0
+
+
+def needs_section(out):
+    """Today's "Needs you" list ("" when nothing needs the owner: the section isn't there)."""
+    m = re.search(r'<ul class="needs">(.*?)</ul>\s*</section>', out, re.S)
+    return m.group(1) if m else ""
+
+
+def handoffs_section(out):
+    return re.search(r'<h2 id="handoffs"[^>]*>Handoffs</h2>(.*?)</section>', out, re.S).group(1)
+
+
+def test_books_import_states_on_today():
+    c, a, _ = setup()
+    for p in (Path(TMP) / "command-centre" / "proposals").glob("*.json"):  # the Ads tests' leftovers
+        p.unlink()
+    # none: no dry run, no approval
+    books_files(dry=None)
+    assert actions.books_status()["state"] == "none"
+    out = page(c, "/")
+    base = attention(out)
+    assert 'data-kind="books-import"' not in out and "approve-books-import" not in out
+    assert "Books import" not in handoffs_section(out) and "books-import-done" not in out
+    # waiting: a dry run, no approval: the only Books import state under Needs you
+    books_files()
+    st = actions.books_status()
+    assert st["state"] == "waiting" and st["dry_run"] and st["approved_at"] is None
+    out = page(c, "/")
+    assert 'data-action="approve-books-import"' in needs_section(out) and attention(out) == base + 1
+    assert needs_section(out).count('data-kind="books-import" data-count="1"') == 1
+    assert "books-import-done" not in out
+    # approved: the approval matches the dry run and the import isn't done: a handoff, not an approval
+    books_files(record=True)
+    st = actions.books_status()
+    assert st["state"] == "approved" and st["approved_at"].startswith("2026-09-28") and st["imported_at"] is None
+    assert st["dry_run_sha256"] and st["dry_run"]  # the old keys stay
+    out = page(c, "/")
+    hand = handoffs_section(out)
+    assert "Books import" not in needs_section(out) and attention(out) == base
+    assert "Copy prompt for Remote Control" in hand and "skip any invoice number that already exists" in hand
+    assert 'data-action="books-import-done"' in hand and "approved Mon 28 Sep 2026" in hand
+    assert models.books_import_handoff(st) is not None
+    # stale: the dry run changed since: a warning, no prompt; information (the owner's rule), not under Needs you
+    Path(TMP, "books-import-2026.json").write_text(json.dumps(BOOKS_DRY + [{"ref": "1111", "total": 1}]))
+    st = actions.books_status()
+    assert st["state"] == "stale" and models.books_import_handoff(st) is None
+    out = page(c, "/")
+    hand = handoffs_section(out)
+    assert "the dry run has moved on" in hand and 'data-action="books-import-done"' in hand
+    assert "never send, void or record a payment" not in out  # no import prompt to copy
+    assert "Books import" not in needs_section(out) and attention(out) == base
+    assert "dry run has changed since it was approved" in out  # the For information line
+    Path(TMP, "books-import-2026.json").unlink()  # a dry run that's gone is stale too
+    assert actions.books_status()["state"] == "stale"
+    # imported, by the record: nothing about the import on Today
+    books_files(record=dict(json.loads(books_files(record=True)[1].read_text()), status="imported",
+                            imported_at="2026-09-28T12:00:00+00:00"))
+    st = actions.books_status()
+    assert st["state"] == "imported" and st["imported_at"] == "2026-09-28T12:00:00+00:00"
+    out = page(c, "/")
+    assert "Books import" not in out and "books-import-done" not in out and "approve-books-import" not in out
+    assert attention(out) == base and models.books_import_handoff(st) is None
+    # imported, by the Books cache: every dry-run ref is an invoice number in Books (norm_ref: INV2111 is 2111)
+    books_files(record=True, cache=["INV2111", "0310", "9999"])
+    assert actions.books_status()["state"] == "imported"
+    books_files(record=True, cache=["2111"])  # one missing: still approved
+    assert actions.books_status()["state"] == "approved"
+    books_files(dry=[{"ref": "2111"}, {"amount": 5}], record=True, cache=["2111"])  # an entry without a ref
+    assert actions.books_status()["state"] == "approved"
+    books_files(dry=[], record=True, cache=[])  # an empty dry run proves nothing
+    assert actions.books_status()["state"] == "approved"
+    # a cache alone never skips the approval
+    books_files(cache=["2111", "0310"])
+    assert actions.books_status()["state"] == "waiting"
+    books_files(dry=None)
+
+
+def test_mark_the_books_import_done():
+    c, a, _ = setup()
+    for state_files in ({"dry": None}, {}):  # none, then waiting
+        books_files(**state_files)
+        r = preview(c, "books-import-done", {})
+        assert r.status_code == 400 and r.json()["error"] == "the Books import isn't approved yet", r.text
+    _, rec_path = books_files(record=True)
+    before = json.loads(rec_path.read_text())
+    p = preview(c, "books-import-done", {}).json()
+    assert p["passkey"] is True and p["command"] is None
+    assert "Mark the 2026 Books import done" in p["summary"] and before["dry_run_sha256"][:16] in p["summary"]
+    assert "approved 2026-09-28" in p["summary"] and "Nothing is sent to Books" in p["summary"]
+    assert "Writes: ~/lcs-private/command-centre/approvals/books-import-2026.json" in p["summary"]
+    r = post(c, "/actions/books-import-done/run", {"input": {}})
+    assert r.status_code == 403 and json.loads(rec_path.read_text()) == before  # a passkey is needed
+    r = post(c, "/actions/books-import-done/run", {"input": {}, "credential": a.assert_(p["options"])})
+    assert r.status_code == 200 and r.json()["ok"] and r.json()["output"] == "Books import marked done", r.text
+    after = json.loads(rec_path.read_text())
+    assert after["status"] == "imported" and datetime.datetime.fromisoformat(after["imported_at"]).tzinfo is not None
+    assert {k: v for k, v in after.items() if k not in ("status", "imported_at")} == \
+        {k: v for k, v in before.items() if k != "status"}  # every other field kept
+    assert oct(os.stat(rec_path).st_mode & 0o777) == "0o600"
+    assert [p.name for p in rec_path.parent.iterdir()] == [rec_path.name]  # no temp file left
+    assert actions.books_status()["state"] == "imported"
+    line = audit_lines()[-1]
+    assert line["action"] == "books-import-done" and line["result"] == "ok" and line["passkey"]
+    assert preview(c, "books-import-done", {}).json()["error"] == "the Books import is already marked done"
+    assert "books-import-done" not in page(c, "/")
+    # a stale approval can be marked done too (the import ran before the dry run moved on)
+    books_files(record=True)
+    Path(TMP, "books-import-2026.json").write_text("[]")
+    assert actions.books_status()["state"] == "stale"
+    p = preview(c, "books-import-done", {}).json()
+    assert "The dry run has changed since it was approved" in p["summary"]
+    r = post(c, "/actions/books-import-done/run", {"input": {}, "credential": a.assert_(p["options"])})
+    assert r.status_code == 200 and actions.books_status()["state"] == "imported"
+    books_files(dry=None)
 
 
 # ---------------------------------------------------------------- Ads proposals
@@ -818,6 +1103,60 @@ class GitCalls:
 
     def __exit__(self, *exc):
         actions.GIT_RUNNER = self.saved
+
+
+def test_pages_read_the_proposals_without_touching_the_mirror():
+    """No GET has a side effect: the pages list the proposals without making, rewriting or fetching the mirror, and
+    run git in it only when it is exactly as ensure_mirror() left it. The refresh job (tidy_mirror) and the Ads
+    actions put it back."""
+    c, a, _ = setup()
+    clear_applied()
+    with AdsRepo() as repo:
+        proposal(repo=repo)
+        # never checked against GitHub: listed, no mirror made, no git run
+        with GitCalls() as g:
+            page(c, "/marketing")
+            page(c, "/")
+        assert g.calls == [] and not actions.mirror_dir().exists()
+        assert {p["id"]: p for p in actions.list_proposals()}["neg-2026-10"]["problem"] is None
+        assert actions.tidy_mirror() == "none" and not actions.mirror_dir().exists()  # the job never makes one
+        # checked once (validate fetches into the mirror): a page reads it as it is and rewrites nothing
+        actions.ADS_VALIDATE.validate({"proposal": "neg-2026-10"})
+        assert actions.mirror_intact()
+        cfg = actions.mirror_dir() / "config"
+        before = (cfg.read_bytes(), cfg.stat().st_mtime_ns)
+        with GitCalls() as g:
+            page(c, "/marketing")
+        assert g.calls and (cfg.read_bytes(), cfg.stat().st_mtime_ns) == before
+        assert not any(word in argv for argv, _ in g.calls for word in ("init", "fetch", "config", "gc"))
+        # a config changed behind the app's back: the page runs no git at all and leaves the file alone
+        cfg.write_text(actions.MIRROR_CONFIG + "[log]\n\tshowSignature = true\n")
+        assert not actions.mirror_intact()
+        with GitCalls() as g:
+            page(c, "/marketing")
+            listed = {p["id"]: p for p in actions.list_proposals()}
+        assert g.calls == [] and "showSignature" in cfg.read_text()
+        assert listed["neg-2026-10"]["problem"] is None  # checked against GitHub when the owner opens it
+        assert actions.tidy_mirror() == "tidied" and actions.mirror_intact()
+        # an alternates file: the same
+        alt = actions.mirror_dir() / "objects" / "info" / "alternates"
+        alt.parent.mkdir(exist_ok=True)
+        alt.write_text("/tmp/elsewhere\n")
+        assert not actions.mirror_intact()
+        with GitCalls() as g:
+            page(c, "/")
+        assert g.calls == [] and alt.exists()
+        # the job's tidy never waits on (or runs beside) an action
+        assert actions._RUN_LOCK.acquire(timeout=1)
+        try:
+            assert actions.tidy_mirror() == "busy" and alt.exists()
+        finally:
+            actions._RUN_LOCK.release()
+        assert actions.tidy_mirror() == "tidied" and not alt.exists() and actions.mirror_intact()
+        os.chmod(actions.mirror_dir(), 0o755)  # a loosened folder isn't the app's own either
+        assert not actions.mirror_intact()
+        actions.ensure_mirror()
+        assert actions.mirror_intact()
 
 
 def test_poc3_every_git_call_is_hardened_and_runs_in_the_mirror():
@@ -1470,6 +1809,7 @@ def claude_form(argv):
 
 SAFE_ON_ALLOWLIST = {
     "refresh-data": "read-only; dashboard.py is allowlisted for the scheduled prompts",
+    "sync-now": "read-only; cc_sync.py books and marketing are the refresh job's and the daily pass's own commands",
     "singer-withdrawn": "the enquiry assistant already withdraws a mis-sent invoice (Appendix E)",
     "resolve-hand-check": "matched by --note *; check_payments.py refuses --owner without the app's nonce",
 }
@@ -1485,6 +1825,7 @@ def test_the_apps_own_commands_are_not_allowlisted_unless_safe():
         "singer-settled": {"invoice": key, "date": D},
         "singer-withdrawn": {"invoice": key, "reason": "not-ours"},
         "refresh-data": {},
+        "sync-now": {"source": "books"},
         "backup-now": {},
     }
     write_config(backup={"recipient": "age1test", "target": TMP})
@@ -1505,7 +1846,8 @@ def test_the_apps_own_commands_are_not_allowlisted_unless_safe():
                         f"{allowlist.PY} scripts/ads/set_budget.py 111 4.50 {flag}"):
                 assert not allowlist.allowed(cmd, pats), cmd
             seen.add(name)
-    seen |= {"approve-books-import", "todo-tick", "push-subscribe", "push-unsubscribe", "draft-mark"}  # no subprocess
+    seen |= {"approve-books-import", "books-import-done", "todo-tick", "push-subscribe", "push-unsubscribe",
+             "draft-mark"}  # no subprocess
     assert seen == set(actions.REGISTRY)
     # the guarded one really is matched, and its refusal is tested in test_check_payments.py
     cmd = claude_form(actions.RESOLVE_HAND_CHECK.argv(actions.RESOLVE_HAND_CHECK.validate(samples["resolve-hand-check"])))
@@ -1600,6 +1942,130 @@ def test_activity_page_filters_and_masks():
     assert "<script>alert" not in q and 'value="&lt;script&gt;alert(1)"' in q and "Nothing matches" in q
     assert "Confirm the bank details" in page(c, "/activity?q=bank+details")
     assert page(c, "/activity?action=%3Cx%3E&result=nope").count("activity-item") >= 3
+
+
+# ---------------------------------------------------------------- short by transfer fees (owner decision, 28 Sep 2026)
+
+
+def days_ago(n):
+    return (TODAY - datetime.timedelta(days=n)).isoformat()
+
+
+FEE_ROW = {"booking_ref": "2408", "invoice_date": days_ago(40), "event_date": (TODAY + datetime.timedelta(days=20)).isoformat(),
+           "client_name": "Bea Feeworthy", "client_email": "bea@example.org", "occasion": "Wedding", "ensemble": "Octet",
+           "value_gbp": "950", "notes": f"deposit seen {days_ago(35)} (Starling)"}
+
+
+class FeeBank:
+    """A GET-only Starling stand-in whose feed holds 2408's two payments: £937.60 of £950, £12.40 lost to fees."""
+
+    def account(self):
+        return {"accountUid": "acc-1", "defaultCategory": "cat-1"}
+
+    def get(self, path):
+        return {"clearedBalance": {"minorUnits": 100000}, "effectiveBalance": {"minorUnits": 100000}}
+
+    def feed(self, since, until, direction):
+        return [{"direction": "IN", "amount": {"minorUnits": m}, "transactionTime": f"{d}T10:00:00Z",
+                 "reference": f"INV {ref}", "counterPartyName": who}
+                for ref, who, m, d in (("2408", "B FEEWORTHY", 47500, days_ago(35)),
+                                       ("2408", "B FEEWORTHY", 46260, days_ago(2)),
+                                       # a past booking's payments (only in the ledger for one test)
+                                       ("0909", "C PASTFIELD", 30000, days_ago(50)),
+                                       ("0909", "C PASTFIELD", 29100, days_ago(10)))]
+
+
+def fee_setup(client_factory=FeeBank):
+    c, a, clock = setup(client_factory=client_factory)
+    rows = lm.read_csv(cp.LEDGER)
+    write_csv(os.path.join(TMP, "bookings.csv"), LEDGER_COLS, rows + [FEE_ROW])
+    return c, a, clock
+
+
+FEE_INPUT = {"ref": "2408", "choice": "short-by-fees", "date": D, "amount": "12.40"}
+
+
+def test_short_by_fees_preview_and_argv():
+    c, _, _ = fee_setup()
+    act = actions.RESOLVE_HAND_CHECK
+    cleaned = act.validate(FEE_INPUT)
+    assert act.argv(cleaned) == [PYX, CHECK, "--note", "2408", f"short by fees £12.40 accepted {D}", "--owner"]
+    s = act.preview(cleaned)
+    for part in ("booking 2408 (Bea)", "£937.60 received of £950.00", "short by £12.40 in transfer fees",
+                 "will read paid in full", f"\"short by fees £12.40 accepted {D} (owner)\""):
+        assert part in s, (part, s)
+    assert "Feeworthy" not in s and "example.org" not in s
+    assert cleaned["input"] == FEE_INPUT
+    assert act.argv(act.validate(dict(FEE_INPUT, amount="12.4")))[4] == f"short by fees £12.40 accepted {D}"
+    assert act.argv(act.validate(dict(FEE_INPUT, amount="12.41")))[4] == f"short by fees £12.40 accepted {D}"  # 1p
+    r = preview(c, "resolve-hand-check", FEE_INPUT)
+    assert r.status_code == 200 and r.json()["summary"] == s, r.text
+    # the owner-only phrase stays out of the ordinary select
+    assert ("short-by-fees", "short by transfer fees") not in create_app.__globals__["HAND_CHOICES"]
+
+
+def test_short_by_fees_refusals():
+    fee_setup()
+    v = actions.RESOLVE_HAND_CHECK.validate
+    reasons = {
+        "40.01": "the amount must be more than £0 and at most £40.00",
+        "45": "the amount must be more than £0 and at most £40.00",
+        "0": "the amount must be more than £0 and at most £40.00",
+        "12.42": "the amount isn't that booking's balance (£12.40)",
+        "5": "the amount isn't that booking's balance (£12.40)",
+    }
+    for amount, reason in reasons.items():
+        assert refused(v, dict(FEE_INPUT, amount=amount)) == reason, amount
+    for amount in ("abc", "12.400", "-12.40", "£12.40", "1e1", "12,40", "112.40", " "):
+        assert refused(v, dict(FEE_INPUT, amount=amount)), amount
+    assert refused(v, {k: x for k, x in FEE_INPUT.items() if k != "amount"}) == "amount is required"
+    assert refused(v, dict(FEE_INPUT, amount=12.4)) == "bad amount"  # a number, not a form string
+    assert refused(v, dict(FEE_INPUT, choice="paid-in-full")) == "an amount goes only with short by transfer fees"
+    assert refused(v, dict(FEE_INPUT, date=days_ago(3))) == f"the date is before the last payment ({days_ago(2)})"
+    assert refused(v, dict(FEE_INPUT, ref="2111", amount="5")) == "that booking has no part-paid balance to accept"
+    assert refused(v, dict(FEE_INPUT, ref="0310")) == "that booking has no part-paid balance to accept"
+    fee_setup(client_factory=lambda: None)  # no bank: nothing to check the shortfall against
+    assert refused(v, FEE_INPUT) == "the bank wasn't checked: can't confirm the shortfall"
+
+
+def test_short_by_fees_through_the_real_script_reads_paid_in_full():
+    c, a, _ = fee_setup()
+    r = run(c, a, "resolve-hand-check", FEE_INPUT)
+    assert r.status_code == 200 and r.json()["ok"] is True, r.text
+    notes = ledger_notes("2408")
+    assert notes == f"{FEE_ROW['notes']}; short by fees £12.40 accepted {D} (owner)", notes
+    row = next(x for x in lm.read_csv(cp.LEDGER) if x["booking_ref"] == "2408")
+    got = cp.collect(FeeBank(), [row], TODAY)
+    assert [x["state"] for _, _, x in got] == ["PAID_IN_FULL"], got
+    assessed = got[0][2]
+    assert assessed["balance"] == 0 and assessed["fees"] == 12.4 and assessed["action"] != "balance_reminder"
+    assert assessed["record_in_books"][-1] == [days_ago(2), 462.6, 12.4], assessed
+
+
+def test_booking_page_offers_short_by_fees_only_for_a_small_part_paid_balance():
+    c, _, _ = fee_setup()
+    out = page(c, "/bookings/2408")
+    assert 'name="choice" value="short-by-fees"' in out and 'name="amount" value="12.40"' in out, out
+    assert "Short by transfer fees (£12.40)" in out
+    assert 'value="short-by-fees"' not in page(c, "/bookings/2111")  # nothing received: no shortfall to accept
+    c, _, _ = fee_setup(client_factory=lambda: None)
+    assert 'value="short-by-fees"' not in page(c, "/bookings/2408")  # bank not checked
+
+
+def test_hand_check_list_offers_short_by_fees_on_a_past_part_paid_booking():
+    c, _, _ = fee_setup()
+    rows = lm.read_csv(cp.LEDGER)
+    past = dict(FEE_ROW, booking_ref="0909", invoice_date=days_ago(60), event_date=days_ago(5), value_gbp="600",
+                notes="", client_name="Cy Pastfield", client_email="cy@example.org")
+    write_csv(os.path.join(TMP, "bookings.csv"), LEDGER_COLS, rows + [past])
+    for path in ("/money", "/"):
+        out = page(c, path)
+        assert "/bookings/0909" in out and 'name="amount" value="9.00"' in out, path
+    # 2408 isn't a hand check: Money doesn't list it; Today asks about its £12.40 as a fee shortfall (98.7% in)
+    assert 'name="amount" value="12.40"' not in page(c, "/money")
+    assert 'name="amount" value="12.40"' in page(c, "/")
+    cleaned = actions.RESOLVE_HAND_CHECK.validate({"ref": "0909", "choice": "short-by-fees", "date": D, "amount": "9"})
+    assert cleaned["phrase"] == f"short by fees £9.00 accepted {D}"
 
 
 if __name__ == "__main__":

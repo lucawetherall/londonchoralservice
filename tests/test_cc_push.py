@@ -317,8 +317,61 @@ def test_unsubscribe_needs_no_passkey_and_removes_the_device():
     assert post(c, "/actions/push-unsubscribe/run", {"input": {"id": sid}}, origin=None).status_code == 403
 
 
+def test_device_page_never_makes_the_key():
+    c, a, _ = setup()
+    push.forget_key()
+    push.vapid_file().unlink(missing_ok=True)
+    page = c.get("/device", headers=HEADERS).text
+    assert not push.vapid_file().exists()  # a GET writes nothing
+    assert 'data-key=""' in page and "Not set up yet" in page
+    assert push.public_key_b64(create=False) is None and not push.vapid_file().exists()
+    push.private_key()  # what the service does when it starts
+    page = c.get("/device", headers=HEADERS).text
+    assert f'data-key="{push.public_key_b64(create=False)}"' in page and "Not set up yet" not in page
+
+
+def test_the_service_makes_the_key_at_start_up():
+    fake = FakeSecurity()
+    saved = push.SECURITY_RUNNER, push.watch, os.environ.pop("CC_VAPID_STORE")
+
+    async def no_watch(stop=None, poll=None, flags=None):
+        return None
+
+    push.SECURITY_RUNNER, push.watch = fake, no_watch
+    os.environ["CC_NO_REFRESH_JOB"] = "1"
+    push.forget_key()
+    try:
+        fixtures()
+        app = create_app(client_factory=lambda: None, checkout=lambda: "main", watch=True)
+        assert fake.stored is None and fake.calls == []  # nothing before start-up
+        with TestClient(app, base_url=ORIGIN, client=("127.0.0.1", 50000)):
+            pass
+        assert fake.stored and len(fake.stored) == 64
+        assert sum(1 for argv, _ in fake.calls if argv[1] == "-i") == 1
+    finally:
+        push.SECURITY_RUNNER, push.watch = saved[0], saved[1]
+        os.environ["CC_VAPID_STORE"] = saved[2]
+        os.environ.pop("CC_NO_REFRESH_JOB", None)
+        push.forget_key()
+
+
+def test_save_state_leaves_no_temp_file_when_it_fails():
+    fixtures()
+    d = auth.config_dir()
+    try:
+        push.save_state({"bad": object()})  # json can't write it
+    except TypeError:
+        pass
+    else:
+        raise AssertionError("save_state accepted an unwritable value")
+    assert not [p.name for p in d.iterdir() if p.name.endswith(".tmp")]
+    push.save_state({"ok": 1})
+    assert push.load_state() == {"ok": 1} and not [p for p in d.iterdir() if p.name.endswith(".tmp")]
+
+
 def test_device_page_shows_the_key_and_devices_without_secrets():
     c, a, _ = setup()
+    push.private_key()  # made at the service's start-up
     p = post(c, "/actions/push-subscribe/preview", {"input": sub_input()}).json()
     post(c, "/actions/push-subscribe/run", {"input": sub_input(), "credential": a.assert_(p["options"])})
     page = c.get("/device", headers=HEADERS).text
@@ -378,7 +431,8 @@ def test_payload_is_a_fixed_template_with_validated_fields_only():
         except ValueError:
             continue
         raise AssertionError(ref)
-    assert set(push.KINDS) == set(cc_event.KINDS) | {"run-stale"}
+    assert set(push.KINDS) == set(cc_event.KINDS) | {"run-stale", "sync-stale", "books-disagree"}
+    assert push.APP_KINDS == {"run-stale", "sync-stale", "books-disagree"}
 
 
 def test_events_are_pushed_to_every_device_and_history_is_not_replayed():
@@ -457,6 +511,205 @@ def test_stale_run_counts_daytime_hours_and_pushes_once():
     assert push.payload(e)["body"] == "Not run for 3 daytime hours (last seen Sun 20:00)."
     assert push.stale_run(at(28, 13), st) is None
     assert push.daytime_between(at(27, 20), at(28, 9)) == datetime.timedelta(hours=2)
+
+
+# ---------------------------------------------------------------- alerts on silence (sync-stale, books-disagree)
+
+
+def set_mtime(path, when):
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text("{}")
+    os.utime(path, (when.timestamp(), when.timestamp()))
+
+
+def clear_sync_files():
+    for p in push.sync_paths().values():
+        p.unlink(missing_ok=True)
+
+
+def test_sync_stale_fires_once_a_day_and_never_at_night():
+    fixtures()
+    clear_sync_files()
+    at = lambda d, h, m=0: datetime.datetime(2026, 9, d, h, m, tzinfo=LONDON)  # noqa: E731
+    books = push.sync_paths()["books"]
+    st = {}
+    assert push.sync_stale(at(28, 12), st) == []  # never written: a sync not set up yet, no alert
+    set_mtime(books, at(27, 21, 30))  # the last pass of yesterday
+    assert push.sync_stale(at(28, 6, 59), st) == []  # before 07:00: not checked
+    assert push.sync_stale(at(28, 7, 0), st) == []  # the night doesn't count: 30 daytime minutes
+    assert push.sync_stale(at(28, 9, 30), st) == []  # exactly 3 daytime hours (21:30-22:00, 07:00-09:30)
+    [e] = push.sync_stale(at(28, 9, 31), st)
+    assert e["kind"] == "sync-stale" and e["subject"] == "books"
+    m = push.payload(e)
+    assert m == {"title": "Books sync has stopped", "body": "Last good sync Sun 21:30. Open Health.", "url": "/health"}, m
+    push.mark_sent(st, e, at(28, 9, 31))
+    assert push.sync_stale(at(28, 15), st) == []  # once a London day
+    assert push.sync_stale(at(28, 22, 30), st) == []  # night: never
+    assert push.sync_stale(at(29, 7, 29), st) == []  # a new day: the first pass gets half an hour to run
+    [again] = push.sync_stale(at(29, 7, 30), st)  # still not written: the new day's one alert
+    assert again["subject"] == "books"
+    # a sync that ran today: the body says the time only
+    set_mtime(books, at(29, 8, 0))
+    st = {}
+    [e] = push.sync_stale(at(29, 11, 5), st)
+    assert push.payload(e)["body"] == "Last good sync 08:00. Open Health."
+    # the static dashboard has its own subject and title, on the same once-a-day rule
+    clear_sync_files()
+    set_mtime(push.sync_paths()["dashboard"], at(29, 7, 0))
+    [d] = push.sync_stale(at(29, 12, 0), st)
+    assert d["subject"] == "dashboard" and push.payload(d)["title"] == "Dashboard refresh has stopped"
+    # a line of this kind in events.jsonl (which Claude's cc_event.py could reach) is never pushed
+    for bad in ({"kind": "sync-stale", "fields": {"subject": "books", "last": "Ann Smithfield", "at": "x"}},
+                {"kind": "sync-stale", "fields": {"subject": "bank", "last": at(29, 7).isoformat(),
+                                                  "at": at(29, 12).isoformat()}},
+                {"kind": "sync-stale", "fields": {"subject": "books", "last": "2026-09-29T07:00:00",
+                                                  "at": "2026-09-29T12:00:00"}},
+                {"kind": "books-disagree", "fields": {"ref": "ann@example.org"}},
+                {"kind": "books-disagree", "fields": {"ref": "2111", "text": "free text"}}):
+        assert push.payload(bad) is None, bad
+
+
+def test_sync_alerts_go_through_the_watcher_once_and_events_file_lines_are_ignored():
+    fixtures()
+    clear_sync_files()
+    push.add_subscription(push.validate_subscription(sub_input()), LOGIN, "abc")
+    fake = FakeWebPush()
+    saved = with_fake(fake)
+    try:
+        at = lambda h, m=0: datetime.datetime(2026, 9, 28, h, m, tzinfo=LONDON)  # noqa: E731
+        set_state_mtime(at(23))  # the enquiry assistant is running: no run-stale push in the way
+        assert push.look(at(8)) == []  # the first look starts at the end of the events file
+        # Claude's side can append lines; one claiming to be an app alert is dropped, not pushed
+        with open(push.events_path(), "a") as f:
+            f.write(json.dumps({"kind": "sync-stale", "fields": {"subject": "books", "last": at(7).isoformat(),
+                                                                 "at": at(8).isoformat()}}) + "\n")
+            f.write(json.dumps({"kind": "books-disagree", "fields": {"ref": "2111"}}) + "\n")
+        assert push.look(at(8, 1)) == [] and fake.calls == []
+        set_mtime(push.sync_paths()["books"], at(7))
+        pushed = push.look(at(10, 1))
+        assert [p["title"] for p in pushed] == ["Books sync has stopped"] and len(fake.calls) == 1
+        assert push.look(at(12)) == [] and push.look(at(21, 59)) == [] and len(fake.calls) == 1
+        st = push.load_state()
+        assert st["alerts"] == {"sync-stale:books": "2026-09-28"}, st
+        mode = os.stat(push.state_path()).st_mode & 0o777
+        assert mode == 0o600, oct(mode)
+        # held back by the hourly cap: not marked sent, so it goes later that day
+        clear_sync_files()
+        set_mtime(push.sync_paths()["dashboard"], at(7))
+        st = push.load_state()
+        st["sent"] = [at(13).timestamp()] * push.HOUR_MAX
+        push.save_state(st)
+        assert push.look(at(13, 1)) == []
+        assert "sync-stale:dashboard" not in push.load_state().get("alerts", {})
+        later = push.look(at(14, 2))
+        assert [p["title"] for p in later] == ["Dashboard refresh has stopped"], later
+    finally:
+        push.WEBPUSH = saved
+
+
+class Flags:
+    """Stands in for data.Data.books_flags_now: counts its calls."""
+
+    def __init__(self, items, complete=True):
+        self.items, self.complete, self.calls = items, complete, 0
+
+    def __call__(self):
+        self.calls += 1
+        if isinstance(self.items, Exception):
+            raise self.items
+        return None if self.items is None else (list(self.items), self.complete)
+
+
+def flag(ref, text="Starling matched, Books unpaid"):
+    return {"ref": ref, "text": text, "tone": "warn", "href": None}
+
+
+def test_books_disagree_fires_after_a_day_once_a_day_and_not_at_night():
+    fixtures()
+    at = lambda d, h, m=0: datetime.datetime(2026, 9, d, h, m, tzinfo=LONDON)  # noqa: E731
+    st = {}
+    flags = Flags([flag("2111"), flag("0310", "in the ledger, not in Books")])
+    assert push.books_disagree(at(28, 23), st, flags) == [] and flags.calls == 0  # night: not even looked at
+    assert push.books_disagree(at(28, 9), st, flags) == [] and flags.calls == 1  # first seen now
+    assert push.books_disagree(at(28, 9, 10), st, flags) == [] and flags.calls == 1  # every 30 minutes only
+    assert push.books_disagree(at(29, 8, 30), st, flags) == []  # 23.5 hours
+    out = push.books_disagree(at(29, 9, 30), st, flags)
+    assert [e["fields"] for e in out] == [{"ref": "0310"}, {"ref": "2111"}], out
+    m = push.payload(out[1])
+    assert m == {"title": "Books disagreement", "body": "2111: Books has disagreed for over a day. Open Today.",
+                 "url": "/"}, m
+    for e in out:
+        push.mark_sent(st, e, at(29, 9, 30))
+    assert push.books_disagree(at(29, 15), st, flags) == []  # once a London day per ref
+    assert push.books_disagree(at(29, 22, 30), st, flags) == []  # night
+    assert len(push.books_disagree(at(30, 7, 0), st, flags)) == 2  # the next day, again
+    # a flag that went away (complete list) is forgotten; coming back starts its day again
+    st = {}
+    flags = Flags([flag("2111")])
+    push.books_disagree(at(28, 9), st, flags)
+    flags.items = []
+    push.books_disagree(at(28, 12), st, flags)
+    assert st["flags_seen"] == {}
+    flags.items = [flag("2111")]
+    push.books_disagree(at(28, 13), st, flags)
+    assert push.books_disagree(at(29, 10), st, flags) == []  # 21 hours since it came back
+    # with the bank not checked (incomplete), a Starling flag missing from the list isn't forgotten
+    st = {}
+    flags = Flags([flag("2111")])
+    push.books_disagree(at(28, 9), st, flags)
+    flags.items, flags.complete = [], False
+    push.books_disagree(at(28, 12), st, flags)
+    assert "2111|Starling matched, Books unpaid" in st["flags_seen"]
+    assert push.books_disagree(at(29, 12), st, flags) == []  # but it only alerts while it is listed
+    flags.items, flags.complete = [flag("2111")], True
+    assert [e["fields"]["ref"] for e in push.books_disagree(at(29, 13), st, flags)] == ["2111"]
+    # Books not synced, or a failing read: nothing, and the watcher carries on
+    assert push.books_disagree(at(28, 9), {}, Flags(None)) == []
+    assert push.books_disagree(at(28, 9), {}, Flags(OSError("private path"))) == []
+    assert push.books_disagree(at(28, 9), {}, None) == []
+
+
+def test_books_disagree_through_the_watcher_names_only_the_ref():
+    fixtures()
+    clear_sync_files()
+    push.add_subscription(push.validate_subscription(sub_input()), LOGIN, "abc")
+    fake = FakeWebPush()
+    saved = with_fake(fake)
+    try:
+        at = lambda d, h, m=0: datetime.datetime(2026, 9, d, h, m, tzinfo=LONDON)  # noqa: E731
+        flags = Flags([flag("2111", "Books paid, Starling not matched"), flag("bad ref", "x")])
+        set_state_mtime(at(29, 23))  # the enquiry assistant is running: no run-stale push in the way
+        assert push.look(at(28, 9), flags) == []
+        pushed = push.look(at(29, 9, 30), flags)
+        assert pushed == [{"title": "Books disagreement", "body": "2111: Books has disagreed for over a day. Open Today.",
+                           "url": "/"}], pushed
+        body = json.dumps(fake.calls[0][1])
+        assert "Starling" not in body and "Ann" not in body
+        assert push.load_state()["alerts"] == {"books-disagree:2111": "2026-09-29"}
+        assert push.look(at(29, 10, 1), flags) == [] and len(fake.calls) == 1
+    finally:
+        push.WEBPUSH = saved
+
+
+def test_the_app_passes_its_flags_to_the_watcher():
+    """create_app starts push.watch with the reader's books_flags_now, which returns Today's flags."""
+    import inspect
+    from command_centre import app as app_module
+    assert "flags=reader.books_flags_now" in inspect.getsource(app_module.create_app)
+    assert "flags" in inspect.signature(push.watch).parameters
+    fixtures()
+    reader = data.Data(client_factory=lambda: None, now=lambda: datetime.datetime(2026, 9, 28, 9, tzinfo=LONDON))
+    cache = Path(TMP) / "command-centre" / "cache" / "books.json"
+    cache.unlink(missing_ok=True)
+    assert reader.books_flags_now() is None  # Books not synced
+    cache.parent.mkdir(parents=True, exist_ok=True)
+    cache.write_text(json.dumps({"generated_at": "2026-09-28T07:00:00+01:00", "totals": {}, "bills": [],
+                                 "invoices": [{"number": "9999", "status": "sent", "date": "2026-09-01",
+                                               "total": 100.0, "balance": 100.0}]}))
+    flags, complete = reader.books_flags_now()
+    assert ("9999", "in Books, not in the ledger") in {(f["ref"], f["text"]) for f in flags} and complete is False
+    cache.unlink()
 
 
 # ---------------------------------------------------------------- cc_event.py

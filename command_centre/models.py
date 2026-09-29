@@ -2,7 +2,7 @@
 
 The rules stay in the scripts: payment states come from check_payments (collect, assess, deposit_due_date,
 is_cancelled, closed_on), the pipeline's from pipeline (followups_due, reviews_due, summary_dict, STATUS_ORDER),
-the singers' from singer_invoices (normalise_name, first_name, payee_status, is_open, ring_first, is_trusted,
+the singers' from singer_invoices (normalise_name, first_name, payee_status, is_open, ring_first_in, trust_label, live_warnings,
 bill_number). What is here only arranges their answers for a page.
 
 Privacy, as on the phase-1 pages: client and singer first names only, emails never, bank accounts as
@@ -19,7 +19,7 @@ REPO = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO / "scripts" / "reports"))
 import dashboard as dash  # noqa: E402
 
-cp, lm, pl, si = dash.cp, dash.lm, dash.pl, dash.si
+cp, lm, pl, si, mr = dash.cp, dash.lm, dash.pl, dash.si, dash.mr
 
 BALANCE_DAYS = 3  # check_payments' BALANCE_DUE: the balance falls due three days before the event
 DEPOSIT_STATES = {"AWAITING_DEPOSIT", "DEPOSIT_OVERDUE"}
@@ -28,6 +28,7 @@ REF_RE = re.compile(r"^[A-Za-z0-9-]{1,20}$")
 ISO_DAY = re.compile(r"\b(\d{4}-\d{2}-\d{2})\b")
 EMAIL = re.compile(r"[\w.+-]+@[\w-]+(\.[\w-]+)+")
 LONG_DIGITS = re.compile(r"\d(?:[ -]?\d){5,}")
+ISO_DATE = re.compile(r"(?:19|20)\d\d-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12]\d|3[01])")
 SEARCH_MIN, SEARCH_MAX, SEARCH_LIMIT = 2, 80, 50
 FOLLOWUP_GAP = {0: pl.FIRST_AFTER, 1: pl.SECOND_AFTER, 2: pl.LOST_AFTER}
 
@@ -42,12 +43,97 @@ def invoice_key(message_id):
     return "".join(chr(97 + b % 26) for b in digest[:12])
 
 
+ENQUIRY_KEY_RE = re.compile(r"^[a-z]{12}$")
+
+
+def enquiry_key(enquiry_id):
+    """An enquiry's handle in the app's URLs and pages: 12 lower-case letters from sha256 of its id (the Zoho thread
+    id, a long digit run), as drafts.draft_key does for a draft, so no thread id reaches a URL or a page."""
+    digest = hashlib.sha256(("lcs-cc-enquiry:" + str(enquiry_id or "")).encode("utf-8")).digest()
+    return "".join(chr(97 + b % 26) for b in digest[:12])
+
+
+def enquiry_href(enquiry_id):
+    return f"/enquiries/{enquiry_key(enquiry_id)}"
+
+
 def singer_actions(r):
     """Which singer-invoice actions a store row allows (the validators in actions.py check again)."""
     open_ = si.is_open(r)
     return {"key": invoice_key(r.get("message_id")),
             "can_confirm": bool(r.get("bank_fp")) and r.get("bank_confirmed") != "yes" and not si.is_withdrawn(r),
             "can_settle": open_, "can_withdraw": open_}
+
+
+RING_REASON = "bank details changed since their last invoice: ring them on a number you already hold"
+NEW_REASON = "bank details not confirmed yet: ring them on a number you already hold, then confirm"
+NO_BANK_REASON = "no bank details on the invoice: ask them for their details"
+
+
+def singer_trust(store_rows, r):
+    """What the pay list needs about one open invoice (the store's whole history decides trust):
+    - trusted: singer_invoices.account_trusted (the account, by its fingerprint, confirmed by phone or paid to
+      verifiably on any of the singer's invoices), or a Starling payee that already holds exactly these details
+      (the scan's "existing: " payee, which singer_invoices itself treats as trusted and never warns about);
+    - trust: how ("confirmed by phone", "paid to verifiably", "Starling payee"), or "";
+    - bill_number: the Books bill number (singer_invoices.bill_number: no digit run over 5);
+    - reason: why an untrusted one waits (ring first, not confirmed yet, or no bank details), else "".
+    Never trusted while ring_first_in says to ring (the details changed since the trusted ones)."""
+    fp = r.get("bank_fp") or ""
+    ring = si.ring_first_in(store_rows, r)
+    label = si.trust_label(store_rows, r) if fp else ""
+    if not label and fp and (r.get("payee") or "").startswith("existing: ") and r.get("bank_changed") != "yes":
+        label = "Starling payee"
+    trusted = bool(label) and not ring
+    reason = "" if trusted else RING_REASON if ring else NEW_REASON if fp else NO_BANK_REASON
+    return {"trusted": trusted, "trust": label if trusted else "", "reason": reason,
+            "bill_number": mask_digits(si.bill_number(r.get("invoice_ref"), r.get("message_id")))}
+
+
+def singer_pay_list(singers, bill_flags=None):
+    """The open singer invoices (data.open_singers: oldest first, never paid or withdrawn), split the way Today's
+    Needs you counts them, so the Money page's list and Today's rows always agree:
+      ring        ring first (singer_invoices.ring_first_in): each its own Needs-you row;
+      books_paid  Books already shows the bill paid (singer_bill_flags' "key"): its bill row says to check it;
+      pay         the account is trusted (singer_trust): "Pay N singer invoices, £X" is these, and `total` their sum;
+      confirm     the rest (new or unconfirmed details, or none on the invoice): one grouped "confirm" row."""
+    paid_in_books = {f["key"] for f in bill_flags or [] if f.get("key")}
+    out = {"ring": [], "books_paid": [], "pay": [], "confirm": []}
+    for s in singers or []:
+        if s.get("ring_first"):
+            out["ring"].append(s)
+        elif s.get("key") in paid_in_books:
+            out["books_paid"].append(s)
+        elif s.get("trusted"):
+            out["pay"].append(s)
+        else:
+            out["confirm"].append(s)
+    out["total"] = round(sum(s.get("amount") or 0 for s in out["pay"]), 2)
+    return out
+
+
+WAIT_AFTER = datetime.timedelta(hours=24)
+
+
+def enquiries_waiting(rows, found, now):
+    """Pipeline rows in status "new" first seen more than 24 hours ago (first_seen is a date: its midnight, London
+    time, counts as the moment it came in) whose thread has no draft in the drafts cache (drafts.read_drafts'
+    (drafts, when), or None when nothing is recorded yet), oldest first: [{enquiry_id, occasion, first_seen}].
+    One per enquiry. No names: the pipeline holds none."""
+    drafted = {str(d.get("thread_id") or "") for d in (found[0] if found else [])}
+    drafted.discard("")
+    now = now if now.tzinfo else now.replace(tzinfo=dash.LONDON)
+    out, seen = [], set()
+    for r in rows or []:
+        eid = (r.get("enquiry_id") or "").strip()
+        day = to_date(r.get("first_seen"))
+        if not eid or eid in seen or pl.status_of(r) != "new" or day is None or eid in drafted:
+            continue
+        if now - datetime.datetime.combine(day, datetime.time(0), dash.LONDON) <= WAIT_AFTER:
+            continue
+        seen.add(eid)
+        out.append({"enquiry_id": eid, "occasion": (r.get("occasion") or "").strip(), "first_seen": day})
+    return sorted(out, key=lambda e: (e["first_seen"], e["enquiry_id"]))
 
 
 def to_date(value):
@@ -59,8 +145,11 @@ def first_name(name):
 
 
 def mask_digits(text):
-    """Any run of six or more digits (spaces or dashes allowed between them) -> ••••last4."""
-    return LONG_DIGITS.sub(lambda m: "••••" + re.sub(r"\D", "", m.group())[-4:], str(text or ""))
+    """Any run of six or more digits (spaces or dashes allowed between them) -> ••••last4, except an ISO date
+    (YYYY-MM-DD, a 19xx or 20xx year, a real month and day), which notes carry and no bank number looks like."""
+    def mask(m):
+        return m.group() if ISO_DATE.fullmatch(m.group()) else "••••" + re.sub(r"\D", "", m.group())[-4:]
+    return LONG_DIGITS.sub(mask, str(text or ""))
 
 
 def mask_note(text, full_name=""):
@@ -162,12 +251,12 @@ def ledger_timeline(row, booking, today):
     return out
 
 
-def enquiry_items(r, cache, today, prefix=""):
+def enquiry_items(r, today, prefix=""):
     """An enquiry's timeline items (pipeline row): first seen, quotes, follow-ups, next follow-up, event."""
     eid = r.get("enquiry_id", "")
-    href = f"/enquiries/{eid}"
+    href = enquiry_href(eid)
     out = [item(to_date(r.get("first_seen")), "enquiry",
-                f"{prefix}Enquiry {eid} by {r.get('source') or 'unknown source'}"
+                f"{prefix}Enquiry {enquiry_key(eid)} by {r.get('source') or 'unknown source'}"
                 + (f", {r.get('occasion')}" if r.get("occasion") else ""), href)]
     quotes = sorted({d for d in (to_date(x) for x in pl.QUOTED_NOTE.findall(r.get("notes") or "")) if d})
     for i, d in enumerate(quotes):
@@ -188,17 +277,17 @@ def enquiry_items(r, cache, today, prefix=""):
     return out
 
 
-def enquiry_timeline(r, cache, today):
-    out = enquiry_items(r, cache, today)
+def enquiry_timeline(r, today):
+    out = enquiry_items(r, today)
     event = to_date(r.get("event_date"))
     if event:
         out.append(item(event, "event", "Event date"))
     return sort_items(out)
 
 
-def booking_enquiries(ref, enquiries, cache, today):
+def booking_enquiries(ref, enquiries, today):
     return [x for r in enquiries if (r.get("booking_ref") or "").strip() == ref
-            for x in enquiry_items(r, cache, today)]
+            for x in enquiry_items(r, today)]
 
 
 def linked_singer_rows(ref, event_date, singer_rows):
@@ -239,21 +328,53 @@ def booking_singer_list(ref, event_date, singer_rows):
 BOOKS_UNPAID = {"sent", "viewed", "unpaid", "overdue"}
 STARLING_MATCHED = {"DEPOSIT_SEEN", "PAID_IN_FULL"}
 DRAFT_DAYS = 2  # Appendix A step 6g: a Books draft more than 2 days old
+LEDGER_SETTLED = {"PAID_IN_FULL", "CLOSED", "CANCELLED", "PAYMENT_ON_CANCELLED"}  # not "open" for the ledger rule
 
 
-def books_summary(cache):
-    """The Money page's Books panel from books.json: totals, draft and overdue invoice numbers, and when it was
-    synced (an aware datetime, or None when the stamp is unreadable)."""
+BOOKS_STALE = datetime.timedelta(hours=24)  # Today warns when books.json is older than this
+
+
+def books_synced(cache, now):
+    """{generated_at (an aware datetime, or None when unreadable), stale} for the "as of" line on Today."""
+    try:
+        when = datetime.datetime.fromisoformat(str(cache.get("generated_at")))
+    except ValueError:
+        when = None
+    if when is not None and when.tzinfo is None:
+        when = when.replace(tzinfo=dash.LONDON)
+    if now.tzinfo is None:
+        now = now.replace(tzinfo=dash.LONDON)
+    return {"generated_at": when, "stale": when is None or now - when > BOOKS_STALE}
+
+
+def ledger_href(number, ledger_rows):
+    """/bookings/<ref> for the ledger booking whose ref is this Books number (check_payments.norm_ref on both), or
+    None when there is no such booking."""
+    key = cp.norm_ref(str(number or ""))
+    for r in ledger_rows or []:
+        ref = (r.get("booking_ref") or "").strip()
+        if key and cp.norm_ref(ref) == key and REF_RE.fullmatch(ref):
+            return f"/bookings/{ref}"
+    return None
+
+
+def books_summary(cache, ledger_rows=None):
+    """The Money page's Books panel from books.json: totals, draft and overdue invoices ({number, href}: the ledger
+    booking's page, or None when the ledger has no such booking), and when it was synced (an aware datetime, or
+    None when the stamp is unreadable)."""
     try:
         when = datetime.datetime.fromisoformat(str(cache.get("generated_at")))
     except ValueError:
         when = None
     invoices = [i for i in cache.get("invoices") or [] if isinstance(i, dict)]
+
+    def listed(keep):
+        numbers = sorted(str(i.get("number", "")) for i in invoices if keep(i))
+        return [{"number": n, "href": ledger_href(n, ledger_rows)} for n in numbers]
     return {"totals": cache.get("totals") or {}, "generated_at": when,
             "bills_read": cache.get("bills_read") is not False,  # false on the free Books plan (no bills)
-            "drafts": sorted(str(i.get("number", "")) for i in invoices if i.get("status") == "draft"),
-            "overdue": sorted(str(i.get("number", "")) for i in invoices
-                              if i.get("status") == "overdue" and float(i.get("balance") or 0) > 0)}
+            "drafts": listed(lambda i: i.get("status") == "draft"),
+            "overdue": listed(lambda i: i.get("status") == "overdue" and float(i.get("balance") or 0) > 0)}
 
 
 def books_invoice(ref, invoices):
@@ -278,16 +399,30 @@ def books_timeline(ref, invoices):
 def books_flags(invoices, ledger_rows, bookings, today, bank_checked):
     """The Appendix A step 6g disagreements, for Today: [{ref, text, tone}].
 
-    - a Books draft more than 2 days old: "Books draft not sent (>2 days)";
+    - a Books draft more than 2 days old: "Invoice email not sent (>2 days): check Zoho Drafts";
     - Books paid, but Starling hasn't matched the full fee (the state isn't PAID_IN_FULL and the notes have no
       "paid in full" date): "Books paid, Starling not matched";
     - Starling matched a payment (DEPOSIT_SEEN, PAID_IN_FULL, or a "paid in full" note) but Books shows the invoice
       unpaid or overdue with nothing paid: "Starling matched, Books unpaid"; or part-paid when Starling says paid in
       full: "Starling paid in full, Books part-paid".
-    The two Starling comparisons are skipped when the bank wasn't checked, as 6g skips them."""
+    The two Starling comparisons are skipped when the bank wasn't checked, as 6g skips them.
+
+    And the ledger against Books (the caller passes a cache, so these never run while Books isn't synced):
+    - an open ledger booking (not cancelled, not closed, not paid in full) invoiced at least 2 days ago with no
+      Books invoice of its ref (a void one doesn't count): "in the ledger, not in Books";
+    - a Books invoice, not a draft or void, whose number is no ledger ref: "in Books, not in the ledger".
+    Each flag carries `href`: the ledger booking's page, or None when the ledger has no such booking."""
     rows = {cp.norm_ref(r.get("booking_ref")): r for r in ledger_rows if (r.get("booking_ref") or "").strip()}
     states = {cp.norm_ref(b.get("ref")): b.get("state") for b in bookings}
     out = []
+
+    def flag(number, text, tone):
+        row = rows.get(cp.norm_ref(number))
+        ref = (row.get("booking_ref") or "").strip() if row else ""
+        out.append({"ref": number, "text": text, "tone": tone,
+                    "href": f"/bookings/{ref}" if ref and REF_RE.fullmatch(ref) else None})
+
+    in_books = set()
     for i in invoices or []:
         if not isinstance(i, dict):
             continue
@@ -295,9 +430,13 @@ def books_flags(invoices, ledger_rows, bookings, today, bank_checked):
         key = cp.norm_ref(number)
         status = str(i.get("status") or "")
         made = to_date(i.get("date"))
+        if key and status != "void":
+            in_books.add(key)
+        if key and status not in ("draft", "void") and key not in rows:
+            flag(number, "in Books, not in the ledger", "warn")
         if status == "draft":
             if made and (today - made).days > DRAFT_DAYS:
-                out.append({"ref": number, "text": "Books draft not sent (>2 days)", "tone": "warn"})
+                flag(number, "Invoice email not sent (>2 days): check Zoho Drafts", "warn")
             continue
         if not bank_checked or key not in rows:
             continue
@@ -306,12 +445,275 @@ def books_flags(invoices, ledger_rows, bookings, today, bank_checked):
         matched = full or state in STARLING_MATCHED
         total, balance = float(i.get("total") or 0), float(i.get("balance") or 0)
         if status == "paid" and not full:
-            out.append({"ref": number, "text": "Books paid, Starling not matched", "tone": "bad"})
+            flag(number, "Books paid, Starling not matched", "bad")
         elif status in BOOKS_UNPAID and matched and total > 0 and balance >= total - 0.005:
-            out.append({"ref": number, "text": "Starling matched, Books unpaid", "tone": "warn"})
+            flag(number, "Starling matched, Books unpaid", "warn")
         elif status == "partially_paid" and full:
-            out.append({"ref": number, "text": "Starling paid in full, Books part-paid", "tone": "warn"})
+            flag(number, "Starling paid in full, Books part-paid", "warn")
+    for key, r in rows.items():
+        invoiced = to_date(r.get("invoice_date"))
+        if key in in_books or cp.is_cancelled(r) or cp.closed_on(r) or invoiced is None \
+                or states.get(key) in LEDGER_SETTLED:
+            continue
+        if (today - invoiced).days >= DRAFT_DAYS:
+            flag(r["booking_ref"].strip(), "in the ledger, not in Books", "warn")
     return sorted(out, key=lambda f: (f["ref"], f["text"]))
+
+
+def _bill_first(r):
+    return si.first_name(r.get("singer_name"))
+
+
+def singer_bill_flags(store_rows, bills):
+    """The singer store against the Books bills, for Today's Books and Starling card: [{ref, text, tone, href}].
+
+    - a singer invoice paid with paid_verified "yes" whose Books bill (singer_invoices.books_bill) is still open
+      with a balance: "paid in Starling, bill open in Books";
+    - a Books bill marked paid whose invoice is still open here (not paid, not withdrawn): "bill paid in Books,
+      invoice open here".
+    `ref` is the bill number and the first name ("SI-12345 Jane"); `href` is the Singers page."""
+    out = []
+    for r in store_rows or []:
+        if si.is_withdrawn(r):
+            continue
+        bill = si.books_bill(r, bills)
+        if bill is None:
+            continue
+        number = si.bill_number(r.get("invoice_ref"), r.get("message_id"))
+        label = f"{mask_digits(number)} {_bill_first(r)}".strip()
+        status = str(bill.get("status") or "")
+        balance = float(bill.get("balance") or 0)
+        if r.get("paid_on") and r.get("paid_verified") == "yes" and status not in ("paid", "void") and balance > 0:
+            out.append({"ref": label, "text": "paid in Starling, bill open in Books", "tone": "warn", "href": "/singers"})
+        elif status == "paid" and si.is_open(r):
+            # `key`: the open invoice's handle, so Today doesn't also ask the owner to pay it (needs_you)
+            out.append({"ref": label, "text": "bill paid in Books, invoice open here", "tone": "warn",
+                        "href": "/singers", "key": invoice_key(r.get("message_id"))})
+    return sorted(out, key=lambda f: (f["ref"], f["text"]))
+
+
+# ---------------------------------------------------------------- Today: what needs the owner
+
+# States in which the balance can be a transfer-fee shortfall: a confident payment in, the rest not in the bank
+# (actions.FEE_STATES is this tuple: the short-by-fees check and the pages agree)
+FEE_STATES = ("DEPOSIT_SEEN", "BALANCE_DUE", "PAST_PART_PAID", "NOTED_PAID")
+FEE_SHARE = 0.9  # Today asks about a shortfall only once at least 90% of the fee is in (never a deposit-only booking)
+
+
+def _gbp(value):
+    return f"£{float(value or 0):,.2f}"
+
+
+def _on(day):
+    d = to_date(str(day or "")[:10])
+    return f"{d.day} {d:%b}" if d else "an unknown date"
+
+
+def fee_shortfall(a, bank_checked):
+    """The transfer-fee question for one assessment (check_payments.assess), or None: the bank was checked, the
+    state is one of FEE_STATES, the confident payments leave a gap of £0.01 up to check_payments.FEE_CAP that is
+    the whole remaining balance (value - received), and at least FEE_SHARE of the fee is in. {ref, gap, value,
+    received, state}. Never for a held booking (its notes and recorded facts disagree): the owner resolves that
+    first."""
+    if not bank_checked or not a or a.get("state") not in FEE_STATES or a.get("held"):
+        return None
+    value, received = float(a.get("value") or 0), float(a.get("received") or 0)
+    gap, balance = round(value - received, 2), round(float(a.get("balance") or 0), 2)
+    if value <= 0 or received <= 0 or abs(gap - balance) > 0.005:
+        return None
+    if not 0.01 <= gap <= cp.FEE_CAP or received + 0.005 < FEE_SHARE * value:
+        return None
+    return {"ref": a.get("ref"), "gap": gap, "value": round(value, 2), "received": round(received, 2),
+            "state": a.get("state")}
+
+
+def hand_reason(a, bank_checked):
+    """Why a booking is on the hand check, in plain words with the amounts (the facts check_payments.describe
+    gives, shortened for a phone): "£36.15 short of £733.08; the event has passed"."""
+    state, value = a.get("state"), float(a.get("value") or 0)
+    received, balance = float(a.get("received") or 0), float(a.get("balance") or 0)
+    if a.get("held"):  # whatever its state, the question is the disagreement
+        return mr.hand_check_label(a)
+    if not bank_checked:
+        return f"{_gbp(value)} booking; this comes from the ledger notes, as the bank isn't checked"
+
+    def listed(key):
+        return " and ".join(f"{_gbp(x)} on {_on(d)}" for d, x in a.get(key) or []) or "a payment"
+
+    if state == "PAST_PART_PAID":
+        return f"{_gbp(balance)} short of {_gbp(value)}; the event has passed"
+    if state == "PAST_UNMATCHED":
+        return f"no payment for {_gbp(value)} in the bank; the event has passed"
+    if state == "NOTED_PAID":
+        if received:
+            return f"{_gbp(received)} of {_gbp(value)} in the bank; the ledger notes say the rest was paid"
+        return f"no payment for {_gbp(value)} in the bank; the ledger notes say it was paid"
+    if state == "CHECK_PAYMENT":
+        if received and a.get("possible_balance"):
+            return f"{_gbp(received)} of {_gbp(value)} in; {listed('possible_balance')} may be the balance: confirm it"
+        return f"{listed('unconfirmed')} may be for this {_gbp(value)} booking: confirm it"
+    if state == "CHECK_VALUE":
+        return ("the fee is missing or unreadable in the ledger" if value <= 0
+                else "the invoice or event date is missing or unreadable in the ledger")
+    if state == "PAYMENT_ON_CANCELLED":
+        return f"{listed('hand_check_payments')} paid on a cancelled booking: refund or keep"
+    if state == "PAYMENT_AFTER_CLOSE":
+        return f"{listed('hand_check_payments')} paid after it was paid in full"
+    if state == "ARRANGED":
+        when = f" ({_on(a['event_date'])})" if a.get("event_date") else ""
+        return (f"{_gbp(balance)} to collect in cash or by cheque on the day{when}"
+                + ("; no deposit seen" if a.get("arranged_no_deposit") else ""))
+    return mr.hand_check_label(a)
+
+
+def hand_rows(assessments, today, bank_checked):
+    """The hand-check list (dashboard.hand_check: money_report.needs_hand_check, one row each), each with its
+    plain-words `reason`, its `event_date` and, when it qualifies, its transfer-fee question (`fee`)."""
+    by_ref = {a["ref"]: a for a in assessments}
+    out = []
+    for h in dash.hand_check(assessments, today):
+        a = by_ref.get(h["ref"]) or {}
+        out.append(dict(h, reason=hand_reason(a, bank_checked), event_date=a.get("event_date"),
+                        fee=fee_shortfall(a, bank_checked)))
+    return out
+
+
+NEEDS_SOURCES = {  # panel name -> how "Some sources didn't load" names it
+    "ledger": "the bookings ledger", "singer_store": "the singer invoices", "books": "the Books cache",
+    "enquiries": "the enquiry pipeline", "singers": "the singer invoices", "hand": "the hand checks",
+    "bank": "the payment states", "proposals": "the Ads proposals", "books_import": "the Books import",
+    "drafts": "the drafts inbox", "books_flags": "the Books comparison", "bill_flags": "the singer bills",
+    "followups": "the follow-ups", "runs": "the run times", "backup": "the backup record",
+    "waiting": "the enquiries waiting for a reply"}
+NEEDS_ROOTS = {"singers": ("singer_store",), "hand": ("ledger",), "bank": ("ledger",), "followups": ("enquiries",),
+               "books_flags": ("books", "ledger"), "bill_flags": ("books", "singer_store"),
+               "waiting": ("enquiries", "drafts")}
+BANK_SOURCE = "the bank (Starling)"
+
+
+def needs_you(panels, bank_unreachable=False):
+    """Today's "Needs you": (rows, missing). Only what the owner must act on now; a category with nothing in it
+    adds no row, and informational lines (Books sync times, handoffs, the bank line) live elsewhere on the page.
+
+    `panels` maps a name in NEEDS_SOURCES to a data.Panel (anything with .ok, .value); a missing name is skipped.
+    Rows, in the spec's priority order, each {"kind", "count", "tone", ...}:
+      ring      a singer invoice whose bank details changed and aren't trusted yet (ring first): one row each;
+      hand      a hand check (money_report.needs_hand_check, so an ARRANGED balance only from 7 days out): one each,
+                with its `fee` (fee_shortfall) when it is also a transfer-fee shortfall;
+      fee       a booking whose confident payments leave a gap of £0.01 up to FEE_CAP, the whole balance, with at
+                least 90% of the fee in (fee_shortfall), that isn't a hand check: "accept as transfer fees?", one each;
+      deposits  the DEPOSIT_OVERDUE bookings, one grouped row;   balances  the BALANCE_DUE bookings, grouped
+                (less any asked about as a fee shortfall);
+      approval  an Ads change set waiting (not applied, no problem): one each;
+      books-import  the 2026 Books import waiting for approval (only "waiting": approved, stale or imported is
+                a handoff or a note, not an approval);
+      waiting   enquiries in status new, first seen over 24 hours ago, with no draft for their thread
+                (enquiries_waiting), grouped;
+      drafts    the drafts inbox's open drafts, grouped;
+      books     a Books/Starling/ledger disagreement (books_flags): one each;
+      bill      a singer bill disagreement (singer_bill_flags): one each;
+      pay       the open singer invoices to a trusted account, grouped ("Pay N singer invoices, £X"):
+                singer_pay_list's "pay", exactly the Money page's pay list;
+      confirm   the open ones whose details aren't trusted yet and aren't ring first (new details, or none on
+                the invoice), grouped: confirm them before paying;
+      followups pipeline.followups_due (due by today only), grouped;
+      runs      the Health page's stale run files that have been written before (one never written is a run not
+                set up yet, which Health shows), grouped;   backup  a backup key set up but no backup in 36 hours.
+
+    The count rule: a row counts the items it stands for, 1 for a single row and N for a grouped row, which says
+    its N in its own words; the lede is the sum, so it always equals the numbers the rows show. Nothing is counted
+    twice (a ring-first invoice is not also in the pay group; a hand check, a deposit and a balance are different
+    payment states of different bookings).
+
+    `missing` names each source that didn't load, with its error's type name. Its category lists nothing (never its stale data), so the count
+    is then a floor. While Starling can't be read (`bank_unreachable`), the payment states are the ledger notes'
+    guesses, so the hand checks, deposits and balances are left out and the bank is named instead."""
+    rows, missing = [], []
+
+    def note(name, error):
+        label = f"{NEEDS_SOURCES.get(name, name)} ({error})"  # the error's type name only, as every panel shows it
+        if label not in missing:
+            missing.append(label)
+
+    def value(name):
+        """The panel's value, or None (when it failed, noted in `missing` by its root source when that failed)."""
+        p = panels.get(name)
+        if p is None:
+            return None
+        for root in NEEDS_ROOTS.get(name, ()):
+            r = panels.get(root)
+            if r is not None and not r.ok:
+                note(root, r.error)
+                return None
+        if not p.ok:
+            note(name, p.error)
+            return None
+        return p.value
+
+    singers = value("singers") or []
+    for s in singers:
+        if s.get("ring_first"):
+            rows.append({"kind": "ring", "count": 1, "tone": "bad", "item": s})
+    if bank_unreachable:
+        if BANK_SOURCE not in missing:
+            missing.append(BANK_SOURCE)
+    else:
+        bank = value("bank")
+        checked = bool((bank or {}).get("bank_checked"))
+        fees = {}
+        for a in (bank or {}).get("assessments") or []:
+            f = fee_shortfall(a, checked)
+            if f:
+                fees[f["ref"]] = f
+        for h in value("hand") or []:
+            # a hand check that is also a fee shortfall stays one row: its fee question is folded into it
+            rows.append({"kind": "hand", "count": 1, "tone": "warn", "item": h, "fee": fees.pop(h["ref"], None)})
+        for ref in sorted(fees):
+            rows.append({"kind": "fee", "count": 1, "tone": "warn", "item": fees[ref]})
+        asked = {r["item"]["ref"] for r in rows if r["kind"] == "fee"}
+        for state, kind, tone in (("DEPOSIT_OVERDUE", "deposits", "bad"), ("BALANCE_DUE", "balances", "warn")):
+            # a balance that is only a fee shortfall is asked about above, not chased here as well; a held booking
+            # is a hand check, never chased
+            refs = sorted(a["ref"] for a in (bank or {}).get("assessments") or []
+                          if a.get("state") == state and a["ref"] not in asked and not a.get("held"))
+            if refs:
+                rows.append({"kind": kind, "count": len(refs), "tone": tone, "refs": refs, "state": state})
+    for p in value("proposals") or []:
+        if not p.get("applied") and not p.get("problem"):
+            rows.append({"kind": "approval", "count": 1, "tone": "warn", "item": p})
+    books_import = value("books_import")
+    if books_import and books_import.get("state") == "waiting":
+        rows.append({"kind": "books-import", "count": 1, "tone": "warn"})
+    waiting = value("waiting") or []
+    if waiting:
+        rows.append({"kind": "waiting", "count": len(waiting), "tone": "warn", "items": waiting})
+    inbox = value("drafts")
+    open_drafts = (inbox or {}).get("open") or []
+    if open_drafts:
+        rows.append({"kind": "drafts", "count": len(open_drafts), "tone": "warn", "items": open_drafts})
+    for f in value("books_flags") or []:
+        rows.append({"kind": "books", "count": 1, "tone": f.get("tone") or "warn", "item": f})
+    bill_flags = value("bill_flags") or []
+    for f in bill_flags:
+        rows.append({"kind": "bill", "count": 1, "tone": f.get("tone") or "warn", "item": f})
+    split = singer_pay_list(singers, bill_flags)
+    if split["pay"]:
+        rows.append({"kind": "pay", "count": len(split["pay"]), "tone": "warn", "items": split["pay"],
+                     "total": split["total"]})
+    if split["confirm"]:
+        rows.append({"kind": "confirm", "count": len(split["confirm"]), "tone": "warn", "items": split["confirm"]})
+    due = value("followups") or []
+    if due:
+        rows.append({"kind": "followups", "count": len(due), "tone": "warn", "items": due})
+    runs = value("runs")
+    # a file that has never been written is a run not set up yet (Health says so); one that stopped is a failure
+    stale = [r for r in (runs[0] if runs else []) if r.get("stale") and r.get("when") is not None]
+    if stale:
+        rows.append({"kind": "runs", "count": len(stale), "tone": "bad", "items": stale})
+    backup = value("backup")
+    if backup and backup.get("configured") and backup.get("stale"):
+        rows.append({"kind": "backup", "count": 1, "tone": "bad", "item": backup})
+    return rows, missing
 
 
 def margin_map(margins):
@@ -378,8 +780,9 @@ def rate(value):
 # ---------------------------------------------------------------- singers
 
 
-def _warnings(r):
-    return [mask_digits(n) for n in (r.get("notes") or "").split("; ") if n and not n.startswith(si.KEEP_NOTES)]
+def _warnings(rows, r):
+    """si.live_warnings (no bank alarm once the account is trusted anywhere in rows), long digit runs masked."""
+    return [mask_digits(n) for n in si.live_warnings(rows, r)]
 
 
 def singer_directory(rows, today):
@@ -395,23 +798,19 @@ def singer_directory(rows, today):
         latest = live[0] if live else group[0]
         paid = [r for r in live if r.get("paid_on")]
         warnings = []
-        if any(si.ring_first(r) for r in live if si.is_open(r)):
+        if any(si.ring_first_in(rows, r) for r in live if si.is_open(r)):
             warnings.append("Bank details changed: ring on a number you already have before paying")
         for r in live:
             if si.is_open(r):
-                warnings += [w for w in _warnings(r) if w not in warnings]
+                warnings += [w for w in _warnings(rows, r) if w not in warnings]
         if not latest.get("bank_fp"):
             check = "no bank details on file"
-        elif latest.get("bank_confirmed") == "yes":
-            check = "confirmed by phone"
-        elif latest.get("paid_verified") == "yes":
-            check = "paid to verifiably"
-        else:
-            check = "not yet verified"
+        else:  # the account, not just this row: confirmed or paid to verifiably on any invoice with the same details
+            check = si.trust_label(rows, latest) or "not yet verified"
         invoices = [{"received": si.received_date(r), "bill_number": si.bill_number(r.get("invoice_ref"), r.get("message_id")),
                      "amount": lm.money(r.get("amount_gbp")), "paid_on": to_date(r.get("paid_on")),
                      "paid_amount": lm.parse_gbp(r.get("paid_amount")), "open": si.is_open(r),
-                     "ring_first": si.ring_first(r), "last4": dash.digits4(r.get("bank_last4")),
+                     "ring_first": si.ring_first_in(rows, r), "last4": dash.digits4(r.get("bank_last4")),
                      **singer_actions(r)} for r in live]
         withdrawn = [{"received": si.received_date(r), "bill_number": si.bill_number(r.get("invoice_ref"), r.get("message_id")),
                       "amount": lm.money(r.get("amount_gbp")), "on": to_date(r.get("withdrawn"))}
@@ -451,6 +850,31 @@ def season_table(summary):
             "total": clean(dict(season.get("total") or {}, campaign="Total"))}
 
 
+def bar_line_chart(pts, bar_title, top_label, width=480, height=210):
+    """Geometry for an inline SVG of bars and a line, one slot per (date, bar value, line value), oldest first;
+    the line is scaled to its own largest value. `bar_title(day, bar, line)` gives each bar's tooltip and
+    `top_label(largest bar)` the top tick. None when there are no points."""
+    pts = sorted(pts)
+    if not pts:
+        return None
+    left, right, top, bottom = 62, 12, 14, 30
+    plot_w, plot_h = width - left - right, height - top - bottom
+    top_bar = max(p[1] for p in pts) or 1.0
+    top_line = max(p[2] for p in pts) or 1.0
+    slot = plot_w / len(pts)
+    bars, line = [], []
+    for i, (day, value, other) in enumerate(pts):
+        h = plot_h * value / top_bar
+        x = left + i * slot
+        bars.append({"x": round(x + slot * 0.15, 1), "y": round(top + plot_h - h, 1), "w": round(slot * 0.7, 1),
+                     "h": round(h, 1), "label": f"{day.day} {day:%b}", "lx": round(x + slot / 2, 1),
+                     "title": bar_title(day, value, other)})
+        line.append(f"{round(x + slot / 2, 1)},{round(top + plot_h - plot_h * other / top_line, 1)}")
+    return {"width": width, "height": height, "bars": bars, "line": " ".join(line), "top": top,
+            "base": top + plot_h, "left": left, "right": width - right, "max_bar": top_bar,
+            "max_line": int(top_line), "top_label": top_label(top_bar), "label_y": height - 10}
+
+
 def weekly_chart(weeks, width=480, height=210):
     """Geometry for an inline SVG: bars of weekly spend and a line of clicks, oldest week first."""
     pts = []
@@ -459,25 +883,87 @@ def weekly_chart(weeks, width=480, height=210):
         spend, clicks = _num(w.get("spend_gbp")), _num(w.get("clicks"))
         if day and spend is not None:
             pts.append((day, spend, clicks or 0))
-    pts.sort()
-    if not pts:
-        return None
-    left, right, top, bottom = 62, 12, 14, 30
-    plot_w, plot_h = width - left - right, height - top - bottom
-    top_spend = max(p[1] for p in pts) or 1.0
-    top_clicks = max(p[2] for p in pts) or 1.0
-    slot = plot_w / len(pts)
-    bars, line = [], []
-    for i, (day, spend, clicks) in enumerate(pts):
-        h = plot_h * spend / top_spend
-        x = left + i * slot
-        bars.append({"x": round(x + slot * 0.15, 1), "y": round(top + plot_h - h, 1), "w": round(slot * 0.7, 1),
-                     "h": round(h, 1), "label": f"{day.day} {day:%b}", "lx": round(x + slot / 2, 1),
-                     "title": f"week of {day.day} {day:%b}: £{spend:,.2f}, {int(clicks)} clicks"})
-        line.append(f"{round(x + slot / 2, 1)},{round(top + plot_h - plot_h * clicks / top_clicks, 1)}")
-    return {"width": width, "height": height, "bars": bars, "line": " ".join(line), "top": top,
-            "base": top + plot_h, "left": left, "right": width - right, "max_spend": top_spend,
-            "max_clicks": int(top_clicks), "label_y": height - 10}
+    c = bar_line_chart(pts, lambda d, spend, clicks: f"week of {d.day} {d:%b}: £{spend:,.2f}, {int(clicks)} clicks",
+                       lambda most: f"£{most:,.2f}", width, height)
+    if c:
+        c.update(max_spend=c["max_bar"], max_clicks=c["max_line"])
+    return c
+
+
+# ---------------------------------------------------------------- marketing cache (cc_sync.py marketing)
+
+
+MARKETING_STALE = datetime.timedelta(hours=36)  # written once a day, in the refresh job's first pass
+LEAD_KEYS = ("form", "whatsapp", "email", "call", "other", "message", "form_error")
+
+
+def _count(value):
+    v = _num(value)
+    return int(v) if v is not None and v > 0 else 0
+
+
+def _clean(value, most):
+    return re.sub(r"[\x00-\x1f\x7f]", "", str(value or "")).strip()[:most]
+
+
+def leads_chart(weeks, width=480, height=210):
+    """Geometry for the GA4 leads chart: bars of form enquiries (generate_lead) and a line of WhatsApp and email
+    taps (contact_click), oldest week first."""
+    pts = []
+    for w in weeks or []:
+        day = to_date(str(w.get("week_start") or "")[:10])
+        if day:
+            pts.append((day, _count(w.get("form")), _count(w.get("whatsapp")) + _count(w.get("email"))))
+
+    def title(d, form, taps):
+        return (f"week of {d.day} {d:%b}: {int(form)} form enquir{'y' if form == 1 else 'ies'}, "
+                f"{int(taps)} WhatsApp or email tap{'' if taps == 1 else 's'}")
+    return bar_line_chart(pts, title, lambda most: f"{int(most)}", width, height)
+
+
+def marketing_view(cache, now):
+    """The Marketing page's three cached panels from marketing.json, every value checked: {generated_at (aware, or
+    None when unreadable), stale (over 36 hours old, or no readable time), terms, looked_at, shortlist {start, end,
+    items}, lead_weeks, chart, thresholded, extra {message, form_error, other}}."""
+    try:
+        when = datetime.datetime.fromisoformat(str(cache.get("generated_at")))
+    except ValueError:
+        when = None
+    if when is not None and when.tzinfo is None:
+        when = when.replace(tzinfo=dash.LONDON)
+    if now.tzinfo is None:
+        now = now.replace(tzinfo=dash.LONDON)
+    st = cache.get("search_terms") if isinstance(cache.get("search_terms"), dict) else {}
+    terms = []
+    for r in st.get("items") or []:
+        if isinstance(r, dict) and _clean(r.get("term"), 120):
+            terms.append({"term": _clean(r.get("term"), 120), "campaign": _clean(r.get("campaign"), 80) or "?",
+                          "clicks_7": _count(r.get("clicks_7")), "cost_7": _num(r.get("cost_7")) or 0.0,
+                          "clicks_28": _count(r.get("clicks_28")), "cost_28": _num(r.get("cost_28")) or 0.0,
+                          "why": _clean(r.get("why"), 120)})
+    sl = cache.get("shortlist") if isinstance(cache.get("shortlist"), dict) else {}
+    shortlist = []
+    for r in sl.get("items") or []:
+        if isinstance(r, dict) and _clean(r.get("query"), 120):
+            page = _clean(r.get("page"), 200)
+            shortlist.append({"query": _clean(r.get("query"), 120), "page": page if page.startswith("/") else "/",
+                              "position": _num(r.get("position")), "impressions": _count(r.get("impressions")),
+                              "clicks": _count(r.get("clicks")), "fix": _clean(r.get("fix"), 200)})
+    leads = cache.get("leads") if isinstance(cache.get("leads"), dict) else {}
+    weeks = []
+    for w in leads.get("weeks") or []:
+        day = to_date(str(w.get("week_start") or "")[:10]) if isinstance(w, dict) else None
+        if day:
+            weeks.append({"week_start": day, **{k: _count(w.get(k)) for k in LEAD_KEYS}})
+    weeks.sort(key=lambda w: w["week_start"])
+    return {"generated_at": when, "stale": when is None or now - when > MARKETING_STALE,
+            "terms": terms, "looked_at": _count(st.get("looked_at")),
+            "shortlist": {"start": to_date(str(sl.get("start") or "")[:10]),
+                          "end": to_date(str(sl.get("end") or "")[:10]), "items": shortlist},
+            "lead_weeks": weeks,
+            "chart": leads_chart([dict(w, week_start=w["week_start"].isoformat()) for w in weeks]),
+            "thresholded": bool(leads.get("thresholded")),
+            "extra": {k: sum(w[k] for w in weeks) for k in ("message", "form_error", "other")}}
 
 
 def gclid_counts(cache):
@@ -515,14 +1001,15 @@ def enquiry_dates(enquiries, today):
     out = []
     for r in enquiries:
         eid = r.get("enquiry_id", "")
-        href = f"/enquiries/{eid}"
+        key, href = enquiry_key(eid), enquiry_href(eid)
+        what = r.get("occasion") or "event"
         nxt = next_followup(r, today)
         if nxt:
             words = "Mark lost" if nxt[1] == "mark_lost" else f"Follow-up ({nxt[1]})"
-            out.append(item(nxt[0], "followup", f"{words} {eid}", href, "warn"))
+            out.append(item(nxt[0], "followup", f"{words}: {what} enquiry {key}", href, "warn"))
         event = to_date(r.get("event_date"))
         if event and pl.status_of(r) in ("new", "quoted") and not (r.get("booking_ref") or "").strip():
-            out.append(item(event, "enquiry", f"Enquiry {eid}: {r.get('occasion') or 'event'} (not booked)", href))
+            out.append(item(event, "enquiry", f"Enquiry {key}: {what} (not booked)", href))
     return out
 
 
@@ -631,12 +1118,13 @@ def search(q, kind, rows):
                             "href": f"/bookings/{ref}" if REF_RE.fullmatch(ref) else None})
     elif kind == "enquiries":
         for r in rows:
-            fields = [r.get("enquiry_id"), r.get("occasion"), r.get("booking_ref"), r.get("package")]
+            fields = [r.get("enquiry_id"), enquiry_key(r.get("enquiry_id", "")), r.get("occasion"),
+                      r.get("booking_ref"), r.get("package")]
             if any(q in (f or "").casefold() for f in fields):
                 eid = r.get("enquiry_id", "")
-                out.append({"kind": "Enquiry", "label": eid,
+                out.append({"kind": "Enquiry", "label": enquiry_key(eid),
                             "detail": f"{r.get('occasion') or ''} · {pl.status_of(r) or 'no status'}",
-                            "href": f"/enquiries/{eid}" if pl.ID_RE.fullmatch(eid) else None})
+                            "href": enquiry_href(eid) if pl.ID_RE.fullmatch(eid) else None})
     elif kind == "singers":
         rq = _ref_query(q)
         for r in rows:
@@ -702,18 +1190,19 @@ def export_pipeline(enquiries, cache):
 BOOKS_IMPORT_PROMPT = (
     "Run the owner-approved Zoho Books 2026 import: read ~/lcs-private/books-import-2026.json and "
     "~/lcs-private/command-centre/approvals/books-import-2026.json{approval}, check the approval's dry-run "
-    "sha256 still matches the dry run, then create each invoice as a draft in Zoho Books under the guard "
+    "sha256 still matches the dry run, first list the invoices already in Books and skip any invoice number "
+    "that already exists, then create each remaining invoice as a draft in Zoho Books under the guard "
     "(see docs/superpowers/specs/2026-09-28-zoho-books-design.md) — never send, void or record a payment — "
-    "then report."
+    "then report. I mark the import done on the Command Centre's Today page afterwards."
 )
 
 
 def books_import_handoff(approval):
-    """The fixed Books-import handoff prompt, or None while there's nothing approved to hand off. `approval` is
-    actions.books_status()'s dict. The prompt never carries any record's own text (client names, amounts,
-    refs): only the file paths, the guard doc, and the approval's own sha256 prefix, which is a fingerprint of
-    the record, not its content, and is already shown on the page."""
-    if not approval or not approval.get("approved_at"):
+    """The fixed Books-import handoff prompt, or None unless the import is approved, matches the dry run and isn't
+    done yet (state "approved"). `approval` is actions.books_status()'s dict. The prompt never carries any
+    record's own text (client names, amounts, refs): only the file paths, the guard doc, and the approval's own
+    sha256 prefix, which is a fingerprint of the record, not its content, and is already shown on the page."""
+    if not approval or approval.get("state") != "approved" or not approval.get("approved_at"):
         return None
     sha = approval.get("dry_run_sha256")
     detail = f" (approval hash {sha[:16]}…)" if sha else ""

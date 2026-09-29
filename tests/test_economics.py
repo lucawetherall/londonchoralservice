@@ -419,6 +419,32 @@ def row(query, page, impressions, position, clicks=0):
 SITE = "https://londonchoralservice.com"
 
 
+def test_negative_blocking_follows_googles_match_rules():
+    negs = [("singer", "BROAD"), ("albert hall", "PHRASE"), ("carol singers", "EXACT"), ("brass", "BROAD")]
+    assert ec.negative_blocking("best singer for wedding", negs) == ("singer", "BROAD")
+    assert ec.negative_blocking("wedding singers", negs) is None  # no plurals or close variants
+    assert ec.negative_blocking("carols at the royal albert hall", negs) == ("albert hall", "PHRASE")
+    assert ec.negative_blocking("hall albert carols", negs) is None  # phrase needs the order
+    assert ec.negative_blocking("carol singers", negs) == ("carol singers", "EXACT")
+    assert ec.negative_blocking("hire carol singers", negs) is None  # exact needs the whole term
+    assert ec.negative_blocking("Brass band music for a funeral", negs) == ("brass", "BROAD")
+    assert ec.negative_blocking("st paul's", [("st paul's", "PHRASE")]) == ("st paul's", "PHRASE")
+    assert ec.negative_blocking("", negs) is None and ec.negative_blocking(None, []) is None
+
+
+def test_search_term_flag_follows_the_targeting_rule():
+    for term, word in (("wedding singer london", "singer"), ("Funeral SOLOIST", "soloist"), ("solo violin", "solo"),
+                       ("female vocalists for hire", "vocalists"), ("carol singer hire", "singer")):
+        assert ec.search_term_flag(term) == f"solo-singer search ('{word}'): choirs of four or more only", term
+    assert ec.search_term_flag("choir lyrics") == "not a hiring search ('lyrics')"
+    assert ec.search_term_flag("join a choir") == "not a hiring search ('join')"
+    assert ec.search_term_flag("funeral songs") == "no choir or hiring word"
+    for term in ("wedding singers london", "christmas carol singers", "hire a choir", "london choral service",
+                 "carols in the city", "funeral quartet"):
+        assert ec.search_term_flag(term) is None, term
+    assert ec.search_term_flag("") == "no choir or hiring word" and ec.search_term_flag(None) == "no choir or hiring word"
+
+
 def test_hiring_intent_keeps_singers_and_drops_singer():
     assert ec.hiring_intent("wedding singers london")
     assert not ec.hiring_intent("wedding singer london")
