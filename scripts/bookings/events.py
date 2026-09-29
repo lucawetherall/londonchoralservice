@@ -25,8 +25,17 @@
         every ledger and store row read from its notes alone and events first (with the log, or with the dry run's
         proposed events added), one line per family that reads differently; "no difference" and exit 0, else exit 1.
 
-verify, show, migrate (without --apply) and compare only read (the dry run writes its report). The retract and
-notes-checked commands come in a later change.
+    .venv/bin/python scripts/bookings/events.py retract <eid> --owner
+        the Command Centre's "Undo a recorded fact", after the passkey: retract {target, why: mistake}, claiming
+        "earlier entry undone D (owner)" in the row's notes
+    .venv/bin/python scripts/bookings/events.py notes-checked <booking|singer_invoice> <id> <hash>... --owner
+        the Command Centre's "The recorded facts are right", after the passkey: notes-checked {clauses}, claiming
+        "notes checked D (owner)"; each hash (lcs_events.note_hash) must be a clause of the row's notes that no
+        fact claims now, and once claimed the notes are read without it, so a booking or invoice held on it is
+        released
+
+verify, show, migrate (without --apply) and compare only read (the dry run writes its report). retract,
+notes-checked and migrate --apply are the owner's (Claude is denied them in .claude/settings.json).
 """
 
 import argparse
@@ -275,6 +284,54 @@ def cmd_retract(args):
     return 0
 
 
+CHECKED = "notes checked {d} (owner)"  # no kind's words in it, so the notes read no fact from it
+
+
+def cmd_notes_checked(args):
+    """The owner's "The recorded facts are right" (the Command Centre, after the passkey): notes-checked {clauses},
+    by owner, claiming "notes checked D (owner)" appended to the row's notes, both under the row's CSV lock. Each
+    hash must be a clause of that row's notes now that no fact claims (the loose clauses a held booking or invoice
+    was held on): once claimed, the notes are read without them and the recorded facts decide."""
+    import lcs_migrate
+    cp, si = lcs_migrate.cp, lcs_migrate.si
+    subject, id_, hashes = args.subject, args.id, args.hashes
+    if not lcs_events.loggable(subject, id_):
+        raise SystemExit("not a booking ref or message id; nothing written")
+    if not 1 <= len(hashes) <= 20 or len(set(hashes)) != len(hashes) or not all(lcs_events.HEX12.fullmatch(h)
+                                                                                for h in hashes):
+        raise SystemExit("1 to 20 different note clause hashes (12 hex each); nothing written")
+    if not args.owner:
+        raise SystemExit("notes-checked runs from the Command Centre only (--owner, the owner's passkey); "
+                         "nothing written")
+    path, cols, key = ((cp.LEDGER, None, "booking_ref") if subject == "booking"
+                       else (si.STORE, si.COLUMNS, "message_id"))
+    where = lcs_owner.owner_folder_problem([path, lcs_events.log_path()])
+    if where:
+        raise SystemExit(f"--owner {where}; nothing written")
+    if not lcs_owner.owner_confirmed():
+        raise SystemExit("--owner needs the Command Centre's one-time owner nonce (the owner's passkey approval); "
+                         "nothing written")
+    today = lm.today()
+    clause = CHECKED.format(d=today.isoformat())
+    with lcs_events.recording(path, cols) as t:
+        r = next((x for x in t.rows if (x.get(key) or "").strip() == id_), None)
+        if r is None:
+            raise SystemExit(f"no {subject.replace('_', ' ')} {id_}; nothing written")
+        lcs_events.clear_cache()  # read the facts afresh under the row's lock
+        claims = lcs_events.facts(subject, id_, today).claims
+        loose = {lcs_events.note_hash(c.strip()) for c in (r.get("notes") or "").split(";")
+                 if c.strip() and lcs_events.note_hash(c.strip()) not in claims}
+        if set(hashes) - loose:
+            raise SystemExit("each hash must be a clause of its notes that no recorded fact claims now; nothing written")
+        r["notes"] = (f"{r['notes']}; " if (r.get("notes") or "").strip() else "") + clause
+        if not lcs_events.record(t, subject, id_, "notes-checked", {"clauses": list(hashes)}, "owner", clause):
+            raise SystemExit("the state log isn't recording facts (no migration applied); nothing written")
+    n = len(hashes)
+    print(f"{subject.replace('_', ' ')} {id_}: {n} note clause{'' if n == 1 else 's'} confirmed as read by the "
+          "recorded facts")
+    return 0
+
+
 def cmd_compare(args):
     import lcs_migrate
     today = lm.today()
@@ -307,6 +364,12 @@ def main(argv=None):
     p.add_argument("eid")
     p.add_argument("--owner", action="store_true", help="the Command Centre only: needs its one-time nonce on stdin")
     p.set_defaults(fn=cmd_retract)
+    p = sub.add_parser("notes-checked")
+    p.add_argument("subject", choices=lcs_events.SUBJECTS)
+    p.add_argument("id")
+    p.add_argument("hashes", nargs="+", metavar="HASH")
+    p.add_argument("--owner", action="store_true", help="the Command Centre only: needs its one-time nonce on stdin")
+    p.set_defaults(fn=cmd_notes_checked)
     p = sub.add_parser("compare")
     p.add_argument("--proposed", action="store_true", help="add the migration dry run's proposed events")
     p.set_defaults(fn=cmd_compare)
