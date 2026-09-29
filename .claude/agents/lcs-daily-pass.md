@@ -21,6 +21,7 @@ SHELL COMMANDS (only these, from the repo folder)
   .venv/bin/python scripts/bookings/check_payments.py --apply --json
   .venv/bin/python scripts/bookings/imap_draft.py sent <invoice ref> <client email> <YYYY-MM-DD invoice date>
   .venv/bin/python scripts/bookings/check_payments.py --reminded <invoice ref> --kind <deposit|balance|receipt>
+  .venv/bin/python scripts/bookings/check_payments.py --fact <invoice ref> noted-paid --scope <part|full> --on <YYYY-MM-DD>
   .venv/bin/python scripts/bookings/pipeline.py status <threadId> <confirmed|deposit_paid|done|lost> [invoice ref]
   .venv/bin/python scripts/bookings/pipeline.py thread <invoice ref>
   .venv/bin/python scripts/bookings/pipeline.py contact <threadId> <YYYY-MM-DD>
@@ -53,9 +54,9 @@ a. Payments: run `check_payments.py --apply --json` ([] when Starling is unavail
      If the guard denies a call, record nothing more for that booking and report its reason.
    Then act on each booking's "action" only:
    - receipt: unless Luca has already thanked them, a reply thanking them for the payment and confirming their date is secured. Either way `--reminded <ref> --kind receipt` and `pipeline.py status <threadId> deposit_paid` (ignore "no enquiry"). Then `.venv/bin/python scripts/reports/cc_event.py deposit --first <first name> --ref <ref>`.
-   - deposit_reminder: if the client says they've paid or Luca has acknowledged a payment, draft nothing and list it under "Money to check by hand". Otherwise a short reminder: invoice number, the first instalment (or, when short_notice is true, the full fee, due before the event), that it secures the date, and "do let me know if you've already sent it". Then `--reminded <ref> --kind deposit`.
+   - deposit_reminder: if the client says they've paid or Luca has acknowledged a payment, draft nothing and list it under "Money to check by hand". When it is the booking's own client saying so in its own thread, also record it: `check_payments.py --fact <invoice ref> noted-paid --scope <part|full> --on <the date of their message>` (full only when they say the whole fee or the balance is paid, else part; it writes the note itself and makes the booking a hand check, so it isn't chased again). Never write it as a free-text note (--note refuses it and names this form). Otherwise a short reminder: invoice number, the first instalment (or, when short_notice is true, the full fee, due before the event), that it secures the date, and "do let me know if you've already sent it". Then `--reminded <ref> --kind deposit`.
    - balance_reminder: the same paid check. Otherwise a short reminder: the balance, due the day before the event, and "the bank details are on your invoice". Then `--reminded <ref> --kind balance`. For a funeral add "funeral: check tone before sending".
-   - hand_check: draft nothing; list under "Money to check by hand" with ref, state and £. Then `.venv/bin/python scripts/reports/cc_event.py hand-check --ref <ref> --state <state>` (the state exactly as check_payments.py gives it; no name).
+   - hand_check: draft nothing; list under "Money to check by hand" with ref, state and £ (when its "held" list isn't empty, add "notes and recorded facts disagree: <the held families>": Luca settles it in the Command Centre; record nothing for it). Then `.venv/bin/python scripts/reports/cc_event.py hand-check --ref <ref> --state <state>` (the state exactly as check_payments.py gives it; no name).
 b. Follow-ups: `pipeline.py followups-due` (never a funeral or a booked client). For each (enquiry_id = threadId):
    - Client wrote since Luca's last message: `contact <id> <date>`, no draft.
    - Luca already chased by hand: `followed <id> <n> <date he sent it>`, no draft.
