@@ -89,7 +89,7 @@ def live_facts(subject, id_):
         return []
     f = cp.lcs_events.facts(subject, id_, lm.today())
     return [{"eid": e["eid"], "on": to_date(e["on"]), "words": FACT_WORDS.get(e["kind"], e["kind"]), "who": fact_who(e),
-             "kind": e["kind"]} for e in f.live if e["kind"] not in ("retract", "notes-checked")]
+             "kind": e["kind"]} for e in f.live if e["kind"] not in ("retract", "notes-checked", "bank-warning")]  # a warning: confirm, not undo
 
 
 RING_REASON = "bank details changed since their last invoice: ring them on a number you already hold"

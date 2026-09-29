@@ -627,6 +627,12 @@ def _hand_validate(raw):
         raise ActionError("unknown booking")
     words, kind, values = HAND_CHOICES[f["choice"]]
     values = dict(values)
+    if kind in ("cancelled", "reinstated"):  # backdated, it would hold the booking (the latest by date would lose)
+        latest = max((x["on"] for x in models.live_facts("booking", f["ref"])
+                      if x["kind"] in ("cancelled", "reinstated") and x["on"]), default=None)
+        if latest and day < latest.isoformat():
+            raise ActionError(f"that date is before the booking's latest recorded cancellation or reinstatement "
+                              f"({latest.strftime('%-d %b %Y')}): use that day or later")
     cleaned = {"input": {"ref": f["ref"], "choice": f["choice"], "date": day}, "ref": f["ref"], "words": words,
                "first_name": data.dash.first_name(row.get("client_name"))}
     if f["choice"] == FEE_CHOICE:
@@ -1967,14 +1973,19 @@ def _undo_validate(raw):
     if x is None:
         raise ActionError("that isn't a live recorded fact of this one")
     return {"input": {"subject": f["subject"], "key": f["key"], "eid": f["eid"]}, "eid": f["eid"], "label": label,
-            "words": x["words"], "on": x["on"].strftime("%-d %b %Y") if x["on"] else "?", "who": x["who"],
+            "words": x["words"], "on": x["on"].strftime("%-d %b %Y") if x["on"] else "?", "who": x["who"], "kind": x["kind"],
             "day": today().isoformat()}
 
 
+MARKER_KINDS = {"deposit-seen", "reminder-drafted", "review-drafted", "review-skipped", "paid-reply-drafted"}
+
+
 def _undo_describe(c):
+    then = (" Its note no longer counts either, so the assistant may draft it again." if c["kind"] in MARKER_KINDS
+            else "")
     return (f"Undo the recorded fact on {c['label']}: {c['words']}, dated {c['on']}, recorded by {c['who']}. It stays "
             f"in the state log as history, and this reads as if it had never been recorded; \"earlier entry undone "
-            f"{c['day']} (owner)\" is added to its notes.")
+            f"{c['day']} (owner)\" is added to its notes.{then}")
 
 
 UNDO_FACT = ScriptAction("undo-fact", EVENTS, _undo_validate, _undo_describe,

@@ -534,6 +534,13 @@ class Facts:
     def has(self, family):
         return family in self.families
 
+    @property
+    def aside(self):
+        """Note hashes the owner set aside: the clauses facts he undid as a mistake claim, and those a live
+        notes-checked confirms. The notes are read without them (set_aside), so an undone marker is un-marked."""
+        return ({e["note"] for e in self.events if e.get("retracted") == "mistake" and e.get("note")}
+                | {c for e in self.of("notes-checked") for c in e["fields"]["clauses"]})
+
     def of(self, *kinds):
         """Live events of these kinds, in file order."""
         return [e for e in self.live if e["kind"] in kinds]
@@ -611,6 +618,14 @@ class Facts:
     @property
     def thanked(self):
         return bool(self.of("paid-reply-drafted"))
+
+
+def set_aside(notes, f):
+    """The notes without the clauses f sets aside (Facts.aside), rejoined with "; "; unchanged when there are none."""
+    aside = f.aside
+    if not aside:
+        return notes or ""
+    return "; ".join(c.strip() for c in (notes or "").split(";") if c.strip() and note_hash(c.strip()) not in aside)
 
 
 _INDEXED = {}

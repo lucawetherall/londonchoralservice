@@ -256,7 +256,8 @@ def ledger_add(row):
             import lcs_migrate
             by_hash = {cp.lcs_events.note_hash(c): c for c in cp.clauses(new["notes"])}
             for p in lcs_migrate.booking_proposals(new, lm.today(), cp.lcs_events.Facts("booking"))[0]:
-                if p["by"] == "script":
+                # a fact dated after today isn't recorded (plan() leaves it out too): the row and its note still are
+                if p["by"] == "script" and p["on"] <= lm.today().isoformat():
                     cp.lcs_events.record(t, "booking", p["id"], p["kind"], p["fields"], "script",
                                          by_hash.get(p["note"]), on=p["on"])
     print(f"ledger: added {row['booking_ref']}")

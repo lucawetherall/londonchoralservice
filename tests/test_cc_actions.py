@@ -2239,6 +2239,17 @@ def undo_setup():
     return c, a, eid
 
 
+def test_a_hand_check_cancellation_dated_before_the_latest_one_is_refused():
+    c, a, eid = undo_setup()  # 2111 carries a recorded cancellation of 20 Sep 2026
+    v = actions.RESOLVE_HAND_CHECK.validate
+    assert refused(v, {"ref": "2111", "choice": "reinstated", "date": "2026-09-15"}) == (
+        "that date is before the booking's latest recorded cancellation or reinstatement (20 Sep 2026): "
+        "use that day or later"), refused(v, {"ref": "2111", "choice": "reinstated", "date": "2026-09-15"})
+    assert v({"ref": "2111", "choice": "reinstated", "date": D})["kind"] == "reinstated"
+    assert v({"ref": "2111", "choice": "refunded", "date": "2026-09-15"})  # another family: any date
+    clear_log()
+
+
 def test_undo_fact_argv_summary_and_refusals():
     c, a, eid = undo_setup()
     act = actions.REGISTRY["undo-fact"]
@@ -2273,6 +2284,10 @@ def test_undo_fact_through_the_real_script_and_the_pages():
     assert 'data-action="undo-fact"' in out and f'value="{seid}"' in out and MSG not in out
     cleaned = actions.REGISTRY["undo-fact"].validate({"subject": "singer_invoice", "key": key, "eid": seid})
     assert actions.REGISTRY["undo-fact"].argv(cleaned) == [PYX, EVENTS, "retract", seid, "--owner"]
+    s = actions.REGISTRY["undo-fact"].preview(cleaned)  # a marker: the summary says what undoing it does
+    assert "the assistant may draft it again" in s, s
+    wid = fact("singer_invoice", MSG, "bank-warning", {"fp8": FP_A[:8], "codes": ["new"]}, "script", D, "x")
+    refused(actions.REGISTRY["undo-fact"].validate, {"subject": "singer_invoice", "key": key, "eid": wid})
     clear_log()
 
 
