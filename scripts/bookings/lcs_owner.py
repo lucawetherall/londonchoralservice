@@ -17,6 +17,12 @@ import time
 from pathlib import Path
 
 OWNER_NONCE_TTL = 60  # seconds: the Command Centre writes the file moments before it runs the script
+_PROVEN = False  # set once owner_confirmed() has passed in this process: lcs_events.append then takes by: owner
+
+
+def owner_proven():
+    """True when this process passed owner_confirmed() (the nonce is burnt, so only this run can rely on it)."""
+    return _PROVEN
 
 
 def owner_nonce_path():
@@ -81,4 +87,6 @@ def owner_confirmed(stdin_fd=0):
         os.unlink(path)  # single use: burnt before the note is written
     except OSError:
         return False
+    global _PROVEN
+    _PROVEN = True
     return True

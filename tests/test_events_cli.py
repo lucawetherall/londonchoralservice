@@ -67,9 +67,14 @@ def test_verify_reports_an_unreadable_log():
 
 def test_show_prints_one_line_per_fact_and_never_notes():
     fresh()
-    a = ev.append("booking", "2111", "fees-accepted", {"amount": "12.40"}, "owner", on="2026-09-20",
-                  note=ev.note_hash("short by fees £12.40 accepted 2026-09-20 (owner)"))
-    ev.append("booking", "2111", "retract", {"target": a, "why": "mistake"}, "owner", on="2026-09-21")
+    import lcs_owner
+    saved, lcs_owner._PROVEN = lcs_owner._PROVEN, True  # as the Command Centre's owner run
+    try:
+        a = ev.append("booking", "2111", "fees-accepted", {"amount": "12.40"}, "owner", on="2026-09-20",
+                      note=ev.note_hash("short by fees £12.40 accepted 2026-09-20 (owner)"))
+        ev.append("booking", "2111", "retract", {"target": a, "why": "mistake"}, "owner", on="2026-09-21")
+    finally:
+        lcs_owner._PROVEN = saved
     ev.append("booking", "2112", "cancelled", {}, "script")
     code, out = run("show", "booking", "2111")
     lines = out.strip().splitlines()

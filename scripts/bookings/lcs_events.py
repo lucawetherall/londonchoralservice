@@ -28,6 +28,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import lcs_money as lm  # noqa: E402
+import lcs_owner  # noqa: E402
 
 LINE_MAX = 1024  # bytes of one line, its "\n" included
 SUBJECTS = ("booking", "singer_invoice")
@@ -208,6 +209,10 @@ class LogRefused(OSError):
     """The log is not a regular file of this user's with no group or other bits: nothing is read or written."""
 
 
+class OwnerRefused(ValueError):
+    """An owner fact without the owner's proof in this process: nothing is written."""
+
+
 def log_path():
     """<LCS_PRIVATE_DIR or ~/lcs-private>/events.jsonl, read at call time."""
     return Path(os.environ.get("LCS_PRIVATE_DIR", Path.home() / "lcs-private")) / "events.jsonl"
@@ -237,8 +242,10 @@ def _last_line(fd, size):
 
 def append(subject, id, kind, fields, by, on=None, note=None, src="live", eid=None):
     """Validate one fact and append it to the log; returns its eid. `on` (a date or YYYY-MM-DD) defaults to today
-    in London. Refuses (ValueError) a bad line or a reserved kind, and (LogRefused, OSError) a log that is a symlink,
-    another user's or has any group or other bit; either way nothing is written.
+    in London. Refuses (ValueError) a bad line or a reserved kind; (OwnerRefused) by: owner unless this process
+    passed lcs_owner.owner_confirmed() (the Command Centre's one-time nonce) and the log sits in the nonce's private
+    folder with no LCS_BOOKINGS_CSV (lcs_owner.owner_folder_problem); and (LogRefused, OSError) a log that is a
+    symlink, another user's or has any group or other bit. In each case nothing is written.
 
     The log's own lock (lm.ledger_lock on events.jsonl.lock) is taken here and only here, and nothing else is
     called under it. A writer calls this inside its CSV's locked_rows block, never around it (lock order: the
@@ -253,6 +260,8 @@ def append(subject, id, kind, fields, by, on=None, note=None, src="live", eid=No
         obj["note"] = note
     dumps(validate(obj))
     path = log_path()
+    if by == "owner" and (not lcs_owner.owner_proven() or lcs_owner.owner_folder_problem([path])):
+        raise OwnerRefused("an owner fact needs the Command Centre's owner nonce in this run")
     with lm.ledger_lock(path):
         fd = os.open(path, os.O_WRONLY | os.O_APPEND | os.O_CREAT | os.O_NOFOLLOW, 0o600)
         try:

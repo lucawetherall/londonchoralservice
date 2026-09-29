@@ -443,8 +443,14 @@ def test_collect_reports_a_held_closed_or_cancelled_booking_from_the_log():
                   note=ev.note_hash("paid in full 2026-09-15"))
         eid = ev.append("booking", "1506", "arranged", {"method": "cash"}, "script", on="2026-09-15",
                         note=ev.note_hash("balance to be paid in cash"))
-        ev.append("booking", "1506", "retract", {"target": eid, "why": "mistake"}, "owner", on="2026-09-21",
-                  note=ev.note_hash("earlier entry undone 2026-09-21 (owner)"))
+        import lcs_owner
+        saved = lcs_owner._PROVEN, os.environ.pop("LCS_BOOKINGS_CSV")
+        lcs_owner._PROVEN = True  # as the Command Centre's owner run
+        try:
+            ev.append("booking", "1506", "retract", {"target": eid, "why": "mistake"}, "owner", on="2026-09-21",
+                      note=ev.note_hash("earlier entry undone 2026-09-21 (owner)"))
+        finally:
+            lcs_owner._PROVEN, os.environ["LCS_BOOKINGS_CSV"] = saved
         ev.append("booking", "0510", "cancelled", {}, "script", on="2026-09-20", note=ev.note_hash("cancelled 20 Sep"))
         ev.append("booking", "0511", "cancelled", {}, "script", on="2026-09-20", note=ev.note_hash("cancelled 20 Sep"))
         got = {r["booking_ref"]: a for r, _, a in cp.collect(FakeClient([]), [closed, cancelled, quiet], T)}
