@@ -103,9 +103,10 @@ class FakeIMAP:
         rows = []
         for i, raw in picked:
             if "HEADER.FIELDS" in what:
-                key = email.message_from_bytes(raw).get(d.KEY_HEADER)
-                rows.append((f"{i} (BODY[HEADER.FIELDS])".encode(),
-                             (f"{d.KEY_HEADER}: {key}\r\n\r\n" if key else "\r\n").encode()))
+                names = re.search(r"HEADER\.FIELDS \(([^)]*)\)", what).group(1).split()
+                msg = email.message_from_bytes(raw)
+                head = "".join(f"{n}: {msg.get(n)}\r\n" for n in names if msg.get(n))
+                rows.append((f"{i} (BODY[HEADER.FIELDS])".encode(), (head + "\r\n").encode()))
             else:
                 rows.append((f"{i} (BODY[])".encode(), raw))
             rows.append(b")")
@@ -343,6 +344,79 @@ def test_the_sample_documents_stop_cleanly_without_the_templates():
         assert rc == 1 and out.startswith("STOP: the sample documents couldn't be made (/x/invoice.html is missing)"), out
     finally:
         mbd.make_docs = real
+
+
+# --- attach: a copy of Luca's own draft with the two files -------------------------------------
+
+LUCA_ID = "<luca-draft-1@londonchoralservice.com>"
+
+
+def luca_draft(to="client@example.com", msg_id=LUCA_ID, cc=None, key=None, attach=False,
+               html="<p>Dear Sam,</p><p>Lovely to speak. I've attached the invoice and booking confirmation.</p>"
+                    '<p>Luca<br><img src="cid:sig1"></p>'):
+    m = EmailMessage()
+    m["From"], m["To"], m["Subject"] = d.FROM_HEADER, to, "Re: Wedding enquiry"
+    m["Message-ID"], m["In-Reply-To"], m["References"] = msg_id, "<abc123@mail.example.com>", "<abc123@mail.example.com>"
+    if cc:
+        m["Cc"] = cc
+    if key:
+        m[d.KEY_HEADER] = key
+    m.set_content("Dear Sam, lovely to speak.")
+    m.add_alternative(html, subtype="html")
+    m.get_payload()[1].add_related(b"GIF89a-signature", maintype="image", subtype="gif", cid="<sig1>")
+    if attach:
+        m.add_attachment(b"%PDF-1.4", maintype="application", subtype="pdf", filename="Old.pdf")
+    return m.as_bytes()
+
+
+def attach_spec(**kw):
+    s = {"key": "2111-confirmation", "attachments": [str(PDF), str(DOCX)]}
+    s.update(kw)
+    return json.dumps(s)
+
+
+def test_attach_saves_a_copy_of_lucas_draft_with_both_files_and_leaves_the_original():
+    clear_saved()
+    original = luca_draft()
+    imap = FakeIMAP(drafts=[original])
+    rc, out = run_main(["attach", LUCA_ID, attach_spec()], imap)
+    assert rc == 0 and "copy saved in Zoho Drafts" in out and "deletes his original draft" in out, out
+    assert imap.boxes["Drafts"][0] == original and len(imap.boxes["Drafts"]) == 2
+    old = email.message_from_bytes(original, policy=email.policy.default)
+    new = email.message_from_bytes(imap.boxes["Drafts"][1], policy=email.policy.default)
+    for h in ("From", "To", "Subject", "In-Reply-To", "References"):
+        assert new[h] == old[h], h
+    assert new["Message-ID"] != old["Message-ID"] and new[d.KEY_HEADER] == "2111-confirmation"
+    assert [p.get_filename() for p in new.iter_attachments()] == [PDF.name, DOCX.name]
+    html = lambda m: m.get_body(("html",)).get_content().replace("\r\n", "\n")
+    assert html(new) == html(old), (html(new), html(old))
+    assert any(p.get("Content-ID") == "<sig1>" for p in new.walk()), "the signature image is kept"
+    assert new["Cc"] is None and new["Bcc"] is None
+    rc, out = run_main(["attach", LUCA_ID, attach_spec()], FakeIMAP(drafts=[original]))
+    assert rc == 0 and "already saved earlier" in out, out
+
+
+def test_attach_refuses_anything_but_a_plain_draft_to_that_client():
+    cases = [
+        (luca_draft(cc="planner@example.com"), "Cc or Bcc"),
+        (luca_draft(to="other@example.com"), "not the client on booking 2111"),
+        (luca_draft(attach=True), "already has attachments"),
+        (luca_draft(key="2111-reply"), "saved by the assistant"),
+        (luca_draft(html="<p>Sort code 04-00-04, account 12345678.</p>"), "bank details"),
+        (luca_draft(msg_id="<someone-else@londonchoralservice.com>"), "isn't in Drafts"),
+    ]
+    for raw, why in cases:
+        clear_saved()
+        imap = FakeIMAP(drafts=[raw])
+        rc, out = run_main(["attach", LUCA_ID, attach_spec()], imap)
+        assert rc == 1 and why in out, (why, out)
+        assert len(imap.boxes["Drafts"]) == 1, why
+    for args in ([LUCA_ID, attach_spec(key="2111-reply")], [LUCA_ID, attach_spec(attachments=[str(PDF)])],
+                 ["not-an-id", attach_spec()], [LUCA_ID, json.dumps({"key": "2111-confirmation"})],
+                 [LUCA_ID, attach_spec(to="x@example.com")]):
+        clear_saved()
+        rc, out = run_main(["attach", *args], FakeIMAP(drafts=[luca_draft()]))
+        assert rc == 1 and out.startswith("STOP:"), (args, out)
 
 
 # --- sent: the evidence for marking a Books invoice sent ---------------------------------------

@@ -7,6 +7,7 @@ there is no SMTP code here, and the only IMAP write is APPEND to Drafts. Luca op
 Zoho, checks it and presses Send.
 
     .venv/bin/python scripts/bookings/imap_draft.py save '<one-line JSON spec>'
+    .venv/bin/python scripts/bookings/imap_draft.py attach <Message-ID of Luca's draft> '<one-line JSON spec>'
     .venv/bin/python scripts/bookings/imap_draft.py sent <invoice ref> <client email> <YYYY-MM-DD>
     .venv/bin/python scripts/bookings/imap_draft.py check     (owner: sign in, count the folders; writes nothing)
     .venv/bin/python scripts/bookings/imap_draft.py test      (owner: a test draft to luca@almaconsort.com with a real
@@ -28,6 +29,13 @@ save's spec: {"key": "2111-confirmation", "to": "<the client's address>", "subje
                that starts like a PDF or a .docx. Each file is read once, before signing in.
 The subject and text are scanned for bank details with the Zoho Mail guard's scanner
 (.claude/hooks/zoho_guard.py): a draft's text never carries them; the invoice PDF does, as it always has.
+
+attach takes {"key": "<ref>-confirmation", "attachments": [<invoice PDF>, <booking confirmation .docx>]} (the same
+file rules as save) and a draft Luca wrote himself in Drafts, found by its Message-ID. It saves a copy of that
+draft with the two files attached: his text, formatting and signature byte for byte, the same To, Subject and
+threading headers, a new Message-ID and the draft key. Only a plain draft from office@ to that booking's client
+in the ledger, with no Cc, Bcc or attachments and no bank details in its text. The original is never touched
+(Claude deletes nothing): Luca sends the copy and deletes his own draft.
 
 sent reads the Sent folder (read-only) for a message to <client email> since <date> with an attachment named
 exactly "Invoice <ref> - <…>.pdf", and prints "sent: yes <YYYY-MM-DD>" or "sent: no". The daily pass marks the
@@ -158,6 +166,22 @@ def read_attachment(value, ref, root=None):
     return name, maintype, subtype, data
 
 
+def confirmation_files(ref, to, files, root=None):
+    """Booking `ref`'s invoice PDF and booking confirmation, read into memory (invoice first), for a draft to `to`,
+    which must be that booking's client in the ledger."""
+    if len(files) != 2:
+        fail("a confirmation carries both files: the invoice PDF and the booking confirmation .docx")
+    client = ledger_email(ref)
+    if client is None:
+        fail(f"booking {ref} has no client email in the ledger: run ledger-add first")
+    if to.lower() != client:
+        fail(f"to is not the client on booking {ref} in the ledger")
+    attachments = [read_attachment(f, ref, root) for f in files]
+    if {a[0].rsplit(".", 1)[1] for a in attachments} != {"pdf", "docx"}:
+        fail("a confirmation carries one invoice PDF and one booking confirmation .docx")
+    return sorted(attachments, key=lambda a: a[0].endswith(".docx"))  # the invoice first, as Luca attaches them
+
+
 def trim_references(refs):
     ids = refs.split()
     return " ".join(ids if len(ids) <= KEEP_REFS else ids[:1] + ids[-(KEEP_REFS - 1):])
@@ -201,18 +225,7 @@ def validate(spec, root=None):
     if files and not m:
         fail("only a confirmation (key <ref>-confirmation) carries attachments")
     if m:
-        if len(files) != 2:
-            fail("a confirmation carries both files: the invoice PDF and the booking confirmation .docx")
-        ref = m.group(1)
-        client = ledger_email(ref)
-        if client is None:
-            fail(f"booking {ref} has no client email in the ledger: run ledger-add first")
-        if to.lower() != client:
-            fail(f"to is not the client on booking {ref} in the ledger")
-        attachments = [read_attachment(f, ref, root) for f in files]
-        if {a[0].rsplit(".", 1)[1] for a in attachments} != {"pdf", "docx"}:
-            fail("a confirmation carries one invoice PDF and one booking confirmation .docx")
-        attachments.sort(key=lambda a: a[0].endswith(".docx"))  # the invoice first, as Luca attaches them
+        attachments = confirmation_files(m.group(1), to, files, root)
     from zoho_guard import has_bank_details  # the Zoho Mail guard's own scanner
     if has_bank_details({"subject": subject, "content": html}):
         fail("the draft looks like it carries bank details (sort code, account number, IBAN); "
@@ -315,6 +328,13 @@ def record_saved(key):
             t.rows.append({"key": key, "saved_at": datetime.datetime.now(lm.LONDON).isoformat(timespec="seconds")})
 
 
+def append_draft(conn, message):
+    """The one IMAP write: APPEND `message` to Drafts as an unsent draft."""
+    typ, _ = conn.append(DRAFTS, r"(\Draft \Seen)", imaplib.Time2Internaldate(time.time()), message)
+    if typ != "OK":
+        fail("Zoho did not accept the draft")
+
+
 def save(spec, conn, record=True):
     """APPEND the draft to Drafts unless its key was saved before or is on a draft there. Returns what happened."""
     if record and saved_before(spec["key"]):
@@ -324,9 +344,7 @@ def save(spec, conn, record=True):
         if record:
             record_saved(spec["key"])
         return f"already in Drafts ({spec['key']})"
-    typ, _ = conn.append(DRAFTS, r"(\Draft \Seen)", imaplib.Time2Internaldate(time.time()), spec["message"])
-    if typ != "OK":
-        fail("Zoho did not accept the draft")
+    append_draft(conn, spec["message"])
     if record:
         record_saved(spec["key"])
     n = len(spec["attachments"])
@@ -375,6 +393,82 @@ def digest(data):
     return hashlib.sha256(data).hexdigest()
 
 
+def find_draft(conn, message_id):
+    """Luca's draft with this Message-ID in Drafts, parsed, or None."""
+    count = open_folder(conn, DRAFTS)
+    found = None
+    if count:
+        typ, rows = conn.fetch("1:*", "(BODY.PEEK[HEADER.FIELDS (MESSAGE-ID)])")
+        for row in rows if typ == "OK" else []:
+            if isinstance(row, tuple) and len(row) > 1:
+                head = email.message_from_bytes(row[1] or b"", policy=email.policy.default)
+                if (head.get("Message-ID") or "").strip() == message_id:
+                    num = row[0].split()[0].decode()
+                    typ, body = conn.fetch(num, "(BODY.PEEK[])")
+                    raw = next((r[1] for r in body or [] if isinstance(r, tuple) and len(r) > 1), None)
+                    if typ == "OK" and raw:
+                        found = email.message_from_bytes(raw, policy=email.policy.default)
+                    break
+    conn.close()
+    return found
+
+
+def attached_copy(original, key, attachments):
+    """Bytes of a copy of Luca's draft `original` with the booking's two files attached: his body parts (text,
+    HTML, inline images) exactly as they are, the same From, To, Subject and threading headers, a new
+    Message-ID and Date, and the draft key. Refused for anything that isn't a plain draft to that one client."""
+    if original.get(KEY_HEADER):
+        fail("that draft was saved by the assistant, not by Luca")
+    sender = [a.addr_spec.lower() for h in original.get_all("From", []) for a in h.addresses]
+    if sender != [FROM_ADDRESS]:
+        fail("the draft isn't from office@londonchoralservice.com")
+    if original.get("Cc") or original.get("Bcc"):
+        fail("the draft has Cc or Bcc: attach the files by hand")
+    to = [a.addr_spec for h in original.get_all("To", []) for a in h.addresses]
+    if len(to) != 1:
+        fail("the draft must be to exactly one address")
+    if any(True for _ in original.iter_attachments()):
+        fail("the draft already has attachments")
+    text = " ".join(p.get_content() for p in original.walk()
+                    if p.get_content_type() in ("text/plain", "text/html") and not p.is_attachment())
+    from zoho_guard import has_bank_details  # the Zoho Mail guard's own scanner
+    if has_bank_details({"subject": str(original.get("Subject") or ""), "content": text}):
+        fail("the draft looks like it carries bank details; say they are on the invoice instead")
+    copy = email.message_from_bytes(original.as_bytes(), policy=email.policy.SMTP)
+    for name in ("Message-ID", "Date", KEY_HEADER):
+        del copy[name]
+    copy["Date"] = formatdate(localtime=True)
+    copy["Message-ID"] = make_msgid(domain="londonchoralservice.com")
+    copy[KEY_HEADER] = key
+    copy.make_mixed()
+    for name, maintype, subtype, data in attachments:
+        copy.add_attachment(data, maintype=maintype, subtype=subtype, filename=name)
+    return to[0], copy.as_bytes()
+
+
+def attach(conn, message_id, key, files, root=None):
+    """Save a copy of Luca's draft with booking <ref>'s invoice and booking confirmation attached. Never touches
+    the original: Luca sends the copy and deletes his own draft."""
+    ref = CONFIRMATION_KEY.fullmatch(key).group(1)
+    if saved_before(key):
+        return f"already saved earlier ({key}): nothing added"
+    original = find_draft(conn, message_id)
+    if original is None:
+        fail("that draft isn't in Drafts (sent, deleted or edited since): attach the files by hand")
+    to = [a.addr_spec for h in original.get_all("To", []) for a in h.addresses]
+    attachments = confirmation_files(ref, to[0] if len(to) == 1 else "", files, root)
+    to, message = attached_copy(original, key, attachments)
+    keys, _ = draft_keys(conn)
+    if key in keys:
+        record_saved(key)
+        return f"already in Drafts ({key})"
+    append_draft(conn, message)
+    record_saved(key)
+    subject = str(original.get("Subject") or "").replace("\n", " ")[:80]
+    return (f"copy saved in Zoho Drafts with the invoice and booking confirmation attached ({key}): "
+            f"Luca sends the copy and deletes his original draft \"{subject}\"")
+
+
 def invoice_sent(conn, ref, to, since):
     """"sent: yes <date>" if Sent holds a message to `to` since `since` with "Invoice <ref> - ….pdf" attached."""
     name = re.compile(rf"Invoice {re.escape(ref)} - .+\.pdf")
@@ -416,6 +510,26 @@ def run(argv, factory=None, password=None):
         conn = connect(password, factory)
         try:
             return save(spec, conn)
+        finally:
+            conn.logout()
+    if argv[:1] == ["attach"] and len(argv) == 3:
+        message_id = argv[1].strip()
+        if not MSG_ID.fullmatch(message_id):
+            fail("the draft's Message-ID must look like <abc@example.com>")
+        try:
+            spec = json.loads(argv[2])
+        except json.JSONDecodeError:
+            fail("the spec must be one JSON object, as a single-quoted argument")
+        if not isinstance(spec, dict) or set(spec) != {"key", "attachments"}:
+            fail('the attach spec is exactly {"key": "<ref>-confirmation", "attachments": [<pdf>, <docx>]}')
+        key, files = spec["key"], spec["attachments"]
+        if not (isinstance(key, str) and CONFIRMATION_KEY.fullmatch(key)) or not isinstance(files, list):
+            fail("the key must be <ref>-confirmation and attachments a list of the two paths")
+        if saved_before(key):
+            return f"already saved earlier ({key}): nothing added"
+        conn = connect(password, factory)
+        try:
+            return attach(conn, message_id, key, files)
         finally:
             conn.logout()
     if argv[:1] == ["sent"] and len(argv) == 4:
@@ -469,7 +583,8 @@ def run(argv, factory=None, password=None):
         intact = "yes" if got == sent else f"NO (Zoho returned {', '.join(sorted(got)) or 'no attachments'})"
         return (f"{result}; draft key header kept by Zoho: yes; attachments intact: {intact} "
                 f"({', '.join(sent)})")
-    fail("usage: imap_draft.py save '<JSON>' | sent <ref> <client email> <YYYY-MM-DD> | check | test")
+    fail("usage: imap_draft.py save '<JSON>' | attach <Message-ID> '<JSON>' | sent <ref> <client email> <YYYY-MM-DD> "
+         "| check | test")
 
 
 def main(argv=None, factory=None, password=None):
