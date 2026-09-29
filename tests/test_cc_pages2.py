@@ -372,7 +372,7 @@ def test_confirmed_bank_details_clear_the_singers_card_and_today():
 
     with Patched():
         c = make(FakeBank())
-        assert "No changed bank details waiting" not in page(c, "/")
+        assert 'data-kind="ring"' in page(c, "/")
         assert ben()["warnings"] and ben()["bank_check"] == "not yet verified"
         with contextlib.redirect_stdout(io.StringIO()):
             si.cmd_confirm(argparse.Namespace(message_id="m1"))
@@ -384,7 +384,8 @@ def test_confirmed_bank_details_clear_the_singers_card_and_today():
                                   checkout=lambda: "main"), base_url=ORIGIN, client=LOCAL, follow_redirects=False)
         assert "card-bad" not in page(c, "/singers")
         today = page(c, "/")
-        assert "No changed bank details waiting" in today and "changed: ring before paying" not in today
+        assert 'data-kind="ring"' not in today and "ring first" not in today  # no empty "none waiting" line either
+        assert "No changed bank details waiting" not in today
 
 
 # ---------------------------------------------------------------- marketing
@@ -595,7 +596,9 @@ def test_todo_tick_posts_with_fetch_not_a_plain_form():
     # and the route answers JSON with the page to load.
     static = Path(ROOT) / "command_centre" / "static"
     js = (static / "todo.js").read_text()
-    assert 'querySelectorAll("form.todo-tick")' in js and '"Accept": "application/json"' in js
+    # one delegated listener on the document, so the forms still work after the Refresh link re-renders #main
+    assert 'document.addEventListener("submit"' in js and 'classList.contains("todo-tick")' in js
+    assert "querySelectorAll" not in js and '"Accept": "application/json"' in js
     assert "preventDefault" in js and "fetch(f.action" in js
     with Patched():
         c = make(FakeBank())

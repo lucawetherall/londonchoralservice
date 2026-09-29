@@ -33,7 +33,7 @@
 <section class="card-group">
   {% set items = hand.value if hand.ok else (hand.stale or []) %}
   <article class="card card-wide{% if items %} card-warn{% endif %}">
-    <h2>Needs a hand check</h2>
+    <h2 id="hand-check">Needs a hand check</h2>
     {{ m.failed(hand) }}
     {% if items %}{{ m.hand_table(items, bank.ok and bank.value.bank_checked, action_day) }}
     <p class="muted">Resolve adds your note to the ledger through check_payments, after Face ID or Touch ID.</p>
@@ -82,7 +82,7 @@
 
   {% set items = singers.value if singers.ok else (singers.stale or []) %}
   <article class="card card-wide">
-    <h2>Singer invoices unpaid</h2>
+    <h2 id="singer-invoices">Singer invoices unpaid</h2>
     {{ m.failed(singers) }}
     {% if items %}
     <p>{{ items|length }} unpaid, {% if singer_total.ok %}{{ singer_total.value|gbp }}{% else %}{{ items|sum(attribute="amount")|gbp }}{% endif %}</p>

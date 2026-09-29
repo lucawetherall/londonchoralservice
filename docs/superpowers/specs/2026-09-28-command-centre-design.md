@@ -105,6 +105,7 @@ All pages are mobile-first, with dark and light modes and the LCS brand colours.
      - Books drafts not sent;
      - follow-ups the assistant drafted;
      - failed runs.
+   - "Needs you" lists only what the owner must act on, one row each (a grouped row such as "Pay 3 singer invoices, £X" counts its items); an empty category shows nothing, and "Nothing needs you." stands alone when all is clear. Deposits overdue, balances due, singer invoices to pay and a stale backup are rows too; a deposit not yet due, an arranged balance more than 7 days out and a follow-up not yet due never are. The count is the sum of the rows; when a source didn't load, Today says "at least N" (or "?") and names it, never a green 0. Books sync times, the Books import's notes and handoffs sit below, "For information".
    - Also: today's and this week's events, with diary entries and money deadlines.
 2. **Bookings:** a list and filters (upcoming, past, state).
    - Each booking has a timeline: enquiry, quote, follow-ups, invoice (ledger and Books), payments (Starling), singers booked, singer bills, review request, and notes.
@@ -126,6 +127,7 @@ All pages are mobile-first, with dark and light modes and the LCS brand colours.
    - the Search Console shortlist;
    - GA4 leads;
    - trends.
+   - The last three come from `cache/marketing.json` (`cc_sync.py marketing`): "Search terms to check" (7 and 28 days, flagged by `economics.search_term_flag`: solo-singer words, other non-hiring words, no choir or hiring word; at most 30), the Search Console shortlist (at most 20, with its 28-day window) and GA4 leads by week (8 weeks, inline SVG). Each panel shows "as of", a stale warning after 36 hours and a "not synced yet" state; negatives are still proposed only in the Monday review.
 7. **Drafts:** the drafts the assistant saved in Zoho, taken from its run summaries and a Zoho drafts read.
    - Each has a preview and an "open in Zoho" link.
    - The owner can mark a draft sent or discarded; this is a local record only, and the app never sends.
@@ -189,12 +191,13 @@ Not in the app: sending email, payments, payees, deletes, and Books sends or voi
 
 - **Live on each page load** (fast, local):
   - the ledger, the singer store and enquiries.csv;
-  - the check_payments collect, cached for 10 minutes;
+  - the check_payments collect, cached for 10 minutes (a failed Starling read for one minute only, shown on Today as "Bank unreachable at HH:MM (retrying)"; the Refresh link drops the cache with a same-origin POST first);
   - the audit log and events.
 - **Cached** (written by the scheduled runs and by a refresh job every 30 minutes, 07:00–22:00):
   - the Ads summary, and the GA4 and Search Console summaries (via weekly_review's functions);
   - Books receivables and bills (via `lcs_mcp` reads, allowlisted read tools only, through a Books read client mirroring `lcs_mcp`'s safety);
   - Zoho drafts and the calendar.
+  - the marketing cache (`cc_sync.py marketing`: flagged search terms, the Search Console shortlist, GA4 leads by week), from weekly_review's read-only functions, once a day: a SCRIPTS entry with daily=True runs in the refresh job's first pass of the London day (07:00, or the first pass after it); a failure is logged by type and waits for the next day.
 - The refresh job (`command_centre/jobs.py`) also runs `singer_invoices.py paid --apply` first: it reads the Starling feed and records a matched payment's `paid_on`, `paid_amount`, `paid_ref` and `paid_verified` in the singer store under its lock, so a verified payment shows within 30 minutes. It never makes a payee, a payment or a Books record; the singer clerk records the Books vendor payment from `paid --books-due`.
 - Every panel shows "as of <time>". When a source fails, its panel shows the last good data and the error type; it never breaks the page.
 

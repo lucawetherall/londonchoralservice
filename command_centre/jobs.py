@@ -5,12 +5,20 @@ feed, read-only, against the unpaid singer invoices and records a match's paid_o
 paid_verified in the singer store under its lock: a verified payment shows within 30 minutes even when the enquiry
 assistant hasn't run; it never creates a payee, a payment or a Books record, which the singer clerk still does from
 `paid --books-due`), `scripts/reports/dashboard.py` (the static dashboard, read-only) and `scripts/reports/cc_sync.py
-books` (the Books cache, through lcs_mcp's read-only client; it exits 1 when Books couldn't be read). Each is an
+books` (the Books cache, through lcs_mcp's read-only client; it exits 1 when Books couldn't be read). Once a day, in
+the day's first pass (the 07:00 slot, or the first one after it when the service started later or that slot was
+skipped as busy), it also runs `scripts/reports/cc_sync.py marketing` (flagged search terms, the Search Console
+shortlist and GA4 leads, through weekly_review's read-only functions): a script whose SCRIPTS entry has daily=True.
+A daily script that fails is logged and not retried until the next day. Each is an
 argv list, never a shell, with the actions' clean environment (no CC_* variable, LCS_PRIVATE_DIR set explicitly),
-stdin /dev/null and a timeout. Then it clears the app's bank cache, so the next page load reads Starling afresh.
+stdin /dev/null and a timeout. Then it puts the Ads mirror's fixed config back (actions.tidy_mirror: only an existing
+mirror, and only when no action is running; the pages read the proposals without writing), and clears the app's bank
+cache, so the next page load reads Starling afresh.
 
 - It has its own lock, and it takes the manual refresh's lock (actions._LOCKS["refresh"]) without waiting, so a pass
-  never overlaps a "Refresh data now" or another pass: a slot that finds either busy is skipped.
+  never overlaps a "Refresh data now" or another pass: a slot that finds either busy is skipped. While it holds that
+  lock it sets actions.BACKGROUND_REFRESH, so a manual refresh waits up to 20 seconds and then says a background
+  refresh is running, rather than "another action is running".
 - A clean pass writes nothing to the audit log. A failure (a timeout, a non-zero exit, a script that won't start,
   a failing cache clear) is logged as "refresh-job" with its exception's type name only, never the output or the
   message, which could hold private data. One failing script never stops the other.
@@ -36,9 +44,11 @@ LONDON = ZoneInfo("Europe/London")
 FIRST, LAST = datetime.time(7, 0), datetime.time(22, 0)  # the first and last slot of the day
 STEP = 30  # minutes
 POLL = 60  # seconds between looks at the clock
-SCRIPTS = (("singer-paid", ["scripts/bookings/singer_invoices.py", "paid", "--apply"], 180),
-           ("dashboard", ["scripts/reports/dashboard.py"], 180),
-           ("books", ["scripts/reports/cc_sync.py", "books"], 300))
+# (name, argv after the interpreter, timeout in seconds, daily): a daily script runs in the day's first pass only
+SCRIPTS = (("singer-paid", ["scripts/bookings/singer_invoices.py", "paid", "--apply"], 180, False),
+           ("dashboard", ["scripts/reports/dashboard.py"], 180, False),
+           ("books", ["scripts/reports/cc_sync.py", "books"], 300, False),
+           ("marketing", ["scripts/reports/cc_sync.py", "marketing"], 300, True))
 SYSTEM_USER = {"login": "refresh-job"}
 log = logging.getLogger("command_centre")
 
@@ -58,11 +68,13 @@ def slot(now):
 
 
 class RefreshJob:
-    def __init__(self, clear, runner=subprocess.run, python=sys.executable):
+    def __init__(self, clear, runner=subprocess.run, python=sys.executable, tidy=None):
         self.clear = clear
         self.runner = runner
         self.python = python
+        self.tidy = tidy or actions.tidy_mirror
         self.last_slot = None
+        self.last_daily = None  # the London date the daily scripts last ran
         self._lock = threading.Lock()
 
     def due(self, now):
@@ -74,7 +86,7 @@ class RefreshJob:
         if not self.due(now):
             return False
         self.last_slot = slot(now)
-        self.run_once()
+        self.run_once(now)
         return True
 
     def _fail(self, what, exc):
@@ -92,22 +104,35 @@ class RefreshJob:
         if proc.returncode != 0:
             raise NonZeroExit()
 
-    def run_once(self):
-        """One pass: "ok", "failed" (logged) or "skipped" (another pass or a manual refresh is running)."""
+    def run_once(self, now=None):
+        """One pass: "ok", "failed" (logged) or "skipped" (another pass or a manual refresh is running). With `now`,
+        the daily scripts run too when they haven't run on that London date; without it they never do."""
         if not self._lock.acquire(blocking=False):
             return "skipped"
         try:
             refresh = actions._LOCKS["refresh"]
             if not refresh.acquire(blocking=False):
                 return "skipped"
+            actions.BACKGROUND_REFRESH.set()  # a manual "Refresh data now" waits, then says a pass is running
             try:
                 ok = True
-                for what, args, timeout in SCRIPTS:
+                day = now.astimezone(LONDON).date() if now is not None else None
+                daily_due = day is not None and day != self.last_daily
+                if daily_due:
+                    self.last_daily = day  # once a day, whatever the outcome: a failure waits for tomorrow
+                for what, args, timeout, daily in SCRIPTS:
+                    if daily and not daily_due:
+                        continue
                     try:
                         self.run_script(args, timeout)
                     except Exception as e:  # the type only
                         ok = False
                         self._fail(what, e)
+                try:
+                    self.tidy()
+                except Exception as e:
+                    ok = False
+                    self._fail("tidy the Ads mirror", e)
                 try:
                     self.clear()
                 except Exception as e:
@@ -115,6 +140,7 @@ class RefreshJob:
                     self._fail("clear the bank cache", e)
                 return "ok" if ok else "failed"
             finally:
+                actions.BACKGROUND_REFRESH.clear()
                 refresh.release()
         finally:
             self._lock.release()

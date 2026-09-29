@@ -1,6 +1,7 @@
 """Web Push for the Command Centre: VAPID keys, subscriptions, payloads, the events watcher and the stale-run check.
 
-- **VAPID keys.** One P-256 key, made once. Its private scalar (64 hex characters) lives in the macOS Keychain
+- **VAPID keys.** One P-256 key, made once, when the service starts (app.py's lifespan; /device only reads it and
+  says "not set up yet" without one). Its private scalar (64 hex characters) lives in the macOS Keychain
   under the service `lcs-command-centre-vapid`, written and read with the `security` CLI from the app's own
   process: added through `security -i` with the command on stdin (so the key never appears in a process list),
   read with `find-generic-password -w`. Claude never reads it (.claude/settings.json denies
@@ -163,14 +164,17 @@ def _store_private_hex(value):
 _KEY_CACHE = {}
 
 
-def private_key():
-    """The VAPID private key (cryptography's EllipticCurvePrivateKey), made and stored the first time."""
+def private_key(create=True):
+    """The VAPID private key (cryptography's EllipticCurvePrivateKey), made and stored the first time. create=False
+    (the /device page, a GET) only reads: None when there is no key yet. The service makes it at start-up."""
     from cryptography.hazmat.primitives.asymmetric import ec
     store = "file" if file_store() else "keychain"
     if store in _KEY_CACHE:
         return _KEY_CACHE[store]
     value = _read_private_hex()
     if value is None:
+        if not create:
+            return None
         key = ec.generate_private_key(ec.SECP256R1())
         value = f"{key.private_numbers().private_value:064x}"
         _store_private_hex(value)
@@ -183,11 +187,14 @@ def forget_key():
     _KEY_CACHE.clear()
 
 
-def public_key_b64():
-    """The applicationServerKey for pushManager.subscribe(): the uncompressed public point, base64url."""
+def public_key_b64(create=True):
+    """The applicationServerKey for pushManager.subscribe(): the uncompressed public point, base64url. With
+    create=False, None when no key has been made yet."""
     from cryptography.hazmat.primitives import serialization
-    raw = private_key().public_key().public_bytes(serialization.Encoding.X962,
-                                                  serialization.PublicFormat.UncompressedPoint)
+    key = private_key(create=create)
+    if key is None:
+        return None
+    raw = key.public_key().public_bytes(serialization.Encoding.X962, serialization.PublicFormat.UncompressedPoint)
     return auth.b64url(raw)
 
 
@@ -477,9 +484,14 @@ def save_state(st):
     path = state_path()
     tmp = path.with_name(f".{path.name}.{secrets.token_hex(4)}.tmp")
     fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
-    with os.fdopen(fd, "w", encoding="utf-8") as f:
-        json.dump(st, f)
-    os.replace(tmp, path)
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            json.dump(st, f)
+        os.replace(tmp, path)
+    except BaseException:
+        with contextlib.suppress(OSError):
+            os.unlink(tmp)  # a failed write (a full disk, a value json can't write) leaves no temp file behind
+        raise
 
 
 def new_events(st):
