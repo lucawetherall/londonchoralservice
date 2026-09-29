@@ -11,11 +11,12 @@ os.environ["LCS_PRIVATE_DIR"] = _HOME
 os.environ["LCS_BOOKINGS_CSV"] = os.path.join(_HOME, "bookings.csv")
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.join(ROOT, "scripts", "ads"))
 sys.path.insert(0, os.path.join(ROOT, "scripts", "bookings"))
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import check_payments as cp  # noqa: E402
 import lcs_events as ev  # noqa: E402
-from state_cases import BOOKING_CASES, T  # noqa: E402
+from state_cases import BOOKING_CASES, T, seen  # noqa: E402
 
 REF = "2111"
 
@@ -188,6 +189,67 @@ def test_the_monday_money_line_lists_a_held_booking_as_a_hand_check():
     assert mr.hand_check_label(a) == "notes and recorded facts disagree: cancellation", mr.hand_check_label(a)
     assert mr.summary_lines([a], [], {"unpaid": 0, "unpaid_total": 0, "oldest_days": 0, "bank_changed": 0}, T)[3] == \
         "needs a hand check: 1 (2111 notes and recorded facts disagree: cancellation)"
+
+
+# --- Task 6: the pipeline's reviews-due and done-due, and the Ads upload ----------------------------------------
+
+def pipeline_views(r, today, facts):
+    import pipeline
+    enquiry = {c: "" for c in pipeline.COLUMNS} | {"enquiry_id": "t-1", "status": "confirmed", "booking_ref": REF}
+    r = dict(r, occasion="wedding")
+    return {"reviews": [d["booking_ref"] for d in pipeline.reviews_due([r], today, facts={REF: facts})],
+            "done": [d["booking_ref"] for d in pipeline.done_due([enquiry], [r], today, facts={REF: facts})]}
+
+
+REVIEW_CASES = [  # (name, event date, clauses): the review window is 3 to 14 days after the event
+    ("closed, not yet asked", "2026-09-21",
+     [seen("2026-09-04"), ("paid in full 2026-09-20", f("paid-in-full", "2026-09-20", basis="bank"))]),
+    ("closed and asked", "2026-09-21",
+     [seen("2026-09-04"), ("paid in full 2026-09-20", f("paid-in-full", "2026-09-20", basis="bank")),
+      ("review request drafted 2026-09-25", f("review-drafted", "2026-09-25"))]),
+    ("closed, review skipped for a planner", "2026-09-21",
+     [("paid in full 2026-09-20 (owner)", f("paid-in-full", "2026-09-20", "owner", basis="owner")),
+      ("review request skipped 2026-09-25 (planner)", f("review-skipped", "2026-09-25", reason="planner"))]),
+    ("closed but cancelled", "2026-09-21",
+     [("paid in full 2026-09-20", f("paid-in-full", "2026-09-20", basis="bank")),
+      ("cancelled 2026-09-22 by client email", f("cancelled", "2026-09-22"))]),
+    ("not closed", "2026-09-21", [seen("2026-09-04")]),
+]
+
+
+def test_reviews_due_and_done_due_read_the_same_three_ways():
+    for name, event, clauses in REVIEW_CASES:
+        case = (name, 1150, "2026-09-02", event, clauses, [], T)
+        got = {label: pipeline_views(r, T, facts) for label, r, facts in three_ways(case)}
+        assert got["events"] == got["notes"] and got["both"] == got["notes"], (name, got)
+    assert pipeline_views(three_ways(("x", 1150, "2026-09-02", "2026-09-21", REVIEW_CASES[0][2], [], T))[1][1], T,
+                          ev.booking_facts(REF, T, events=build_events(REF, REVIEW_CASES[0][2], False))) == \
+        {"reviews": [REF], "done": [REF]}
+
+
+def test_a_fee_closed_booking_is_review_due_before_apply_writes_paid_in_full():
+    """Bug 3: reviews-due and done-due read the close through closed_on, so an accepted fee closes for them too."""
+    notes = "deposit seen 2026-08-26 (Starling); short by fees £12.40 accepted 2026-09-20 (owner)"
+    r = row(950, "2026-08-24", "2026-09-21", notes)
+    assert pipeline_views(r, T, ev.booking_facts(REF, T, events=[])) == {"reviews": [REF], "done": [REF]}
+
+
+def test_a_held_booking_is_neither_review_due_nor_done_due_nor_uploaded():
+    import upload_bookings
+    clauses = [("paid in full 2026-09-20", f("paid-in-full", "2026-09-20", basis="bank"), True),
+               ("cancelled 20 Sep", f("cancelled", "2026-09-20"), True),
+               ("reinstated 25 Sep", None, False)]
+    r, facts = held_row(clauses, 1150, "2026-09-02", "2026-09-21")
+    ok, okf = held_row([c for c in clauses[:1]], 1150, "2026-09-02", "2026-09-21")
+    assert pipeline_views(ok, T, okf) == {"reviews": [REF], "done": [REF]}
+    assert cp.held(r, T, facts=facts) == ["cancellation"]
+    assert pipeline_views(r, T, facts) == {"reviews": [], "done": []}
+    extra = dict(invoice_date="2026-09-02", enquiry_date="2026-09-01", gclid="Cj0KCQjwTESTCLICKID",
+                 consent="granted", uploaded_at="")
+    ready, skipped = upload_bookings.select_ready([dict(ok, **extra)], facts={REF: okf})
+    assert [x[0]["booking_ref"] for x in ready] == [REF] and skipped == [], (ready, skipped)
+    ready, skipped = upload_bookings.select_ready([dict(r, **extra)], facts={REF: facts})
+    assert ready == [] and skipped == [(REF, "held: notes and recorded facts disagree")], skipped
 
 
 class FakeClient:
