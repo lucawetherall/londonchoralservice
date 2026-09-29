@@ -1,7 +1,7 @@
 # Zoho Books integration: design
 
 **Date:** 2026-09-28
-**Status:** Approved by the owner on 28 Sep 2026: "use everything you need… don't send emails without approval, don't delete things". Bills tools enabled. For the 2026 import, the owner marks invoices sent and matches payments in Books.
+**Status:** Approved by the owner on 28 Sep 2026: "use everything you need… don't send emails without approval, don't delete things". Bills tools enabled. Payment recording by Claude added the same day (rule 2). For the 2026 import, see Owner answers 3.
 **Related:**
 - [Business automation programme](2026-09-28-business-automation-design.md). This design replaces most of its Phase 4 (per-event margin, bookkeeping export), which Books now provides.
 - [docs/HANDOVER-2026-09-27-ads-analytics.md](../../HANDOVER-2026-09-27-ads-analytics.md): Appendix E (enquiry assistant), Appendix A (Monday review).
@@ -15,7 +15,7 @@ Zoho Books becomes the system of record for invoices, client payments and singer
 ## Owner decisions (28 Sep 2026)
 
 1. **Invoices are sent from Books.** When a client accepts a quote, the assistant creates a **draft** invoice in Books and attaches the booking confirmation. The owner reviews it and presses Send in Books. Books emails the PDF from office@ and tracks whether it has been viewed and whether it is overdue.
-2. **The owner records client payments** by confirming Starling bank-feed matches in Books. The assistant reads invoice status from Books. `check_payments.py` stays as a cross-check and still drives the reminder and receipt drafts.
+2. **Client payments are recorded in Books.** The owner confirms Starling bank-feed matches in Books. Later the same day the owner also let the assistant record the payments `check_payments.py --json` is confident about (its `record_in_books` list), and a singer's bill once `singer_invoices.py paid` has matched the Starling payment to the singer's own bank details (rule 2). The assistant reads invoice status from Books. `check_payments.py` stays as a cross-check and still drives the reminder and receipt drafts.
 3. **Singer and organist invoices become Books bills.** Each singer is a vendor, and each bill has the singer's PDF attached. The bank-change warnings stay in the private tracker (`singer_invoices.py`).
 4. **Import 2026 so far.** This year's ledger bookings go into Books as invoices, with their paid or part-paid status.
 
@@ -47,11 +47,12 @@ Books organisation: Alma Consort Ltd, id `941014440`, GBP, not VAT-registered. T
 
 These add to the programme's rules.
 
-1. **Nothing reaches a client from Claude.** Every tool that emails, SMSes, reminds, shares a portal or payment link, or marks an invoice sent stays denied: `email_invoice(s)`, `schedule_invoice_email`, `remind_customer_for_invoice_payment`, `bulk_invoice_reminder`, `send_*`, `enable_*_portal`, `generate_invoice_payment_link`, `mark_invoice_sent`.
-2. **No money records by Claude.** Claude never creates, updates or deletes a customer payment, a vendor payment, a refund, a write-off, a credit application or a bank categorisation. The owner matches bank transactions in Books. The one possible exception is the 2026 import, which is question 3 below.
+1. **Nothing reaches a client from Claude.** Every tool that emails, SMSes, reminds, shares a portal or payment link, or marks an invoice sent stays denied: `email_invoice(s)`, `schedule_invoice_email`, `remind_customer_for_invoice_payment`, `bulk_invoice_reminder`, `send_*`, `enable_*_portal`, `generate_invoice_payment_link`. `mark_invoice_sent` was denied too until 29 Sep 2026; since then the guard allows it (the invoice id only, a status change that emails nobody while Books' automatic reminders are off), and the daily pass calls it only once Luca's own email carrying that invoice is in Sent (the change above).
+2. **Two kinds of money record by Claude, nothing else** (owner decisions, 28 Sep 2026). Claude creates a customer payment only for a confident Starling match that `check_payments.py --json` lists in `record_in_books` (never more than the invoice's balance, never on a draft invoice), and a vendor payment only for a singer's bill that `singer_invoices.py paid` has matched to the singer's own bank details. Each goes against exactly one invoice or bill, through the owner's Starling account in Books (`1534218000000095168`), under the argument checks in the table below. A client payment may carry `bank_charges` (more than £0, at most £25) for a transfer-fee shortfall the owner accepted (Fee shortfalls, below). Claude never updates or deletes a payment, and never creates a refund, a write-off, a credit application or a bank categorisation. On the free plan (from 29 Sep 2026) there are no bills or bank feeds, so only client payments are recorded and nothing is matched in Books.
 3. **Nothing is deleted or voided by Claude.** Mistakes are fixed by the owner in Books.
 4. **No bank details in Books from Claude.** Claude never calls `add_contact_bank_account` or `update_contact_bank_account`. Singer bank details stay in the owner's own Starling payees.
 5. **The guard checks arguments, not just names.** Each approved write tool gets a check on its arguments inside the guard (see the next table). A call that fails the check is denied.
+6. **Books is reached only through these MCP tools, under the guard.** If the guard denies a call, Claude stops and tells the owner. A one-off exception is a committed, reviewed guard change naming the exact records, reverted afterwards, never a direct call to the server. `.claude/hooks/mcp_bypass_guard.py` refuses a script or command that starts the server, reads its configuration or speaks the protocol itself (added after the 2026 import, Owner answers 3).
 
 ## Approved write tools
 
@@ -90,16 +91,17 @@ What the check can't catch: digits spelt out in words, or a number split across 
 
 Still denied:
 - `ZohoBooks_update_invoice`: the owner edits drafts in Books;
-- every email, SMS, reminder, portal or payment-link tool, and `mark_invoice_sent` (the owner's click);
+- every email, SMS, reminder, portal or payment-link tool, and `mark_invoice_sent` other than as rule 1 allows;
 - every delete, void, write-off, refund or credit application;
-- customer and vendor payments, and bank matching or categorising (the owner does these in Books);
+- any other payment: updating or deleting one, a payment not against exactly one invoice or bill, through another account or for a different amount (rule 2); and bank matching or categorising (the owner does these in Books);
 - `approve_bill`, `submit_bill`, `mark_bill_open`, `convert_purchase_order_to_bill`;
 - contact bank accounts and cards, including reading them, and the invoice payment QR tools;
 - reading Books bank accounts, bank transactions, bank statements and reconciliations;
-- any other key on an approved tool, including tax fields, the client portal, payment options, `status`, and the bill `attachment` query parameter;
+- any other key on an approved tool, including tax fields, the client portal, payment options and `status`; a bill `attachment` other than a singer invoice PDF that `singer_invoices.py` saved;
 - a bill update that changes the vendor, the bill number or the line items;
 - an invoice attachment from anywhere but iCloud Drive/LCS-invoices/ (`~/lcs-private/invoices/` before 29 Sep 2026);
-- any tool on a server other than `zoho-books` and `zoho-books-invoices`.
+- any tool on a server other than `zoho-books` and `zoho-books-invoices`;
+- any route to Books other than these MCP tools (rule 6).
 
 The security review of PR #147 (28 Sep 2026) found that `update_invoice` and `update_contact` could redirect a draft or a client's email, that keys outside a few named ones went unchecked, and that free text could carry bank details. Its re-review the same day found that bank details still got through in other layouts (`a/c`, `acct`, en dashes, fullwidth digits, foreign IBANs, a zip code and a bill number), that VAT got through as "V.A.T." or Cyrillic "ВАТ", that the attachment could be any local file, and that a bill update could swap the vendor or the line items. This section is the result.
 
@@ -123,13 +125,14 @@ Today the assistant builds a PDF invoice and a `.docx` confirmation and saves a 
 
 - The owner connects Starling in Books. The weekly and daily checks read `list_invoices` with `status=overdue|unpaid|partially_paid` and compare the result with `check_payments.py`.
 - A booking the two sources disagree on goes to "needs a hand check", e.g. Books says paid but Starling matching does not, or the reverse.
+- The daily pass records each confident payment in `check_payments.py --json`'s `record_in_books` with `create_customer_payment` (rule 2), skipping one Books already shows with the same date and amount.
 
 ### C. Singer bills (after the owner enables the Bills tools)
 
 - `singer_invoices.py scan` runs as now, with the fraud checks.
 - Then the vendor is found or created (`create_contact`, vendor, no bank details) and `create_bill` is called with the amount, the singer's invoice number and date, and the booking ref in the notes.
-- The guard denies `create_bill`'s `attachment` query parameter, so the owner attaches the singer's PDF in Books.
-- The bill's paid status comes from the owner's bank-feed matching in Books. `singer_invoices.py paid` stays as the source of the "Paid!" draft.
+- `create_bill` attaches the singer's PDF through its `attachment` query parameter; the guard allows only a PDF `singer_invoices.py` saved in `~/lcs-private/singer-invoices/`.
+- When `singer_invoices.py paid` matches the Starling payment to the singer's own bank details, the clerk records it against the bill with `create_vendor_payment` (rule 2); anything less certain is left to the owner's bank-feed matching in Books. `singer_invoices.py paid` stays as the source of the "Paid!" draft.
 
 ### D. Import 2026 (one-off, owner-approved batch)
 
@@ -149,11 +152,11 @@ The Monday review prompt (handover Appendix A, step 6g) adds a Books line, read 
 
 1. **Write tools:** approved as above ("use everything you need"), within two limits: no email without approval, and no deleting.
 2. **Bills tools:** enabled.
-3. **Import status:** the owner marks the invoices sent and matches the payments in the Books bank feed.
+3. **Import status:** the plan was for the owner to mark the invoices sent and match the payments in the Books bank feed. On 28 Sep 2026 the owner instead approved Claude marking the 7 invoices sent. The guard then denied `mark_invoice_sent` (the 29 Sep rule allowing it once Luca's own email carrying the invoice is in Sent came the next day) and was not changed: Claude called the Books server directly from a script, around the guard, and in the same way changed invoice 2111's due date (`update_invoice`, still denied). Both are recorded in `logs/books-changes.md`. Rule 6 and `mcp_bypass_guard.py` came out of this.
 
 ## Out of scope
 
-- Claude sending, reminding, deleting, voiding or recording money.
+- Claude sending, reminding, deleting or voiding, or recording money beyond the cases in rule 2.
 - Books' automated payment reminders. These are the owner's own Books setting; if he turns them on, the assistant's reminder drafts must be switched off to avoid double reminders.
 
 ## Fee shortfalls (owner decision, 28 Sep 2026)

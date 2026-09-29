@@ -23,7 +23,8 @@ shortfall the owner accepted as transfer fees, at most £25, as its bank_charges
 singer payment against its bill, unused on the free plan, both through the Starling
 account), and marks an invoice sent (a status change; Books emails nobody as long as
 its automatic payment reminders are off) only once Luca's own email carrying that
-invoice is in the Sent folder. Invoices are created as drafts (`send`
+invoice is in the Sent folder. Calls that go around this hook (a script starting
+the server itself) are refused by mcp_bypass_guard.py. Invoices are created as drafts (`send`
 absent or false) and carry the DDMM booking ref as their number. The guard fails closed: any error, or a tool_input
 of the wrong shape, denies the call.
 Design: docs/superpowers/specs/2026-09-28-zoho-books-design.md

@@ -67,11 +67,61 @@
       "Bash(git remote set-url *)",
       "Bash(git config *)",
       "Bash(*cc_backup.py init*)",
-      "Edit(.git/**)"
+      "Edit(.git/**)",
+      "Read(~/.claude.json)",
+      "Read(//Users/luca/.claude.json)",
+      "Edit(~/.claude.json)",
+      "Write(~/.claude.json)",
+      "Bash(*claude.json*)",
+      "Bash(*mcp-remote*)",
+      "Bash(python3 -)",
+      "Bash(.venv/bin/python -)",
+      "Bash(python3 - *)",
+      "Bash(.venv/bin/python - *)"
     ]
   },
   "hooks": {
     "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/mcp_bypass_guard.py\" || exit 2",
+            "timeout": 10
+          }
+        ]
+      },
+      {
+        "matcher": "Write|Edit|MultiEdit|NotebookEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/mcp_bypass_guard.py\" || exit 2",
+            "timeout": 10
+          }
+        ]
+      },
+      {
+        "matcher": "Read|Grep|Glob|NotebookRead",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/mcp_bypass_guard.py\" || exit 2",
+            "timeout": 10
+          }
+        ]
+      },
+      {
+        "matcher": "mcp__terminal__run_in_terminal|mcp__Control_your_Mac__osascript|mcp__plugin_playwright_playwright__browser_run_code_unsafe",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/mcp_bypass_guard.py\" || exit 2",
+            "timeout": 10
+          }
+        ]
+      },
       {
         "matcher": "mcp__zoho-mail__.*",
         "hooks": [
