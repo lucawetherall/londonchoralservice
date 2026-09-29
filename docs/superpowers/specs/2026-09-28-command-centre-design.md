@@ -96,11 +96,14 @@ iPhone / iPad / laptop ──Tailscale (WireGuard, HTTPS via tailscale serve)─
 
 All pages are mobile-first, with dark and light modes and the LCS brand colours. Every page has a freshness stamp.
 
+Under the header, every page has the **sync strip**: one line of chips (Bank, Books, Drafts, Diary, Ads, Marketing), each with its last good time ("Books 07:30") and a tone. Bank is failed while Starling is unreachable, off with no token (or before a page has read it) and otherwise ok; it is never stale, since the pages read it when they need it. A cache is failed when the app's latest attempt at it failed after its last good write, stale past its limit (Books 24 hours, Drafts, Diary and Marketing 36 hours, Ads 8 days) or when never written, else ok. A failed or stale Bank, Books or Marketing chip is a `sync-now` button; Drafts, Diary and Ads come from the scheduled runs (the daily pass's Mail and Calendar reads, the Monday review), so theirs link to Health, which says so. On a phone the strip scrolls sideways inside itself; the page never does.
+
 1. **Today (home)**
    - What needs the owner, in priority order:
      - bank-detail warnings;
      - hand checks;
      - approvals waiting;
+     - enquiries waiting over a day for a reply (status new, first seen more than 24 hours ago counting from the midnight that starts its first-seen date, London time, and no draft for its thread in the drafts cache), one grouped row with no names;
      - drafts to review and send;
      - Books drafts not sent;
      - follow-ups the assistant drafted;
@@ -115,7 +118,7 @@ All pages are mobile-first, with dark and light modes and the LCS brand colours.
    - the Starling balance and the last 30 days in and out;
    - client money due and overdue;
    - hand checks, each with its resolve actions;
-   - singer invoices unpaid, with payee and bank status;
+   - singer invoices unpaid, as a pay list (`#singer-invoices`): the open invoices to a trusted account (confirmed by phone or paid to verifiably on any of the singer's invoices, or a Starling payee that already holds exactly these details), oldest first, with first name, amount, received date, Books bill number and ••••last4, each amount and bill number a copy button (no passkey), and the total; "Pay in the Starling app", once. Below it, "Ring first" (changed details) and "Confirm before paying" (new details, or none on the invoice), each with its reason; one Books already shows paid is named, not listed. Withdrawn and paid invoices never appear. Today's "Pay N singer invoices, £X" is exactly this list; ring-first invoices are their own rows, and the ones to confirm one grouped row;
    - Books receivables and bills;
    - monthly income against costs.
 5. **Singers:** a directory of name, payee status, bank check (••••last4 only), invoices, total paid, last booking and warnings.
@@ -168,6 +171,7 @@ It needs a passkey (except the local records below) and is logged.
 | Mark a draft sent or discarded; tick a to-do | Local record only. **Exception: no passkey.** These write only the app's own files in `~/lcs-private/command-centre/` (never the ledger, the singer store, email, Books or the bank), so the owner's Tailscale identity, the Host check and the same-origin check are enough. They are still registered actions, with a server-built summary and an `audit.jsonl` entry. |
 | Run a scheduled task now | Not an app action: Runs and health explains to use **Run now** on the task in the Claude app (Routines) |
 | Refresh data now | `dashboard.py`, then `cc_sync.py books`: both read-only |
+| Sync now (a strip chip) | `sync-now` with a fixed `source`: `books` runs `cc_sync.py books`, `marketing` runs `cc_sync.py marketing` (both read-only), `bank` runs nothing and drops the app's bank cache (as POST /refresh does). **No passkey**, like Refresh data now: server-built summary, audit line, same-origin, the refresh lock (it waits up to 20 seconds for a background pass). Any other source is refused, and it takes no free text. Drafts, Diary and Ads can't be synced from the app. |
 | Back up now | The backup job |
 | Copy a handoff prompt | **Exception: no passkey, and it is not a registered action.** The client copies server-written, fixed text to the clipboard; nothing runs, and nothing is sent anywhere. The owner pastes it into Claude Code Remote Control himself. |
 
@@ -183,7 +187,10 @@ Not in the app: sending email, payments, payees, deletes, and Books sends or voi
   - a guard denied a call;
   - a scheduled run failed or wasn't seen for more than 3 hours in the daytime;
   - the Monday review is ready;
-  - a hand check was added.
+  - a hand check was added;
+  - **a sync stopped** (`sync-stale`, built by the app from its own files): the Books cache or the static dashboard not written for more than 3 hours of the refresh job's day (07:00 to 22:00 London; checked from 07:30, so the day's first pass has run), "Books sync has stopped" (or "Dashboard refresh has stopped"), "Last good sync HH:MM. Open Health.";
+  - **Books has disagreed for a day** (`books-disagree`, built by the app): one of Today's Books flags present for more than 24 hours (looked at every 30 minutes, first-seen times kept in `push-state.json`), naming only the booking ref and a fixed phrase.
+  - Each of the last two at most once per London day per subject (recorded in `push-state.json`, atomic, mode 600, only once the push got past the caps), never at night, through the same per-pass and hourly caps and endpoint checks. Lines of the app's own kinds (`run-stale`, `sync-stale`, `books-disagree`) in `events.jsonl` are dropped: Claude can't raise them.
 - **Sources:** hooks and scripts append events to `~/lcs-private/command-centre/events.jsonl`, and the app watches the file and pushes. The scheduled prompts also add one line each via a tiny `cc_event.py` CLI, which is allowlisted. It takes a kind and validated fields, never free text: `enquiry --first <Name> --occasion <fixed list> --date <ISO|tbc>`, `deposit --first <Name> --ref <ref>`, `hand-check --ref <ref> --state <fixed list>`, `bank-change --first <Name>`, `guard-denied --agent <reply-drafter|singer-clerk|daily-pass|monday>`, `run-failed`, `monday-ready`.
 - **Content:** a short title and a body from a fixed template per kind: a first name, a booking ref, a date and fixed words only. Full detail opens in the app. At most 5 per watcher pass (then one "And N more") and 20 an hour. They show on the lock screen: turn off lock-screen previews for this app in iOS Settings if you prefer.
 

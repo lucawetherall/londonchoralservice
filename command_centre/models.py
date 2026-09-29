@@ -50,6 +50,77 @@ def singer_actions(r):
             "can_settle": open_, "can_withdraw": open_}
 
 
+RING_REASON = "bank details changed since their last invoice: ring them on a number you already hold"
+NEW_REASON = "bank details not confirmed yet: ring them on a number you already hold, then confirm"
+NO_BANK_REASON = "no bank details on the invoice: ask them for their details"
+
+
+def singer_trust(store_rows, r):
+    """What the pay list needs about one open invoice (the store's whole history decides trust):
+    - trusted: singer_invoices.account_trusted (the account, by its fingerprint, confirmed by phone or paid to
+      verifiably on any of the singer's invoices), or a Starling payee that already holds exactly these details
+      (the scan's "existing: " payee, which singer_invoices itself treats as trusted and never warns about);
+    - trust: how ("confirmed by phone", "paid to verifiably", "Starling payee"), or "";
+    - bill_number: the Books bill number (singer_invoices.bill_number: no digit run over 5);
+    - reason: why an untrusted one waits (ring first, not confirmed yet, or no bank details), else "".
+    Never trusted while ring_first_in says to ring (the details changed since the trusted ones)."""
+    fp = r.get("bank_fp") or ""
+    ring = si.ring_first_in(store_rows, r)
+    label = si.trust_label(store_rows, r) if fp else ""
+    if not label and fp and (r.get("payee") or "").startswith("existing: ") and r.get("bank_changed") != "yes":
+        label = "Starling payee"
+    trusted = bool(label) and not ring
+    reason = "" if trusted else RING_REASON if ring else NEW_REASON if fp else NO_BANK_REASON
+    return {"trusted": trusted, "trust": label if trusted else "", "reason": reason,
+            "bill_number": mask_digits(si.bill_number(r.get("invoice_ref"), r.get("message_id")))}
+
+
+def singer_pay_list(singers, bill_flags=None):
+    """The open singer invoices (data.open_singers: oldest first, never paid or withdrawn), split the way Today's
+    Needs you counts them, so the Money page's list and Today's rows always agree:
+      ring        ring first (singer_invoices.ring_first_in): each its own Needs-you row;
+      books_paid  Books already shows the bill paid (singer_bill_flags' "key"): its bill row says to check it;
+      pay         the account is trusted (singer_trust): "Pay N singer invoices, £X" is these, and `total` their sum;
+      confirm     the rest (new or unconfirmed details, or none on the invoice): one grouped "confirm" row."""
+    paid_in_books = {f["key"] for f in bill_flags or [] if f.get("key")}
+    out = {"ring": [], "books_paid": [], "pay": [], "confirm": []}
+    for s in singers or []:
+        if s.get("ring_first"):
+            out["ring"].append(s)
+        elif s.get("key") in paid_in_books:
+            out["books_paid"].append(s)
+        elif s.get("trusted"):
+            out["pay"].append(s)
+        else:
+            out["confirm"].append(s)
+    out["total"] = round(sum(s.get("amount") or 0 for s in out["pay"]), 2)
+    return out
+
+
+WAIT_AFTER = datetime.timedelta(hours=24)
+
+
+def enquiries_waiting(rows, found, now):
+    """Pipeline rows in status "new" first seen more than 24 hours ago (first_seen is a date: its midnight, London
+    time, counts as the moment it came in) whose thread has no draft in the drafts cache (drafts.read_drafts'
+    (drafts, when), or None when nothing is recorded yet), oldest first: [{enquiry_id, occasion, first_seen}].
+    One per enquiry. No names: the pipeline holds none."""
+    drafted = {str(d.get("thread_id") or "") for d in (found[0] if found else [])}
+    drafted.discard("")
+    now = now if now.tzinfo else now.replace(tzinfo=dash.LONDON)
+    out, seen = [], set()
+    for r in rows or []:
+        eid = (r.get("enquiry_id") or "").strip()
+        day = to_date(r.get("first_seen"))
+        if not eid or eid in seen or pl.status_of(r) != "new" or day is None or eid in drafted:
+            continue
+        if now - datetime.datetime.combine(day, datetime.time(0), dash.LONDON) <= WAIT_AFTER:
+            continue
+        seen.add(eid)
+        out.append({"enquiry_id": eid, "occasion": (r.get("occasion") or "").strip(), "first_seen": day})
+    return sorted(out, key=lambda e: (e["first_seen"], e["enquiry_id"]))
+
+
 def to_date(value):
     return pl.to_date(value) if value else None
 
@@ -410,9 +481,11 @@ NEEDS_SOURCES = {  # panel name -> how "Some sources didn't load" names it
     "enquiries": "the enquiry pipeline", "singers": "the singer invoices", "hand": "the hand checks",
     "bank": "the payment states", "proposals": "the Ads proposals", "books_import": "the Books import",
     "drafts": "the drafts inbox", "books_flags": "the Books comparison", "bill_flags": "the singer bills",
-    "followups": "the follow-ups", "runs": "the run times", "backup": "the backup record"}
+    "followups": "the follow-ups", "runs": "the run times", "backup": "the backup record",
+    "waiting": "the enquiries waiting for a reply"}
 NEEDS_ROOTS = {"singers": ("singer_store",), "hand": ("ledger",), "bank": ("ledger",), "followups": ("enquiries",),
-               "books_flags": ("books", "ledger"), "bill_flags": ("books", "singer_store")}
+               "books_flags": ("books", "ledger"), "bill_flags": ("books", "singer_store"),
+               "waiting": ("enquiries", "drafts")}
 BANK_SOURCE = "the bank (Starling)"
 
 
@@ -428,11 +501,15 @@ def needs_you(panels, bank_unreachable=False):
       approval  an Ads change set waiting (not applied, no problem): one each;
       books-import  the 2026 Books import waiting for approval (only "waiting": approved, stale or imported is
                 a handoff or a note, not an approval);
+      waiting   enquiries in status new, first seen over 24 hours ago, with no draft for their thread
+                (enquiries_waiting), grouped;
       drafts    the drafts inbox's open drafts, grouped;
       books     a Books/Starling/ledger disagreement (books_flags): one each;
       bill      a singer bill disagreement (singer_bill_flags): one each;
-      pay       the other open singer invoices, grouped ("Pay N singer invoices, £X"): not a ring-first one (its own
-                row) and not one Books already shows paid (its bill row says to check it instead);
+      pay       the open singer invoices to a trusted account, grouped ("Pay N singer invoices, £X"):
+                singer_pay_list's "pay", exactly the Money page's pay list;
+      confirm   the open ones whose details aren't trusted yet and aren't ring first (new details, or none on
+                the invoice), grouped: confirm them before paying;
       followups pipeline.followups_due (due by today only), grouped;
       runs      the Health page's stale run files that have been written before (one never written is a run not
                 set up yet, which Health shows), grouped;   backup  a backup key set up but no backup in 36 hours.
@@ -488,6 +565,9 @@ def needs_you(panels, bank_unreachable=False):
     books_import = value("books_import")
     if books_import and books_import.get("state") == "waiting":
         rows.append({"kind": "books-import", "count": 1, "tone": "warn"})
+    waiting = value("waiting") or []
+    if waiting:
+        rows.append({"kind": "waiting", "count": len(waiting), "tone": "warn", "items": waiting})
     inbox = value("drafts")
     open_drafts = (inbox or {}).get("open") or []
     if open_drafts:
@@ -497,11 +577,12 @@ def needs_you(panels, bank_unreachable=False):
     bill_flags = value("bill_flags") or []
     for f in bill_flags:
         rows.append({"kind": "bill", "count": 1, "tone": f.get("tone") or "warn", "item": f})
-    paid_in_books = {f["key"] for f in bill_flags if f.get("key")}
-    pay = [s for s in singers if not s.get("ring_first") and s.get("key") not in paid_in_books]
-    if pay:
-        rows.append({"kind": "pay", "count": len(pay), "tone": "warn", "items": pay,
-                     "total": round(sum(s.get("amount") or 0 for s in pay), 2)})
+    split = singer_pay_list(singers, bill_flags)
+    if split["pay"]:
+        rows.append({"kind": "pay", "count": len(split["pay"]), "tone": "warn", "items": split["pay"],
+                     "total": split["total"]})
+    if split["confirm"]:
+        rows.append({"kind": "confirm", "count": len(split["confirm"]), "tone": "warn", "items": split["confirm"]})
     due = value("followups") or []
     if due:
         rows.append({"kind": "followups", "count": len(due), "tone": "warn", "items": due})

@@ -1119,8 +1119,8 @@ def test_today_lists_drafts_follow_ups_runs_and_a_stale_backup():
 
 def test_needs_you_rules():
     P = data.Panel
-    singer = lambda key, first, amount, ring=False: {"key": key, "first_name": first, "amount": amount,  # noqa: E731
-                                                     "ring_first": ring}
+    singer = lambda key, first, amount, ring=False, trusted=True: {  # noqa: E731
+        "key": key, "first_name": first, "amount": amount, "ring_first": ring, "trusted": trusted and not ring}
     panels = {
         "singers": P(value=[singer("aaa", "Ann", 100.0), singer("bbb", "Bob", 50.0, ring=True),
                             singer("ccc", "Cy", 70.0)]),
@@ -1160,6 +1160,276 @@ def test_needs_you_rules():
     rows, missing = models.needs_you(dict(panels, books=P(value=None), books_flags=P(value=None),
                                           bill_flags=P(value=None)))
     assert missing == [] and "bill" not in {r["kind"] for r in rows}
+
+
+# ---------------------------------------------------------------- the sync strip
+
+
+def set_age(path, hours):
+    path = Path(path)
+    if not path.exists():
+        write(path, "[]" if path.name in ("drafts.json", "calendar.json") else "{}")
+    t = (NOW - datetime.timedelta(hours=hours)).timestamp()
+    os.utime(path, (t, t))
+
+
+def chips(html):
+    """The strip's chips: {label: (tone, element, sync source or None, href or None, shown text)}."""
+    strip = re.search(r'<ul class="sync-chips"[^>]*>(.*?)</ul>', html, re.S)
+    assert strip, "no sync strip"
+    out = {}
+    for li in re.findall(r"<li>(.*?)</li>", strip.group(1), re.S):
+        m = re.search(r'<(span|a|button)[^>]*class="chip chip-(\w+)"[^>]*>(.*?)</\1>', li, re.S)
+        label = re.search(r'<span class="chip-label">([^<]+)</span>', li).group(1)
+        source = re.search(r'name="source" value="([^"]+)"', li)
+        href = re.search(r'href="([^"]+)"', li)
+        shown = text_of(li).replace(label, "", 1).split(",")[0].strip()
+        out[label] = (m.group(2), m.group(1), source.group(1) if source else None, href.group(1) if href else None,
+                      shown)
+    return out
+
+
+class DownBank(FakeBank):
+    def account(self):
+        import urllib.error
+        raise urllib.error.URLError("down")
+
+    def feed(self, since, until, direction):
+        import urllib.error
+        raise urllib.error.URLError("down")
+
+
+def test_sync_strip_renders_every_tone():
+    from command_centre import sources
+    fixtures()
+    sources.forget_outcomes()
+    set_age(CACHE / "books.json", 1)                          # ok
+    set_age(CACHE / "drafts.json", 40)                        # stale (over 36 hours): the app can't sync it
+    (CACHE / "calendar.json").unlink(missing_ok=True)         # never written: stale, "never"
+    set_age(Path(TMP) / "ads-summary.json", 48)               # ok (the Monday review, weekly)
+    set_age(CACHE / "marketing.json", 2)                      # ok, until a failed attempt after it
+    sources.record_outcome("marketing", False, at=NOW)
+    c = make(FakeBank())
+    got = chips(page(c, "/"))
+    assert list(got) == ["Bank", "Books", "Drafts", "Diary", "Ads", "Marketing"], got
+    assert got["Bank"] == ("ok", "span", None, None, "09:30"), got["Bank"]
+    assert got["Books"] == ("ok", "span", None, None, "08:30"), got["Books"]
+    assert got["Drafts"] == ("stale", "a", None, "/health#syncs", "Sat 17:30"), got["Drafts"]
+    assert got["Diary"] == ("stale", "a", None, "/health#syncs", "never"), got["Diary"]
+    assert got["Ads"] == ("ok", "span", None, None, "Sat 09:30"), got["Ads"]
+    assert got["Marketing"] == ("failed", "button", "marketing", None, "07:30"), got["Marketing"]
+    # a stale Books cache is a sync-now button; a failed attempt after the last good write says failed
+    set_age(CACHE / "books.json", 25)
+    assert chips(page(c, "/money"))["Books"][:3] == ("stale", "button", "books")
+    set_age(CACHE / "books.json", 1)
+    sources.record_outcome("books", False, at=NOW)
+    assert chips(page(c, "/money"))["Books"][:3] == ("failed", "button", "books")
+    sources.record_outcome("books", True, at=NOW)
+    assert chips(page(c, "/money"))["Books"][:3] == ("ok", "span", None)
+    # the Bank: unreachable is failed (a sync-now bank button); no client is off; a page that doesn't read the bank
+    # never makes the strip read it
+    down = make(DownBank())
+    assert chips(page(down, "/"))["Bank"] == ("failed", "button", "bank", None, "not read yet")
+    none = make(None)
+    assert chips(page(none, "/"))["Bank"][:2] == ("off", "span") and "not connected" in chips(page(none, "/"))["Bank"][4]
+    counted = FakeBank()
+    calls = []
+    counted.account = lambda: calls.append(1) or FakeBank.account(counted)
+    fresh = make(counted)
+    assert chips(page(fresh, "/quote"))["Bank"][4] == "not read yet" and calls == []
+    # every page carries it, and a strip that fails never breaks the page
+    for path in ("/", "/money", "/health", "/quote", "/drafts", "/marketing", "/enquiries", "/activity"):
+        assert 'class="sync-strip"' in page(c, path), path
+    real = sources.sync_chips
+    sources.sync_chips = lambda now, bank: 1 / 0
+    try:
+        out = page(c, "/")
+        assert 'class="sync-strip"' not in out and ("Needs you" in out or "Nothing needs you" in out)
+    finally:
+        sources.sync_chips = real
+    # Health explains the ones the app can't sync
+    health = text_of(page(c, "/health"))
+    assert "can't read Mail or the calendar itself" in health and "Run now" in health
+    sources.forget_outcomes()
+
+
+def test_sync_strip_scrolls_inside_itself_on_a_phone():
+    css = (Path(ROOT) / "command_centre" / "static" / "app.css").read_text()
+    rule = lambda sel: re.search(re.escape(sel) + r"\s*\{([^}]*)\}", css).group(1)  # noqa: E731
+    assert "overflow-x: auto" in rule(".sync-chips") and "flex-wrap: nowrap" in rule(".sync-chips")
+    assert "overflow: hidden" in rule(".sync-strip") and "min-width: 0" in rule(".sync-strip")
+    assert "white-space: nowrap" in re.search(r"\n\.chip \{([^}]*)\}", css).group(1)
+
+
+def test_the_refresh_job_notes_each_sync_for_the_strip():
+    from command_centre import sources
+    clean()
+    sources.forget_outcomes()
+    job = jobs.RefreshJob(clear=lambda: None, runner=Recorder(fail={"books": 1}))
+    assert job.run_once(at(7, 0)) == "failed"
+    got = {k: v["ok"] for k, v in sources.outcomes().items()}
+    assert got == {"singer-paid": True, "dashboard": True, "books": False, "marketing": True}, got
+    job = jobs.RefreshJob(clear=lambda: None, runner=Recorder())
+    assert job.run_once() == "ok" and sources.outcomes()["books"]["ok"] is True
+    sources.forget_outcomes()
+
+
+def test_sync_strip_chip_times():
+    from command_centre import sources
+    now = NOW
+    assert sources.short_time(now - datetime.timedelta(minutes=5), now) == "09:25"
+    assert sources.short_time(now - datetime.timedelta(days=2), now) == "Sat 09:30"
+    assert sources.short_time(now - datetime.timedelta(days=20), now) == "8 Sep"
+
+
+# ---------------------------------------------------------------- enquiries waiting over a day
+
+
+def enquiry(eid, first_seen, status="new", occasion="wedding"):
+    return {"enquiry_id": eid, "first_seen": first_seen, "status": status, "last_contact": first_seen,
+            "followups": "0", "occasion": occasion, "source": "email", "event_date": "2027-06-01"}
+
+
+def test_enquiries_waiting_over_a_day_count_each_once_and_skip_drafted_threads():
+    fixtures()
+    lm.write_csv(pl.ENQUIRIES, [
+        enquiry("e1", "2026-09-26"),                    # two days: waiting
+        enquiry("e1", "2026-09-26"),                    # the same enquiry twice: counted once
+        enquiry("e2", "2026-09-27", occasion="funeral"),  # yesterday: its midnight is 33.5 hours ago
+        enquiry("e3", "2026-09-28"),                    # today: not yet
+        enquiry("e4", "2026-09-25"),                    # drafted: the assistant has a reply waiting in Drafts
+        enquiry("e5", "2026-09-20", status="quoted"),  # already quoted
+        enquiry("e6", "2026-09-20", status="lost"),
+    ], pl.COLUMNS)
+    write(CACHE / "drafts.json", json.dumps([draft(thread_id="e4")]))
+    key = drafts.draft_key(draft(thread_id="e4"))  # a draft marked sent still counts as drafted
+    write(Path(TMP) / "command-centre" / "drafts-marks.json", json.dumps({key: {"state": "sent", "at": "x"}}))
+    c = make(FakeBank())
+    html = page(c, "/")
+    rows = needs_rows(html)
+    assert ("waiting", 2) in rows, rows
+    assert lede_number(html) == str(sum(n for _, n in rows))
+    li = re.search(r'data-kind="waiting".*?</li>', html, re.S).group(0)
+    assert "2 enquiries waiting over a day for a reply" in text_of(li) and 'href="/enquiries"' in li
+    assert "Sat 26 Sep 2026" in text_of(li) and "e1" not in li and "Ann" not in li
+    # the rule itself: first_seen's midnight (London) more than 24 hours ago
+    rows_ = [enquiry("x", "2026-09-27")]
+    edge = datetime.datetime(2026, 9, 28, 0, 0, tzinfo=LONDON)
+    assert models.enquiries_waiting(rows_, None, edge) == []
+    assert [e["enquiry_id"] for e in models.enquiries_waiting(rows_, None, edge + datetime.timedelta(seconds=1))] == ["x"]
+    assert models.enquiries_waiting(rows_, ([{"thread_id": "x"}], None), NOW) == []
+    # one enquiry: singular words
+    lm.write_csv(pl.ENQUIRIES, [enquiry("e1", "2026-09-26")], pl.COLUMNS)
+    assert "1 enquiry waiting over a day for a reply" in text_of(page(c, "/"))
+    # a drafts cache that won't load: the row can't be trusted, so it goes and the source is named
+    write(CACHE / "drafts.json", json.dumps({"not": "a list"}))
+    html = page(c, "/")
+    assert "waiting" not in {k for k, _ in needs_rows(html)}
+    assert "the drafts inbox (ValueError)" in text_of(html)
+
+
+# ---------------------------------------------------------------- the singer pay list
+
+
+def pay_fixtures():
+    fixtures(books=False)
+    base = {"payee": "", "bank_changed": "no", "bank_confirmed": "", "paid_on": "", "paid_verified": "",
+            "withdrawn": "", "booking_ref": "0310"}
+    lm.write_csv(si.STORE, [dict(base, **r) for r in [
+        {"message_id": "m1", "received": "2026-09-20", "singer_name": "Ben Fenwickson", "singer_email": "ben@example.org",
+         "invoice_ref": "BF-12", "amount_gbp": "120", "bank_fp": "abc", "bank_last4": "4321", "bank_confirmed": "yes"},
+        {"message_id": "m2", "received": "2026-09-22", "singer_name": "Dora Quillfeather", "singer_email": "dora@example.org",
+         "invoice_ref": "DQ7", "amount_gbp": "150", "bank_fp": "def", "bank_last4": "1111", "bank_confirmed": "yes",
+         "paid_on": "2026-09-25"},
+        {"message_id": "m3", "received": "2026-09-23", "singer_name": "Zed Mistakeham", "singer_email": "zed@example.org",
+         "invoice_ref": "Z1", "amount_gbp": "80", "bank_fp": "zzz", "bank_last4": "9999", "bank_confirmed": "yes",
+         "withdrawn": "2026-09-24"},
+        {"message_id": "m4", "received": "2026-09-24", "singer_name": "Eve Organstone", "singer_email": "eve@example.org",
+         "invoice_ref": "EO1", "amount_gbp": "250", "bank_fp": "eee", "bank_last4": "2222"},
+        {"message_id": "m5", "received": "2026-09-01", "singer_name": "Eve Organstone", "singer_email": "eve@example.org",
+         "invoice_ref": "EO0", "amount_gbp": "250", "bank_fp": "eee", "bank_last4": "2222", "paid_on": "2026-09-05",
+         "paid_verified": "yes"},
+        {"message_id": "m6", "received": "2026-09-10", "singer_name": "Fay Ringwood", "singer_email": "fay@example.org",
+         "invoice_ref": "FR1", "amount_gbp": "100", "bank_fp": "ff01", "bank_last4": "3333", "paid_on": "2026-09-12",
+         "paid_verified": "yes"},
+        {"message_id": "m7", "received": "2026-09-26", "singer_name": "Fay Ringwood", "singer_email": "fay@example.org",
+         "invoice_ref": "FR2", "amount_gbp": "100", "bank_fp": "ff02", "bank_last4": "4444", "bank_changed": "yes"},
+        {"message_id": "m8", "received": "2026-09-21", "singer_name": "Gus Newman", "singer_email": "gus@example.org",
+         "invoice_ref": "INV-1234567", "amount_gbp": "75", "bank_fp": "ggg", "bank_last4": "5555"},
+        {"message_id": "m9", "received": "2026-09-22", "singer_name": "Hal Nodetails", "singer_email": "hal@example.org",
+         "invoice_ref": "H1", "amount_gbp": "60", "bank_fp": "", "bank_last4": ""},
+        {"message_id": "m10", "received": "2026-09-25", "singer_name": "Ivy Payee", "singer_email": "ivy@example.org",
+         "invoice_ref": "IP-3", "amount_gbp": "90", "bank_fp": "iii", "bank_last4": "6666",
+         "payee": "existing: Ivy Payee"},
+        {"message_id": "m11", "received": "2026-09-19", "singer_name": "Jo Booksdone", "singer_email": "jo@example.org",
+         "invoice_ref": "JO-1", "amount_gbp": "55", "bank_fp": "jjj", "bank_last4": "7777", "bank_confirmed": "yes"},
+    ]], si.COLUMNS)
+    bills = [{"number": "BF-12", "vendor": "Ben", "status": "open", "total": 120.0, "balance": 120.0, "date": "2026-09-20"},
+             {"number": "JO-1", "vendor": "Jo", "status": "paid", "total": 55.0, "balance": 0.0, "date": "2026-09-19"}]
+    write(CACHE / "books.json", json.dumps(books_json(bills=bills)))
+
+
+def singer_card(html):
+    return re.search(r'<article class="card card-wide" id="singer-invoices">(.*?)</article>', html, re.S).group(1)
+
+
+def test_money_pay_list_is_trusted_accounts_only_and_matches_today():
+    pay_fixtures()
+    c = make(FakeBank())
+    card = singer_card(page(c, "/money"))
+    table = re.search(r'<table class="table pay-table">(.*?)</table>', card, re.S).group(1)
+    names = re.findall(r'data-label="Singer">([^<]+)<', table)
+    assert names == ["Ben", "Eve", "Ivy"], names  # trusted only, oldest first
+    # each amount and bill number is a copy button (handoffs.js: no passkey, not an action form)
+    for amount, bill in (("120.00", "BF-12"), ("250.00", "EO1"), ("90.00", "IP-3")):
+        assert f'class="button quiet small cc-copy copy-value" data-prompt="{amount}"' in table, amount
+        assert f'data-prompt="{bill}"' in table, bill
+    assert 'data-prompt="460.00"' in table and "£460.00" in text_of(table)  # the total
+    assert "••••4321" in table and "••••2222" in table and "••••6666" in table
+    trust = text_of(table)
+    assert "confirmed by phone" in trust and "paid to verifiably" in trust and "Starling payee" in trust
+    assert text_of(page(c, "/money")).count("Pay in the Starling app") == 1
+    # ring first below it, with the reason; then the ones to confirm; Books-paid named, withdrawn and paid never
+    ring = card[card.index('id="singer-ring"'):card.index('id="singer-confirm"')]
+    assert "Fay" in ring and models.RING_REASON in text_of(ring) and "cc-copy" not in ring
+    confirm = card[card.index('id="singer-confirm"'):]
+    assert "Gus" in confirm and "Hal" in confirm and models.NEW_REASON in text_of(confirm)
+    assert models.NO_BANK_REASON in text_of(confirm) and "cc-copy" not in confirm
+    assert "SI-" not in card and "1234567" not in card
+    assert "Books already shows that bill paid" in text_of(card) and "Jo" in text_of(card)
+    assert "Jo" not in names and "Zed" not in card and "Dora" not in card
+    # Today's pay row is exactly this list
+    today = page(c, "/")
+    rows = dict((k, n) for k, n in needs_rows(today) if k in ("pay", "confirm"))
+    assert rows == {"pay": 3, "confirm": 2}, needs_rows(today)
+    li = re.search(r'data-kind="pay".*?</li>', today, re.S).group(0)
+    assert "Pay 3 singer invoices, £460.00" in text_of(li) and "(Ben, Eve, Ivy)" in text_of(li)
+    li = re.search(r'data-kind="confirm".*?</li>', today, re.S).group(0)
+    assert "Confirm the bank details on 2 singer invoices before paying" in text_of(li) and "(Gus, Hal)" in text_of(li)
+    assert ("ring", 1) in needs_rows(today) and ("bill", 1) in needs_rows(today)
+    assert lede_number(today) == str(sum(n for _, n in needs_rows(today)))
+    # the model agrees with itself: pay + ring + confirm + books_paid is every open invoice, once
+    singers = data.open_singers(lm.read_csv(si.STORE))
+    split = models.singer_pay_list(singers, models.singer_bill_flags(lm.read_csv(si.STORE), json.loads(
+        (CACHE / "books.json").read_text())["bills"]))
+    keys = [s["key"] for part in ("pay", "ring", "confirm", "books_paid") for s in split[part]]
+    assert sorted(keys) == sorted(s["key"] for s in singers) and len(keys) == len(set(keys)) == 7
+    assert split["total"] == 460.0
+
+
+def test_pay_list_trust_rules():
+    rows = [{"message_id": "a", "singer_name": "Ann Test", "singer_email": "a@example.org", "bank_fp": "f1",
+             "bank_changed": "no", "payee": "existing: Ann Test", "invoice_ref": "A-1"}]
+    t = models.singer_trust(rows, rows[0])
+    assert t == {"trusted": True, "trust": "Starling payee", "reason": "", "bill_number": "A-1"}, t
+    # a payee named but the details changed since: never trusted from the payee alone
+    changed = dict(rows[0], bank_changed="yes")
+    t = models.singer_trust([changed], changed)
+    assert t["trusted"] is False and t["reason"] == models.RING_REASON
+    # no details: not trusted, and a bill number with a long digit run falls back to SI- plus 5 digits
+    none = {"message_id": "1789828736363141700", "singer_name": "Bo Test", "bank_fp": "", "invoice_ref": "123456789"}
+    t = models.singer_trust([none], none)
+    assert t["trusted"] is False and t["reason"] == models.NO_BANK_REASON and t["bill_number"] == "SI-41700"
 
 
 def test_health_marks_an_old_static_dashboard_stale():

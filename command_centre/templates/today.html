@@ -33,12 +33,16 @@
     {% elif r.kind == "books-import" %}
       <p class="need-text">Approve the 2026 Books import: a dry run is waiting in <span class="mono">~/lcs-private/books-import-2026.json</span>.</p>
       {{ m.action_button("approve-books-import", "Approve the Books import") }}
+    {% elif r.kind == "waiting" %}
+      <p class="need-text"><a href="/enquiries">{{ r.count }} {{ "enquiry" if r.count == 1 else "enquiries" }} waiting over a day for a reply</a> <span class="muted">(no draft yet; the oldest came in {{ r["items"][0].first_seen|day }})</span></p>
     {% elif r.kind == "drafts" %}
       <p class="need-text"><a href="/drafts">{{ r.count }} {{ "draft" if r.count == 1 else "drafts" }} to review and send</a> <span class="muted">in Zoho</span></p>
     {% elif r.kind in ("books", "bill") %}{% set f = r.item %}
       <p class="need-text">{{ m.ref_link(f.ref, f.href) }} <span class="badge {{ f.tone }}">{{ f.text }}</span></p>
     {% elif r.kind == "pay" %}
       <p class="need-text"><a href="/money#singer-invoices">Pay {{ r.count }} singer {{ "invoice" if r.count == 1 else "invoices" }}, {{ r.total|gbp }}</a> <span class="muted">({{ r["items"]|map(attribute="first_name")|join(", ") }})</span></p>
+    {% elif r.kind == "confirm" %}
+      <p class="need-text"><a href="/money#singer-confirm">Confirm the bank details on {{ r.count }} singer {{ "invoice" if r.count == 1 else "invoices" }} before paying</a> <span class="muted">({{ r["items"]|map(attribute="first_name")|join(", ") }})</span></p>
     {% elif r.kind == "followups" %}
       <p class="need-text"><a href="/enquiries">{{ r.count }} {{ "follow-up" if r.count == 1 else "follow-ups" }} due</a> <span class="muted">(the enquiry assistant drafts them on its next run)</span></p>
     {% elif r.kind == "runs" %}
