@@ -121,6 +121,17 @@ def test_the_mcp_config_can_not_be_read_or_searched():
     expect("deny", run("Read", {"file_path": "~/.claude.json.backup"}), "Read a backup")
     expect("deny", run("Grep", {"pattern": "https", "path": HOME}), "Grep over home")
     expect("deny", run("Glob", {"pattern": "~/.claude*"}), "Glob for the config")
+
+
+def test_a_heredoc_body_is_data_not_a_search_root():
+    # 29 Sep: a PR description with "ok / stale / failed" fed through `cat <<'EOF'` was refused as a search of /
+    body = "gh pr create --title t --body \"$(cat <<'EOF'\n- each chip is ok / stale / failed\n- see ~ for more\nEOF\n)\""
+    expect("allow", bash(body), "a heredoc body naming / and ~")
+    # the search-root rule still holds outside the body, and the body is still marker-scanned
+    expect("deny", bash("cat <<'EOF' /\nhello\nEOF"), "cat of / beside a heredoc")
+    expect("deny", bash("grep -r https ~ <<'EOF'\nx\nEOF"), "grep of ~ beside a heredoc")
+    expect("deny", bash("cat <<'EOF'\nmcp-remote\nEOF"), "a marker inside the body")
+    expect("deny", bash("cat <<'EOF'\n~/.claude.json\nEOF"), "the config named inside the body")
     link = os.path.join(SCRATCH, "innocent-name")
     os.symlink(os.path.join(HOME, ".claude.json"), link)
     expect("deny", run("Read", {"file_path": link}), "Read through a symlink")

@@ -417,12 +417,16 @@ def check_command(text, repo, cwd):
     scripts = list(cmd.scripts)
     seen, roots = set(), config_roots()
     searching = bool(cmd.heads & SEARCHERS)
+    # A heredoc body is data a command reads on stdin, not paths it opens: "ok / stale" in a PR description fed
+    # through `cat <<'EOF'` is not a search of "/". The body is still marker-scanned (analyse) and every word in
+    # it still goes through protected() and the file checks below; only the search-root rule skips it.
+    outside = set(words(strip_heredocs(text)))
     for w in words(text):
         if INTERP.match(os.path.basename(w)):
             continue
         for p in resolve(w, cmd.cwds):
             protected(p)
-            if searching and p in roots:
+            if searching and p in roots and w in outside:
                 raise Deny(f"{P}searching or copying {p} would take in MCP configuration; name a project "
                            "folder instead.")
             if p in seen or not regular(p):
