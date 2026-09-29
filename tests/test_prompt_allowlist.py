@@ -137,9 +137,14 @@ def allowed(cmd, pats):
     return any(p.fullmatch(cmd) for _, p in pats)
 
 
+MONDAY_AGENTS = ("lcs-review-ads", "lcs-review-web", "lcs-review-bookings")
+
+
 def test_prompts_name_commands():
     blocks, scripts = appendix_blocks(), script_paths()
-    assert len(commands(blocks["A"], scripts)) >= 5
+    # The Monday review (Appendix A) is a dispatcher: its own commands plus its three sub-agents'.
+    monday = commands(blocks["A"], scripts) + [c for n in MONDAY_AGENTS for c in commands(blocks[f"agent:{n}"], scripts)]
+    assert len(commands(blocks["A"], scripts)) >= 2 and len(monday) >= 10, monday
     assistant = [c for k, b in blocks.items() if k == "E" or k.startswith("agent:") for c in commands(b, scripts)]
     assert len(assistant) >= 20, len(assistant)
 
@@ -261,8 +266,11 @@ def test_the_command_centre_caches_and_proposals_are_in_the_prompts():
     assert f"{PY} scripts/reports/cc_sync.py books" in agents["lcs-daily-pass"], agents
     assert f"{PY} scripts/reports/cc_sync.py calendar-put 'X'" in agents["lcs-daily-pass"], agents
     assert f"{PY} scripts/bookings/singer_invoices.py link X X" in agents["lcs-singer-clerk"], agents
-    assert f"{PY} scripts/reports/weekly_review.py --save-report --write-proposals" in a, a
-    assert "Budget proposals are waiting in the command centre" in blocks["A"]
+    assert f"{PY} scripts/reports/weekly_review.py --save-report --quiet --write-proposals" in a, a
+    assert "Budget proposals are waiting in the command centre" in blocks["agent:lcs-review-bookings"]
+    for name in MONDAY_AGENTS:  # each Monday sub-agent reads its own slice of the saved report
+        assert any(c.startswith(f"{PY} scripts/reports/report_sections.py ") for c in
+                   commands(blocks[f"agent:{name}"], scripts)), name
     assert not allowed(f"{PY} scripts/reports/cc_sync.py calendar-put < /tmp/x | cat", allow_patterns())
 
 

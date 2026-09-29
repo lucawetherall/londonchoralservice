@@ -49,8 +49,9 @@ windows:
     end: "12-31"
     daily_gbp: 4
 
+  # Raised to £5 on 28 Sep 2026 (owner-approved account review: funeral choir searches convert).
   - name: funerals
     campaigns: ["funeral"]
     start: "01-01"
     end: "12-31"
-    daily_gbp: 4
+    daily_gbp: 5
