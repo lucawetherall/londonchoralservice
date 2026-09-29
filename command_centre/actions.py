@@ -1882,10 +1882,6 @@ for _a in (PUSH_SUBSCRIBE, PUSH_UNSUBSCRIBE, BACKUP_NOW):
 EVENTS = "scripts/bookings/events.py"
 
 
-def migration_applied(events):
-    return any(e.get("src") == "migration" for e in events)
-
-
 def _migrate_validate(raw):
     """The migration's dry run and compare --proposed, in-process (lcs_migrate, the same code events.py runs). Refuses
     a moved ledger or store, an unreadable or broken log, a migration already applied, nothing to migrate, and any
@@ -1900,7 +1896,7 @@ def _migrate_validate(raw):
     events, stats = cp.lcs_events.read()
     if cp.lcs_events.log_problem(stats):
         raise ActionError("the state log can't be read whole: see events.py verify")
-    if migration_applied(events):
+    if cp.lcs_events.migration_applied(events):
         raise ActionError("the events migration has already been applied")
     day = today()
     ledger, store = lm.read_csv(cp.LEDGER), lm.read_csv(si.STORE)

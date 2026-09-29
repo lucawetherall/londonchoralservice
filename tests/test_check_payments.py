@@ -1297,6 +1297,7 @@ NONCE = "ab" * 32
 
 def owner_ledger(notes="PENDING: invoiced"):
     d = tempfile.mkdtemp()
+    seed_migration(d)  # the writers record facts once the migration is applied (the owner facts' tests read them)
     path = os.path.join(d, "bookings.csv")
     cols = ["booking_ref", "value_gbp", "invoice_date", "event_date", "notes", "client_name"]
     with open(path, "w", newline="") as f:
@@ -1625,14 +1626,28 @@ TD = TODAY.isoformat()
 
 
 def log_of(d):
+    """The live lines of <d>/events.jsonl (the migration's seed line left out)."""
     path = os.path.join(d, "events.jsonl")
-    return [json.loads(x) for x in open(path).read().splitlines()] if os.path.exists(path) else []
+    lines = [json.loads(x) for x in open(path).read().splitlines()] if os.path.exists(path) else []
+    return [e for e in lines if e["src"] == "live"]
 
 
-def run_fact(notes, *args):
-    """check_payments.py with the ledger and the log in one temp private folder: (process, notes, log lines)."""
+def seed_migration(d):
+    """<d>/events.jsonl holding one migration line: the writers record facts only once the migration is applied."""
+    now = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    obj = {"v": 1, "eid": "00000000000000aa", "prev": "", "at": now, "on": "2026-01-01", "subject": "booking",
+           "id": "0000", "kind": "deposit-seen", "fields": {}, "by": "script", "src": "migration"}
+    fd = os.open(os.path.join(d, "events.jsonl"), os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+    os.write(fd, (ev.dumps(ev.validate(obj)) + "\n").encode())
+    os.close(fd)
+
+
+def run_fact(notes, *args, migrated=True):
+    """check_payments.py with the ledger and the log in one temp private folder: (process, notes, live log lines)."""
     d = tempfile.mkdtemp()
     os.chmod(d, 0o700)
+    if migrated:
+        seed_migration(d)
     path = os.path.join(d, "bookings.csv")
     cols = ["booking_ref", "value_gbp", "invoice_date", "event_date", "notes", "client_name"]
     with open(path, "w", newline="") as f:
@@ -1742,6 +1757,13 @@ def test_owner_facts_need_the_nonce_and_write_owner_phrases():
         assert p.returncode != 0 and notes == "PENDING: invoiced" and log_of(d) == [], amount
 
 
+def test_before_the_migration_the_writers_write_their_notes_exactly_as_before():
+    for args, clause in ((["--fact", "2111", "cancelled"], f"cancelled {TD} by client email"),
+                         (["--reminded", "2111"], f"reminder drafted {TD}")):
+        p, notes, log = run_fact("PENDING: invoiced", *args, migrated=False)
+        assert p.returncode == 0 and notes == f"PENDING: invoiced; {clause}" and log == [], (args, p.stderr)
+
+
 def test_reminded_records_its_marker():
     for kind, clause, what in ((None, f"reminder drafted {TD}", "deposit"), ("balance", f"balance reminder drafted {TD}", "balance"),
                                ("receipt", f"receipt drafted {TD}", "receipt")):
@@ -1752,9 +1774,11 @@ def test_reminded_records_its_marker():
 
 
 def in_private(fn):
-    """Run fn with this process's private folder (LCS_PRIVATE_DIR) a fresh temp dir; returns (dir, fn's value)."""
+    """Run fn with this process's private folder (LCS_PRIVATE_DIR) a fresh temp dir, the migration applied; returns
+    (dir, fn's value)."""
     d = tempfile.mkdtemp()
     os.chmod(d, 0o700)
+    seed_migration(d)
     saved = os.environ["LCS_PRIVATE_DIR"]
     os.environ["LCS_PRIVATE_DIR"] = d
     ev.clear_cache()
@@ -1838,11 +1862,46 @@ def test_a_ledger_write_that_fails_after_the_fact_withdraws_it():
     assert [(e["kind"], e["fields"].get("why")) for e in log_of(d)] == [("cancelled", None), ("retract", "write-failed")]
 
 
-def test_note_is_unchanged_while_its_fact_refusal_is_switched_off():
-    assert cp.NOTE_REFUSES_FACTS is False  # switched on with the prompts' change to --fact (plan, Task 18)
-    for text in ("cancelled 2026-09-28 by client email", "paid per client email 2026-09-28", "balance to be paid in cash"):
+def test_note_keeps_its_text_and_records_the_fact_it_states_until_the_refusal_is_switched_on():
+    """Until the prompts use --fact (plan, Task 18), the assistant's fact-shaped --note lines still work, and record
+    the fact they state claiming the note, so a later fact in that family never holds the booking."""
+    assert cp.NOTE_REFUSES_FACTS is False
+    for text, facts in (("cancelled 2026-09-28 by client email", [("cancelled", {})]),
+                        ("paid per client email 2026-09-28", [("noted-paid", {"scope": "part"})]),
+                        ("balance to be paid in cash", [("arranged", {"method": "cash"})]),
+                        ("4 singers, London", [])):
         p, notes, log = run_fact("PENDING: invoiced", "--note", "2111", text)
+        assert p.returncode == 0 and notes == "PENDING: invoiced; " + text and p.stdout.strip() == "2111: note added", \
+            (text, p.stderr)
+        assert [(e["kind"], e["fields"]) for e in log] == facts, (text, log)
+        assert all(e["by"] == "script" and e["on"] == TD and e["note"] == ev.note_hash(text) for e in log), log
+        p, notes, log = run_fact("PENDING: invoiced", "--note", "2111", text, migrated=False)
         assert p.returncode == 0 and notes == "PENDING: invoiced; " + text and log == [], (text, p.stderr)
+
+
+def test_a_noted_cancellation_then_the_owners_reinstatement_reads_reinstated_and_is_never_held():
+    def go(d):
+        path = os.path.join(d, "bookings.csv")
+        cp.lm.write_csv(path, [row("2111", 650, "2026-08-22", "2026-11-21", "PENDING: invoiced")],
+                        list(row("a", 1, "", "").keys()))
+        saved = (sys.argv, cp.LEDGER, cp.lcs_owner.owner_confirmed, cp.lcs_owner._PROVEN,
+                 os.environ.pop("LCS_BOOKINGS_CSV"))
+        try:
+            cp.LEDGER = path
+            for argv in (["--note", "2111", "cancelled 2026-09-20 by client email"],
+                         ["--fact", "2111", "reinstated", "--owner"]):
+                cp.lcs_owner.owner_confirmed, cp.lcs_owner._PROVEN = (lambda *a: True), "--owner" in argv
+                sys.argv = ["check_payments.py", *argv]
+                with contextlib.redirect_stdout(io.StringIO()):
+                    cp.main()
+        finally:
+            (sys.argv, cp.LEDGER, cp.lcs_owner.owner_confirmed, cp.lcs_owner._PROVEN,
+             os.environ["LCS_BOOKINGS_CSV"]) = saved
+        ev.clear_cache()
+        r = cp.lm.read_csv(path)[0]
+        return r, cp.is_cancelled(r), cp.held(r, TODAY), cp.notes_cancelled(r["notes"])
+    _, (r, cancelled, held, by_notes) = in_private(go)
+    assert (cancelled, held, by_notes) == (False, [], False), (r["notes"], cancelled, held)
 
 
 def test_note_refuses_fact_shaped_text_once_switched_on():

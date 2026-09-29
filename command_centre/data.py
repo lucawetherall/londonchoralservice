@@ -51,9 +51,9 @@ def stamp(when):
 
 
 def state_log_migrated():
-    """True once the state log holds the events migration's lines (src migration): Health offers "Apply the events
-    migration" only before then."""
-    return any(e.get("src") == "migration" for e in cp.lcs_events.read()[0])
+    """True once the state log holds the events migration's lines (lcs_events.migration_applied): Health offers
+    "Apply the events migration" only before then."""
+    return cp.lcs_events.migration_applied()
 
 
 def open_singers(rows):

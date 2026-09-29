@@ -1291,8 +1291,11 @@ def record_warning(t, r, clause=None):
     """Inside a recording() block, after r's notes and bank columns are written: record bank-warning {fp8, codes}
     for r as it now stands (an empty list for a clean scan), claiming `clause` (default: its first warning clause)."""
     codes, first = bank_codes(r)
-    lcs_events.record(t, "singer_invoice", r["message_id"], "bank-warning",
-                      {"fp8": (r.get("bank_fp") or "")[:8], "codes": codes}, "script", clause or first)
+    fp8 = (r.get("bank_fp") or "")[:8]
+    if not lcs_events.FP8_RE.fullmatch(fp8):
+        return  # a legacy fingerprint the log can't take: no fact, its notes and columns read as before
+    lcs_events.record(t, "singer_invoice", r["message_id"], "bank-warning", {"fp8": fp8, "codes": codes}, "script",
+                      clause or first)
 
 
 def record_flagged(t, rows, before):

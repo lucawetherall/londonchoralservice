@@ -649,6 +649,33 @@ def test_a_future_on_is_ignored_until_that_day():
 
 # --- writers: a fact and its note under the CSV's lock (PR 4) ------------------------------------------------------
 
+
+def migrated_dir():
+    """fresh_dir() whose log holds the events migration's line: the writers record facts only once it is applied."""
+    path = fresh_dir()
+    ev.append("booking", "0000", "deposit-seen", {}, "script", on="2026-01-01", src="migration", eid="00000000000000aa")
+    return path
+
+
+def live():
+    """The log's live lines (the migration's seed line left out)."""
+    return [e for e in ev.read()[0] if e["src"] == "live"]
+
+
+def test_writers_record_nothing_before_the_migration_is_applied():
+    fresh_dir()
+    path = ledger_file()
+    with ev.recording(path) as t:
+        assert add_cancelled(t) is None
+    assert lm.read_csv(path)[0]["notes"] == "PENDING: invoiced; cancelled 2026-09-20 by client email"
+    assert not os.path.exists(ev.log_path()), "no log: the notes alone, exactly as before"
+    assert not ev.migration_applied()
+    migrated_dir()
+    assert ev.migration_applied()
+    eid = ev.append("booking", "0000", "retract", {"target": "00000000000000aa", "why": "write-failed"}, "script")
+    assert eid and not ev.migration_applied(), "a migration withdrawn as write-failed never happened"
+
+
 def ledger_file(notes="PENDING: invoiced"):
     path = os.path.join(os.environ["LCS_PRIVATE_DIR"], "bookings.csv")
     with open(path, "w") as f:
@@ -662,17 +689,17 @@ def add_cancelled(t, clause="cancelled 2026-09-20 by client email"):
 
 
 def test_recording_writes_the_note_and_the_fact_claiming_it():
-    fresh_dir()
+    migrated_dir()
     path = ledger_file()
     with ev.recording(path) as t:
         eid = add_cancelled(t)
     assert lm.read_csv(path)[0]["notes"] == "PENDING: invoiced; cancelled 2026-09-20 by client email"
-    (e,) = ev.read()[0]
+    (e,) = live()
     assert e["eid"] == eid and e["kind"] == "cancelled" and e["note"] == ev.note_hash("cancelled 2026-09-20 by client email")
 
 
 def test_a_failed_csv_write_retracts_the_fact_under_the_same_lock():
-    fresh_dir()
+    migrated_dir()
     path = ledger_file()
     real, held = lm.write_csv, []
 
@@ -705,14 +732,14 @@ def test_a_failed_csv_write_retracts_the_fact_under_the_same_lock():
     assert "nothing written" in msg and "OSError" in msg and "withdrawn" in msg, msg
     assert held == [True]
     assert lm.read_csv(path)[0]["notes"] == "PENDING: invoiced"
-    events = ev.read()[0]
+    events = live()
     assert [x["kind"] for x in events] == ["cancelled", "retract"] and events[1]["fields"] == {"target": eid, "why": "write-failed"}
     f = ev.booking_facts("2111", lm.today())
     assert not f.has("cancellation") and not f.cancelled, "a write-failed fact never happened"
 
 
 def test_a_refusal_after_a_fact_withdraws_it_and_a_failed_retract_says_run_verify():
-    fresh_dir()
+    migrated_dir()
     path = ledger_file()
     try:
         with ev.recording(path) as t:
@@ -720,8 +747,8 @@ def test_a_refusal_after_a_fact_withdraws_it_and_a_failed_retract_says_run_verif
             raise ValueError("bad on")  # a second fact refused: nothing is written, the first is withdrawn
     except SystemExit as e:
         assert "nothing written" in str(e), e
-    assert [x["kind"] for x in ev.read()[0]] == ["cancelled", "retract"]
-    fresh_dir()
+    assert [x["kind"] for x in live()] == ["cancelled", "retract"]
+    migrated_dir()
     path = ledger_file()
     real, saved_append = lm.write_csv, ev.append
 
@@ -742,7 +769,7 @@ def test_a_refusal_after_a_fact_withdraws_it_and_a_failed_retract_says_run_verif
 
 
 def test_a_legacy_id_the_log_cant_take_gets_its_note_and_no_fact():
-    fresh_dir()
+    migrated_dir()
     path = os.path.join(os.environ["LCS_PRIVATE_DIR"], "bookings.csv")
     with open(path, "w") as f:
         f.write("booking_ref,notes\n21/11,PENDING\n")
@@ -750,13 +777,13 @@ def test_a_legacy_id_the_log_cant_take_gets_its_note_and_no_fact():
         t.rows[0]["notes"] += "; reminder drafted 2026-09-28"
         assert ev.record(t, "booking", "21/11", "reminder-drafted", {"what": "deposit"}, "script",
                          "reminder drafted 2026-09-28") is None
-    assert lm.read_csv(path)[0]["notes"] == "PENDING; reminder drafted 2026-09-28" and ev.read()[0] == []
+    assert lm.read_csv(path)[0]["notes"] == "PENDING; reminder drafted 2026-09-28" and live() == []
     assert ev.loggable("booking", "2111A") and not ev.loggable("booking", "21 11")
     assert not ev.loggable("singer_invoice", "<a@b>") and ev.loggable("singer_invoice", "1789828736363141700")
 
 
 def test_a_refused_fact_writes_nothing_at_all():
-    fresh_dir()
+    migrated_dir()
     path = ledger_file()
     try:
         with ev.recording(path) as t:
@@ -765,7 +792,7 @@ def test_a_refused_fact_writes_nothing_at_all():
         assert False, "not refused"
     except SystemExit as e:
         assert "nothing written" in str(e) and "not a kind this writer may record" in str(e), e
-    assert lm.read_csv(path)[0]["notes"] == "PENDING: invoiced" and ev.read()[0] == []
+    assert lm.read_csv(path)[0]["notes"] == "PENDING: invoiced" and live() == []
 
 
 if __name__ == "__main__":

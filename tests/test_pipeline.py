@@ -655,13 +655,28 @@ def test_quoted_and_followed_read_the_status_whatever_its_case():
 
 
 def log_of(d):
+    """The live lines of <d>/events.jsonl (the migration's seed line left out)."""
     path = os.path.join(d, "events.jsonl")
-    return [json.loads(x) for x in open(path).read().splitlines()] if os.path.exists(path) else []
+    lines = [json.loads(x) for x in open(path).read().splitlines()] if os.path.exists(path) else []
+    return [e for e in lines if e["src"] == "live"]
+
+
+def migrated_home():
+    """home() whose state log holds one migration line: the writers record facts only once it is applied."""
+    import lcs_events as ev
+    d = home()
+    now = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    obj = {"v": 1, "eid": "00000000000000aa", "prev": "", "at": now, "on": "2026-01-01", "subject": "booking",
+           "id": "0000", "kind": "deposit-seen", "fields": {}, "by": "script", "src": "migration"}
+    fd = os.open(os.path.join(d, "events.jsonl"), os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+    os.write(fd, (ev.dumps(ev.validate(obj)) + "\n").encode())
+    os.close(fd)
+    return d
 
 
 def test_reviewed_and_review_skipped_record_their_markers():
     import lcs_events as ev
-    d = home()
+    d = migrated_home()
     write_ledger(d, [booking("2009", "2026-09-20", "paid in full 2026-09-19"),
                      booking("2010", "2026-09-20", "paid in full 2026-09-19")])
     p = cli(d, "reviewed", "2009", "2026-09-28")
@@ -690,8 +705,8 @@ def test_review_skipped_takes_only_the_reasons_the_log_records():
     assert log_of(d) == []
 
 
-def test_a_review_date_after_today_is_refused():
-    d = home()
+def test_a_review_date_after_today_is_refused_once_facts_are_recorded():
+    d = migrated_home()
     path = write_ledger(d, [booking("2009", "2026-09-20", "paid in full 2026-09-19")])
     ahead = (lm.today() + datetime.timedelta(days=2)).isoformat()
     p = cli(d, "reviewed", "2009", ahead)

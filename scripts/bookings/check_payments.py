@@ -22,7 +22,10 @@ Alma Consort Starling account, READ-ONLY (see lcs_money.StarlingReadOnly).
     .venv/bin/python scripts/bookings/check_payments.py --note 2111 "paid per client email 2026-09-28"
         (one line, at most 120 characters, no ';'; refuses the scripts' own phrases and the owner's hand-written
         ones: paid in full, short by fees … accepted, deposit seen … (Starling), reminder/receipt drafted, deposit kept, refunded,
-        payment checked, reinstated and the like, review request …, and anything starting PENDING)
+        payment checked, reinstated and the like, review request …, and anything starting PENDING). Until the
+        prompts use --fact (NOTE_REFUSES_FACTS, plan Task 18), a note that states a cancellation, an arrangement or a
+        payment the client reported also records that fact, claiming the note (note_facts); then it refuses them
+        instead, naming the --fact form
     … --note 2111 "paid in full 2026-09-28" --owner
         (the Command Centre only, after the owner's passkey: allows the owner's phrases and records "(owner)";
         refused unless stdin is a pipe carrying the app's one-time nonce, see owner_confirmed)
@@ -417,6 +420,27 @@ def fact_shaped(text):
     if said["noted paid"]:
         return f"noted-paid --scope {said['noted paid']}"
     return None
+
+
+def note_facts(text, row, by, today):
+    """The facts a --note's text states in the families --fact records (cancellation, arrangement, noted paid), read
+    with today's patterns against the row's value, each dated today: [(kind, fields, by, day)]. Until the prompts
+    use --fact (NOTE_REFUSES_FACTS off), --note records them claiming its note, so a later fact in the same family
+    never finds this clause unclaimed and holds the booking. Reinstated only for the owner (--note refuses it
+    otherwise)."""
+    said = assertions(text, money(row), today)
+    out = []
+    if said["cancellation"] is True:
+        out.append(("cancelled", {}, by, today))
+    elif said["cancellation"] is False and by == "owner":
+        out.append(("reinstated", {}, by, today))
+    if said["arrangement"]:
+        low = text.lower()
+        where = {w: low.find(w) for w in ("cash", "cheque") if w in low}
+        out.append(("arranged", {"method": min(where, key=where.get) if where else "third-party"}, by, today))
+    if said["noted paid"]:
+        out.append(("noted-paid", {"scope": said["noted paid"]}, by, today))
+    return out
 
 
 def note_refusal(ref, text):
@@ -1006,11 +1030,12 @@ def main():
             if not owner_confirmed():
                 raise SystemExit("--owner needs the Command Centre's one-time owner nonce (the owner's passkey "
                                  "approval); nothing written")
-        append_note(ref, fact_phrase(kind, fields, day, by), (kind, fields, by, day))
+        append_note(ref, fact_phrase(kind, fields, day, by), [(kind, fields, by, day)])
         print(f"{ref}: {kind} recorded")
         return
     if args.note:
         ref, text = args.note
+        by_note = "owner" if args.owner else "script"
         if "\n" in text or "\r" in text or len(text) > 120 or ";" in text:
             raise SystemExit("note text must be a single line, at most 120 characters, with no ';'")
         if NOTE_REFUSES_FACTS and note_refusal(ref, text):
@@ -1028,13 +1053,14 @@ def main():
         elif reserved_note(text):
             raise SystemExit("that phrase is the scripts' own or the owner's (he writes it in the ledger by hand); "
                              "nothing written")
-        append_note(ref, text)
+        # until the prompts use --fact, the facts the note states are recorded with it (note_facts)
+        append_note(ref, text, None if NOTE_REFUSES_FACTS else (lambda row: note_facts(text, row, by_note, today)))
         print(f"{ref}: note added")
         return
 
     if args.reminded:
         kind = args.kind or "deposit"
-        append_note(args.reminded, f"{MARK_TEXT[kind]} {today}", ("reminder-drafted", {"what": kind}, "script", today))
+        append_note(args.reminded, f"{MARK_TEXT[kind]} {today}", [("reminder-drafted", {"what": kind}, "script", today)])
         print(f"{args.reminded}: {MARK_TEXT[kind]} noted")
         return
     if args.kind:
@@ -1072,17 +1098,16 @@ def owner_confirmed(stdin_fd=0):
     return lcs_owner.owner_confirmed(stdin_fd)
 
 
-def append_note(ref, text, fact=None):
-    """Append "; <text>" to one booking's notes, under the ledger lock. With fact = (kind, fields, by, day), also
-    record it in the state log claiming that clause, under the same lock (lcs_events.recording: if the ledger isn't
-    written after all, the fact is withdrawn)."""
+def append_note(ref, text, facts=None):
+    """Append "; <text>" to one booking's notes, under the ledger lock. `facts`: [(kind, fields, by, day)], or a
+    function of the row giving them, each recorded in the state log claiming that clause, under the same lock
+    (lcs_events.recording: if the ledger isn't written after all, the facts are withdrawn)."""
     with lcs_events.recording(LEDGER) as t:
         for r in t.rows:
             if r["booking_ref"] == ref:
                 notes = r.get("notes") or ""
                 r["notes"] = (f"{notes}; " if notes.strip() else "") + text
-                if fact:
-                    kind, fields, by, day = fact
+                for kind, fields, by, day in (facts(r) if callable(facts) else facts or ()):
                     lcs_events.record(t, "booking", ref, kind, fields, by, text, on=day)
                 break
         else:

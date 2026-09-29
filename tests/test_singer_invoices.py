@@ -373,12 +373,17 @@ def fresh_store():
     clear_log()
 
 
-def clear_log():
-    """No state log: the writers append to <TMP>/events.jsonl, and the tests reuse message ids."""
+def clear_log(migrated=True):
+    """A fresh state log (the writers append to <TMP>/events.jsonl, and the tests reuse message ids) holding only the
+    migration's seed line, so the writers record facts (they do only once the migration is applied); none at all
+    with migrated=False."""
     for name in ("events.jsonl", "events.jsonl.lock"):
         if os.path.exists(os.path.join(TMP, name)):
             os.remove(os.path.join(TMP, name))
     si.lcs_events.clear_cache()
+    if migrated:
+        si.lcs_events.append("booking", "0000", "deposit-seen", {}, "script", on="2026-01-01", src="migration",
+                             eid="00000000000000aa")
 
 
 @contextlib.contextmanager
@@ -834,9 +839,23 @@ def cli_owner(args, nonce=True):
 
 
 def log_lines():
+    """The log's live lines (the migration's seed line left out)."""
     import json
     path = os.path.join(TMP, "events.jsonl")
-    return [json.loads(x) for x in open(path).read().splitlines()] if os.path.exists(path) else []
+    lines = [json.loads(x) for x in open(path).read().splitlines()] if os.path.exists(path) else []
+    return [e for e in lines if e["src"] == "live"]
+
+
+def test_before_the_migration_the_singer_writers_write_as_before():
+    fresh_store()
+    clear_log(migrated=False)
+    scan(GEN.format(n=1), "g1", "2026-08-01")
+    with contextlib.redirect_stdout(io.StringIO()):
+        si.cmd_thanked(Args(message_id="g1"))
+        confirm("g1")
+    assert not os.path.exists(os.path.join(TMP, "events.jsonl"))
+    r = rows_by_id()["g1"]
+    assert r["bank_confirmed"] == "yes" and "paid reply drafted" in r["notes"] and si.confirmed(r)
 
 
 def test_confirm_and_settled_are_the_command_centres_only():
@@ -964,6 +983,18 @@ def test_the_writers_facts_read_as_their_notes_do():
     si.lcs_events.clear_cache()
     diffs = lcs_migrate.compare([], rows, lm.today(), si.lcs_events.read()[0])
     assert diffs == [], diffs
+
+
+def test_a_legacy_row_with_an_odd_fingerprint_never_stops_a_scan():
+    fresh_store()
+    base = {c: "" for c in si.COLUMNS}
+    lm.write_csv(si.STORE, [dict(base, message_id="old1", received="2026-09-25", singer_name="Ben Fenwick",
+                                 singer_email="ben@example.com", amount_gbp="100.00", bank_fp="legacy-not-hex",
+                                 bank_last4="9999", payee=si.NEW_PAYEE, bank_changed="no")], si.COLUMNS)
+    scan(GEN.format(n=1), "g1", "2026-09-01")  # older, other details: flags old1, whose fingerprint the log can't take
+    rows = rows_by_id()
+    assert "g1" in rows and rows["old1"]["bank_changed"] == "yes", rows
+    assert [e["id"] for e in log_lines()] == ["g1"], log_lines()
 
 
 def test_a_message_id_the_log_cant_take_is_refused_before_anything_is_written():

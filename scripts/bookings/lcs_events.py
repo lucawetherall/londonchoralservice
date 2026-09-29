@@ -307,14 +307,28 @@ def loggable(subject, id):
     return isinstance(id, str) and bool(ID_RE[subject].fullmatch(id))
 
 
+def migration_applied(events=None):
+    """True once the log holds the events migration's lines (src migration, not withdrawn as write-failed). The
+    writers record facts only from then on (record()): the migration runs before them (spec, "Migration"), so no
+    live fact ever lands in a family whose legacy note clauses nobody has claimed, which would hold the booking.
+    Renaming the log away turns them off again with the readers (a full rollback)."""
+    if events is None:
+        idx = _indexed(lm.today())[0]
+    else:
+        idx = index(events, lm.today())
+    return any(e["src"] == "migration" and e["retracted"] != "write-failed" for es in idx.values() for e in es)
+
+
 def record(table, subject, id, kind, fields, by, clause, on=None):
     """Inside a writer's recording() block, once the row it edits carries `clause` (the note clause exactly as
     appended, or None for a fact with no note): append the fact claiming that clause, and have locked_rows withdraw
     it (a write-failed retract by the same writer, still under the CSV's lock) should the rows not be written after
     all. Returns the eid. Record a fact only after every refusal the writer makes: a refusal after it withdraws it.
     A legacy id the log can't take (loggable() false: a space, a slash, an "@") records nothing and returns None: no
-    fact can ever exist for it, so its readers keep reading its notes and columns, as before."""
-    if not loggable(subject, id):
+    fact can ever exist for it, so its readers keep reading its notes and columns, as before. Nor does anything
+    before the events migration is applied (migration_applied): the writers then write their notes exactly as
+    before."""
+    if not loggable(subject, id) or not migration_applied():
         return None
     try:
         eid = append(subject, id, kind, fields, by, on=on, note=note_hash(clause) if clause else None)

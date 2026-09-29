@@ -197,6 +197,16 @@ def log_lines():
     return [json.loads(x) for x in path.read_text().splitlines()] if path.exists() else []
 
 
+def live_lines():
+    return [e for e in log_lines() if e["src"] == "live"]
+
+
+def seed_migration():
+    """The state log holding one migration line: the scripts record facts only once the migration is applied."""
+    cp.lcs_events.append("booking", "0000", "deposit-seen", {}, "script", on="2026-01-01", src="migration",
+                         eid="00000000000000aa")
+
+
 def post(c, path, body, origin=ORIGIN):
     h = dict(HEADERS)
     if origin:
@@ -528,12 +538,13 @@ def test_the_owner_nonce_is_hashed_on_disk_and_gone_afterwards():
 
 def test_real_check_payments_owner_note_through_the_full_route():
     c, a, _ = setup()
+    seed_migration()
     r = run(c, a, "resolve-hand-check", {"ref": "2111", "choice": "paid-in-full", "date": D})
     assert r.status_code == 200, r.text
     assert r.json()["ok"] is True, r.json()
     assert r.json()["output"] == "2111: paid-in-full recorded"
     assert ledger_notes("2111") == f"PENDING: invoiced; paid in full {D} (owner)"
-    (e,) = log_lines()  # the fact, the owner's, claiming the note it wrote
+    (e,) = live_lines()  # the fact, the owner's, claiming the note it wrote
     assert (e["kind"], e["fields"], e["by"], e["on"]) == ("paid-in-full", {"basis": "owner"}, "owner", D), e
     assert e["note"] == cp.lcs_events.note_hash(f"paid in full {D} (owner)")
     assert not (Path(TMP) / "command-centre" / "owner-nonce").exists()
@@ -1804,20 +1815,22 @@ def test_the_hand_check_child_gets_the_private_dir_and_no_ledger_override():
 
 def test_real_singer_confirm_through_the_route_is_bound_to_the_fingerprint():
     c, a, _ = setup()
+    seed_migration()
     key = models.invoice_key(MSG)
     r = run(c, a, "singer-confirm", {"invoice": key})
     assert r.status_code == 200 and r.json()["ok"], r.json()
     row = next(x for x in lm.read_csv(si.STORE) if x["message_id"] == MSG)
     assert row["bank_confirmed"] == "yes"
-    (e,) = log_lines()
+    (e,) = live_lines()
     assert (e["kind"], e["fields"], e["by"], e["id"]) == ("bank-confirmed", {"fp8": FP_A[:8]}, "owner", MSG), e
     # settle and withdraw through the real script too: both need the nonce the app passes
     clear_log()
+    seed_migration()
     r = run(c, a, "singer-settled", {"invoice": models.invoice_key(MSG_CONFIRMED), "date": D})
     assert r.status_code == 200 and r.json()["ok"], r.json()
     r = run(c, a, "singer-withdrawn", {"invoice": models.invoice_key(MSG_NOBANK), "reason": "not-ours"})
     assert r.status_code == 200 and r.json()["ok"], r.json()
-    assert [(e["kind"], e["by"]) for e in log_lines()] == [("settled", "owner"), ("withdrawn", "owner")], log_lines()
+    assert [(e["kind"], e["by"]) for e in live_lines()] == [("settled", "owner"), ("withdrawn", "owner")], log_lines()
     clear_log()
     # the details changed after the preview: the rebuilt summary no longer matches the signed one
     fixtures()
