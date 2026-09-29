@@ -308,7 +308,7 @@ REPLY FORMAT (plain English, short, UK spelling, no preamble; built from the sub
 - Bookings: BOOKINGS, UPLOAD, MONEY, BOOKS, HAND CHECKS, PIPELINE, the step 3 enquiry-source lines, then "dashboard updated" (or the failure).
 - Economics: ECONOMICS, BUDGET PROPOSALS, then the CHRISTMAS line and the SPEND GUARD lines.
 - Proposed changes, one numbered list across all three agents: the ads agent's PROPOSED ADS CHANGES (after step 3's Christmas decision), the web agent's PROPOSED SITE CHANGES, "MANUAL-ACTIONS §12: add the dated line" (quote it), a booking upload if UPLOAD says anything would go (upload_bookings.py with --apply, after approval), and any budget proposal the report couldn't write to the Command Centre (as an Ads change set: campaign budget → amount: £a → £b/day, reason "seasonal window <name>"). Each item "resource → field: current → new — reason".
-- End with ONE question: approve the changes by number (all, some or none), and did any WhatsApp enquiry this week turn into a booking (if so, paste its "Ad ref" line)? If nothing needs changing, say so and ask only the WhatsApp question.
+- End with ONE question: approve the changes by number (all, some or none), and did any WhatsApp enquiry this week turn into a booking (if so, paste its "Ref:" line)? If nothing needs changing, say so and ask only the WhatsApp question. When the owner pastes a four-character ref, run `.venv/bin/python scripts/ads/lookup_ref.py <ref> --date <enquiry date>` and put its "ledger gclid" on that booking's ledger row (messages sent before 29 Sep 2026 may carry the full "Ad ref:" value instead).
 ```
 
 <!-- The pre-29-September single-agent prompt, kept below until the dispatcher has run twice, then delete. -->
