@@ -560,6 +560,21 @@
     }
     .pe-form-error[data-visible="true"] { display: block; }
     .h-captcha { margin-top: 2rem; }
+    /* hCaptcha's checkbox is a fixed 302px iframe, wider than the 280px form
+       column on a 320px phone (the rail's 1.25rem padding each side keeps the
+       column under 302px up to a 341px viewport). js/private-events.js asks
+       for the compact widget there; if hCaptcha rendered before it could,
+       shrink the full-size one to fit. The line box keeps the unscaled width,
+       so the wrapper clips it (nothing visible). */
+    @media (max-width: 341px) {
+      .h-captcha:not([data-size="compact"]) {
+        overflow: hidden;
+      }
+      .h-captcha:not([data-size="compact"]) iframe {
+        transform: scale(.92);
+        transform-origin: 0 0;
+      }
+    }
     #pe-form-success {
       margin-top: 2.25rem;
       padding: 1rem 1.25rem;
