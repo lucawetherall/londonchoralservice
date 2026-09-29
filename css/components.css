@@ -759,21 +759,45 @@ td.compare-us .compare-saving {
    Hero Banner Layout
    ═══════════════════════════════════ */
 .hero {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+  grid-template-areas:
+    "crumb crumb"
+    "head  video"
+    "body  video";
+  grid-template-rows: auto auto 1fr;
+  column-gap: var(--space-3xl);
   align-items: start;
-  gap: var(--space-3xl);
+}
+
+.hero > .breadcrumb {
+  grid-area: crumb;
+}
+
+.hero > h1 {
+  grid-area: head;
 }
 
 .hero-text {
-  flex: 2;
+  grid-area: body;
   min-width: 0;
 }
 
 .hero-video {
-  flex: 3;
+  grid-area: video;
   min-width: 0;
   position: sticky;
   top: var(--space-2xl);
+  /* Top edge level with the h1's capitals: Cormorant Garamond's cap top
+     sits 0.28 of the font size below the top of an h1 line box. */
+  margin-top: calc(var(--text-display) * 0.28);
+}
+
+.video-caption {
+  margin-top: var(--space-sm);
+  font-size: var(--text-sm);
+  font-style: italic;
+  color: var(--color-text-mid);
 }
 
 /* ── Responsive Video Embed ── */
@@ -854,16 +878,22 @@ td.compare-us .compare-saving {
   box-shadow: inset 0 0 0 3px var(--color-accent);
 }
 
+/* Phones: the film comes straight after the heading. */
 @media (max-width: 805px) {
   .hero {
-    flex-direction: column;
-    gap: var(--space-2xl);
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "crumb"
+      "head"
+      "video"
+      "body";
+    grid-template-rows: none;
   }
 
   .hero-video {
-    flex: none;
-    width: 100%;
     position: static;
+    margin-top: 0;
+    margin-bottom: var(--space-xl);
   }
 }
 
