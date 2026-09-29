@@ -10,6 +10,12 @@
 
 **Tech Stack:** Static HTML and CSS; Python 3 stdlib for the test and the one-off sweep scripts; `./build.sh`.
 
+**As built (29 Sep 2026).** Reviews changed four things; the committed code and `tests/test_design_markup.py` are the reference where they differ from the listings below:
+- The caret lift is one custom property, `--caret-lift`, and the open state adds back 0.28em (Task 2 listing updated).
+- From 1081 to 1119px the menu gap is 0.8rem, and below 1081px `.site-nav` centres its items (Task 2 listing updated).
+- In each hero the film comes before the text in the markup (breadcrumb, h1, `.hero-video`, `.hero-text`), so the tab order matches the phone layout. `.hero-text` and `.hero-video` carry no `min-width` (the `minmax(0, …)` tracks cover it).
+- The test's check functions are named `check_*`, it guards against missing hero markup, counts at least 72 play buttons, and skips every dot-directory and `command_centre`.
+
 **Spec:** [docs/superpowers/specs/2026-09-29-quiet-design-fixes-design.md](../specs/2026-09-29-quiet-design-fixes-design.md).
 
 ---
