@@ -26,9 +26,17 @@ def js_refs(ids):
 
 def test_matches_site():
     if not shutil.which("node"):
+        assert not os.environ.get("CI"), "node is needed in CI"
         print("skip: node not installed")
         return
     assert js_refs(IDS) == [lr.short_ref(i) for i in IDS]
+
+
+def test_labels():
+    # The agents and lookup_ref.py look for "Ref: XXXX" in the client's first message.
+    src = open(os.path.join(ROOT, "partials", "analytics.html")).read()
+    assert "' Ref: ' + ref" in src and "'\\r\\n\\r\\n\\r\\nRef: ' + ref" in src
+    assert "lcsShortRef(attr.gclid || attr.gbraid || attr.wbraid || '')" in src
 
 
 def test_shape():
