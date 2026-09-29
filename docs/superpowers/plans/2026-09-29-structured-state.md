@@ -62,7 +62,7 @@
 - [ ] **Step 1:** `KINDS = {(subject, kind): {field: checker}}` for every kind in the spec's tables, with `OWNER_ONLY`, `SCRIPT_ONLY` and `RESERVED` sets (the four later-PR kinds: `append` refuses them).
 - [ ] **Step 2:** `validate(obj) -> obj` or `ValueError(<fixed phrase>)`: exactly the top-level keys (`note` optional), `v == 1`, `eid` and `prev` forms, `at` as UTC `Z`, `on` a real date not after `at`'s London date, `id` by subject (`@` refused), exactly the kind's fields, each through its checker (amounts `^\d{1,5}\.\d{2}$` and more than 0, `fees-accepted` at most `check_payments.FEE_CAP`, `fp8` `^([0-9a-f]{8})?$`, `clauses` 1–20 of `^[0-9a-f]{12}$`, words from their lists), `by` and `src` from their lists, `paid-in-full` with `by: script` only as `basis: bank`.
 - [ ] **Step 3:** `dumps(obj)`: sorted keys, no spaces, one line, at most 1,024 bytes, else `ValueError`.
-- [ ] **Tests:** one passing and at least two failing lines per kind; unknown key at top level and in `fields`; a string where a list goes; `"12.4"`, `"0.00"`, `"25.01"` for fees; a name-shaped or email-shaped value in every string field refused; an over-long line.
+- [ ] **Tests:** one passing and at least two failing lines per kind; unknown key at top level and in `fields`; a string where a list goes; `"12.4"`, `"0.00"`, `"40.01"` (over `FEE_CAP`, refused when written) for fees; a name-shaped or email-shaped value in every string field refused; an over-long line.
 
 **Verify:** `.venv/bin/python tests/test_lcs_events.py`
 
