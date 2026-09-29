@@ -1534,19 +1534,19 @@ def test_accepted_fee_reads_paid_in_full():
 
 
 def test_fee_note_above_the_cap_or_in_the_future_is_ignored():
-    for n in ("short by fees £25.01 accepted 2026-09-27", "short by fees £40 accepted 2026-09-27",
+    for n in ("short by fees £40.01 accepted 2026-09-27", "short by fees £45 accepted 2026-09-27",
               "short by fees £12.40 accepted 2026-09-29", "short by fees £0 accepted 2026-09-27"):
         r = fee_row("deposit seen 2026-08-26 (Starling); " + n + " (owner)")
         a = cp.assess(r, FEE_PAID, T)
         assert a["state"] == "DEPOSIT_SEEN" and a["fees"] == 0.0 and a["balance"] == 12.4, (n, a)
         assert cp.fees_accepted(r, T) == 0.0 and cp.closed_on(r, T) is None and cp.open_rows([r], T) == [r], n
-    r = fee_row("short by fees £25 accepted 2026-09-27 (owner)")  # at the cap
-    assert cp.fees_accepted(r, T) == 25.0 and cp.closed_on(r, T) == datetime.date(2026, 9, 27)
+    r = fee_row("short by fees £40 accepted 2026-09-27 (owner)")  # at the cap
+    assert cp.fees_accepted(r, T) == 40.0 and cp.closed_on(r, T) == datetime.date(2026, 9, 27)
 
 
 def test_the_latest_counting_fee_note_wins():
     r = fee_row("short by fees £5 accepted 2026-09-20 (owner); short by fees £12.40 accepted 2026-09-27 (owner); "
-                "short by fees £30 accepted 2026-09-28")
+                "short by fees £45 accepted 2026-09-28")
     assert cp.fees_accepted(r, T) == 12.4
     assert cp.assess(r, FEE_PAID, T)["state"] == "PAID_IN_FULL"
     r = fee_row("short by fees £5 accepted 2026-09-27 (owner)")  # not enough to close the gap

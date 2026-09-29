@@ -45,7 +45,7 @@ before any amount-only match, so it never lands on another client's live booking
 
 States (assess): PAID_IN_FULL (the confident payments cover the booking's value, or fall short of it by no more
 than a shortfall the owner accepted as transfer fees: "short by fees £12.40 accepted YYYY-MM-DD", at most FEE_CAP
-(£25) and dated no later than today, written only through the Command Centre with --owner; "fees" is the part of
+(£40) and dated no later than today, written only through the Command Centre with --owner; "fees" is the part of
 it used, "balance" is then 0, and the fee rides on the last payment in "record_in_books" as Books' bank charges.
 That note closes the booking like "paid in full YYYY-MM-DD": collect() reports it once more, as PAID_IN_FULL,
 and --apply then adds "paid in full" dated the later of the last payment and the fee note), DEPOSIT_SEEN, BALANCE_DUE (from 3 days before the
@@ -126,7 +126,7 @@ RECEIPT_DAYS = 14
 SHORT_NOTICE_DAYS = 10
 # The most a booking may be short by transfer fees and still read paid in full, once the owner accepts it
 # ("short by fees £12.40 accepted 2026-09-28", written only through the Command Centre; owner decision, 28 Sep 2026).
-FEE_CAP = 25.00
+FEE_CAP = 40.00  # owner decision, 29 Sep 2026 (was £25; 2408 was £36.15 short)
 # A thank-you is only ever drafted in these states; notes are never rewritten in the others.
 RECEIPT_STATES = {"PAID_IN_FULL", "DEPOSIT_SEEN", "BALANCE_DUE", "NOTED_PAID"}
 # States whose confident payments the assistant records against the Books invoice (owner decision, 28 Sep 2026).
