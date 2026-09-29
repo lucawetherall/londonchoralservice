@@ -705,15 +705,15 @@ def test_review_skipped_takes_only_the_reasons_the_log_records():
     assert log_of(d) == []
 
 
-def test_a_review_date_after_today_is_refused_once_facts_are_recorded():
-    d = migrated_home()
-    path = write_ledger(d, [booking("2009", "2026-09-20", "paid in full 2026-09-19")])
-    ahead = (lm.today() + datetime.timedelta(days=2)).isoformat()
-    p = cli(d, "reviewed", "2009", ahead)
-    assert p.returncode != 0 and "nothing written" in p.stderr, p.stderr
-    with open(path, newline="") as f:
-        assert next(csv.DictReader(f))["notes"] == "paid in full 2026-09-19"
-    assert log_of(d) == []
+def test_a_review_date_after_today_is_refused_before_and_after_the_migration():
+    for d in (home(), migrated_home()):
+        path = write_ledger(d, [booking("2009", "2026-09-20", "paid in full 2026-09-19")])
+        ahead = (lm.today() + datetime.timedelta(days=2)).isoformat()
+        p = cli(d, "reviewed", "2009", ahead)
+        assert p.returncode != 0 and "after today" in p.stderr and "nothing written" in p.stderr, p.stderr
+        with open(path, newline="") as f:
+            assert next(csv.DictReader(f))["notes"] == "paid in full 2026-09-19"
+        assert log_of(d) == []
 
 
 if __name__ == "__main__":

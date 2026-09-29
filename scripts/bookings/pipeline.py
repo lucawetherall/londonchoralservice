@@ -413,6 +413,8 @@ def cmd_followed(args):
 
 def cmd_reviewed(args):
     when = iso(args.date, "date")
+    if when > lm.today().isoformat():  # a review request is drafted today or earlier, never ahead
+        raise SystemExit(f"{args.booking_ref}: {when} is after today; nothing written")
     note_review(args.booking_ref, f"review request drafted {when}", ("review-drafted", {}, when))
 
 
