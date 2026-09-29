@@ -417,12 +417,21 @@ def check_command(text, repo, cwd):
     scripts = list(cmd.scripts)
     seen, roots = set(), config_roots()
     searching = bool(cmd.heads & SEARCHERS)
+    # A heredoc body is data a command reads on stdin, not paths it opens, and a quoted phrase with spaces in it
+    # is one argument, not a path: "ok / stale" in a PR description or a commit message is not a search of "/".
+    # Both are still marker-scanned (analyse) and every word in them still goes through protected() and the file
+    # checks below; only the search-root rule looks at the shell-parsed arguments without spaces. `cat "/"` is
+    # still refused (its argument is "/"); when the command can't be shell-parsed, every word counts.
+    outside = set()
+    for t in token_lists(text)[0]:
+        if not re.search(r"\s", t):
+            outside.update(words(t))
     for w in words(text):
         if INTERP.match(os.path.basename(w)):
             continue
         for p in resolve(w, cmd.cwds):
             protected(p)
-            if searching and p in roots:
+            if searching and p in roots and w in outside:
                 raise Deny(f"{P}searching or copying {p} would take in MCP configuration; name a project "
                            "folder instead.")
             if p in seen or not regular(p):
