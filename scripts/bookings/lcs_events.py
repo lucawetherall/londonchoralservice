@@ -281,6 +281,7 @@ _CACHE = {}
 
 def clear_cache():
     _CACHE.clear()
+    _INDEXED.clear()
 
 
 def read(path=None):
@@ -359,3 +360,139 @@ def index(events, today):
     for e in live:
         out.setdefault((e["subject"], e["id"]), []).append(dict(e, retracted=e["eid"] in gone))
     return out
+
+
+# --- facts: what the log says about one booking or invoice, per family -----------------------------------------
+
+# A family decides one question (spec, "Families"). Markers are a union with the notes; every other family, once
+# it has events for a subject (retracted ones count: they are history), is read from them and not the notes.
+FAMILIES = {
+    "booking": {"close": {"paid-in-full", "fees-accepted"}, "cancellation": {"cancelled", "reinstated"},
+                "cancel settlement": {"deposit-kept", "refunded", "payment-checked"}, "arrangement": {"arranged"},
+                "noted paid": {"noted-paid"},
+                "markers": {"deposit-seen", "reminder-drafted", "review-drafted", "review-skipped"}},
+    "singer_invoice": {"bank warnings": {"bank-warning"}, "bank trust": {"bank-confirmed"}, "settlement": {"settled"},
+                       "withdrawal": {"withdrawn"}, "markers": {"paid-reply-drafted"}},
+}
+
+
+class Facts:
+    """The recorded facts for one booking or singer invoice (its index() list), read per family. Nothing here
+    reads notes: check_payments and singer_invoices decide, per family, between these and the notes.
+
+    families: the families with events (retracted ones included); claims: the note hashes of every event
+    (retracted ones included) plus the clauses a live notes-checked confirmed."""
+
+    def __init__(self, subject, events=()):
+        self.subject, self.events = subject, list(events)
+        self.live = [e for e in self.events if not e.get("retracted")]
+        self.families = {fam for e in self.events for fam, kinds in FAMILIES[subject].items() if e["kind"] in kinds}
+        self.claims = ({e["note"] for e in self.events if e.get("note")}
+                       | {c for e in self.live if e["kind"] == "notes-checked" for c in e["fields"]["clauses"]})
+
+    def has(self, family):
+        return family in self.families
+
+    def of(self, *kinds):
+        """Live events of these kinds, in file order."""
+        return [e for e in self.live if e["kind"] in kinds]
+
+    def _latest_on(self, *kinds):
+        return max((_date(e["on"]) for e in self.of(*kinds)), default=None)
+
+    # --- bookings
+    @property
+    def closed_on(self):
+        return self._latest_on("paid-in-full", "fees-accepted")
+
+    @property
+    def paid_full_on(self):
+        return self._latest_on("paid-in-full")
+
+    @property
+    def fees(self):
+        """[(date, amount)] of the live fees-accepted facts, in file order (fee_notes' shape)."""
+        return [(_date(e["on"]), float(e["fields"]["amount"])) for e in self.of("fees-accepted")]
+
+    @property
+    def cancelled(self):
+        """The later of cancelled and reinstated by (on, file order); False with neither live."""
+        last = max(enumerate(self.of("cancelled", "reinstated")), key=lambda x: (x[1]["on"], x[0]), default=None)
+        return bool(last and last[1]["kind"] == "cancelled")
+
+    @property
+    def settled_on(self):
+        return self._latest_on("deposit-kept", "refunded", "payment-checked")
+
+    @property
+    def arranged(self):
+        return bool(self.of("arranged"))
+
+    @property
+    def noted_part(self):
+        return bool(self.of("noted-paid"))
+
+    @property
+    def noted_full(self):
+        return any(e["fields"]["scope"] == "full" for e in self.of("noted-paid"))
+
+    @property
+    def deposit_seen(self):
+        return bool(self.of("deposit-seen"))
+
+    @property
+    def reminded(self):
+        return {w: any(e["fields"]["what"] == w for e in self.of("reminder-drafted")) for w in ("deposit", "balance", "receipt")}
+
+    @property
+    def review(self):
+        return bool(self.of("review-drafted", "review-skipped"))
+
+    # --- singer invoices
+    @property
+    def warning(self):
+        """The latest live bank-warning's (fp8, codes), or None."""
+        w = self.of("bank-warning")
+        return (w[-1]["fields"]["fp8"], list(w[-1]["fields"]["codes"])) if w else None
+
+    @property
+    def confirmed_fp8s(self):
+        return {e["fields"]["fp8"] for e in self.of("bank-confirmed")}
+
+    @property
+    def settled(self):
+        return bool(self.of("settled"))
+
+    @property
+    def withdrawn_on(self):
+        return self._latest_on("withdrawn")
+
+    @property
+    def thanked(self):
+        return bool(self.of("paid-reply-drafted"))
+
+
+_INDEXED = {}
+
+
+def _indexed(today):
+    """index(read()) for today, cached while the log is unchanged (read() returns the same list)."""
+    events, _ = read()
+    key = (id(events), today)
+    if _INDEXED.get("key") != key or _INDEXED.get("events") is not events:
+        _INDEXED.update(key=key, events=events, index=index(events, today))
+    return _INDEXED["index"]
+
+
+def facts(subject, id, today, events=None):
+    """Facts for one subject: from `events` (a list of validated events, as tests pass) or else the log."""
+    idx = index(events, today) if events is not None else _indexed(today)
+    return Facts(subject, idx.get((subject, id), []))
+
+
+def booking_facts(ref, today, events=None):
+    return facts("booking", ref, today, events)
+
+
+def invoice_facts(message_id, today, events=None):
+    return facts("singer_invoice", message_id, today, events)

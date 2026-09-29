@@ -17,7 +17,10 @@ NO_DEPOSIT = {"DEPOSIT_OVERDUE", "AWAITING_DEPOSIT"}
 
 
 def needs_hand_check(a, today):
-    """ARRANGED only from ARRANGED_DAYS before the event (or with no event date, or no deposit seen at all)."""
+    """ARRANGED only from ARRANGED_DAYS before the event (or with no event date, or no deposit seen at all). A held
+    booking (its notes and recorded facts disagree, check_payments.held) always, whatever its state."""
+    if a.get("held"):
+        return True
     if a["state"] != "ARRANGED":
         return a["state"] in HAND_CHECK
     horizon = (today + datetime.timedelta(days=ARRANGED_DAYS)).isoformat()
@@ -25,6 +28,8 @@ def needs_hand_check(a, today):
 
 
 def hand_check_label(a):
+    if a.get("held"):
+        return "notes and recorded facts disagree: " + ", ".join(a["held"])
     received = a.get("received") or 0
     if a["state"] == "NOTED_PAID" and received:
         return f"noted paid, £{received:,.2f} in bank"
