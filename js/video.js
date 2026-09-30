@@ -13,12 +13,12 @@
   //  - the shield shows the thumbnail until the film is playing, covering
   //    YouTube's loading screen, and again whenever it is paused, covering
   //    the pause screen. At the end the original button returns.
-  //  - YouTube draws a pause icon in the middle of the picture for up to
-  //    five seconds whenever playback starts other than by an immediate
-  //    muted autoplay: an unmuted or late start, a play command, a seek. So
-  //    the film autoplays muted and is unmuted on its first frame; whenever
-  //    it starts any other way (a resume, a slow start), the thumbnail stays
-  //    over it for ICON_HOLD while the sound plays.
+  //  - YouTube draws a small pause icon in the middle of the picture for a
+  //    few seconds whenever playback starts other than by an immediate muted
+  //    autoplay, so the film autoplays muted and is unmuted on its first
+  //    frame. After a resume or a slow start the icon can still show
+  //    briefly: the film is shown straight away rather than held behind the
+  //    thumbnail (owner's choice, 30 Sep 2026).
   //    iPhones and iPads start unmuted instead, because iOS can refuse to
   //    unmute an embedded player, which would leave the film silent.
   // The shield pauses and resumes the film through the player's postMessage
@@ -28,9 +28,8 @@
   // shield steps aside after a few seconds so the visitor can start the
   // film with YouTube's own play button, and returns once it plays.
   var ORIGIN = 'https://www.youtube-nocookie.com';
-  var UNSTARTED = -1, ENDED = 0, PLAYING = 1, PAUSED = 2, CUED = 5;
+  var ENDED = 0, PLAYING = 1, PAUSED = 2;
   var AUTOPLAY_WAIT = 5000;
-  var ICON_HOLD = 5000;
   var IOS = /iP(hone|ad|od)/.test(navigator.userAgent) ||
     (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
   var players = [];
@@ -73,34 +72,20 @@
     if (icon) shield.appendChild(icon.cloneNode(true));
 
     // state: the player's last reported state (null until it reports).
-    // iconDue: the next start will show YouTube's pause icon, so hold the
-    // thumbnail over it for ICON_HOLD.
-    var player = { iframe: iframe, shield: shield, state: null, heard: false, started: false, iconDue: false };
+    var player = { iframe: iframe, shield: shield, state: null, heard: false, started: false };
     players.push(player);
 
     function setLabel() {
       shield.setAttribute('aria-label', (player.state === PLAYING ? 'Pause ' : 'Play ') + (name || 'film'));
     }
 
-    // Show the playing film, after `delay` ms if it is still playing then.
-    function reveal(delay) {
-      clearTimeout(player.revealTimer);
-      player.revealTimer = setTimeout(function () {
-        if (player.state !== PLAYING) return;
-        shield.classList.remove('is-loading');
-        player.iconDue = false;
-      }, delay);
-    }
-
     function cover(paused) {
-      clearTimeout(player.revealTimer);
       shield.classList.toggle('is-paused', paused);
       shield.classList.toggle('is-loading', !paused);
     }
 
     function finish() {
       clearTimeout(player.autoplayTimer);
-      clearTimeout(player.revealTimer);
       clearInterval(player.listenTimer);
       clearInterval(player.kickTimer);
       players.splice(players.indexOf(player), 1);
@@ -108,22 +93,18 @@
 
     player.onState = function (state) {
       player.state = state;
-      if (state === UNSTARTED || state === CUED) {
-        player.iconDue = true;
-      } else if (state === PLAYING) {
+      if (state === PLAYING) {
         if (!shield.parentNode) {
           // Back after autoplay was blocked and YouTube's button was pressed.
           var hadFocus = document.activeElement === iframe;
-          cover(false);
           wrap.appendChild(shield);
           if (hadFocus) shield.focus({ preventScroll: true });
         }
-        shield.classList.remove('is-paused');
+        shield.classList.remove('is-paused', 'is-loading');
         if (!player.started) {
           player.started = true;
           if (!IOS) send(iframe, 'unMute');
         }
-        reveal(player.iconDue ? ICON_HOLD : 250);
       } else if (state === PAUSED) {
         cover(true);
       } else if (state === ENDED) {
@@ -141,7 +122,6 @@
     // report it, so a quick second press toggles back instead of repeating.
     shield.addEventListener('click', function () {
       if (!player.started) {
-        player.iconDue = true;
         send(iframe, 'playVideo');
         return;
       }
@@ -152,9 +132,7 @@
       } else {
         send(iframe, 'playVideo');
         player.state = PLAYING;
-        player.iconDue = true;
-        cover(false);
-        reveal(ICON_HOLD);
+        shield.classList.remove('is-paused', 'is-loading');
       }
       setLabel();
     });
@@ -178,10 +156,7 @@
     // allowed, so nudge it until it starts.
     player.kickTimer = setInterval(function () {
       if (player.started || !shield.parentNode) return clearInterval(player.kickTimer);
-      if (player.heard) {
-        player.iconDue = true;
-        send(iframe, 'playVideo');
-      }
+      if (player.heard) send(iframe, 'playVideo');
     }, 750);
 
     // Autoplay blocked: step aside so YouTube's play button can be pressed.
