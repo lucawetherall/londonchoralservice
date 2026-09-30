@@ -76,6 +76,15 @@ videos:
     # music-guides/anima-christi-catholic-funeral.html,
     # music-guides/catholic-funeral-hymns.html,
     # compare/london-funeral-singers.html
+  # Added 2026-09-30. The lead Christmas film: hero on christmas.html, carol-singers.html and
+  # christmas-pricing.html, first Christmas track on christmas.html, carol-singers.html and
+  # listen.html, and the embed on twelve party/booking music guides.
+  - page: "christmas.html, carol-singers.html, christmas-pricing.html, listen.html"
+    position: 7
+    youtube_id: "d-HBdh5awoE"
+    title: "It's the Most Wonderful Time of the Year"  # sung by an octet; labelled "Full Choir" on the site
+    upload_date: "2026-09-30"  # verified via the watch page's uploadDate meta 2026-09-30
+    duration: "PT1M50S"  # lengthSeconds 110
 
 geo_areas:
   westminster: [51.49594, -0.13495]
