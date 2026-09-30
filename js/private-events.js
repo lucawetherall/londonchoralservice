@@ -71,8 +71,13 @@
       '<path d="M45 24 27 14v20z" fill="#FAF6EE"/>' +
       '</svg>';
 
-    // Third-party embed loads only on click (site-wide pattern).
+    // Third-party embed loads only on click (site-wide pattern), through the
+    // shared player in js/video.js, which keeps YouTube's overlay hidden.
     btn.addEventListener('click', function () {
+      if (window.lcsPlayFilm) {
+        window.lcsPlayFilm(btn, videoId, playLabel.replace(/^Play /, ''), 'Alma Consort');
+        return;
+      }
       var iframe = document.createElement('iframe');
       iframe.src = 'https://www.youtube-nocookie.com/embed/' + videoId + '?autoplay=1';
       iframe.title = playLabel.replace(/^Play /, '') + ' — Alma Consort';
