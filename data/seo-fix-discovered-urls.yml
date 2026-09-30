@@ -81,7 +81,9 @@ videos:
   # listen.html, and the embed on twelve party/booking music guides.
   - page: "christmas.html, carol-singers.html, christmas-pricing.html, listen.html"
     position: 7
-    youtube_id: "d-HBdh5awoE"
+    youtube_id: "UOy498rsonU"  # re-upload of d-HBdh5awoE (same film, improved), swapped in 2026-09-30.
+    # Thumbnails still load from /vi/d-HBdh5awoE/: YouTube had made none for the new upload
+    # at the time of the swap. Move them to UOy498rsonU before the old upload is deleted.
     title: "It's the Most Wonderful Time of the Year"  # sung by an octet; labelled "Full Choir" on the site
     upload_date: "2026-09-30"  # verified via the watch page's uploadDate meta 2026-09-30
     duration: "PT1M50S"  # lengthSeconds 110
