@@ -78,9 +78,7 @@ videos:
     # compare/london-funeral-singers.html
   # Added 2026-09-30. The lead Christmas film: hero on christmas.html, carol-singers.html and
   # christmas-pricing.html, first Christmas track on christmas.html, carol-singers.html and
-  # listen.html, and the embed on twelve party/booking music guides. YouTube has no
-  # maxresdefault.jpg for it yet (404 on 2026-09-30), so pages use sddefault.jpg
-  # (640x480, cropped to 16:9 by CSS).
+  # listen.html, and the embed on twelve party/booking music guides.
   - page: "christmas.html, carol-singers.html, christmas-pricing.html, listen.html"
     position: 7
     youtube_id: "d-HBdh5awoE"
