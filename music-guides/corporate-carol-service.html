@@ -1728,9 +1728,18 @@
       box-shadow: inset 0 0 0 3px var(--color-accent);
     }
     
-    /* Laid over a playing film (js/video.js) so YouTube's title bar and hover
-       controls never show. Clear while playing; the thumbnail and play button
-       return when paused, covering YouTube's pause screen. */
+    /* The playing film (js/video.js) is taller than its 16:9 frame, which
+       clips it: YouTube letterboxes the picture to the full width, so the frame
+       shows all of it, while the title bar drawn at the player's top and the
+       logo and "Watch on YouTube" bar at its bottom land outside the frame. */
+    .video-embed iframe.video-frame {
+      top: -5rem;
+      height: calc(100% + 10rem);
+    }
+    
+    /* Laid over a playing film (js/video.js) so YouTube's hover controls never
+       show. It shows the thumbnail until the film is playing (is-loading) and
+       again when paused, covering YouTube's loading and pause screens. */
     .video-shield {
       position: absolute;
       inset: 0;
@@ -1747,6 +1756,7 @@
       display: none;
     }
     
+    .video-shield.is-loading img,
     .video-shield.is-paused img {
       display: block;
       width: 100%;
