@@ -43,6 +43,7 @@ PUBLIC = [
     # Pages
     '*.html',                  # root pages, including 404.html
     'areas/**/*.html',
+    'barbershop-grams/**/*.html',
     'compare/**/*.html',
     'destinations/**/*.html',
     'music-guides/**/*.html',
