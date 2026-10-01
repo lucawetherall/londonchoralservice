@@ -2178,6 +2178,316 @@ def test_bill_verdict_yes_for_a_trusted_account_with_an_old_warning():
     assert si.NOT_YET_VERIFIED in rows_by_id()["g2"]["notes"]  # the record keeps what scan said at the time
 
 
+# --- several invoices in one email (spec 2026-10-02) -------------------------------------------
+
+def multi_mime(attachments, body="Attached are my invoices, thanks!"):
+    """Raw MIME with a text body and the given (file name, bytes, content type) attachments."""
+    parts = [f"--XX\nContent-Type: text/plain\n\n{body}\n"]
+    for fname, data, ctype in attachments:
+        parts.append(f"--XX\nContent-Type: {ctype}\nContent-Disposition: attachment; filename=\"{fname}\"\n"
+                     f"Content-Transfer-Encoding: base64\n\n{base64.b64encode(data).decode()}\n")
+    return ("From: Ben Fenwick <ben@example.com>\nSubject: Invoices\nMIME-Version: 1.0\n"
+            "Content-Type: multipart/mixed; boundary=XX\n\n" + "".join(parts) + "--XX--\n")
+
+
+def multi_eml(attachments, body="Attached are my invoices, thanks!"):
+    path = os.path.join(TMP, "multi.eml")
+    with open(path, "w") as f:
+        f.write(multi_mime(attachments, body))
+    return path
+
+
+PDF = "application/pdf"
+REC_INV = ["Invoice", "Recording session 24 September 2026", "Total 100.00 GBP", "Sort code 12-34-56", "Account number 11112222"]
+FUN_INV = ["Invoice", "Funeral 21 September 2026", "Total 120.00 GBP", "Sort code 12-34-56", "Account number 11112222"]
+TWO = [("Invoice recording.pdf", text_pdf(REC_INV), PDF), ("Invoice funeral.pdf", text_pdf(FUN_INV), PDF)]
+
+
+def test_two_invoice_attachments_read_as_two_invoices():
+    found = si.read_invoices(multi_eml(TWO))
+    assert [f["amount"] for f in found] == [100.0, 120.0], found
+    assert [f["document"] for f in found] == ["Invoice recording.pdf", "Invoice funeral.pdf"]
+    assert found[0]["warnings"][0] == "invoice 1 of 2 in this email (Invoice recording.pdf)", found[0]["warnings"]
+    assert found[1]["warnings"][0] == "invoice 2 of 2 in this email (Invoice funeral.pdf)"
+    assert all((f["sort_code"], f["account_number"]) == ("123456", "11112222") for f in found)
+    assert (2026, 9, 24) in found[0]["dates"] and (2026, 9, 21) not in found[0]["dates"], found[0]["dates"]
+    assert si.read_invoice(multi_eml(TWO))["amount"] == 100.0  # the old reader: the first invoice
+
+
+def test_an_expense_receipt_is_not_an_invoice_of_its_own():
+    receipt = text_pdf(["Tax invoice", "Trip 7 March", "Total 18.40 GBP"])
+    invoice = text_pdf(["Invoice 7", "Recording fee 150.00 GBP", "Taxi 18.40 GBP", "Total 168.40 GBP"])
+    for name in ("Receipt_07Mar2026.pdf", "Trip 7 March.pdf"):  # named a receipt, or only a line on the invoice
+        found = si.read_invoices(multi_eml([(name, receipt, PDF), ("Invoice 7 March.pdf", invoice, PDF)]))
+        assert [f["amount"] for f in found] == [168.40], (name, found)
+        assert found[0]["document"] == "Invoice 7 March.pdf" and not found[0]["warnings"][:1] == ["invoice 1 of 1 in this email"]
+        assert si.read_invoice(multi_eml([(name, receipt, PDF), ("Invoice 7 March.pdf", invoice, PDF)]))["amount"] == 168.40
+    fresh_store()
+    path = multi_eml([("Receipt_07Mar2026.pdf", receipt, PDF), ("Invoice 7 March.pdf", invoice, PDF)])
+    assert si.save_pdf(Path(path).read_text(), "r1", "Invoice 7 March.pdf").read_bytes() == invoice
+
+
+def test_the_same_invoice_as_pdf_and_docx_is_one_invoice():
+    docx = make_docx(["Invoice", "Recording session 24 September 2026", "Total £100.00"])
+    found = si.read_invoices(multi_eml([("Invoice 5.docx", docx, si.DOCX_TYPE), ("Invoice 5.pdf", text_pdf(REC_INV), PDF)]))
+    assert len(found) == 1 and found[0]["document"] == "Invoice 5.pdf" and found[0]["amount"] == 100.0, found
+
+
+def test_a_bank_details_sheet_serves_every_invoice_in_the_email():
+    rec = text_pdf(["Invoice", "Recording session 24 September 2026", "Total 100.00 GBP"])
+    fun = text_pdf(["Invoice", "Funeral 21 September 2026", "Total 120.00 GBP"])
+    sheet = text_pdf(["My bank details", "Sort code 12-34-56", "Account number 11112222"])
+    found = si.read_invoices(multi_eml([("Invoice a.pdf", rec, PDF), ("Invoice b.pdf", fun, PDF),
+                                        ("Bank details.pdf", sheet, PDF)]))
+    assert [(f["amount"], f["sort_code"], f["account_number"]) for f in found] == [
+        (100.0, "123456", "11112222"), (120.0, "123456", "11112222")], found
+
+
+def test_an_invoice_in_the_body_alone_is_one_invoice():
+    found = si.read_invoices(eml(GEN.format(n=4)))
+    assert len(found) == 1 and found[0]["amount"] == 100.0 and found[0]["document"] is None
+    assert not any(w.startswith("invoice 1 of") for w in found[0]["warnings"])
+
+
+def test_part_ids_and_bill_numbers():
+    assert si.part_id("1790000000000012345", 1) == "1790000000000012345"
+    assert si.part_id("1790000000000012345", 2) == "1790000000000012345-2"
+    assert si.email_id("1790000000000012345-2") == "1790000000000012345"
+    assert si.email_id("1790000000000012345") == "1790000000000012345"
+    assert si.email_id("msg-2") == "msg-2" and si.email_id("g1") == "g1"  # only an all-digit Zoho id has parts
+    assert si.part_number("1790000000000012345-3") == 3 and si.part_number("177") == 1
+    assert si.bill_number("", "1790000000000012345") == "SI-12345"
+    assert si.bill_number("", "1790000000000012345-2") == "SI-12345B"
+    assert si.bill_number("", "1790000000000012345-3") == "SI-12345C"
+    assert si.bill_number("31002", "1790000000000012345-2") == "31002"  # the singer's own ref still comes first
+
+
+def scan_file(path, mid, received="2026-10-01", client=None):
+    buf = io.StringIO()
+    with contextlib.redirect_stdout(buf):
+        si.cmd_scan(Args(file=path, message_id=mid, received=received, sender_email="ben@example.com",
+                         sender_name="Ben Fenwick"), client or FakeClient())
+    return buf.getvalue()
+
+
+def test_scan_records_each_invoice_in_the_email():
+    fresh_store()
+    got = scan_file(multi_eml(TWO), "500")
+    rows = rows_by_id()
+    assert set(rows) == {"500", "500-2"}, rows
+    assert (rows["500"]["amount_gbp"], rows["500-2"]["amount_gbp"]) == ("100.00", "120.00")
+    assert rows["500"]["notes"].startswith("invoice 1 of 2 in this email") and rows["500-2"]["notes"].startswith("invoice 2 of 2")
+    assert "invoice 1 of 2: 500\n" in got and "invoice 2 of 2: 500-2\n" in got, got
+    assert got.count("bill: ") == 2 and "bill_number: SI-500\n" in got and "bill_number: SI-500B\n" in got, got
+    assert (si.PDF_DIR / "500.pdf").read_bytes() == text_pdf(REC_INV)
+    assert (si.PDF_DIR / "500-2.pdf").read_bytes() == text_pdf(FUN_INV)
+    assert rows["500-2"]["bank_changed"] == "no", rows["500-2"]  # the same details twice in one email: no change
+    again = scan_file(multi_eml(TWO), "500")
+    assert "already recorded: 500\n" in again and "already recorded: 500-2\n" in again, again
+    assert len(lm.read_csv(si.STORE)) == 2
+    for secret in ("11112222", "123456"):
+        assert secret not in got and secret not in si.STORE.read_text(), secret
+
+
+def test_scan_flags_a_second_invoice_with_other_bank_details():
+    fresh_store()
+    other = ["Invoice", "Funeral 21 September 2026", "Total 120.00 GBP", "Sort code 65-43-21", "Account number 99998888"]
+    scan_file(multi_eml([TWO[0], ("Invoice funeral.pdf", text_pdf(other), PDF)]), "510")
+    assert rows_by_id()["510-2"]["bank_changed"] == "yes" and "BANK DETAILS CHANGED" in rows_by_id()["510-2"]["notes"]
+
+
+def test_scan_refuses_an_invoice_id_within_an_email():
+    fresh_store()
+    try:
+        scan_file(multi_eml(TWO), "500-2")
+        raise AssertionError("scanned a part id")
+    except SystemExit as e:
+        assert "500" in str(e) and "email" in str(e), e
+    assert not si.STORE.exists() or not lm.read_csv(si.STORE)
+
+
+def more(mid, path):
+    buf = io.StringIO()
+    with contextlib.redirect_stdout(buf):
+        si.cmd_more(Args(message_id=mid, file=path, fetch=False), FakeClient())
+    return buf.getvalue()
+
+
+def test_more_records_the_invoices_an_older_scan_missed():
+    fresh_store()
+    scan_file(multi_eml(TWO[:1]), "600")  # recorded before the tracker read every invoice: the first only
+    first = dict(rows_by_id()["600"])
+    got = more("600", multi_eml(TWO))
+    rows = rows_by_id()
+    assert set(rows) == {"600", "600-2"} and rows["600-2"]["amount_gbp"] == "120.00", rows
+    assert rows["600"] == first  # the first invoice's row is never touched
+    assert "invoice 2 of 2: 600-2\n" in got and "invoice 1 of 2" not in got, got
+    assert "no further invoices" in more("600", multi_eml(TWO))
+    try:
+        more("601", multi_eml(TWO))
+        raise AssertionError("more on an unknown email")
+    except SystemExit as e:
+        assert "601" in str(e)
+
+
+def test_rescan_and_pdf_of_a_second_invoice_fetch_its_email():
+    fresh_store()
+    scan_file(multi_eml(TWO), "520")
+    fixed = ["Invoice", "Funeral 21 September 2026", "Total 125.00 GBP", "Sort code 12-34-56", "Account number 11112222"]
+    calls = []
+    with fake_fetch({"520": multi_mime([TWO[0], ("Invoice funeral.pdf", text_pdf(fixed), PDF)])}, calls):
+        got = rescan("520-2", fetch=True)
+        (si.PDF_DIR / "520-2.pdf").unlink()
+        saved = run_main(["pdf", "520-2", "--fetch"])
+    assert calls == ["520", "520"], calls
+    assert rows_by_id()["520-2"]["amount_gbp"] == "125.00" and rows_by_id()["520"]["amount_gbp"] == "100.00", got
+    assert "520-2.pdf" in saved and (si.PDF_DIR / "520-2.pdf").read_bytes() == text_pdf(fixed), saved
+
+
+def two_paid_invoices(mid="530"):
+    fresh_store()
+    scan_file(multi_eml(TWO), mid, received=(lm.today() - datetime.timedelta(days=2)).isoformat())
+
+
+def test_paid_thanks_an_email_with_several_invoices_once():
+    two_paid_invoices()
+    day = (lm.today() - datetime.timedelta(days=1)).isoformat()
+    first = paid_due(FakeClient(out=[fp_out(100, day, "BEN FENWICK", "q1", "123456", "11112222")]))
+    assert "PAID 530: Ben £100.00 on " in first and "(invoice 1 of 2 in this email: thanked together once all are paid)" in first
+    assert "NEWLY PAID" not in first and "THANKS DUE" not in first, first  # the other invoice is still unpaid
+    second = paid_due(FakeClient(out=[fp_out(120, day, "BEN FENWICK", "q2", "123456", "11112222")]))
+    assert "PAID 530-2: Ben £120.00" in second and "NEWLY PAID" not in second, second
+    due = [x for x in second.splitlines() if x.startswith("THANKS DUE")]
+    assert due == [f"THANKS DUE 530: Ben £220.00 paid {day}, no \"Paid!\" reply yet (2 invoices in one email)"], second
+    with contextlib.redirect_stdout(io.StringIO()):
+        si.cmd_thanked(Args(message_id="530-2"))
+    rows = rows_by_id()
+    assert all("paid reply drafted" in rows[m]["notes"] for m in ("530", "530-2")), rows
+    assert "THANKS DUE" not in paid_due(FakeClient())
+    kinds = [e["kind"] for e in si.lcs_events.read()[0] if e.get("id") in ("530", "530-2")]
+    assert kinds.count("paid-reply-drafted") == 2, kinds
+
+
+def test_two_equal_invoices_in_one_email_take_one_payment_each():
+    fresh_store()
+    same = [("Invoice a.pdf", text_pdf(REC_INV), PDF), ("Invoice b.pdf", text_pdf(REC_INV[:1] + ["Funeral 21 September 2026"] + REC_INV[2:]), PDF)]
+    received = (lm.today() - datetime.timedelta(days=2)).isoformat()
+    scan_file(multi_eml(same), "540", received=received)
+    day = (lm.today() - datetime.timedelta(days=1)).isoformat()
+    paid_due(FakeClient(out=[fp_out(100, day, "BEN FENWICK", "r1", "123456", "11112222"),
+                             fp_out(100, day, "BEN FENWICK", "r2", "123456", "11112222")]))
+    rows = rows_by_id()
+    assert (rows["540"]["paid_ref"], rows["540-2"]["paid_ref"]) == ("r1", "r2"), rows
+
+
+def amounts(attachments, body="Attached are my invoices, thanks!"):
+    return [f["amount"] for f in si.read_invoices(multi_eml(attachments, body))]
+
+
+def test_two_different_invoices_with_the_same_file_name_stay_two():
+    assert amounts([("Invoice.pdf", text_pdf(REC_INV), PDF), ("Invoice.pdf", text_pdf(FUN_INV), PDF)]) == [100.0, 120.0]
+    assert amounts([("invoice.pdf", text_pdf(REC_INV), PDF), ("Invoice.PDF", text_pdf(FUN_INV), PDF)]) == [100.0, 120.0]
+
+
+def test_copies_under_other_names_are_one_invoice():
+    numbered = ["Invoice 12", "Recording session 24 September 2026", "Total 100.00 GBP"]
+    assert amounts([("Invoice 12.docx", make_docx(numbered), si.DOCX_TYPE), ("Invoice_12.pdf", text_pdf(numbered), PDF)]) == [100.0]
+    ref = ["Invoice INV-0107", "Wedding 19 Sep", "Total 150.00 GBP"]
+    assert amounts([("INV-0107.pdf", text_pdf(ref), PDF), ("INV-0107 (1).pdf", text_pdf(ref), PDF)]) == [150.0]
+    found = si.read_invoices(multi_eml([("forwarded.pdf", text_pdf(REC_INV), PDF), ("Invoice 1.pdf", text_pdf(REC_INV), PDF)]))
+    assert len(found) == 1, found  # the same text twice (a forwarded original): one invoice
+
+
+def test_terms_and_statements_are_never_invoices_of_their_own():
+    terms = make_docx(["Booking terms", "Invoices are payable within 14 days", "A cancellation fee of £50.00 applies"])
+    for name in ("Booking terms.docx", "Info.docx"):
+        found = si.read_invoices(multi_eml([("Invoice recording.pdf", text_pdf(REC_INV), PDF), (name, terms, si.DOCX_TYPE)]))
+        assert [f["amount"] for f in found] == [100.0], (name, found)
+    assert any("Info.docx" in w and "may be another invoice" in w for w in found[0]["warnings"]), found[0]["warnings"]
+    statement = text_pdf(["Invoice summary 2 and 3", "Total due 220.00 GBP"])
+    got = amounts(TWO + [("Invoice summary.pdf", statement, PDF)])
+    assert got == [100.0, 120.0], got
+    assert amounts(TWO + [("Statement.pdf", statement, PDF)]) == [100.0, 120.0]
+
+
+def test_a_fee_note_with_a_taxi_invoice_reads_the_fee_note():
+    note = text_pdf(["Fee note", "Session 100.00 GBP", "Uber 18.40 GBP", "Total 118.40 GBP"])
+    uber = text_pdf(["Tax invoice", "Trip", "Total 18.40 GBP"])
+    found = si.read_invoices(multi_eml([("Uber.pdf", uber, PDF), ("Fee note.pdf", note, PDF)]))
+    assert [f["amount"] for f in found] == [118.40], found
+    assert any("Uber.pdf" in w and "read as a receipt" in w for w in found[0]["warnings"]), found[0]["warnings"]
+
+
+def test_two_numbered_invoices_where_one_quotes_the_others_figure():
+    a = text_pdf(["Invoice 31001", "Funeral fee 100.00 GBP", "Travel 10.00 GBP", "Total 110.00 GBP",
+                  "Sort code 12-34-56", "Account number 11112222"])
+    b = text_pdf(["Invoice 31002", "Funeral 28 August", "Total 100.00 GBP", "Sort code 12-34-56", "Account number 11112222"])
+    assert amounts([("31001 Funeral.pdf", a, PDF), ("31002 Funeral.pdf", b, PDF)]) == [110.0, 100.0]
+
+
+def test_each_invoice_takes_its_ref_and_dates_from_its_own_document():
+    body = "Invoice ref 1020 for the funeral on 21 September 2026 and the recording on 24 September 2026"
+    found = si.read_invoices(multi_eml(TWO, body=body))
+    assert (2026, 9, 21) not in found[0]["dates"] and (2026, 9, 24) not in found[1]["dates"], found
+    assert [f["invoice_ref"] for f in found] == ["", ""], found
+
+
+def test_a_second_invoice_paid_by_name_is_left_to_check():
+    fresh_store()
+    no_bank = [("Invoice a.pdf", text_pdf(["Invoice", "Recording 24 September 2026", "Total 100.00 GBP"]), PDF),
+               ("Invoice b.pdf", text_pdf(["Invoice", "Funeral 21 September 2026", "Total 120.00 GBP"]), PDF)]
+    scan_file(multi_eml(no_bank), "560", received=(lm.today() - datetime.timedelta(days=2)).isoformat())
+    day = (lm.today() - datetime.timedelta(days=1)).isoformat()
+    got = paid_due(FakeClient(out=[out(100, day, "BEN FENWICK", "t1"), out(120, day, "BEN FENWICK", "t2")]))
+    assert "PAID 560: Ben £100.00" in got and "(matched by name, check before thanking)" in got, got
+    assert "THANKS DUE" not in got and "NEWLY PAID" not in got, got
+
+
+def test_rescan_finds_a_second_invoice_by_its_file_name():
+    fresh_store()
+    scan_file(multi_eml(TWO), "570")
+    fixed = ["Invoice", "Funeral 21 September 2026", "Total 125.00 GBP", "Sort code 12-34-56", "Account number 11112222"]
+    swapped = multi_mime([("Invoice funeral.pdf", text_pdf(fixed), PDF), TWO[0]])  # the funeral now comes first
+    with fake_fetch({"570": swapped}):
+        rescan("570-2", fetch=True)
+    rows = rows_by_id()
+    assert rows["570-2"]["amount_gbp"] == "125.00" and rows["570"]["amount_gbp"] == "100.00", rows
+
+
+def test_pdf_of_a_second_invoice_sent_as_docx_is_none():
+    fresh_store()
+    docx = make_docx(["Invoice", "Funeral 21 September 2026", "Total £120.00"])
+    raw = multi_mime([TWO[0], ("Invoice funeral.docx", docx, si.DOCX_TYPE)])
+    with fake_fetch({"580": raw}):
+        with contextlib.redirect_stdout(io.StringIO()):
+            si.cmd_scan(Args(fetch=True, file=None, message_id="580", received="2026-10-01", sender_email="ben@example.com",
+                             sender_name="Ben Fenwick"), FakeClient())
+        assert "pdf: none" in run_main(["pdf", "580-2", "--fetch"])
+    assert set(rows_by_id()) == {"580", "580-2"}
+
+
+def test_more_refuses_when_the_first_invoice_no_longer_matches():
+    fresh_store()
+    scan_file(multi_eml(TWO[1:]), "590")  # the first row recorded the funeral's £120
+    try:
+        more("590", multi_eml(TWO))
+        raise AssertionError("more recorded against a first invoice that doesn't match")
+    except SystemExit as e:
+        assert "check it by hand" in str(e), e
+    assert set(rows_by_id()) == {"590"}
+
+
+def test_a_withdrawn_invoice_does_not_hold_up_the_thanks():
+    two_paid_invoices("550")
+    with contextlib.redirect_stdout(io.StringIO()):
+        si.cmd_withdrawn(Args(message_id="550-2", reason="not-ours", owner=False))
+    day = (lm.today() - datetime.timedelta(days=1)).isoformat()
+    got = paid_due(FakeClient(out=[fp_out(100, day, "BEN FENWICK", "s1", "123456", "11112222")]))
+    # one live invoice left: the ordinary single-invoice line, which the clerk thanks
+    assert f"NEWLY PAID 550: Ben £100.00 on {day} (bank details match)" in got, got
+    assert not any(x.startswith("PAID ") for x in got.splitlines()), got
+
+
 if __name__ == "__main__":
     failures = 0
     for name, fn in sorted(globals().items()):
