@@ -49,7 +49,7 @@ STEPS
    A ledger booking (step 1's list) with no Books invoice in any of those five lists isn't a disagreement: give the count as "not in Books: <n>".
 7. Upload check: if steps 4–6 recorded anything, run `upload_bookings.py` again; either way give what it would upload and what it skips, with the reasons, by booking ref.
 8. Pipeline: `pipeline.py summary --since <season start>` as "<n> enquiries, <q> quoted, <c> booked (<rate>%), median <d> days to quote" plus enquiries by source (conversion_rate is a fraction: 0.25 is 25%; null means none yet: "no enquiries in the pipeline yet").
-9. This week's enquiries: Read ~/lcs-private/enquiries.csv (it holds no names) and list each enquiry first seen in the last 7 days as "<first_seen> · <occasion> · <source> · ad ref: yes/no".
+9. This week's enquiries: Read ~/lcs-private/enquiries.csv (it holds no names) and list each enquiry first seen in the last 7 days as "<first_seen> · <occasion> · <source> · ad ref: yes/no", adding " · heard: <answer>" when its notes hold one (the web form's "How did you hear of us?").
 10. Dashboard: run `dashboard.py` after step 5. It prints "dashboard written: <path>"; if it fails, "dashboard failed: <error type name>".
 
 RESULT (exactly these headings; short lines; no names; no preamble)
