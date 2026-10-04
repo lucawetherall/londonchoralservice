@@ -1873,8 +1873,8 @@ def _backup_validate(raw):
 
 BACKUP_NOW = ScriptAction(
     "backup-now", CC_BACKUP, _backup_validate,
-    lambda c: (f"Back up ~/lcs-private now: a tar.gz encrypted with age to the backup key, written to {c['target']}; "
-               f"backups older than 14 days are removed."),
+    lambda c: (f"Back up ~/lcs-private now: a full tar.gz encrypted with age to the backup key, written to "
+               f"{c['target']}; backups are kept every night for 14 days, weekly for 8 weeks and monthly for 7 years."),
     lambda c: ["run"], passkey=False, timeout=900, title="Back up now", lock="backup")
 _LOCKS.update(push=threading.Lock(), backup=threading.Lock())  # neither waits on (or blocks) a write
 for _a in (PUSH_SUBSCRIBE, PUSH_UNSUBSCRIBE, BACKUP_NOW):
