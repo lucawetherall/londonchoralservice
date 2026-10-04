@@ -207,7 +207,7 @@
   <meta property="og:image:height" content="630">
   <meta property="og:image:alt" content="The London Choral Service: carol singers and Christmas choirs">
   <meta property="article:published_time" content="2026-07-29">
-  <meta property="article:modified_time" content="2026-09-29">
+  <meta property="article:modified_time" content="2026-09-30">
 
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Christmas Entertainment for Hotels &amp; Venues | LCS">
@@ -1196,6 +1196,7 @@
       border: none;
       padding: 0;
       margin: 0;
+      min-width: 0; /* a fieldset otherwise grows to its widest child (the captcha) */
     }
     
     .form-field {
@@ -1293,6 +1294,20 @@
     
     .form-error[data-visible="true"] {
       display: block;
+    }
+    
+    /* hCaptcha's checkbox is a fixed 302px iframe, wider than the 272px form on
+       a 320px phone. js/form.js asks for the compact widget there; if hCaptcha
+       rendered before it could, shrink the full-size one to fit. The line box
+       keeps the unscaled width, so the wrapper clips it (nothing visible). */
+    @media (max-width: 349px) {
+      .h-captcha:not([data-size="compact"]) {
+        overflow: hidden;
+      }
+      .h-captcha:not([data-size="compact"]) iframe {
+        transform: scale(0.9);
+        transform-origin: 0 0;
+      }
     }
     
     .form-status {
@@ -1713,6 +1728,58 @@
     /* .video-embed clips overflow, so the global outline (drawn outside) is
        invisible here: draw the focus ring inside the thumbnail instead. */
     .video-thumb:focus-visible {
+      outline: 3px solid #fff;
+      outline-offset: -6px;
+      box-shadow: inset 0 0 0 3px var(--color-accent);
+    }
+    
+    /* The playing film (js/video.js) is taller than its 16:9 frame, which
+       clips it: YouTube letterboxes the picture to the full width, so the frame
+       shows all of it, while the title bar drawn at the player's top and the
+       logo and "Watch on YouTube" bar at its bottom land outside the frame. */
+    .video-embed iframe.video-frame {
+      top: -5rem;
+      height: calc(100% + 10rem);
+    }
+    
+    /* Laid over a playing film (js/video.js) so YouTube's hover controls never
+       show. It shows the thumbnail until the film is playing (is-loading) and
+       again when paused, covering YouTube's loading and pause screens. */
+    .video-shield {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      cursor: pointer;
+    }
+    
+    .video-shield img,
+    .video-shield .play-btn {
+      display: none;
+    }
+    
+    .video-shield.is-loading img,
+    .video-shield.is-paused img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    
+    .video-shield.is-paused .play-btn {
+      display: block;
+    }
+    
+    .video-shield:hover .play-btn circle,
+    .video-shield:focus-visible .play-btn circle {
+      fill: var(--color-accent);
+      stroke: var(--color-accent);
+    }
+    
+    .video-shield:focus-visible {
       outline: 3px solid #fff;
       outline-offset: -6px;
       box-shadow: inset 0 0 0 3px var(--color-accent);
@@ -2512,7 +2579,7 @@
         "url": "https://londonchoralservice.com/music-guides/hotel-christmas-entertainment.html",
         "inLanguage": "en-GB",
         "datePublished": "2026-07-29",
-        "dateModified": "2026-09-29",
+        "dateModified": "2026-09-30",
         "description": "How live carol singers work in a hotel: lobby sets, festive afternoon tea, ballroom singalongs, what they cost, and why December starts to fill by mid-September.",
         "author": [
           {
@@ -2623,13 +2690,13 @@
       },
       {
         "@type": "VideoObject",
-        "name": "Carol of the Bells — Full Choir",
+        "name": "It’s the Most Wonderful Time of the Year — Full Choir",
         "description": "Live performance by The London Choral Service.",
-        "thumbnailUrl": "https://img.youtube.com/vi/dGYqQf6BDAk/maxresdefault.jpg",
-        "uploadDate": "2026-09-29",
-        "duration": "PT1M21S",
-        "contentUrl": "https://www.youtube.com/watch?v=dGYqQf6BDAk",
-        "embedUrl": "https://www.youtube-nocookie.com/embed/dGYqQf6BDAk",
+        "thumbnailUrl": "https://img.youtube.com/vi/MyDf9cMp0gk/sddefault.jpg",
+        "uploadDate": "2026-09-30",
+        "duration": "PT1M50S",
+        "contentUrl": "https://www.youtube.com/watch?v=MyDf9cMp0gk",
+        "embedUrl": "https://www.youtube-nocookie.com/embed/MyDf9cMp0gk",
         "publisher": {
           "@id": "https://londonchoralservice.com/#organization"
         }
@@ -2714,7 +2781,7 @@
           </nav>
           <h1>Christmas entertainment for hotels</h1>
           <p class="guide-meta">By Luca Wetherall, Artistic Director &amp; Tutor in Music, University of Oxford</p>
-          <p class="guide-meta">Published <time datetime="2026-07-29">29 July 2026</time> &middot; Updated <time datetime="2026-09-29">29 September 2026</time></p>
+          <p class="guide-meta">Published <time datetime="2026-07-29">29 July 2026</time> &middot; Updated <time datetime="2026-09-30">30 September 2026</time></p>
           <hr class="rule">
         </div>
       </section>
@@ -2723,12 +2790,12 @@
         <div class="prose">
           <p class="lede">A hotel at Christmas has something almost no other venue has: a building already full of people. Guests come down for afternoon tea, drop bags at the desk, wait for a table, stand about with a glass before dinner. Live carol singers turn those in-between minutes into the part of the stay guests film and put online. And they ask very little of the building&thinsp;&mdash;&thinsp;no stage, no power, no sound check. This guide covers which format suits a lobby, a tea room, and a ballroom, how to schedule singers across December, what the choir wears and sings, and what to settle before you sign.</p>
           <div class="video-embed" style="margin-block-start: var(--space-lg)">
-            <button class="video-thumb" aria-label="Play Carol of the Bells" data-video="dGYqQf6BDAk">
-              <img src="https://img.youtube.com/vi/dGYqQf6BDAk/maxresdefault.jpg" alt="Carol of the Bells &mdash; The London Choral Service" loading="lazy" width="1280" height="720">
+            <button class="video-thumb" aria-label="Play It&rsquo;s the Most Wonderful Time of the Year" data-video="MyDf9cMp0gk">
+              <img src="https://img.youtube.com/vi/MyDf9cMp0gk/sddefault.jpg" alt="It&rsquo;s the Most Wonderful Time of the Year &mdash; The London Choral Service" loading="lazy" width="640" height="480">
               <svg class="play-btn" viewBox="0 0 56 56" aria-hidden="true"><circle cx="28" cy="28" r="27"/><path d="M23 19v18l15-9z"/></svg>
             </button>
           </div>
-          <p class="text-sm text-mid">Eight of our singers performing Carol of the Bells. <a href="../listen.html">Hear more recordings</a>.</p>
+          <p class="text-sm text-mid">Eight of our singers performing It&rsquo;s the Most Wonderful Time of the Year. <a href="../listen.html">Hear more recordings</a>.</p>
         </div>
       </section>
 

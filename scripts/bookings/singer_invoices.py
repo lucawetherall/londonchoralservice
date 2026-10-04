@@ -5,6 +5,14 @@ Starling. Records live in ~/lcs-private/singer-invoices.csv (mode 600).
     singer_invoices.py scan --fetch --message-id ID --received YYYY-MM-DD --sender-email E --sender-name 'N'
     singer_invoices.py scan <saved message> --message-id ID …   # the same, from a saved getOriginalMessage result
     singer_invoices.py rescan <message id> [--fetch | <saved message>]  # re-read an UNPAID invoice
+    singer_invoices.py more <message id> [--fetch | <saved message>]  # record the further invoices in an email
+        recorded with only its first (scanned before the tracker read every invoice in an email)
+
+One email can carry several invoices (spec 2026-10-02): scan records each as its own row. The first keeps the
+email's message id and the k-th is "<message id>-<k>"; email_id() gives the email back, for fetching and
+replying. Each prints its own block, headed "invoice k of n: <id>". A payment for one of them prints
+"PAID <id>: …" instead of NEWLY PAID, and the email gets one THANKS DUE line under its message id once every
+invoice in it is paid to verified details. `thanked` marks them all.
 
 scan and rescan end with two lines for the Books bill: "bill: yes" or "bill: no (<reason>)" (bank warning,
 amount not found or zero amount) and "bill_number: <x>" (the singer's ref, or SI- plus the last 5 digits of
@@ -62,8 +70,12 @@ drafts "Paid!" only for a match on the bank details. `settled` is the owner's ow
 command; it marks the invoice paid (paid_verified=no) and never trusts its details.
 
 Invoices are read from PDF and .docx attachments and the email body (.doc files
-are flagged to check by hand). With --fetch the script fetches the raw email
-itself, read-only, through lcs_mcp (ZohoMail_getOriginalMessage only).
+are flagged to check by hand). An attachment that says "invoice" and has an amount
+is an invoice document, unless its file name says "receipt", it is a copy of another
+(same file stem), or it is an expense receipt whose amount is a line on another
+invoice. Each invoice document is read first, ahead of the other sources. With
+--fetch the script fetches the raw email itself, read-only, through lcs_mcp
+(ZohoMail_getOriginalMessage only).
 """
 
 import argparse
@@ -90,7 +102,8 @@ import lcs_money as lm  # noqa: E402
 import lcs_owner  # noqa: E402
 
 STORE = lm.PRIVATE / "singer-invoices.csv"
-PDF_DIR = lm.PRIVATE / "singer-invoices"  # <message id>.pdf, mode 600: attached to the Books bill
+PDF_DIR = lm.PRIVATE / "singer-invoices"  # <message id>.pdf (<message id>-<k>.pdf for the k-th), mode 600
+PART_RE = re.compile(r"^(\d+)-([2-9]|[1-9]\d)$")  # the k-th invoice (k >= 2) in a Zoho email: "<message id>-<k>"
 MAX_PDF_BYTES = 10 * 1024 * 1024
 COLUMNS = ["message_id", "received", "singer_name", "singer_email", "invoice_ref", "amount_gbp", "bank_fp", "bank_last4",
            "payee", "bank_changed", "bank_confirmed", "paid_on", "paid_amount", "paid_ref", "paid_verified", "notes",
@@ -1021,14 +1034,143 @@ def print_link(ref):
     print(f"linked: {ref}" if ref else "link: none")
 
 
+INVOICE_WORD = re.compile(r"invoice", re.I)
+RECEIPT_NAME = re.compile(r"receipt", re.I)
+
+
+def amounts_in(text):
+    """Every money amount written in `text` (after £ or GBP, or a bare figure with pence), rounded to pence."""
+    found = set()
+    for m in re.finditer(MONEY, text or "", re.I):
+        figure = m.group(1) or m.group(2)
+        if figure:
+            found.add(round(float(figure.replace(",", "")), 2))
+    return found
+
+
+NOT_AN_INVOICE_NAME = re.compile(r"statement|terms|conditions|\bt\s*&\s*cs?\b|remittance", re.I)
+PART_NOTE = re.compile(r"^invoice (\d+) of (\d+) in this email(?: \((.*)\))?$")
+
+
+def _normal(text):
+    return re.sub(r"\s+", " ", text or "").strip().casefold()
+
+
+INVOICE_HEADING = re.compile(r"^\s*(?:tax\s+)?invoice\b", re.I | re.M)  # a line that starts "Invoice …"
+
+
+def classify_documents(sources):
+    """(invoices, receipts, doubtful) among the attachments in `sources` (message_texts output), as indices in the
+    email's order (spec 2026-10-02). Only attachments with readable text and an amount count.
+    - A receipt (part of an invoice, not one of its own): its file name says "receipt", or it carries no bank
+      details and its amount is a line on a larger document.
+    - The first invoice is the first other attachment with an amount whose file name doesn't say statement,
+      terms or remittance: the one the tracker always took, receipts aside.
+    - A copy of an invoice (the same amount, and the same ref, the same text, or the same file stem as .pdf and
+      .docx) counts once, the PDF kept.
+    - A further invoice needs "invoice" in its file name or an invoice heading, and also "invoice" in its file
+      name, a ref of its own or bank details of its own. Every other attachment with an amount (terms, statements
+      and the like) is doubtful: never recorded, only warned about. Of three or more, one whose amount is the
+      others' total is a statement."""
+    docs = []
+    for i, (label, text, _problem) in enumerate(sources):
+        if label == "email body" or not text or not text.strip():
+            continue
+        e = extract(text)
+        if e["amount"]:
+            named = bool(INVOICE_WORD.search(label))
+            docs.append({"i": i, "name": label, "amount": e["amount"], "ref": e["invoice_ref"], "text": _normal(text),
+                         "bank": bool(e["sort_code"] and e["account_number"]), "amounts": amounts_in(text),
+                         "other": bool(NOT_AN_INVOICE_NAME.search(label)),
+                         "strong": (named or bool(INVOICE_HEADING.search(text)))
+                         and (named or bool(e["invoice_ref"]) or bool(e["sort_code"] and e["account_number"]))})
+
+    def is_receipt(d):
+        return bool(RECEIPT_NAME.search(d["name"])) or not d["bank"] and any(
+            o is not d and d["amount"] < o["amount"] and d["amount"] in o["amounts"] for o in docs)
+
+    def is_copy(d, k):
+        same_stem = (Path(d["name"]).stem.strip().casefold() == Path(k["name"]).stem.strip().casefold()
+                     and Path(d["name"]).suffix.lower() != Path(k["name"]).suffix.lower())
+        return d["amount"] == k["amount"] and ((d["ref"] and d["ref"] == k["ref"]) or d["text"] == k["text"] or same_stem)
+
+    receipts = [d for d in docs if is_receipt(d)]
+    rest = [d for d in docs if d not in receipts and not d["other"]]
+    invoices, doubtful = rest[:1], []
+    for d in rest[1:] + [d for d in docs if d["other"] and d not in receipts]:
+        twin = next((k for k in invoices if is_copy(d, k)), None)
+        if twin is not None:
+            if d["name"].lower().endswith(".pdf") and not twin["name"].lower().endswith(".pdf"):
+                invoices[invoices.index(twin)] = d
+        elif d["strong"] and not d["other"] and invoices:
+            invoices.append(d)
+        else:
+            doubtful.append(d)
+    if len(invoices) > 2:  # a statement: one document totalling the others
+        for d in invoices[1:]:
+            if abs(sum(o["amount"] for o in invoices if o is not d) - d["amount"]) < 0.005:
+                invoices.remove(d)
+                doubtful.append(d)
+                break
+    return [d["i"] for d in invoices], [d["i"] for d in receipts], [d["i"] for d in doubtful]
+
+
+def split_sources(sources):
+    """[(invoice document's file name or None, its sources, warnings)], one per invoice in the email. With at
+    most one invoice: the whole email, that invoice first and receipts last. With several: each invoice's
+    document, then the attachments with no amount (a bank-details sheet, an unreadable .doc), then the body.
+    The warnings name a document read as a receipt (unless its file name says so) or doubtful as an invoice."""
+    invoices, receipts, doubtful = classify_documents(sources)
+    notes = [f"{sources[i][0]} (£{extract(sources[i][1])['amount']:,.2f}) may be another invoice: check it by hand"
+             for i in doubtful]
+    notes += [f"{sources[i][0]} (£{extract(sources[i][1])['amount']:,.2f}) read as a receipt included in the invoice: "
+              "check by hand if it is an invoice of its own" for i in receipts if not RECEIPT_NAME.search(sources[i][0])]
+    if len(invoices) <= 1:
+        order = invoices + [k for k in range(len(sources)) if k not in invoices and k not in receipts] + receipts
+        return [(sources[invoices[0]][0] if invoices else None, [sources[k] for k in order], notes)]
+    extra = [s for k, s in enumerate(sources) if s[0] != "email body" and k not in invoices + receipts + doubtful
+             and (s[1] is None or not extract(s[1])["amount"])]
+    body = [s for s in sources if s[0] == "email body"]
+    return [(sources[i][0], [sources[i]] + extra + body, notes if n == 0 else []) for n, i in enumerate(invoices)]
+
+
+def note_name(name):
+    """A file name as it can sit in a notes clause: no clause separators, at most 80 characters."""
+    return re.sub(r"[;\n\r]+", ",", name or "").strip()[:80]
+
+
+def read_invoices(path=None, raw=None):
+    """read_sources for each invoice in the email (split_sources), first to last. Each carries "document" (its
+    invoice document's file name, or None). With several, each invoice's ref and dates come from its own
+    document alone (the body speaks for them all), and its warnings start with "invoice k of n in this email
+    (<file name>)", which rescan and pdf use to find it again."""
+    groups = split_sources(message_texts(path, raw=raw))
+    found = []
+    for k, (document, sources, notes) in enumerate(groups, 1):
+        inv = read_sources(sources)
+        inv["document"] = document
+        inv["warnings"] += [w for w in notes if w not in inv["warnings"]]
+        if len(groups) > 1:
+            own = read_sources(sources[:1])
+            inv.update(invoice_ref=own["invoice_ref"], dates=own["dates"], event_dates=own["event_dates"])
+            inv["warnings"].insert(0, f"invoice {k} of {len(groups)} in this email ({note_name(document)})")
+        found.append(inv)
+    return found
+
+
 def read_invoice(path=None, raw=None):
-    """Amount, ref and bank details from every PDF and .docx and the body (`raw`: the MIME text itself). Bank details come from the first PDF that
-    has both numbers (else the first source that does); when sources give different details, or one gives
-    unclear details while another is clear, `sources_disagree` is set and DIFFER is warned."""
+    """The email's first invoice (read_invoices)."""
+    return read_invoices(path, raw=raw)[0]
+
+
+def read_sources(sources):
+    """Amount, ref and bank details from the given sources, in order (message_texts entries). Bank details come
+    from the first PDF that has both numbers (else the first source that does); when sources give different
+    details, or one gives unclear details while another is clear, `sources_disagree` is set and DIFFER is warned."""
     found = {"amount": 0.0, "invoice_ref": "", "sort_code": "", "account_number": "", "warnings": [],
              "sources_disagree": False, "dates": [], "event_dates": set()}
     details, unclear = [], False  # details: (is a pdf, sort code, account number)
-    for label, text, problem in message_texts(path, raw=raw):
+    for label, text, problem in sources:
         if text is None:
             found["warnings"].append(f"could not read {label} (.doc): check by hand")
             continue
@@ -1080,15 +1222,53 @@ def note(r, text):
     r["notes"] = (r["notes"] + "; " if r.get("notes") else "") + text
 
 
-def save_pdf(raw, message_id):
-    """The message's first PDF attachment, written to PDF_DIR/<message id>.pdf (mode 600, folder 700) so the
-    Books bill can carry it. Returns the path, or None when there is no readable PDF under MAX_PDF_BYTES."""
-    safe = re.sub(r"[^0-9A-Za-z]", "", message_id or "")
+def part_id(message_id, k):
+    """The id of the k-th invoice in an email: the message id itself for the first, "<message id>-<k>" after."""
+    return message_id if k == 1 else f"{message_id}-{k}"
+
+
+def email_id(message_id):
+    """The email's message id for an invoice id: "<message id>-<k>" gives the message id. Only an all-digit id
+    (as Zoho's are) has parts; any other id is its own email."""
+    m = PART_RE.match(message_id or "")
+    return m.group(1) if m else message_id
+
+
+def part_number(message_id):
+    """k for the k-th invoice in its email (1 for an email's own message id)."""
+    m = PART_RE.match(message_id or "")
+    return int(m.group(2)) if m else 1
+
+
+def email_rows(rows, message_id):
+    """Every recorded invoice of message_id's email, first invoice first."""
+    base = email_id(message_id)
+    return sorted((r for r in rows if email_id(r["message_id"]) == base), key=lambda r: part_number(r["message_id"]))
+
+
+def live_parts(rows, message_id, facts=None):
+    """email_rows without the withdrawn ones."""
+    return [r for r in email_rows(rows, message_id) if not is_withdrawn(r, facts)]
+
+
+def pdf_stem(message_id):
+    """The PDF's file name stem: the message id's letters and digits, or "<message id>-<k>" for the k-th
+    invoice (the "-" kept, so it never collides with another email's id)."""
+    m = PART_RE.match(message_id or "")
+    return f"{m.group(1)}-{m.group(2)}" if m else re.sub(r"[^0-9A-Za-z]", "", message_id or "")
+
+
+def save_pdf(raw, message_id, document=None):
+    """The message's PDF attachment named `document` (its first PDF when None), written to
+    PDF_DIR/<pdf_stem>.pdf (mode 600, folder 700). Returns the path, or None when there is no such readable
+    PDF under MAX_PDF_BYTES."""
+    safe = pdf_stem(message_id)
     if not safe:
         return None
     msg = email.message_from_string(raw, policy=policy.default)
     for part in msg.walk():
-        if not (part.get_filename() or "").lower().endswith(".pdf"):
+        name = part.get_filename() or ""
+        if not name.lower().endswith(".pdf") or (document is not None and name != document):
             continue
         data = part.get_payload(decode=True) or b""
         if not data.startswith(b"%PDF") or len(data) > MAX_PDF_BYTES:
@@ -1105,9 +1285,10 @@ def save_pdf(raw, message_id):
 
 
 def load_raw(args):
-    """The MIME text: fetched (--fetch) or from a saved getOriginalMessage result or .eml."""
+    """The MIME text: fetched (--fetch, by the email's own message id) or from a saved getOriginalMessage result or
+    .eml."""
     if getattr(args, "fetch", False):
-        return fetch_raw(args.message_id)
+        return fetch_raw(email_id(args.message_id))
     from invoice_text import raw_message
     return raw_message(args.file)
 
@@ -1193,12 +1374,15 @@ MAX_BILL_RUN = 5  # the Books guard reads a longer run as a possible bank number
 
 def bill_number(ref, message_id):
     """The Books bill_number: the singer's own ref if no digit run in it is longer than 5 digits,
-    else "SI-" plus the last 5 digits of the Zoho message id."""
+    else "SI-" plus the last 5 digits of the Zoho message id, and for the k-th invoice in an email (k >= 2) a
+    letter (B for the second), which keeps the digit run at 5."""
     ref = (ref or "").strip()
     if ref and ref != "?" and all(sum(c.isdigit() for c in m.group()) <= MAX_BILL_RUN for m in BILL_RUN.finditer(ref)):
         return ref
-    digits = re.sub(r"\D", "", message_id or "")
-    return "SI-" + (digits[-5:] if digits else re.sub(r"[^A-Za-z0-9]", "", message_id or "")[-5:])
+    base, k = email_id(message_id or ""), part_number(message_id or "")
+    digits = re.sub(r"\D", "", base)
+    tail = digits[-5:] if digits else re.sub(r"[^A-Za-z0-9]", "", base)[-5:]
+    return "SI-" + tail + ("" if k == 1 else chr(ord("A") + k - 1) if k <= 26 else f"Z{k}")
 
 
 def books_bill(r, bills):
@@ -1236,26 +1420,33 @@ THANKS_DAYS = 7  # a verified payment this recent with no "Paid!" draft yet gets
 THANKS_MARK = "thanks due"
 
 
-def print_books_due(rows, skip=(), today=None, facts=None):
+def print_books_due(rows, skip=(), today=None, facts=None, thanks_skip=None):
     """paid --books-due: after the normal output, for payments already recorded here (paid_verified yes) and so
     no longer NEWLY PAID (the Command Centre's half-hourly job may have recorded them first):
     - "BOOKS DUE <message id>: …" plus the usual "books:" line, when the invoice's Books bill is still open with a
       balance (a bill not in the cache, or already paid, gets no line);
     - "THANKS DUE <message id>: …" when `paid --apply` recorded it (THANKS_MARK in its notes) in the last
       THANKS_DAYS days and no "Paid!" reply is noted.
-    `skip` holds this run's NEWLY PAID ids. Read-only. Without books.json it prints "books-due: no Books cache"
-    instead of the BOOKS DUE lines. A "Paid!" reply counts when either the notes or the recorded facts say so."""
+    `skip` holds this run's hits (no BOOKS DUE: their own lines carry the books line), and `thanks_skip` (default
+    `skip`) the ones whose NEWLY PAID line already reaches the clerk: a PAID line (one of several invoices in an
+    email) doesn't, so its email can get its THANKS DUE in the same run. Read-only. Without books.json it prints
+    "books-due: no Books cache" instead of the BOOKS DUE lines. A "Paid!" reply counts when either the notes or
+    the recorded facts say so."""
     today = today or lm.today()
-    done = [r for r in rows if r.get("paid_on") and r.get("paid_verified") == "yes" and not is_withdrawn(r, facts)
-            and r["message_id"] not in skip]
+    thanks_skip = set(skip) if thanks_skip is None else set(thanks_skip)
+    paid_ok = [r for r in rows if r.get("paid_on") and r.get("paid_verified") == "yes" and not is_withdrawn(r, facts)]
     # a held invoice (its notes and recorded facts disagree) gets one HELD line and no BOOKS DUE or THANKS DUE
-    for r in [r for r in done if held(rows, r, facts)]:
-        print(f"HELD {r['message_id']}: check by hand")
-        done.remove(r)
+    held_ids = set()
+    for r in paid_ok:
+        if (r["message_id"] not in skip or r["message_id"] not in thanks_skip) and held(rows, r, facts):
+            print(f"HELD {r['message_id']}: check by hand")
+            held_ids.add(r["message_id"])
+    books = [r for r in paid_ok if r["message_id"] not in skip and r["message_id"] not in held_ids]
+    done = [r for r in paid_ok if r["message_id"] not in thanks_skip and r["message_id"] not in held_ids]
     bills = read_books_bills()
     if bills is None:
         print("books-due: no Books cache")
-    for r in done:
+    for r in books:
         bill = books_bill(r, bills) if bills is not None else None
         if bill is None or str(bill.get("status") or "").lower() == "paid" or lm.money(bill.get("balance")) <= 0:
             continue
@@ -1264,7 +1455,26 @@ def print_books_due(rows, skip=(), today=None, facts=None):
               f"bill open in Books")
         print(f"   books: bill_number {bill_number(r.get('invoice_ref'), r['message_id'])}"
               f" · email {r.get('singer_email')} · amount {amount:.2f} · date {r['paid_on']}")
+    emails = set()
     for r in done:
+        group = live_parts(rows, r["message_id"], facts)
+        if len(group) > 1:
+            # several invoices in one email: one line under the email's message id, once every one of them is paid
+            # to verified details, none is held or thanked, and the last was paid and marked in the window
+            base = email_id(r["message_id"])
+            if base in emails:
+                continue
+            emails.add(base)
+            last = max(group, key=lambda x: x.get("paid_on") or "")
+            paid = iso_or_none(last.get("paid_on"))
+            if (not all(x.get("paid_on") and x.get("paid_verified") == "yes" for x in group)
+                    or any(held(rows, x, facts) or thanked(x, facts) for x in group)
+                    or paid is None or (today - paid).days > THANKS_DAYS or THANKS_MARK not in (last.get("notes") or "")):
+                continue
+            total = sum(lm.parse_gbp(x.get("paid_amount")) or lm.money(x.get("amount_gbp")) for x in group)
+            print(f"THANKS DUE {base}: {first_name(last['singer_name'])} £{total:,.2f} paid {last['paid_on']}, "
+                  f"no \"Paid!\" reply yet ({len(group)} invoices in one email)")
+            continue
         paid = iso_or_none(r.get("paid_on"))
         notes = r.get("notes") or ""
         if (paid is None or (today - paid).days > THANKS_DAYS or THANKS_MARK not in notes
@@ -1333,24 +1543,56 @@ def print_stored(r, rows=()):
 
 
 def already_recorded(rows, message_id):
-    row = next((r for r in rows if r["message_id"] == message_id), None)
-    if row is not None:
-        print(f"already recorded: {message_id}")
+    """Print every recorded invoice of message_id's email as scan printed it; True when there is one."""
+    found = email_rows(rows, message_id)
+    for row in found:
+        if len(found) > 1:
+            print(f"invoice {part_number(row['message_id'])} of {len(found)}: {row['message_id']}")
+        print(f"already recorded: {row['message_id']}")
         print_stored(row, rows)
-        saved = PDF_DIR / f"{re.sub(r'[^0-9A-Za-z]', '', message_id)}.pdf"
+        saved = PDF_DIR / f"{pdf_stem(row['message_id'])}.pdf"
         print(f"pdf: {saved if saved.is_file() else 'none'}")
-    return row is not None
+    return bool(found)
 
 
-def load_invoice(args):
-    return read_invoice(None, raw=fetch_raw(args.message_id)) if getattr(args, "fetch", False) else read_invoice(args.file)
+def recorded_document(row):
+    """The file name a row's "invoice k of n in this email (<file name>)" clause names, or None."""
+    for clause in ((row or {}).get("notes") or "").split("; "):
+        m = PART_NOTE.match(clause.strip())
+        if m and m.group(3):
+            return m.group(3)
+    return None
+
+
+def invoice_part(invs, message_id, row=None):
+    """The invoice message_id names among its email's invoices (read_invoices): the one whose document the row's
+    notes name (so a change to the reader can't swap two invoices), else the k-th. SystemExit when there is none."""
+    name = recorded_document(row)
+    if name:
+        hits = [inv for inv in invs if note_name(inv.get("document")) == name]
+        if len(hits) != 1:
+            raise SystemExit(f"{message_id}: its email no longer reads {name} as one invoice; nothing done")
+        return hits[0]
+    k = part_number(message_id)
+    if k > len(invs):
+        raise SystemExit(f"{message_id}: its email reads as {len(invs)} invoice(s) now; nothing done")
+    return invs[k - 1]
+
+
+def load_invoice(args, row=None):
+    raw = load_raw(args) if getattr(args, "fetch", False) else None
+    invs = read_invoices(None, raw=raw) if raw is not None else read_invoices(args.file)
+    return invoice_part(invs, args.message_id, row)
 
 
 def cmd_pdf(args, client=None):
     """Save the invoice PDF of a recorded invoice and print "pdf: <path>" (or "pdf: none")."""
-    if not any(r["message_id"] == args.message_id for r in lm.read_csv(STORE)):
+    row = next((r for r in lm.read_csv(STORE) if r["message_id"] == args.message_id), None)
+    if row is None:
         raise SystemExit(f"no invoice {args.message_id}")
-    path = save_pdf(load_raw(args), args.message_id)
+    raw = load_raw(args)
+    inv = invoice_part(read_invoices(None, raw=raw), args.message_id, row)
+    path = save_pdf(raw, args.message_id, inv.get("document")) if inv.get("document") or part_number(args.message_id) == 1 else None
     print(f"pdf: {path or 'none'}")
 
 
@@ -1389,35 +1631,77 @@ def check_message_id(message_id):
 
 def cmd_scan(args, client):
     check_message_id(args.message_id)
+    if PART_RE.match(args.message_id):
+        raise SystemExit(f"{args.message_id} is an invoice within email {email_id(args.message_id)}: scan the "
+                         "email's own message id; nothing recorded")
     if already_recorded(lm.read_csv(STORE), args.message_id):
         return
     raw = load_raw(args)
-    inv = read_invoice(None, raw=raw)
+    invs = read_invoices(None, raw=raw)
+    record_parts(raw, list(enumerate(invs, 1)), len(invs), args.message_id, args.received, args.sender_email,
+                 args.sender_name, client, resume=True)
+
+
+def record_parts(raw, parts, n, message_id, received, sender_email, sender_name, client, resume=False):
+    """Record invoices [(k, invoice)] of the n in email message_id under one lock, each assessed against the rows
+    before it (so a second invoice with other bank details is flagged as changed), then print each as scan does:
+    headed "invoice k of n: <id>" when n > 1, with its link, bill lines and saved PDF. With resume, an email
+    recorded meanwhile (another run) is printed as already recorded instead."""
     payees = payee_info(client)
-    link = auto_link(linkable_dates(inv.get("dates") or [], inv.get("event_dates") or set()),
-                      lm.read_csv(lm.LEDGER), args.received)
+    ledger = lm.read_csv(lm.LEDGER)
+    links = {k: auto_link(linkable_dates(inv.get("dates") or [], inv.get("event_dates") or set()), ledger, received)
+             for k, inv in parts}
+    done = []
     # after the fetch: never hold the lock over the network. recording: the store's lock, each fact under it
     with lcs_events.recording(STORE, COLUMNS) as t:
         rows = t.rows  # read again: a fetch can take a while
-        if already_recorded(rows, args.message_id):
+        if resume and already_recorded(rows, message_id):
             return
-        before = {id(r): r.get("notes") or "" for r in rows}
-        a, changed, flagged = assess_invoice(inv, rows, args.message_id, args.received, args.sender_email,
-                                             args.sender_name, payees)
-        rows.append({"message_id": args.message_id, "received": args.received, "singer_name": args.sender_name,
-                     "singer_email": args.sender_email.lower(), "invoice_ref": inv["invoice_ref"],
-                     "amount_gbp": f"{inv['amount']:.2f}", "bank_fp": a["bank_fp"], "bank_last4": a["bank_last4"],
-                     "payee": a["payee"], "bank_changed": changed, "bank_confirmed": "", "paid_on": "",
-                     "paid_amount": "", "paid_ref": "", "paid_verified": "",
-                     "notes": "; ".join(inv["warnings"] + a["warnings"]), "booking_ref": link})
-        record_flagged(t, rows, before)
-        record_warning(t, rows[-1])
-    for line in flagged:
-        print(line)
-    print_result(args.sender_name, inv, a)
-    print_link(link)
-    print_bill(inv["warnings"] + a["warnings"], inv["amount"], inv["invoice_ref"], args.message_id)
-    print(f"pdf: {save_pdf(raw, args.message_id) or 'none'}")
+        for k, inv in parts:
+            mid = part_id(message_id, k)
+            if any(r["message_id"] == mid for r in rows):
+                continue
+            before = {id(r): r.get("notes") or "" for r in rows}
+            a, changed, flagged = assess_invoice(inv, rows, mid, received, sender_email, sender_name, payees)
+            rows.append({"message_id": mid, "received": received, "singer_name": sender_name,
+                         "singer_email": sender_email.lower(), "invoice_ref": inv["invoice_ref"],
+                         "amount_gbp": f"{inv['amount']:.2f}", "bank_fp": a["bank_fp"], "bank_last4": a["bank_last4"],
+                         "payee": a["payee"], "bank_changed": changed, "bank_confirmed": "", "paid_on": "",
+                         "paid_amount": "", "paid_ref": "", "paid_verified": "",
+                         "notes": "; ".join(inv["warnings"] + a["warnings"]), "booking_ref": links[k]})
+            record_flagged(t, rows, before)
+            record_warning(t, rows[-1])
+            done.append((k, mid, inv, a, flagged))
+    for k, mid, inv, a, flagged in done:
+        if n > 1:
+            print(f"invoice {k} of {n}: {mid}")
+        for line in flagged:
+            print(line)
+        print_result(sender_name, inv, a)
+        print_link(links[k])
+        print_bill(inv["warnings"] + a["warnings"], inv["amount"], inv["invoice_ref"], mid)
+        print(f"pdf: {save_pdf(raw, mid, inv.get('document')) or 'none'}")
+    return [mid for _, mid, *_ in done]
+
+
+def cmd_more(args, client):
+    """Record the further invoices in an email recorded with only its first (scanned before the tracker read every
+    invoice in an email). The rows already recorded are never touched."""
+    check_message_id(args.message_id)
+    base = email_id(args.message_id)
+    first = next((r for r in lm.read_csv(STORE) if r["message_id"] == base), None)
+    if first is None:
+        raise SystemExit(f"no invoice {base}")
+    raw = load_raw(args)
+    invs = read_invoices(None, raw=raw)
+    if not invs or abs(invs[0]["amount"] - lm.money(first.get("amount_gbp"))) >= 0.01:
+        raise SystemExit(f"{base}: the email's first invoice reads £{invs[0]['amount'] if invs else 0:,.2f} but "
+                         f"£{lm.money(first.get('amount_gbp')):,.2f} is recorded: check it by hand; nothing recorded")
+    recorded = {r["message_id"] for r in email_rows(lm.read_csv(STORE), base)}
+    parts = [(k, inv) for k, inv in enumerate(invs, 1) if k > 1 and part_id(base, k) not in recorded]
+    if not parts or not record_parts(raw, parts, len(invs), base, first.get("received") or "",
+                                     first.get("singer_email") or "", first.get("singer_name") or "", client):
+        print(f"{base}: no further invoices to record")
 
 
 KEEP_NOTES = ("bank details confirmed by phone", "paid reply drafted", "settled by hand", "rescanned", "withdrawn",
@@ -1459,7 +1743,7 @@ def cmd_rescan(args, client):
         return row
 
     first = find(lm.read_csv(STORE))
-    inv = load_invoice(args)
+    inv = load_invoice(args, first)
     payees = payee_info(client)
     guess = auto_link(linkable_dates(inv.get("dates") or [], inv.get("event_dates") or set()),
                        lm.read_csv(lm.LEDGER), first.get("received"))
@@ -1516,7 +1800,10 @@ def cmd_paid(args, client):
         hits = match_and_record(args, client)
     finally:  # --books-due runs even when Starling is unavailable: it reads only the store and the Books cache
         if getattr(args, "books_due", False):
-            print_books_due(lm.read_csv(STORE), skip=set(hits))
+            rows = lm.read_csv(STORE)
+            # this run's NEWLY PAID lines already reach the clerk; a PAID line (one of several invoices in an email)
+            # does not, so its email can still get its THANKS DUE line in this run
+            print_books_due(rows, skip=set(hits), thanks_skip={m for m in hits if len(live_parts(rows, m)) <= 1})
 
 
 def match_and_record(args, client):
@@ -1558,8 +1845,16 @@ def match_and_record(args, client):
     for r in rows:
         if r["message_id"] in hits:
             when, amount, uid, verified = hits[r["message_id"]]
-            print(f"NEWLY PAID {r['message_id']}: {first_name(r['singer_name'])} £{amount:,.2f} on {when}"
-                  + (" (bank details match)" if verified else " (matched by name, check before thanking)"))
+            if len(live_parts(rows, r["message_id"])) > 1:
+                # one of several invoices in one email: thanked once for them all, by THANKS DUE (the assistant
+                # hands the clerk only NEWLY PAID and THANKS DUE lines)
+                print(f"PAID {r['message_id']}: {first_name(r['singer_name'])} £{amount:,.2f} on {when}"
+                      + (" (bank details match)" if verified else " (matched by name, check before thanking)")
+                      + f" (invoice {part_number(r['message_id'])} of {len(email_rows(rows, r['message_id']))} in "
+                        "this email: thanked together once all are paid)")
+            else:
+                print(f"NEWLY PAID {r['message_id']}: {first_name(r['singer_name'])} £{amount:,.2f} on {when}"
+                      + (" (bank details match)" if verified else " (matched by name, check before thanking)"))
             if verified:  # what the clerk needs to record the payment against the Books bill
                 print(f"   books: bill_number {bill_number(r.get('invoice_ref'), r['message_id'])}"
                       f" · email {r.get('singer_email')} · amount {amount:.2f} · date {when}")
@@ -1631,12 +1926,18 @@ def owner_run(args, what, only=False):
 
 
 def cmd_thanked(args, client=None):
-    def edit(r):
-        clause = f"paid reply drafted {lm.today()}"
-        note(r, clause)
-        return "paid-reply-drafted", {}, "script", clause, None
-    update_invoice(args.message_id, edit)
-    print(f"{args.message_id}: paid reply noted")
+    """Note the "Paid!" reply on the invoice, and on every other paid invoice in its email (one reply thanks them
+    all), under one lock: every note and fact, or none."""
+    clause = f"paid reply drafted {lm.today()}"
+    with lcs_events.recording(STORE, COLUMNS) as t:
+        if not any(r["message_id"] == args.message_id for r in t.rows):
+            raise SystemExit(f"no invoice {args.message_id}")
+        marked = [r for r in email_rows(t.rows, args.message_id)
+                  if r["message_id"] == args.message_id or (r.get("paid_on") and not is_withdrawn(r))]
+        for r in marked:
+            note(r, clause)
+            lcs_events.record(t, "singer_invoice", r["message_id"], "paid-reply-drafted", {}, "script", clause)
+    print(f"{args.message_id}: paid reply noted" + (f" on all {len(marked)} invoices in the email" if len(marked) > 1 else ""))
 
 
 FP_RE = re.compile(r"^[0-9a-f]{16}$")
@@ -1815,6 +2116,10 @@ def main():
     r.add_argument("message_id")
     r.add_argument("file", nargs="?", help="a saved getOriginalMessage result or .eml (not with --fetch)")
     r.add_argument("--fetch", action="store_true", help="fetch the raw email itself, read-only")
+    mo = sub.add_parser("more")
+    mo.add_argument("message_id")
+    mo.add_argument("file", nargs="?", help="a saved getOriginalMessage result or .eml (not with --fetch)")
+    mo.add_argument("--fetch", action="store_true", help="fetch the raw email itself, read-only")
     p = sub.add_parser("paid")
     p.add_argument("--apply", action="store_true")
     p.add_argument("--books-due", action="store_true",
@@ -1844,12 +2149,13 @@ def main():
     lk.add_argument("booking_ref")
     sub.add_parser("margins")
     args = ap.parse_args()
-    if args.cmd in ("scan", "rescan", "pdf") and bool(args.fetch) == bool(args.file):
+    if args.cmd in ("scan", "rescan", "pdf", "more") and bool(args.fetch) == bool(args.file):
         ap.error(f"{args.cmd}: give either --fetch or a saved file")
-    tok = lm.keychain_token() if args.cmd in ("scan", "rescan", "paid") else None
+    tok = lm.keychain_token() if args.cmd in ("scan", "rescan", "paid", "more") else None
     client = lm.StarlingReadOnly(tok) if tok else None
     try:
-        {"scan": cmd_scan, "rescan": cmd_rescan, "paid": cmd_paid, "status": cmd_status, "thanked": cmd_thanked,
+        {"scan": cmd_scan, "rescan": cmd_rescan, "more": cmd_more, "paid": cmd_paid, "status": cmd_status,
+         "thanked": cmd_thanked,
          "confirm": cmd_confirm, "settled": cmd_settled, "withdrawn": cmd_withdrawn, "pdf": cmd_pdf,
          "link": cmd_link, "margins": cmd_margins}[args.cmd](args, client)
     except (lm.StarlingError, urllib.error.URLError, TimeoutError, ConnectionError) as e:  # type name only

@@ -1,8 +1,29 @@
 # Off-site listings pack
 
-Ready-to-paste copy for the §12 actions in `MANUAL-ACTIONS-REQUIRED.md`. Every figure comes from `pricing.html`; every credential is one the site already states. House rules apply off-site too: no roster-scale claims, no VAT claims in either direction, no star-rating claims, no incentivised reviews.
+Ready-to-paste copy for the directory listings in `MANUAL-ACTIONS-REQUIRED.md` §2. Rewritten 4 October 2026 to current prices and the owner's choir focus (26 Sep 2026: choir bookings of four or more voices). Soloists are left out on purpose, so these listings don't draw solo-singer requests. Every figure comes from `pricing.html` and `christmas-pricing.html`; every credential is one the site already states. House rules apply off-site too: no roster size, no VAT claims either way beyond "No VAT is added", no star ratings, no incentivised reviews.
 
-## Canonical NAP — use verbatim everywhere
+## How a listing gets made
+
+Claude can't create accounts, enter passwords or solve CAPTCHAs, even with the owner's go-ahead. For each site the owner does the sign-up (account, email check, any phone or ID check) and stays signed in, in the browser built into the Claude app or in Chrome with Claude in Chrome. Claude then fills every profile field from this pack, uploads the logo and photos, sets categories, service area and prices, and stops before each Publish, Submit or Accept-terms button for the owner's yes. Afterwards Claude checks the listing is live, records its URL in the status table below, and adds it to the Organization `sameAs` on `index.html`.
+
+## Status
+
+| Site | Cost (researched 4 Oct 2026) | Account | Listing live | URL |
+| --- | --- | --- | --- | --- |
+| Google Business Profile | free | yes | yes (anchored Maidenhead) | https://www.google.com/maps?cid=12581882416994311757 |
+| Bing Places | free; imports from the Google profile | no | no | |
+| Apple Business | free; Apple Account, verified by phone or documents | no | no | |
+| Yell | free listing (paid upsells declined) | no | no | |
+| Hitched | free listing (paid tiers unpublished) | no | no | |
+| Bridebook | free Limited Profile (Basic £20/mo, Classic £99/mo) | no | no | |
+| Guides for Brides | free basic listing | no | no | |
+| whiteballoon (funeral) | £20/mo, first month free; "Singers & Musicians" category | no | no | |
+| Poptop | free Basic; 12% booking fee, bookings stay on the platform | no | no | |
+| Encore | free; 20% of the quote, bookings stay on the platform | no | no | |
+
+Skipped: FuneralGuide (lists funeral directors only), Bark and Add to Event (shared pay-per-lead credits that draw cheap soloist requests). Sign up with office@londonchoralservice.com so leads reach the enquiry inbox.
+
+## Canonical NAP: use verbatim everywhere
 
 | Field | Value |
 | --- | --- |
@@ -10,80 +31,90 @@ Ready-to-paste copy for the §12 actions in `MANUAL-ACTIONS-REQUIRED.md`. Every 
 | Phone | 07356 042468 |
 | Email | office@londonchoralservice.com |
 | Website | https://londonchoralservice.com |
-| Postcode on record | N1 7GU registered office; the Maps listing is anchored "The London Choral Service, Maidenhead" — confirm the address GBP shows and copy that everywhere exactly |
+| Address | Copy whatever the Google Business Profile shows (the Maps listing is anchored "The London Choral Service, Maidenhead"), character for character. The registered office is N1 7GU. |
 | Legal entity | Alma Consort Ltd (Companies House 16785727) |
+| Service area | London and the home counties (Surrey, Kent, Essex, Hertfordshire, Berkshire, Buckinghamshire); further afield on request |
 
-Whatever address and phone format GBP ends up with is the master. Copy it character-for-character into every other listing.
+## Prices to enter (from pricing.html, 4 Oct 2026)
+
+| Ensemble | Price |
+| --- | --- |
+| Small Choir (4 singers) | from £1,150 |
+| Quintet (5 singers) | from £1,400 |
+| Sextet (6 singers) | from £1,600 |
+| Full Choir (8 singers) | from £2,000 |
+| Chorus (12 singers) | from £3,000 |
+| Organist or pianist | £250, alone or added to a choir |
+
+December dates cost the same, except Christmas Eve and Christmas Day (around 25% more). No VAT is added. Travel beyond Greater London is quoted with the booking. When a site asks for one "starting price", enter £1,150.
 
 ## Google Business Profile
 
 **Primary category:** Choir (or Music Service if Choir is unavailable). **Secondary:** Wedding Service, Funeral Service.
 
-**Description (720 chars, limit 750):**
+**Description (limit 750 characters):**
 
-> The London Choral Service provides professional singers, choirs, and instrumentalists for funerals, weddings, memorials, Christmas carol services, and corporate events across the UK. Our musicians are prize-winning graduates of the Royal Academy of Music, the Royal College of Music, and Britain's leading conservatoires; their credits include the coronation of King Charles III, the Royal Albert Hall, Westminster Abbey, and the BBC Proms. A soloist starts from £250 and choirs from £1,150 (four voices) to £3,000 (twelve-voice chorus), with the same rates in December. Every booking is arranged personally by our Artistic Director, Luca Wetherall, Tutor in Music at the University of Oxford. Founded and based in London.
+> The London Choral Service provides professional choirs for weddings, funerals, memorial services, Christmas carol singing and corporate events in London, the home counties and beyond. A Small Choir of four voices costs £1,150, a sextet £1,600, a choir of eight £2,000 and a twelve-voice chorus £3,000, with an organist or pianist for £250. Our singers trained at the Royal Academy of Music, the Royal College of Music and Britain's other leading conservatoires, and have sung at the coronation of King Charles III, Westminster Abbey and the BBC Proms. Luca Wetherall, Tutor in Music at the University of Oxford, arranges every booking, and you get a written quote before you book.
 
-**Services to list:** Funeral singers · Wedding choir · Memorial service music · Christmas carol services · Carol singers for hire · Corporate event choir · Organist and accompanist hire.
+**Services to list:** Wedding choir · Funeral choir · Memorial service music · Christmas carol singers · Carol services · Corporate event choir · Organist and pianist hire.
 
 ## Encore Musicians profile
 
-**Headline:** Conservatoire-trained singers and choirs for funerals, weddings, and carol services
+**Headline:** Professional choirs for weddings, funerals and carol services
 
 **Bio:**
 
-> We are a small, hand-picked ensemble of professional singers directed by Luca Wetherall, Tutor in Music at the University of Oxford. Our members are prize-winning graduates of the Royal Academy of Music, the Royal College of Music, and Britain's leading music colleges, with credits including the coronation of King Charles III, Westminster Abbey, the Royal Albert Hall, and the BBC Proms.
+> We are a small ensemble of professional singers, hand-picked and directed by Luca Wetherall, Tutor in Music at the University of Oxford. Our singers trained at the Royal Academy of Music, the Royal College of Music and Britain's other leading conservatoires, and have sung at the coronation of King Charles III, Westminster Abbey, the Royal Albert Hall and the BBC Proms.
 >
-> We sing at funerals, weddings, memorials, Christmas carol services, and corporate events across the UK — from a single voice in a crematorium chapel to a twelve-voice chorus in a cathedral. We handle repertoire, rehearsals, and liaison with your venue, clergy, or funeral director, and we arrive early, warmed up, and rehearsed. Repertoire spans sacred and classical music, hymns, and pop arranged for voices; if there is a piece you want that we do not already sing, we arrange it and send you a recording before the day.
+> We sing at weddings, funerals, memorials, Christmas carol services and corporate events, as a choir of four voices or a chorus of up to twelve. We plan the repertoire with you, rehearse it, and agree timings with your venue, clergy or funeral director. We sing sacred and classical music, hymns, and pop arranged for voices. If you want a piece we don't yet sing, we arrange it and send you a recording before the day.
 
-**Pricing to enter:** soloist from £250; choirs from £1,150 (four voices) to £3,000 (twelve). Accompanist from £225 when added to a booking. Same rates in December. Prices include all fees and taxes; travel costs may apply beyond Greater London.
+**Pricing:** choirs from £1,150 (four voices) to £3,000 (twelve). Organist or pianist £250. No VAT is added. Travel beyond Greater London is quoted with the booking.
 
 ## Poptop profile
 
 **Short pitch:**
 
-> Professional singers and choirs for ceremonies people remember: funerals handled with care at short notice, wedding music from processional to recessional, and a cappella carol singers for offices, hotels, and residents' events. Conservatoire-trained musicians whose credits include the coronation of King Charles III and the BBC Proms, directed personally by an Oxford academic. Soloist from £250; choirs from £1,150. The price quoted is the price paid.
+> Professional choirs for weddings, funerals and Christmas events. At a funeral, four voices lead the hymns and sing during the service, and we can often help at short notice. At a wedding we sing from the processional to the recessional. In December our a cappella carol singers perform at offices, hotel lobbies and residents' evenings. Our singers' credits include the coronation of King Charles III and the BBC Proms. Choirs from £1,150, with a written quote before you book.
 
-## Bark / Add to Event (short bio)
+## Bark / Add to Event (short bio; skipped for now, kept for reference)
 
-> The London Choral Service supplies professional singers, choirs, and instrumentalists for funerals, weddings, and Christmas events across the UK. Musicians from the Royal Academy and Royal College of Music; public liability insurance; a written quote with everything included. Soloist from £250, choirs from £1,150.
+> The London Choral Service provides professional choirs for weddings, funerals and Christmas events in London and the home counties. Our singers trained at the Royal Academy and Royal College of Music, and we carry public liability insurance. Choirs start at £1,150 for four voices, and you get a written quote before you book.
 
-## Hitched profile (wedding market, §2)
+## Hitched profile
 
-**Headline:** Wedding choirs and singers — one voice to a twelve-voice chorus
+**Headline:** Wedding choirs, from four voices to a twelve-voice chorus
 
 **About:**
 
-> We sing weddings: the processional as you walk in, hymns the whole congregation can hold onto, a solo during the signing of the register, and a recessional to carry you back down the aisle. Our singers are prize-winning graduates of the Royal Academy of Music, the Royal College of Music, and Britain's leading conservatoires, directed personally by Luca Wetherall, Tutor in Music at the University of Oxford.
+> We sing church and civil weddings: the processional as you walk in, hymns your guests can follow, an anthem while you sign the register, and a recessional as you leave. Our singers trained at the Royal Academy of Music, the Royal College of Music and Britain's other leading conservatoires. Luca Wetherall, Tutor in Music at the University of Oxford, directs every booking.
 >
-> We work in churches and licensed venues across the UK, liaise with your organist, vicar, or coordinator, and arrive early and rehearsed. Repertoire runs from Renaissance motets to pop arranged for voices; if you want a piece we do not already sing, we arrange it and send you a recording before the day.
+> We sing in churches and licensed venues across London, the home counties and beyond. We talk to your organist, vicar or coordinator, and arrive early and rehearsed. Our repertoire runs from Renaissance motets to pop arranged for voices. If you want a piece we don't yet sing, we arrange it and send you a recording before the day.
 
-**Price guide:** soloist from £250; choirs from £1,150 (four voices) to £3,000 (twelve). The written quote includes everything; travel costs may apply beyond Greater London.
+**Price guide:** a Small Choir of four voices costs £1,150, a sextet £1,600 and a choir of eight £2,000. Add an organist for £250. No VAT is added; travel beyond Greater London is quoted with the booking.
 
-## Bridebook profile (§2)
+## Bridebook profile
 
-> Professional wedding choirs and singers — conservatoire-trained musicians whose credits include the coronation of King Charles III, Westminster Abbey, and the BBC Proms. One voice to a twelve-voice chorus, in church or civil venues, with repertoire from sacred classics to pop arranged for choir. Soloist from £250; choirs from £1,150. Directed personally by an Oxford academic; the quote you receive includes everything.
+> Professional wedding choirs, from four voices to a twelve-voice chorus, for church and civil ceremonies. Our singers have sung at the coronation of King Charles III, Westminster Abbey and the BBC Proms. We plan the music with you, from sacred classics to pop arranged for choir. A Small Choir of four costs £1,150 and a choir of eight £2,000, and you get a written quote before you book.
 
-## FuneralGuide listing (§2)
+## whiteballoon and other funeral directories
 
-> We provide singers and instrumentalists for funerals, memorials, and committals across the UK — a single voice in a crematorium chapel, a quartet to lead the hymns, or a full choir in church. We take bookings at short notice, liaise directly with the funeral director and clergy on timings and the order of service, and arrive early and rehearsed. A soloist starts from £250 and a small choir of four from £1,150; the written quote includes everything. Families can pay us directly, or we can invoice the funeral home.
+> We provide professional choirs for funerals, memorials and committals in London and the home counties. Four voices lead the hymns and sing during the service; a larger choir suits a full church. We take bookings at short notice, and agree timings and the order of service with the funeral director and clergy. A Small Choir of four costs £1,150. Families can pay us directly, or we can invoice the funeral director.
 
-## Yell listing (§2)
+## Yell, Bing Places and Apple Business Connect
 
-> The London Choral Service provides professional singers, choirs, and instrumentalists for funerals, weddings, memorials, Christmas carol services, and corporate events across the UK. Conservatoire-trained musicians; public liability insurance; soloist from £250, choirs from £1,150. The operating name of Alma Consort Ltd.
+> The London Choral Service provides professional choirs for weddings, funerals, memorial services, Christmas carol singing and corporate events in London, the home counties and beyond. Our singers trained at Britain's leading conservatoires. Choirs start at £1,150 for four voices. The London Choral Service is the trading name of Alma Consort Ltd.
 
-## GBP seasonal posts (§9.1)
+## GBP seasonal post
 
-**September post — link to https://londonchoralservice.com/christmas.html:**
+**November post, linking to https://londonchoralservice.com/carol-singers.html** *(adjust the availability line to the real diary before posting)*:
 
-> Company carol services, hotel lobby carols, and residents' events for December are booking now. Our December diary usually closes by mid-September, and the second and third weeks go first. A small choir of four is £1,150, a sextet £1,600, and a twelve-voice chorus £3,000 — the same rates as the rest of the year. Tell us your date and venue and we will come back with availability and a written quote.
-
-**November post — link to https://londonchoralservice.com/carol-singers.html** *(adjust the availability line to the real diary before posting)*:
-
-> [Late availability for carol singers this December: weekday lunchtime and early-evening slots remain.] Four a cappella voices from £1,150, roaming or in sets, for offices, hotel lobbies, switch-ons, and residents' evenings. Standard rates through December, with a premium only on Christmas Eve and Christmas Day.
+> [Late availability for carol singers this December: weekday lunchtime and early-evening slots remain.] Four a cappella voices from £1,150, roaming or in sets, for offices, hotel lobbies, switch-ons and residents' evenings. Standard rates through December, with a premium only on Christmas Eve and Christmas Day.
 
 ## Review-request emails (§3 cadence)
 
-**Day 30 — to the booker:**
+The enquiry assistant drafts one review request 3–14 days after a paid-in-full event (never to a funeral client). These templates are for a hand-sent follow-up.
+
+**Day 30, to the booker:**
 
 > Subject: A small favour after [date]
 >
@@ -97,17 +128,17 @@ Whatever address and phone format GBP ends up with is the master. Copy it charac
 > Luca Wetherall
 > The London Choral Service
 
-**Day 60 — if no review:**
+**Day 60, if no review:**
 
 > Subject: How was the music, honestly?
 >
 > Dear [name],
 >
-> A month on from [event], I wanted to ask how you felt the music went — including anything we could have done better. If you were happy with it, a sentence or two on Google would mean a great deal: [GBP review link]. If something fell short, reply to this email and tell me directly.
+> A month on from [event], I wanted to ask how you felt the music went, including anything we could have done better. If you were happy with it, a sentence or two on Google would mean a great deal: [GBP review link]. If something fell short, reply to this email and tell me directly.
 >
 > Luca
 
-**Day 90 — final touch:**
+**Day 90, final touch:**
 
 > Subject: One last note from us
 >
@@ -121,7 +152,8 @@ Whatever address and phone format GBP ends up with is the master. Copy it charac
 ## Rules that apply off-site (from the house claim gates)
 
 - Never state a roster size ("150+ singers" is a competitor's line and a banned claim).
-- Never claim VAT registration, and never state prices exclude VAT. Say "prices include all fees and taxes" — that is the site's own wording.
+- Alma Consort Ltd is not VAT-registered. Say "No VAT is added"; never "prices include VAT", "include all fees and taxes" or "plus VAT".
 - No star-rating or "5-star" claims anywhere.
-- Quote only figures on `pricing.html`, and update listings in the same pass whenever those prices change.
-- No incentives for reviews, ever — both Google and Trustpilot delist for it.
+- Quote only figures on `pricing.html`, and update every listing in the same pass whenever those prices change.
+- London cathedrals and Westminster Abbey: name them only as places the singers have sung, never as choirs we join or add voices to.
+- No incentives for reviews, ever: both Google and Trustpilot delist for it.

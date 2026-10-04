@@ -1195,6 +1195,7 @@
       border: none;
       padding: 0;
       margin: 0;
+      min-width: 0; /* a fieldset otherwise grows to its widest child (the captcha) */
     }
     
     .form-field {
@@ -1292,6 +1293,20 @@
     
     .form-error[data-visible="true"] {
       display: block;
+    }
+    
+    /* hCaptcha's checkbox is a fixed 302px iframe, wider than the 272px form on
+       a 320px phone. js/form.js asks for the compact widget there; if hCaptcha
+       rendered before it could, shrink the full-size one to fit. The line box
+       keeps the unscaled width, so the wrapper clips it (nothing visible). */
+    @media (max-width: 349px) {
+      .h-captcha:not([data-size="compact"]) {
+        overflow: hidden;
+      }
+      .h-captcha:not([data-size="compact"]) iframe {
+        transform: scale(0.9);
+        transform-origin: 0 0;
+      }
     }
     
     .form-status {
@@ -1712,6 +1727,58 @@
     /* .video-embed clips overflow, so the global outline (drawn outside) is
        invisible here: draw the focus ring inside the thumbnail instead. */
     .video-thumb:focus-visible {
+      outline: 3px solid #fff;
+      outline-offset: -6px;
+      box-shadow: inset 0 0 0 3px var(--color-accent);
+    }
+    
+    /* The playing film (js/video.js) is taller than its 16:9 frame, which
+       clips it: YouTube letterboxes the picture to the full width, so the frame
+       shows all of it, while the title bar drawn at the player's top and the
+       logo and "Watch on YouTube" bar at its bottom land outside the frame. */
+    .video-embed iframe.video-frame {
+      top: -5rem;
+      height: calc(100% + 10rem);
+    }
+    
+    /* Laid over a playing film (js/video.js) so YouTube's hover controls never
+       show. It shows the thumbnail until the film is playing (is-loading) and
+       again when paused, covering YouTube's loading and pause screens. */
+    .video-shield {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      cursor: pointer;
+    }
+    
+    .video-shield img,
+    .video-shield .play-btn {
+      display: none;
+    }
+    
+    .video-shield.is-loading img,
+    .video-shield.is-paused img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    
+    .video-shield.is-paused .play-btn {
+      display: block;
+    }
+    
+    .video-shield:hover .play-btn circle,
+    .video-shield:focus-visible .play-btn circle {
+      fill: var(--color-accent);
+      stroke: var(--color-accent);
+    }
+    
+    .video-shield:focus-visible {
       outline: 3px solid #fff;
       outline-offset: -6px;
       box-shadow: inset 0 0 0 3px var(--color-accent);
@@ -2821,6 +2888,19 @@
             <div class="form-field">
               <label for="message">Details</label>
               <textarea id="message" name="message" rows="5" placeholder="Where in the building, how many residents you expect, whether you want singing along, anything else."></textarea>
+            </div>
+            <div class="form-field">
+              <label for="hear">How did you hear of us? <span class="optional">(optional)</span></label>
+              <select id="hear" name="hear">
+                <option value="" selected>Please choose</option>
+                <option>Searching on Google</option>
+                <option>A Google ad</option>
+                <option>Recommended by someone</option>
+                <option>A funeral director</option>
+                <option>A wedding planner or venue</option>
+                <option>A directory or listings site</option>
+                <option>Other</option>
+              </select>
             </div>
             <div class="h-captcha" data-captcha="true"></div>
             <p class="form-error" id="captcha-error" role="alert">Please tick the box above to confirm you&rsquo;re not a robot, then try again.</p>

@@ -8,6 +8,16 @@
   var btnLabel   = submitBtn ? submitBtn.textContent : 'Send enquiry';
   var redirectUrl = form.getAttribute('data-redirect') || '/thank-you.html';
 
+  // hCaptcha's normal checkbox is a fixed 302px iframe; on a 320px phone the
+  // form is narrower and the page scrolls sideways. Ask for the compact
+  // widget (158px) wherever the normal one won't fit. hCaptcha reads
+  // data-size when it renders, so set it only while its script has yet to
+  // run; css/components.css shrinks a full-size widget that got there first.
+  var captchaBox = form.querySelector('.h-captcha');
+  if (captchaBox && !window.hcaptcha && captchaBox.clientWidth < 302) {
+    captchaBox.setAttribute('data-size', 'compact');
+  }
+
   // The visitor's own occasion choice beats the page's default (?from= on the
   // redirect), so a hotel enquiry about a switch-on isn't logged as "christmas".
   function leadOccasion() {

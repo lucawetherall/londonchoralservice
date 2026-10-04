@@ -1195,6 +1195,7 @@
       border: none;
       padding: 0;
       margin: 0;
+      min-width: 0; /* a fieldset otherwise grows to its widest child (the captcha) */
     }
     
     .form-field {
@@ -1292,6 +1293,20 @@
     
     .form-error[data-visible="true"] {
       display: block;
+    }
+    
+    /* hCaptcha's checkbox is a fixed 302px iframe, wider than the 272px form on
+       a 320px phone. js/form.js asks for the compact widget there; if hCaptcha
+       rendered before it could, shrink the full-size one to fit. The line box
+       keeps the unscaled width, so the wrapper clips it (nothing visible). */
+    @media (max-width: 349px) {
+      .h-captcha:not([data-size="compact"]) {
+        overflow: hidden;
+      }
+      .h-captcha:not([data-size="compact"]) iframe {
+        transform: scale(0.9);
+        transform-origin: 0 0;
+      }
     }
     
     .form-status {
@@ -1712,6 +1727,58 @@
     /* .video-embed clips overflow, so the global outline (drawn outside) is
        invisible here: draw the focus ring inside the thumbnail instead. */
     .video-thumb:focus-visible {
+      outline: 3px solid #fff;
+      outline-offset: -6px;
+      box-shadow: inset 0 0 0 3px var(--color-accent);
+    }
+    
+    /* The playing film (js/video.js) is taller than its 16:9 frame, which
+       clips it: YouTube letterboxes the picture to the full width, so the frame
+       shows all of it, while the title bar drawn at the player's top and the
+       logo and "Watch on YouTube" bar at its bottom land outside the frame. */
+    .video-embed iframe.video-frame {
+      top: -5rem;
+      height: calc(100% + 10rem);
+    }
+    
+    /* Laid over a playing film (js/video.js) so YouTube's hover controls never
+       show. It shows the thumbnail until the film is playing (is-loading) and
+       again when paused, covering YouTube's loading and pause screens. */
+    .video-shield {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      cursor: pointer;
+    }
+    
+    .video-shield img,
+    .video-shield .play-btn {
+      display: none;
+    }
+    
+    .video-shield.is-loading img,
+    .video-shield.is-paused img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    
+    .video-shield.is-paused .play-btn {
+      display: block;
+    }
+    
+    .video-shield:hover .play-btn circle,
+    .video-shield:focus-visible .play-btn circle {
+      fill: var(--color-accent);
+      stroke: var(--color-accent);
+    }
+    
+    .video-shield:focus-visible {
       outline: 3px solid #fff;
       outline-offset: -6px;
       box-shadow: inset 0 0 0 3px var(--color-accent);
@@ -2711,6 +2778,19 @@
       },
       {
         "@type": "VideoObject",
+        "name": "It’s the Most Wonderful Time of the Year — Full Choir",
+        "description": "Live performance by The London Choral Service.",
+        "thumbnailUrl": "https://img.youtube.com/vi/MyDf9cMp0gk/sddefault.jpg",
+        "uploadDate": "2026-09-30",
+        "duration": "PT1M50S",
+        "contentUrl": "https://www.youtube.com/watch?v=MyDf9cMp0gk",
+        "embedUrl": "https://www.youtube-nocookie.com/embed/MyDf9cMp0gk",
+        "publisher": {
+          "@id": "https://londonchoralservice.com/#organization"
+        }
+      },
+      {
+        "@type": "VideoObject",
         "name": "Carol of the Bells — Full Choir",
         "description": "Live performance by The London Choral Service.",
         "thumbnailUrl": "https://img.youtube.com/vi/dGYqQf6BDAk/maxresdefault.jpg",
@@ -2813,12 +2893,12 @@
         <h1>Hire carol singers<br><span class="h1-sub">Professional singers for parties, receptions, and December events</span></h1>
         <div class="hero-video">
           <div class="video-embed">
-            <button class="video-thumb" aria-label="Play Carol of the Bells" data-video="dGYqQf6BDAk">
-              <img src="https://img.youtube.com/vi/dGYqQf6BDAk/maxresdefault.jpg" alt="Carol of the Bells &mdash; The London Choral Service" fetchpriority="high" width="1280" height="720">
+            <button class="video-thumb" aria-label="Play It&rsquo;s the Most Wonderful Time of the Year" data-video="MyDf9cMp0gk">
+              <img src="https://img.youtube.com/vi/MyDf9cMp0gk/sddefault.jpg" alt="It&rsquo;s the Most Wonderful Time of the Year &mdash; The London Choral Service" fetchpriority="high" width="640" height="480">
               <svg class="play-btn" viewBox="0 0 56 56" aria-hidden="true"><circle cx="28" cy="28" r="27"/><path d="M23 19v18l15-9z"/></svg>
             </button>
           </div>
-          <p class="video-caption">Carol of the Bells, sung by our full choir</p>
+          <p class="video-caption">It&rsquo;s the Most Wonderful Time of the Year, sung by our full choir</p>
         </div>
         <div class="hero-text">
           <p class="guide-meta">By Luca Wetherall, Artistic Director &amp; Tutor in Music, University of Oxford</p>
@@ -2891,7 +2971,18 @@
     <section class="section">
       <div class="prose">
         <h2>Hear our musicians</h2>
-        <p>The first two recordings are from a Christmas set. The hymns below them were taken from services we sang rather than from a carol programme, but they are the same singers and the same sound you would hear at a carol booking.</p>
+        <p>The first three recordings are from our Christmas sets. The hymns below them were taken from services we sang rather than from a carol programme, but they are the same singers and the same sound you would hear at a carol booking.</p>
+
+        <article class="track">
+          <h3 class="track-title">It&rsquo;s the Most Wonderful Time of the Year <span class="track-meta">&mdash; Full Choir</span></h3>
+          <p class="track-description">The Andy Williams song from 1963, sung by eight voices. We put it in sets for office parties and hotel receptions, between the traditional carols.</p>
+          <div class="video-embed">
+            <button class="video-thumb" aria-label="Play It&rsquo;s the Most Wonderful Time of the Year" data-video="MyDf9cMp0gk">
+              <img src="https://img.youtube.com/vi/MyDf9cMp0gk/sddefault.jpg" alt="It&rsquo;s the Most Wonderful Time of the Year — The London Choral Service" loading="lazy" width="640" height="480">
+              <svg class="play-btn" viewBox="0 0 56 56" aria-hidden="true"><circle cx="28" cy="28" r="27"/><path d="M23 19v18l15-9z"/></svg>
+            </button>
+          </div>
+        </article>
 
         <article class="track">
           <h3 class="track-title">Carol of the Bells <span class="track-meta">&mdash; Full Choir</span></h3>
@@ -3069,6 +3160,19 @@
             <div class="form-field">
               <label for="message">Your message</label>
               <textarea id="message" name="message" rows="5"></textarea>
+            </div>
+            <div class="form-field">
+              <label for="hear">How did you hear of us? <span class="optional">(optional)</span></label>
+              <select id="hear" name="hear">
+                <option value="" selected>Please choose</option>
+                <option>Searching on Google</option>
+                <option>A Google ad</option>
+                <option>Recommended by someone</option>
+                <option>A funeral director</option>
+                <option>A wedding planner or venue</option>
+                <option>A directory or listings site</option>
+                <option>Other</option>
+              </select>
             </div>
             <div class="h-captcha" data-captcha="true"></div>
             <p class="form-error" id="captcha-error" role="alert">Please tick the box above to confirm you&rsquo;re not a robot, then try again.</p>

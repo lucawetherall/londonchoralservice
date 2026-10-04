@@ -727,7 +727,7 @@ def needs_you(panels, bank_unreachable=False):
                 the invoice), grouped: confirm them before paying;
       followups pipeline.followups_due (due by today only), grouped;
       runs      the Health page's stale run files that have been written before (one never written is a run not
-                set up yet, which Health shows), grouped;   backup  a backup key set up but no backup in 36 hours.
+                set up yet, which Health shows), grouped;   backup  a backup key set up but no backup in 36 hours, or the last run failed.
 
     The count rule: a row counts the items it stands for, 1 for a single row and N for a grouped row, which says
     its N in its own words; the lede is the sum, so it always equals the numbers the rows show. Nothing is counted
@@ -820,7 +820,7 @@ def needs_you(panels, bank_unreachable=False):
     if stale:
         rows.append({"kind": "runs", "count": len(stale), "tone": "bad", "items": stale})
     backup = value("backup")
-    if backup and backup.get("configured") and backup.get("stale"):
+    if backup and backup.get("configured") and (backup.get("stale") or backup.get("error")):
         rows.append({"kind": "backup", "count": 1, "tone": "bad", "item": backup})
     return rows, missing
 

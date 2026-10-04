@@ -438,6 +438,41 @@
       outline: none;
       box-shadow: inset 0 0 0 3px var(--parchmentLight);
     }
+    /* The playing film (js/video.js) is taller than the frame, which clips
+       YouTube's title bar and logo; the shield over it hides the hover UI
+       and shows the thumbnail while loading and when paused. */
+    #voicing-media iframe.video-frame {
+      top: -5rem;
+      height: calc(100% + 10rem);
+    }
+    .video-shield {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      cursor: pointer;
+    }
+    .video-shield img,
+    .video-shield .play-btn { display: none; }
+    .video-shield.is-paused { background: var(--choirStall); }
+    .video-shield.is-loading img,
+    .video-shield.is-paused img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      opacity: .88;
+    }
+    .video-shield.is-paused .play-btn { display: block; }
+    .video-shield:hover .play-btn,
+    .video-shield:focus-visible .play-btn { opacity: .85; }
+    .video-shield:focus-visible {
+      outline: none;
+      box-shadow: inset 0 0 0 3px var(--parchmentLight);
+    }
     #voicing-media:empty + .pe-media-caption { display: none; }
     .pe-media-caption { margin-top: .75rem; }
 

@@ -15,7 +15,8 @@ SKIP_DIRS = {'command_centre', 'partials', 'node_modules', 'graphify-out', 'docs
 PROMO = 'Lov_NegzVhM'
 ABIDE = 'G9-R6k5n7Io'
 UBI = '-GQaQEGhYEs'
-BELLS = 'dGYqQf6BDAk'
+# It's the Most Wonderful Time of the Year (re-upload, 30 Sep 2026).
+WONDERFUL = 'UOy498rsonU'
 
 HERO_FILMS = {
     'index.html': PROMO,
@@ -28,9 +29,9 @@ HERO_FILMS = {
     'for-hotels.html': PROMO,
     'for-livery-companies.html': PROMO,
     'for-property-managers.html': PROMO,
-    'christmas.html': BELLS,
-    'carol-singers.html': BELLS,
-    'christmas-pricing.html': BELLS,
+    'christmas.html': WONDERFUL,
+    'carol-singers.html': WONDERFUL,
+    'christmas-pricing.html': WONDERFUL,
     'for-funeral-directors.html': ABIDE,
     'for-wedding-planners.html': UBI,
 }
@@ -40,7 +41,7 @@ CAPTIONS = {
     PROMO: None,
     ABIDE: 'Abide With Me, sung by our full choir',
     UBI: 'Ubi Caritas by Ola Gjeilo, sung by a quintet',
-    BELLS: 'Carol of the Bells, sung by our full choir',
+    WONDERFUL: 'It&rsquo;s the Most Wonderful Time of the Year, sung by our full choir',
 }
 
 NEW_PLAY_BTN = ('<svg class="play-btn" viewBox="0 0 56 56" aria-hidden="true">'

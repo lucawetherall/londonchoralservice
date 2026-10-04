@@ -62,7 +62,7 @@
     {% elif r.kind == "runs" %}
       <p class="need-text"><a href="/health">{{ r.count }} {{ "run hasn't" if r.count == 1 else "runs haven't" }} written on time</a>: <span class="muted">{{ r["items"]|map(attribute="label")|join(", ") }}</span></p>
     {% elif r.kind == "backup" %}{% set b = r.item %}
-      <p class="need-text"><a href="/health#backup">{% if b.at is none %}No backup yet{% else %}The last backup is over 36 hours old ({{ b.at|when }}){% endif %}</a>: check the nightly job, or tap Back up now.</p>
+      <p class="need-text"><a href="/health#backup">{% if b.error %}The last backup run failed ({{ b.error }}){% elif b.at is none %}No backup yet{% else %}The last backup is over 36 hours old ({{ b.at|when }}){% endif %}</a>: check the nightly job, or tap Back up now.</p>
     {% endif %}
     </li>
   {% endfor %}

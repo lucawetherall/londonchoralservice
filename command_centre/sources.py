@@ -273,8 +273,9 @@ BACKUP_STALE = datetime.timedelta(hours=36)
 
 def backup_status(now):
     """The last backup, from <private>/command-centre/backup-state.json (written by scripts/reports/cc_backup.py):
-    {"at", "age", "name", "size", "stale", "configured"}. The backup folder itself isn't listed (iCloud may hold
-    it offline). Only the public recipient's presence is checked; nothing secret is read."""
+    {"at", "age", "name", "size", "stale", "configured", "error", "failed_at"} ("error" only when a run failed after
+    the last good backup). The backup folder itself isn't listed (iCloud may hold it offline). Only the public
+    recipient's presence is checked; nothing secret is read."""
     try:
         cfg = auth.load_config()
     except (OSError, ValueError):
@@ -287,8 +288,15 @@ def backup_status(now):
     except ValueError:
         at = None
     age = now - at if at else None
+    try:
+        failed = (datetime.datetime.fromisoformat(str(state.get("failed_at"))).astimezone(LONDON)
+                  if state.get("failed_at") else None)
+    except ValueError:
+        failed = None
+    error = str(state.get("error") or "")[:200] if failed and (at is None or failed > at) else ""
     return {"at": at, "age": age, "name": str(state.get("name") or "")[:80], "size": state.get("size"),
-            "stale": age is None or age > BACKUP_STALE, "configured": bool(block.get("recipient"))}
+            "stale": age is None or age > BACKUP_STALE, "configured": bool(block.get("recipient")),
+            "error": error, "failed_at": failed if error else None}
 
 
 def age_words(age):
@@ -300,6 +308,9 @@ def backup_check(now):
     b = backup_status(now)
     if not b["configured"]:
         return check("Backup", False, "no backup key yet: run scripts/reports/cc_backup.py init on the Mac")
+    if b["error"]:
+        last = f"last good backup {age_words(b['age'])}" if b["at"] else "no good backup yet"
+        return check("Backup", False, f"the last run failed ({b['error']}); {last}: tap Back up now to retry")
     if b["at"] is None:
         return check("Backup", False, "no backup yet: tap Back up now, then install the nightly LaunchAgent")
     detail = f"last {age_words(b['age'])}" + (" (over 36 hours: check the nightly LaunchAgent)" if b["stale"] else "")
