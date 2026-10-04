@@ -90,8 +90,11 @@
     {% else %}
     <p><span class="badge {{ 'bad' if b.stale else 'ok' }}">{{ 'over 36 hours' if b.stale else 'ok' }}</span> Last backup {{ b.at|when }}{% if b.age %} ({{ (b.age.total_seconds() // 3600)|int }} hours ago){% endif %}.</p>
     {% endif %}
+    {% if b.configured and b.error %}
+    <p><span class="badge bad">failed</span> The last run failed ({{ b.error }}){% if b.failed_at %}, {{ b.failed_at|when }}{% endif %}. Tap Back up now to try again.</p>
+    {% endif %}
   {% endif %}
-  <p class="muted">Every night at 02:30: all of ~/lcs-private (the mirror, runs and caches left out), encrypted with age, 14 days kept. Only the key in your password manager opens it.</p>
+  <p class="muted">Every night at 02:30: a full backup of ~/lcs-private to iCloud Drive, encrypted with age (only the app's mirror and run folders, copies of the public code, are left out). Kept every night for 14 days, weekly for 8 weeks and monthly for 7 years. Only the key in your password manager opens it.</p>
   {{ m.action_button("backup-now", "Back up now") }}
 </section>
 

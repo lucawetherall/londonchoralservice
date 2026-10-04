@@ -11,15 +11,18 @@
   disk. Refused when a recipient exists already, unless --replace (older backups still need the older key), and
   refused when stdout isn't a terminal, so the key can't land in a pipe, a log or a tool's transcript (Claude's
   Bash tool is denied `cc_backup.py init` in .claude/settings.json as well).
-- **run** writes a tar.gz of the private folder, encrypted to the recipient, as
+- **run** writes a full backup: a tar.gz of the whole private folder, encrypted to the recipient, as
   lcs-backup-YYYYMMDD-HHMMSS.tar.gz.age (mode 600) in the target folder: the config's `backup.target`, by default
   ~/Library/Mobile Documents/com~apple~CloudDocs/LCS-backups (iCloud Drive). Left out: the backups themselves,
-  command-centre/runs/, command-centre/cache/ and command-centre/mirror.git (large and re-creatable), and
-  anything that isn't a regular file, folder or symlink (sockets). The tar.gz is streamed through an os.pipe
+  command-centre/runs/ and command-centre/mirror.git (the app's copies of the public GitHub code, re-creatable),
+  and anything that isn't a regular file, folder or symlink (sockets). The tar.gz is streamed through an os.pipe
   into age by a second thread, so no plaintext copy is ever written to disk; the ciphertext goes to a .part file
-  that is renamed when complete. Backups older than 14 days are removed afterwards (only files with that exact
-  name, never the newest), and so are .part files left by an interrupted run more than a day ago. command-centre/backup-state.json records the
-  time, name, size and sha256 for the Health page. One run at a time.
+  that is renamed when complete. Retention afterwards (only files with that exact name, never the newest): every
+  backup of the last 14 days, the last of each week for 8 weeks and the last of each month for 7 years (company
+  records are kept for 6 years after the period they cover); .part files left by an interrupted run more than a
+  day ago are removed. command-centre/backup-state.json records the time, name, size and sha256 for the Health
+  page; a failed run adds "error" and "failed_at" to it (the last good backup's fields stay) and posts a macOS
+  notification. One run at a time.
 - **verify** reads the identity from stdin (hidden when typed), decrypts the newest backup through a pipe (never
   to disk), and prints how many entries it holds and their paths. Nothing is extracted.
 
@@ -36,6 +39,7 @@ import os
 import re
 import secrets
 import stat
+import subprocess
 import sys
 import tarfile
 import threading
@@ -50,9 +54,12 @@ LONDON = ZoneInfo("Europe/London")
 DEFAULT_TARGET = "~/Library/Mobile Documents/com~apple~CloudDocs/LCS-backups"
 NAME_RE = re.compile(r"^lcs-backup-(\d{8})-(\d{6})\.tar\.gz\.age$")
 PART_RE = re.compile(r"^\.lcs-backup-\d{8}-\d{6}\.tar\.gz\.age\.[0-9a-f]{8}\.part$")
-KEEP = datetime.timedelta(days=14)
+KEEP = datetime.timedelta(days=14)  # every backup this recent
+KEEP_WEEKS = 8  # the last backup of each of these weeks (the current one included)
+KEEP_MONTHS = 84  # the last backup of each of these months: 7 years
+RETENTION_WORDS = "kept every night for 14 days, weekly for 8 weeks and monthly for 7 years"
 PART_KEEP = datetime.timedelta(days=1)
-EXCLUDE = ("command-centre/runs", "command-centre/cache", "command-centre/mirror.git", "command-centre/backups")
+EXCLUDE = ("command-centre/runs", "command-centre/mirror.git", "command-centre/backups")
 LIST_MAX = 200  # paths printed by verify
 
 
@@ -186,10 +193,33 @@ def name_time(name):
         return None
 
 
+def kept(times, now):
+    """The backup times to keep: the newest; every one within KEEP of `now`; the last of each ISO week within
+    KEEP_WEEKS weeks (the current week counts as one); the last of each calendar month within KEEP_MONTHS months."""
+    times = sorted(times)
+    keep = set(times[-1:])
+    last_of_week, last_of_month = {}, {}
+    for t in times:  # ascending, so each period ends up holding its last backup
+        if now - t <= KEEP:
+            keep.add(t)
+        last_of_week[t.isocalendar()[:2]] = t
+        last_of_month[(t.year, t.month)] = t
+    this_monday = datetime.date.fromisocalendar(*now.isocalendar()[:2], 1)
+    for (year, week), t in last_of_week.items():
+        if (this_monday - datetime.date.fromisocalendar(year, week, 1)).days // 7 < KEEP_WEEKS:
+            keep.add(t)
+    for (year, month), t in last_of_month.items():
+        if (now.year - year) * 12 + (now.month - month) < KEEP_MONTHS:
+            keep.add(t)
+    return keep
+
+
 def prune(target, now, keep_name):
-    """Remove backups (exact name pattern, regular files) older than KEEP, never `keep_name`, and .part files (exact
-    name pattern, regular files) last written more than PART_KEEP ago. Returns the count of backups removed."""
+    """Remove the backups (exact name pattern, regular files) that `kept` doesn't keep, never `keep_name`, and .part
+    files (exact name pattern, regular files) last written more than PART_KEEP ago. Returns the count of backups
+    removed."""
     removed = 0
+    backups = []
     for entry in os.scandir(target):
         if PART_RE.fullmatch(entry.name) and entry.is_file(follow_symlinks=False):
             written = datetime.datetime.fromtimestamp(entry.stat(follow_symlinks=False).st_mtime, LONDON)
@@ -197,9 +227,11 @@ def prune(target, now, keep_name):
                 os.unlink(entry.path)
             continue
         when = name_time(entry.name)
-        if when is None or entry.name == keep_name or not entry.is_file(follow_symlinks=False):
-            continue
-        if now - when > KEEP:
+        if when is not None and entry.is_file(follow_symlinks=False):
+            backups.append((when, entry))
+    keep = kept([when for when, _ in backups], now)
+    for when, entry in backups:
+        if when not in keep and entry.name != keep_name:
             os.unlink(entry.path)
             removed += 1
     return removed
@@ -280,6 +312,31 @@ def run(now=None, private=None):
         return result
     finally:
         os.close(lock)
+
+
+def notify(title, message):
+    """A macOS notification (the nightly run has no one watching it). Quietly nothing elsewhere, or with
+    LCS_NO_NOTIFY set."""
+    if sys.platform != "darwin" or os.environ.get("LCS_NO_NOTIFY"):
+        return
+    script = f"display notification {json.dumps(message, ensure_ascii=False)} with title {json.dumps(title, ensure_ascii=False)}"
+    try:
+        subprocess.run(["/usr/bin/osascript", "-e", script], capture_output=True, timeout=10, check=False)
+    except (OSError, subprocess.SubprocessError):
+        pass
+
+
+def record_failure(detail, now=None):
+    """Add "error" and "failed_at" to the state file, keeping the last good backup's fields."""
+    found = {}
+    try:
+        found = json.loads(state_path().read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        pass
+    state = found if isinstance(found, dict) else {}
+    when = (now or datetime.datetime.now(datetime.timezone.utc)).astimezone(datetime.timezone.utc)
+    state.update(error=str(detail)[:200], failed_at=when.isoformat(timespec="seconds"))
+    write_private_json(state_path(), state)
 
 
 # ---------------------------------------------------------------- verify
@@ -375,10 +432,19 @@ def main(argv=None):
             print("Then: bash command_centre/install.sh --backup   (the nightly LaunchAgent, 02:30)")
             del identity
         elif args.cmd == "run":
-            r = run()
+            try:
+                r = run()
+            except (BackupError, OSError, ValueError) as e:
+                detail = str(e) if isinstance(e, BackupError) else type(e).__name__
+                try:
+                    record_failure(detail)
+                except OSError:
+                    pass
+                notify("LCS backup failed", f"{detail}. The last good backup is still in iCloud Drive.")
+                raise
             print(f"backup written: {r['name']} ({r['size'] / 1e6:,.1f} MB, {r['entries']} entries"
                   f"{', ' + str(r['skipped']) + ' skipped' if r['skipped'] else ''}); "
-                  f"removed {r['removed']} older than 14 days")
+                  f"removed {r['removed']} not needed under the retention ({RETENTION_WORDS})")
         else:
             path, names = verify(read_identity())
             print(f"{os.path.basename(path)}: opens with this key; {len(names)} entries")
