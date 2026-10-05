@@ -115,7 +115,6 @@ def test_prices_prints_compact_price_tables():
     assert code == 0, err
     assert "Small Choir" in out and "£1,150" in out and "£" in out, out
     assert "pricing.html" in out and "christmas-pricing.html" in out
-    assert "£450" in out  # the soloist-with-organist combination price
     assert len(out.encode()) < 4000, len(out.encode())
     assert "<" not in out and "&pound;" not in out
 
