@@ -11,9 +11,10 @@ HAND_CHECK = {"CHECK_PAYMENT": "possible payment", "CHECK_VALUE": "unreadable va
               "PAST_UNMATCHED": "past, unpaid", "PAST_PART_PAID": "past, part paid",
               "NOTED_PAID": "noted paid, not in bank",
               "PAYMENT_ON_CANCELLED": "payment on a cancelled booking", "PAYMENT_AFTER_CLOSE": "payment after paid in full",
-              "ARRANGED": "balance arranged (cash/cheque on the day)"}
+              "ARRANGED": "balance arranged (cash/cheque on the day)",
+              "AWAITING_INVOICE_SENT": "invoice not yet sent, deposit would be overdue"}
 ARRANGED_DAYS = 7  # an arranged cash or cheque balance is a hand check from 7 days before the event
-NO_DEPOSIT = {"DEPOSIT_OVERDUE", "AWAITING_DEPOSIT"}
+NO_DEPOSIT = {"DEPOSIT_OVERDUE", "AWAITING_DEPOSIT", "AWAITING_INVOICE_SENT"}
 
 
 def needs_hand_check(a, today):
@@ -21,6 +22,8 @@ def needs_hand_check(a, today):
     booking (its notes and recorded facts disagree, check_payments.held) always, whatever its state."""
     if a.get("held"):
         return True
+    if a["state"] == "AWAITING_INVOICE_SENT":  # an unsent invoice only once the deposit would have been due
+        return bool(a.get("deposit_late"))
     if a["state"] != "ARRANGED":
         return a["state"] in HAND_CHECK
     horizon = (today + datetime.timedelta(days=ARRANGED_DAYS)).isoformat()

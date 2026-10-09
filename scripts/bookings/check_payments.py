@@ -64,7 +64,10 @@ That note closes the booking like "paid in full YYYY-MM-DD": collect() reports i
 and --apply then adds "paid in full" dated the later of the last payment and the fee note), DEPOSIT_SEEN, BALANCE_DUE (from 3 days before the
 event), AWAITING_DEPOSIT (until the deposit falls due: 7 days after the invoice,
 or 3 days before a short-notice event, never the invoice day), DEPOSIT_OVERDUE
-(future events only), NOTED_PAID (the owner's notes say paid, or an earlier run's
+(future events only), AWAITING_INVOICE_SENT (instead of either of those two while the booking's Zoho Books invoice
+is still a draft, so the client hasn't been sent it: never chased, action none; on the Monday hand check once the
+deposit would have been due. Read from the Command Centre's local Books cache, unsent_invoices; no cache, no
+change),NOTED_PAID (the owner's notes say paid, or an earlier run's
 "deposit seen … (Starling)" with nothing in the feed now; negated or future
 phrases such as "not yet seen", "no payment received", "to be paid" or "asked if
 paid" don't count, but "no chase needed - paid 5 Sep" does. With a deposit in the
@@ -104,7 +107,7 @@ it ("told bank transfer only", "by transfer not cash", "going to pay cash but wi
 transfer"), and a note of the whole fee paid still wins. Never chased or thanked; on the Monday
 hand check from 7 days before the event, or every week when no deposit is in the bank
 or the notes. A possible balance payment in the bank makes it CHECK_PAYMENT instead).
-Only DEPOSIT_OVERDUE and BALANCE_DUE are ever chased; just_received (a confident
+Only DEPOSIT_OVERDUE and BALANCE_DUE are ever chased (never AWAITING_INVOICE_SENT); just_received (a confident
 payment in the last 14 days with no receipt drafted, only in PAID_IN_FULL,
 DEPOSIT_SEEN, BALANCE_DUE or NOTED_PAID) asks for a thank-you, and short_notice
 (event within 10 days of the invoice) asks for the full fee rather than a deposit.
@@ -118,6 +121,7 @@ import argparse
 import datetime
 import json
 import math
+import os
 import re
 import sys
 import urllib.error
@@ -685,6 +689,24 @@ def deposit_due_date(invoice, event):
     return due
 
 
+def books_cache():
+    """The Command Centre's Books cache (cc_sync.py books); LCS_PRIVATE_DIR is read at call time."""
+    return Path(os.environ.get("LCS_PRIVATE_DIR", Path.home() / "lcs-private")) / "command-centre" / "cache" / "books.json"
+
+
+def unsent_invoices(path=None):
+    """Booking refs whose Zoho Books invoice is still a draft, so the client hasn't been sent it (the daily pass
+    marks an invoice sent only once Luca's email carrying it is in Sent). Read from the local cache, no network
+    call. An invoice only moves on from draft, so a stale cache can hold a reminder back a day, never send one
+    early. A missing or unreadable cache gives an empty set: every booking is then assessed as before."""
+    try:
+        data = json.loads(Path(path or books_cache()).read_text())
+        return {str(i["number"]).strip() for i in data["invoices"]
+                if str(i.get("status", "")).lower() == "draft" and str(i.get("number", "")).strip()}
+    except (OSError, ValueError, KeyError, TypeError, AttributeError):
+        return set()
+
+
 def noted_facts(f):
     """(noted part, noted full) from the recorded facts: the noted-paid facts, and a recorded "paid in full" close,
     which the notes' own "paid in full YYYY-MM-DD" says too (its "paid" is a paid word)."""
@@ -718,7 +740,8 @@ def note_readings(r, today=None, facts=None):
                          "receipt": bool(re.search(r"receipt drafted", notes, re.I)) or marked["receipt"]}}
 
 
-def assess(r, paid, today, facts=None):
+def assess(r, paid, today, facts=None, unsent=None):
+    """`unsent`: the refs whose Books invoice hasn't been sent yet (None reads unsent_invoices())."""
     value = money(r)
     f = facts_for(r, today, facts)
     sure = [p for p in paid if p[2] in CONFIDENT]
@@ -775,6 +798,8 @@ def assess(r, paid, today, facts=None):
         state = "CHECK_PAYMENT"
     else:
         state = "DEPOSIT_OVERDUE" if today > deposit_due else "AWAITING_DEPOSIT"
+        if r["booking_ref"] in (unsent_invoices() if unsent is None else unsent):
+            state = "AWAITING_INVOICE_SENT"  # the client has no invoice yet: nothing to chase
     reminded = read["reminded"]
     hold = held(r, today, f)  # notes and recorded facts disagree: the owner resolves it, nothing acts meanwhile
     # the part of the accepted fee that closes the gap: only in PAID_IN_FULL, never more than what is still owed
@@ -807,6 +832,8 @@ def assess(r, paid, today, facts=None):
         # unless the state is settled enough and the confident payments don't exceed the booking's value
         "record_in_books": books if state in BOOKS_STATES and total <= value + 0.01 and not hold else [],
     }
+    if state == "AWAITING_INVOICE_SENT":  # only then, so every other assessment is exactly as before
+        out["deposit_late"] = today > deposit_due  # the Monday hand check lists it from then on
     out["action"] = action_for(out, today)
     if hold:  # only when held, so an assessment with no recorded facts is exactly as before
         out["held"], out["action"] = hold, "hand_check"
@@ -858,6 +885,8 @@ def describe_state(a):
         "PAID_IN_FULL": " · PAID IN FULL" + (f" (£{a['fees']:,.2f} short by fees, accepted)" if a.get("fees") else ""),
         "DEPOSIT_SEEN": "",
         "AWAITING_DEPOSIT": " · awaiting deposit (not yet due)",
+        "AWAITING_INVOICE_SENT": " · invoice still a draft in Books, not yet sent to the client (never chased)"
+                                 + (f"; the deposit would have been due {a['deposit_due']}" if a.get("deposit_late") else ""),
         "BALANCE_DUE": f" · BALANCE £{a['balance']:,.2f} DUE" + (" (reminder already drafted)" if a["reminded"]["balance"] else ""),
         "DEPOSIT_OVERDUE": f" · DEPOSIT OVERDUE since {a['deposit_due']}" + (" (reminder already drafted)" if a["reminded"]["deposit"] else ""),
         "NOTED_PAID": (" · part paid in the bank feed; the ledger notes say the rest was paid" if a["received"]
