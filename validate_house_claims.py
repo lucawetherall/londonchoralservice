@@ -86,6 +86,7 @@ FILES = (
     + glob.glob('compare/*.html')
     + glob.glob('destinations/*.html')
     + glob.glob('destinations/**/*.html')
+    + glob.glob('barbershop-grams/*.html')
     + ['llms.txt']
 )
 
