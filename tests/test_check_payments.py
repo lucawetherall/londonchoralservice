@@ -59,6 +59,44 @@ def test_deposit_overdue_for_future_event():
     assert a["state"] == "DEPOSIT_OVERDUE" and a["deposit_due"] == "2026-09-08"
 
 
+def write_books_cache(invoices):
+    path = cp.books_cache()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps({"generated_at": "2026-09-28T09:00:00+01:00", "invoices": invoices}))
+    return path
+
+
+def test_unsent_invoice_is_never_chased():
+    """A booking whose Books invoice is still a draft (the client was told it comes once they send a PO number):
+    no deposit reminder however overdue, and the Monday hand check only once the deposit would have been due."""
+    r = row("1211", 500, "2026-09-01", "2026-10-30", "PENDING: invoiced")
+    a = cp.assess(r, [], T, unsent={"1211"})
+    assert a["state"] == "AWAITING_INVOICE_SENT" and a["action"] == "none" and a["deposit_late"], a
+    assert "not yet sent" in cp.describe(a) and "would have been due 2026-09-08" in cp.describe(a)
+    early = cp.assess(row("1211", 500, "2026-09-25", "2026-12-12"), [], T, unsent={"1211"})
+    assert early["state"] == "AWAITING_INVOICE_SENT" and early["action"] == "none" and not early["deposit_late"]
+    assert "would have been due" not in cp.describe(early)
+    # another booking's draft changes nothing; a payment in the bank still counts as one
+    assert cp.assess(r, [], T, unsent={"2111"})["state"] == "DEPOSIT_OVERDUE"
+    assert cp.assess(r, [("2026-09-05", 250.0, "reference")], T, unsent={"1211"})["state"] == "DEPOSIT_SEEN"
+
+
+def test_unsent_invoices_read_from_the_books_cache():
+    path = cp.books_cache()
+    try:
+        assert cp.unsent_invoices() == set()  # no cache: every booking is assessed as before
+        write_books_cache([{"number": "1211", "status": "draft"}, {"number": "2111", "status": "partially_paid"},
+                           {"number": "0510", "status": "sent"}])
+        assert cp.unsent_invoices() == {"1211"}
+        r = row("1211", 500, "2026-09-01", "2026-10-30", "PENDING: invoiced")
+        assert cp.assess(r, [], T)["state"] == "AWAITING_INVOICE_SENT"
+        assert cp.assess(dict(r, booking_ref="0510"), [], T)["state"] == "DEPOSIT_OVERDUE"
+        path.write_text("not json")
+        assert cp.unsent_invoices() == set() and cp.assess(r, [], T)["state"] == "DEPOSIT_OVERDUE"
+    finally:
+        path.unlink(missing_ok=True)
+
+
 def test_awaiting_deposit_inside_seven_days():
     assert cp.assess(row("X", 500, "2026-09-25", "2026-10-30", "PENDING: invoiced"), [], T)["state"] == "AWAITING_DEPOSIT"
 

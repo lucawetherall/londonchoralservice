@@ -54,6 +54,7 @@ STATUS_ORDER = pl.STATUS_ORDER
 STATES = {  # payment state -> (words, tone)
     "PAID_IN_FULL": ("paid in full", "ok"), "CLOSED": ("paid in full (closed)", "ok"),
     "DEPOSIT_SEEN": ("deposit in", "ok"), "AWAITING_DEPOSIT": ("awaiting deposit", ""),
+    "AWAITING_INVOICE_SENT": ("invoice not yet sent", "warn"),
     "BALANCE_DUE": ("balance due", "warn"), "DEPOSIT_OVERDUE": ("deposit overdue", "bad"),
     "NOTED_PAID": ("noted paid", "warn"), "CHECK_PAYMENT": ("possible payment: check", "warn"),
     "CHECK_VALUE": ("unreadable value or date", "warn"), "PAST_UNMATCHED": ("past, unpaid", "bad"),

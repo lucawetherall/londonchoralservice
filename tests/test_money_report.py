@@ -15,6 +15,15 @@ T = datetime.date(2026, 9, 28)
 QUIET_SINGERS = {"unpaid": 0, "unpaid_total": 0.0, "oldest_days": 0, "bank_changed": 0}
 
 
+def test_unsent_invoice_is_a_hand_check_only_once_the_deposit_would_be_late():
+    late = {"ref": "1211", "state": "AWAITING_INVOICE_SENT", "balance": 500.0, "event_date": "2026-12-12",
+            "deposit_late": True}
+    early = dict(late, ref="1212", deposit_late=False)
+    lines = mr.summary_lines([late, early], [], QUIET_SINGERS, T)
+    assert "deposits overdue: 0" in lines, lines
+    assert "needs a hand check: 1 (1211 invoice not yet sent, deposit would be overdue)" in lines, lines
+
+
 def test_summary_lines():
     assessments = [
         {"ref": "A", "state": "DEPOSIT_OVERDUE", "balance": 500.0, "event_date": "2026-10-30"},
