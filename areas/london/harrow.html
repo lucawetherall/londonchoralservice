@@ -2480,6 +2480,128 @@
       gap: var(--space-xs) var(--space-lg);
       margin-bottom: var(--space-lg);
     }
+    
+    /* ═══════════════════════════════════
+       Cookie consent sheet (js/consent.js)
+       A full-width sheet at the foot of the window. It never covers the page
+       with an overlay or locks scrolling. Accept and Reject share one style.
+       The same rules sit in partials/private-register.css.html for the
+       private-register pages, so the variables fall back to that palette.
+       --consent-offset (set by js/consent.js) lifts it above the mobile CTA bar.
+       ═══════════════════════════════════ */
+    .consent {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: var(--consent-offset, 0px);
+      z-index: 1000;
+      background-color: var(--color-bg-alt, var(--parchmentLight, #EDE8E1));
+      color: var(--color-text, var(--choirStall, #2C2420));
+      border-top: 1px solid var(--color-rule, var(--limestone, #D6CEC6));
+      box-shadow: 0 -4px 18px rgba(44, 36, 32, 0.12);
+      font-family: var(--font-body, 'Source Serif 4', Georgia, serif);
+      font-size: 1.125rem;
+      line-height: 1.5;
+    }
+    
+    .consent[hidden] {
+      display: none;
+    }
+    
+    .consent:focus {
+      outline: none;
+    }
+    
+    .consent:focus-visible {
+      outline: 2px solid var(--color-text, var(--choirStall, #2C2420));
+      outline-offset: -4px;
+    }
+    
+    .consent__inner {
+      max-width: 72rem;
+      margin: 0 auto;
+      padding: 1.25rem 1.5rem;
+      padding-bottom: calc(1.25rem + env(safe-area-inset-bottom, 0px));
+      display: flex;
+      align-items: center;
+      gap: 1rem 2rem;
+    }
+    
+    .consent__text {
+      flex: 1 1 auto;
+      margin: 0;
+    }
+    
+    .consent__text a {
+      color: inherit;
+      text-decoration: underline;
+      text-underline-offset: 0.15em;
+    }
+    
+    .consent__actions {
+      flex: 0 0 auto;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+    }
+    
+    .consent__btn {
+      min-width: 9rem;
+      min-height: 2.75rem;
+      margin: 0;
+      padding: 0.75rem 1.5rem;
+      font-family: var(--font-heading, var(--font-display, 'Cormorant Garamond', Georgia, serif));
+      font-size: 1.125rem;
+      font-weight: 500;
+      letter-spacing: 0.02em;
+      line-height: 1.2;
+      color: var(--color-bg, var(--parchment, #F7F3EE));
+      background-color: var(--color-text, var(--choirStall, #2C2420));
+      border: 1px solid var(--color-text, var(--choirStall, #2C2420));
+      border-radius: 0;
+      cursor: pointer;
+    }
+    
+    .consent__btn:hover {
+      text-decoration: underline;
+      text-underline-offset: 0.2em;
+    }
+    
+    .consent__btn:focus-visible {
+      outline: 2px solid var(--color-text, var(--choirStall, #2C2420));
+      outline-offset: 3px;
+    }
+    
+    /* Reopened from "Cookie choices": the current answer is marked the same way
+       on either button. */
+    .consent__btn[aria-pressed="true"] {
+      text-decoration: underline;
+      text-underline-offset: 0.2em;
+    }
+    
+    @media (max-width: 760px) {
+      .consent__inner {
+        flex-direction: column;
+        align-items: stretch;
+        padding: 1rem;
+        padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+      }
+      .consent__btn {
+        min-width: 0;
+      }
+    }
+    
+    @media (max-width: 340px) {
+      .consent__actions {
+        grid-template-columns: 1fr;
+      }
+    }
+    
+    @media print {
+      .consent {
+        display: none !important;
+      }
+    }
     /* ═══════════════════════════════════
        Print Styles
        ═══════════════════════════════════ */
