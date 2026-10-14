@@ -6,12 +6,16 @@ puts it in the Drafts folder of office@londonchoralservice.com over IMAP (APPEND
 there is no SMTP code here. The IMAP writes are APPEND to Drafts and, for `attach` only, one MOVE of Luca's
 original draft to Trash once its copy with the attachments has been read back and checked (owner decision,
 29 Sep 2026), and `discard`, a MOVE of one office@ draft to Trash that Luca approves each time (owner decision,
-14 Oct 2026; .claude/hooks/owner_confirm_guard.py asks him). Nothing is ever deleted. Luca opens the draft in Zoho, checks it and presses Send.
+14 Oct 2026; .claude/hooks/owner_confirm_guard.py asks him), and `replace`, the same MOVE of an old office@ draft
+once Luca has asked for a new or changed one and that replacement is already in Drafts (owner decision, 14 Oct 2026;
+no approval prompt). Nothing is ever deleted. Luca opens the draft in Zoho, checks it and presses Send.
 
     .venv/bin/python scripts/bookings/imap_draft.py save '<one-line JSON spec>'
     .venv/bin/python scripts/bookings/imap_draft.py attach <Message-ID of Luca's draft> '<one-line JSON spec>'
     .venv/bin/python scripts/bookings/imap_draft.py sent <invoice ref> <client email> <YYYY-MM-DD>
     .venv/bin/python scripts/bookings/imap_draft.py discard <Message-ID>   (owner-approved only: a draft to Trash)
+    .venv/bin/python scripts/bookings/imap_draft.py replace <old Message-ID> <new Message-ID>
+                                    (the old draft to Trash, once Luca asked for a new or changed one and it is saved)
     .venv/bin/python scripts/bookings/imap_draft.py check     (owner: sign in, count the folders; writes nothing)
     .venv/bin/python scripts/bookings/imap_draft.py test      (owner: a test draft to luca@almaconsort.com with a real
                                                               sample invoice and booking confirmation; delete it)
@@ -528,6 +532,48 @@ def discard(conn, message_id):
     return f"draft moved to Trash: \"{subject}\"" + (f" ({key}; it can be saved again)" if key else "")
 
 
+def thread_of(msg):
+    """What ties a reply draft to its conversation: In-Reply-To, else the subject without Re:/Fwd: prefixes."""
+    reply = (msg.get("In-Reply-To") or "").strip()
+    if reply:
+        return reply
+    return re.sub(r"^(?:\s*(?:re|fwd?)\s*:\s*)+", "", str(msg.get("Subject") or ""), flags=re.I).strip().lower()
+
+
+def replace(conn, old_id, new_id):
+    """Move an old draft to Trash because Luca asked for a new or changed one (owner decision, 14 Oct 2026: no
+    approval prompt for this). Only when the replacement is already in Drafts, both are from office@, both go to the
+    same one address and belong to the same conversation. Recoverable from Trash; never a deletion."""
+    if old_id == new_id:
+        fail("the old and new drafts must be different")
+    new = find_draft(conn, new_id)
+    if new is None:
+        fail("the replacement draft isn't in Drafts: save it first, then replace the old one")
+    old = find_draft(conn, old_id)
+    if old is None:
+        fail("the old draft isn't in Drafts (sent, deleted or edited since)")
+
+    def senders(m):
+        return [a.addr_spec.lower() for h in m.get_all("From", []) for a in h.addresses]
+
+    def recipients(m):
+        return sorted(a.addr_spec.lower() for name in ("To", "Cc", "Bcc") for h in m.get_all(name, []) for a in h.addresses)
+
+    if senders(old) != [FROM_ADDRESS] or senders(new) != [FROM_ADDRESS]:
+        fail("only drafts from office@londonchoralservice.com can be replaced")
+    if len(recipients(old)) != 1 or recipients(old) != recipients(new):
+        fail("the replacement must go to the same one address as the old draft")
+    if thread_of(old) != thread_of(new):
+        fail("the replacement must be in the same conversation as the old draft")
+    subject = str(old.get("Subject") or "").replace("\n", " ")[:80]
+    key = trash_draft(conn, old_id, own_only=False)
+    if key is None:
+        fail(f"couldn't move \"{subject}\" to Trash (no MOVE, or its Message-ID isn't unique in Drafts): delete it in Zoho")
+    if key:
+        forget_saved(key)
+    return f"old draft moved to Trash, replaced by the new one: \"{subject}\""
+
+
 def attach(conn, message_id, key, files, root=None):
     """Save a copy of Luca's draft with booking <ref>'s invoice and booking confirmation attached, check it, then
     move his original to Trash (see retire_original)."""
@@ -629,6 +675,15 @@ def run(argv, factory=None, password=None):
             return discard(conn, message_id)
         finally:
             conn.logout()
+    if argv[:1] == ["replace"] and len(argv) == 3:
+        old_id, new_id = argv[1].strip(), argv[2].strip()
+        if not (MSG_ID.fullmatch(old_id) and MSG_ID.fullmatch(new_id)):
+            fail("both Message-IDs must look like <abc@example.com>")
+        conn = connect(password, factory)
+        try:
+            return replace(conn, old_id, new_id)
+        finally:
+            conn.logout()
     if argv[:1] == ["sent"] and len(argv) == 4:
         ref, to, since = argv[1], argv[2].strip(), argv[3]
         if not REF.fullmatch(ref):
@@ -681,7 +736,7 @@ def run(argv, factory=None, password=None):
         return (f"{result}; draft key header kept by Zoho: yes; attachments intact: {intact} "
                 f"({', '.join(sent)})")
     fail("usage: imap_draft.py save '<JSON>' | attach <Message-ID> '<JSON>' | sent <ref> <client email> <YYYY-MM-DD> "
-         "| discard <Message-ID> | check | test")
+         "| discard <Message-ID> | replace <old Message-ID> <new Message-ID> | check | test")
 
 
 def main(argv=None, factory=None, password=None):
