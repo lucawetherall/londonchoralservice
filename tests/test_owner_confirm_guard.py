@@ -16,16 +16,23 @@ def bash(command):
     return decide(json.dumps({"tool_name": "Bash", "tool_input": {"command": command}}))
 
 
-def test_discard_always_asks_luca():
+def test_discard_and_every_way_round_the_plain_forms_ask_luca():
     for cmd in (".venv/bin/python scripts/bookings/imap_draft.py discard '<a@b.com>'",
-                "cd x && python3 scripts/bookings/imap_draft.py  discard <a@b.com>",
-                "echo hi; .venv/bin/python imap_draft.py discard x"):
+                "cd x && python3 scripts/bookings/imap_draft.py  discard '<a@b.com>'",
+                "python3 -m imap_draft discard x",
+                "python3 -c \"import imap_draft as d; d.main([chr(100)+'iscard','x'])\"",
+                "X=discard; .venv/bin/python scripts/bookings/imap_draft.py $X x",
+                ".venv/bin/python scripts/bookings/imap_draft.py save '{}'; .venv/bin/python scripts/bookings/imap_draft.py discard x",
+                ".venv/bin/python scripts/bookings/imap_draft.py save \"$(cat spec)\"",
+                ".venv/bin/python other.py  # calls trash_draft",
+                ".venv/bin/python -c 'import x; x.forget_saved(1)'"):
         assert bash(cmd) == "ask", cmd
 
 
-def test_other_commands_are_left_to_the_other_rules():
-    for cmd in (".venv/bin/python scripts/bookings/imap_draft.py save '{}'",
-                ".venv/bin/python scripts/bookings/imap_draft.py attach '<a@b.com>' '{}'", "ls"):
+def test_the_automations_plain_forms_are_left_to_the_other_rules():
+    for cmd in (".venv/bin/python scripts/bookings/imap_draft.py save '{\"key\": \"2111-confirmation\", \"html\": \"<p>a & b; $1</p>\"}'",
+                ".venv/bin/python scripts/bookings/imap_draft.py attach '<a@b.com>' '{\"key\": \"2111-confirmation\"}'",
+                ".venv/bin/python scripts/bookings/imap_draft.py sent 2111 client@example.com 2026-10-01", "ls"):
         assert bash(cmd) is None, cmd
 
 
