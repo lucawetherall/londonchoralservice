@@ -15,8 +15,13 @@ SKIP_DIRS = {'command_centre', 'partials', 'node_modules', 'graphify-out', 'docs
 PROMO = 'Lov_NegzVhM'
 ABIDE = 'G9-R6k5n7Io'
 UBI = '-GQaQEGhYEs'
-# It's the Most Wonderful Time of the Year (re-upload, 30 Sep 2026).
-WONDERFUL = 'UOy498rsonU'
+# It's the Most Wonderful Time of the Year (final upload, 30 Sep 2026;
+# see data/seo-fix-discovered-urls.yml).
+WONDERFUL = 'MyDf9cMp0gk'
+
+# YouTube has no maxresdefault.jpg for the final Christmas upload yet, so its
+# pages use sddefault.jpg; every other hero film uses maxresdefault.jpg.
+THUMBS = {WONDERFUL: 'sddefault.jpg'}
 
 HERO_FILMS = {
     'index.html': PROMO,
@@ -121,7 +126,8 @@ def check_heroes():
                   f'{page}: breadcrumb must come before the h1')
 
         check(f'data-video="{film}"' in video, f'{page}: hero film should be {film}')
-        check(f'/vi/{film}/maxresdefault.jpg' in video, f'{page}: hero thumbnail should be {film}')
+        thumb = THUMBS.get(film, 'maxresdefault.jpg')
+        check(f'/vi/{film}/{thumb}' in video, f'{page}: hero thumbnail should be {film}')
         if CAPTIONS[film] is None:
             check('class="video-caption"' not in video, f'{page}: the {film} film takes no caption')
         else:
