@@ -368,6 +368,50 @@ def test_bare_number_with_suffixed_siblings_and_no_surname_is_unconfirmed_on_all
     assert all(a["received"] == 0 and a["just_received"] is False for a in states)
 
 
+CLASH_ROWS = [row("1212", 1470, "2026-05-11", "2026-08-21", "paid in full 2026-08-17; hand check only", name="Ann Smith"),
+              row("1212A", 2800, "2026-09-25", "2027-08-21",
+                  "hand check only: the client pays with ref 1212", name="Bo Jones")]
+
+
+def test_hand_check_only_never_confirms_a_payment():
+    """Two bookings share the invoice number the client pays with: a reference plus the payer's surname, or the
+    surname and deposit, would be confident; on a hand-check-only booking it is unconfirmed, a hand check, never
+    chased, thanked, noted or recorded in Books."""
+    for ref, who in (("INV 1212", "BO JONES"), ("1212", "KATE DOE"), ("", "MR B JONES")):
+        found = cp.match(CLASH_ROWS, [pay(1400, "2026-09-28", ref, who)], T)
+        assert found["1212A"] and all(how not in cp.CONFIDENT for _, _, how in found["1212A"]), (ref, found)
+        a = cp.assess(CLASH_ROWS[1], found["1212A"], T)
+        assert a["state"] == "CHECK_PAYMENT" and a["received"] == 0 and a["action"] == "hand_check", a
+        assert a["hand_only"] and a["record_in_books"] == [] and not a["just_received"], a
+        assert "hand check only" in cp.describe(a)
+        assert cp.updated_notes(CLASH_ROWS[1]["notes"], a, found["1212A"]) == CLASH_ROWS[1]["notes"]
+    # nothing in the bank yet, deposit late: listed by hand, never a reminder (the client's ref isn't ours)
+    late = cp.assess(CLASH_ROWS[1], [], datetime.date(2026, 10, 14))
+    assert late["state"] == "DEPOSIT_OVERDUE" and late["action"] == "hand_check" and late["hand_only"], late
+    # a confident match handed straight to assess is demoted too
+    direct = cp.assess(CLASH_ROWS[1], [("2026-09-28", 2800.0, "reference")], T)
+    assert direct["state"] == "CHECK_PAYMENT" and direct["record_in_books"] == [], direct
+    # the closed booking: a later payment naming it is still a hand check
+    found = cp.match(CLASH_ROWS, [pay(1400, "2026-09-28", "1212", "ANN SMITH")], T)
+    assert found["1212"] == [("2026-09-28", 1400.0, "reference, hand check only")], found
+    assert cp.assess(CLASH_ROWS[0], found["1212"], T)["state"] == "PAYMENT_AFTER_CLOSE"
+    # without the phrase the same payment is confident, as before
+    plain = [dict(r, notes="") for r in CLASH_ROWS]
+    assert cp.match(plain, [pay(1400, "2026-09-28", "INV 1212", "BO JONES")], T)["1212A"][0][2] == "reference"
+
+
+def test_hand_check_only_is_on_the_monday_hand_check_line():
+    import money_report as mr
+    late = cp.assess(CLASH_ROWS[1], [], datetime.date(2026, 10, 14))
+    assert mr.needs_hand_check(late, datetime.date(2026, 10, 14))
+    assert mr.hand_check_label(late) == "invoice number shared, every payment by hand (no payment matched yet)"
+    quiet = {"unpaid": 0, "unpaid_total": 0.0, "oldest_days": 0, "bank_changed": 0}
+    lines = mr.summary_lines([late], [], quiet, datetime.date(2026, 10, 14))
+    assert "deposits overdue: 0" in lines and any(x.startswith("needs a hand check: 1 (1212A ") for x in lines), lines
+    early = cp.assess(CLASH_ROWS[1], [], T)
+    assert early["state"] == "AWAITING_DEPOSIT" and mr.needs_hand_check(early, T)
+
+
 def test_reference_to_one_booking_from_another_clients_name_is_unconfirmed():
     rows = [row("2111", 650, "2026-08-22", "2026-11-21", "PENDING: invoiced", name="Ann Smith"),
             row("0512", 650, "2026-09-20", "2026-12-05", "PENDING: invoiced", name="Bo Jones")]
