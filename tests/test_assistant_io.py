@@ -221,6 +221,69 @@ def test_state_file_is_private_and_done_moves_last_checked_to_the_run_start():
     assert json.loads(run("state")[1])["handled"] == ["m1", "m2"]
 
 
+# --- books-queue ---------------------------------------------------------------------------------
+
+def queued(ref="2111", **over):
+    rec = {"ref": ref, "reason": "trial expired",
+           "contact_email": "client@example.com",
+           "contact": {"contact_name": "Test Client", "contact_type": "customer"},
+           "invoice": {"invoice_number": ref, "date": "2026-10-14", "due_date": "2026-10-21",
+                       "line_items": [{"name": "Small choir (4 singers)", "rate": 1150, "quantity": 1}],
+                       "notes": "First instalment £575.00 due 21 October 2026."}}
+    rec.update(over)
+    return json.dumps(rec)
+
+
+def test_books_queue_add_list_done_round_trip_at_mode_600():
+    fresh()
+    code, out, _ = run("books-queue", "list")
+    assert code == 0 and json.loads(out) == [], out
+    code, out, _ = run("books-queue", "add", queued())
+    assert code == 0 and "2111 queued" in out, out
+    path = os.path.join(_HOME, "books-queue.jsonl")
+    assert oct(os.stat(path).st_mode & 0o777) == "0o600"
+    rows = json.loads(run("books-queue", "list")[1])
+    assert [r["ref"] for r in rows] == ["2111"] and rows[0]["invoice"]["line_items"][0]["rate"] == 1150, rows
+    assert rows[0]["contact_email"] == "client@example.com" and rows[0]["queued"], rows
+    code, out, _ = run("books-queue", "add", queued())  # a rerun of the same booking
+    assert code == 0 and "already queued" in out, out
+    run("books-queue", "add", queued("2111A"))
+    assert [r["ref"] for r in json.loads(run("books-queue", "list")[1])] == ["2111", "2111A"]
+    code, out, _ = run("books-queue", "done", "2111")
+    assert code == 0 and "2111 done" in out, out
+    assert [r["ref"] for r in json.loads(run("books-queue", "list")[1])] == ["2111A"]
+    code, _, err = run("books-queue", "done", "2111")
+    assert code != 0 and "not queued" in err, err
+    # the done record stays in the file (a trail), and the ref can be queued again later
+    assert len(open(path).read().splitlines()) == 2
+    code, out, _ = run("books-queue", "add", queued())
+    assert code == 0 and "2111 queued" in out, out
+
+
+def test_books_queue_add_refuses_bad_records():
+    fresh()
+    bad = [
+        "not json",
+        json.dumps([1]),
+        queued(extra="x"),
+        queued(ref="21-11"),
+        queued(contact_email="nobody"),
+        queued(contact={"contact_type": "customer"}),
+        queued(invoice={"invoice_number": "9999", "line_items": [{"rate": 1}]}),
+        queued(invoice={"invoice_number": "2111", "send": True, "line_items": [{"rate": 1}]}),
+        queued(invoice={"invoice_number": "2111", "customer_id": "1", "line_items": [{"rate": 1}]}),
+        queued(invoice={"invoice_number": "2111", "line_items": []}),
+        queued(invoice={"invoice_number": "2111", "line_items": [{"name": "no rate"}]}),
+    ]
+    for arg in bad:
+        code, _, err = run("books-queue", "add", arg)
+        assert code != 0, arg
+    assert not os.path.exists(os.path.join(_HOME, "books-queue.jsonl"))
+    for args in (("books-queue",), ("books-queue", "list", "x"), ("books-queue", "done"), ("books-queue", "zap")):
+        code, _, err = run(*args)
+        assert code != 0 and "usage" in err, (args, err)
+
+
 if __name__ == "__main__":
     failures = 0
     for name, fn in sorted(globals().items()):
