@@ -30,7 +30,7 @@ Three other items in `data/seo-fix-discovered-urls.yml` couldn't be resolved at 
 
 - **`luca_wetherall_orcid`** — if Luca has an ORCID, add it to `data/seo-fix-discovered-urls.yml` and rerun the schema sweep on `about.html` to populate `Person.sameAs`.
 - **`lcs_linkedin_company`** — if a LinkedIn company page exists for The London Choral Service or Alma Consort, add its URL to the YAML and rerun the schema sweep on `index.html` to populate `Organization.sameAs`.
-- **`videos[*].upload_date`** + **`videos[*].duration`** — five YouTube videos' metadata still can't be resolved automatically (consent gate on four; the egress proxy blocks YouTube outright for `ZVSQ2Ts4GZE`, the Anima Christi recording added 2026-08-15). Open each video on YouTube manually, capture the upload date (YYYY-MM-DD) and the duration (convert to ISO 8601, e.g. 3:42 → `PT3M42S`), update the YAML, and rerun the VideoObject sweep on `pricing.html`, `listen.html`, and the two `music-guides/anima-christi-*` pages. The fifth video, `mKMjUvCCW3E`, was resolved by the user on 2026-08-15 and its `VideoObject` now ships on `listen.html`, `christmas.html`, and `carol-singers.html`.
+- **`videos[*].upload_date`** + **`videos[*].duration`** — **Done 2026-10-14:** all eight videos in the YAML now carry a verified upload date and duration; nothing left here. (Original note: five YouTube videos' metadata still can't be resolved automatically (consent gate on four; the egress proxy blocks YouTube outright for `ZVSQ2Ts4GZE`, the Anima Christi recording added 2026-08-15). Open each video on YouTube manually, capture the upload date (YYYY-MM-DD) and the duration (convert to ISO 8601, e.g. 3:42 → `PT3M42S`), update the YAML, and rerun the VideoObject sweep on `pricing.html`, `listen.html`, and the two `music-guides/anima-christi-*` pages. The fifth video, `mKMjUvCCW3E`, was resolved by the user on 2026-08-15 and its `VideoObject` now ships on `listen.html`, `christmas.html`, and `carol-singers.html`.)
 
 These are LOW priority next to the GBP work above — they affect knowledge-graph completeness and AI-citation strength, not local-pack ranking.
 
@@ -58,6 +58,8 @@ When you've done the round, run a free citation scan against the homepage URL at
 
 ## 3. Post-event review request workflow
 
+**Mostly done 2026-10-14:** the enquiry assistant's daily pass now drafts one review request 3–14 days after each paid-in-full event (never after a funeral), so the day-30/60/90 cadence below is superseded. One thing remains for you: open a Trustpilot business account if you want reviews there as well as on Google (and §23, the optional review link).
+
 The audit's #4 critical priority is a review-request cadence. Goal: 30+ Google + Trustpilot reviews in 90 days. The review velocity is what shifts the local pack ranking, not the absolute count, so the cadence matters more than getting the sequence perfect.
 
 Set up a simple template-based workflow. After every booking that completes, schedule three touches:
@@ -73,6 +75,8 @@ Do not offer incentives for reviews. Both Google and Trustpilot have policies ag
 ---
 
 ## 4. GSC, GA4, and CrUX credentials
+
+**Done 2026-10-14:** no service account is needed. Application Default Credentials carry the Search Console and GA4 scopes (see "Sign-in scopes" in the repo's agent instructions), and the Monday review reads both with them. The CrUX API key below is optional and still unset; nothing depends on it.
 
 The audit's §9 and several Phase-3+ items depend on having read access to real Google performance data. None of these can be set up from inside this repo.
 
@@ -112,6 +116,8 @@ If migration does happen later, the VCL/Workers logic for each header is in audi
 
 ## 6. Per-page OG image generation infrastructure
 
+**Done (closed 2026-10-14):** besides the six hand-made cards (update of 2026-08-18 below), `scripts/og/generate_og_images.mjs` renders a card for every area, borough, `for-*`, hub and register page into `assets/og/`.
+
 Currently every page shares the same Open Graph image. The audit recommends per-page images for the top 16 pages: the 12 pillar pages plus the 4 highest-traffic music guides (top traffic to be confirmed once §4 GA4 access is live, but reasonable defaults: Christmas carols, Abide With Me, Be Thou My Vision, Pie Jesu).
 
 Two viable implementations:
@@ -128,6 +134,8 @@ For 16 pages that change rarely, Cloudinary is the lower-effort choice. Pick the
 ---
 
 ## 7. IndexNow protocol
+
+**Done 2026-08-20 (closed 2026-10-14):** the key file is live and the ping runs after every deploy; see the updates below.
 
 IndexNow is Microsoft + Yandex's submit-on-change protocol. Google doesn't use it directly but it's still worth implementing because Bing pickup is fast and the implementation cost is near zero.
 
@@ -156,6 +164,8 @@ Step 3 is code and goes into a later phase. Steps 1 and 2 are manual prerequisit
 
 ## 8. CSS extraction refactor
 
+**Closed 2026-10-14 (won't do):** the decision below stands; reopen only if CrUX field data shows render-blocking CSS costing LCP.
+
 The audit notes that all CSS currently lives inline in each HTML file rather than in external stylesheets. In theory this hurts caching across pageviews; in practice, with the site already at decent CWV and pages averaging ~60–70 KB pre-gzip, the saving from extraction is small.
 
 **Decision: skip until real CWV field data shows it's costing.** Once §4 credentials are live and CrUX is reporting actual user-experienced LCP/INP for the domain, revisit. If CrUX shows LCP > 2.5s on a meaningful share of visits and the trace points at render-blocking CSS, then extract. Otherwise leave it alone — extraction is a substantial refactor for what is currently a hypothetical gain.
@@ -165,10 +175,10 @@ The audit notes that all CSS currently lives inline in each HTML file rather tha
 The July 2026 Christmas expansion (`docs/superpowers/plans/2026-07-29-christmas-expansion.md`) added 12 pages targeting carol-service and carol-singer hirers. These off-site and asset tasks are human-only:
 
 1. **Google Business Profile seasonal update.** Add "Christmas carol services" and "Carol singers" as services on the GBP listing; post a seasonal update (September and November) linking to `/christmas.html` and `/carol-singers.html`. Blocked on §1 (GBP claim) if still outstanding. *(Update 2026-08-20: both posts are drafted in `docs/off-site-listings-pack.md` §"GBP seasonal posts" — paste and go.)*
-2. **Google Ads seasonal conversions.** Resolved 2026-09-26: every enquiry form now fires one `generate_lead` GA4 event carrying `occasion` and `lead_source` (the page path), plus one "Submit lead form" Ads conversion. Per-source reporting comes from those parameters in GA4 (register them as custom dimensions); no per-occasion Ads actions are needed.
+2. **Google Ads seasonal conversions.** Resolved 2026-09-26: every enquiry form now fires one `generate_lead` GA4 event carrying `occasion` and `lead_source` (the page path), plus one "Submit lead form" Ads conversion. Per-source reporting comes from those parameters in GA4 (register them as custom dimensions); no per-occasion Ads actions are needed. **Done 2026-10-14:** `occasion` and `lead_source` (plus `method`, `link_location` and `error_type`) are registered as event-scoped custom dimensions in GA4.
 3. **Carol recordings.** Partly done (August 2026): one Christmas recording — Blue Christmas, `mKMjUvCCW3E`, Small Choir — now leads the "Hear our musicians" sections on christmas.html and carol-singers.html and sits under "Something different" on listen.html, with full `VideoObject` schema. Everything else in those sections is still hymn recordings. Record 1–2 actual carols (even rehearsal-quality video) and hand them to an agent to wire in the same way.
-4. **Christmas OG image.** All ~118 pages share one generic og-image (see §6 / ROADMAP R7.3). A seasonal image for christmas.html + carol-singers.html would lift social CTR during the season.
-5. **Google Search Console.** After the expansion merges: resubmit sitemap.xml, request indexing for the 12 new URLs, and from September watch the query report for cannibalisation between christmas.html ("carol service" terms) and carol-singers.html ("hire carol singers" terms) — the pages are deliberately split on those intents.
+4. **Done 2026-10-14:** christmas.html and carol-singers.html both carry `assets/og-christmas.png`. (Original: **Christmas OG image.** All ~118 pages share one generic og-image (see §6 / ROADMAP R7.3). A seasonal image for christmas.html + carol-singers.html would lift social CTR during the season.)
+5. **Google Search Console.** After the expansion merges: resubmit sitemap.xml, request indexing for the 12 new URLs, and from September watch the query report for cannibalisation between christmas.html ("carol service" terms) and carol-singers.html ("hire carol singers" terms) — the pages are deliberately split on those intents. **Done 2026-10-14:** Google last read the sitemap on 13 Oct 2026 (resubmitted 27 Sep; 0 errors). Cannibalisation check, 14 Sep–11 Oct: only four queries showed both pages, each on 1–3 impressions ("carol singers for hire london", "carol singers london", "christmas carol singers london", "christmas carolers for hire"); christmas.html ranked higher on three, carol-singers.html on one (position 1 on a single impression). Too little data to act on; look again in November.
 6. **Citations.** Add "carol singers" as a category/service on Bark, Poptop, Encore, and Add to Event profiles (§2) — those marketplaces dominate the "carol singers for hire" SERP and a presence there captures buyers who never leave the platform.
 7. **Brand watch.** londoncarolsingers.com trades as "LCS — London's premier carol singers". Site copy now consistently uses the full "London Choral Service" name on Christmas pages; keep an eye on branded-search confusion.
 
@@ -178,9 +188,9 @@ The July 2026 Christmas expansion (`docs/superpowers/plans/2026-07-29-christmas-
 
 The 2026-07-31 overhaul added 11 further Christmas guides (24 in total), set a vocal/string ensemble floor across the site, and led carol hire with four voices. Human-only follow-ups:
 
-1. **Google Search Console.** Resubmit `sitemap.xml` (now 126 URLs) and request indexing for the 11 new guide URLs. Priority: this needs doing before September, when booking research peaks.
-2. **Cannibalisation watch.** The Christmas guide set is now 24 pages and several sit close together — `how-many-carol-singers` against the sizing FAQ on `carol-singers.html`, `best-carols-for-four-voices` against `christmas-carols-guide`, and `christmas-drinks-reception-music` against `company-christmas-party-entertainment`. Each has an exclusive title and H1, but watch the GSC query report from September for the two pages swapping positions on the same term.
-3. **Confirm the accompanied small-group pricing is right.** `pricing.html` now publishes £645 for two singers with organ or piano and £860 for three, derived as £215 per singer plus £215 for the accompanist. If that arithmetic is not how you actually quote it, tell an agent the real figures — the derivation is stated on the page and in three guides.
+1. **Done 2026-10-14:** sitemap resubmitted 27 Sep and read by Google on 13 Oct. (Original: **Google Search Console.** Resubmit `sitemap.xml` (now 126 URLs) and request indexing for the 11 new guide URLs. Priority: this needs doing before September, when booking research peaks.)
+2. **Cannibalisation watch.** The Christmas guide set is now 24 pages and several sit close together — `how-many-carol-singers` against the sizing FAQ on `carol-singers.html`, `best-carols-for-four-voices` against `christmas-carols-guide`, and `christmas-drinks-reception-music` against `company-christmas-party-entertainment`. Each has an exclusive title and H1, but watch the GSC query report from September for the two pages swapping positions on the same term. **Checked 2026-10-14:** none of the six guides had a Search Console impression in 14 Sep–11 Oct, so there is no overlap yet; look again in November.
+3. **Closed 2026-10-14 (stale):** the £645 and £860 figures no longer appear on any page. (Original: **Confirm the accompanied small-group pricing is right.** `pricing.html` now publishes £645 for two singers with organ or piano and £860 for three, derived as £215 per singer plus £215 for the accompanist. If that arithmetic is not how you actually quote it, tell an agent the real figures — the derivation is stated on the page and in three guides.)
 4. **Decide on the lambeth testimonial.** `areas/london/lambeth.html` carries a client quote describing a *trio* singing at an outdoor committal, which the new floor no longer offers. It was left untouched because editing a genuine quote would be fabricating it. Removing it is a business decision, not an agent one.
 
 ---
@@ -252,11 +262,11 @@ The competitor everyone outranks us with — The London Funeral Singers — is t
 
 The page is `private-events.html` (spec: `docs/superpowers/specs/2026-08-26-private-events-design.md`). Every open decision was settled by the owner on 2026-08-26; only the items below remain.
 
-1. **Send one live test enquiry (do this first).** The form now carries hCaptcha, matching the rest of the site, so it uses the shared Web3Forms access key exactly as the other forms do. It could not be tested from the build environment (the network proxy blocks api.web3forms.com and hcaptcha.com). Before advertising the page, submit one real enquiry through the live form and confirm it arrives, with the subject line `Private events enquiry — Alma Consort / LCS`.
+1. **Still open, checked 2026-10-14:** no message with the subject `Private events enquiry — Alma Consort / LCS` has reached the office inbox since the page launched. **Send one live test enquiry (do this first).** The form now carries hCaptcha, matching the rest of the site, so it uses the shared Web3Forms access key exactly as the other forms do. It could not be tested from the build environment (the network proxy blocks api.web3forms.com and hcaptcha.com). Before advertising the page, submit one real enquiry through the live form and confirm it arrives, with the subject line `Private events enquiry — Alma Consort / LCS`.
 2. **Photography and the fuller venue list.** Supply hero and section photography (the page ships typographic-only), and the fuller fifteen-plus venue list for the "Where we have sung" section — the HTML comment slot after `ul.pe-venues` marks where the items go. Every venue listed must be one the singers have actually performed in. The section currently shows the eight London venues vetted on `about.html` and states the international coverage in prose; naming venues abroad would be the single strongest addition to the page.
 3. **Voicing videos.** Map one YouTube video per voicing into `PE.VOICING_VIDEOS` in `js/private-events.js` (keys: `eight`, `twelve`, `sixteen`, `twenty-four`). Video IDs MUST first exist in `data/seo-fix-discovered-urls.yml` — add any new video there first, with a verified upload date, before pasting its ID into the JS. A voicing left `null` renders no player, which is the shipped state.
-4. **Google Ads: dedicated conversion action (when convenient).** The page fires the existing generic Contact label (`AW-17988388404/RjhECKGP7akcELSMxIFD`), so conversions record from day one but are not segmented from ordinary contact enquiries. To separate them, create a conversion action named **"Private events enquiry"** in Google Ads and map the GA4 event `ads_conversion_PrivateEvents_1` to it — the procedure documented for the corporate audience in `thank-you.html` (lines 52–54) — then paste its `send_to` label over `PE.ADS_CONVERSION` in `js/private-events.js`.
-5. **almaconsort.com.** The ensemble section links to the homepage and the page's schema lists it as the ensemble's URL. Confirm it presents well to a planner vetting the name, and add a reciprocal link from that site back to https://londonchoralservice.com/private-events.html.
+4. **Closed 2026-10-14 (superseded):** `PE.ADS_CONVERSION` is gone; the register forms call the shared `lcsLead()`, which fires the "Submit lead form" conversion and a GA4 `generate_lead` carrying `lead_source`, so private-events leads are already separable in GA4. (Original: **Google Ads: dedicated conversion action (when convenient).** The page fires the existing generic Contact label (`AW-17988388404/RjhECKGP7akcELSMxIFD`), so conversions record from day one but are not segmented from ordinary contact enquiries. To separate them, create a conversion action named **"Private events enquiry"** in Google Ads and map the GA4 event `ads_conversion_PrivateEvents_1` to it — the procedure documented for the corporate audience in `thank-you.html` (lines 52–54) — then paste its `send_to` label over `PE.ADS_CONVERSION` in `js/private-events.js`.)
+5. **almaconsort.com.** The ensemble section links to the homepage and the page's schema lists it as the ensemble's URL. Confirm it presents well to a planner vetting the name, and add a reciprocal link from that site back to https://londonchoralservice.com/private-events.html. **Checked 2026-10-14:** almaconsort.com links to the londonchoralservice.com homepage, not yet to `/private-events.html`.
 
 **Decided 2026-08-26, no action needed:** hCaptcha is on (owner's decision, reversing the original brief); the discretion commitment in the planners section stands as written and must be honoured on every engagement, deputies and instrumentalists included; the voicing selector ships prose-only; the venue section ships the London list with international coverage stated in prose; the page carries a bespoke OG image (`assets/og-private-events.png`).
 
@@ -285,16 +295,19 @@ Spec: `docs/superpowers/specs/2026-08-29-international-luxury-weddings-design.md
    performance visa per musician, on a months-long timeline. Confirm the real
    working lead time before the US page is written: if a booking is impractical
    under six months, the page must say so rather than imply otherwise.
-4. **Google Ads.** Create a dedicated conversion action for the destinations
+4. **Closed 2026-10-14 (superseded):** `PE.ADS_CONVERSION` is gone; register pages fire
+   the shared `lcsLead()` ("Submit lead form", with `lead_source` in GA4). The paid-search
+   idea below is optional. (Original: **Google Ads.** Create a dedicated conversion action for the destinations
    funnel and paste its `send_to` label over `PE.ADS_CONVERSION` in
    `js/private-events.js`; until then the generic Contact label fires for every
    register page. Consider paid search on destination terms using the reserved
-   hero H1 variant (`grep -n 'Hero H1 A/B alternatives' private-events.html`).
+   hero H1 variant (`grep -n 'Hero H1 A/B alternatives' private-events.html`).)
 5. **Photography or video from an overseas engagement.** The highest-value asset
    for this audience and the one thing here that cannot be written. All register
    pages ship typographic-only until supplied.
-6. **A bespoke OG image** for `/destinations/` and `/planners-and-venues.html`;
-   both currently reuse `assets/og-private-events.png`.
+6. **Done 2026-10-14:** `/destinations/` has `assets/og/destinations-index.png`, and
+   `/planners-and-venues.html` now has `assets/og/planners-and-venues.png` (rendered by
+   `scripts/og/generate_og_images.mjs`, picked up by `scripts/gen_planners_page.py`).
 7. **Planner-network and luxury-directory outreach**, and wedding-press placement
    &mdash; there are now pages to point at.
 8. **Refresh the repo graph.** ~~Stale~~ **Done 2026-09-04.** Refreshed against
@@ -307,6 +320,8 @@ Spec: `docs/superpowers/specs/2026-08-29-international-luxury-weddings-design.md
 ---
 
 ## 15. www subdomain serves a broken TLS certificate, 2026-08-30
+
+**Still broken, confirmed 2026-10-14:** `curl https://www.londonchoralservice.com/` still fails certificate verification. The fix is yours (GitHub Settings → Pages, or the DNS panel; steps below).
 
 A full SEO audit found `https://www.londonchoralservice.com` fails the TLS handshake outright (`SSL: no alternative certificate subject name matches target host name`) rather than redirecting to the apex domain. DNS for `www` already resolves to GitHub Pages' anycast IPs, but the certificate GitHub serves only covers `*.github.io` — it doesn't cover the `www` host because the custom domain configured in the repo's Settings → Pages is only the apex (`londonchoralservice.com`), and GitHub Pages only provisions/serves a matching cert for the configured custom domain. (The site deploys through GitHub Actions, which ignores the repo's `CNAME` file; the Settings value is what counts.)
 
@@ -322,16 +337,18 @@ What to do:
 
 ## 16. Follow-ups from the 2026-09-04 audit fixes
 
-1. **Consent Mode check (Google Ads and GA4).** The site now sets Consent Mode v2 defaults to "denied" and shows a cookie notice. In Google Ads → Goals → Conversions → Diagnostics, confirm the conversion actions show "Consent mode: active" and that modelled conversions appear after a fortnight. In GA4 Admin → Data collection, confirm consent signals are received. Nothing to change in the repo unless a tag reports "consent not set".
+1. **Partly checked 2026-10-14:** the API cannot read the Diagnostics page, so the "Consent mode: active" badge still needs your eye. What it can see: all six conversion actions are enabled ("Submit lead form" and "WhatsApp or email click" primary), enhanced conversions for leads is on, and Ads recorded conversions in the last 30 days. GA4 shows `contact_click` events but no `generate_lead` in the last 28 days, although form enquiries did arrive; that fits visitors declining cookies, but confirm in GA4 Admin → Data collection that consent signals are received. **Consent Mode check (Google Ads and GA4).** The site now sets Consent Mode v2 defaults to "denied" and shows a cookie notice. In Google Ads → Goals → Conversions → Diagnostics, confirm the conversion actions show "Consent mode: active" and that modelled conversions appear after a fortnight. In GA4 Admin → Data collection, confirm consent signals are received. Nothing to change in the repo unless a tag reports "consent not set".
 2. **Read `terms.html`.** It publishes the fourteen Terms of Booking clauses from the booking agreement, adapted to a web page (the funeral post-service invoicing exception is stated under clause 4, and a complaints paragraph is added). Confirm the wording matches what goes out on booking confirmations, or edit the page and the agreement together.
 3. **Read `accessibility.html`** and confirm the alternative-format promise and the one-working-day reply are what you want to stand behind.
-4. **Two testimonials still say "she"** ("Pamela, Richmond" on 9 pages, "Helen, Wimbledon" on 4). See ROADMAP R12.
+4. **Done 2026-09-28:** pronouns corrected (ROADMAP R12). (Original: **Two testimonials still say "she"** ("Pamela, Richmond" on 9 pages, "Helen, Wimbledon" on 4). See ROADMAP R12.)
 5. **Reply-time promises are now: one working day (usually the same day) everywhere, and the same working day (usually within a few hours) on the funeral and funeral-director pages.** If the office cannot keep those, say which to soften.
 6. **The nav's hamburger breakpoint moved from 805px to 1080px** so the eight-item menu never clips; tablets in portrait now get the hamburger. Check on an iPad if that matters to you.
 
 ---
 
 ## 17. Zoho Books plan
+
+**Closed 2026-10-14 (superseded by §27):** Books moved to the Free plan on 29 Sep; no paid plan is needed.
 
 The Books organisation "Alma Consort Ltd" (id `941014440`) is on a Premium trial. Once the trial ends, the MCP tools and the invoice flow described in §18 to §20 stop working.
 
@@ -345,6 +362,8 @@ What to do:
 ## 18. Zoho Books set-up
 
 **Changed 2026-09-29:** invoices now reach clients as a PDF attached to your own email from Zoho Mail (made from your private template, which already carries the bank details), not from Books. Only points 1 (manual numbering) and 4 (VAT status) still matter; 2, 3, 5 and 6 are no longer needed, because Books emails nobody.
+
+**Done 2026-10-14 (checked read-only):** all ten invoices in Books are numbered with DDMM refs (one carries a letter suffix, `2111A`, for a second booking on the same ref), so Books is not overwriting the numbers; and the invoices checked carry no tax (`tax_total` 0, no tax lines). The organisation's own VAT setting is not readable through the API; glance at it next time you are in Books.
 
 A handful of one-off settings need choosing before invoices go out through Books. None of these can be set by Claude: the write tools available to Claude do not cover organisation settings, and the bank details point below is deliberately blocked in code.
 
@@ -408,6 +427,8 @@ Until this is added, review requests link to the Maps listing instead, which wor
 ---
 
 ## 24. Seasonal budgets
+
+**Done 2026-09-28:** `data/budget-windows.yml` carries the seasonal windows (carols at £8 to 13 Dec under the Christmas cap exception, then £5), and the Monday report proposes changes from it.
 
 The Monday marketing review can propose seasonal daily-budget changes (carols in the run-up to Christmas, weddings in spring, and so on), but only once you've set the windows it should use.
 
