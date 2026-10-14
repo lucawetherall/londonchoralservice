@@ -64,6 +64,36 @@ def test_no_click_reference_or_no_consent_is_skipped():
     assert "consent" in reasons([row(consent="unknown")])["2111"]
 
 
+def test_form_consent_with_a_click_reference_is_ready_like_granted():
+    assert refs([row(consent="form")]) == ["2111"]
+    assert refs([row(consent="Form ")]) == ["2111"]
+
+
+def test_form_consent_without_a_click_reference_goes_by_email_alone():
+    r = row(consent="form", gclid="", client_email="Ann.Smith@example.com")
+    ready, skipped = ub.select_ready([r])
+    assert skipped == [] and [x[0]["booking_ref"] for x in ready] == ["2111"], (ready, skipped)
+    # ...but only with enhanced conversions for leads on in the account
+    keep, moved = ub.needs_ec_for_leads(ready, [], ec_for_leads=False)
+    assert keep == [] and moved == [("2111", ub.NO_EC_FOR_LEADS)], (keep, moved)
+    assert ub.needs_ec_for_leads(ready, [], ec_for_leads=True) == (ready, [])
+
+
+def test_with_ec_for_leads_off_a_row_with_a_click_reference_still_goes():
+    ready, _ = ub.select_ready([row(consent="form"), row("2112", consent="form", gclid="", client_email="a@b.com")])
+    keep, moved = ub.needs_ec_for_leads(ready, [], ec_for_leads=False)
+    assert [x[0]["booking_ref"] for x in keep] == ["2111"] and [m[0] for m in moved] == ["2112"], (keep, moved)
+
+
+def test_form_consent_without_a_click_reference_or_an_email_is_skipped():
+    assert "no usable email" in reasons([row(consent="form", gclid="", client_email="")])["2111"]
+
+
+def test_cookie_consent_alone_never_sends_an_email_only_upload():
+    assert "no ad click reference" in reasons([row(consent="granted", gclid="", client_email="a@b.com")])["2111"]
+    assert "no ad click reference" in reasons([row(consent="unknown", gclid="", client_email="a@b.com")])["2111"]
+
+
 def test_unreadable_nan_inf_zero_or_negative_values_are_refused():
     for bad in ("", "abc", "nan", "inf", "-inf", "-50", "0", "£-1,150"):
         rows = [row(value_gbp=bad)]
