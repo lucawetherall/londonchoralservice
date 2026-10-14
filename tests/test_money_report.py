@@ -15,6 +15,34 @@ T = datetime.date(2026, 9, 28)
 QUIET_SINGERS = {"unpaid": 0, "unpaid_total": 0.0, "oldest_days": 0, "bank_changed": 0}
 
 
+def test_unsent_invoice_is_a_hand_check_only_once_the_deposit_would_be_late():
+    late = {"ref": "1211", "state": "AWAITING_INVOICE_SENT", "balance": 500.0, "event_date": "2026-12-12",
+            "deposit_late": True}
+    early = dict(late, ref="1212", deposit_late=False)
+    lines = mr.summary_lines([late, early], [], QUIET_SINGERS, T)
+    assert "deposits overdue: 0" in lines, lines
+    assert "needs a hand check: 1 (1211 invoice not yet sent, deposit would be overdue)" in lines, lines
+
+
+def test_single_payment_terms_on_the_money_lines():
+    """A booking on single-payment terms: not on the balances line before its due date, its own overdue line after it,
+    and its hand checks never speak of a deposit or a balance."""
+    r = {"booking_ref": "1211", "value_gbp": "1750", "invoice_date": "2026-09-01", "event_date": "2026-10-01",
+         "notes": "single payment: full fee due by 2026-10-05 (agreed 2026-09-01)", "client_name": "Acme Events Ltd"}
+    waiting = cp.assess(r, [], T, unsent=set())
+    lines = mr.summary_lines([waiting], [], QUIET_SINGERS, T)
+    assert waiting["state"] == "AWAITING_PAYMENT" and "balances due in the next 7 days: 0, £0.00" in lines, lines
+    assert not any(x.startswith("full fees overdue") for x in lines), lines
+    late = cp.assess(dict(r, notes="single payment: full fee due by 2026-09-20 (agreed 2026-09-01)"), [], T, unsent=set())
+    lines = mr.summary_lines([late], [], QUIET_SINGERS, T)
+    assert "deposits overdue: 0" in lines and "full fees overdue (single payment): 1 (1211)" in lines, lines
+    part = cp.assess(r, [("2026-09-10", 875.0, "reference")], T, unsent=set())
+    unsent = cp.assess(dict(r, notes="single payment: full fee due by 2026-09-20 (agreed 2026-09-01)"), [], T,
+                       unsent={"1211"})
+    assert mr.hand_check_label(part) == "part payment on single-payment terms", part
+    assert mr.hand_check_label(unsent) == "invoice not yet sent, full fee would be overdue", unsent
+
+
 def test_summary_lines():
     assessments = [
         {"ref": "A", "state": "DEPOSIT_OVERDUE", "balance": 500.0, "event_date": "2026-10-30"},

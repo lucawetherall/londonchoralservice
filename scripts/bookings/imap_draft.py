@@ -5,11 +5,13 @@ The Zoho Mail MCP can't attach files to a draft, so this script builds the whole
 puts it in the Drafts folder of office@londonchoralservice.com over IMAP (APPEND). It never sends:
 there is no SMTP code here. The IMAP writes are APPEND to Drafts and, for `attach` only, one MOVE of Luca's
 original draft to Trash once its copy with the attachments has been read back and checked (owner decision,
-29 Sep 2026). Nothing is ever deleted. Luca opens the draft in Zoho, checks it and presses Send.
+29 Sep 2026), and `discard`, a MOVE of one office@ draft to Trash that Luca approves each time (owner decision,
+14 Oct 2026; .claude/hooks/owner_confirm_guard.py asks him). Nothing is ever deleted. Luca opens the draft in Zoho, checks it and presses Send.
 
     .venv/bin/python scripts/bookings/imap_draft.py save '<one-line JSON spec>'
     .venv/bin/python scripts/bookings/imap_draft.py attach <Message-ID of Luca's draft> '<one-line JSON spec>'
     .venv/bin/python scripts/bookings/imap_draft.py sent <invoice ref> <client email> <YYYY-MM-DD>
+    .venv/bin/python scripts/bookings/imap_draft.py discard <Message-ID>   (owner-approved only: a draft to Trash)
     .venv/bin/python scripts/bookings/imap_draft.py check     (owner: sign in, count the folders; writes nothing)
     .venv/bin/python scripts/bookings/imap_draft.py test      (owner: a test draft to luca@almaconsort.com with a real
                                                               sample invoice and booking confirmation; delete it)
@@ -138,10 +140,9 @@ def read_attachment(value, ref, root=None):
     if real.parent.parent != root or not real.parent.name.startswith(f"{ref} - "):
         fail(f"{real.name} is not in booking {ref}'s folder in iCloud Drive/LCS-invoices")
     name = real.name
-    if real.suffix == ".pdf":
-        ok = re.fullmatch(rf"Invoice {re.escape(ref)} - .+\.pdf", name)
-    elif real.suffix == ".docx":
-        ok = re.fullmatch(r"Booking Confirmation - .+\.docx", name)
+    if real.suffix in (".pdf", ".docx"):  # a business client's short confirmation is a PDF (make_po_documents.py)
+        ok = (re.fullmatch(rf"Invoice {re.escape(ref)} - .+\.pdf", name)
+              or re.fullmatch(r"Booking Confirmation - .+\.(?:docx|pdf)", name))
     else:
         ok = None
     if not ok:
@@ -181,9 +182,10 @@ def confirmation_files(ref, to, files, root=None):
     if to.lower() != client:
         fail(f"to is not the client on booking {ref} in the ledger")
     attachments = [read_attachment(f, ref, root) for f in files]
-    if {a[0].rsplit(".", 1)[1] for a in attachments} != {"pdf", "docx"}:
-        fail("a confirmation carries one invoice PDF and one booking confirmation .docx")
-    return sorted(attachments, key=lambda a: a[0].endswith(".docx"))  # the invoice first, as Luca attaches them
+    invoices = [a for a in attachments if a[0].startswith(f"Invoice {ref} - ")]
+    if len(invoices) != 1 or not any(a[0].startswith("Booking Confirmation - ") for a in attachments):
+        fail("a confirmation carries one invoice PDF and one booking confirmation (.docx or .pdf)")
+    return sorted(attachments, key=lambda a: a not in invoices)  # the invoice first, as Luca attaches them
 
 
 def trim_references(refs):
@@ -466,27 +468,64 @@ def copy_is_faithful(copy, original, attachments):
             and str(copy.get("To")) == str(original.get("To")) and str(copy.get("Subject")) == str(original.get("Subject")))
 
 
-def retire_original(conn, message_id):
-    """Move Luca's original draft to Trash: the one IMAP change besides APPEND, allowed by the owner on 29 Sep 2026
-    for this case only. Only the single draft in Drafts with exactly this Message-ID and no draft key; only by
-    MOVE (so it stays recoverable in Trash): no flag changes, and no closing a writable folder (that would purge). True when moved."""
+def trash_draft(conn, message_id, own_only):
+    """Move the one draft in Drafts with exactly this Message-ID, from office@, to Trash: the one IMAP change besides
+    APPEND. Only by MOVE (so it stays recoverable in Trash): no flag changes, and no closing a writable folder (that
+    would purge). own_only: only a draft with no draft key (one Luca wrote). Returns its draft key ("" when it has
+    none) once moved, or None when nothing was moved (no MOVE, no single match, not from office@)."""
     if "MOVE" not in conn.capabilities:
-        return False
+        return None
     typ, _ = conn.select(DRAFTS)
     if typ != "OK":
-        return False
-    typ, rows = conn.uid("FETCH", "1:*", "(UID BODY.PEEK[HEADER.FIELDS (MESSAGE-ID X-LCS-DRAFT-KEY)])")
-    uids = []
+        return None
+    typ, rows = conn.uid("FETCH", "1:*", "(UID BODY.PEEK[HEADER.FIELDS (MESSAGE-ID FROM X-LCS-DRAFT-KEY)])")
+    hits = []
     for row in rows if typ == "OK" else []:
         if isinstance(row, tuple) and len(row) > 1:
             head = email.message_from_bytes(row[1] or b"", policy=email.policy.default)
             m = re.search(rb"UID (\d+)", row[0] or b"")
-            if m and (head.get("Message-ID") or "").strip() == message_id and not head.get(KEY_HEADER):
-                uids.append(m.group(1).decode())
-    if len(uids) != 1:
-        return False
-    typ, _ = conn.uid("MOVE", uids[0], TRASH)
-    return typ == "OK"
+            if m and (head.get("Message-ID") or "").strip() == message_id:
+                hits.append((m.group(1).decode(), head))
+    if len(hits) != 1:
+        return None
+    uid, head = hits[0]
+    key = str(head.get(KEY_HEADER) or "").strip()
+    sender = [a.addr_spec.lower() for h in head.get_all("From", []) for a in h.addresses]
+    if (own_only and key) or sender != [FROM_ADDRESS]:
+        return None
+    typ, _ = conn.uid("MOVE", uid, TRASH)
+    return key if typ == "OK" else None
+
+
+def retire_original(conn, message_id):
+    """Move Luca's original draft to Trash once its copy with the attachments checks out (owner decision, 29 Sep
+    2026). True when moved."""
+    return trash_draft(conn, message_id, own_only=True) is not None
+
+
+def forget_saved(key):
+    """Drop `key` from the saved-drafts record, so the draft can be saved again."""
+    with lm.locked_rows(SAVED, SAVED_COLUMNS) as t:
+        t.rows = [r for r in t.rows if r.get("key") != key]
+
+
+def discard(conn, message_id):
+    """Move one draft from office@ in Drafts to Trash, on Luca's say-so (owner decision, 14 Oct 2026): a hook asks
+    him to approve every run of this command. Recoverable from Trash; never a deletion. If the draft was saved by
+    this script, its key is forgotten so a corrected draft can be saved."""
+    draft = find_draft(conn, message_id)
+    if draft is None:
+        fail("that draft isn't in Drafts (sent, deleted or edited since)")
+    sender = [a.addr_spec.lower() for h in draft.get_all("From", []) for a in h.addresses]
+    if sender != [FROM_ADDRESS]:
+        fail("only a draft from office@londonchoralservice.com can be discarded")
+    subject = str(draft.get("Subject") or "").replace("\n", " ")[:80]
+    key = trash_draft(conn, message_id, own_only=False)
+    if key is None:
+        fail(f"couldn't move \"{subject}\" to Trash (no MOVE, or its Message-ID isn't unique in Drafts): delete it in Zoho")
+    if key:
+        forget_saved(key)
+    return f"draft moved to Trash: \"{subject}\"" + (f" ({key}; it can be saved again)" if key else "")
 
 
 def attach(conn, message_id, key, files, root=None):
@@ -581,6 +620,15 @@ def run(argv, factory=None, password=None):
             return attach(conn, message_id, key, files)
         finally:
             conn.logout()
+    if argv[:1] == ["discard"] and len(argv) == 2:
+        message_id = argv[1].strip()
+        if not MSG_ID.fullmatch(message_id):
+            fail("the draft's Message-ID must look like <abc@example.com>")
+        conn = connect(password, factory)
+        try:
+            return discard(conn, message_id)
+        finally:
+            conn.logout()
     if argv[:1] == ["sent"] and len(argv) == 4:
         ref, to, since = argv[1], argv[2].strip(), argv[3]
         if not REF.fullmatch(ref):
@@ -633,7 +681,7 @@ def run(argv, factory=None, password=None):
         return (f"{result}; draft key header kept by Zoho: yes; attachments intact: {intact} "
                 f"({', '.join(sent)})")
     fail("usage: imap_draft.py save '<JSON>' | attach <Message-ID> '<JSON>' | sent <ref> <client email> <YYYY-MM-DD> "
-         "| check | test")
+         "| discard <Message-ID> | check | test")
 
 
 def main(argv=None, factory=None, password=None):

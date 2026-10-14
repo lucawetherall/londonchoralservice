@@ -35,7 +35,8 @@ def test_matches_site():
 def test_labels():
     # The agents and lookup_ref.py look for "Ref: XXXX" in the client's first message.
     src = open(os.path.join(ROOT, "partials", "analytics.html")).read()
-    assert "' Ref: ' + ref" in src and "'\\r\\n\\r\\n\\r\\nRef: ' + ref" in src
+    assert "'Ref: ' + ref" in src and "' (Sent from ' + source + '.' + (tag ? ' ' + tag : '') + ')'" in src
+    assert "'\\r\\n\\r\\n\\r\\n' + tag" in src
     assert "lcsShortRef(attr.gclid || attr.gbraid || attr.wbraid || '')" in src
 
 

@@ -509,6 +509,8 @@ def ledger_counts(rows):
         "cancelled": len(rows) - len(live),
         "latest": max((r.get("invoice_date") or "" for r in live), default=""),
         "with_ref": sum(1 for r in live if (r.get("gclid") or "").strip()),
+        # the client ticked the web form's ad-measurement box (consent = form): may upload by hashed email alone
+        "form_consent": sum(1 for r in live if (r.get("consent") or "").strip().lower() == "form"),
         "ready": len(upload_bookings.select_ready(rows)[0]),
         "uploaded": sum(1 for r in rows if (r.get("uploaded_at") or "").strip()),
         "by_occasion": {k: tuple(v) for k, v in sorted(by.items())},
@@ -524,7 +526,8 @@ def ledger_section():
         c = ledger_counts(list(csv.DictReader(f)))
     print(f"   {c['bookings']} bookings, £{c['total']:,.2f} · latest invoice {c['latest'] or '-'}"
           + (f" · {c['cancelled']} cancelled (not counted)" if c["cancelled"] else ""))
-    print(f"   with an ad click reference {c['with_ref']} · ready to upload {c['ready']} · uploaded {c['uploaded']}")
+    print(f"   with an ad click reference {c['with_ref']} · ad-measurement box ticked {c['form_consent']}"
+          f" · ready to upload {c['ready']} · uploaded {c['uploaded']}")
     print("   by occasion: " + " · ".join(f"{k} {n} (£{v:,.0f})" for k, (n, v) in c["by_occasion"].items()))
 
 

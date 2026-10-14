@@ -605,4 +605,92 @@
     @media (prefers-reduced-motion: reduce) {
       .bs-btn, .bs-occasions a, .bs-skip-link { transition: none; }
     }
+  
+
+    /* ── Cookie consent sheet (js/consent.js) — third twin of the block at the
+       end of css/components.css and the one in partials/private-register.css.html;
+       change all three together. js/consent.js runs on these pages, so without
+       these rules the sheet renders unstyled. Palette and type are this
+       register's own. ── */
+    .consent {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: var(--consent-offset, 0px);
+      z-index: 1000;
+      background-color: var(--bs-cream);
+      color: var(--bs-ink);
+      border-top: 1px solid var(--bs-rule);
+      box-shadow: 0 -4px 18px rgba(31, 26, 23, 0.12);
+      font-family: var(--font-body);
+      font-size: 1.125rem;
+      line-height: 1.5;
+    }
+    .consent[hidden] { display: none; }
+    .consent:focus { outline: none; }
+    .consent:focus-visible {
+      outline: 2px solid var(--bs-ink);
+      outline-offset: -4px;
+    }
+    .consent__inner {
+      max-width: 72rem;
+      margin: 0 auto;
+      padding: 1.25rem 1.5rem;
+      padding-bottom: calc(1.25rem + env(safe-area-inset-bottom, 0px));
+      display: flex;
+      align-items: center;
+      gap: 1rem 2rem;
+    }
+    .consent__text { flex: 1 1 auto; margin: 0; }
+    .consent__text a {
+      color: inherit;
+      text-decoration: underline;
+      text-underline-offset: 0.15em;
+    }
+    .consent__actions {
+      flex: 0 0 auto;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+    }
+    .consent__btn {
+      min-width: 9rem;
+      min-height: 2.75rem;
+      margin: 0;
+      padding: 0.75rem 1.5rem;
+      font-family: var(--font-display);
+      font-size: 1.125rem;
+      font-weight: 500;
+      letter-spacing: 0.02em;
+      line-height: 1.2;
+      color: var(--bs-paper);
+      background-color: var(--bs-ink);
+      border: 1px solid var(--bs-ink);
+      border-radius: 0;
+      cursor: pointer;
+    }
+    .consent__btn:hover,
+    .consent__btn[aria-pressed="true"] {
+      text-decoration: underline;
+      text-underline-offset: 0.2em;
+    }
+    .consent__btn:focus-visible {
+      outline: 2px solid var(--bs-ink);
+      outline-offset: 3px;
+    }
+    @media (max-width: 760px) {
+      .consent__inner {
+        flex-direction: column;
+        align-items: stretch;
+        padding: 1rem;
+        padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+      }
+      .consent__btn { min-width: 0; }
+    }
+    @media (max-width: 340px) {
+      .consent__actions { grid-template-columns: 1fr; }
+    }
+    @media print {
+      .consent { display: none !important; }
+    }
   </style>

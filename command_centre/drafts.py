@@ -24,7 +24,8 @@ KEY_RE = re.compile(r"^[a-z]{12}$")
 FIELDS = ("thread_id", "kind", "first_name", "subject", "created")
 KIND_WORDS = {"reply": "reply", "confirmation": "booking confirmation", "holding": "holding reply",
               "follow-up": "quote follow-up", "deposit-reminder": "deposit reminder",
-              "balance-reminder": "balance reminder", "receipt": "payment receipt", "review": "review request",
+              "balance-reminder": "balance reminder", "payment-reminder": "full-fee reminder",
+              "receipt": "payment receipt", "review": "review request",
               "paid-thanks": "singer “Paid!”", "other": "other"}
 
 
