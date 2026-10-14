@@ -97,6 +97,74 @@ def test_unsent_invoices_read_from_the_books_cache():
         path.unlink(missing_ok=True)
 
 
+def test_books_closed_lists_closed_bookings_payments_for_books():
+    """Owner hands-off, 14 Oct 2026: a closed booking drops out of collect(), so its Starling payments never reached
+    record_in_books. books_closed lists them (read-only), only for refs Books still shows open, never a cancelled
+    or "hand check only" booking, and never a payment after the close."""
+    rows = [row("2110", 1400, "2026-09-07", "2026-10-21", "deposit seen 2026-09-10 (Starling); paid in full 2026-09-10"),
+            row("2108A", 2800, "2026-09-05", "2027-08-21", "hand check only: shares 2108; paid in full 2026-09-10",
+                name="Bo Jones"),
+            row("2509", 3225, "2026-09-01", "2026-09-21", "paid in full 2026-09-12", name="Cy Brown"),
+            row("0110", 500, "2026-09-01", "2026-10-30", "cancelled 2026-09-05 by client email", name="Di Green"),
+            row("2111", 650, "2026-08-22", "2026-11-21", "PENDING", name="Ed White")]
+    feed = [pay(1400, "2026-09-10", "INV2110"), pay(50, "2026-09-20", "INV2110"), pay(1400, "2026-09-09", "2108A"),
+            pay(3225, "2026-09-12", "INV2509"), pay(325, "2026-08-26", "INV 2111")]
+    client = FakeClient(feed)
+    got = {a["ref"]: a for a in cp.books_closed(client, rows, T, open_in_books={"2110": 1400.0, "2108A": 2800.0,
+                                                                               "0110": 500.0, "2111": 650.0})}
+    assert set(got) == {"2110"}, got  # 2509 is paid in Books; 2108A hand check only; 0110 cancelled; 2111 open
+    assert got["2110"]["record_in_books"] == [["2026-09-10", 1400.0, 0.0]], got  # the £50 after the close is left out
+    assert got["2110"]["closed_on"] == "2026-09-10" and got["2110"]["books_balance"] == 1400.0
+    # no Books cache: nothing is known to be open in Books, so nothing is listed (and Starling isn't read)
+    quiet = FakeClient(feed)
+    assert cp.books_closed(quiet, rows, T) == [] and quiet.calls == []
+    # a ref already reported (an open or fee-pending booking) isn't listed twice
+    assert cp.books_closed(FakeClient(feed), rows, T, open_in_books={"2110": 1400.0}, skip={"2110"}) == []
+    # nothing to look at: no feed call
+    quiet = FakeClient(feed)
+    assert cp.books_closed(quiet, rows, T, open_in_books={}) == [] and quiet.calls == []
+
+
+def test_closed_items_join_the_json_list():
+    item = cp.closed_item({"ref": "2110", "closed_on": "2026-09-10", "value": 1400.0, "received": 1400.0,
+                           "books_balance": 1400.0, "record_in_books": [["2026-09-10", 1400.0, 0.0]]})
+    assert item["state"] == "CLOSED" and item["action"] == "none" and item["record_in_books"]
+    assert cp.closed_item(dict(item, record_in_books=[]))["action"] == "hand_check"
+    rows = [row("2110", 1400, "2026-09-07", "2026-10-21", "paid in full 2026-09-10"),
+            row("2111", 650, "2026-08-22", "2026-11-21", "PENDING", name="Ed White")]
+    path = cp.books_cache()
+    args = type("A", (), {"json": True, "apply": False, "selftest": False, "books_closed": False})()
+    try:
+        write_books_cache([{"number": "2110", "status": "overdue", "balance": 1400}])
+        buf = io.StringIO()
+        with contextlib.redirect_stdout(buf):
+            cp.run(args, FakeClient([pay(1400, "2026-09-10", "INV2110"), pay(325, "2026-08-26", "INV 2111")]), rows, T)
+        got = {a["ref"]: a for a in json.loads(buf.getvalue())}
+        assert got["2111"]["state"] == "DEPOSIT_SEEN" and got["2110"]["state"] == "CLOSED", got
+        assert got["2110"]["record_in_books"] == [["2026-09-10", 1400.0, 0.0]]
+    finally:
+        path.unlink(missing_ok=True)
+
+
+def test_books_closed_is_read_only_and_on_its_own():
+    p = subprocess.run([PY, SCRIPT, "--books-closed", "--apply"], capture_output=True, text=True,
+                       env=dict(os.environ, LCS_PRIVATE_DIR=_HOME))
+    assert p.returncode != 0 and "goes on its own" in (p.stderr + p.stdout), p
+
+
+def test_books_open_balances_reads_the_cache():
+    path = cp.books_cache()
+    try:
+        assert cp.books_open_balances() is None
+        write_books_cache([{"number": "2110", "status": "overdue", "balance": 1400}, {"number": "2509", "status": "paid",
+                                                                                      "balance": 0},
+                           {"number": "1211", "status": "draft", "balance": 1750},
+                           {"number": "2111", "status": "partially_paid", "balance": 325}])
+        assert cp.books_open_balances() == {"2110": 1400.0, "2111": 325.0}
+    finally:
+        path.unlink(missing_ok=True)
+
+
 def test_awaiting_deposit_inside_seven_days():
     assert cp.assess(row("X", 500, "2026-09-25", "2026-10-30", "PENDING: invoiced"), [], T)["state"] == "AWAITING_DEPOSIT"
 

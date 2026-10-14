@@ -14,7 +14,10 @@ guard's READ_ALLOW list (ZohoBooks_list_invoices on zoho-books-invoices, ZohoBoo
 writes ~/lcs-private/command-centre/cache/books.json: each invoice's number, status, date, due date, total, balance
 and the customer's first name only; each bill's number, the vendor's first name, status, total, balance and date
 (best effort: the free Books plan has no bills, so a failed bill read gives "bills_read": false and no bills);
-the totals (receivables, overdue, unpaid bills) and generated_at. On any failure it prints the error's type name
+the totals (receivables, overdue, unpaid bills) and generated_at. From the same read it writes
+~/lcs-private/books-guard.json (mode 600, outside the Command Centre's cache): each invoice's invoice_id, customer_id,
+number, status, total and balance, no names, which the Books guard checks invoice updates and client payments
+against (owner hands-off, 14 Oct 2026). On any failure it prints the error's type name
 only, keeps the last cache and exits 1, so the Command Centre's refresh job logs the failure (a scheduled run
 notes it and carries on).
 
@@ -206,9 +209,35 @@ def totals(invoices, bills):
             "unpaid_bills": round(sum(b["balance"] for b in unpaid), 2), "unpaid_bills_count": len(unpaid)}
 
 
-def books_snapshot(call, now=None):
-    """The books.json payload, from `call(server, tool, arguments) -> text` (lcs_mcp.call_tool, or a fake)."""
-    invoices = [invoice_row(r) for r in list_all(call, INVOICE_SERVER, "ZohoBooks_list_invoices", "invoices")]
+RECORD_ID = re.compile(r"[0-9]{9,20}")
+
+
+def guard_row(r):
+    """One invoice as the Books guard sees it (books-guard.json): ids, number, status and balance; no names."""
+    ids = {k: str(r.get(k) or "").strip() for k in ("invoice_id", "customer_id")}
+    if not all(RECORD_ID.fullmatch(v) for v in ids.values()):
+        return None
+    return dict(ids, number=short(r.get("invoice_number"), 30), status=short(r.get("status"), 20).lower(),
+                balance=gbp(r.get("balance")), total=gbp(r.get("total")))
+
+
+def guard_snapshot(records, when):
+    """The Books guard's view of Books (owner hands-off, 14 Oct 2026): written to ~/lcs-private/books-guard.json,
+    outside the Command Centre's cache, because books.json carries no record ids. The guard
+    (.claude/hooks/zoho_books_guard.py) can't call Books itself, so it checks invoice updates and client payments
+    against this: the invoice's customer, status and balance."""
+    return {"generated_at": when, "invoices": [g for g in (guard_row(r) for r in records) if g]}
+
+
+def guard_path():
+    return private_dir() / "books-guard.json"
+
+
+def books_snapshot(call, now=None, guard_out=None):
+    """The books.json payload, from `call(server, tool, arguments) -> text` (lcs_mcp.call_tool, or a fake). With
+    `guard_out` (a dict), it is filled with the guard's snapshot from the same read."""
+    records = list_all(call, INVOICE_SERVER, "ZohoBooks_list_invoices", "invoices")
+    invoices = [invoice_row(r) for r in records]
     # Bills are best effort: the free Books plan (from 29 Sep 2026) has none, so a failed read leaves them
     # out ("bills_read": false) instead of losing the invoices; singer costs live in singer-invoices.csv.
     try:
@@ -219,14 +248,18 @@ def books_snapshot(call, now=None):
     invoices.sort(key=lambda i: (i["date"], i["number"]), reverse=True)
     bills.sort(key=lambda b: (b["date"], b["number"]), reverse=True)
     when = (now or datetime.datetime.now(LONDON)).isoformat(timespec="seconds")
+    if guard_out is not None:
+        guard_out.update(guard_snapshot(records, when))
     return {"generated_at": when, "invoices": invoices, "bills": bills, "bills_read": bills_read,
             "totals": totals(invoices, bills)}
 
 
 def cmd_books(call=None, now=None):
     try:
-        snap = books_snapshot(call or lcs_mcp.call_tool, now)
+        guard = {}
+        snap = books_snapshot(call or lcs_mcp.call_tool, now, guard)
         write_private_json(cache_dir() / "books.json", snap)
+        write_private_json(guard_path(), guard)
     except Exception as e:  # the type name only: a message could carry a client's details or a server's URL
         print(f"books: not updated ({type(e).__name__}); the last cache is kept")
         return 1
