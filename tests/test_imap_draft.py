@@ -199,6 +199,18 @@ def test_a_confirmation_carries_both_files_and_nothing_else_carries_any():
     assert [a[0] for a in got["attachments"]] == [PDF.name, DOCX.name], "the invoice first"
 
 
+def test_a_business_confirmation_may_be_a_pdf():
+    conf = FOLDER / "Booking Confirmation - A Client - 21 Nov 2026.pdf"
+    conf.write_bytes(b"%PDF-1.4 fake confirmation")
+    got = d.validate(spec(attachments=[str(conf), str(PDF)]))
+    assert [a[0] for a in got["attachments"]] == [PDF.name, conf.name], "the invoice first"
+    two_invoices = FOLDER / "Invoice 2111 - A Client copy.pdf"
+    two_invoices.write_bytes(b"%PDF-1.4 fake invoice")
+    assert "one invoice PDF" in (refused(spec(attachments=[str(PDF), str(two_invoices)])) or "")
+    two_invoices.unlink()
+    conf.unlink()
+
+
 def test_attachments_must_be_this_bookings_files_for_this_client():
     assert "not in booking 2111's folder" in refused(spec(attachments=[str(OTHER_PDF), str(DOCX)]))
     assert "not the client on booking 2111" in refused(spec(to="other@example.com"))
@@ -482,18 +494,44 @@ def test_sent_matches_the_exact_invoice_to_the_client():
         assert rc == 1 and out.startswith("STOP:"), (args, out)
 
 
+def test_discard_moves_one_office_draft_to_trash_and_forgets_its_key():
+    clear_saved()
+    keyed = luca_draft(key="2111-confirmation")
+    d.record_saved("2111-confirmation")
+    imap = FakeIMAP(drafts=[luca_draft(msg_id="<other@londonchoralservice.com>"), keyed])
+    rc, out = run_main(["discard", LUCA_ID], imap)
+    assert rc == 0 and "moved to Trash" in out and "can be saved again" in out, out
+    assert imap.boxes["Trash"] == [keyed] and len(imap.boxes["Drafts"]) == 1, "only that draft, and only to Trash"
+    assert not d.saved_before("2111-confirmation")
+    plain = luca_draft()
+    imap = FakeIMAP(drafts=[plain])
+    rc, out = run_main(["discard", LUCA_ID], imap)
+    assert rc == 0 and imap.boxes["Trash"] == [plain] and "can be saved again" not in out, out
+
+
+def test_discard_refuses_other_senders_missing_or_duplicate_drafts():
+    other = luca_draft().replace(d.FROM_HEADER.encode(), b"Luca <luca@almaconsort.com>")
+    for drafts, why in (([other], "only a draft from office@"), ([], "isn't in Drafts"),
+                        ([luca_draft(), luca_draft()], "couldn't move")):
+        imap = FakeIMAP(drafts=drafts)
+        rc, out = run_main(["discard", LUCA_ID], imap)
+        assert rc == 1 and why in out and imap.boxes["Trash"] == [], (why, out)
+    rc, out = run_main(["discard", "not-an-id"], FakeIMAP())
+    assert rc == 1 and "Message-ID" in out, out
+
+
 def test_the_script_has_no_sending_code():
     src = (ROOT / "scripts" / "bookings" / "imap_draft.py").read_text()
     for word in ("smtplib", "SMTP(", "sendmail", "send_message", ".store(", ".copy(", ".move(", "expunge",
                  "EXPUNGE", "STORE", "COPY", ".delete(", ".create(", "Deleted"):
         assert word not in src, word
-    # UID commands only in retire_original: a FETCH of headers and one MOVE, to Trash
-    retire = src[src.index("def retire_original"):src.index("def attach(")]
-    rest = src.replace(retire, "")
+    # UID commands only in trash_draft: a FETCH of headers and one MOVE, to Trash
+    trash = src[src.index("def trash_draft"):src.index("def retire_original")]
+    rest = src.replace(trash, "")
     assert ".uid(" not in rest and "conn.select(DRAFTS)" not in rest.replace("conn.select(DRAFTS, readonly=True)", "")
-    assert re.findall(r'\.uid\("(\w+)"', retire) == ["FETCH", "MOVE"], re.findall(r'\.uid\("(\w+)"', retire)
-    assert 'conn.uid("MOVE", uids[0], TRASH)' in retire and "len(uids) != 1" in retire
-    assert "conn.close()" not in retire, "CLOSE on a writable folder would expunge"
+    assert re.findall(r'\.uid\("(\w+)"', trash) == ["FETCH", "MOVE"], re.findall(r'\.uid\("(\w+)"', trash)
+    assert 'conn.uid("MOVE", uid, TRASH)' in trash and "len(hits) != 1" in trash
+    assert "conn.close()" not in trash, "CLOSE on a writable folder would expunge"
     assert len(re.findall(r"\.append\(DRAFTS", src)) == 1
     assert len(re.findall(r"conn\.append\(", src)) == 1
 

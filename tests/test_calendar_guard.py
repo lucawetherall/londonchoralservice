@@ -70,6 +70,17 @@ def test_write_tools_are_denied():
         assert decide(f"mcp__{SERVER}__{name}") == "deny", name
 
 
+def test_delete_on_the_lcs_calendar_asks_luca_and_is_denied_elsewhere():
+    tool = f"mcp__{SERVER}__delete_event"
+    assert decide(tool, {"calendarId": LCS_CAL, "eventId": "e1"}) == "ask"
+    assert decide(tool, {"calendarId": LCS_CAL, "eventId": "e1", "notificationLevel": "NONE"}) == "ask"
+    for bad in ({"eventId": "e1"}, {"calendarId": "primary", "eventId": "e1"},
+                {"calendarId": LCS_CAL, "eventId": ""}, {"calendarId": LCS_CAL, "eventId": "e1", "notificationLevel": "ALL"},
+                {"calendarId": LCS_CAL, "eventId": "e1", "sendUpdates": "all"}):
+        assert decide(tool, bad) == "deny", bad
+    assert decide(tool, {"calendarId": LCS_CAL, "eventId": "e1"}, home=home_with(None)) == "deny"
+
+
 def test_booking_on_the_lcs_calendar_is_allowed():
     assert decide(CREATE, booking()) == "allow"
     assert decide(CREATE, booking(allDay=True, startTime="2027-08-21", endTime="2027-08-22",

@@ -25,6 +25,15 @@ prompts). Private data stays in ~/lcs-private/; this file holds none.
     .venv/bin/python scripts/bookings/assistant_io.py ledger-add '<json object>'
         append one booking row (columns as in the ledger header); refuses duplicates and an
         occasion that isn't wedding, funeral, christmas, corporate, private event or other
+    .venv/bin/python scripts/bookings/assistant_io.py books-queue add '<json object>'
+        queue a Books record the drafter couldn't make (Books unavailable: plan, sign-in or tools):
+        {ref, reason, contact_email, contact: <create_contact body>, invoice: <create_invoice body
+        without customer_id>}, kept in ~/lcs-private/books-queue.jsonl (mode 600); a ref already
+        queued is left as it was
+    .venv/bin/python scripts/bookings/assistant_io.py books-queue list
+        JSON list of the queued records not yet done, oldest first
+    .venv/bin/python scripts/bookings/assistant_io.py books-queue done <ref>
+        mark a queued record done once its Books invoice exists
 """
 
 import datetime
@@ -43,6 +52,7 @@ import check_payments as cp  # noqa: E402
 
 PRIVATE = lm.PRIVATE  # $LCS_PRIVATE_DIR (default ~/lcs-private), like the ledger
 STATE = PRIVATE / "assistant-state.json"
+BOOKS_QUEUE = PRIVATE / "books-queue.jsonl"  # Books records owed while Books can't take them
 STYLE = PRIVATE / "email-style.md"
 LEDGER = lm.LEDGER  # $LCS_BOOKINGS_CSV, else bookings.csv in $LCS_PRIVATE_DIR (default ~/lcs-private)
 INVOICES = PRIVATE / "invoices"  # before 29 Sep 2026
@@ -263,6 +273,86 @@ def ledger_add(row):
     print(f"ledger: added {row['booking_ref']}")
 
 
+# --- Books queue ---------------------------------------------------------------------------------
+# When Books refuses writes (an expired trial, a lapsed sign-in, the tools missing), the drafter stores here the exact
+# contact and invoice bodies it meant to send, and the daily pass replays them once Books works again, so nobody has
+# to add an invoice to Books by hand.
+
+QUEUE_KEYS = {"ref", "reason", "contact_email", "contact", "invoice"}
+
+
+def read_queue():
+    if not BOOKS_QUEUE.exists():
+        return []
+    return [json.loads(line) for line in BOOKS_QUEUE.read_text().splitlines() if line.strip()]
+
+
+def write_queue(rows):
+    private_write(BOOKS_QUEUE, "".join(json.dumps(r, ensure_ascii=False) + "\n" for r in rows))
+
+
+def queue_add(rec, today=None):
+    if not isinstance(rec, dict):
+        raise SystemExit("books-queue add needs one JSON object")
+    unknown = set(rec) - QUEUE_KEYS
+    if unknown:
+        raise SystemExit(f"unknown keys: {', '.join(sorted(unknown))}; nothing written")
+    ref = rec.get("ref")
+    if not (isinstance(ref, str) and REF_RE.fullmatch(ref)):
+        raise SystemExit("ref must be a booking ref such as 2111 or 2111A; nothing written")
+    email = rec.get("contact_email")
+    if not (isinstance(email, str) and re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", email)):
+        raise SystemExit("contact_email must be the client's email address; nothing written")
+    contact, inv = rec.get("contact"), rec.get("invoice")
+    if not (isinstance(contact, dict) and contact.get("contact_name")):
+        raise SystemExit("contact must be the create_contact body, with contact_name; nothing written")
+    if not isinstance(inv, dict) or inv.get("invoice_number") != ref:
+        raise SystemExit("invoice must be the create_invoice body, with invoice_number equal to ref; nothing written")
+    if "send" in inv or "customer_id" in inv:
+        raise SystemExit("leave send and customer_id out of the invoice body (the replay finds the contact); "
+                         "nothing written")
+    items = inv.get("line_items")
+    if not (isinstance(items, list) and items and all(isinstance(i, dict) and "rate" in i for i in items)):
+        raise SystemExit("invoice.line_items must list each item with its rate; nothing written")
+    with lm.ledger_lock(BOOKS_QUEUE):  # the drafter and the daily pass run in parallel: no lost update
+        rows = read_queue()
+        if any(r["ref"] == ref and not r.get("done") for r in rows):
+            print(f"books-queue: {ref} already queued")
+            return
+        rows.append({"ref": ref, "queued": (today or london_today()).isoformat(),
+                     "reason": str(rec.get("reason") or ""), "contact_email": email, "contact": contact, "invoice": inv})
+        write_queue(rows)
+    print(f"books-queue: {ref} queued")
+
+
+def queue_done(ref, today=None):
+    with lm.ledger_lock(BOOKS_QUEUE):
+        rows = read_queue()
+        hit = [r for r in rows if r["ref"] == ref and not r.get("done")]
+        if not hit:
+            raise SystemExit(f"books-queue: {ref} is not queued")
+        for r in hit:
+            r["done"] = (today or london_today()).isoformat()
+        write_queue(rows)
+    print(f"books-queue: {ref} done")
+
+
+def cmd_books_queue(args):
+    sub = args[0] if args else ""
+    if sub == "add" and len(args) == 2:
+        try:
+            rec = json.loads(args[1])
+        except json.JSONDecodeError:
+            raise SystemExit("books-queue add needs one JSON object")
+        queue_add(rec)
+    elif sub == "list" and len(args) == 1:
+        print(json.dumps([r for r in read_queue() if not r.get("done")], ensure_ascii=False))
+    elif sub == "done" and len(args) == 2:
+        queue_done(args[1])
+    else:
+        raise SystemExit("usage: books-queue add '<json>' | books-queue list | books-queue done <ref>")
+
+
 def main():
     cmd, args = (sys.argv[1] if len(sys.argv) > 1 else ""), sys.argv[2:]
     if cmd == "state":
@@ -298,6 +388,8 @@ def main():
         except json.JSONDecodeError:
             raise SystemExit("ledger-add needs one JSON object")
         ledger_add(row)
+    elif cmd == "books-queue":
+        cmd_books_queue(args)
     else:
         raise SystemExit(__doc__)
 
