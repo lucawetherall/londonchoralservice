@@ -506,6 +506,27 @@ def test_drafts_put_merges_and_keeps_mode_600():
     assert cc_sync.main(["drafts-put", json.dumps(draft(kind="review"))]) == 0
 
 
+def test_a_draft_recorded_with_its_message_id_offers_move_to_trash():
+    clean()
+    for bad in ("abc@x.com", "<a b@x.com>", "<x>", 5):
+        code, out = quiet(cc_sync.cmd_drafts_put, json.dumps(draft(message_id=bad)))
+        assert code == 2 and "message_id" in out and not (CACHE / "drafts.json").exists(), (bad, out)
+    fixtures()
+    mid = "<lcs.1@londonchoralservice.com>"
+    code, out = quiet(cc_sync.cmd_drafts_put, json.dumps([draft(message_id=mid),
+                                                           draft(thread_id="T2", kind="receipt", first_name="Dan")]))
+    assert code == 0, out
+    assert {d.get("message_id") for d in json.loads((CACHE / "drafts.json").read_text())} == {mid, None}
+    html = page(make(FakeBank()), "/drafts")
+    assert html.count('data-action="draft-trash"') == 2  # the listed one, and the by-Message-ID form
+    assert "Move to Trash in Zoho: Ann" in html and "Move to Trash in Zoho: Dan" not in html
+    assert mid not in html  # the form carries the draft's key; the server looks the Message-ID up
+    synced = cc_sync.sync_drafts(json.loads((CACHE / "drafts.json").read_text()),
+                                 [{"thread_id": THREAD, "subject": "Re: Wedding", "date": "2026-09-29",
+                                   "to_first_name": "Ann"}])
+    assert synced[0]["message_id"] == mid  # a live listing keeps it
+
+
 def test_the_agents_record_each_saved_draft():
     for name in ("lcs-reply-drafter", "lcs-daily-pass", "lcs-singer-clerk"):
         body = (Path(ROOT) / ".claude" / "agents" / f"{name}.md").read_text(encoding="utf-8")

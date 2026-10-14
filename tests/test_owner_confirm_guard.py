@@ -17,7 +17,10 @@ def bash(command):
 
 
 def test_discard_and_every_way_round_the_plain_forms_ask_luca():
+    """A second layer only: discard refuses without the Command Centre's nonce (tests/test_imap_draft.py)."""
     for cmd in (".venv/bin/python scripts/bookings/imap_draft.py discard '<a@b.com>'",
+                ".venv/bin/python scripts/bookings/imap_draft.py discard '<a@b.com>' --owner",
+                "echo x | .venv/bin/python scripts/bookings/imap_draft.py discard '<a@b.com>' --owner",
                 "cd x && python3 scripts/bookings/imap_draft.py  discard '<a@b.com>'",
                 "python3 -m imap_draft discard x",
                 "python3 -c \"import imap_draft as d; d.main([chr(100)+'iscard','x'])\"",

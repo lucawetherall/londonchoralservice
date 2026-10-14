@@ -28,6 +28,15 @@
   <li><span class="dot dot-followup"></span>follow-up</li><li><span class="dot dot-enquiry"></span>enquiry</li>
 </ul>
 
+<details class="card">
+  <summary>Let Claude delete a London Choral Service calendar event</summary>
+  <form class="cc-action" data-action="calendar-delete">
+    <label class="field">Event id <input type="text" name="event_id" pattern="[A-Za-z0-9][A-Za-z0-9_\-]{3,199}" maxlength="200" required autocapitalize="off" autocomplete="off" spellcheck="false"></label>
+    <button type="submit" class="button small quiet">Check, then approve</button>
+  </form>
+  <p class="muted">Paste the event id Claude gives you. After your passkey, Claude may delete exactly that event, on the London Choral Service calendar only, once, within 10 minutes. The app itself deletes nothing.</p>
+</details>
+
 {{ m.failed(grid) }}
 {% if g %}
 <h2 class="cal-title">{{ g.title }}</h2>

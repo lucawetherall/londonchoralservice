@@ -72,6 +72,8 @@
       "Bash(security dump-keychain *)",
       "Write(~/lcs-private/command-centre/**)",
       "Edit(~/lcs-private/command-centre/**)",
+      "Bash(*owner-nonce*)",
+      "Bash(*command-centre/approvals*)",
       "Write(~/lcs-private/events.jsonl)",
       "Edit(~/lcs-private/events.jsonl)",
       "Write(~/lcs-private/events.jsonl.lock)",

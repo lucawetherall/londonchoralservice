@@ -21,6 +21,10 @@ from . import auth, sources, todo
 ZOHO_DRAFTS_URL = "https://mail.zoho.com/zm/#mail/folder/drafts"  # the owner's account is on Zoho's .com data centre
 STATES = ("sent", "discarded", "open")
 KEY_RE = re.compile(r"^[a-z]{12}$")
+# An RFC 5322 Message-ID as imap_draft.py takes it (its MSG_ID): printable ASCII bar space, "<", ">" and "@" on each
+# side of one "@". A draft recorded with one (cc_sync.py drafts-put's optional message_id) can be moved to Trash
+# from the inbox, after the passkey (the draft-trash action).
+MESSAGE_ID_RE = re.compile(r"^<[!-;=?A-~]{1,90}@[!-;=?A-~]{1,90}>$")
 FIELDS = ("thread_id", "kind", "first_name", "subject", "created")
 KIND_WORDS = {"reply": "reply", "confirmation": "booking confirmation", "holding": "holding reply",
               "follow-up": "quote follow-up", "deposit-reminder": "deposit reminder",
@@ -57,6 +61,8 @@ def read_drafts():
         if isinstance(d, dict) and all(isinstance(d.get(k), str) for k in FIELDS):
             row = {k: d[k] for k in FIELDS}
             row["source"] = d.get("source") if d.get("source") in ("assistant", "zoho") else "assistant"
+            mid = d.get("message_id")
+            row["message_id"] = mid if isinstance(mid, str) and MESSAGE_ID_RE.fullmatch(mid) else ""
             out.append(row)
     return out, when
 
@@ -89,7 +95,8 @@ def inbox(found, marks):
         state = m.get("state") if m.get("state") in STATES else "open"
         row = {"key": key, "kind": d["kind"], "kind_words": KIND_WORDS.get(d["kind"], d["kind"]),
                "first_name": d["first_name"], "subject": d["subject"], "created": d["created"], "state": state,
-               "marked_at": str(m.get("at") or "")[:10], "saved_by_you": d.get("source") == "zoho"}
+               "marked_at": str(m.get("at") or "")[:10], "saved_by_you": d.get("source") == "zoho",
+               "can_trash": bool(d.get("message_id"))}
         (open_ if state == "open" else marked).append(row)
     order = lambda r: (r["created"], r["key"])  # noqa: E731
     return {"open": sorted(open_, key=order, reverse=True), "marked": sorted(marked, key=order, reverse=True),

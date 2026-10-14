@@ -168,6 +168,25 @@ def test_the_shell_capable_mcp_tools_are_checked_too():
     expect("allow", run("mcp__terminal__run_in_terminal", {"command": "git status"}), "terminal git status")
 
 
+def test_the_owners_passkey_proofs_cannot_be_written_from_a_shell():
+    """The Command Centre's owner nonce and approvals folder (14 Oct 2026): only the app writes them."""
+    for cmd in ("echo abc > ~/lcs-private/command-centre/owner-nonce",
+                "cp /tmp/a.json ~/lcs-private/command-centre/approvals/calendar-delete-0123456789abcdef0123456789abcdef.json",
+                "python3 -c \"import os; open(os.path.join(os.path.expanduser('~/lcs-private'), 'command-centre', "
+                "'approvals', 'x.json'), 'w')\"",
+                "printf x | tee \"$HOME/lcs-private/command-centre\"/approvals/calendar-delete-ab.json",
+                "touch ~/lcs-private/command-centre/approvals/calendar-delete-*"):
+        expect("deny", bash(cmd), cmd)
+    script = write(os.path.join(SCRATCH, "forge", "f.py"),
+                   "from pathlib import Path\np = Path.home() / 'lcs-private' / 'command-centre' / 'approvals'\n")
+    expect("deny", bash(f"python3 {script}"), "an untracked script naming the approvals folder")
+    expect("deny", run("Write", {"file_path": os.path.join(SCRATCH, "w2", "n.py"),
+                                 "content": "open('owner-nonce', 'w')\n"}), "writing a forger in the scratchpad")
+    for cmd in (f"{PY} tests/test_calendar_guard.py", f"{PY} tests/test_cc_actions.py", "ls ~/lcs-private",
+                f"{PY} -m command_centre"):
+        expect("allow", bash(cmd), cmd)
+
+
 # --- file tools ----------------------------------------------------------------------------------------------
 
 def test_writing_the_attack_is_denied_outside_the_allowlist():

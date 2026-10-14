@@ -29,6 +29,10 @@ unguarded. This hook closes it. Wired in .claude/settings.json for:
 - Read, Grep and Glob: denied on MCP configuration (~/.claude.json and its backups, .mcp.json,
   claude_desktop_config.json, ~/.mcp-auth) and on a search rooted at a folder that holds it.
 
+The same command and untracked-file checks also refuse naming the Command Centre's owner nonce or its approvals
+folder (OWNER_PROOF): those files are Luca's passkey proofs for the --owner scripts and for a calendar delete, and
+only the app writes them (settings also deny the Write and Edit tools there).
+
 It fails closed: malformed input or any internal error denies the call. It can't see through deliberate
 obfuscation (strings assembled at run time, encoded payloads); the rule in CLAUDE.md covers intent.
 """
@@ -71,6 +75,12 @@ CLIENT = {
     "cmd": (re.compile(r"\b(import|from)\s+lcs_mcp\b|lcs_mcp['\"]|['\"]lcs_mcp", re.I), "the lcs_mcp client"),
     "file": (re.compile(r"(?<![a-z0-9_])lcs_mcp(?![a-z0-9_])", re.I), "the lcs_mcp client"),
 }
+# The owner's passkey proofs (owner decision, 14 Oct 2026): the Command Centre's one-time owner nonce and its
+# approvals folder (a calendar delete is allowed only against an approval there). Only the app writes them. A
+# command, or an untracked file (a scratch script, a file written outside the repo), that names them is refused;
+# reviewed, tracked code (lcs_owner.py, the app, the calendar guard and their tests) may name them.
+OWNER_PROOF = (re.compile(r"owner-nonce|command-centre[\s/\\,+()]*approvals|calendar-delete-[0-9a-f*?\[{]", re.I),
+               "the Command Centre's owner nonce or approvals (written only by the app, after Luca's passkey)")
 
 # Tracked files that may hold markers (and may be written with them).
 CODE_OK = {
@@ -118,11 +128,11 @@ class Deny(Exception):
 
 def found(text, client=None):
     """The label of the first marker in `text` (also with quotes and backslashes dropped), else None.
-    `client` ("cmd" or "file") adds the lcs_mcp check for command text or for an untracked file."""
+    `client` ("cmd" or "file") adds the lcs_mcp check and OWNER_PROOF for command text or for an untracked file."""
     if not text:
         return None
     for t in (text, re.sub(r"[\"'\\`]", "", text)):
-        for rx, label in MARKERS + ([CLIENT[client]] if client else []):
+        for rx, label in MARKERS + ([CLIENT[client], OWNER_PROOF] if client else []):
             if rx.search(t):
                 return label
     return None
