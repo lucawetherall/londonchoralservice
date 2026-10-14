@@ -62,6 +62,7 @@ Every rule that reads or writes `notes` to decide something, and the event that 
 | B14 | `RESERVED_NOTES`, `reserved_note` | — | `--note` refuses B2, B4–B6, B10, B11, B13 and `PENDING` without `--owner` | Carries over as "who may write which kind" |
 | B15 | " (owner)" appended by `--owner` | `--note … --owner` | Nothing (a human record) | `by: owner` |
 | B16 | `pipeline.reviews_due`, `done_due` read `FULL_NOTE` directly | — | Bug 3 above | Both read the close through one function, `closed_on` |
+| B17 | `TERMS_NOTE` "full fee due by YYYY-MM-DD" → `full_by` (added 14 Oct 2026) | `--fact REF terms --full-by D2` | Single-payment terms (a business paying against a purchase order): no deposit stage; AWAITING_PAYMENT, then PAYMENT_OVERDUE (one `payment_reminder`), PAID_IN_FULL on a confident payment of the whole fee; a part payment is CHECK_PAYMENT | `terms {full_by}` |
 
 ### Singer invoices (`singer_invoices.py`)
 
@@ -126,7 +127,8 @@ The note phrase is the one written today, so the pattern readers read the same f
 | `reinstated` | none | owner | Command Centre | "reinstated D (owner)" |
 | `deposit-kept`, `refunded`, `payment-checked` | none | owner | Command Centre | "deposit kept D (owner)" and so on |
 | `deposit-seen` | none | script | `--apply` | "deposit seen D (Starling)" |
-| `reminder-drafted` | `what`: `deposit`, `balance` or `receipt` | script | `--reminded` | "reminder drafted D", "balance reminder drafted D", "receipt drafted D" |
+| `reminder-drafted` | `what`: `deposit`, `balance`, `payment` or `receipt` | script | `--reminded` | "reminder drafted D", "balance reminder drafted D", "payment reminder drafted D", "receipt drafted D" |
+| `terms` | `full_by`: a date (the day the whole fee falls due) | script, owner | `--fact` (from the client's purchase order or the owner's word); the owner's `--note` | "single payment: full fee due by D2 (agreed D)" |
 | `review-drafted` | none | script | `pipeline.py reviewed` | "review request drafted D" |
 | `review-skipped` | `reason`: `planner` or `unresolved` | script | `pipeline.py review-skipped` | "review request skipped D (reason)" |
 | Reserved for the later PR: `payment-confirmed`, `discount-agreed`, `goodwill-reduction`, `overpayment-refunded` | see [Later](#later-pr-how-each-feature-uses-events) | owner | Command Centre | The writer refuses them until that PR |
@@ -165,6 +167,7 @@ Kinds group into families. A family decides one question.
 | booking | cancel settlement | `deposit-kept`, `refunded`, `payment-checked` | `cancel_settled_on` = the latest `on` |
 | booking | arrangement | `arranged` | Arranged, with the method |
 | booking | noted paid | `noted-paid` | `noted_hand` for any; `noted_full` for `full` |
+| booking | terms | `terms` | `full_by` = the latest by `(on, file order)`; none means the usual deposit and balance |
 | booking | markers | `deposit-seen`, `reminder-drafted`, `review-drafted`, `review-skipped` | Union: set if either the events or the notes say so |
 | singer_invoice | bank warnings | `bank-warning` | The latest line's codes, only while its `fp8` is the invoice's current `bank_fp[:8]` |
 | singer_invoice | bank trust | `bank-confirmed` | Confirmed while its `fp8` is the invoice's current `bank_fp[:8]` (a rescan to other details voids it, as clearing `bank_confirmed` does today) |
@@ -223,7 +226,7 @@ The patterns stay in the code as the fallback and the disagreement reader. They 
 
 | Kind | `by: script` | `by: owner` |
 |---|---|---|
-| `cancelled`, `arranged`, `noted-paid` | Yes (the assistant, from a client's own message) | Yes |
+| `cancelled`, `arranged`, `noted-paid`, `terms` | Yes (the assistant, from a client's own message or purchase order) | Yes |
 | `paid-in-full` | Only `basis: bank`, only from `--apply` when `assess` says PAID_IN_FULL from confident payments | `basis: owner` |
 | `fees-accepted`, `reinstated`, `deposit-kept`, `refunded`, `payment-checked`, `notes-checked`, `retract {why: mistake}` | No | Yes |
 | `deposit-seen`, `reminder-drafted`, `review-drafted`, `review-skipped`, `bank-warning`, `paid-reply-drafted` | Yes | No (nothing for the owner to record) |

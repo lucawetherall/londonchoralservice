@@ -23,6 +23,7 @@ cp, lm, pl, si, mr = dash.cp, dash.lm, dash.pl, dash.si, dash.mr
 
 BALANCE_DAYS = 3  # check_payments' BALANCE_DUE: the balance falls due three days before the event
 DEPOSIT_STATES = {"AWAITING_DEPOSIT", "DEPOSIT_OVERDUE"}
+PAYMENT_STATES = {"AWAITING_PAYMENT", "PAYMENT_OVERDUE"}  # single-payment terms: the whole fee by a day, no deposit
 NO_BALANCE = {"PAID_IN_FULL", "CLOSED", "CANCELLED", "PAYMENT_ON_CANCELLED", "PAYMENT_AFTER_CLOSE", "CHECK_VALUE"}
 REF_RE = re.compile(r"^[A-Za-z0-9-]{1,20}$")
 ISO_DAY = re.compile(r"\b(\d{4}-\d{2}-\d{2})\b")
@@ -293,7 +294,8 @@ def booking_rows(ledger, assessments, bank_checked, today):
             "ensemble": r.get("ensemble", ""), "value": value, "state": state,
             "received": (a or {}).get("received", value if state == "CLOSED" else 0.0) or 0.0,
             "balance": (a or {}).get("balance", 0.0 if state in ("CLOSED", "CANCELLED") else value),
-            "deposit_due": to_date((a or {}).get("deposit_due")), "assessment": a,
+            "deposit_due": to_date((a or {}).get("deposit_due")), "payment_due": to_date((a or {}).get("payment_due")),
+            "assessment": a,
             "bank_checked": bool(bank_checked and ref in by_ref),
             "upcoming": event is None or event >= today, "cancelled": state in ("CANCELLED", "PAYMENT_ON_CANCELLED"),
         })
@@ -324,6 +326,9 @@ def ledger_timeline(row, booking, today):
     if booking["deposit_due"]:
         tone = "bad" if booking["state"] == "DEPOSIT_OVERDUE" else ""
         out.append(item(booking["deposit_due"], "money", "Deposit due", tone=tone))
+    if booking.get("payment_due"):
+        tone = "bad" if booking["state"] == "PAYMENT_OVERDUE" else ""
+        out.append(item(booking["payment_due"], "money", "Full fee due (single payment)", tone=tone))
     if a.get("first"):
         out.append(item(to_date(a["first"]), "money", f"First payment seen in Starling (matched by {a.get('how') or '?'}); "
                         f"£{a.get('received', 0):,.2f} received in all", tone="ok"))
@@ -711,7 +716,8 @@ def needs_you(panels, bank_unreachable=False):
                 with its `fee` (fee_shortfall) when it is also a transfer-fee shortfall;
       fee       a booking whose confident payments leave a gap of £0.01 up to FEE_CAP, the whole balance, with at
                 least 90% of the fee in (fee_shortfall), that isn't a hand check: "accept as transfer fees?", one each;
-      deposits  the DEPOSIT_OVERDUE bookings, one grouped row;   balances  the BALANCE_DUE bookings, grouped
+      deposits  the DEPOSIT_OVERDUE bookings, one grouped row;   payments  the PAYMENT_OVERDUE bookings (single-payment
+                terms: the whole fee), grouped;   balances  the BALANCE_DUE bookings, grouped
                 (less any asked about as a fee shortfall);
       approval  an Ads change set waiting (not applied, no problem): one each;
       books-import  the 2026 Books import waiting for approval (only "waiting": approved, stale or imported is
@@ -780,7 +786,8 @@ def needs_you(panels, bank_unreachable=False):
         for ref in sorted(fees):
             rows.append({"kind": "fee", "count": 1, "tone": "warn", "item": fees[ref]})
         asked = {r["item"]["ref"] for r in rows if r["kind"] == "fee"}
-        for state, kind, tone in (("DEPOSIT_OVERDUE", "deposits", "bad"), ("BALANCE_DUE", "balances", "warn")):
+        for state, kind, tone in (("DEPOSIT_OVERDUE", "deposits", "bad"), ("PAYMENT_OVERDUE", "payments", "bad"),
+                                  ("BALANCE_DUE", "balances", "warn")):
             # a balance that is only a fee shortfall is asked about above, not chased here as well; a held booking
             # is a hand check, never chased
             refs = sorted(a["ref"] for a in (bank or {}).get("assessments") or []
@@ -1107,7 +1114,10 @@ def booking_dates(bookings):
         if b["deposit_due"] and b["state"] in DEPOSIT_STATES:
             out.append(item(b["deposit_due"], "deposit", f"Deposit due {who}", href,
                             "bad" if b["state"] == "DEPOSIT_OVERDUE" else "warn"))
-        if b["event_date"] and b["state"] not in NO_BALANCE and (b["balance"] or 0) > 0:
+        if b.get("payment_due") and b["state"] in PAYMENT_STATES:
+            out.append(item(b["payment_due"], "deposit", f"Full fee due {who}, £{b['balance']:,.2f}", href,
+                            "bad" if b["state"] == "PAYMENT_OVERDUE" else "warn"))
+        if b["event_date"] and not b.get("payment_due") and b["state"] not in NO_BALANCE and (b["balance"] or 0) > 0:
             out.append(item(b["event_date"] - datetime.timedelta(days=BALANCE_DAYS), "balance",
                             f"Balance due {who}, £{b['balance']:,.2f}", href, "warn"))
     return out

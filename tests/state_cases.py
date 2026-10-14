@@ -33,6 +33,7 @@ def seen(day):
 
 
 PENDING = ("PENDING: invoiced", None)
+TERMS_0920 = ("single payment: full fee due by 2026-09-20 (agreed 2026-09-01)", f("terms", "2026-09-01", full_by="2026-09-20"))
 
 BOOKING_CASES = [
     # --- cancellation (B9, B10) ---------------------------------------------------------------------------------
@@ -146,6 +147,21 @@ BOOKING_CASES = [
      [seen("2026-09-04"), ("paid in full 2026-09-20", f("paid-in-full", "2026-09-20", basis="bank")),
       ("review request drafted 2026-09-25", f("review-drafted", "2026-09-25"))],
      [("2026-09-04", 575.0, "reference"), ("2026-09-20", 575.0, "reference")], T),
+    # --- single-payment terms (B17): one invoice for the full fee, no deposit stage --------------------------------
+    ("terms: the full fee not yet due", 1750, "2026-09-01", "2026-11-30",
+     [PENDING, ("single payment: full fee due by 2026-10-05 (agreed 2026-09-01)",
+                f("terms", "2026-09-01", full_by="2026-10-05"))], [], T),
+    ("terms: the full fee overdue", 1750, "2026-09-01", "2026-11-30", [PENDING, TERMS_0920], [], T),
+    ("terms: the full-fee reminder drafted once", 1750, "2026-09-01", "2026-11-30",
+     [PENDING, TERMS_0920, ("payment reminder drafted 2026-09-25", f("reminder-drafted", "2026-09-25", what="payment"))],
+     [], T),
+    ("terms: paid in full", 1750, "2026-09-01", "2026-11-30", [PENDING, TERMS_0920],
+     [("2026-09-18", 1750.0, "reference")], T),
+    ("terms: a part payment is a hand check, never a deposit", 1750, "2026-09-01", "2026-11-30", [PENDING, TERMS_0920],
+     [("2026-09-18", 875.0, "reference")], T),
+    ("terms: the owner's later due date wins", 1750, "2026-09-01", "2026-11-30",
+     [PENDING, TERMS_0920, ("single payment: full fee due by 2026-10-31 (agreed 2026-09-22) (owner)",
+                            f("terms", "2026-09-22", "owner", full_by="2026-10-31"))], [], T),
 ]
 
 # --- singer invoices (S1–S12) -----------------------------------------------------------------------------------

@@ -3,9 +3,10 @@
 
 import datetime
 
-# Never in the balances line: settled, cancelled, uncertain or past bookings.
+# Never in the balances line: settled, cancelled, uncertain or past bookings, nor one on single-payment terms before its
+# due date (AWAITING_PAYMENT; once overdue, its whole fee is due, as an unpaid deposit booking's is).
 NOT_DUE = {"PAID_IN_FULL", "NOTED_PAID", "CANCELLED", "CHECK_PAYMENT", "CHECK_VALUE",
-           "PAYMENT_ON_CANCELLED", "PAYMENT_AFTER_CLOSE", "ARRANGED"}
+           "PAYMENT_ON_CANCELLED", "PAYMENT_AFTER_CLOSE", "ARRANGED", "AWAITING_PAYMENT"}
 # NOTED_PAID stays here until the owner writes "paid in full YYYY-MM-DD" in the notes (the booking then closes).
 HAND_CHECK = {"CHECK_PAYMENT": "possible payment", "CHECK_VALUE": "unreadable value or date",
               "PAST_UNMATCHED": "past, unpaid", "PAST_PART_PAID": "past, part paid",
@@ -14,7 +15,7 @@ HAND_CHECK = {"CHECK_PAYMENT": "possible payment", "CHECK_VALUE": "unreadable va
               "ARRANGED": "balance arranged (cash/cheque on the day)",
               "AWAITING_INVOICE_SENT": "invoice not yet sent, deposit would be overdue"}
 ARRANGED_DAYS = 7  # an arranged cash or cheque balance is a hand check from 7 days before the event
-NO_DEPOSIT = {"DEPOSIT_OVERDUE", "AWAITING_DEPOSIT", "AWAITING_INVOICE_SENT"}
+NO_DEPOSIT = {"DEPOSIT_OVERDUE", "AWAITING_DEPOSIT", "AWAITING_INVOICE_SENT", "PAYMENT_OVERDUE"}
 
 
 def needs_hand_check(a, today):
@@ -34,6 +35,11 @@ def hand_check_label(a):
     if a.get("held"):
         return "notes and recorded facts disagree: " + ", ".join(a["held"])
     received = a.get("received") or 0
+    if a.get("payment_due"):  # single-payment terms: there is no deposit or balance to speak of
+        if a["state"] == "AWAITING_INVOICE_SENT":
+            return "invoice not yet sent, full fee would be overdue"
+        if a["state"] == "CHECK_PAYMENT" and received:
+            return "part payment on single-payment terms"
     if a["state"] == "NOTED_PAID" and received:
         return f"noted paid, £{received:,.2f} in bank"
     if a["state"] == "CHECK_PAYMENT" and received:  # a deposit is in; the unconfirmed one may be the balance
@@ -54,6 +60,9 @@ def summary_lines(assessments, receipts, singer, today):
     # a held booking (notes and recorded facts disagree) is on the hand check line only, never chased
     overdue = [a["ref"] for a in assessments if a["state"] == "DEPOSIT_OVERDUE" and not a.get("held")]
     lines.append(f"deposits overdue: {len(overdue)}" + (f" ({', '.join(overdue)})" if overdue else ""))
+    full = [a["ref"] for a in assessments if a["state"] == "PAYMENT_OVERDUE" and not a.get("held")]
+    if full:  # single-payment terms (one invoice for the whole fee): only when there are any, so the lines are as before
+        lines.append(f"full fees overdue (single payment): {len(full)} ({', '.join(full)})")
     start, horizon = today.isoformat(), (today + datetime.timedelta(days=7)).isoformat()
     soon = [a for a in assessments if a.get("event_date") and start <= a["event_date"] <= horizon and a["balance"] > 0
             and a["state"] not in NOT_DUE and not a["state"].startswith("PAST_") and not a.get("held")]

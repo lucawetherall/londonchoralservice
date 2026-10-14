@@ -128,6 +128,17 @@ def test_future_dated_facts_are_left_out_and_reported():
     assert all("dated after today" in f for f in flags) and len(flags) == 2, flags
 
 
+def test_terms_take_their_agreed_day_never_their_due_date():
+    """A due date is usually after today: the fact is dated by its "(agreed D)", or else the invoice date, flagged."""
+    props = mig.booking_proposals(booking("2111", "single payment: full fee due by 2026-12-01 (agreed 2026-09-02)"), T,
+                                  ev.Facts("booking"))[0]
+    assert [(p["kind"], p["fields"], p["on"], p["by"]) for p in props] == [
+        ("terms", {"full_by": "2026-12-01"}, "2026-09-02", "script")], props
+    props = mig.booking_proposals(booking("2111", "full fee due by 2026-12-01 per PO (owner)"), T, ev.Facts("booking"))[0]
+    assert [(p["kind"], p["on"], p["by"], p["flags"]) for p in props] == [
+        ("terms", "2026-09-01", "owner", ["undated"])], props
+
+
 def test_paid_in_full_basis_follows_its_writer():
     props = mig.booking_proposals(booking("2111", "paid in full 2026-09-20 (owner)"), T, ev.Facts("booking"))[0]
     assert [(p["kind"], p["fields"], p["by"], p["flags"]) for p in props] == [

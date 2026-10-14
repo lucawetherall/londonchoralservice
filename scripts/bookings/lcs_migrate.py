@@ -36,7 +36,8 @@ import singer_invoices as si  # noqa: E402
 ISO = re.compile(r"\b(\d{4}-\d{2}-\d{2})\b")
 RULES = {"paid-in-full": "B5", "fees-accepted": "B6", "noted-paid": "B7/B8", "cancelled": "B9", "reinstated": "B10",
          "deposit-kept": "B11", "refunded": "B11", "payment-checked": "B11", "arranged": "B12", "deposit-seen": "B2",
-         "reminder-drafted": "B4", "review-drafted": "B13", "review-skipped": "B13", "bank-warning": "S1-S4",
+         "reminder-drafted": "B4", "review-drafted": "B13", "review-skipped": "B13", "terms": "B17",
+         "bank-warning": "S1-S4",
          "bank-confirmed": "S7", "settled": "S8", "withdrawn": "S9", "paid-reply-drafted": "S10"}
 FAMILY = {k: fam for subject in lcs_events.FAMILIES.values() for fam, kinds in subject.items() for k in kinds}
 SETTLED_KIND = (("deposit kept", "deposit-kept"), ("refunded", "refunded"))  # else payment-checked
@@ -172,6 +173,22 @@ def booking_proposals(r, today, have):
                 continue
             found.append(_proposal(m.start(), "fees-accepted", {"amount": f"{amount:.2f}"}, "owner",
                                    clause_at(parts, m.start()), day))
+    # single-payment terms (B17): "single payment: full fee due by D2 (agreed D)", each dated by its own "agreed" day
+    if not skip("terms"):
+        for m in cp.TERMS_NOTE.finditer(notes):
+            due, clause = _date(m.group(1)), clause_at(parts, m.start())
+            if due is None:
+                continue  # notes_full_by skips it too
+            agreed = re.search(r"\(agreed (\d{4}-\d{2}-\d{2})\)", clause or "")
+            day = _date(agreed.group(1)) if agreed else None
+            if agreed and out_of_reach("terms", day):
+                continue
+            flags = []
+            if not agreed:  # never dated by its due date, which may be after today: the invoice date instead
+                day, flags = _fallback(cp.date_or_none(r.get("invoice_date")), today), ["undated"]
+            owner = (clause or "").rstrip().endswith("(owner)")
+            found.append(_proposal(m.start(), "terms", {"full_by": due.isoformat()}, "owner" if owner else "script",
+                                   clause, day, flags))
     # cancel settlement (B11)
     if not skip("deposit-kept"):
         for m in cp.SETTLED_NOTE.finditer(notes):
@@ -188,9 +205,8 @@ def booking_proposals(r, today, have):
                 day = first_iso(m.group(0))
                 if day and day <= today:
                     found.append(_proposal(start + m.start(), "deposit-seen", {}, "script", clause, day))
-            for rx, what in ((r"(?<!balance )reminder drafted", "deposit"), (r"balance reminder drafted", "balance"),
-                             (r"receipt drafted", "receipt")):
-                m = re.search(rx, clause, re.I)
+            for what, rx in cp.REMINDED_NOTE.items():
+                m = rx.search(clause)
                 if m:
                     found.append(_proposal(start + m.start(), "reminder-drafted", {"what": what}, "script", clause))
             m = cp.REVIEW_NOTE.search(clause)
@@ -376,6 +392,7 @@ def booking_readings(r, today, facts):
             "cancel settlement": cp.cancel_settled_on(r, today, f),
             "arrangement": n["arranged"],
             "noted paid": (n["noted_hand"], n["noted_full"]),
+            "terms": cp.full_by(r, today, f),
             "markers": (n["noted_auto"], n["reminded"], bool(cp.REVIEW_NOTE.search(r.get("notes") or "")) or f.review),
             "held": cp.held(r, today, f)}
 
