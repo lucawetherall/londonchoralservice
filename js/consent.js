@@ -1,11 +1,19 @@
-/* Cookie consent banner for Google Analytics and Google Ads (Consent Mode v2).
+/* Cookie consent sheet for Google Analytics and Google Ads (Consent Mode v2).
  *
  * Defaults are set to "denied" in partials/analytics.html before gtag loads,
  * so no analytics or advertising cookie is written until the visitor chooses
- * Allow. The choice is stored in localStorage under "lcs-consent" and can be
- * changed from any link carrying data-consent-open (footer: Cookie choices).
- * ad_personalization stays denied whatever the choice: the site does not run
- * remarketing, and privacy.html says so.
+ * Accept. The choice is stored in localStorage under "lcs-consent" ("granted"
+ * or "denied") and can be changed from any link carrying data-consent-open
+ * (footer: Cookie choices). Until a choice is stored the sheet shows on every
+ * page. ad_personalization stays denied whatever the choice: the site does
+ * not run remarketing, and privacy.html says so.
+ *
+ * The sheet is full width at the foot of the window, with Accept and Reject
+ * the same size and style (PECR/ICO: rejecting is as easy as accepting). It
+ * has no overlay and no scroll lock. On first view it takes keyboard focus
+ * without scrolling the page. On phones it sits above the mobile CTA bar.
+ * Styles: the "Cookie consent sheet" block in css/components.css and its twin
+ * in partials/private-register.css.html.
  */
 (function () {
   'use strict';
@@ -35,8 +43,8 @@
     if (choice === 'denied') forget();
   }
 
-  // Withdrawing consent removes what an earlier Allow left behind: the kept ad
-  // click reference and the Google Analytics / Ads cookies (set on the bare
+  // Withdrawing consent removes what an earlier Accept left behind: the kept
+  // ad click reference and the Google Analytics / Ads cookies (set on the bare
   // host or on the parent domain, so clear both).
   function forget() {
     try { sessionStorage.removeItem('lcs-attr'); } catch (e) {}
@@ -50,45 +58,41 @@
     });
   }
 
-  var CSS = '' +
-    '.consent{position:fixed;left:1rem;bottom:1rem;z-index:1000;max-width:21rem;' +
-    'background:var(--color-bg,var(--parchment,#F7F3EE));color:var(--color-text-mid,var(--organPipe,#6B5E56));' +
-    'border:1px solid var(--color-rule,var(--limestone,#D6CEC6));border-radius:3px;' +
-    'font-family:var(--font-body,"Source Serif 4",Georgia,serif);font-size:.8125rem;line-height:1.45;' +
-    'box-shadow:0 2px 12px rgba(44,36,32,.08)}' +
-    '.consent__inner{padding:.7rem .85rem;display:flex;flex-wrap:wrap;gap:.5rem .75rem;align-items:center}' +
-    '.consent__text{flex:1 1 12rem;margin:0}' +
-    '.consent__text a{color:inherit}' +
-    '.consent__actions{display:flex;gap:.4rem}' +
-    '.consent__btn{font:inherit;font-size:.75rem;letter-spacing:.04em;text-transform:uppercase;' +
-    'padding:.35rem .7rem;border:1px solid currentColor;background:transparent;color:inherit;cursor:pointer;border-radius:2px}' +
-    '.consent__btn--allow{color:var(--color-text,var(--choirStall,#2C2420))}' +
-    '.consent__btn[aria-pressed="true"]{text-decoration:underline;text-underline-offset:.2em}' +
-    '.consent__btn:hover{color:var(--color-accent,var(--cassockRed,#8B3A3A))}' +
-    '.consent__btn:focus-visible{outline:2px solid currentColor;outline-offset:2px}' +
-    '@media (max-width:1080px){.consent{left:.75rem;right:.75rem;bottom:4.5rem;max-width:none}}' +
-    '@media print{.consent{display:none}}';
-
   var banner = null;
+  var cta = null;
   var returnFocus = null;
+  var bodyPadding = '';
+
+  // Keep the sheet above the mobile CTA bar while that bar is on screen
+  // (nav.js slides it away when the footer comes into view), and pad the
+  // page by the sheet's height so the last of the content can still be
+  // scrolled into view while the sheet is open.
+  function place() {
+    if (!banner || banner.hidden) return;
+    var lift = 0;
+    if (cta && !cta.classList.contains('is-hidden') && getComputedStyle(cta).display !== 'none') {
+      lift = cta.offsetHeight;
+    }
+    banner.style.setProperty('--consent-offset', lift + 'px');
+    document.body.style.paddingBottom = (banner.offsetHeight + lift) + 'px';
+  }
 
   function build() {
     if (banner) return banner;
-    var style = document.createElement('style');
-    style.textContent = CSS;
-    document.head.appendChild(style);
-
     banner = document.createElement('section');
     banner.className = 'consent';
+    banner.setAttribute('role', 'region');
     banner.setAttribute('aria-label', 'Cookie choices');
+    banner.setAttribute('tabindex', '-1');
     banner.hidden = true;
     banner.innerHTML =
       '<div class="consent__inner">' +
-        '<p class="consent__text">Analytics and ad-measurement cookies, none set until you choose. ' +
-        '<a href="/privacy.html#cookies">Details</a>.</p>' +
+        '<p class="consent__text">We&rsquo;d like to use cookies to count visits and see which of our ' +
+        'Google ads lead to enquiries, and we set none unless you accept. ' +
+        '<a href="/privacy.html#cookies">How we use cookies</a></p>' +
         '<div class="consent__actions">' +
-          '<button type="button" class="consent__btn consent__btn--allow" data-consent="granted">Allow</button>' +
-          '<button type="button" class="consent__btn" data-consent="denied">Decline</button>' +
+          '<button type="button" class="consent__btn" data-consent="granted">Accept</button>' +
+          '<button type="button" class="consent__btn" data-consent="denied">Reject</button>' +
         '</div>' +
       '</div>';
     banner.addEventListener('click', function (e) {
@@ -97,24 +101,55 @@
       var choice = btn.getAttribute('data-consent');
       write(choice);
       apply(choice);
-      banner.hidden = true;
-      // The focused button just disappeared: hand focus back to whatever
-      // reopened the banner, so keyboard users are not dropped on <body>.
-      if (returnFocus && document.contains(returnFocus)) returnFocus.focus();
-      returnFocus = null;
+      hide(e.detail === 0);
     });
     document.body.appendChild(banner);
+
+    cta = document.querySelector('.mobile-cta');
+    window.addEventListener('resize', place);
+    if (cta && 'MutationObserver' in window) {
+      new MutationObserver(place).observe(cta, { attributes: true, attributeFilter: ['class'] });
+    }
     return banner;
   }
 
   function show() {
     var b = build();
+    if (b.hidden) bodyPadding = document.body.style.paddingBottom;
     b.hidden = false;
+    place();
+  }
+
+  // byKeyboard: the choice came from Enter or Space (click detail 0). The
+  // focused button is about to disappear, so hand focus back to whatever
+  // reopened the sheet, or to the main content, so keyboard users are not
+  // dropped at the end of the document.
+  function hide(byKeyboard) {
+    banner.hidden = true;
+    document.body.style.paddingBottom = bodyPadding;
+    if (returnFocus && document.contains(returnFocus)) {
+      returnFocus.focus();
+    } else if (byKeyboard) {
+      var main = document.querySelector('main') || document.body;
+      if (!main.hasAttribute('tabindex')) main.setAttribute('tabindex', '-1');
+      main.focus({ preventScroll: true });
+    } else if (banner.contains(document.activeElement)) {
+      document.activeElement.blur();
+    }
+    returnFocus = null;
   }
 
   function init() {
     var stored = read();
-    if (stored !== 'granted' && stored !== 'denied') show();
+    if (stored !== 'granted' && stored !== 'denied') {
+      show();
+      // First view: move keyboard focus to the sheet, without scrolling, but
+      // only if the visitor has not already started using the page.
+      var active = document.activeElement;
+      if (!active || active === document.body || active === document.documentElement) {
+        banner.focus({ preventScroll: true });
+      }
+    }
 
     document.addEventListener('click', function (e) {
       var opener = e.target.closest('[data-consent-open]');
@@ -123,12 +158,12 @@
       returnFocus = opener;
       show();
       // Reopened from the footer link at the end of the page: move focus into
-      // the banner and mark the current choice.
+      // the sheet and mark the current choice.
       var current = read();
       Array.prototype.forEach.call(banner.querySelectorAll('[data-consent]'), function (b) {
         b.setAttribute('aria-pressed', String(b.getAttribute('data-consent') === current));
       });
-      banner.querySelector('[data-consent]').focus();
+      banner.querySelector('[data-consent]').focus({ preventScroll: true });
     });
   }
 
