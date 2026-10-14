@@ -140,10 +140,9 @@ def read_attachment(value, ref, root=None):
     if real.parent.parent != root or not real.parent.name.startswith(f"{ref} - "):
         fail(f"{real.name} is not in booking {ref}'s folder in iCloud Drive/LCS-invoices")
     name = real.name
-    if real.suffix == ".pdf":
-        ok = re.fullmatch(rf"Invoice {re.escape(ref)} - .+\.pdf", name)
-    elif real.suffix == ".docx":
-        ok = re.fullmatch(r"Booking Confirmation - .+\.docx", name)
+    if real.suffix in (".pdf", ".docx"):  # a business client's short confirmation is a PDF (make_po_documents.py)
+        ok = (re.fullmatch(rf"Invoice {re.escape(ref)} - .+\.pdf", name)
+              or re.fullmatch(r"Booking Confirmation - .+\.(?:docx|pdf)", name))
     else:
         ok = None
     if not ok:
@@ -183,9 +182,10 @@ def confirmation_files(ref, to, files, root=None):
     if to.lower() != client:
         fail(f"to is not the client on booking {ref} in the ledger")
     attachments = [read_attachment(f, ref, root) for f in files]
-    if {a[0].rsplit(".", 1)[1] for a in attachments} != {"pdf", "docx"}:
-        fail("a confirmation carries one invoice PDF and one booking confirmation .docx")
-    return sorted(attachments, key=lambda a: a[0].endswith(".docx"))  # the invoice first, as Luca attaches them
+    invoices = [a for a in attachments if a[0].startswith(f"Invoice {ref} - ")]
+    if len(invoices) != 1 or not any(a[0].startswith("Booking Confirmation - ") for a in attachments):
+        fail("a confirmation carries one invoice PDF and one booking confirmation (.docx or .pdf)")
+    return sorted(attachments, key=lambda a: a not in invoices)  # the invoice first, as Luca attaches them
 
 
 def trim_references(refs):

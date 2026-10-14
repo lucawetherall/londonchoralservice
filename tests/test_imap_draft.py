@@ -199,6 +199,18 @@ def test_a_confirmation_carries_both_files_and_nothing_else_carries_any():
     assert [a[0] for a in got["attachments"]] == [PDF.name, DOCX.name], "the invoice first"
 
 
+def test_a_business_confirmation_may_be_a_pdf():
+    conf = FOLDER / "Booking Confirmation - A Client - 21 Nov 2026.pdf"
+    conf.write_bytes(b"%PDF-1.4 fake confirmation")
+    got = d.validate(spec(attachments=[str(conf), str(PDF)]))
+    assert [a[0] for a in got["attachments"]] == [PDF.name, conf.name], "the invoice first"
+    two_invoices = FOLDER / "Invoice 2111 - A Client copy.pdf"
+    two_invoices.write_bytes(b"%PDF-1.4 fake invoice")
+    assert "one invoice PDF" in (refused(spec(attachments=[str(PDF), str(two_invoices)])) or "")
+    two_invoices.unlink()
+    conf.unlink()
+
+
 def test_attachments_must_be_this_bookings_files_for_this_client():
     assert "not in booking 2111's folder" in refused(spec(attachments=[str(OTHER_PDF), str(DOCX)]))
     assert "not the client on booking 2111" in refused(spec(to="other@example.com"))
