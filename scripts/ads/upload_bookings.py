@@ -14,8 +14,15 @@ now requires for new offline-conversion integrations; it needs the
 https://www.googleapis.com/auth/datamanager scope on Application Default
 Credentials and the Data Manager API enabled on the Cloud project.
 
-Only rows with an ad click reference, consent = granted, a value above zero,
-and no uploaded_at are uploaded (select_ready). Rows whose notes start with
+Only rows with a recorded consent (CONSENTS), a value above zero and no
+uploaded_at are uploaded (select_ready). consent = granted: the client allowed
+cookies and the enquiry carried an ad click reference. consent = form: the
+client ticked the web form's optional ad-measurement box (ad_measurement=yes);
+both count as ad_user_data GRANTED. A row needs an ad click reference, except a
+"form" row: that one may go up with the client's hashed email alone (Data
+Manager accepts userData as an event's only identifier), and only when
+"Enhanced conversions for leads" is on in the Ads account; otherwise it is
+skipped with that reason. Rows whose notes start with
 "PENDING" (invoiced, deposit not yet seen) wait until the flag is cleared; a
 cancelled booking never goes, by the same rule check_payments uses
 (is_cancelled: "cancelled" anywhere in the notes, unless a later "reinstated"
@@ -53,6 +60,11 @@ COLUMNS = ["booking_ref", "invoice_date", "event_date", "client_name", "client_e
 LOG = Path(__file__).resolve().parents[2] / "logs" / "ads-changes.md"
 SCRIPT = "scripts/ads/upload_bookings.py"
 LONDON = ZoneInfo("Europe/London")
+# ledger consent values that mean ad_user_data GRANTED: cookie consent with a click reference ("granted"),
+# or the web form's ad-measurement box ticked ("form", which also allows an email-only upload).
+CONSENTS = ("granted", "form")
+NO_EC_FOR_LEADS = ("no ad click reference, and enhanced conversions for leads is off in Google Ads "
+                   "(an email-only upload needs it)")
 
 
 def ensure_ledger():
@@ -121,11 +133,16 @@ def select_ready(rows, facts=None):
         if cp.is_pending(r.get("notes") or ""):
             skipped.append((ref, "PENDING: no deposit seen yet (clear the flag in notes once it is paid)"))
             continue
-        if not (r.get("gclid") or "").strip():
+        consent = (r.get("consent") or "").strip().lower()
+        has_click = bool((r.get("gclid") or "").strip())
+        if not has_click and consent != "form":
             skipped.append((ref, "no ad click reference (not from a Google ad, or cookies declined)"))
             continue
-        if (r.get("consent") or "").strip().lower() != "granted":
+        if consent not in CONSENTS:
             skipped.append((ref, "no recorded consent for ad measurement"))
+            continue
+        if not has_click and not hashed_email(r.get("client_email")):
+            skipped.append((ref, "ad-measurement box ticked, but no ad click reference and no usable email"))
             continue
         try:
             when, when_str = to_datetime(r["invoice_date"])
@@ -144,6 +161,16 @@ def select_ready(rows, facts=None):
     return ready, skipped
 
 
+def needs_ec_for_leads(ready, skipped, ec_for_leads):
+    """An email-only row (no click reference: select_ready lets one through only for consent = form) can be
+    matched only by enhanced conversions for leads. With that off, it moves to skipped, with the reason."""
+    if ec_for_leads:
+        return ready, skipped
+    keep = [x for x in ready if (x[0].get("gclid") or "").strip()]
+    moved = [((x[0].get("booking_ref") or "").strip(), NO_EC_FOR_LEADS) for x in ready if x not in keep]
+    return keep, skipped + moved
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--apply", action="store_true")
@@ -153,9 +180,9 @@ def main():
 
     ready, skipped = select_ready(rows)
 
-    for ref, why in skipped:
-        print(f"skip {ref or '(no ref)'}: {why}")
     if not ready:
+        for ref, why in skipped:
+            print(f"skip {ref or '(no ref)'}: {why}")
         print("Nothing to upload.")
         return
 
@@ -172,11 +199,20 @@ def main():
     ec_for_leads = next(iter(ga.search(customer_id=CUSTOMER_ID, query=(
         "SELECT customer.conversion_tracking_setting.enhanced_conversions_for_leads_enabled FROM customer")))
     ).customer.conversion_tracking_setting.enhanced_conversions_for_leads_enabled
+    ready, skipped = needs_ec_for_leads(ready, skipped, ec_for_leads)
+
+    for ref, why in skipped:
+        print(f"skip {ref or '(no ref)'}: {why}")
+    if not ready:
+        print("Nothing to upload.")
+        return
 
     def event(r, value, when_str):
-        e = {"adIdentifiers": click_id(r["gclid"]), "eventTimestamp": when_str,
+        e = {"eventTimestamp": when_str,
              "transactionId": r["booking_ref"].strip(), "eventSource": "OTHER",
              "conversionValue": value, "currency": "GBP"}
+        if (r.get("gclid") or "").strip():
+            e["adIdentifiers"] = click_id(r["gclid"])
         h = hashed_email(r.get("client_email")) if ec_for_leads else None
         if h:
             e["userData"] = {"userIdentifiers": [{"emailAddress": h}]}
@@ -186,7 +222,7 @@ def main():
     body = {
         "destinations": [{"operatingAccount": account, "loginAccount": account,
                           "productDestinationId": str(action_id)}],
-        # Visitors allowed ad measurement; the site never allows ad personalisation.
+        # Every row sent has consent granted or the form's ad-measurement box ticked; never ad personalisation.
         "consent": {"adUserData": "CONSENT_GRANTED", "adPersonalization": "CONSENT_DENIED"},
         "encoding": "HEX",
         "events": [event(r, value, when_str) for r, value, when_str in ready],

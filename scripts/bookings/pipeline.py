@@ -6,7 +6,10 @@ report and the dashboard import summary_dict().
 
     .venv/bin/python scripts/bookings/pipeline.py add '<json object>'   (or: add - , the JSON on stdin)
         a new enquiry; refuses a duplicate enquiry_id or an unknown field.
-        Defaults: status new, followups 0, last_contact = first_seen
+        Defaults: status new, followups 0, last_contact = first_seen.
+        Two extra keys from the web form go into notes, not columns: "ad_visit": "<page slug>"
+        (the landing page of an ad click without cookie consent) -> "ad visit: <slug>", and
+        "ad_measurement": "yes" (the sender ticked the ad-measurement box) -> "ad measurement: yes"
     .venv/bin/python scripts/bookings/pipeline.py quoted <enquiry_id> <package> <gbp> <YYYY-MM-DD>
         Luca's reply quoted a package: status quoted, follow-up clock restarts. Refuses a date
         before last_contact, or a quote already noted for that date
@@ -81,6 +84,8 @@ OCCASIONS = ("wedding", "funeral", "christmas", "corporate", "private event", "o
 GCLID_RE = re.compile(r"^((gbraid|wbraid):)?[A-Za-z0-9_-]{10,200}$")
 MAX_LEN = {"notes": 300, "gclid": 207}  # characters; gclid is then held to GCLID_RE
 MAX_OTHER = 80  # every other field
+# The web form's ad_visit: the landing page's slug, as partials/analytics.html's lcsAdVisitSlug writes it.
+AD_VISIT_RE = re.compile(r"^(?=.{1,80}$)[a-z0-9-]+(/[a-z0-9-]+)*$")
 MAX_GBP = 100000
 
 
@@ -277,9 +282,30 @@ def change(enquiry_id, fn):
             raise SystemExit(f"no enquiry {enquiry_id}")
 
 
+def ad_notes(data):
+    """Pop the web form's ad_visit and ad_measurement from an `add` object -> the notes they give
+    ("ad visit: weddings", "ad measurement: yes"). ad_visit must be a page slug (AD_VISIT_RE, as
+    partials/analytics.html writes it); ad_measurement must be yes or no (no, or empty, notes nothing)."""
+    notes = []
+    visit = str(data.pop("ad_visit", "") or "").strip().lower()
+    if visit:
+        if not AD_VISIT_RE.fullmatch(visit):
+            raise SystemExit("ad_visit must be a page name such as weddings or areas/london/camden "
+                             "(a-z, 0-9, - and /, at most 80 characters)")
+        notes.append(f"ad visit: {visit}")
+    measure = str(data.pop("ad_measurement", "") or "").strip().lower()
+    if measure not in ("", "yes", "no"):
+        raise SystemExit("ad_measurement must be yes or no")
+    if measure == "yes":
+        notes.append("ad measurement: yes")
+    return notes
+
+
 def clean_row(data):
     if not isinstance(data, dict):
         raise SystemExit("add needs one JSON object")
+    data = dict(data)
+    extra = ad_notes(data)
     unknown = sorted(set(data) - set(COLUMNS))
     if unknown:
         raise SystemExit(f"unknown field(s): {', '.join(unknown)}; nothing written")
@@ -318,6 +344,10 @@ def clean_row(data):
         row["booking_ref"] = ident(row["booking_ref"], "booking_ref")
     if row["status"] == "confirmed" and not row["booking_ref"]:
         raise SystemExit("status confirmed needs a booking_ref")
+    for text in extra:
+        row["notes"] = add_note(row["notes"], text)
+    if len(row["notes"]) > MAX_LEN["notes"]:
+        raise SystemExit(f"notes is too long (at most {MAX_LEN['notes']} characters); nothing written")
     return row
 
 

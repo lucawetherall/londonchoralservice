@@ -1076,6 +1076,32 @@ td.compare-us .compare-saving {
   display: block;
 }
 
+/* Optional ad-measurement checkbox (unticked by default), above the captcha.
+   Not a .form-field: those rules style inputs as full-width underlined boxes. */
+.form-check {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-sm);
+}
+.form-check input {
+  flex: none;
+  width: 1.125rem;
+  height: 1.125rem;
+  margin: 0.2em 0 0;
+  accent-color: var(--color-accent);
+  cursor: pointer;
+}
+.form-check label {
+  font-size: var(--text-sm);
+  color: var(--color-text-mid);
+  cursor: pointer;
+}
+.form-check-note {
+  font-size: var(--text-sm);
+  margin: 0 0 var(--space-lg) calc(1.125rem + var(--space-sm));
+}
+
 /* hCaptcha's checkbox is a fixed 302px iframe, wider than the 272px form on
    a 320px phone. js/form.js asks for the compact widget there; if hCaptcha
    rendered before it could, shrink the full-size one to fit. The line box

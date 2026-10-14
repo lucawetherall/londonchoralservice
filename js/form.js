@@ -147,6 +147,21 @@
       var attr = window.lcsAttribution();
       Object.keys(attr).forEach(function (k) { if (!data[k]) data[k] = attr[k]; });
     }
+    // Without consent: the landing page's name when this page's URL came from
+    // an ad (never the click ID), and the click ID itself only if the sender
+    // ticked the ad-measurement box (ad_measurement=yes). Nothing is stored.
+    if (!consented) {
+      try {
+        if (typeof window.lcsAdVisit === 'function') {
+          var visit = window.lcsAdVisit();
+          if (visit) data.ad_visit = visit;
+        }
+        if (data.ad_measurement === 'yes' && typeof window.lcsClickIds === 'function') {
+          var ids = window.lcsClickIds();
+          Object.keys(ids).forEach(function (k) { if (!data[k]) data[k] = ids[k]; });
+        }
+      } catch (_) { /* attribution must never block the enquiry */ }
+    }
 
     fetch('https://api.web3forms.com/submit', {
       method: 'POST',

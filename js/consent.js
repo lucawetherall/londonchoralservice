@@ -85,10 +85,12 @@
     banner.setAttribute('aria-label', 'Cookie choices');
     banner.setAttribute('tabindex', '-1');
     banner.hidden = true;
+    // Neutral wording on the Alma Consort private register (pages with .pe-header).
+    var ads = document.querySelector('.pe-header') ? 'which Google ads' : 'which of our Google ads';
     banner.innerHTML =
       '<div class="consent__inner">' +
-        '<p class="consent__text">We&rsquo;d like to use cookies to count visits and see which of our ' +
-        'Google ads lead to enquiries, and we set none unless you accept. ' +
+        '<p class="consent__text">We&rsquo;d like to use cookies to count visits and see ' + ads + ' ' +
+        'lead to enquiries, and we set none unless you accept. ' +
         '<a href="/privacy.html#cookies">How we use cookies</a></p>' +
         '<div class="consent__actions">' +
           '<button type="button" class="consent__btn" data-consent="granted">Accept</button>' +

@@ -319,6 +319,31 @@ def test_cli_add_gclid_shape():
     assert "BAD" not in enquiries(d)
 
 
+def test_cli_add_writes_ad_visit_and_ad_measurement_into_notes():
+    d = home()
+    p = add(d, ad_visit="weddings", ad_measurement="yes", notes="heard: A Google ad")
+    assert p.returncode == 0, p.stderr
+    r = enquiries(d)["1001"]
+    assert r["notes"] == "heard: A Google ad; ad visit: weddings; ad measurement: yes", r["notes"]
+    assert add(d, enquiry_id="1002", ad_visit="areas/london/camden").returncode == 0
+    assert enquiries(d)["1002"]["notes"] == "ad visit: areas/london/camden"
+    assert add(d, enquiry_id="1003", ad_visit="", ad_measurement="no").returncode == 0
+    assert enquiries(d)["1003"]["notes"] == ""
+    assert "ad_visit" not in pl.COLUMNS and "ad_measurement" not in pl.COLUMNS
+
+
+def test_cli_add_refuses_a_bad_ad_visit_or_ad_measurement():
+    d = home()
+    for bad in ({"ad_visit": "Ann Smith"}, {"ad_visit": "weddings?gclid=Cj0KCQjw"}, {"ad_visit": "../x"},
+                {"ad_visit": "a" * 81}, {"ad_measurement": "maybe"}, {"ad_measurement": True}):
+        p = add(d, **bad)
+        assert p.returncode != 0 and ("ad_visit" in p.stderr or "ad_measurement" in p.stderr), (bad, p.stderr)
+        assert "Ann" not in p.stderr + p.stdout and "Cj0KCQjw" not in p.stderr + p.stdout
+    p = add(d, notes="x" * 290, ad_visit="weddings")
+    assert p.returncode != 0 and "notes" in p.stderr, p.stderr
+    assert not os.path.exists(os.path.join(d, "enquiries.csv")) or enquiries(d) == {}
+
+
 def test_cli_add_reads_json_from_stdin():
     d = home()
     row = {"enquiry_id": "1001", "first_seen": "2026-09-20", "source": "email", "occasion": "wedding",
