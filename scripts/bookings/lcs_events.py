@@ -70,6 +70,10 @@ def _codes(x):
     return isinstance(x, list) and len(set(x)) == len(x) and all(isinstance(c, str) and c in CODES for c in x)
 
 
+def _day(x):
+    return isinstance(x, str) and bool(ON_RE.fullmatch(x)) and _date(x) is not None
+
+
 def _clauses(x):
     return (isinstance(x, list) and 1 <= len(x) <= 20
             and all(isinstance(c, str) and HEX12.fullmatch(c) for c in x))
@@ -90,7 +94,11 @@ KINDS = {
     ("booking", "refunded"): {},
     ("booking", "payment-checked"): {},
     ("booking", "deposit-seen"): {},
-    ("booking", "reminder-drafted"): {"what": _word("deposit", "balance", "receipt")},
+    ("booking", "reminder-drafted"): {"what": _word("deposit", "balance", "payment", "receipt")},
+    # single-payment terms (a business client paying against a purchase order): one invoice for the full fee, due by
+    # full_by, with no deposit stage. The script may record it (from the client's purchase order or the owner's
+    # word), and so may the owner
+    ("booking", "terms"): {"full_by": _day},
     ("booking", "review-drafted"): {},
     ("booking", "review-skipped"): {"reason": _word("planner", "unresolved")},
     # reserved for the later PR (confirm a payment, more shortfall reasons): validated, but append refuses them
@@ -509,7 +517,7 @@ def index(events, today):
 FAMILIES = {
     "booking": {"close": {"paid-in-full", "fees-accepted"}, "cancellation": {"cancelled", "reinstated"},
                 "cancel settlement": {"deposit-kept", "refunded", "payment-checked"}, "arrangement": {"arranged"},
-                "noted paid": {"noted-paid"},
+                "noted paid": {"noted-paid"}, "terms": {"terms"},
                 "markers": {"deposit-seen", "reminder-drafted", "review-drafted", "review-skipped"}},
     "singer_invoice": {"bank warnings": {"bank-warning"}, "bank trust": {"bank-confirmed"}, "settlement": {"settled"},
                        "withdrawal": {"withdrawn"}, "markers": {"paid-reply-drafted"}},
@@ -585,12 +593,20 @@ class Facts:
         return any(e["fields"]["scope"] == "full" for e in self.of("noted-paid"))
 
     @property
+    def full_by(self):
+        """The due date of the latest live terms fact by (on, file order): the whole fee falls due then, with no
+        deposit stage; None with none."""
+        last = max(enumerate(self.of("terms")), key=lambda x: (x[1]["on"], x[0]), default=None)
+        return _date(last[1]["fields"]["full_by"]) if last else None
+
+    @property
     def deposit_seen(self):
         return bool(self.of("deposit-seen"))
 
     @property
     def reminded(self):
-        return {w: any(e["fields"]["what"] == w for e in self.of("reminder-drafted")) for w in ("deposit", "balance", "receipt")}
+        return {w: any(e["fields"]["what"] == w for e in self.of("reminder-drafted"))
+                for w in ("deposit", "balance", "payment", "receipt")}
 
     @property
     def review(self):

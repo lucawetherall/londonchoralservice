@@ -90,8 +90,8 @@ DATETIME_RE = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d{1,6})?
 HONORIFICS = {"dr", "mr", "mrs", "ms", "miss", "mx", "prof", "rev", "revd", "the"}
 NOT_OPEN_INVOICE = {"draft", "void", "paid"}
 NOT_OPEN_BILL = {"void", "paid"}
-DRAFT_KINDS = ("reply", "confirmation", "holding", "follow-up", "deposit-reminder", "balance-reminder", "receipt",
-               "review", "paid-thanks", "other")
+DRAFT_KINDS = ("reply", "confirmation", "holding", "follow-up", "deposit-reminder", "balance-reminder",
+               "payment-reminder", "receipt", "review", "paid-thanks", "other")
 DRAFT_KEYS = {"thread_id", "kind", "first_name", "subject", "created"}
 MESSAGE_ID_RE = re.compile(r"^<[!-;=?A-~]{1,90}@[!-;=?A-~]{1,90}>$")  # the drafts' optional RFC Message-ID
 DRAFTS_PER_CALL, DRAFTS_KEPT, DRAFT_SUBJECT_MAX = 50, 500, 80

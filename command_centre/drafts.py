@@ -28,7 +28,8 @@ MESSAGE_ID_RE = re.compile(r"^<[!-;=?A-~]{1,90}@[!-;=?A-~]{1,90}>$")
 FIELDS = ("thread_id", "kind", "first_name", "subject", "created")
 KIND_WORDS = {"reply": "reply", "confirmation": "booking confirmation", "holding": "holding reply",
               "follow-up": "quote follow-up", "deposit-reminder": "deposit reminder",
-              "balance-reminder": "balance reminder", "receipt": "payment receipt", "review": "review request",
+              "balance-reminder": "balance reminder", "payment-reminder": "full-fee reminder",
+              "receipt": "payment receipt", "review": "review request",
               "paid-thanks": "singer “Paid!”", "other": "other"}
 
 

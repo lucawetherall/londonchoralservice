@@ -56,6 +56,7 @@ STATES = {  # payment state -> (words, tone)
     "DEPOSIT_SEEN": ("deposit in", "ok"), "AWAITING_DEPOSIT": ("awaiting deposit", ""),
     "AWAITING_INVOICE_SENT": ("invoice not yet sent", "warn"),
     "BALANCE_DUE": ("balance due", "warn"), "DEPOSIT_OVERDUE": ("deposit overdue", "bad"),
+    "AWAITING_PAYMENT": ("awaiting full fee (single payment)", ""), "PAYMENT_OVERDUE": ("full fee overdue", "bad"),
     "NOTED_PAID": ("noted paid", "warn"), "CHECK_PAYMENT": ("possible payment: check", "warn"),
     "CHECK_VALUE": ("unreadable value or date", "warn"), "PAST_UNMATCHED": ("past, unpaid", "bad"),
     "PAST_PART_PAID": ("past, part paid", "bad"), "PAYMENT_ON_CANCELLED": ("payment on a cancelled booking", "bad"),

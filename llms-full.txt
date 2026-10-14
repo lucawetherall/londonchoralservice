@@ -728,6 +728,8 @@ Please enter a valid email address.
 
 Please enter a message.
 
+How we use this
+
 Please tick the box above to confirm you’re not a robot, then try again.
 
 Luca replies within one working day, usually the same day.
@@ -903,6 +905,8 @@ Thank you — we’ll be in touch shortly.
 
 Something went wrong. Please try again, message us on WhatsApp, or call us on 07356 042468 .
 
+How we use this
+
 Please tick the box above to confirm you’re not a robot, then try again.
 
 “The whole process was a joy from start to finish. Luca understood exactly the feel we wanted and the quartet were note-perfect on the day. Our parents were in tears.”
@@ -1077,6 +1081,8 @@ Tell us about the service and we’ll come back with music suggestions. Luca rea
 Thank you — we’ll be in touch shortly.
 
 Something went wrong. Please try again, message us on WhatsApp, or call us on 07356 042468 .
+
+How we use this
 
 Please tick the box above to confirm you’re not a robot, then try again.
 
@@ -1295,6 +1301,8 @@ Thank you — we’ll be in touch shortly.
 
 Something went wrong. Please try again, message us on WhatsApp, or call us on 07356 042468 .
 
+How we use this
+
 Please tick the box above to confirm you’re not a robot, then try again.
 
 “Organising a carol service for 300 people felt daunting but Luca handled everything. The programme was perfect — traditional enough for the older partners, fresh enough that it didn’t feel stale. Superb.”
@@ -1398,6 +1406,8 @@ Tell us the basics and we’ll take it from there. Luca will call the family the
 Thank you — we’ll be in touch with the family shortly.
 
 Something went wrong. Please try again, message us on WhatsApp, or call us on 07356 042468 .
+
+How we use this
 
 Please tick the box above to confirm you’re not a robot, then try again.
 
@@ -1505,6 +1515,8 @@ Tell us the basics and we’ll take it from there. Luca will call the couple wit
 Thank you — we’ll be in touch with the couple shortly.
 
 Something went wrong. Please try again, message us on WhatsApp, or call us on 07356 042468 .
+
+How we use this
 
 Please tick the box above to confirm you’re not a robot, then try again.
 
@@ -1639,6 +1651,8 @@ Enquire
 We take a small number of engagements each year. Tell us about yours.
 
 Fields marked * are required.
+
+How we use this
 
 Please tick the box above to confirm you’re not a robot, then send again.
 
@@ -1803,6 +1817,8 @@ Enquire
 Tell us where you are marrying and when. If we have the date free, Luca Wetherall will come back with what the music could be and what the whole engagement would cost.
 
 Fields marked * are required.
+
+How we use this
 
 Please tick the box above to confirm you’re not a robot, then send again.
 
@@ -1976,6 +1992,8 @@ Tell us where in Italy you are marrying and when. If the date is free, Luca Weth
 
 Fields marked * are required.
 
+How we use this
+
 Please tick the box above to confirm you’re not a robot, then send again.
 
 Please check the highlighted fields, then send again.
@@ -2138,6 +2156,8 @@ Enquire
 Tell us where in France you are marrying and when. If the date is free, Luca Wetherall will come back with what the music could be and what the whole engagement would cost, travel included.
 
 Fields marked * are required.
+
+How we use this
 
 Please tick the box above to confirm you’re not a robot, then send again.
 
@@ -2304,6 +2324,8 @@ Tell us where in Spain you are marrying and when. If the date is free, Luca Weth
 
 Fields marked * are required.
 
+How we use this
+
 Please tick the box above to confirm you’re not a robot, then send again.
 
 Please check the highlighted fields, then send again.
@@ -2464,6 +2486,8 @@ Enquire
 Tell us where in Portugal you are marrying and when. If the date is free, Luca Wetherall will come back with what the music could be and what the whole engagement would cost, travel included.
 
 Fields marked * are required.
+
+How we use this
 
 Please tick the box above to confirm you’re not a robot, then send again.
 
@@ -2633,6 +2657,8 @@ Tell us where in Greece you are marrying and when. If the date is free, Luca Wet
 
 Fields marked * are required.
 
+How we use this
+
 Please tick the box above to confirm you’re not a robot, then send again.
 
 Please check the highlighted fields, then send again.
@@ -2796,6 +2822,8 @@ Enquire
 Tell us where in Cyprus you are marrying and when. If the date is free, Luca Wetherall will come back with what the music could be and what the whole engagement would cost, travel included.
 
 Fields marked * are required.
+
+How we use this
 
 Please tick the box above to confirm you’re not a robot, then send again.
 
@@ -2964,6 +2992,8 @@ Tell us where in Malta you are marrying and when. If the date is free, Luca Weth
 
 Fields marked * are required.
 
+How we use this
+
 Please tick the box above to confirm you’re not a robot, then send again.
 
 Please check the highlighted fields, then send again.
@@ -3127,6 +3157,8 @@ Tell us where in Croatia you are marrying and when. If the date is free, Luca We
 
 Fields marked * are required.
 
+How we use this
+
 Please tick the box above to confirm you’re not a robot, then send again.
 
 Please check the highlighted fields, then send again.
@@ -3279,6 +3311,8 @@ Enquire
 Tell us where in Gibraltar you are marrying and when. If the date is free, Luca Wetherall will come back with what the music could be and what the whole engagement would cost, travel included.
 
 Fields marked * are required.
+
+How we use this
 
 Please tick the box above to confirm you’re not a robot, then send again.
 
@@ -3440,6 +3474,8 @@ Enquire
 Tell us where in Ireland you are marrying and when. If the date is free, Luca Wetherall will come back with what the music could be and what the whole engagement would cost, travel included.
 
 Fields marked * are required.
+
+How we use this
 
 Please tick the box above to confirm you’re not a robot, then send again.
 
@@ -3604,6 +3640,8 @@ Tell us where in Scotland you are marrying and when. If the date is free, Luca W
 
 Fields marked * are required.
 
+How we use this
+
 Please tick the box above to confirm you’re not a robot, then send again.
 
 Please check the highlighted fields, then send again.
@@ -3757,6 +3795,8 @@ Enquire
 Tell us where in United States you are marrying and when. If the date is free, Luca Wetherall will come back with what the music could be and what the whole engagement would cost, travel included.
 
 Fields marked * are required.
+
+How we use this
 
 Please tick the box above to confirm you’re not a robot, then send again.
 
@@ -3912,6 +3952,8 @@ Tell us where in Mexico you are marrying and when. If the date is free, Luca Wet
 
 Fields marked * are required.
 
+How we use this
+
 Please tick the box above to confirm you’re not a robot, then send again.
 
 Please check the highlighted fields, then send again.
@@ -4064,6 +4106,8 @@ Tell us where in Barbados you are marrying and when. If the date is free, Luca W
 
 Fields marked * are required.
 
+How we use this
+
 Please tick the box above to confirm you’re not a robot, then send again.
 
 Please check the highlighted fields, then send again.
@@ -4211,6 +4255,8 @@ Tell us where in St Lucia you are marrying and when. If the date is free, Luca W
 
 Fields marked * are required.
 
+How we use this
+
 Please tick the box above to confirm you’re not a robot, then send again.
 
 Please check the highlighted fields, then send again.
@@ -4355,6 +4401,8 @@ Enquire
 Tell us where in Jamaica you are marrying and when. If the date is free, Luca Wetherall will come back with what the music could be and what the whole engagement would cost, travel included.
 
 Fields marked * are required.
+
+How we use this
 
 Please tick the box above to confirm you’re not a robot, then send again.
 
@@ -4505,6 +4553,8 @@ Tell us where in Mauritius you are marrying and when. If the date is free, Luca 
 
 Fields marked * are required.
 
+How we use this
+
 Please tick the box above to confirm you’re not a robot, then send again.
 
 Please check the highlighted fields, then send again.
@@ -4652,6 +4702,8 @@ Enquire
 Tell us where in Maldives you are marrying and when. If the date is free, Luca Wetherall will come back with what the music could be and what the whole engagement would cost, travel included.
 
 Fields marked * are required.
+
+How we use this
 
 Please tick the box above to confirm you’re not a robot, then send again.
 
@@ -4802,6 +4854,8 @@ Tell us where in Seychelles you are marrying and when. If the date is free, Luca
 
 Fields marked * are required.
 
+How we use this
+
 Please tick the box above to confirm you’re not a robot, then send again.
 
 Please check the highlighted fields, then send again.
@@ -4945,6 +4999,8 @@ Enquire
 Tell us where in Thailand you are marrying and when. If the date is free, Luca Wetherall will come back with what the music could be and what the whole engagement would cost, travel included.
 
 Fields marked * are required.
+
+How we use this
 
 Please tick the box above to confirm you’re not a robot, then send again.
 
@@ -5099,6 +5155,8 @@ Tell us where in Bali you are marrying and when. If the date is free, Luca Wethe
 
 Fields marked * are required.
 
+How we use this
+
 Please tick the box above to confirm you’re not a robot, then send again.
 
 Please check the highlighted fields, then send again.
@@ -5250,6 +5308,8 @@ Tell us where in South Africa you are marrying and when. If the date is free, Lu
 
 Fields marked * are required.
 
+How we use this
+
 Please tick the box above to confirm you’re not a robot, then send again.
 
 Please check the highlighted fields, then send again.
@@ -5358,6 +5418,8 @@ Enquire
 Tell us about the engagement, or about the events you handle in general if you are looking to set up a standing arrangement.
 
 Fields marked * are required.
+
+How we use this
 
 Please tick the box above to confirm you’re not a robot, then send again.
 
@@ -5534,6 +5596,8 @@ Thank you — we’ll be in touch shortly.
 
 Something went wrong. Please try again, message us on WhatsApp, or call us on 07356 042468 .
 
+How we use this
+
 Please tick the box above to confirm you’re not a robot, then try again.
 
 Text us on WhatsApp for the fastest reply, or call us on 07356 042468
@@ -5641,6 +5705,8 @@ Thank you — we’ll be in touch shortly.
 
 Something went wrong. Please try again, message us on WhatsApp, or call us on 07356 042468 .
 
+How we use this
+
 Please tick the box above to confirm you’re not a robot, then try again.
 
 Or visit the contact page , or call Luca on 07356 042468 .
@@ -5743,6 +5809,8 @@ Tell us the building and the date and we’ll come back within one working day. 
 Thank you — we’ll be in touch shortly.
 
 Something went wrong. Please try again, message us on WhatsApp, or call us on 07356 042468 .
+
+How we use this
 
 Please tick the box above to confirm you’re not a robot, then try again.
 
@@ -5848,6 +5916,8 @@ Thank you — we’ll be in touch shortly.
 
 Something went wrong. Please try again, message us on WhatsApp, or call us on 07356 042468 .
 
+How we use this
+
 Please tick the box above to confirm you’re not a robot, then try again.
 
 Or visit the contact page , or call Luca on 07356 042468 .
@@ -5948,6 +6018,8 @@ Tell us the basics and we’ll come back within one working day. For a quicker c
 Thank you — we’ll be in touch shortly.
 
 Something went wrong. Please try again, message us on WhatsApp, or call us on 07356 042468 .
+
+How we use this
 
 Please tick the box above to confirm you’re not a robot, then try again.
 
@@ -6088,6 +6160,8 @@ Share a few details and we’ll come back to you with a proposal within one work
 Thank you — we’ll be in touch shortly.
 
 Something went wrong. Please try again, message us on WhatsApp, or call us on 07356 042468 .
+
+How we use this
 
 Please tick the box above to confirm you’re not a robot, then try again.
 
@@ -15460,6 +15534,8 @@ Thank you — we’ll be in touch shortly.
 
 Something went wrong. Please try again, message us on WhatsApp, or call us on 07356 042468 .
 
+How we use this
+
 Please tick the box above to confirm you’re not a robot, then try again.
 
 Or visit the contact page , or call Luca on 07356 042468 .
@@ -19137,6 +19213,8 @@ Send the date, the venue, and a rough idea of numbers, however close the date is
 Thank you — we’ll be in touch shortly.
 
 Something went wrong. Please try again, message us on WhatsApp, or call us on 07356 042468 .
+
+How we use this
 
 Please tick the box above to confirm you’re not a robot, then try again.
 

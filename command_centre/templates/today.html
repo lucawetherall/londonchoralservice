@@ -40,8 +40,8 @@
     {% elif r.kind == "fee" %}{% set f = r.item %}
       <p class="need-text"><a class="mono" href="/bookings/{{ f.ref }}">{{ f.ref }}</a>: {{ f.gap|gbp }} short of {{ f.value|gbp }} — accept as transfer fees?</p>
       {{ m.fee_form(f.ref, action_day, f.gap, primary=true) }}
-    {% elif r.kind in ("deposits", "balances") %}
-      <p class="need-text"><a href="/bookings?when=all&amp;state={{ r.state }}">{{ r.count }} {{ ("deposit" if r.count == 1 else "deposits") ~ " overdue" if r.kind == "deposits" else ("balance" if r.count == 1 else "balances") ~ " due" }}</a>: {% for ref in r.refs %}<a class="mono" href="/bookings/{{ ref }}">{{ ref }}</a>{{ ", " if not loop.last }}{% endfor %}. <span class="muted">The daily pass drafts the reminder; send it from Zoho.</span></p>
+    {% elif r.kind in ("deposits", "payments", "balances") %}
+      <p class="need-text"><a href="/bookings?when=all&amp;state={{ r.state }}">{{ r.count }} {{ ("deposit" if r.count == 1 else "deposits") ~ " overdue" if r.kind == "deposits" else ("full fee" if r.count == 1 else "full fees") ~ " overdue" if r.kind == "payments" else ("balance" if r.count == 1 else "balances") ~ " due" }}</a>: {% for ref in r.refs %}<a class="mono" href="/bookings/{{ ref }}">{{ ref }}</a>{{ ", " if not loop.last }}{% endfor %}. <span class="muted">The daily pass drafts the reminder; send it from Zoho.</span></p>
     {% elif r.kind == "approval" %}{% set p = r.item %}
       <p class="need-text"><a href="/marketing#proposals">Approve or leave: {{ p.title }}</a> <span class="muted">(Ads change set{% if p.validated %}, checked with Google{% endif %})</span></p>
     {% elif r.kind == "books-import" %}

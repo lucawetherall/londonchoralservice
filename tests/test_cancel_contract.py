@@ -114,6 +114,7 @@ def test_section_9_counts_the_cancelled_separately():
     counts = weekly_review.ledger_counts(lm.read_csv(LEDGER))
     assert counts["cancelled"] == 1 and counts["bookings"] == 1 and counts["total"] == 1150.0, counts
     assert counts["ready"] == 1, counts
+    assert counts["form_consent"] == 0, counts  # no row has the web form's ad-measurement box ticked
 
 
 if __name__ == "__main__":
