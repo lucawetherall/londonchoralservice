@@ -47,6 +47,23 @@ def test_read_only_tools_are_allowed_on_both_servers():
     assert decide("zoho-books", "ZohoBooks_list_bills") == "allow"
 
 
+def test_books_health_check_read_is_allowed():
+    # the daily pass and the Monday review check the plan (an expired trial refuses every write) before anything else
+    assert decide("zoho-books-invoices", "ZohoBooks_list_organizations") == "allow"
+
+
+def test_a_queued_invoice_replayed_with_its_customer_id_is_allowed():
+    # the daily pass replays the body assistant_io.py books-queue stored, adding the contact's customer_id
+    queued = {"invoice_number": "2111", "date": "2026-10-14", "due_date": "2026-10-21",
+              "line_items": [{"name": "Small choir (4 singers)", "description": "Four singers for the service.",
+                              "rate": 1150, "quantity": 1}],
+              "notes": "First instalment £575.00 due 21 October 2026 to confirm the booking; balance £575.00 due "
+                       "20 November 2026."}
+    call = {"query_params": {"organization_id": "941014440", "ignore_auto_number_generation": True},
+            "body": dict(queued, customer_id="1534218000000000001")}
+    assert decide("zoho-books-invoices", "ZohoBooks_create_invoice", call) == "allow"
+
+
 def test_bank_account_and_transaction_reads_are_denied():
     assert not [n for n in guard_module().READ_ALLOW if "bank_" in n]
     for server in SERVERS:
