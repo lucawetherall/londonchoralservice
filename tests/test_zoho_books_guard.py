@@ -312,6 +312,14 @@ def test_update_invoice_corrects_dates_terms_text_and_lines_on_draft_or_sent_inv
     assert denied(U_INV, {"query_params": ORG, "body": {"due_date": "2026-10-28"}})  # no invoice id
 
 
+def test_update_invoice_may_give_the_reason_books_asks_for_on_a_sent_invoice():
+    # Books refuses a sent invoice's update without one (code 110701, 14 Oct 2026); it is scanned like other text
+    assert not denied(U_INV, upd(reason="Due date corrected to the agreed single payment date"))
+    for text in ("VAT correction", "Tax fix", "Sort code 04-00-04"):
+        assert denied(U_INV, upd(reason=text)), text
+    assert denied(U_INV, upd(reason={"text": "x"}))
+
+
 def test_update_invoice_never_changes_customer_currency_tax_or_email():
     assert denied(U_INV, upd(customer_id=OTHER_CUSTOMER))
     assert not denied(U_INV, upd(customer_id=None))

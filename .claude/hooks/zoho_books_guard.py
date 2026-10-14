@@ -426,7 +426,8 @@ def _iso_day(v, where):
 # lines' description, rate and quantity, on a draft or sent (not paid, not void) invoice. Never the customer
 # (customer_id, which the update schema requires, may only restate the invoice's own), never the currency, tax or
 # VAT fields, discounts, adjustments, email text or flags (none of those keys is listed), and the invoice number
-# only on a draft, to a DDMM ref. The text scan below still denies bank details, VAT wording and the word tax.
+# only on a draft, to a DDMM ref. Books asks a sent invoice's update for a `reason` (code 110701, 14 Oct 2026): free
+# text, scanned like the rest. The text scan below still denies bank details, VAT wording and the word tax.
 def check_update_invoice(body, query, path):
     _need(path, "invoice_id", "path_variables")
     # Books removes every line an update leaves out, so each update resends the invoice's lines (get_invoice first,
@@ -567,7 +568,7 @@ WRITE_TOOLS = {
     # owner hands-off, 14 Oct 2026
     "ZohoBooks_update_invoice": (
         obj("customer_id", "invoice_number", "date", "due_date", "payment_terms", "payment_terms_label", "notes",
-            "terms", "reference_number", line_items=[INVOICE_UPDATE_LINE]),
+            "terms", "reference_number", "reason", line_items=[INVOICE_UPDATE_LINE]),
         obj("organization_id", "ignore_auto_number_generation"), obj("invoice_id"), check_update_invoice),
     "ZohoBooks_disable_invoice_payment_reminder": (
         NOTHING, ORG_ONLY, obj("invoice_id"), check_disable_reminder),
