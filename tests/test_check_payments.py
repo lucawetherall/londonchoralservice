@@ -134,7 +134,7 @@ def test_just_received_lasts_fourteen_days_until_a_receipt_is_drafted():
 def test_reminder_marks_are_distinct():
     a = cp.assess(row("X", 650, "2026-08-22", "2026-10-01", "deposit seen x; balance reminder drafted 2026-09-28"),
                   [("2026-08-26", 325.0, "reference")], T)
-    assert a["reminded"] == {"deposit": False, "balance": True, "receipt": False}
+    assert a["reminded"] == {"deposit": False, "balance": True, "payment": False, "receipt": False}
     b = cp.assess(row("X", 650, "2026-09-01", "2026-10-30", "PENDING: x; reminder drafted 2026-09-20"), [], T)
     assert b["reminded"]["deposit"] is True and b["reminded"]["balance"] is False
 
@@ -269,9 +269,9 @@ def test_cancelled_anywhere_in_notes():
 def test_reminded_marks_ignore_case():
     a = cp.assess(row("X", 650, "2026-08-22", "2026-10-01", "Balance Reminder Drafted 2026-09-28"),
                   [("2026-08-26", 325.0, "reference")], T)
-    assert a["reminded"] == {"deposit": False, "balance": True, "receipt": False}
+    assert a["reminded"] == {"deposit": False, "balance": True, "payment": False, "receipt": False}
     b = cp.assess(row("X", 650, "2026-09-01", "2026-10-30", "PENDING: x; Reminder drafted 2026-09-20; Receipt drafted"), [], T)
-    assert b["reminded"] == {"deposit": True, "balance": False, "receipt": True}
+    assert b["reminded"] == {"deposit": True, "balance": False, "payment": False, "receipt": True}
 
 
 def test_updated_notes_on_empty_notes():
@@ -2019,6 +2019,113 @@ def test_note_refusal_names_each_fact_form_and_passes_free_text():
     _, (out, notes) = in_private(go)
     assert out[0] == "record it with --fact 2111 cancelled; nothing written" and out[1] == "written", out
     assert notes == "PENDING: invoiced; 4 singers, London", notes
+
+
+# --- single-payment terms: one invoice for the full fee by a due date, no deposit stage -------------------------------
+
+TERMS = "PENDING: invoiced; single payment: full fee due by 2026-10-28 (agreed 2026-10-14)"
+
+
+def po_row(notes=TERMS):
+    """A business client paying against a purchase order: invoiced 14 Oct for the full £1,750, due by 28 Oct."""
+    return row("1211", 1750, "2026-10-14", "2026-11-12", notes, name="Acme Events Ltd")
+
+
+def test_single_payment_terms_have_no_deposit_stage():
+    day = datetime.date(2026, 10, 22)
+    # without the terms, a deposit would be overdue from the 22nd and chased for half the fee
+    assert cp.assess(po_row("PENDING: invoiced"), [], day, unsent=set())["action"] == "deposit_reminder"
+    a = cp.assess(po_row(), [], day, unsent=set())
+    assert (a["state"], a["action"], a["payment_due"], a["deposit_due"]) == ("AWAITING_PAYMENT", "none", "2026-10-28",
+                                                                              None), a
+    assert not a["short_notice"] and "deposit" not in cp.describe(a).lower(), cp.describe(a)
+    assert cp.assess(po_row(), [], datetime.date(2026, 10, 28), unsent=set())["state"] == "AWAITING_PAYMENT"
+
+
+def test_single_payment_terms_overdue_are_chased_once_for_the_full_fee():
+    day = datetime.date(2026, 10, 29)
+    a = cp.assess(po_row(), [], day, unsent=set())
+    assert (a["state"], a["action"], a["balance"]) == ("PAYMENT_OVERDUE", "payment_reminder", 1750.0), a
+    line = cp.describe(a)
+    assert "FULL FEE £1,750.00 OVERDUE since 2026-10-28" in line and "deposit" not in line.lower(), line
+    b = cp.assess(po_row(TERMS + "; payment reminder drafted 2026-10-29"), [], datetime.date(2026, 10, 30), unsent=set())
+    assert b["state"] == "PAYMENT_OVERDUE" and b["action"] == "none", b
+    assert b["reminded"] == {"deposit": False, "balance": False, "payment": True, "receipt": False}, b["reminded"]
+    assert "(reminder already drafted)" in cp.describe(b)
+    # a deposit reminder note never stands in for the full-fee one
+    c = cp.assess(po_row(TERMS + "; reminder drafted 2026-10-29"), [], datetime.date(2026, 10, 30), unsent=set())
+    assert c["action"] == "payment_reminder", c
+
+
+def test_single_payment_terms_paid_in_full_and_part_paid():
+    day = datetime.date(2026, 10, 27)
+    full = cp.assess(po_row(), [("2026-10-25", 1750.0, "reference")], day, unsent=set())
+    assert (full["state"], full["action"]) == ("PAID_IN_FULL", "receipt"), full
+    assert full["record_in_books"] == [["2026-10-25", 1750.0, 0.0]], full
+    # half the fee is never read as a deposit: a hand check, nothing recorded in Books, never a balance reminder
+    for when in (day, datetime.date(2026, 11, 10)):
+        part = cp.assess(po_row(), [("2026-10-25", 875.0, "reference")], when, unsent=set())
+        assert (part["state"], part["action"], part["record_in_books"]) == ("CHECK_PAYMENT", "hand_check", []), part
+        assert "single-payment terms" in cp.describe(part) and "balance" not in cp.describe(part).lower()
+
+
+def test_single_payment_terms_with_an_unsent_invoice_or_after_the_event():
+    a = cp.assess(po_row(), [], datetime.date(2026, 10, 22), unsent={"1211"})
+    assert a["state"] == "AWAITING_INVOICE_SENT" and a["action"] == "none" and not a["deposit_late"], a
+    b = cp.assess(po_row(), [], datetime.date(2026, 10, 29), unsent={"1211"})
+    assert b["deposit_late"] and "the payment would have been due 2026-10-28" in cp.describe(b), cp.describe(b)
+    # net terms falling due after the event: awaiting until then, then a past event's hand check (never chased)
+    net = row("1211", 1750, "2026-10-14", "2026-10-20", "single payment: full fee due by 2026-11-19 (agreed 2026-10-14)")
+    assert cp.assess(net, [], datetime.date(2026, 11, 1), unsent=set())["state"] == "AWAITING_PAYMENT"
+    late = cp.assess(net, [], datetime.date(2026, 11, 20), unsent=set())
+    assert (late["state"], late["action"]) == ("PAST_UNMATCHED", "hand_check"), late
+
+
+def test_fact_terms_records_the_due_date_and_its_note():
+    p, notes, log = run_fact("PENDING: invoiced", "--fact", "2111", "terms", "--full-by", "2026-10-28")
+    clause = f"single payment: full fee due by 2026-10-28 (agreed {TD})"
+    assert p.returncode == 0 and "2111: terms recorded" in p.stdout, p.stderr
+    assert notes == f"PENDING: invoiced; {clause}", notes
+    assert [(e["kind"], e["fields"], e["by"], e["on"], e["note"]) for e in log] == [
+        ("terms", {"full_by": "2026-10-28"}, "script", TD, ev.note_hash(clause))], log
+    assert cp.full_by({"notes": notes}, TODAY, ev.Facts("booking")) == datetime.date(2026, 10, 28)
+    # before the migration: the note alone, which the readers read the same way
+    p, notes, log = run_fact("PENDING: invoiced", "--fact", "2111", "terms", "--full-by", "2026-10-28", migrated=False)
+    assert p.returncode == 0 and "noted; facts start after the migration" in p.stdout and log == [], (p.stdout, log)
+    assert notes == f"PENDING: invoiced; {clause}", notes
+
+
+def test_fact_terms_refuses_bad_input_and_writes_nothing():
+    far = (TODAY + datetime.timedelta(days=731)).isoformat()
+    for args in (["--fact", "2111", "terms"], ["--fact", "2111", "terms", "--full-by", "2026-02-30"],
+                 ["--fact", "2111", "terms", "--full-by", "28/10/2026"], ["--fact", "2111", "terms", "--full-by", far],
+                 ["--fact", "2111", "terms", "--full-by", "2026-10-28", "--scope", "full"],
+                 ["--fact", "2111", "cancelled", "--full-by", "2026-10-28"], ["--full-by", "2026-10-28"]):
+        p, notes, log = run_fact("PENDING: invoiced", *args)
+        assert p.returncode != 0 and "nothing written" in p.stderr, (args, p.stdout, p.stderr)
+        assert notes == "PENDING: invoiced" and log == [], (args, notes, log)
+
+
+def test_note_refuses_terms_text_naming_the_fact_form():
+    p, notes, log = run_fact("PENDING: invoiced", "--note", "2111", "full fee due by 2026-10-28 per PO")
+    assert p.returncode != 0 and "--fact 2111 terms --full-by YYYY-MM-DD" in p.stderr, p.stderr
+    assert notes == "PENDING: invoiced" and log == [], (notes, log)
+
+
+def test_reminded_payment_records_its_marker():
+    p, notes, log = run_fact(TERMS, "--reminded", "2111", "--kind", "payment")
+    assert p.returncode == 0 and notes == f"{TERMS}; payment reminder drafted {TD}", (p.stderr, notes)
+    assert [(e["kind"], e["fields"]) for e in log] == [("reminder-drafted", {"what": "payment"})], log
+
+
+def test_a_recorded_terms_fact_reads_like_its_note():
+    on = "2026-10-14"
+    facts = ev.booking_facts("1211", datetime.date(2026, 10, 29), events=[
+        ev.validate({"v": 1, "eid": "00000000000000b1", "prev": "", "at": f"{on}T12:00:00Z", "on": on,
+                     "subject": "booking", "id": "1211", "kind": "terms", "fields": {"full_by": "2026-10-28"},
+                     "by": "script", "src": "live"})])
+    a = cp.assess(po_row("PENDING: invoiced"), [], datetime.date(2026, 10, 29), facts=facts, unsent=set())
+    assert (a["state"], a["action"], a.get("held")) == ("PAYMENT_OVERDUE", "payment_reminder", None), a
 
 
 def clear_log():

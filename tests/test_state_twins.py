@@ -82,11 +82,12 @@ def test_every_booking_case_reads_the_same_three_ways():
 def test_the_cases_reach_every_family_and_many_states():
     kinds = {k for c in BOOKING_CASES for _, facts in c[4] for k, *_ in facts_list(facts)}
     assert kinds >= {"paid-in-full", "fees-accepted", "noted-paid", "arranged", "cancelled", "reinstated", "deposit-kept",
-                     "refunded", "payment-checked", "deposit-seen", "reminder-drafted", "review-drafted"}, kinds
+                     "refunded", "payment-checked", "deposit-seen", "reminder-drafted", "review-drafted", "terms"}, kinds
     states = {reading(r, c[5], c[6], facts)["assess"]["state"] for c in BOOKING_CASES for label, r, facts in three_ways(c)
               if label == "notes"}
     assert states >= {"CANCELLED", "PAYMENT_ON_CANCELLED", "PAYMENT_AFTER_CLOSE", "PAID_IN_FULL", "ARRANGED",
-                      "NOTED_PAID", "BALANCE_DUE", "DEPOSIT_OVERDUE", "CHECK_PAYMENT", "DEPOSIT_SEEN"}, states
+                      "NOTED_PAID", "BALANCE_DUE", "DEPOSIT_OVERDUE", "CHECK_PAYMENT", "DEPOSIT_SEEN", "AWAITING_PAYMENT",
+                      "PAYMENT_OVERDUE"}, states
 
 
 def test_with_no_facts_the_readers_are_todays():
@@ -129,6 +130,9 @@ HOLDS = [
     ("noted paid", [("paid per client email 2026-09-20", f("noted-paid", "2026-09-20", scope="full"), True),
                     ("earlier entry undone 2026-09-21 (owner)", UNDO, True), ("client paid 5 Sep", None, False)],
      f("noted-paid", "2026-09-22", scope="full")),
+    ("terms", [("single payment: full fee due by 2026-10-05 (agreed 2026-09-01)",
+                f("terms", "2026-09-01", full_by="2026-10-05"), True), ("full fee due by 2026-10-31 per PO", None, False)],
+     f("terms", "2026-09-22", full_by="2026-10-31")),
 ]
 
 
