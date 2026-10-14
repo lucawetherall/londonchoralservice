@@ -5,13 +5,16 @@ The Zoho Mail MCP can't attach files to a draft, so this script builds the whole
 puts it in the Drafts folder of office@londonchoralservice.com over IMAP (APPEND). It never sends:
 there is no SMTP code here. The IMAP writes are APPEND to Drafts and, for `attach` only, one MOVE of Luca's
 original draft to Trash once its copy with the attachments has been read back and checked (owner decision,
-29 Sep 2026), and `discard`, a MOVE of one office@ draft to Trash that Luca approves each time (owner decision,
-14 Oct 2026; .claude/hooks/owner_confirm_guard.py asks him). Nothing is ever deleted. Luca opens the draft in Zoho, checks it and presses Send.
+29 Sep 2026), and `discard`, a MOVE of one office@ draft to Trash that Luca approves each time with his passkey in
+the Command Centre (owner decision, 14 Oct 2026): it runs only as `discard <Message-ID> --owner` with the app's
+one-time nonce piped on stdin (lcs_owner.owner_confirmed), and the Trash helper itself refuses any draft but Luca's
+own original unless this process passed that check. Nothing is ever deleted. Luca opens the draft in Zoho, checks it and presses Send.
 
     .venv/bin/python scripts/bookings/imap_draft.py save '<one-line JSON spec>'
     .venv/bin/python scripts/bookings/imap_draft.py attach <Message-ID of Luca's draft> '<one-line JSON spec>'
     .venv/bin/python scripts/bookings/imap_draft.py sent <invoice ref> <client email> <YYYY-MM-DD>
-    .venv/bin/python scripts/bookings/imap_draft.py discard <Message-ID>   (owner-approved only: a draft to Trash)
+    .venv/bin/python scripts/bookings/imap_draft.py discard <Message-ID> --owner
+                                          (the Command Centre only, after Luca's passkey: a draft to Trash)
     .venv/bin/python scripts/bookings/imap_draft.py check     (owner: sign in, count the folders; writes nothing)
     .venv/bin/python scripts/bookings/imap_draft.py test      (owner: a test draft to luca@almaconsort.com with a real
                                                               sample invoice and booking confirmation; delete it)
@@ -77,6 +80,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / ".claude" / "hooks"))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import lcs_money as lm  # noqa: E402  LEDGER, PRIVATE, LONDON, ICLOUD_INVOICES, read_csv, locked_rows
+import lcs_owner  # noqa: E402  the Command Centre's one-time owner nonce (discard)
 
 FROM_ADDRESS = "office@londonchoralservice.com"
 FROM_HEADER = f"Luca Wetherall <{FROM_ADDRESS}>"  # as Luca's own sent replies show it
@@ -472,7 +476,11 @@ def trash_draft(conn, message_id, own_only):
     """Move the one draft in Drafts with exactly this Message-ID, from office@, to Trash: the one IMAP change besides
     APPEND. Only by MOVE (so it stays recoverable in Trash): no flag changes, and no closing a writable folder (that
     would purge). own_only: only a draft with no draft key (one Luca wrote). Returns its draft key ("" when it has
-    none) once moved, or None when nothing was moved (no MOVE, no single match, not from office@)."""
+    none) once moved, or None when nothing was moved (no MOVE, no single match, not from office@).
+    Any draft but Luca's own original (own_only=False) moves only in a process that passed lcs_owner.owner_confirmed()
+    (`discard --owner`, run by the Command Centre after his passkey), so importing this can't step round the gate."""
+    if not own_only and not lcs_owner.owner_proven():
+        fail("moving a draft to Trash needs Luca's passkey approval in the Command Centre")
     if "MOVE" not in conn.capabilities:
         return None
     typ, _ = conn.select(DRAFTS)
@@ -510,8 +518,8 @@ def forget_saved(key):
 
 
 def discard(conn, message_id):
-    """Move one draft from office@ in Drafts to Trash, on Luca's say-so (owner decision, 14 Oct 2026): a hook asks
-    him to approve every run of this command. Recoverable from Trash; never a deletion. If the draft was saved by
+    """Move one draft from office@ in Drafts to Trash, on Luca's say-so (owner decision, 14 Oct 2026): run() lets it
+    through only with --owner and the Command Centre's one-time nonce, written after his passkey. Recoverable from Trash; never a deletion. If the draft was saved by
     this script, its key is forgotten so a corrected draft can be saved."""
     draft = find_draft(conn, message_id)
     if draft is None:
@@ -587,7 +595,11 @@ def invoice_sent(conn, ref, to, since):
     return f"sent: yes {found.isoformat()}" if found else "sent: no"
 
 
-def run(argv, factory=None, password=None):
+OWNER_ONLY = ("discard needs Luca's passkey: he approves it in the Command Centre (Drafts, Move to Trash), which "
+              "runs it with --owner and its one-time nonce")
+
+
+def run(argv, factory=None, password=None, stdin_fd=0):
     if argv[:1] == ["save"] and len(argv) == 2:
         try:
             spec = validate(json.loads(argv[1]))
@@ -620,10 +632,14 @@ def run(argv, factory=None, password=None):
             return attach(conn, message_id, key, files)
         finally:
             conn.logout()
-    if argv[:1] == ["discard"] and len(argv) == 2:
+    if argv[:1] == ["discard"]:
+        if len(argv) != 3 or argv[2] != "--owner":
+            fail(OWNER_ONLY)
         message_id = argv[1].strip()
         if not MSG_ID.fullmatch(message_id):
             fail("the draft's Message-ID must look like <abc@example.com>")
+        if not lcs_owner.owner_confirmed(stdin_fd):
+            fail(OWNER_ONLY)
         conn = connect(password, factory)
         try:
             return discard(conn, message_id)
@@ -681,13 +697,13 @@ def run(argv, factory=None, password=None):
         return (f"{result}; draft key header kept by Zoho: yes; attachments intact: {intact} "
                 f"({', '.join(sent)})")
     fail("usage: imap_draft.py save '<JSON>' | attach <Message-ID> '<JSON>' | sent <ref> <client email> <YYYY-MM-DD> "
-         "| discard <Message-ID> | check | test")
+         "| discard <Message-ID> --owner | check | test")
 
 
-def main(argv=None, factory=None, password=None):
+def main(argv=None, factory=None, password=None, stdin_fd=0):
     argv = sys.argv[1:] if argv is None else argv
     try:
-        print(run(argv, factory, password))
+        print(run(argv, factory, password, stdin_fd))
     except Refused as e:
         print(f"STOP: {e}")
         return 1
