@@ -314,24 +314,26 @@ def queue_add(rec, today=None):
     items = inv.get("line_items")
     if not (isinstance(items, list) and items and all(isinstance(i, dict) and "rate" in i for i in items)):
         raise SystemExit("invoice.line_items must list each item with its rate; nothing written")
-    rows = read_queue()
-    if any(r["ref"] == ref and not r.get("done") for r in rows):
-        print(f"books-queue: {ref} already queued")
-        return
-    rows.append({"ref": ref, "queued": (today or london_today()).isoformat(), "reason": str(rec.get("reason") or ""),
-                 "contact_email": email, "contact": contact, "invoice": inv})
-    write_queue(rows)
+    with lm.ledger_lock(BOOKS_QUEUE):  # the drafter and the daily pass run in parallel: no lost update
+        rows = read_queue()
+        if any(r["ref"] == ref and not r.get("done") for r in rows):
+            print(f"books-queue: {ref} already queued")
+            return
+        rows.append({"ref": ref, "queued": (today or london_today()).isoformat(),
+                     "reason": str(rec.get("reason") or ""), "contact_email": email, "contact": contact, "invoice": inv})
+        write_queue(rows)
     print(f"books-queue: {ref} queued")
 
 
 def queue_done(ref, today=None):
-    rows = read_queue()
-    hit = [r for r in rows if r["ref"] == ref and not r.get("done")]
-    if not hit:
-        raise SystemExit(f"books-queue: {ref} is not queued")
-    for r in hit:
-        r["done"] = (today or london_today()).isoformat()
-    write_queue(rows)
+    with lm.ledger_lock(BOOKS_QUEUE):
+        rows = read_queue()
+        hit = [r for r in rows if r["ref"] == ref and not r.get("done")]
+        if not hit:
+            raise SystemExit(f"books-queue: {ref} is not queued")
+        for r in hit:
+            r["done"] = (today or london_today()).isoformat()
+        write_queue(rows)
     print(f"books-queue: {ref} done")
 
 
