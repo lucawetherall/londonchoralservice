@@ -16,6 +16,8 @@ spec.json (all money in pounds; the fee must be the one the client accepted):
    "provision": "Solo singer & harpist", "issue_date": "2026-08-21",
    "items": [{"name": "Wedding solo singer", "detail": "…", "qty": 1, "rate": 325}, …],
    "instalment_1_due": "2026-08-28", "instalment_2_due": "2026-11-20"}
+"file_name" (optional) names the folder and files instead of client_name, for a billing name a file name
+can't carry well, e.g. client_name "Community & Co c/o Liz Baalham", file_name "Community & Co".
 Instalments are 50/50 unless "instalment_1" / "instalment_2" amounts are given.
 Output goes to iCloud Drive/LCS-invoices/<ref> - <client>/ (~/Library/Mobile Documents/
 com~apple~CloudDocs/LCS-invoices; folders mode 700, files mode 600), so the documents are on
@@ -118,10 +120,11 @@ def make_docs(spec, root=OUT_ROOT):
     service = spec["service_type"] + (f" — {spec['venue']}" if spec.get("venue") else "")
     client, ref = spec["client_name"].strip(), str(spec["ref"]).strip()
 
-    folder = out_folder(ref, client, root)
-    pdf = folder / f"Invoice {safe_name(ref)} - {safe_name(client)}.pdf"
+    label = (spec.get("file_name") or client).strip()  # e.g. "Community & Co" when the client is "… c/o …"
+    folder = out_folder(ref, label, root)
+    pdf = folder / f"Invoice {safe_name(ref)} - {safe_name(label)}.pdf"
     short = datetime.date.fromisoformat(spec["service_date"]).strftime("%-d %b %Y")
-    docx = folder / f"Booking Confirmation - {safe_name(client)} - {short}.docx"
+    docx = folder / f"Booking Confirmation - {safe_name(label)} - {short}.docx"
 
     inv_spec = {
         "INVOICE_REF": ref, "ISSUE_DATE": long_date(issue), "CLIENT_NAME": client,

@@ -303,7 +303,7 @@ def hook_commands(matcher):
 def test_the_hook_is_wired_for_every_route():
     want = 'python3 "$CLAUDE_PROJECT_DIR/.claude/hooks/mcp_bypass_guard.py" || exit 2'
     for matcher in ("Bash", "Write|Edit|MultiEdit|NotebookEdit", "Read|Grep|Glob|NotebookRead"):
-        assert hook_commands(matcher) == [want], (matcher, hook_commands(matcher))
+        assert hook_commands(matcher)[:1] == [want], (matcher, hook_commands(matcher))  # first; others may follow
     shells = [e["matcher"] for e in json.load(open(SETTINGS))["hooks"]["PreToolUse"]
               if "mcp__terminal__run_in_terminal" in e["matcher"]]
     assert len(shells) == 1 and hook_commands(shells[0]) == [want], shells

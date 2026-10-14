@@ -15,8 +15,12 @@ That calendar's id lives in ~/lcs-private/calendar.json as {"lcs_calendar_id": "
   - summary starts with "LCS " and is at most 120 characters;
   - notificationLevel, if given, is "NONE";
   - no text field holds an email address or bank details.
-Updating, deleting or responding to an event, and any tool the connector adds
-later, are denied. It accepts only tools of this one connector (on a new
+delete_event is never allowed outright: on the London Choral Service calendar,
+with only calendarId, eventId and notificationLevel "NONE", the guard answers
+"ask", so Claude Code shows Luca the call and waits for his explicit approval
+whatever the permission mode (owner decision, 14 Oct 2026); anywhere else it is
+denied. The scheduled tasks never delete events. Updating or responding to an
+event, and any tool the connector adds later, are denied. It accepts only tools of this one connector (on a new
 machine whose connector id differs, update SERVER here, the matcher and the
 allowlist in .claude/settings.json together). It fails closed: any error, a
 missing or malformed config, or a tool name of the wrong shape denies the call.
@@ -79,6 +83,31 @@ def check_create(tool_input):
     return None
 
 
+DELETE_KEYS = {"calendarId", "eventId", "notificationLevel"}
+ASK = "ask:"
+
+
+def check_delete(tool_input):
+    """ASK + reason when Luca may approve this delete, else a deny reason."""
+    if not isinstance(tool_input, dict):
+        return f"{P}delete_event input must be an object."
+    extra = sorted(set(tool_input) - DELETE_KEYS)
+    if extra:
+        return f"{P}delete_event may not set {', '.join(extra)}."
+    try:
+        cal = lcs_calendar_id()
+    except Exception:
+        return f"{P}{CONFIG} is missing or has no lcs_calendar_id; no event can be deleted."
+    if tool_input.get("calendarId") != cal:
+        return f"{P}events may be deleted only from the London Choral Service calendar."
+    if not isinstance(tool_input.get("eventId"), str) or not tool_input["eventId"].strip():
+        return f"{P}eventId is required."
+    if tool_input.get("notificationLevel", "NONE") != "NONE":
+        return f"{P}notificationLevel must be NONE."
+    return (f"{ASK}Deletes one event from the London Choral Service calendar. "
+            "Only Luca can approve this.")
+
+
 def decide(tool, tool_input=None):
     parts = tool.split("__")
     if len(parts) != 3 or parts[0] != "mcp" or parts[1] != SERVER or not parts[2]:
@@ -87,8 +116,11 @@ def decide(tool, tool_input=None):
         return None  # allowed; normal permission rules apply
     if parts[2] == "create_event":
         return check_create(tool_input)
+    if parts[2] == "delete_event":
+        return check_delete(tool_input)
     return (f"{P}{parts[2]} isn't allowed. Claude reads the diary and adds confirmed bookings to the "
-            "London Choral Service calendar; it never changes, deletes or responds to an event.")
+            "London Choral Service calendar; it never changes or responds to an event, and deletes one "
+            "only with Luca's approval.")
 
 
 def main():
@@ -102,9 +134,10 @@ def main():
     except Exception as e:  # fail closed
         reason = f"Calendar guard error ({type(e).__name__}); call blocked."
     if reason:
+        ask = reason.startswith(ASK)
         print(json.dumps({"hookSpecificOutput": {"hookEventName": "PreToolUse",
-                                                 "permissionDecision": "deny",
-                                                 "permissionDecisionReason": reason}}))
+                                                 "permissionDecision": "ask" if ask else "deny",
+                                                 "permissionDecisionReason": reason[len(ASK):] if ask else reason}}))
     sys.exit(0)
 
 
