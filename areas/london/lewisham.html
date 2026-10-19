@@ -1519,6 +1519,20 @@
       }
     }
     
+    /* Modifier — secondary button: outlined, beside a primary .btn-link. */
+    .btn-link--secondary,
+    .btn-link--secondary:visited,
+    .btn-link--secondary:active {
+      background-color: transparent;
+      color: var(--color-accent);
+      box-shadow: inset 0 0 0 1px var(--color-accent);
+    }
+    
+    .btn-link--secondary:hover {
+      background-color: var(--color-accent);
+      color: var(--color-bg);
+    }
+    
     /* Modifier — button with leading inline icon (e.g. WhatsApp).
        Icon stays subordinate to the label: 0.85em with a tight gap so the
        button reads as text-first, with the glyph as a quiet accent. */
@@ -1673,8 +1687,10 @@
       grid-template-areas:
         "crumb crumb"
         "head  video"
+        "offer video"
         "body  video";
-      grid-template-rows: auto auto 1fr;
+      /* The offer row is empty (zero height) on pages without a .hero-offer. */
+      grid-template-rows: auto auto auto 1fr;
       column-gap: var(--space-3xl);
       align-items: start;
     }
@@ -1689,6 +1705,42 @@
     
     .hero-text {
       grid-area: body;
+    }
+    
+    /* Landing-page offer under the h1: the facts and the buttons a visitor needs
+       on the first screen. On phones it sits above the film. */
+    .hero-offer {
+      grid-area: offer;
+      margin-bottom: var(--space-xl);
+    }
+    
+    .hero-facts {
+      list-style: none;
+      padding: 0;
+      margin: 0 0 var(--space-lg);
+    }
+    
+    .hero-facts li {
+      position: relative;
+      padding-left: 1.6rem;
+      margin-bottom: var(--space-xs);
+      line-height: 1.45;
+    }
+    
+    .hero-facts li::before {
+      content: "\2713";
+      position: absolute;
+      left: 0;
+      color: var(--color-accent);
+      font-size: 0.9em;
+    }
+    
+    .hero-ctas {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: var(--space-sm) var(--space-md);
+      margin-bottom: var(--space-md);
     }
     
     .hero-video {
@@ -1845,6 +1897,7 @@
         grid-template-areas:
           "crumb"
           "head"
+          "offer"
           "video"
           "body";
         grid-template-rows: none;
@@ -2864,8 +2917,8 @@
             <li><a href="/weddings.html">Weddings</a></li>
             <li><a href="/funerals.html">Funerals</a></li>
             <li><a href="/corporate.html">Corporate</a></li>
-            <li><a href="/christmas.html">Christmas</a></li>
-            <li><a href="/carol-singers.html">Carol Singers</a></li>
+            <li><a href="/christmas.html">Christmas carol singers</a></li>
+            <li><a href="/christmas-carol-services.html">Church carol services</a></li>
             <li><a href="/private-events.html">Private Events</a></li>
             <li><a href="/destinations/">Weddings Abroad</a></li>
             <li class="dropdown-separator" aria-hidden="true"></li>
@@ -2959,7 +3012,7 @@
         <p>A grand celebration at one of Lewisham&rsquo;s larger churches, or an intimate ceremony in a smaller parish setting&thinsp;&mdash;&thinsp;a live choir does what a recording cannot: keep a nervous congregation in tune and in time through the hymns, and follow them with a piece during the signing of the register that guests will go on talking about over dinner. The churches of Blackheath and Lee offer particularly attractive venues, with fine acoustics and beautiful interiors. Our singers will work with you to create a programme of hymns, anthems, and choral pieces that reflects your personality and the spirit of the day. For ideas on building the perfect musical programme, explore our guide to <a href="../../music-guides/choosing-wedding-hymns.html">choosing wedding hymns</a>.</p>
 
         <h2>Carols in Catford and Grove Park</h2>
-        <p>Near St&nbsp;Mary&rsquo;s Lewisham and the churches around Blackheath and Lee, offices and residents&rsquo; groups ask us to <a href="../../carol-singers.html">book professional carol singers</a> for a staff party or reception each December. We&rsquo;re also available as <a href="../../carol-singers.html">carol singers for hire</a> at residents&rsquo; evenings across Catford and Grove Park, singing a cappella throughout.</p>
+        <p>Near St&nbsp;Mary&rsquo;s Lewisham and the churches around Blackheath and Lee, offices and residents&rsquo; groups ask us to <a href="../../christmas.html">book professional carol singers</a> for a staff party or reception each December. We&rsquo;re also available as <a href="../../christmas.html">carol singers for hire</a> at residents&rsquo; evenings across Catford and Grove Park, singing a cappella throughout.</p>
 
         <p><a href="../../contact.html" class="btn-link">Get in touch about your occasion in Lewisham</a></p>
       </div>
@@ -2995,8 +3048,8 @@
             <li><a href="/weddings.html">Weddings</a></li>
             <li><a href="/funerals.html">Funerals</a></li>
             <li><a href="/corporate.html">Corporate events</a></li>
-            <li><a href="/christmas.html">Christmas carol services</a></li>
-            <li><a href="/carol-singers.html">Hire carol singers</a></li>
+            <li><a href="/christmas.html">Christmas carol singers</a></li>
+            <li><a href="/christmas-carol-services.html">Church carol services</a></li>
             <li><a href="/private-events.html">Private events</a></li>
             <li><a href="/destinations/">Weddings abroad</a></li>
             <li><a href="/pricing.html">Pricing</a></li>

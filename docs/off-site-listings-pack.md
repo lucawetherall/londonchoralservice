@@ -106,7 +106,7 @@ December dates cost the same, except Christmas Eve and Christmas Day (around 25%
 
 ## GBP seasonal post
 
-**November post, linking to https://londonchoralservice.com/carol-singers.html** *(adjust the availability line to the real diary before posting)*:
+**November post, linking to https://londonchoralservice.com/christmas.html** *(carol-singers.html merged into christmas.html on 19 Oct 2026)* *(adjust the availability line to the real diary before posting)*:
 
 > [Late availability for carol singers this December: weekday lunchtime and early-evening slots remain.] Four a cappella voices from £1,150, roaming or in sets, for offices, hotel lobbies, switch-ons and residents' evenings. Standard rates through December, with a premium only on Christmas Eve and Christmas Day.
 

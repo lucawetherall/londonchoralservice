@@ -1519,6 +1519,20 @@
       }
     }
     
+    /* Modifier — secondary button: outlined, beside a primary .btn-link. */
+    .btn-link--secondary,
+    .btn-link--secondary:visited,
+    .btn-link--secondary:active {
+      background-color: transparent;
+      color: var(--color-accent);
+      box-shadow: inset 0 0 0 1px var(--color-accent);
+    }
+    
+    .btn-link--secondary:hover {
+      background-color: var(--color-accent);
+      color: var(--color-bg);
+    }
+    
     /* Modifier — button with leading inline icon (e.g. WhatsApp).
        Icon stays subordinate to the label: 0.85em with a tight gap so the
        button reads as text-first, with the glyph as a quiet accent. */
@@ -1673,8 +1687,10 @@
       grid-template-areas:
         "crumb crumb"
         "head  video"
+        "offer video"
         "body  video";
-      grid-template-rows: auto auto 1fr;
+      /* The offer row is empty (zero height) on pages without a .hero-offer. */
+      grid-template-rows: auto auto auto 1fr;
       column-gap: var(--space-3xl);
       align-items: start;
     }
@@ -1689,6 +1705,42 @@
     
     .hero-text {
       grid-area: body;
+    }
+    
+    /* Landing-page offer under the h1: the facts and the buttons a visitor needs
+       on the first screen. On phones it sits above the film. */
+    .hero-offer {
+      grid-area: offer;
+      margin-bottom: var(--space-xl);
+    }
+    
+    .hero-facts {
+      list-style: none;
+      padding: 0;
+      margin: 0 0 var(--space-lg);
+    }
+    
+    .hero-facts li {
+      position: relative;
+      padding-left: 1.6rem;
+      margin-bottom: var(--space-xs);
+      line-height: 1.45;
+    }
+    
+    .hero-facts li::before {
+      content: "\2713";
+      position: absolute;
+      left: 0;
+      color: var(--color-accent);
+      font-size: 0.9em;
+    }
+    
+    .hero-ctas {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: var(--space-sm) var(--space-md);
+      margin-bottom: var(--space-md);
     }
     
     .hero-video {
@@ -1845,6 +1897,7 @@
         grid-template-areas:
           "crumb"
           "head"
+          "offer"
           "video"
           "body";
         grid-template-rows: none;
@@ -2872,8 +2925,8 @@
             <li><a href="/weddings.html">Weddings</a></li>
             <li><a href="/funerals.html">Funerals</a></li>
             <li><a href="/corporate.html">Corporate</a></li>
-            <li><a href="/christmas.html">Christmas</a></li>
-            <li><a href="/carol-singers.html">Carol Singers</a></li>
+            <li><a href="/christmas.html">Christmas carol singers</a></li>
+            <li><a href="/christmas-carol-services.html">Church carol services</a></li>
             <li><a href="/private-events.html">Private Events</a></li>
             <li><a href="/destinations/">Weddings Abroad</a></li>
             <li class="dropdown-separator" aria-hidden="true"></li>
@@ -2959,7 +3012,7 @@
         <p>Westminster is a common choice for large memorial services held weeks or months after a funeral. These events often take place at Westminster Abbey, St&nbsp;Martin-in-the-Fields, or St&nbsp;James&rsquo;s Piccadilly and can involve more ambitious musical programmes than a funeral allows. We provide choirs of eight to twelve voices for memorial services and can include orchestral players if the family wants a full performance of a Fauré Requiem or other large-scale work. Our <a href="../../music-guides/memorial-service-planning.html">memorial service planning guide</a> covers the practical steps involved.</p>
 
         <h2>Carols for Mayfair hotels and West End offices</h2>
-        <p>Each December we provide carol services and roaming carol singers for offices, hotels, and residents&rsquo; events across Westminster, from the West End church of St&nbsp;James&rsquo;s Piccadilly to the hotels and function rooms around Mayfair and Park Lane. A choir can lead <a href="../../christmas.html">a full carol service</a> at your workplace or a church you have hired, or you can book <a href="../../carol-singers.html">roaming carol singers</a> for a residents&rsquo; or corporate gathering. For hotels arranging a festive reception, our page on <a href="../../for-hotels.html">carol singers for hotels</a> covers formats and timings.</p>
+        <p>Each December we provide carol services and roaming carol singers for offices, hotels, and residents&rsquo; events across Westminster, from the West End church of St&nbsp;James&rsquo;s Piccadilly to the hotels and function rooms around Mayfair and Park Lane. A choir can lead <a href="../../christmas-carol-services.html">a full carol service</a> at your workplace or a church you have hired, or you can book <a href="../../christmas.html">roaming carol singers</a> for a residents&rsquo; or corporate gathering. For hotels arranging a festive reception, our page on <a href="../../for-hotels.html">carol singers for hotels</a> covers formats and timings.</p>
 
         <h2>Weddings at St&nbsp;Margaret&rsquo;s Westminster</h2>
         <p>St&nbsp;Margaret&rsquo;s Westminster has hosted weddings for centuries, including those of Samuel Pepys, Winston Churchill, and many members of Parliament. Couples who marry there can draw on the church&rsquo;s strong musical tradition, and we provide choirs of four to twelve voices to match the scale of the occasion. St&nbsp;James&rsquo;s Piccadilly is another popular choice, with its generous nave and welcoming atmosphere.</p>
@@ -3017,8 +3070,8 @@
             <li><a href="/weddings.html">Weddings</a></li>
             <li><a href="/funerals.html">Funerals</a></li>
             <li><a href="/corporate.html">Corporate events</a></li>
-            <li><a href="/christmas.html">Christmas carol services</a></li>
-            <li><a href="/carol-singers.html">Hire carol singers</a></li>
+            <li><a href="/christmas.html">Christmas carol singers</a></li>
+            <li><a href="/christmas-carol-services.html">Church carol services</a></li>
             <li><a href="/private-events.html">Private events</a></li>
             <li><a href="/destinations/">Weddings abroad</a></li>
             <li><a href="/pricing.html">Pricing</a></li>

@@ -1519,6 +1519,20 @@
       }
     }
     
+    /* Modifier — secondary button: outlined, beside a primary .btn-link. */
+    .btn-link--secondary,
+    .btn-link--secondary:visited,
+    .btn-link--secondary:active {
+      background-color: transparent;
+      color: var(--color-accent);
+      box-shadow: inset 0 0 0 1px var(--color-accent);
+    }
+    
+    .btn-link--secondary:hover {
+      background-color: var(--color-accent);
+      color: var(--color-bg);
+    }
+    
     /* Modifier — button with leading inline icon (e.g. WhatsApp).
        Icon stays subordinate to the label: 0.85em with a tight gap so the
        button reads as text-first, with the glyph as a quiet accent. */
@@ -1673,8 +1687,10 @@
       grid-template-areas:
         "crumb crumb"
         "head  video"
+        "offer video"
         "body  video";
-      grid-template-rows: auto auto 1fr;
+      /* The offer row is empty (zero height) on pages without a .hero-offer. */
+      grid-template-rows: auto auto auto 1fr;
       column-gap: var(--space-3xl);
       align-items: start;
     }
@@ -1689,6 +1705,42 @@
     
     .hero-text {
       grid-area: body;
+    }
+    
+    /* Landing-page offer under the h1: the facts and the buttons a visitor needs
+       on the first screen. On phones it sits above the film. */
+    .hero-offer {
+      grid-area: offer;
+      margin-bottom: var(--space-xl);
+    }
+    
+    .hero-facts {
+      list-style: none;
+      padding: 0;
+      margin: 0 0 var(--space-lg);
+    }
+    
+    .hero-facts li {
+      position: relative;
+      padding-left: 1.6rem;
+      margin-bottom: var(--space-xs);
+      line-height: 1.45;
+    }
+    
+    .hero-facts li::before {
+      content: "\2713";
+      position: absolute;
+      left: 0;
+      color: var(--color-accent);
+      font-size: 0.9em;
+    }
+    
+    .hero-ctas {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: var(--space-sm) var(--space-md);
+      margin-bottom: var(--space-md);
     }
     
     .hero-video {
@@ -1845,6 +1897,7 @@
         grid-template-areas:
           "crumb"
           "head"
+          "offer"
           "video"
           "body";
         grid-template-rows: none;
@@ -2864,8 +2917,8 @@
             <li><a href="/weddings.html">Weddings</a></li>
             <li><a href="/funerals.html">Funerals</a></li>
             <li><a href="/corporate.html">Corporate</a></li>
-            <li><a href="/christmas.html">Christmas</a></li>
-            <li><a href="/carol-singers.html">Carol Singers</a></li>
+            <li><a href="/christmas.html">Christmas carol singers</a></li>
+            <li><a href="/christmas-carol-services.html">Church carol services</a></li>
             <li><a href="/private-events.html">Private Events</a></li>
             <li><a href="/destinations/">Weddings Abroad</a></li>
             <li class="dropdown-separator" aria-hidden="true"></li>
@@ -2934,7 +2987,7 @@
         <p>Planning a funeral or memorial in the City can feel daunting, but we handle the music from first enquiry to the day itself. Our <a href="../../music-guides/funeral-music-guide.html">funeral music guide</a> offers practical advice, or you are welcome to <a href="../../contact.html">contact us directly</a> to talk through your needs.</p>
 
         <h2>Livery halls and City carol services</h2>
-        <p>Livery companies and City institutions <a href="../../carol-singers.html">book carol singers</a> every December, often pairing <a href="../../christmas.html">a Christmas carol service</a> in a Square Mile church with a reception in a livery hall afterwards. Our singers are equally at home processing through a hall between courses or holding a formal programme in the nave. We offer <a href="../../for-livery-companies.html">carol services for livery companies</a> throughout the Square Mile, and December books out well ahead of the festive season, so early contact matters here more than almost anywhere else we work.</p>
+        <p>Livery companies and City institutions <a href="../../christmas.html">book carol singers</a> every December, often pairing <a href="../../christmas-carol-services.html">a Christmas carol service</a> in a Square Mile church with a reception in a livery hall afterwards. Our singers are equally at home processing through a hall between courses or holding a formal programme in the nave. We offer <a href="../../for-livery-companies.html">carol services for livery companies</a> throughout the Square Mile, and December books out well ahead of the festive season, so early contact matters here more than almost anywhere else we work.</p>
 
         <h2>Weddings at Temple Church and St&nbsp;Bartholomew-the-Great</h2>
         <p>The City&rsquo;s churches offer magnificent settings for weddings, and a professional choir gives the ceremony a sound to match the setting. Temple Church is a particularly sought-after wedding venue, its Norman round nave one of the few medieval round naves left in England. St&nbsp;Bartholomew-the-Great and the Dutch Church at Austin Friars are strong choices too, each with its own character and acoustic.</p>
@@ -2995,8 +3048,8 @@
             <li><a href="/weddings.html">Weddings</a></li>
             <li><a href="/funerals.html">Funerals</a></li>
             <li><a href="/corporate.html">Corporate events</a></li>
-            <li><a href="/christmas.html">Christmas carol services</a></li>
-            <li><a href="/carol-singers.html">Hire carol singers</a></li>
+            <li><a href="/christmas.html">Christmas carol singers</a></li>
+            <li><a href="/christmas-carol-services.html">Church carol services</a></li>
             <li><a href="/private-events.html">Private events</a></li>
             <li><a href="/destinations/">Weddings abroad</a></li>
             <li><a href="/pricing.html">Pricing</a></li>

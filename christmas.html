@@ -217,30 +217,30 @@
   <script src="/js/consent.js" defer></script>
   <!-- @include-end partials/analytics.html -->
 
-  <title>Christmas Carol Services for Companies &amp; Venues | LCS</title>
-  <meta name="description" content="Professional choirs for Christmas carol services in offices, hotels, livery halls, churches, and charity concerts across the UK. 4 to 12 voices, from £1,150.">
+  <title>Hire Christmas Carol Singers in London &amp; the UK | LCS</title>
+  <meta name="description" content="Hire Christmas carol singers in London and across the UK for office parties, receptions, hotel lobbies, and markets. Four singers from £1,150 for two hours.">
   <meta name="theme-color" content="#F7F3EE">
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://londonchoralservice.com/christmas.html">
   <link rel="alternate" hreflang="en-gb" href="https://londonchoralservice.com/christmas.html">
   <link rel="alternate" hreflang="x-default" href="https://londonchoralservice.com/christmas.html">
 
-  <meta property="og:title" content="Christmas Carol Services for Companies &amp; Venues | LCS">
-  <meta property="og:description" content="Professional choirs for Christmas carol services in offices, hotels, livery halls, churches, and charity concerts across the UK. 4 to 12 voices, from £1,150.">
+  <meta property="og:title" content="Hire Christmas Carol Singers in London &amp; the UK | LCS">
+  <meta property="og:description" content="Hire Christmas carol singers in London and across the UK for office parties, receptions, hotel lobbies, and markets. Four singers from £1,150 for two hours.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://londonchoralservice.com/christmas.html">
   <meta property="og:locale" content="en_GB">
   <meta property="og:site_name" content="London Choral Service">
-  <meta property="og:image" content="https://londonchoralservice.com/assets/og-christmas.png">
+  <meta property="og:image" content="https://londonchoralservice.com/assets/og/christmas.png">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
-  <meta property="og:image:alt" content="The London Choral Service: carol singers and Christmas choirs">
+  <meta property="og:image:alt" content="The London Choral Service: Christmas Carol Singers. For office parties, receptions, lobbies and markets">
 
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Christmas Carol Services for Companies &amp; Venues | LCS">
-  <meta name="twitter:description" content="Professional choirs for Christmas carol services in offices, hotels, livery halls, churches, and charity concerts across the UK. 4 to 12 voices, from £1,150.">
-  <meta name="twitter:image" content="https://londonchoralservice.com/assets/og-christmas.png">
-  <meta name="twitter:image:alt" content="The London Choral Service: carol singers and Christmas choirs">
+  <meta name="twitter:title" content="Hire Christmas Carol Singers in London &amp; the UK | LCS">
+  <meta name="twitter:description" content="Hire Christmas carol singers in London and across the UK for office parties, receptions, hotel lobbies, and markets. Four singers from £1,150 for two hours.">
+  <meta name="twitter:image" content="https://londonchoralservice.com/assets/og/christmas.png">
+  <meta name="twitter:image:alt" content="The London Choral Service: Christmas Carol Singers. For office parties, receptions, lobbies and markets">
   <link rel="preconnect" href="https://img.youtube.com">
   <link rel="dns-prefetch" href="https://www.googletagmanager.com">
   <link rel="dns-prefetch" href="https://api.web3forms.com">
@@ -1520,6 +1520,20 @@
       }
     }
     
+    /* Modifier — secondary button: outlined, beside a primary .btn-link. */
+    .btn-link--secondary,
+    .btn-link--secondary:visited,
+    .btn-link--secondary:active {
+      background-color: transparent;
+      color: var(--color-accent);
+      box-shadow: inset 0 0 0 1px var(--color-accent);
+    }
+    
+    .btn-link--secondary:hover {
+      background-color: var(--color-accent);
+      color: var(--color-bg);
+    }
+    
     /* Modifier — button with leading inline icon (e.g. WhatsApp).
        Icon stays subordinate to the label: 0.85em with a tight gap so the
        button reads as text-first, with the glyph as a quiet accent. */
@@ -1674,8 +1688,10 @@
       grid-template-areas:
         "crumb crumb"
         "head  video"
+        "offer video"
         "body  video";
-      grid-template-rows: auto auto 1fr;
+      /* The offer row is empty (zero height) on pages without a .hero-offer. */
+      grid-template-rows: auto auto auto 1fr;
       column-gap: var(--space-3xl);
       align-items: start;
     }
@@ -1690,6 +1706,42 @@
     
     .hero-text {
       grid-area: body;
+    }
+    
+    /* Landing-page offer under the h1: the facts and the buttons a visitor needs
+       on the first screen. On phones it sits above the film. */
+    .hero-offer {
+      grid-area: offer;
+      margin-bottom: var(--space-xl);
+    }
+    
+    .hero-facts {
+      list-style: none;
+      padding: 0;
+      margin: 0 0 var(--space-lg);
+    }
+    
+    .hero-facts li {
+      position: relative;
+      padding-left: 1.6rem;
+      margin-bottom: var(--space-xs);
+      line-height: 1.45;
+    }
+    
+    .hero-facts li::before {
+      content: "\2713";
+      position: absolute;
+      left: 0;
+      color: var(--color-accent);
+      font-size: 0.9em;
+    }
+    
+    .hero-ctas {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: var(--space-sm) var(--space-md);
+      margin-bottom: var(--space-md);
     }
     
     .hero-video {
@@ -1846,6 +1898,7 @@
         grid-template-areas:
           "crumb"
           "head"
+          "offer"
           "video"
           "body";
         grid-template-rows: none;
@@ -2751,11 +2804,11 @@
     "@graph": [
       {
         "@type": "Service",
-        "name": "Christmas Carol Service",
-        "serviceType": "Christmas Carol Service",
+        "name": "Christmas Carol Singers",
+        "serviceType": "Carol Singers",
         "inLanguage": "en-GB",
-        "dateModified": "2026-08-18",
-        "description": "Professional choirs for Christmas carol services and carol concerts in offices, hotels, livery halls, residential buildings, charity events, private parties, and churches across the United Kingdom. Sung a cappella, or with an organist or pianist.",
+        "dateModified": "2026-10-19",
+        "description": "Professional carol singers for office parties, drinks receptions, hotel and residential lobbies, Christmas markets, light switch-ons, and outdoor events in London and across the United Kingdom. Four to twelve voices, sung unaccompanied, for up to two hours.",
         "url": "https://londonchoralservice.com/christmas.html",
         "provider": {
           "@type": "LocalBusiness",
@@ -2767,22 +2820,12 @@
         },
         "hasOfferCatalog": {
           "@type": "OfferCatalog",
-          "name": "Christmas Ensembles & Accompaniment",
+          "name": "Carol Singers & Accompaniment",
           "itemListElement": [
             {
               "@type": "OfferCatalog",
-              "name": "Choirs & Singers",
+              "name": "Carol Singers",
               "itemListElement": [
-                {
-                  "@type": "Offer",
-                  "price": "250",
-                  "priceCurrency": "GBP",
-                  "itemOffered": {
-                    "@type": "Service",
-                    "name": "Soloist",
-                    "description": "One trained singer for a sung grace or a single set piece at a dinner. Carol singing itself starts at four voices, which is the smallest group that holds four-part harmony unaccompanied."
-                  }
-                },
                 {
                   "@type": "Offer",
                   "price": "1150",
@@ -2790,7 +2833,7 @@
                   "itemOffered": {
                     "@type": "Service",
                     "name": "Small Choir (4 singers)",
-                    "description": "Four-part harmony on carols and hymns, enough to lead congregational singing in a church seating 50 to 200."
+                    "description": "Four carol singers in four-part harmony, unaccompanied, for an office reception, a lobby, or a room of up to 150. Up to two hours including breaks."
                   }
                 },
                 {
@@ -2810,7 +2853,7 @@
                   "itemOffered": {
                     "@type": "Service",
                     "name": "Sextet (6 singers)",
-                    "description": "Six voices fill a livery hall or a mid-sized church without amplification; a busy hotel lobby with a bar working wants eight."
+                    "description": "Six voices fill a mid-sized hall or a hotel foyer without amplification."
                   }
                 },
                 {
@@ -2820,7 +2863,7 @@
                   "itemOffered": {
                     "@type": "Service",
                     "name": "Full Choir (8 singers)",
-                    "description": "Eight singers for large churches and full carol services, splitting into eight parts for the bigger anthems."
+                    "description": "Eight singers hold their own over a busy bar, a crowd talking across them, or a large hall."
                   }
                 },
                 {
@@ -2830,7 +2873,7 @@
                   "itemOffered": {
                     "@type": "Service",
                     "name": "Chorus (12 singers)",
-                    "description": "Twelve singers for cathedrals, ticketed charity carol concerts, and congregations of several hundred."
+                    "description": "Twelve singers for several hundred guests, a switch-on crowd, or a ticketed concert."
                   }
                 }
               ]
@@ -2845,18 +2888,8 @@
                   "priceCurrency": "GBP",
                   "itemOffered": {
                     "@type": "Service",
-                    "name": "Organist",
-                    "description": "Carol and hymn accompaniment on the organ of the church you have booked, plus voluntaries before and after the service."
-                  }
-                },
-                {
-                  "@type": "Offer",
-                  "price": "250",
-                  "priceCurrency": "GBP",
-                  "itemOffered": {
-                    "@type": "Service",
                     "name": "Pianist",
-                    "description": "Piano accompaniment to support singing, or background piano between the choir sets at a reception or party."
+                    "description": "Background piano between the sets at a reception or party, where the venue has a piano."
                   }
                 }
               ]
@@ -2892,42 +2925,50 @@
         "mainEntity": [
           {
             "@type": "Question",
-            "name": "How late can we book a choir for a carol service in December?",
+            "name": "Can the carol singers move around the room?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Most years our December dates start to fill by the middle of September. Last-minute Christmas bookings are welcome, so it is always worth asking. Send us the date and we will confirm availability within one working day."
+              "text": "Yes. They can roam through the crowd, stopping wherever a group has gathered, or stay in one spot for sets of three or four carols. Roaming suits a drinks reception where guests arrive across an hour; fixed sets suit a seated dinner or a switch-on with a countdown. A standard booking runs up to two hours including breaks, usually three or four sets of about twenty-five minutes."
             }
           },
           {
             "@type": "Question",
-            "name": "What music does the choir sing at a Christmas carol service?",
+            "name": "Can carol singers perform outdoors in the cold?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "All the traditional carols, from Once in Royal David&rsquo;s City to O Holy Night, and a cappella arrangements of popular Christmas songs for receptions and parties. Luca builds the programme around your running order and marks which carols the room sings and which the choir takes alone."
+              "text": "Yes. Markets, courtyards, and light switch-ons are ordinary December work. We ask for cover from rain and somewhere warm to wait between sets. In a hard frost we sing shorter sets more often."
             }
           },
           {
             "@type": "Question",
-            "name": "Can the choir roam around the venue or sing outdoors?",
+            "name": "What do carol singers wear?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Both work. The singers can move through a lobby, a drinks reception, or a switch-on crowd, or stay in one position for set pieces. Dress is your call: concert dress, all black, casual, or Christmas jumpers, and we have Santa hats if you want them."
+              "text": "Whatever suits your event. Concert dress for a formal evening, all black for a lobby set that should not draw the eye, ordinary clothes for a market or a family party, or Christmas jumpers if you want the singers to look festive. We have Santa hats if you want them."
             }
           },
           {
             "@type": "Question",
-            "name": "What happens if the venue has no piano or organ?",
+            "name": "How many carol singers should we book for our venue?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Nothing changes. The choir sings a cappella and needs no instrument and no amplification. If you would rather have keyboard accompaniment, we can bring a keyboard and speaker for an extra charge, quoted upfront in your written quote so there is no surprise on the invoice."
+              "text": "Size the group to the space and the noise. Four singers suit a lobby, an office reception, or a room of up to 150. Six fill a mid-sized hall or a hotel foyer. Eight hold their own over a busy bar or a crowd talking across them, and twelve are for several hundred guests."
             }
           },
           {
             "@type": "Question",
-            "name": "How much does a Christmas carol service cost?",
+            "name": "What does the venue need to provide for carol singers?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "We charge no Christmas uplift: the standard prices apply to every December date except Christmas Eve and Christmas Day, which carry a premium of around 25%. A Small Choir of four is £1,150, a sextet £1,600, a full choir of eight £2,000, and a chorus of twelve £3,000, inclusive of all taxes, fees, and travel within Greater London. A standard booking runs up to two hours including breaks, or the length of a church service; longer bookings carry a premium, quoted upfront. Full pricing is on our pricing page."
+              "text": "Somewhere to stand. A high ceiling and a hard floor help, so a staircase, an atrium, or a gallery works well. The singers sing unaccompanied, so there is nothing to plug in. If you want a pianist between the sets, the venue needs a piano; if it has none, we can bring a keyboard and speaker for an extra charge, quoted upfront."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "How far ahead should we book carol singers for December?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Most years our December dates start to fill by the middle of September. Late bookings are welcome, and a date booked in December costs the same as one booked in June. Send us the date and the venue, however close, and we will confirm availability within one working day."
             }
           },
           {
@@ -2935,23 +2976,15 @@
             "name": "Are you available on Christmas Eve and Christmas Day?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Yes, we sing on both, including carols by candlelight on the 24th. Those two dates carry a premium, typically around 25 per cent, confirmed in the written quote before you commit to anything. They are the first dates to go each year, so ask early."
+              "text": "Yes, we sing on both. Those two dates carry a premium of around 25%, confirmed in the written quote before you commit. They are the first dates to go each year, so ask early."
             }
           },
           {
             "@type": "Question",
-            "name": "Can you sing a carol service in a church we have booked?",
+            "name": "How do we book and pay for carol singers?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Yes. You arrange the church and the date with the incumbent, and we bring the choir and, if you want the carols accompanied, an organist who knows the instrument in that building. We deal with the clergy and vergers direct on rehearsal access, seating, and the running order."
-            }
-          },
-          {
-            "@type": "Question",
-            "name": "Who will I be booking with?",
-            "acceptedAnswer": {
-              "@type": "Answer",
-              "text": "The London Choral Service is the trading name of Alma Consort Ltd, and that is the company name you will see on your booking confirmation and invoice."
+              "text": "Half the fee secures the date and is non-refundable; the rest is due before we sing. You can pay in one go or in two equal instalments, unless the event is ten days or fewer away, when we ask for a single payment. We can invoice a company against its purchase order on standard 30-day terms. The London Choral Service is the trading name of Alma Consort Ltd, the name on your booking confirmation and invoice."
             }
           }
         ]
@@ -2963,13 +2996,13 @@
       },
       {
         "@type": "VideoObject",
-        "name": "Once in Royal David’s City — Full Choir",
+        "name": "It’s the Most Wonderful Time of the Year — Full Choir",
         "description": "Live performance by The London Choral Service.",
-        "thumbnailUrl": "https://img.youtube.com/vi/SbvqWglsbMo/maxresdefault.jpg",
+        "thumbnailUrl": "https://img.youtube.com/vi/csFWUu-r85Y/maxresdefault.jpg",
         "uploadDate": "2026-10-19",
-        "duration": "PT1M53S",
-        "contentUrl": "https://www.youtube.com/watch?v=SbvqWglsbMo",
-        "embedUrl": "https://www.youtube-nocookie.com/embed/SbvqWglsbMo",
+        "duration": "PT1M50S",
+        "contentUrl": "https://www.youtube.com/watch?v=csFWUu-r85Y",
+        "embedUrl": "https://www.youtube-nocookie.com/embed/csFWUu-r85Y",
         "publisher": {
           "@id": "https://londonchoralservice.com/#organization"
         }
@@ -2999,45 +3032,6 @@
         "publisher": {
           "@id": "https://londonchoralservice.com/#organization"
         }
-      },
-      {
-        "@type": "VideoObject",
-        "name": "It’s the Most Wonderful Time of the Year — Full Choir",
-        "description": "Live performance by The London Choral Service.",
-        "thumbnailUrl": "https://img.youtube.com/vi/csFWUu-r85Y/maxresdefault.jpg",
-        "uploadDate": "2026-10-19",
-        "duration": "PT1M50S",
-        "contentUrl": "https://www.youtube.com/watch?v=csFWUu-r85Y",
-        "embedUrl": "https://www.youtube-nocookie.com/embed/csFWUu-r85Y",
-        "publisher": {
-          "@id": "https://londonchoralservice.com/#organization"
-        }
-      },
-      {
-        "@type": "VideoObject",
-        "name": "Carol of the Bells — Full Choir",
-        "description": "Live performance by The London Choral Service.",
-        "thumbnailUrl": "https://img.youtube.com/vi/dGYqQf6BDAk/maxresdefault.jpg",
-        "uploadDate": "2026-09-29",
-        "duration": "PT1M21S",
-        "contentUrl": "https://www.youtube.com/watch?v=dGYqQf6BDAk",
-        "embedUrl": "https://www.youtube-nocookie.com/embed/dGYqQf6BDAk",
-        "publisher": {
-          "@id": "https://londonchoralservice.com/#organization"
-        }
-      },
-      {
-        "@type": "VideoObject",
-        "name": "Blue Christmas — Small Choir",
-        "description": "Live performance by The London Choral Service.",
-        "thumbnailUrl": "https://img.youtube.com/vi/mKMjUvCCW3E/maxresdefault.jpg",
-        "uploadDate": "2026-08-14",
-        "duration": "PT1M40S",
-        "contentUrl": "https://www.youtube.com/watch?v=mKMjUvCCW3E",
-        "embedUrl": "https://www.youtube-nocookie.com/embed/mKMjUvCCW3E",
-        "publisher": {
-          "@id": "https://londonchoralservice.com/#organization"
-        }
       }
     ]
   }
@@ -3062,8 +3056,8 @@
             <li><a href="/weddings.html">Weddings</a></li>
             <li><a href="/funerals.html">Funerals</a></li>
             <li><a href="/corporate.html">Corporate</a></li>
-            <li><a href="/christmas.html">Christmas</a></li>
-            <li><a href="/carol-singers.html">Carol Singers</a></li>
+            <li><a href="/christmas.html">Christmas carol singers</a></li>
+            <li><a href="/christmas-carol-services.html">Church carol services</a></li>
             <li><a href="/private-events.html">Private Events</a></li>
             <li><a href="/destinations/">Weddings Abroad</a></li>
             <li class="dropdown-separator" aria-hidden="true"></li>
@@ -3114,150 +3108,75 @@
             <li>Christmas</li>
           </ol>
         </nav>
-        <h1>Christmas carol services<br><span class="h1-sub">Professional choirs for companies, venues, and churches</span></h1>
+        <h1>Hire carol singers in London<br><span class="h1-sub">For office parties, receptions, lobbies, and markets</span></h1>
+        <div class="hero-offer">
+          <ul class="hero-facts">
+            <li>Four carol singers from <strong>&pound;1,150</strong> for two hours</li>
+            <li>The same price in December, London travel included</li>
+            <li>Four to twelve voices, roaming or in sets</li>
+            <li>A written quote within one working day</li>
+          </ul>
+          <p class="hero-ctas">
+            <a href="#enquiry" class="btn-link">Check your date</a>
+            <a href="https://wa.me/447356042468" target="_blank" rel="noopener" class="btn-link btn-link--secondary btn-link--icon" data-whatsapp><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" aria-hidden="true" focusable="false"><path fill="currentColor" d="M16 .395a15.6 15.6 0 0 0-13.534 23.36L0 32l8.43-2.42A15.6 15.6 0 0 0 31.6 16.005 15.6 15.6 0 0 0 16 .395Zm0 28.41a12.78 12.78 0 0 1-6.523-1.79l-.467-.28-4.846 1.39 1.42-4.738-.305-.486A12.78 12.78 0 0 1 16 3.214a12.81 12.81 0 0 1 12.81 12.81A12.81 12.81 0 0 1 16 28.805Zm7.025-9.575c-.385-.193-2.275-1.122-2.628-1.25-.353-.13-.609-.193-.866.193s-.994 1.25-1.218 1.508c-.225.257-.45.29-.834.097-.385-.193-1.626-.6-3.097-1.911-1.144-1.02-1.916-2.28-2.14-2.665-.225-.385-.024-.594.169-.787.174-.173.385-.45.578-.674.193-.225.257-.385.385-.642.13-.257.064-.482-.032-.674-.097-.193-.866-2.087-1.187-2.857-.312-.75-.628-.65-.866-.66l-.738-.013a1.42 1.42 0 0 0-1.027.482c-.353.385-1.347 1.315-1.347 3.207s1.379 3.72 1.572 3.977c.193.257 2.715 4.146 6.578 5.815.92.397 1.637.633 2.196.81.923.293 1.762.252 2.426.153.74-.11 2.275-.93 2.595-1.829.32-.898.32-1.668.225-1.829-.097-.16-.353-.257-.738-.45Z"/></svg>WhatsApp us</a>
+          </p>
+          <p class="text-sm text-mid">Planning a carol service in a church? See <a href="christmas-carol-services.html">church carol services</a>.</p>
+        </div>
         <div class="hero-video">
           <div class="video-embed">
-            <button class="video-thumb" aria-label="Play Once in Royal David&rsquo;s City" data-video="SbvqWglsbMo">
-              <img src="https://img.youtube.com/vi/SbvqWglsbMo/maxresdefault.jpg" alt="Once in Royal David&rsquo;s City — The London Choral Service" fetchpriority="high" width="1280" height="720">
+            <button class="video-thumb" aria-label="Play It&rsquo;s the Most Wonderful Time of the Year" data-video="csFWUu-r85Y">
+              <img src="https://img.youtube.com/vi/csFWUu-r85Y/maxresdefault.jpg" alt="It&rsquo;s the Most Wonderful Time of the Year &mdash; The London Choral Service" fetchpriority="high" width="1280" height="720">
               <svg class="play-btn" viewBox="0 0 56 56" aria-hidden="true"><circle cx="28" cy="28" r="27"/><path d="M23 19v18l15-9z"/></svg>
             </button>
           </div>
-          <p class="video-caption">Once in Royal David&rsquo;s City, sung by our full choir</p>
+          <p class="video-caption">It&rsquo;s the Most Wonderful Time of the Year, sung by our full choir</p>
         </div>
         <div class="hero-text">
           <p class="guide-meta">By Luca Wetherall, Artistic Director &amp; Tutor in Music, University of Oxford</p>
-          <p class="guide-meta">Last updated: July 2026</p>
-          <p class="lede">Offices and companies book us first: the annual carol service, the gala dinner, the client drinks reception. The same choirs sing in hotels, at residents&rsquo; Christmas evenings, in livery halls, at charity carol concerts, and at private parties. Carol bookings start with four voices in full harmony, and run up to twelve, unaccompanied or with an organist.</p>
-          <p class="text-sm text-mid">This page covers structured carol services and concerts. If you want singers moving through an office party or a hotel lobby instead, you can <a href="carol-singers.html">hire Christmas carol singers in London</a> or anywhere in the UK.</p>
-          <p class="text-sm text-mid">Trusted by law firms, banks, charities, and City livery companies. Musicians from the Royal Academy, Royal College, and Britain&rsquo;s leading conservatoires.</p>
-          <p><a href="#enquiry" class="btn-link">Tell us about your event</a></p>
+          <p class="lede">The singers arrive in the dress you asked for, sing carols where your guests are standing, and leave you to run the evening. They sing unaccompanied and need only somewhere to stand: a corner of the lobby, the foot of a staircase, or a spot by the bar.</p>
         </div>
       </div>
     </section>
 
-        <section class="section">
-          <div class="prose">
-            <h2>Included with every booking</h2>
-            <p class="lede">One flat price, and a team chosen for your occasion.</p>
-            <ul class="included-list">
-              <li><span class="tick" aria-hidden="true">&#10003;</span><span>A one-to-one music consultation with our Artistic Director, Luca Wetherall (Tutor in Music, University of Oxford), who plans your repertoire with you.</span></li>
-              <li><span class="tick" aria-hidden="true">&#10003;</span><span>A handpicked ensemble, matched to your occasion. We choose every singer for you, never send whoever is free from a rota.</span></li>
-              <li><span class="tick" aria-hidden="true">&#10003;</span><span>All rehearsals, preparation, and sheet music.</span></li>
-              <li><span class="tick" aria-hidden="true">&#10003;</span><span>We coordinate with your venue or office.</span></li>
-              <li><span class="tick" aria-hidden="true">&#10003;</span><span>A written quote, confirmed before you commit. No hidden fees.</span></li>
-            </ul>
-            <p class="included-price"><strong>From &pound;1,150 for a small choir of four</strong>, all in. Travel within Greater London included.</p>
-          </div>
-        </section>
-
-    <!-- Section 2: How It Works -->
+    <!-- Section 2: Proof -->
     <section class="section">
       <div class="prose">
-        <h2>How it works</h2>
-        <div class="steps">
-          <div class="step">
-            <span class="step-num">1</span>
-            <h3>Tell us about your event</h3>
-            <p>Share the date, venue, format, and any preferences. We send a proposal within one working day.</p>
-          </div>
-          <div class="step">
-            <span class="step-num">2</span>
-            <h3>We plan the programme</h3>
-            <p>Luca finalises the repertoire and coordinates arrival, positioning, and technical requirements with your venue.</p>
-          </div>
-          <div class="step">
-            <span class="step-num">3</span>
-            <h3>We perform</h3>
-            <p>Musicians arrive in concert dress, set up without fuss, and perform to the brief.</p>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Section 3: What We Provide -->
-    <section class="section">
-      <div class="prose">
-        <h2>What we provide</h2>
-        <p>A carol service, a gala dinner, a drinks reception, and an office party each want a different shape. A carol service usually calls for a full choir of eight with an organist. A drinks reception works better with four singers alternating traditional carols and a cappella arrangements of popular Christmas songs. A formal dinner may need one voice for a sung grace and a single set piece.</p>
-        <p>Where the singing happens changes the answer as much as the occasion does. In a hotel lobby or an atrium, three or four short sets across an evening suit the flow of guests better than one long concert. At a residents&rsquo; Christmas evening, a song sheet and four carols the whole building can join in on does more than a recital. A livery hall wants a sung grace and a short formal set before the loving cup; a ticketed charity concert wants a printed order of service and readers between the carols.</p>
-        <p>Luca Wetherall, our Artistic Director, discusses your event with you or your event coordinator, then sends a proposal with ensemble options and a programme outline. We handle all coordination with your venue or event manager. Our musicians arrive in concert dress, set up without fuss, and perform to the brief. If you would rather they wore all black, ordinary clothes, or Christmas jumpers, say so and they will.</p>
-        <p>Beyond the music, we can help organise the wider event. We assist with finding and booking a venue, printing programmes, and arranging refreshments &mdash; so you can hand off as much or as little of the planning as you like.</p>
-        <p>Our clients include law firms, banks, charities, schools, and City livery companies across London and the UK.</p>
-        <p>For company Christmas parties, awards dinners, and year-round corporate events, see also our <a href="corporate.html">corporate music page</a>.</p>
-
-        <figure class="pull-quote">
-          <blockquote><p>&ldquo;We hire the London Choral Service for our annual carol service every December. The choir knows the building, the format, and exactly what we need. Our partners and clients look forward to it each year.&rdquo;</p></blockquote>
-          <figcaption>&mdash;&ensp;Helen, Events Manager, City of London</figcaption>
-        </figure>
-
         <figure class="pull-quote">
           <blockquote><p>&ldquo;The choir were the highlight of our Christmas drinks. They moved through the crowd singing carols and it completely transformed the atmosphere. Several clients have already asked if we&rsquo;re doing it again next year.&rdquo;</p></blockquote>
           <figcaption>&mdash;&ensp;James, London Law Firm Partner</figcaption>
         </figure>
+        <p class="text-sm text-mid">Our clients include law firms, banks, hotels, and charities. The singers trained at the Royal Academy of Music, the Royal College of Music, and Britain&rsquo;s other conservatoires.</p>
       </div>
     </section>
 
-    <!-- Section 3b: Carol services in churches -->
+    <!-- Section 3: What you get -->
     <section class="section">
       <div class="prose">
-        <h2>Carol services in churches</h2>
-        <p>Companies, charities, and livery companies often book a church for an evening in December and then need musicians to fill it. You settle the date with the incumbent; we supply the choir and, where the building has a decent instrument, an organist who has played it before. If the church has no organist of its own, or theirs is already committed that week, ours covers the hymns, the carols, and the voluntaries at either end.</p>
-        <p>The first thing we agree is which carols the congregation sings and which the choir takes alone. Four singers will lead a room of 150 through <i>Hark! The Herald Angels Sing</i>; eight will carry a church of 400. In between those, the choir sings the pieces a congregation cannot: the Willcocks descants, Poston&rsquo;s <i>Jesus Christ the Apple Tree</i>, an unaccompanied <i>Gaudete</i>. Six of each is the usual balance for an hour.</p>
-        <p>The running order is yours to choose. A liturgical service follows the Nine Lessons and Carols pattern from King&rsquo;s College: a bidding prayer, nine readings from scripture, a carol after each, a blessing at the end. A secular running order drops the prayers and puts a chief executive, a patron, or a beneficiary in the reading slots instead, usually with the appeal placed before the last carol. Either runs to about an hour.</p>
-        <p>We deal with the building direct. Vergers control access, heating, lighting, and how long you get in the church before the doors open; clergy will want to see the order of service if any liturgy is involved. We contact them once the booking is confirmed and send you the arrival and rehearsal times rather than asking you to broker it.</p>
-        <p>Accompaniment is a separate decision from the size of the choir. The singers can perform a cappella throughout, which needs no instrument and no amplification and is the usual answer in offices and hotel lobbies. In a church we would normally send an organist, added to any choir for &pound;250. At a reception or a party, a pianist can support the singing, or we can send a choir with background piano between the sets, where the pianist covers the gaps and the singers come back in for each set. If the venue has no piano at all, we can bring a keyboard and speaker for an extra charge, quoted upfront in your written quote.</p>
+        <h2>What you get</h2>
+        <ul class="included-list">
+          <li><span class="tick" aria-hidden="true">&#10003;</span><span>Four to twelve singers, each one chosen for your event by our Artistic Director, Luca Wetherall.</span></li>
+          <li><span class="tick" aria-hidden="true">&#10003;</span><span>A set list agreed with you: the carols your guests know, with a cappella arrangements of the Christmas songs they expect at a party.</span></li>
+          <li><span class="tick" aria-hidden="true">&#10003;</span><span>Roaming carols as guests arrive, or sets of three or four from one spot.</span></li>
+          <li><span class="tick" aria-hidden="true">&#10003;</span><span>Concert dress, all black, ordinary clothes, or Christmas jumpers. You choose, and we bring Santa hats if you want them.</span></li>
+          <li><span class="tick" aria-hidden="true">&#10003;</span><span>Travel within Greater London, and one point of contact from your first email to the event.</span></li>
+          <li><span class="tick" aria-hidden="true">&#10003;</span><span>A written quote before you commit, with no charges added later.</span></li>
+        </ul>
+        <p class="included-price"><strong>From &pound;1,150 for four singers</strong>, for up to two hours of carols, all in.</p>
       </div>
     </section>
 
-    <!-- Section 3c: Who we work with -->
-    <section class="section">
+    <!-- Section 4: Hear them -->
+    <section class="section" id="hear">
       <div class="prose">
-        <h2>Who we work with</h2>
-        <p>Several of these audiences have a page of their own, covering what each one tends to ask about first.</p>
-        <div class="guide-links">
-          <a href="for-event-managers.html">For event managers</a>
-          <a href="for-hotels.html">For hotels and venues</a>
-          <a href="for-property-managers.html">For property managers</a>
-          <a href="for-livery-companies.html">For livery companies</a>
-          <a href="for-charities.html">For charities</a>
-        </div>
-      </div>
-    </section>
-
-    <!-- Section 4: Listen -->
-    <section class="section">
-      <div class="prose">
-        <h2>Hear our musicians</h2>
-        <p>Six recordings from our Christmas sets, sung by the singers you would book.</p>
-
-        <article class="track">
-          <h3 class="track-title">Once in Royal David&rsquo;s City <span class="track-meta">&mdash; Full Choir</span></h3>
-          <p class="track-description">Mrs Alexander&rsquo;s words to Gauntlett&rsquo;s tune, sung by eight voices. It opens the Nine Lessons and Carols at King&rsquo;s College, Cambridge, and we often sing it as the processional at a carol service.</p>
-          <div class="video-embed">
-            <button class="video-thumb" aria-label="Play Once in Royal David&rsquo;s City" data-video="SbvqWglsbMo">
-              <img src="https://img.youtube.com/vi/SbvqWglsbMo/maxresdefault.jpg" alt="Once in Royal David&rsquo;s City — The London Choral Service" loading="lazy" width="1280" height="720">
-              <svg class="play-btn" viewBox="0 0 56 56" aria-hidden="true"><circle cx="28" cy="28" r="27"/><path d="M23 19v18l15-9z"/></svg>
-            </button>
-          </div>
-        </article>
+        <h2>Hear the singers</h2>
+        <p>Two more films from our Christmas sets, sung by the singers you would book.</p>
 
         <article class="track">
           <h3 class="track-title">Ding Dong! Merrily on High <span class="track-meta">&mdash; Full Choir</span></h3>
           <p class="track-description">A French dance tune from 1589 with words George Ratcliffe Woodward added in 1924, sung by eight voices. We sing it at markets and in lobbies, where guests can hear the long Gloria runs over the noise.</p>
           <div class="video-embed">
             <button class="video-thumb" aria-label="Play Ding Dong! Merrily on High" data-video="zDlSFb74p4E">
-              <img src="https://img.youtube.com/vi/zDlSFb74p4E/maxresdefault.jpg" alt="Ding Dong! Merrily on High — The London Choral Service" loading="lazy" width="1280" height="720">
-              <svg class="play-btn" viewBox="0 0 56 56" aria-hidden="true"><circle cx="28" cy="28" r="27"/><path d="M23 19v18l15-9z"/></svg>
-            </button>
-          </div>
-        </article>
-
-        <article class="track">
-          <h3 class="track-title">It&rsquo;s the Most Wonderful Time of the Year <span class="track-meta">&mdash; Full Choir</span></h3>
-          <p class="track-description">The Andy Williams song from 1963, sung by eight voices. We sing it at office parties and drinks receptions alongside the traditional carols.</p>
-          <div class="video-embed">
-            <button class="video-thumb" aria-label="Play It&rsquo;s the Most Wonderful Time of the Year" data-video="csFWUu-r85Y">
-              <img src="https://img.youtube.com/vi/csFWUu-r85Y/maxresdefault.jpg" alt="It&rsquo;s the Most Wonderful Time of the Year — The London Choral Service" loading="lazy" width="1280" height="720">
+              <img src="https://img.youtube.com/vi/zDlSFb74p4E/maxresdefault.jpg" alt="Ding Dong! Merrily on High &mdash; The London Choral Service" loading="lazy" width="1280" height="720">
               <svg class="play-btn" viewBox="0 0 56 56" aria-hidden="true"><circle cx="28" cy="28" r="27"/><path d="M23 19v18l15-9z"/></svg>
             </button>
           </div>
@@ -3265,32 +3184,10 @@
 
         <article class="track">
           <h3 class="track-title">Winter Wonderland <span class="track-meta">&mdash; Full Choir</span></h3>
-          <p class="track-description">The 1934 song by Felix Bernard and Richard Smith, sung by eight voices in close harmony. Its words are about snow rather than Christmas, so it suits a reception that wants seasonal music without a run of carols.</p>
+          <p class="track-description">The 1934 song by Felix Bernard and Richard Smith, sung by eight voices in close harmony. The words are about snow, so we programme it between the carols at receptions.</p>
           <div class="video-embed">
             <button class="video-thumb" aria-label="Play Winter Wonderland" data-video="UaVhyyidlTs">
-              <img src="https://img.youtube.com/vi/UaVhyyidlTs/maxresdefault.jpg" alt="Winter Wonderland — The London Choral Service" loading="lazy" width="1280" height="720">
-              <svg class="play-btn" viewBox="0 0 56 56" aria-hidden="true"><circle cx="28" cy="28" r="27"/><path d="M23 19v18l15-9z"/></svg>
-            </button>
-          </div>
-        </article>
-
-        <article class="track">
-          <h3 class="track-title">Carol of the Bells <span class="track-meta">&mdash; Full Choir</span></h3>
-          <p class="track-description">Leontovych&rsquo;s Ukrainian carol, sung by eight voices. The four-note bell figure runs under the tune almost the whole way through. We sing it at receptions and Christmas parties more than in church.</p>
-          <div class="video-embed">
-            <button class="video-thumb" aria-label="Play Carol of the Bells" data-video="dGYqQf6BDAk">
-              <img src="https://img.youtube.com/vi/dGYqQf6BDAk/maxresdefault.jpg" alt="Carol of the Bells — The London Choral Service" loading="lazy" width="1280" height="720">
-              <svg class="play-btn" viewBox="0 0 56 56" aria-hidden="true"><circle cx="28" cy="28" r="27"/><path d="M23 19v18l15-9z"/></svg>
-            </button>
-          </div>
-        </article>
-
-        <article class="track">
-          <h3 class="track-title">Blue Christmas <span class="track-meta">&mdash; Small Choir</span></h3>
-          <p class="track-description">The Elvis number, sung in harmony. It suits a drinks reception or an office party, programmed between the traditional carols.</p>
-          <div class="video-embed">
-            <button class="video-thumb" aria-label="Play Blue Christmas" data-video="mKMjUvCCW3E">
-              <img src="https://img.youtube.com/vi/mKMjUvCCW3E/maxresdefault.jpg" alt="Blue Christmas — The London Choral Service" loading="lazy" width="1280" height="720">
+              <img src="https://img.youtube.com/vi/UaVhyyidlTs/maxresdefault.jpg" alt="Winter Wonderland &mdash; The London Choral Service" loading="lazy" width="1280" height="720">
               <svg class="play-btn" viewBox="0 0 56 56" aria-hidden="true"><circle cx="28" cy="28" r="27"/><path d="M23 19v18l15-9z"/></svg>
             </button>
           </div>
@@ -3300,120 +3197,138 @@
       </div>
     </section>
 
-    <!-- Section 5: Pricing Summary -->
+    <!-- Section 5: Where we sing -->
+    <section class="section">
+      <div class="prose">
+        <h2>Where we sing</h2>
+        <ul class="guide-grid">
+          <li class="guide-card">
+            <h3><a href="for-event-managers.html">Office parties and staff drinks</a></h3>
+            <p>Four singers work the room as people arrive and the drinks go round, then gather for a last set the whole office can join.</p>
+            <span class="guide-card__cta" aria-hidden="true">For event managers &rarr;</span>
+          </li>
+          <li class="guide-card">
+            <h3>Drinks receptions and client evenings</h3>
+            <p>Roaming carols for the first hour while guests arrive, then a short set before the speeches.</p>
+          </li>
+          <li class="guide-card">
+            <h3><a href="for-hotels.html">Hotel and venue lobbies</a></h3>
+            <p>We sing three or four short sets across an evening or a festive afternoon tea, timed to the flow of guests.</p>
+            <span class="guide-card__cta" aria-hidden="true">For hotels and venues &rarr;</span>
+          </li>
+          <li class="guide-card">
+            <h3><a href="for-property-managers.html">Residents&rsquo; evenings</a></h3>
+            <p>A song sheet and four carols the whole building can join in on, in the lobby or the courtyard of an apartment block.</p>
+            <span class="guide-card__cta" aria-hidden="true">For property managers &rarr;</span>
+          </li>
+          <li class="guide-card">
+            <h3>Markets, switch-ons, and outdoor events</h3>
+            <p>We sing the crowd up to the countdown and carry on while people stay. We ask for cover from rain and somewhere warm between sets.</p>
+          </li>
+          <li class="guide-card">
+            <h3><a href="for-charities.html">Charity events</a></h3>
+            <p>Carols at a fundraising reception or a supporters&rsquo; evening, with a singalong to finish if you want one.</p>
+            <span class="guide-card__cta" aria-hidden="true">For charities &rarr;</span>
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- Section 6: Mid-page call to action -->
+    <section class="section">
+      <div class="prose">
+        <p class="lede">Send us the date and the venue, and we will reply with a written quote within one working day.</p>
+        <p><a href="#enquiry" class="btn-link">Check your date</a></p>
+      </div>
+    </section>
+
+    <!-- Section 7: Pricing -->
     <section class="section">
       <div class="prose">
         <h2>Pricing</h2>
-        <p>Flat prices, no hidden fees. Luca discusses your event with you, builds the programme, and coordinates with your venue.</p>
+        <p>One figure, quoted in writing, for up to two hours of carols with breaks. It covers the singers, the set list, and the arrangements with your venue.</p>
         <div class="price-cards">
           <div class="price-card">
             <div class="price">&pound;1,150</div>
             <div class="price-label">Small Choir (4)</div>
           </div>
           <div class="price-card">
+            <div class="price">&pound;1,400</div>
+            <div class="price-label">Quintet (5)</div>
+          </div>
+          <div class="price-card">
             <div class="price">&pound;1,600</div>
-            <div class="price-label">Sextet</div>
+            <div class="price-label">Sextet (6)</div>
           </div>
           <div class="price-card">
             <div class="price">&pound;2,000</div>
-            <div class="price-label">Full Choir</div>
+            <div class="price-label">Full Choir (8)</div>
           </div>
           <div class="price-card">
             <div class="price">&pound;3,000</div>
             <div class="price-label">Chorus (12)</div>
           </div>
         </div>
-        <p>Carol bookings start with a Small Choir of four at &pound;1,150; a soloist is available for a sung grace or a single set piece at a dinner. Prices include all taxes, fees, and travel within Greater London, and we do not charge more at Christmas than at any other time of year. Christmas Eve and Christmas Day carry a premium, which we confirm in the written quote before you commit.</p>
-        <p><a href="christmas-pricing.html">Christmas prices for a two-hour booking &rarr;</a> &ensp;|&ensp; <a href="pricing.html">Full pricing with all ensemble options</a></p>
+        <p>Prices include all taxes, fees, and travel within Greater London, and a December date costs the same as one in June. Christmas Eve and Christmas Day carry a premium of around 25%, which we confirm in the written quote before you commit.</p>
+        <p>Where the venue has a piano, a pianist can play between the sets for &pound;250, to cover the gaps while the singers rest. If there is no piano, we can bring a keyboard and speaker for an extra charge, quoted upfront.</p>
+        <p><a href="christmas-pricing.html">Christmas prices with worked examples &rarr;</a></p>
       </div>
     </section>
 
-    <!-- Section 6: Music Guides -->
+    <!-- Section 8: How it works -->
     <section class="section">
       <div class="prose">
-        <h2>Christmas music guides</h2>
-        <p>Longer reading on the parts of a carol event that take the most working out.</p>
-
-        <h3>Planning a carol service</h3>
-        <div class="guide-links">
-          <a href="music-guides/corporate-carol-service.html">Planning a corporate carol service</a>
-          <a href="music-guides/office-carol-service-planning.html">Office carol service planning</a>
-          <a href="music-guides/nine-lessons-and-carols.html">Nine Lessons and Carols: order of service &amp; planning</a>
-          <a href="music-guides/charity-carol-concert.html">Planning a charity carol concert</a>
-          <a href="music-guides/carols-by-candlelight.html">Carols by candlelight</a>
-          <a href="music-guides/church-carol-service-choir-hire.html">Hiring a choir for a church carol service</a>
-        </div>
-
-        <h3>Choosing the music</h3>
-        <div class="guide-links">
-          <a href="music-guides/christmas-carols-guide.html">Christmas carols guide</a>
-          <a href="music-guides/best-carols-for-four-voices.html">The best carols for four voices</a>
-          <a href="music-guides/a-cappella-christmas-songs.html">A cappella Christmas songs</a>
-          <a href="music-guides/christmas-carol-lyrics-meanings.html">Carol lyrics and what they mean</a>
-          <a href="music-guides/advent-carols-vs-christmas-carols.html">Advent carols vs Christmas carols</a>
-        </div>
-
-        <h3>Hiring singers</h3>
-        <div class="guide-links">
-          <a href="music-guides/christmas-choir-hire.html">Hiring a Christmas choir</a>
-          <a href="music-guides/how-many-carol-singers.html">How many carol singers you need</a>
-          <a href="music-guides/best-christmas-carol-singers.html">Best Christmas carol singers</a>
-          <a href="music-guides/carol-singers-cost.html">How much carol singers cost</a>
-          <a href="music-guides/when-to-book-christmas-entertainment.html">When to book Christmas entertainment</a>
-          <a href="music-guides/booking-carol-singers-agency-vs-direct.html">Booking carol singers: agency vs direct</a>
-        </div>
-
-        <h3>By event and venue</h3>
-        <div class="guide-links">
-          <a href="music-guides/company-christmas-party-entertainment.html">Company Christmas party entertainment</a>
-          <a href="music-guides/christmas-drinks-reception-music.html">Music for a Christmas drinks reception</a>
-          <a href="music-guides/christmas-gala-dinner-music.html">Music for a gala or awards dinner</a>
-          <a href="music-guides/carol-singers-law-firms.html">Carol singers for law firms</a>
-          <a href="music-guides/hotel-christmas-entertainment.html">Christmas entertainment for hotels</a>
-          <a href="music-guides/residents-christmas-carol-event.html">Hosting a residents&rsquo; carol event</a>
-          <a href="music-guides/outdoor-carol-singing.html">Outdoor carol singing</a>
+        <h2>How it works</h2>
+        <div class="steps">
+          <div class="step">
+            <span class="step-num">1</span>
+            <h3>Send us the date and the venue</h3>
+            <p>Tell us when, where, about how many guests, and what you want the singers to do. We reply with ensemble options and a written quote within one working day.</p>
+          </div>
+          <div class="step">
+            <span class="step-num">2</span>
+            <h3>We build the sets</h3>
+            <p>Luca chooses the carols, sets the running order, and agrees positioning, timings, and access with your venue or building manager.</p>
+          </div>
+          <div class="step">
+            <span class="step-num">3</span>
+            <h3>The singers arrive and sing</h3>
+            <p>They turn up in the dress you asked for, need only somewhere to stand, and sing to the brief.</p>
+          </div>
         </div>
       </div>
     </section>
 
-    <!-- Section 6b: FAQ -->
+    <!-- Section 9: FAQ -->
     <section class="section">
       <div class="prose">
         <h2>Frequently asked questions</h2>
 
-        <h3>How late can we book a choir for a carol service in December?</h3>
-        <p>Most years our December dates start to fill by the middle of September. Last-minute Christmas bookings are welcome, so it is always worth asking. Send us the date and we will confirm availability within one working day.</p>
-
-        <h3>What music does the choir sing at a Christmas carol service?</h3>
-        <p>All the traditional carols, from Once in Royal David&rsquo;s City to O Holy Night, and a cappella arrangements of popular Christmas songs for receptions and parties. Luca builds the programme around your running order and marks which carols the room sings and which the choir takes alone.</p>
-
-        <h3>Can the choir roam around the venue or sing outdoors?</h3>
-        <p>Both work. The singers can move through a lobby, a drinks reception, or a switch-on crowd, or stay in one position for set pieces. Dress is your call: concert dress, all black, casual, or Christmas jumpers, and we have Santa hats if you want them.</p>
-
-        <h3>What happens if the venue has no piano or organ?</h3>
-        <p>Nothing changes. The choir sings a cappella and needs no instrument and no amplification. If you would rather have keyboard accompaniment, we can bring a keyboard and speaker for an extra charge, quoted upfront in your written quote so there is no surprise on the invoice.</p>
-
-        <h3>How much does a Christmas carol service cost?</h3>
-        <p>We charge no Christmas uplift: the standard prices apply to every December date except Christmas Eve and Christmas Day, which carry a premium of around 25%. A Small Choir of four is &pound;1,150, a sextet &pound;1,600, a full choir of eight &pound;2,000, and a chorus of twelve &pound;3,000, inclusive of all taxes, fees, and travel within Greater London. A standard booking runs up to two hours including breaks, or the length of a church service; longer bookings carry a premium, quoted upfront. Full pricing is on our <a href="pricing.html">pricing page</a>.</p>
-
+        <h3>Can the carol singers move around the room?</h3>
+        <p>Yes. They can roam through the crowd, stopping wherever a group has gathered, or stay in one spot for sets of three or four carols. Roaming suits a drinks reception where guests arrive across an hour; fixed sets suit a seated dinner or a switch-on with a countdown. A standard booking runs up to two hours including breaks, usually three or four sets of about twenty-five minutes.</p>
+        <h3>Can carol singers perform outdoors in the cold?</h3>
+        <p>Yes. Markets, courtyards, and light switch-ons are ordinary December work. We ask for cover from rain and somewhere warm to wait between sets. In a hard frost we sing shorter sets more often.</p>
+        <h3>What do carol singers wear?</h3>
+        <p>Whatever suits your event. Concert dress for a formal evening, all black for a lobby set that should not draw the eye, ordinary clothes for a market or a family party, or Christmas jumpers if you want the singers to look festive. We have Santa hats if you want them.</p>
+        <h3>How many carol singers should we book for our venue?</h3>
+        <p>Size the group to the space and the noise. Four singers suit a lobby, an office reception, or a room of up to 150. Six fill a mid-sized hall or a hotel foyer. Eight hold their own over a busy bar or a crowd talking across them, and twelve are for several hundred guests.</p>
+        <h3>What does the venue need to provide for carol singers?</h3>
+        <p>Somewhere to stand. A high ceiling and a hard floor help, so a staircase, an atrium, or a gallery works well. The singers sing unaccompanied, so there is nothing to plug in. If you want a pianist between the sets, the venue needs a piano; if it has none, we can bring a keyboard and speaker for an extra charge, quoted upfront.</p>
+        <h3>How far ahead should we book carol singers for December?</h3>
+        <p>Most years our December dates start to fill by the middle of September. Late bookings are welcome, and a date booked in December costs the same as one booked in June. Send us the date and the venue, however close, and we will confirm availability within one working day.</p>
         <h3>Are you available on Christmas Eve and Christmas Day?</h3>
-        <p>Yes, we sing on both, including carols by candlelight on the 24th. Those two dates carry a premium, typically around 25 per cent, confirmed in the written quote before you commit to anything. They are the first dates to go each year, so ask early.</p>
-
-        <h3>Can you sing a carol service in a church we have booked?</h3>
-        <p>Yes. You arrange the church and the date with the incumbent, and we bring the choir and, if you want the carols accompanied, an organist who knows the instrument in that building. We deal with the clergy and vergers direct on rehearsal access, seating, and the running order.</p>
-
-        <h3>Who will I be booking with?</h3>
-        <p>The London Choral Service is the trading name of Alma Consort Ltd, and that is the company name you will see on your booking confirmation and invoice.</p>
-      <p><a href="faq.html">More questions and answers on our FAQ page &rarr;</a></p>
+        <p>Yes, we sing on both. Those two dates carry a premium of around 25%, confirmed in the written quote before you commit. They are the first dates to go each year, so ask early.</p>
+        <h3>How do we book and pay for carol singers?</h3>
+        <p>Half the fee secures the date and is non-refundable; the rest is due before we sing. You can pay in one go or in two equal instalments, unless the event is ten days or fewer away, when we ask for a single payment. We can invoice a company against its purchase order on standard 30-day terms. The London Choral Service is the trading name of Alma Consort Ltd, the name on your booking confirmation and invoice.</p>
+        <p><a href="faq.html">More questions and answers on our FAQ page &rarr;</a></p>
       </div>
     </section>
 
-
-    <!-- Section 7: Contact Form -->
+    <!-- Section 10: Enquiry form -->
     <section class="section" id="enquiry">
       <div class="prose">
-        <h2>Tell us about your Christmas event</h2>
-        <p>Share a few details and we&rsquo;ll come back to you with a proposal. We respond to every enquiry personally.</p>
+        <h2>Check your date</h2>
+        <p>Tell us the date, the venue, and about how many guests. We reply with a written quote within one working day, usually the same day.</p>
 
         <div class="form-status form-status--success" data-visible="false" role="alert">
           <p>Thank you &mdash; we&rsquo;ll be in touch shortly.</p>
@@ -3425,7 +3340,9 @@
         <form class="contact-form" method="post" novalidate data-redirect="thank-you.html?from=christmas">
           <div>
             <input type="hidden" name="access_key" value="dc1af546-26ac-45b3-a85d-064a3a59886d">
-            <input type="hidden" name="subject" value="Christmas event enquiry — London Choral Service">
+            <input type="hidden" name="subject" value="Christmas carol singers enquiry — London Choral Service">
+            <input type="hidden" name="occasion" value="christmas">
+            <input type="hidden" name="page" value="christmas">
             <input type="checkbox" name="botcheck" class="sr-only" tabindex="-1" aria-hidden="true">
             <div class="form-field">
               <label for="name">Your name</label>
@@ -3442,16 +3359,16 @@
               <input type="tel" id="phone" name="phone" autocomplete="tel">
             </div>
             <div class="form-field">
-              <label for="occasion">Type of occasion</label>
-              <select id="occasion" name="occasion">
-                <option value="" disabled>Please select</option>
-                <option value="funeral">Funeral</option>
-                <option value="wedding">Wedding</option>
-                <option value="memorial">Memorial service</option>
-                <option value="celebration">Celebration of life</option>
-                <option value="christmas" selected>Christmas / carol service</option>
-                <option value="corporate">Corporate event</option>
-                <option value="other">Other</option>
+              <label for="event-type">Type of event</label>
+              <select id="event-type" name="event_type">
+                <option value="" selected>Please choose</option>
+                <option>Office or staff party</option>
+                <option>Drinks reception</option>
+                <option>Hotel or venue lobby</option>
+                <option>Residents&rsquo; event</option>
+                <option>Market or light switch-on</option>
+                <option>Outdoor event</option>
+                <option>Other</option>
               </select>
             </div>
             <div class="form-field">
@@ -3459,8 +3376,16 @@
               <input type="date" id="date" name="date">
             </div>
             <div class="form-field">
-              <label for="message">Your message</label>
-              <textarea id="message" name="message" rows="5"></textarea>
+              <label for="guests">Approximate number of guests <span class="optional">(optional)</span></label>
+              <input type="text" id="guests" name="guests" inputmode="numeric">
+            </div>
+            <div class="form-field">
+              <label for="postcode-or-venue">Venue or postcode <span class="optional">(optional)</span></label>
+              <input type="text" id="postcode-or-venue" name="postcode_or_venue">
+            </div>
+            <div class="form-field">
+              <label for="message">Anything else we should know</label>
+              <textarea id="message" name="message" rows="4"></textarea>
             </div>
             <div class="form-field">
               <label for="hear">How did you hear of us? <span class="optional">(optional)</span></label>
@@ -3469,8 +3394,6 @@
                 <option>Searching on Google</option>
                 <option>A Google ad</option>
                 <option>Recommended by someone</option>
-                <option>A funeral director</option>
-                <option>A wedding planner or venue</option>
                 <option>A directory or listings site</option>
                 <option>Other</option>
               </select>
@@ -3482,17 +3405,27 @@
             <p class="form-check-note"><a href="/privacy.html#ad-measurement">How we use this</a></p>
             <div class="h-captcha" data-captcha="true"></div>
             <p class="form-error" id="captcha-error" role="alert">Please tick the box above to confirm you&rsquo;re not a robot, then try again.</p>
-            <button type="submit" class="btn">Send enquiry</button>
+            <button type="submit" class="btn">Check availability</button>
           </div>
         </form>
 
-        <figure class="pull-quote">
-          <blockquote><p>&ldquo;Organising a carol service for 300 people felt daunting but Luca handled everything. The programme was perfect &mdash; traditional enough for the older partners, fresh enough that it didn&rsquo;t feel stale. Superb.&rdquo;</p></blockquote>
-          <figcaption>&mdash;&ensp;Laura, Head of Events, Canary Wharf</figcaption>
-        </figure>
-
-        <p>Text us on WhatsApp for the fastest reply, or call us on <a href="tel:+447356042468"><strong>07356 042468</strong></a></p>
+        <p>For the fastest reply, message us on <a href="https://wa.me/447356042468" target="_blank" rel="noopener" data-whatsapp>WhatsApp</a>, or call <a href="tel:+447356042468"><strong>07356 042468</strong></a>.</p>
         <p class="text-sm text-mid">We reply within one working day, usually the same day.</p>
+      </div>
+    </section>
+
+    <!-- Section 11: Further reading -->
+    <section class="section">
+      <div class="prose">
+        <h2>Further reading</h2>
+        <div class="guide-links">
+          <a href="music-guides/carol-singers-cost.html">How much carol singers cost</a>
+          <a href="music-guides/how-many-carol-singers.html">How many carol singers you need</a>
+          <a href="music-guides/company-christmas-party-entertainment.html">Company Christmas party entertainment</a>
+          <a href="music-guides/hotel-christmas-entertainment.html">Christmas entertainment for hotels</a>
+          <a href="music-guides/outdoor-carol-singing.html">Outdoor carol singing</a>
+          <a href="music-guides/when-to-book-christmas-entertainment.html">When to book Christmas entertainment</a>
+        </div>
       </div>
     </section>
 
@@ -3520,8 +3453,8 @@
             <li><a href="/weddings.html">Weddings</a></li>
             <li><a href="/funerals.html">Funerals</a></li>
             <li><a href="/corporate.html">Corporate events</a></li>
-            <li><a href="/christmas.html">Christmas carol services</a></li>
-            <li><a href="/carol-singers.html">Hire carol singers</a></li>
+            <li><a href="/christmas.html">Christmas carol singers</a></li>
+            <li><a href="/christmas-carol-services.html">Church carol services</a></li>
             <li><a href="/private-events.html">Private events</a></li>
             <li><a href="/destinations/">Weddings abroad</a></li>
             <li><a href="/pricing.html">Pricing</a></li>
