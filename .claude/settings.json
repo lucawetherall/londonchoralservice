@@ -66,6 +66,9 @@
       "mcp__caefd5da-81a5-4eb0-993a-dfeaa5b9d7c1__get_event",
       "mcp__caefd5da-81a5-4eb0-993a-dfeaa5b9d7c1__create_event"
     ],
+    "ask": [
+      "Bash(*--owner*)"
+    ],
     "deny": [
       "Bash(security find-generic-password *)",
       "Bash(security dump-keychain)",
@@ -78,11 +81,6 @@
       "Edit(~/lcs-private/events.jsonl)",
       "Write(~/lcs-private/events.jsonl.lock)",
       "Edit(~/lcs-private/events.jsonl.lock)",
-      "Bash(*events.py migrate*--apply*)",
-      "Bash(*events.py retract*)",
-      "Bash(*events.py notes-checked*)",
-      "Bash(*singer_invoices.py confirm*)",
-      "Bash(*singer_invoices.py settled*)",
       "Bash(git update-ref *)",
       "Bash(git remote set-url *)",
       "Bash(git config *)",

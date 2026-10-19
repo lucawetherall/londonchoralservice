@@ -34,7 +34,8 @@ NEVER = [
     f"{PY} scripts/ads/set_budget.py 24295921372 4.50 --apply",
     f"{PY} scripts/ads/set_budget.py 24295921372 4.50 --validate-only",
     f"{PY} scripts/bookings/singer_invoices.py confirm X --expect-fp a1b2c3d4e5f60718",
-    # the state log's owner commands: the Command Centre runs them after a passkey tap (structured-state design)
+    # the state log's owner commands: Luca approves each one (the Command Centre's passkey, or his Allow on Claude
+    # Code's prompt in a live chat; structured-state design, owner_confirm_guard)
     f"{PY} scripts/bookings/events.py migrate --apply --expect {'a' * 64} --owner",
     f"{PY} scripts/bookings/events.py migrate --apply",
     f"{PY} scripts/bookings/events.py retract a1b2c3d4e5f60718 --owner",
@@ -44,12 +45,13 @@ NEVER = [
     f"{PY} scripts/bookings/imap_draft.py test",
 ]
 # Owner-only forms the allowlist can't exclude (a glob can't forbid a flag): `--note *` and `--reminded *` match
-# them, so check_payments.py itself refuses --owner without the Command Centre's one-time nonce on a pipe
-# (tests/test_check_payments.py, test_owner_note_is_refused_without_the_nonce and the tests after it).
+# them, so check_payments.py itself refuses --owner without Luca's one-time approval nonce on a pipe
+# (tests/test_check_payments.py, test_owner_note_is_refused_without_the_nonce and the tests after it), and settings'
+# ask rule Bash(*--owner*) makes every one of them prompt.
 SCRIPT_GUARDED = [
     f"{PY} scripts/bookings/check_payments.py --note X \"paid in full 2026-09-28\" --owner",
     f"{PY} scripts/bookings/check_payments.py --reminded X --note X \"refunded 2026-09-28\" --owner",
-    # `withdrawn *` matches the Command Centre's owner form: singer_invoices.py refuses --owner without the nonce
+    # `withdrawn *` matches the owner form: singer_invoices.py refuses --owner without the nonce
     # (tests/test_singer_invoices.py, test_thanked_and_withdrawn_record_their_facts)
     f"{PY} scripts/bookings/singer_invoices.py withdrawn X not-ours --owner",
     # `--fact *` matches the owner kinds: check_payments.py refuses them without --owner and the nonce
@@ -273,12 +275,34 @@ def test_helper_commands_the_prompts_rely_on_are_covered():
         assert allowed(cmd, pats), cmd
 
 
-def test_owner_only_state_commands_are_denied_to_claude():
-    deny = json.load(open(os.path.join(ROOT, ".claude", "settings.json"), encoding="utf-8"))["permissions"]["deny"]
-    for rule in ("Bash(*events.py migrate*--apply*)", "Bash(*events.py retract*)", "Bash(*events.py notes-checked*)",
-                 "Bash(*singer_invoices.py confirm*)", "Bash(*singer_invoices.py settled*)",
-                 "Write(~/lcs-private/events.jsonl)", "Edit(~/lcs-private/events.jsonl)"):
+OWNER_DENY_REMOVED = ("Bash(*events.py migrate*--apply*)", "Bash(*events.py retract*)", "Bash(*events.py notes-checked*)",
+                      "Bash(*singer_invoices.py confirm*)", "Bash(*singer_invoices.py settled*)")
+
+
+def test_owner_commands_always_prompt_and_the_proofs_stay_denied():
+    """Owner decision, 19 Oct 2026: Luca approves an --owner command with his Allow on Claude Code's prompt, so the
+    deny rules that stopped those commands being tried at all are gone; the ask rule makes every --owner command
+    prompt (even in bypassPermissions), the scheduled prompts never name one, and the nonce files, the approvals
+    folder, the state log and the command-centre folder stay denied to Claude's tools."""
+    perms = json.load(open(SETTINGS, encoding="utf-8"))["permissions"]
+    deny, ask = perms["deny"], perms.get("ask", [])
+    for rule in OWNER_DENY_REMOVED:
+        assert rule not in deny, rule
+    for rule in ("Bash(*owner-nonce*)", "Bash(*command-centre/approvals*)", "Write(~/lcs-private/command-centre/**)",
+                 "Edit(~/lcs-private/command-centre/**)", "Write(~/lcs-private/events.jsonl)",
+                 "Edit(~/lcs-private/events.jsonl)", "Write(~/lcs-private/events.jsonl.lock)",
+                 "Edit(~/lcs-private/events.jsonl.lock)"):
         assert rule in deny, rule
+    assert ask == ["Bash(*--owner*)"], ask
+    asks = patterns_of(ask)
+    owner_forms = [c for c in NEVER + SCRIPT_GUARDED if "--owner" in c]
+    assert len(owner_forms) >= 7, owner_forms
+    for cmd in owner_forms + [f"printf '%s\\n' {'a' * 64} | {c}" for c in owner_forms]:  # as the hook rewrites it
+        assert any(p.fullmatch(cmd) for _, p in asks), cmd
+    blocks, scripts = appendix_blocks(), script_paths()
+    for k, b in blocks.items():
+        for c in commands(b, scripts):
+            assert not any(p.fullmatch(c) for _, p in asks), f"Appendix {k}: {c} would stop on a prompt"
 
 
 def test_the_command_centre_caches_and_proposals_are_in_the_prompts():
