@@ -201,6 +201,19 @@ def church_page():
     check('londonchoralservice.com/christmas-carol-services.html' in read('sitemap.xml'), 'sitemap.xml: church page')
 
 
+# ── nav, footer and homepage ──
+
+def nav_footer():
+    for rel in ('partials/nav.html', 'partials/footer.html'):
+        t = read(rel)
+        check('href="/christmas-carol-services.html">Church carol services<' in t, f'{rel}: church carol services link')
+        check('href="/christmas.html">Christmas carol singers<' in t, f'{rel}: Christmas carol singers link')
+        check('/carol-singers.html' not in t, f'{rel}: still links the stub')
+    idx = main_part(read('index.html'))
+    a, b = idx.find('href="christmas.html"'), idx.find('href="christmas-carol-services.html"')
+    check(-1 not in (a, b) and a < b, 'index.html: Christmas block links both pages, carolling first')
+
+
 def main():
     stub_preserves_query()
     stub_has_noscript_refresh()
@@ -220,6 +233,7 @@ def main():
                   'thank-you.html?from=carol-service',
                   ('Church carol service', 'School or community service', 'Other'))
     faq_unique('christmas-carol-services.html')
+    nav_footer()
     if failures:
         print(f'FAIL: {len(failures)} problem(s)')
         for f in failures[:60]:
