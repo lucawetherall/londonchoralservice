@@ -1562,6 +1562,41 @@ def test_owner_note_with_the_nonce_over_a_pipe_is_written_once():
     assert p.returncode != 0 and notes2 == notes
 
 
+def test_owner_note_with_lucas_allow_on_claude_codes_prompt():
+    """The chat route (19 Oct 2026): .claude/hooks/owner_confirm_guard.py mints a one-time approval for the exact
+    command and rewrites it to pipe the code in. The rewritten command (what runs once Luca clicks Allow) writes the
+    note once; the code fits no other command, and a replay is refused."""
+    import shlex
+    d, path = owner_ledger()
+    os.makedirs(os.path.join(d, "command-centre"), mode=0o700, exist_ok=True)
+    env = {k: v for k, v in os.environ.items() if k != "LCS_BOOKINGS_CSV"}
+    env["LCS_PRIVATE_DIR"] = d
+    cmd = '.venv/bin/python scripts/bookings/check_payments.py --note 2111 "paid in full 2026-09-28" --owner'
+    event = json.dumps({"tool_name": "Bash", "session_id": "s", "tool_input": {"command": cmd, "description": "x"}})
+    guard = os.path.join(ROOT, ".claude", "hooks", "owner_confirm_guard.py")
+    out = json.loads(subprocess.run([PY, guard], input=event, capture_output=True, text=True, env=env).stdout)
+    out = out["hookSpecificOutput"]
+    assert out["permissionDecision"] == "ask", out
+    rewritten = out["updatedInput"]["command"]
+    secret = rewritten.split()[2]
+    assert rewritten == f"printf '%s\\n' {secret} | {cmd}", rewritten
+
+    def run(command):  # the venv's python in place of .venv/bin/python, from the repo root as the Bash tool runs it
+        command = command.replace("| .venv/bin/python ", f"| {shlex.quote(PY)} ", 1)
+        p = subprocess.run(["/bin/bash", "-c", command], cwd=ROOT, env=env, capture_output=True, text=True, timeout=30)
+        with open(path, newline="") as f:
+            return p, list(csv.DictReader(f))[0]["notes"]
+    other = rewritten.replace("paid in full", "refunded")
+    p, notes = run(other)
+    assert p.returncode != 0 and notes == "PENDING: invoiced", (p.stdout, p.stderr, notes)
+    p, notes = run(rewritten)
+    assert p.returncode == 0, p.stderr
+    assert notes == "PENDING: invoiced; paid in full 2026-09-28 (owner)", notes
+    assert not [n for n in os.listdir(os.path.join(d, "command-centre")) if n.startswith("owner-nonce.chat-")]
+    p, notes2 = run(rewritten)
+    assert p.returncode != 0 and notes2 == notes, "a replay is refused"
+
+
 def test_owner_note_is_refused_without_the_nonce():
     """Every way an allowlisted command could try it: no file, no pipe, the wrong nonce, the file's own contents."""
     cases = []

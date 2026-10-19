@@ -35,10 +35,11 @@ already made.
     singer_invoices.py status              # unpaid invoices and totals
     singer_invoices.py thanked <message id>  # note that the "Paid!" reply was drafted
     singer_invoices.py confirm <message id> --expect-fp <bank_fp, all 16 hex> --owner  # the owner rang the singer:
-        trust these bank details. The Command Centre's only (its one-time nonce on a pipe; owner decision, 29 Sep
-        2026): refused unless the recorded details are still the ones the owner approved
+        trust these bank details. Luca's approval only (a one-time nonce on a pipe, lcs_owner: the Command
+        Centre's passkey, or his Allow on Claude Code's prompt in a live chat; owner decisions, 29 Sep and
+        19 Oct 2026): refused unless the recorded details are still the ones the owner approved
     singer_invoices.py settled <message id> YYYY-MM-DD --owner  # the owner paid it outside the feed's reach: mark
-        it paid (the Command Centre's only, as confirm)
+        it paid (Luca's approval only, as confirm)
     singer_invoices.py pdf <message id> [--fetch | <saved message>]  # save the invoice PDF for the Books bill
         (scan saves it too and ends with "pdf: <path>" or "pdf: none")
     singer_invoices.py withdrawn <message id> <reason word> [--owner]  # sent to us by mistake (another
@@ -113,7 +114,8 @@ REASON_RE = re.compile(r"^[a-z][a-z-]{0,19}$")  # one lower-case word, such as n
 NEW_PAYEE = "NEW: add as a payee in the Starling app"
 NEW_DETAILS = "NEW BANK DETAILS: confirm them by phone on a number you already hold before adding the payee"
 NOT_YET_VERIFIED = "BANK DETAILS NOT YET VERIFIED (seen on an earlier invoice): confirm by phone"
-# confirm is the Command Centre's (owner decision, 29 Sep 2026: it needs the owner's passkey nonce)
+# confirm is the owner's (owner decision, 29 Sep 2026: it needs his approval's nonce); the hint names the Command
+# Centre's page, which still works, and Luca may equally ask Claude in a live chat and click Allow (19 Oct 2026)
 CONFIRM_HINT = ", then confirm them in the Command Centre (Singers)"
 # the hint older invoices carry in their notes: shown as CONFIRM_HINT (the notes themselves are never rewritten)
 LEGACY_HINT = re.compile(r", then run singer_invoices\.py confirm \S+$")
@@ -1907,21 +1909,21 @@ def update_invoice(message_id, fn):
 
 
 def owner_run(args, what, only=False):
-    """The owner barrier for confirm and settled (only=True: they run from the Command Centre alone; owner decision,
-    29 Sep 2026) and for withdrawn --owner: --owner, the store and the state log in the nonce's private folder with no
-    LCS_BOOKINGS_CSV, and the Command Centre's one-time nonce over a pipe (lcs_owner). SystemExit otherwise, with
-    nothing written. Returns "owner", or "script" for a withdrawn without --owner."""
+    """The owner barrier for confirm and settled (only=True: they are the owner's alone; owner decision, 29 Sep 2026)
+    and for withdrawn --owner: --owner, the store and the state log in the nonce's private folder with no
+    LCS_BOOKINGS_CSV, and Luca's one-time approval nonce over a pipe (lcs_owner: the Command Centre's passkey, or his
+    Allow on Claude Code's prompt in a live chat). SystemExit otherwise, with nothing written. Returns "owner", or
+    "script" for a withdrawn without --owner."""
     if not getattr(args, "owner", False):
         if only:
-            raise SystemExit(f"{args.message_id}: this runs from the Command Centre only (the owner's passkey); "
-                             f"nothing {what}")
+            raise SystemExit(f"{args.message_id}: this is the owner's: it needs --owner and Luca's approval (his Allow "
+                             f"on Claude Code's prompt, or the Command Centre's passkey); nothing {what}")
         return "script"
     where = lcs_owner.owner_folder_problem([STORE, lcs_events.log_path()])
     if where:
         raise SystemExit(f"--owner {where}; nothing {what}")
     if not lcs_owner.owner_confirmed():
-        raise SystemExit("--owner needs the Command Centre's one-time owner nonce (the owner's passkey approval); "
-                         f"nothing {what}")
+        raise SystemExit(f"{lcs_owner.NEEDS_APPROVAL}; nothing {what}")
     return "owner"
 
 
@@ -1945,9 +1947,10 @@ FP_RE = re.compile(r"^[0-9a-f]{16}$")
 
 def cmd_confirm(args, client=None):
     """The owner rang the singer on a number already held: trust this invoice's bank details, and record
-    bank-confirmed {fp8} in the state log. The Command Centre's only (--owner and its nonce; owner decision, 29 Sep
-    2026): it passes --expect-fp, the whole 16-character fingerprint its passkey summary showed, and this refuses
-    unless the recorded fingerprint is still exactly that, so a rescan between approval and run confirms nothing."""
+    bank-confirmed {fp8} in the state log. The owner's only (--owner and his approval's nonce; owner decisions, 29 Sep
+    and 19 Oct 2026). The Command Centre passes --expect-fp, the whole 16-character fingerprint its passkey summary
+    showed, and this refuses unless the recorded fingerprint is still exactly that, so a rescan between approval and
+    run confirms nothing; a confirm Luca allows in a live chat may pass it too."""
     expect = getattr(args, "expect_fp", None)
     if expect is not None and not FP_RE.fullmatch(expect):
         raise SystemExit(f"{args.message_id}: --expect-fp takes all 16 lower-case hex characters; nothing confirmed")
@@ -1969,8 +1972,9 @@ def cmd_confirm(args, client=None):
 
 def cmd_settled(args, client=None):
     """The owner's: an invoice paid outside the feed's reach. Marks it paid for its own amount, unverified, and
-    records settled {amount}; never trusts its bank details (bank_confirmed is left alone). The Command Centre's only
-    (--owner and its nonce; owner decision, 29 Sep 2026)."""
+    records settled {amount}; never trusts its bank details (bank_confirmed is left alone). The owner's only (--owner
+    and his approval's nonce, from the Command Centre or his Allow in a live chat; owner decisions, 29 Sep and
+    19 Oct 2026)."""
     day = strict_date(args.date)
     if day > lm.today().isoformat():  # a typo'd year never marks a payment that hasn't happened
         raise SystemExit(f"{args.message_id}: {day} is after today; settle it on the day it was paid")
@@ -1997,8 +2001,8 @@ WITHDRAWN_REASONS = ("not-ours", "duplicate", "sent-in-error")  # the state log'
 def cmd_withdrawn(args, client=None):
     """An invoice sent to us by mistake (another organisation's booking): mark it withdrawn today, with a
     one-word reason in the notes, and record withdrawn {reason} (not-ours, duplicate, sent-in-error, else other).
-    Refuses a paid or already withdrawn invoice. With --owner (the Command Centre, its nonce) the fact is the
-    owner's."""
+    Refuses a paid or already withdrawn invoice. With --owner (Luca's approval nonce: the Command Centre's, or his
+    Allow in a live chat) the fact is the owner's."""
     reason = (args.reason or "").strip()
     if not REASON_RE.fullmatch(reason):
         raise SystemExit("the reason must be one lower-case word, such as not-ours")
@@ -2127,7 +2131,8 @@ def main():
     sub.add_parser("status")
     t = sub.add_parser("thanked")
     t.add_argument("message_id")
-    owner_help = "the Command Centre only: needs its one-time nonce on stdin"
+    owner_help = ("Luca's approval only: needs its one-time nonce on stdin (the Command Centre's, or his Allow on "
+                  "Claude Code's prompt)")
     c = sub.add_parser("confirm")
     c.add_argument("message_id")
     c.add_argument("--expect-fp", metavar="FINGERPRINT", help="refuse unless bank_fp is exactly this (16 hex)")

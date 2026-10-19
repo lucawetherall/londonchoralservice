@@ -22,8 +22,8 @@ Alma Consort Starling account, READ-ONLY (see lcs_money.StarlingReadOnly).
         notes (fact_phrase: "cancelled D by client email", "paid per client email D", "balance paid per client
         email D", "balance payable in cash on the day (arranged D)" …), both under the ledger lock. --on defaults
         to today (never after it, at most 730 days back). The owner's kinds (paid-in-full, fees-accepted --amount
-        X, reinstated, deposit-kept, refunded, payment-checked) need --owner and the Command Centre's nonce, and
-        write "… (owner)"
+        X, reinstated, deposit-kept, refunded, payment-checked) need --owner and Luca's approval (the Command
+        Centre's nonce, or his Allow on Claude Code's prompt: lcs_owner), and write "… (owner)"
     .venv/bin/python scripts/bookings/check_payments.py --note 2111 "4 singers, London"
         (free text only: one line, at most 120 characters, no ';'; refuses the scripts' own phrases and the owner's
         hand-written ones: paid in full, short by fees … accepted, deposit seen … (Starling), reminder/receipt drafted, deposit kept, refunded,
@@ -32,8 +32,9 @@ Alma Consort Starling account, READ-ONLY (see lcs_money.StarlingReadOnly).
         decision 29 Sep 2026), naming the --fact form to use instead: "record it with --fact 2111 cancelled;
         nothing written")
     … --note 2111 "paid in full 2026-09-28" --owner
-        (the Command Centre only, after the owner's passkey: allows the owner's phrases and records "(owner)";
-        refused unless stdin is a pipe carrying the app's one-time nonce, see owner_confirmed)
+        (Luca's approval only, his passkey in the Command Centre or his Allow on Claude Code's prompt in a live
+        chat: allows the owner's phrases and records "(owner)"; refused unless stdin is a pipe carrying that
+        approval's one-time nonce, see owner_confirmed)
     .venv/bin/python scripts/bookings/check_payments.py --selftest       # token, account and permissions
     .venv/bin/python scripts/bookings/check_payments.py --books-closed   # read-only JSON: closed bookings' Starling
         payments that may be missing from Books (books_closed; owner decision, 14 Oct 2026)
@@ -68,7 +69,7 @@ before any amount-only match, so it never lands on another client's live booking
 
 States (assess): PAID_IN_FULL (the confident payments cover the booking's value, or fall short of it by no more
 than a shortfall the owner accepted as transfer fees: "short by fees £12.40 accepted YYYY-MM-DD", at most FEE_CAP
-(£40) and dated no later than today, written only through the Command Centre with --owner; "fees" is the part of
+(£40) and dated no later than today, written only with --owner and Luca's approval; "fees" is the part of
 it used, "balance" is then 0, and the fee rides on the last payment in "record_in_books" as Books' bank charges.
 That note closes the booking like "paid in full YYYY-MM-DD": collect() reports it once more, as PAID_IN_FULL,
 and --apply then adds "paid in full" dated the later of the last payment and the fee note), DEPOSIT_SEEN, BALANCE_DUE (from 3 days before the
@@ -162,7 +163,8 @@ CONFIDENT = ("reference", "name and amount")
 RECEIPT_DAYS = 14
 SHORT_NOTICE_DAYS = 10
 # The most a booking may be short by transfer fees and still read paid in full, once the owner accepts it
-# ("short by fees £12.40 accepted 2026-09-28", written only through the Command Centre; owner decision, 28 Sep 2026).
+# ("short by fees £12.40 accepted 2026-09-28", written only with --owner and Luca's approval; owner decision,
+# 28 Sep 2026).
 FEE_CAP = lm.FEE_CAP  # £40, owner decision, 29 Sep 2026; defined in lcs_money so the state log's schema shares it
 # A thank-you is only ever drafted in these states; notes are never rewritten in the others.
 RECEIPT_STATES = {"PAID_IN_FULL", "DEPOSIT_SEEN", "BALANCE_DUE", "NOTED_PAID"}
@@ -414,7 +416,7 @@ def reserved_note(text):
 # --- --fact: a fact recorded in the state log with today's phrase as its note (structured-state design) ---------
 
 # The kinds --fact records. The script may record the first three (the assistant, from a client's own message); the
-# rest are the owner's, with --owner and the Command Centre's nonce. Markers have their own writers (--reminded,
+# rest are the owner's, with --owner and his approval's nonce (lcs_owner). Markers have their own writers (--reminded,
 # --apply, pipeline.py reviewed / review-skipped); retract and notes-checked are events.py's.
 FACT_KINDS = ("cancelled", "noted-paid", "arranged", "terms", "paid-in-full", "fees-accepted", "reinstated",
               "deposit-kept", "refunded", "payment-checked")
@@ -502,7 +504,8 @@ def fact_input(args, today):
         raise SystemExit(f"--fact records one of: {', '.join(FACT_KINDS)}; nothing written")
     by = "owner" if args.owner else "script"
     if kind in OWNER_FACTS and by != "owner":
-        raise SystemExit(f"{kind} is the owner's: the Command Centre records it with --owner; nothing written")
+        raise SystemExit(f"{kind} is the owner's: it is recorded with --owner, once Luca approves it (his Allow on "
+                         "Claude Code's prompt in a live chat, or the Command Centre's passkey); nothing written")
     given = {k: getattr(args, k) for k in FACT_ARGS if getattr(args, k) is not None}
     want = FACT_FIELDS.get(kind)
     if set(given) != ({want[0]} if want else set()):
@@ -1278,7 +1281,9 @@ def main():
     ap.add_argument("--method")
     ap.add_argument("--scope")
     ap.add_argument("--full-by", dest="full_by", metavar="YYYY-MM-DD")
-    ap.add_argument("--owner", action="store_true", help="the Command Centre only: needs its one-time nonce on stdin")
+    ap.add_argument("--owner", action="store_true",
+                    help="Luca's approval only: needs its one-time nonce on stdin (the Command Centre's, or his Allow "
+                         "on Claude Code's prompt)")
     args = ap.parse_args()
     today = lm.today()
 
@@ -1302,8 +1307,7 @@ def main():
             if where:
                 raise SystemExit(f"--owner {where}; nothing written")
             if not owner_confirmed():
-                raise SystemExit("--owner needs the Command Centre's one-time owner nonce (the owner's passkey "
-                                 "approval); nothing written")
+                raise SystemExit(f"{lcs_owner.NEEDS_APPROVAL}; nothing written")
         append_note(ref, fact_phrase(kind, fields, day, by), [(kind, fields, by, day)])
         lcs_events.clear_cache()  # read the log afresh: was the fact recorded, or only its note?
         print(f"{ref}: {kind} recorded" if lcs_events.migration_applied()
@@ -1321,15 +1325,14 @@ def main():
             if where:
                 raise SystemExit(f"--owner {where}; nothing written")
             if not owner_confirmed():
-                raise SystemExit("--owner needs the Command Centre's one-time owner nonce (the owner's passkey "
-                                 "approval); nothing written")
+                raise SystemExit(f"{lcs_owner.NEEDS_APPROVAL}; nothing written")
             text = f"{text} (owner)"
         elif reserved_note(text):
             raise SystemExit("that phrase is the scripts' own or the owner's (he writes it in the ledger by hand); "
                              "nothing written")
         elif NOTE_REFUSES_FACTS and note_refusal(ref, text):
             # the assistant records a cancellation, an arrangement or a client's "paid" with --fact (question 3);
-            # the owner's --note (the Command Centre's nonce) is his own record and is not refused
+            # the owner's --note (his approval's nonce) is his own record and is not refused
             raise SystemExit(note_refusal(ref, text))
         # the facts a note states are recorded with it, claiming it (note_facts), so it never holds the booking: the
         # owner's own phrases, or (NOTE_REFUSES_FACTS off) the assistant's; a refused text never gets here
@@ -1372,8 +1375,8 @@ def owner_ledger_problem(environ=None):
 
 
 def owner_confirmed(stdin_fd=0):
-    """True only when the Command Centre ran this --owner note after the owner's passkey approval (lcs_owner.
-    owner_confirmed: the one-time nonce over a pipe, burnt on a match)."""
+    """True only when Luca approved this --owner write, by his passkey in the Command Centre or his Allow on Claude
+    Code's prompt (lcs_owner.owner_confirmed: the one-time nonce over a pipe, burnt on a match)."""
     return lcs_owner.owner_confirmed(stdin_fd)
 
 
