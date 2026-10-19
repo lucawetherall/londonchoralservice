@@ -24,8 +24,8 @@ text, reference number and lines (never the customer, currency, tax fields, or t
 except on a draft, to a DDMM ref), and turn an invoice's payment reminders off (never on).
 Invoice updates and client payments are checked against ~/lcs-private/books-guard.json
 (cc_sync.py books; at most an hour old) and payments against the ledger. It records only
-client payments backed by a Starling payment (one invoice, its own customer, sent and
-open, never above its balance, only for a booking in the ledger, with any shortfall the
+client payments backed by a Starling payment (one invoice, its own customer and number, sent
+and open, never above its balance, only for a booking in the ledger, with any shortfall the
 owner accepted as transfer fees, at most £40, as its bank_charges) and a singer payment
 against its bill (unused on the free plan), both through the Starling account, and marks an invoice sent (a status change; Books emails nobody as long as
 its automatic payment reminders are off) only once Luca's own email carrying that
@@ -503,6 +503,8 @@ def check_create_customer_payment(body, query, path):
     inv = _books_invoice(body["invoice_id"])
     if body["customer_id"] != inv["customer_id"]:
         raise Deny(P + "customer_id must be the invoice's own customer.")
+    if ref is not None and ref != inv["number"]:  # a 2108A payment never lands on invoice 2108
+        raise Deny(P + f"reference_number {ref} must be the invoice's own number ({inv['number']}).")
     if inv["status"] not in OPEN_STATUSES:
         raise Deny(P + f"invoice {inv['number']} is {inv['status']}: a payment is recorded only against a sent invoice "
                    "with a balance (never a draft, paid or void one).")
