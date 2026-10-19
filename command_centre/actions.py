@@ -23,7 +23,13 @@ Binding rules (docs/superpowers/specs/2026-09-28-command-centre-design.md, and t
   and withdraw through `singer_invoices.py … --owner` (structured-state design: each records its fact in the state
   log with its note), which refuse unless they get the one-time owner nonce written here (owner_nonce(): the file
   holds sha256(nonce), the nonce goes over the pipe), and unless the ledger or store and the state log sit beside
-  that nonce (LCS_BOOKINGS_CSV unset). So does the events migration's apply (events.py migrate --apply).
+  that nonce (LCS_BOOKINGS_CSV unset). So does the events migration's apply (events.py migrate --apply), and so
+  does `imap_draft.py discard <Message-ID> --owner` (draft-trash: one office@ draft to Zoho Trash; owner decision,
+  14 Oct 2026).
+- calendar-delete runs no script (the app has no Google Calendar access): after the passkey it writes a one-time
+  approval, approvals/calendar-delete-<hash>.json (mode 600, CAL_APPROVAL_TTL seconds), naming exactly the London
+  Choral Service calendar and one event id. .claude/hooks/calendar_guard.py allows Claude's delete_event call only
+  against a matching, unexpired approval, and deletes it as it does.
 - Ads change sets come from ~/lcs-private/command-centre/proposals/<id>.json (mode 600). A proposal pins a commit,
   the script's blob at that commit and its arguments (simple tokens). The app keeps its own bare mirror,
   ~/lcs-private/command-centre/mirror.git (mode 700, its config rewritten to a fixed one each time), and fetches
@@ -2087,3 +2093,141 @@ DRAFT_MARK = LocalAction("draft-mark", _draft_validate, _draft_preview, _draft_r
 _LOCKS["drafts"] = threading.Lock()  # a local record: it never waits on (or blocks) a write
 REGISTRY[DRAFT_MARK.name] = DRAFT_MARK
 ROUTED.add(DRAFT_MARK.name)
+
+
+# ---------------------------------------------------------------- move an office@ draft to Trash (owner decision, 14 Oct 2026)
+
+
+IMAP_DRAFT = "scripts/bookings/imap_draft.py"
+
+
+def _trash_validate(raw):
+    """A draft in the inbox recorded with its Message-ID (key), or any office@ draft by its Message-ID. The script
+    checks again that the draft is in Drafts, from office@, and the only one with that Message-ID."""
+    from . import drafts
+    f = fields(raw, ("key", "message_id"), required=())
+    if bool(f.get("key")) == bool(f.get("message_id")):
+        raise ActionError("give one draft: from the list, or by its Message-ID")
+    if f.get("key"):
+        if not drafts.KEY_RE.fullmatch(f["key"]):
+            raise ActionError("unknown draft")
+        found = drafts.find(f["key"])
+        if found is None:
+            raise ActionError("unknown draft")
+        if not found.get("message_id"):
+            raise ActionError("that draft was recorded without its Message-ID: move it by Message-ID instead")
+        return {"key": f["key"], "message_id": found["message_id"], "draft": found, "input": {"key": f["key"]}}
+    mid = f["message_id"]
+    if not drafts.MESSAGE_ID_RE.fullmatch(mid):
+        raise ActionError("the Message-ID must look like <abc@londonchoralservice.com>")
+    return {"key": None, "message_id": mid, "draft": None, "input": {"message_id": mid}}
+
+
+def _trash_describe(c):
+    d = c["draft"]
+    what = (f"the {d['kind']} draft to {d['first_name']} ({d['created']}), Message-ID {c['message_id']}," if d
+            else f"the office@londonchoralservice.com draft with Message-ID {c['message_id']}")
+    return (f"Move {what} from Zoho Drafts to Trash. It stays recoverable in Trash; nothing is deleted or sent. "
+            f"It moves only if it is from office@ and the one draft with that Message-ID.")
+
+
+def _trash_after(c, code, raw, who):
+    if code == 0 and c.get("key"):
+        from . import drafts
+        with contextlib.suppress(Exception):  # a local record; the move itself is in the audit log
+            drafts.set_mark(c["key"], "discarded")
+    return None
+
+
+DRAFT_TRASH = ScriptAction("draft-trash", IMAP_DRAFT, _trash_validate, _trash_describe,
+                           lambda c: ["discard", c["message_id"], "--owner"], owner_nonce=True, timeout=60,
+                           after=_trash_after, title="Move a draft to Trash")
+REGISTRY[DRAFT_TRASH.name] = DRAFT_TRASH
+ROUTED.add(DRAFT_TRASH.name)
+
+
+# ---------------------------------------------------------------- let Claude delete one LCS calendar event (14 Oct 2026)
+
+
+CAL_APPROVAL_TTL = 600  # seconds: .claude/hooks/calendar_guard.py honours an approval this long, once
+CAL_APPROVAL_RE = re.compile(r"^calendar-delete-[0-9a-f]{32}\.json$")
+EVENT_ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_-]{3,199}$")  # Google's event ids, and recurring instances (_…T…Z)
+
+
+def lcs_calendar_id():
+    """The London Choral Service calendar's id from <private>/calendar.json, as the calendar guard reads it."""
+    try:
+        with open(auth.private_dir() / "calendar.json", encoding="utf-8") as f:
+            cfg = json.load(f)
+    except (OSError, ValueError):
+        cfg = None
+    cal = cfg.get("lcs_calendar_id") if isinstance(cfg, dict) else None
+    if not isinstance(cal, str) or not cal.strip():
+        raise ActionError("~/lcs-private/calendar.json has no lcs_calendar_id")
+    return cal
+
+
+def calendar_approvals_dir():
+    return auth.config_dir() / "approvals"
+
+
+def calendar_binding(nonce_sha256, calendar_id, event_id):
+    """What the guard recomputes: the approval's nonce hash bound to exactly this calendar and event."""
+    return hashlib.sha256(f"lcs-calendar-delete\n{nonce_sha256}\n{calendar_id}\n{event_id}".encode("utf-8")).hexdigest()
+
+
+def _cal_validate(raw):
+    f = fields(raw, ("event_id",))
+    if not EVENT_ID_RE.fullmatch(f["event_id"]):
+        raise ActionError("the event id must be the Google Calendar event's id (letters, digits, _ and -)")
+    return {"event_id": f["event_id"], "calendar_id": lcs_calendar_id(), "input": {"event_id": f["event_id"]}}
+
+
+def _cal_preview(c):
+    return (f"Let Claude delete one event from the London Choral Service calendar: event {c['event_id']} on calendar "
+            f"{c['calendar_id']}. The calendar guard then allows exactly one delete_event call for that event, with "
+            f"notifications off, within {CAL_APPROVAL_TTL // 60} minutes, and burns the approval as it lets it "
+            f"through. The app itself deletes nothing.\n"
+            f"Writes: ~/lcs-private/command-centre/approvals/calendar-delete-….json")
+
+
+def _prune_calendar_approvals(folder, now):
+    """Drop expired or unreadable calendar approvals (the guard ignores them anyway)."""
+    for p in folder.iterdir():
+        if not CAL_APPROVAL_RE.fullmatch(p.name):
+            continue
+        try:
+            if not p.is_symlink() and p.is_file():
+                rec = json.loads(p.read_text(encoding="utf-8"))
+                if isinstance(rec, dict) and isinstance(rec.get("expires_at"), (int, float)) \
+                        and rec["expires_at"] > now:
+                    continue
+            p.unlink()
+        except (OSError, ValueError):
+            with contextlib.suppress(OSError):
+                p.unlink()
+
+
+def _cal_run(c, who):
+    folder = calendar_approvals_dir()
+    folder.mkdir(mode=0o700, parents=True, exist_ok=True)
+    for d in (folder.parent, folder):  # the guard trusts only mode-700 folders that aren't symlinks
+        if d.is_symlink() or not d.is_dir():
+            raise ActionError("the approvals folder isn't a plain folder")
+        os.chmod(d, 0o700)
+    now = int(time.time())
+    _prune_calendar_approvals(folder, now)
+    nonce_sha = hashlib.sha256(secrets.token_hex(32).encode("ascii")).hexdigest()
+    write_private(folder / f"calendar-delete-{nonce_sha[:32]}.json", {
+        "kind": "calendar-delete", "calendar_id": c["calendar_id"], "event_id": c["event_id"],
+        "nonce_sha256": nonce_sha, "binding": calendar_binding(nonce_sha, c["calendar_id"], c["event_id"]),
+        "approved_at": now, "expires_at": now + CAL_APPROVAL_TTL,
+        "approved_by": who.get("login", ""), "passkey": who.get("passkey")}, exclusive=True)
+    return (f"approved: Claude may delete event {c['event_id']} once, within {CAL_APPROVAL_TTL // 60} minutes; "
+            f"tell it to go ahead")
+
+
+CALENDAR_DELETE = LocalAction("calendar-delete", _cal_validate, _cal_preview, _cal_run,
+                              title="Let Claude delete a calendar event")
+REGISTRY[CALENDAR_DELETE.name] = CALENDAR_DELETE
+ROUTED.add(CALENDAR_DELETE.name)

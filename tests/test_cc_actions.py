@@ -259,7 +259,7 @@ def test_registry_and_passkey_flags():
                                      "singer-withdrawn", "refresh-data", "ads-validate", "ads-apply",
                                      "approve-books-import", "books-import-done", "push-subscribe",
                                      "push-unsubscribe", "backup-now", "draft-mark", "sync-now", "migrate-events",
-                                     "undo-fact", "notes-checked"}
+                                     "undo-fact", "notes-checked", "draft-trash", "calendar-delete"}
     no_passkey = {n for n, a in actions.REGISTRY.items() if not a.passkey}
     assert no_passkey == {"todo-tick", "refresh-data", "push-unsubscribe", "backup-now", "draft-mark",
                           "sync-now"}, no_passkey
@@ -1878,6 +1878,7 @@ def test_the_apps_own_commands_are_not_allowlisted_unless_safe():
         "sync-now": {"source": "books"},
         "backup-now": {},
         "migrate-events": {},
+        "draft-trash": {"message_id": "<abc.123@londonchoralservice.com>"},
     }
     write_config(backup={"recipient": "age1test", "target": TMP})
     seen = set()
@@ -1915,7 +1916,7 @@ def test_the_apps_own_commands_are_not_allowlisted_unless_safe():
     seen.add("notes-checked")
     clear_log()
     seen |= {"approve-books-import", "books-import-done", "todo-tick", "push-subscribe", "push-unsubscribe",
-             "draft-mark"}  # no subprocess
+             "draft-mark", "calendar-delete"}  # no subprocess
     assert seen == set(actions.REGISTRY)
     # the guarded ones, once the allowlist matches them (`--fact *`, `withdrawn *`), are listed as script-guarded:
     # their refusal without the app's nonce is tested in test_check_payments.py and test_singer_invoices.py
@@ -2379,6 +2380,122 @@ def test_notes_checked_on_a_held_singer_invoice():
     rows = lm.read_csv(si.STORE)
     assert si.held(rows, next(x for x in rows if x["message_id"] == MSG)) == []
     clear_log()
+
+
+# ---------------------------------------------------------------- deletes only the owner approves (14 Oct 2026)
+
+
+IMAP = str(Path(ROOT) / "scripts" / "bookings" / "imap_draft.py")
+DRAFT_MID = "<cc.trash.1@londonchoralservice.com>"
+
+
+def write_drafts(rows):
+    from command_centre import drafts
+    path = drafts.drafts_path()
+    path.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
+    path.write_text(json.dumps(rows))
+    (Path(TMP) / "command-centre" / "drafts-marks.json").unlink(missing_ok=True)
+
+
+LISTED = {"thread_id": "T1", "kind": "reply", "first_name": "Sam", "subject": "Re: Wedding", "created": D,
+          "source": "assistant", "message_id": DRAFT_MID}
+
+
+def test_draft_trash_argv_summary_and_refusals():
+    from command_centre import drafts
+    write_drafts([LISTED, dict(LISTED, thread_id="T2", message_id=None)])
+    act = actions.REGISTRY["draft-trash"]
+    assert act.passkey is True and act.owner_nonce is True and act.title == "Move a draft to Trash"
+    c = act.validate({"message_id": DRAFT_MID})
+    assert act.argv(c) == [PYX, IMAP, "discard", DRAFT_MID, "--owner"]
+    s = act.preview(c)
+    assert s.endswith(f"Runs: .venv/bin/python scripts/bookings/imap_draft.py discard '{DRAFT_MID}' --owner"), s
+    assert "Trash" in s and "recoverable" in s
+    key = drafts.draft_key(LISTED)
+    c = act.validate({"key": key})
+    assert act.argv(c) == [PYX, IMAP, "discard", DRAFT_MID, "--owner"] and "reply draft to Sam" in act.preview(c)
+    unrecorded = drafts.draft_key(dict(LISTED, thread_id="T2"))
+    for inp, why in (({}, "give one draft"), ({"key": key, "message_id": DRAFT_MID}, "give one draft"),
+                     ({"message_id": "abc@x.com"}, "Message-ID"), ({"message_id": "<-rf@x.com> --x"}, "Message-ID"),
+                     ({"message_id": "<a b@x.com>"}, "Message-ID"), ({"key": "zzzzzzzzzzzz"}, "unknown draft"),
+                     ({"key": unrecorded}, "without its Message-ID"), ({"other": "x"}, "unexpected field")):
+        assert why in refused(act.validate, inp), (inp, refused(act.validate, inp))
+
+
+def test_draft_trash_runs_with_the_nonce_after_the_passkey_and_marks_the_listed_draft():
+    from command_centre import drafts
+    c, a, _ = setup()
+    write_drafts([LISTED])
+    key = drafts.draft_key(LISTED)
+    assert preview(c, "draft-trash", {"key": key}).json()["passkey"] is True
+    r = post(c, "/actions/draft-trash/run", {"input": {"key": key}})  # no passkey: refused, nothing runs
+    assert r.status_code in (400, 403), r.text
+    with Runner(Recorder(out=b'draft moved to Trash: "Re: Wedding"\n')) as rec:
+        r = run(c, a, "draft-trash", {"key": key})
+    assert r.status_code == 200 and r.json()["ok"], r.text
+    (argv, kw), = rec.calls
+    assert argv == [PYX, IMAP, "discard", DRAFT_MID, "--owner"]
+    assert re.fullmatch(rb"[0-9a-f]{64}\n", kw["input"]) and "LCS_BOOKINGS_CSV" not in kw["env"]
+    assert [e["result"] for e in audit_lines() if e["action"] == "draft-trash"][-2:] == ["started", "ok"]
+    assert audit_lines()[-1]["input"] == {"key": key} and audit_lines()[-1]["summary"].endswith("--owner")
+    assert drafts.load_marks()[key]["state"] == "discarded"
+    assert not (Path(TMP) / "command-centre" / "owner-nonce").exists()
+
+
+def test_the_real_imap_draft_takes_the_apps_nonce_and_refuses_without_it():
+    """The real script through the route: with the app's nonce it gets past the owner check to the IMAP host check
+    (LCS_IMAP_HOST is set to a non-Zoho host, so it stops there, before any Keychain or network access)."""
+    c, a, _ = setup()
+    os.environ["LCS_IMAP_HOST"] = "imap.example.invalid"
+    try:
+        r = run(c, a, "draft-trash", {"message_id": DRAFT_MID})
+        assert r.status_code == 200 and "not a Zoho IMAP server" in r.json()["output"], r.json()
+        assert not (Path(TMP) / "command-centre" / "owner-nonce").exists()
+        p = subprocess.run([PYX, IMAP, "discard", DRAFT_MID, "--owner"], env=dict(os.environ), capture_output=True,
+                           text=True, stdin=subprocess.DEVNULL, timeout=30)
+        assert p.returncode == 1 and "passkey" in p.stdout and "Zoho IMAP" not in p.stdout, p.stdout
+        p = subprocess.run([PYX, IMAP, "discard", DRAFT_MID], env=dict(os.environ), capture_output=True, text=True,
+                           input="0" * 64 + "\n", timeout=30)
+        assert p.returncode == 1 and "passkey" in p.stdout, p.stdout
+    finally:
+        os.environ.pop("LCS_IMAP_HOST", None)
+
+
+def test_calendar_delete_writes_one_short_lived_approval_after_the_passkey():
+    c, a, _ = setup()
+    cal = "lcs123@group.calendar.google.com"
+    folder = Path(TMP) / "command-centre" / "approvals"
+    for p in folder.glob("calendar-delete-*.json"):
+        p.unlink()
+    (Path(TMP) / "calendar.json").unlink(missing_ok=True)
+    act = actions.REGISTRY["calendar-delete"]
+    assert act.passkey is True
+    assert "no lcs_calendar_id" in refused(act.validate, {"event_id": "abc123def"})
+    (Path(TMP) / "calendar.json").write_text(json.dumps({"lcs_calendar_id": cal}))
+    for bad in ("", "-rf", "a b", "x" * 201, "../etc", "ab"):
+        assert refused(act.validate, {"event_id": bad}), bad
+    body = preview(c, "calendar-delete", {"event_id": "abc123def"}).json()
+    assert body["passkey"] is True and "abc123def" in body["summary"] and cal in body["summary"]
+    r = post(c, "/actions/calendar-delete/run", {"input": {"event_id": "abc123def"}})
+    assert r.status_code in (400, 403) and not list(folder.glob("calendar-delete-*.json")), r.text
+    stale = folder / ("calendar-delete-" + "0" * 32 + ".json")  # an expired one is tidied away
+    folder.mkdir(mode=0o700, parents=True, exist_ok=True)
+    stale.write_text(json.dumps({"expires_at": 1}))
+    with Runner(Recorder()) as rec:
+        r = run(c, a, "calendar-delete", {"event_id": "abc123def"})
+    assert r.status_code == 200 and r.json()["ok"] and rec.calls == [], r.text
+    (path,) = list(folder.glob("calendar-delete-*.json"))
+    assert oct(path.stat().st_mode & 0o777) == "0o600" and oct(folder.stat().st_mode & 0o777) == "0o700"
+    rec_ = json.loads(path.read_text())
+    assert (rec_["kind"], rec_["calendar_id"], rec_["event_id"]) == ("calendar-delete", cal, "abc123def")
+    assert path.name == f"calendar-delete-{rec_['nonce_sha256'][:32]}.json"
+    assert rec_["binding"] == actions.calendar_binding(rec_["nonce_sha256"], cal, "abc123def")
+    assert rec_["expires_at"] - rec_["approved_at"] == actions.CAL_APPROVAL_TTL == 600
+    path.unlink()  # the approvals folder is shared with the Books import tests
+    assert rec_["approved_by"] == LOGIN and rec_["passkey"], rec_
+    done = audit_lines()[-1]
+    assert done["action"] == "calendar-delete" and done["result"] == "ok" and done["input"] == {"event_id": "abc123def"}
+    assert done["passkey"] == b64(a.cred_id)[:8]
 
 
 if __name__ == "__main__":

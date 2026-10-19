@@ -17,7 +17,10 @@ def bash(command):
 
 
 def test_discard_and_every_way_round_the_plain_forms_ask_luca():
+    """A second layer only: discard refuses without the Command Centre's nonce (tests/test_imap_draft.py)."""
     for cmd in (".venv/bin/python scripts/bookings/imap_draft.py discard '<a@b.com>'",
+                ".venv/bin/python scripts/bookings/imap_draft.py discard '<a@b.com>' --owner",
+                "echo x | .venv/bin/python scripts/bookings/imap_draft.py discard '<a@b.com>' --owner",
                 "cd x && python3 scripts/bookings/imap_draft.py  discard '<a@b.com>'",
                 "python3 -m imap_draft discard x",
                 "python3 -c \"import imap_draft as d; d.main([chr(100)+'iscard','x'])\"",
@@ -32,8 +35,15 @@ def test_discard_and_every_way_round_the_plain_forms_ask_luca():
 def test_the_automations_plain_forms_are_left_to_the_other_rules():
     for cmd in (".venv/bin/python scripts/bookings/imap_draft.py save '{\"key\": \"2111-confirmation\", \"html\": \"<p>a & b; $1</p>\"}'",
                 ".venv/bin/python scripts/bookings/imap_draft.py attach '<a@b.com>' '{\"key\": \"2111-confirmation\"}'",
-                ".venv/bin/python scripts/bookings/imap_draft.py sent 2111 client@example.com 2026-10-01", "ls"):
+                ".venv/bin/python scripts/bookings/imap_draft.py sent 2111 client@example.com 2026-10-01",
+                ".venv/bin/python scripts/bookings/imap_draft.py replace '<old@x.com>' '<new@x.com>'", "ls"):
         assert bash(cmd) is None, cmd
+
+
+def test_replace_chained_or_disguised_still_asks():
+    for cmd in (".venv/bin/python scripts/bookings/imap_draft.py replace '<a@b.com>' '<c@d.com>'; rm x",
+                ".venv/bin/python scripts/bookings/imap_draft.py replace $(cat ids)"):
+        assert bash(cmd) == "ask", cmd
 
 
 def test_malformed_events_ask():

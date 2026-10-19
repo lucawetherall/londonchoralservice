@@ -15,8 +15,15 @@ SKIP_DIRS = {'command_centre', 'partials', 'node_modules', 'graphify-out', 'docs
 PROMO = 'Lov_NegzVhM'
 ABIDE = 'G9-R6k5n7Io'
 UBI = '-GQaQEGhYEs'
-# It's the Most Wonderful Time of the Year (re-upload, 30 Sep 2026).
-WONDERFUL = 'UOy498rsonU'
+# It's the Most Wonderful Time of the Year (fourth upload, 19 Oct 2026;
+# see data/seo-fix-discovered-urls.yml).
+WONDERFUL = 'csFWUu-r85Y'
+# Church carol services hero (19 Oct 2026).
+ROYAL = 'SbvqWglsbMo'
+
+# Every hero film uses maxresdefault.jpg; list an exception here if a new
+# upload has no maxres thumbnail yet.
+THUMBS = {}
 
 HERO_FILMS = {
     'index.html': PROMO,
@@ -30,7 +37,7 @@ HERO_FILMS = {
     'for-livery-companies.html': PROMO,
     'for-property-managers.html': PROMO,
     'christmas.html': WONDERFUL,
-    'carol-singers.html': WONDERFUL,
+    'christmas-carol-services.html': ROYAL,
     'christmas-pricing.html': WONDERFUL,
     'for-funeral-directors.html': ABIDE,
     'for-wedding-planners.html': UBI,
@@ -42,6 +49,7 @@ CAPTIONS = {
     ABIDE: 'Abide With Me, sung by our full choir',
     UBI: 'Ubi Caritas by Ola Gjeilo, sung by a quintet',
     WONDERFUL: 'It&rsquo;s the Most Wonderful Time of the Year, sung by our full choir',
+    ROYAL: 'Once in Royal David&rsquo;s City, sung by our full choir',
 }
 
 NEW_PLAY_BTN = ('<svg class="play-btn" viewBox="0 0 56 56" aria-hidden="true">'
@@ -121,7 +129,8 @@ def check_heroes():
                   f'{page}: breadcrumb must come before the h1')
 
         check(f'data-video="{film}"' in video, f'{page}: hero film should be {film}')
-        check(f'/vi/{film}/maxresdefault.jpg' in video, f'{page}: hero thumbnail should be {film}')
+        thumb = THUMBS.get(film, 'maxresdefault.jpg')
+        check(f'/vi/{film}/{thumb}' in video, f'{page}: hero thumbnail should be {film}')
         if CAPTIONS[film] is None:
             check('class="video-caption"' not in video, f'{page}: the {film} film takes no caption')
         else:

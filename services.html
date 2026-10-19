@@ -1519,6 +1519,20 @@
       }
     }
     
+    /* Modifier — secondary button: outlined, beside a primary .btn-link. */
+    .btn-link--secondary,
+    .btn-link--secondary:visited,
+    .btn-link--secondary:active {
+      background-color: transparent;
+      color: var(--color-accent);
+      box-shadow: inset 0 0 0 1px var(--color-accent);
+    }
+    
+    .btn-link--secondary:hover {
+      background-color: var(--color-accent);
+      color: var(--color-bg);
+    }
+    
     /* Modifier — button with leading inline icon (e.g. WhatsApp).
        Icon stays subordinate to the label: 0.85em with a tight gap so the
        button reads as text-first, with the glyph as a quiet accent. */
@@ -1673,8 +1687,10 @@
       grid-template-areas:
         "crumb crumb"
         "head  video"
+        "offer video"
         "body  video";
-      grid-template-rows: auto auto 1fr;
+      /* The offer row is empty (zero height) on pages without a .hero-offer. */
+      grid-template-rows: auto auto auto 1fr;
       column-gap: var(--space-3xl);
       align-items: start;
     }
@@ -1689,6 +1705,42 @@
     
     .hero-text {
       grid-area: body;
+    }
+    
+    /* Landing-page offer under the h1: the facts and the buttons a visitor needs
+       on the first screen. On phones it sits above the film. */
+    .hero-offer {
+      grid-area: offer;
+      margin-bottom: var(--space-xl);
+    }
+    
+    .hero-facts {
+      list-style: none;
+      padding: 0;
+      margin: 0 0 var(--space-lg);
+    }
+    
+    .hero-facts li {
+      position: relative;
+      padding-left: 1.6rem;
+      margin-bottom: var(--space-xs);
+      line-height: 1.45;
+    }
+    
+    .hero-facts li::before {
+      content: "\2713";
+      position: absolute;
+      left: 0;
+      color: var(--color-accent);
+      font-size: 0.9em;
+    }
+    
+    .hero-ctas {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: var(--space-sm) var(--space-md);
+      margin-bottom: var(--space-md);
     }
     
     .hero-video {
@@ -1845,6 +1897,7 @@
         grid-template-areas:
           "crumb"
           "head"
+          "offer"
           "video"
           "body";
         grid-template-rows: none;
@@ -2949,8 +3002,8 @@
             <li><a href="/weddings.html">Weddings</a></li>
             <li><a href="/funerals.html">Funerals</a></li>
             <li><a href="/corporate.html">Corporate</a></li>
-            <li><a href="/christmas.html">Christmas</a></li>
-            <li><a href="/carol-singers.html">Carol Singers</a></li>
+            <li><a href="/christmas.html">Christmas carol singers</a></li>
+            <li><a href="/christmas-carol-services.html">Church carol services</a></li>
             <li><a href="/private-events.html">Private Events</a></li>
             <li><a href="/destinations/">Weddings Abroad</a></li>
             <li class="dropdown-separator" aria-hidden="true"></li>
@@ -3088,7 +3141,7 @@
             <h3>Carol singers</h3>
             <div>
               <p>Roaming carol singers for office parties, hotel lobbies, switch-ons, and residents&rsquo; evenings. Fully a cappella, so no stage, power, or sound system is needed &mdash; the singers work whatever space you have.</p>
-              <a href="carol-singers.html" class="occasion-cta">Hire carol singers &rarr;</a>
+              <a href="christmas.html" class="occasion-cta">Hire carol singers &rarr;</a>
             </div>
           </li>
         </ul>
@@ -3212,8 +3265,8 @@
             <li><a href="/weddings.html">Weddings</a></li>
             <li><a href="/funerals.html">Funerals</a></li>
             <li><a href="/corporate.html">Corporate events</a></li>
-            <li><a href="/christmas.html">Christmas carol services</a></li>
-            <li><a href="/carol-singers.html">Hire carol singers</a></li>
+            <li><a href="/christmas.html">Christmas carol singers</a></li>
+            <li><a href="/christmas-carol-services.html">Church carol services</a></li>
             <li><a href="/private-events.html">Private events</a></li>
             <li><a href="/destinations/">Weddings abroad</a></li>
             <li><a href="/pricing.html">Pricing</a></li>

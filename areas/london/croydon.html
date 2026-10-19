@@ -1519,6 +1519,20 @@
       }
     }
     
+    /* Modifier — secondary button: outlined, beside a primary .btn-link. */
+    .btn-link--secondary,
+    .btn-link--secondary:visited,
+    .btn-link--secondary:active {
+      background-color: transparent;
+      color: var(--color-accent);
+      box-shadow: inset 0 0 0 1px var(--color-accent);
+    }
+    
+    .btn-link--secondary:hover {
+      background-color: var(--color-accent);
+      color: var(--color-bg);
+    }
+    
     /* Modifier — button with leading inline icon (e.g. WhatsApp).
        Icon stays subordinate to the label: 0.85em with a tight gap so the
        button reads as text-first, with the glyph as a quiet accent. */
@@ -1673,8 +1687,10 @@
       grid-template-areas:
         "crumb crumb"
         "head  video"
+        "offer video"
         "body  video";
-      grid-template-rows: auto auto 1fr;
+      /* The offer row is empty (zero height) on pages without a .hero-offer. */
+      grid-template-rows: auto auto auto 1fr;
       column-gap: var(--space-3xl);
       align-items: start;
     }
@@ -1689,6 +1705,42 @@
     
     .hero-text {
       grid-area: body;
+    }
+    
+    /* Landing-page offer under the h1: the facts and the buttons a visitor needs
+       on the first screen. On phones it sits above the film. */
+    .hero-offer {
+      grid-area: offer;
+      margin-bottom: var(--space-xl);
+    }
+    
+    .hero-facts {
+      list-style: none;
+      padding: 0;
+      margin: 0 0 var(--space-lg);
+    }
+    
+    .hero-facts li {
+      position: relative;
+      padding-left: 1.6rem;
+      margin-bottom: var(--space-xs);
+      line-height: 1.45;
+    }
+    
+    .hero-facts li::before {
+      content: "\2713";
+      position: absolute;
+      left: 0;
+      color: var(--color-accent);
+      font-size: 0.9em;
+    }
+    
+    .hero-ctas {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: var(--space-sm) var(--space-md);
+      margin-bottom: var(--space-md);
     }
     
     .hero-video {
@@ -1845,6 +1897,7 @@
         grid-template-areas:
           "crumb"
           "head"
+          "offer"
           "video"
           "body";
         grid-template-rows: none;
@@ -2872,8 +2925,8 @@
             <li><a href="/weddings.html">Weddings</a></li>
             <li><a href="/funerals.html">Funerals</a></li>
             <li><a href="/corporate.html">Corporate</a></li>
-            <li><a href="/christmas.html">Christmas</a></li>
-            <li><a href="/carol-singers.html">Carol Singers</a></li>
+            <li><a href="/christmas.html">Christmas carol singers</a></li>
+            <li><a href="/christmas-carol-services.html">Church carol services</a></li>
             <li><a href="/private-events.html">Private Events</a></li>
             <li><a href="/destinations/">Weddings Abroad</a></li>
             <li class="dropdown-separator" aria-hidden="true"></li>
@@ -2969,7 +3022,7 @@
         <p>Three of our guides help with a service at the Minster or on Mitcham Road: the <a href="../../music-guides/funeral-music-guide.html">funeral music guide</a>, <a href="../../music-guides/popular-funeral-hymns.html">popular funeral hymns</a> and the <a href="../../music-guides/funeral-music-costs.html">funeral music costs guide</a>. For a wedding in Sanderstead or Purley, see the <a href="../../music-guides/choosing-wedding-hymns.html">wedding hymns guide</a>.</p>
 
         <h2>Carols in Croydon town centre, Purley and Sanderstead</h2>
-        <p>Offices and venues around Croydon town centre, Purley, and Sanderstead call on <a href="../../carol-singers.html">roaming carol singers</a> to move between rooms at their December events rather than keeping the choir fixed in one spot. Croydon Minster also welcomes carol services in the lead-up to Christmas, and residents&rsquo; associations in Selsdon and South Norwood can simply <a href="../../carol-singers.html">book carol singers</a> for a residents&rsquo; party or festive gathering. December is Croydon&rsquo;s busiest month for us, so it pays to get in touch early.</p>
+        <p>Offices and venues around Croydon town centre, Purley, and Sanderstead call on <a href="../../christmas.html">roaming carol singers</a> to move between rooms at their December events rather than keeping the choir fixed in one spot. Croydon Minster also welcomes carol services in the lead-up to Christmas, and residents&rsquo; associations in Selsdon and South Norwood can simply <a href="../../christmas.html">book carol singers</a> for a residents&rsquo; party or festive gathering. December is Croydon&rsquo;s busiest month for us, so it pays to get in touch early.</p>
 
         <p><a href="../../contact.html" class="btn-link">Get in touch about your occasion in Croydon</a></p>
       </div>
@@ -3005,8 +3058,8 @@
             <li><a href="/weddings.html">Weddings</a></li>
             <li><a href="/funerals.html">Funerals</a></li>
             <li><a href="/corporate.html">Corporate events</a></li>
-            <li><a href="/christmas.html">Christmas carol services</a></li>
-            <li><a href="/carol-singers.html">Hire carol singers</a></li>
+            <li><a href="/christmas.html">Christmas carol singers</a></li>
+            <li><a href="/christmas-carol-services.html">Church carol services</a></li>
             <li><a href="/private-events.html">Private events</a></li>
             <li><a href="/destinations/">Weddings abroad</a></li>
             <li><a href="/pricing.html">Pricing</a></li>

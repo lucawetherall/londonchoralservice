@@ -14,7 +14,10 @@ guard's READ_ALLOW list (ZohoBooks_list_invoices on zoho-books-invoices, ZohoBoo
 writes ~/lcs-private/command-centre/cache/books.json: each invoice's number, status, date, due date, total, balance
 and the customer's first name only; each bill's number, the vendor's first name, status, total, balance and date
 (best effort: the free Books plan has no bills, so a failed bill read gives "bills_read": false and no bills);
-the totals (receivables, overdue, unpaid bills) and generated_at. On any failure it prints the error's type name
+the totals (receivables, overdue, unpaid bills) and generated_at. From the same read it writes
+~/lcs-private/books-guard.json (mode 600, outside the Command Centre's cache): each invoice's invoice_id, customer_id,
+number, status, total and balance, no names, which the Books guard checks invoice updates and client payments
+against (owner hands-off, 14 Oct 2026). On any failure it prints the error's type name
 only, keeps the last cache and exits 1, so the Command Centre's refresh job logs the failure (a scheduled run
 notes it and carries on).
 
@@ -40,7 +43,8 @@ through a symlink) and stdin are there for hand use.
 drafts-put records the drafts the scheduled assistant saved in Zoho Mail, for the Command Centre's drafts inbox:
 one JSON object or a list of at most 50, each exactly {thread_id, kind, first_name, subject, created}: a thread id
 of 1 to 40 letters and digits, a kind from DRAFT_KINDS, one capitalised first name (cc_event.py's rule), a subject
-of at most 80 characters with no control character, and the created date as YYYY-MM-DD. Anything else refuses the
+of at most 80 characters with no control character, and the created date as YYYY-MM-DD, plus optionally the
+draft's RFC message_id (<…@…>; the inbox then offers Move to Trash, after the passkey). Anything else refuses the
 whole input and writes nothing. The drafts are merged into ~/lcs-private/command-centre/cache/drafts.json (a new
 one with the same thread and kind replaces the old), newest first, at most 500 kept, under an flock. The owner's
 sent/discarded marks live elsewhere (drafts-marks.json, written by the app), so a re-recorded draft keeps its mark.
@@ -92,6 +96,7 @@ NOT_OPEN_BILL = {"void", "paid"}
 DRAFT_KINDS = ("reply", "confirmation", "holding", "follow-up", "deposit-reminder", "balance-reminder",
                "payment-reminder", "receipt", "review", "paid-thanks", "other")
 DRAFT_KEYS = {"thread_id", "kind", "first_name", "subject", "created"}
+MESSAGE_ID_RE = re.compile(r"^<[!-;=?A-~]{1,90}@[!-;=?A-~]{1,90}>$")  # the drafts' optional RFC Message-ID
 DRAFTS_PER_CALL, DRAFTS_KEPT, DRAFT_SUBJECT_MAX = 50, 500, 80
 THREAD_RE = re.compile(r"^[A-Za-z0-9]{1,40}$")
 FIRST_RE = re.compile(r"^[A-Z][a-z'’-]{1,20}$")  # cc_event.py's first-name rule
@@ -206,9 +211,35 @@ def totals(invoices, bills):
             "unpaid_bills": round(sum(b["balance"] for b in unpaid), 2), "unpaid_bills_count": len(unpaid)}
 
 
-def books_snapshot(call, now=None):
-    """The books.json payload, from `call(server, tool, arguments) -> text` (lcs_mcp.call_tool, or a fake)."""
-    invoices = [invoice_row(r) for r in list_all(call, INVOICE_SERVER, "ZohoBooks_list_invoices", "invoices")]
+RECORD_ID = re.compile(r"[0-9]{9,20}")
+
+
+def guard_row(r):
+    """One invoice as the Books guard sees it (books-guard.json): ids, number, status and balance; no names."""
+    ids = {k: str(r.get(k) or "").strip() for k in ("invoice_id", "customer_id")}
+    if not all(RECORD_ID.fullmatch(v) for v in ids.values()):
+        return None
+    return dict(ids, number=short(r.get("invoice_number"), 30), status=short(r.get("status"), 20).lower(),
+                balance=gbp(r.get("balance")), total=gbp(r.get("total")))
+
+
+def guard_snapshot(records, when):
+    """The Books guard's view of Books (owner hands-off, 14 Oct 2026): written to ~/lcs-private/books-guard.json,
+    outside the Command Centre's cache, because books.json carries no record ids. The guard
+    (.claude/hooks/zoho_books_guard.py) can't call Books itself, so it checks invoice updates and client payments
+    against this: the invoice's customer, status and balance."""
+    return {"generated_at": when, "invoices": [g for g in (guard_row(r) for r in records) if g]}
+
+
+def guard_path():
+    return private_dir() / "books-guard.json"
+
+
+def books_snapshot(call, now=None, guard_out=None):
+    """The books.json payload, from `call(server, tool, arguments) -> text` (lcs_mcp.call_tool, or a fake). With
+    `guard_out` (a dict), it is filled with the guard's snapshot from the same read."""
+    records = list_all(call, INVOICE_SERVER, "ZohoBooks_list_invoices", "invoices")
+    invoices = [invoice_row(r) for r in records]
     # Bills are best effort: the free Books plan (from 29 Sep 2026) has none, so a failed read leaves them
     # out ("bills_read": false) instead of losing the invoices; singer costs live in singer-invoices.csv.
     try:
@@ -219,14 +250,18 @@ def books_snapshot(call, now=None):
     invoices.sort(key=lambda i: (i["date"], i["number"]), reverse=True)
     bills.sort(key=lambda b: (b["date"], b["number"]), reverse=True)
     when = (now or datetime.datetime.now(LONDON)).isoformat(timespec="seconds")
+    if guard_out is not None:
+        guard_out.update(guard_snapshot(records, when))
     return {"generated_at": when, "invoices": invoices, "bills": bills, "bills_read": bills_read,
             "totals": totals(invoices, bills)}
 
 
 def cmd_books(call=None, now=None):
     try:
-        snap = books_snapshot(call or lcs_mcp.call_tool, now)
+        guard = {}
+        snap = books_snapshot(call or lcs_mcp.call_tool, now, guard)
         write_private_json(cache_dir() / "books.json", snap)
+        write_private_json(guard_path(), guard)
     except Exception as e:  # the type name only: a message could carry a client's details or a server's URL
         print(f"books: not updated ({type(e).__name__}); the last cache is kept")
         return 1
@@ -361,8 +396,12 @@ def validate_drafts(value):
     out = []
     for i, d in enumerate(items):
         where = f"draft {i}"
-        if not isinstance(d, dict) or set(d) != DRAFT_KEYS:
-            raise Refused(f"{where} must have exactly thread_id, kind, first_name, subject and created")
+        if not isinstance(d, dict) or set(d) - {"message_id"} != DRAFT_KEYS:
+            raise Refused(f"{where} must have exactly thread_id, kind, first_name, subject and created "
+                          "(and optionally message_id)")
+        mid = d.get("message_id")
+        if mid is not None and not (isinstance(mid, str) and MESSAGE_ID_RE.fullmatch(mid)):
+            raise Refused(f"{where} message_id must be one Message-ID like <abc@londonchoralservice.com>")
         if not isinstance(d["thread_id"], str) or not THREAD_RE.fullmatch(d["thread_id"]):
             raise Refused(f"{where} thread_id must be 1 to 40 letters and digits")
         if d["kind"] not in DRAFT_KINDS:
@@ -376,8 +415,11 @@ def validate_drafts(value):
             datetime.date.fromisoformat(d["created"])
         except ValueError:
             raise Refused(f"{where} created is not a real date") from None
-        out.append({"thread_id": d["thread_id"], "kind": d["kind"], "first_name": d["first_name"],
-                    "subject": subject, "created": d["created"], "source": "assistant"})
+        row = {"thread_id": d["thread_id"], "kind": d["kind"], "first_name": d["first_name"],
+               "subject": subject, "created": d["created"], "source": "assistant"}
+        if mid:
+            row["message_id"] = mid
+        out.append(row)
     return out
 
 
@@ -432,13 +474,18 @@ def sync_drafts(old, rows):
                 and isinstance(d.get("kind"), str):
             prev = kind_by_thread.get(d["thread_id"])
             if prev is None or str(d.get("created", "")) >= prev[1]:
-                kind_by_thread[d["thread_id"]] = (d["kind"], str(d.get("created", "")))
+                mid = d.get("message_id") if isinstance(d.get("message_id"), str) \
+                    and MESSAGE_ID_RE.fullmatch(d["message_id"]) else None
+                kind_by_thread[d["thread_id"]] = (d["kind"], str(d.get("created", "")), mid)
     out = []
     for row in rows:
         known = kind_by_thread.get(row["thread_id"])
-        out.append({"thread_id": row["thread_id"], "kind": known[0] if known else "other",
-                    "first_name": row["to_first_name"], "subject": row["subject"], "created": row["date"],
-                    "source": "assistant" if known else "zoho"})
+        entry = {"thread_id": row["thread_id"], "kind": known[0] if known else "other",
+                 "first_name": row["to_first_name"], "subject": row["subject"], "created": row["date"],
+                 "source": "assistant" if known else "zoho"}
+        if known and known[2]:
+            entry["message_id"] = known[2]  # kept from drafts-put, so the inbox can still offer Move to Trash
+        out.append(entry)
     return sorted(out, key=lambda d: (d["created"], d["thread_id"], d["kind"]), reverse=True)[:DRAFTS_KEPT]
 
 

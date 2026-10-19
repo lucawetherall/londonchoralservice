@@ -5,6 +5,7 @@
   {% if d.state == "open" %}
   {{ m.action_button("draft-mark", "Mark sent", {"key": d.key, "state": "sent"}, aria="Mark sent: " ~ d.first_name ~ ", " ~ d.kind_words) }}
   {{ m.action_button("draft-mark", "Discarded", {"key": d.key, "state": "discarded"}, quiet=true, aria="Discarded: " ~ d.first_name ~ ", " ~ d.kind_words) }}
+  {% if d.can_trash %}{{ m.action_button("draft-trash", "Move to Trash", {"key": d.key}, quiet=true, aria="Move to Trash in Zoho: " ~ d.first_name ~ ", " ~ d.kind_words) }}{% endif %}
   {% else %}
   {{ m.action_button("draft-mark", "Reopen", {"key": d.key, "state": "open"}, quiet=true, aria="Reopen: " ~ d.first_name ~ ", " ~ d.kind_words) }}
   {% endif %}
@@ -13,8 +14,16 @@
 {% block content %}
 <p class="lede">
   <a class="button" href="{{ zoho_url }}" target="_blank" rel="noopener noreferrer">Open Zoho Mail drafts</a>
-  <span class="muted">Review and send each draft in Zoho. Marking one here is a record on the Mac only: nothing is sent or deleted.</span>
+  <span class="muted">Review and send each draft in Zoho. Marking one here is a record on the Mac only: nothing is sent or deleted. Move to Trash moves the draft in Zoho itself, after your passkey.</span>
 </p>
+<details class="card">
+  <summary>Move an office@ draft to Trash by its Message-ID</summary>
+  <form class="cc-action" data-action="draft-trash">
+    <label class="field">Message-ID <input type="text" name="message_id" placeholder="&lt;abc@londonchoralservice.com&gt;" pattern="&lt;[^\s&lt;&gt;@]+@[^\s&lt;&gt;@]+&gt;" maxlength="190" required autocapitalize="off" autocomplete="off" spellcheck="false"></label>
+    <button type="submit" class="button small quiet">Check, then approve</button>
+  </form>
+  <p class="muted">For a draft Claude names in chat, or one not listed here. Only a draft from office@londonchoralservice.com moves, and only to Trash, where it stays recoverable.</p>
+</details>
 {{ m.failed(drafts) }}
 {{ m.failed(inbox) }}
 {% set box = inbox.value if inbox.ok else inbox.stale %}

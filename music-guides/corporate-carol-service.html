@@ -233,7 +233,7 @@
   <meta property="og:image:height" content="630">
   <meta property="og:image:alt" content="The London Choral Service: carol singers and Christmas choirs">
   <meta property="article:published_time" content="2026-03-04">
-  <meta property="article:modified_time" content="2026-09-29">
+  <meta property="article:modified_time" content="2026-10-19">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Planning a Corporate Carol Service: A Complete Guide | LCS">
   <meta name="twitter:description" content="How to plan a carol service for your company: choosing a church or hotel, the running order, readings and readers, accompaniment, and what it costs.">
@@ -1516,6 +1516,20 @@
       }
     }
     
+    /* Modifier — secondary button: outlined, beside a primary .btn-link. */
+    .btn-link--secondary,
+    .btn-link--secondary:visited,
+    .btn-link--secondary:active {
+      background-color: transparent;
+      color: var(--color-accent);
+      box-shadow: inset 0 0 0 1px var(--color-accent);
+    }
+    
+    .btn-link--secondary:hover {
+      background-color: var(--color-accent);
+      color: var(--color-bg);
+    }
+    
     /* Modifier — button with leading inline icon (e.g. WhatsApp).
        Icon stays subordinate to the label: 0.85em with a tight gap so the
        button reads as text-first, with the glyph as a quiet accent. */
@@ -1670,8 +1684,10 @@
       grid-template-areas:
         "crumb crumb"
         "head  video"
+        "offer video"
         "body  video";
-      grid-template-rows: auto auto 1fr;
+      /* The offer row is empty (zero height) on pages without a .hero-offer. */
+      grid-template-rows: auto auto auto 1fr;
       column-gap: var(--space-3xl);
       align-items: start;
     }
@@ -1686,6 +1702,42 @@
     
     .hero-text {
       grid-area: body;
+    }
+    
+    /* Landing-page offer under the h1: the facts and the buttons a visitor needs
+       on the first screen. On phones it sits above the film. */
+    .hero-offer {
+      grid-area: offer;
+      margin-bottom: var(--space-xl);
+    }
+    
+    .hero-facts {
+      list-style: none;
+      padding: 0;
+      margin: 0 0 var(--space-lg);
+    }
+    
+    .hero-facts li {
+      position: relative;
+      padding-left: 1.6rem;
+      margin-bottom: var(--space-xs);
+      line-height: 1.45;
+    }
+    
+    .hero-facts li::before {
+      content: "\2713";
+      position: absolute;
+      left: 0;
+      color: var(--color-accent);
+      font-size: 0.9em;
+    }
+    
+    .hero-ctas {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: var(--space-sm) var(--space-md);
+      margin-bottom: var(--space-md);
     }
     
     .hero-video {
@@ -1842,6 +1894,7 @@
         grid-template-areas:
           "crumb"
           "head"
+          "offer"
           "video"
           "body";
         grid-template-rows: none;
@@ -2749,7 +2802,7 @@
         "url": "https://londonchoralservice.com/music-guides/corporate-carol-service.html",
         "inLanguage": "en-GB",
         "datePublished": "2026-03-04",
-        "dateModified": "2026-09-29",
+        "dateModified": "2026-10-19",
         "description": "How to plan a carol service for your company: choosing a church or hotel, the running order, readings and readers, accompaniment, and what it costs.",
         "author": [
           {
@@ -2852,13 +2905,13 @@
       },
       {
         "@type": "VideoObject",
-        "name": "Carol of the Bells — Full Choir",
+        "name": "Once in Royal David’s City — Full Choir",
         "description": "Live performance by The London Choral Service.",
-        "thumbnailUrl": "https://img.youtube.com/vi/dGYqQf6BDAk/maxresdefault.jpg",
-        "uploadDate": "2026-09-29",
-        "duration": "PT1M21S",
-        "contentUrl": "https://www.youtube.com/watch?v=dGYqQf6BDAk",
-        "embedUrl": "https://www.youtube-nocookie.com/embed/dGYqQf6BDAk",
+        "thumbnailUrl": "https://img.youtube.com/vi/SbvqWglsbMo/maxresdefault.jpg",
+        "uploadDate": "2026-10-19",
+        "duration": "PT1M53S",
+        "contentUrl": "https://www.youtube.com/watch?v=SbvqWglsbMo",
+        "embedUrl": "https://www.youtube-nocookie.com/embed/SbvqWglsbMo",
         "publisher": {
           "@id": "https://londonchoralservice.com/#organization"
         }
@@ -2884,8 +2937,8 @@
             <li><a href="/weddings.html">Weddings</a></li>
             <li><a href="/funerals.html">Funerals</a></li>
             <li><a href="/corporate.html">Corporate</a></li>
-            <li><a href="/christmas.html">Christmas</a></li>
-            <li><a href="/carol-singers.html">Carol Singers</a></li>
+            <li><a href="/christmas.html">Christmas carol singers</a></li>
+            <li><a href="/christmas-carol-services.html">Church carol services</a></li>
             <li><a href="/private-events.html">Private Events</a></li>
             <li><a href="/destinations/">Weddings Abroad</a></li>
             <li class="dropdown-separator" aria-hidden="true"></li>
@@ -2937,7 +2990,7 @@
           </ol></nav>
           <h1>Planning a corporate carol service</h1>
           <p class="guide-meta">By Luca Wetherall, Artistic Director &amp; Tutor in Music, University of Oxford</p>
-          <p class="guide-meta">Published <time datetime="2026-03-04">4 March 2026</time> &middot; Updated <time datetime="2026-09-29">29 September 2026</time></p>
+          <p class="guide-meta">Published <time datetime="2026-03-04">4 March 2026</time> &middot; Updated <time datetime="2026-10-19">19 October 2026</time></p>
           <hr class="rule">
         </div>
       </section>
@@ -2946,12 +2999,12 @@
         <div class="prose">
           <p class="lede">A carol service brings a room together more effectively than a drinks reception or a dinner. It isn&rsquo;t a drinks reception where people cluster in familiar groups, or a dinner where conversation is limited to whoever happens to be seated beside you. It is shared, not just attended. When a room full of people sings together, something shifts. For sixty or ninety minutes, the hierarchies and habits of the working week fall away, and you&rsquo;re left with something that feels closer to community.</p>
           <div class="video-embed" style="margin-block-start: var(--space-lg)">
-            <button class="video-thumb" aria-label="Play Carol of the Bells" data-video="dGYqQf6BDAk">
-              <img src="https://img.youtube.com/vi/dGYqQf6BDAk/maxresdefault.jpg" alt="Carol of the Bells &mdash; The London Choral Service" loading="lazy" width="1280" height="720">
+            <button class="video-thumb" aria-label="Play Once in Royal David&rsquo;s City" data-video="SbvqWglsbMo">
+              <img src="https://img.youtube.com/vi/SbvqWglsbMo/maxresdefault.jpg" alt="Once in Royal David&rsquo;s City &mdash; The London Choral Service" loading="lazy" width="1280" height="720">
               <svg class="play-btn" viewBox="0 0 56 56" aria-hidden="true"><circle cx="28" cy="28" r="27"/><path d="M23 19v18l15-9z"/></svg>
             </button>
           </div>
-          <p class="text-sm text-mid">Eight of our singers performing Carol of the Bells. <a href="../listen.html">Hear more recordings</a>.</p>
+          <p class="text-sm text-mid">Eight of our singers performing Once in Royal David&rsquo;s City. <a href="../listen.html">Hear more recordings</a>.</p>
         </div>
       </section>
 
@@ -2988,7 +3041,7 @@
       <section class="section">
         <div class="prose">
           <p>We help companies plan and perform carol services every December, from City of London churches to in-office atria. If you’re still deciding on a venue, we can advise.</p>
-          <p><a href="../christmas.html" class="btn-link">Start planning your carol service</a></p>
+          <p><a href="../christmas-carol-services.html" class="btn-link">Start planning your carol service</a></p>
           <p class="text-sm text-mid">Text us on WhatsApp for the fastest reply, or call us on <a href="tel:+447356042468">07356 042468</a>.</p>
         </div>
       </section>
@@ -3067,7 +3120,7 @@
           <h2>Let us plan your carol service</h2>
           <p>We organise corporate carol services for companies of every size, from intimate gatherings of thirty people in a City chapel to large-scale events for several hundred guests in major London churches. We provide a handpicked team of professional singers and instrumentalists, help you choose the music and the readings, liaise with the venue, and manage the logistics on the day. You can also explore our <a href="company-christmas-party-entertainment.html">guide to company Christmas entertainment</a>, our <a href="../corporate.html">corporate music</a> page, and our full <a href="../services.html">range of services</a> to see how we can help.</p>
           <p>If you&rsquo;re considering a carol service for your organisation this Christmas, the best time to start the conversation is now. We&rsquo;ll talk you through the options, answer your questions, and give you a clear idea of what&rsquo;s involved&thinsp;&mdash;&thinsp;with no obligation at all.</p>
-          <p><a href="../christmas.html" class="btn-link">Get in touch about your Christmas event</a></p>
+          <p><a href="../christmas-carol-services.html" class="btn-link">Get in touch about your Christmas event</a></p>
         </div>
       </section>
 
@@ -3120,8 +3173,8 @@
             <li><a href="/weddings.html">Weddings</a></li>
             <li><a href="/funerals.html">Funerals</a></li>
             <li><a href="/corporate.html">Corporate events</a></li>
-            <li><a href="/christmas.html">Christmas carol services</a></li>
-            <li><a href="/carol-singers.html">Hire carol singers</a></li>
+            <li><a href="/christmas.html">Christmas carol singers</a></li>
+            <li><a href="/christmas-carol-services.html">Church carol services</a></li>
             <li><a href="/private-events.html">Private events</a></li>
             <li><a href="/destinations/">Weddings abroad</a></li>
             <li><a href="/pricing.html">Pricing</a></li>
@@ -3178,7 +3231,7 @@
 
   <div class="mobile-cta" role="group" aria-label="Quick contact">
     <a href="https://wa.me/447356042468" target="_blank" rel="noopener" class="mobile-cta-whatsapp" data-whatsapp><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" aria-hidden="true" focusable="false"><path fill="currentColor" d="M16 .395a15.6 15.6 0 0 0-13.534 23.36L0 32l8.43-2.42A15.6 15.6 0 0 0 31.6 16.005 15.6 15.6 0 0 0 16 .395Zm0 28.41a12.78 12.78 0 0 1-6.523-1.79l-.467-.28-4.846 1.39 1.42-4.738-.305-.486A12.78 12.78 0 0 1 16 3.214a12.81 12.81 0 0 1 12.81 12.81A12.81 12.81 0 0 1 16 28.805Zm7.025-9.575c-.385-.193-2.275-1.122-2.628-1.25-.353-.13-.609-.193-.866.193s-.994 1.25-1.218 1.508c-.225.257-.45.29-.834.097-.385-.193-1.626-.6-3.097-1.911-1.144-1.02-1.916-2.28-2.14-2.665-.225-.385-.024-.594.169-.787.174-.173.385-.45.578-.674.193-.225.257-.385.385-.642.13-.257.064-.482-.032-.674-.097-.193-.866-2.087-1.187-2.857-.312-.75-.628-.65-.866-.66l-.738-.013a1.42 1.42 0 0 0-1.027.482c-.353.385-1.347 1.315-1.347 3.207s1.379 3.72 1.572 3.977c.193.257 2.715 4.146 6.578 5.815.92.397 1.637.633 2.196.81.923.293 1.762.252 2.426.153.74-.11 2.275-.93 2.595-1.829.32-.898.32-1.668.225-1.829-.097-.16-.353-.257-.738-.45Z"/></svg>WhatsApp</a>
-    <a href="/christmas.html" class="mobile-cta-enquire">Enquire</a>
+    <a href="/christmas-carol-services.html" class="mobile-cta-enquire">Enquire</a>
   </div>
   <script src="../js/nav.js" defer></script>
   <script src="../js/video.js" defer></script>

@@ -97,6 +97,74 @@ def test_unsent_invoices_read_from_the_books_cache():
         path.unlink(missing_ok=True)
 
 
+def test_books_closed_lists_closed_bookings_payments_for_books():
+    """Owner hands-off, 14 Oct 2026: a closed booking drops out of collect(), so its Starling payments never reached
+    record_in_books. books_closed lists them (read-only), only for refs Books still shows open, never a cancelled
+    or "hand check only" booking, and never a payment after the close."""
+    rows = [row("2110", 1400, "2026-09-07", "2026-10-21", "deposit seen 2026-09-10 (Starling); paid in full 2026-09-10"),
+            row("2108A", 2800, "2026-09-05", "2027-08-21", "hand check only: shares 2108; paid in full 2026-09-10",
+                name="Bo Jones"),
+            row("2509", 3225, "2026-09-01", "2026-09-21", "paid in full 2026-09-12", name="Cy Brown"),
+            row("0110", 500, "2026-09-01", "2026-10-30", "cancelled 2026-09-05 by client email", name="Di Green"),
+            row("2111", 650, "2026-08-22", "2026-11-21", "PENDING", name="Ed White")]
+    feed = [pay(1400, "2026-09-10", "INV2110"), pay(50, "2026-09-20", "INV2110"), pay(1400, "2026-09-09", "2108A"),
+            pay(3225, "2026-09-12", "INV2509"), pay(325, "2026-08-26", "INV 2111")]
+    client = FakeClient(feed)
+    got = {a["ref"]: a for a in cp.books_closed(client, rows, T, open_in_books={"2110": 1400.0, "2108A": 2800.0,
+                                                                               "0110": 500.0, "2111": 650.0})}
+    assert set(got) == {"2110"}, got  # 2509 is paid in Books; 2108A hand check only; 0110 cancelled; 2111 open
+    assert got["2110"]["record_in_books"] == [["2026-09-10", 1400.0, 0.0]], got  # the £50 after the close is left out
+    assert got["2110"]["closed_on"] == "2026-09-10" and got["2110"]["books_balance"] == 1400.0
+    # no Books cache: nothing is known to be open in Books, so nothing is listed (and Starling isn't read)
+    quiet = FakeClient(feed)
+    assert cp.books_closed(quiet, rows, T) == [] and quiet.calls == []
+    # a ref already reported (an open or fee-pending booking) isn't listed twice
+    assert cp.books_closed(FakeClient(feed), rows, T, open_in_books={"2110": 1400.0}, skip={"2110"}) == []
+    # nothing to look at: no feed call
+    quiet = FakeClient(feed)
+    assert cp.books_closed(quiet, rows, T, open_in_books={}) == [] and quiet.calls == []
+
+
+def test_closed_items_join_the_json_list():
+    item = cp.closed_item({"ref": "2110", "closed_on": "2026-09-10", "value": 1400.0, "received": 1400.0,
+                           "books_balance": 1400.0, "record_in_books": [["2026-09-10", 1400.0, 0.0]]})
+    assert item["state"] == "CLOSED" and item["action"] == "none" and item["record_in_books"]
+    assert cp.closed_item(dict(item, record_in_books=[]))["action"] == "hand_check"
+    rows = [row("2110", 1400, "2026-09-07", "2026-10-21", "paid in full 2026-09-10"),
+            row("2111", 650, "2026-08-22", "2026-11-21", "PENDING", name="Ed White")]
+    path = cp.books_cache()
+    args = type("A", (), {"json": True, "apply": False, "selftest": False, "books_closed": False})()
+    try:
+        write_books_cache([{"number": "2110", "status": "overdue", "balance": 1400}])
+        buf = io.StringIO()
+        with contextlib.redirect_stdout(buf):
+            cp.run(args, FakeClient([pay(1400, "2026-09-10", "INV2110"), pay(325, "2026-08-26", "INV 2111")]), rows, T)
+        got = {a["ref"]: a for a in json.loads(buf.getvalue())}
+        assert got["2111"]["state"] == "DEPOSIT_SEEN" and got["2110"]["state"] == "CLOSED", got
+        assert got["2110"]["record_in_books"] == [["2026-09-10", 1400.0, 0.0]]
+    finally:
+        path.unlink(missing_ok=True)
+
+
+def test_books_closed_is_read_only_and_on_its_own():
+    p = subprocess.run([PY, SCRIPT, "--books-closed", "--apply"], capture_output=True, text=True,
+                       env=dict(os.environ, LCS_PRIVATE_DIR=_HOME))
+    assert p.returncode != 0 and "goes on its own" in (p.stderr + p.stdout), p
+
+
+def test_books_open_balances_reads_the_cache():
+    path = cp.books_cache()
+    try:
+        assert cp.books_open_balances() is None
+        write_books_cache([{"number": "2110", "status": "overdue", "balance": 1400}, {"number": "2509", "status": "paid",
+                                                                                      "balance": 0},
+                           {"number": "1211", "status": "draft", "balance": 1750},
+                           {"number": "2111", "status": "partially_paid", "balance": 325}])
+        assert cp.books_open_balances() == {"2110": 1400.0, "2111": 325.0}
+    finally:
+        path.unlink(missing_ok=True)
+
+
 def test_awaiting_deposit_inside_seven_days():
     assert cp.assess(row("X", 500, "2026-09-25", "2026-10-30", "PENDING: invoiced"), [], T)["state"] == "AWAITING_DEPOSIT"
 
@@ -366,6 +434,50 @@ def test_bare_number_with_suffixed_siblings_and_no_surname_is_unconfirmed_on_all
     states = [cp.assess(r, found[r["booking_ref"]], T) for r in SUFFIX_ROWS]
     assert [a["state"] for a in states] == ["CHECK_PAYMENT", "CHECK_PAYMENT"]
     assert all(a["received"] == 0 and a["just_received"] is False for a in states)
+
+
+CLASH_ROWS = [row("1212", 1470, "2026-05-11", "2026-08-21", "paid in full 2026-08-17; hand check only", name="Ann Smith"),
+              row("1212A", 2800, "2026-09-25", "2027-08-21",
+                  "hand check only: the client pays with ref 1212", name="Bo Jones")]
+
+
+def test_hand_check_only_never_confirms_a_payment():
+    """Two bookings share the invoice number the client pays with: a reference plus the payer's surname, or the
+    surname and deposit, would be confident; on a hand-check-only booking it is unconfirmed, a hand check, never
+    chased, thanked, noted or recorded in Books."""
+    for ref, who in (("INV 1212", "BO JONES"), ("1212", "KATE DOE"), ("", "MR B JONES")):
+        found = cp.match(CLASH_ROWS, [pay(1400, "2026-09-28", ref, who)], T)
+        assert found["1212A"] and all(how not in cp.CONFIDENT for _, _, how in found["1212A"]), (ref, found)
+        a = cp.assess(CLASH_ROWS[1], found["1212A"], T)
+        assert a["state"] == "CHECK_PAYMENT" and a["received"] == 0 and a["action"] == "hand_check", a
+        assert a["hand_only"] and a["record_in_books"] == [] and not a["just_received"], a
+        assert "hand check only" in cp.describe(a)
+        assert cp.updated_notes(CLASH_ROWS[1]["notes"], a, found["1212A"]) == CLASH_ROWS[1]["notes"]
+    # nothing in the bank yet, deposit late: listed by hand, never a reminder (the client's ref isn't ours)
+    late = cp.assess(CLASH_ROWS[1], [], datetime.date(2026, 10, 14))
+    assert late["state"] == "DEPOSIT_OVERDUE" and late["action"] == "hand_check" and late["hand_only"], late
+    # a confident match handed straight to assess is demoted too
+    direct = cp.assess(CLASH_ROWS[1], [("2026-09-28", 2800.0, "reference")], T)
+    assert direct["state"] == "CHECK_PAYMENT" and direct["record_in_books"] == [], direct
+    # the closed booking: a later payment naming it is still a hand check
+    found = cp.match(CLASH_ROWS, [pay(1400, "2026-09-28", "1212", "ANN SMITH")], T)
+    assert found["1212"] == [("2026-09-28", 1400.0, "reference, hand check only")], found
+    assert cp.assess(CLASH_ROWS[0], found["1212"], T)["state"] == "PAYMENT_AFTER_CLOSE"
+    # without the phrase the same payment is confident, as before
+    plain = [dict(r, notes="") for r in CLASH_ROWS]
+    assert cp.match(plain, [pay(1400, "2026-09-28", "INV 1212", "BO JONES")], T)["1212A"][0][2] == "reference"
+
+
+def test_hand_check_only_is_on_the_monday_hand_check_line():
+    import money_report as mr
+    late = cp.assess(CLASH_ROWS[1], [], datetime.date(2026, 10, 14))
+    assert mr.needs_hand_check(late, datetime.date(2026, 10, 14))
+    assert mr.hand_check_label(late) == "invoice number shared, every payment by hand (no payment matched yet)"
+    quiet = {"unpaid": 0, "unpaid_total": 0.0, "oldest_days": 0, "bank_changed": 0}
+    lines = mr.summary_lines([late], [], quiet, datetime.date(2026, 10, 14))
+    assert "deposits overdue: 0" in lines and any(x.startswith("needs a hand check: 1 (1212A ") for x in lines), lines
+    early = cp.assess(CLASH_ROWS[1], [], T)
+    assert early["state"] == "AWAITING_DEPOSIT" and mr.needs_hand_check(early, T)
 
 
 def test_reference_to_one_booking_from_another_clients_name_is_unconfirmed():

@@ -95,6 +95,26 @@ def test_books_cache_shape_and_totals():
     assert all(a["query_params"]["organization_id"] == "941014440" for _, _, a in fake.calls)
 
 
+def test_books_also_writes_the_guards_id_snapshot_outside_the_cache():
+    """books-guard.json (owner hands-off, 14 Oct 2026): the ids the Books guard checks updates and payments against,
+    beside the cache, never in it, and with no names or emails."""
+    clear()
+    invoices = [dict(INVOICES[0], invoice_id="1534218000000100020", customer_id="1534218000000100010"),
+                dict(INVOICES[1], invoice_id="2", customer_id="1534218000000100011")]  # a short id is left out
+    code, _ = run(cc_sync.cmd_books, FakeBooks(invoices=invoices), NOW)
+    assert code == 0
+    path = Path(TMP) / "books-guard.json"
+    data = json.loads(path.read_text())
+    assert data == {"generated_at": "2026-09-28T09:30:00+01:00", "invoices": [
+        {"invoice_id": "1534218000000100020", "customer_id": "1534218000000100010", "number": "2111",
+         "status": "sent", "balance": 1150.0, "total": 1150.0}]}, data
+    for private in ("Harriet", "Example-Smith", "h@example.com"):
+        assert private not in path.read_text(), private
+    assert mode(path) == 0o600
+    assert "invoice_id" not in (CACHE / "books.json").read_text()
+    path.unlink()
+
+
 def test_books_without_bills_on_the_free_plan_still_caches_the_invoices():
     clear()
     fake = FakeBooks()

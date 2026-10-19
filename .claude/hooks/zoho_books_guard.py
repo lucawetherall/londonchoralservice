@@ -16,12 +16,18 @@ number anywhere in a write call may carry bank details (in any format, any
 country), VAT wording or Greek/Cyrillic lookalike letters, and no invoice or bill
 text may mention tax. An attachment must be a .pdf or .docx inside
 iCloud Drive/LCS-invoices/ (~/Library/Mobile Documents/com~apple~CloudDocs/LCS-invoices).
-Claude never emails, reminds, deletes, voids or writes off anything in Books, never
-matches a bank transaction and never updates an invoice. It records only the
-payments the owner approved (a confident client payment against its invoice, with any
-shortfall the owner accepted as transfer fees, at most £40, as its bank_charges; and a
-singer payment against its bill, unused on the free plan, both through the Starling
-account), and marks an invoice sent (a status change; Books emails nobody as long as
+Claude never emails, reminds, deletes, voids or writes off anything in Books and never
+matches a bank transaction. Since 14 Oct 2026 (owner hands-off: "you have full permissions
+to fix all Books issues. i dont ever want to manually edit books") Claude keeps Books
+correct: it may correct a draft or sent invoice's dates, payment terms, notes and terms
+text, reference number and lines (never the customer, currency, tax fields, or the number
+except on a draft, to a DDMM ref), and turn an invoice's payment reminders off (never on).
+Invoice updates and client payments are checked against ~/lcs-private/books-guard.json
+(cc_sync.py books; at most an hour old) and payments against the ledger. It records only
+client payments backed by a Starling payment (one invoice, its own customer, sent and
+open, never above its balance, never a "hand check only" booking, with any shortfall the
+owner accepted as transfer fees, at most £40, as its bank_charges) and a singer payment
+against its bill (unused on the free plan), both through the Starling account, and marks an invoice sent (a status change; Books emails nobody as long as
 its automatic payment reminders are off) only once Luca's own email carrying that
 invoice is in the Sent folder. Calls that go around this hook (a script starting
 the server itself) are refused by mcp_bypass_guard.py. Invoices are created as drafts (`send`
@@ -29,6 +35,8 @@ absent or false) and carry the DDMM booking ref as their number. The guard fails
 of the wrong shape, denies the call.
 Design: docs/superpowers/specs/2026-09-28-zoho-books-design.md
 """
+import csv
+import datetime
 import json
 import math
 import os
@@ -172,6 +180,8 @@ NOTHING = obj()
 CONTACT_PERSON = obj("first_name", "last_name", "email", "phone", "mobile", "is_primary_contact", "salutation")
 BILLING_ADDRESS = obj("address", "street2", "city", "state", "zip", "country", "attention")
 INVOICE_LINE = obj("name", "description", "rate", "quantity", "item_order", "item_id")
+# An update resends every line with its line_item_id (a line left out is removed); item_id is the schema's required key
+INVOICE_UPDATE_LINE = obj("line_item_id", "item_id", "name", "description", "rate", "quantity", "item_order")
 BILL_LINE = obj("name", "description", "rate", "quantity", "account_id", "item_order")
 BILL_DOCUMENT = obj("document_id", "file_name")  # the keys the create_bill schema lists for documents
 BILL_FIELDS = ("vendor_id", "bill_number", "date", "due_date", "reference_number", "notes",
@@ -307,7 +317,6 @@ def check_create_bank_account(body, query, path):
 
 # Singer bills only (owner decision, 28 Sep 2026): a payment Starling shows was made to the singer's own bank
 # details, recorded against that one bill, in full, through the owner's "Starling Business" account in Books.
-# Client payments stay the owner's: Books' customer-payment tools are still denied.
 STARLING_BOOKS_ACCOUNT_ID = "1534218000000095168"  # the owner's Starling Business account in Books
 
 
@@ -341,6 +350,125 @@ def check_create_vendor_payment(body, query, path):
 FEE_CAP = 40.00  # check_payments.FEE_CAP
 
 
+# --- the guard's view of Books and the ledger (owner hands-off, 14 Oct 2026) ------------------------------
+# The guard can't call Books (mcp_bypass_guard.py refuses that, rightly), so it checks invoice updates and client
+# payments against ~/lcs-private/books-guard.json, which `cc_sync.py books` writes from a read-only list_invoices:
+# each invoice's invoice_id, customer_id, number, status, total and balance. It must be at most SNAPSHOT_MAX_AGE
+# old; run `cc_sync.py books` first. A payment is also checked against the ledger (~/lcs-private/bookings.csv):
+# the invoice's booking must be there, and never one whose notes say "hand check only". A missing, unreadable or
+# stale file denies the call (fail closed). LCS_PRIVATE_DIR and LCS_BOOKINGS_CSV move both, as for the scripts.
+SNAPSHOT_MAX_AGE = datetime.timedelta(minutes=60)
+OPEN_STATUSES = {"sent", "viewed", "overdue", "unpaid", "partially_paid"}  # sent to the client and not yet paid
+EDITABLE_STATUSES = OPEN_STATUSES | {"draft"}  # an invoice Claude may correct: never a paid or void one
+HAND_ONLY_NOTE = re.compile(r"\bhand check only\b", re.I)  # check_payments.HAND_ONLY_NOTE
+ISO_DAY = re.compile(r"[0-9]{4}-[0-9]{2}-[0-9]{2}")
+
+
+def _private_dir():
+    return os.environ.get("LCS_PRIVATE_DIR") or os.path.join(os.path.expanduser("~"), "lcs-private")
+
+
+def _books_invoice(invoice_id, now=None):
+    """The invoice as books-guard.json shows it, or Deny."""
+    stale = Deny(P + "the guard checks this against ~/lcs-private/books-guard.json, which is missing, unreadable or "
+                 "more than an hour old, or doesn't list this invoice: run `.venv/bin/python scripts/reports/cc_sync.py "
+                 "books` and try again.")
+    try:
+        with open(os.path.join(_private_dir(), "books-guard.json"), encoding="utf-8") as f:
+            data = json.load(f)
+        when = datetime.datetime.fromisoformat(data["generated_at"])
+        now = now or datetime.datetime.now(datetime.timezone.utc)
+        if when.tzinfo is None or not (datetime.timedelta(minutes=-5) <= now - when <= SNAPSHOT_MAX_AGE):
+            raise stale
+        found = [i for i in data["invoices"] if isinstance(i, dict) and i.get("invoice_id") == invoice_id]
+    except Deny:
+        raise
+    except (OSError, ValueError, KeyError, TypeError, AttributeError):
+        raise stale
+    if len(found) != 1 or not all(isinstance(found[0].get(k), str) for k in ("customer_id", "number", "status")):
+        raise stale
+    inv = found[0]
+    if not isinstance(inv.get("balance"), (int, float)) or isinstance(inv.get("balance"), bool):
+        raise stale
+    return inv
+
+
+def _ledger_allows_payment(number):
+    """Deny unless the ledger has the booking `number` and none of its rows says "hand check only"."""
+    path = os.environ.get("LCS_BOOKINGS_CSV") or os.path.join(_private_dir(), "bookings.csv")
+    try:
+        with open(path, newline="", encoding="utf-8") as f:
+            rows = [r for r in csv.DictReader(f) if (r.get("booking_ref") or "").strip() == number]
+    except (OSError, ValueError, csv.Error):
+        raise Deny(P + "the ledger (~/lcs-private/bookings.csv) can't be read, so no payment is recorded.")
+    if not rows:
+        raise Deny(P + f"invoice {number} has no booking in the ledger, so no payment is recorded against it.")
+    if any(HAND_ONLY_NOTE.search(r.get("notes") or "") for r in rows):
+        raise Deny(P + f"booking {number} says \"hand check only\" in the ledger: its payments are confirmed by hand, "
+                   "never recorded by Claude.")
+
+
+def _plain_number(v):
+    return isinstance(v, (int, float)) and not isinstance(v, bool) and math.isfinite(v)
+
+
+def _iso_day(v, where):
+    try:
+        ok = isinstance(v, str) and ISO_DAY.fullmatch(v) and datetime.date.fromisoformat(v)
+    except ValueError:
+        ok = False
+    if not ok:
+        raise Deny(f"{P}{where} must be a date written YYYY-MM-DD.")
+
+
+# Invoice corrections (owner hands-off, 14 Oct 2026: "you have full permissions to fix all Books issues. i dont
+# ever want to manually edit books"): dates and payment terms, notes and terms text, the reference number and the
+# lines' description, rate and quantity, on a draft or sent (not paid, not void) invoice. Never the customer
+# (customer_id, which the update schema requires, may only restate the invoice's own), never the currency, tax or
+# VAT fields, discounts, adjustments, email text or flags (none of those keys is listed), and the invoice number
+# only on a draft, to a DDMM ref. Books asks a sent invoice's update for a `reason` (code 110701, 14 Oct 2026): free
+# text, scanned like the rest. The text scan below still denies bank details, VAT wording and the word tax.
+def check_update_invoice(body, query, path):
+    _need(path, "invoice_id", "path_variables")
+    # Books removes every line an update leaves out, so each update resends the invoice's lines (get_invoice first,
+    # each with its line_item_id); a call without them could empty the invoice.
+    if not (isinstance(body.get("line_items"), list) and body["line_items"]):
+        raise Deny(P + "an invoice update resends every line from get_invoice (with its line_item_id): Books removes "
+                   "a line left out.")
+    inv = _books_invoice(path["invoice_id"])
+    if inv["status"] not in EDITABLE_STATUSES:
+        raise Deny(P + f"invoice {inv['number']} is {inv['status']}: Claude corrects only draft or sent invoices, "
+                   "never a paid or void one.")
+    if "customer_id" in body and body["customer_id"] != inv["customer_id"]:
+        raise Deny(P + "an invoice update never changes the customer: customer_id may only restate the invoice's own.")
+    num = body.get("invoice_number")
+    if "invoice_number" in body and num != inv["number"]:
+        if inv["status"] != "draft":
+            raise Deny(P + "the invoice number changes only on a draft invoice.")
+        if not (isinstance(num, str) and INVOICE_NUMBER.fullmatch(num)):
+            raise Deny(P + "invoice_number must be the booking's DDMM ref (e.g. 2111 or 2111B).")
+    auto = query.get("ignore_auto_number_generation")
+    if auto is not None and not (isinstance(auto, bool) or (isinstance(auto, str) and auto.lower() in ("true", "false"))):
+        raise Deny(P + "ignore_auto_number_generation must be true or false.")
+    for key in ("date", "due_date"):
+        if key in body:
+            _iso_day(body[key], f"body.{key}")
+    if "payment_terms" in body and not (isinstance(body["payment_terms"], int) and not isinstance(body["payment_terms"], bool)
+                                        and 0 <= body["payment_terms"] <= 400):
+        raise Deny(P + "payment_terms must be a whole number of days.")
+    for i, line in enumerate(body.get("line_items") or []):
+        for key, low in (("rate", 0), ("quantity", 0)):
+            if key in line and not (_plain_number(line[key]) and low <= line[key] <= 10000
+                                    and (key != "quantity" or line[key] > 0)):
+                raise Deny(f"{P}body.line_items[{i}].{key} must be a plain number (rate £0 to £10,000, quantity above 0).")
+
+
+# Payment reminders off (owner hands-off, 14 Oct 2026): Books' automatic reminders would email the client, so Claude
+# turns them off wherever it finds them on. Never on: enable_invoice_payment_reminder and every remind tool stay denied.
+def check_disable_reminder(body, query, path):
+    _need(path, "invoice_id", "path_variables")
+
+
 def check_create_customer_payment(body, query, path):
     for key in ("customer_id", "date", "invoice_id"):
         _need(body, key, "body")
@@ -372,6 +500,18 @@ def check_create_customer_payment(body, query, path):
         raise Deny(P + "amount must be more than £0 and at most £10,000.")
     if charges and not charges < amounts[0]:
         raise Deny(P + "bank_charges must be less than amount.")
+    _iso_day(body["date"], "body.date")
+    # Books as the guard last saw it (books-guard.json): the invoice's own customer, sent and still open, never a
+    # draft, paid or void one, and never more than its balance; then the ledger: never a "hand check only" booking.
+    inv = _books_invoice(body["invoice_id"])
+    if body["customer_id"] != inv["customer_id"]:
+        raise Deny(P + "customer_id must be the invoice's own customer.")
+    if inv["status"] not in OPEN_STATUSES:
+        raise Deny(P + f"invoice {inv['number']} is {inv['status']}: a payment is recorded only against a sent invoice "
+                   "with a balance (never a draft, paid or void one).")
+    if round(amounts[0], 2) > round(inv["balance"], 2):
+        raise Deny(P + f"£{amounts[0]:,.2f} is more than invoice {inv['number']}'s balance (£{inv['balance']:,.2f}).")
+    _ledger_allows_payment(inv["number"])
 
 
 def check_create_item(body, query, path):
@@ -425,6 +565,13 @@ WRITE_TOOLS = {
     "ZohoBooks_create_item": (
         obj("name", "rate", "description", "item_type", "product_type", "purchase_rate", "purchase_description"),
         ORG_ONLY, NOTHING, check_create_item),
+    # owner hands-off, 14 Oct 2026
+    "ZohoBooks_update_invoice": (
+        obj("customer_id", "invoice_number", "date", "due_date", "payment_terms", "payment_terms_label", "notes",
+            "terms", "reference_number", "reason", line_items=[INVOICE_UPDATE_LINE]),
+        obj("organization_id", "ignore_auto_number_generation"), obj("invoice_id"), check_update_invoice),
+    "ZohoBooks_disable_invoice_payment_reminder": (
+        NOTHING, ORG_ONLY, obj("invoice_id"), check_disable_reminder),
 }
 
 
@@ -567,10 +714,9 @@ def decide(tool, tool_input):
         except Deny as e:
             return str(e)
         return None
-    if name == "ZohoBooks_update_invoice":
-        return P + "Claude doesn't update invoices. The owner edits drafts in Books."
-    return (f"{P}{name} isn't allowed. Claude may read Books and make draft invoices, contacts and bills; "
-            "it never emails, reminds, deletes, voids, refunds, writes off or matches bank transactions.")
+    return (f"{P}{name} isn't allowed. Claude may read Books, make draft invoices, contacts and bills, correct an "
+            "invoice's dates, terms, text and lines, record a client payment and turn reminders off; it never emails, "
+            "reminds, deletes, voids, refunds, writes off or matches bank transactions.")
 
 
 def _no_duplicate_keys(pairs):

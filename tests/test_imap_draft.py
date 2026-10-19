@@ -494,19 +494,122 @@ def test_sent_matches_the_exact_invoice_to_the_client():
         assert rc == 1 and out.startswith("STOP:"), (args, out)
 
 
+NONCE_FILE = TMP / "private" / "command-centre" / "owner-nonce"
+
+
+def owner_run(argv, imap, nonce_ok=True, piped=True):
+    """run_main with the Command Centre's one-time nonce: its sha256 in <private>/command-centre/owner-nonce (mode
+    600), the nonce itself on a pipe (nonce_ok=False pipes a different one; piped=False gives /dev/null instead)."""
+    import hashlib, secrets
+    d.lcs_owner._PROVEN = False
+    nonce = secrets.token_hex(32)
+    NONCE_FILE.parent.mkdir(mode=0o700, exist_ok=True)
+    fd = os.open(NONCE_FILE, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+    os.write(fd, hashlib.sha256(nonce.encode()).hexdigest().encode())
+    os.close(fd)
+    r, w = os.pipe()
+    os.write(w, ((nonce if nonce_ok else secrets.token_hex(32)) + "\n").encode())
+    os.close(w)
+    out = io.StringIO()
+    try:
+        with redirect_stdout(out), open(os.devnull) as null:
+            rc = d.main(argv, factory=lambda host: imap, password="right", stdin_fd=r if piped else null.fileno())
+    finally:
+        os.close(r)
+        d.lcs_owner._PROVEN = False
+        if NONCE_FILE.exists():
+            NONCE_FILE.unlink()
+    return rc, out.getvalue()
+
+
 def test_discard_moves_one_office_draft_to_trash_and_forgets_its_key():
     clear_saved()
     keyed = luca_draft(key="2111-confirmation")
     d.record_saved("2111-confirmation")
     imap = FakeIMAP(drafts=[luca_draft(msg_id="<other@londonchoralservice.com>"), keyed])
-    rc, out = run_main(["discard", LUCA_ID], imap)
+    rc, out = owner_run(["discard", LUCA_ID, "--owner"], imap)
     assert rc == 0 and "moved to Trash" in out and "can be saved again" in out, out
     assert imap.boxes["Trash"] == [keyed] and len(imap.boxes["Drafts"]) == 1, "only that draft, and only to Trash"
     assert not d.saved_before("2111-confirmation")
     plain = luca_draft()
     imap = FakeIMAP(drafts=[plain])
-    rc, out = run_main(["discard", LUCA_ID], imap)
+    rc, out = owner_run(["discard", LUCA_ID, "--owner"], imap)
     assert rc == 0 and imap.boxes["Trash"] == [plain] and "can be saved again" not in out, out
+
+
+def test_the_nonce_is_burnt_by_a_discard():
+    burnt = []
+    real = d.lcs_owner.owner_confirmed
+
+    def watch(fd=0):
+        ok = real(fd)
+        burnt.append(ok and not NONCE_FILE.exists())
+        return ok
+    d.lcs_owner.owner_confirmed = watch
+    try:
+        rc, out = owner_run(["discard", LUCA_ID, "--owner"], FakeIMAP(drafts=[luca_draft()]))
+    finally:
+        d.lcs_owner.owner_confirmed = real
+    assert rc == 0 and burnt == [True], (burnt, out)
+
+
+def test_discard_needs_the_owner_flag_and_the_command_centres_nonce():
+    for argv, kw in ((["discard", LUCA_ID], {}), (["discard", LUCA_ID, "--force"], {}),
+                     (["discard", LUCA_ID, "--owner", "x"], {}),
+                     (["discard", LUCA_ID, "--owner"], {"nonce_ok": False}),
+                     (["discard", LUCA_ID, "--owner"], {"piped": False})):
+        imap = FakeIMAP(drafts=[luca_draft()])
+        rc, out = owner_run(argv, imap, **kw)
+        assert rc == 1 and out.startswith("STOP:") and "passkey" in out and out.count("\n") == 1, (argv, kw, out)
+        assert imap.boxes["Trash"] == [] and not [c for c in imap.calls if c[0] == "login"], (argv, kw)
+    rc, out = run_main(["discard", LUCA_ID, "--owner"], FakeIMAP(drafts=[luca_draft()]))  # no nonce file at all
+    assert rc == 1 and "passkey" in out, out
+
+
+def test_the_trash_helper_refuses_other_callers_but_attachs_retire_still_runs():
+    d.lcs_owner._PROVEN = False
+    imap = FakeIMAP(drafts=[luca_draft(key="2111-reply")])
+    try:
+        d.trash_draft(imap, LUCA_ID, own_only=False)
+        raise AssertionError("trash_draft(own_only=False) ran without the owner's nonce")
+    except d.Refused as e:
+        assert "passkey" in str(e)
+    assert imap.boxes["Trash"] == [] and not [c for c in imap.calls if c[0] == "uid"]
+    plain = luca_draft()
+    imap = FakeIMAP(drafts=[plain])
+    assert d.retire_original(imap, LUCA_ID) is True and imap.boxes["Trash"] == [plain], "unattended, as before"
+
+
+def test_the_trash_helper_takes_replace_only_for_a_pair_that_passes_the_replace_rules():
+    """replace runs without the passkey (owner decision, 14 Oct 2026), but replaced_by isn't a general way round it:
+    trash_draft checks the replace rules for that exact pair itself."""
+    d.lcs_owner._PROVEN = False
+    other_thread = luca_draft(msg_id=NEW_ID).replace(b"In-Reply-To: <abc123@mail.example.com>",
+                                                     b"In-Reply-To: <zzz@mail.example.com>")
+    for drafts, new_id in (([luca_draft(key="2111-reply")], NEW_ID),             # no replacement saved
+                           ([luca_draft(key="2111-reply")], LUCA_ID),            # itself
+                           ([luca_draft(key="2111-reply"), luca_draft(msg_id=NEW_ID, to="someone@example.com")], NEW_ID),
+                           ([luca_draft(key="2111-reply"), other_thread], NEW_ID)):
+        imap = FakeIMAP(drafts=drafts)
+        try:
+            d.trash_draft(imap, LUCA_ID, own_only=False, replaced_by=new_id)
+            raise AssertionError(f"trash_draft moved a draft for a pair the replace rules refuse ({new_id})")
+        except d.Refused:
+            pass
+        assert imap.boxes["Trash"] == [] and not [c for c in imap.calls if c[0] == "uid"]
+    old, new = luca_draft(key="2111-reply"), luca_draft(msg_id=NEW_ID)
+    imap = FakeIMAP(drafts=[old, new])
+    assert d.trash_draft(imap, LUCA_ID, own_only=False, replaced_by=NEW_ID) == "2111-reply"
+    assert imap.boxes["Trash"] == [old] and imap.boxes["Drafts"] == [new]
+
+
+def test_replace_runs_unattended_without_the_owners_nonce():
+    d.lcs_owner._PROVEN = False
+    old, new = luca_draft(), luca_draft(msg_id=NEW_ID)
+    imap = FakeIMAP(drafts=[old, new])
+    rc, out = run_main(["replace", LUCA_ID, NEW_ID], imap)
+    assert rc == 0 and "moved to Trash" in out and imap.boxes["Trash"] == [old], out
+    assert not d.lcs_owner.owner_proven()
 
 
 def test_discard_refuses_other_senders_missing_or_duplicate_drafts():
@@ -514,10 +617,43 @@ def test_discard_refuses_other_senders_missing_or_duplicate_drafts():
     for drafts, why in (([other], "only a draft from office@"), ([], "isn't in Drafts"),
                         ([luca_draft(), luca_draft()], "couldn't move")):
         imap = FakeIMAP(drafts=drafts)
-        rc, out = run_main(["discard", LUCA_ID], imap)
+        rc, out = owner_run(["discard", LUCA_ID, "--owner"], imap)
         assert rc == 1 and why in out and imap.boxes["Trash"] == [], (why, out)
-    rc, out = run_main(["discard", "not-an-id"], FakeIMAP())
+    rc, out = owner_run(["discard", "not-an-id", "--owner"], FakeIMAP())
     assert rc == 1 and "Message-ID" in out, out
+
+
+NEW_ID = "<new@londonchoralservice.com>"
+
+
+def test_replace_moves_the_old_draft_once_its_replacement_is_saved():
+    clear_saved()
+    old, new = luca_draft(key="2111-confirmation"), luca_draft(msg_id=NEW_ID)
+    d.record_saved("2111-confirmation")
+    imap = FakeIMAP(drafts=[old, new])
+    rc, out = run_main(["replace", LUCA_ID, NEW_ID], imap)
+    assert rc == 0 and "moved to Trash" in out, out
+    assert imap.boxes["Trash"] == [old] and imap.boxes["Drafts"] == [new], "only the old draft, and only to Trash"
+    assert not d.saved_before("2111-confirmation")
+
+
+def test_replace_refuses_unless_the_new_draft_matches():
+    other_sender = luca_draft(msg_id=NEW_ID).replace(d.FROM_HEADER.encode(), b"Luca <luca@almaconsort.com>")
+    for drafts, why in (([luca_draft()], "replacement draft isn't in Drafts"),
+                        ([luca_draft(msg_id=NEW_ID)], "old draft isn't in Drafts"),
+                        ([luca_draft(), luca_draft(msg_id=NEW_ID, to="someone@example.com")], "same one address"),
+                        ([luca_draft(), other_sender], "only drafts from office@")):
+        imap = FakeIMAP(drafts=drafts)
+        rc, out = run_main(["replace", LUCA_ID, NEW_ID], imap)
+        assert rc == 1 and why in out and imap.boxes["Trash"] == [], (why, out)
+    other_thread = luca_draft(msg_id=NEW_ID).replace(b"In-Reply-To: <abc123@mail.example.com>",
+                                                     b"In-Reply-To: <zzz@mail.example.com>")
+    imap = FakeIMAP(drafts=[luca_draft(), other_thread])
+    rc, out = run_main(["replace", LUCA_ID, NEW_ID], imap)
+    assert rc == 1 and "same conversation" in out and imap.boxes["Trash"] == [], out
+    for args in (["replace", LUCA_ID, LUCA_ID], ["replace", "x", NEW_ID]):
+        rc, out = run_main(args, FakeIMAP(drafts=[luca_draft()]))
+        assert rc == 1 and out.startswith("STOP:"), (args, out)
 
 
 def test_the_script_has_no_sending_code():

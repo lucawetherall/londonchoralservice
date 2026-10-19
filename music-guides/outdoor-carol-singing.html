@@ -236,7 +236,7 @@
   <meta property="og:image:height" content="630">
   <meta property="og:image:alt" content="The London Choral Service: carol singers and Christmas choirs">
   <meta property="article:published_time" content="2026-07-31">
-  <meta property="article:modified_time" content="2026-09-29">
+  <meta property="article:modified_time" content="2026-10-19">
 
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Outdoor Carol Singing: Markets, Switch-Ons & Streets | LCS">
@@ -1521,6 +1521,20 @@
       }
     }
     
+    /* Modifier — secondary button: outlined, beside a primary .btn-link. */
+    .btn-link--secondary,
+    .btn-link--secondary:visited,
+    .btn-link--secondary:active {
+      background-color: transparent;
+      color: var(--color-accent);
+      box-shadow: inset 0 0 0 1px var(--color-accent);
+    }
+    
+    .btn-link--secondary:hover {
+      background-color: var(--color-accent);
+      color: var(--color-bg);
+    }
+    
     /* Modifier — button with leading inline icon (e.g. WhatsApp).
        Icon stays subordinate to the label: 0.85em with a tight gap so the
        button reads as text-first, with the glyph as a quiet accent. */
@@ -1675,8 +1689,10 @@
       grid-template-areas:
         "crumb crumb"
         "head  video"
+        "offer video"
         "body  video";
-      grid-template-rows: auto auto 1fr;
+      /* The offer row is empty (zero height) on pages without a .hero-offer. */
+      grid-template-rows: auto auto auto 1fr;
       column-gap: var(--space-3xl);
       align-items: start;
     }
@@ -1691,6 +1707,42 @@
     
     .hero-text {
       grid-area: body;
+    }
+    
+    /* Landing-page offer under the h1: the facts and the buttons a visitor needs
+       on the first screen. On phones it sits above the film. */
+    .hero-offer {
+      grid-area: offer;
+      margin-bottom: var(--space-xl);
+    }
+    
+    .hero-facts {
+      list-style: none;
+      padding: 0;
+      margin: 0 0 var(--space-lg);
+    }
+    
+    .hero-facts li {
+      position: relative;
+      padding-left: 1.6rem;
+      margin-bottom: var(--space-xs);
+      line-height: 1.45;
+    }
+    
+    .hero-facts li::before {
+      content: "\2713";
+      position: absolute;
+      left: 0;
+      color: var(--color-accent);
+      font-size: 0.9em;
+    }
+    
+    .hero-ctas {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: var(--space-sm) var(--space-md);
+      margin-bottom: var(--space-md);
     }
     
     .hero-video {
@@ -1847,6 +1899,7 @@
         grid-template-areas:
           "crumb"
           "head"
+          "offer"
           "video"
           "body";
         grid-template-rows: none;
@@ -2756,7 +2809,7 @@
         "url": "https://londonchoralservice.com/music-guides/outdoor-carol-singing.html",
         "inLanguage": "en-GB",
         "datePublished": "2026-07-31",
-        "dateModified": "2026-09-29",
+        "dateModified": "2026-10-19",
         "description": "Booking carol singers outdoors: how many voices a market or switch-on needs, what weather and cold do to singing, and what to provide on the day.",
         "author": [
           {
@@ -2867,13 +2920,13 @@
       },
       {
         "@type": "VideoObject",
-        "name": "Carol of the Bells — Full Choir",
+        "name": "Ding Dong! Merrily on High — Full Choir",
         "description": "Live performance by The London Choral Service.",
-        "thumbnailUrl": "https://img.youtube.com/vi/dGYqQf6BDAk/maxresdefault.jpg",
-        "uploadDate": "2026-09-29",
-        "duration": "PT1M21S",
-        "contentUrl": "https://www.youtube.com/watch?v=dGYqQf6BDAk",
-        "embedUrl": "https://www.youtube-nocookie.com/embed/dGYqQf6BDAk",
+        "thumbnailUrl": "https://img.youtube.com/vi/zDlSFb74p4E/maxresdefault.jpg",
+        "uploadDate": "2026-10-19",
+        "duration": "PT1M45S",
+        "contentUrl": "https://www.youtube.com/watch?v=zDlSFb74p4E",
+        "embedUrl": "https://www.youtube-nocookie.com/embed/zDlSFb74p4E",
         "publisher": {
           "@id": "https://londonchoralservice.com/#organization"
         }
@@ -2901,8 +2954,8 @@
             <li><a href="/weddings.html">Weddings</a></li>
             <li><a href="/funerals.html">Funerals</a></li>
             <li><a href="/corporate.html">Corporate</a></li>
-            <li><a href="/christmas.html">Christmas</a></li>
-            <li><a href="/carol-singers.html">Carol Singers</a></li>
+            <li><a href="/christmas.html">Christmas carol singers</a></li>
+            <li><a href="/christmas-carol-services.html">Church carol services</a></li>
             <li><a href="/private-events.html">Private Events</a></li>
             <li><a href="/destinations/">Weddings Abroad</a></li>
             <li class="dropdown-separator" aria-hidden="true"></li>
@@ -2953,7 +3006,7 @@
           </ol></nav>
           <h1>Outdoor carol singing</h1>
           <p class="guide-meta">By Luca Wetherall, Artistic Director &amp; Tutor in Music, University of Oxford</p>
-          <p class="guide-meta">Published <time datetime="2026-07-31">31 July 2026</time> &middot; Updated <time datetime="2026-09-29">29 September 2026</time></p>
+          <p class="guide-meta">Published <time datetime="2026-07-31">31 July 2026</time> &middot; Updated <time datetime="2026-10-19">19 October 2026</time></p>
           <hr class="rule">
         </div>
       </section>
@@ -2961,12 +3014,12 @@
         <div class="prose">
           <p class="lede">Outdoors takes away the thing a building was giving you for free. There are no reflections, no ceiling to hold the sound, and usually a crowd making more noise than the same crowd would make indoors. Carol singing still works out there, and we do a lot of it every December, but it is sized and planned differently.</p>
           <div class="video-embed" style="margin-block-start: var(--space-lg)">
-            <button class="video-thumb" aria-label="Play Carol of the Bells" data-video="dGYqQf6BDAk">
-              <img src="https://img.youtube.com/vi/dGYqQf6BDAk/maxresdefault.jpg" alt="Carol of the Bells &mdash; The London Choral Service" loading="lazy" width="1280" height="720">
+            <button class="video-thumb" aria-label="Play Ding Dong! Merrily on High" data-video="zDlSFb74p4E">
+              <img src="https://img.youtube.com/vi/zDlSFb74p4E/maxresdefault.jpg" alt="Ding Dong! Merrily on High &mdash; The London Choral Service" loading="lazy" width="1280" height="720">
               <svg class="play-btn" viewBox="0 0 56 56" aria-hidden="true"><circle cx="28" cy="28" r="27"/><path d="M23 19v18l15-9z"/></svg>
             </button>
           </div>
-          <p class="text-sm text-mid">Eight of our singers performing Carol of the Bells. <a href="../listen.html">Hear more recordings</a>.</p>
+          <p class="text-sm text-mid">Eight of our singers performing Ding Dong! Merrily on High. <a href="../listen.html">Hear more recordings</a>.</p>
         </div>
       </section>
       <section class="section">
@@ -3072,7 +3125,7 @@
       <section class="section">
         <div class="prose">
           <p>We sing at markets, light switch-ons and street events across London and the rest of the UK. Tell us where the singers would stand and what else is making noise nearby, and we will tell you what size group the space needs.</p>
-          <p><a href="../carol-singers.html" class="btn-link">Hire carol singers</a></p>
+          <p><a href="../christmas.html" class="btn-link">Hire carol singers</a></p>
           <p class="text-sm text-mid">Text us on WhatsApp for the fastest reply, or call us on <a href="tel:+447356042468">07356 042468</a>.</p>
         </div>
       </section>
@@ -3109,8 +3162,8 @@
             <li><a href="/weddings.html">Weddings</a></li>
             <li><a href="/funerals.html">Funerals</a></li>
             <li><a href="/corporate.html">Corporate events</a></li>
-            <li><a href="/christmas.html">Christmas carol services</a></li>
-            <li><a href="/carol-singers.html">Hire carol singers</a></li>
+            <li><a href="/christmas.html">Christmas carol singers</a></li>
+            <li><a href="/christmas-carol-services.html">Church carol services</a></li>
             <li><a href="/private-events.html">Private events</a></li>
             <li><a href="/destinations/">Weddings abroad</a></li>
             <li><a href="/pricing.html">Pricing</a></li>

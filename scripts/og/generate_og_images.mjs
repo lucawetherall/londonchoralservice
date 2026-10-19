@@ -63,6 +63,8 @@ const MANUAL = {
   'contact.html': ['Contact Us', 'Send us the date and the venue'],
   'faq.html': ['Questions & Answers', 'Booking, repertoire, travel and prices'],
   'listen.html': ['Hear Our Singers', 'Hymns, anthems and carols, recorded by our musicians'],
+  'christmas.html': ['Christmas Carol Singers', 'For office parties, receptions, lobbies and markets'],
+  'christmas-carol-services.html': ['Christmas Carol Services', 'A choir and organist for your service in church'],
   'accessibility.html': ['Accessibility', 'How this website works for every visitor'],
   'privacy.html': ['Privacy Policy', 'What we collect, and why'],
   'terms.html': ['Terms of Booking', 'The terms that govern every booking'],

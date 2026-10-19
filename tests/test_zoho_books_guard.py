@@ -1,12 +1,47 @@
 #!/usr/bin/env python3
 """Tests for .claude/hooks/zoho_books_guard.py (PreToolUse). Stdlib only."""
-import importlib.util, json, os, subprocess, sys, tempfile
+import datetime, importlib.util, json, os, subprocess, sys, tempfile
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 GUARD = os.path.join(ROOT, ".claude", "hooks", "zoho_books_guard.py")
 SETTINGS = os.path.join(ROOT, ".claude", "settings.json")
 
 SERVERS = ("zoho-books", "zoho-books-invoices")
+
+# The guard's view of Books (books-guard.json, which cc_sync.py books writes) and the ledger: a temp tree, never
+# the real ~/lcs-private. Every subprocess the tests start inherits these.
+PRIVATE = tempfile.mkdtemp()
+os.environ["LCS_PRIVATE_DIR"] = PRIVATE
+os.environ["LCS_BOOKINGS_CSV"] = os.path.join(PRIVATE, "bookings.csv")
+CUSTOMER, OTHER_CUSTOMER = "1534218000000100010", "1534218000000100099"
+SENT_ID, DRAFT_ID, PAID_ID, VOID_ID, SHARED_ID, UNLEDGERED_ID = (
+    "1534218000000100020", "1534218000000100021", "1534218000000100022", "1534218000000100023",
+    "1534218000000100024", "1534218000000100025")
+SNAPSHOT = [
+    {"invoice_id": SENT_ID, "customer_id": CUSTOMER, "number": "2111", "status": "sent", "total": 1150.0, "balance": 1150.0},
+    {"invoice_id": DRAFT_ID, "customer_id": CUSTOMER, "number": "1211", "status": "draft", "total": 1750.0, "balance": 1750.0},
+    {"invoice_id": PAID_ID, "customer_id": CUSTOMER, "number": "2509", "status": "paid", "total": 3225.0, "balance": 0.0},
+    {"invoice_id": VOID_ID, "customer_id": CUSTOMER, "number": "0101", "status": "void", "total": 100.0, "balance": 100.0},
+    {"invoice_id": SHARED_ID, "customer_id": CUSTOMER, "number": "2108A", "status": "sent", "total": 2800.0, "balance": 2800.0},
+    {"invoice_id": UNLEDGERED_ID, "customer_id": CUSTOMER, "number": "0909", "status": "overdue", "total": 500.0, "balance": 500.0},
+]
+
+
+def write_snapshot(invoices=SNAPSHOT, age=datetime.timedelta(0), text=None):
+    when = (datetime.datetime.now(datetime.timezone.utc) - age).isoformat(timespec="seconds")
+    with open(os.path.join(PRIVATE, "books-guard.json"), "w") as f:
+        f.write(text if text is not None else json.dumps({"generated_at": when, "invoices": invoices}))
+
+
+def write_ledger(text=None):
+    with open(os.environ["LCS_BOOKINGS_CSV"], "w") as f:
+        f.write(text if text is not None else
+                "booking_ref,notes\n2111,PENDING: invoiced\n1211,PENDING\n2509,paid in full 2026-09-20\n"
+                "2108A,\"hand check only: shares 2108, owner decision\"\n")
+
+
+write_snapshot()
+write_ledger()
 
 
 NON_READ_ONLY = [ "ZohoBooks_add_bank_reconciliation_attachment", "ZohoBooks_add_contact_address", "ZohoBooks_add_contact_attachment", "ZohoBooks_add_contact_bank_account", "ZohoBooks_add_contact_card", "ZohoBooks_add_contact_comment", "ZohoBooks_add_contact_tax_info", "ZohoBooks_add_invoice_comment", "ZohoBooks_add_invoice_digital_signature", "ZohoBooks_add_invoice_document", "ZohoBooks_add_invoice_online_payment_bank_account", "ZohoBooks_apply_credits_to_invoice", "ZohoBooks_apply_invoice_substatus", "ZohoBooks_apply_pricebook_to_invoice", "ZohoBooks_approve_contact_bank_account", "ZohoBooks_approve_invoice", "ZohoBooks_approve_invoices", "ZohoBooks_assign_contact_owner", "ZohoBooks_assign_owner_to_contacts", "ZohoBooks_bulk_invoice_reminder", "ZohoBooks_bulk_mark_item_masters_active", "ZohoBooks_bulk_mark_item_masters_inactive", "ZohoBooks_bulk_mark_item_variants_active", "ZohoBooks_bulk_mark_item_variants_inactive", "ZohoBooks_bulk_update_bank_account_rules", "ZohoBooks_cancel_einvoice_invoice", "ZohoBooks_cancel_invoice", "ZohoBooks_cancel_invoice_einvoice", "ZohoBooks_cancel_invoices_einvoice", "ZohoBooks_cancel_scheduled_invoice_email", "ZohoBooks_cancel_write_off_invoice", "ZohoBooks_categorize_as_credit_note_refunds", "ZohoBooks_categorize_as_vendor_credit_refunds", "ZohoBooks_categorize_as_vendor_payment_refund", "ZohoBooks_categorize_bank_transaction", "ZohoBooks_categorize_bank_transaction_as_customer_payment", "ZohoBooks_categorize_bank_transaction_as_expense", "ZohoBooks_categorize_bank_transaction_as_payment_refund", "ZohoBooks_categorize_bank_transaction_as_vendor_payment", "ZohoBooks_create_bank_account", "ZohoBooks_create_bank_account_match_filter", "ZohoBooks_create_bank_account_rule", "ZohoBooks_create_bank_reconciliation", "ZohoBooks_create_bank_transaction", "ZohoBooks_create_contact", "ZohoBooks_create_contact_person", "ZohoBooks_create_customer_payment", "ZohoBooks_create_customer_payment_refund", "ZohoBooks_create_employee", "ZohoBooks_create_expense", "ZohoBooks_create_invoice", "ZohoBooks_create_invoice_asynchronous_online_payment", "ZohoBooks_create_invoice_from_salesorder", "ZohoBooks_create_invoice_synchronous_online_payment", "ZohoBooks_create_invoices_from_estimates", "ZohoBooks_create_invoices_from_projects", "ZohoBooks_create_item", "ZohoBooks_create_item_master", "ZohoBooks_create_item_variant", "ZohoBooks_create_pricebook", "ZohoBooks_create_recurring_bill", "ZohoBooks_create_tax", "ZohoBooks_create_tax_authority", "ZohoBooks_create_tax_exemption", "ZohoBooks_create_tax_group", "ZohoBooks_decline_contact_bank_account", "ZohoBooks_delete_invoice", "ZohoBooks_delete_invoice_applied_credit", "ZohoBooks_delete_invoice_comment", "ZohoBooks_delete_invoice_document", "ZohoBooks_delete_invoice_einvoice_status", "ZohoBooks_delete_invoice_expense_receipt", "ZohoBooks_delete_invoice_line_item", "ZohoBooks_delete_invoice_payment", "ZohoBooks_delete_invoice_substatus", "ZohoBooks_delete_invoices", "ZohoBooks_delete_recurring_bill", "ZohoBooks_disable_contact_payment_reminder", "ZohoBooks_disable_contact_person_sms", "ZohoBooks_disable_contact_portal", "ZohoBooks_disable_invoice_payment_reminder", "ZohoBooks_email_contact", "ZohoBooks_email_contact_statement", "ZohoBooks_email_invoice", "ZohoBooks_email_invoices", "ZohoBooks_enable_contact_payment_reminder", "ZohoBooks_enable_contact_person_sms", "ZohoBooks_enable_contact_portal", "ZohoBooks_enable_invoice_payment_reminder", "ZohoBooks_exclude_bank_transaction", "ZohoBooks_fetch_invoice_einvoice", "ZohoBooks_finalize_invoice_approval", "ZohoBooks_force_pay_invoice", "ZohoBooks_generate_invoice_payment_link", "ZohoBooks_get_bank_statement_import_encryption_key", "ZohoBooks_import_bank_statements", "ZohoBooks_invite_contact_person_to_portal", "ZohoBooks_mail_invoice_pdf", "ZohoBooks_map_invoice_with_salesorder", "ZohoBooks_mark_bank_account_active", "ZohoBooks_mark_bank_account_inactive", "ZohoBooks_mark_contact_active", "ZohoBooks_mark_contact_address_as_billing", "ZohoBooks_mark_contact_address_as_shipping", "ZohoBooks_mark_contact_inactive", "ZohoBooks_mark_contact_person_primary", "ZohoBooks_mark_contacts_for_1099_tracking", "ZohoBooks_mark_invoice_draft", "ZohoBooks_mark_invoice_einvoice_cancelled", "ZohoBooks_mark_invoice_einvoice_pushed", "ZohoBooks_mark_invoice_ready_to_push", "ZohoBooks_mark_invoice_sent", "ZohoBooks_mark_invoice_void", "ZohoBooks_mark_invoices_sent", "ZohoBooks_mark_invoices_shipped", "ZohoBooks_mark_item_active", "ZohoBooks_mark_item_inactive", "ZohoBooks_mark_item_master_as_active", "ZohoBooks_mark_item_master_as_inactive", "ZohoBooks_mark_item_variant_as_active", "ZohoBooks_mark_item_variant_as_inactive", "ZohoBooks_mark_pricebook_active", "ZohoBooks_mark_pricebook_inactive", "ZohoBooks_match_bank_transaction", "ZohoBooks_merge_contact", "ZohoBooks_move_item_variant", "ZohoBooks_preview_invoice_coupons", "ZohoBooks_push_invoice_einvoice", "ZohoBooks_push_invoices_einvoice", "ZohoBooks_recall_invoice_einvoice_status", "ZohoBooks_reject_invoice", "ZohoBooks_remind_customer_for_invoice_payment", "ZohoBooks_reorder_bank_account_rules", "ZohoBooks_resend_contact_person_portal_invite", "ZohoBooks_restore_bank_transaction", "ZohoBooks_restore_contact_documents", "ZohoBooks_resume_recurring_bill", "ZohoBooks_save_bank_reconciliation_draft", "ZohoBooks_schedule_invoice_email", "ZohoBooks_send_contact_client_review_email", "ZohoBooks_send_contact_payment_method_email", "ZohoBooks_send_contact_sms", "ZohoBooks_send_contact_vendor_statement_email", "ZohoBooks_send_contacts_sms", "ZohoBooks_send_invoice_dunning_notifications", "ZohoBooks_send_invoice_retry_sms", "ZohoBooks_send_invoice_sms", "ZohoBooks_send_invoice_via_snail_mail", "ZohoBooks_skip_suggested_bank_account_rule", "ZohoBooks_stop_recurring_bill", "ZohoBooks_submit_invoice", "ZohoBooks_submit_invoices", "ZohoBooks_track_contact_1099", "ZohoBooks_uncategorize_bank_transaction", "ZohoBooks_ungroup_item_variants", "ZohoBooks_unmap_invoices_from_salesorders", "ZohoBooks_unmatch_bank_transaction", "ZohoBooks_unship_invoices", "ZohoBooks_untrack_contact_1099", "ZohoBooks_update_bank_account", "ZohoBooks_update_bank_account_match_filter", "ZohoBooks_update_bank_account_preferences", "ZohoBooks_update_bank_account_rule", "ZohoBooks_update_bank_reconciliation", "ZohoBooks_update_bank_transaction", "ZohoBooks_update_contact", "ZohoBooks_update_contact_address", "ZohoBooks_update_contact_bank_account", "ZohoBooks_update_contact_card", "ZohoBooks_update_contact_document", "ZohoBooks_update_contact_person", "ZohoBooks_update_contact_tags", "ZohoBooks_update_contact_tax_info", "ZohoBooks_update_contact_trn_status", "ZohoBooks_update_contact_using_custom_field", "ZohoBooks_update_custom_fields_in_customer_payment", "ZohoBooks_update_custom_fields_in_invoice", "ZohoBooks_update_custom_fields_in_item", "ZohoBooks_update_customer_payment", "ZohoBooks_update_customer_payment_refund", "ZohoBooks_update_customer_payment_using_custom_field", "ZohoBooks_update_expense", "ZohoBooks_update_expense_using_custom_field", "ZohoBooks_update_invoice", "ZohoBooks_update_invoice_advanced_tracking_details", "ZohoBooks_update_invoice_billing_address", "ZohoBooks_update_invoice_cfdi_status", "ZohoBooks_update_invoice_comment", "ZohoBooks_update_invoice_einvoice_payment_status", "ZohoBooks_update_invoice_metadata", "ZohoBooks_update_invoice_shipping_address", "ZohoBooks_update_invoice_template", "ZohoBooks_update_invoice_using_custom_field", "ZohoBooks_update_item", "ZohoBooks_update_item_master", "ZohoBooks_update_item_using_custom_field", "ZohoBooks_update_item_variant", "ZohoBooks_update_pricebook", "ZohoBooks_update_recurring_bill", "ZohoBooks_update_recurring_bill_using_custom_field", "ZohoBooks_update_tax", "ZohoBooks_update_tax_authority", "ZohoBooks_update_tax_exemption", "ZohoBooks_update_tax_group", "ZohoBooks_upload_invoice_digital_signature", "ZohoBooks_upload_invoice_document", "ZohoBooks_verify_contact_address_by_id", "ZohoBooks_verify_contact_bank_account", "ZohoBooks_verify_contact_einvoice", "ZohoBooks_void_invoices", "ZohoBooks_write_off_invoice", "ZohoBooks_write_off_invoices" ]
@@ -120,6 +155,7 @@ APPROVED_WRITES = {
     "ZohoBooks_create_bill", "ZohoBooks_update_bill", "ZohoBooks_add_bill_comment",
     "ZohoBooks_create_item", "ZohoBooks_create_bank_account", "ZohoBooks_create_vendor_payment",
     "ZohoBooks_create_customer_payment",
+    "ZohoBooks_update_invoice", "ZohoBooks_disable_invoice_payment_reminder",  # owner hands-off, 14 Oct 2026
 }
 STARLING = "1534218000000095168"
 ORG = {"organization_id": "941014440"}
@@ -187,6 +223,17 @@ def good_inputs():
         "ZohoBooks_create_bank_account": {"body": {"account_name": "Starling Business", "account_type": "bank",
                                                    "currency_code": "GBP", "description": "Business account"},
                                           "query_params": ORG},
+        "ZohoBooks_update_invoice": {"body": {"customer_id": CUSTOMER, "date": "2026-10-14", "due_date": "2026-10-28",
+                                              "payment_terms": 14, "payment_terms_label": "Due 28 October 2026",
+                                              "notes": "Full fee £1,750.00 due by 28 October 2026.",
+                                              "terms": "Single payment, due by 28 October 2026.",
+                                              "reference_number": "PO 4471",
+                                              "line_items": [{"line_item_id": "1534218000000100030",
+                                                              "item_id": "1534218000000100031", "name": "Full choir",
+                                                              "description": "Carols, 12 Nov 2026", "rate": 1750,
+                                                              "quantity": 1, "item_order": 1}]},
+                                     "query_params": ORG, "path_variables": {"invoice_id": SENT_ID}},
+        "ZohoBooks_disable_invoice_payment_reminder": {"query_params": ORG, "path_variables": {"invoice_id": SENT_ID}},
         "ZohoBooks_create_item": {"body": {"name": "Singing fee", "rate": 0, "description": "Singer's fee",
                                            "item_type": "purchases", "product_type": "service",
                                            "purchase_rate": "0", "purchase_description": "Singer's fee"},
@@ -231,14 +278,123 @@ def test_minimal_good_calls_are_allowed():
         assert decide("zoho-books", tool, ti) == "allow", tool
 
 
-# --- H1: no invoice updates ----------------------------------------------------------
+# --- invoice corrections (owner hands-off, 14 Oct 2026) -------------------------------
 
-def test_update_invoice_is_denied_even_with_good_arguments():
-    ti = {"body": good_inputs()["ZohoBooks_create_invoice"]["body"], "query_params": ORG,
-          "path_variables": {"invoice_id": "444"}}
+U_INV = "ZohoBooks_update_invoice"
+
+
+def upd(invoice_id=SENT_ID, query=None, **body):
+    ti = json.loads(json.dumps(good_inputs()[U_INV]))
+    ti["path_variables"]["invoice_id"] = invoice_id
+    for k, v in body.items():
+        if v is None:
+            ti["body"].pop(k, None)
+        else:
+            ti["body"][k] = v
+    if query:
+        ti["query_params"].update(query)
+    return ti
+
+
+def test_update_invoice_corrects_dates_terms_text_and_lines_on_draft_or_sent_invoices():
     for server in SERVERS:
-        assert decide(server, "ZohoBooks_update_invoice", ti) == "deny", server
-        assert decide(server, "ZohoBooks_update_invoice", {}) == "deny", server
+        assert decide(server, U_INV, upd()) == "allow", server
+        assert decide(server, U_INV, upd(DRAFT_ID)) == "allow", server
+    line = good_inputs()[U_INV]["body"]["line_items"][0]
+    assert decide("zoho-books-invoices", U_INV, {"query_params": ORG, "path_variables": {"invoice_id": SENT_ID},
+                                                 "body": {"due_date": "2026-10-28", "line_items": [line]}}) == "allow"
+    # Books drops every line an update leaves out: the lines are always resent
+    assert denied(U_INV, {"query_params": ORG, "path_variables": {"invoice_id": SENT_ID}, "body": {"due_date": "2026-10-28"}})
+    assert denied(U_INV, upd(line_items=[]))
+    for status_id in (PAID_ID, VOID_ID, "1534218000000999999"):  # paid, void, not in the snapshot
+        assert denied(U_INV, upd(status_id), "zoho-books-invoices"), status_id
+    assert denied(U_INV, {"query_params": ORG, "path_variables": {"invoice_id": SENT_ID}, "body": {}})
+    assert denied(U_INV, {"query_params": ORG, "body": {"due_date": "2026-10-28"}})  # no invoice id
+
+
+def test_update_invoice_may_give_the_reason_books_asks_for_on_a_sent_invoice():
+    # Books refuses a sent invoice's update without one (code 110701, 14 Oct 2026); it is scanned like other text
+    assert not denied(U_INV, upd(reason="Due date corrected to the agreed single payment date"))
+    for text in ("VAT correction", "Tax fix", "Sort code 04-00-04"):
+        assert denied(U_INV, upd(reason=text)), text
+    assert denied(U_INV, upd(reason={"text": "x"}))
+
+
+def test_update_invoice_never_changes_customer_currency_tax_or_email():
+    assert denied(U_INV, upd(customer_id=OTHER_CUSTOMER))
+    assert not denied(U_INV, upd(customer_id=None))
+    for key, val in (("currency_id", "1534218000000000001"), ("exchange_rate", 1.2), ("tax_id", "1"),
+                     ("tax_treatment", "uk"), ("vat_treatment", "uk"), ("is_inclusive_tax", True),
+                     ("tax_authority_id", "1"), ("tax_exemption_id", "1"), ("discount", 10), ("adjustment", -5),
+                     ("adjustment_description", "Rounding"), ("custom_body", "Hello"), ("custom_subject", "Hi"),
+                     ("contact_persons_associated", [{"contact_person_id": "1"}]), ("payment_options", {}),
+                     ("allow_partial_payments", True), ("template_id", "1"), ("custom_fields", []), ("send", True),
+                     ("status", "paid"), ("location_id", "1"), ("shipping_charge", "5")):
+        assert denied(U_INV, upd(**{key: val})), key
+    for key, val in (("tax_id", "1"), ("tax_name", "x"), ("tax_percentage", 20), ("discount", 5),
+                     ("discount_amount", 5), ("project_id", "1"), ("unit", "hrs")):
+        line = dict(good_inputs()[U_INV]["body"]["line_items"][0], **{key: val})
+        assert denied(U_INV, upd(line_items=[line])), key
+    for query in ({"send": True}, {"send": "false"}, {"email": True}, {"ignore_auto_number_generation": "maybe"}):
+        assert denied(U_INV, upd(query=query)), query
+    for text in ("Plus VAT at 20%", "Tax included", "Sort code 04-00-04", "Account 12345678", "ВАТ"):
+        assert denied(U_INV, upd(notes=text)), text
+        assert denied(U_INV, upd(terms=text)), text
+
+
+def test_update_invoice_number_changes_only_on_a_draft_to_a_ddmm_ref():
+    assert not denied(U_INV, upd(invoice_number="2111"))  # restating a sent invoice's own number
+    assert denied(U_INV, upd(invoice_number="2112"))  # a sent invoice keeps its number
+    assert not denied(U_INV, upd(DRAFT_ID, invoice_number="1211A", query={"ignore_auto_number_generation": True}))
+    assert not denied(U_INV, upd(DRAFT_ID, invoice_number="1212"))
+    for bad in ("INV-1212", "12121", "1212AB", "1212a", 1212, ""):
+        assert denied(U_INV, upd(DRAFT_ID, invoice_number=bad)), bad
+
+
+def test_update_invoice_checks_dates_terms_and_line_amounts():
+    for key, bad in (("date", "14/10/2026"), ("due_date", "2026-02-30"), ("due_date", 20261028),
+                     ("payment_terms", "14"), ("payment_terms", True), ("payment_terms", -1)):
+        assert denied(U_INV, upd(**{key: bad})), (key, bad)
+    line = good_inputs()[U_INV]["body"]["line_items"][0]
+    for key, bad in (("rate", -1), ("rate", 10001), ("rate", "1750"), ("quantity", 0), ("quantity", True)):
+        assert denied(U_INV, upd(line_items=[dict(line, **{key: bad})])), (key, bad)
+    assert not denied(U_INV, upd(line_items=[dict(line, rate=1400), {"item_id": "1534218000000100031",
+                                                                     "description": "Organist", "rate": 250,
+                                                                     "quantity": 1}]))
+
+
+def test_update_invoice_needs_a_fresh_guard_snapshot():
+    try:
+        write_snapshot(age=datetime.timedelta(minutes=59))
+        assert not denied(U_INV, upd())
+        write_snapshot(age=datetime.timedelta(minutes=61))
+        assert denied(U_INV, upd())
+        write_snapshot(age=-datetime.timedelta(minutes=30))  # from the future
+        assert denied(U_INV, upd())
+        write_snapshot(text="{not json")
+        assert denied(U_INV, upd())
+        write_snapshot(text=json.dumps({"generated_at": "2026-10-14T12:00:00", "invoices": SNAPSHOT}))  # no zone
+        assert denied(U_INV, upd())
+        write_snapshot(invoices=SNAPSHOT + [dict(SNAPSHOT[0], number="2111B")])  # an id twice
+        assert denied(U_INV, upd())
+        os.remove(os.path.join(PRIVATE, "books-guard.json"))
+        assert denied(U_INV, upd())
+    finally:
+        write_snapshot()
+
+
+def test_reminders_may_only_be_turned_off():
+    R = "ZohoBooks_disable_invoice_payment_reminder"
+    for server in SERVERS:
+        assert decide(server, R, good_inputs()[R]) == "allow", server
+        assert decide(server, "ZohoBooks_enable_invoice_payment_reminder", good_inputs()[R]) == "deny", server
+        for tool in ("ZohoBooks_remind_customer_for_invoice_payment", "ZohoBooks_bulk_invoice_reminder",
+                     "ZohoBooks_send_invoice_dunning_notifications", "ZohoBooks_disable_contact_payment_reminder",
+                     "ZohoBooks_enable_contact_payment_reminder"):
+            assert decide(server, tool, good_inputs()[R]) == "deny", (server, tool)
+    assert denied(R, {"query_params": ORG})
+    assert denied(R, dict(good_inputs()[R], body={"enabled": True}))
+    assert denied(R, {"query_params": dict(ORG, send=True), "path_variables": {"invoice_id": SENT_ID}})
 
 
 # --- H2: contact updates change names only -------------------------------------------
@@ -521,6 +677,38 @@ def test_customer_payment_is_one_invoice_through_starling_with_no_thank_you_emai
     for key in ("contact_persons", "bank_charges", "exchange_rate", "retainerinvoice_id", "custom_fields", "tags"):
         assert denied(C, with_(C, "body", **{key: "1"})), key
     assert denied(C, with_(C, "body", description="Paid from 12-34-56 12345678"))
+
+
+def test_customer_payment_is_checked_against_books_and_the_ledger():
+    """Owner hands-off, 14 Oct 2026: closed bookings' payments are recorded too, so the guard itself checks the
+    invoice (books-guard.json) and the ledger: its own customer, sent and open, never above the balance, never a
+    draft, paid or void invoice, never a booking that is missing from the ledger or says "hand check only"."""
+    C = "ZohoBooks_create_customer_payment"
+
+    def pay(invoice_id=SENT_ID, amount=575, customer=CUSTOMER):
+        return with_(C, "body", invoice_id=invoice_id, customer_id=customer, amount=amount, amount_applied=amount,
+                     invoices=[{"invoice_id": invoice_id, "amount_applied": amount}])
+    assert not denied(C, pay())
+    assert not denied(C, pay(amount=1150))  # the whole balance
+    assert denied(C, pay(amount=1150.01))  # above it
+    assert denied(C, pay(customer=OTHER_CUSTOMER))
+    for invoice_id in (DRAFT_ID, PAID_ID, VOID_ID, "1534218000000999999"):
+        assert denied(C, pay(invoice_id, amount=50)), invoice_id
+    assert denied(C, pay(SHARED_ID, amount=1400))  # 2108A: "hand check only"
+    assert denied(C, pay(UNLEDGERED_ID, amount=100))  # no booking 0909 in the ledger
+    assert denied(C, with_(C, "body", date="10/10/2026"))
+    try:
+        write_ledger("booking_ref,notes\n2111,\"paid, then HAND CHECK ONLY (owner)\"\n")
+        assert denied(C, pay())
+        os.remove(os.environ["LCS_BOOKINGS_CSV"])
+        assert denied(C, pay())  # no ledger: fail closed
+        write_ledger()
+        write_snapshot(age=datetime.timedelta(hours=2))
+        assert denied(C, pay())
+    finally:
+        write_ledger()
+        write_snapshot()
+    assert not denied(C, pay())
 
 
 def test_the_2408_one_off_is_gone():

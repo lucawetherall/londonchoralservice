@@ -8,7 +8,9 @@ Alma Consort Starling account, READ-ONLY (see lcs_money.StarlingReadOnly).
         each item's "action" is receipt | deposit_reminder | balance_reminder | payment_reminder | hand_check | none
         (action_for),
         and "record_in_books" lists its confident payments [[date, amount, bank charges]] for the Books invoice
-        (BOOKS_STATES; the bank charges are 0.0 except on the last payment of a booking closed by an accepted fee)
+        (BOOKS_STATES; the bank charges are 0.0 except on the last payment of a booking closed by an accepted fee);
+        after the open bookings come items with state CLOSED (books_closed, closed_item): closed bookings whose Books
+        invoice the cache still shows open, with their Starling payments to record (owner hands-off, 14 Oct 2026)
     .venv/bin/python scripts/bookings/check_payments.py --reminded 2111 [--kind deposit|balance|payment|receipt]
         (also records reminder-drafted in the state log; --apply records deposit-seen and paid-in-full, basis bank,
         where it writes those notes)
@@ -33,6 +35,8 @@ Alma Consort Starling account, READ-ONLY (see lcs_money.StarlingReadOnly).
         (the Command Centre only, after the owner's passkey: allows the owner's phrases and records "(owner)";
         refused unless stdin is a pipe carrying the app's one-time nonce, see owner_confirmed)
     .venv/bin/python scripts/bookings/check_payments.py --selftest       # token, account and permissions
+    .venv/bin/python scripts/bookings/check_payments.py --books-closed   # read-only JSON: closed bookings' Starling
+        payments that may be missing from Books (books_closed; owner decision, 14 Oct 2026)
 
 Matching (against every ledger row, closed ones too, so a payment is never
 credited to the wrong booking): an incoming payment belongs to a booking when its
@@ -120,8 +124,12 @@ payment in the last 14 days with no receipt drafted, only in PAID_IN_FULL,
 DEPOSIT_SEEN, BALANCE_DUE or NOTED_PAID) asks for a thank-you, and short_notice
 (event within 10 days of the invoice) asks for the full fee rather than a deposit.
 Every CHECK_*, PAST_*, NOTED_PAID and PAYMENT_* state is on the Monday money line's
-"needs a hand check" (money_report.py), and ARRANGED as above; --apply never rewrites
-the notes of a cancelled or closed row, and drops a "deposit not yet seen" clause when
+"needs a hand check" (money_report.py), and ARRANGED as above. "hand check only" in a booking's
+notes (hand_only: the client pays with an invoice number another booking also has, as when a ref was issued twice and
+the owner kept it) makes every payment matched to that booking unconfirmed, so nothing is credited, chased, thanked,
+noted or recorded in Books for it: its action is always hand_check, and it is on that line every week while the phrase
+stays (write it on both bookings). --apply never rewrites
+the notes of a cancelled, closed or hand-check-only row, and drops a "deposit not yet seen" clause when
 it writes "deposit seen … (Starling)". Output shows invoice numbers and amounts only.
 """
 
@@ -144,6 +152,9 @@ LEDGER = lm.LEDGER
 MARK_TEXT = {"deposit": "reminder drafted", "balance": "balance reminder drafted", "payment": "payment reminder drafted",
              "receipt": "receipt drafted"}
 CONFIDENT = ("reference", "name and amount")
+# A client paying with an invoice number another booking also has (a ref issued twice; owner decision, 14 Oct 2026:
+# keep it, record the second booking under a suffixed ref, and check every payment on either by hand)
+HAND_ONLY_NOTE = re.compile(r"\bhand check only\b", re.I)
 RECEIPT_DAYS = 14
 SHORT_NOTICE_DAYS = 10
 # The most a booking may be short by transfer fees and still read paid in full, once the owner accepts it
@@ -269,6 +280,16 @@ def named_keys(text, known):
         if hit:
             out.add(hit)
     return out
+
+
+def hand_only(r):
+    """True when the notes say "hand check only": every payment matched to this booking is unconfirmed (demoted)."""
+    return bool(HAND_ONLY_NOTE.search(r.get("notes") or ""))
+
+
+def demoted(paid):
+    """The payments with every confident match made unconfirmed ("reference, hand check only")."""
+    return [(d, a, f"{how}, hand check only" if how in CONFIDENT else how) for d, a, how in paid]
 
 
 def surnames(r):
@@ -656,6 +677,9 @@ def match(rows, items, today):
             how = "name only, amount differs"
         for ref in dict.fromkeys(refs):
             found[ref].append((when, amount, how))
+    for r in rows:  # a booking whose payments are checked by hand only never has a confident match
+        if hand_only(r):
+            found[r["booking_ref"]] = demoted(found[r["booking_ref"]])
     return found
 
 
@@ -789,6 +813,9 @@ def assess(r, paid, today, facts=None, unsent=None):
     """`unsent`: the refs whose Books invoice hasn't been sent yet (None reads unsent_invoices())."""
     value = money(r)
     f = facts_for(r, today, facts)
+    hand = hand_only(r)
+    if hand:  # match() demotes them already; a caller's own list too
+        paid = demoted(paid)
     sure = [p for p in paid if p[2] in CONFIDENT]
     maybe = [p for p in paid if p[2] not in CONFIDENT]
     total = round(sum(a for _, a, _ in sure), 2)
@@ -887,6 +914,8 @@ def assess(r, paid, today, facts=None, unsent=None):
         # the Monday hand check lists it once the deposit (or, on single-payment terms, the whole fee) would be late
         out["deposit_late"] = today > (terms or deposit_due)
     out["action"] = action_for(out, today)
+    if hand:  # only then, so every other assessment is exactly as before: never chased, thanked or recorded
+        out["hand_only"], out["action"] = True, "hand_check"
     if hold:  # only when held, so an assessment with no recorded facts is exactly as before
         out["held"], out["action"] = hold, "hand_check"
     return out
@@ -924,6 +953,8 @@ def describe(a):
     line = describe_state(a)
     if a.get("held"):
         line += f" · notes and recorded facts disagree: {', '.join(a['held'])} (check by hand)"
+    if a.get("hand_only"):
+        line += " · hand check only: its invoice number is shared, so every payment is confirmed by hand"
     return line
 
 
@@ -969,7 +1000,7 @@ def describe_state(a):
 
 def updated_notes(notes, a, paid):
     """Ledger notes after this run; only confident matches (reference, name and amount) change them."""
-    if a["state"] in NEVER_WRITTEN:  # cancelled or closed rows are never rewritten
+    if a["state"] in NEVER_WRITTEN or a.get("hand_only"):  # cancelled, closed or hand-check-only: never rewritten
         return notes
     sure = [p for p in paid if p[2] in CONFIDENT]
     new = notes
@@ -1175,8 +1206,67 @@ def received_since(client, rows, since, today):
             and not (live[ref] and d > live[ref].isoformat())]
 
 
+def books_open_balances(path=None):
+    """{ref: balance} for the Books invoices the local cache (cc_sync.py books) shows still open: not draft, void or
+    paid, with a balance above £0. None when there is no readable cache."""
+    try:
+        data = json.loads(Path(path or books_cache()).read_text())
+        return {str(i["number"]).strip(): float(i.get("balance") or 0) for i in data["invoices"]
+                if str(i.get("status", "")).lower() not in ("draft", "void", "paid")
+                and float(i.get("balance") or 0) > 0.005 and str(i.get("number", "")).strip()}
+    except (OSError, ValueError, KeyError, TypeError, AttributeError):
+        return None
+
+
+CLOSED_BOOKS_DAYS = 400  # how far back a closed booking is looked at for payments missing from Books
+
+
+def books_closed(client, rows, today, open_in_books=None, skip=()):
+    """Closed bookings ("paid in full YYYY-MM-DD", or an accepted fee) whose Starling payments may be missing from
+    Books (owner decision, 14 Oct 2026: Claude keeps Books correct). collect() leaves a closed booking out, so its
+    payments never reach "record_in_books"; this lists them, read-only, as [{ref, closed_on, value, received,
+    books_balance, record_in_books}], with record_in_books the confident payments dated up to the close, oldest
+    first ([date, amount, bank charges], the accepted fee on the last one). Never a cancelled, held or "hand check
+    only" booking, and empty when the confident payments exceed the booking's value. Only the refs the Books cache shows
+    still open (no readable cache: none), and none in `skip` (refs already reported); the daily pass skips a payment Books already has (same date and amount)."""
+    if open_in_books is None:
+        open_in_books = books_open_balances() or {}
+    oldest = today - datetime.timedelta(days=CLOSED_BOOKS_DAYS)
+    shut = [r for r in rows if not is_cancelled(r) and closed_on(r, today) and closed_on(r, today) >= oldest
+            and not hand_only(r) and r["booking_ref"] in open_in_books and r["booking_ref"] not in skip]
+    starts = [d - datetime.timedelta(days=3) for d in (date_or_none(r.get("invoice_date")) for r in shut) if d]
+    if not starts:
+        return []
+    found = match(rows, client.feed(min(starts), today + datetime.timedelta(days=1), "IN"), today)
+    out = []
+    for r in shut:
+        close = closed_on(r, today).isoformat()
+        paid = [p for p in found[r["booking_ref"]] if p[0] <= close]
+        a = assess(r, paid, today)
+        sure = sorted((d, x) for d, x, how in paid if how in CONFIDENT)
+        total, value = round(sum(x for _, x in sure), 2), money(r)
+        books = [[d, x, 0.0] for d, x in sure]
+        if books and a["state"] == "PAID_IN_FULL" and a.get("fees"):
+            books[-1][2] = a["fees"]
+        if a.get("held") or a.get("hand_only") or total > value + 0.01:
+            books = []
+        out.append({"ref": r["booking_ref"], "closed_on": close, "value": value, "received": total,
+                    "books_balance": open_in_books[r["booking_ref"]],
+                    "record_in_books": books})
+    return out
+
+
+def closed_item(c):
+    """A books_closed entry as an item of the --json list: state CLOSED, so the daily pass records its
+    "record_in_books" against the Books invoice like any other; with nothing to record, a hand check (Books shows
+    the invoice open, the ledger says paid in full, and Starling has nothing confident to add)."""
+    return dict(c, state="CLOSED", action="none" if c["record_in_books"] else "hand_check")
+
+
 def main():
     ap = argparse.ArgumentParser()
+    ap.add_argument("--books-closed", dest="books_closed", action="store_true",
+                    help="read-only: closed bookings' Starling payments that may be missing from Books, as JSON")
     ap.add_argument("--apply", action="store_true")
     ap.add_argument("--json", action="store_true")
     ap.add_argument("--selftest", action="store_true")
@@ -1195,6 +1285,10 @@ def main():
 
     # lm.locked_rows holds lm.ledger_lock, an flock on a fresh descriptor: NOT re-entrant. Never nest it, or
     # call another ledger writer while holding it, in one process: the second acquire deadlocks.
+    if args.books_closed:
+        if args.apply or args.note or args.fact or args.reminded or args.kind or args.selftest or args.owner:
+            raise SystemExit("--books-closed goes on its own (read-only); nothing written")
+        args.json = True  # its output is JSON only; Starling unavailable prints []
     if args.owner and not (args.note or args.fact):
         raise SystemExit("--owner goes with --note or --fact only; nothing written")
     if not args.fact and any(getattr(args, k) is not None for k in ("on", *FACT_ARGS)):
@@ -1320,6 +1414,12 @@ def run(args, client, rows, today):
     """Report (and with --apply, note) payments. All Starling calls happen first, on `rows` read without the
     lock; --apply then takes the lock, re-reads the ledger, and reassesses each booking from its fresh row
     (the same payments, no network) before writing, so an edit made meanwhile is kept."""
+    if getattr(args, "books_closed", False):
+        try:
+            print(json.dumps(books_closed(client, rows, today)))
+        except STARLING_DOWN as e:
+            return starling_unavailable(args, e)
+        return
     if args.selftest:
         try:
             scopes = sorted(client.get("/api/v2/identity/token").get("scopes", []))
@@ -1339,16 +1439,19 @@ def run(args, client, rows, today):
 
     try:
         results = collect(client, rows, today)
+        # closed bookings whose payments may be missing from Books (owner hands-off, 14 Oct 2026): JSON only
+        closed = ([closed_item(c) for c in books_closed(client, rows, today, skip={r["booking_ref"] for r, _, _ in results})]
+                  if args.json else [])
     except STARLING_DOWN as e:
         return starling_unavailable(args, e)
-    if not results:
+    if not results and not closed:
         print("[]" if args.json else "No open bookings to check.")
         return
     for _, _, a in results:
         if not args.json:
             print(describe(a))
     if args.json:
-        print(json.dumps([a for _, _, a in results]))
+        print(json.dumps([a for _, _, a in results] + closed))
     if args.apply and apply_notes(results, today) and not args.json:
         print("Ledger notes updated.")
 

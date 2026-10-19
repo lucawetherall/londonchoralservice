@@ -1520,6 +1520,20 @@
       }
     }
     
+    /* Modifier — secondary button: outlined, beside a primary .btn-link. */
+    .btn-link--secondary,
+    .btn-link--secondary:visited,
+    .btn-link--secondary:active {
+      background-color: transparent;
+      color: var(--color-accent);
+      box-shadow: inset 0 0 0 1px var(--color-accent);
+    }
+    
+    .btn-link--secondary:hover {
+      background-color: var(--color-accent);
+      color: var(--color-bg);
+    }
+    
     /* Modifier — button with leading inline icon (e.g. WhatsApp).
        Icon stays subordinate to the label: 0.85em with a tight gap so the
        button reads as text-first, with the glyph as a quiet accent. */
@@ -1674,8 +1688,10 @@
       grid-template-areas:
         "crumb crumb"
         "head  video"
+        "offer video"
         "body  video";
-      grid-template-rows: auto auto 1fr;
+      /* The offer row is empty (zero height) on pages without a .hero-offer. */
+      grid-template-rows: auto auto auto 1fr;
       column-gap: var(--space-3xl);
       align-items: start;
     }
@@ -1690,6 +1706,42 @@
     
     .hero-text {
       grid-area: body;
+    }
+    
+    /* Landing-page offer under the h1: the facts and the buttons a visitor needs
+       on the first screen. On phones it sits above the film. */
+    .hero-offer {
+      grid-area: offer;
+      margin-bottom: var(--space-xl);
+    }
+    
+    .hero-facts {
+      list-style: none;
+      padding: 0;
+      margin: 0 0 var(--space-lg);
+    }
+    
+    .hero-facts li {
+      position: relative;
+      padding-left: 1.6rem;
+      margin-bottom: var(--space-xs);
+      line-height: 1.45;
+    }
+    
+    .hero-facts li::before {
+      content: "\2713";
+      position: absolute;
+      left: 0;
+      color: var(--color-accent);
+      font-size: 0.9em;
+    }
+    
+    .hero-ctas {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: var(--space-sm) var(--space-md);
+      margin-bottom: var(--space-md);
     }
     
     .hero-video {
@@ -1846,6 +1898,7 @@
         grid-template-areas:
           "crumb"
           "head"
+          "offer"
           "video"
           "body";
         grid-template-rows: none;
@@ -3002,8 +3055,8 @@
             <li><a href="/weddings.html">Weddings</a></li>
             <li><a href="/funerals.html">Funerals</a></li>
             <li><a href="/corporate.html">Corporate</a></li>
-            <li><a href="/christmas.html">Christmas</a></li>
-            <li><a href="/carol-singers.html">Carol Singers</a></li>
+            <li><a href="/christmas.html">Christmas carol singers</a></li>
+            <li><a href="/christmas-carol-services.html">Church carol services</a></li>
             <li><a href="/private-events.html">Private Events</a></li>
             <li><a href="/destinations/">Weddings Abroad</a></li>
             <li class="dropdown-separator" aria-hidden="true"></li>
@@ -3227,7 +3280,7 @@
     <section class="section">
       <div class="prose">
         <h2>Christmas &amp; carol singers</h2>
-        <p>Christmas bookings are charged at the table rates above, and carol bookings start with a Small Choir of four, since the singing is normally unaccompanied. A soloist is available for a sung grace or a single set piece at a dinner. A <a href="christmas.html">carol service</a> in an office, livery hall, or hired church, or <a href="carol-singers.html">carol singers</a> roaming a party or singing sets in a lobby, costs the same as the equivalent ensemble at any other time of year. Prices include all taxes, fees, and travel within Greater London.</p>
+        <p>Christmas bookings are charged at the table rates above, and carol bookings start with a Small Choir of four, since the singing is normally unaccompanied. A soloist is available for a sung grace or a single set piece at a dinner. A <a href="christmas-carol-services.html">carol service</a> in an office, livery hall, or hired church, or <a href="christmas.html">carol singers</a> roaming a party or singing sets in a lobby, costs the same as the equivalent ensemble at any other time of year. Prices include all taxes, fees, and travel within Greater London.</p>
         <p>A standard Christmas booking covers up to two hours including breaks, or the length of a church service. The choir sings entirely a cappella where there is no instrument, and we can also provide an organist or pianist, or background piano between sets. Bringing a keyboard and speaker to a venue without a piano carries an extra charge, quoted upfront. Christmas Eve and Christmas Day dates carry a premium of around 25%. Our <a href="christmas-pricing.html">Christmas prices page</a> sets out what each ensemble costs for a two-hour booking, and the <a href="music-guides/carol-singers-cost.html">carol singers cost guide</a> breaks down the options.</p>
       </div>
     </section>
@@ -3335,8 +3388,8 @@
             <li><a href="/weddings.html">Weddings</a></li>
             <li><a href="/funerals.html">Funerals</a></li>
             <li><a href="/corporate.html">Corporate events</a></li>
-            <li><a href="/christmas.html">Christmas carol services</a></li>
-            <li><a href="/carol-singers.html">Hire carol singers</a></li>
+            <li><a href="/christmas.html">Christmas carol singers</a></li>
+            <li><a href="/christmas-carol-services.html">Church carol services</a></li>
             <li><a href="/private-events.html">Private events</a></li>
             <li><a href="/destinations/">Weddings abroad</a></li>
             <li><a href="/pricing.html">Pricing</a></li>
