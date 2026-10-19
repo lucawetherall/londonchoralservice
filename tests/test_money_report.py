@@ -166,6 +166,33 @@ def test_an_arranged_balance_is_a_hand_check_only_within_seven_days_or_past():
                         "bare balance arranged (cash/cheque on the day), no deposit seen)"), lines[3]
 
 
+def test_a_shared_ref_is_on_the_money_lines_like_any_other_booking():
+    """Owner decision, 19 Oct 2026: a ref issued twice (1212 and 1212A) is settled by the bank feed, and a "hand
+    check only" note is inert. Nothing in the bank: an overdue deposit. A payment the payer's surname places: off
+    the hand check line. The shared number with neither surname: a possible payment on both, by hand."""
+    rows = [{"booking_ref": "1212", "value_gbp": "1300", "invoice_date": "2026-09-10", "event_date": "2026-12-12",
+             "notes": "hand check only: shares 1212 with 1212A", "client_name": "Ann Smith"},
+            {"booking_ref": "1212A", "value_gbp": "1400", "invoice_date": "2026-09-01", "event_date": "2027-01-16",
+             "notes": "hand check only: the client pays with ref 1212", "client_name": "Bo Jones"}]
+
+    def paid(ref, who):
+        item = {"direction": "IN", "amount": {"minorUnits": 70000}, "transactionTime": "2026-09-24T10:00:00Z",
+                "reference": ref, "counterPartyName": who}
+        found = cp.match(rows, [item], T)
+        return [cp.assess(r, found[r["booking_ref"]], T, unsent=set()) for r in rows]
+    late = cp.assess(rows[1], [], T, unsent=set())
+    assert late["state"] == "DEPOSIT_OVERDUE" and late["action"] == "deposit_reminder", late
+    lines = mr.summary_lines([late], [], QUIET_SINGERS, T)
+    assert "deposits overdue: 1 (1212A)" in lines and "needs a hand check: 0" in lines, lines
+    sure = paid("INV 1212", "BO JONES")
+    assert [a["state"] for a in sure] == ["DEPOSIT_OVERDUE", "DEPOSIT_SEEN"], sure
+    assert not mr.needs_hand_check(sure[1], T)
+    assert mr.summary_lines(sure, [], QUIET_SINGERS, T)[3] == "needs a hand check: 0"
+    unsure = paid("1212", "KATE DOE")
+    assert mr.summary_lines(unsure, [], QUIET_SINGERS, T)[3] == \
+        "needs a hand check: 2 (1212 possible payment; 1212A possible payment)"
+
+
 # --- review I6: the singer line never depends on the Starling token --------------------------
 
 def test_singer_line_on_its_own():

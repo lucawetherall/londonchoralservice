@@ -20,9 +20,8 @@ NO_DEPOSIT = {"DEPOSIT_OVERDUE", "AWAITING_DEPOSIT", "AWAITING_INVOICE_SENT", "P
 
 def needs_hand_check(a, today):
     """ARRANGED only from ARRANGED_DAYS before the event (or with no event date, or no deposit seen at all). A held
-    booking (its notes and recorded facts disagree, check_payments.held) always, whatever its state, and so is one
-    whose payments are checked by hand only (its invoice number is shared, check_payments.hand_only)."""
-    if a.get("held") or a.get("hand_only"):
+    booking (its notes and recorded facts disagree, check_payments.held) always, whatever its state."""
+    if a.get("held"):
         return True
     if a["state"] == "AWAITING_INVOICE_SENT":  # an unsent invoice only once the deposit would have been due
         return bool(a.get("deposit_late"))
@@ -35,10 +34,6 @@ def needs_hand_check(a, today):
 def hand_check_label(a):
     if a.get("held"):
         return "notes and recorded facts disagree: " + ", ".join(a["held"])
-    if a.get("hand_only"):  # every payment unconfirmed, so the state says only what is in the bank
-        what = (HAND_CHECK[a["state"]] if a["state"] in HAND_CHECK and a["state"] != "AWAITING_INVOICE_SENT"
-                else "no payment matched yet")
-        return f"invoice number shared, every payment by hand ({what})"
     received = a.get("received") or 0
     if a.get("payment_due"):  # single-payment terms: there is no deposit or balance to speak of
         if a["state"] == "AWAITING_INVOICE_SENT":
@@ -63,18 +58,14 @@ def summary_lines(assessments, receipts, singer, today):
     week = [r for r in receipts if r[1] >= week_start]
     lines = [f"received from clients, last 7 days: £{sum(a for _, _, a in week):,.2f} ({plural(len(week), 'payment')})"]
     # a held booking (notes and recorded facts disagree) is on the hand check line only, never chased
-    # and so is one checked by hand only (its invoice number is shared: a payment may be in the bank under it)
-    overdue = [a["ref"] for a in assessments if a["state"] == "DEPOSIT_OVERDUE" and not a.get("held")
-               and not a.get("hand_only")]
+    overdue = [a["ref"] for a in assessments if a["state"] == "DEPOSIT_OVERDUE" and not a.get("held")]
     lines.append(f"deposits overdue: {len(overdue)}" + (f" ({', '.join(overdue)})" if overdue else ""))
-    full = [a["ref"] for a in assessments if a["state"] == "PAYMENT_OVERDUE" and not a.get("held")
-            and not a.get("hand_only")]
+    full = [a["ref"] for a in assessments if a["state"] == "PAYMENT_OVERDUE" and not a.get("held")]
     if full:  # single-payment terms (one invoice for the whole fee): only when there are any, so the lines are as before
         lines.append(f"full fees overdue (single payment): {len(full)} ({', '.join(full)})")
     start, horizon = today.isoformat(), (today + datetime.timedelta(days=7)).isoformat()
     soon = [a for a in assessments if a.get("event_date") and start <= a["event_date"] <= horizon and a["balance"] > 0
-            and a["state"] not in NOT_DUE and not a["state"].startswith("PAST_") and not a.get("held")
-            and not a.get("hand_only")]
+            and a["state"] not in NOT_DUE and not a["state"].startswith("PAST_") and not a.get("held")]
     # An unpaid booking this week is listed here too (its whole fee is due); say so, so the total isn't read
     # as balances alone. The deposits line gives a count only, so no money is counted twice.
     bare = sum(a["state"] in NO_DEPOSIT for a in soon)

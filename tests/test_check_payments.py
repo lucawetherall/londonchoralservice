@@ -100,20 +100,22 @@ def test_unsent_invoices_read_from_the_books_cache():
 def test_books_closed_lists_closed_bookings_payments_for_books():
     """Owner hands-off, 14 Oct 2026: a closed booking drops out of collect(), so its Starling payments never reached
     record_in_books. books_closed lists them (read-only), only for refs Books still shows open, never a cancelled
-    or "hand check only" booking, and never a payment after the close."""
+    booking, and never a payment after the close. A "hand check only" note changes nothing (owner decision, 19 Oct
+    2026: the bank feed settles a shared invoice number)."""
     rows = [row("2110", 1400, "2026-09-07", "2026-10-21", "deposit seen 2026-09-10 (Starling); paid in full 2026-09-10"),
-            row("2108A", 2800, "2026-09-05", "2027-08-21", "hand check only: shares 2108; paid in full 2026-09-10",
+            row("1212A", 1400, "2026-09-05", "2027-08-21", "hand check only: shares 1212; paid in full 2026-09-10",
                 name="Bo Jones"),
             row("2509", 3225, "2026-09-01", "2026-09-21", "paid in full 2026-09-12", name="Cy Brown"),
             row("0110", 500, "2026-09-01", "2026-10-30", "cancelled 2026-09-05 by client email", name="Di Green"),
             row("2111", 650, "2026-08-22", "2026-11-21", "PENDING", name="Ed White")]
-    feed = [pay(1400, "2026-09-10", "INV2110"), pay(50, "2026-09-20", "INV2110"), pay(1400, "2026-09-09", "2108A"),
+    feed = [pay(1400, "2026-09-10", "INV2110"), pay(50, "2026-09-20", "INV2110"), pay(1400, "2026-09-09", "1212A"),
             pay(3225, "2026-09-12", "INV2509"), pay(325, "2026-08-26", "INV 2111")]
     client = FakeClient(feed)
-    got = {a["ref"]: a for a in cp.books_closed(client, rows, T, open_in_books={"2110": 1400.0, "2108A": 2800.0,
+    got = {a["ref"]: a for a in cp.books_closed(client, rows, T, open_in_books={"2110": 1400.0, "1212A": 1400.0,
                                                                                "0110": 500.0, "2111": 650.0})}
-    assert set(got) == {"2110"}, got  # 2509 is paid in Books; 2108A hand check only; 0110 cancelled; 2111 open
+    assert set(got) == {"2110", "1212A"}, got  # 2509 is paid in Books; 0110 cancelled; 2111 open
     assert got["2110"]["record_in_books"] == [["2026-09-10", 1400.0, 0.0]], got  # the £50 after the close is left out
+    assert got["1212A"]["record_in_books"] == [["2026-09-09", 1400.0, 0.0]], got  # its note is inert
     assert got["2110"]["closed_on"] == "2026-09-10" and got["2110"]["books_balance"] == 1400.0
     # no Books cache: nothing is known to be open in Books, so nothing is listed (and Starling isn't read)
     quiet = FakeClient(feed)
@@ -436,48 +438,48 @@ def test_bare_number_with_suffixed_siblings_and_no_surname_is_unconfirmed_on_all
     assert all(a["received"] == 0 and a["just_received"] is False for a in states)
 
 
-CLASH_ROWS = [row("1212", 1470, "2026-05-11", "2026-08-21", "paid in full 2026-08-17; hand check only", name="Ann Smith"),
-              row("1212A", 2800, "2026-09-25", "2027-08-21",
-                  "hand check only: the client pays with ref 1212", name="Bo Jones")]
+# A ref issued twice: the second booking is recorded under a suffixed ref, and the client pays with the number both
+# share. Both rows still say "hand check only", which is now inert text (owner decision, 19 Oct 2026).
+SHARED_ROWS = [row("1212", 1300, "2026-09-10", "2026-12-12", "hand check only: shares 1212 with 1212A", name="Ann Smith"),
+               row("1212A", 1400, "2026-09-20", "2027-01-16", "hand check only: the client pays with ref 1212",
+                   name="Bo Jones")]
 
 
-def test_hand_check_only_never_confirms_a_payment():
-    """Two bookings share the invoice number the client pays with: a reference plus the payer's surname, or the
-    surname and deposit, would be confident; on a hand-check-only booking it is unconfirmed, a hand check, never
-    chased, thanked, noted or recorded in Books."""
-    for ref, who in (("INV 1212", "BO JONES"), ("1212", "KATE DOE"), ("", "MR B JONES")):
-        found = cp.match(CLASH_ROWS, [pay(1400, "2026-09-28", ref, who)], T)
-        assert found["1212A"] and all(how not in cp.CONFIDENT for _, _, how in found["1212A"]), (ref, found)
-        a = cp.assess(CLASH_ROWS[1], found["1212A"], T)
+def test_a_shared_ref_is_confident_on_the_booking_the_payers_surname_names():
+    """"INV 1212" names 1212 and 1212A both; the payer's surname picks one, a confident reference match on that
+    booking only, whatever its notes say: credited, thanked and recorded in Books like any other."""
+    for who, ref, other in (("BO JONES", "1212A", "1212"), ("MRS A SMITH", "1212", "1212A")):
+        found = cp.match(SHARED_ROWS, [pay(650, "2026-09-24", "INV 1212", who)], T)
+        assert found[ref] == [("2026-09-24", 650.0, "reference")] and found[other] == [], (who, found)
+        a = cp.assess(next(r for r in SHARED_ROWS if r["booking_ref"] == ref), found[ref], T)
+        assert a["state"] == "DEPOSIT_SEEN" and a["received"] == 650.0 and a["action"] == "receipt", a
+        assert a["record_in_books"] == [["2026-09-24", 650.0, 0.0]] and "hand_only" not in a, a
+        assert "hand check only" not in cp.describe(a)
+
+
+def test_a_shared_ref_with_neither_surname_is_unconfirmed_on_both():
+    """With neither client's surname in the payer's name, the shared number is "reference naming several bookings"
+    on both: unconfirmed, a hand check, never credited, thanked, noted or recorded in Books."""
+    found = cp.match(SHARED_ROWS, [pay(650, "2026-09-24", "1212", "KATE DOE")], T)
+    for r in SHARED_ROWS:
+        assert found[r["booking_ref"]] == [("2026-09-24", 650.0, "reference naming several bookings")], found
+        a = cp.assess(r, found[r["booking_ref"]], T)
         assert a["state"] == "CHECK_PAYMENT" and a["received"] == 0 and a["action"] == "hand_check", a
-        assert a["hand_only"] and a["record_in_books"] == [] and not a["just_received"], a
-        assert "hand check only" in cp.describe(a)
-        assert cp.updated_notes(CLASH_ROWS[1]["notes"], a, found["1212A"]) == CLASH_ROWS[1]["notes"]
-    # nothing in the bank yet, deposit late: listed by hand, never a reminder (the client's ref isn't ours)
-    late = cp.assess(CLASH_ROWS[1], [], datetime.date(2026, 10, 14))
-    assert late["state"] == "DEPOSIT_OVERDUE" and late["action"] == "hand_check" and late["hand_only"], late
-    # a confident match handed straight to assess is demoted too
-    direct = cp.assess(CLASH_ROWS[1], [("2026-09-28", 2800.0, "reference")], T)
-    assert direct["state"] == "CHECK_PAYMENT" and direct["record_in_books"] == [], direct
-    # the closed booking: a later payment naming it is still a hand check
-    found = cp.match(CLASH_ROWS, [pay(1400, "2026-09-28", "1212", "ANN SMITH")], T)
-    assert found["1212"] == [("2026-09-28", 1400.0, "reference, hand check only")], found
-    assert cp.assess(CLASH_ROWS[0], found["1212"], T)["state"] == "PAYMENT_AFTER_CLOSE"
-    # without the phrase the same payment is confident, as before
-    plain = [dict(r, notes="") for r in CLASH_ROWS]
-    assert cp.match(plain, [pay(1400, "2026-09-28", "INV 1212", "BO JONES")], T)["1212A"][0][2] == "reference"
+        assert a["record_in_books"] == [] and not a["just_received"], a
+        assert cp.updated_notes(r["notes"], a, found[r["booking_ref"]]) == r["notes"]
 
 
-def test_hand_check_only_is_on_the_monday_hand_check_line():
-    import money_report as mr
-    late = cp.assess(CLASH_ROWS[1], [], datetime.date(2026, 10, 14))
-    assert mr.needs_hand_check(late, datetime.date(2026, 10, 14))
-    assert mr.hand_check_label(late) == "invoice number shared, every payment by hand (no payment matched yet)"
-    quiet = {"unpaid": 0, "unpaid_total": 0.0, "oldest_days": 0, "bank_changed": 0}
-    lines = mr.summary_lines([late], [], quiet, datetime.date(2026, 10, 14))
-    assert "deposits overdue: 0" in lines and any(x.startswith("needs a hand check: 1 (1212A ") for x in lines), lines
-    early = cp.assess(CLASH_ROWS[1], [], T)
-    assert early["state"] == "AWAITING_DEPOSIT" and mr.needs_hand_check(early, T)
+def test_a_shared_ref_paid_in_full_by_the_bank_feed_is_recorded_in_books():
+    """Owner decision, 19 Oct 2026: the Starling feed shows the invoice paid in full, so it is marked paid and
+    recorded in Books without him. Confident payments covering the fee close the booking, "hand check only" or not."""
+    feed = [pay(700, "2026-09-22", "INV 1212", "BO JONES"), pay(700, "2026-09-27", "1212 balance", "MR B JONES")]
+    found = cp.match(SHARED_ROWS, feed, T)
+    assert found["1212"] == [] and [how for _, _, how in found["1212A"]] == ["reference", "reference"], found
+    a = cp.assess(SHARED_ROWS[1], found["1212A"], T)
+    assert a["state"] == "PAID_IN_FULL" and a["balance"] == 0 and a["action"] == "receipt", a
+    assert a["record_in_books"] == [["2026-09-22", 700.0, 0.0], ["2026-09-27", 700.0, 0.0]], a
+    assert cp.updated_notes(SHARED_ROWS[1]["notes"], a, found["1212A"]) == \
+        "hand check only: the client pays with ref 1212; paid in full 2026-09-27"
 
 
 def test_reference_to_one_booking_from_another_clients_name_is_unconfirmed():
