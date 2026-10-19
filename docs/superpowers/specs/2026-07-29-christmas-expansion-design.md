@@ -49,6 +49,8 @@ Christmas is the highest-value season for a choir-for-hire business, and the sit
 
 ### 1. Keyword/intent split (anti-cannibalisation contract — load-bearing)
 
+> **Superseded 2026-10-19.** carol-singers.html is now a redirect to christmas.html, which owns *hire carol singers* (events, parties, lobbies, markets). The *carol service* family moved to a new page, `christmas-carol-services.html`, for carol services in a church. See `docs/superpowers/specs/2026-10-19-christmas-landing-pages-design.md`. The FAQ uniqueness rule below still applies.
+
 No page may target another row's head term in its `<title>` or H1. This table is the contract; every content agent receives its own row.
 
 | Page | Title (≤60c) | H1 | Owns |

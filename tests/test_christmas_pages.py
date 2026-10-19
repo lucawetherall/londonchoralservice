@@ -214,6 +214,42 @@ def nav_footer():
     check(-1 not in (a, b) and a < b, 'index.html: Christmas block links both pages, carolling first')
 
 
+# ── body links ──
+
+CHURCH_GUIDES = ('nine-lessons-and-carols', 'church-carol-service-choir-hire', 'carols-by-candlelight',
+                 'advent-carols-vs-christmas-carols', 'christmas-carols-guide', 'corporate-carol-service')
+STUB_LINK = re.compile(r'href="(?:[^"]*/)?carol-singers\.html')
+A_TAG = re.compile(r'<a\b[^>]*href="(?:[^"]*/)?(christmas|christmas-carol-services)\.html[^"]*"[^>]*>(.*?)</a>', re.S)
+
+
+def no_links_to_stub():
+    for rel in site_pages():
+        if rel == 'carol-singers.html':
+            continue
+        check(not STUB_LINK.search(read(rel)), f'{rel}: links to the carol-singers.html stub')
+
+
+def church_guides_point_to_church_page():
+    for slug in CHURCH_GUIDES:
+        rel = f'music-guides/{slug}.html'
+        bar = read(rel).split('class="mobile-cta"', 1)[1].split('</div>', 1)[0]
+        check('christmas-carol-services.html" class="mobile-cta-enquire"' in bar,
+              f'{rel}: sticky Enquire should go to the church page')
+
+
+def anchor_text_matches():
+    for rel in site_pages():
+        body = INCLUDE.sub('', read(rel))
+        for page, anchor in A_TAG.findall(body):
+            text = re.sub(r'<[^>]+>', '', anchor)
+            if page == 'christmas':
+                check(not re.search(r'carol (service|concert)', text, re.I),
+                      f'{rel}: "{text}" links christmas.html; carol services belong to the church page')
+            else:
+                check('carol singers' not in text.lower(),
+                      f'{rel}: "{text}" links the church page; carol singers belong to christmas.html')
+
+
 def main():
     stub_preserves_query()
     stub_has_noscript_refresh()
@@ -234,6 +270,9 @@ def main():
                   ('Church carol service', 'School or community service', 'Other'))
     faq_unique('christmas-carol-services.html')
     nav_footer()
+    no_links_to_stub()
+    church_guides_point_to_church_page()
+    anchor_text_matches()
     if failures:
         print(f'FAIL: {len(failures)} problem(s)')
         for f in failures[:60]:
