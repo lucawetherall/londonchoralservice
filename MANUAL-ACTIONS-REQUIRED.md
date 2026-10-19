@@ -258,6 +258,8 @@ The competitor everyone outranks us with — The London Funeral Singers — is t
 
 **Weekly review, 2026-10-16 (Search Console, 7–13 Oct vs 30 Sep–6 Oct):** 56 clicks (was 44), 2,059 impressions (was 2,250), CTR 2.7% (was 2.0%), average position 7.5 (was 7.9). Music guides carry the clicks (nine-lessons-and-carols 25, be-thou-my-vision-wedding-hymn, christmas-carols-guide and wedding-choral-repertoire 2 each); the homepage has 6. Hiring queries still off page one: "hire a choir" 11.0, "how to book a choir" 12.5, "how to choose the right choir" 15.0, "choir to hire" 16.0, "choir wedding" 15.0. The 14 Oct heading and link fixes fall after this window. Sitemap last read 2026-10-15; all ad landing pages indexed.
 
+**Weekly review, 2026-10-19 (Search Console, 2026-10-10 to 2026-10-16):** 65 clicks (was 52), 2,079 impressions (was 2,190), CTR 3% (was 2%), average position 7.5 (was 8.0). Music guides carry the clicks (nine-lessons-and-carols 25, christmas-carols-guide 3, humanist-wedding-music 3, hiring-a-choir 2); the homepage has 7. Hiring queries still off page one: "how to book a choir" 12.6, "hire a choir" 12.0, "how to choose the right choir" 14.4, "why corporate event planners love booking choirs" 9.0, "carol singers london" 8.7. Sitemap last read 2026-10-17; all ad landing pages indexed.
+
 ---
 
 ## 13. Private events page launch follow-ups, 2026-08-26
