@@ -171,4 +171,7 @@ echo "Validating house claims..."
 echo "Checking the deploy allowlist..."
 "$PY" scripts/stage_site.py
 
+# Advisory only: says whether graphify-out/ is behind the repo. Never fails the build.
+"$PY" scripts/refresh_graph.py --check || echo "graph: check failed (ignored)"
+
 echo "Done."

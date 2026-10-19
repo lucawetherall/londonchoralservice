@@ -26,7 +26,7 @@ The website of The London Choral Service (Alma Consort Ltd) — a choir-for-hire
 - `MANUAL-ACTIONS-REQUIRED.md` — human-only dashboard tasks. **Never attempt these**
 - `SITE-STOP-SLOP-PLAN.md` — house copy-style audit (distilled into the `writing-site-copy` skill)
 - `.github/workflows/` — `deploy-pages.yml` (allowlist checks on every pull request; deploy on `main`) and `indexnow.yml` (IndexNow ping, called after each deploy)
-- `graphify-out/` — pre-built knowledge graph of the whole repo (pages, guides, boroughs, skills, plans, cross-links). **Committed and checked in** — query it instead of re-exploring the codebase for broad "how does X relate to Y" or "what links to Z" questions. See Commands below.
+- `graphify-out/` — committed knowledge graph of the repo, in three layers: code (AST), page-to-page links and redirects (`scripts/graph_site_links.py`), and concepts from pages and docs (LLM extraction: repertoire, policies, specs). Page nodes are `{path}_page` (`areas/london/camden.html` → `areas_london_camden_page`). `.graphifyignore` lists what it skips (images, generated files). Use it for cross-file questions ("what links to X", "what touches the ledger", where to start in `scripts/` or `command_centre/`), not for an edit to one known file, where grep is quicker.
 
 ## Commands
 
@@ -40,7 +40,7 @@ The website of The London Choral Service (Alma Consort Ltd) — a choir-for-hire
 - Check the live site after a deploy or an allowlist change: `git fetch origin && python3 scripts/check_live_site.py` (every published file 200, every other repo file 404, sitemap URLs 200; exit 2 means the CDN is still serving answers from before the deploy, so re-run in ten minutes)
 - Local preview: `python3 -m http.server 8000`
 - Social share cards: `node scripts/og/generate_og_images.mjs --wire` renders `assets/og/*.png` (1200×630, from each page's h1) and rewires `og:image`/`twitter:image`. Needs Playwright + Chromium; rerun after adding an area, borough, destination or `for-*` page.
-- Query the repo graph: `/graphify query "<question>"` (reads the committed `graphify-out/graph.json` — do not rebuild unless files have changed since the last graph commit). Refresh after a large content sweep with `/graphify --update`.
+- Query the repo graph: `graphify query "<question>"`, `graphify path "<A>" "<B>"`, `graphify explain "<node>"` (read the committed `graphify-out/graph.json`; `graph.html` is a per-community overview). `python3 scripts/refresh_graph.py` refreshes the code and link layers, keeps the community names and needs no LLM (~10 s); `--check` says how far behind the graph is, and `./build.sh` prints that line. The concept layer is refreshed with `/graphify --update` in Claude Code (about one agent per 21 changed pages/docs); it is due when the check says so.
 
 ## Conventions
 
@@ -67,7 +67,7 @@ The website of The London Choral Service (Alma Consort Ltd) — a choir-for-hire
 - Larger features: write a spec in `docs/superpowers/specs/` and a plan in `docs/superpowers/plans/`, named `YYYY-MM-DD-<name>.md`, matching the existing documents' style.
 - The owner gives broad mandates ("make the best decisions", "fix everything"): carry the work through end to end (build, test, PR, merge, verify live) and batch anything needing approval (Google Ads changes, business-policy calls) into one question.
 - Before committing: run the `build-and-verify` checklist. Commit messages follow the existing history style (`fix(scope): …`, `copy: …`, `chore: …`).
-- If a change adds/removes/materially rewrites pages (new-page work, a site-wide sweep, a bulk content edit), refresh the graph with `/graphify --update` and commit `graphify-out/` alongside the content change so it doesn't drift stale.
+- Keep `graphify-out/` out of content and feature PRs: `graph.json` is rewritten wholesale, so two sessions' PRs would conflict on it. When the build's last line says the graph is behind, refresh it in its own PR (`chore(graph): refresh the knowledge graph`): `python3 scripts/refresh_graph.py` for code and links, plus `/graphify --update` when the concept extraction is due or after a large content sweep.
 
 ## Project skills
 
