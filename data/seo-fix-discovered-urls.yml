@@ -76,16 +76,54 @@ videos:
     # music-guides/anima-christi-catholic-funeral.html,
     # music-guides/catholic-funeral-hymns.html,
     # compare/london-funeral-singers.html
-  # Added 2026-09-30. The lead Christmas film: hero on christmas.html, carol-singers.html and
-  # christmas-pricing.html, first Christmas track on christmas.html, carol-singers.html and
-  # listen.html, and the embed on twelve party/booking music guides.
+  # Added 2026-09-30. Hero on christmas-pricing.html (and on christmas.html and carol-singers.html
+  # until 2026-10-19, when Royal David's and Ding Dong took those heroes), a track on christmas.html,
+  # carol-singers.html and listen.html, and the lead embed on twelve party/booking music guides.
   - page: "christmas.html, carol-singers.html, christmas-pricing.html, listen.html"
     position: 7
-    youtube_id: "MyDf9cMp0gk"  # third upload of the same film (after d-HBdh5awoE and UOy498rsonU), swapped in 2026-09-30.
-    # No maxresdefault.jpg yet (404 on 2026-09-30), so pages use sddefault.jpg (640x480, cropped to 16:9 by CSS).
+    youtube_id: "csFWUu-r85Y"  # fourth upload of the same film (after d-HBdh5awoE, UOy498rsonU and MyDf9cMp0gk), swapped in 2026-10-19.
+    # maxresdefault.jpg exists (200 on 2026-10-19), so pages use it at 1280x720.
     title: "It's the Most Wonderful Time of the Year"  # sung by an octet; labelled "Full Choir" on the site
-    upload_date: "2026-09-30"  # verified via the watch page's uploadDate meta 2026-09-30
+    upload_date: "2026-10-19"  # verified via the watch page's uploadDate meta 2026-10-19 (14:11 PDT)
     duration: "PT1M50S"  # lengthSeconds 110
+  # Carol of the Bells: backfilled 2026-10-19 from the VideoObject already on the pages.
+  - page: "christmas.html, carol-singers.html, listen.html"
+    position: 8
+    youtube_id: "dGYqQf6BDAk"
+    title: "Carol of the Bells"  # sung by an octet; labelled "Full Choir" on the site
+    upload_date: "2026-09-29"
+    duration: "PT1M21S"
+    # Lead film on the carol-service music guides.
+  # Added 2026-10-19. Same eight singers and session as Carol of the Bells; all labelled "Full Choir".
+  # Upload times 14:02-14:06 PDT on 19 Oct = 22:02-22:06 BST, so the UK date is 2026-10-19.
+  # Plan: docs/superpowers/plans/2026-10-19-christmas-carol-videos.md
+  - page: "christmas.html (hero), listen.html"
+    position: 9
+    youtube_id: "SbvqWglsbMo"
+    title: "Once in Royal David's City"  # YouTube title "Once In Royal David's City"
+    upload_date: "2026-10-19"  # verified via the watch page's uploadDate meta 2026-10-19
+    duration: "PT1M53S"  # lengthSeconds 113
+    # Also embedded on: music-guides/christmas-carols-guide.html,
+    # music-guides/christmas-carol-lyrics-meanings.html, music-guides/nine-lessons-and-carols.html
+  - page: "carol-singers.html (hero), listen.html, christmas.html"
+    position: 10
+    youtube_id: "zDlSFb74p4E"
+    title: "Ding Dong! Merrily on High"  # YouTube title "Ding Dong Merrily On High"
+    upload_date: "2026-10-19"  # verified via the watch page's uploadDate meta 2026-10-19
+    duration: "PT1M45S"  # lengthSeconds 105
+    # Also embedded on: music-guides/christmas-carols-guide.html,
+    # music-guides/christmas-carol-lyrics-meanings.html, music-guides/best-carols-for-four-voices.html,
+    # music-guides/outdoor-carol-singing.html (lead film there, replacing Carol of the Bells)
+  - page: "listen.html, christmas.html, carol-singers.html"
+    position: 11
+    youtube_id: "UaVhyyidlTs"
+    title: "Winter Wonderland"
+    upload_date: "2026-10-19"  # verified via the watch page's uploadDate meta 2026-10-19
+    duration: "PT1M9S"  # lengthSeconds 69
+    # Thumbnail is a close-up of one singer; owner chose to keep it (2026-10-19).
+    # Also embedded on: music-guides/a-cappella-christmas-songs.html,
+    # music-guides/christmas-drinks-reception-music.html,
+    # music-guides/company-christmas-party-entertainment.html
 
 geo_areas:
   westminster: [51.49594, -0.13495]

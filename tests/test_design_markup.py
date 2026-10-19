@@ -15,13 +15,16 @@ SKIP_DIRS = {'command_centre', 'partials', 'node_modules', 'graphify-out', 'docs
 PROMO = 'Lov_NegzVhM'
 ABIDE = 'G9-R6k5n7Io'
 UBI = '-GQaQEGhYEs'
-# It's the Most Wonderful Time of the Year (final upload, 30 Sep 2026;
+# It's the Most Wonderful Time of the Year (fourth upload, 19 Oct 2026;
 # see data/seo-fix-discovered-urls.yml).
-WONDERFUL = 'MyDf9cMp0gk'
+WONDERFUL = 'csFWUu-r85Y'
+# Carol service and carol singer heroes (19 Oct 2026).
+ROYAL = 'SbvqWglsbMo'
+DINGDONG = 'zDlSFb74p4E'
 
-# YouTube has no maxresdefault.jpg for the final Christmas upload yet, so its
-# pages use sddefault.jpg; every other hero film uses maxresdefault.jpg.
-THUMBS = {WONDERFUL: 'sddefault.jpg'}
+# Every hero film uses maxresdefault.jpg; list an exception here if a new
+# upload has no maxres thumbnail yet.
+THUMBS = {}
 
 HERO_FILMS = {
     'index.html': PROMO,
@@ -34,8 +37,8 @@ HERO_FILMS = {
     'for-hotels.html': PROMO,
     'for-livery-companies.html': PROMO,
     'for-property-managers.html': PROMO,
-    'christmas.html': WONDERFUL,
-    'carol-singers.html': WONDERFUL,
+    'christmas.html': ROYAL,
+    'carol-singers.html': DINGDONG,
     'christmas-pricing.html': WONDERFUL,
     'for-funeral-directors.html': ABIDE,
     'for-wedding-planners.html': UBI,
@@ -47,6 +50,8 @@ CAPTIONS = {
     ABIDE: 'Abide With Me, sung by our full choir',
     UBI: 'Ubi Caritas by Ola Gjeilo, sung by a quintet',
     WONDERFUL: 'It&rsquo;s the Most Wonderful Time of the Year, sung by our full choir',
+    ROYAL: 'Once in Royal David&rsquo;s City, sung by our full choir',
+    DINGDONG: 'Ding Dong! Merrily on High, sung by our full choir',
 }
 
 NEW_PLAY_BTN = ('<svg class="play-btn" viewBox="0 0 56 56" aria-hidden="true">'
