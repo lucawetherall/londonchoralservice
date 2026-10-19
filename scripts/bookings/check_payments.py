@@ -47,10 +47,13 @@ reference names the invoice number ("INV2111", "INV 2111", "INV-2111",
 1212 A") or a glued one-letter tail ("1212A", "INV1212A"); "1212 A SMITH" and
 "INV1212BAL" name 1212. A reference that names any booking is final, but it is
 only CONFIDENT when nothing contradicts it: "1212" when 1212A also exists names
-them all, and the payer's surname may pick one (else all are unconfirmed); and
+them all, and the payer's surname may pick one, or failing that a client's surname written in
+the reference ("ANN SMITH -1212", when someone else pays), as long as the payment falls in that
+booking's window and doesn't fit another's fee or half-fee instead (pick_fits; else all are unconfirmed,
+as when neither surname or both appear); and
 the payer's surname contradicts it only when it fits another open booking whose
 window and fee or half-fee fit the payment, while the named client's surname is
-absent from the payer's name (then both are unconfirmed). Parents and funeral
+absent from both the payer's name and the reference (then both are unconfirmed). Parents and funeral
 directors paying under another name are normal. Surnames are the last real word
 of each party ("Ann Smith & Tom Jones": Smith or Jones; "T Brackenwold & Sons": Brackenwold).
 Failing a reference, when its amount is the deposit or full fee, the payer's name
@@ -125,12 +128,13 @@ payment in the last 14 days with no receipt drafted, only in PAID_IN_FULL,
 DEPOSIT_SEEN, BALANCE_DUE or NOTED_PAID) asks for a thank-you, and short_notice
 (event within 10 days of the invoice) asks for the full fee rather than a deposit.
 Every CHECK_*, PAST_*, NOTED_PAID and PAYMENT_* state is on the Monday money line's
-"needs a hand check" (money_report.py), and ARRANGED as above. "hand check only" in a booking's
-notes (hand_only: the client pays with an invoice number another booking also has, as when a ref was issued twice and
-the owner kept it) makes every payment matched to that booking unconfirmed, so nothing is credited, chased, thanked,
-noted or recorded in Books for it: its action is always hand_check, and it is on that line every week while the phrase
-stays (write it on both bookings). --apply never rewrites
-the notes of a cancelled, closed or hand-check-only row, and drops a "deposit not yet seen" clause when
+"needs a hand check" (money_report.py), and ARRANGED as above. A ref issued twice (the second booking recorded
+under a suffixed ref: 1212 and 1212A) is told apart by the payer's surname, or else a client's surname in the
+reference (by_reference); a payment naming the shared number with neither surname (or both), or one
+whose date or amount fits the other booking instead, is "reference naming several bookings", unconfirmed on both and a hand check.
+Otherwise the bank feed settles either booking like any other, and a "hand check only" note is inert text (owner
+decision, 19 Oct 2026). --apply never rewrites
+the notes of a cancelled or closed row, and drops a "deposit not yet seen" clause when
 it writes "deposit seen … (Starling)". Output shows invoice numbers and amounts only.
 """
 
@@ -153,9 +157,9 @@ LEDGER = lm.LEDGER
 MARK_TEXT = {"deposit": "reminder drafted", "balance": "balance reminder drafted", "payment": "payment reminder drafted",
              "receipt": "receipt drafted"}
 CONFIDENT = ("reference", "name and amount")
-# A client paying with an invoice number another booking also has (a ref issued twice; owner decision, 14 Oct 2026:
-# keep it, record the second booking under a suffixed ref, and check every payment on either by hand)
-HAND_ONLY_NOTE = re.compile(r"\bhand check only\b", re.I)
+# A client paying with an invoice number another booking also has (a ref issued twice, the second booking under a
+# suffixed ref) is told apart by the payer's surname, or else a client's surname in the reference (by_reference)
+# when the payment fits that booking (pick_fits), and is otherwise a hand check
 RECEIPT_DAYS = 14
 SHORT_NOTICE_DAYS = 10
 # The most a booking may be short by transfer fees and still read paid in full, once the owner accepts it
@@ -282,16 +286,6 @@ def named_keys(text, known):
         if hit:
             out.add(hit)
     return out
-
-
-def hand_only(r):
-    """True when the notes say "hand check only": every payment matched to this booking is unconfirmed (demoted)."""
-    return bool(HAND_ONLY_NOTE.search(r.get("notes") or ""))
-
-
-def demoted(paid):
-    """The payments with every confident match made unconfirmed ("reference, hand check only")."""
-    return [(d, a, f"{how}, hand check only" if how in CONFIDENT else how) for d, a, how in paid]
 
 
 def surnames(r):
@@ -622,11 +616,22 @@ def full_by(r, today=None, facts=None):
     return notes_full_by(lcs_events.set_aside(r.get("notes"), f))
 
 
-def by_reference(keys, by_key, payer, amount, rows, when, today):
-    """(booking refs, how) for a payment whose reference names these ledger keys. The payer's surname
-    contradicts the reference only when it fits another OPEN booking whose window and fee (or half-fee)
-    fit the payment too, and the named client's own surname isn't in the payer's name; a parent or
-    funeral director paying under another name is otherwise normal."""
+def pick_fits(r, group, amount, when, today):
+    """A surname's pick among bookings sharing a number stands only when the payment falls inside that booking's
+    window and its amount doesn't fit another of them instead: £700 from a "SMITH" naming 1212 (Smith, £1,300)
+    when 1212A (Jones, £1,400) has the £700 half-fee is a relative of the Joneses as likely as of the Smiths."""
+    if not in_window(r, when, today):
+        return False
+    return fits_amount(amount, r) or not any(fits_amount(amount, o) for o in group if o is not r)
+
+
+def by_reference(keys, by_key, payer, amount, rows, when, today, reference=""):
+    """(booking refs, how) for a payment whose reference names these ledger keys. A number several bookings
+    share goes to the one whose client's surname is in the payer's name, or failing that in the reference
+    itself ("ANN SMITH -1212" paid by her parents), when the payment fits that booking (pick_fits). The payer's surname contradicts the reference only when
+    it fits another OPEN booking whose window and fee (or half-fee) fit the payment too, and the named
+    client's own surname is in neither the payer's name nor the reference; a parent or funeral director
+    paying under another name is otherwise normal."""
     named = []
     for k in sorted(keys):
         group = list(by_key[k])
@@ -634,15 +639,19 @@ def by_reference(keys, by_key, payer, amount, rows, when, today):
             group += [r for kk, rs in by_key.items() if len(kk) == len(k) + 1 and kk.startswith(k) and kk[-1].isalpha()
                       for r in rs]
         if len(group) > 1:
-            who = [r for r in group if payer_is(r, payer)]
-            group = who if len(who) == 1 else group
+            for text in (payer, reference):  # the payer's name first, then the reference's own words
+                who = [r for r in group if payer_is(r, text)]
+                if len(who) == 1:
+                    if pick_fits(who[0], group, amount, when, today):
+                        group = who
+                    break
         named += [r for r in group if r not in named]
     refs = sorted({r["booking_ref"] for r in named})
     if len(refs) > 1:
         return refs, "reference naming several bookings"
     others = sorted({r["booking_ref"] for r in open_rows(rows, today) if r["booking_ref"] != refs[0] and payer_is(r, payer)
                      and in_window(r, when, today) and fits_amount(amount, r)})
-    if others and not any(payer_is(r, payer) for r in named):
+    if others and not any(payer_is(r, payer) or payer_is(r, reference) for r in named):
         return refs + others, "reference, but the payer's name fits another booking"
     return refs, "reference"
 
@@ -662,7 +671,7 @@ def match(rows, items, today):
         payer = it.get("counterPartyName") or ""
         keys = named_keys(it.get("reference"), by_key)
         if keys:
-            refs, how = by_reference(keys, by_key, payer, amount, rows, when, today)
+            refs, how = by_reference(keys, by_key, payer, amount, rows, when, today, it.get("reference") or "")
         else:
             refs = [r["booking_ref"] for r in rows if not is_cancelled(r) and fits_amount(amount, r)
                     and in_window(r, when, today) and payer_is(r, payer)]
@@ -680,9 +689,6 @@ def match(rows, items, today):
             how = "name only, amount differs"
         for ref in dict.fromkeys(refs):
             found[ref].append((when, amount, how))
-    for r in rows:  # a booking whose payments are checked by hand only never has a confident match
-        if hand_only(r):
-            found[r["booking_ref"]] = demoted(found[r["booking_ref"]])
     return found
 
 
@@ -816,9 +822,6 @@ def assess(r, paid, today, facts=None, unsent=None):
     """`unsent`: the refs whose Books invoice hasn't been sent yet (None reads unsent_invoices())."""
     value = money(r)
     f = facts_for(r, today, facts)
-    hand = hand_only(r)
-    if hand:  # match() demotes them already; a caller's own list too
-        paid = demoted(paid)
     sure = [p for p in paid if p[2] in CONFIDENT]
     maybe = [p for p in paid if p[2] not in CONFIDENT]
     total = round(sum(a for _, a, _ in sure), 2)
@@ -917,8 +920,6 @@ def assess(r, paid, today, facts=None, unsent=None):
         # the Monday hand check lists it once the deposit (or, on single-payment terms, the whole fee) would be late
         out["deposit_late"] = today > (terms or deposit_due)
     out["action"] = action_for(out, today)
-    if hand:  # only then, so every other assessment is exactly as before: never chased, thanked or recorded
-        out["hand_only"], out["action"] = True, "hand_check"
     if hold:  # only when held, so an assessment with no recorded facts is exactly as before
         out["held"], out["action"] = hold, "hand_check"
     return out
@@ -956,8 +957,6 @@ def describe(a):
     line = describe_state(a)
     if a.get("held"):
         line += f" · notes and recorded facts disagree: {', '.join(a['held'])} (check by hand)"
-    if a.get("hand_only"):
-        line += " · hand check only: its invoice number is shared, so every payment is confirmed by hand"
     return line
 
 
@@ -1003,7 +1002,7 @@ def describe_state(a):
 
 def updated_notes(notes, a, paid):
     """Ledger notes after this run; only confident matches (reference, name and amount) change them."""
-    if a["state"] in NEVER_WRITTEN or a.get("hand_only"):  # cancelled, closed or hand-check-only: never rewritten
+    if a["state"] in NEVER_WRITTEN:  # cancelled or closed rows are never rewritten
         return notes
     sure = [p for p in paid if p[2] in CONFIDENT]
     new = notes
@@ -1229,14 +1228,14 @@ def books_closed(client, rows, today, open_in_books=None, skip=()):
     Books (owner decision, 14 Oct 2026: Claude keeps Books correct). collect() leaves a closed booking out, so its
     payments never reach "record_in_books"; this lists them, read-only, as [{ref, closed_on, value, received,
     books_balance, record_in_books}], with record_in_books the confident payments dated up to the close, oldest
-    first ([date, amount, bank charges], the accepted fee on the last one). Never a cancelled, held or "hand check
-    only" booking, and empty when the confident payments exceed the booking's value. Only the refs the Books cache shows
+    first ([date, amount, bank charges], the accepted fee on the last one). Never a cancelled or held booking, and
+    empty when the confident payments exceed the booking's value. Only the refs the Books cache shows
     still open (no readable cache: none), and none in `skip` (refs already reported); the daily pass skips a payment Books already has (same date and amount)."""
     if open_in_books is None:
         open_in_books = books_open_balances() or {}
     oldest = today - datetime.timedelta(days=CLOSED_BOOKS_DAYS)
     shut = [r for r in rows if not is_cancelled(r) and closed_on(r, today) and closed_on(r, today) >= oldest
-            and not hand_only(r) and r["booking_ref"] in open_in_books and r["booking_ref"] not in skip]
+            and r["booking_ref"] in open_in_books and r["booking_ref"] not in skip]
     starts = [d - datetime.timedelta(days=3) for d in (date_or_none(r.get("invoice_date")) for r in shut) if d]
     if not starts:
         return []
@@ -1251,7 +1250,7 @@ def books_closed(client, rows, today, open_in_books=None, skip=()):
         books = [[d, x, 0.0] for d, x in sure]
         if books and a["state"] == "PAID_IN_FULL" and a.get("fees"):
             books[-1][2] = a["fees"]
-        if a.get("held") or a.get("hand_only") or total > value + 0.01:
+        if a.get("held") or total > value + 0.01:
             books = []
         out.append({"ref": r["booking_ref"], "closed_on": close, "value": value, "received": total,
                     "books_balance": open_in_books[r["booking_ref"]],

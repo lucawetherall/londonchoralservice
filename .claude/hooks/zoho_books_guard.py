@@ -24,8 +24,8 @@ text, reference number and lines (never the customer, currency, tax fields, or t
 except on a draft, to a DDMM ref), and turn an invoice's payment reminders off (never on).
 Invoice updates and client payments are checked against ~/lcs-private/books-guard.json
 (cc_sync.py books; at most an hour old) and payments against the ledger. It records only
-client payments backed by a Starling payment (one invoice, its own customer, sent and
-open, never above its balance, never a "hand check only" booking, with any shortfall the
+client payments backed by a Starling payment (one invoice, its own customer and number, sent
+and open, never above its balance, only for a booking in the ledger, with any shortfall the
 owner accepted as transfer fees, at most £40, as its bank_charges) and a singer payment
 against its bill (unused on the free plan), both through the Starling account, and marks an invoice sent (a status change; Books emails nobody as long as
 its automatic payment reminders are off) only once Luca's own email carrying that
@@ -355,12 +355,12 @@ FEE_CAP = 40.00  # check_payments.FEE_CAP
 # payments against ~/lcs-private/books-guard.json, which `cc_sync.py books` writes from a read-only list_invoices:
 # each invoice's invoice_id, customer_id, number, status, total and balance. It must be at most SNAPSHOT_MAX_AGE
 # old; run `cc_sync.py books` first. A payment is also checked against the ledger (~/lcs-private/bookings.csv):
-# the invoice's booking must be there, and never one whose notes say "hand check only". A missing, unreadable or
-# stale file denies the call (fail closed). LCS_PRIVATE_DIR and LCS_BOOKINGS_CSV move both, as for the scripts.
+# the invoice's booking must be there (a ref issued twice is check_payments.py's to tell apart by the payer's surname;
+# owner decision, 19 Oct 2026). A missing, unreadable or stale file denies the call (fail closed). LCS_PRIVATE_DIR and
+# LCS_BOOKINGS_CSV move both, as for the scripts.
 SNAPSHOT_MAX_AGE = datetime.timedelta(minutes=60)
 OPEN_STATUSES = {"sent", "viewed", "overdue", "unpaid", "partially_paid"}  # sent to the client and not yet paid
 EDITABLE_STATUSES = OPEN_STATUSES | {"draft"}  # an invoice Claude may correct: never a paid or void one
-HAND_ONLY_NOTE = re.compile(r"\bhand check only\b", re.I)  # check_payments.HAND_ONLY_NOTE
 ISO_DAY = re.compile(r"[0-9]{4}-[0-9]{2}-[0-9]{2}")
 
 
@@ -394,7 +394,7 @@ def _books_invoice(invoice_id, now=None):
 
 
 def _ledger_allows_payment(number):
-    """Deny unless the ledger has the booking `number` and none of its rows says "hand check only"."""
+    """Deny unless the ledger can be read and has the booking `number`."""
     path = os.environ.get("LCS_BOOKINGS_CSV") or os.path.join(_private_dir(), "bookings.csv")
     try:
         with open(path, newline="", encoding="utf-8") as f:
@@ -403,9 +403,6 @@ def _ledger_allows_payment(number):
         raise Deny(P + "the ledger (~/lcs-private/bookings.csv) can't be read, so no payment is recorded.")
     if not rows:
         raise Deny(P + f"invoice {number} has no booking in the ledger, so no payment is recorded against it.")
-    if any(HAND_ONLY_NOTE.search(r.get("notes") or "") for r in rows):
-        raise Deny(P + f"booking {number} says \"hand check only\" in the ledger: its payments are confirmed by hand, "
-                   "never recorded by Claude.")
 
 
 def _plain_number(v):
@@ -502,10 +499,12 @@ def check_create_customer_payment(body, query, path):
         raise Deny(P + "bank_charges must be less than amount.")
     _iso_day(body["date"], "body.date")
     # Books as the guard last saw it (books-guard.json): the invoice's own customer, sent and still open, never a
-    # draft, paid or void one, and never more than its balance; then the ledger: never a "hand check only" booking.
+    # draft, paid or void one, and never more than its balance; then the ledger: the invoice's booking must be in it.
     inv = _books_invoice(body["invoice_id"])
     if body["customer_id"] != inv["customer_id"]:
         raise Deny(P + "customer_id must be the invoice's own customer.")
+    if ref is not None and ref != inv["number"]:  # a 2108A payment never lands on invoice 2108
+        raise Deny(P + f"reference_number {ref} must be the invoice's own number ({inv['number']}).")
     if inv["status"] not in OPEN_STATUSES:
         raise Deny(P + f"invoice {inv['number']} is {inv['status']}: a payment is recorded only against a sent invoice "
                    "with a balance (never a draft, paid or void one).")

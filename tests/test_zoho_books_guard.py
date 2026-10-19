@@ -682,24 +682,37 @@ def test_customer_payment_is_one_invoice_through_starling_with_no_thank_you_emai
 def test_customer_payment_is_checked_against_books_and_the_ledger():
     """Owner hands-off, 14 Oct 2026: closed bookings' payments are recorded too, so the guard itself checks the
     invoice (books-guard.json) and the ledger: its own customer, sent and open, never above the balance, never a
-    draft, paid or void invoice, never a booking that is missing from the ledger or says "hand check only"."""
+    draft, paid or void invoice, never a booking that is missing from the ledger. A "hand check only" note no longer
+    stops a payment (owner decision, 19 Oct 2026: the bank feed settles a shared invoice number)."""
     C = "ZohoBooks_create_customer_payment"
 
-    def pay(invoice_id=SENT_ID, amount=575, customer=CUSTOMER):
+    numbers = {i["invoice_id"]: i["number"] for i in SNAPSHOT}
+
+    def pay(invoice_id=SENT_ID, amount=575, customer=CUSTOMER, ref=""):
         return with_(C, "body", invoice_id=invoice_id, customer_id=customer, amount=amount, amount_applied=amount,
+                     reference_number=numbers.get(invoice_id, "2111") if ref == "" else ref,
                      invoices=[{"invoice_id": invoice_id, "amount_applied": amount}])
     assert not denied(C, pay())
+    # the reference must be the invoice's own number: a 2108A payment never lands on 2111, nor 2108's on 2108A
+    assert denied(C, pay(ref="2108A")) and denied(C, pay(SHARED_ID, amount=1400, ref="2108"))
+    assert not denied(C, pay(ref=None))  # no reference_number at all is still allowed
     assert not denied(C, pay(amount=1150))  # the whole balance
     assert denied(C, pay(amount=1150.01))  # above it
     assert denied(C, pay(customer=OTHER_CUSTOMER))
     for invoice_id in (DRAFT_ID, PAID_ID, VOID_ID, "1534218000000999999"):
         assert denied(C, pay(invoice_id, amount=50)), invoice_id
-    assert denied(C, pay(SHARED_ID, amount=1400))  # 2108A: "hand check only"
+    assert not denied(C, pay(SHARED_ID, amount=1400))  # 2108A says "hand check only": inert text now
+    assert denied(C, pay(SHARED_ID, amount=2800.01))  # every other check still holds: above its balance
     assert denied(C, pay(UNLEDGERED_ID, amount=100))  # no booking 0909 in the ledger
     assert denied(C, with_(C, "body", date="10/10/2026"))
+    assert not hasattr(guard_module(), "HAND_ONLY_NOTE")
     try:
         write_ledger("booking_ref,notes\n2111,\"paid, then HAND CHECK ONLY (owner)\"\n")
-        assert denied(C, pay())
+        assert not denied(C, pay())
+        write_ledger("booking_ref,notes\n2509,paid in full 2026-09-20\n")
+        assert denied(C, pay())  # 2111 missing from the ledger
+        write_ledger("booking_ref,notes\n")
+        assert denied(C, pay())  # an empty ledger
         os.remove(os.environ["LCS_BOOKINGS_CSV"])
         assert denied(C, pay())  # no ledger: fail closed
         write_ledger()
@@ -712,20 +725,25 @@ def test_customer_payment_is_checked_against_books_and_the_ledger():
 
 
 def test_the_2108a_one_off_is_gone():
-    """The one-off of 19 Oct 2026 (#264) was used once (payment 11 against invoice 2108A) and removed: a payment on a
-    "hand check only" booking is refused again, that one included."""
+    """The one-off of 19 Oct 2026 (#264) was used once (payment 11 against invoice 2108A) and removed. Books now shows
+    that invoice paid, so the same payment is refused by the ordinary rules (never a paid invoice): never twice."""
     C = "ZohoBooks_create_customer_payment"
     real = {"invoice_id": "1534218000000393001", "customer_id": "1534218000000392001", "number": "2108A",
-            "status": "sent", "total": 2800.0, "balance": 2800.0}
+            "status": "paid", "total": 2800.0, "balance": 0.0}
     ti = with_(C, "body", invoice_id=real["invoice_id"], customer_id=real["customer_id"], date="2026-10-19",
                amount=2800, amount_applied=2800, reference_number="2108A", description=None,
                invoices=[{"invoice_id": real["invoice_id"], "amount_applied": 2800}])
+    mod = guard_module()
     try:
         write_snapshot(SNAPSHOT + [real])
         assert denied(C, ti)
+        try:
+            mod.check_create_customer_payment(ti["body"], ti.get("query_params", {}), ti.get("path_variables", {}))
+            raise AssertionError("allowed")
+        except mod.Deny as e:
+            assert "invoice 2108A is paid" in str(e), e  # refused as any paid invoice is
     finally:
         write_snapshot()
-    mod = guard_module()
     assert not any(hasattr(mod, n) for n in ("ONE_OFF_HAND_CHECK_PAYMENTS", "_one_off_payment", "_claim_one_off"))
 
 
