@@ -164,7 +164,7 @@ def christmas_hero_offer():
     check('class="hero-facts"' in head, 'christmas.html: facts sit between the h1 and the film')
     check('href="#enquiry" class="btn-link"' in head, 'christmas.html: primary button above the film')
     check('data-whatsapp' in head, 'christmas.html: WhatsApp button in the hero')
-    for claim in ('&pound;1,150', 'two hours', 'December', 'Greater London', 'one working day'):
+    for claim in ('&pound;1,150', 'two hours', 'December', 'London travel', 'one working day'):
         check(claim in head, f'christmas.html: hero facts should mention {claim!r} (ad message match)')
 
 
