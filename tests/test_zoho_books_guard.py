@@ -686,10 +686,16 @@ def test_customer_payment_is_checked_against_books_and_the_ledger():
     stops a payment (owner decision, 19 Oct 2026: the bank feed settles a shared invoice number)."""
     C = "ZohoBooks_create_customer_payment"
 
-    def pay(invoice_id=SENT_ID, amount=575, customer=CUSTOMER):
+    numbers = {i["invoice_id"]: i["number"] for i in SNAPSHOT}
+
+    def pay(invoice_id=SENT_ID, amount=575, customer=CUSTOMER, ref=""):
         return with_(C, "body", invoice_id=invoice_id, customer_id=customer, amount=amount, amount_applied=amount,
+                     reference_number=numbers.get(invoice_id, "2111") if ref == "" else ref,
                      invoices=[{"invoice_id": invoice_id, "amount_applied": amount}])
     assert not denied(C, pay())
+    # the reference must be the invoice's own number: a 2108A payment never lands on 2111, nor 2108's on 2108A
+    assert denied(C, pay(ref="2108A")) and denied(C, pay(SHARED_ID, amount=1400, ref="2108"))
+    assert not denied(C, pay(ref=None))  # no reference_number at all is still allowed
     assert not denied(C, pay(amount=1150))  # the whole balance
     assert denied(C, pay(amount=1150.01))  # above it
     assert denied(C, pay(customer=OTHER_CUSTOMER))

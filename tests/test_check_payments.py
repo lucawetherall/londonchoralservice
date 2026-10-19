@@ -448,12 +448,12 @@ SHARED_ROWS = [row("1212", 1300, "2026-09-10", "2026-12-12", "hand check only: s
 def test_a_shared_ref_is_confident_on_the_booking_the_payers_surname_names():
     """"INV 1212" names 1212 and 1212A both; the payer's surname picks one, a confident reference match on that
     booking only, whatever its notes say: credited, thanked and recorded in Books like any other."""
-    for who, ref, other in (("BO JONES", "1212A", "1212"), ("MRS A SMITH", "1212", "1212A")):
-        found = cp.match(SHARED_ROWS, [pay(650, "2026-09-24", "INV 1212", who)], T)
-        assert found[ref] == [("2026-09-24", 650.0, "reference")] and found[other] == [], (who, found)
+    for who, ref, other, x in (("BO JONES", "1212A", "1212", 700.0), ("MRS A SMITH", "1212", "1212A", 650.0)):
+        found = cp.match(SHARED_ROWS, [pay(x, "2026-09-24", "INV 1212", who)], T)
+        assert found[ref] == [("2026-09-24", x, "reference")] and found[other] == [], (who, found)
         a = cp.assess(next(r for r in SHARED_ROWS if r["booking_ref"] == ref), found[ref], T)
-        assert a["state"] == "DEPOSIT_SEEN" and a["received"] == 650.0 and a["action"] == "receipt", a
-        assert a["record_in_books"] == [["2026-09-24", 650.0, 0.0]] and "hand_only" not in a, a
+        assert a["state"] == "DEPOSIT_SEEN" and a["received"] == x and a["action"] == "receipt", a
+        assert a["record_in_books"] == [["2026-09-24", x, 0.0]] and "hand_only" not in a, a
         assert "hand check only" not in cp.describe(a)
 
 
@@ -490,12 +490,38 @@ def test_a_shared_ref_with_the_clients_name_in_the_reference_is_confident_when_s
     assert found["1212A"] == [("2026-09-24", 1400.0, "reference")] and found["1212"] == [], found
     a = cp.assess(SHARED_ROWS[1], found["1212A"], T)
     assert a["state"] == "PAID_IN_FULL" and a["record_in_books"] == [["2026-09-24", 1400.0, 0.0]], a
-    found = cp.match(SHARED_ROWS, [pay(650, "2026-09-24", "1212 ANN SMITH", "BO JONES")], T)
-    assert found["1212A"] == [("2026-09-24", 650.0, "reference")] and found["1212"] == [], found
+    found = cp.match(SHARED_ROWS, [pay(700, "2026-09-24", "1212 ANN SMITH", "BO JONES")], T)
+    assert found["1212A"] == [("2026-09-24", 700.0, "reference")] and found["1212"] == [], found
     for ref in ("SMITH JONES 1212", "1212 WEDDING"):
         found = cp.match(SHARED_ROWS, [pay(650, "2026-09-24", ref, "MR J R . MRS B M SMYTHE")], T)
         assert all(found[r["booking_ref"]] == [("2026-09-24", 650.0, "reference naming several bookings")]
                    for r in SHARED_ROWS), (ref, found)
+
+
+def test_a_surname_pick_the_amount_or_date_contradicts_is_unconfirmed_on_both():
+    """Review of #270: the surname alone must not decide. £700 from "MRS P SMITH" with "1212 deposit" names 1212
+    (Smith, £1,300) by surname, but £700 is 1212A's half-fee and not 1212's: she may be Bo Jones's mother. A payment
+    dated outside the picked booking's window is no pick either. Both stay unconfirmed: never thanked, chased or
+    recorded in Books on the wrong one."""
+    found = cp.match(SHARED_ROWS, [pay(700, "2026-09-24", "1212 deposit", "MRS P SMITH")], T)
+    for r in SHARED_ROWS:
+        assert found[r["booking_ref"]] == [("2026-09-24", 700.0, "reference naming several bookings")], found
+        a = cp.assess(r, found[r["booking_ref"]], T)
+        assert a["action"] == "hand_check" and a["record_in_books"] == [] and not a["just_received"], a
+    # an odd amount that fits neither booking still goes to the surname's pick (a split payment from the client)
+    assert cp.match(SHARED_ROWS, [pay(300, "2026-09-24", "1212", "MRS A SMITH")], T)["1212"][0][2] == "reference"
+    # 1212A's window opens three days before its invoice (2026-09-20): a payment on 2026-09-12 can't be its own
+    early = cp.match(SHARED_ROWS, [pay(700, "2026-09-12", "INV 1212", "BO JONES")], T)
+    assert all(how == "reference naming several bookings" for hits in early.values() for _, _, how in hits), early
+
+
+def test_a_shared_ref_whose_payer_fits_both_clients_is_unconfirmed_on_both():
+    """A joint account carrying both surnames, or two clients with the same surname: no single pick."""
+    found = cp.match(SHARED_ROWS, [pay(700, "2026-09-24", "INV 1212", "A SMITH & B JONES")], T)
+    assert all(found[r["booking_ref"]][0][2] == "reference naming several bookings" for r in SHARED_ROWS), found
+    twins = [dict(r, client_name=n) for r, n in zip(SHARED_ROWS, ("Ann Smith", "Bo Smith"))]
+    found = cp.match(twins, [pay(700, "2026-09-24", "INV 1212", "MR B SMITH")], T)
+    assert all(found[r["booking_ref"]][0][2] == "reference naming several bookings" for r in twins), found
 
 
 def test_a_reference_naming_its_client_is_confident_whoever_pays():
