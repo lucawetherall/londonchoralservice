@@ -393,50 +393,6 @@ def _books_invoice(invoice_id, now=None):
     return inv
 
 
-# One-off exceptions to the "hand check only" rule (CLAUDE.md, Zoho Books: "a committed, reviewed guard change naming the
-# exact records, reverted afterwards"). Each lets exactly one customer payment through:
-# - that invoice and customer, and the invoice as books-guard.json shows it (sent, with that total and that balance);
-# - that date and that exact amount, no bank charges, and the booking's own ref (or none) as reference_number;
-# - only until `until`: it lapses even if the revert is missed.
-# The first time one is allowed the guard claims it with a marker under ~/lcs-private/books-guard-one-offs/, so it is
-# never allowed twice, even against a snapshot that still shows the invoice unpaid.
-# Owner, 19 Oct 2026: record the £2,800 Starling payment of 19 Oct against invoice 2108A. Its bank reference names the
-# client and it equals the invoice. 2108A is hand-check only because ref 2108 was also issued to an earlier booking.
-ONE_OFF_HAND_CHECK_PAYMENTS = (
-    {"invoice_id": "1534218000000393001", "customer_id": "1534218000000392001", "number": "2108A",
-     "date": "2026-10-19", "amount": 2800.0, "until": "2026-10-20"},
-)
-
-
-def _one_off_payment(body, inv, today=None):
-    """The one of ONE_OFF_HAND_CHECK_PAYMENTS that this payment is exactly, still in date, or None."""
-    today = today or datetime.date.today()
-    for o in ONE_OFF_HAND_CHECK_PAYMENTS:
-        if (body.get("invoice_id") == o["invoice_id"] and body.get("customer_id") == o["customer_id"]
-                and inv.get("number") == o["number"] and inv.get("status") == "sent"
-                and _plain_number(inv.get("total")) and round(inv["total"], 2) == o["amount"]
-                and _plain_number(inv.get("balance")) and round(inv["balance"], 2) == o["amount"]
-                and body.get("date") == o["date"] and "bank_charges" not in body
-                and _plain_number(body.get("amount")) and body["amount"] == o["amount"]
-                and body.get("reference_number") in (None, o["number"])
-                and today <= datetime.date.fromisoformat(o["until"])):
-            return o
-    return None
-
-
-def _claim_one_off(o):
-    """Mark the one-off used (O_EXCL), or Deny when it already is or the marker can't be written (fail closed)."""
-    folder = os.path.join(_private_dir(), "books-guard-one-offs")
-    try:
-        os.makedirs(folder, mode=0o700, exist_ok=True)
-        fd = os.open(os.path.join(folder, f"{o['invoice_id']}-{o['date']}"), os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
-        os.close(fd)
-    except FileExistsError:
-        raise Deny(P + f"the one-off for invoice {o['number']} has been used already: a payment is never recorded twice.")
-    except OSError:
-        raise Deny(P + "the one-off's use can't be recorded, so no payment is recorded.")
-
-
 def _ledger_allows_payment(number):
     """Deny unless the ledger has the booking `number` and none of its rows says "hand check only"."""
     path = os.environ.get("LCS_BOOKINGS_CSV") or os.path.join(_private_dir(), "bookings.csv")
@@ -555,10 +511,7 @@ def check_create_customer_payment(body, query, path):
                    "with a balance (never a draft, paid or void one).")
     if round(amounts[0], 2) > round(inv["balance"], 2):
         raise Deny(P + f"£{amounts[0]:,.2f} is more than invoice {inv['number']}'s balance (£{inv['balance']:,.2f}).")
-    one_off = _one_off_payment(body, inv)
-    if not one_off:
-        _ledger_allows_payment(inv["number"])
-    return one_off  # claimed by check_write only once every other check (the bank-details scan too) has passed
+    _ledger_allows_payment(inv["number"])
 
 
 def check_create_item(body, query, path):
@@ -744,10 +697,8 @@ def check_write(name, tool_input):
         tool_input = {}
     ti = _fit(tool_input, {"body": body_spec, "query_params": query_spec, "path_variables": path_spec}, "tool_input")
     body, query, path = ti.get("body", {}), ti.get("query_params", {}), ti.get("path_variables", {})
-    one_off = check(body, query, path)
+    check(body, query, path)
     _scan(ti, None, "tool_input", tax="invoice" in name or "bill" in name)
-    if one_off:  # last of all, so a call refused for any other reason never uses the one-off up
-        _claim_one_off(one_off)
 
 
 def decide(tool, tool_input):

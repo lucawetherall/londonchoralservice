@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Tests for .claude/hooks/zoho_books_guard.py (PreToolUse). Stdlib only."""
-import datetime, importlib.util, json, os, shutil, subprocess, sys, tempfile
+import datetime, importlib.util, json, os, subprocess, sys, tempfile
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 GUARD = os.path.join(ROOT, ".claude", "hooks", "zoho_books_guard.py")
@@ -711,56 +711,22 @@ def test_customer_payment_is_checked_against_books_and_the_ledger():
     assert not denied(C, pay())
 
 
-REAL_2108A = {"invoice_id": "1534218000000393001", "customer_id": "1534218000000392001", "number": "2108A",
-              "status": "sent", "total": 2800.0, "balance": 2800.0}
-
-
-def test_the_2108a_one_off_lets_exactly_that_payment_past_the_hand_check():
-    """Owner, 19 Oct 2026: record the £2,800 Starling payment of 19 Oct against invoice 2108A. Booking 2108A is "hand
-    check only" because ref 2108 was issued twice; the one-off lets that one payment through, nothing else."""
+def test_the_2108a_one_off_is_gone():
+    """The one-off of 19 Oct 2026 (#264) was used once (payment 11 against invoice 2108A) and removed: a payment on a
+    "hand check only" booking is refused again, that one included."""
     C = "ZohoBooks_create_customer_payment"
-
-    def pay(**changes):
-        body = {"invoice_id": REAL_2108A["invoice_id"], "customer_id": REAL_2108A["customer_id"], "date": "2026-10-19",
-                "amount": 2800, "amount_applied": 2800, "reference_number": "2108A", "description": None,
-                "invoices": [{"invoice_id": REAL_2108A["invoice_id"], "amount_applied": changes.get("amount", 2800)}]}
-        body.update(changes)
-        return with_(C, "body", **body)
-    used = os.path.join(PRIVATE, "books-guard-one-offs")
-    mod = guard_module()
-    body = {"invoice_id": REAL_2108A["invoice_id"], "customer_id": REAL_2108A["customer_id"], "date": "2026-10-19",
-            "amount": 2800, "reference_number": "2108A"}
-    on_the_day = datetime.date(2026, 10, 19)
-    assert mod._one_off_payment(body, REAL_2108A, today=datetime.date(2026, 10, 20))
-    assert not mod._one_off_payment(body, REAL_2108A, today=datetime.date(2026, 10, 21))  # it lapses on its own
-    for changed in (dict(REAL_2108A, total=5600.0, balance=5600.0), dict(REAL_2108A, balance=1400.0),
-                    dict(REAL_2108A, status="partially_paid"), dict(REAL_2108A, number="2108")):
-        assert not mod._one_off_payment(body, changed, today=on_the_day), changed  # the invoice itself is pinned
-    for bad in ({"reference_number": "2108"}, {"amount": 2800.004}, {"amount": True}, {"bank_charges": 1}):
-        assert not mod._one_off_payment(dict(body, **bad), REAL_2108A, today=on_the_day), bad
-    if datetime.date.today() > datetime.date(2026, 10, 20):
-        return  # lapsed: the hook path below can no longer allow it (the revert removes this test)
-    shutil.rmtree(used, ignore_errors=True)
+    real = {"invoice_id": "1534218000000393001", "customer_id": "1534218000000392001", "number": "2108A",
+            "status": "sent", "total": 2800.0, "balance": 2800.0}
+    ti = with_(C, "body", invoice_id=real["invoice_id"], customer_id=real["customer_id"], date="2026-10-19",
+               amount=2800, amount_applied=2800, reference_number="2108A", description=None,
+               invoices=[{"invoice_id": real["invoice_id"], "amount_applied": 2800}])
     try:
-        write_snapshot(SNAPSHOT + [REAL_2108A])
-        assert denied(C, pay(date="2026-10-20"))
-        assert denied(C, pay(amount=1400, amount_applied=1400))
-        assert denied(C, pay(bank_charges=5))
-        assert denied(C, pay(customer_id=OTHER_CUSTOMER))
-        assert denied(C, pay(account_id="1534218000000117002"))
-        assert denied(C, pay(payment_mode="cash"))
-        assert denied(C, pay(reference_number="2108"))
-        other = with_(C, "body", invoice_id=SHARED_ID, customer_id=CUSTOMER, date="2026-10-19", amount=2800,
-                      amount_applied=2800, invoices=[{"invoice_id": SHARED_ID, "amount_applied": 2800}])
-        assert denied(C, other)  # any other "hand check only" invoice: still refused
-        assert denied(C, pay(description="Paid from 12-34-56 12345678"))  # refused by the bank-details scan, last
-        assert not os.path.exists(used) or not os.listdir(used)  # nothing above used it up
-        assert not denied(C, pay())  # the one payment
-        assert denied(C, pay())  # never twice, even against the same (stale) snapshot
-        assert denied(C, pay(reference_number=None))
+        write_snapshot(SNAPSHOT + [real])
+        assert denied(C, ti)
     finally:
-        shutil.rmtree(used, ignore_errors=True)
         write_snapshot()
+    mod = guard_module()
+    assert not any(hasattr(mod, n) for n in ("ONE_OFF_HAND_CHECK_PAYMENTS", "_one_off_payment", "_claim_one_off"))
 
 
 def test_the_2408_one_off_is_gone():
