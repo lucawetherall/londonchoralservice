@@ -46,10 +46,11 @@ reference names the invoice number ("INV2111", "INV 2111", "INV-2111",
 1212 A") or a glued one-letter tail ("1212A", "INV1212A"); "1212 A SMITH" and
 "INV1212BAL" name 1212. A reference that names any booking is final, but it is
 only CONFIDENT when nothing contradicts it: "1212" when 1212A also exists names
-them all, and the payer's surname may pick one (else all are unconfirmed); and
+them all, and the payer's surname may pick one, or failing that a client's surname written in
+the reference ("ANN SMITH -1212", when someone else pays) (else all are unconfirmed); and
 the payer's surname contradicts it only when it fits another open booking whose
 window and fee or half-fee fit the payment, while the named client's surname is
-absent from the payer's name (then both are unconfirmed). Parents and funeral
+absent from both the payer's name and the reference (then both are unconfirmed). Parents and funeral
 directors paying under another name are normal. Surnames are the last real word
 of each party ("Ann Smith & Tom Jones": Smith or Jones; "T Brackenwold & Sons": Brackenwold).
 Failing a reference, when its amount is the deposit or full fee, the payer's name
@@ -125,8 +126,8 @@ DEPOSIT_SEEN, BALANCE_DUE or NOTED_PAID) asks for a thank-you, and short_notice
 (event within 10 days of the invoice) asks for the full fee rather than a deposit.
 Every CHECK_*, PAST_*, NOTED_PAID and PAYMENT_* state is on the Monday money line's
 "needs a hand check" (money_report.py), and ARRANGED as above. A ref issued twice (the second booking recorded
-under a suffixed ref: 1212 and 1212A) is told apart by the payer's surname (by_reference); a payment naming the
-shared number with neither surname is "reference naming several bookings", unconfirmed on both and a hand check.
+under a suffixed ref: 1212 and 1212A) is told apart by the payer's surname, or else a client's surname in the
+reference (by_reference); a payment naming the shared number with neither surname in either is "reference naming several bookings", unconfirmed on both and a hand check.
 Otherwise the bank feed settles either booking like any other, and a "hand check only" note is inert text (owner
 decision, 19 Oct 2026). --apply never rewrites
 the notes of a cancelled or closed row, and drops a "deposit not yet seen" clause when
@@ -153,7 +154,8 @@ MARK_TEXT = {"deposit": "reminder drafted", "balance": "balance reminder drafted
              "receipt": "receipt drafted"}
 CONFIDENT = ("reference", "name and amount")
 # A client paying with an invoice number another booking also has (a ref issued twice, the second booking under a
-# suffixed ref) is told apart by the payer's surname (by_reference), and is otherwise a hand check
+# suffixed ref) is told apart by the payer's surname, or else a client's surname in the reference (by_reference),
+# and is otherwise a hand check
 RECEIPT_DAYS = 14
 SHORT_NOTICE_DAYS = 10
 # The most a booking may be short by transfer fees and still read paid in full, once the owner accepts it
@@ -608,11 +610,13 @@ def full_by(r, today=None, facts=None):
     return notes_full_by(lcs_events.set_aside(r.get("notes"), f))
 
 
-def by_reference(keys, by_key, payer, amount, rows, when, today):
-    """(booking refs, how) for a payment whose reference names these ledger keys. The payer's surname
-    contradicts the reference only when it fits another OPEN booking whose window and fee (or half-fee)
-    fit the payment too, and the named client's own surname isn't in the payer's name; a parent or
-    funeral director paying under another name is otherwise normal."""
+def by_reference(keys, by_key, payer, amount, rows, when, today, reference=""):
+    """(booking refs, how) for a payment whose reference names these ledger keys. A number several bookings
+    share goes to the one whose client's surname is in the payer's name, or failing that in the reference
+    itself ("ANN SMITH -1212" paid by her parents). The payer's surname contradicts the reference only when
+    it fits another OPEN booking whose window and fee (or half-fee) fit the payment too, and the named
+    client's own surname is in neither the payer's name nor the reference; a parent or funeral director
+    paying under another name is otherwise normal."""
     named = []
     for k in sorted(keys):
         group = list(by_key[k])
@@ -620,15 +624,18 @@ def by_reference(keys, by_key, payer, amount, rows, when, today):
             group += [r for kk, rs in by_key.items() if len(kk) == len(k) + 1 and kk.startswith(k) and kk[-1].isalpha()
                       for r in rs]
         if len(group) > 1:
-            who = [r for r in group if payer_is(r, payer)]
-            group = who if len(who) == 1 else group
+            for text in (payer, reference):  # the payer's name first, then the reference's own words
+                who = [r for r in group if payer_is(r, text)]
+                if len(who) == 1:
+                    group = who
+                    break
         named += [r for r in group if r not in named]
     refs = sorted({r["booking_ref"] for r in named})
     if len(refs) > 1:
         return refs, "reference naming several bookings"
     others = sorted({r["booking_ref"] for r in open_rows(rows, today) if r["booking_ref"] != refs[0] and payer_is(r, payer)
                      and in_window(r, when, today) and fits_amount(amount, r)})
-    if others and not any(payer_is(r, payer) for r in named):
+    if others and not any(payer_is(r, payer) or payer_is(r, reference) for r in named):
         return refs + others, "reference, but the payer's name fits another booking"
     return refs, "reference"
 
@@ -648,7 +655,7 @@ def match(rows, items, today):
         payer = it.get("counterPartyName") or ""
         keys = named_keys(it.get("reference"), by_key)
         if keys:
-            refs, how = by_reference(keys, by_key, payer, amount, rows, when, today)
+            refs, how = by_reference(keys, by_key, payer, amount, rows, when, today, it.get("reference") or "")
         else:
             refs = [r["booking_ref"] for r in rows if not is_cancelled(r) and fits_amount(amount, r)
                     and in_window(r, when, today) and payer_is(r, payer)]

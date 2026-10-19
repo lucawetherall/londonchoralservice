@@ -482,6 +482,30 @@ def test_a_shared_ref_paid_in_full_by_the_bank_feed_is_recorded_in_books():
         "hand check only: the client pays with ref 1212; paid in full 2026-09-27"
 
 
+def test_a_shared_ref_with_the_clients_name_in_the_reference_is_confident_when_someone_else_pays():
+    """Relatives pay under their own name but write the client's name with the shared number: the reference's own
+    words pick the booking (19 Oct 2026). The payer's name is tried first; a reference naming both clients, or
+    neither, leaves both unconfirmed."""
+    found = cp.match(SHARED_ROWS, [pay(1400, "2026-09-24", "BO JONES -1212", "MR J R . MRS B M SMYTHE")], T)
+    assert found["1212A"] == [("2026-09-24", 1400.0, "reference")] and found["1212"] == [], found
+    a = cp.assess(SHARED_ROWS[1], found["1212A"], T)
+    assert a["state"] == "PAID_IN_FULL" and a["record_in_books"] == [["2026-09-24", 1400.0, 0.0]], a
+    found = cp.match(SHARED_ROWS, [pay(650, "2026-09-24", "1212 ANN SMITH", "BO JONES")], T)
+    assert found["1212A"] == [("2026-09-24", 650.0, "reference")] and found["1212"] == [], found
+    for ref in ("SMITH JONES 1212", "1212 WEDDING"):
+        found = cp.match(SHARED_ROWS, [pay(650, "2026-09-24", ref, "MR J R . MRS B M SMYTHE")], T)
+        assert all(found[r["booking_ref"]] == [("2026-09-24", 650.0, "reference naming several bookings")]
+                   for r in SHARED_ROWS), (ref, found)
+
+
+def test_a_reference_naming_its_client_is_confident_whoever_pays():
+    """The payer's surname fits another open booking, but the reference names the invoice and its own client."""
+    rows = [row("2111", 650, "2026-08-22", "2026-11-21", "PENDING: invoiced", name="Ann Smith"),
+            row("0512", 650, "2026-09-20", "2026-12-05", "PENDING: invoiced", name="Bo Jones")]
+    found = cp.match(rows, [pay(325, "2026-09-24", "INV 2111 ANN SMITH", "BO JONES")], T)
+    assert found["2111"] == [("2026-09-24", 325.0, "reference")] and found["0512"] == [], found
+
+
 def test_reference_to_one_booking_from_another_clients_name_is_unconfirmed():
     rows = [row("2111", 650, "2026-08-22", "2026-11-21", "PENDING: invoiced", name="Ann Smith"),
             row("0512", 650, "2026-09-20", "2026-12-05", "PENDING: invoiced", name="Bo Jones")]
@@ -736,6 +760,9 @@ def test_a_letter_mid_reference_never_picks_a_sibling():
         for k in ("2111A", "2111B"):
             assert all(how not in cp.CONFIDENT for _, _, how in found[k]), (ref, found)
         states = [cp.assess(r, found[r["booking_ref"]], T) for r in SIBLINGS]
+        if "SMITH" in ref:  # 2111's own client named in the reference picks the number (19 Oct 2026)
+            assert found["2111"] == [("2026-09-24", 575.0, "reference")] and not found["2111A"] and not found["2111B"]
+            continue
         assert all(a["state"] == "CHECK_PAYMENT" and a["just_received"] is False for a in states), (ref, states)
 
 
