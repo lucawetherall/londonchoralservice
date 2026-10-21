@@ -40,6 +40,8 @@ save's spec: {"key": "2111-confirmation", "to": "<the client's address>", "subje
                files are "Invoice <ref> - <client>.pdf" and "Booking Confirmation - <client> - <date>.docx",
                in iCloud Drive/LCS-invoices/<ref> - <client>/, each an ordinary file (no links), at most 10 MB,
                that starts like a PDF or a .docx. Each file is read once, before signing in.
+               A reissued confirmation (new terms, or a copy that didn't open) takes the key
+               "<ref>-confirmation-r2", then -r3 … -r9, under the same rules (owner decision, 21 Oct 2026).
 The subject and text are scanned for bank details with the Zoho Mail guard's scanner
 (.claude/hooks/zoho_guard.py): a draft's text never carries them; the invoice PDF does, as it always has.
 
@@ -104,7 +106,7 @@ SAVED_COLUMNS = ["key", "saved_at"]
 SPEC_KEYS = {"key", "to", "subject", "in_reply_to", "references", "html", "attachments"}
 KEY = re.compile(r"[0-9A-Za-z-]{1,40}")
 REF = re.compile(r"[0-9]{4}[A-Z]?")
-CONFIRMATION_KEY = re.compile(r"([0-9]{4}[A-Z]?)-confirmation")
+CONFIRMATION_KEY = re.compile(r"([0-9]{4}[A-Z]?)-confirmation(?:-r[2-9])?")  # -r2…-r9: a reissue (21 Oct 2026)
 ADDRESS = re.compile(r"[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+@[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?"
                      r"(?:\.[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?)+")
 ID_CHARS = r"[!-;=?A-~]+"  # printable ASCII except space, "<", ">" and "@"
@@ -690,7 +692,7 @@ def run(argv, factory=None, password=None, stdin_fd=0):
             fail('the attach spec is exactly {"key": "<ref>-confirmation", "attachments": [<pdf>, <docx>]}')
         key, files = spec["key"], spec["attachments"]
         if not (isinstance(key, str) and CONFIRMATION_KEY.fullmatch(key)) or not isinstance(files, list):
-            fail("the key must be <ref>-confirmation and attachments a list of the two paths")
+            fail("the key must be <ref>-confirmation (-r2 … -r9 for a reissue) and attachments a list of the two paths")
         if saved_before(key):
             return f"already saved earlier ({key}): nothing added"
         conn = connect(password, factory)
