@@ -14,7 +14,7 @@
 
 luca_wetherall_linkedin: "https://www.linkedin.com/in/luca-wetherall-377a85140/"
 luca_wetherall_oxford_faculty: "https://www.music.ox.ac.uk/people/luca-wetherall"
-luca_wetherall_orcid: "TODO"  # candidate 0000-0003-4217-5362 surfaced in search; ORCID page is JS-rendered and could not be confirmed via WebFetch. User to verify ownership before publishing.
+luca_wetherall_orcid: "https://orcid.org/0000-0001-9099-2485"  # confirmed 2026-10-23: the only Luca Wetherall in the ORCID registry, affiliations Royal Holloway and the University of Oxford (as on about.html); the earlier candidate 0000-0003-4217-5362 belongs to someone else.
 
 lcs_linkedin_company: "TODO"  # /company/london-choral-service returned 404; user to create or supply the canonical slug.
 lcs_youtube_channel: "https://www.youtube.com/@londonchoralservice"  # confirmed via oEmbed author_url for all four embedded videos
@@ -23,6 +23,7 @@ alma_consort_companies_house: "https://find-and-update.company-information.servi
 alma_consort_registered_office_postcode: "N1 7GU"  # 20 Wenlock Road, London — registered 15 Oct 2025, SIC 90010 Performing arts
 
 gbp_canonical_maps_url: "https://www.google.com/maps?cid=12581882416994311757"  # resolved 2026-08-20: owner supplied the full Maps URL (q=The+London+Choral+Service,+Maidenhead with ftid=0xa19a60657d276719:0xae9bd36586adde4d); the stable cid form is the ftid's second component in decimal. Listing name/anchor on Maps: "The London Choral Service, Maidenhead". Checked 2026-10-23: the public listing shows "The London Choral Service", category Choir, no address (service-area business).
+gbp_review_url: "https://g.page/r/CU3erYZl05uuEBM/review"  # read 2026-10-23 from Business Profile → Ask for reviews (signed in); the code decodes to the same place id as the cid above (0xae9bd36586adde4d), so the l is a lower-case L.
 gbp_interim_short_link: "https://maps.app.goo.gl/bqn5pG4tpJ5RY8ET6"  # superseded by the canonical URL above; kept for reference (supplied by owner 2026-08-19).
 
 videos:

@@ -12,6 +12,8 @@ The site already references a Google Maps presence — `index.html` carries `sam
 
 **Update 2026-08-19:** the owner reports the listing has been claimed.
 
+**Checked 2026-10-23, signed in (read-only):** the profile is verified, business ID `07940104319114173142`, service area "London, UK and Greater London, UK". The dashboard still shows the old description (it offers soloists and says Luca directs the service) and only the Choir category. Claude's attempt to make the click-by-click edits below was stopped by Claude Code's permission check, because they publish to a live profile. Either do steps 2–7 yourself, or tell Claude in a live chat "edit the Google Business Profile as in MANUAL §1" and allow the edits when asked.
+
 **Audit 2026-10-23 (public listing, signed out, UK).** What a searcher sees on the cid URL:
 
 | Field | Now | Should be |
@@ -58,6 +60,7 @@ If the listing turns out not to exist or isn't verified, claim it before doing a
 
 Three other items in `data/seo-fix-discovered-urls.yml` couldn't be resolved at Phase 1. Each ships as a TODO comment in the schema until you fill it in:
 
+- **Done 2026-10-23 (ORCID):** the registry has one Luca Wetherall, `0000-0001-9099-2485` (Royal Holloway, University of Oxford), now in the YAML and in `Person.sameAs` on `about.html`, `luca-wetherall.html` and `index.html`. The earlier candidate `0000-0003-4217-5362` was someone else's record. The LinkedIn company page still doesn't exist (`/company/london-choral-service` 404); making one is yours.
 - **`luca_wetherall_orcid`** — if Luca has an ORCID, add it to `data/seo-fix-discovered-urls.yml` and rerun the schema sweep on `about.html` to populate `Person.sameAs`.
 - **`lcs_linkedin_company`** — if a LinkedIn company page exists for The London Choral Service or Alma Consort, add its URL to the YAML and rerun the schema sweep on `index.html` to populate `Organization.sameAs`.
 - **`videos[*].upload_date`** + **`videos[*].duration`** — **Done 2026-10-14:** all eight videos in the YAML now carry a verified upload date and duration; nothing left here. (Original note: five YouTube videos' metadata still can't be resolved automatically (consent gate on four; the egress proxy blocks YouTube outright for `ZVSQ2Ts4GZE`, the Anima Christi recording added 2026-08-15). Open each video on YouTube manually, capture the upload date (YYYY-MM-DD) and the duration (convert to ISO 8601, e.g. 3:42 → `PT3M42S`), update the YAML, and rerun the VideoObject sweep on `pricing.html`, `listen.html`, and the two `music-guides/anima-christi-*` pages. The fifth video, `mKMjUvCCW3E`, was resolved by the user on 2026-08-15 and its `VideoObject` now ships on `listen.html`, `christmas.html`, and `carol-singers.html`.)
@@ -247,6 +250,8 @@ Conversion modelling is degraded until Consent Mode v2 exists (ROADMAP R4). Read
 
 ### Quarterly: re-check competitor pricing
 
+**Checked 2026-10-23:** every figure is unchanged (soloist, organist and instrumentalists £275, Small Choir £1,400, Full Choir £2,400, Chorus £4,000, all + VAT). The soloist line now reads "Classic soloist … £275 + VAT", without "From", and the YAML quote follows it. `checked_date` and the page's visible date are now 23 October 2026. Next check due by late January 2027.
+
 `data/competitor-pricing.yml` carries a `checked_date`, and `build.sh` prints a STALE warning once it passes 120 days. Every quarter, open https://www.londonfuneralsingers.co.uk/pricing, compare each `source_quote` against what is published, and update the figures, the `checked_date`, and `compare/london-funeral-singers.html` **in the same commit** — a figure and its date must never disagree. If their prices moved, the `derived_figures` totals and savings need recomputing too, and the build will fail until they are.
 
 ---
@@ -300,11 +305,11 @@ The competitor everyone outranks us with — The London Funeral Singers — is t
 
 The page is `private-events.html` (spec: `docs/superpowers/specs/2026-08-26-private-events-design.md`). Every open decision was settled by the owner on 2026-08-26; only the items below remain.
 
-1. **Still open, checked 2026-10-14:** no message with the subject `Private events enquiry — Alma Consort / LCS` has reached the office inbox since the page launched. **Send one live test enquiry (do this first).** The form now carries hCaptcha, matching the rest of the site, so it uses the shared Web3Forms access key exactly as the other forms do. It could not be tested from the build environment (the network proxy blocks api.web3forms.com and hcaptcha.com). Before advertising the page, submit one real enquiry through the live form and confirm it arrives, with the subject line `Private events enquiry — Alma Consort / LCS`.
+1. **Still open, 2026-10-23:** Claude filled nothing in. Claude Code's permission check stops it from submitting a live form, so this one is yours: open `https://londonchoralservice.com/private-events.html?lcs_internal=1#enquiry`, send a short enquiry marked TEST, and check it reaches the office inbox. **Checked 2026-10-14:** no message with the subject `Private events enquiry — Alma Consort / LCS` has reached the office inbox since the page launched. **Send one live test enquiry (do this first).** The form now carries hCaptcha, matching the rest of the site, so it uses the shared Web3Forms access key exactly as the other forms do. It could not be tested from the build environment (the network proxy blocks api.web3forms.com and hcaptcha.com). Before advertising the page, submit one real enquiry through the live form and confirm it arrives, with the subject line `Private events enquiry — Alma Consort / LCS`.
 2. **Photography and the fuller venue list.** Supply hero and section photography (the page ships typographic-only), and the fuller fifteen-plus venue list for the "Where we have sung" section — the HTML comment slot after `ul.pe-venues` marks where the items go. Every venue listed must be one the singers have actually performed in. The section currently shows the eight London venues vetted on `about.html` and states the international coverage in prose; naming venues abroad would be the single strongest addition to the page.
 3. **Voicing videos.** Map one YouTube video per voicing into `PE.VOICING_VIDEOS` in `js/private-events.js` (keys: `eight`, `twelve`, `sixteen`, `twenty-four`). Video IDs MUST first exist in `data/seo-fix-discovered-urls.yml` — add any new video there first, with a verified upload date, before pasting its ID into the JS. A voicing left `null` renders no player, which is the shipped state.
 4. **Closed 2026-10-14 (superseded):** `PE.ADS_CONVERSION` is gone; the register forms call the shared `lcsLead()`, which fires the "Submit lead form" conversion and a GA4 `generate_lead` carrying `lead_source`, so private-events leads are already separable in GA4. (Original: **Google Ads: dedicated conversion action (when convenient).** The page fires the existing generic Contact label (`AW-17988388404/RjhECKGP7akcELSMxIFD`), so conversions record from day one but are not segmented from ordinary contact enquiries. To separate them, create a conversion action named **"Private events enquiry"** in Google Ads and map the GA4 event `ads_conversion_PrivateEvents_1` to it — the procedure documented for the corporate audience in `thank-you.html` (lines 52–54) — then paste its `send_to` label over `PE.ADS_CONVERSION` in `js/private-events.js`.)
-5. **almaconsort.com.** The ensemble section links to the homepage and the page's schema lists it as the ensemble's URL. Confirm it presents well to a planner vetting the name, and add a reciprocal link from that site back to https://londonchoralservice.com/private-events.html. **Checked 2026-10-14:** almaconsort.com links to the londonchoralservice.com homepage, not yet to `/private-events.html`.
+5. **almaconsort.com.** The ensemble section links to the homepage and the page's schema lists it as the ensemble's URL. Confirm it presents well to a planner vetting the name, and add a reciprocal link from that site back to https://londonchoralservice.com/private-events.html. **Checked 2026-10-14:** almaconsort.com links to the londonchoralservice.com homepage, not yet to `/private-events.html`. **Checked again 2026-10-23:** still only the homepage link.
 
 **Decided 2026-08-26, no action needed:** hCaptcha is on (owner's decision, reversing the original brief); the discretion commitment in the planners section stands as written and must be honoured on every engagement, deputies and instrumentalists included; the voicing selector ships prose-only; the venue section ships the London list with international coverage stated in prose; the page carries a bespoke OG image (`assets/og-private-events.png`).
 
@@ -359,7 +364,9 @@ Spec: `docs/superpowers/specs/2026-08-29-international-luxury-weddings-design.md
 
 ## 15. www subdomain serves a broken TLS certificate, 2026-08-30
 
-**Still broken, confirmed 2026-10-14:** `curl https://www.londonchoralservice.com/` still fails certificate verification. The fix is yours (GitHub Settings → Pages, or the DNS panel; steps below).
+**Still broken, 2026-10-23, with the cause narrowed:** DNS is right (`www` is a CNAME to `lucawetherall.github.io` at Porkbun), and GitHub's certificate covers only `londonchoralservice.com` (state "approved", expires 2027-01-03). GitHub issues the `www` certificate when the custom domain is saved again, but Claude Code's permission check stopped Claude from doing that (a domain change). Your fix, two minutes: GitHub → the repo → Settings → Pages → Custom domain. Click **Remove**, type `londonchoralservice.com` again, click **Save**, wait for the DNS check to go green, then tick **Enforce HTTPS** once it's offered (it can take up to an hour). The apex site keeps working during this. Then `curl -I https://www.londonchoralservice.com/` should return a 301.
+
+**Confirmed 2026-10-14:** `curl https://www.londonchoralservice.com/` still fails certificate verification. The fix is yours (GitHub Settings → Pages, or the DNS panel; steps below).
 
 A full SEO audit found `https://www.londonchoralservice.com` fails the TLS handshake outright (`SSL: no alternative certificate subject name matches target host name`) rather than redirecting to the apex domain. DNS for `www` already resolves to GitHub Pages' anycast IPs, but the certificate GitHub serves only covers `*.github.io` — it doesn't cover the `www` host because the custom domain configured in the repo's Settings → Pages is only the apex (`londonchoralservice.com`), and GitHub Pages only provisions/serves a matching cert for the configured custom domain. (The site deploys through GitHub Actions, which ignores the repo's `CNAME` file; the Settings value is what counts.)
 
@@ -375,7 +382,7 @@ What to do:
 
 ## 16. Follow-ups from the 2026-09-04 audit fixes
 
-1. **Partly checked 2026-10-14:** the API cannot read the Diagnostics page, so the "Consent mode: active" badge still needs your eye. What it can see: all six conversion actions are enabled ("Submit lead form" and "WhatsApp or email click" primary), enhanced conversions for leads is on, and Ads recorded conversions in the last 30 days. GA4 shows `contact_click` events but no `generate_lead` in the last 28 days, although form enquiries did arrive; that fits visitors declining cookies, but confirm in GA4 Admin → Data collection that consent signals are received. **Consent Mode check (Google Ads and GA4).** The site now sets Consent Mode v2 defaults to "denied" and shows a cookie notice. In Google Ads → Goals → Conversions → Diagnostics, confirm the conversion actions show "Consent mode: active" and that modelled conversions appear after a fortnight. In GA4 Admin → Data collection, confirm consent signals are received. Nothing to change in the repo unless a tag reports "consent not set".
+1. **Done 2026-10-23 (checked signed in, read-only):** Google Ads → Goals → Diagnostics shows Consent mode **Excellent** for the web. GA4 Admin → Consent settings shows "No issues detected", with analytics and all three advertising consent signals active. Enhanced conversions flags two actions "Urgent": the website action has no recent enhanced data (few visitors allow cookies), and the "Booked job" import has had no upload yet. The first goes away as consented leads arrive; the second goes away with the first `upload_bookings.py` apply. **Partly checked 2026-10-14:** the API cannot read the Diagnostics page, so the "Consent mode: active" badge still needs your eye. What it can see: all six conversion actions are enabled ("Submit lead form" and "WhatsApp or email click" primary), enhanced conversions for leads is on, and Ads recorded conversions in the last 30 days. GA4 shows `contact_click` events but no `generate_lead` in the last 28 days, although form enquiries did arrive; that fits visitors declining cookies, but confirm in GA4 Admin → Data collection that consent signals are received. **Consent Mode check (Google Ads and GA4).** The site now sets Consent Mode v2 defaults to "denied" and shows a cookie notice. In Google Ads → Goals → Conversions → Diagnostics, confirm the conversion actions show "Consent mode: active" and that modelled conversions appear after a fortnight. In GA4 Admin → Data collection, confirm consent signals are received. Nothing to change in the repo unless a tag reports "consent not set".
 2. **Read `terms.html`.** It publishes the fourteen Terms of Booking clauses from the booking agreement, adapted to a web page (the funeral post-service invoicing exception is stated under clause 4, and a complaints paragraph is added). Confirm the wording matches what goes out on booking confirmations, or edit the page and the agreement together.
 3. **Read `accessibility.html`** and confirm the alternative-format promise and the one-working-day reply are what you want to stand behind.
 4. **Done 2026-09-28:** pronouns corrected (ROADMAP R12). (Original: **Two testimonials still say "she"** ("Pamela, Richmond" on 9 pages, "Helen, Wimbledon" on 4). See ROADMAP R12.)
@@ -438,6 +445,8 @@ What was asked of you (kept for the record):
 
 ## 21. Back up ~/lcs-private/fingerprint.key
 
+**Covered, checked 2026-10-23:** the Command Centre's nightly job (`scripts/reports/cc_backup.py`, 02:30) writes an age-encrypted copy of the whole `~/lcs-private` folder, `fingerprint.key` included, to iCloud Drive → LCS-backups; the newest is from 02:30 today. Make sure the backup's secret key ("AGE-SECRET-KEY-1…", shown once at `init`) is in your password manager, since without it the backups can't be opened. There is no Time Machine destination on this Mac.
+
 This key turns a singer's bank sort code and account number into the fingerprint the singer-invoice tracker uses to spot a changed bank detail. It lives outside the repo at `~/lcs-private/fingerprint.key`.
 
 Back it up as part of your normal `~/lcs-private` backup routine (whatever you already use for `bookings.csv` and the rest of that folder). If it's lost, the tracker refuses to run until it's restored, since it can no longer tell whether a singer's bank details have changed. Never commit it to the repo and never share it outside your own backup.
@@ -457,6 +466,8 @@ What to do:
 ---
 
 ## 23. Google review link
+
+**Done 2026-10-23:** Claude read the link from the signed-in profile (Ask for reviews): `https://g.page/r/CU3erYZl05uuEBM/review` is now `gbp_review_url` in `data/seo-fix-discovered-urls.yml`, so the daily pass's next review request carries it. Its code decodes to the profile's own place id, which settles the one ambiguous character (a lower-case L). The steps below are kept for reference.
 
 Optional. If you want post-event review requests to go straight to the review-writing form rather than the general Maps listing, find the Business Profile's "Ask for reviews" short link (Google Business Profile → Home → "Ask for reviews", copy the link) and add it to `data/seo-fix-discovered-urls.yml` as `gbp_review_url`.
 
@@ -544,3 +555,16 @@ Added 2026-10-23. The site has a visit counter that uses no cookies and stores n
 4. Claude puts the code in `LCS_COUNTER` on the counter's pull request and rebuilds. The privacy policy there (`privacy.html#visit-counter`) already describes the counter, so merge it with the code set, not before. Once it is live, Claude checks that a page view reaches the dashboard.
 
 Your own visits: the counter skips any device where you opened a page with `?lcs_internal=1` (the same flag GA4 uses). A visitor can opt out from the privacy policy's link (`?lcs_count=off`), and the counter also skips browsers sending Global Privacy Control or Do Not Track.
+
+---
+
+## 30. Google Ads advertiser verification (due 4 Nov 2026)
+
+Added 2026-10-23. Google Ads shows a banner on every page: "Verify your identity. Some of your ads may be paused or limited", with advertiser verification due by **2026-11-04**. If it isn't done by then, Google can stop serving the ads, Christmas campaign included.
+
+Only you can do it, since it needs your ID and the company's details:
+
+1. Sign in to Google Ads (account 873-388-1378) and click **Get started** on the yellow banner, or go to **Billing → Advertiser verification**.
+2. Answer the questions about who pays for the ads and who the advertiser is: Alma Consort Ltd, Companies House 16785727, trading as The London Choral Service.
+3. Upload what Google asks for, usually a photo ID for you and a company document such as the Companies House certificate of incorporation.
+4. Google usually replies within a few working days. Tell an agent when it's approved, so this section can be closed.
