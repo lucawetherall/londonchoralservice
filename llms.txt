@@ -4,7 +4,7 @@
 
 > Professional singers, choirs, and instrumentalists for funerals, weddings, memorials, and ceremonies across the United Kingdom. A small, hand-picked team of conservatoire-trained musicians based in London.
 
-> Content last updated: September 2026. 60 music guides available.
+> Content last updated: 24 October 2026. 60 music guides available.
 
 The London Choral Service provides live music for life's most important occasions. Founded and led by Artistic Director Luca Wetherall, a Clarendon Scholar and Tutor in Music at the University of Oxford, the ensemble comprises prize-winning graduates of the Royal Academy of Music, the Royal College of Music, and Britain's leading music colleges. Their credits include the coronation of King Charles III, the Royal Albert Hall, Westminster Abbey, and the BBC Proms. The London Choral Service is the operating name of Alma Consort Ltd.
 
@@ -184,7 +184,12 @@ The London Choral Service provides live music for life's most important occasion
 - [Chelmsford](https://londonchoralservice.com/areas/chelmsford.html): Funeral and wedding musicians in Chelmsford and Essex
 - [Rochester](https://londonchoralservice.com/areas/rochester.html): Singers and choirs for Rochester, Medway, and north Kent
 
+## Resources
+
+- [Funeral music sheet (PDF)](https://londonchoralservice.com/assets/print/funeral-music-sheet.pdf): One A4 page for families and funeral directors, listing the hymns families choose most, the solo and choral pieces we sing, what a choir of four adds to a service, and how to reach us
+
 ## Optional
 
-- [Listen](https://londonchoralservice.com/listen.html): Films of our singers in the hymns, anthems and solos asked for most at weddings and funerals, with the unrecorded repertoire listed- [Privacy Policy](https://londonchoralservice.com/privacy.html): Data protection and privacy information
+- [Listen](https://londonchoralservice.com/listen.html): Films of our singers in the hymns, anthems and solos asked for most at weddings and funerals, with the unrecorded repertoire listed
+- [Privacy Policy](https://londonchoralservice.com/privacy.html): Data protection and privacy information
 - [Full site text](https://londonchoralservice.com/llms-full.txt): The complete visible text of every page in one markdown file, regenerated on each build
