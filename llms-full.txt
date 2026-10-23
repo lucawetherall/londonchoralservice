@@ -5484,7 +5484,7 @@ Either, and most residents’ evenings work best as a mix. Print song sheets and
 
 #### How does invoicing work for a managing agent?
 
-We invoice whichever company you nominate — the managing agent, the resident management company, or the developer — and put your purchase order number, cost-centre code, or scheme reference on the invoice if you give it to us at the booking stage. The legal entity is Alma Consort Ltd, the operating company behind the London Choral Service. Terms are 30 days net, and payment is by BACS to a UK business account.
+We invoice whichever company you nominate — the managing agent, the resident management company, or the developer — and put your purchase order number, cost-centre code, or scheme reference on the invoice if you give it to us at the booking stage. The legal entity is Alma Consort Ltd, the operating company behind the London Choral Service. Payment is due 14 days from the invoice date and before the event, by BACS to a UK business account.
 
 
 #### How long does a residents’ carol evening run?
