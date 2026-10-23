@@ -5,9 +5,10 @@ The Zoho Mail MCP can't attach files to a draft, so this script builds the whole
 puts it in the Drafts folder of office@londonchoralservice.com over IMAP (APPEND). It never sends:
 there is no SMTP code here. The IMAP writes are APPEND to Drafts and, for `attach` only, one MOVE of Luca's
 original draft to Trash once its copy with the attachments has been read back and checked (owner decision,
-29 Sep 2026); `discard`, a MOVE of any one office@ draft to Trash that Luca approves each time with his passkey in
-the Command Centre (owner decision, 14 Oct 2026): it runs only as `discard <Message-ID> --owner` with the app's
-one-time nonce piped on stdin (lcs_owner.owner_confirmed); and `replace`, the same MOVE of an old office@ draft once
+29 Sep 2026); `discard`, a MOVE of any one office@ draft to Trash that Luca approves each time, with his passkey in
+the Command Centre (owner decision, 14 Oct 2026) or his Allow on Claude Code's prompt in a live chat (19 Oct 2026):
+it runs only as `discard <Message-ID> --owner` with that approval's one-time nonce piped on stdin
+(lcs_owner.owner_confirmed); and `replace`, the same MOVE of an old office@ draft once
 Luca has asked for a new or changed one and that replacement is already in Drafts, from office@, to the same one
 address and in the same conversation (owner decision, later on 14 Oct 2026; no approval, so it runs unattended). The
 Trash helper itself refuses any draft but Luca's own original unless this process passed the passkey check or the
@@ -18,7 +19,7 @@ ever deleted. Luca opens the draft in Zoho, checks it and presses Send.
     .venv/bin/python scripts/bookings/imap_draft.py attach <Message-ID of Luca's draft> '<one-line JSON spec>'
     .venv/bin/python scripts/bookings/imap_draft.py sent <invoice ref> <client email> <YYYY-MM-DD>
     .venv/bin/python scripts/bookings/imap_draft.py discard <Message-ID> --owner
-                                          (the Command Centre only, after Luca's passkey: a draft to Trash)
+                     (Luca's approval only, his passkey or his Allow on Claude Code's prompt: a draft to Trash)
     .venv/bin/python scripts/bookings/imap_draft.py replace <old Message-ID> <new Message-ID>
                                     (the old draft to Trash, once Luca asked for a new or changed one and it is saved)
     .venv/bin/python scripts/bookings/imap_draft.py check     (owner: sign in, count the folders; writes nothing)
@@ -39,6 +40,8 @@ save's spec: {"key": "2111-confirmation", "to": "<the client's address>", "subje
                files are "Invoice <ref> - <client>.pdf" and "Booking Confirmation - <client> - <date>.docx",
                in iCloud Drive/LCS-invoices/<ref> - <client>/, each an ordinary file (no links), at most 10 MB,
                that starts like a PDF or a .docx. Each file is read once, before signing in.
+               A reissued confirmation (new terms, or a copy that didn't open) takes the key
+               "<ref>-confirmation-r2", then -r3 … -r9, under the same rules (owner decision, 21 Oct 2026).
 The subject and text are scanned for bank details with the Zoho Mail guard's scanner
 (.claude/hooks/zoho_guard.py): a draft's text never carries them; the invoice PDF does, as it always has.
 
@@ -86,7 +89,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / ".claude" / "hooks"))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import lcs_money as lm  # noqa: E402  LEDGER, PRIVATE, LONDON, ICLOUD_INVOICES, read_csv, locked_rows
-import lcs_owner  # noqa: E402  the Command Centre's one-time owner nonce (discard)
+import lcs_owner  # noqa: E402  Luca's one-time approval nonce (discard)
 
 FROM_ADDRESS = "office@londonchoralservice.com"
 FROM_HEADER = f"Luca Wetherall <{FROM_ADDRESS}>"  # as Luca's own sent replies show it
@@ -103,7 +106,7 @@ SAVED_COLUMNS = ["key", "saved_at"]
 SPEC_KEYS = {"key", "to", "subject", "in_reply_to", "references", "html", "attachments"}
 KEY = re.compile(r"[0-9A-Za-z-]{1,40}")
 REF = re.compile(r"[0-9]{4}[A-Z]?")
-CONFIRMATION_KEY = re.compile(r"([0-9]{4}[A-Z]?)-confirmation")
+CONFIRMATION_KEY = re.compile(r"([0-9]{4}[A-Z]?)-confirmation(?:-r[2-9])?")  # -r2…-r9: a reissue (21 Oct 2026)
 ADDRESS = re.compile(r"[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+@[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?"
                      r"(?:\.[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?)+")
 ID_CHARS = r"[!-;=?A-~]+"  # printable ASCII except space, "<", ">" and "@"
@@ -520,12 +523,14 @@ def trash_draft(conn, message_id, own_only, replaced_by=None):
     would purge). own_only: only a draft with no draft key (one Luca wrote). Returns its draft key ("" when it has
     none) once moved, or None when nothing was moved (no MOVE, no single match, not from office@).
     Any draft but Luca's own original (own_only=False) moves only in a process that passed lcs_owner.owner_confirmed()
-    (`discard --owner`, run by the Command Centre after his passkey), or, for `replace`, when replaced_by names the
+    (`discard --owner`, once Luca approved it: his passkey in the Command Centre, or his Allow on Claude Code's
+    prompt), or, for `replace`, when replaced_by names the
     new draft and check_replacement passes for that exact pair here, so importing this can't step round either gate:
     the most a caller without the passkey can do is what `replace` itself may do unattended."""
     if not own_only and not lcs_owner.owner_proven():
         if replaced_by is None:
-            fail("moving a draft to Trash needs Luca's passkey approval in the Command Centre")
+            fail("moving a draft to Trash needs Luca's approval (his Allow on Claude Code's prompt, or his passkey "
+                 "in the Command Centre)")
         check_replacement(conn, message_id, replaced_by)
     if "MOVE" not in conn.capabilities:
         return None
@@ -657,8 +662,9 @@ def invoice_sent(conn, ref, to, since):
     return f"sent: yes {found.isoformat()}" if found else "sent: no"
 
 
-OWNER_ONLY = ("discard needs Luca's passkey: he approves it in the Command Centre (Drafts, Move to Trash), which "
-              "runs it with --owner and its one-time nonce")
+OWNER_ONLY = ("discard needs Luca's approval: his Allow on Claude Code's prompt for `discard <Message-ID> --owner` "
+              "run on its own in a live chat, or his passkey in the Command Centre (Drafts, Move to Trash); either "
+              "pipes in a one-time nonce")
 
 
 def run(argv, factory=None, password=None, stdin_fd=0):
@@ -686,7 +692,7 @@ def run(argv, factory=None, password=None, stdin_fd=0):
             fail('the attach spec is exactly {"key": "<ref>-confirmation", "attachments": [<pdf>, <docx>]}')
         key, files = spec["key"], spec["attachments"]
         if not (isinstance(key, str) and CONFIRMATION_KEY.fullmatch(key)) or not isinstance(files, list):
-            fail("the key must be <ref>-confirmation and attachments a list of the two paths")
+            fail("the key must be <ref>-confirmation (-r2 … -r9 for a reissue) and attachments a list of the two paths")
         if saved_before(key):
             return f"already saved earlier ({key}): nothing added"
         conn = connect(password, factory)

@@ -25,8 +25,15 @@
       "input_tokens": 239224,
       "output_tokens": 0,
       "files": 58
+    },
+    {
+      "date": "2026-10-19T22:24:32.892152+00:00",
+      "input_tokens": 1287718,
+      "output_tokens": 0,
+      "files": 403,
+      "note": "subagent totals (input+output combined); images skipped"
     }
   ],
-  "total_input_tokens": 720224,
+  "total_input_tokens": 2007942,
   "total_output_tokens": 148000
 }

@@ -187,6 +187,28 @@ def test_the_owners_passkey_proofs_cannot_be_written_from_a_shell():
         expect("allow", bash(cmd), cmd)
 
 
+def test_the_approval_hook_cannot_be_run_by_hand():
+    """owner_confirm_guard.py mints a chat approval (19 Oct 2026): run by hand, it would give Claude a one-time code
+    without Luca's Allow. Naming it, or reaching it through a glob, is refused; its test file still runs."""
+    hook = ".claude/hooks/owner_confirm_guard.py"
+    for cmd in (f"{PY} {hook}", f"python3 {hook} < /tmp/event.json", f"echo '{{}}' | python3 {hook}",
+                f"python3 {os.path.join(ROOT, hook)}", f"cd .claude/hooks && python3 owner_confirm_guard.py",
+                "python3 .claude/hooks/owner_conf*.py", "python3 .claude/hooks/owner_''confirm_guard.py",
+                "python3 -c \"import sys; sys.path.insert(0, '.claude/hooks'); import owner_confirm_guard\"",
+                "cp .claude/hooks/owner_c?nfirm_guard.py /tmp/x.py",
+                "printf x > ~/lcs-private/command-centre/owner-nonce.chat-" + "ab" * 32):
+        expect("deny", bash(cmd), cmd)
+    script = write(os.path.join(SCRATCH, "mint", "m.py"), "import runpy\nrunpy.run_path('owner_confirm_guard.py')\n")
+    expect("deny", bash(f"python3 {script}"), "an untracked script naming the hook")
+    for cmd in (f"{PY} tests/test_owner_confirm_guard.py", f"/x/.venv/bin/python tests/test_owner_confirm_guard.py",
+                f"{PY} tests/test_mcp_bypass_guard.py", "ls tests/test_*guard.py",
+                f"{PY} scripts/bookings/check_payments.py --fact 2111 refunded --owner"):
+        expect("allow", bash(cmd), cmd)
+    for tool, ti in (("Read", {"file_path": os.path.join(ROOT, hook)}),  # reviewed code: the file tools may open it
+                     ("Edit", {"file_path": os.path.join(ROOT, hook), "old_string": "zzz-not-there", "new_string": "y"})):
+        expect("allow", run(tool, ti), tool)
+
+
 # --- file tools ----------------------------------------------------------------------------------------------
 
 def test_writing_the_attack_is_denied_outside_the_allowlist():

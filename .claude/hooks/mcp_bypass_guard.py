@@ -29,9 +29,13 @@ unguarded. This hook closes it. Wired in .claude/settings.json for:
 - Read, Grep and Glob: denied on MCP configuration (~/.claude.json and its backups, .mcp.json,
   claude_desktop_config.json, ~/.mcp-auth) and on a search rooted at a folder that holds it.
 
-The same command and untracked-file checks also refuse naming the Command Centre's owner nonce or its approvals
-folder (OWNER_PROOF): those files are Luca's passkey proofs for the --owner scripts and for a calendar delete, and
-only the app writes them (settings also deny the Write and Edit tools there).
+The same command and untracked-file checks also refuse naming the owner nonce files (the Command Centre's
+owner-nonce and owner_confirm_guard's owner-nonce.chat-*), the Command Centre's approvals folder or the approval hook
+.claude/hooks/owner_confirm_guard.py itself (OWNER_PROOF; its test file, tests/test_owner_confirm_guard.py, may be
+named and run). Those files are Luca's approvals for the --owner scripts and for a calendar delete: only the app
+(after his passkey) and that hook (once he clicks Allow on Claude Code's prompt) write them, and running the hook by
+hand would mint an approval without the prompt, so a command that runs the hook through a glob or another path to
+it is refused too (OWNER_HOOK; settings also deny the Write and Edit tools in the command-centre folder).
 
 It fails closed: malformed input or any internal error denies the call. It can't see through deliberate
 obfuscation (strings assembled at run time, encoded payloads); the rule in CLAUDE.md covers intent.
@@ -75,12 +79,19 @@ CLIENT = {
     "cmd": (re.compile(r"\b(import|from)\s+lcs_mcp\b|lcs_mcp['\"]|['\"]lcs_mcp", re.I), "the lcs_mcp client"),
     "file": (re.compile(r"(?<![a-z0-9_])lcs_mcp(?![a-z0-9_])", re.I), "the lcs_mcp client"),
 }
-# The owner's passkey proofs (owner decision, 14 Oct 2026): the Command Centre's one-time owner nonce and its
-# approvals folder (a calendar delete is allowed only against an approval there). Only the app writes them. A
-# command, or an untracked file (a scratch script, a file written outside the repo), that names them is refused;
-# reviewed, tracked code (lcs_owner.py, the app, the calendar guard and their tests) may name them.
-OWNER_PROOF = (re.compile(r"owner-nonce|command-centre[\s/\\,+()]*approvals|calendar-delete-[0-9a-f*?\[{]", re.I),
-               "the Command Centre's owner nonce or approvals (written only by the app, after Luca's passkey)")
+# The owner's approvals (owner decisions, 14 and 19 Oct 2026): the one-time owner nonce files (the Command Centre's
+# owner-nonce and the chat approvals owner-nonce.chat-*), the app's approvals folder (a calendar delete is allowed
+# only against an approval there) and the hook that writes the chat approvals. Only the app, after Luca's passkey,
+# and that hook, once he clicks Allow, write them. A command, or an untracked file (a scratch script, a file written
+# outside the repo), that names them is refused; reviewed, tracked code (lcs_owner.py, the app, the hooks and their
+# tests) may name them, and the hook's test file may be named (tests/test_owner_confirm_guard.py).
+OWNER_PROOF = (re.compile(r"owner-nonce|command-centre[\s/\\,+()]*approvals|calendar-delete-[0-9a-f*?\[{]|"
+                          r"(?<![a-z0-9_])owner_confirm_guard", re.I),
+               "Luca's owner approvals (the owner nonce files, the Command Centre's approvals or the approval hook "
+               "owner_confirm_guard; written only by the app after his passkey, or by that hook once he clicks Allow)")
+# A file the command names that is the approval hook once resolved (through a glob, a link or another path to it):
+# running it by hand would mint an approval without the prompt.
+OWNER_HOOK = re.compile(r"(?<![a-z0-9_])owner_confirm_guard(?![a-z0-9_])", re.I)
 
 # Tracked files that may hold markers (and may be written with them).
 CODE_OK = {
@@ -226,6 +237,12 @@ def protected(path):
         raise Deny(f"{P}{os.path.basename(path)} is MCP configuration and is off limits.")
 
 
+def owner_hook(path):
+    """For commands only: the Read and Edit tools may still open the hook (it is reviewed code)."""
+    if OWNER_HOOK.search(os.path.basename(path)):
+        raise Deny(f"{P}the command names {OWNER_PROOF[1]}.")
+
+
 # --- commands ----------------------------------------------------------------------------------------------
 
 def strip_heredocs(cmd):
@@ -368,6 +385,7 @@ class Command:
 
 def vet_script(path, repo, cmd):
     protected(path)
+    owner_hook(path)
     loc = repo.locate(path)
     if loc and repo.tracked(loc):
         if loc[1] in CODE_OK:
@@ -441,6 +459,7 @@ def check_command(text, repo, cwd):
             continue
         for p in resolve(w, cmd.cwds):
             protected(p)
+            owner_hook(p)
             if searching and p in roots and w in outside:
                 raise Deny(f"{P}searching or copying {p} would take in MCP configuration; name a project "
                            "folder instead.")

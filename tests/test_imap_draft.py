@@ -211,6 +211,18 @@ def test_a_business_confirmation_may_be_a_pdf():
     conf.unlink()
 
 
+def test_a_reissue_key_takes_the_same_files_under_the_same_rules():
+    got = d.validate(spec(key="2111-confirmation-r2"))
+    assert [a[0] for a in got["attachments"]] == [PDF.name, DOCX.name]
+    assert d.validate(spec(key="2111-confirmation-r9"))["attachments"]
+    for bad in ("2111-confirmation-r1", "2111-confirmation-r10", "2111-confirmation-2", "2111-reissue"):
+        assert "only a confirmation" in (refused(spec(key=bad)) or ""), bad
+    assert "not the client on booking 2111" in refused(spec(key="2111-confirmation-r2", to="other@example.com"))
+    d.record_saved("2111-confirmation")
+    assert not d.saved_before("2111-confirmation-r2"), "a reissue is its own key"
+    d.forget_saved("2111-confirmation")
+
+
 def test_attachments_must_be_this_bookings_files_for_this_client():
     assert "not in booking 2111's folder" in refused(spec(attachments=[str(OTHER_PDF), str(DOCX)]))
     assert "not the client on booking 2111" in refused(spec(to="other@example.com"))

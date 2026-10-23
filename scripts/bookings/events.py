@@ -17,7 +17,8 @@
         (mode 600: refs, message ids, kinds, dates, amounts, rule names and flags; never note text) with its totals
         and sha256 printed. Writes nothing else.
     .venv/bin/python scripts/bookings/events.py migrate --apply --expect <sha256> --owner
-        the Command Centre only, after the owner's passkey (its one-time nonce on a pipe, lcs_owner): re-runs the dry
+        Luca's approval only (its one-time nonce on a pipe, lcs_owner: the Command Centre's passkey, or his Allow
+        on Claude Code's prompt in a live chat): re-runs the dry
         run under the ledger's and the store's locks, refuses a different hash (something changed since) or any
         difference compare --proposed finds, then appends the events (src migration, derived eids) and prints
         "N new events". A second apply adds nothing: "0 new events".
@@ -26,16 +27,20 @@
         proposed events added), one line per family that reads differently; "no difference" and exit 0, else exit 1.
 
     .venv/bin/python scripts/bookings/events.py retract <eid> --owner
-        the Command Centre's "Undo a recorded fact", after the passkey: retract {target, why: mistake}, claiming
+        the owner's undo (the Command Centre's "Undo a recorded fact", or Luca's Allow in a live chat): retract
+        {target, why: mistake}, claiming
         "earlier entry undone D (owner)" in the row's notes
     .venv/bin/python scripts/bookings/events.py notes-checked <booking|singer_invoice> <id> <hash>... --owner
-        the Command Centre's "The recorded facts are right", after the passkey: notes-checked {clauses}, claiming
+        the owner's "The recorded facts are right" (the Command Centre, or Luca's Allow in a live chat):
+        notes-checked {clauses}, claiming
         "notes checked D (owner)"; each hash (lcs_events.note_hash) must be a clause of the row's notes that no
         fact claims now, and once claimed the notes are read without it, so a booking or invoice held on it is
         released
 
 verify, show, migrate (without --apply) and compare only read (the dry run writes its report). retract,
-notes-checked and migrate --apply are the owner's (Claude is denied them in .claude/settings.json).
+notes-checked and migrate --apply are the owner's: with --owner they write only with Luca's approval (lcs_owner), and
+Claude runs one only in a live chat, as one plain command he allows on Claude Code's prompt
+(.claude/hooks/owner_confirm_guard.py; settings ask for every --owner command).
 """
 
 import argparse
@@ -165,7 +170,8 @@ def apply_migration(args, today):
     """The owner's apply: the nonce, the folder, the same dry run (hash), no compare difference; then the events."""
     import lcs_migrate
     if not args.owner:
-        raise SystemExit("--apply needs --owner (the Command Centre's passkey action); nothing written")
+        raise SystemExit("--apply needs --owner (Luca's approval: his Allow on Claude Code's prompt, or the Command "
+                         "Centre's passkey); nothing written")
     if not args.expect or not SHA_RE.fullmatch(args.expect):
         raise SystemExit("--apply needs --expect with the dry run's sha256 (64 hex); nothing written")
     _, _, ledger_path, store_path = rows()
@@ -173,8 +179,7 @@ def apply_migration(args, today):
     if where:
         raise SystemExit(f"--owner {where}; nothing written")
     if not lcs_owner.owner_confirmed():
-        raise SystemExit("--owner needs the Command Centre's one-time owner nonce (the owner's passkey approval); "
-                         "nothing written")
+        raise SystemExit(f"{lcs_owner.NEEDS_APPROVAL}; nothing written")
     # the CSVs' locks, ledger first, so neither changes between the hash check and the last append; the log's own
     # lock is taken inside each append (lock order: the CSVs', then the log's)
     with lm.ledger_lock(ledger_path), lm.ledger_lock(store_path):
@@ -235,16 +240,18 @@ def undo_columns(r, kind):
 
 
 def cmd_retract(args):
-    """The owner's undo (the Command Centre's "Undo a recorded fact", after the passkey): retract {target, why:
-    mistake}, by owner, claiming "earlier entry undone D (owner)" appended to the row's notes, both under the row's
-    CSV lock; a singer invoice's columns go back (undo_columns). The fact stays in the log as history, its clause
-    set aside, so the subject reads as if it had never been recorded."""
+    """The owner's undo (the Command Centre's "Undo a recorded fact" after the passkey, or Luca's Allow on Claude
+    Code's prompt in a live chat): retract {target, why: mistake}, by owner, claiming "earlier entry undone D
+    (owner)" appended to the row's notes, both under the row's CSV lock; a singer invoice's columns go back
+    (undo_columns). The fact stays in the log as history, its clause set aside, so the subject reads as if it had
+    never been recorded."""
     import lcs_migrate
     cp, si = lcs_migrate.cp, lcs_migrate.si
     if not lcs_events.HEX16.fullmatch(args.eid or ""):
         raise SystemExit("not a recorded fact's id (16 hex); nothing written")
     if not args.owner:
-        raise SystemExit("retract runs from the Command Centre only (--owner, the owner's passkey); nothing written")
+        raise SystemExit("retract is the owner's: it needs --owner and Luca's approval (his Allow on Claude Code's "
+                         "prompt, or the Command Centre's passkey); nothing written")
     today = lm.today()
 
     def live_target():
@@ -265,8 +272,7 @@ def cmd_retract(args):
     if where:
         raise SystemExit(f"--owner {where}; nothing written")
     if not lcs_owner.owner_confirmed():
-        raise SystemExit("--owner needs the Command Centre's one-time owner nonce (the owner's passkey approval); "
-                         "nothing written")
+        raise SystemExit(f"{lcs_owner.NEEDS_APPROVAL}; nothing written")
     clause = UNDONE.format(d=today.isoformat())
     with lcs_events.recording(path, cols) as t:
         again = live_target()  # read again under the row's lock: another undo may have landed meanwhile
@@ -288,10 +294,11 @@ CHECKED = "notes checked {d} (owner)"  # no kind's words in it, so the notes rea
 
 
 def cmd_notes_checked(args):
-    """The owner's "The recorded facts are right" (the Command Centre, after the passkey): notes-checked {clauses},
-    by owner, claiming "notes checked D (owner)" appended to the row's notes, both under the row's CSV lock. Each
-    hash must be a clause of that row's notes now that no fact claims (the loose clauses a held booking or invoice
-    was held on): once claimed, the notes are read without them and the recorded facts decide."""
+    """The owner's "The recorded facts are right" (the Command Centre after the passkey, or Luca's Allow on Claude
+    Code's prompt in a live chat): notes-checked {clauses}, by owner, claiming "notes checked D (owner)" appended
+    to the row's notes, both under the row's CSV lock. Each hash must be a clause of that row's notes now that no
+    fact claims (the loose clauses a held booking or invoice was held on): once claimed, the notes are read without
+    them and the recorded facts decide."""
     import lcs_migrate
     cp, si = lcs_migrate.cp, lcs_migrate.si
     subject, id_, hashes = args.subject, args.id, args.hashes
@@ -301,16 +308,15 @@ def cmd_notes_checked(args):
                                                                                 for h in hashes):
         raise SystemExit("1 to 20 different note clause hashes (12 hex each); nothing written")
     if not args.owner:
-        raise SystemExit("notes-checked runs from the Command Centre only (--owner, the owner's passkey); "
-                         "nothing written")
+        raise SystemExit("notes-checked is the owner's: it needs --owner and Luca's approval (his Allow on Claude "
+                         "Code's prompt, or the Command Centre's passkey); nothing written")
     path, cols, key = ((cp.LEDGER, None, "booking_ref") if subject == "booking"
                        else (si.STORE, si.COLUMNS, "message_id"))
     where = lcs_owner.owner_folder_problem([path, lcs_events.log_path()])
     if where:
         raise SystemExit(f"--owner {where}; nothing written")
     if not lcs_owner.owner_confirmed():
-        raise SystemExit("--owner needs the Command Centre's one-time owner nonce (the owner's passkey approval); "
-                         "nothing written")
+        raise SystemExit(f"{lcs_owner.NEEDS_APPROVAL}; nothing written")
     today = lm.today()
     clause = CHECKED.format(d=today.isoformat())
     with lcs_events.recording(path, cols) as t:
@@ -355,20 +361,22 @@ def main(argv=None):
     p.add_argument("subject", choices=lcs_events.SUBJECTS)
     p.add_argument("id")
     p.set_defaults(fn=cmd_show)
+    owner_help = ("Luca's approval only: needs its one-time nonce on stdin (the Command Centre's, or his Allow on "
+                  "Claude Code's prompt)")
     p = sub.add_parser("migrate")
     p.add_argument("--apply", action="store_true")
     p.add_argument("--expect", metavar="SHA256")
-    p.add_argument("--owner", action="store_true", help="the Command Centre only: needs its one-time nonce on stdin")
+    p.add_argument("--owner", action="store_true", help=owner_help)
     p.set_defaults(fn=cmd_migrate)
     p = sub.add_parser("retract")
     p.add_argument("eid")
-    p.add_argument("--owner", action="store_true", help="the Command Centre only: needs its one-time nonce on stdin")
+    p.add_argument("--owner", action="store_true", help=owner_help)
     p.set_defaults(fn=cmd_retract)
     p = sub.add_parser("notes-checked")
     p.add_argument("subject", choices=lcs_events.SUBJECTS)
     p.add_argument("id")
     p.add_argument("hashes", nargs="+", metavar="HASH")
-    p.add_argument("--owner", action="store_true", help="the Command Centre only: needs its one-time nonce on stdin")
+    p.add_argument("--owner", action="store_true", help=owner_help)
     p.set_defaults(fn=cmd_notes_checked)
     p = sub.add_parser("compare")
     p.add_argument("--proposed", action="store_true", help="add the migration dry run's proposed events")
