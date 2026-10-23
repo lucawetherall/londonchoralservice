@@ -133,6 +133,14 @@ videos:
     # Also embedded on: music-guides/a-cappella-christmas-songs.html,
     # music-guides/christmas-drinks-reception-music.html,
     # music-guides/company-christmas-party-entertainment.html
+  # Added 2026-10-23. Sung by a chorus of twelve; unlisted on YouTube at upload.
+  - page: "listen.html, funerals.html"
+    position: 12
+    youtube_id: "39MyhPogl6A"
+    title: "There's a Wideness in God's Mercy (Coverdale)"
+    upload_date: "2026-10-23"  # verified via the watch page's uploadDate meta 2026-10-23 (10:09 PDT = 18:09 BST)
+    duration: "PT2M41S"  # lengthSeconds 161
+    # Also embedded on: music-guides/popular-funeral-hymns.html (no VideoObject there)
 
 geo_areas:
   westminster: [51.49594, -0.13495]
