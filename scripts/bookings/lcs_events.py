@@ -101,6 +101,8 @@ KINDS = {
     ("booking", "terms"): {"full_by": _day},
     ("booking", "review-drafted"): {},
     ("booking", "review-skipped"): {"reason": _word("planner", "unresolved")},
+    # the one reminder after a review request: drafted, or skipped (a planner or venue, or the client wrote since)
+    ("booking", "review-reminded"): {"outcome": _word("drafted", "planner", "replied")},
     # reserved for the later PR (confirm a payment, more shortfall reasons): validated, but append refuses them
     ("booking", "payment-confirmed"): {"item": _pattern(ITEM_RE), "amount": _amount()},
     ("booking", "discount-agreed"): {"amount": _amount()},
@@ -121,8 +123,8 @@ RESERVED = {"payment-confirmed", "discount-agreed", "goodwill-reduction", "overp
 # (from --apply), the owner's only as basis owner; retract {why: mistake} is the owner's.
 OWNER_ONLY = {"fees-accepted", "reinstated", "deposit-kept", "refunded", "payment-checked", "notes-checked",
               "bank-confirmed", "settled"} | RESERVED
-SCRIPT_ONLY = {"deposit-seen", "reminder-drafted", "review-drafted", "review-skipped", "bank-warning",
-               "paid-reply-drafted"}
+SCRIPT_ONLY = {"deposit-seen", "reminder-drafted", "review-drafted", "review-skipped", "review-reminded",
+               "bank-warning", "paid-reply-drafted"}
 
 
 def _date(text):
@@ -518,7 +520,8 @@ FAMILIES = {
     "booking": {"close": {"paid-in-full", "fees-accepted"}, "cancellation": {"cancelled", "reinstated"},
                 "cancel settlement": {"deposit-kept", "refunded", "payment-checked"}, "arrangement": {"arranged"},
                 "noted paid": {"noted-paid"}, "terms": {"terms"},
-                "markers": {"deposit-seen", "reminder-drafted", "review-drafted", "review-skipped"}},
+                "markers": {"deposit-seen", "reminder-drafted", "review-drafted", "review-skipped",
+                            "review-reminded"}},
     "singer_invoice": {"bank warnings": {"bank-warning"}, "bank trust": {"bank-confirmed"}, "settlement": {"settled"},
                        "withdrawal": {"withdrawn"}, "markers": {"paid-reply-drafted"}},
 }
@@ -611,6 +614,15 @@ class Facts:
     @property
     def review(self):
         return bool(self.of("review-drafted", "review-skipped"))
+
+    @property
+    def review_asked(self):
+        """The day of the earliest live review-drafted fact (the request), or None."""
+        return min((_date(e["on"]) for e in self.of("review-drafted")), default=None)
+
+    @property
+    def review_reminded(self):
+        return bool(self.of("review-reminded"))
 
     # --- singer invoices
     @property

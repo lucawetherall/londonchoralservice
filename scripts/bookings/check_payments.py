@@ -27,7 +27,7 @@ Alma Consort Starling account, READ-ONLY (see lcs_money.StarlingReadOnly).
     .venv/bin/python scripts/bookings/check_payments.py --note 2111 "4 singers, London"
         (free text only: one line, at most 120 characters, no ';'; refuses the scripts' own phrases and the owner's
         hand-written ones: paid in full, short by fees … accepted, deposit seen … (Starling), reminder/receipt drafted, deposit kept, refunded,
-        payment checked, reinstated and the like, review request …, and anything starting PENDING. It also refuses
+        payment checked, reinstated and the like, review request … and review reminder …, and anything starting PENDING. It also refuses
         text that states a cancellation, an arrangement or a payment the client reported (NOTE_REFUSES_FACTS, owner
         decision 29 Sep 2026), naming the --fact form to use instead: "record it with --fact 2111 cancelled;
         nothing written")
@@ -412,11 +412,14 @@ SETTLED_NOTE = re.compile(
     r"(?<!not )\b(?:deposit kept|refunded|(?:payment|refund|deposit) checked)\s+(\d{4}-\d{2}-\d{2})\b", re.I)
 
 
-# The pipeline's own note on a ledger row (pipeline.py reviewed / review-skipped).
+# The pipeline's own notes on a ledger row (pipeline.py reviewed / review-skipped, and review-reminded /
+# review-reminder-skipped for the one reminder after a request).
 REVIEW_NOTE = re.compile(r"review request (drafted|skipped)", re.I)
+REVIEW_REMINDER_NOTE = re.compile(r"review reminder (drafted|skipped)", re.I)
 # Phrases --note never writes: the scripts' own notes, and the ones the owner writes by hand in the ledger
 # (paid in full, short by fees, deposit kept / refunded / checked, reinstated), which close, settle or reopen a booking.
-RESERVED_NOTES = (FULL_NOTE, FEES_NOTE, AUTO_NOTE, MARK_NOTE, SETTLED_NOTE, RESUMED, REVIEW_NOTE)
+RESERVED_NOTES = (FULL_NOTE, FEES_NOTE, AUTO_NOTE, MARK_NOTE, SETTLED_NOTE, RESUMED, REVIEW_NOTE,
+                  REVIEW_REMINDER_NOTE)
 
 
 def reserved_note(text):
