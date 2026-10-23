@@ -73,7 +73,8 @@ FACT_WORDS = {
     "arranged": "balance arranged", "cancelled": "cancelled", "reinstated": "reinstated", "deposit-kept": "deposit kept",
     "refunded": "refunded", "payment-checked": "payment checked", "deposit-seen": "deposit seen in the bank",
     "reminder-drafted": "reminder or receipt drafted", "review-drafted": "review request drafted",
-    "review-skipped": "review request skipped", "bank-warning": "bank details checked on a scan",
+    "review-skipped": "review request skipped", "review-reminded": "review reminder drafted or skipped",
+    "bank-warning": "bank details checked on a scan",
     "bank-confirmed": "bank details confirmed by phone", "settled": "paid by hand", "withdrawn": "withdrawn",
     "paid-reply-drafted": "\"Paid!\" reply drafted",
 }
@@ -341,13 +342,15 @@ def ledger_timeline(row, booking, today):
         if cp.lcs_events.note_hash(clause) in claimed:
             continue  # shown once, as its recorded fact
         m = ISO_DAY.search(clause)
-        kind = "review" if cp.REVIEW_NOTE.search(clause) else "note"
+        kind = "review" if cp.REVIEW_NOTE.search(clause) or cp.REVIEW_REMINDER_NOTE.search(clause) else "note"
         out.append(item(to_date(m.group(1)) if m else None, kind, mask_note(clause, row.get("client_name"))))
     if booking["event_date"]:
         out.append(item(booking["event_date"], "event", f"Event: {booking['occasion'] or 'booking'}"
                         + (f", {booking['ensemble']}" if booking["ensemble"] else "")))
-    if booking["ref"] in {x["booking_ref"] for x in pl.reviews_due([row], today)}:
-        out.append(item(today, "review", "Review request due", tone="warn"))
+    for x in pl.reviews_due([row], today):
+        if x["booking_ref"] == booking["ref"]:
+            out.append(item(today, "review", "Review reminder due" if x["kind"] == "reminder" else "Review request due",
+                            tone="warn"))
     return out
 
 

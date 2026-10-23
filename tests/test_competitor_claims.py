@@ -61,6 +61,23 @@ def test_declared_derived_figure_passes():
     code, out = run_in_sandbox(yaml_text, "<p>&pound;550 plus VAT.</p>")
     assert code == 0, f"declared derived figure should pass: {out}"
 
+def test_price_with_unstated_vat_allows_only_the_printed_figure():
+    """A package quoted with no VAT treatment admits its own figure, not a +20% one."""
+    yaml_text = YAML.format(date="2026-08-18").replace("lcs_prices:", (
+        "  other:\n"
+        "    name: \"Other\"\n"
+        "    pricing_url: \"https://example.org\"\n"
+        "    checked_date: \"2026-08-18\"\n"
+        "    packages:\n"
+        "      quartet:\n"
+        "        price_as_quoted: 1349\n"
+        "        source_quote: \"4 Piece Choir : £1349\"\n"
+        "lcs_prices:"))
+    code, out = run_in_sandbox(yaml_text, "<p>&pound;1,349.</p>")
+    assert code == 0, f"printed figure should pass: {out}"
+    code, out = run_in_sandbox(yaml_text, "<p>&pound;1,619.</p>")
+    assert code == 1, f"derived inc-VAT figure must fail for unstated VAT: {out}"
+
 def test_stale_data_warns_but_passes():
     code, out = run_in_sandbox(
         YAML.format(date="2020-01-01"),

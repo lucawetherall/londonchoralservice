@@ -16,6 +16,7 @@ import sys
 
 SHEETS = {
     'scripts/print/funeral-music-sheet.html': 'assets/print/funeral-music-sheet.pdf',
+    'scripts/print/wedding-music-sheet.html': 'assets/print/wedding-music-sheet.pdf',
 }
 
 CANDIDATES = [

@@ -258,7 +258,8 @@ def listing(d):
 def sample():
     ledger = [booking("2111", "deposit seen 2026-09-04 (Starling); Cancelled 20 Sep"),
               booking("2112", "PENDING: invoiced; rest will be paid by the father"),
-              booking("2113", "paid in full 2026-09-20 (owner); review request drafted 2026-09-25")]
+              booking("2113", "paid in full 2026-09-20 (owner); review request drafted 2026-09-25; "
+                              "review reminder drafted 2026-10-02")]
     fp = lm.bank_fingerprint("123456", "11112222")
     store = [{"message_id": "1759000000000000001", "received": "2026-09-01", "singer_name": "Ben Fenwick",
               "singer_email": "ben@example.com", "amount_gbp": "100.00", "bank_fp": fp, "bank_last4": "2222",
@@ -281,6 +282,7 @@ def test_the_dry_run_writes_only_its_report():
     text = open(report, encoding="utf-8").read()
     assert hashlib.sha256(text.encode()).hexdigest() == sha_of(out)
     assert "booking 2111 cancelled" in text and "singer_invoice 1759000000000000001 bank-confirmed" in text, text
+    assert "booking 2113 review-reminded" in text, text
     for secret in ("Ann", "Smith", "Ben", "father", "Cancelled 20 Sep", "ring them", "••••", "example.com"):
         assert secret not in text and secret not in out, secret
     assert re.search(r"^totals: \d+ events", text, re.M), text

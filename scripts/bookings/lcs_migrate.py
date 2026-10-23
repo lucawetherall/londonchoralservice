@@ -36,7 +36,8 @@ import singer_invoices as si  # noqa: E402
 ISO = re.compile(r"\b(\d{4}-\d{2}-\d{2})\b")
 RULES = {"paid-in-full": "B5", "fees-accepted": "B6", "noted-paid": "B7/B8", "cancelled": "B9", "reinstated": "B10",
          "deposit-kept": "B11", "refunded": "B11", "payment-checked": "B11", "arranged": "B12", "deposit-seen": "B2",
-         "reminder-drafted": "B4", "review-drafted": "B13", "review-skipped": "B13", "terms": "B17",
+         "reminder-drafted": "B4", "review-drafted": "B13", "review-skipped": "B13", "review-reminded": "B13",
+         "terms": "B17",
          "bank-warning": "S1-S4",
          "bank-confirmed": "S7", "settled": "S8", "withdrawn": "S9", "paid-reply-drafted": "S10"}
 FAMILY = {k: fam for subject in lcs_events.FAMILIES.values() for fam, kinds in subject.items() for k in kinds}
@@ -219,6 +220,16 @@ def booking_proposals(r, today, have):
                                            clause))
                 else:
                     left.append(f"left out: booking {ref} review-skipped [B13]: a reason the log doesn't take")
+            m = cp.REVIEW_REMINDER_NOTE.search(clause)
+            if m and m.group(1).lower() == "drafted":
+                found.append(_proposal(start + m.start(), "review-reminded", {"outcome": "drafted"}, "script", clause))
+            elif m:
+                reason = re.search(r"\((planner|replied)\)", clause)
+                if reason:
+                    found.append(_proposal(start + m.start(), "review-reminded", {"outcome": reason.group(1)},
+                                           "script", clause))
+                else:
+                    left.append(f"left out: booking {ref} review-reminded [B13]: a reason the log doesn't take")
         # arrangement (B12) and noted paid (B7, B8), read per clause exactly as assess reads the whole notes
         arranged, rest = cp.arranged_notes(clause)
         if arranged and not skip("arranged"):

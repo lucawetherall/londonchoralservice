@@ -27,6 +27,11 @@ def allowed_figures(cfg):
     allowed, vat = set(), cfg.get("vat_rate", 0.20)
     for provider in cfg.get("providers", {}).values():
         for pkg in provider.get("packages", {}).values():
+            if "price_ex_vat" not in pkg:
+                # The page states no VAT treatment: only the figure as printed is
+                # allowed, never a derived inc-VAT one.
+                allowed.add(pkg["price_as_quoted"])
+                continue
             ex = pkg["price_ex_vat"]
             allowed.add(ex)
             allowed.add(round(ex * (1 + vat)))
