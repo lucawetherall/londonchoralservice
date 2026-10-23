@@ -233,7 +233,7 @@
   <meta property="og:image:height" content="630">
   <meta property="og:image:alt" content="The London Choral Service: carol singers and Christmas choirs">
   <meta property="article:published_time" content="2026-03-04">
-  <meta property="article:modified_time" content="2026-10-19">
+  <meta property="article:modified_time" content="2026-10-23">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Christmas Party Entertainment for Companies | LCS">
   <meta name="twitter:description" content="Live choral music at a company Christmas party: roaming carol singers, seated-dinner sets, and full performances, with costs and venue acoustics.">
@@ -1214,6 +1214,116 @@
     }
     
     /* ═══════════════════════════════════
+       Film Grid (Listen pages)
+       Cards of click-to-play films (js/video.js). Inside .wide three fit a
+       row; two cards share a row between them; phones get one per row.
+       ═══════════════════════════════════ */
+    .film-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+      gap: var(--space-2xl) var(--space-xl);
+      list-style: none;
+      padding: 0;
+      margin: var(--space-xl) 0 0;
+    }
+    
+    .film-card {
+      display: flex;
+      flex-direction: column;
+      margin: 0;
+    }
+    
+    .film-card .video-embed {
+      margin-bottom: var(--space-md);
+    }
+    
+    .film-card h3 {
+      font-size: var(--text-lg);
+      font-weight: 500;
+      margin-bottom: var(--space-xs);
+    }
+    
+    .film-card__meta {
+      font-size: var(--text-sm);
+      color: var(--color-text-mid);
+      margin-bottom: var(--space-sm);
+    }
+    
+    .film-card p {
+      margin-bottom: var(--space-sm);
+    }
+    
+    .film-card__link {
+      margin-top: auto;
+      padding-top: var(--space-xs);
+      font-family: var(--font-heading);
+      font-size: var(--text-md);
+      font-weight: 500;
+    }
+    
+    /* A paragraph under a heading in a .wide section, held to prose width. */
+    .section-intro {
+      max-width: var(--width-prose);
+      color: var(--color-text-mid);
+    }
+    
+    /* Pieces without a film: title, ensemble, one line each. */
+    .repertoire-list {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: var(--space-lg) var(--space-2xl);
+      margin: var(--space-lg) 0 var(--space-2xl);
+    }
+    
+    .repertoire-list > div {
+      border-top: 1px solid var(--color-rule);
+      padding-top: var(--space-md);
+    }
+    
+    .repertoire-list dt {
+      font-family: var(--font-heading);
+      font-size: var(--text-md);
+      font-weight: 500;
+      line-height: var(--leading-tight);
+      margin-bottom: var(--space-xs);
+    }
+    
+    .repertoire-list dt span {
+      font-family: var(--font-body);
+      font-size: var(--text-sm);
+      font-weight: 400;
+      color: var(--color-text-mid);
+    }
+    
+    .repertoire-list dd {
+      margin: 0;
+      font-size: var(--text-sm);
+      color: var(--color-text-mid);
+    }
+    
+    /* Titles only, in two columns. */
+    .piece-list {
+      columns: 2;
+      column-gap: var(--space-2xl);
+      padding-left: 1.2em;
+      margin-bottom: var(--space-xl);
+    }
+    
+    .piece-list li {
+      break-inside: avoid;
+    }
+    
+    @media (max-width: 599px) {
+      .repertoire-list {
+        grid-template-columns: minmax(0, 1fr);
+      }
+    
+      .piece-list {
+        columns: 1;
+      }
+    }
+    
+    /* ═══════════════════════════════════
        Contact Form
        ═══════════════════════════════════ */
     .contact-form fieldset {
@@ -1905,6 +2015,17 @@
         margin-top: 0;
         margin-bottom: var(--space-xl);
       }
+    
+      /* Listen pages: the visitor came to hear the singers, so the film comes
+         before the lede and the buttons. */
+      .hero--film-first {
+        grid-template-areas:
+          "crumb"
+          "head"
+          "video"
+          "offer"
+          "body";
+      }
     }
     
     /* ═══════════════════════════════════
@@ -2025,6 +2146,23 @@
       font-size: var(--text-sm);
       font-weight: 500;
       color: var(--color-accent);
+    }
+    
+    /* Three film stills in a start-here card (listen.html's Christmas card).
+       Decorative: the card's heading link carries the destination. */
+    .start-here__films {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: var(--space-sm);
+      margin-top: var(--space-lg);
+    }
+    
+    .start-here__films img {
+      display: block;
+      width: 100%;
+      height: auto;
+      aspect-ratio: 16 / 9;
+      object-fit: cover;
     }
     
     /* ═══════════════════════════════════
@@ -2802,7 +2940,7 @@
         "url": "https://londonchoralservice.com/music-guides/company-christmas-party-entertainment.html",
         "inLanguage": "en-GB",
         "datePublished": "2026-03-04",
-        "dateModified": "2026-10-19",
+        "dateModified": "2026-10-23",
         "description": "Live choral music at a company Christmas party: roaming carol singers, seated-dinner sets, and full performances, with costs and venue acoustics.",
         "author": [
           {
@@ -3003,7 +3141,7 @@
           </ol></nav>
           <h1>Live choral music for company Christmas parties</h1>
           <p class="guide-meta">By Luca Wetherall, Artistic Director &amp; Tutor in Music, University of Oxford</p>
-          <p class="guide-meta">Published <time datetime="2026-03-04">4 March 2026</time> &middot; Updated <time datetime="2026-10-19">19 October 2026</time></p>
+          <p class="guide-meta">Published <time datetime="2026-03-04">4 March 2026</time> &middot; Updated <time datetime="2026-10-23">23 October 2026</time></p>
           <hr class="rule">
         </div>
       </section>
@@ -3017,7 +3155,7 @@
               <svg class="play-btn" viewBox="0 0 56 56" aria-hidden="true"><circle cx="28" cy="28" r="27"/><path d="M23 19v18l15-9z"/></svg>
             </button>
           </div>
-          <p class="text-sm text-mid">Eight of our singers performing It&rsquo;s the Most Wonderful Time of the Year. <a href="../listen.html">Hear more recordings</a>.</p>
+          <p class="text-sm text-mid">Eight of our singers performing It&rsquo;s the Most Wonderful Time of the Year. <a href="../christmas-listen.html">Hear more recordings</a>.</p>
         </div>
       </section>
 
@@ -3073,7 +3211,7 @@
               <svg class="play-btn" viewBox="0 0 56 56" aria-hidden="true"><circle cx="28" cy="28" r="27"/><path d="M23 19v18l15-9z"/></svg>
             </button>
           </div>
-          <p class="text-sm text-mid">Eight of our singers performing Winter Wonderland. <a href="../listen.html">Hear more recordings</a>.</p>
+          <p class="text-sm text-mid">Eight of our singers performing Winter Wonderland. <a href="../christmas-listen.html">Hear more recordings</a>.</p>
           <p><strong>Lighter seasonal pieces</strong> keep the energy up. <em>Jingle Bells</em>, <em>Rudolph the Red-Nosed Reindeer</em>, <em>Let It Snow</em>&thinsp;&mdash;&thinsp;these aren&rsquo;t sacred choral repertoire, but they&rsquo;re part of the fabric of Christmas, and a good vocal ensemble can make them sing. They work especially well for audience participation moments and singalongs.</p>
           <p><strong>Audience singalong moments</strong> are often the highlight of the evening. The choir leads, the room follows, and for a few minutes nobody is thinking about quarterly targets. We can include printed lyric sheets if you&rsquo;d like, though most guests know the words to at least the first verse. The choir carries the harmonies and the tune, so everyone feels supported.</p>
           <p>If there&rsquo;s a particular piece that matters to your organisation&thinsp;&mdash;&thinsp;a company anthem, a favourite song, something tied to a tradition you&rsquo;ve built over the years&thinsp;&mdash;&thinsp;let us know. Our singers are experienced sight-readers and can prepare new material at short notice.</p>

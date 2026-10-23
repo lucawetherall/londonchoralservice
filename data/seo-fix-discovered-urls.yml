@@ -60,7 +60,8 @@ videos:
     title: "Ubi Caritas (Ola Gjeilo)"
     upload_date: "2026-08-14"  # verified via ytInitialPlayerResponse 2026-08-15
     duration: "PT3M28S"
-  - page: "listen.html"  # off christmas.html since 2026-10-19 (spec christmas-landing-pages); carol-singers.html is a redirect
+  # 2026-10-23 (spec listen-pages): the six Christmas films moved from listen.html to christmas-listen.html.
+  - page: "christmas-listen.html"  # off christmas.html since 2026-10-19 (spec christmas-landing-pages); carol-singers.html is a redirect
     position: 5
     youtube_id: "mKMjUvCCW3E"
     title: "Blue Christmas"
@@ -80,7 +81,7 @@ videos:
   # until 2026-10-19, when Royal David's and Ding Dong took those heroes), a track on christmas.html,
   # carol-singers.html and listen.html, and the lead embed on twelve party/booking music guides.
   # From 2026-10-19 (spec 2026-10-19-christmas-landing-pages) it is the christmas.html hero again.
-  - page: "christmas.html (hero), christmas-pricing.html (hero), listen.html"
+  - page: "christmas.html (hero), christmas-pricing.html (hero), christmas-listen.html"
     position: 7
     youtube_id: "csFWUu-r85Y"  # fourth upload of the same film (after d-HBdh5awoE, UOy498rsonU and MyDf9cMp0gk), swapped in 2026-10-19.
     # maxresdefault.jpg exists (200 on 2026-10-19), so pages use it at 1280x720.
@@ -88,7 +89,7 @@ videos:
     upload_date: "2026-10-19"  # verified via the watch page's uploadDate meta 2026-10-19 (14:11 PDT)
     duration: "PT1M50S"  # lengthSeconds 110
   # Carol of the Bells: backfilled 2026-10-19 from the VideoObject already on the pages.
-  - page: "listen.html"  # off christmas.html since 2026-10-19
+  - page: "christmas-listen.html"  # off christmas.html since 2026-10-19
     position: 8
     youtube_id: "dGYqQf6BDAk"
     title: "Carol of the Bells"  # sung by an octet; labelled "Full Choir" on the site
@@ -102,7 +103,7 @@ videos:
   # Added 2026-10-19. Same eight singers and session as Carol of the Bells; all labelled "Full Choir".
   # Upload times 14:02-14:06 PDT on 19 Oct = 22:02-22:06 BST, so the UK date is 2026-10-19.
   # Plan: docs/superpowers/plans/2026-10-19-christmas-carol-videos.md
-  - page: "christmas-carol-services.html (hero), listen.html"  # christmas.html hero until 2026-10-19
+  - page: "christmas-carol-services.html (hero), christmas-listen.html"  # christmas.html hero until 2026-10-19
     position: 9
     youtube_id: "SbvqWglsbMo"
     title: "Once in Royal David's City"  # YouTube title "Once In Royal David's City"
@@ -112,7 +113,7 @@ videos:
     # church-carol-service-choir-hire.html, carols-by-candlelight.html,
     # advent-carols-vs-christmas-carols.html, corporate-carol-service.html.
     # Inline on: music-guides/christmas-carol-lyrics-meanings.html
-  - page: "christmas.html, christmas-carol-services.html, listen.html"  # carol-singers.html hero until 2026-10-19
+  - page: "christmas.html, christmas-carol-services.html, christmas-listen.html"  # carol-singers.html hero until 2026-10-19
     position: 10
     youtube_id: "zDlSFb74p4E"
     title: "Ding Dong! Merrily on High"  # YouTube title "Ding Dong Merrily On High"
@@ -121,7 +122,7 @@ videos:
     # Also embedded on: music-guides/christmas-carols-guide.html,
     # music-guides/christmas-carol-lyrics-meanings.html, music-guides/best-carols-for-four-voices.html,
     # music-guides/outdoor-carol-singing.html (lead film there, replacing Carol of the Bells)
-  - page: "listen.html, christmas.html"
+  - page: "christmas-listen.html, christmas.html"
     position: 11
     youtube_id: "UaVhyyidlTs"
     title: "Winter Wonderland"
