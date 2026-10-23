@@ -65,11 +65,15 @@
       window.addEventListener(evt, loadGA, { once: true, passive: true });
     });
 
-    // Conversion tracking. A lead is one "Submit lead form" conversion, fired by
-    // js/form.js and js/private-events.js only after Web3Forms accepts the
-    // enquiry. Phone, email and WhatsApp taps are contact_click events (their
-    // own secondary Ads actions "Call click" and "WhatsApp or email click"),
-    // never leads. Labels come from Google Ads (conversion action tag snippets).
+    // Conversion tracking. A lead is one "Submit lead form" conversion plus a GA4
+    // generate_lead, started by js/form.js and js/private-events.js only after
+    // Web3Forms accepts the enquiry. With cookie consent, js/form.js's lead is
+    // sent from thank-you.html (lcsLead below hands it over); without consent,
+    // and on the private register's inline success, it goes from the form's own
+    // page at once. Phone, email and WhatsApp taps are contact_click events, never
+    // leads, each with its own Ads action: "WhatsApp or email click" is a
+    // primary goal (owner decision, 26 Sep 2026) and "Call click" a secondary
+    // one. Labels come from Google Ads (conversion action tag snippets).
     var LCS_ADS = {
       lead: 'AW-17988388404/RjhECKGP7akcELSMxIFD',
       call: 'AW-17988388404/HHu8CJq1x4UdELSMxIFD',
@@ -165,7 +169,7 @@
         var h1 = document.querySelector('h1');
         var page = ((h1 && h1.childNodes[0] && h1.childNodes[0].textContent) || document.title.split('|')[0]).replace(/\s+/g, ' ').trim();
         var attr = lcsAttribution();
-        var ad = attr.gclid || attr.gbraid || attr.wbraid || attr.utm_medium === 'cpc' ? ', via a Google ad' : '';
+        var ad = attr.gclid || attr.gbraid || attr.wbraid || attr.utm_medium === 'cpc' || lcsAdVisit() ? ', via a Google ad' : '';
         var source = 'your \u201c' + page + '\u201d page' + ad;
         // With cookie consent, a short reference to the ad click rides along too,
         // so a booking that starts on WhatsApp or email can be reported to Google
@@ -176,7 +180,8 @@
             ref = lcsShortRef(attr.gclid || attr.gbraid || attr.wbraid || '');
           }
         } catch (e) {}
-        // Without consent, only the landing page's name (never the click ID).
+        // Without consent, only the landing page's name and the ad's campaign
+        // (never the click ID).
         var visit = ref ? '' : lcsAdVisit();
         var tag = ref ? 'Ref: ' + ref : visit ? 'Ad visit: ' + visit : '';
         if (method === 'whatsapp') {
@@ -227,18 +232,79 @@
 
     // Ad visit without cookies: when this page's own URL holds an ad click ID
     // and the visitor has not allowed cookies, its messages and form carry the
-    // page's name ("Ad visit: weddings"), never the click ID. It lives only in
-    // this variable: nothing is stored, so the next page carries nothing.
+    // landing page's name and the ad's campaign from utm_campaign ("Ad visit:
+    // pricing (wedding-leads)"), never the click ID. Nothing is stored: the
+    // label lives in this variable, and same-site links on the page carry it in
+    // their address (lcs_av=<label>), so the next page the visitor opens knows
+    // it too and passes it on. scripts/bookings/pipeline.py reads the same format.
     function lcsAdVisitSlug(path) {
       var p = String(path || '').toLowerCase().replace(/^\/+/, '').replace(/\.html$/, '').replace(/(^|\/)index$/, '').replace(/\/+$/, '');
       if (!p) return 'home';
-      return /^[a-z0-9-]+(\/[a-z0-9-]+)*$/.test(p) ? p : 'other';
+      return p.length <= 80 && /^[a-z0-9-]+(\/[a-z0-9-]+)*$/.test(p) ? p : 'other';
     }
-    var LCS_AD_VISIT = /[?&](gclid|gbraid|wbraid)=[^&]/.test(location.search) ? lcsAdVisitSlug(location.pathname) : '';
+    function lcsAdVisitLabel() {
+      try {
+        var q = new URLSearchParams(location.search);
+        if (/[?&](gclid|gbraid|wbraid)=[^&]/.test(location.search)) {
+          var slug = lcsAdVisitSlug(location.pathname), campaign = q.get('utm_campaign') || '';
+          return /^[a-z0-9-]{1,40}$/.test(campaign) ? slug + ' (' + campaign + ')' : slug;
+        }
+        // Carried from the previous page, and only from a page of this site, so
+        // a shared or bookmarked address never counts as an ad visit.
+        var carried = q.get('lcs_av') || '';
+        var from = document.referrer ? new URL(document.referrer).origin : '';
+        // The page at most 80 characters, the campaign at most 40 (as pipeline.py's AD_VISIT_RE).
+        if (from === location.origin &&
+            /^(?=[a-z0-9\/-]{1,80}( \(|$))[a-z0-9-]+(\/[a-z0-9-]+)*( \([a-z0-9-]{1,40}\))?$/.test(carried)) return carried;
+      } catch (e) {}
+      return '';
+    }
+    var LCS_AD_VISIT = lcsAdVisitLabel();
     function lcsAdVisit() {
       if (!LCS_AD_VISIT) return '';
-      try { if (localStorage.getItem('lcs-consent') === 'granted') return ''; } catch (e) {}
+      // Once cookies are allowed the click reference (lcsAttribution) takes over, but only if there is one: a
+      // visitor who accepts on a later page has no click ID left, so the label stays.
+      try {
+        if (localStorage.getItem('lcs-consent') === 'granted') {
+          var a = lcsAttribution();
+          if (a.gclid || a.gbraid || a.wbraid) return '';
+        }
+      } catch (e) {}
       return LCS_AD_VISIT;
+    }
+    // Same-site page links (.html or folder addresses) get lcs_av=<label> at
+    // run time, for ad visitors only, so crawlers never see it. Never tel:,
+    // mailto:, WhatsApp, other sites or links within the page. Once the visitor
+    // allows cookies the label comes off again where a click ID remains
+    // (lcsAttribution takes over); after accepting on a later page it stays.
+    function lcsCarryAdVisit(a) {
+      try {
+        var raw = a.getAttribute('href') || '';
+        if (!raw || raw.charAt(0) === '#' || /^(tel|mailto|sms|javascript):/i.test(raw) ||
+            raw.indexOf('wa.me/') !== -1 || a.hasAttribute('download')) return;
+        var url = new URL(raw, location.href);
+        if (url.origin !== location.origin || !/(\.html|\/)$/.test(url.pathname)) return;
+        var visit = lcsAdVisit();
+        if (visit) url.searchParams.set('lcs_av', visit);
+        else if (url.searchParams.has('lcs_av')) url.searchParams.delete('lcs_av');
+        else return;
+        a.setAttribute('href', url.pathname + url.search + url.hash);
+      } catch (e) {}
+    }
+    if (LCS_AD_VISIT) {
+      var lcsCarryAll = function() {
+        if (lcsAdVisit()) Array.prototype.forEach.call(document.querySelectorAll('a[href]'), lcsCarryAdVisit);
+      };
+      if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', lcsCarryAll);
+      else lcsCarryAll();
+      // Links added later, and a choice made on the cookie sheet since, are
+      // settled as each link is used.
+      ['click', 'auxclick', 'contextmenu'].forEach(function(evt) {
+        document.addEventListener(evt, function(e) {
+          var a = e.target.closest && e.target.closest('a[href]');
+          if (a) lcsCarryAdVisit(a);
+        }, true);
+      });
     }
     // The click IDs in this page's own URL, for an enquiry whose sender ticked
     // the form's ad-measurement box (read at submit, never stored).
@@ -267,7 +333,7 @@
   <!-- @include-end partials/analytics.html -->
 
   <title>Funeral and wedding choirs in Rochester | LCS</title>
-  <meta name="description" content="Hire conservatoire-trained singers for funerals, weddings, and memorials in Rochester, Medway, and north Kent. Soloists and choirs from £250.">
+  <meta name="description" content="Funeral singers and wedding choirs in Rochester and Medway, at Rochester Cathedral, St Nicholas Church and Medway Crematorium. Soloists from £250.">
   <meta name="theme-color" content="#F7F3EE">
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://londonchoralservice.com/areas/rochester.html">
@@ -275,7 +341,7 @@
   <link rel="alternate" hreflang="x-default" href="https://londonchoralservice.com/areas/rochester.html">
 
   <meta property="og:title" content="Funeral and wedding choirs in Rochester | LCS">
-  <meta property="og:description" content="Hire conservatoire-trained singers for funerals, weddings, and memorials in Rochester, Medway, and north Kent. Soloists and choirs from £250.">
+  <meta property="og:description" content="Funeral singers and wedding choirs in Rochester and Medway, at Rochester Cathedral, St Nicholas Church and Medway Crematorium. Soloists from £250.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://londonchoralservice.com/areas/rochester.html">
   <meta property="og:locale" content="en_GB">
@@ -287,7 +353,7 @@
 
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Funeral and wedding choirs in Rochester | LCS">
-  <meta name="twitter:description" content="Hire conservatoire-trained singers for funerals, weddings, and memorials in Rochester, Medway, and north Kent. Soloists and choirs from £250.">
+  <meta name="twitter:description" content="Funeral singers and wedding choirs in Rochester and Medway, at Rochester Cathedral, St Nicholas Church and Medway Crematorium. Soloists from £250.">
   <meta name="twitter:image" content="https://londonchoralservice.com/assets/og/areas-rochester.png">
   <meta name="twitter:image:alt" content="The London Choral Service: Funeral &amp; Wedding Choirs in Rochester. Live singers for churches, crematoria and carol services">
   <link rel="dns-prefetch" href="https://www.googletagmanager.com">
@@ -2992,7 +3058,7 @@
         "@type": "Service",
         "name": "Funeral Singers & Wedding Choirs in Rochester",
         "url": "https://londonchoralservice.com/areas/rochester.html",
-        "description": "Hire conservatoire-trained singers for funerals, weddings, and memorials in Rochester, Medway, and north Kent. Soloists and choirs from £250.",
+        "description": "Funeral singers and wedding choirs in Rochester and Medway, at Rochester Cathedral, St Nicholas Church and Medway Crematorium. Soloists from £250.",
         "provider": {
           "@type": "LocalBusiness",
           "@id": "https://londonchoralservice.com/#organization",
@@ -3051,7 +3117,7 @@
             "name": "How much is a funeral choir for Rochester Cathedral or Medway Crematorium?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "For funerals at Rochester Cathedral, St Nicholas Church, Medway Crematorium, and churches across the Medway towns and north Kent, a soloist starts from £250, above that, four voices are £1,150, a quintet £1,400, a sextet £1,600, and a full choir of eight £2,000. Rochester is reasonably close to London, so travel costs are kept to a minimum, though a supplement may apply for venues further into Kent."
+              "text": "For funerals at Rochester Cathedral, St Nicholas Church, Medway Crematorium, and churches across the Medway towns and north Kent, a soloist starts from £250. A full choir of eight, at £2,000, fills the Norman nave of Rochester Cathedral; four voices, at £1,150, suit St Nicholas Church or the chapel at Medway Crematorium. Rochester is close to London, so travel costs stay low, though a supplement may apply for venues further into Kent."
             }
           },
           {
@@ -3059,7 +3125,7 @@
             "name": "Do you provide choirs for weddings at Rochester Cathedral?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Yes. Rochester Cathedral — the second oldest in England — has a Norman nave that produces a wonderful sound for choral singing, and we also perform at St Nicholas Church and the many fine medieval and Georgian churches across Medway and north Kent. Ensembles range from a solo vocalist to a chorus of twelve, and we are always glad to learn new repertoire for your ceremony."
+              "text": "Yes, with the cathedral's permission. Rochester Cathedral, the second oldest in England, has a Norman nave that carries choral singing well, and we also perform at St Nicholas Church and the medieval and Georgian churches across Medway and north Kent. Ensembles range from a solo vocalist to a chorus of twelve, and we will learn new repertoire for your ceremony."
             }
           },
           {
@@ -3067,7 +3133,7 @@
             "name": "How do you choose funeral music for Rochester Cathedral’s Norman nave?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Our singers cover the full range — traditional hymns such as Dear Lord and Father of Mankind, classical sacred works such as Ave Maria, and contemporary or popular songs. Rochester Cathedral's ancient Norman nave lends a particular richness to choral pieces, but we adapt our approach to suit any venue in the Medway area, from a large church to a quiet crematorium chapel. We make bespoke arrangements when a family asks for a piece outside our usual repertoire."
+              "text": "Our singers cover traditional hymns such as Dear Lord and Father of Mankind, classical sacred works such as Ave Maria, and contemporary or popular songs. Rochester Cathedral's ancient Norman nave lends a particular richness to choral pieces, but we adapt our approach to suit any venue in the Medway area, from a large church to a quiet crematorium chapel. We make bespoke arrangements when a family asks for a piece outside our usual repertoire."
             }
           },
           {
@@ -3075,7 +3141,7 @@
             "name": "Do you sing at Medway Crematorium, which serves Rochester?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Yes. Medway Crematorium is the principal crematorium for the Rochester area, and our singers perform there regularly. They are familiar with its chapel, comfortable with its timed service format, and always liaise with both the crematorium staff and your funeral director well before the day to make sure everything goes smoothly."
+              "text": "Yes. Medway Crematorium is the principal crematorium for the Rochester area, and our singers know it well. They are familiar with its chapel and its timed service format, and they speak to the crematorium staff and your funeral director well before the day so the service runs to time."
             }
           },
           {
@@ -3083,7 +3149,7 @@
             "name": "Can you book carol singers for an event in Rochester at Christmas?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Yes. We provide carol services and roaming carol singers for offices, hotels, and community events throughout Rochester and Medway each December, performed entirely unaccompanied. As December dates usually start to fill by mid-September, we would encourage enquiring well ahead of the season — see our Christmas page for full details."
+              "text": "Yes. Each December our unaccompanied carol singers sing for offices, hotels and community events across Rochester and Medway, and we offer carol services as a fixed programme. Medway dates begin to go from mid-September, so an early enquiry gives you more choice; see our Christmas page for full details."
             }
           }
         ]
@@ -3164,21 +3230,21 @@
           </ol>
         </nav>
 
-        <h1>Funeral and wedding choirs in Rochester</h1>
+        <h1>Choirs for Rochester Cathedral, Medway Crematorium and north Kent</h1>
         <p class="guide-meta">Musicians selected by Luca Wetherall, Artistic Director &amp; Tutor in Music, University of Oxford &mdash; <a href="/luca-wetherall.html">read more about our team</a>.</p>
-        <p class="lede">Rochester is one of England&rsquo;s oldest and most characterful cities, a place of ancient stone and literary heritage set on the banks of the River Medway. Charles Dickens loved it so dearly that it wove its way into almost everything he wrote, and the cathedral and castle that rise above the high street give the city a quiet grandeur that few places of its size can match. The London Choral Service provides professional singers, choirs, and instrumentalists for funerals, weddings, memorials, and ceremonies across Rochester, Medway, and north Kent.</p>
+        <p class="lede">Rochester is one of England&rsquo;s oldest cities, a place of ancient stone and literary heritage set on the banks of the River Medway. Charles Dickens loved it, and the cathedral and castle rise above the high street. Our singers, choirs and instrumentalists perform at funerals, weddings and memorials there and across Chatham, Gillingham, Strood and north Kent.</p>
 
         <hr class="rule">
 
         <h2>Funeral music in Rochester</h2>
 
-        <p>When someone you love has died, the thought of organising music for their funeral can feel like one burden too many. We want you to know that we are here to carry that for you. Our singers perform at <a href="../services.html">funerals and memorial services</a> throughout Rochester and the wider Medway towns&thinsp;&mdash;&thinsp;at Rochester Cathedral, the second oldest cathedral in England, founded in 604&thinsp;AD and a place whose Norman nave still holds an extraordinary, reverent stillness; at St Nicholas Church, one of the city&rsquo;s most beloved parish churches; at Medway Crematorium; and at churches and chapels across Chatham, Gillingham, Strood, and the surrounding north Kent countryside. A solo soprano singing <em>Ave Maria</em> in a quiet crematorium chapel, a full choir lifting the congregation with <em>Dear Lord and Father of Mankind</em> beneath Rochester&rsquo;s ancient vaulting &mdash; we shape the music around what feels right for you and for the person you are remembering.</p>
+        <p>When someone you love has died, the thought of organising music for their funeral can feel like one burden too many. We want you to know that we are here to carry that for you. Our singers perform at <a href="../services.html">funerals and memorial services</a> throughout Rochester and the wider Medway towns: at Rochester Cathedral, the second oldest cathedral in England, founded in 604&thinsp;AD, where we sing in the Norman nave with the cathedral&rsquo;s permission; at St Nicholas Church, one of the city&rsquo;s parish churches; at Medway Crematorium; and at churches and chapels across Chatham, Gillingham, Strood, and the surrounding north Kent countryside. That might be a solo soprano singing <em>Ave Maria</em> in a quiet crematorium chapel, or a full choir leading the congregation in <em>Dear Lord and Father of Mankind</em> beneath Rochester&rsquo;s Norman vaulting. We shape the music around what feels right for you and for the person you are remembering.</p>
 
-        <p>Live singing gives voice to what a reading cannot say, and our conservatoire-trained musicians deliver it with sensitivity and grace. If you are unsure which music to choose, our <a href="../music-guides/funeral-music-guide.html">funeral music guide</a> offers thoughtful suggestions for hymns, solos, and choral works that sit well in both cathedral and crematorium acoustics. You are also very welcome to telephone us&thinsp;&mdash;&thinsp;we are always happy to talk things through at your own pace, and there is never any obligation.</p>
+        <p>Live singing gives voice to what a reading cannot say, and our musicians are conservatoire-trained. If you are unsure which music to choose, our <a href="../music-guides/funeral-music-guide.html">funeral music guide</a> offers suggestions for hymns, solos, and choral works that sit well in both cathedral and crematorium acoustics. You are also welcome to telephone us to talk things through at your own pace, with no obligation.</p>
 
         <h2>Wedding choirs and singers</h2>
 
-        <p>Rochester is a striking setting for a wedding. Rochester Cathedral &mdash; the second-oldest in England, founded in 604 AD &mdash; is one of the most atmospheric churches to marry in anywhere in the south-east. The medieval and Georgian churches across Medway and north Kent give couples a range of venues at different scales. A live choir does what a recording cannot: make the hymns sound intended rather than endured, and follow them with a piece during the signing of the register that guests will go on talking about over dinner. Our choirs and soloists perform at weddings across Rochester and Kent, and we will learn new repertoire if there is a song that holds particular meaning for you. Hymn suggestions for a Medway wedding are in our guide to <a href="../music-guides/choosing-wedding-hymns.html">choosing wedding hymns</a>.</p>
+        <p>Rochester Cathedral, the second-oldest in England, was founded in 604 AD, and with the cathedral&rsquo;s permission our choir can sing at a wedding there. The medieval and Georgian churches across Medway and north Kent give couples a range of venues at different scales. Under Rochester&rsquo;s Norman vaulting a choir gives the hymns a confident lead, and one piece covers the five minutes or so it takes to sign the register. Our choirs and soloists perform at weddings across Rochester and Kent, and we will learn new repertoire if there is a song that holds particular meaning for you. Hymn suggestions for a Medway wedding are in our guide to <a href="../music-guides/choosing-wedding-hymns.html">choosing wedding hymns</a>.</p>
 
         <h2>Ensembles &amp; pricing</h2>
 
@@ -3193,28 +3259,34 @@
 
         <h2>Christmas carol singers in Rochester</h2>
 
-        <p>Rochester&rsquo;s cobbled high street and the cathedral above it make for a properly Dickensian December, and offices, hotels, and residents&rsquo; groups across Medway book carol singers well before the market stalls appear. Rather than the cathedral itself, we sing in churches and historic venues throughout north Kent, offering <a href="../christmas.html">singers for your December event</a> or <a href="../christmas-carol-services.html">Christmas carol services</a> as a fixed programme.</p>
+        <p>Rochester&rsquo;s cobbled high street and the cathedral above it make for a properly Dickensian December, and offices, hotels, and residents&rsquo; groups across Medway book carol singers well before the market stalls appear. At Christmas we sing in churches and historic venues throughout north Kent, though not in the cathedral itself, offering <a href="../christmas.html">singers for your December event</a> or <a href="../christmas-carol-services.html">Christmas carol services</a> as a fixed programme.</p>
 
         <h2>Frequently asked questions</h2>
         
         <h3>How much is a funeral choir for Rochester Cathedral or Medway Crematorium?</h3>
-        <p>For funerals at Rochester Cathedral, St Nicholas Church, Medway Crematorium, and churches across the Medway towns and north Kent, a soloist starts from £250, above that, four voices are £1,150, a quintet £1,400, a sextet £1,600, and a full choir of eight £2,000. Rochester is reasonably close to London, so travel costs are kept to a minimum, though a supplement may apply for venues further into Kent.</p>
+        <p>For funerals at Rochester Cathedral, St Nicholas Church, Medway Crematorium, and churches across the Medway towns and north Kent, a soloist starts from £250. A full choir of eight, at £2,000, fills the Norman nave of Rochester Cathedral; four voices, at £1,150, suit St Nicholas Church or the chapel at Medway Crematorium. Rochester is close to London, so travel costs stay low, though a supplement may apply for venues further into Kent.</p>
         
         <h3>Do you provide choirs for weddings at Rochester Cathedral?</h3>
-        <p>Yes. Rochester Cathedral — the second oldest in England — has a Norman nave that produces a wonderful sound for choral singing, and we also perform at St Nicholas Church and the many fine medieval and Georgian churches across Medway and north Kent. Ensembles range from a solo vocalist to a chorus of twelve, and we are always glad to learn new repertoire for your ceremony.</p>
+        <p>Yes, with the cathedral's permission. Rochester Cathedral, the second oldest in England, has a Norman nave that carries choral singing well, and we also perform at St Nicholas Church and the medieval and Georgian churches across Medway and north Kent. Ensembles range from a solo vocalist to a chorus of twelve, and we will learn new repertoire for your ceremony.</p>
         
         <h3>How do you choose funeral music for Rochester Cathedral&rsquo;s Norman nave?</h3>
-        <p>Our singers cover the full range — traditional hymns such as Dear Lord and Father of Mankind, classical sacred works such as Ave Maria, and contemporary or popular songs. Rochester Cathedral's ancient Norman nave lends a particular richness to choral pieces, but we adapt our approach to suit any venue in the Medway area, from a large church to a quiet crematorium chapel. We make bespoke arrangements when a family asks for a piece outside our usual repertoire.</p>
+        <p>Our singers cover traditional hymns such as Dear Lord and Father of Mankind, classical sacred works such as Ave Maria, and contemporary or popular songs. Rochester Cathedral's ancient Norman nave lends a particular richness to choral pieces, but we adapt our approach to suit any venue in the Medway area, from a large church to a quiet crematorium chapel. We make bespoke arrangements when a family asks for a piece outside our usual repertoire.</p>
 
         <h3>Do you sing at Medway Crematorium, which serves Rochester?</h3>
-        <p>Yes. Medway Crematorium is the principal crematorium for the Rochester area, and our singers perform there regularly. They are familiar with its chapel, comfortable with its timed service format, and always liaise with both the crematorium staff and your funeral director well before the day to make sure everything goes smoothly.</p>
+        <p>Yes. Medway Crematorium is the principal crematorium for the Rochester area, and our singers know it well. They are familiar with its chapel and its timed service format, and they speak to the crematorium staff and your funeral director well before the day so the service runs to time.</p>
 
         <h3>Can you book carol singers for an event in Rochester at Christmas?</h3>
-        <p>Yes. We provide carol services and roaming carol singers for offices, hotels, and community events throughout Rochester and Medway each December, performed entirely unaccompanied. As December dates usually start to fill by mid-September, we would encourage enquiring well ahead of the season — see our <a href="../christmas.html">Christmas page</a> for full details.</p>
+        <p>Yes. Each December our unaccompanied carol singers sing for offices, hotels and community events across Rochester and Medway, and we offer carol services as a fixed programme. Medway dates begin to go from mid-September, so an early enquiry gives you more choice; see our <a href="../christmas.html">Christmas page</a> for full details.</p>
 
         <p>Medway families can find more in our <a href="../music-guides/funeral-music-guide.html">funeral music guide</a>, <a href="../music-guides/popular-funeral-hymns.html">popular funeral hymns</a> and <a href="../music-guides/funeral-music-costs.html">funeral music costs guide</a>, and couples marrying in Rochester can turn to our <a href="../music-guides/choosing-wedding-hymns.html">wedding hymns guide</a>.</p>
 
         <p><a href="../contact.html" class="btn-link">Arrange singers in Rochester and Medway</a></p>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="prose">
+        <p class="text-sm text-mid">Nearby London boroughs: <a href="london/bexley.html">Bexley</a> &middot; <a href="london/bromley.html">Bromley</a></p>
       </div>
     </section>
 

@@ -65,11 +65,15 @@
       window.addEventListener(evt, loadGA, { once: true, passive: true });
     });
 
-    // Conversion tracking. A lead is one "Submit lead form" conversion, fired by
-    // js/form.js and js/private-events.js only after Web3Forms accepts the
-    // enquiry. Phone, email and WhatsApp taps are contact_click events (their
-    // own secondary Ads actions "Call click" and "WhatsApp or email click"),
-    // never leads. Labels come from Google Ads (conversion action tag snippets).
+    // Conversion tracking. A lead is one "Submit lead form" conversion plus a GA4
+    // generate_lead, started by js/form.js and js/private-events.js only after
+    // Web3Forms accepts the enquiry. With cookie consent, js/form.js's lead is
+    // sent from thank-you.html (lcsLead below hands it over); without consent,
+    // and on the private register's inline success, it goes from the form's own
+    // page at once. Phone, email and WhatsApp taps are contact_click events, never
+    // leads, each with its own Ads action: "WhatsApp or email click" is a
+    // primary goal (owner decision, 26 Sep 2026) and "Call click" a secondary
+    // one. Labels come from Google Ads (conversion action tag snippets).
     var LCS_ADS = {
       lead: 'AW-17988388404/RjhECKGP7akcELSMxIFD',
       call: 'AW-17988388404/HHu8CJq1x4UdELSMxIFD',
@@ -165,7 +169,7 @@
         var h1 = document.querySelector('h1');
         var page = ((h1 && h1.childNodes[0] && h1.childNodes[0].textContent) || document.title.split('|')[0]).replace(/\s+/g, ' ').trim();
         var attr = lcsAttribution();
-        var ad = attr.gclid || attr.gbraid || attr.wbraid || attr.utm_medium === 'cpc' ? ', via a Google ad' : '';
+        var ad = attr.gclid || attr.gbraid || attr.wbraid || attr.utm_medium === 'cpc' || lcsAdVisit() ? ', via a Google ad' : '';
         var source = 'your \u201c' + page + '\u201d page' + ad;
         // With cookie consent, a short reference to the ad click rides along too,
         // so a booking that starts on WhatsApp or email can be reported to Google
@@ -176,7 +180,8 @@
             ref = lcsShortRef(attr.gclid || attr.gbraid || attr.wbraid || '');
           }
         } catch (e) {}
-        // Without consent, only the landing page's name (never the click ID).
+        // Without consent, only the landing page's name and the ad's campaign
+        // (never the click ID).
         var visit = ref ? '' : lcsAdVisit();
         var tag = ref ? 'Ref: ' + ref : visit ? 'Ad visit: ' + visit : '';
         if (method === 'whatsapp') {
@@ -227,18 +232,79 @@
 
     // Ad visit without cookies: when this page's own URL holds an ad click ID
     // and the visitor has not allowed cookies, its messages and form carry the
-    // page's name ("Ad visit: weddings"), never the click ID. It lives only in
-    // this variable: nothing is stored, so the next page carries nothing.
+    // landing page's name and the ad's campaign from utm_campaign ("Ad visit:
+    // pricing (wedding-leads)"), never the click ID. Nothing is stored: the
+    // label lives in this variable, and same-site links on the page carry it in
+    // their address (lcs_av=<label>), so the next page the visitor opens knows
+    // it too and passes it on. scripts/bookings/pipeline.py reads the same format.
     function lcsAdVisitSlug(path) {
       var p = String(path || '').toLowerCase().replace(/^\/+/, '').replace(/\.html$/, '').replace(/(^|\/)index$/, '').replace(/\/+$/, '');
       if (!p) return 'home';
-      return /^[a-z0-9-]+(\/[a-z0-9-]+)*$/.test(p) ? p : 'other';
+      return p.length <= 80 && /^[a-z0-9-]+(\/[a-z0-9-]+)*$/.test(p) ? p : 'other';
     }
-    var LCS_AD_VISIT = /[?&](gclid|gbraid|wbraid)=[^&]/.test(location.search) ? lcsAdVisitSlug(location.pathname) : '';
+    function lcsAdVisitLabel() {
+      try {
+        var q = new URLSearchParams(location.search);
+        if (/[?&](gclid|gbraid|wbraid)=[^&]/.test(location.search)) {
+          var slug = lcsAdVisitSlug(location.pathname), campaign = q.get('utm_campaign') || '';
+          return /^[a-z0-9-]{1,40}$/.test(campaign) ? slug + ' (' + campaign + ')' : slug;
+        }
+        // Carried from the previous page, and only from a page of this site, so
+        // a shared or bookmarked address never counts as an ad visit.
+        var carried = q.get('lcs_av') || '';
+        var from = document.referrer ? new URL(document.referrer).origin : '';
+        // The page at most 80 characters, the campaign at most 40 (as pipeline.py's AD_VISIT_RE).
+        if (from === location.origin &&
+            /^(?=[a-z0-9\/-]{1,80}( \(|$))[a-z0-9-]+(\/[a-z0-9-]+)*( \([a-z0-9-]{1,40}\))?$/.test(carried)) return carried;
+      } catch (e) {}
+      return '';
+    }
+    var LCS_AD_VISIT = lcsAdVisitLabel();
     function lcsAdVisit() {
       if (!LCS_AD_VISIT) return '';
-      try { if (localStorage.getItem('lcs-consent') === 'granted') return ''; } catch (e) {}
+      // Once cookies are allowed the click reference (lcsAttribution) takes over, but only if there is one: a
+      // visitor who accepts on a later page has no click ID left, so the label stays.
+      try {
+        if (localStorage.getItem('lcs-consent') === 'granted') {
+          var a = lcsAttribution();
+          if (a.gclid || a.gbraid || a.wbraid) return '';
+        }
+      } catch (e) {}
       return LCS_AD_VISIT;
+    }
+    // Same-site page links (.html or folder addresses) get lcs_av=<label> at
+    // run time, for ad visitors only, so crawlers never see it. Never tel:,
+    // mailto:, WhatsApp, other sites or links within the page. Once the visitor
+    // allows cookies the label comes off again where a click ID remains
+    // (lcsAttribution takes over); after accepting on a later page it stays.
+    function lcsCarryAdVisit(a) {
+      try {
+        var raw = a.getAttribute('href') || '';
+        if (!raw || raw.charAt(0) === '#' || /^(tel|mailto|sms|javascript):/i.test(raw) ||
+            raw.indexOf('wa.me/') !== -1 || a.hasAttribute('download')) return;
+        var url = new URL(raw, location.href);
+        if (url.origin !== location.origin || !/(\.html|\/)$/.test(url.pathname)) return;
+        var visit = lcsAdVisit();
+        if (visit) url.searchParams.set('lcs_av', visit);
+        else if (url.searchParams.has('lcs_av')) url.searchParams.delete('lcs_av');
+        else return;
+        a.setAttribute('href', url.pathname + url.search + url.hash);
+      } catch (e) {}
+    }
+    if (LCS_AD_VISIT) {
+      var lcsCarryAll = function() {
+        if (lcsAdVisit()) Array.prototype.forEach.call(document.querySelectorAll('a[href]'), lcsCarryAdVisit);
+      };
+      if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', lcsCarryAll);
+      else lcsCarryAll();
+      // Links added later, and a choice made on the cookie sheet since, are
+      // settled as each link is used.
+      ['click', 'auxclick', 'contextmenu'].forEach(function(evt) {
+        document.addEventListener(evt, function(e) {
+          var a = e.target.closest && e.target.closest('a[href]');
+          if (a) lcsCarryAdVisit(a);
+        }, true);
+      });
     }
     // The click IDs in this page's own URL, for an enquiry whose sender ticked
     // the form's ad-measurement box (read at submit, never stored).
@@ -267,7 +333,7 @@
   <!-- @include-end partials/analytics.html -->
 
   <title>Funeral and wedding choirs in Havering | LCS</title>
-  <meta name="description" content="Professional funeral singers and wedding choirs in Havering, London. Conservatoire-trained musicians for funerals, weddings, memorials, and ceremonies.">
+  <meta name="description" content="Funeral and wedding choirs in Havering, at South Essex Crematorium in Corbets Tey and St Andrew’s Hornchurch. Soloists from £250, choirs of four from £1,150.">
   <meta name="theme-color" content="#F7F3EE">
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://londonchoralservice.com/areas/london/havering.html">
@@ -275,7 +341,7 @@
   <link rel="alternate" hreflang="x-default" href="https://londonchoralservice.com/areas/london/havering.html">
 
   <meta property="og:title" content="Funeral and wedding choirs in Havering | LCS">
-  <meta property="og:description" content="Professional funeral singers and wedding choirs in Havering, London. Conservatoire-trained musicians for funerals, weddings, memorials, and ceremonies.">
+  <meta property="og:description" content="Funeral and wedding choirs in Havering, at South Essex Crematorium in Corbets Tey and St Andrew’s Hornchurch. Soloists from £250, choirs of four from £1,150.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://londonchoralservice.com/areas/london/havering.html">
   <meta property="og:locale" content="en_GB">
@@ -287,7 +353,7 @@
 
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Funeral and wedding choirs in Havering | LCS">
-  <meta name="twitter:description" content="Professional funeral singers and wedding choirs in Havering, London. Conservatoire-trained musicians for funerals, weddings, memorials, and ceremonies.">
+  <meta name="twitter:description" content="Funeral and wedding choirs in Havering, at South Essex Crematorium in Corbets Tey and St Andrew’s Hornchurch. Soloists from £250, choirs of four from £1,150.">
   <meta name="twitter:image" content="https://londonchoralservice.com/assets/og/areas-london-havering.png">
   <meta name="twitter:image:alt" content="The London Choral Service: Funeral &amp; Wedding Choirs in Havering. Live singers for churches, crematoria and carol services">
   <link rel="dns-prefetch" href="https://www.googletagmanager.com">
@@ -3060,7 +3126,7 @@
             "name": "Do you cover crematorium services in Havering?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Yes. South Essex Crematorium in Corbets Tey is the main crematorium serving Havering, and our singers have performed in its chapels on many occasions. We coordinate with crematorium staff and your funeral director so the music fits naturally within the service timings."
+              "text": "Yes. South Essex Crematorium in Corbets Tey is the main crematorium serving Havering, and our singers have performed in its chapels on many occasions. We coordinate with crematorium staff and your funeral director so the music fits within the service timings."
             }
           },
           {
@@ -3068,7 +3134,7 @@
             "name": "How much is a funeral choir at South Essex Crematorium or St Andrew’s Hornchurch?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "For services at South Essex Crematorium in Corbets Tey, St Andrew's Hornchurch, or churches in Romford and Upminster, a soloist starts from £250. A small choir of four is £1,150, a quintet £1,400, a sextet £1,600, and a full choir of eight £2,000. Havering is a Greater London borough, so the fee includes getting our singers to Romford, Hornchurch or Upminster."
+              "text": "For services at South Essex Crematorium in Corbets Tey, St Andrew's Hornchurch, or churches in Romford and Upminster, a soloist starts from £250. A quartet, the usual size for a crematorium chapel, is £1,150. In the nave at St Andrew's a sextet (£1,600) carries the hymns, and a full choir of eight is £2,000. Havering is a Greater London borough, so the fee includes getting our singers to Romford, Hornchurch or Upminster."
             }
           },
           {
@@ -3084,7 +3150,7 @@
             "name": "Can you sing popular songs at South Essex Crematorium as well as hymns at St Andrew’s Hornchurch?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "At St Andrew's Hornchurch, the spacious nave brings out the best in traditional hymns, psalms, and choral anthems. At South Essex Crematorium, we frequently perform popular songs, contemporary pieces, and modern classical works. We can prepare bespoke arrangements of any song — if it mattered to your loved one, we will make it work for voices."
+              "text": "At St Andrew's Hornchurch, the spacious nave brings out the best in traditional hymns, psalms, and choral anthems. At South Essex Crematorium, we often perform popular songs, contemporary pieces, and modern classical works. We can prepare bespoke arrangements of any song that mattered to your loved one."
             }
           }
         ]
@@ -3165,7 +3231,7 @@
             <li>Havering</li>
           </ol>
         </nav>
-        <h1>Funeral and wedding choirs in Havering</h1>
+        <h1>Havering choirs for South Essex Crematorium and St&nbsp;Andrew&rsquo;s</h1>
         <p class="guide-meta">Musicians selected by Luca Wetherall, Artistic Director &amp; Tutor in Music, University of Oxford &mdash; <a href="/luca-wetherall.html">read more about our team</a>.</p>
         <p class="lede">Havering sits on London&rsquo;s eastern edge, where the city gives way to the green belt countryside of Essex. From the market town character of Romford and the village charm of Upminster to the quieter streets of Hornchurch and Corbets Tey, we provide professional singers and choirs for funerals, weddings, memorials, and ceremonies across the borough.</p>
         <hr class="rule">
@@ -3175,13 +3241,13 @@
     <section class="section">
       <div class="prose">
         <h2>Funerals at South Essex Crematorium and St&nbsp;Andrew&rsquo;s Hornchurch</h2>
-        <p>South Essex Crematorium in Corbets Tey is the principal crematorium serving families in Havering and the surrounding area. Its chapels are well suited to live music, and our singers have performed there on many occasions, adapting their repertoire to reflect the full range of musical tastes&thinsp;&mdash;&thinsp;from traditional hymns and psalm settings to popular songs and modern classical works. St&nbsp;Andrew&rsquo;s Church in Hornchurch, a handsome medieval parish church with a fine acoustic, is another venue we know well. Its spacious nave allows choral sound to develop naturally, creating a moving atmosphere for funeral and memorial services. For help with choosing the right music, please see our <a href="../../music-guides/funeral-music-guide.html">funeral music guide</a> or <a href="../../contact.html">get in touch</a> directly.</p>
+        <p>South Essex Crematorium in Corbets Tey is the principal crematorium serving families in Havering and the surrounding area. Its chapels are well suited to live music, and our singers have performed there on many occasions, with repertoire ranging from traditional hymns and psalm settings to popular songs and modern classical works. St&nbsp;Andrew&rsquo;s Church in Hornchurch, a handsome medieval parish church with a fine acoustic, is another venue we know well. Its spacious nave gives choral sound room to carry at funeral and memorial services. For help with choosing the right music, please see our <a href="../../music-guides/funeral-music-guide.html">funeral music guide</a> or <a href="../../contact.html">get in touch</a>.</p>
         <p>If the service is at South Essex Crematorium in Corbets Tey, read our <a href="../../music-guides/crematorium-music.html">guide to crematorium music</a> on timing and acoustics in a shorter chapel service.</p>
 
-        <p>We also regularly provide funeral singers for services in Romford, Upminster, and the smaller churches and chapels that serve Havering&rsquo;s communities. In a large parish church with a pipe organ or a modern crematorium chapel, we work closely with funeral directors, clergy, and families so the music is handled with care. Our singers are comfortable in services of all faiths and denominations, and we are happy to prepare unfamiliar repertoire when requested. Our <a href="../../services.html">services page</a> describes the full range, from a graveside soloist in Upminster to a choir in a Romford church.</p>
+        <p>We also provide funeral singers for services in Romford, Upminster, and the smaller churches and chapels that serve Havering&rsquo;s communities. In a large parish church with a pipe organ or a modern crematorium chapel, we work closely with funeral directors, clergy, and families so the music is handled with care. Our singers are comfortable in services of any denomination or none, and we are happy to prepare unfamiliar repertoire when requested. Our <a href="../../services.html">services page</a> describes the full range, from a graveside soloist in Upminster to a choir in a Romford church.</p>
 
         <h2>Choir sizes for Hornchurch, Upminster and Romford</h2>
-        <p>St&nbsp;Andrew&rsquo;s Hornchurch is a sizeable parish church with a generous nave, and a sextet usually carries congregational hymns well there for a wedding &mdash; with a full eight-voice choir worth considering for ceremonies where the congregation is large. The parish churches of Upminster and Romford handle a quartet or sextet comfortably depending on the scale of the day. For a smaller funeral with family-only present, a quartet generally suits better than a larger ensemble. If the service is taking place in a modern crematorium chapel, a quartet is usually the right call: enough to lead a hymn, compact enough to fit the room. For a graveside or short committal, a soloist is usually plenty. Our <a href="../../pricing.html">pricing page</a> sets out costs by ensemble size.</p>
+        <p>St&nbsp;Andrew&rsquo;s Hornchurch is a sizeable parish church with a generous nave, and a sextet usually carries congregational hymns well there for a wedding, and a full eight-voice choir is worth considering when the congregation is large. The parish churches of Upminster and Romford handle a quartet or sextet comfortably depending on the scale of the day. For a smaller funeral with family-only present, a quartet generally suits better than a larger ensemble. If the service is taking place in a modern crematorium chapel, a quartet is usually the right call: enough to lead a hymn, compact enough to fit the room. For a graveside or short committal, a soloist is usually plenty. Our <a href="../../pricing.html">pricing page</a> sets out costs by ensemble size.</p>
 
         <figure class="pull-quote">
           <blockquote>
@@ -3193,32 +3259,32 @@
         <h2>Havering funeral questions</h2>
 
         <h3>Do you cover crematorium services in Havering?</h3>
-        <p>Yes. South Essex Crematorium in Corbets Tey is the main crematorium serving Havering, and our singers have performed in its chapels on many occasions. We coordinate with crematorium staff and your funeral director so the music fits naturally within the service timings.</p>
+        <p>Yes. South Essex Crematorium in Corbets Tey is the main crematorium serving Havering, and our singers have performed in its chapels on many occasions. We coordinate with crematorium staff and your funeral director so the music fits within the service timings.</p>
 
         <h3>How much is a funeral choir at South Essex Crematorium or St&nbsp;Andrew&rsquo;s Hornchurch?</h3>
-        <p>For services at South Essex Crematorium in Corbets Tey, St&nbsp;Andrew&rsquo;s Hornchurch, or churches in Romford and Upminster, a soloist starts from &pound;250. A small choir of four is &pound;1,150, a quintet &pound;1,400, a sextet &pound;1,600, and a full choir of eight &pound;2,000. Havering is a Greater London borough, so the fee includes getting our singers to Romford, Hornchurch or Upminster.</p>
+        <p>For services at South Essex Crematorium in Corbets Tey, St&nbsp;Andrew&rsquo;s Hornchurch, or churches in Romford and Upminster, a soloist starts from &pound;250. A quartet, the usual size for a crematorium chapel, is &pound;1,150. In the nave at St&nbsp;Andrew&rsquo;s a sextet (&pound;1,600) carries the hymns, and a full choir of eight is &pound;2,000. Havering is a Greater London borough, so the fee includes getting our singers to Romford, Hornchurch or Upminster.</p>
 
         <h3>What size of choir suits a family-only funeral in Havering?</h3>
         <p>For a smaller funeral with only family present, a quartet (from &pound;1,150) usually suits better than a larger ensemble. At a graveside or short committal, a soloist (from &pound;250) is usually plenty.</p>
 
         <h3>Can you sing popular songs at South Essex Crematorium as well as hymns at St&nbsp;Andrew&rsquo;s Hornchurch?</h3>
-        <p>At St&nbsp;Andrew&rsquo;s Hornchurch, the spacious nave brings out the best in traditional hymns, psalms, and choral anthems. At South Essex Crematorium, we frequently perform popular songs, contemporary pieces, and modern classical works. We can prepare bespoke arrangements of any song &mdash; if it mattered to your loved one, we will make it work for voices.</p>
+        <p>At St&nbsp;Andrew&rsquo;s Hornchurch, the spacious nave brings out the best in traditional hymns, psalms, and choral anthems. At South Essex Crematorium, we often perform popular songs, contemporary pieces, and modern classical works. We can prepare bespoke arrangements of any song that mattered to your loved one.</p>
 
         <p>Four of our guides help with planning in Havering: the <a href="../../music-guides/funeral-music-guide.html">funeral music guide</a> and <a href="../../music-guides/popular-funeral-hymns.html">popular funeral hymns</a> for a service at South Essex Crematorium, the <a href="../../music-guides/funeral-music-costs.html">funeral music costs guide</a> for fees, and the <a href="../../music-guides/choosing-wedding-hymns.html">wedding hymns guide</a> for a wedding at St&nbsp;Andrew&rsquo;s Hornchurch.</p>
 
         <h2>Weddings at St&nbsp;Andrew&rsquo;s Hornchurch</h2>
-        <p>Havering&rsquo;s churches offer some appealing wedding settings. St&nbsp;Andrew&rsquo;s Hornchurch, with its ancient tower and churchyard, is a popular choice, while the churches of Upminster and Romford each have their own character. A live choir does what a recording cannot: hold the hymns together for a congregation that is unsure of the tune, and follow them with a piece during the signing of the register that guests will go on talking about over dinner. Our singers are experienced at leading congregational hymns and equally at home performing more intricate choral works. Our guide to <a href="../../music-guides/choosing-wedding-hymns.html">choosing wedding hymns</a> can help you pick hymns a St&nbsp;Andrew&rsquo;s congregation can follow.</p>
+        <p>Havering&rsquo;s churches offer some appealing wedding settings. St&nbsp;Andrew&rsquo;s Hornchurch, with its ancient tower and churchyard, is a popular choice, while the churches of Upminster and Romford each have their own character. In a nave the size of St&nbsp;Andrew&rsquo;s, our singers keep the congregation together on a hymn it half knows, then sing a piece you have chosen while you sign the register. They lead congregational hymns and take on more intricate choral works with the same ease. To pick hymns a St&nbsp;Andrew&rsquo;s congregation can follow, start with <a href="../../music-guides/choosing-wedding-hymns.html">choosing wedding hymns</a>.</p>
 
         <h2>Carols in Romford and Upminster</h2>
         <p>Offices in Havering usually want a seated carol evening, residents near St&nbsp;Andrew&rsquo;s Hornchurch often prefer singers who circulate through a party, and venues in Romford and Upminster ask for both. We provide <a href="../../christmas.html">singers for a December evening</a> built around a running order, or you can <a href="../../christmas.html">hire carol singers</a> to roam a reception instead.</p>
 
-        <p><a href="../../contact.html" class="btn-link">Get in touch about your occasion in Havering</a></p>
+        <p><a href="../../contact.html" class="btn-link">Ask about a date in Romford, Hornchurch or Upminster</a></p>
       </div>
     </section>
 
     <section class="section">
       <div class="prose">
-        <p class="text-sm text-mid">Nearby boroughs: <a href="redbridge.html">Redbridge</a> &middot; <a href="barking-dagenham.html">Barking &amp; Dagenham</a> &middot; <a href="newham.html">Newham</a></p>
+        <p class="text-sm text-mid">Nearby boroughs: <a href="redbridge.html">Redbridge</a> &middot; <a href="barking-dagenham.html">Barking &amp; Dagenham</a> &middot; <a href="newham.html">Newham</a> &middot; <a href="bexley.html">Bexley</a></p>
       </div>
     </section>
 

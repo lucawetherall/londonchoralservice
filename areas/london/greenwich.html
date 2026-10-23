@@ -65,11 +65,15 @@
       window.addEventListener(evt, loadGA, { once: true, passive: true });
     });
 
-    // Conversion tracking. A lead is one "Submit lead form" conversion, fired by
-    // js/form.js and js/private-events.js only after Web3Forms accepts the
-    // enquiry. Phone, email and WhatsApp taps are contact_click events (their
-    // own secondary Ads actions "Call click" and "WhatsApp or email click"),
-    // never leads. Labels come from Google Ads (conversion action tag snippets).
+    // Conversion tracking. A lead is one "Submit lead form" conversion plus a GA4
+    // generate_lead, started by js/form.js and js/private-events.js only after
+    // Web3Forms accepts the enquiry. With cookie consent, js/form.js's lead is
+    // sent from thank-you.html (lcsLead below hands it over); without consent,
+    // and on the private register's inline success, it goes from the form's own
+    // page at once. Phone, email and WhatsApp taps are contact_click events, never
+    // leads, each with its own Ads action: "WhatsApp or email click" is a
+    // primary goal (owner decision, 26 Sep 2026) and "Call click" a secondary
+    // one. Labels come from Google Ads (conversion action tag snippets).
     var LCS_ADS = {
       lead: 'AW-17988388404/RjhECKGP7akcELSMxIFD',
       call: 'AW-17988388404/HHu8CJq1x4UdELSMxIFD',
@@ -165,7 +169,7 @@
         var h1 = document.querySelector('h1');
         var page = ((h1 && h1.childNodes[0] && h1.childNodes[0].textContent) || document.title.split('|')[0]).replace(/\s+/g, ' ').trim();
         var attr = lcsAttribution();
-        var ad = attr.gclid || attr.gbraid || attr.wbraid || attr.utm_medium === 'cpc' ? ', via a Google ad' : '';
+        var ad = attr.gclid || attr.gbraid || attr.wbraid || attr.utm_medium === 'cpc' || lcsAdVisit() ? ', via a Google ad' : '';
         var source = 'your \u201c' + page + '\u201d page' + ad;
         // With cookie consent, a short reference to the ad click rides along too,
         // so a booking that starts on WhatsApp or email can be reported to Google
@@ -176,7 +180,8 @@
             ref = lcsShortRef(attr.gclid || attr.gbraid || attr.wbraid || '');
           }
         } catch (e) {}
-        // Without consent, only the landing page's name (never the click ID).
+        // Without consent, only the landing page's name and the ad's campaign
+        // (never the click ID).
         var visit = ref ? '' : lcsAdVisit();
         var tag = ref ? 'Ref: ' + ref : visit ? 'Ad visit: ' + visit : '';
         if (method === 'whatsapp') {
@@ -227,18 +232,79 @@
 
     // Ad visit without cookies: when this page's own URL holds an ad click ID
     // and the visitor has not allowed cookies, its messages and form carry the
-    // page's name ("Ad visit: weddings"), never the click ID. It lives only in
-    // this variable: nothing is stored, so the next page carries nothing.
+    // landing page's name and the ad's campaign from utm_campaign ("Ad visit:
+    // pricing (wedding-leads)"), never the click ID. Nothing is stored: the
+    // label lives in this variable, and same-site links on the page carry it in
+    // their address (lcs_av=<label>), so the next page the visitor opens knows
+    // it too and passes it on. scripts/bookings/pipeline.py reads the same format.
     function lcsAdVisitSlug(path) {
       var p = String(path || '').toLowerCase().replace(/^\/+/, '').replace(/\.html$/, '').replace(/(^|\/)index$/, '').replace(/\/+$/, '');
       if (!p) return 'home';
-      return /^[a-z0-9-]+(\/[a-z0-9-]+)*$/.test(p) ? p : 'other';
+      return p.length <= 80 && /^[a-z0-9-]+(\/[a-z0-9-]+)*$/.test(p) ? p : 'other';
     }
-    var LCS_AD_VISIT = /[?&](gclid|gbraid|wbraid)=[^&]/.test(location.search) ? lcsAdVisitSlug(location.pathname) : '';
+    function lcsAdVisitLabel() {
+      try {
+        var q = new URLSearchParams(location.search);
+        if (/[?&](gclid|gbraid|wbraid)=[^&]/.test(location.search)) {
+          var slug = lcsAdVisitSlug(location.pathname), campaign = q.get('utm_campaign') || '';
+          return /^[a-z0-9-]{1,40}$/.test(campaign) ? slug + ' (' + campaign + ')' : slug;
+        }
+        // Carried from the previous page, and only from a page of this site, so
+        // a shared or bookmarked address never counts as an ad visit.
+        var carried = q.get('lcs_av') || '';
+        var from = document.referrer ? new URL(document.referrer).origin : '';
+        // The page at most 80 characters, the campaign at most 40 (as pipeline.py's AD_VISIT_RE).
+        if (from === location.origin &&
+            /^(?=[a-z0-9\/-]{1,80}( \(|$))[a-z0-9-]+(\/[a-z0-9-]+)*( \([a-z0-9-]{1,40}\))?$/.test(carried)) return carried;
+      } catch (e) {}
+      return '';
+    }
+    var LCS_AD_VISIT = lcsAdVisitLabel();
     function lcsAdVisit() {
       if (!LCS_AD_VISIT) return '';
-      try { if (localStorage.getItem('lcs-consent') === 'granted') return ''; } catch (e) {}
+      // Once cookies are allowed the click reference (lcsAttribution) takes over, but only if there is one: a
+      // visitor who accepts on a later page has no click ID left, so the label stays.
+      try {
+        if (localStorage.getItem('lcs-consent') === 'granted') {
+          var a = lcsAttribution();
+          if (a.gclid || a.gbraid || a.wbraid) return '';
+        }
+      } catch (e) {}
       return LCS_AD_VISIT;
+    }
+    // Same-site page links (.html or folder addresses) get lcs_av=<label> at
+    // run time, for ad visitors only, so crawlers never see it. Never tel:,
+    // mailto:, WhatsApp, other sites or links within the page. Once the visitor
+    // allows cookies the label comes off again where a click ID remains
+    // (lcsAttribution takes over); after accepting on a later page it stays.
+    function lcsCarryAdVisit(a) {
+      try {
+        var raw = a.getAttribute('href') || '';
+        if (!raw || raw.charAt(0) === '#' || /^(tel|mailto|sms|javascript):/i.test(raw) ||
+            raw.indexOf('wa.me/') !== -1 || a.hasAttribute('download')) return;
+        var url = new URL(raw, location.href);
+        if (url.origin !== location.origin || !/(\.html|\/)$/.test(url.pathname)) return;
+        var visit = lcsAdVisit();
+        if (visit) url.searchParams.set('lcs_av', visit);
+        else if (url.searchParams.has('lcs_av')) url.searchParams.delete('lcs_av');
+        else return;
+        a.setAttribute('href', url.pathname + url.search + url.hash);
+      } catch (e) {}
+    }
+    if (LCS_AD_VISIT) {
+      var lcsCarryAll = function() {
+        if (lcsAdVisit()) Array.prototype.forEach.call(document.querySelectorAll('a[href]'), lcsCarryAdVisit);
+      };
+      if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', lcsCarryAll);
+      else lcsCarryAll();
+      // Links added later, and a choice made on the cookie sheet since, are
+      // settled as each link is used.
+      ['click', 'auxclick', 'contextmenu'].forEach(function(evt) {
+        document.addEventListener(evt, function(e) {
+          var a = e.target.closest && e.target.closest('a[href]');
+          if (a) lcsCarryAdVisit(a);
+        }, true);
+      });
     }
     // The click IDs in this page's own URL, for an enquiry whose sender ticked
     // the form's ad-measurement box (read at submit, never stored).
@@ -267,7 +333,7 @@
   <!-- @include-end partials/analytics.html -->
 
   <title>Wedding and funeral choirs in Greenwich | LCS</title>
-  <meta name="description" content="Professional funeral singers and wedding choirs in Greenwich, London. Conservatoire-trained musicians for funerals, weddings, memorials, and ceremonies.">
+  <meta name="description" content="Wedding choirs and funeral singers in Greenwich, from St Alfege and the Old Royal Naval College chapels to Eltham Crematorium. Choirs of four from £1,150.">
   <meta name="theme-color" content="#F7F3EE">
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://londonchoralservice.com/areas/london/greenwich.html">
@@ -275,7 +341,7 @@
   <link rel="alternate" hreflang="x-default" href="https://londonchoralservice.com/areas/london/greenwich.html">
 
   <meta property="og:title" content="Wedding and funeral choirs in Greenwich | LCS">
-  <meta property="og:description" content="Professional funeral singers and wedding choirs in Greenwich, London. Conservatoire-trained musicians for funerals, weddings, memorials, and ceremonies.">
+  <meta property="og:description" content="Wedding choirs and funeral singers in Greenwich, from St Alfege and the Old Royal Naval College chapels to Eltham Crematorium. Choirs of four from £1,150.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://londonchoralservice.com/areas/london/greenwich.html">
   <meta property="og:locale" content="en_GB">
@@ -287,7 +353,7 @@
 
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Wedding and funeral choirs in Greenwich | LCS">
-  <meta name="twitter:description" content="Professional funeral singers and wedding choirs in Greenwich, London. Conservatoire-trained musicians for funerals, weddings, memorials, and ceremonies.">
+  <meta name="twitter:description" content="Wedding choirs and funeral singers in Greenwich, from St Alfege and the Old Royal Naval College chapels to Eltham Crematorium. Choirs of four from £1,150.">
   <meta name="twitter:image" content="https://londonchoralservice.com/assets/og/areas-london-greenwich.png">
   <meta name="twitter:image:alt" content="The London Choral Service: Wedding &amp; Funeral Choirs in Greenwich. Live singers for churches, crematoria and carol services">
   <link rel="dns-prefetch" href="https://www.googletagmanager.com">
@@ -3057,7 +3123,7 @@
         "mainEntity": [
           {
             "@type": "Question",
-            "name": "Can you provide a choir for a wedding in Greenwich?",
+            "name": "Will a wedding choir work at St Alfege Greenwich?",
             "acceptedAnswer": {
               "@type": "Answer",
               "text": "Yes. St Alfege Greenwich, a Hawksmoor church with a generous acoustic, and the chapels of the Old Royal Naval College all suit a wedding choir, and we provide ensembles from a solo vocalist up to a twelve-voice chorus. We also sing at smaller parish churches and licensed venues across the borough, and we handle the musical programme from first contact through to the final piece."
@@ -3076,7 +3142,7 @@
             "name": "Is Eltham Crematorium the one Greenwich families use, and do you sing there?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Yes. Eltham Crematorium is the principal crematorium serving Greenwich families, and our singers know its chapel and service timings well. We coordinate directly with crematorium staff and your funeral director so the music fits naturally into the service."
+              "text": "Yes. Eltham Crematorium is the principal crematorium serving Greenwich families, and our singers know its chapel and service timings well. We coordinate with crematorium staff and your funeral director so the music fits the service timings."
             }
           }
         ]
@@ -3157,7 +3223,7 @@
             <li>Greenwich</li>
           </ol>
         </nav>
-        <h1>Wedding and funeral choirs in Greenwich</h1>
+        <h1>Wedding choirs at St&nbsp;Alfege and the Naval College, Greenwich</h1>
         <p class="guide-meta">Musicians selected by Luca Wetherall, Artistic Director &amp; Tutor in Music, University of Oxford &mdash; <a href="/luca-wetherall.html">read more about our team</a>.</p>
         <p class="lede">The Royal Borough of Greenwich is steeped in maritime history and architectural grandeur, from the painted halls of the Old Royal Naval College to the hilltop views of Greenwich Park. We provide professional singers and choirs for funerals, weddings, memorials, and ceremonies at venues throughout the borough, including Eltham, Charlton, and Woolwich.</p>
         <hr class="rule">
@@ -3177,10 +3243,10 @@
         </figure>
 
         <h2>How many singers, from St&nbsp;Alfege to Charlton Cemetery</h2>
-        <p>For a wedding at St&nbsp;Alfege Greenwich or one of the chapels at the Old Royal Naval College, we&rsquo;d typically suggest a sextet or larger &mdash; the volume of those buildings rewards more voices, and the acoustic carries even quiet passages right to the back. A full eight-voice choir is worth considering for a Naval College chapel ceremony with a substantial congregation. Eltham Crematorium runs to a fixed service length, so a quartet is usually the right call: enough to lead a hymn, compact enough for the chapel. The smaller parish churches in Woolwich, Plumstead, and Abbey Wood also sit comfortably with a quartet. For a graveside at Charlton Cemetery, a soloist is often more fitting than a larger group. Our <a href="../../pricing.html">pricing page</a> lists costs.</p>
+        <p>For a wedding at St&nbsp;Alfege Greenwich or one of the chapels at the Old Royal Naval College, we&rsquo;d typically suggest a sextet or larger, because the volume of those buildings rewards more voices, and the acoustic carries even quiet passages right to the back. A full eight-voice choir is worth considering for a Naval College chapel ceremony with a substantial congregation. Eltham Crematorium runs to a fixed service length, so a quartet is usually the right call: enough to lead a hymn, compact enough for the chapel. The smaller parish churches in Woolwich, Plumstead, and Abbey Wood also sit comfortably with a quartet. For a graveside at Charlton Cemetery, a soloist is often more fitting than a larger group. Our <a href="../../pricing.html">pricing page</a> lists costs.</p>
 
         <h2>Funerals in Greenwich, Eltham and Woolwich</h2>
-        <p>Greenwich&rsquo;s churches and ceremony venues are among the most historically significant in South East London, and our singers bring a level of musicianship worthy of these remarkable settings. St&nbsp;Alfege Greenwich, designed by Nicholas Hawksmoor and standing at the heart of Greenwich town centre, is a church of exceptional beauty with a resonant acoustic that responds wonderfully to choral music. We have provided singers for funeral and memorial services there on numerous occasions. The Royal Naval Chapel within the Old Royal Naval College is another extraordinary venue, and its baroque interior lends a unique solemnity to services held within its walls. For advice on choosing music, see our <a href="../../music-guides/funeral-music-guide.html">funeral music guide</a> or <a href="../../contact.html">contact us</a> to discuss your requirements.</p>
+        <p>Greenwich&rsquo;s churches and ceremony venues are among the most historically significant in South East London. St&nbsp;Alfege Greenwich, designed by Nicholas Hawksmoor and standing at the heart of Greenwich town centre, has a resonant acoustic that carries choral music well. We have provided singers for funeral and memorial services there on numerous occasions. The Royal Naval Chapel within the Old Royal Naval College is another option, with a baroque interior suited to a formal service. For advice on choosing music, see our <a href="../../music-guides/funeral-music-guide.html">funeral music guide</a> or <a href="../../contact.html">contact us</a> to discuss your requirements.</p>
 
         <p>Eltham Crematorium serves families from across the borough and the wider South East London area, and our singers are well accustomed to its setting and requirements. We also provide musicians for services at Charlton Cemetery, where graveside singing can bring a profound sense of comfort, and at churches and chapels in Woolwich, Plumstead, and Abbey Wood. In every case, we coordinate closely with funeral directors and clergy to ensure the music is prepared and delivered with the utmost care. For how we work at Eltham, Charlton and elsewhere in the borough, see our <a href="../../services.html">services page</a>.</p>
 
@@ -3189,22 +3255,22 @@
 
         <h2>Questions about Greenwich weddings and funerals</h2>
 
-        <h3>Can you provide a choir for a wedding in Greenwich?</h3>
+        <h3>Will a wedding choir work at St&nbsp;Alfege Greenwich?</h3>
         <p>Yes. St&nbsp;Alfege Greenwich, a Hawksmoor church with a generous acoustic, and the chapels of the Old Royal Naval College all suit a wedding choir, and we provide ensembles from a solo vocalist up to a twelve-voice chorus. We also sing at smaller parish churches and licensed venues across the borough, and we handle the musical programme from first contact through to the final piece.</p>
 
         <h3>How big a choir does a wedding at the Old Royal Naval College need?</h3>
         <p>For a wedding at St&nbsp;Alfege or one of the Old Royal Naval College chapels we usually suggest a sextet (from &pound;1,600) or larger, because those buildings reward more voices. A full choir of eight (from &pound;2,000) is worth considering for a Naval College chapel ceremony with a large congregation.</p>
 
         <h3>Is Eltham Crematorium the one Greenwich families use, and do you sing there?</h3>
-        <p>Yes. Eltham Crematorium is the principal crematorium serving Greenwich families, and our singers know its chapel and service timings well. We coordinate directly with crematorium staff and your funeral director so the music fits naturally into the service.</p>
+        <p>Yes. Eltham Crematorium is the principal crematorium serving Greenwich families, and our singers know its chapel and service timings well. We coordinate with crematorium staff and your funeral director so the music fits the service timings.</p>
 
-        <p><a href="../../contact.html" class="btn-link">Get in touch about your occasion in Greenwich</a></p>
+        <p><a href="../../contact.html" class="btn-link">Ask us about a choir for Greenwich</a></p>
       </div>
     </section>
 
     <section class="section">
       <div class="prose">
-        <p class="text-sm text-mid">Nearby boroughs: <a href="lewisham.html">Lewisham</a> &middot; <a href="bromley.html">Bromley</a> &middot; <a href="bexley.html">Bexley</a> &middot; <a href="newham.html">Newham</a> &middot; <a href="tower-hamlets.html">Tower Hamlets</a></p>
+        <p class="text-sm text-mid">Nearby boroughs: <a href="lewisham.html">Lewisham</a> &middot; <a href="bromley.html">Bromley</a> &middot; <a href="bexley.html">Bexley</a> &middot; <a href="newham.html">Newham</a> &middot; <a href="tower-hamlets.html">Tower Hamlets</a> &middot; <a href="barking-dagenham.html">Barking &amp; Dagenham</a></p>
       </div>
     </section>
 

@@ -65,11 +65,15 @@
       window.addEventListener(evt, loadGA, { once: true, passive: true });
     });
 
-    // Conversion tracking. A lead is one "Submit lead form" conversion, fired by
-    // js/form.js and js/private-events.js only after Web3Forms accepts the
-    // enquiry. Phone, email and WhatsApp taps are contact_click events (their
-    // own secondary Ads actions "Call click" and "WhatsApp or email click"),
-    // never leads. Labels come from Google Ads (conversion action tag snippets).
+    // Conversion tracking. A lead is one "Submit lead form" conversion plus a GA4
+    // generate_lead, started by js/form.js and js/private-events.js only after
+    // Web3Forms accepts the enquiry. With cookie consent, js/form.js's lead is
+    // sent from thank-you.html (lcsLead below hands it over); without consent,
+    // and on the private register's inline success, it goes from the form's own
+    // page at once. Phone, email and WhatsApp taps are contact_click events, never
+    // leads, each with its own Ads action: "WhatsApp or email click" is a
+    // primary goal (owner decision, 26 Sep 2026) and "Call click" a secondary
+    // one. Labels come from Google Ads (conversion action tag snippets).
     var LCS_ADS = {
       lead: 'AW-17988388404/RjhECKGP7akcELSMxIFD',
       call: 'AW-17988388404/HHu8CJq1x4UdELSMxIFD',
@@ -165,7 +169,7 @@
         var h1 = document.querySelector('h1');
         var page = ((h1 && h1.childNodes[0] && h1.childNodes[0].textContent) || document.title.split('|')[0]).replace(/\s+/g, ' ').trim();
         var attr = lcsAttribution();
-        var ad = attr.gclid || attr.gbraid || attr.wbraid || attr.utm_medium === 'cpc' ? ', via a Google ad' : '';
+        var ad = attr.gclid || attr.gbraid || attr.wbraid || attr.utm_medium === 'cpc' || lcsAdVisit() ? ', via a Google ad' : '';
         var source = 'your \u201c' + page + '\u201d page' + ad;
         // With cookie consent, a short reference to the ad click rides along too,
         // so a booking that starts on WhatsApp or email can be reported to Google
@@ -176,7 +180,8 @@
             ref = lcsShortRef(attr.gclid || attr.gbraid || attr.wbraid || '');
           }
         } catch (e) {}
-        // Without consent, only the landing page's name (never the click ID).
+        // Without consent, only the landing page's name and the ad's campaign
+        // (never the click ID).
         var visit = ref ? '' : lcsAdVisit();
         var tag = ref ? 'Ref: ' + ref : visit ? 'Ad visit: ' + visit : '';
         if (method === 'whatsapp') {
@@ -227,18 +232,79 @@
 
     // Ad visit without cookies: when this page's own URL holds an ad click ID
     // and the visitor has not allowed cookies, its messages and form carry the
-    // page's name ("Ad visit: weddings"), never the click ID. It lives only in
-    // this variable: nothing is stored, so the next page carries nothing.
+    // landing page's name and the ad's campaign from utm_campaign ("Ad visit:
+    // pricing (wedding-leads)"), never the click ID. Nothing is stored: the
+    // label lives in this variable, and same-site links on the page carry it in
+    // their address (lcs_av=<label>), so the next page the visitor opens knows
+    // it too and passes it on. scripts/bookings/pipeline.py reads the same format.
     function lcsAdVisitSlug(path) {
       var p = String(path || '').toLowerCase().replace(/^\/+/, '').replace(/\.html$/, '').replace(/(^|\/)index$/, '').replace(/\/+$/, '');
       if (!p) return 'home';
-      return /^[a-z0-9-]+(\/[a-z0-9-]+)*$/.test(p) ? p : 'other';
+      return p.length <= 80 && /^[a-z0-9-]+(\/[a-z0-9-]+)*$/.test(p) ? p : 'other';
     }
-    var LCS_AD_VISIT = /[?&](gclid|gbraid|wbraid)=[^&]/.test(location.search) ? lcsAdVisitSlug(location.pathname) : '';
+    function lcsAdVisitLabel() {
+      try {
+        var q = new URLSearchParams(location.search);
+        if (/[?&](gclid|gbraid|wbraid)=[^&]/.test(location.search)) {
+          var slug = lcsAdVisitSlug(location.pathname), campaign = q.get('utm_campaign') || '';
+          return /^[a-z0-9-]{1,40}$/.test(campaign) ? slug + ' (' + campaign + ')' : slug;
+        }
+        // Carried from the previous page, and only from a page of this site, so
+        // a shared or bookmarked address never counts as an ad visit.
+        var carried = q.get('lcs_av') || '';
+        var from = document.referrer ? new URL(document.referrer).origin : '';
+        // The page at most 80 characters, the campaign at most 40 (as pipeline.py's AD_VISIT_RE).
+        if (from === location.origin &&
+            /^(?=[a-z0-9\/-]{1,80}( \(|$))[a-z0-9-]+(\/[a-z0-9-]+)*( \([a-z0-9-]{1,40}\))?$/.test(carried)) return carried;
+      } catch (e) {}
+      return '';
+    }
+    var LCS_AD_VISIT = lcsAdVisitLabel();
     function lcsAdVisit() {
       if (!LCS_AD_VISIT) return '';
-      try { if (localStorage.getItem('lcs-consent') === 'granted') return ''; } catch (e) {}
+      // Once cookies are allowed the click reference (lcsAttribution) takes over, but only if there is one: a
+      // visitor who accepts on a later page has no click ID left, so the label stays.
+      try {
+        if (localStorage.getItem('lcs-consent') === 'granted') {
+          var a = lcsAttribution();
+          if (a.gclid || a.gbraid || a.wbraid) return '';
+        }
+      } catch (e) {}
       return LCS_AD_VISIT;
+    }
+    // Same-site page links (.html or folder addresses) get lcs_av=<label> at
+    // run time, for ad visitors only, so crawlers never see it. Never tel:,
+    // mailto:, WhatsApp, other sites or links within the page. Once the visitor
+    // allows cookies the label comes off again where a click ID remains
+    // (lcsAttribution takes over); after accepting on a later page it stays.
+    function lcsCarryAdVisit(a) {
+      try {
+        var raw = a.getAttribute('href') || '';
+        if (!raw || raw.charAt(0) === '#' || /^(tel|mailto|sms|javascript):/i.test(raw) ||
+            raw.indexOf('wa.me/') !== -1 || a.hasAttribute('download')) return;
+        var url = new URL(raw, location.href);
+        if (url.origin !== location.origin || !/(\.html|\/)$/.test(url.pathname)) return;
+        var visit = lcsAdVisit();
+        if (visit) url.searchParams.set('lcs_av', visit);
+        else if (url.searchParams.has('lcs_av')) url.searchParams.delete('lcs_av');
+        else return;
+        a.setAttribute('href', url.pathname + url.search + url.hash);
+      } catch (e) {}
+    }
+    if (LCS_AD_VISIT) {
+      var lcsCarryAll = function() {
+        if (lcsAdVisit()) Array.prototype.forEach.call(document.querySelectorAll('a[href]'), lcsCarryAdVisit);
+      };
+      if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', lcsCarryAll);
+      else lcsCarryAll();
+      // Links added later, and a choice made on the cookie sheet since, are
+      // settled as each link is used.
+      ['click', 'auxclick', 'contextmenu'].forEach(function(evt) {
+        document.addEventListener(evt, function(e) {
+          var a = e.target.closest && e.target.closest('a[href]');
+          if (a) lcsCarryAdVisit(a);
+        }, true);
+      });
     }
     // The click IDs in this page's own URL, for an enquiry whose sender ticked
     // the form's ad-measurement box (read at submit, never stored).
@@ -3382,17 +3448,19 @@
               <textarea id="message" name="message" rows="5"></textarea>
             </div>
             <div class="form-field">
-              <label for="hear">How did you hear of us? <span class="optional">(optional)</span></label>
-              <select id="hear" name="hear">
+              <label for="hear">How did you hear about us?</label>
+              <select id="hear" name="hear" required aria-describedby="hear-error">
                 <option value="" selected>Please choose</option>
-                <option>Searching on Google</option>
-                <option>A Google ad</option>
+                <option>A Google ad (marked Sponsored)</option>
+                <option>A Google search result</option>
                 <option>Recommended by someone</option>
                 <option>A funeral director</option>
                 <option>A wedding planner or venue</option>
                 <option>A directory or listings site</option>
                 <option>Other</option>
+                <option>Prefer not to say</option>
               </select>
+              <p class="form-error" id="hear-error">Please choose how you heard about us.</p>
             </div>
             <div class="form-check">
               <input type="checkbox" id="ad-measurement" name="ad_measurement" value="yes">
@@ -3499,7 +3567,6 @@
     <a href="https://wa.me/447356042468" target="_blank" rel="noopener" class="mobile-cta-whatsapp" data-whatsapp><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" aria-hidden="true" focusable="false"><path fill="currentColor" d="M16 .395a15.6 15.6 0 0 0-13.534 23.36L0 32l8.43-2.42A15.6 15.6 0 0 0 31.6 16.005 15.6 15.6 0 0 0 16 .395Zm0 28.41a12.78 12.78 0 0 1-6.523-1.79l-.467-.28-4.846 1.39 1.42-4.738-.305-.486A12.78 12.78 0 0 1 16 3.214a12.81 12.81 0 0 1 12.81 12.81A12.81 12.81 0 0 1 16 28.805Zm7.025-9.575c-.385-.193-2.275-1.122-2.628-1.25-.353-.13-.609-.193-.866.193s-.994 1.25-1.218 1.508c-.225.257-.45.29-.834.097-.385-.193-1.626-.6-3.097-1.911-1.144-1.02-1.916-2.28-2.14-2.665-.225-.385-.024-.594.169-.787.174-.173.385-.45.578-.674.193-.225.257-.385.385-.642.13-.257.064-.482-.032-.674-.097-.193-.866-2.087-1.187-2.857-.312-.75-.628-.65-.866-.66l-.738-.013a1.42 1.42 0 0 0-1.027.482c-.353.385-1.347 1.315-1.347 3.207s1.379 3.72 1.572 3.977c.193.257 2.715 4.146 6.578 5.815.92.397 1.637.633 2.196.81.923.293 1.762.252 2.426.153.74-.11 2.275-.93 2.595-1.829.32-.898.32-1.668.225-1.829-.097-.16-.353-.257-.738-.45Z"/></svg>WhatsApp</a>
     <a href="#enquiry" class="mobile-cta-enquire">Enquire</a>
   </div>
-  <script src="https://web3forms.com/client/script.js" async defer></script>
   <script src="js/nav.js" defer></script>
   <script src="js/form.js" defer></script>
   <script src="js/video.js" defer></script>

@@ -605,6 +605,15 @@
       border: 1px solid #E0A8A8;
     }
     .pe-form-error[data-visible="true"] { display: block; }
+    /* A field's own message (js/private-events.js shows it on a blocked send). */
+    .pe-field-error {
+      display: none;
+      margin: .4rem 0 0;
+      font-size: .9375rem;
+      color: #9B2C2C;
+    }
+    .pe-field-error[data-visible="true"],
+    .pe-field select:user-invalid + .pe-field-error { display: block; }
     .h-captcha { margin-top: 2rem; }
     /* hCaptcha's checkbox is a fixed 302px iframe, wider than the 280px form
        column on a 320px phone (the rail's 1.25rem padding each side keeps the

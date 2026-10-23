@@ -7,9 +7,13 @@ report and the dashboard import summary_dict().
     .venv/bin/python scripts/bookings/pipeline.py add '<json object>'   (or: add - , the JSON on stdin)
         a new enquiry; refuses a duplicate enquiry_id or an unknown field.
         Defaults: status new, followups 0, last_contact = first_seen.
-        Two extra keys from the web form go into notes, not columns: "ad_visit": "<page slug>"
-        (the landing page of an ad click without cookie consent) -> "ad visit: <slug>", and
-        "ad_measurement": "yes" (the sender ticked the ad-measurement box) -> "ad measurement: yes"
+        Two extra keys from the web form go into notes, not columns: "ad_visit": "<page>" or
+        "<page> (<campaign>)" (the landing page of an ad click without cookie consent, and the ad's
+        utm_campaign when it had one) -> "ad visit: <value>", and "ad_measurement": "yes" (the
+        sender ticked the ad-measurement box) -> "ad measurement: yes"
+    .venv/bin/python scripts/bookings/pipeline.py heard <enquiry_id> '<answer>'
+        how the client says they found us, when they answer by email: notes "heard: <answer>".
+        One short line with no names, emails or phone numbers; refuses a second answer
     .venv/bin/python scripts/bookings/pipeline.py quoted <enquiry_id> <package> <gbp> <YYYY-MM-DD>
         Luca's reply quoted a package: status quoted, follow-up clock restarts. Refuses a date
         before last_contact, or a quote already noted for that date
@@ -51,6 +55,13 @@ booking, or one whose ledger occasion is blank. `quoted` also notes
 
 Output shows enquiry ids, booking refs, dates and counts only: never names,
 emails or notes. enquiries.csv has no name or email column, and `add` refuses one.
+
+Reading an enquiry's source from its notes (for the Monday review and the reports):
+ad_visit_from_notes() and ad_visit_campaign() read "ad visit: <page>" or
+"ad visit: <page> (<campaign>)" (the campaign, when given, outranks the page's campaign),
+and heard_from_notes() with heard_kind() read the client's own answer: "ad", "search"
+(a Google search result: not an ad), "unknown" (the old "Searching on Google", the register's
+old "Search", "Prefer not to say", "Google, not said which") or "other".
 """
 
 import argparse
@@ -84,8 +95,28 @@ OCCASIONS = ("wedding", "funeral", "christmas", "corporate", "private event", "o
 GCLID_RE = re.compile(r"^((gbraid|wbraid):)?[A-Za-z0-9_-]{10,200}$")
 MAX_LEN = {"notes": 300, "gclid": 207}  # characters; gclid is then held to GCLID_RE
 MAX_OTHER = 80  # every other field
-# The web form's ad_visit: the landing page's slug, as partials/analytics.html's lcsAdVisitSlug writes it.
-AD_VISIT_RE = re.compile(r"^(?=.{1,80}$)[a-z0-9-]+(/[a-z0-9-]+)*$")
+# The web form's ad_visit, as partials/analytics.html writes it: the landing page's slug
+# (lcsAdVisitSlug, at most 80 characters), then " (<utm_campaign>)" when the ad click carried one.
+AD_VISIT_RE = re.compile(r"^(?P<page>(?=[a-z0-9/-]{1,80}(?: \(|$))[a-z0-9-]+(?:/[a-z0-9-]+)*)"
+                         r"(?: \((?P<campaign>[a-z0-9-]{1,40})\))?$")
+AD_VISIT_NOTE = re.compile(r"(?:^|; )ad visit: ([^;]+)")
+# Each campaign's utm_campaign (its final URL suffix) -> its Google Ads campaign id.
+CAMPAIGN_IDS = {"funeral-expert": "23735776277", "wedding-leads": "23739971001",
+                "christmas-carol-singers-2026": "24295921372"}
+# A landing page without a campaign in its ad visit (before 23 Oct 2026) -> the campaign it belongs to.
+PAGE_CAMPAIGNS = {"weddings": "wedding-leads", "funerals": "funeral-expert",
+                  "carol-singers": "christmas-carol-singers-2026", "christmas-pricing": "christmas-carol-singers-2026",
+                  "christmas": "christmas-carol-singers-2026",
+                  "christmas-carol-services": "christmas-carol-singers-2026"}
+# The client's own answer to "How did you hear about us?" (notes "heard: <answer>"), lower case.
+HEARD_NOTE = re.compile(r"(?:^|; )heard: ([^;]+)")
+HEARD_AD = {"a google ad", "a google ad (marked sponsored)"}
+HEARD_SEARCH = {"a google search result"}
+# An ad or a search result, or not said: the old form answer "Searching on Google", the register's old
+# "Search", "Prefer not to say", and "Google, not said which" (the reply drafter's note for an email that
+# names Google but not which).
+HEARD_UNKNOWN = {"searching on google", "search", "prefer not to say", "google, not said which"}
+HEARD_MAX = 60
 MAX_GBP = 100000
 
 
@@ -226,6 +257,51 @@ def done_due(rows, ledger_rows, today, facts=None):
     return out
 
 
+def ad_visit_parts(value):
+    """An ad visit value ("pricing" or "pricing (wedding-leads)") -> (page, campaign or None), or None
+    when it isn't one (AD_VISIT_RE)."""
+    m = AD_VISIT_RE.fullmatch(str(value or "").strip().lower())
+    return (m.group("page"), m.group("campaign")) if m else None
+
+
+def ad_visit_from_notes(notes):
+    """The first "ad visit: <value>" in an enquiry's notes -> (page, campaign or None), or None."""
+    m = AD_VISIT_NOTE.search(notes or "")
+    return ad_visit_parts(m.group(1)) if m else None
+
+
+def ad_visit_campaign(value):
+    """The campaign an ad visit came from, as its utm_campaign slug (CAMPAIGN_IDS gives the id), or None.
+    `value` is an ad visit string or ad_visit_parts' pair. The campaign the visit names outranks the
+    page's: "funerals (wedding-leads)" is wedding-leads. Without one, the page's (PAGE_CAMPAIGNS)."""
+    parts = value if isinstance(value, tuple) else ad_visit_parts(value)
+    if not parts:
+        return None
+    page, campaign = parts
+    return campaign or PAGE_CAMPAIGNS.get(page)
+
+
+def heard_from_notes(notes):
+    """The client's own answer in an enquiry's notes ("heard: <answer>"), or ""."""
+    m = HEARD_NOTE.search(notes or "")
+    return m.group(1).strip() if m else ""
+
+
+def heard_kind(answer):
+    """The client's answer to "How did you hear about us?" -> "ad" (old "A Google ad" or the form's
+    "A Google ad (marked Sponsored)"), "search" (a Google search result: not an ad), "unknown" (no
+    answer, "Prefer not to say", or one that could be either: the old "Searching on Google", the
+    register's old "Search", "Google, not said which") or "other" (any other answer: not from an ad)."""
+    a = re.sub(r"\s+", " ", str(answer or "")).strip().lower()
+    if a in HEARD_AD:
+        return "ad"
+    if a in HEARD_SEARCH:
+        return "search"
+    if not a or a in HEARD_UNKNOWN:
+        return "unknown"
+    return "other"
+
+
 def summary_dict(rows, since=None):
     """Pipeline figures for enquiries first seen on or after `since` (a date, a YYYY-MM-DD string or None).
 
@@ -291,7 +367,8 @@ def ad_notes(data):
     if visit:
         if not AD_VISIT_RE.fullmatch(visit):
             raise SystemExit("ad_visit must be a page name such as weddings or areas/london/camden "
-                             "(a-z, 0-9, - and /, at most 80 characters)")
+                             "(a-z, 0-9, - and /, at most 80 characters), optionally followed by its "
+                             "campaign in brackets, such as pricing (wedding-leads)")
         notes.append(f"ad visit: {visit}")
     measure = str(data.pop("ad_measurement", "") or "").strip().lower()
     if measure not in ("", "yes", "no"):
@@ -429,6 +506,31 @@ def cmd_status(args):
     print(f"enquiry {args.enquiry_id}: {args.status}" + (f" ({ref})" if ref else ""))
 
 
+def clean_heard(answer):
+    """The client's answer for a "heard: <answer>" note: one short line with no email address, phone
+    number or ';' (which would split the notes). Names are the caller's to leave out."""
+    a = re.sub(r"\s+", " ", str(answer or "")).strip()
+    if not a or len(a) > HEARD_MAX:
+        raise SystemExit(f"the answer must be 1-{HEARD_MAX} characters; nothing changed")
+    if ";" in a or "@" in a or re.search(r"\d{5,}|\d[\d ]{8,}\d", a):
+        raise SystemExit("the answer must be a few words, with no ';', email address or phone number; nothing changed")
+    return a
+
+
+def cmd_heard(args):
+    answer = clean_heard(args.answer)
+
+    def edit(r):
+        if heard_from_notes(r.get("notes")):
+            raise SystemExit(f"enquiry {r['enquiry_id']} already has an answer; nothing changed")
+        notes = add_note(r.get("notes"), f"heard: {answer}")
+        if len(notes) > MAX_LEN["notes"]:
+            raise SystemExit(f"notes would be too long (at most {MAX_LEN['notes']} characters); nothing changed")
+        r["notes"] = notes
+    change(args.enquiry_id, edit)
+    print(f"enquiry {args.enquiry_id}: heard ({heard_kind(answer)})")
+
+
 def cmd_followed(args):
     n, when = int(args.number), iso(args.date, "date")
 
@@ -518,6 +620,9 @@ def main(argv=None):
     p.add_argument("enquiry_id")
     p.add_argument("number", choices=["1", "2"])
     p.add_argument("date")
+    p = sub.add_parser("heard")
+    p.add_argument("enquiry_id")
+    p.add_argument("answer")
     for name in ("followups-due", "reviews-due", "done-due"):
         p = sub.add_parser(name)
         p.add_argument("--today", type=lambda s: iso(s, "--today"))
@@ -545,6 +650,8 @@ def main(argv=None):
         cmd_status(args)
     elif args.cmd == "followed":
         cmd_followed(args)
+    elif args.cmd == "heard":
+        cmd_heard(args)
     elif args.cmd == "followups-due":
         print(json.dumps(followups_due(lm.read_csv(ENQUIRIES), today_arg(args))))
     elif args.cmd == "reviews-due":

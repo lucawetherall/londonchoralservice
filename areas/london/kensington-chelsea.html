@@ -65,11 +65,15 @@
       window.addEventListener(evt, loadGA, { once: true, passive: true });
     });
 
-    // Conversion tracking. A lead is one "Submit lead form" conversion, fired by
-    // js/form.js and js/private-events.js only after Web3Forms accepts the
-    // enquiry. Phone, email and WhatsApp taps are contact_click events (their
-    // own secondary Ads actions "Call click" and "WhatsApp or email click"),
-    // never leads. Labels come from Google Ads (conversion action tag snippets).
+    // Conversion tracking. A lead is one "Submit lead form" conversion plus a GA4
+    // generate_lead, started by js/form.js and js/private-events.js only after
+    // Web3Forms accepts the enquiry. With cookie consent, js/form.js's lead is
+    // sent from thank-you.html (lcsLead below hands it over); without consent,
+    // and on the private register's inline success, it goes from the form's own
+    // page at once. Phone, email and WhatsApp taps are contact_click events, never
+    // leads, each with its own Ads action: "WhatsApp or email click" is a
+    // primary goal (owner decision, 26 Sep 2026) and "Call click" a secondary
+    // one. Labels come from Google Ads (conversion action tag snippets).
     var LCS_ADS = {
       lead: 'AW-17988388404/RjhECKGP7akcELSMxIFD',
       call: 'AW-17988388404/HHu8CJq1x4UdELSMxIFD',
@@ -165,7 +169,7 @@
         var h1 = document.querySelector('h1');
         var page = ((h1 && h1.childNodes[0] && h1.childNodes[0].textContent) || document.title.split('|')[0]).replace(/\s+/g, ' ').trim();
         var attr = lcsAttribution();
-        var ad = attr.gclid || attr.gbraid || attr.wbraid || attr.utm_medium === 'cpc' ? ', via a Google ad' : '';
+        var ad = attr.gclid || attr.gbraid || attr.wbraid || attr.utm_medium === 'cpc' || lcsAdVisit() ? ', via a Google ad' : '';
         var source = 'your \u201c' + page + '\u201d page' + ad;
         // With cookie consent, a short reference to the ad click rides along too,
         // so a booking that starts on WhatsApp or email can be reported to Google
@@ -176,7 +180,8 @@
             ref = lcsShortRef(attr.gclid || attr.gbraid || attr.wbraid || '');
           }
         } catch (e) {}
-        // Without consent, only the landing page's name (never the click ID).
+        // Without consent, only the landing page's name and the ad's campaign
+        // (never the click ID).
         var visit = ref ? '' : lcsAdVisit();
         var tag = ref ? 'Ref: ' + ref : visit ? 'Ad visit: ' + visit : '';
         if (method === 'whatsapp') {
@@ -227,18 +232,79 @@
 
     // Ad visit without cookies: when this page's own URL holds an ad click ID
     // and the visitor has not allowed cookies, its messages and form carry the
-    // page's name ("Ad visit: weddings"), never the click ID. It lives only in
-    // this variable: nothing is stored, so the next page carries nothing.
+    // landing page's name and the ad's campaign from utm_campaign ("Ad visit:
+    // pricing (wedding-leads)"), never the click ID. Nothing is stored: the
+    // label lives in this variable, and same-site links on the page carry it in
+    // their address (lcs_av=<label>), so the next page the visitor opens knows
+    // it too and passes it on. scripts/bookings/pipeline.py reads the same format.
     function lcsAdVisitSlug(path) {
       var p = String(path || '').toLowerCase().replace(/^\/+/, '').replace(/\.html$/, '').replace(/(^|\/)index$/, '').replace(/\/+$/, '');
       if (!p) return 'home';
-      return /^[a-z0-9-]+(\/[a-z0-9-]+)*$/.test(p) ? p : 'other';
+      return p.length <= 80 && /^[a-z0-9-]+(\/[a-z0-9-]+)*$/.test(p) ? p : 'other';
     }
-    var LCS_AD_VISIT = /[?&](gclid|gbraid|wbraid)=[^&]/.test(location.search) ? lcsAdVisitSlug(location.pathname) : '';
+    function lcsAdVisitLabel() {
+      try {
+        var q = new URLSearchParams(location.search);
+        if (/[?&](gclid|gbraid|wbraid)=[^&]/.test(location.search)) {
+          var slug = lcsAdVisitSlug(location.pathname), campaign = q.get('utm_campaign') || '';
+          return /^[a-z0-9-]{1,40}$/.test(campaign) ? slug + ' (' + campaign + ')' : slug;
+        }
+        // Carried from the previous page, and only from a page of this site, so
+        // a shared or bookmarked address never counts as an ad visit.
+        var carried = q.get('lcs_av') || '';
+        var from = document.referrer ? new URL(document.referrer).origin : '';
+        // The page at most 80 characters, the campaign at most 40 (as pipeline.py's AD_VISIT_RE).
+        if (from === location.origin &&
+            /^(?=[a-z0-9\/-]{1,80}( \(|$))[a-z0-9-]+(\/[a-z0-9-]+)*( \([a-z0-9-]{1,40}\))?$/.test(carried)) return carried;
+      } catch (e) {}
+      return '';
+    }
+    var LCS_AD_VISIT = lcsAdVisitLabel();
     function lcsAdVisit() {
       if (!LCS_AD_VISIT) return '';
-      try { if (localStorage.getItem('lcs-consent') === 'granted') return ''; } catch (e) {}
+      // Once cookies are allowed the click reference (lcsAttribution) takes over, but only if there is one: a
+      // visitor who accepts on a later page has no click ID left, so the label stays.
+      try {
+        if (localStorage.getItem('lcs-consent') === 'granted') {
+          var a = lcsAttribution();
+          if (a.gclid || a.gbraid || a.wbraid) return '';
+        }
+      } catch (e) {}
       return LCS_AD_VISIT;
+    }
+    // Same-site page links (.html or folder addresses) get lcs_av=<label> at
+    // run time, for ad visitors only, so crawlers never see it. Never tel:,
+    // mailto:, WhatsApp, other sites or links within the page. Once the visitor
+    // allows cookies the label comes off again where a click ID remains
+    // (lcsAttribution takes over); after accepting on a later page it stays.
+    function lcsCarryAdVisit(a) {
+      try {
+        var raw = a.getAttribute('href') || '';
+        if (!raw || raw.charAt(0) === '#' || /^(tel|mailto|sms|javascript):/i.test(raw) ||
+            raw.indexOf('wa.me/') !== -1 || a.hasAttribute('download')) return;
+        var url = new URL(raw, location.href);
+        if (url.origin !== location.origin || !/(\.html|\/)$/.test(url.pathname)) return;
+        var visit = lcsAdVisit();
+        if (visit) url.searchParams.set('lcs_av', visit);
+        else if (url.searchParams.has('lcs_av')) url.searchParams.delete('lcs_av');
+        else return;
+        a.setAttribute('href', url.pathname + url.search + url.hash);
+      } catch (e) {}
+    }
+    if (LCS_AD_VISIT) {
+      var lcsCarryAll = function() {
+        if (lcsAdVisit()) Array.prototype.forEach.call(document.querySelectorAll('a[href]'), lcsCarryAdVisit);
+      };
+      if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', lcsCarryAll);
+      else lcsCarryAll();
+      // Links added later, and a choice made on the cookie sheet since, are
+      // settled as each link is used.
+      ['click', 'auxclick', 'contextmenu'].forEach(function(evt) {
+        document.addEventListener(evt, function(e) {
+          var a = e.target.closest && e.target.closest('a[href]');
+          if (a) lcsCarryAdVisit(a);
+        }, true);
+      });
     }
     // The click IDs in this page's own URL, for an enquiry whose sender ticked
     // the form's ad-measurement box (read at submit, never stored).
@@ -267,7 +333,7 @@
   <!-- @include-end partials/analytics.html -->
 
   <title>Funeral and wedding choirs in Kensington &amp; Chelsea | LCS</title>
-  <meta name="description" content="Hire conservatoire-trained singers for funerals, weddings, and memorials in Kensington and Chelsea. Soloists and choirs available from £250. Book today.">
+  <meta name="description" content="Funeral and wedding choirs in Kensington and Chelsea, from requiems at Brompton Oratory to Holy Trinity Sloane Square and St Mary Abbots. Soloists from £250.">
   <meta name="theme-color" content="#F7F3EE">
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://londonchoralservice.com/areas/london/kensington-chelsea.html">
@@ -275,7 +341,7 @@
   <link rel="alternate" hreflang="x-default" href="https://londonchoralservice.com/areas/london/kensington-chelsea.html">
 
   <meta property="og:title" content="Funeral and wedding choirs in Kensington &amp; Chelsea | LCS">
-  <meta property="og:description" content="Hire conservatoire-trained singers for funerals, weddings, and memorials in Kensington and Chelsea. Soloists and choirs available from £250. Book today.">
+  <meta property="og:description" content="Funeral and wedding choirs in Kensington and Chelsea, from requiems at Brompton Oratory to Holy Trinity Sloane Square and St Mary Abbots. Soloists from £250.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://londonchoralservice.com/areas/london/kensington-chelsea.html">
   <meta property="og:locale" content="en_GB">
@@ -287,7 +353,7 @@
 
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Funeral and wedding choirs in Kensington &amp; Chelsea | LCS">
-  <meta name="twitter:description" content="Hire conservatoire-trained singers for funerals, weddings, and memorials in Kensington and Chelsea. Soloists and choirs available from £250. Book today.">
+  <meta name="twitter:description" content="Funeral and wedding choirs in Kensington and Chelsea, from requiems at Brompton Oratory to Holy Trinity Sloane Square and St Mary Abbots. Soloists from £250.">
   <meta name="twitter:image" content="https://londonchoralservice.com/assets/og/areas-london-kensington-chelsea.png">
   <meta name="twitter:image:alt" content="The London Choral Service: Funeral &amp; Wedding Choirs in Kensington &amp; Chelsea. Live singers for churches, crematoria and carol services">
   <link rel="dns-prefetch" href="https://www.googletagmanager.com">
@@ -3057,7 +3123,7 @@
         "mainEntity": [
           {
             "@type": "Question",
-            "name": "How much does a funeral singer cost in Kensington and Chelsea?",
+            "name": "What does a funeral choir cost at St Mary Abbots or Chelsea Old Church?",
             "acceptedAnswer": {
               "@type": "Answer",
               "text": "A solo funeral singer starts from £250. Sizes above that run £1,150 for four voices, £1,400 for five, £1,600 for six, and £2,000 for a full choir of eight. For a service at St Mary Abbots or Chelsea Old Church, the fee already covers our travel within Greater London and our liaison with your funeral director. Larger ensembles for Brompton Oratory services are quoted on request."
@@ -3084,7 +3150,7 @@
             "name": "Do you cover crematorium services near Kensington and Chelsea?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Kensington and Chelsea has no crematorium within its boundaries. Families in the borough most often use Mortlake Crematorium in Richmond or Putney Vale Crematorium in Wandsworth. We sing at both regularly and can advise on music for crematorium services."
+              "text": "Kensington and Chelsea has no crematorium within its boundaries. Families in the borough most often use Mortlake Crematorium in Richmond or Putney Vale Crematorium in Wandsworth. We sing at both and can advise on music for crematorium services."
             }
           }
         ]
@@ -3165,9 +3231,9 @@
             <li>Kensington &amp; Chelsea</li>
           </ol>
         </nav>
-        <h1>Funeral and wedding choirs in Kensington &amp; Chelsea</h1>
+        <h1>Kensington and Chelsea choirs, from the Oratory to Cheyne Walk</h1>
         <p class="guide-meta">Musicians selected by Luca Wetherall, Artistic Director &amp; Tutor in Music, University of Oxford &mdash; <a href="/luca-wetherall.html">read more about our team</a>.</p>
-        <p class="lede">The Royal Borough of Kensington and Chelsea is home to some of London&rsquo;s most magnificent churches. We provide professional singers and choirs for funerals, weddings, and memorial services at venues across the borough, from the grandeur of Brompton Oratory to the charm of Chelsea Old Church.</p>
+        <p class="lede">The Royal Borough of Kensington and Chelsea includes Brompton Oratory, whose nave seats over 1,000, and St&nbsp;Mary Abbots, whose spire is the tallest in London. We provide professional singers and choirs for funerals, weddings, and memorial services at venues across the borough, from the Oratory to the smaller Chelsea Old Church.</p>
         <hr class="rule">
       </div>
     </section>
@@ -3175,9 +3241,9 @@
     <section class="section">
       <div class="prose">
         <h2>Funerals at Brompton Oratory, Holy Trinity and St&nbsp;Mary Abbots</h2>
-        <p>Brompton Oratory on Brompton Road is one of the finest Catholic churches in England. Its Italianate nave, modelled on the Chiesa Nuova in Rome, seats over 1,000 and produces a generous, reverberant acoustic. We provide singers for requiem masses and Catholic funeral liturgies there, and our musicians are familiar with the Oratory&rsquo;s Latin rite traditions and its expectations around sacred music. Families who want a Fauré or Mozart Requiem at the Oratory can discuss the options with us directly.</p>
+        <p>Brompton Oratory on Brompton Road has an Italianate nave, modelled on the Chiesa Nuova in Rome, which seats over 1,000 and produces a generous, reverberant acoustic. We provide singers for requiem masses and Catholic funeral liturgies there, and our musicians are familiar with the Oratory&rsquo;s Latin rite traditions and its expectations around sacred music. Families who want a Fauré or Mozart Requiem at the Oratory can discuss the options with us.</p>
 
-        <p>For Church of England funerals, Holy Trinity Sloane Square sits at the top of Sloane Street and has a warm, resonant interior well suited to a quartet or sextet. St&nbsp;Mary Abbots on Kensington High Street, with its 278-foot spire (the tallest in London), is a landmark parish church where we sing regularly. Chelsea Old Church on Cheyne Walk, rebuilt after severe bomb damage in 1941, provides a more intimate setting for smaller family services. St&nbsp;Luke&rsquo;s Chelsea on Sydney Street, an early Gothic Revival building with a tall, airy nave, has a clear acoustic that carries even a solo voice to the back of the church.</p>
+        <p>For Church of England funerals, Holy Trinity Sloane Square sits at the top of Sloane Street and has a warm, resonant interior well suited to a quartet or sextet. St&nbsp;Mary Abbots on Kensington High Street, with its 278-foot spire (the tallest in London), is a parish church where we sing. Chelsea Old Church on Cheyne Walk, rebuilt after severe bomb damage in 1941, provides a more intimate setting for smaller family services. St&nbsp;Luke&rsquo;s Chelsea on Sydney Street, an early Gothic Revival building with a tall, airy nave, has a clear acoustic that carries even a solo voice to the back of the church.</p>
 
         <p>The Royal Hospital Chelsea Chapel, part of the home of the Chelsea Pensioners, hosts occasional memorial services for residents and their families. We have provided singers there by arrangement with the Hospital&rsquo;s chaplain. Families considering music for any of these venues can start with our <a href="../../music-guides/popular-funeral-hymns.html">popular funeral hymns</a> guide or our broader <a href="../../music-guides/funeral-music-guide.html">funeral music guide</a>.</p>
 
@@ -3189,29 +3255,29 @@
         </figure>
 
         <h2>Getting singers to Kensington and Chelsea churches</h2>
-        <p>Most churches in Kensington and Chelsea sit on busy roads with limited parking. Brompton Oratory is a two-minute walk from South Kensington station. St&nbsp;Mary Abbots is directly on High Street Kensington. Chelsea Old Church is best reached on foot from Sloane Square or by taxi along the Embankment. We coordinate arrival times with funeral directors and wedding planners so our singers are in place and warmed up well before the service begins.</p>
+        <p>Most churches in Kensington and Chelsea sit on busy roads with limited parking. Brompton Oratory is a two-minute walk from South Kensington station. St&nbsp;Mary Abbots stands on High Street Kensington. Chelsea Old Church is best reached on foot from Sloane Square or by taxi along the Embankment. We coordinate arrival times with funeral directors and wedding planners so our singers are in place and warmed up well before the service begins.</p>
 
-        <p>Brompton Oratory has its own expectations around rehearsal access and vestry arrangements for visiting musicians. We are familiar with the process and liaise with the Oratory&rsquo;s music office directly. At Holy Trinity Sloane Square and St&nbsp;Luke&rsquo;s Chelsea, we coordinate with the parish administrator to confirm access and warm-up times.</p>
+        <p>Brompton Oratory has its own expectations around rehearsal access and vestry arrangements for visiting musicians. We are familiar with the process and liaise with the Oratory&rsquo;s music office. At Holy Trinity Sloane Square and St&nbsp;Luke&rsquo;s Chelsea, we coordinate with the parish administrator to confirm access and warm-up times.</p>
 
         <p>Families in neighbouring <a href="westminster.html">Westminster</a> or <a href="hammersmith-fulham.html">Hammersmith &amp; Fulham</a> can also book our singers for venues in those boroughs. We cover all of central and west London. For families south of the river, we also serve <a href="wandsworth.html">Wandsworth</a> and <a href="lambeth.html">Lambeth</a>.</p>
 
         <h2>Weddings at Brompton Oratory and Sloane Square</h2>
-        <p>Brompton Oratory is one of London&rsquo;s most sought-after wedding churches. Its scale and acoustic reward a larger choir of eight to twelve voices, and we can pair our singers with the Oratory&rsquo;s own organist or bring an additional instrumentalist. Holy Trinity Sloane Square and St&nbsp;Luke&rsquo;s Chelsea are also popular with couples who want a traditional church wedding in SW3 or SW1.</p>
+        <p>Brompton Oratory&rsquo;s scale and acoustic reward a larger choir of eight to twelve voices, and we can pair our singers with the Oratory&rsquo;s own organist or bring an additional instrumentalist. Holy Trinity Sloane Square and St&nbsp;Luke&rsquo;s Chelsea are also popular with couples who want a traditional church wedding in SW3 or SW1.</p>
 
-        <p>We plan the music with each couple from first enquiry through to the ceremony itself. That covers congregational hymns, an anthem during the register signing, and processional or recessional voluntaries. Our <a href="../../music-guides/choosing-wedding-hymns.html">guide to choosing wedding hymns</a> lists the pieces couples request most often. We also provide singers for civil ceremonies at licensed Kensington and Chelsea venues, including hotel function rooms and private dining clubs.</p>
+        <p>We plan the music with each couple from first enquiry through to the ceremony itself. That covers congregational hymns, an anthem during the register signing, and processional or recessional voluntaries. The hymns couples ask for most often are in our <a href="../../music-guides/choosing-wedding-hymns.html">wedding hymns guide</a>. We also provide singers for civil ceremonies at licensed Kensington and Chelsea venues, including hotel function rooms and private dining clubs.</p>
 
         <h2>Memorials in private clubs and hotels</h2>
         <p>Kensington and Chelsea is home to many private clubs, hotels, and event spaces that host memorial gatherings and celebrations of life. We provide singers for non-church events at venues across the borough, adapting our programme to suit the setting. A vocal ensemble of two to four voices works well in a hotel function room or private dining space. We can perform without amplification in most rooms. See our <a href="../../music-guides/celebration-of-life-music.html">celebration of life music</a> guide for repertoire ideas suited to non-church settings.</p>
 
         <h2>Carols for hotels, clubs and garden squares</h2>
-        <p>Near Brompton Oratory and around the garden squares of Chelsea and South Kensington, hotels and private clubs book <a href="../../christmas-carol-services.html">a company carol service</a> well before the tree goes up in the lobby. Managing agents and residents&rsquo; committees ask us to arrange <a href="../../for-property-managers.html">residents&rsquo; carol events</a> across several squares in one evening, and offices nearby often want to <a href="../../christmas.html">book professional carol singers</a> for a single client reception. The choir sings without accompaniment, so a hotel lobby, a private club, or a garden square all suit us equally well.</p>
+        <p>Near Brompton Oratory and around the garden squares of Chelsea and South Kensington, hotels and private clubs book <a href="../../christmas-carol-services.html">a company carol service</a> well before the tree goes up in the lobby. Managing agents and residents&rsquo; committees ask us to arrange <a href="../../for-property-managers.html">residents&rsquo; carol events</a> across several squares in one evening, and offices nearby often want to <a href="../../christmas.html">book professional carol singers</a> for a single client reception. The choir sings without accompaniment, so a hotel lobby, a private club, or a garden square all work.</p>
 
         <h2>Choir sizes from the Oratory to Chelsea Old Church</h2>
         <p>Brompton Oratory and St&nbsp;Mary Abbots suit ensembles of six voices or more. Chelsea Old Church and the Royal Hospital Chelsea Chapel work best with a quartet. A soloist is a good choice for a private memorial at home or a small ceremony room. We can also add an organist, harpist, or string players to any ensemble. Full pricing details and ensemble options are on our <a href="../../pricing.html">pricing page</a>, and our <a href="../../music-guides/funeral-music-costs.html">funeral music costs guide</a> explains what to expect at each price point.</p>
 
         <h2>Questions about the Oratory and Chelsea churches</h2>
 
-        <h3>How much does a funeral singer cost in Kensington and Chelsea?</h3>
+        <h3>What does a funeral choir cost at St&nbsp;Mary Abbots or Chelsea Old Church?</h3>
         <p>A solo funeral singer starts from &pound;250. Sizes above that run &pound;1,150 for four voices, &pound;1,400 for five, &pound;1,600 for six, and &pound;2,000 for a full choir of eight. For a service at St&nbsp;Mary Abbots or Chelsea Old Church, the fee already covers our travel within Greater London and our liaison with your funeral director. Larger ensembles for Brompton Oratory services are quoted on request.</p>
 
         <h3>What types of music can you perform at a funeral in Kensington and Chelsea?</h3>
@@ -3221,9 +3287,9 @@
         <p>Yes, by arrangement with the Hospital&rsquo;s chaplain. The chapel hosts occasional memorial services for residents and their families, and a quartet (from &pound;1,150) suits it best.</p>
 
         <h3>Do you cover crematorium services near Kensington and Chelsea?</h3>
-        <p>Kensington and Chelsea has no crematorium within its boundaries. Families in the borough most often use Mortlake Crematorium in <a href="richmond.html">Richmond</a> or Putney Vale Crematorium in <a href="wandsworth.html">Wandsworth</a>. We sing at both regularly and can advise on <a href="../../music-guides/crematorium-music.html">music for crematorium services</a>.</p>
+        <p>Kensington and Chelsea has no crematorium within its boundaries. Families in the borough most often use Mortlake Crematorium in <a href="richmond.html">Richmond</a> or Putney Vale Crematorium in <a href="wandsworth.html">Wandsworth</a>. We sing at both and can advise on <a href="../../music-guides/crematorium-music.html">music for crematorium services</a>.</p>
 
-        <p><a href="../../contact.html" class="btn-link">Get in touch about your occasion in Kensington &amp; Chelsea</a></p>
+        <p><a href="../../contact.html" class="btn-link">Ask about a service at the Oratory or in Chelsea</a></p>
       </div>
     </section>
 

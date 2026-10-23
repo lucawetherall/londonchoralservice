@@ -65,11 +65,15 @@
       window.addEventListener(evt, loadGA, { once: true, passive: true });
     });
 
-    // Conversion tracking. A lead is one "Submit lead form" conversion, fired by
-    // js/form.js and js/private-events.js only after Web3Forms accepts the
-    // enquiry. Phone, email and WhatsApp taps are contact_click events (their
-    // own secondary Ads actions "Call click" and "WhatsApp or email click"),
-    // never leads. Labels come from Google Ads (conversion action tag snippets).
+    // Conversion tracking. A lead is one "Submit lead form" conversion plus a GA4
+    // generate_lead, started by js/form.js and js/private-events.js only after
+    // Web3Forms accepts the enquiry. With cookie consent, js/form.js's lead is
+    // sent from thank-you.html (lcsLead below hands it over); without consent,
+    // and on the private register's inline success, it goes from the form's own
+    // page at once. Phone, email and WhatsApp taps are contact_click events, never
+    // leads, each with its own Ads action: "WhatsApp or email click" is a
+    // primary goal (owner decision, 26 Sep 2026) and "Call click" a secondary
+    // one. Labels come from Google Ads (conversion action tag snippets).
     var LCS_ADS = {
       lead: 'AW-17988388404/RjhECKGP7akcELSMxIFD',
       call: 'AW-17988388404/HHu8CJq1x4UdELSMxIFD',
@@ -165,7 +169,7 @@
         var h1 = document.querySelector('h1');
         var page = ((h1 && h1.childNodes[0] && h1.childNodes[0].textContent) || document.title.split('|')[0]).replace(/\s+/g, ' ').trim();
         var attr = lcsAttribution();
-        var ad = attr.gclid || attr.gbraid || attr.wbraid || attr.utm_medium === 'cpc' ? ', via a Google ad' : '';
+        var ad = attr.gclid || attr.gbraid || attr.wbraid || attr.utm_medium === 'cpc' || lcsAdVisit() ? ', via a Google ad' : '';
         var source = 'your \u201c' + page + '\u201d page' + ad;
         // With cookie consent, a short reference to the ad click rides along too,
         // so a booking that starts on WhatsApp or email can be reported to Google
@@ -176,7 +180,8 @@
             ref = lcsShortRef(attr.gclid || attr.gbraid || attr.wbraid || '');
           }
         } catch (e) {}
-        // Without consent, only the landing page's name (never the click ID).
+        // Without consent, only the landing page's name and the ad's campaign
+        // (never the click ID).
         var visit = ref ? '' : lcsAdVisit();
         var tag = ref ? 'Ref: ' + ref : visit ? 'Ad visit: ' + visit : '';
         if (method === 'whatsapp') {
@@ -227,18 +232,79 @@
 
     // Ad visit without cookies: when this page's own URL holds an ad click ID
     // and the visitor has not allowed cookies, its messages and form carry the
-    // page's name ("Ad visit: weddings"), never the click ID. It lives only in
-    // this variable: nothing is stored, so the next page carries nothing.
+    // landing page's name and the ad's campaign from utm_campaign ("Ad visit:
+    // pricing (wedding-leads)"), never the click ID. Nothing is stored: the
+    // label lives in this variable, and same-site links on the page carry it in
+    // their address (lcs_av=<label>), so the next page the visitor opens knows
+    // it too and passes it on. scripts/bookings/pipeline.py reads the same format.
     function lcsAdVisitSlug(path) {
       var p = String(path || '').toLowerCase().replace(/^\/+/, '').replace(/\.html$/, '').replace(/(^|\/)index$/, '').replace(/\/+$/, '');
       if (!p) return 'home';
-      return /^[a-z0-9-]+(\/[a-z0-9-]+)*$/.test(p) ? p : 'other';
+      return p.length <= 80 && /^[a-z0-9-]+(\/[a-z0-9-]+)*$/.test(p) ? p : 'other';
     }
-    var LCS_AD_VISIT = /[?&](gclid|gbraid|wbraid)=[^&]/.test(location.search) ? lcsAdVisitSlug(location.pathname) : '';
+    function lcsAdVisitLabel() {
+      try {
+        var q = new URLSearchParams(location.search);
+        if (/[?&](gclid|gbraid|wbraid)=[^&]/.test(location.search)) {
+          var slug = lcsAdVisitSlug(location.pathname), campaign = q.get('utm_campaign') || '';
+          return /^[a-z0-9-]{1,40}$/.test(campaign) ? slug + ' (' + campaign + ')' : slug;
+        }
+        // Carried from the previous page, and only from a page of this site, so
+        // a shared or bookmarked address never counts as an ad visit.
+        var carried = q.get('lcs_av') || '';
+        var from = document.referrer ? new URL(document.referrer).origin : '';
+        // The page at most 80 characters, the campaign at most 40 (as pipeline.py's AD_VISIT_RE).
+        if (from === location.origin &&
+            /^(?=[a-z0-9\/-]{1,80}( \(|$))[a-z0-9-]+(\/[a-z0-9-]+)*( \([a-z0-9-]{1,40}\))?$/.test(carried)) return carried;
+      } catch (e) {}
+      return '';
+    }
+    var LCS_AD_VISIT = lcsAdVisitLabel();
     function lcsAdVisit() {
       if (!LCS_AD_VISIT) return '';
-      try { if (localStorage.getItem('lcs-consent') === 'granted') return ''; } catch (e) {}
+      // Once cookies are allowed the click reference (lcsAttribution) takes over, but only if there is one: a
+      // visitor who accepts on a later page has no click ID left, so the label stays.
+      try {
+        if (localStorage.getItem('lcs-consent') === 'granted') {
+          var a = lcsAttribution();
+          if (a.gclid || a.gbraid || a.wbraid) return '';
+        }
+      } catch (e) {}
       return LCS_AD_VISIT;
+    }
+    // Same-site page links (.html or folder addresses) get lcs_av=<label> at
+    // run time, for ad visitors only, so crawlers never see it. Never tel:,
+    // mailto:, WhatsApp, other sites or links within the page. Once the visitor
+    // allows cookies the label comes off again where a click ID remains
+    // (lcsAttribution takes over); after accepting on a later page it stays.
+    function lcsCarryAdVisit(a) {
+      try {
+        var raw = a.getAttribute('href') || '';
+        if (!raw || raw.charAt(0) === '#' || /^(tel|mailto|sms|javascript):/i.test(raw) ||
+            raw.indexOf('wa.me/') !== -1 || a.hasAttribute('download')) return;
+        var url = new URL(raw, location.href);
+        if (url.origin !== location.origin || !/(\.html|\/)$/.test(url.pathname)) return;
+        var visit = lcsAdVisit();
+        if (visit) url.searchParams.set('lcs_av', visit);
+        else if (url.searchParams.has('lcs_av')) url.searchParams.delete('lcs_av');
+        else return;
+        a.setAttribute('href', url.pathname + url.search + url.hash);
+      } catch (e) {}
+    }
+    if (LCS_AD_VISIT) {
+      var lcsCarryAll = function() {
+        if (lcsAdVisit()) Array.prototype.forEach.call(document.querySelectorAll('a[href]'), lcsCarryAdVisit);
+      };
+      if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', lcsCarryAll);
+      else lcsCarryAll();
+      // Links added later, and a choice made on the cookie sheet since, are
+      // settled as each link is used.
+      ['click', 'auxclick', 'contextmenu'].forEach(function(evt) {
+        document.addEventListener(evt, function(e) {
+          var a = e.target.closest && e.target.closest('a[href]');
+          if (a) lcsCarryAdVisit(a);
+        }, true);
+      });
     }
     // The click IDs in this page's own URL, for an enquiry whose sender ticked
     // the form's ad-measurement box (read at submit, never stored).
@@ -267,7 +333,7 @@
   <!-- @include-end partials/analytics.html -->
 
   <title>Funeral and wedding choirs in Guildford | LCS</title>
-  <meta name="description" content="Hire conservatoire-trained singers for funerals, weddings, and memorials in Guildford and Surrey. The London Choral Service offers soloists from £250.">
+  <meta name="description" content="Funeral singers and wedding choirs in Guildford and Surrey, from Guildford Cathedral to Holy Trinity and Guildford Crematorium. Soloists from £250.">
   <meta name="theme-color" content="#F7F3EE">
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://londonchoralservice.com/areas/guildford.html">
@@ -275,7 +341,7 @@
   <link rel="alternate" hreflang="x-default" href="https://londonchoralservice.com/areas/guildford.html">
 
   <meta property="og:title" content="Funeral and wedding choirs in Guildford | LCS">
-  <meta property="og:description" content="Hire conservatoire-trained singers for funerals, weddings, and memorials in Guildford and Surrey. The London Choral Service offers soloists from £250.">
+  <meta property="og:description" content="Funeral singers and wedding choirs in Guildford and Surrey, from Guildford Cathedral to Holy Trinity and Guildford Crematorium. Soloists from £250.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://londonchoralservice.com/areas/guildford.html">
   <meta property="og:locale" content="en_GB">
@@ -287,7 +353,7 @@
 
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Funeral and wedding choirs in Guildford | LCS">
-  <meta name="twitter:description" content="Hire conservatoire-trained singers for funerals, weddings, and memorials in Guildford and Surrey. The London Choral Service offers soloists from £250.">
+  <meta name="twitter:description" content="Funeral singers and wedding choirs in Guildford and Surrey, from Guildford Cathedral to Holy Trinity and Guildford Crematorium. Soloists from £250.">
   <meta name="twitter:image" content="https://londonchoralservice.com/assets/og/areas-guildford.png">
   <meta name="twitter:image:alt" content="The London Choral Service: Funeral &amp; Wedding Choirs in Guildford. Live singers for churches, crematoria and carol services">
   <link rel="dns-prefetch" href="https://www.googletagmanager.com">
@@ -3003,7 +3069,7 @@
             "name": "Surrey"
           }
         },
-        "description": "Hire conservatoire-trained singers for funerals, weddings, and memorials in Guildford and Surrey. The London Choral Service offers soloists from £250.",
+        "description": "Funeral singers and wedding choirs in Guildford and Surrey, from Guildford Cathedral to Holy Trinity and Guildford Crematorium. Soloists from £250.",
         "url": "https://londonchoralservice.com/areas/guildford.html",
         "serviceType": [
           "Funeral Music",
@@ -3053,7 +3119,7 @@
             "name": "What does a funeral quartet or soloist cost in Guildford?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "A soloist in Guildford starts from £250, beyond a soloist, four voices are £1,150, a quintet £1,400, a sextet £1,600, and a full choir of eight £2,000. Guildford is close to London, so travel costs are generally modest, though a small supplement may apply for venues deeper into the Surrey Hills. We deal with your funeral director ourselves, and that is part of the fee."
+              "text": "A soloist in Guildford starts from £250 and four voices are £1,150. The arches of Guildford Cathedral suit a full choir of eight, at £2,000, while a soloist or quartet suits Holy Trinity, St Nicolas' or Guildford Crematorium. Travel from London adds little, though a small supplement may apply for venues deeper into the Surrey Hills. We deal with your funeral director ourselves, and that is part of the fee."
             }
           },
           {
@@ -3061,7 +3127,7 @@
             "name": "Do you sing at weddings in Guildford Cathedral and the Surrey Hills?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Yes. Our choirs sing at weddings throughout Guildford and Surrey, from the grandeur of Guildford Cathedral to the candlelit warmth of Holy Trinity Church and the honey-coloured village churches tucked into the Surrey Hills. We work with each couple to choose the right ensemble size and repertoire for their venue and ceremony."
+              "text": "Yes. Our choirs sing at weddings throughout Guildford and Surrey, from Guildford Cathedral to the candlelit Holy Trinity Church and the village churches of the Surrey Hills. We work with each couple to choose the right ensemble size and repertoire for their venue and ceremony."
             }
           },
           {
@@ -3069,7 +3135,7 @@
             "name": "Which pieces suit a funeral at Guildford Cathedral or Holy Trinity?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Our repertoire spans traditional hymns, classical sacred works, and contemporary songs. The soaring modernist arches of Guildford Cathedral suit large-scale choral music, while Holy Trinity, St Nicolas', and Guildford Crematorium lend themselves to more intimate pieces — a reflective solo, or a quartet singing quietly. If there is a favourite song, we will arrange it for voices or for instruments."
+              "text": "Our repertoire spans traditional hymns, classical sacred works, and contemporary songs. The modernist arches of Guildford Cathedral suit large-scale choral music, while Holy Trinity, St Nicolas', and Guildford Crematorium suit more intimate pieces, such as a reflective solo or a quartet singing quietly. If there is a favourite song, we will arrange it for voices or for instruments."
             }
           },
           {
@@ -3077,7 +3143,7 @@
             "name": "Are you familiar with Guildford Crematorium?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Yes. We sing regularly at Guildford Crematorium and are familiar with its acoustic and timing requirements. Our musicians coordinate directly with crematorium staff and your funeral director so the music is handled with care from start to finish."
+              "text": "Yes. We sing at Guildford Crematorium and know its acoustic and timing requirements. Our musicians coordinate with crematorium staff and your funeral director so the music fits the order of service."
             }
           },
           {
@@ -3085,7 +3151,7 @@
             "name": "Can you bring carol singers to a Guildford or Surrey event in December?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Yes. We provide carol services and roaming carol singers for offices, hotels, and residents' Christmas events across Guildford and Surrey. December dates are in high demand and usually start to fill by mid-September, so we'd recommend enquiring early. Our Christmas page has more information."
+              "text": "Yes. We sing carols for offices, hotel lobbies and residents' Christmas events across Guildford and Surrey, and lead full carol services for churches. Surrey December dates begin to go from mid-September, so it helps to write early. Our Christmas page has more information."
             }
           }
         ]
@@ -3165,9 +3231,9 @@
             <li>Guildford</li>
           </ol>
         </nav>
-        <h1>Funeral and wedding choirs in Guildford</h1>
+        <h1>Singers and choirs from Guildford Cathedral to the Surrey Hills</h1>
         <p class="guide-meta">Musicians selected by Luca Wetherall, Artistic Director &amp; Tutor in Music, University of Oxford &mdash; <a href="/luca-wetherall.html">read more about our team</a>.</p>
-        <p class="lede">The London Choral Service provides professional singers, choirs, and instrumentalists for funerals, weddings, memorials, and ceremonies across Guildford and the wider Surrey area. Every musician we work with is conservatoire-trained, and every performance is shaped with care around your service and its setting.</p>
+        <p class="lede">We bring conservatoire-trained singers, choirs and instrumentalists to funerals, weddings and memorials in Guildford, and to churches and crematoria across Surrey from Woking and Farnham to Dorking and Haslemere. We plan the music around your service and the building it is held in.</p>
         <hr class="rule">
       </div>
     </section>
@@ -3175,15 +3241,15 @@
     <section class="section" style="padding-block-start: var(--space-2xl)">
       <div class="prose">
         <h2>Funeral music in Guildford</h2>
-        <p>When someone close to you dies, even the most practical tasks can feel impossible. Organising music for a funeral while you are still grieving is something no one should have to face alone, and we are here to take that weight from you entirely. Whether you&rsquo;re planning a service beneath the soaring modernist arches of Guildford Cathedral, a more intimate farewell at Holy Trinity Church or St Nicolas&rsquo; Church in the centre of town, or a cremation at Guildford Crematorium, we will work gently with you and your funeral director to make sure the music reflects the person you have lost and brings comfort to everyone who gathers to remember them. A solo soprano singing <em>Ave Maria</em> as the congregation settles, a small choir lifting the words of a much-loved hymn into the stillness of a chapel, a cellist playing a quiet melody as family members take their seats&thinsp;&mdash;&thinsp;whatever feels right for your farewell, we will arrange it with sensitivity and warmth.</p>
-        <p>Our singers are experienced at performing in churches, chapels, and crematoria right across Surrey&thinsp;&mdash;&thinsp;from Woking and Farnham to Epsom, Dorking, Reigate, Cobham, and Haslemere. Many of the families who contact us are unsure where to begin with the music. There is no wrong question, and there is never any pressure. We are always happy to talk things through, suggest pieces that suit the setting, and help you find music that will feel meaningful on the day. For the options, see our <a href="../services.html">funeral music services</a>; for ideas, our <a href="../music-guides/funeral-music-guide.html">guide to funeral music</a> covers hymns, solos and instrumental pieces that suit the cathedral, St Nicolas&rsquo; or Guildford Crematorium.</p>
+        <p>When someone close to you dies, even the most practical tasks can feel impossible. Organising music for a funeral while you are still grieving is something no one should have to face alone, and we are here to take that weight from you. Whether you&rsquo;re planning a service beneath the modernist arches of Guildford Cathedral, a more intimate farewell at Holy Trinity Church or St Nicolas&rsquo; Church in the centre of town, or a cremation at Guildford Crematorium, we will work with you and your funeral director to make sure the music reflects the person you have lost. We can arrange a solo soprano singing <em>Ave Maria</em> as the congregation settles, a small choir singing a much-loved hymn, or a cellist playing a quiet melody as family members take their seats.</p>
+        <p>Our singers are experienced at performing in churches, chapels, and crematoria across Surrey, from Woking and Farnham to Epsom, Dorking, Reigate, Cobham, and Haslemere. You may not know where to begin with the music. There is no wrong question, and there is never any pressure. We can talk things through, suggest pieces that suit the setting, and help you find music that will feel meaningful on the day. For the options, see our <a href="../services.html">funeral music services</a>; for ideas, our <a href="../music-guides/funeral-music-guide.html">guide to funeral music</a> covers hymns, solos and instrumental pieces that suit the cathedral, St Nicolas&rsquo; or Guildford Crematorium.</p>
 
         <h2>Wedding music in Guildford</h2>
-        <p>Surrey has some of the most striking wedding venues in the south of England. From the grandeur of Guildford Cathedral and the candlelit Holy Trinity Church to the honey-coloured village churches tucked into the Surrey Hills, a live choir does what a recording cannot: keep a nervous congregation in tune and in time through the hymns, and follow them with a piece during the signing of the register that guests will go on talking about over dinner. Our choirs and soloists sing the processional as you walk down the aisle, the hymns that draw the whole congregation in, a reflective piece during the signing of the register, and a recessional to carry you back down the aisle. We work with each couple to choose music that fits them: traditional favourites, a contemporary arrangement, or a piece with sentimental meaning only you and your partner will recognise.</p>
-        <p>If you&rsquo;re still deciding on your wedding music, our <a href="../music-guides/choosing-wedding-hymns.html">guide to choosing wedding hymns</a> is a helpful starting point. It covers the most popular choices alongside a few less expected suggestions that our couples have loved.</p>
+        <p>Surrey has some of the most striking wedding venues in the south of England. Under the modernist arches of Guildford Cathedral, in the candlelit Holy Trinity Church or in a village church in the Surrey Hills, a choir keeps a nervous congregation in tune and in time through the hymns. Our choirs and soloists sing the processional as you walk down the aisle, the hymns, one reflective piece while you sign the register (the signing takes around five minutes), and a recessional to carry you back down the aisle. We work with each couple to choose music that fits them: traditional favourites, a contemporary arrangement, or a piece with sentimental meaning only you and your partner will recognise.</p>
+        <p>Couples still choosing hymns for Holy Trinity or the cathedral can start with our <a href="../music-guides/choosing-wedding-hymns.html">wedding hymns guide</a>, which covers the most popular choices and a few less expected ones.</p>
 
         <h2>Ensembles &amp; pricing</h2>
-        <p>We offer ensemble sizes for every kind of venue, from a solo singer or instrumentalist to a full choir of up to twelve voices. String quartets, harpists, and organists are also available for both sacred and secular settings across Guildford and Surrey. Our pricing is clear and straightforward, with no hidden extras. Visit our <a href="../pricing.html">pricing page</a> for full details, or get in touch and we&rsquo;ll put together a quote tailored to exactly what you need.</p>
+        <p>We offer ensemble sizes for every kind of venue, from a solo singer or instrumentalist to a full choir of up to twelve voices. String quartets, harpists, and organists are also available for both sacred and secular settings across Guildford and Surrey. Our pricing is clear and straightforward, with no hidden extras. Visit our <a href="../pricing.html">pricing page</a> for full details, or get in touch and we&rsquo;ll put together a quote tailored to what you need.</p>
 
         <figure class="pull-quote">
           <blockquote>
@@ -3198,19 +3264,19 @@
         <h2>Frequently asked questions</h2>
         
         <h3>What does a funeral quartet or soloist cost in Guildford?</h3>
-        <p>A soloist in Guildford starts from £250, beyond a soloist, four voices are £1,150, a quintet £1,400, a sextet £1,600, and a full choir of eight £2,000. Guildford is close to London, so travel costs are generally modest, though a small supplement may apply for venues deeper into the Surrey Hills. We deal with your funeral director ourselves, and that is part of the fee.</p>
+        <p>A soloist in Guildford starts from £250 and four voices are £1,150. The arches of Guildford Cathedral suit a full choir of eight, at £2,000, while a soloist or quartet suits Holy Trinity, St Nicolas' or Guildford Crematorium. Travel from London adds little, though a small supplement may apply for venues deeper into the Surrey Hills. We deal with your funeral director ourselves, and that is part of the fee.</p>
 
         <h3>Do you sing at weddings in Guildford Cathedral and the Surrey Hills?</h3>
-        <p>Yes. Our choirs sing at weddings throughout Guildford and Surrey, from the grandeur of Guildford Cathedral to the candlelit warmth of Holy Trinity Church and the honey-coloured village churches tucked into the Surrey Hills. We work with each couple to choose the right ensemble size and repertoire for their venue and ceremony.</p>
+        <p>Yes. Our choirs sing at weddings throughout Guildford and Surrey, from Guildford Cathedral to the candlelit Holy Trinity Church and the village churches of the Surrey Hills. We work with each couple to choose the right ensemble size and repertoire for their venue and ceremony.</p>
 
         <h3>Which pieces suit a funeral at Guildford Cathedral or Holy Trinity?</h3>
-        <p>Our repertoire spans traditional hymns, classical sacred works, and contemporary songs. The soaring modernist arches of Guildford Cathedral suit large-scale choral music, while Holy Trinity, St Nicolas', and Guildford Crematorium lend themselves to more intimate pieces — a reflective solo, or a quartet singing quietly. If there is a favourite song, we will arrange it for voices or for instruments.</p>
+        <p>Our repertoire spans traditional hymns, classical sacred works, and contemporary songs. The modernist arches of Guildford Cathedral suit large-scale choral music, while Holy Trinity, St Nicolas', and Guildford Crematorium suit more intimate pieces, such as a reflective solo or a quartet singing quietly. If there is a favourite song, we will arrange it for voices or for instruments.</p>
 
         <h3>Are you familiar with Guildford Crematorium?</h3>
-        <p>Yes. We sing regularly at Guildford Crematorium and are familiar with its acoustic and timing requirements. Our musicians coordinate directly with crematorium staff and your funeral director so the music is handled with care from start to finish.</p>
+        <p>Yes. We sing at Guildford Crematorium and know its acoustic and timing requirements. Our musicians coordinate with crematorium staff and your funeral director so the music fits the order of service.</p>
 
         <h3>Can you bring carol singers to a Guildford or Surrey event in December?</h3>
-        <p>Yes. We provide carol services and roaming carol singers for offices, hotels, and residents&rsquo; Christmas events across Guildford and Surrey. December dates are in high demand and usually start to fill by mid-September, so we&rsquo;d recommend enquiring early. Our <a href="../christmas.html">Christmas page</a> has more information.</p>
+        <p>Yes. We sing carols for offices, hotel lobbies and residents&rsquo; Christmas events across Guildford and Surrey, and lead full carol services for churches. Surrey December dates begin to go from mid-September, so it helps to write early. Our <a href="../christmas.html">Christmas page</a> has more information.</p>
 
         <p>Families from Woking to Haslemere can read our <a href="../music-guides/funeral-music-guide.html">funeral music guide</a> and <a href="../music-guides/popular-funeral-hymns.html">popular funeral hymns</a> before choosing, and the <a href="../music-guides/funeral-music-costs.html">funeral music costs guide</a> and <a href="../music-guides/choosing-wedding-hymns.html">wedding hymns guide</a> answer questions about fees and wedding music.</p>
 

@@ -65,11 +65,15 @@
       window.addEventListener(evt, loadGA, { once: true, passive: true });
     });
 
-    // Conversion tracking. A lead is one "Submit lead form" conversion, fired by
-    // js/form.js and js/private-events.js only after Web3Forms accepts the
-    // enquiry. Phone, email and WhatsApp taps are contact_click events (their
-    // own secondary Ads actions "Call click" and "WhatsApp or email click"),
-    // never leads. Labels come from Google Ads (conversion action tag snippets).
+    // Conversion tracking. A lead is one "Submit lead form" conversion plus a GA4
+    // generate_lead, started by js/form.js and js/private-events.js only after
+    // Web3Forms accepts the enquiry. With cookie consent, js/form.js's lead is
+    // sent from thank-you.html (lcsLead below hands it over); without consent,
+    // and on the private register's inline success, it goes from the form's own
+    // page at once. Phone, email and WhatsApp taps are contact_click events, never
+    // leads, each with its own Ads action: "WhatsApp or email click" is a
+    // primary goal (owner decision, 26 Sep 2026) and "Call click" a secondary
+    // one. Labels come from Google Ads (conversion action tag snippets).
     var LCS_ADS = {
       lead: 'AW-17988388404/RjhECKGP7akcELSMxIFD',
       call: 'AW-17988388404/HHu8CJq1x4UdELSMxIFD',
@@ -165,7 +169,7 @@
         var h1 = document.querySelector('h1');
         var page = ((h1 && h1.childNodes[0] && h1.childNodes[0].textContent) || document.title.split('|')[0]).replace(/\s+/g, ' ').trim();
         var attr = lcsAttribution();
-        var ad = attr.gclid || attr.gbraid || attr.wbraid || attr.utm_medium === 'cpc' ? ', via a Google ad' : '';
+        var ad = attr.gclid || attr.gbraid || attr.wbraid || attr.utm_medium === 'cpc' || lcsAdVisit() ? ', via a Google ad' : '';
         var source = 'your \u201c' + page + '\u201d page' + ad;
         // With cookie consent, a short reference to the ad click rides along too,
         // so a booking that starts on WhatsApp or email can be reported to Google
@@ -176,7 +180,8 @@
             ref = lcsShortRef(attr.gclid || attr.gbraid || attr.wbraid || '');
           }
         } catch (e) {}
-        // Without consent, only the landing page's name (never the click ID).
+        // Without consent, only the landing page's name and the ad's campaign
+        // (never the click ID).
         var visit = ref ? '' : lcsAdVisit();
         var tag = ref ? 'Ref: ' + ref : visit ? 'Ad visit: ' + visit : '';
         if (method === 'whatsapp') {
@@ -227,18 +232,79 @@
 
     // Ad visit without cookies: when this page's own URL holds an ad click ID
     // and the visitor has not allowed cookies, its messages and form carry the
-    // page's name ("Ad visit: weddings"), never the click ID. It lives only in
-    // this variable: nothing is stored, so the next page carries nothing.
+    // landing page's name and the ad's campaign from utm_campaign ("Ad visit:
+    // pricing (wedding-leads)"), never the click ID. Nothing is stored: the
+    // label lives in this variable, and same-site links on the page carry it in
+    // their address (lcs_av=<label>), so the next page the visitor opens knows
+    // it too and passes it on. scripts/bookings/pipeline.py reads the same format.
     function lcsAdVisitSlug(path) {
       var p = String(path || '').toLowerCase().replace(/^\/+/, '').replace(/\.html$/, '').replace(/(^|\/)index$/, '').replace(/\/+$/, '');
       if (!p) return 'home';
-      return /^[a-z0-9-]+(\/[a-z0-9-]+)*$/.test(p) ? p : 'other';
+      return p.length <= 80 && /^[a-z0-9-]+(\/[a-z0-9-]+)*$/.test(p) ? p : 'other';
     }
-    var LCS_AD_VISIT = /[?&](gclid|gbraid|wbraid)=[^&]/.test(location.search) ? lcsAdVisitSlug(location.pathname) : '';
+    function lcsAdVisitLabel() {
+      try {
+        var q = new URLSearchParams(location.search);
+        if (/[?&](gclid|gbraid|wbraid)=[^&]/.test(location.search)) {
+          var slug = lcsAdVisitSlug(location.pathname), campaign = q.get('utm_campaign') || '';
+          return /^[a-z0-9-]{1,40}$/.test(campaign) ? slug + ' (' + campaign + ')' : slug;
+        }
+        // Carried from the previous page, and only from a page of this site, so
+        // a shared or bookmarked address never counts as an ad visit.
+        var carried = q.get('lcs_av') || '';
+        var from = document.referrer ? new URL(document.referrer).origin : '';
+        // The page at most 80 characters, the campaign at most 40 (as pipeline.py's AD_VISIT_RE).
+        if (from === location.origin &&
+            /^(?=[a-z0-9\/-]{1,80}( \(|$))[a-z0-9-]+(\/[a-z0-9-]+)*( \([a-z0-9-]{1,40}\))?$/.test(carried)) return carried;
+      } catch (e) {}
+      return '';
+    }
+    var LCS_AD_VISIT = lcsAdVisitLabel();
     function lcsAdVisit() {
       if (!LCS_AD_VISIT) return '';
-      try { if (localStorage.getItem('lcs-consent') === 'granted') return ''; } catch (e) {}
+      // Once cookies are allowed the click reference (lcsAttribution) takes over, but only if there is one: a
+      // visitor who accepts on a later page has no click ID left, so the label stays.
+      try {
+        if (localStorage.getItem('lcs-consent') === 'granted') {
+          var a = lcsAttribution();
+          if (a.gclid || a.gbraid || a.wbraid) return '';
+        }
+      } catch (e) {}
       return LCS_AD_VISIT;
+    }
+    // Same-site page links (.html or folder addresses) get lcs_av=<label> at
+    // run time, for ad visitors only, so crawlers never see it. Never tel:,
+    // mailto:, WhatsApp, other sites or links within the page. Once the visitor
+    // allows cookies the label comes off again where a click ID remains
+    // (lcsAttribution takes over); after accepting on a later page it stays.
+    function lcsCarryAdVisit(a) {
+      try {
+        var raw = a.getAttribute('href') || '';
+        if (!raw || raw.charAt(0) === '#' || /^(tel|mailto|sms|javascript):/i.test(raw) ||
+            raw.indexOf('wa.me/') !== -1 || a.hasAttribute('download')) return;
+        var url = new URL(raw, location.href);
+        if (url.origin !== location.origin || !/(\.html|\/)$/.test(url.pathname)) return;
+        var visit = lcsAdVisit();
+        if (visit) url.searchParams.set('lcs_av', visit);
+        else if (url.searchParams.has('lcs_av')) url.searchParams.delete('lcs_av');
+        else return;
+        a.setAttribute('href', url.pathname + url.search + url.hash);
+      } catch (e) {}
+    }
+    if (LCS_AD_VISIT) {
+      var lcsCarryAll = function() {
+        if (lcsAdVisit()) Array.prototype.forEach.call(document.querySelectorAll('a[href]'), lcsCarryAdVisit);
+      };
+      if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', lcsCarryAll);
+      else lcsCarryAll();
+      // Links added later, and a choice made on the cookie sheet since, are
+      // settled as each link is used.
+      ['click', 'auxclick', 'contextmenu'].forEach(function(evt) {
+        document.addEventListener(evt, function(e) {
+          var a = e.target.closest && e.target.closest('a[href]');
+          if (a) lcsCarryAdVisit(a);
+        }, true);
+      });
     }
     // The click IDs in this page's own URL, for an enquiry whose sender ticked
     // the form's ad-measurement box (read at submit, never stored).
@@ -267,7 +333,7 @@
   <!-- @include-end partials/analytics.html -->
 
   <title>Wedding and funeral choirs in Hackney | LCS</title>
-  <meta name="description" content="Professional funeral singers and wedding choirs in Hackney. Conservatoire-trained musicians for funerals, weddings, memorials, and ceremonies.">
+  <meta name="description" content="Wedding and funeral choirs in Hackney for St John at Hackney on Mare Street, Abney Park Cemetery, St Mary of Eton and the borough&rsquo;s warehouse venues.">
   <meta name="theme-color" content="#F7F3EE">
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://londonchoralservice.com/areas/london/hackney.html">
@@ -275,7 +341,7 @@
   <link rel="alternate" hreflang="x-default" href="https://londonchoralservice.com/areas/london/hackney.html">
 
   <meta property="og:title" content="Wedding and funeral choirs in Hackney | LCS">
-  <meta property="og:description" content="Professional funeral singers and wedding choirs in Hackney. Conservatoire-trained musicians for funerals, weddings, memorials, and ceremonies.">
+  <meta property="og:description" content="Wedding and funeral choirs in Hackney for St John at Hackney on Mare Street, Abney Park Cemetery, St Mary of Eton and the borough&rsquo;s warehouse venues.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://londonchoralservice.com/areas/london/hackney.html">
   <meta property="og:locale" content="en_GB">
@@ -287,7 +353,7 @@
 
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Wedding and funeral choirs in Hackney | LCS">
-  <meta name="twitter:description" content="Professional funeral singers and wedding choirs in Hackney. Conservatoire-trained musicians for funerals, weddings, memorials, and ceremonies.">
+  <meta name="twitter:description" content="Wedding and funeral choirs in Hackney for St John at Hackney on Mare Street, Abney Park Cemetery, St Mary of Eton and the borough&rsquo;s warehouse venues.">
   <meta name="twitter:image" content="https://londonchoralservice.com/assets/og/areas-london-hackney.png">
   <meta name="twitter:image:alt" content="The London Choral Service: Wedding &amp; Funeral Choirs in Hackney. Live singers for churches, crematoria and carol services">
   <link rel="dns-prefetch" href="https://www.googletagmanager.com">
@@ -3057,10 +3123,10 @@
         "mainEntity": [
           {
             "@type": "Question",
-            "name": "Can you provide a choir for a wedding in Hackney?",
+            "name": "Do you sing at warehouse weddings as well as St John at Hackney?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "We do. St John at Hackney on Mare Street is a magnificent church for a wedding choir, and its acoustic makes congregational singing feel effortless. We also perform at Hackney's many licensed venues — from restored warehouses to elegant town halls — with ensembles ranging from a solo vocalist to a full twelve-voice chorus."
+              "text": "We do. St John at Hackney on Mare Street is a large Georgian church whose acoustic carries congregational singing well. We also perform at Hackney's licensed venues, from restored warehouses to town halls, with ensembles ranging from a solo vocalist to a full twelve-voice chorus."
             }
           },
           {
@@ -3076,7 +3142,7 @@
             "name": "Does the music change between St John at Hackney and Abney Park Cemetery?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "At St John at Hackney, the soaring Georgian interior suits traditional hymns, psalms, and choral anthems particularly well. At Abney Park Cemetery or St Mary of Eton, we often perform more intimate, reflective pieces — contemporary songs, classical arias, or bespoke arrangements of something personally meaningful to the family."
+              "text": "At St John at Hackney, the tall Georgian interior suits traditional hymns, psalms, and choral anthems. At Abney Park Cemetery or St Mary of Eton, we often perform quieter pieces: contemporary songs, classical arias, or bespoke arrangements of a song that meant something to the family."
             }
           },
           {
@@ -3084,7 +3150,7 @@
             "name": "Can you sing at a cremation for a Hackney family, given the borough has no crematorium?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Hackney does not have its own crematorium, but we regularly sing at nearby crematoria including the City of London Cemetery and Crematorium at Manor Park. Our singers handle the logistics and liaise with funeral directors to ensure everything is coordinated smoothly on the day."
+              "text": "Hackney has no crematorium of its own. We sing at nearby crematoria including the City of London Cemetery and Crematorium at Manor Park. Our singers handle the logistics and agree the timings with your funeral director."
             }
           }
         ]
@@ -3165,9 +3231,9 @@
             <li>Hackney</li>
           </ol>
         </nav>
-        <h1>Wedding and funeral choirs in Hackney</h1>
+        <h1>Choirs for Hackney weddings, from Mare Street to the warehouses</h1>
         <p class="guide-meta">Musicians selected by Luca Wetherall, Artistic Director &amp; Tutor in Music, University of Oxford &mdash; <a href="/luca-wetherall.html">read more about our team</a>.</p>
-        <p class="lede">The London Borough of Hackney is one of east London&rsquo;s most culturally rich boroughs, home to communities in Stoke Newington, Dalston, Clapton, and Shoreditch. Our conservatoire-trained singers provide thoughtful, well-prepared music for funerals, weddings, and memorial services at churches, cemeteries, and ceremony venues throughout Hackney.</p>
+        <p class="lede">Hackney takes in Stoke Newington, Dalston, Clapton, and Shoreditch, and its venues run from St&nbsp;John at Hackney on Mare Street to Abney Park Cemetery and converted warehouses. Our conservatoire-trained singers provide well-prepared music for funerals, weddings, and memorial services across the borough.</p>
         <hr class="rule">
       </div>
     </section>
@@ -3175,14 +3241,14 @@
     <section class="section">
       <div class="prose">
         <h2>Weddings at St&nbsp;John at Hackney and in converted warehouses</h2>
-        <p>Hackney has become one of London&rsquo;s most sought-after boroughs for weddings, and its venues reflect the area&rsquo;s creative, independent spirit. St&nbsp;John at Hackney is a magnificent church for a wedding ceremony, and its acoustic makes congregational singing feel effortless and uplifting. For couples choosing civil ceremonies, Hackney&rsquo;s many licensed venues&thinsp;&mdash;&thinsp;from restored warehouses to elegant town halls&thinsp;&mdash;&thinsp;offer settings where a vocal soloist or small ensemble can create a moment guests will remember. We help couples plan their music from the first enquiry through to the day itself. Our <a href="../../music-guides/choosing-wedding-hymns.html">guide to choosing wedding hymns</a> offers practical advice for getting started.</p>
+        <p>Hackney has become one of London&rsquo;s most sought-after boroughs for weddings, and its venues reflect the area&rsquo;s creative, independent spirit. St&nbsp;John at Hackney is a large Georgian church, and its acoustic carries congregational singing well. For couples choosing civil ceremonies, Hackney&rsquo;s licensed venues range from restored warehouses to town halls, and a soloist or quartet sits well in those rooms. We help couples plan their music from the first enquiry through to the day itself. Our <a href="../../music-guides/choosing-wedding-hymns.html">guide to choosing wedding hymns</a> offers practical advice for getting started.</p>
 
         <h2>Choir sizes for Mare Street, the Marshes and warehouse venues</h2>
-        <p>St&nbsp;John at Hackney has the kind of soaring Georgian interior that rewards more voices &mdash; for a wedding there a sextet or full eight-voice choir suits the building, and the acoustic makes even four singers sound bigger than the number suggests. St&nbsp;Mary of Eton, beside the Hackney Marshes, is more intimate, and a quartet generally fits the room better. For a graveside service at Abney Park Cemetery, a soloist is usually more fitting than a full ensemble: a clear unaccompanied voice carries well outdoors and suits the reflective character of the place. For civil ceremonies in Hackney&rsquo;s converted warehouses and town halls, the right size depends on the room &mdash; a quartet generally sits well in those spaces. Our <a href="../../pricing.html">pricing page</a> lists the fee for a quartet in a warehouse venue, a sextet on Mare Street and the sizes in between.</p>
+        <p>St&nbsp;John at Hackney has a tall Georgian interior that rewards more voices. For a wedding there a sextet or full eight-voice choir suits the building, and the acoustic makes even four singers sound bigger than the number suggests. St&nbsp;Mary of Eton, beside the Hackney Marshes, is more intimate, and a quartet generally fits the room better. For a graveside service at Abney Park Cemetery, a soloist is usually more fitting than a full ensemble: a clear unaccompanied voice carries well outdoors and suits the reflective character of the place. For civil ceremonies in Hackney&rsquo;s converted warehouses and town halls, the right size depends on the room, though a quartet generally sits well in those spaces. Our <a href="../../pricing.html">pricing page</a> lists the fee for a quartet in a warehouse venue, a sextet on Mare Street and the sizes in between.</p>
 
         <h2>Funerals at St&nbsp;John at Hackney and Abney Park Cemetery</h2>
-        <p>Hackney&rsquo;s churches and cemeteries span centuries of London history, and each brings its own character to a funeral or memorial service. St&nbsp;John at Hackney, the magnificent Georgian church on Mare Street, has a soaring interior and a superb acoustic that can make even a small choir sound majestic. It is one of our favourite venues in east London to sing in. Abney Park Cemetery in Stoke Newington&thinsp;&mdash;&thinsp;a historic garden cemetery and nature reserve&thinsp;&mdash;&thinsp;offers a unique and atmospheric setting for farewell services, and our singers have performed there for families seeking something reflective and personal. St&nbsp;Mary of Eton, tucked beside the Hackney Marshes, provides a quieter, more intimate space, while the churches of Stoke Newington offer a range of settings suited to both traditional and contemporary services.</p>
-        <p>Whatever the style of the service, our singers can bring the right music to the occasion. We perform hymns, choral anthems, classical arias, and songs from other traditions, and we are always willing to learn unfamiliar pieces. Our <a href="../../music-guides/funeral-music-guide.html">funeral music guide</a> is a useful resource if you are beginning to think about repertoire. You can learn more about what we offer on our <a href="../../services.html">services page</a>, or simply <a href="../../contact.html">contact us</a> to start a conversation.</p>
+        <p>Hackney&rsquo;s churches and cemeteries span centuries of London history, and each brings its own character to a funeral or memorial service. St&nbsp;John at Hackney, the Georgian church on Mare Street, has a tall interior and a resonant acoustic that makes even a small choir sound full. It is one of our favourite venues in east London to sing in. Abney Park Cemetery in Stoke Newington is a historic garden cemetery and nature reserve, and our singers have performed there for families who wanted a reflective, personal service. St&nbsp;Mary of Eton, tucked beside the Hackney Marshes, provides a quieter, more intimate space, while the churches of Stoke Newington offer a range of settings suited to both traditional and contemporary services.</p>
+        <p>We perform hymns, choral anthems, classical arias, and songs from other traditions, and we will learn unfamiliar pieces. Our <a href="../../music-guides/funeral-music-guide.html">funeral music guide</a> is a useful resource if you are beginning to think about repertoire. You can learn more about what we offer on our <a href="../../services.html">services page</a>, or <a href="../../contact.html">contact us</a> to start a conversation.</p>
 
         <figure class="pull-quote">
           <blockquote>
@@ -3196,19 +3262,19 @@
 
         <h2>Before you book in Hackney</h2>
 
-        <h3>Can you provide a choir for a wedding in Hackney?</h3>
-        <p>We do. St&nbsp;John at Hackney on Mare Street is a magnificent church for a wedding choir, and its acoustic makes congregational singing feel effortless. We also perform at Hackney&rsquo;s many licensed venues &mdash; from restored warehouses to elegant town halls &mdash; with ensembles ranging from a solo vocalist to a full twelve-voice chorus.</p>
+        <h3>Do you sing at warehouse weddings as well as St&nbsp;John at Hackney?</h3>
+        <p>We do. St&nbsp;John at Hackney on Mare Street is a large Georgian church whose acoustic carries congregational singing well. We also perform at Hackney&rsquo;s licensed venues, from restored warehouses to town halls, with ensembles ranging from a solo vocalist to a full twelve-voice chorus.</p>
 
         <h3>Is a quartet enough for a wedding at St&nbsp;John at Hackney?</h3>
         <p>It can be: the acoustic makes four singers sound bigger than the number suggests. Most weddings there suit a sextet (from &pound;1,600) or a full choir of eight (from &pound;2,000), because the Georgian interior rewards more voices.</p>
 
         <h3>Does the music change between St&nbsp;John at Hackney and Abney Park Cemetery?</h3>
-        <p>At St&nbsp;John at Hackney, the soaring Georgian interior suits traditional hymns, psalms, and choral anthems particularly well. At Abney Park Cemetery or St&nbsp;Mary of Eton, we often perform more intimate, reflective pieces &mdash; contemporary songs, classical arias, or bespoke arrangements of something personally meaningful to the family.</p>
+        <p>At St&nbsp;John at Hackney, the tall Georgian interior suits traditional hymns, psalms, and choral anthems. At Abney Park Cemetery or St&nbsp;Mary of Eton, we often perform quieter pieces: contemporary songs, classical arias, or bespoke arrangements of a song that meant something to the family.</p>
 
         <h3>Can you sing at a cremation for a Hackney family, given the borough has no crematorium?</h3>
-        <p>Hackney does not have its own crematorium, but we regularly sing at nearby crematoria including the City of London Cemetery and Crematorium at Manor Park. Our singers handle the logistics and liaise with funeral directors to ensure everything is coordinated smoothly on the day.</p>
+        <p>Hackney has no crematorium of its own. We sing at nearby crematoria including the City of London Cemetery and Crematorium at Manor Park. Our singers handle the logistics and agree the timings with your funeral director.</p>
 
-        <p><a href="../../contact.html" class="btn-link">Get in touch about your occasion in Hackney</a></p>
+        <p><a href="../../contact.html" class="btn-link">Tell us about your service in Hackney</a></p>
       </div>
     </section>
 

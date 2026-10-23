@@ -65,11 +65,15 @@
       window.addEventListener(evt, loadGA, { once: true, passive: true });
     });
 
-    // Conversion tracking. A lead is one "Submit lead form" conversion, fired by
-    // js/form.js and js/private-events.js only after Web3Forms accepts the
-    // enquiry. Phone, email and WhatsApp taps are contact_click events (their
-    // own secondary Ads actions "Call click" and "WhatsApp or email click"),
-    // never leads. Labels come from Google Ads (conversion action tag snippets).
+    // Conversion tracking. A lead is one "Submit lead form" conversion plus a GA4
+    // generate_lead, started by js/form.js and js/private-events.js only after
+    // Web3Forms accepts the enquiry. With cookie consent, js/form.js's lead is
+    // sent from thank-you.html (lcsLead below hands it over); without consent,
+    // and on the private register's inline success, it goes from the form's own
+    // page at once. Phone, email and WhatsApp taps are contact_click events, never
+    // leads, each with its own Ads action: "WhatsApp or email click" is a
+    // primary goal (owner decision, 26 Sep 2026) and "Call click" a secondary
+    // one. Labels come from Google Ads (conversion action tag snippets).
     var LCS_ADS = {
       lead: 'AW-17988388404/RjhECKGP7akcELSMxIFD',
       call: 'AW-17988388404/HHu8CJq1x4UdELSMxIFD',
@@ -165,7 +169,7 @@
         var h1 = document.querySelector('h1');
         var page = ((h1 && h1.childNodes[0] && h1.childNodes[0].textContent) || document.title.split('|')[0]).replace(/\s+/g, ' ').trim();
         var attr = lcsAttribution();
-        var ad = attr.gclid || attr.gbraid || attr.wbraid || attr.utm_medium === 'cpc' ? ', via a Google ad' : '';
+        var ad = attr.gclid || attr.gbraid || attr.wbraid || attr.utm_medium === 'cpc' || lcsAdVisit() ? ', via a Google ad' : '';
         var source = 'your \u201c' + page + '\u201d page' + ad;
         // With cookie consent, a short reference to the ad click rides along too,
         // so a booking that starts on WhatsApp or email can be reported to Google
@@ -176,7 +180,8 @@
             ref = lcsShortRef(attr.gclid || attr.gbraid || attr.wbraid || '');
           }
         } catch (e) {}
-        // Without consent, only the landing page's name (never the click ID).
+        // Without consent, only the landing page's name and the ad's campaign
+        // (never the click ID).
         var visit = ref ? '' : lcsAdVisit();
         var tag = ref ? 'Ref: ' + ref : visit ? 'Ad visit: ' + visit : '';
         if (method === 'whatsapp') {
@@ -227,18 +232,79 @@
 
     // Ad visit without cookies: when this page's own URL holds an ad click ID
     // and the visitor has not allowed cookies, its messages and form carry the
-    // page's name ("Ad visit: weddings"), never the click ID. It lives only in
-    // this variable: nothing is stored, so the next page carries nothing.
+    // landing page's name and the ad's campaign from utm_campaign ("Ad visit:
+    // pricing (wedding-leads)"), never the click ID. Nothing is stored: the
+    // label lives in this variable, and same-site links on the page carry it in
+    // their address (lcs_av=<label>), so the next page the visitor opens knows
+    // it too and passes it on. scripts/bookings/pipeline.py reads the same format.
     function lcsAdVisitSlug(path) {
       var p = String(path || '').toLowerCase().replace(/^\/+/, '').replace(/\.html$/, '').replace(/(^|\/)index$/, '').replace(/\/+$/, '');
       if (!p) return 'home';
-      return /^[a-z0-9-]+(\/[a-z0-9-]+)*$/.test(p) ? p : 'other';
+      return p.length <= 80 && /^[a-z0-9-]+(\/[a-z0-9-]+)*$/.test(p) ? p : 'other';
     }
-    var LCS_AD_VISIT = /[?&](gclid|gbraid|wbraid)=[^&]/.test(location.search) ? lcsAdVisitSlug(location.pathname) : '';
+    function lcsAdVisitLabel() {
+      try {
+        var q = new URLSearchParams(location.search);
+        if (/[?&](gclid|gbraid|wbraid)=[^&]/.test(location.search)) {
+          var slug = lcsAdVisitSlug(location.pathname), campaign = q.get('utm_campaign') || '';
+          return /^[a-z0-9-]{1,40}$/.test(campaign) ? slug + ' (' + campaign + ')' : slug;
+        }
+        // Carried from the previous page, and only from a page of this site, so
+        // a shared or bookmarked address never counts as an ad visit.
+        var carried = q.get('lcs_av') || '';
+        var from = document.referrer ? new URL(document.referrer).origin : '';
+        // The page at most 80 characters, the campaign at most 40 (as pipeline.py's AD_VISIT_RE).
+        if (from === location.origin &&
+            /^(?=[a-z0-9\/-]{1,80}( \(|$))[a-z0-9-]+(\/[a-z0-9-]+)*( \([a-z0-9-]{1,40}\))?$/.test(carried)) return carried;
+      } catch (e) {}
+      return '';
+    }
+    var LCS_AD_VISIT = lcsAdVisitLabel();
     function lcsAdVisit() {
       if (!LCS_AD_VISIT) return '';
-      try { if (localStorage.getItem('lcs-consent') === 'granted') return ''; } catch (e) {}
+      // Once cookies are allowed the click reference (lcsAttribution) takes over, but only if there is one: a
+      // visitor who accepts on a later page has no click ID left, so the label stays.
+      try {
+        if (localStorage.getItem('lcs-consent') === 'granted') {
+          var a = lcsAttribution();
+          if (a.gclid || a.gbraid || a.wbraid) return '';
+        }
+      } catch (e) {}
       return LCS_AD_VISIT;
+    }
+    // Same-site page links (.html or folder addresses) get lcs_av=<label> at
+    // run time, for ad visitors only, so crawlers never see it. Never tel:,
+    // mailto:, WhatsApp, other sites or links within the page. Once the visitor
+    // allows cookies the label comes off again where a click ID remains
+    // (lcsAttribution takes over); after accepting on a later page it stays.
+    function lcsCarryAdVisit(a) {
+      try {
+        var raw = a.getAttribute('href') || '';
+        if (!raw || raw.charAt(0) === '#' || /^(tel|mailto|sms|javascript):/i.test(raw) ||
+            raw.indexOf('wa.me/') !== -1 || a.hasAttribute('download')) return;
+        var url = new URL(raw, location.href);
+        if (url.origin !== location.origin || !/(\.html|\/)$/.test(url.pathname)) return;
+        var visit = lcsAdVisit();
+        if (visit) url.searchParams.set('lcs_av', visit);
+        else if (url.searchParams.has('lcs_av')) url.searchParams.delete('lcs_av');
+        else return;
+        a.setAttribute('href', url.pathname + url.search + url.hash);
+      } catch (e) {}
+    }
+    if (LCS_AD_VISIT) {
+      var lcsCarryAll = function() {
+        if (lcsAdVisit()) Array.prototype.forEach.call(document.querySelectorAll('a[href]'), lcsCarryAdVisit);
+      };
+      if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', lcsCarryAll);
+      else lcsCarryAll();
+      // Links added later, and a choice made on the cookie sheet since, are
+      // settled as each link is used.
+      ['click', 'auxclick', 'contextmenu'].forEach(function(evt) {
+        document.addEventListener(evt, function(e) {
+          var a = e.target.closest && e.target.closest('a[href]');
+          if (a) lcsCarryAdVisit(a);
+        }, true);
+      });
     }
     // The click IDs in this page's own URL, for an enquiry whose sender ticked
     // the form's ad-measurement box (read at submit, never stored).
@@ -267,7 +333,7 @@
   <!-- @include-end partials/analytics.html -->
 
   <title>Wedding and funeral choirs in Richmond upon Thames | LCS</title>
-  <meta name="description" content="Hire conservatoire-trained singers for funerals, weddings, and memorials in Richmond upon Thames. Soloists and choirs available from £250. Enquire today.">
+  <meta name="description" content="Wedding and funeral choirs in Richmond upon Thames, from St Mary Magdalene by the river to St Anne’s Kew and Mortlake Crematorium. Choirs of four from £1,150.">
   <meta name="theme-color" content="#F7F3EE">
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://londonchoralservice.com/areas/london/richmond.html">
@@ -275,7 +341,7 @@
   <link rel="alternate" hreflang="x-default" href="https://londonchoralservice.com/areas/london/richmond.html">
 
   <meta property="og:title" content="Wedding and funeral choirs in Richmond upon Thames | LCS">
-  <meta property="og:description" content="Hire conservatoire-trained singers for funerals, weddings, and memorials in Richmond upon Thames. Soloists and choirs available from £250. Enquire today.">
+  <meta property="og:description" content="Wedding and funeral choirs in Richmond upon Thames, from St Mary Magdalene by the river to St Anne’s Kew and Mortlake Crematorium. Choirs of four from £1,150.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://londonchoralservice.com/areas/london/richmond.html">
   <meta property="og:locale" content="en_GB">
@@ -287,7 +353,7 @@
 
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Wedding and funeral choirs in Richmond upon Thames | LCS">
-  <meta name="twitter:description" content="Hire conservatoire-trained singers for funerals, weddings, and memorials in Richmond upon Thames. Soloists and choirs available from £250. Enquire today.">
+  <meta name="twitter:description" content="Wedding and funeral choirs in Richmond upon Thames, from St Mary Magdalene by the river to St Anne’s Kew and Mortlake Crematorium. Choirs of four from £1,150.">
   <meta name="twitter:image" content="https://londonchoralservice.com/assets/og/areas-london-richmond.png">
   <meta name="twitter:image:alt" content="The London Choral Service: Wedding &amp; Funeral Choirs in Richmond upon Thames. Live singers for churches, crematoria and carol services">
   <link rel="dns-prefetch" href="https://www.googletagmanager.com">
@@ -2992,7 +3058,7 @@
         "@type": "Service",
         "name": "Funeral Singers & Wedding Choirs in Richmond upon Thames",
         "url": "https://londonchoralservice.com/areas/london/richmond.html",
-        "description": "Hire conservatoire-trained singers for funerals, weddings, and memorials in Richmond upon Thames. Soloists and choirs available from £250. Enquire today.",
+        "description": "Wedding and funeral choirs in Richmond upon Thames, from St Mary Magdalene by the river to St Anne’s Kew and Mortlake Crematorium. Choirs of four from £1,150.",
         "provider": {
           "@type": "LocalBusiness",
           "@id": "https://londonchoralservice.com/#organization"
@@ -3068,7 +3134,7 @@
             "name": "Do you sing at Mortlake Crematorium in Richmond?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Yes, we sing at Mortlake Crematorium regularly and know its chapels well. Our singers arrive early to coordinate with staff and plan the programme to fit within the allocated time slots. A soloist is often the best choice for crematorium services, though a quartet works well there too."
+              "text": "Yes. We sing at Mortlake Crematorium and know its chapels well. Our singers arrive early to coordinate with staff and plan the programme to fit within the allocated time slots. A soloist is often the best choice for crematorium services, though a quartet works well there too."
             }
           }
         ]
@@ -3148,10 +3214,10 @@
             <li>Richmond upon Thames</li>
           </ol>
         </nav>
-        <h1>Wedding and funeral choirs in Richmond upon Thames</h1>
+        <h1>Choirs for riverside weddings in Richmond, Kew and Twickenham</h1>
         <p class="guide-meta">Musicians selected by Luca Wetherall, Artistic Director &amp; Tutor in Music, University of Oxford &mdash; <a href="/luca-wetherall.html">read more about our team</a>.</p>
-        <p class="lede">The London Borough of Richmond upon Thames is widely regarded as one of the most beautiful parts of London, with its royal parks, Thames-side walks, and handsome period architecture. The London Choral Service provides conservatoire-trained singers and instrumentalists for funerals, weddings, memorials, and ceremonies across Richmond, Twickenham, Kew, Ham, and the surrounding areas.</p>
-        <p>Richmond is one of <a href="../london.html">over thirty London boroughs we cover</a> &mdash; see the full list, with named venues, on our London hub page.</p>
+        <p class="lede">Richmond upon Thames has royal parks, Thames-side walks and handsome period architecture. We send conservatoire-trained singers and instrumentalists to funerals, weddings, memorials and ceremonies in Richmond, Twickenham, Kew, Ham and the streets around them.</p>
+        <p>Richmond is one of <a href="../london.html">over thirty London boroughs we cover</a>; the full list, with named venues, is on our London hub page.</p>
         <hr class="rule">
       </div>
     </section>
@@ -3159,7 +3225,7 @@
     <section class="section">
       <div class="prose">
         <h2>Weddings at St&nbsp;Mary Magdalene and in Kew</h2>
-        <p>Richmond upon Thames is one of London&rsquo;s most sought-after wedding locations, and it is easy to see why. St&nbsp;Mary Magdalene by the river and the churches of Kew both make fine settings for a marriage ceremony, and our singers also perform at the many licensed venues in Twickenham, Ham, and beyond. At the Chapel Royal, Hampton Court Palace, we sing at weddings only with the permission of the chapel&rsquo;s clergy. From triumphant hymns to tender motets, we work with each couple to create a musical programme that enhances the joy of the day. Our <a href="../../music-guides/choosing-wedding-hymns.html">guide to choosing wedding hymns</a> is a good place to start.</p>
+        <p>Richmond upon Thames is one of London&rsquo;s most sought-after wedding locations. St&nbsp;Mary Magdalene by the river and the churches of Kew both make fine settings for a marriage ceremony, and our singers also perform at the many licensed venues in Twickenham, Ham, and beyond. At the Chapel Royal, Hampton Court Palace, we sing at weddings only with the permission of the chapel&rsquo;s clergy. We plan the programme with each couple, from the hymns to the motets. Our <a href="../../music-guides/choosing-wedding-hymns.html">guide to choosing wedding hymns</a> is a good place to start.</p>
 
         <h2>Choir sizes from St&nbsp;Mary Magdalene to St&nbsp;Anne&rsquo;s Kew</h2>
         <p>For a wedding at St&nbsp;Mary Magdalene Richmond, we&rsquo;d typically suggest a sextet or larger, because the volume of the building rewards more voices. St&nbsp;Anne&rsquo;s Kew is more intimate; a quartet or sextet sits comfortably there depending on the size of the congregation. Mortlake Crematorium runs to a fixed service length, so a quartet is generally the right call: enough to lead a hymn, compact enough for the chapel. The parish churches in Twickenham, Teddington, Ham, and Barnes vary in scale; most handle a quartet well, with a sextet adding weight at the larger ones. For a graveside committal, a soloist is often more fitting. You&rsquo;ll find the fee for a quartet at Mortlake or a sextet at St&nbsp;Mary Magdalene on our <a href="../../pricing.html">pricing page</a>.</p>
@@ -3170,11 +3236,11 @@
         </figure>
 
         <h2>Funerals at Mortlake Crematorium and St&nbsp;Mary Magdalene</h2>
-        <p>We regularly perform at services throughout the borough, including St&nbsp;Mary Magdalene Richmond&thinsp;&mdash;&thinsp;a landmark church overlooking the Thames&thinsp;&mdash;&thinsp;Mortlake Crematorium, and St&nbsp;Anne&rsquo;s Kew. Our singers also work at churches and chapels in Ham, Twickenham, Teddington, and Barnes, bringing the same care and professionalism to every service. A soloist singing a reflective piece, a quartet leading the congregation in traditional hymns&thinsp;&mdash;&thinsp;we help you find music that feels right for the person you are remembering. Our <a href="../../music-guides/funeral-music-guide.html">funeral music guide</a> offers a wide range of suggestions, and we encourage you to <a href="../../contact.html">get in touch</a> to discuss your plans.</p>
-        <p>Mortlake Crematorium serves a wide area of south-west London, and our singers know its chapels well. We understand the particular timing constraints of crematorium services and work efficiently within them, ensuring that every note counts. Live singing at a crematorium service changes the mood of the room in a way recorded music rarely does. You can find out more about how we prepare for each service on our <a href="../../services.html">services page</a>.</p>
+        <p>We sing at funerals across the borough: at St&nbsp;Mary Magdalene Richmond, the church overlooking the Thames, at Mortlake Crematorium, and at St&nbsp;Anne&rsquo;s Kew. Our singers also work at churches and chapels in Ham, Twickenham, Teddington, and Barnes. It might be a soloist singing a reflective piece or a quartet leading traditional hymns; we help you choose music that feels right for the person you are remembering. Our <a href="../../music-guides/funeral-music-guide.html">funeral music guide</a> offers a wide range of suggestions, or you can <a href="../../contact.html">get in touch</a> to discuss your plans.</p>
+        <p>Mortlake Crematorium serves a wide area of south-west London, and our singers know its chapels well. Crematorium services run to fixed time slots, and we plan the music to fit them. You can find out more about how we prepare for each service on our <a href="../../services.html">services page</a>.</p>
 
         <h2>Carols from Richmond&rsquo;s riverside to Twickenham</h2>
-        <p>Every December we provide carol services and roaming carol singers for offices, venues, and residents&rsquo; events across Richmond upon Thames, from the riverside terraces of Richmond to Twickenham, Kew, and Ham. A small ensemble can lead <a href="../../christmas-carol-services.html">Christmas carol services</a> at a venue near St&nbsp;Mary Magdalene, or <a href="../../christmas.html">carol singers for your event</a> can circulate through an office party or residents&rsquo; gathering.</p>
+        <p>Offices on Richmond&rsquo;s riverside terraces and residents&rsquo; groups in Twickenham, Kew and Ham book us for carols each December. A small ensemble can lead <a href="../../christmas-carol-services.html">Christmas carol services</a> at a venue near St&nbsp;Mary Magdalene, or <a href="../../christmas.html">carol singers for your event</a> can circulate through an office party or residents&rsquo; gathering.</p>
 
         <h2>Questions about Kew, Richmond and Mortlake</h2>
 
@@ -3182,9 +3248,9 @@
         <p>St&nbsp;Anne&rsquo;s Kew is more intimate than St&nbsp;Mary Magdalene, and a quartet (from &pound;1,150) or a sextet (from &pound;1,600) sits comfortably there, depending on the size of the congregation.</p>
 
         <h3>Do you sing at Mortlake Crematorium in Richmond?</h3>
-        <p>Yes, we sing at Mortlake Crematorium regularly and know its chapels well. Our singers arrive early to coordinate with staff and plan the programme to fit within the allocated time slots. A soloist is often the best choice for crematorium services, though a quartet works well there too.</p>
+        <p>Yes. We sing at Mortlake Crematorium and know its chapels well. Our singers arrive early to coordinate with staff and plan the programme to fit within the allocated time slots. A soloist is often the best choice for crematorium services, though a quartet works well there too.</p>
 
-        <p><a href="../../contact.html" class="btn-link">Get in touch about your occasion in Richmond</a></p>
+        <p><a href="../../contact.html" class="btn-link">Tell us about your Richmond or Kew date</a></p>
       </div>
     </section>
 

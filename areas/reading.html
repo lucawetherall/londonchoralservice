@@ -65,11 +65,15 @@
       window.addEventListener(evt, loadGA, { once: true, passive: true });
     });
 
-    // Conversion tracking. A lead is one "Submit lead form" conversion, fired by
-    // js/form.js and js/private-events.js only after Web3Forms accepts the
-    // enquiry. Phone, email and WhatsApp taps are contact_click events (their
-    // own secondary Ads actions "Call click" and "WhatsApp or email click"),
-    // never leads. Labels come from Google Ads (conversion action tag snippets).
+    // Conversion tracking. A lead is one "Submit lead form" conversion plus a GA4
+    // generate_lead, started by js/form.js and js/private-events.js only after
+    // Web3Forms accepts the enquiry. With cookie consent, js/form.js's lead is
+    // sent from thank-you.html (lcsLead below hands it over); without consent,
+    // and on the private register's inline success, it goes from the form's own
+    // page at once. Phone, email and WhatsApp taps are contact_click events, never
+    // leads, each with its own Ads action: "WhatsApp or email click" is a
+    // primary goal (owner decision, 26 Sep 2026) and "Call click" a secondary
+    // one. Labels come from Google Ads (conversion action tag snippets).
     var LCS_ADS = {
       lead: 'AW-17988388404/RjhECKGP7akcELSMxIFD',
       call: 'AW-17988388404/HHu8CJq1x4UdELSMxIFD',
@@ -165,7 +169,7 @@
         var h1 = document.querySelector('h1');
         var page = ((h1 && h1.childNodes[0] && h1.childNodes[0].textContent) || document.title.split('|')[0]).replace(/\s+/g, ' ').trim();
         var attr = lcsAttribution();
-        var ad = attr.gclid || attr.gbraid || attr.wbraid || attr.utm_medium === 'cpc' ? ', via a Google ad' : '';
+        var ad = attr.gclid || attr.gbraid || attr.wbraid || attr.utm_medium === 'cpc' || lcsAdVisit() ? ', via a Google ad' : '';
         var source = 'your \u201c' + page + '\u201d page' + ad;
         // With cookie consent, a short reference to the ad click rides along too,
         // so a booking that starts on WhatsApp or email can be reported to Google
@@ -176,7 +180,8 @@
             ref = lcsShortRef(attr.gclid || attr.gbraid || attr.wbraid || '');
           }
         } catch (e) {}
-        // Without consent, only the landing page's name (never the click ID).
+        // Without consent, only the landing page's name and the ad's campaign
+        // (never the click ID).
         var visit = ref ? '' : lcsAdVisit();
         var tag = ref ? 'Ref: ' + ref : visit ? 'Ad visit: ' + visit : '';
         if (method === 'whatsapp') {
@@ -227,18 +232,79 @@
 
     // Ad visit without cookies: when this page's own URL holds an ad click ID
     // and the visitor has not allowed cookies, its messages and form carry the
-    // page's name ("Ad visit: weddings"), never the click ID. It lives only in
-    // this variable: nothing is stored, so the next page carries nothing.
+    // landing page's name and the ad's campaign from utm_campaign ("Ad visit:
+    // pricing (wedding-leads)"), never the click ID. Nothing is stored: the
+    // label lives in this variable, and same-site links on the page carry it in
+    // their address (lcs_av=<label>), so the next page the visitor opens knows
+    // it too and passes it on. scripts/bookings/pipeline.py reads the same format.
     function lcsAdVisitSlug(path) {
       var p = String(path || '').toLowerCase().replace(/^\/+/, '').replace(/\.html$/, '').replace(/(^|\/)index$/, '').replace(/\/+$/, '');
       if (!p) return 'home';
-      return /^[a-z0-9-]+(\/[a-z0-9-]+)*$/.test(p) ? p : 'other';
+      return p.length <= 80 && /^[a-z0-9-]+(\/[a-z0-9-]+)*$/.test(p) ? p : 'other';
     }
-    var LCS_AD_VISIT = /[?&](gclid|gbraid|wbraid)=[^&]/.test(location.search) ? lcsAdVisitSlug(location.pathname) : '';
+    function lcsAdVisitLabel() {
+      try {
+        var q = new URLSearchParams(location.search);
+        if (/[?&](gclid|gbraid|wbraid)=[^&]/.test(location.search)) {
+          var slug = lcsAdVisitSlug(location.pathname), campaign = q.get('utm_campaign') || '';
+          return /^[a-z0-9-]{1,40}$/.test(campaign) ? slug + ' (' + campaign + ')' : slug;
+        }
+        // Carried from the previous page, and only from a page of this site, so
+        // a shared or bookmarked address never counts as an ad visit.
+        var carried = q.get('lcs_av') || '';
+        var from = document.referrer ? new URL(document.referrer).origin : '';
+        // The page at most 80 characters, the campaign at most 40 (as pipeline.py's AD_VISIT_RE).
+        if (from === location.origin &&
+            /^(?=[a-z0-9\/-]{1,80}( \(|$))[a-z0-9-]+(\/[a-z0-9-]+)*( \([a-z0-9-]{1,40}\))?$/.test(carried)) return carried;
+      } catch (e) {}
+      return '';
+    }
+    var LCS_AD_VISIT = lcsAdVisitLabel();
     function lcsAdVisit() {
       if (!LCS_AD_VISIT) return '';
-      try { if (localStorage.getItem('lcs-consent') === 'granted') return ''; } catch (e) {}
+      // Once cookies are allowed the click reference (lcsAttribution) takes over, but only if there is one: a
+      // visitor who accepts on a later page has no click ID left, so the label stays.
+      try {
+        if (localStorage.getItem('lcs-consent') === 'granted') {
+          var a = lcsAttribution();
+          if (a.gclid || a.gbraid || a.wbraid) return '';
+        }
+      } catch (e) {}
       return LCS_AD_VISIT;
+    }
+    // Same-site page links (.html or folder addresses) get lcs_av=<label> at
+    // run time, for ad visitors only, so crawlers never see it. Never tel:,
+    // mailto:, WhatsApp, other sites or links within the page. Once the visitor
+    // allows cookies the label comes off again where a click ID remains
+    // (lcsAttribution takes over); after accepting on a later page it stays.
+    function lcsCarryAdVisit(a) {
+      try {
+        var raw = a.getAttribute('href') || '';
+        if (!raw || raw.charAt(0) === '#' || /^(tel|mailto|sms|javascript):/i.test(raw) ||
+            raw.indexOf('wa.me/') !== -1 || a.hasAttribute('download')) return;
+        var url = new URL(raw, location.href);
+        if (url.origin !== location.origin || !/(\.html|\/)$/.test(url.pathname)) return;
+        var visit = lcsAdVisit();
+        if (visit) url.searchParams.set('lcs_av', visit);
+        else if (url.searchParams.has('lcs_av')) url.searchParams.delete('lcs_av');
+        else return;
+        a.setAttribute('href', url.pathname + url.search + url.hash);
+      } catch (e) {}
+    }
+    if (LCS_AD_VISIT) {
+      var lcsCarryAll = function() {
+        if (lcsAdVisit()) Array.prototype.forEach.call(document.querySelectorAll('a[href]'), lcsCarryAdVisit);
+      };
+      if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', lcsCarryAll);
+      else lcsCarryAll();
+      // Links added later, and a choice made on the cookie sheet since, are
+      // settled as each link is used.
+      ['click', 'auxclick', 'contextmenu'].forEach(function(evt) {
+        document.addEventListener(evt, function(e) {
+          var a = e.target.closest && e.target.closest('a[href]');
+          if (a) lcsCarryAdVisit(a);
+        }, true);
+      });
     }
     // The click IDs in this page's own URL, for an enquiry whose sender ticked
     // the form's ad-measurement box (read at submit, never stored).
@@ -267,7 +333,7 @@
   <!-- @include-end partials/analytics.html -->
 
   <title>Funeral and wedding choirs in Reading | LCS</title>
-  <meta name="description" content="Hire conservatoire-trained singers for funerals, weddings, and memorials in Reading and Berkshire. The London Choral Service offers soloists from £250.">
+  <meta name="description" content="Funeral singers and wedding choirs in Reading and Berkshire, from Reading Minster to the crematorium at Henley Road, Caversham. Soloists from £250.">
   <meta name="theme-color" content="#F7F3EE">
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://londonchoralservice.com/areas/reading.html">
@@ -275,7 +341,7 @@
   <link rel="alternate" hreflang="x-default" href="https://londonchoralservice.com/areas/reading.html">
 
   <meta property="og:title" content="Funeral and wedding choirs in Reading | LCS">
-  <meta property="og:description" content="Hire conservatoire-trained singers for funerals, weddings, and memorials in Reading and Berkshire. The London Choral Service offers soloists from £250.">
+  <meta property="og:description" content="Funeral singers and wedding choirs in Reading and Berkshire, from Reading Minster to the crematorium at Henley Road, Caversham. Soloists from £250.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://londonchoralservice.com/areas/reading.html">
   <meta property="og:locale" content="en_GB">
@@ -287,7 +353,7 @@
 
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Funeral and wedding choirs in Reading | LCS">
-  <meta name="twitter:description" content="Hire conservatoire-trained singers for funerals, weddings, and memorials in Reading and Berkshire. The London Choral Service offers soloists from £250.">
+  <meta name="twitter:description" content="Funeral singers and wedding choirs in Reading and Berkshire, from Reading Minster to the crematorium at Henley Road, Caversham. Soloists from £250.">
   <meta name="twitter:image" content="https://londonchoralservice.com/assets/og/areas-reading.png">
   <meta name="twitter:image:alt" content="The London Choral Service: Funeral &amp; Wedding Choirs in Reading. Live singers for churches, crematoria and carol services">
   <link rel="dns-prefetch" href="https://www.googletagmanager.com">
@@ -3003,7 +3069,7 @@
             "name": "Berkshire"
           }
         },
-        "description": "Hire conservatoire-trained singers for funerals, weddings, and memorials in Reading and Berkshire. The London Choral Service offers soloists from £250.",
+        "description": "Funeral singers and wedding choirs in Reading and Berkshire, from Reading Minster to the crematorium at Henley Road, Caversham. Soloists from £250.",
         "url": "https://londonchoralservice.com/areas/reading.html",
         "serviceType": [
           "Funeral Music",
@@ -3061,7 +3127,7 @@
             "name": "Can you provide a wedding choir at Reading Minster or a Thames Valley church?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Yes. Our wedding choirs perform at Reading Minster, St Giles' Church, and the lovely parish churches in Sonning, Pangbourne, Goring, and Henley-on-Thames. We also sing at civil ceremony venues and riverside hotels across the Thames Valley, and we tailor the ensemble and repertoire to suit your ceremony."
+              "text": "Yes. Our wedding choirs perform at Reading Minster, St Giles' Church, and the parish churches in Sonning, Pangbourne, Goring, and Henley-on-Thames. We also sing at civil ceremony venues and riverside hotels across the Thames Valley, and we tailor the ensemble and repertoire to suit your ceremony."
             }
           },
           {
@@ -3077,7 +3143,7 @@
             "name": "Do you cover Reading Crematorium at Henley Road?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Yes. We sing regularly at Reading Crematorium at Henley Road, Caversham, and our musicians are well accustomed to its timing and acoustic. We liaise directly with crematorium staff and your funeral director so the music fits the service exactly."
+              "text": "Yes. We sing at Reading Crematorium at Henley Road, Caversham, and our musicians know its timing and acoustic. We speak to the crematorium staff and your funeral director beforehand so the music fits the running order."
             }
           },
           {
@@ -3085,7 +3151,7 @@
             "name": "Can you send carol singers to Reading and Berkshire events at Christmas?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Yes. We provide carol services and roaming carol singers for offices, hotels, and residents' Christmas events across Reading and Berkshire. December is our busiest month, and dates usually start to fill by mid-September, so we'd suggest enquiring in good time. Our Christmas page has full details."
+              "text": "Yes. We sing carols in offices, hotel lobbies, community halls and residents' Christmas events across Reading and Berkshire, and lead carol services for churches and companies. December is our busiest month, and Berkshire dates begin to go from mid-September. Our Christmas page has full details."
             }
           }
         ]
@@ -3165,9 +3231,9 @@
             <li>Reading</li>
           </ol>
         </nav>
-        <h1>Funeral and wedding choirs in Reading</h1>
+        <h1>Reading Minster to Henley Road: choirs for funerals and weddings</h1>
         <p class="guide-meta">Musicians selected by Luca Wetherall, Artistic Director &amp; Tutor in Music, University of Oxford &mdash; <a href="/luca-wetherall.html">read more about our team</a>.</p>
-        <p class="lede">Reading sits at the heart of Berkshire, where the Kennet meets the Thames and centuries-old churches stand alongside a modern, growing town. The London Choral Service provides professional singers, choirs, and instrumentalists for funerals, weddings, memorials, and ceremonies across Reading and the surrounding Berkshire countryside. Every musician on our team is conservatoire-trained, and every performance is shaped with care around the service and its setting.</p>
+        <p class="lede">Reading sits at the heart of Berkshire, where the Kennet meets the Thames and centuries-old churches stand alongside a modern, growing town. Our conservatoire-trained singers, choirs and instrumentalists perform at funerals, weddings and memorials in Reading, Caversham and Tilehurst, out to Wokingham and Woodley, and along the Thames at Sonning and Pangbourne.</p>
         <hr class="rule">
       </div>
     </section>
@@ -3175,15 +3241,15 @@
     <section class="section" style="padding-block-start: var(--space-2xl)">
       <div class="prose">
         <h2>Funeral music in Reading</h2>
-        <p>Losing someone you love leaves a kind of silence that nothing quite fills. Choosing music for their funeral, in the middle of grief, can feel like an impossible task. We understand that, and we are here to carry that weight for you. Our singers perform at <a href="../services.html">funerals and memorial services</a> across Reading and Berkshire&thinsp;&mdash;&thinsp;at Reading Minster (St Mary&rsquo;s), whose medieval nave has held generations of farewells, at St Giles&rsquo; Church with its peaceful setting near the town centre, and at Reading Crematorium at Henley Road, Caversham. We also cover parish churches right across the county, from Caversham and Tilehurst to Wokingham, Woodley, and beyond.</p>
-        <p>Perhaps you would like a soprano singing <em>Pie Jesu</em> as mourners arrive, or a small choir to lead the congregation through <em>The Lord&rsquo;s My Shepherd</em>. Perhaps a lone cellist playing softly as the coffin is carried in would feel more fitting. Whatever you have in mind&thinsp;&mdash;&thinsp;or even if you have no idea where to begin&thinsp;&mdash;&thinsp;we will guide you gently towards music that honours the person you are saying goodbye to. Our <a href="../music-guides/funeral-music-guide.html">funeral music guide</a> offers suggestions for hymns, solos, and choral works, with notes on when each works best. You are also always welcome to telephone us; there is never any obligation, and we are happy simply to listen and talk things through.</p>
+        <p>Losing someone you love leaves a kind of silence that nothing quite fills. Choosing music for their funeral, in the middle of grief, can feel like an impossible task. We understand that, and we are here to carry that weight for you. Our singers perform at <a href="../services.html">funerals and memorial services</a> across Reading and Berkshire: at Reading Minster (St Mary&rsquo;s), with its medieval nave, at St Giles&rsquo; Church near the town centre, and at Reading Crematorium at Henley Road, Caversham. We also cover parish churches right across the county, from Caversham and Tilehurst to Wokingham, Woodley, and beyond.</p>
+        <p>Perhaps you would like a soprano singing <em>Pie Jesu</em> as mourners arrive, or a small choir to lead the congregation through <em>The Lord&rsquo;s My Shepherd</em>. Perhaps a lone cellist playing softly as the coffin is carried in would feel more fitting. Whatever you have in mind, or if you have no idea where to begin, we will help you choose music for the person you are saying goodbye to. Our <a href="../music-guides/funeral-music-guide.html">funeral music guide</a> offers suggestions for hymns, solos, and choral works, with notes on when each works best. You are welcome to telephone us; there is no obligation, and we are happy to listen and talk things through.</p>
 
         <h2>Wedding music in Reading</h2>
-        <p>Reading and the wider Thames Valley have a wide range of wedding settings. Reading Minster gives you a grand, historic backdrop; the parish churches across Berkshire &mdash; in Sonning, Pangbourne, Goring, and Henley-on-Thames &mdash; offer something more intimate. For civil ceremonies at riverside hotels and country houses, a live choir does what a recording cannot: give the hymns a lead the congregation can follow without embarrassment, and follow them with a piece during the signing of the register that guests will go on talking about over dinner. Our choirs and soloists perform throughout the ceremony: the processional as you walk down the aisle, the hymns that bring the room together, a reflective piece during the signing of the register, and a recessional to carry you back down the aisle.</p>
+        <p>Reading and the wider Thames Valley have a wide range of wedding settings. Reading Minster gives you a grand, historic backdrop; the parish churches in Sonning, Pangbourne, Goring, and Henley-on-Thames work on a smaller scale. Riverside hotels and country houses along the Thames host civil ceremonies. In church, our choirs and soloists sing the processional as you walk down the aisle, give the hymns a lead the congregation can follow without embarrassment, sing one reflective piece while you sign the register, and send you back down the aisle with a recessional.</p>
         <p>We work with each couple to find music that fits them: traditional hymns, a contemporary arrangement of a favourite song, or a piece with particular meaning to you both. If you are still exploring your options, our guide to <a href="../music-guides/choosing-wedding-hymns.html">choosing wedding hymns</a> is a helpful starting point, covering popular choices alongside a few less obvious pieces that have worked well for our couples.</p>
 
         <h2>Ensembles &amp; pricing</h2>
-        <p>We offer everything from a single soloist to a full choir of up to twelve voices, and can pair singers with an organist, harpist, or string quartet. Every musician is hand-picked from our conservatoire-trained team. Because no two occasions are alike, we encourage you to tell us a little about what you have in mind so we can recommend the right ensemble and provide an accurate quote. Full details of our standard packages are on our <a href="../pricing.html">pricing page</a>, or simply get in touch and we&rsquo;ll tailor something to your needs.</p>
+        <p>We offer everything from a single soloist to a full choir of up to twelve voices, and can pair singers with an organist, harpist, or string quartet. Every musician is hand-picked from our conservatoire-trained team. Because the right ensemble depends on the venue and the service, we encourage you to tell us a little about what you have in mind so we can recommend the right ensemble and provide an accurate quote. Full details of our standard packages are on our <a href="../pricing.html">pricing page</a>, or get in touch and we&rsquo;ll tailor something to your needs.</p>
 
         <figure class="pull-quote">
           <blockquote>
@@ -3201,16 +3267,16 @@
         <p>A soloist in Reading starts from £250, a choir of four is £1,150, a choir of five £1,400, a choir of six £1,600, and a full choir of eight £2,000. Reading is within comfortable reach of London, though a small travel supplement may apply for venues further out in Berkshire. Liaison with your funeral director comes within the fee.</p>
 
         <h3>Can you provide a wedding choir at Reading Minster or a Thames Valley church?</h3>
-        <p>Yes. Our wedding choirs perform at Reading Minster, St Giles' Church, and the lovely parish churches in Sonning, Pangbourne, Goring, and Henley-on-Thames. We also sing at civil ceremony venues and riverside hotels across the Thames Valley, and we tailor the ensemble and repertoire to suit your ceremony.</p>
+        <p>Yes. Our wedding choirs perform at Reading Minster, St Giles' Church, and the parish churches in Sonning, Pangbourne, Goring, and Henley-on-Thames. We also sing at civil ceremony venues and riverside hotels across the Thames Valley, and we tailor the ensemble and repertoire to suit your ceremony.</p>
 
         <h3>What funeral music do you perform at Reading Minster or Henley Road?</h3>
         <p>At a Reading funeral we sing traditional hymns, classical sacred works and contemporary songs. The medieval nave of Reading Minster gives choral music room to carry, while services at Reading Crematorium at Henley Road often suit a soloist or smaller ensemble. We are happy to arrange a family favourite for the singers or for an instrument.</p>
 
         <h3>Do you cover Reading Crematorium at Henley Road?</h3>
-        <p>Yes. We sing regularly at Reading Crematorium at Henley Road, Caversham, and our musicians are well accustomed to its timing and acoustic. We liaise directly with crematorium staff and your funeral director so the music fits the service exactly.</p>
+        <p>Yes. We sing at Reading Crematorium at Henley Road, Caversham, and our musicians know its timing and acoustic. We speak to the crematorium staff and your funeral director beforehand so the music fits the running order.</p>
 
         <h3>Can you send carol singers to Reading and Berkshire events at Christmas?</h3>
-        <p>Yes. We provide carol services and roaming carol singers for offices, hotels, and residents&rsquo; Christmas events across Reading and Berkshire. December is our busiest month, and dates usually start to fill by mid-September, so we&rsquo;d suggest enquiring in good time. Our <a href="../christmas.html">Christmas page</a> has full details.</p>
+        <p>Yes. We sing carols in offices, hotel lobbies, community halls and residents&rsquo; Christmas events across Reading and Berkshire, and lead carol services for churches and companies. December is our busiest month, and Berkshire dates begin to go from mid-September. Our <a href="../christmas.html">Christmas page</a> has full details.</p>
 
         <p>For services from Reading Minster to Caversham, our <a href="../music-guides/funeral-music-guide.html">funeral music guide</a> and <a href="../music-guides/popular-funeral-hymns.html">popular funeral hymns</a> help with choosing, the <a href="../music-guides/funeral-music-costs.html">funeral music costs guide</a> sets out fees, and couples have our <a href="../music-guides/choosing-wedding-hymns.html">wedding hymns guide</a>.</p>
 

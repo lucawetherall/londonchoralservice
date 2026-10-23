@@ -65,11 +65,15 @@
       window.addEventListener(evt, loadGA, { once: true, passive: true });
     });
 
-    // Conversion tracking. A lead is one "Submit lead form" conversion, fired by
-    // js/form.js and js/private-events.js only after Web3Forms accepts the
-    // enquiry. Phone, email and WhatsApp taps are contact_click events (their
-    // own secondary Ads actions "Call click" and "WhatsApp or email click"),
-    // never leads. Labels come from Google Ads (conversion action tag snippets).
+    // Conversion tracking. A lead is one "Submit lead form" conversion plus a GA4
+    // generate_lead, started by js/form.js and js/private-events.js only after
+    // Web3Forms accepts the enquiry. With cookie consent, js/form.js's lead is
+    // sent from thank-you.html (lcsLead below hands it over); without consent,
+    // and on the private register's inline success, it goes from the form's own
+    // page at once. Phone, email and WhatsApp taps are contact_click events, never
+    // leads, each with its own Ads action: "WhatsApp or email click" is a
+    // primary goal (owner decision, 26 Sep 2026) and "Call click" a secondary
+    // one. Labels come from Google Ads (conversion action tag snippets).
     var LCS_ADS = {
       lead: 'AW-17988388404/RjhECKGP7akcELSMxIFD',
       call: 'AW-17988388404/HHu8CJq1x4UdELSMxIFD',
@@ -165,7 +169,7 @@
         var h1 = document.querySelector('h1');
         var page = ((h1 && h1.childNodes[0] && h1.childNodes[0].textContent) || document.title.split('|')[0]).replace(/\s+/g, ' ').trim();
         var attr = lcsAttribution();
-        var ad = attr.gclid || attr.gbraid || attr.wbraid || attr.utm_medium === 'cpc' ? ', via a Google ad' : '';
+        var ad = attr.gclid || attr.gbraid || attr.wbraid || attr.utm_medium === 'cpc' || lcsAdVisit() ? ', via a Google ad' : '';
         var source = 'your \u201c' + page + '\u201d page' + ad;
         // With cookie consent, a short reference to the ad click rides along too,
         // so a booking that starts on WhatsApp or email can be reported to Google
@@ -176,7 +180,8 @@
             ref = lcsShortRef(attr.gclid || attr.gbraid || attr.wbraid || '');
           }
         } catch (e) {}
-        // Without consent, only the landing page's name (never the click ID).
+        // Without consent, only the landing page's name and the ad's campaign
+        // (never the click ID).
         var visit = ref ? '' : lcsAdVisit();
         var tag = ref ? 'Ref: ' + ref : visit ? 'Ad visit: ' + visit : '';
         if (method === 'whatsapp') {
@@ -227,18 +232,79 @@
 
     // Ad visit without cookies: when this page's own URL holds an ad click ID
     // and the visitor has not allowed cookies, its messages and form carry the
-    // page's name ("Ad visit: weddings"), never the click ID. It lives only in
-    // this variable: nothing is stored, so the next page carries nothing.
+    // landing page's name and the ad's campaign from utm_campaign ("Ad visit:
+    // pricing (wedding-leads)"), never the click ID. Nothing is stored: the
+    // label lives in this variable, and same-site links on the page carry it in
+    // their address (lcs_av=<label>), so the next page the visitor opens knows
+    // it too and passes it on. scripts/bookings/pipeline.py reads the same format.
     function lcsAdVisitSlug(path) {
       var p = String(path || '').toLowerCase().replace(/^\/+/, '').replace(/\.html$/, '').replace(/(^|\/)index$/, '').replace(/\/+$/, '');
       if (!p) return 'home';
-      return /^[a-z0-9-]+(\/[a-z0-9-]+)*$/.test(p) ? p : 'other';
+      return p.length <= 80 && /^[a-z0-9-]+(\/[a-z0-9-]+)*$/.test(p) ? p : 'other';
     }
-    var LCS_AD_VISIT = /[?&](gclid|gbraid|wbraid)=[^&]/.test(location.search) ? lcsAdVisitSlug(location.pathname) : '';
+    function lcsAdVisitLabel() {
+      try {
+        var q = new URLSearchParams(location.search);
+        if (/[?&](gclid|gbraid|wbraid)=[^&]/.test(location.search)) {
+          var slug = lcsAdVisitSlug(location.pathname), campaign = q.get('utm_campaign') || '';
+          return /^[a-z0-9-]{1,40}$/.test(campaign) ? slug + ' (' + campaign + ')' : slug;
+        }
+        // Carried from the previous page, and only from a page of this site, so
+        // a shared or bookmarked address never counts as an ad visit.
+        var carried = q.get('lcs_av') || '';
+        var from = document.referrer ? new URL(document.referrer).origin : '';
+        // The page at most 80 characters, the campaign at most 40 (as pipeline.py's AD_VISIT_RE).
+        if (from === location.origin &&
+            /^(?=[a-z0-9\/-]{1,80}( \(|$))[a-z0-9-]+(\/[a-z0-9-]+)*( \([a-z0-9-]{1,40}\))?$/.test(carried)) return carried;
+      } catch (e) {}
+      return '';
+    }
+    var LCS_AD_VISIT = lcsAdVisitLabel();
     function lcsAdVisit() {
       if (!LCS_AD_VISIT) return '';
-      try { if (localStorage.getItem('lcs-consent') === 'granted') return ''; } catch (e) {}
+      // Once cookies are allowed the click reference (lcsAttribution) takes over, but only if there is one: a
+      // visitor who accepts on a later page has no click ID left, so the label stays.
+      try {
+        if (localStorage.getItem('lcs-consent') === 'granted') {
+          var a = lcsAttribution();
+          if (a.gclid || a.gbraid || a.wbraid) return '';
+        }
+      } catch (e) {}
       return LCS_AD_VISIT;
+    }
+    // Same-site page links (.html or folder addresses) get lcs_av=<label> at
+    // run time, for ad visitors only, so crawlers never see it. Never tel:,
+    // mailto:, WhatsApp, other sites or links within the page. Once the visitor
+    // allows cookies the label comes off again where a click ID remains
+    // (lcsAttribution takes over); after accepting on a later page it stays.
+    function lcsCarryAdVisit(a) {
+      try {
+        var raw = a.getAttribute('href') || '';
+        if (!raw || raw.charAt(0) === '#' || /^(tel|mailto|sms|javascript):/i.test(raw) ||
+            raw.indexOf('wa.me/') !== -1 || a.hasAttribute('download')) return;
+        var url = new URL(raw, location.href);
+        if (url.origin !== location.origin || !/(\.html|\/)$/.test(url.pathname)) return;
+        var visit = lcsAdVisit();
+        if (visit) url.searchParams.set('lcs_av', visit);
+        else if (url.searchParams.has('lcs_av')) url.searchParams.delete('lcs_av');
+        else return;
+        a.setAttribute('href', url.pathname + url.search + url.hash);
+      } catch (e) {}
+    }
+    if (LCS_AD_VISIT) {
+      var lcsCarryAll = function() {
+        if (lcsAdVisit()) Array.prototype.forEach.call(document.querySelectorAll('a[href]'), lcsCarryAdVisit);
+      };
+      if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', lcsCarryAll);
+      else lcsCarryAll();
+      // Links added later, and a choice made on the cookie sheet since, are
+      // settled as each link is used.
+      ['click', 'auxclick', 'contextmenu'].forEach(function(evt) {
+        document.addEventListener(evt, function(e) {
+          var a = e.target.closest && e.target.closest('a[href]');
+          if (a) lcsCarryAdVisit(a);
+        }, true);
+      });
     }
     // The click IDs in this page's own URL, for an enquiry whose sender ticked
     // the form's ad-measurement box (read at submit, never stored).
@@ -267,7 +333,7 @@
   <!-- @include-end partials/analytics.html -->
 
   <title>Funeral and wedding choirs in the City of London | LCS</title>
-  <meta name="description" content="Hire conservatoire-trained singers for funerals, weddings, and memorials in the City of London. Soloists and choirs from £250. Enquire with us today.">
+  <meta name="description" content="Funeral and wedding choirs in the City of London: Temple Church, St Bartholomew-the-Great and livery hall carol services. Soloists from £250, choirs from £1,150.">
   <meta name="theme-color" content="#F7F3EE">
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://londonchoralservice.com/areas/london/city-of-london.html">
@@ -275,7 +341,7 @@
   <link rel="alternate" hreflang="x-default" href="https://londonchoralservice.com/areas/london/city-of-london.html">
 
   <meta property="og:title" content="Funeral and wedding choirs in the City of London | LCS">
-  <meta property="og:description" content="Hire conservatoire-trained singers for funerals, weddings, and memorials in the City of London. Soloists and choirs from £250. Enquire with us today.">
+  <meta property="og:description" content="Funeral and wedding choirs in the City of London: Temple Church, St Bartholomew-the-Great and livery hall carol services. Soloists from £250, choirs from £1,150.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://londonchoralservice.com/areas/london/city-of-london.html">
   <meta property="og:locale" content="en_GB">
@@ -287,7 +353,7 @@
 
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Funeral and wedding choirs in the City of London | LCS">
-  <meta name="twitter:description" content="Hire conservatoire-trained singers for funerals, weddings, and memorials in the City of London. Soloists and choirs from £250. Enquire with us today.">
+  <meta name="twitter:description" content="Funeral and wedding choirs in the City of London: Temple Church, St Bartholomew-the-Great and livery hall carol services. Soloists from £250, choirs from £1,150.">
   <meta name="twitter:image" content="https://londonchoralservice.com/assets/og/areas-london-city-of-london.png">
   <meta name="twitter:image:alt" content="The London Choral Service: Funeral &amp; Wedding Choirs in the City of London. Live singers for churches, crematoria and carol services">
   <link rel="dns-prefetch" href="https://www.googletagmanager.com">
@@ -3057,7 +3123,7 @@
         "mainEntity": [
           {
             "@type": "Question",
-            "name": "How much does a funeral singer cost in City of London?",
+            "name": "What does a funeral choir cost at Temple Church or St Bartholomew-the-Great?",
             "acceptedAnswer": {
               "@type": "Answer",
               "text": "For a funeral at Temple Church, St Bartholomew-the-Great, or any other City venue, a soloist starts from £250. Larger ensembles are £1,150 for four voices, £1,400 for a quintet, £1,600 for a sextet, and £2,000 for a full choir of eight. Travel into the Square Mile is part of the fee, since the City lies within Greater London."
@@ -3076,7 +3142,7 @@
             "name": "Can a City of London funeral have live singers at the Manor Park crematorium?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Yes. The City of London Crematorium in Manor Park is the nearest crematorium, and we sing there regularly. Our singers are practised at working within fixed crematorium time slots and agree the timings with the Manor Park staff before the service."
+              "text": "Yes. The City of London Crematorium in Manor Park is the nearest crematorium, and we sing there. Our singers are practised at working within fixed crematorium time slots and agree the timings with the Manor Park staff before the service."
             }
           }
         ]
@@ -3157,7 +3223,7 @@
             <li>City of London</li>
           </ol>
         </nav>
-        <h1>Funeral and wedding choirs in the City of London</h1>
+        <h1>City of London choirs, from Temple Church to the livery halls</h1>
         <p class="guide-meta">Musicians selected by Luca Wetherall, Artistic Director &amp; Tutor in Music, University of Oxford &mdash; <a href="/luca-wetherall.html">read more about our team</a>.</p>
         <p class="lede">The Square Mile is home to some of the finest ecclesiastical architecture in England. We provide professional singers and choirs for funerals, weddings, and memorial services at the City&rsquo;s historic churches and livery halls.</p>
         <hr class="rule">
@@ -3167,19 +3233,19 @@
     <section class="section">
       <div class="prose">
         <h2>Funerals at St&nbsp;Paul&rsquo;s, Temple Church and the City&rsquo;s parish churches</h2>
-        <p>The City of London&rsquo;s ancient churches provide dignified and beautiful settings for funeral and memorial services. St&nbsp;Paul&rsquo;s Cathedral, Wren&rsquo;s masterpiece on Ludgate Hill, is one of the most awe-inspiring spaces in which our singers perform. Its vast dome and magnificent acoustic call for musicians who can fill the space with confidence and reverence&thinsp;&mdash;&thinsp;qualities our ensembles bring to every service.</p>
+        <p>The City of London&rsquo;s ancient churches provide dignified and beautiful settings for funeral and memorial services. St&nbsp;Paul&rsquo;s Cathedral, Wren&rsquo;s church on Ludgate Hill, has its own choir, and we sing there only with the cathedral&rsquo;s permission, as a separate ensemble. Its vast dome and resonant acoustic need singers who can fill the space with confidence.</p>
 
-        <p>Beyond St&nbsp;Paul&rsquo;s, we regularly provide funeral singers at Temple Church, the round church of the Knights Templar that sits between Fleet Street and the Thames. Its remarkable acoustic rewards careful, skilful singing. We also serve families holding services at St&nbsp;Bartholomew-the-Great in Smithfield, London&rsquo;s oldest surviving parish church, and at St&nbsp;Mary-le-Bow on Cheapside&thinsp;&mdash;&thinsp;the church whose bells traditionally define a true Cockney. For families who prefer a non-religious setting, the City of London Crematorium in Manor Park offers a peaceful alternative, and our singers are experienced in providing music for services there.</p>
+        <p>Beyond St&nbsp;Paul&rsquo;s, we provide funeral singers at Temple Church, the round church of the Knights Templar that sits between Fleet Street and the Thames. Its round nave rewards careful, skilful singing. We also serve families holding services at St&nbsp;Bartholomew-the-Great in Smithfield, London&rsquo;s oldest surviving parish church, and at St&nbsp;Mary-le-Bow on Cheapside, the church whose bells traditionally define a true Cockney. For families who prefer a non-religious setting, the City of London Crematorium in Manor Park offers a peaceful alternative, and our singers are experienced in providing music for services there.</p>
 
-        <p>Planning a funeral or memorial in the City can feel daunting, but we handle the music from first enquiry to the day itself. Our <a href="../../music-guides/funeral-music-guide.html">funeral music guide</a> offers practical advice, or you are welcome to <a href="../../contact.html">contact us directly</a> to talk through your needs.</p>
+        <p>Planning a funeral or memorial in the City can feel daunting, but we handle the music from first enquiry to the day itself. Our <a href="../../music-guides/funeral-music-guide.html">funeral music guide</a> offers practical advice, or you are welcome to <a href="../../contact.html">contact us</a> to talk through your needs.</p>
 
         <h2>Livery halls and City carol services</h2>
-        <p>Livery companies and City institutions <a href="../../christmas.html">book carol singers</a> every December, often pairing <a href="../../christmas-carol-services.html">a Christmas carol service</a> in a Square Mile church with a reception in a livery hall afterwards. Our singers are equally at home processing through a hall between courses or holding a formal programme in the nave. We offer <a href="../../for-livery-companies.html">carol services for livery companies</a> throughout the Square Mile, and December books out well ahead of the festive season, so early contact matters here more than almost anywhere else we work.</p>
+        <p>Livery companies and City institutions <a href="../../christmas.html">book carol singers</a> every December, often pairing <a href="../../christmas-carol-services.html">a Christmas carol service</a> in a Square Mile church with a reception in a livery hall afterwards. Our singers can process through a hall between courses or hold a formal programme in the nave. We offer <a href="../../for-livery-companies.html">carol services for livery companies</a> throughout the Square Mile, and livery dates book early, so the summer is the time to get in touch.</p>
 
         <h2>Weddings at Temple Church and St&nbsp;Bartholomew-the-Great</h2>
-        <p>The City&rsquo;s churches offer magnificent settings for weddings, and a professional choir gives the ceremony a sound to match the setting. Temple Church is a particularly sought-after wedding venue, its Norman round nave one of the few medieval round naves left in England. St&nbsp;Bartholomew-the-Great and the Dutch Church at Austin Friars are strong choices too, each with its own character and acoustic.</p>
+        <p>Several of the City&rsquo;s churches hold weddings, and a professional choir can lead the hymns and sing while you sign the register. Temple Church is a sought-after wedding venue, its Norman round nave one of the few medieval round naves left in England. St&nbsp;Bartholomew-the-Great and the Dutch Church at Austin Friars are strong choices too, each with its own character and acoustic.</p>
 
-        <p>Our wedding choirs range from small vocal ensembles to larger groups, and we tailor the repertoire to reflect each couple&rsquo;s tastes&thinsp;&mdash;&thinsp;whether that means traditional Anglican hymns, Renaissance polyphony, or contemporary songs arranged for voices. For ideas and inspiration, explore our guide to <a href="../../music-guides/choosing-wedding-hymns.html">choosing wedding hymns</a>.</p>
+        <p>Our wedding choirs range from small vocal ensembles to larger groups, and we tailor the repertoire to reflect each couple&rsquo;s tastes, whether that means traditional Anglican hymns, Renaissance polyphony, or contemporary songs arranged for voices. For ideas and inspiration, explore our guide to <a href="../../music-guides/choosing-wedding-hymns.html">choosing wedding hymns</a>.</p>
 
         <figure class="pull-quote">
           <blockquote>
@@ -3190,18 +3256,18 @@
 
         <h2>Questions about the Square Mile</h2>
 
-        <h3>How much does a funeral singer cost in City of London?</h3>
+        <h3>What does a funeral choir cost at Temple Church or St&nbsp;Bartholomew-the-Great?</h3>
         <p>For a funeral at Temple Church, St&nbsp;Bartholomew-the-Great, or any other City venue, a soloist starts from &pound;250. Larger ensembles are &pound;1,150 for four voices, &pound;1,400 for a quintet, &pound;1,600 for a sextet, and &pound;2,000 for a full choir of eight. Travel into the Square Mile is part of the fee, since the City lies within Greater London.</p>
 
         <h3>Can the choir sing a carol service in a church and then at a livery hall reception?</h3>
         <p>Yes. Livery companies often pair a carol service in a Square Mile church with a reception in their hall, and our singers can hold a formal programme in the nave and then process through the hall between courses. Livery dates book early, so enquiries are best made in the summer.</p>
 
         <h3>Can a City of London funeral have live singers at the Manor Park crematorium?</h3>
-        <p>Yes. The City of London Crematorium in Manor Park is the nearest crematorium, and we sing there regularly. Our singers are practised at working within fixed crematorium time slots and agree the timings with the Manor Park staff before the service.</p>
+        <p>Yes. The City of London Crematorium in Manor Park is the nearest crematorium, and we sing there. Our singers are practised at working within fixed crematorium time slots and agree the timings with the Manor Park staff before the service.</p>
 
         <p>Families planning a service at Temple Church or St&nbsp;Bartholomew-the-Great can read our <a href="../../music-guides/funeral-music-guide.html">funeral music guide</a>, browse <a href="../../music-guides/popular-funeral-hymns.html">popular funeral hymns</a> or check fees in the <a href="../../music-guides/funeral-music-costs.html">funeral music costs guide</a>; our <a href="../../music-guides/choosing-wedding-hymns.html">wedding hymns guide</a> is for couples marrying in the Square Mile.</p>
 
-        <p><a href="../../contact.html" class="btn-link">Get in touch about your occasion in the City of London</a></p>
+        <p><a href="../../contact.html" class="btn-link">Talk to us about a service in the Square Mile</a></p>
       </div>
     </section>
 

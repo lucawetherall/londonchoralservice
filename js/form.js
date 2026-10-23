@@ -18,6 +18,37 @@
     captchaBox.setAttribute('data-size', 'compact');
   }
 
+  // Web3Forms' client script only adds the hCaptcha widget, whose scripts and
+  // images come to about 1 MB. Fetch it as the form comes within 800px of the
+  // screen, or as soon as the visitor clicks or tabs into the form, so it stays
+  // out of the page's first paint. Pages still carrying the script tag skip it.
+  var CAPTCHA_LOADER = 'https://web3forms.com/client/script.js';
+  var captchaRequested = false;
+  function loadCaptcha() {
+    if (captchaRequested) return;
+    captchaRequested = true;
+    if (document.querySelector('script[src="' + CAPTCHA_LOADER + '"]')) return;
+    var s = document.createElement('script');
+    s.src = CAPTCHA_LOADER;
+    s.async = true;
+    document.body.appendChild(s);
+  }
+  if (captchaBox) {
+    form.addEventListener('focusin', loadCaptcha);
+    form.addEventListener('pointerdown', loadCaptcha);
+    if ('IntersectionObserver' in window) {
+      var captchaWatch = new IntersectionObserver(function (entries) {
+        if (entries.some(function (en) { return en.isIntersecting; })) {
+          captchaWatch.disconnect();
+          loadCaptcha();
+        }
+      }, { rootMargin: '800px 0px' });
+      captchaWatch.observe(form);
+    } else {
+      loadCaptcha();
+    }
+  }
+
   // The visitor's own occasion choice beats the page's default (?from= on the
   // redirect), so a hotel enquiry about a switch-on isn't logged as "christmas".
   function leadOccasion() {
@@ -147,9 +178,10 @@
       var attr = window.lcsAttribution();
       Object.keys(attr).forEach(function (k) { if (!data[k]) data[k] = attr[k]; });
     }
-    // Without consent: the landing page's name when this page's URL came from
-    // an ad (never the click ID), and the click ID itself only if the sender
-    // ticked the ad-measurement box (ad_measurement=yes). Nothing is stored.
+    // Without consent: the ad visit label when this visit came from an ad
+    // (the landing page and campaign, "pricing (wedding-leads)", never the
+    // click ID), and the click ID itself only if the sender ticked the
+    // ad-measurement box (ad_measurement=yes). Nothing is stored.
     if (!consented) {
       try {
         if (typeof window.lcsAdVisit === 'function') {

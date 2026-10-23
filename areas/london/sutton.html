@@ -65,11 +65,15 @@
       window.addEventListener(evt, loadGA, { once: true, passive: true });
     });
 
-    // Conversion tracking. A lead is one "Submit lead form" conversion, fired by
-    // js/form.js and js/private-events.js only after Web3Forms accepts the
-    // enquiry. Phone, email and WhatsApp taps are contact_click events (their
-    // own secondary Ads actions "Call click" and "WhatsApp or email click"),
-    // never leads. Labels come from Google Ads (conversion action tag snippets).
+    // Conversion tracking. A lead is one "Submit lead form" conversion plus a GA4
+    // generate_lead, started by js/form.js and js/private-events.js only after
+    // Web3Forms accepts the enquiry. With cookie consent, js/form.js's lead is
+    // sent from thank-you.html (lcsLead below hands it over); without consent,
+    // and on the private register's inline success, it goes from the form's own
+    // page at once. Phone, email and WhatsApp taps are contact_click events, never
+    // leads, each with its own Ads action: "WhatsApp or email click" is a
+    // primary goal (owner decision, 26 Sep 2026) and "Call click" a secondary
+    // one. Labels come from Google Ads (conversion action tag snippets).
     var LCS_ADS = {
       lead: 'AW-17988388404/RjhECKGP7akcELSMxIFD',
       call: 'AW-17988388404/HHu8CJq1x4UdELSMxIFD',
@@ -165,7 +169,7 @@
         var h1 = document.querySelector('h1');
         var page = ((h1 && h1.childNodes[0] && h1.childNodes[0].textContent) || document.title.split('|')[0]).replace(/\s+/g, ' ').trim();
         var attr = lcsAttribution();
-        var ad = attr.gclid || attr.gbraid || attr.wbraid || attr.utm_medium === 'cpc' ? ', via a Google ad' : '';
+        var ad = attr.gclid || attr.gbraid || attr.wbraid || attr.utm_medium === 'cpc' || lcsAdVisit() ? ', via a Google ad' : '';
         var source = 'your \u201c' + page + '\u201d page' + ad;
         // With cookie consent, a short reference to the ad click rides along too,
         // so a booking that starts on WhatsApp or email can be reported to Google
@@ -176,7 +180,8 @@
             ref = lcsShortRef(attr.gclid || attr.gbraid || attr.wbraid || '');
           }
         } catch (e) {}
-        // Without consent, only the landing page's name (never the click ID).
+        // Without consent, only the landing page's name and the ad's campaign
+        // (never the click ID).
         var visit = ref ? '' : lcsAdVisit();
         var tag = ref ? 'Ref: ' + ref : visit ? 'Ad visit: ' + visit : '';
         if (method === 'whatsapp') {
@@ -227,18 +232,79 @@
 
     // Ad visit without cookies: when this page's own URL holds an ad click ID
     // and the visitor has not allowed cookies, its messages and form carry the
-    // page's name ("Ad visit: weddings"), never the click ID. It lives only in
-    // this variable: nothing is stored, so the next page carries nothing.
+    // landing page's name and the ad's campaign from utm_campaign ("Ad visit:
+    // pricing (wedding-leads)"), never the click ID. Nothing is stored: the
+    // label lives in this variable, and same-site links on the page carry it in
+    // their address (lcs_av=<label>), so the next page the visitor opens knows
+    // it too and passes it on. scripts/bookings/pipeline.py reads the same format.
     function lcsAdVisitSlug(path) {
       var p = String(path || '').toLowerCase().replace(/^\/+/, '').replace(/\.html$/, '').replace(/(^|\/)index$/, '').replace(/\/+$/, '');
       if (!p) return 'home';
-      return /^[a-z0-9-]+(\/[a-z0-9-]+)*$/.test(p) ? p : 'other';
+      return p.length <= 80 && /^[a-z0-9-]+(\/[a-z0-9-]+)*$/.test(p) ? p : 'other';
     }
-    var LCS_AD_VISIT = /[?&](gclid|gbraid|wbraid)=[^&]/.test(location.search) ? lcsAdVisitSlug(location.pathname) : '';
+    function lcsAdVisitLabel() {
+      try {
+        var q = new URLSearchParams(location.search);
+        if (/[?&](gclid|gbraid|wbraid)=[^&]/.test(location.search)) {
+          var slug = lcsAdVisitSlug(location.pathname), campaign = q.get('utm_campaign') || '';
+          return /^[a-z0-9-]{1,40}$/.test(campaign) ? slug + ' (' + campaign + ')' : slug;
+        }
+        // Carried from the previous page, and only from a page of this site, so
+        // a shared or bookmarked address never counts as an ad visit.
+        var carried = q.get('lcs_av') || '';
+        var from = document.referrer ? new URL(document.referrer).origin : '';
+        // The page at most 80 characters, the campaign at most 40 (as pipeline.py's AD_VISIT_RE).
+        if (from === location.origin &&
+            /^(?=[a-z0-9\/-]{1,80}( \(|$))[a-z0-9-]+(\/[a-z0-9-]+)*( \([a-z0-9-]{1,40}\))?$/.test(carried)) return carried;
+      } catch (e) {}
+      return '';
+    }
+    var LCS_AD_VISIT = lcsAdVisitLabel();
     function lcsAdVisit() {
       if (!LCS_AD_VISIT) return '';
-      try { if (localStorage.getItem('lcs-consent') === 'granted') return ''; } catch (e) {}
+      // Once cookies are allowed the click reference (lcsAttribution) takes over, but only if there is one: a
+      // visitor who accepts on a later page has no click ID left, so the label stays.
+      try {
+        if (localStorage.getItem('lcs-consent') === 'granted') {
+          var a = lcsAttribution();
+          if (a.gclid || a.gbraid || a.wbraid) return '';
+        }
+      } catch (e) {}
       return LCS_AD_VISIT;
+    }
+    // Same-site page links (.html or folder addresses) get lcs_av=<label> at
+    // run time, for ad visitors only, so crawlers never see it. Never tel:,
+    // mailto:, WhatsApp, other sites or links within the page. Once the visitor
+    // allows cookies the label comes off again where a click ID remains
+    // (lcsAttribution takes over); after accepting on a later page it stays.
+    function lcsCarryAdVisit(a) {
+      try {
+        var raw = a.getAttribute('href') || '';
+        if (!raw || raw.charAt(0) === '#' || /^(tel|mailto|sms|javascript):/i.test(raw) ||
+            raw.indexOf('wa.me/') !== -1 || a.hasAttribute('download')) return;
+        var url = new URL(raw, location.href);
+        if (url.origin !== location.origin || !/(\.html|\/)$/.test(url.pathname)) return;
+        var visit = lcsAdVisit();
+        if (visit) url.searchParams.set('lcs_av', visit);
+        else if (url.searchParams.has('lcs_av')) url.searchParams.delete('lcs_av');
+        else return;
+        a.setAttribute('href', url.pathname + url.search + url.hash);
+      } catch (e) {}
+    }
+    if (LCS_AD_VISIT) {
+      var lcsCarryAll = function() {
+        if (lcsAdVisit()) Array.prototype.forEach.call(document.querySelectorAll('a[href]'), lcsCarryAdVisit);
+      };
+      if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', lcsCarryAll);
+      else lcsCarryAll();
+      // Links added later, and a choice made on the cookie sheet since, are
+      // settled as each link is used.
+      ['click', 'auxclick', 'contextmenu'].forEach(function(evt) {
+        document.addEventListener(evt, function(e) {
+          var a = e.target.closest && e.target.closest('a[href]');
+          if (a) lcsCarryAdVisit(a);
+        }, true);
+      });
     }
     // The click IDs in this page's own URL, for an enquiry whose sender ticked
     // the form's ad-measurement box (read at submit, never stored).
@@ -267,7 +333,7 @@
   <!-- @include-end partials/analytics.html -->
 
   <title>Funeral and wedding choirs in Sutton | LCS</title>
-  <meta name="description" content="Professional funeral singers and wedding choirs in Sutton, London. Conservatoire-trained musicians for funerals, weddings, memorials, and ceremonies.">
+  <meta name="description" content="Funeral and wedding choirs in Sutton, from North East Surrey Crematorium to All Saints Carshalton beside the ponds. Soloists from £250, choirs from £1,150.">
   <meta name="theme-color" content="#F7F3EE">
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://londonchoralservice.com/areas/london/sutton.html">
@@ -275,7 +341,7 @@
   <link rel="alternate" hreflang="x-default" href="https://londonchoralservice.com/areas/london/sutton.html">
 
   <meta property="og:title" content="Funeral and wedding choirs in Sutton | LCS">
-  <meta property="og:description" content="Professional funeral singers and wedding choirs in Sutton, London. Conservatoire-trained musicians for funerals, weddings, memorials, and ceremonies.">
+  <meta property="og:description" content="Funeral and wedding choirs in Sutton, from North East Surrey Crematorium to All Saints Carshalton beside the ponds. Soloists from £250, choirs from £1,150.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://londonchoralservice.com/areas/london/sutton.html">
   <meta property="og:locale" content="en_GB">
@@ -287,7 +353,7 @@
 
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Funeral and wedding choirs in Sutton | LCS">
-  <meta name="twitter:description" content="Professional funeral singers and wedding choirs in Sutton, London. Conservatoire-trained musicians for funerals, weddings, memorials, and ceremonies.">
+  <meta name="twitter:description" content="Funeral and wedding choirs in Sutton, from North East Surrey Crematorium to All Saints Carshalton beside the ponds. Soloists from £250, choirs from £1,150.">
   <meta name="twitter:image" content="https://londonchoralservice.com/assets/og/areas-london-sutton.png">
   <meta name="twitter:image:alt" content="The London Choral Service: Funeral &amp; Wedding Choirs in Sutton. Live singers for churches, crematoria and carol services">
   <link rel="dns-prefetch" href="https://www.googletagmanager.com">
@@ -3068,7 +3134,7 @@
             "name": "Do you cover North East Surrey Crematorium for Sutton funerals?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Yes, we perform regularly at North East Surrey Crematorium, which serves Sutton and the surrounding boroughs. Our singers know its chapels well and arrive early to coordinate with staff, ensuring the programme fits neatly within the allocated time slots."
+              "text": "Yes. We sing at North East Surrey Crematorium, which serves Sutton and the surrounding boroughs. Our singers know its chapels well and arrive early to coordinate with staff, so the programme fits the allocated time slot."
             }
           },
           {
@@ -3084,7 +3150,7 @@
             "name": "What can you sing at a Sutton funeral, in church or at the crematorium?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "We sing traditional hymns, sacred choral works, contemporary songs, and popular music. At All Saints Carshalton families often request classic hymns that suit the church's generous acoustic, while at North East Surrey Crematorium a mix of reflective pieces and personal favourites is common. We also arrange any piece you have in mind."
+              "text": "We sing traditional hymns, sacred choral works, contemporary songs, and popular music. At All Saints Carshalton classic hymns suit the church's generous acoustic, while at North East Surrey Crematorium a mix of reflective pieces and personal favourites is common. We also arrange any piece you have in mind."
             }
           }
         ]
@@ -3165,9 +3231,9 @@
             <li>Sutton</li>
           </ol>
         </nav>
-        <h1>Funeral and wedding choirs in Sutton</h1>
+        <h1>Funeral choirs for Sutton, Carshalton and Cheam</h1>
         <p class="guide-meta">Musicians selected by Luca Wetherall, Artistic Director &amp; Tutor in Music, University of Oxford &mdash; <a href="/luca-wetherall.html">read more about our team</a>.</p>
-        <p class="lede">The London Borough of Sutton sits on London&rsquo;s southern edge, where the suburbs give way to the chalk downlands of the North Downs. From the town centre of Sutton itself to the historic village of Carshalton and the quiet residential streets of Cheam, we provide professional singers and choirs for funerals, weddings, memorials, and ceremonies across the borough.</p>
+        <p class="lede">Sutton sits on London&rsquo;s southern edge, where the suburbs meet the chalk downlands of the North Downs. We provide singers and choirs for funerals, weddings, memorials and ceremonies in Sutton town centre, the old village of Carshalton and the quiet streets of Cheam.</p>
         <hr class="rule">
       </div>
     </section>
@@ -3175,13 +3241,13 @@
     <section class="section">
       <div class="prose">
         <h2>Funerals at North East Surrey Crematorium and All Saints Carshalton</h2>
-        <p>North East Surrey Crematorium, situated on the border of Sutton and neighbouring Morden, is the principal crematorium serving families in the borough. Its chapels are well designed for live music, and our singers have performed there on many occasions, delivering everything from traditional hymns and sacred anthems to popular songs and modern classical works. Sutton Cemetery, with its peaceful grounds and well-maintained chapel, provides another setting where live singing can bring real comfort and dignity to a funeral service. For guidance on choosing the right music, please see our <a href="../../music-guides/funeral-music-guide.html">funeral music guide</a> or <a href="../../contact.html">get in touch</a> directly.</p>
+        <p>North East Surrey Crematorium, situated on the border of Sutton and neighbouring Morden, is the principal crematorium serving families in the borough. Its chapels are well designed for live music, and our singers have performed there on many occasions, delivering everything from traditional hymns and sacred anthems to popular songs and modern classical works. Sutton Cemetery, with its peaceful grounds and well-maintained chapel, is another place where we sing for funeral services. For guidance on choosing the right music, see our <a href="../../music-guides/funeral-music-guide.html">funeral music guide</a> or <a href="../../contact.html">get in touch</a>.</p>
         <p>Our <a href="../../music-guides/crematorium-music.html">guide to crematorium music</a> deals with the practical side of a service at North East Surrey Crematorium: timing, the chapel acoustic and a shorter running order.</p>
 
-        <p>All Saints Church in Carshalton is one of the borough&rsquo;s finest churches, standing beside the historic ponds in the heart of the village. Its generous acoustic and beautiful interior make it an ideal venue for funeral and memorial services with choral music. The churches of Cheam and Sutton town centre also offer warm and welcoming settings. We work closely with funeral directors, clergy, and families so the music side of the day is one less thing to manage. Our singers are experienced in services of all faiths and none, and we are always willing to learn unfamiliar pieces on request. For the steps from first call to the service at All Saints or the crematorium, see our <a href="../../services.html">services page</a>.</p>
+        <p>All Saints Church in Carshalton stands beside the historic ponds in the heart of the village. Its generous acoustic suits funeral and memorial services with choral music. The churches of Cheam and Sutton town centre also offer warm and welcoming settings. We work closely with funeral directors, clergy, and families so the music side of the day is one less thing to manage. Our singers sing at religious and non-religious services, and we are willing to learn unfamiliar pieces on request. For the steps from first call to the service at All Saints or the crematorium, see our <a href="../../services.html">services page</a>.</p>
 
         <h2>Choir sizes for Carshalton, Cheam and the crematorium chapel</h2>
-        <p>All Saints Carshalton has a generous acoustic that rewards more voices, so for a wedding there a sextet usually feels right &mdash; with a full eight-voice choir worth considering when the congregation is large. The room takes a bigger sound well, and processional hymns sit better with more voices. The parish churches of Cheam and Sutton vary in scale; most sit comfortably with a quartet, and a sextet adds weight at the larger ones. For a smaller funeral with family-only present, a quartet generally suits the moment better than a larger group. For a chapel service in a modern crematorium, a quartet keeps the music compact within the timing. For a graveside committal, a soloist is usually plenty, and a quartet is ideal for the chapel service beforehand. Our <a href="../../pricing.html">pricing page</a> gives the fee for a quartet in Cheam, an eight-voice choir at All Saints and the sizes in between.</p>
+        <p>All Saints Carshalton has a generous acoustic that rewards more voices, so for a wedding there a sextet usually feels right, and a full choir of eight is worth considering when the congregation is large. The room takes a bigger sound well, and processional hymns sit better with more voices. The parish churches of Cheam and Sutton vary in scale; most sit comfortably with a quartet, and a sextet adds weight at the larger ones. For a smaller funeral with family-only present, a quartet generally suits the moment better than a larger group. For a chapel service in a modern crematorium, a quartet keeps the music compact within the timing. For a graveside committal, a soloist is usually plenty, and a quartet is ideal for the chapel service beforehand. Our <a href="../../pricing.html">pricing page</a> gives the fee for a quartet in Cheam, an eight-voice choir at All Saints and the sizes in between.</p>
 
         <figure class="pull-quote">
           <blockquote>
@@ -3196,23 +3262,23 @@
         <p>For services at North East Surrey Crematorium, All Saints Carshalton, or the churches of Cheam, a solo funeral singer starts from &pound;250. Ensembles then run &pound;1,150 for a quartet, &pound;1,400 for a quintet, &pound;1,600 for a sextet, and &pound;2,000 for a full choir of eight. Those fees include our travel, since the whole of Sutton lies within Greater London.</p>
 
         <h3>Do you cover North East Surrey Crematorium for Sutton funerals?</h3>
-        <p>Yes, we perform regularly at North East Surrey Crematorium, which serves Sutton and the surrounding boroughs. Our singers know its chapels well and arrive early to coordinate with staff, ensuring the programme fits neatly within the allocated time slots.</p>
+        <p>Yes. We sing at North East Surrey Crematorium, which serves Sutton and the surrounding boroughs. Our singers know its chapels well and arrive early to coordinate with staff, so the programme fits the allocated time slot.</p>
 
         <h3>Can you sing at a funeral at All Saints Carshalton?</h3>
         <p>Yes. All Saints stands beside the historic ponds in Carshalton village, and its generous acoustic suits funeral and memorial services with choral music.</p>
 
         <h3>What can you sing at a Sutton funeral, in church or at the crematorium?</h3>
-        <p>We sing traditional hymns, sacred choral works, contemporary songs, and popular music. At All Saints Carshalton families often request classic hymns that suit the church&rsquo;s generous acoustic, while at North East Surrey Crematorium a mix of reflective pieces and personal favourites is common. We also arrange any piece you have in mind.</p>
+        <p>We sing traditional hymns, sacred choral works, contemporary songs, and popular music. At All Saints Carshalton classic hymns suit the church&rsquo;s generous acoustic, while at North East Surrey Crematorium a mix of reflective pieces and personal favourites is common. We also arrange any piece you have in mind.</p>
 
         <p>Families planning a funeral at All Saints Carshalton or Sutton Cemetery can start with the <a href="../../music-guides/funeral-music-guide.html">funeral music guide</a> and our <a href="../../music-guides/popular-funeral-hymns.html">popular funeral hymns</a>, then check fees in the <a href="../../music-guides/funeral-music-costs.html">funeral music costs guide</a>. For a Cheam or Carshalton wedding, the <a href="../../music-guides/choosing-wedding-hymns.html">wedding hymns guide</a> has hymn suggestions.</p>
 
         <h2>Weddings at All Saints Carshalton</h2>
-        <p>Sutton&rsquo;s churches offer couples some charming settings for a wedding ceremony. All Saints Carshalton, with its village setting and handsome interior, is a particularly popular choice, while the churches of Cheam and Sutton provide welcoming and well-appointed spaces for celebrations large and small. A live choir adds a dimension to a wedding that recorded music simply cannot achieve&thinsp;&mdash;&thinsp;the sound of trained voices rising together creates moments of real beauty and emotion. Our singers are equally confident leading congregational singing and performing polished choral pieces during quieter parts of the service. If you are marrying at All Saints Carshalton, our guide to <a href="../../music-guides/choosing-wedding-hymns.html">choosing wedding hymns</a> will help you draw up a shortlist.</p>
+        <p>Sutton&rsquo;s churches offer couples some charming settings for a wedding ceremony. All Saints Carshalton, with its village setting and handsome interior, is a popular choice, and the churches of Cheam and Sutton take larger and smaller weddings. All Saints has the generous acoustic to take a sextet, and processional hymns sit better with more voices. Our singers lead the congregational singing and sing choral pieces during the quieter parts of the service. If you are marrying at All Saints Carshalton, our guide to <a href="../../music-guides/choosing-wedding-hymns.html">choosing wedding hymns</a> will help you draw up a shortlist.</p>
 
         <h2>Carols in Sutton, Carshalton and Cheam</h2>
-        <p>In December we provide carol services and roaming carol singers for offices, venues, and residents&rsquo; events across Sutton, Carshalton, and Cheam. A choir can lead <a href="../../christmas-carol-services.html">an office carol service in December</a> at a workplace near Sutton town centre, or <a href="../../christmas.html">roaming carol singers</a> can circulate at a residents&rsquo; gathering close to All Saints Carshalton.</p>
+        <p>We sing carols across Sutton, Carshalton and Cheam each December. A choir can lead <a href="../../christmas-carol-services.html">an office carol service in December</a> at a workplace near Sutton town centre, or <a href="../../christmas.html">roaming carol singers</a> can circulate at a residents&rsquo; gathering close to All Saints Carshalton.</p>
 
-        <p><a href="../../contact.html" class="btn-link">Get in touch about your occasion in Sutton</a></p>
+        <p><a href="../../contact.html" class="btn-link">Ask about a service in Sutton or Carshalton</a></p>
       </div>
     </section>
 

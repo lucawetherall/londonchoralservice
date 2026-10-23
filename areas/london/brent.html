@@ -65,11 +65,15 @@
       window.addEventListener(evt, loadGA, { once: true, passive: true });
     });
 
-    // Conversion tracking. A lead is one "Submit lead form" conversion, fired by
-    // js/form.js and js/private-events.js only after Web3Forms accepts the
-    // enquiry. Phone, email and WhatsApp taps are contact_click events (their
-    // own secondary Ads actions "Call click" and "WhatsApp or email click"),
-    // never leads. Labels come from Google Ads (conversion action tag snippets).
+    // Conversion tracking. A lead is one "Submit lead form" conversion plus a GA4
+    // generate_lead, started by js/form.js and js/private-events.js only after
+    // Web3Forms accepts the enquiry. With cookie consent, js/form.js's lead is
+    // sent from thank-you.html (lcsLead below hands it over); without consent,
+    // and on the private register's inline success, it goes from the form's own
+    // page at once. Phone, email and WhatsApp taps are contact_click events, never
+    // leads, each with its own Ads action: "WhatsApp or email click" is a
+    // primary goal (owner decision, 26 Sep 2026) and "Call click" a secondary
+    // one. Labels come from Google Ads (conversion action tag snippets).
     var LCS_ADS = {
       lead: 'AW-17988388404/RjhECKGP7akcELSMxIFD',
       call: 'AW-17988388404/HHu8CJq1x4UdELSMxIFD',
@@ -165,7 +169,7 @@
         var h1 = document.querySelector('h1');
         var page = ((h1 && h1.childNodes[0] && h1.childNodes[0].textContent) || document.title.split('|')[0]).replace(/\s+/g, ' ').trim();
         var attr = lcsAttribution();
-        var ad = attr.gclid || attr.gbraid || attr.wbraid || attr.utm_medium === 'cpc' ? ', via a Google ad' : '';
+        var ad = attr.gclid || attr.gbraid || attr.wbraid || attr.utm_medium === 'cpc' || lcsAdVisit() ? ', via a Google ad' : '';
         var source = 'your \u201c' + page + '\u201d page' + ad;
         // With cookie consent, a short reference to the ad click rides along too,
         // so a booking that starts on WhatsApp or email can be reported to Google
@@ -176,7 +180,8 @@
             ref = lcsShortRef(attr.gclid || attr.gbraid || attr.wbraid || '');
           }
         } catch (e) {}
-        // Without consent, only the landing page's name (never the click ID).
+        // Without consent, only the landing page's name and the ad's campaign
+        // (never the click ID).
         var visit = ref ? '' : lcsAdVisit();
         var tag = ref ? 'Ref: ' + ref : visit ? 'Ad visit: ' + visit : '';
         if (method === 'whatsapp') {
@@ -227,18 +232,79 @@
 
     // Ad visit without cookies: when this page's own URL holds an ad click ID
     // and the visitor has not allowed cookies, its messages and form carry the
-    // page's name ("Ad visit: weddings"), never the click ID. It lives only in
-    // this variable: nothing is stored, so the next page carries nothing.
+    // landing page's name and the ad's campaign from utm_campaign ("Ad visit:
+    // pricing (wedding-leads)"), never the click ID. Nothing is stored: the
+    // label lives in this variable, and same-site links on the page carry it in
+    // their address (lcs_av=<label>), so the next page the visitor opens knows
+    // it too and passes it on. scripts/bookings/pipeline.py reads the same format.
     function lcsAdVisitSlug(path) {
       var p = String(path || '').toLowerCase().replace(/^\/+/, '').replace(/\.html$/, '').replace(/(^|\/)index$/, '').replace(/\/+$/, '');
       if (!p) return 'home';
-      return /^[a-z0-9-]+(\/[a-z0-9-]+)*$/.test(p) ? p : 'other';
+      return p.length <= 80 && /^[a-z0-9-]+(\/[a-z0-9-]+)*$/.test(p) ? p : 'other';
     }
-    var LCS_AD_VISIT = /[?&](gclid|gbraid|wbraid)=[^&]/.test(location.search) ? lcsAdVisitSlug(location.pathname) : '';
+    function lcsAdVisitLabel() {
+      try {
+        var q = new URLSearchParams(location.search);
+        if (/[?&](gclid|gbraid|wbraid)=[^&]/.test(location.search)) {
+          var slug = lcsAdVisitSlug(location.pathname), campaign = q.get('utm_campaign') || '';
+          return /^[a-z0-9-]{1,40}$/.test(campaign) ? slug + ' (' + campaign + ')' : slug;
+        }
+        // Carried from the previous page, and only from a page of this site, so
+        // a shared or bookmarked address never counts as an ad visit.
+        var carried = q.get('lcs_av') || '';
+        var from = document.referrer ? new URL(document.referrer).origin : '';
+        // The page at most 80 characters, the campaign at most 40 (as pipeline.py's AD_VISIT_RE).
+        if (from === location.origin &&
+            /^(?=[a-z0-9\/-]{1,80}( \(|$))[a-z0-9-]+(\/[a-z0-9-]+)*( \([a-z0-9-]{1,40}\))?$/.test(carried)) return carried;
+      } catch (e) {}
+      return '';
+    }
+    var LCS_AD_VISIT = lcsAdVisitLabel();
     function lcsAdVisit() {
       if (!LCS_AD_VISIT) return '';
-      try { if (localStorage.getItem('lcs-consent') === 'granted') return ''; } catch (e) {}
+      // Once cookies are allowed the click reference (lcsAttribution) takes over, but only if there is one: a
+      // visitor who accepts on a later page has no click ID left, so the label stays.
+      try {
+        if (localStorage.getItem('lcs-consent') === 'granted') {
+          var a = lcsAttribution();
+          if (a.gclid || a.gbraid || a.wbraid) return '';
+        }
+      } catch (e) {}
       return LCS_AD_VISIT;
+    }
+    // Same-site page links (.html or folder addresses) get lcs_av=<label> at
+    // run time, for ad visitors only, so crawlers never see it. Never tel:,
+    // mailto:, WhatsApp, other sites or links within the page. Once the visitor
+    // allows cookies the label comes off again where a click ID remains
+    // (lcsAttribution takes over); after accepting on a later page it stays.
+    function lcsCarryAdVisit(a) {
+      try {
+        var raw = a.getAttribute('href') || '';
+        if (!raw || raw.charAt(0) === '#' || /^(tel|mailto|sms|javascript):/i.test(raw) ||
+            raw.indexOf('wa.me/') !== -1 || a.hasAttribute('download')) return;
+        var url = new URL(raw, location.href);
+        if (url.origin !== location.origin || !/(\.html|\/)$/.test(url.pathname)) return;
+        var visit = lcsAdVisit();
+        if (visit) url.searchParams.set('lcs_av', visit);
+        else if (url.searchParams.has('lcs_av')) url.searchParams.delete('lcs_av');
+        else return;
+        a.setAttribute('href', url.pathname + url.search + url.hash);
+      } catch (e) {}
+    }
+    if (LCS_AD_VISIT) {
+      var lcsCarryAll = function() {
+        if (lcsAdVisit()) Array.prototype.forEach.call(document.querySelectorAll('a[href]'), lcsCarryAdVisit);
+      };
+      if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', lcsCarryAll);
+      else lcsCarryAll();
+      // Links added later, and a choice made on the cookie sheet since, are
+      // settled as each link is used.
+      ['click', 'auxclick', 'contextmenu'].forEach(function(evt) {
+        document.addEventListener(evt, function(e) {
+          var a = e.target.closest && e.target.closest('a[href]');
+          if (a) lcsCarryAdVisit(a);
+        }, true);
+      });
     }
     // The click IDs in this page's own URL, for an enquiry whose sender ticked
     // the form's ad-measurement box (read at submit, never stored).
@@ -267,7 +333,7 @@
   <!-- @include-end partials/analytics.html -->
 
   <title>Funeral and wedding choirs in Brent | LCS</title>
-  <meta name="description" content="Hire conservatoire-trained singers for funerals, weddings, and memorials in Brent. The London Choral Service offers soloists and choirs from £250. Enquire today.">
+  <meta name="description" content="Funeral and wedding choirs in Brent, singing at Willesden New Cemetery, Alperton Cemetery and the medieval church of St Mary in Willesden. Soloists from £250.">
   <meta name="theme-color" content="#F7F3EE">
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://londonchoralservice.com/areas/london/brent.html">
@@ -275,7 +341,7 @@
   <link rel="alternate" hreflang="x-default" href="https://londonchoralservice.com/areas/london/brent.html">
 
   <meta property="og:title" content="Funeral and wedding choirs in Brent | LCS">
-  <meta property="og:description" content="Hire conservatoire-trained singers for funerals, weddings, and memorials in Brent. The London Choral Service offers soloists and choirs from £250. Enquire today.">
+  <meta property="og:description" content="Funeral and wedding choirs in Brent, singing at Willesden New Cemetery, Alperton Cemetery and the medieval church of St Mary in Willesden. Soloists from £250.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://londonchoralservice.com/areas/london/brent.html">
   <meta property="og:locale" content="en_GB">
@@ -287,7 +353,7 @@
 
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Funeral and wedding choirs in Brent | LCS">
-  <meta name="twitter:description" content="Hire conservatoire-trained singers for funerals, weddings, and memorials in Brent. The London Choral Service offers soloists and choirs from £250. Enquire today.">
+  <meta name="twitter:description" content="Funeral and wedding choirs in Brent, singing at Willesden New Cemetery, Alperton Cemetery and the medieval church of St Mary in Willesden. Soloists from £250.">
   <meta name="twitter:image" content="https://londonchoralservice.com/assets/og/areas-london-brent.png">
   <meta name="twitter:image:alt" content="The London Choral Service: Funeral &amp; Wedding Choirs in Brent. Live singers for churches, crematoria and carol services">
   <link rel="dns-prefetch" href="https://www.googletagmanager.com">
@@ -3057,7 +3123,7 @@
         "mainEntity": [
           {
             "@type": "Question",
-            "name": "How much does a funeral singer cost in Brent?",
+            "name": "What does a funeral choir cost at St Mary’s Willesden or Willesden New Cemetery?",
             "acceptedAnswer": {
               "@type": "Answer",
               "text": "For services at St Mary's Willesden, Willesden New Cemetery, or any other Brent venue, a soloist starts from £250. A quartet is £1,150, five voices £1,400, six voices £1,600, and a full choir of eight £2,000. The fee includes travel to Wembley, Willesden and the rest of Brent, which lies within Greater London."
@@ -3076,7 +3142,7 @@
             "name": "Can you sing music from different faith traditions at a Brent funeral?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Our repertoire covers traditional hymns, classical sacred works, contemporary songs, and bespoke arrangements. Brent's diverse communities often request music from a wide range of traditions, and our singers are experienced in adapting to services of all faiths and none."
+              "text": "Our repertoire covers traditional hymns, classical sacred works, contemporary songs, and bespoke arrangements. Our singers adapt to religious and non-religious services alike, and can draw on more than one tradition in a single service."
             }
           }
         ]
@@ -3157,9 +3223,9 @@
             <li>Brent</li>
           </ol>
         </nav>
-        <h1>Funeral and wedding choirs in Brent</h1>
+        <h1>Choirs for Brent funerals and weddings, from Willesden to Wembley</h1>
         <p class="guide-meta">Musicians selected by Luca Wetherall, Artistic Director &amp; Tutor in Music, University of Oxford &mdash; <a href="/luca-wetherall.html">read more about our team</a>.</p>
-        <p class="lede">The London Borough of Brent is one of north-west London&rsquo;s most diverse boroughs, home to communities in Wembley, Willesden, Kilburn, Kingsbury, and Alperton. Our conservatoire-trained singers provide music of the highest quality for funerals, weddings, memorials, and ceremonies at venues throughout Brent and its surrounding areas.</p>
+        <p class="lede">Brent is one of north-west London&rsquo;s most diverse boroughs, home to communities in Wembley, Willesden, Kilburn, Kingsbury, and Alperton. Our conservatoire-trained singers perform at funerals, weddings, memorials and ceremonies in all of them, and in the boroughs next door.</p>
         <hr class="rule">
       </div>
     </section>
@@ -3167,14 +3233,14 @@
     <section class="section">
       <div class="prose">
         <h2>Funerals at St&nbsp;Mary&rsquo;s Willesden and Willesden New Cemetery</h2>
-        <p>Brent&rsquo;s churches and cemeteries serve a wonderfully diverse population, and our singers are experienced in providing music for services across a wide range of traditions. St&nbsp;Mary&rsquo;s Willesden is one of the borough&rsquo;s oldest and most treasured churches, a medieval building with a long history of pilgrimage and a quiet, welcoming atmosphere that suits a funeral service. Willesden New Cemetery is one of the borough&rsquo;s principal cemeteries, and our singers have performed there for many families, bringing warmth and solemnity to chapel services and graveside farewells alike. Alperton Cemetery offers a smaller, more intimate setting, while the churches and chapels around Wembley serve a large local community with varied needs and expectations.</p>
-        <p>Traditional hymns, classical choral works, a favourite song performed by a soloist, or a combination of all three&thinsp;&mdash;&thinsp;we can help you plan music that feels right for the occasion. Our <a href="../../music-guides/funeral-music-guide.html">funeral music guide</a> provides a starting point for choosing repertoire, and our <a href="../../services.html">services page</a> outlines the options we offer. Please <a href="../../contact.html">contact us</a> to discuss your requirements&thinsp;&mdash;&thinsp;there is no obligation, and we are happy to advise at any stage.</p>
+        <p>Brent&rsquo;s churches and cemeteries serve a diverse population, and our singers are experienced in providing music for services across a wide range of traditions. St&nbsp;Mary&rsquo;s Willesden is one of the borough&rsquo;s oldest churches, a medieval building with a long history of pilgrimage and a quiet, welcoming atmosphere that suits a funeral service. Willesden New Cemetery is one of the borough&rsquo;s principal cemeteries, and our singers have sung there at chapel services and at the graveside. Alperton Cemetery offers a smaller, more intimate setting, and the churches and chapels around Wembley serve a large local community.</p>
+        <p>We can help you plan traditional hymns, classical choral works, a favourite song performed by a soloist, or a mix of these. Our <a href="../../music-guides/funeral-music-guide.html">funeral music guide</a> provides a starting point for choosing repertoire, and our <a href="../../services.html">services page</a> outlines the options we offer. Please <a href="../../contact.html">contact us</a> to discuss your requirements. There is no obligation, and we are happy to advise at any stage.</p>
 
         <h2>Weddings from Willesden to Wembley</h2>
-        <p>Brent offers a range of wonderful settings for weddings, from the historic charm of St&nbsp;Mary&rsquo;s Willesden to the modern grandeur of venues around Wembley. Our singers can provide anything from a soloist performing during the signing of the register to a full choir leading congregational hymns with energy and confidence. For civil ceremonies at licensed venues across the borough, we adapt our approach to suit the space and the couple&rsquo;s wishes, whether that means a contemplative classical piece or a more celebratory choral arrangement. Our <a href="../../music-guides/choosing-wedding-hymns.html">guide to choosing wedding hymns</a> is a helpful starting point for planning your wedding music.</p>
+        <p>Brent&rsquo;s wedding settings range from medieval St&nbsp;Mary&rsquo;s Willesden to the larger modern venues around Wembley. Our singers can provide anything from a soloist performing during the signing of the register to a full choir leading the congregational hymns. For civil ceremonies at licensed venues across the borough, we adapt our approach to suit the space and the couple&rsquo;s wishes, whether that means a contemplative classical piece or a more celebratory choral arrangement. Our <a href="../../music-guides/choosing-wedding-hymns.html">guide to choosing wedding hymns</a> is a helpful starting point for planning your wedding music.</p>
 
         <h2>How many singers for Brent&rsquo;s churches and cemetery chapels</h2>
-        <p>St&nbsp;Mary&rsquo;s Willesden is a medieval church with a quiet, contained acoustic, and a quartet usually carries the music there without overwhelming the space &mdash; though for a wedding with a fuller congregation a sextet adds weight to the hymns. Willesden New Cemetery&rsquo;s chapel runs to a tighter timing, so a quartet tends to be the right call: enough for a hymn, compact enough to fit the room. At Alperton Cemetery a soloist often suits the more intimate setting better. For weddings around Wembley, especially the larger licensed venues, a sextet or full eight-voice choir gives the day proper presence. For graveside committals across Brent, a single voice tends to suit the moment better than a larger ensemble. Fees for a soloist at Alperton, a quartet in Willesden and each larger group are on our <a href="../../pricing.html">pricing page</a>.</p>
+        <p>St&nbsp;Mary&rsquo;s Willesden is a medieval church with a quiet, contained acoustic, and a quartet usually carries the music there without overwhelming the space, though for a wedding with a fuller congregation a sextet adds weight to the hymns. Willesden New Cemetery&rsquo;s chapel runs to a tighter timing, so a quartet tends to be the right call: enough for a hymn, compact enough to fit the room. At Alperton Cemetery a soloist often suits the more intimate setting better. For weddings at the larger licensed venues around Wembley, a sextet or full eight-voice choir fills the room. For graveside committals across Brent, a single voice tends to suit the moment better than a larger ensemble. Fees for a soloist at Alperton, a quartet in Willesden and each larger group are on our <a href="../../pricing.html">pricing page</a>.</p>
 
         <figure class="pull-quote">
           <blockquote>
@@ -3185,21 +3251,21 @@
 
         <h2>Common questions in Brent</h2>
 
-        <h3>How much does a funeral singer cost in Brent?</h3>
+        <h3>What does a funeral choir cost at St&nbsp;Mary&rsquo;s Willesden or Willesden New Cemetery?</h3>
         <p>For services at St&nbsp;Mary&rsquo;s Willesden, Willesden New Cemetery, or any other Brent venue, a soloist starts from &pound;250. A quartet is &pound;1,150, five voices &pound;1,400, six voices &pound;1,600, and a full choir of eight &pound;2,000. The fee includes travel to Wembley, Willesden and the rest of Brent, which lies within Greater London.</p>
 
         <h3>Which size of choir suits a cemetery chapel in Brent?</h3>
         <p>Willesden New Cemetery&rsquo;s chapel runs to a tighter timing, so a quartet (from &pound;1,150) is usually right there. Alperton Cemetery is more intimate, and a soloist (from &pound;250) often suits it better.</p>
 
         <h3>Can you sing music from different faith traditions at a Brent funeral?</h3>
-        <p>Our repertoire covers traditional hymns, classical sacred works, contemporary songs, and bespoke arrangements. Brent&rsquo;s diverse communities often request music from a wide range of traditions, and our singers are experienced in adapting to services of all faiths and none.</p>
+        <p>Our repertoire covers traditional hymns, classical sacred works, contemporary songs, and bespoke arrangements. Our singers adapt to religious and non-religious services alike, and can draw on more than one tradition in a single service.</p>
 
         <p>Whatever tradition a Willesden family follows, our <a href="../../music-guides/funeral-music-guide.html">funeral music guide</a> and <a href="../../music-guides/popular-funeral-hymns.html">popular funeral hymns</a> give you a place to start. We also publish a <a href="../../music-guides/funeral-music-costs.html">funeral music costs guide</a> and, for couples marrying at St&nbsp;Mary&rsquo;s Willesden, a <a href="../../music-guides/choosing-wedding-hymns.html">wedding hymns guide</a>.</p>
 
         <h2>Carol singers in Wembley, Willesden and Kilburn</h2>
-        <p>December brings <a href="../../christmas.html">roaming carol singers</a> to offices, venues, and residents&rsquo; events across Wembley, Willesden, and Kilburn. St&nbsp;Mary&rsquo;s Willesden also welcomes a carol service in the lead-up to Christmas, and businesses in Kingsbury and Alperton often want <a href="../../christmas-carol-services.html">an office carol service</a> for staff parties and client events. Brent&rsquo;s December calendar fills early, so it&rsquo;s worth getting in touch in good time.</p>
+        <p>December brings <a href="../../christmas.html">roaming carol singers</a> to offices, venues, and residents&rsquo; events across Wembley, Willesden, and Kilburn. St&nbsp;Mary&rsquo;s Willesden also welcomes a carol service in the lead-up to Christmas, and businesses in Kingsbury and Alperton often want <a href="../../christmas-carol-services.html">an office carol service</a> for staff parties and client events. December dates start to fill by mid-September.</p>
 
-        <p><a href="../../contact.html" class="btn-link">Get in touch about your occasion in Brent</a></p>
+        <p><a href="../../contact.html" class="btn-link">Ask us about a service in Brent</a></p>
       </div>
     </section>
 

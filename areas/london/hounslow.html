@@ -65,11 +65,15 @@
       window.addEventListener(evt, loadGA, { once: true, passive: true });
     });
 
-    // Conversion tracking. A lead is one "Submit lead form" conversion, fired by
-    // js/form.js and js/private-events.js only after Web3Forms accepts the
-    // enquiry. Phone, email and WhatsApp taps are contact_click events (their
-    // own secondary Ads actions "Call click" and "WhatsApp or email click"),
-    // never leads. Labels come from Google Ads (conversion action tag snippets).
+    // Conversion tracking. A lead is one "Submit lead form" conversion plus a GA4
+    // generate_lead, started by js/form.js and js/private-events.js only after
+    // Web3Forms accepts the enquiry. With cookie consent, js/form.js's lead is
+    // sent from thank-you.html (lcsLead below hands it over); without consent,
+    // and on the private register's inline success, it goes from the form's own
+    // page at once. Phone, email and WhatsApp taps are contact_click events, never
+    // leads, each with its own Ads action: "WhatsApp or email click" is a
+    // primary goal (owner decision, 26 Sep 2026) and "Call click" a secondary
+    // one. Labels come from Google Ads (conversion action tag snippets).
     var LCS_ADS = {
       lead: 'AW-17988388404/RjhECKGP7akcELSMxIFD',
       call: 'AW-17988388404/HHu8CJq1x4UdELSMxIFD',
@@ -165,7 +169,7 @@
         var h1 = document.querySelector('h1');
         var page = ((h1 && h1.childNodes[0] && h1.childNodes[0].textContent) || document.title.split('|')[0]).replace(/\s+/g, ' ').trim();
         var attr = lcsAttribution();
-        var ad = attr.gclid || attr.gbraid || attr.wbraid || attr.utm_medium === 'cpc' ? ', via a Google ad' : '';
+        var ad = attr.gclid || attr.gbraid || attr.wbraid || attr.utm_medium === 'cpc' || lcsAdVisit() ? ', via a Google ad' : '';
         var source = 'your \u201c' + page + '\u201d page' + ad;
         // With cookie consent, a short reference to the ad click rides along too,
         // so a booking that starts on WhatsApp or email can be reported to Google
@@ -176,7 +180,8 @@
             ref = lcsShortRef(attr.gclid || attr.gbraid || attr.wbraid || '');
           }
         } catch (e) {}
-        // Without consent, only the landing page's name (never the click ID).
+        // Without consent, only the landing page's name and the ad's campaign
+        // (never the click ID).
         var visit = ref ? '' : lcsAdVisit();
         var tag = ref ? 'Ref: ' + ref : visit ? 'Ad visit: ' + visit : '';
         if (method === 'whatsapp') {
@@ -227,18 +232,79 @@
 
     // Ad visit without cookies: when this page's own URL holds an ad click ID
     // and the visitor has not allowed cookies, its messages and form carry the
-    // page's name ("Ad visit: weddings"), never the click ID. It lives only in
-    // this variable: nothing is stored, so the next page carries nothing.
+    // landing page's name and the ad's campaign from utm_campaign ("Ad visit:
+    // pricing (wedding-leads)"), never the click ID. Nothing is stored: the
+    // label lives in this variable, and same-site links on the page carry it in
+    // their address (lcs_av=<label>), so the next page the visitor opens knows
+    // it too and passes it on. scripts/bookings/pipeline.py reads the same format.
     function lcsAdVisitSlug(path) {
       var p = String(path || '').toLowerCase().replace(/^\/+/, '').replace(/\.html$/, '').replace(/(^|\/)index$/, '').replace(/\/+$/, '');
       if (!p) return 'home';
-      return /^[a-z0-9-]+(\/[a-z0-9-]+)*$/.test(p) ? p : 'other';
+      return p.length <= 80 && /^[a-z0-9-]+(\/[a-z0-9-]+)*$/.test(p) ? p : 'other';
     }
-    var LCS_AD_VISIT = /[?&](gclid|gbraid|wbraid)=[^&]/.test(location.search) ? lcsAdVisitSlug(location.pathname) : '';
+    function lcsAdVisitLabel() {
+      try {
+        var q = new URLSearchParams(location.search);
+        if (/[?&](gclid|gbraid|wbraid)=[^&]/.test(location.search)) {
+          var slug = lcsAdVisitSlug(location.pathname), campaign = q.get('utm_campaign') || '';
+          return /^[a-z0-9-]{1,40}$/.test(campaign) ? slug + ' (' + campaign + ')' : slug;
+        }
+        // Carried from the previous page, and only from a page of this site, so
+        // a shared or bookmarked address never counts as an ad visit.
+        var carried = q.get('lcs_av') || '';
+        var from = document.referrer ? new URL(document.referrer).origin : '';
+        // The page at most 80 characters, the campaign at most 40 (as pipeline.py's AD_VISIT_RE).
+        if (from === location.origin &&
+            /^(?=[a-z0-9\/-]{1,80}( \(|$))[a-z0-9-]+(\/[a-z0-9-]+)*( \([a-z0-9-]{1,40}\))?$/.test(carried)) return carried;
+      } catch (e) {}
+      return '';
+    }
+    var LCS_AD_VISIT = lcsAdVisitLabel();
     function lcsAdVisit() {
       if (!LCS_AD_VISIT) return '';
-      try { if (localStorage.getItem('lcs-consent') === 'granted') return ''; } catch (e) {}
+      // Once cookies are allowed the click reference (lcsAttribution) takes over, but only if there is one: a
+      // visitor who accepts on a later page has no click ID left, so the label stays.
+      try {
+        if (localStorage.getItem('lcs-consent') === 'granted') {
+          var a = lcsAttribution();
+          if (a.gclid || a.gbraid || a.wbraid) return '';
+        }
+      } catch (e) {}
       return LCS_AD_VISIT;
+    }
+    // Same-site page links (.html or folder addresses) get lcs_av=<label> at
+    // run time, for ad visitors only, so crawlers never see it. Never tel:,
+    // mailto:, WhatsApp, other sites or links within the page. Once the visitor
+    // allows cookies the label comes off again where a click ID remains
+    // (lcsAttribution takes over); after accepting on a later page it stays.
+    function lcsCarryAdVisit(a) {
+      try {
+        var raw = a.getAttribute('href') || '';
+        if (!raw || raw.charAt(0) === '#' || /^(tel|mailto|sms|javascript):/i.test(raw) ||
+            raw.indexOf('wa.me/') !== -1 || a.hasAttribute('download')) return;
+        var url = new URL(raw, location.href);
+        if (url.origin !== location.origin || !/(\.html|\/)$/.test(url.pathname)) return;
+        var visit = lcsAdVisit();
+        if (visit) url.searchParams.set('lcs_av', visit);
+        else if (url.searchParams.has('lcs_av')) url.searchParams.delete('lcs_av');
+        else return;
+        a.setAttribute('href', url.pathname + url.search + url.hash);
+      } catch (e) {}
+    }
+    if (LCS_AD_VISIT) {
+      var lcsCarryAll = function() {
+        if (lcsAdVisit()) Array.prototype.forEach.call(document.querySelectorAll('a[href]'), lcsCarryAdVisit);
+      };
+      if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', lcsCarryAll);
+      else lcsCarryAll();
+      // Links added later, and a choice made on the cookie sheet since, are
+      // settled as each link is used.
+      ['click', 'auxclick', 'contextmenu'].forEach(function(evt) {
+        document.addEventListener(evt, function(e) {
+          var a = e.target.closest && e.target.closest('a[href]');
+          if (a) lcsCarryAdVisit(a);
+        }, true);
+      });
     }
     // The click IDs in this page's own URL, for an enquiry whose sender ticked
     // the form's ad-measurement box (read at submit, never stored).
@@ -267,7 +333,7 @@
   <!-- @include-end partials/analytics.html -->
 
   <title>Funeral and wedding choirs in Hounslow | LCS</title>
-  <meta name="description" content="Professional funeral singers and wedding choirs in Hounslow, London. Conservatoire-trained musicians for funerals, weddings, memorials, and ceremonies.">
+  <meta name="description" content="Funeral and wedding choirs in Hounslow, from South West Middlesex Crematorium in Hanworth to St Mary’s Hounslow and the riverside churches at Isleworth.">
   <meta name="theme-color" content="#F7F3EE">
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://londonchoralservice.com/areas/london/hounslow.html">
@@ -275,7 +341,7 @@
   <link rel="alternate" hreflang="x-default" href="https://londonchoralservice.com/areas/london/hounslow.html">
 
   <meta property="og:title" content="Funeral and wedding choirs in Hounslow | LCS">
-  <meta property="og:description" content="Professional funeral singers and wedding choirs in Hounslow, London. Conservatoire-trained musicians for funerals, weddings, memorials, and ceremonies.">
+  <meta property="og:description" content="Funeral and wedding choirs in Hounslow, from South West Middlesex Crematorium in Hanworth to St Mary’s Hounslow and the riverside churches at Isleworth.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://londonchoralservice.com/areas/london/hounslow.html">
   <meta property="og:locale" content="en_GB">
@@ -287,7 +353,7 @@
 
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Funeral and wedding choirs in Hounslow | LCS">
-  <meta name="twitter:description" content="Professional funeral singers and wedding choirs in Hounslow, London. Conservatoire-trained musicians for funerals, weddings, memorials, and ceremonies.">
+  <meta name="twitter:description" content="Funeral and wedding choirs in Hounslow, from South West Middlesex Crematorium in Hanworth to St Mary’s Hounslow and the riverside churches at Isleworth.">
   <meta name="twitter:image" content="https://londonchoralservice.com/assets/og/areas-london-hounslow.png">
   <meta name="twitter:image:alt" content="The London Choral Service: Funeral &amp; Wedding Choirs in Hounslow. Live singers for churches, crematoria and carol services">
   <link rel="dns-prefetch" href="https://www.googletagmanager.com">
@@ -3057,7 +3123,7 @@
         "mainEntity": [
           {
             "@type": "Question",
-            "name": "How much does a funeral singer cost in Hounslow?",
+            "name": "What does a funeral choir cost at St Mary’s Hounslow or in Feltham?",
             "acceptedAnswer": {
               "@type": "Answer",
               "text": "A soloist for a Hounslow funeral, whether at St Mary’s or a Feltham church, starts from £250. The next steps up are £1,150 for a quartet, £1,400 for a quintet, £1,600 for a sextet, and £2,000 for a full choir of eight. All prices include travel within Greater London and liaison with your funeral director."
@@ -3068,7 +3134,7 @@
             "name": "Can your singers perform at South West Middlesex Crematorium in Hanworth?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Yes. South West Middlesex Crematorium in Hanworth is the nearest crematorium to much of the borough, and our singers are well accustomed to its chapel and service timings. We work closely with crematorium staff and your funeral director to make sure the music fits the service exactly."
+              "text": "Yes. South West Middlesex Crematorium in Hanworth is the nearest crematorium to much of the borough, and our singers are well accustomed to its chapel and service timings. We agree the timings with crematorium staff and your funeral director so the music fits the slot."
             }
           },
           {
@@ -3076,7 +3142,7 @@
             "name": "Which music suits a funeral at St Mary’s Hounslow or South West Middlesex Crematorium?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "At St Mary’s Hounslow or the parish churches of Chiswick and Isleworth, we sing traditional hymns, psalms and sacred choral works, which suit those church acoustics. At South West Middlesex Crematorium, we often perform more reflective repertoire — popular songs, gentle classical pieces, or a bespoke arrangement of something that held special significance for the family."
+              "text": "At St Mary’s Hounslow or the parish churches of Chiswick and Isleworth, we sing traditional hymns, psalms and sacred choral works, which suit those church acoustics. At South West Middlesex Crematorium, we often perform more reflective repertoire: popular songs, gentle classical pieces, or a bespoke arrangement of something that held special significance for the family."
             }
           },
           {
@@ -3164,9 +3230,9 @@
             <li>Hounslow</li>
           </ol>
         </nav>
-        <h1>Funeral and wedding choirs in Hounslow</h1>
+        <h1>Hanworth to Chiswick: choirs for Hounslow funerals and weddings</h1>
         <p class="guide-meta">Musicians selected by Luca Wetherall, Artistic Director &amp; Tutor in Music, University of Oxford &mdash; <a href="/luca-wetherall.html">read more about our team</a>.</p>
-        <p class="lede">The London Borough of Hounslow spans a broad sweep of west London, from the Georgian elegance of Chiswick to the green open spaces of Feltham and Isleworth. The London Choral Service provides conservatoire-trained singers and instrumentalists for funerals, weddings, memorials, and ceremonies at venues throughout the borough.</p>
+        <p class="lede">Hounslow covers a broad sweep of west London, from Georgian Chiswick to the open spaces of Feltham and Isleworth. We send conservatoire-trained singers and instrumentalists to funerals, weddings, memorials and ceremonies at St&nbsp;Mary&rsquo;s Hounslow, the crematorium in Hanworth and the parish churches in between.</p>
         <hr class="rule">
       </div>
     </section>
@@ -3174,23 +3240,23 @@
     <section class="section">
       <div class="prose">
         <h2>Funerals at South West Middlesex Crematorium and St&nbsp;Mary&rsquo;s Hounslow</h2>
-        <p>Our singers perform regularly at churches and crematoria across Hounslow, including St&nbsp;Mary&rsquo;s Hounslow, South West Middlesex Crematorium in Hanworth, and parish churches in Feltham, Chiswick, and Isleworth. Each venue has its own character and acoustic, and we take care to match our ensemble and repertoire to the setting. A single voice singing <em>Ave Maria</em>, a quartet leading a congregation through well-loved hymns&thinsp;&mdash;&thinsp;we bring the same commitment to musical excellence and pastoral care. Our <a href="../../music-guides/funeral-music-guide.html">funeral music guide</a> offers suggestions across many traditions, and we are always glad to help you plan. Please <a href="../../contact.html">contact us</a> whenever you are ready.</p>
+        <p>Our singers perform at churches and crematoria across Hounslow, including St&nbsp;Mary&rsquo;s Hounslow, South West Middlesex Crematorium in Hanworth, and parish churches in Feltham, Chiswick, and Isleworth. Each venue has its own character and acoustic, and we take care to match our ensemble and repertoire to the setting. A family might ask for a single voice singing <em>Ave Maria</em>, or for a quartet to lead the congregation through the hymns. Our <a href="../../music-guides/funeral-music-guide.html">funeral music guide</a> offers suggestions across many traditions, and we can help you plan the rest. Please <a href="../../contact.html">contact us</a> whenever you are ready.</p>
         <p>Our <a href="../../music-guides/crematorium-music.html">guide to crematorium music</a> covers timing and acoustics in chapels like the one at South West Middlesex Crematorium, and how to shape a shorter service.</p>
-        <p>We work closely with funeral directors and officiants across the borough to ensure that the musical elements of a service are coordinated with care. Our singers arrive early, dress appropriately, and conduct themselves with the utmost professionalism. For many families, live singing makes the difference between a service that gets through the order and one the room actually shares &mdash; a moment of beauty in the midst of grief. You can read more about how we approach each booking on our <a href="../../services.html">services page</a>.</p>
+        <p>We agree the timing of each piece with the funeral director and officiant. Our singers arrive early and dress for a funeral, and they give the congregation voices to sing the hymns with. You can read more about how we approach each booking on our <a href="../../services.html">services page</a>.</p>
 
         <h2>Choir sizes from Hanworth to Chiswick and Isleworth</h2>
-        <p>South West Middlesex Crematorium in Hanworth runs to a fixed service length, so a quartet is usually the right call &mdash; large enough for a hymn, compact enough for the chapel. St&nbsp;Mary&rsquo;s Hounslow handles a quartet or sextet well depending on the size of the congregation. For weddings in the larger parish churches of Chiswick, a sextet generally suits the buildings &mdash; the acoustic rewards a fuller sound, and processional hymns sit better with more voices. The riverside churches at Isleworth tend to be more intimate; a quartet works well there. For a quiet funeral or a small civil ceremony, a soloist singing something simple often sits better than a larger group. For a graveside committal, one voice is usually plenty. You can compare the fee for a graveside soloist with a quartet at Hanworth on our <a href="../../pricing.html">pricing page</a>.</p>
+        <p>South West Middlesex Crematorium in Hanworth runs to a fixed service length, so a quartet is usually the right call: large enough for a hymn, compact enough for the chapel. St&nbsp;Mary&rsquo;s Hounslow handles a quartet or sextet well depending on the size of the congregation. For weddings in the larger parish churches of Chiswick, a sextet suits the buildings, whose acoustic rewards a fuller sound; processional hymns also sit better with more voices. The riverside churches at Isleworth tend to be more intimate; a quartet works well there. For a quiet funeral or a small civil ceremony, a soloist singing something simple often sits better than a larger group. For a graveside committal, one voice is usually plenty. You can compare the fee for a graveside soloist with a quartet at Hanworth on our <a href="../../pricing.html">pricing page</a>.</p>
 
         <h2>Planning a funeral in Hounslow</h2>
 
-        <h3>How much does a funeral singer cost in Hounslow?</h3>
+        <h3>What does a funeral choir cost at St&nbsp;Mary&rsquo;s Hounslow or in Feltham?</h3>
         <p>A soloist for a Hounslow funeral, whether at St&nbsp;Mary&rsquo;s or a Feltham church, starts from &pound;250. The next steps up are &pound;1,150 for a quartet, &pound;1,400 for a quintet, &pound;1,600 for a sextet, and &pound;2,000 for a full choir of eight. All prices include travel within Greater London and liaison with your funeral director.</p>
 
         <h3>Can your singers perform at South West Middlesex Crematorium in Hanworth?</h3>
-        <p>Yes. South West Middlesex Crematorium in Hanworth is the nearest crematorium to much of the borough, and our singers are well accustomed to its chapel and service timings. We work closely with crematorium staff and your funeral director to make sure the music fits the service exactly.</p>
+        <p>Yes. South West Middlesex Crematorium in Hanworth is the nearest crematorium to much of the borough, and our singers are well accustomed to its chapel and service timings. We agree the timings with crematorium staff and your funeral director so the music fits the slot.</p>
 
         <h3>Which music suits a funeral at St&nbsp;Mary&rsquo;s Hounslow or South West Middlesex Crematorium?</h3>
-        <p>At St&nbsp;Mary&rsquo;s Hounslow or the parish churches of Chiswick and Isleworth, we sing traditional hymns, psalms and sacred choral works, which suit those church acoustics. At South West Middlesex Crematorium, we often perform more reflective repertoire &mdash; popular songs, gentle classical pieces, or a bespoke arrangement of something that held special significance for the family.</p>
+        <p>At St&nbsp;Mary&rsquo;s Hounslow or the parish churches of Chiswick and Isleworth, we sing traditional hymns, psalms and sacred choral works, which suit those church acoustics. At South West Middlesex Crematorium, we often perform more reflective repertoire: popular songs, gentle classical pieces, or a bespoke arrangement of something that held special significance for the family.</p>
 
         <h3>Would a single singer suit a quiet funeral in Hounslow?</h3>
         <p>Yes. For a quiet funeral or a graveside committal, a soloist (from &pound;250) singing something simple often sits better than a larger group. At South West Middlesex Crematorium a quartet (from &pound;1,150) is usually the right size: large enough for a hymn and compact enough for the chapel.</p>
@@ -3198,7 +3264,7 @@
         <p>If the funeral is at St&nbsp;Mary&rsquo;s Hounslow, start with our <a href="../../music-guides/funeral-music-guide.html">funeral music guide</a> and the list of <a href="../../music-guides/popular-funeral-hymns.html">popular funeral hymns</a>. Couples marrying in Chiswick can turn to the <a href="../../music-guides/choosing-wedding-hymns.html">wedding hymns guide</a>, and the <a href="../../music-guides/funeral-music-costs.html">funeral music costs guide</a> sets out fees by ensemble.</p>
 
         <h2>Weddings in Chiswick and Isleworth</h2>
-        <p>From the handsome churches of Chiswick to Isleworth&rsquo;s charming riverside setting, Hounslow offers a surprisingly varied range of wedding venues. Our singers can provide rousing congregational hymns, a reflective anthem during the signing of the register, or uplifting music as the couple leave the church. We also perform at civil ceremonies in licensed venues across the borough, bringing the warmth and polish of live choral music to every celebration. Browse our <a href="../../music-guides/choosing-wedding-hymns.html">guide to choosing wedding hymns</a> for ideas on building your perfect programme.</p>
+        <p>Hounslow&rsquo;s wedding venues run from the larger parish churches of Chiswick to the riverside churches at Isleworth. Our singers can lead the congregational hymns, sing a reflective anthem while you sign the register, and send you out of the church with something brighter. We also sing at civil ceremonies in licensed venues across the borough. For hymns that suit a Chiswick church, see <a href="../../music-guides/choosing-wedding-hymns.html">choosing wedding hymns</a>.</p>
 
         <figure class="pull-quote">
           <blockquote><p>&ldquo;We were absolutely delighted with the choir. The four singers you arranged for our wedding were outstanding&thinsp;&mdash;&thinsp;confident, warm, and utterly professional.&rdquo;</p></blockquote>
@@ -3208,7 +3274,7 @@
         <h2>Carols near Hounslow high street</h2>
         <p>Near St&nbsp;Mary&rsquo;s Hounslow and the offices along Hounslow high street, December enquiries shift from weddings and funerals to <a href="../../christmas.html">December carol singing</a>: a roaming group for a residents&rsquo; association, or <a href="../../christmas-carol-services.html">a company carol service</a> for a staff party. The choir sings a cappella, so all we need is space enough to stand together.</p>
 
-        <p><a href="../../contact.html" class="btn-link">Get in touch about your occasion in Hounslow</a></p>
+        <p><a href="../../contact.html" class="btn-link">Plan the music for a Hounslow service</a></p>
       </div>
     </section>
 

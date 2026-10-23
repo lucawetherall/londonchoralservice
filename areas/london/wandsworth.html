@@ -65,11 +65,15 @@
       window.addEventListener(evt, loadGA, { once: true, passive: true });
     });
 
-    // Conversion tracking. A lead is one "Submit lead form" conversion, fired by
-    // js/form.js and js/private-events.js only after Web3Forms accepts the
-    // enquiry. Phone, email and WhatsApp taps are contact_click events (their
-    // own secondary Ads actions "Call click" and "WhatsApp or email click"),
-    // never leads. Labels come from Google Ads (conversion action tag snippets).
+    // Conversion tracking. A lead is one "Submit lead form" conversion plus a GA4
+    // generate_lead, started by js/form.js and js/private-events.js only after
+    // Web3Forms accepts the enquiry. With cookie consent, js/form.js's lead is
+    // sent from thank-you.html (lcsLead below hands it over); without consent,
+    // and on the private register's inline success, it goes from the form's own
+    // page at once. Phone, email and WhatsApp taps are contact_click events, never
+    // leads, each with its own Ads action: "WhatsApp or email click" is a
+    // primary goal (owner decision, 26 Sep 2026) and "Call click" a secondary
+    // one. Labels come from Google Ads (conversion action tag snippets).
     var LCS_ADS = {
       lead: 'AW-17988388404/RjhECKGP7akcELSMxIFD',
       call: 'AW-17988388404/HHu8CJq1x4UdELSMxIFD',
@@ -165,7 +169,7 @@
         var h1 = document.querySelector('h1');
         var page = ((h1 && h1.childNodes[0] && h1.childNodes[0].textContent) || document.title.split('|')[0]).replace(/\s+/g, ' ').trim();
         var attr = lcsAttribution();
-        var ad = attr.gclid || attr.gbraid || attr.wbraid || attr.utm_medium === 'cpc' ? ', via a Google ad' : '';
+        var ad = attr.gclid || attr.gbraid || attr.wbraid || attr.utm_medium === 'cpc' || lcsAdVisit() ? ', via a Google ad' : '';
         var source = 'your \u201c' + page + '\u201d page' + ad;
         // With cookie consent, a short reference to the ad click rides along too,
         // so a booking that starts on WhatsApp or email can be reported to Google
@@ -176,7 +180,8 @@
             ref = lcsShortRef(attr.gclid || attr.gbraid || attr.wbraid || '');
           }
         } catch (e) {}
-        // Without consent, only the landing page's name (never the click ID).
+        // Without consent, only the landing page's name and the ad's campaign
+        // (never the click ID).
         var visit = ref ? '' : lcsAdVisit();
         var tag = ref ? 'Ref: ' + ref : visit ? 'Ad visit: ' + visit : '';
         if (method === 'whatsapp') {
@@ -227,18 +232,79 @@
 
     // Ad visit without cookies: when this page's own URL holds an ad click ID
     // and the visitor has not allowed cookies, its messages and form carry the
-    // page's name ("Ad visit: weddings"), never the click ID. It lives only in
-    // this variable: nothing is stored, so the next page carries nothing.
+    // landing page's name and the ad's campaign from utm_campaign ("Ad visit:
+    // pricing (wedding-leads)"), never the click ID. Nothing is stored: the
+    // label lives in this variable, and same-site links on the page carry it in
+    // their address (lcs_av=<label>), so the next page the visitor opens knows
+    // it too and passes it on. scripts/bookings/pipeline.py reads the same format.
     function lcsAdVisitSlug(path) {
       var p = String(path || '').toLowerCase().replace(/^\/+/, '').replace(/\.html$/, '').replace(/(^|\/)index$/, '').replace(/\/+$/, '');
       if (!p) return 'home';
-      return /^[a-z0-9-]+(\/[a-z0-9-]+)*$/.test(p) ? p : 'other';
+      return p.length <= 80 && /^[a-z0-9-]+(\/[a-z0-9-]+)*$/.test(p) ? p : 'other';
     }
-    var LCS_AD_VISIT = /[?&](gclid|gbraid|wbraid)=[^&]/.test(location.search) ? lcsAdVisitSlug(location.pathname) : '';
+    function lcsAdVisitLabel() {
+      try {
+        var q = new URLSearchParams(location.search);
+        if (/[?&](gclid|gbraid|wbraid)=[^&]/.test(location.search)) {
+          var slug = lcsAdVisitSlug(location.pathname), campaign = q.get('utm_campaign') || '';
+          return /^[a-z0-9-]{1,40}$/.test(campaign) ? slug + ' (' + campaign + ')' : slug;
+        }
+        // Carried from the previous page, and only from a page of this site, so
+        // a shared or bookmarked address never counts as an ad visit.
+        var carried = q.get('lcs_av') || '';
+        var from = document.referrer ? new URL(document.referrer).origin : '';
+        // The page at most 80 characters, the campaign at most 40 (as pipeline.py's AD_VISIT_RE).
+        if (from === location.origin &&
+            /^(?=[a-z0-9\/-]{1,80}( \(|$))[a-z0-9-]+(\/[a-z0-9-]+)*( \([a-z0-9-]{1,40}\))?$/.test(carried)) return carried;
+      } catch (e) {}
+      return '';
+    }
+    var LCS_AD_VISIT = lcsAdVisitLabel();
     function lcsAdVisit() {
       if (!LCS_AD_VISIT) return '';
-      try { if (localStorage.getItem('lcs-consent') === 'granted') return ''; } catch (e) {}
+      // Once cookies are allowed the click reference (lcsAttribution) takes over, but only if there is one: a
+      // visitor who accepts on a later page has no click ID left, so the label stays.
+      try {
+        if (localStorage.getItem('lcs-consent') === 'granted') {
+          var a = lcsAttribution();
+          if (a.gclid || a.gbraid || a.wbraid) return '';
+        }
+      } catch (e) {}
       return LCS_AD_VISIT;
+    }
+    // Same-site page links (.html or folder addresses) get lcs_av=<label> at
+    // run time, for ad visitors only, so crawlers never see it. Never tel:,
+    // mailto:, WhatsApp, other sites or links within the page. Once the visitor
+    // allows cookies the label comes off again where a click ID remains
+    // (lcsAttribution takes over); after accepting on a later page it stays.
+    function lcsCarryAdVisit(a) {
+      try {
+        var raw = a.getAttribute('href') || '';
+        if (!raw || raw.charAt(0) === '#' || /^(tel|mailto|sms|javascript):/i.test(raw) ||
+            raw.indexOf('wa.me/') !== -1 || a.hasAttribute('download')) return;
+        var url = new URL(raw, location.href);
+        if (url.origin !== location.origin || !/(\.html|\/)$/.test(url.pathname)) return;
+        var visit = lcsAdVisit();
+        if (visit) url.searchParams.set('lcs_av', visit);
+        else if (url.searchParams.has('lcs_av')) url.searchParams.delete('lcs_av');
+        else return;
+        a.setAttribute('href', url.pathname + url.search + url.hash);
+      } catch (e) {}
+    }
+    if (LCS_AD_VISIT) {
+      var lcsCarryAll = function() {
+        if (lcsAdVisit()) Array.prototype.forEach.call(document.querySelectorAll('a[href]'), lcsCarryAdVisit);
+      };
+      if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', lcsCarryAll);
+      else lcsCarryAll();
+      // Links added later, and a choice made on the cookie sheet since, are
+      // settled as each link is used.
+      ['click', 'auxclick', 'contextmenu'].forEach(function(evt) {
+        document.addEventListener(evt, function(e) {
+          var a = e.target.closest && e.target.closest('a[href]');
+          if (a) lcsCarryAdVisit(a);
+        }, true);
+      });
     }
     // The click IDs in this page's own URL, for an enquiry whose sender ticked
     // the form's ad-measurement box (read at submit, never stored).
@@ -267,7 +333,7 @@
   <!-- @include-end partials/analytics.html -->
 
   <title>Wedding and funeral choirs in Wandsworth | LCS</title>
-  <meta name="description" content="Professional funeral singers and wedding choirs in Wandsworth, London. Conservatoire-trained musicians for funerals, weddings, memorials, and ceremonies.">
+  <meta name="description" content="Wedding and funeral choirs in Wandsworth, from St Mary’s Battersea, where William Blake married, to All Saints and Putney Vale Crematorium. Soloists from £250.">
   <meta name="theme-color" content="#F7F3EE">
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://londonchoralservice.com/areas/london/wandsworth.html">
@@ -275,7 +341,7 @@
   <link rel="alternate" hreflang="x-default" href="https://londonchoralservice.com/areas/london/wandsworth.html">
 
   <meta property="og:title" content="Wedding and funeral choirs in Wandsworth | LCS">
-  <meta property="og:description" content="Professional funeral singers and wedding choirs in Wandsworth, London. Conservatoire-trained musicians for funerals, weddings, memorials, and ceremonies.">
+  <meta property="og:description" content="Wedding and funeral choirs in Wandsworth, from St Mary’s Battersea, where William Blake married, to All Saints and Putney Vale Crematorium. Soloists from £250.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://londonchoralservice.com/areas/london/wandsworth.html">
   <meta property="og:locale" content="en_GB">
@@ -287,7 +353,7 @@
 
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Wedding and funeral choirs in Wandsworth | LCS">
-  <meta name="twitter:description" content="Professional funeral singers and wedding choirs in Wandsworth, London. Conservatoire-trained musicians for funerals, weddings, memorials, and ceremonies.">
+  <meta name="twitter:description" content="Wedding and funeral choirs in Wandsworth, from St Mary’s Battersea, where William Blake married, to All Saints and Putney Vale Crematorium. Soloists from £250.">
   <meta name="twitter:image" content="https://londonchoralservice.com/assets/og/areas-london-wandsworth.png">
   <meta name="twitter:image:alt" content="The London Choral Service: Wedding &amp; Funeral Choirs in Wandsworth. Live singers for churches, crematoria and carol services">
   <link rel="dns-prefetch" href="https://www.googletagmanager.com">
@@ -3057,10 +3123,10 @@
         "mainEntity": [
           {
             "@type": "Question",
-            "name": "Can you provide a choir for a wedding in Wandsworth?",
+            "name": "Will you sing at a wedding in Putney or at All Saints Wandsworth?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Yes. St Mary's Battersea — where William Blake was married — is a wonderful setting for a wedding with live choral music, and All Saints Wandsworth and the churches of Putney are equally welcoming. We provide choirs from a solo vocalist up to twelve voices and take care of all the musical planning from first enquiry to the day itself."
+              "text": "Yes. All Saints Wandsworth has a substantial acoustic, and a sextet is generally the right call there. The churches of Putney vary in scale; most handle a quartet comfortably. We provide anything from a soloist to twelve voices and plan the music with you from first enquiry to the day itself."
             }
           },
           {
@@ -3076,7 +3142,7 @@
             "name": "Do you know Putney Vale Crematorium’s chapels?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Yes. Putney Vale Crematorium, set beside Wimbledon Common, is one of London's busiest crematoria and a venue we know well. Its chapels have a dignified, tranquil acoustic that works well with both solo voices and small ensembles. We coordinate directly with crematorium staff to ensure the music fits within the allotted service time."
+              "text": "Yes. Putney Vale Crematorium, set beside Wimbledon Common, is one of London's busiest crematoria and a venue we know well. Its chapels have a dignified, tranquil acoustic that works well with both solo voices and small ensembles. We coordinate with crematorium staff so the music fits within the allotted service time."
             }
           }
         ]
@@ -3157,7 +3223,7 @@
             <li>Wandsworth</li>
           </ol>
         </nav>
-        <h1>Wedding and funeral choirs in Wandsworth</h1>
+        <h1>Battersea to Putney Vale: wedding and funeral choirs in Wandsworth</h1>
         <p class="guide-meta">Musicians selected by Luca Wetherall, Artistic Director &amp; Tutor in Music, University of Oxford &mdash; <a href="/luca-wetherall.html">read more about our team</a>.</p>
         <p class="lede">Wandsworth encompasses some of South West London&rsquo;s most desirable neighbourhoods, from the riverside elegance of Putney and the green spaces of Wandsworth Common to Battersea and Tooting. We provide conservatoire-trained singers and choirs for funerals, weddings, memorials, and ceremonies at venues across the borough.</p>
         <hr class="rule">
@@ -3167,15 +3233,15 @@
     <section class="section">
       <div class="prose">
         <h2>Weddings at St&nbsp;Mary&rsquo;s Battersea, where William Blake married</h2>
-        <p>Wandsworth has a wide variety of wedding settings. St&nbsp;Mary&rsquo;s Battersea, where the poet and artist William Blake was married in 1782, is a particular favourite, while All Saints Wandsworth and the churches of Putney work for ceremonies of all sizes. A live choir does the work a recording cannot: hold the hymns together for a congregation that is unsure of the tune, and follow them with a choral piece during the signing of the register. Our singers are confident leading congregational hymns and equally at home performing more intricate choral works. Our guide to <a href="../../music-guides/choosing-wedding-hymns.html">choosing wedding hymns</a> can help you pick hymns for St&nbsp;Mary&rsquo;s Battersea or a Putney church.</p>
+        <p>Wandsworth has a wide variety of wedding settings. St&nbsp;Mary&rsquo;s Battersea, where the poet and artist William Blake was married in 1782, is a particular favourite, while All Saints Wandsworth and the churches of Putney work for ceremonies of all sizes. In Blake&rsquo;s intimate church a quartet can hold the hymns together for a congregation unsure of the tune, then sing one choral piece while you sign the register. At All Saints, with its larger acoustic, a sextet has room for more intricate choral works. Our guide to <a href="../../music-guides/choosing-wedding-hymns.html">choosing wedding hymns</a> can help you pick hymns for St&nbsp;Mary&rsquo;s Battersea or a Putney church.</p>
 
         <h2>Choir sizes from Battersea to Putney Vale</h2>
-        <p>St&nbsp;Mary&rsquo;s Battersea is an intimate riverside church &mdash; a quartet usually sits well in the room, and a sextet works for a wedding with a larger congregation, but the building doesn&rsquo;t demand a bigger sound to fill it. All Saints Wandsworth has a more substantial acoustic, and a sextet is generally the right call there for weddings. The churches of Putney vary in scale; most handle a quartet comfortably, with a sextet adding weight at the larger ones. For a chapel service at Putney Vale, the fixed timing and smaller room mean a quartet is usually the practical choice. For a graveside committal there, a soloist is usually the better fit. Our <a href="../../pricing.html">pricing page</a> sets out the costs by ensemble size.</p>
+        <p>St&nbsp;Mary&rsquo;s Battersea is an intimate riverside church. A quartet usually sits well in the room, and a sextet works for a wedding with a larger congregation; the building doesn&rsquo;t need a bigger sound to fill it. All Saints Wandsworth has a more substantial acoustic, and a sextet is generally the right call there for weddings. The churches of Putney vary in scale; most handle a quartet comfortably, with a sextet adding weight at the larger ones. For a chapel service at Putney Vale, the fixed timing and smaller room mean a quartet is usually the practical choice. For a graveside committal there, a soloist is usually the better fit. Each of these sizes has its fee on our <a href="../../pricing.html">pricing page</a>.</p>
 
         <h2>Funerals at Putney Vale Crematorium and All Saints Wandsworth</h2>
-        <p>Putney Vale Crematorium, set within extensive grounds bordering Wimbledon Common, is one of London&rsquo;s most well-known crematoria and a venue where our singers have performed on numerous occasions. Its chapels offer a dignified and tranquil setting, and the measured acoustic responds well to both solo voices and small choral ensembles. All Saints Church on Wandsworth High Street, with its striking tower and spacious interior, is another venue we know well&thinsp;&mdash;&thinsp;its warm acoustic makes it an ideal setting for traditional funeral services with hymns and choral music. For advice on selecting the right pieces, please see our <a href="../../music-guides/funeral-music-guide.html">funeral music guide</a> or <a href="../../contact.html">get in touch</a> directly.</p>
+        <p>Putney Vale Crematorium, set within extensive grounds bordering Wimbledon Common, is one of London&rsquo;s most well-known crematoria and a venue where our singers have performed on numerous occasions. Its chapels offer a dignified and tranquil setting, and the measured acoustic responds well to both solo voices and small choral ensembles. All Saints Church on Wandsworth High Street, with its striking tower and spacious interior, is another venue we know well, and its warm acoustic suits traditional funeral services with hymns and choral music. For advice on selecting the right pieces, see our <a href="../../music-guides/funeral-music-guide.html">funeral music guide</a> or <a href="../../contact.html">get in touch</a>.</p>
 
-        <p>Across the borough, St&nbsp;Mary&rsquo;s Battersea stands on a beautiful riverside site that has been a place of worship for over a thousand years. Its intimate chapel and fine views over the Thames provide a uniquely contemplative atmosphere for funeral and memorial services. At one of these historic churches, at Putney Vale, or in one of the many community venues around Battersea Park, we work closely with funeral directors, clergy, and families so the music side of the day is one less thing to manage. On our <a href="../../services.html">services page</a> you can read how we prepare for a funeral at Putney Vale or in Battersea.</p>
+        <p>Across the borough, St&nbsp;Mary&rsquo;s Battersea stands on a riverside site that has been a place of worship for over a thousand years. The church is intimate and looks out over the Thames, which suits a quiet funeral or memorial service. At one of these historic churches, at Putney Vale, or in one of the many community venues around Battersea Park, we work closely with funeral directors, clergy, and families so the music side of the day is one less thing to manage. On our <a href="../../services.html">services page</a> you can read how we prepare for a funeral at Putney Vale or in Battersea.</p>
 
         <figure class="pull-quote">
           <blockquote>
@@ -3185,20 +3251,20 @@
         </figure>
 
         <h2>Carols from Putney to Wandsworth Common</h2>
-        <p>In December we provide carol services and roaming carol singers for offices, venues, and residents&rsquo; events across Wandsworth, from Putney and Battersea to Wandsworth Common. A choir can lead <a href="../../christmas-carol-services.html">an office carol service in December</a> near All Saints Wandsworth, or <a href="../../christmas.html">carol singers for your event</a> can circulate at a residents&rsquo; gathering close to St&nbsp;Mary&rsquo;s Battersea.</p>
+        <p>From Putney and Battersea across to Wandsworth Common, we sing carols for offices and residents&rsquo; events in December. A choir can lead <a href="../../christmas-carol-services.html">an office carol service in December</a> near All Saints Wandsworth, or <a href="../../christmas.html">carol singers for your event</a> can circulate at a residents&rsquo; gathering close to St&nbsp;Mary&rsquo;s Battersea.</p>
 
         <h2>Questions about Battersea and Putney Vale</h2>
 
-        <h3>Can you provide a choir for a wedding in Wandsworth?</h3>
-        <p>Yes. St&nbsp;Mary&rsquo;s Battersea &mdash; where William Blake was married &mdash; is a wonderful setting for a wedding with live choral music, and All Saints Wandsworth and the churches of Putney are equally welcoming. We provide choirs from a solo vocalist up to twelve voices and take care of all the musical planning from first enquiry to the day itself.</p>
+        <h3>Will you sing at a wedding in Putney or at All Saints Wandsworth?</h3>
+        <p>Yes. All Saints Wandsworth has a substantial acoustic, and a sextet is generally the right call there. The churches of Putney vary in scale; most handle a quartet comfortably. We provide anything from a soloist to twelve voices and plan the music with you from first enquiry to the day itself.</p>
 
         <h3>Does St&nbsp;Mary&rsquo;s Battersea need a large choir?</h3>
         <p>No. St&nbsp;Mary&rsquo;s is an intimate riverside church where a quartet (from &pound;1,150) usually sits well, and a sextet (from &pound;1,600) covers a wedding with a larger congregation. The building does not need a bigger sound to fill it.</p>
 
         <h3>Do you know Putney Vale Crematorium&rsquo;s chapels?</h3>
-        <p>Yes. Putney Vale Crematorium, set beside Wimbledon Common, is one of London&rsquo;s busiest crematoria and a venue we know well. Its chapels have a dignified, tranquil acoustic that works well with both solo voices and small ensembles. We coordinate directly with crematorium staff to ensure the music fits within the allotted service time.</p>
+        <p>Yes. Putney Vale Crematorium, set beside Wimbledon Common, is one of London&rsquo;s busiest crematoria and a venue we know well. Its chapels have a dignified, tranquil acoustic that works well with both solo voices and small ensembles. We coordinate with crematorium staff so the music fits within the allotted service time.</p>
 
-        <p><a href="../../contact.html" class="btn-link">Get in touch about your occasion in Wandsworth</a></p>
+        <p><a href="../../contact.html" class="btn-link">Ask about a Battersea, Putney or Wandsworth date</a></p>
       </div>
     </section>
 

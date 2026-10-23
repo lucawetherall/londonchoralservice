@@ -65,11 +65,15 @@
       window.addEventListener(evt, loadGA, { once: true, passive: true });
     });
 
-    // Conversion tracking. A lead is one "Submit lead form" conversion, fired by
-    // js/form.js and js/private-events.js only after Web3Forms accepts the
-    // enquiry. Phone, email and WhatsApp taps are contact_click events (their
-    // own secondary Ads actions "Call click" and "WhatsApp or email click"),
-    // never leads. Labels come from Google Ads (conversion action tag snippets).
+    // Conversion tracking. A lead is one "Submit lead form" conversion plus a GA4
+    // generate_lead, started by js/form.js and js/private-events.js only after
+    // Web3Forms accepts the enquiry. With cookie consent, js/form.js's lead is
+    // sent from thank-you.html (lcsLead below hands it over); without consent,
+    // and on the private register's inline success, it goes from the form's own
+    // page at once. Phone, email and WhatsApp taps are contact_click events, never
+    // leads, each with its own Ads action: "WhatsApp or email click" is a
+    // primary goal (owner decision, 26 Sep 2026) and "Call click" a secondary
+    // one. Labels come from Google Ads (conversion action tag snippets).
     var LCS_ADS = {
       lead: 'AW-17988388404/RjhECKGP7akcELSMxIFD',
       call: 'AW-17988388404/HHu8CJq1x4UdELSMxIFD',
@@ -165,7 +169,7 @@
         var h1 = document.querySelector('h1');
         var page = ((h1 && h1.childNodes[0] && h1.childNodes[0].textContent) || document.title.split('|')[0]).replace(/\s+/g, ' ').trim();
         var attr = lcsAttribution();
-        var ad = attr.gclid || attr.gbraid || attr.wbraid || attr.utm_medium === 'cpc' ? ', via a Google ad' : '';
+        var ad = attr.gclid || attr.gbraid || attr.wbraid || attr.utm_medium === 'cpc' || lcsAdVisit() ? ', via a Google ad' : '';
         var source = 'your \u201c' + page + '\u201d page' + ad;
         // With cookie consent, a short reference to the ad click rides along too,
         // so a booking that starts on WhatsApp or email can be reported to Google
@@ -176,7 +180,8 @@
             ref = lcsShortRef(attr.gclid || attr.gbraid || attr.wbraid || '');
           }
         } catch (e) {}
-        // Without consent, only the landing page's name (never the click ID).
+        // Without consent, only the landing page's name and the ad's campaign
+        // (never the click ID).
         var visit = ref ? '' : lcsAdVisit();
         var tag = ref ? 'Ref: ' + ref : visit ? 'Ad visit: ' + visit : '';
         if (method === 'whatsapp') {
@@ -227,18 +232,79 @@
 
     // Ad visit without cookies: when this page's own URL holds an ad click ID
     // and the visitor has not allowed cookies, its messages and form carry the
-    // page's name ("Ad visit: weddings"), never the click ID. It lives only in
-    // this variable: nothing is stored, so the next page carries nothing.
+    // landing page's name and the ad's campaign from utm_campaign ("Ad visit:
+    // pricing (wedding-leads)"), never the click ID. Nothing is stored: the
+    // label lives in this variable, and same-site links on the page carry it in
+    // their address (lcs_av=<label>), so the next page the visitor opens knows
+    // it too and passes it on. scripts/bookings/pipeline.py reads the same format.
     function lcsAdVisitSlug(path) {
       var p = String(path || '').toLowerCase().replace(/^\/+/, '').replace(/\.html$/, '').replace(/(^|\/)index$/, '').replace(/\/+$/, '');
       if (!p) return 'home';
-      return /^[a-z0-9-]+(\/[a-z0-9-]+)*$/.test(p) ? p : 'other';
+      return p.length <= 80 && /^[a-z0-9-]+(\/[a-z0-9-]+)*$/.test(p) ? p : 'other';
     }
-    var LCS_AD_VISIT = /[?&](gclid|gbraid|wbraid)=[^&]/.test(location.search) ? lcsAdVisitSlug(location.pathname) : '';
+    function lcsAdVisitLabel() {
+      try {
+        var q = new URLSearchParams(location.search);
+        if (/[?&](gclid|gbraid|wbraid)=[^&]/.test(location.search)) {
+          var slug = lcsAdVisitSlug(location.pathname), campaign = q.get('utm_campaign') || '';
+          return /^[a-z0-9-]{1,40}$/.test(campaign) ? slug + ' (' + campaign + ')' : slug;
+        }
+        // Carried from the previous page, and only from a page of this site, so
+        // a shared or bookmarked address never counts as an ad visit.
+        var carried = q.get('lcs_av') || '';
+        var from = document.referrer ? new URL(document.referrer).origin : '';
+        // The page at most 80 characters, the campaign at most 40 (as pipeline.py's AD_VISIT_RE).
+        if (from === location.origin &&
+            /^(?=[a-z0-9\/-]{1,80}( \(|$))[a-z0-9-]+(\/[a-z0-9-]+)*( \([a-z0-9-]{1,40}\))?$/.test(carried)) return carried;
+      } catch (e) {}
+      return '';
+    }
+    var LCS_AD_VISIT = lcsAdVisitLabel();
     function lcsAdVisit() {
       if (!LCS_AD_VISIT) return '';
-      try { if (localStorage.getItem('lcs-consent') === 'granted') return ''; } catch (e) {}
+      // Once cookies are allowed the click reference (lcsAttribution) takes over, but only if there is one: a
+      // visitor who accepts on a later page has no click ID left, so the label stays.
+      try {
+        if (localStorage.getItem('lcs-consent') === 'granted') {
+          var a = lcsAttribution();
+          if (a.gclid || a.gbraid || a.wbraid) return '';
+        }
+      } catch (e) {}
       return LCS_AD_VISIT;
+    }
+    // Same-site page links (.html or folder addresses) get lcs_av=<label> at
+    // run time, for ad visitors only, so crawlers never see it. Never tel:,
+    // mailto:, WhatsApp, other sites or links within the page. Once the visitor
+    // allows cookies the label comes off again where a click ID remains
+    // (lcsAttribution takes over); after accepting on a later page it stays.
+    function lcsCarryAdVisit(a) {
+      try {
+        var raw = a.getAttribute('href') || '';
+        if (!raw || raw.charAt(0) === '#' || /^(tel|mailto|sms|javascript):/i.test(raw) ||
+            raw.indexOf('wa.me/') !== -1 || a.hasAttribute('download')) return;
+        var url = new URL(raw, location.href);
+        if (url.origin !== location.origin || !/(\.html|\/)$/.test(url.pathname)) return;
+        var visit = lcsAdVisit();
+        if (visit) url.searchParams.set('lcs_av', visit);
+        else if (url.searchParams.has('lcs_av')) url.searchParams.delete('lcs_av');
+        else return;
+        a.setAttribute('href', url.pathname + url.search + url.hash);
+      } catch (e) {}
+    }
+    if (LCS_AD_VISIT) {
+      var lcsCarryAll = function() {
+        if (lcsAdVisit()) Array.prototype.forEach.call(document.querySelectorAll('a[href]'), lcsCarryAdVisit);
+      };
+      if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', lcsCarryAll);
+      else lcsCarryAll();
+      // Links added later, and a choice made on the cookie sheet since, are
+      // settled as each link is used.
+      ['click', 'auxclick', 'contextmenu'].forEach(function(evt) {
+        document.addEventListener(evt, function(e) {
+          var a = e.target.closest && e.target.closest('a[href]');
+          if (a) lcsCarryAdVisit(a);
+        }, true);
+      });
     }
     // The click IDs in this page's own URL, for an enquiry whose sender ticked
     // the form's ad-measurement box (read at submit, never stored).
@@ -267,7 +333,7 @@
   <!-- @include-end partials/analytics.html -->
 
   <title>Funeral and wedding choirs in Bexley | LCS</title>
-  <meta name="description" content="Professional funeral singers and wedding choirs in Bexley, London. Conservatoire-trained musicians for funerals, weddings, memorials, and ceremonies.">
+  <meta name="description" content="Funeral and wedding choirs in Bexley, Bexleyheath and Sidcup, from St Mary the Virgin beside the River Cray to Eltham Crematorium. A quartet is £1,150.">
   <meta name="theme-color" content="#F7F3EE">
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://londonchoralservice.com/areas/london/bexley.html">
@@ -275,7 +341,7 @@
   <link rel="alternate" hreflang="x-default" href="https://londonchoralservice.com/areas/london/bexley.html">
 
   <meta property="og:title" content="Funeral and wedding choirs in Bexley | LCS">
-  <meta property="og:description" content="Professional funeral singers and wedding choirs in Bexley, London. Conservatoire-trained musicians for funerals, weddings, memorials, and ceremonies.">
+  <meta property="og:description" content="Funeral and wedding choirs in Bexley, Bexleyheath and Sidcup, from St Mary the Virgin beside the River Cray to Eltham Crematorium. A quartet is £1,150.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://londonchoralservice.com/areas/london/bexley.html">
   <meta property="og:locale" content="en_GB">
@@ -287,7 +353,7 @@
 
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Funeral and wedding choirs in Bexley | LCS">
-  <meta name="twitter:description" content="Professional funeral singers and wedding choirs in Bexley, London. Conservatoire-trained musicians for funerals, weddings, memorials, and ceremonies.">
+  <meta name="twitter:description" content="Funeral and wedding choirs in Bexley, Bexleyheath and Sidcup, from St Mary the Virgin beside the River Cray to Eltham Crematorium. A quartet is £1,150.">
   <meta name="twitter:image" content="https://londonchoralservice.com/assets/og/areas-london-bexley.png">
   <meta name="twitter:image:alt" content="The London Choral Service: Funeral &amp; Wedding Choirs in Bexley. Live singers for churches, crematoria and carol services">
   <link rel="dns-prefetch" href="https://www.googletagmanager.com">
@@ -3076,7 +3142,7 @@
             "name": "Do you sing at Eltham Crematorium, over the Bexley boundary at Falconwood?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Yes. We sing regularly at Eltham Crematorium and are familiar with its chapel layout and timing requirements. Our singers arrive early, liaise with crematorium staff, and ensure the music fits precisely within the allotted service time."
+              "text": "Yes. We sing at Eltham Crematorium and know its chapel layout and timing requirements. Our singers arrive early, liaise with crematorium staff, and make sure the music fits within the allotted service time."
             }
           }
         ]
@@ -3157,9 +3223,9 @@
             <li>Bexley</li>
           </ol>
         </nav>
-        <h1>Funeral and wedding choirs in Bexley</h1>
+        <h1>Bexley choirs for St&nbsp;Mary the Virgin, Sidcup and Bexleyheath</h1>
         <p class="guide-meta">Musicians selected by Luca Wetherall, Artistic Director &amp; Tutor in Music, University of Oxford &mdash; <a href="/luca-wetherall.html">read more about our team</a>.</p>
-        <p class="lede">The London Borough of Bexley sits on London&rsquo;s south-eastern edge, where the city meets the green landscapes of Kent. From the historic village of Bexley to the communities of Erith, Bexleyheath, and Sidcup, we provide professional singers and choirs for funerals, weddings, memorials, and ceremonies at venues across the borough.</p>
+        <p class="lede">On London&rsquo;s south-eastern edge, where the city meets the green landscapes of Kent, Bexley takes in the historic village of Bexley and the communities of Erith, Bexleyheath and Sidcup. We provide professional singers and choirs for funerals, weddings, memorials, and ceremonies at venues across the borough.</p>
         <hr class="rule">
       </div>
     </section>
@@ -3167,15 +3233,15 @@
     <section class="section">
       <div class="prose">
         <h2>Funerals at St&nbsp;Mary the Virgin and Eltham Crematorium</h2>
-        <p>St&nbsp;Mary the Virgin Bexley is one of the borough&rsquo;s most beautiful and historically significant churches, with parts of the building dating back to the thirteenth century. Its tranquil setting beside the River Cray and its warm stone interior make it a moving place for a funeral or memorial service, and our singers are honoured to perform there. The church&rsquo;s acoustic is particularly well suited to small vocal ensembles, where the clarity of each voice can be fully appreciated. Eltham Crematorium at Falconwood, just over the borough boundary and serving families across Bexley, is another venue where we regularly provide singers, and we are well versed in the particular requirements of crematorium services. For help choosing the right music, please see our <a href="../../music-guides/funeral-music-guide.html">funeral music guide</a> or <a href="../../contact.html">contact us</a> to discuss your needs.</p>
+        <p>Parts of St&nbsp;Mary the Virgin Bexley date back to the thirteenth century. Its setting beside the River Cray and its warm stone interior suit a funeral or memorial service, and the acoustic favours small vocal ensembles, in which each voice comes through clearly. Eltham Crematorium at Falconwood, just over the borough boundary and serving families across Bexley, is another venue where we provide singers, and we plan the music to fit the crematorium&rsquo;s allotted service time. For help choosing the right music, please see our <a href="../../music-guides/funeral-music-guide.html">funeral music guide</a> or <a href="../../contact.html">contact us</a> to discuss your needs.</p>
 
-        <p>We also provide funeral singers for services at churches and chapels in Bexleyheath, where the town&rsquo;s parish churches offer welcoming spaces for services of all sizes, and in Sidcup. For a single hymn accompanied by organ or a full programme of choral music, we will help you find the right ensemble and repertoire. Our singers liaise directly with funeral directors and clergy on timings, cues, and the order of service. Visit our <a href="../../services.html">services page</a> to learn more about our approach.</p>
+        <p>We also provide funeral singers for services at churches and chapels in Bexleyheath, where the town&rsquo;s parish churches offer welcoming spaces for services of all sizes, and in Sidcup. For a single hymn accompanied by organ or a full programme of choral music, we will help you find the right ensemble and repertoire. Our singers liaise with funeral directors and clergy on timings, cues, and the order of service. Visit our <a href="../../services.html">services page</a> to learn more about our approach.</p>
 
         <h2>Weddings in Bexley village, Bexleyheath and Sidcup</h2>
-        <p>Bexley&rsquo;s village churches and historic parish settings provide a charming backdrop for weddings, and live choral music brings an atmosphere that recorded music simply cannot achieve. St&nbsp;Mary the Virgin Bexley is a particularly romantic choice, while the churches of Bexleyheath, Sidcup, and Crayford each have their own distinctive character. Our singers will work with you to plan a programme of hymns, anthems, and choral pieces that makes your ceremony memorable. Our guide to <a href="../../music-guides/choosing-wedding-hymns.html">choosing wedding hymns</a> will help you shortlist hymns for a ceremony in Bexley village or Crayford.</p>
+        <p>Bexley&rsquo;s village churches and historic parish settings suit a traditional wedding, and a live choir can lead your guests in the hymns and sing during the signing of the register. St&nbsp;Mary the Virgin Bexley, beside the River Cray, is a romantic choice, while the churches of Bexleyheath, Sidcup, and Crayford each have their own distinctive character. Our singers will work with you to plan a programme of hymns, anthems, and choral pieces that suits your ceremony. Our guide to <a href="../../music-guides/choosing-wedding-hymns.html">choosing wedding hymns</a> will help you shortlist hymns for a ceremony in Bexley village or Crayford.</p>
 
         <h2>Choosing a choir size for Bexley&rsquo;s parish churches</h2>
-        <p>St&nbsp;Mary the Virgin Bexley is a village-scale church, and a quartet usually fits the room well for both weddings and funerals &mdash; large enough to lead a hymn, small enough not to overwhelm the building. The parish churches of Bexleyheath, Sidcup, and Crayford vary in size, but most sit comfortably with a quartet or sextet. If you&rsquo;re booking a wedding with a full congregation in one of the larger spaces, a sextet adds weight to processional hymns without becoming dominant. For a quiet funeral, a single voice can be more affecting than a full choir &mdash; particularly at a graveside, where simplicity tends to suit the moment. We&rsquo;re happy to help you decide once we know the venue. Our <a href="../../pricing.html">pricing page</a> gives the fee for a quartet at St&nbsp;Mary the Virgin and for each larger size.</p>
+        <p>St&nbsp;Mary the Virgin Bexley is a village-scale church, and a quartet usually fits the room well for both weddings and funerals: large enough to lead a hymn, small enough not to overwhelm the building. The parish churches of Bexleyheath, Sidcup, and Crayford vary in size, but most sit comfortably with a quartet or sextet. If you&rsquo;re booking a wedding with a full congregation in one of the larger spaces, a sextet adds weight to processional hymns without becoming dominant. For a quiet funeral, a single voice can be more affecting than a full choir, and at a graveside it is usually the better choice. We&rsquo;re happy to help you decide once we know the venue. Our <a href="../../pricing.html">pricing page</a> gives the fee for a quartet at St&nbsp;Mary the Virgin and for each larger size.</p>
 
         <figure class="pull-quote">
           <blockquote>
@@ -3193,20 +3259,20 @@
         <p>For a funeral at St&nbsp;Mary the Virgin Bexley, Eltham Crematorium, or any other venue in the area, a soloist starts from &pound;250. The next steps up are &pound;1,150 for a quartet, &pound;1,400 for a quintet, &pound;1,600 for a sextet, and &pound;2,000 for a full choir of eight. Travel to Bexleyheath, Sidcup or Erith is included, as it is for any venue in Greater London.</p>
 
         <h3>Do you sing at Eltham Crematorium, over the Bexley boundary at Falconwood?</h3>
-        <p>Yes. We sing regularly at Eltham Crematorium and are familiar with its chapel layout and timing requirements. Our singers arrive early, liaise with crematorium staff, and ensure the music fits precisely within the allotted service time.</p>
+        <p>Yes. We sing at Eltham Crematorium and know its chapel layout and timing requirements. Our singers arrive early, liaise with crematorium staff, and make sure the music fits within the allotted service time.</p>
 
         <p>Our <a href="../../music-guides/funeral-music-guide.html">funeral music guide</a> and the list of <a href="../../music-guides/popular-funeral-hymns.html">popular funeral hymns</a> are a good first read before a service at St&nbsp;Mary the Virgin or Eltham. The <a href="../../music-guides/funeral-music-costs.html">funeral music costs guide</a> explains fees, and the <a href="../../music-guides/choosing-wedding-hymns.html">wedding hymns guide</a> covers weddings in Bexley village.</p>
 
         <h2>Carol singers in Bexleyheath, Sidcup and Crayford</h2>
-        <p>St&nbsp;Mary the Virgin Bexley holds a carol service each December, and offices and venues across Bexleyheath, Sidcup, and Crayford <a href="../../christmas.html">book carol singers</a> for festive gatherings throughout the month. We also send <a href="../../christmas.html">roaming carol singers</a> who move between departments or tables rather than staying fixed on a stage. Residents&rsquo; associations and local venues tend to secure their preferred date well before December arrives.</p>
+        <p>St&nbsp;Mary the Virgin Bexley holds a carol service each December, and offices and venues across Bexleyheath, Sidcup, and Crayford <a href="../../christmas.html">book carol singers</a> for festive gatherings throughout the month. We also send <a href="../../christmas.html">roaming carol singers</a> who move between departments or tables rather than staying fixed on a stage. December dates start to fill by mid-September, so residents&rsquo; associations and local venues tend to book ahead.</p>
 
-        <p><a href="../../contact.html" class="btn-link">Get in touch about your occasion in Bexley</a></p>
+        <p><a href="../../contact.html" class="btn-link">Book singers for a Bexley service</a></p>
       </div>
     </section>
 
     <section class="section">
       <div class="prose">
-        <p class="text-sm text-mid">Nearby boroughs: <a href="greenwich.html">Greenwich</a> &middot; <a href="bromley.html">Bromley</a></p>
+        <p class="text-sm text-mid">Nearby boroughs: <a href="greenwich.html">Greenwich</a> &middot; <a href="bromley.html">Bromley</a> &middot; <a href="barking-dagenham.html">Barking &amp; Dagenham</a> &middot; <a href="havering.html">Havering</a></p>
       </div>
     </section>
 

@@ -65,11 +65,15 @@
       window.addEventListener(evt, loadGA, { once: true, passive: true });
     });
 
-    // Conversion tracking. A lead is one "Submit lead form" conversion, fired by
-    // js/form.js and js/private-events.js only after Web3Forms accepts the
-    // enquiry. Phone, email and WhatsApp taps are contact_click events (their
-    // own secondary Ads actions "Call click" and "WhatsApp or email click"),
-    // never leads. Labels come from Google Ads (conversion action tag snippets).
+    // Conversion tracking. A lead is one "Submit lead form" conversion plus a GA4
+    // generate_lead, started by js/form.js and js/private-events.js only after
+    // Web3Forms accepts the enquiry. With cookie consent, js/form.js's lead is
+    // sent from thank-you.html (lcsLead below hands it over); without consent,
+    // and on the private register's inline success, it goes from the form's own
+    // page at once. Phone, email and WhatsApp taps are contact_click events, never
+    // leads, each with its own Ads action: "WhatsApp or email click" is a
+    // primary goal (owner decision, 26 Sep 2026) and "Call click" a secondary
+    // one. Labels come from Google Ads (conversion action tag snippets).
     var LCS_ADS = {
       lead: 'AW-17988388404/RjhECKGP7akcELSMxIFD',
       call: 'AW-17988388404/HHu8CJq1x4UdELSMxIFD',
@@ -165,7 +169,7 @@
         var h1 = document.querySelector('h1');
         var page = ((h1 && h1.childNodes[0] && h1.childNodes[0].textContent) || document.title.split('|')[0]).replace(/\s+/g, ' ').trim();
         var attr = lcsAttribution();
-        var ad = attr.gclid || attr.gbraid || attr.wbraid || attr.utm_medium === 'cpc' ? ', via a Google ad' : '';
+        var ad = attr.gclid || attr.gbraid || attr.wbraid || attr.utm_medium === 'cpc' || lcsAdVisit() ? ', via a Google ad' : '';
         var source = 'your \u201c' + page + '\u201d page' + ad;
         // With cookie consent, a short reference to the ad click rides along too,
         // so a booking that starts on WhatsApp or email can be reported to Google
@@ -176,7 +180,8 @@
             ref = lcsShortRef(attr.gclid || attr.gbraid || attr.wbraid || '');
           }
         } catch (e) {}
-        // Without consent, only the landing page's name (never the click ID).
+        // Without consent, only the landing page's name and the ad's campaign
+        // (never the click ID).
         var visit = ref ? '' : lcsAdVisit();
         var tag = ref ? 'Ref: ' + ref : visit ? 'Ad visit: ' + visit : '';
         if (method === 'whatsapp') {
@@ -227,18 +232,79 @@
 
     // Ad visit without cookies: when this page's own URL holds an ad click ID
     // and the visitor has not allowed cookies, its messages and form carry the
-    // page's name ("Ad visit: weddings"), never the click ID. It lives only in
-    // this variable: nothing is stored, so the next page carries nothing.
+    // landing page's name and the ad's campaign from utm_campaign ("Ad visit:
+    // pricing (wedding-leads)"), never the click ID. Nothing is stored: the
+    // label lives in this variable, and same-site links on the page carry it in
+    // their address (lcs_av=<label>), so the next page the visitor opens knows
+    // it too and passes it on. scripts/bookings/pipeline.py reads the same format.
     function lcsAdVisitSlug(path) {
       var p = String(path || '').toLowerCase().replace(/^\/+/, '').replace(/\.html$/, '').replace(/(^|\/)index$/, '').replace(/\/+$/, '');
       if (!p) return 'home';
-      return /^[a-z0-9-]+(\/[a-z0-9-]+)*$/.test(p) ? p : 'other';
+      return p.length <= 80 && /^[a-z0-9-]+(\/[a-z0-9-]+)*$/.test(p) ? p : 'other';
     }
-    var LCS_AD_VISIT = /[?&](gclid|gbraid|wbraid)=[^&]/.test(location.search) ? lcsAdVisitSlug(location.pathname) : '';
+    function lcsAdVisitLabel() {
+      try {
+        var q = new URLSearchParams(location.search);
+        if (/[?&](gclid|gbraid|wbraid)=[^&]/.test(location.search)) {
+          var slug = lcsAdVisitSlug(location.pathname), campaign = q.get('utm_campaign') || '';
+          return /^[a-z0-9-]{1,40}$/.test(campaign) ? slug + ' (' + campaign + ')' : slug;
+        }
+        // Carried from the previous page, and only from a page of this site, so
+        // a shared or bookmarked address never counts as an ad visit.
+        var carried = q.get('lcs_av') || '';
+        var from = document.referrer ? new URL(document.referrer).origin : '';
+        // The page at most 80 characters, the campaign at most 40 (as pipeline.py's AD_VISIT_RE).
+        if (from === location.origin &&
+            /^(?=[a-z0-9\/-]{1,80}( \(|$))[a-z0-9-]+(\/[a-z0-9-]+)*( \([a-z0-9-]{1,40}\))?$/.test(carried)) return carried;
+      } catch (e) {}
+      return '';
+    }
+    var LCS_AD_VISIT = lcsAdVisitLabel();
     function lcsAdVisit() {
       if (!LCS_AD_VISIT) return '';
-      try { if (localStorage.getItem('lcs-consent') === 'granted') return ''; } catch (e) {}
+      // Once cookies are allowed the click reference (lcsAttribution) takes over, but only if there is one: a
+      // visitor who accepts on a later page has no click ID left, so the label stays.
+      try {
+        if (localStorage.getItem('lcs-consent') === 'granted') {
+          var a = lcsAttribution();
+          if (a.gclid || a.gbraid || a.wbraid) return '';
+        }
+      } catch (e) {}
       return LCS_AD_VISIT;
+    }
+    // Same-site page links (.html or folder addresses) get lcs_av=<label> at
+    // run time, for ad visitors only, so crawlers never see it. Never tel:,
+    // mailto:, WhatsApp, other sites or links within the page. Once the visitor
+    // allows cookies the label comes off again where a click ID remains
+    // (lcsAttribution takes over); after accepting on a later page it stays.
+    function lcsCarryAdVisit(a) {
+      try {
+        var raw = a.getAttribute('href') || '';
+        if (!raw || raw.charAt(0) === '#' || /^(tel|mailto|sms|javascript):/i.test(raw) ||
+            raw.indexOf('wa.me/') !== -1 || a.hasAttribute('download')) return;
+        var url = new URL(raw, location.href);
+        if (url.origin !== location.origin || !/(\.html|\/)$/.test(url.pathname)) return;
+        var visit = lcsAdVisit();
+        if (visit) url.searchParams.set('lcs_av', visit);
+        else if (url.searchParams.has('lcs_av')) url.searchParams.delete('lcs_av');
+        else return;
+        a.setAttribute('href', url.pathname + url.search + url.hash);
+      } catch (e) {}
+    }
+    if (LCS_AD_VISIT) {
+      var lcsCarryAll = function() {
+        if (lcsAdVisit()) Array.prototype.forEach.call(document.querySelectorAll('a[href]'), lcsCarryAdVisit);
+      };
+      if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', lcsCarryAll);
+      else lcsCarryAll();
+      // Links added later, and a choice made on the cookie sheet since, are
+      // settled as each link is used.
+      ['click', 'auxclick', 'contextmenu'].forEach(function(evt) {
+        document.addEventListener(evt, function(e) {
+          var a = e.target.closest && e.target.closest('a[href]');
+          if (a) lcsCarryAdVisit(a);
+        }, true);
+      });
     }
     // The click IDs in this page's own URL, for an enquiry whose sender ticked
     // the form's ad-measurement box (read at submit, never stored).
@@ -267,7 +333,7 @@
   <!-- @include-end partials/analytics.html -->
 
   <title>Funeral and wedding choirs in Birmingham | LCS</title>
-  <meta name="description" content="Hire conservatoire-trained singers for funerals, weddings, and memorials in Birmingham and the West Midlands. Soloists and choirs available from £250.">
+  <meta name="description" content="Funeral and wedding choirs in Birmingham, at the Cathedral, the Oratory in Edgbaston and Lodge Hill Crematorium. Soloists from £250, choirs from £1,150.">
   <meta name="theme-color" content="#F7F3EE">
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://londonchoralservice.com/areas/birmingham.html">
@@ -275,7 +341,7 @@
   <link rel="alternate" hreflang="x-default" href="https://londonchoralservice.com/areas/birmingham.html">
 
   <meta property="og:title" content="Funeral and wedding choirs in Birmingham | LCS">
-  <meta property="og:description" content="Hire conservatoire-trained singers for funerals, weddings, and memorials in Birmingham and the West Midlands. Soloists and choirs available from £250.">
+  <meta property="og:description" content="Funeral and wedding choirs in Birmingham, at the Cathedral, the Oratory in Edgbaston and Lodge Hill Crematorium. Soloists from £250, choirs from £1,150.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://londonchoralservice.com/areas/birmingham.html">
   <meta property="og:locale" content="en_GB">
@@ -287,7 +353,7 @@
 
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Funeral and wedding choirs in Birmingham | LCS">
-  <meta name="twitter:description" content="Hire conservatoire-trained singers for funerals, weddings, and memorials in Birmingham and the West Midlands. Soloists and choirs available from £250.">
+  <meta name="twitter:description" content="Funeral and wedding choirs in Birmingham, at the Cathedral, the Oratory in Edgbaston and Lodge Hill Crematorium. Soloists from £250, choirs from £1,150.">
   <meta name="twitter:image" content="https://londonchoralservice.com/assets/og/areas-birmingham.png">
   <meta name="twitter:image:alt" content="The London Choral Service: Funeral &amp; Wedding Choirs in Birmingham. Live singers for churches, crematoria and carol services">
   <link rel="dns-prefetch" href="https://www.googletagmanager.com">
@@ -3003,7 +3069,7 @@
             "name": "West Midlands"
           }
         },
-        "description": "Hire conservatoire-trained singers for funerals, weddings, and memorials in Birmingham and the West Midlands. Soloists and choirs available from £250.",
+        "description": "Funeral and wedding choirs in Birmingham, at the Cathedral, the Oratory in Edgbaston and Lodge Hill Crematorium. Soloists from £250, choirs from £1,150.",
         "url": "https://londonchoralservice.com/areas/birmingham.html",
         "serviceType": [
           "Funeral Music",
@@ -3053,7 +3119,7 @@
             "name": "What does a small funeral choir cost in Birmingham?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "At Lodge Hill, Perry Barr or St Philip’s, a single funeral singer starts from £250. A small choir of four is £1,150, a quintet £1,400, a sextet £1,600, and a full choir of eight £2,000. Prices include liaison with your funeral director; a modest travel supplement may apply for services in the West Midlands."
+              "text": "At Lodge Hill, Perry Barr or St Philip’s, a single funeral singer starts from £250. A choir of four is £1,150, and the full choir of eight that suits St Philip’s or the Oratory is £2,000, with a quintet at £1,400 and a sextet at £1,600 between them. Prices include liaison with your funeral director; a modest travel supplement may apply for services in the West Midlands."
             }
           },
           {
@@ -3061,7 +3127,7 @@
             "name": "Can you provide a wedding choir at Birmingham Cathedral or the Oratory?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Yes. Our wedding choirs range from a solo vocalist to a full twelve-voice chorus and regularly perform at Birmingham Cathedral, the Birmingham Oratory, and country houses across Warwickshire. We work with couples to choose music that fits the setting and handle all the arrangements on the day."
+              "text": "Yes. Our wedding choirs range from a solo vocalist to a full twelve-voice chorus and sing at Birmingham Cathedral, the Birmingham Oratory, and country houses across Warwickshire. We work with couples to choose music that fits the setting and handle all the arrangements on the day."
             }
           },
           {
@@ -3077,7 +3143,7 @@
             "name": "Do you sing at Birmingham crematoriums such as Lodge Hill and Perry Barr?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Yes, we regularly sing at Lodge Hill Crematorium, Perry Barr Crematorium, and Sutton Coldfield Crematorium, among other venues across the West Midlands. Our musicians are familiar with the timing and acoustic requirements of each chapel and coordinate directly with crematorium staff."
+              "text": "Yes, we sing at Lodge Hill Crematorium, Perry Barr Crematorium, and Sutton Coldfield Crematorium, among other venues across the West Midlands. Our musicians are familiar with the timing and acoustic requirements of each chapel and coordinate with crematorium staff."
             }
           },
           {
@@ -3085,7 +3151,7 @@
             "name": "Could carol singers perform at our Birmingham Christmas event?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Yes. We provide both traditional carol services and roaming carol singers for offices, hotels, and residents' Christmas events across Birmingham and the West Midlands. December is our busiest month, and dates usually start to fill by mid-September, so early enquiries are worth making. Visit our Christmas page for details."
+              "text": "Yes. We arrange traditional carol services, and carol singers who move between rooms at office parties, hotels and residents' Christmas events across Birmingham and the West Midlands. December is our busiest month; visit our Christmas page for dates and details."
             }
           }
         ]
@@ -3165,9 +3231,9 @@
             <li>Birmingham</li>
           </ol>
         </nav>
-        <h1>Funeral and wedding choirs in Birmingham</h1>
+        <h1>Birmingham funeral and wedding choirs, from St&nbsp;Philip&rsquo;s to Lodge Hill</h1>
         <p class="guide-meta">Musicians selected by Luca Wetherall, Artistic Director &amp; Tutor in Music, University of Oxford &mdash; <a href="/luca-wetherall.html">read more about our team</a>.</p>
-        <p class="lede">The London Choral Service provides professional singers, choirs, and instrumentalists for funerals, weddings, memorials, and ceremonies across Birmingham and the wider West Midlands. Every musician we work with is conservatoire-trained, and every performance is prepared around the service and its setting.</p>
+        <p class="lede">From requiem masses at St Martin in the Bull Ring to weddings in Warwickshire country houses, we bring professional singers, choirs and instrumentalists to services across Birmingham and the West Midlands. Every musician we work with is conservatoire-trained, and every performance is prepared around the service and its setting.</p>
         <hr class="rule">
       </div>
     </section>
@@ -3175,7 +3241,7 @@
     <section class="section" style="padding-block-start: var(--space-2xl)">
       <div class="prose">
         <h2>Funeral music in Birmingham</h2>
-        <p>Arranging funeral music is one of the harder tasks at an already difficult time. We&rsquo;re here to make it simpler. We sing at Birmingham Cathedral (St Philip&rsquo;s), at St Martin in the Bull Ring for requiem masses, and at Lodge Hill, Perry Barr, and Sutton Coldfield Crematoriums. We work with you and your funeral director to settle the music. A single soprano singing <em>Pie Jesu</em>, a small choir performing a favourite hymn, a cellist playing as people gather &mdash; whatever feels fitting, we can arrange it.</p>
+        <p>Arranging funeral music is one of the harder tasks at an already difficult time. We&rsquo;re here to make it simpler. We sing at Birmingham Cathedral (St Philip&rsquo;s), at St Martin in the Bull Ring for requiem masses, and at Lodge Hill, Perry Barr, and Sutton Coldfield Crematoriums. We work with you and your funeral director to settle the music. We can arrange a single soprano singing <em>Pie Jesu</em>, a small choir for a favourite hymn, or a cellist playing as people gather.</p>
         <p>Most families aren&rsquo;t sure what to choose at first. We&rsquo;re happy to talk through the options and suggest pieces that suit the tone of the service. Our <a href="../services.html">funeral music services</a> page sets out what we offer, and our <a href="../music-guides/funeral-music-guide.html">guide to funeral music</a> suggests hymns, solos and instrumental pieces for a church such as St Martin in the Bull Ring or a crematorium chapel.</p>
 
         <h2>Birmingham venues we know well</h2>
@@ -3190,14 +3256,14 @@
 
         <p>Our singers travel to Birmingham from London or from a regional base, depending on the date and the ensemble required. We arrive at least 45 minutes before the service to warm up and rehearse in the venue. Travel within the central Birmingham area is included in the published price; for services further out across the West Midlands or in Warwickshire, we quote the modest travel supplement upfront.</p>
 
-        <p>Most central Birmingham venues are walkable from New Street, Snow Hill, or Moor Street stations. We arrange parking ourselves for any equipment we bring (typically a portable keyboard for venues without an organ). Funeral directors can rely on us to handle the music coordination end-to-end &mdash; see our <a href="../for-funeral-directors.html">funeral director resource page</a> for how this works in practice.</p>
+        <p>Most central Birmingham venues are walkable from New Street, Snow Hill, or Moor Street stations. We arrange parking ourselves for any equipment we bring (typically a portable keyboard for venues without an organ). Funeral directors can leave the music coordination to us from start to finish; our <a href="../for-funeral-directors.html">funeral director resource page</a> explains how this works in practice.</p>
 
         <h2>Memorial services and celebrations of life</h2>
 
         <p>Memorial services held weeks or months after a funeral often allow a more substantial musical programme than the funeral itself. Birmingham Cathedral and the Birmingham Oratory both suit choirs of eight to twelve voices, and we can include orchestral players for performances of Faur&eacute;&rsquo;s <em>Requiem</em> or extracts from Handel&rsquo;s <em>Messiah</em>. Civic memorial services at the Town Hall or Symphony Hall sometimes benefit from a chorus of twelve. Our <a href="../music-guides/memorial-service-planning.html">memorial service planning guide</a> covers the practical decisions involved.</p>
 
         <h2>Wedding music in Birmingham</h2>
-        <p>Birmingham has no shortage of wonderful wedding venues, from the grandeur of Birmingham Cathedral and the ornate interiors of the Birmingham Oratory to intimate civil ceremonies at the city&rsquo;s historic hotels and country houses in the surrounding Warwickshire countryside. Our choirs and soloists bring warmth and presence to every part of the day&thinsp;&mdash;&thinsp;from the processional as you walk down the aisle to the hymns, the signing of the register, and the recessional. We work closely with couples to choose music that reflects who they are, whether that means traditional choral hymns, a contemporary arrangement, or something unexpected.</p>
+        <p>Birmingham&rsquo;s wedding venues range from Birmingham Cathedral and the ornate interiors of the Birmingham Oratory to civil ceremonies at the city&rsquo;s historic hotels and country houses in the surrounding Warwickshire countryside. Our choirs and soloists can sing the processional as you walk down the aisle, the hymns, a piece for the signing of the register, and the recessional. We work with couples to choose music that reflects who they are, whether that means traditional choral hymns, a contemporary arrangement, or something unexpected.</p>
         <p>If you&rsquo;re still deciding on your music, our <a href="../music-guides/choosing-wedding-hymns.html">guide to choosing wedding hymns</a> is a good place to start. It covers the most popular choices along with a few less obvious suggestions that our couples have loved.</p>
 
         <h2>Ensembles &amp; pricing</h2>
@@ -3216,19 +3282,19 @@
         <h2>Frequently asked questions</h2>
         
         <h3>What does a small funeral choir cost in Birmingham?</h3>
-        <p>At Lodge Hill, Perry Barr or St&nbsp;Philip&rsquo;s, a single funeral singer starts from &pound;250. A small choir of four is &pound;1,150, a quintet &pound;1,400, a sextet &pound;1,600, and a full choir of eight &pound;2,000. Prices include liaison with your funeral director; a modest travel supplement may apply for services in the West Midlands.</p>
+        <p>At Lodge Hill, Perry Barr or St&nbsp;Philip&rsquo;s, a single funeral singer starts from &pound;250. A choir of four is &pound;1,150, and the full choir of eight that suits St&nbsp;Philip&rsquo;s or the Oratory is &pound;2,000, with a quintet at &pound;1,400 and a sextet at &pound;1,600 between them. Prices include liaison with your funeral director; a modest travel supplement may apply for services in the West Midlands.</p>
 
         <h3>Can you provide a wedding choir at Birmingham Cathedral or the Oratory?</h3>
-        <p>Yes. Our wedding choirs range from a solo vocalist to a full twelve-voice chorus and regularly perform at Birmingham Cathedral, the Birmingham Oratory, and country houses across Warwickshire. We work with couples to choose music that fits the setting and handle all the arrangements on the day.</p>
+        <p>Yes. Our wedding choirs range from a solo vocalist to a full twelve-voice chorus and sing at Birmingham Cathedral, the Birmingham Oratory, and country houses across Warwickshire. We work with couples to choose music that fits the setting and handle all the arrangements on the day.</p>
 
         <h3>What music works for a funeral at Birmingham Cathedral or St&nbsp;Martin in the Bull Ring?</h3>
         <p>Our singers perform traditional hymns, classical sacred works such as Pie Jesu and Ave Maria, and contemporary songs or personal favourites. For services at Birmingham Cathedral or St Martin in the Bull Ring, we can draw on the full Anglican choral repertoire. If the piece you want has no version for voices, we can write a bespoke arrangement.</p>
 
         <h3>Do you sing at Birmingham crematoriums such as Lodge Hill and Perry Barr?</h3>
-        <p>Yes, we regularly sing at Lodge Hill Crematorium, Perry Barr Crematorium, and Sutton Coldfield Crematorium, among other venues across the West Midlands. Our musicians are familiar with the timing and acoustic requirements of each chapel and coordinate directly with crematorium staff.</p>
+        <p>Yes, we sing at Lodge Hill Crematorium, Perry Barr Crematorium, and Sutton Coldfield Crematorium, among other venues across the West Midlands. Our musicians are familiar with the timing and acoustic requirements of each chapel and coordinate with crematorium staff.</p>
 
         <h3>Could carol singers perform at our Birmingham Christmas event?</h3>
-        <p>Yes. We provide both traditional carol services and roaming carol singers for offices, hotels, and residents&rsquo; Christmas events across Birmingham and the West Midlands. December is our busiest month, and dates usually start to fill by mid-September, so early enquiries are worth making. Visit our <a href="../christmas.html">Christmas page</a> for details.</p>
+        <p>Yes. We arrange traditional carol services, and carol singers who move between rooms at office parties, hotels and residents&rsquo; Christmas events across Birmingham and the West Midlands. December is our busiest month; visit our <a href="../christmas.html">Christmas page</a> for dates and details.</p>
 
         <p>Before a service at St Philip&rsquo;s or Lodge Hill, you can read our <a href="../music-guides/funeral-music-guide.html">funeral music guide</a> and <a href="../music-guides/popular-funeral-hymns.html">popular funeral hymns</a>, or check fees in the <a href="../music-guides/funeral-music-costs.html">funeral music costs guide</a>; couples can turn to our <a href="../music-guides/choosing-wedding-hymns.html">wedding hymns guide</a>.</p>
 

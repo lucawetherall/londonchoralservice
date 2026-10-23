@@ -65,11 +65,15 @@
       window.addEventListener(evt, loadGA, { once: true, passive: true });
     });
 
-    // Conversion tracking. A lead is one "Submit lead form" conversion, fired by
-    // js/form.js and js/private-events.js only after Web3Forms accepts the
-    // enquiry. Phone, email and WhatsApp taps are contact_click events (their
-    // own secondary Ads actions "Call click" and "WhatsApp or email click"),
-    // never leads. Labels come from Google Ads (conversion action tag snippets).
+    // Conversion tracking. A lead is one "Submit lead form" conversion plus a GA4
+    // generate_lead, started by js/form.js and js/private-events.js only after
+    // Web3Forms accepts the enquiry. With cookie consent, js/form.js's lead is
+    // sent from thank-you.html (lcsLead below hands it over); without consent,
+    // and on the private register's inline success, it goes from the form's own
+    // page at once. Phone, email and WhatsApp taps are contact_click events, never
+    // leads, each with its own Ads action: "WhatsApp or email click" is a
+    // primary goal (owner decision, 26 Sep 2026) and "Call click" a secondary
+    // one. Labels come from Google Ads (conversion action tag snippets).
     var LCS_ADS = {
       lead: 'AW-17988388404/RjhECKGP7akcELSMxIFD',
       call: 'AW-17988388404/HHu8CJq1x4UdELSMxIFD',
@@ -165,7 +169,7 @@
         var h1 = document.querySelector('h1');
         var page = ((h1 && h1.childNodes[0] && h1.childNodes[0].textContent) || document.title.split('|')[0]).replace(/\s+/g, ' ').trim();
         var attr = lcsAttribution();
-        var ad = attr.gclid || attr.gbraid || attr.wbraid || attr.utm_medium === 'cpc' ? ', via a Google ad' : '';
+        var ad = attr.gclid || attr.gbraid || attr.wbraid || attr.utm_medium === 'cpc' || lcsAdVisit() ? ', via a Google ad' : '';
         var source = 'your \u201c' + page + '\u201d page' + ad;
         // With cookie consent, a short reference to the ad click rides along too,
         // so a booking that starts on WhatsApp or email can be reported to Google
@@ -176,7 +180,8 @@
             ref = lcsShortRef(attr.gclid || attr.gbraid || attr.wbraid || '');
           }
         } catch (e) {}
-        // Without consent, only the landing page's name (never the click ID).
+        // Without consent, only the landing page's name and the ad's campaign
+        // (never the click ID).
         var visit = ref ? '' : lcsAdVisit();
         var tag = ref ? 'Ref: ' + ref : visit ? 'Ad visit: ' + visit : '';
         if (method === 'whatsapp') {
@@ -227,18 +232,79 @@
 
     // Ad visit without cookies: when this page's own URL holds an ad click ID
     // and the visitor has not allowed cookies, its messages and form carry the
-    // page's name ("Ad visit: weddings"), never the click ID. It lives only in
-    // this variable: nothing is stored, so the next page carries nothing.
+    // landing page's name and the ad's campaign from utm_campaign ("Ad visit:
+    // pricing (wedding-leads)"), never the click ID. Nothing is stored: the
+    // label lives in this variable, and same-site links on the page carry it in
+    // their address (lcs_av=<label>), so the next page the visitor opens knows
+    // it too and passes it on. scripts/bookings/pipeline.py reads the same format.
     function lcsAdVisitSlug(path) {
       var p = String(path || '').toLowerCase().replace(/^\/+/, '').replace(/\.html$/, '').replace(/(^|\/)index$/, '').replace(/\/+$/, '');
       if (!p) return 'home';
-      return /^[a-z0-9-]+(\/[a-z0-9-]+)*$/.test(p) ? p : 'other';
+      return p.length <= 80 && /^[a-z0-9-]+(\/[a-z0-9-]+)*$/.test(p) ? p : 'other';
     }
-    var LCS_AD_VISIT = /[?&](gclid|gbraid|wbraid)=[^&]/.test(location.search) ? lcsAdVisitSlug(location.pathname) : '';
+    function lcsAdVisitLabel() {
+      try {
+        var q = new URLSearchParams(location.search);
+        if (/[?&](gclid|gbraid|wbraid)=[^&]/.test(location.search)) {
+          var slug = lcsAdVisitSlug(location.pathname), campaign = q.get('utm_campaign') || '';
+          return /^[a-z0-9-]{1,40}$/.test(campaign) ? slug + ' (' + campaign + ')' : slug;
+        }
+        // Carried from the previous page, and only from a page of this site, so
+        // a shared or bookmarked address never counts as an ad visit.
+        var carried = q.get('lcs_av') || '';
+        var from = document.referrer ? new URL(document.referrer).origin : '';
+        // The page at most 80 characters, the campaign at most 40 (as pipeline.py's AD_VISIT_RE).
+        if (from === location.origin &&
+            /^(?=[a-z0-9\/-]{1,80}( \(|$))[a-z0-9-]+(\/[a-z0-9-]+)*( \([a-z0-9-]{1,40}\))?$/.test(carried)) return carried;
+      } catch (e) {}
+      return '';
+    }
+    var LCS_AD_VISIT = lcsAdVisitLabel();
     function lcsAdVisit() {
       if (!LCS_AD_VISIT) return '';
-      try { if (localStorage.getItem('lcs-consent') === 'granted') return ''; } catch (e) {}
+      // Once cookies are allowed the click reference (lcsAttribution) takes over, but only if there is one: a
+      // visitor who accepts on a later page has no click ID left, so the label stays.
+      try {
+        if (localStorage.getItem('lcs-consent') === 'granted') {
+          var a = lcsAttribution();
+          if (a.gclid || a.gbraid || a.wbraid) return '';
+        }
+      } catch (e) {}
       return LCS_AD_VISIT;
+    }
+    // Same-site page links (.html or folder addresses) get lcs_av=<label> at
+    // run time, for ad visitors only, so crawlers never see it. Never tel:,
+    // mailto:, WhatsApp, other sites or links within the page. Once the visitor
+    // allows cookies the label comes off again where a click ID remains
+    // (lcsAttribution takes over); after accepting on a later page it stays.
+    function lcsCarryAdVisit(a) {
+      try {
+        var raw = a.getAttribute('href') || '';
+        if (!raw || raw.charAt(0) === '#' || /^(tel|mailto|sms|javascript):/i.test(raw) ||
+            raw.indexOf('wa.me/') !== -1 || a.hasAttribute('download')) return;
+        var url = new URL(raw, location.href);
+        if (url.origin !== location.origin || !/(\.html|\/)$/.test(url.pathname)) return;
+        var visit = lcsAdVisit();
+        if (visit) url.searchParams.set('lcs_av', visit);
+        else if (url.searchParams.has('lcs_av')) url.searchParams.delete('lcs_av');
+        else return;
+        a.setAttribute('href', url.pathname + url.search + url.hash);
+      } catch (e) {}
+    }
+    if (LCS_AD_VISIT) {
+      var lcsCarryAll = function() {
+        if (lcsAdVisit()) Array.prototype.forEach.call(document.querySelectorAll('a[href]'), lcsCarryAdVisit);
+      };
+      if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', lcsCarryAll);
+      else lcsCarryAll();
+      // Links added later, and a choice made on the cookie sheet since, are
+      // settled as each link is used.
+      ['click', 'auxclick', 'contextmenu'].forEach(function(evt) {
+        document.addEventListener(evt, function(e) {
+          var a = e.target.closest && e.target.closest('a[href]');
+          if (a) lcsCarryAdVisit(a);
+        }, true);
+      });
     }
     // The click IDs in this page's own URL, for an enquiry whose sender ticked
     // the form's ad-measurement box (read at submit, never stored).
@@ -267,7 +333,7 @@
   <!-- @include-end partials/analytics.html -->
 
   <title>Funeral and wedding choirs in Cambridge | LCS</title>
-  <meta name="description" content="Hire conservatoire-trained singers for funerals, weddings, and memorials in Cambridge and Cambridgeshire. Soloists and choirs available from £250.">
+  <meta name="description" content="Funeral and wedding choirs in Cambridge, sung by musicians who know the college chapels and Cambridge Crematorium. Soloists from £250, choirs from £1,150.">
   <meta name="theme-color" content="#F7F3EE">
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://londonchoralservice.com/areas/cambridge.html">
@@ -275,7 +341,7 @@
   <link rel="alternate" hreflang="x-default" href="https://londonchoralservice.com/areas/cambridge.html">
 
   <meta property="og:title" content="Funeral and wedding choirs in Cambridge | LCS">
-  <meta property="og:description" content="Hire conservatoire-trained singers for funerals, weddings, and memorials in Cambridge and Cambridgeshire. Soloists and choirs available from £250.">
+  <meta property="og:description" content="Funeral and wedding choirs in Cambridge, sung by musicians who know the college chapels and Cambridge Crematorium. Soloists from £250, choirs from £1,150.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://londonchoralservice.com/areas/cambridge.html">
   <meta property="og:locale" content="en_GB">
@@ -287,7 +353,7 @@
 
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Funeral and wedding choirs in Cambridge | LCS">
-  <meta name="twitter:description" content="Hire conservatoire-trained singers for funerals, weddings, and memorials in Cambridge and Cambridgeshire. Soloists and choirs available from £250.">
+  <meta name="twitter:description" content="Funeral and wedding choirs in Cambridge, sung by musicians who know the college chapels and Cambridge Crematorium. Soloists from £250, choirs from £1,150.">
   <meta name="twitter:image" content="https://londonchoralservice.com/assets/og/areas-cambridge.png">
   <meta name="twitter:image:alt" content="The London Choral Service: Funeral &amp; Wedding Choirs in Cambridge. Live singers for churches, crematoria and carol services">
   <link rel="dns-prefetch" href="https://www.googletagmanager.com">
@@ -2992,7 +3058,7 @@
         "@type": "Service",
         "name": "Funeral Singers & Wedding Choirs in Cambridge",
         "url": "https://londonchoralservice.com/areas/cambridge.html",
-        "description": "Hire conservatoire-trained singers for funerals, weddings, and memorials in Cambridge and Cambridgeshire. Soloists and choirs available from £250.",
+        "description": "Funeral and wedding choirs in Cambridge, sung by musicians who know the college chapels and Cambridge Crematorium. Soloists from £250, choirs from £1,150.",
         "provider": {
           "@type": "LocalBusiness",
           "@id": "https://londonchoralservice.com/#organization",
@@ -3056,7 +3122,7 @@
           },
           {
             "@type": "Question",
-            "name": "Can you provide a choir for a wedding in a Cambridge college chapel?",
+            "name": "Can we book a wedding choir for Pembroke, Caius or Great St Mary's?",
             "acceptedAnswer": {
               "@type": "Answer",
               "text": "Yes. Our choirs and soloists perform at weddings in college chapels such as King's College Chapel, Pembroke, and Gonville & Caius, as well as at Great St Mary's and parish churches across the county. Ensembles range from a solo vocalist to a twelve-voice chorus, and we take care of all the musical planning and liaison with your venue."
@@ -3067,7 +3133,7 @@
             "name": "What can you sing at a Cambridge funeral, from Abide with Me to Pie Jesu?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Our repertoire covers traditional hymns such as Abide with Me, classical sacred works such as Pie Jesu, and contemporary songs or personal favourites. In a city with such a deep choral heritage, the quality of singing matters enormously, and every musician on our team is conservatoire-trained. We can make a bespoke arrangement of a piece your family chooses."
+              "text": "Our repertoire covers traditional hymns such as Abide with Me, classical sacred works such as Pie Jesu, and contemporary songs or personal favourites. Cambridge congregations know their choral music, and every musician on our team is conservatoire-trained. We can make a bespoke arrangement of a piece your family chooses."
             }
           },
           {
@@ -3075,7 +3141,7 @@
             "name": "Can you sing at Cambridge Crematorium as well as in the colleges?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Yes, we regularly sing at Cambridge Crematorium and at parish churches throughout the city and surrounding Cambridgeshire villages. Our musicians are experienced in working within the chapel's specific timings and acoustics, and coordinate directly with crematorium staff and funeral directors."
+              "text": "Yes, we sing at Cambridge Crematorium and at parish churches throughout the city and surrounding Cambridgeshire villages. Our musicians are experienced in working within the chapel's specific timings and acoustics, and coordinate with crematorium staff and funeral directors."
             }
           },
           {
@@ -3083,7 +3149,7 @@
             "name": "Can we book carol singers in the college chapel tradition for a Cambridge event?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Yes. Alongside carol services in the college chapel tradition, we provide roaming carol singers for offices, hotels, and residents' Christmas events across Cambridge and Cambridgeshire. December dates are in high demand and usually start to fill by mid-September, so early enquiries make a real difference. See our Christmas page for more."
+              "text": "Yes. We sing carol services in the college chapel tradition, and our singers can also move among guests at office parties, hotel receptions and residents' events across Cambridgeshire. December dates begin to go from mid-September; see our Christmas page for more."
             }
           }
         ]
@@ -3164,23 +3230,23 @@
           </ol>
         </nav>
 
-        <h1>Funeral and wedding choirs in Cambridge</h1>
+        <h1>Choirs for Cambridge funerals and college chapel weddings</h1>
         <p class="guide-meta">Musicians selected by Luca Wetherall, Artistic Director &amp; Tutor in Music, University of Oxford &mdash; <a href="/luca-wetherall.html">read more about our team</a>.</p>
-        <p class="lede">Few places on earth are as closely identified with choral music as Cambridge. The sound of voices rising through the fan-vaulted ceiling of King&rsquo;s College Chapel has moved listeners for over five hundred years, and the choral tradition that began in those college chapels continues to shape how the world thinks about singing. The London Choral Service provides professional singers, choirs, and instrumentalists for funerals, weddings, memorials, and ceremonies across Cambridge and the surrounding Cambridgeshire countryside, drawing on the very tradition that makes this city so extraordinary.</p>
+        <p class="lede">Few places on earth are as closely identified with choral music as Cambridge. Choirs have sung under the fan-vaulted ceiling of King&rsquo;s College Chapel for over five hundred years. Our singers, choirs and instrumentalists work at funerals, weddings and memorials across Cambridge and the Cambridgeshire villages, and several of the singers are current or former members of the college choirs.</p>
 
         <hr class="rule">
 
         <h2>Funeral music in Cambridge</h2>
 
-        <p>When you are grieving, the thought of organising music for a funeral can feel like one more burden you should not have to carry. We understand, and we are here to help. Our singers perform at <a href="../services.html">funerals and memorial services</a> throughout Cambridge and Cambridgeshire&thinsp;&mdash;&thinsp;at Great St Mary&rsquo;s, the University Church that has stood at the heart of the city since the Middle Ages, at parish churches across the county, and at Cambridge Crematorium. A solitary tenor singing <em>Ave Maria</em> in a hushed chapel, a full choir raising the congregation with <em>Abide with Me</em> &mdash; we shape the music around what the family needs.</p>
+        <p>When you are grieving, the thought of organising music for a funeral can feel like one more burden you should not have to carry. We understand, and we are here to help. Our singers perform at <a href="../services.html">funerals and memorial services</a> throughout Cambridge and Cambridgeshire: at Great St Mary&rsquo;s, the University Church that has stood at the heart of the city since the Middle Ages, at parish churches across the county, and at Cambridge Crematorium. We shape the music around what the family needs, from a solitary tenor singing <em>Ave Maria</em> in a chapel to a full choir leading the congregation in <em>Abide with Me</em>.</p>
 
-        <p>Cambridge audiences know good singing when they hear it. Every musician on our team is conservatoire-trained, and many have sung in the very college chapels that define the Cambridge sound. If you are unsure which music to choose, our <a href="../music-guides/funeral-music-guide.html">funeral music guide</a> offers thoughtful suggestions for hymns, solos, and choral works suited to the setting and the service. You are also very welcome to call us&thinsp;&mdash;&thinsp;we are always happy to talk things through at your own pace, and there is never any obligation.</p>
+        <p>Cambridge audiences know good singing when they hear it. Every musician on our team is conservatoire-trained, and many have sung in the Cambridge college chapels. If you are unsure which music to choose, our <a href="../music-guides/funeral-music-guide.html">funeral music guide</a> offers thoughtful suggestions for hymns, solos, and choral works suited to the setting and the service. You are also welcome to call us and talk things through at your own pace, with no obligation.</p>
 
         <h2>Cambridge venues we know well</h2>
 
-        <p>King&rsquo;s College Chapel is one of the most acoustically remarkable spaces in Britain. The fan vaulting and stone create a long, generous reverberation that lifts unaccompanied choral repertoire and gives even a small ensemble enormous presence. Our singers know how to use its acoustic well; renaissance polyphony and Stanford anthems sound extraordinary here. The chapel has its own choir, and we sing there only with the chapel&rsquo;s permission.</p>
+        <p>King&rsquo;s College Chapel suits unaccompanied singing. The fan vaulting and stone create a long reverberation that carries choral repertoire and gives even a small ensemble presence. Our singers know how to pace that acoustic, and renaissance polyphony and Stanford anthems suit it. The chapel has its own choir, and we sing there only with the chapel&rsquo;s permission.</p>
 
-        <p>St John&rsquo;s College Chapel and Trinity College Chapel each have their own choral traditions and acoustic characters. Both suit ensembles of six to eight voices well. The smaller college chapels &mdash; Gonville &amp; Caius, Pembroke, Jesus, Selwyn &mdash; are intimate enough that a quartet sounds full, with the kind of warm acoustic that makes hymn-singing feel personal.</p>
+        <p>St John&rsquo;s College Chapel and Trinity College Chapel each have their own choral traditions and acoustic characters. Both suit ensembles of six to eight voices well. The smaller college chapels, such as Gonville &amp; Caius, Pembroke, Jesus and Selwyn, are intimate enough that a quartet sounds full, and their warm acoustic suits hymn-singing.</p>
 
         <p>Great St Mary&rsquo;s, the University Church on Senate House Hill, has a more open acoustic and seats around 1,300. It works well for large memorial services and university ceremonies, where a choir of eight or twelve voices can fill the building comfortably. Cambridge Crematorium on Huntingdon Road has a single chapel running on tight time slots; a soloist usually suits its scale and timing best, and a quartet is the ideal where there are hymns to lead. For more, see our <a href="../music-guides/crematorium-music.html">crematorium music guide</a>.</p>
 
@@ -3188,17 +3254,17 @@
 
         <p>Several of our singers are based in or near Cambridge, including current and former members of the college choirs. Most central Cambridge venues are walkable from the railway station; for college chapels we coordinate access with the porters&rsquo; lodge and the college music office in advance.</p>
 
-        <p>We arrive at least 45 minutes before the service to warm up and rehearse in the venue. Cambridge sits outside Greater London, so a modest travel supplement applies; we quote it upfront, whether the service is in the city centre or in outlying parts of Cambridgeshire &mdash; Ely, Newmarket, St Neots, Huntingdon. Funeral directors arranging music on behalf of families can find more on our <a href="../for-funeral-directors.html">funeral director resource page</a>.</p>
+        <p>We arrive at least 45 minutes before the service to warm up and rehearse in the venue. Cambridge sits outside Greater London, so a modest travel supplement applies; we quote it upfront, whether the service is in the city centre or in outlying towns such as Ely, Newmarket, St Neots and Huntingdon. Funeral directors arranging music on behalf of families can find more on our <a href="../for-funeral-directors.html">funeral director resource page</a>.</p>
 
         <h2>Memorial services and celebrations of life</h2>
 
-        <p>Cambridge memorial services held in college chapels or at Great St Mary&rsquo;s often allow a substantial musical programme &mdash; movements from Faur&eacute;&rsquo;s <em>Requiem</em>, Stanford anthems, Howells settings, or extended Bach chorales. We can include orchestral or chamber players where the venue and budget allow. For an intimate celebration of life at a college garden or family home, a quartet or solo voice is usually the right scale. If you are planning a memorial at Great St Mary&rsquo;s or a college chapel, our <a href="../music-guides/memorial-service-planning.html">memorial service planning guide</a> covers the choices you will need to make.</p>
+        <p>Cambridge memorial services held in college chapels or at Great St Mary&rsquo;s often allow a substantial musical programme: movements from Faur&eacute;&rsquo;s <em>Requiem</em>, Stanford anthems, Howells settings, or extended Bach chorales. We can include orchestral or chamber players where the venue and budget allow. For an intimate celebration of life at a college garden or family home, a quartet or solo voice is usually the right scale. If you are planning a memorial at Great St Mary&rsquo;s or a college chapel, our <a href="../music-guides/memorial-service-planning.html">memorial service planning guide</a> covers the choices you will need to make.</p>
 
         <h2>Wedding choirs and singers</h2>
 
-        <p>Cambridge is a remarkable place to be married. The college chapels alone offer settings of unusual beauty &mdash; the luminous stone of King&rsquo;s College Chapel, the smaller Pembroke and Gonville &amp; Caius, the chapels along the Backs. Beyond the colleges, Cambridgeshire is full of medieval parish churches and country estates that suit weddings. Our singers lead the hymns for guests who have not sung since school, and we choose music for the signing of the register that suits the size of your chapel. A choir filling a vaulted chapel, a soprano singing as the register is signed, the whole room joining in on the final hymn &mdash; this is the part of the day people still talk about years later.</p>
+        <p>Cambridge gives you a choice of college chapels to marry in: King&rsquo;s College Chapel, the smaller Pembroke and Gonville &amp; Caius, and the chapels along the Backs. Beyond the colleges, Cambridgeshire is full of medieval parish churches and country estates that suit weddings. Our singers lead the hymns for guests who have not sung since school, and we choose music for the signing of the register that suits the size of your chapel. The signing takes around five minutes, enough for one piece: a soprano solo in Pembroke, say, or a full choir under a vaulted roof.</p>
 
-        <p>Our choirs and soloists perform at weddings of every size and denomination, and we are always glad to learn new repertoire if there is a piece that holds special meaning for you. Our guide to <a href="../music-guides/choosing-wedding-hymns.html">choosing wedding hymns</a> is a good place to begin if you are still exploring your options.</p>
+        <p>Our choirs and soloists perform at weddings of every size and denomination, and we will learn new repertoire if there is a piece that holds special meaning for you. Our guide to <a href="../music-guides/choosing-wedding-hymns.html">choosing wedding hymns</a> is a good place to begin if you are still exploring your options.</p>
 
         <h2>Ensembles &amp; pricing</h2>
 
@@ -3213,24 +3279,24 @@
 
         <h2>Christmas carol singers in Cambridge</h2>
 
-        <p>Cambridge is synonymous with carol singing at Christmas, and we provide both formal carol services and roaming carol singers for offices, venues, and residents&rsquo; events across the city and county throughout December. Churches and companies can arrange <a href="../christmas.html">carol singers in December</a> in the tradition sung at King&rsquo;s College Chapel, or <a href="../christmas.html">hire carol singers</a> for a party or reception where the choir moves among guests.</p>
+        <p>Cambridge is synonymous with carol singing at Christmas. Through December we sing formal carol services, and send singers to offices, venues and residents&rsquo; events across the city and county. Churches and companies can arrange <a href="../christmas.html">carol singers in December</a> in the tradition sung at King&rsquo;s College Chapel, or <a href="../christmas.html">hire carol singers</a> for a party or reception where the choir moves among guests.</p>
 
         <h2>Frequently asked questions</h2>
         
         <h3>What are your fees for a funeral choir or soloist in Cambridge?</h3>
         <p>A Cambridge funeral with one singer starts from &pound;250. The next steps up are &pound;1,150 for a quartet, &pound;1,400 for a quintet, &pound;1,600 for a sextet, and &pound;2,000 for a full choir of eight. Many of our singers have performed in the Cambridge college chapel tradition, so they know the repertoire and the acoustics from the inside. As Cambridge sits outside Greater London, a modest travel supplement applies, quoted upfront.</p>
 
-        <h3>Can you provide a choir for a wedding in a Cambridge college chapel?</h3>
+        <h3>Can we book a wedding choir for Pembroke, Caius or Great St&nbsp;Mary&rsquo;s?</h3>
         <p>Yes. Our choirs and soloists perform at weddings in college chapels such as King&rsquo;s College Chapel, Pembroke, and Gonville &amp; Caius, as well as at Great St Mary&rsquo;s and parish churches across the county. Ensembles range from a solo vocalist to a twelve-voice chorus, and we take care of all the musical planning and liaison with your venue.</p>
 
         <h3>What can you sing at a Cambridge funeral, from Abide with Me to Pie Jesu?</h3>
-        <p>Our repertoire covers traditional hymns such as Abide with Me, classical sacred works such as Pie Jesu, and contemporary songs or personal favourites. In a city with such a deep choral heritage, the quality of singing matters enormously, and every musician on our team is conservatoire-trained. We can make a bespoke arrangement of a piece your family chooses.</p>
+        <p>Our repertoire covers traditional hymns such as Abide with Me, classical sacred works such as Pie Jesu, and contemporary songs or personal favourites. Cambridge congregations know their choral music, and every musician on our team is conservatoire-trained. We can make a bespoke arrangement of a piece your family chooses.</p>
 
         <h3>Can you sing at Cambridge Crematorium as well as in the colleges?</h3>
-        <p>Yes, we regularly sing at Cambridge Crematorium and at parish churches throughout the city and surrounding Cambridgeshire villages. Our musicians are experienced in working within the chapel&rsquo;s specific timings and acoustics, and coordinate directly with crematorium staff and funeral directors.</p>
+        <p>Yes, we sing at Cambridge Crematorium and at parish churches throughout the city and surrounding Cambridgeshire villages. Our musicians are experienced in working within the chapel&rsquo;s specific timings and acoustics, and coordinate with crematorium staff and funeral directors.</p>
 
         <h3>Can we book carol singers in the college chapel tradition for a Cambridge event?</h3>
-        <p>Yes. Alongside carol services in the college chapel tradition, we provide roaming carol singers for offices, hotels, and residents&rsquo; Christmas events across Cambridge and Cambridgeshire. December dates are in high demand and usually start to fill by mid-September, so early enquiries make a real difference. See our <a href="../christmas.html">Christmas page</a> for more.</p>
+        <p>Yes. We sing carol services in the college chapel tradition, and our singers can also move among guests at office parties, hotel receptions and residents&rsquo; events across Cambridgeshire. December dates begin to go from mid-September; see our <a href="../christmas.html">Christmas page</a> for more.</p>
 
         <p>Couples marrying in a college chapel can use our <a href="../music-guides/choosing-wedding-hymns.html">wedding hymns guide</a>, and families planning a service at Great St Mary&rsquo;s will find our <a href="../music-guides/funeral-music-guide.html">funeral music guide</a>, <a href="../music-guides/popular-funeral-hymns.html">popular funeral hymns</a> and <a href="../music-guides/funeral-music-costs.html">funeral music costs guide</a> useful.</p>
 

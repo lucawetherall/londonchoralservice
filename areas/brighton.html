@@ -65,11 +65,15 @@
       window.addEventListener(evt, loadGA, { once: true, passive: true });
     });
 
-    // Conversion tracking. A lead is one "Submit lead form" conversion, fired by
-    // js/form.js and js/private-events.js only after Web3Forms accepts the
-    // enquiry. Phone, email and WhatsApp taps are contact_click events (their
-    // own secondary Ads actions "Call click" and "WhatsApp or email click"),
-    // never leads. Labels come from Google Ads (conversion action tag snippets).
+    // Conversion tracking. A lead is one "Submit lead form" conversion plus a GA4
+    // generate_lead, started by js/form.js and js/private-events.js only after
+    // Web3Forms accepts the enquiry. With cookie consent, js/form.js's lead is
+    // sent from thank-you.html (lcsLead below hands it over); without consent,
+    // and on the private register's inline success, it goes from the form's own
+    // page at once. Phone, email and WhatsApp taps are contact_click events, never
+    // leads, each with its own Ads action: "WhatsApp or email click" is a
+    // primary goal (owner decision, 26 Sep 2026) and "Call click" a secondary
+    // one. Labels come from Google Ads (conversion action tag snippets).
     var LCS_ADS = {
       lead: 'AW-17988388404/RjhECKGP7akcELSMxIFD',
       call: 'AW-17988388404/HHu8CJq1x4UdELSMxIFD',
@@ -165,7 +169,7 @@
         var h1 = document.querySelector('h1');
         var page = ((h1 && h1.childNodes[0] && h1.childNodes[0].textContent) || document.title.split('|')[0]).replace(/\s+/g, ' ').trim();
         var attr = lcsAttribution();
-        var ad = attr.gclid || attr.gbraid || attr.wbraid || attr.utm_medium === 'cpc' ? ', via a Google ad' : '';
+        var ad = attr.gclid || attr.gbraid || attr.wbraid || attr.utm_medium === 'cpc' || lcsAdVisit() ? ', via a Google ad' : '';
         var source = 'your \u201c' + page + '\u201d page' + ad;
         // With cookie consent, a short reference to the ad click rides along too,
         // so a booking that starts on WhatsApp or email can be reported to Google
@@ -176,7 +180,8 @@
             ref = lcsShortRef(attr.gclid || attr.gbraid || attr.wbraid || '');
           }
         } catch (e) {}
-        // Without consent, only the landing page's name (never the click ID).
+        // Without consent, only the landing page's name and the ad's campaign
+        // (never the click ID).
         var visit = ref ? '' : lcsAdVisit();
         var tag = ref ? 'Ref: ' + ref : visit ? 'Ad visit: ' + visit : '';
         if (method === 'whatsapp') {
@@ -227,18 +232,79 @@
 
     // Ad visit without cookies: when this page's own URL holds an ad click ID
     // and the visitor has not allowed cookies, its messages and form carry the
-    // page's name ("Ad visit: weddings"), never the click ID. It lives only in
-    // this variable: nothing is stored, so the next page carries nothing.
+    // landing page's name and the ad's campaign from utm_campaign ("Ad visit:
+    // pricing (wedding-leads)"), never the click ID. Nothing is stored: the
+    // label lives in this variable, and same-site links on the page carry it in
+    // their address (lcs_av=<label>), so the next page the visitor opens knows
+    // it too and passes it on. scripts/bookings/pipeline.py reads the same format.
     function lcsAdVisitSlug(path) {
       var p = String(path || '').toLowerCase().replace(/^\/+/, '').replace(/\.html$/, '').replace(/(^|\/)index$/, '').replace(/\/+$/, '');
       if (!p) return 'home';
-      return /^[a-z0-9-]+(\/[a-z0-9-]+)*$/.test(p) ? p : 'other';
+      return p.length <= 80 && /^[a-z0-9-]+(\/[a-z0-9-]+)*$/.test(p) ? p : 'other';
     }
-    var LCS_AD_VISIT = /[?&](gclid|gbraid|wbraid)=[^&]/.test(location.search) ? lcsAdVisitSlug(location.pathname) : '';
+    function lcsAdVisitLabel() {
+      try {
+        var q = new URLSearchParams(location.search);
+        if (/[?&](gclid|gbraid|wbraid)=[^&]/.test(location.search)) {
+          var slug = lcsAdVisitSlug(location.pathname), campaign = q.get('utm_campaign') || '';
+          return /^[a-z0-9-]{1,40}$/.test(campaign) ? slug + ' (' + campaign + ')' : slug;
+        }
+        // Carried from the previous page, and only from a page of this site, so
+        // a shared or bookmarked address never counts as an ad visit.
+        var carried = q.get('lcs_av') || '';
+        var from = document.referrer ? new URL(document.referrer).origin : '';
+        // The page at most 80 characters, the campaign at most 40 (as pipeline.py's AD_VISIT_RE).
+        if (from === location.origin &&
+            /^(?=[a-z0-9\/-]{1,80}( \(|$))[a-z0-9-]+(\/[a-z0-9-]+)*( \([a-z0-9-]{1,40}\))?$/.test(carried)) return carried;
+      } catch (e) {}
+      return '';
+    }
+    var LCS_AD_VISIT = lcsAdVisitLabel();
     function lcsAdVisit() {
       if (!LCS_AD_VISIT) return '';
-      try { if (localStorage.getItem('lcs-consent') === 'granted') return ''; } catch (e) {}
+      // Once cookies are allowed the click reference (lcsAttribution) takes over, but only if there is one: a
+      // visitor who accepts on a later page has no click ID left, so the label stays.
+      try {
+        if (localStorage.getItem('lcs-consent') === 'granted') {
+          var a = lcsAttribution();
+          if (a.gclid || a.gbraid || a.wbraid) return '';
+        }
+      } catch (e) {}
       return LCS_AD_VISIT;
+    }
+    // Same-site page links (.html or folder addresses) get lcs_av=<label> at
+    // run time, for ad visitors only, so crawlers never see it. Never tel:,
+    // mailto:, WhatsApp, other sites or links within the page. Once the visitor
+    // allows cookies the label comes off again where a click ID remains
+    // (lcsAttribution takes over); after accepting on a later page it stays.
+    function lcsCarryAdVisit(a) {
+      try {
+        var raw = a.getAttribute('href') || '';
+        if (!raw || raw.charAt(0) === '#' || /^(tel|mailto|sms|javascript):/i.test(raw) ||
+            raw.indexOf('wa.me/') !== -1 || a.hasAttribute('download')) return;
+        var url = new URL(raw, location.href);
+        if (url.origin !== location.origin || !/(\.html|\/)$/.test(url.pathname)) return;
+        var visit = lcsAdVisit();
+        if (visit) url.searchParams.set('lcs_av', visit);
+        else if (url.searchParams.has('lcs_av')) url.searchParams.delete('lcs_av');
+        else return;
+        a.setAttribute('href', url.pathname + url.search + url.hash);
+      } catch (e) {}
+    }
+    if (LCS_AD_VISIT) {
+      var lcsCarryAll = function() {
+        if (lcsAdVisit()) Array.prototype.forEach.call(document.querySelectorAll('a[href]'), lcsCarryAdVisit);
+      };
+      if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', lcsCarryAll);
+      else lcsCarryAll();
+      // Links added later, and a choice made on the cookie sheet since, are
+      // settled as each link is used.
+      ['click', 'auxclick', 'contextmenu'].forEach(function(evt) {
+        document.addEventListener(evt, function(e) {
+          var a = e.target.closest && e.target.closest('a[href]');
+          if (a) lcsCarryAdVisit(a);
+        }, true);
+      });
     }
     // The click IDs in this page's own URL, for an enquiry whose sender ticked
     // the form's ad-measurement box (read at submit, never stored).
@@ -267,7 +333,7 @@
   <!-- @include-end partials/analytics.html -->
 
   <title>Funeral and wedding choirs in Brighton | LCS</title>
-  <meta name="description" content="Hire conservatoire-trained singers for funerals, weddings, and memorials in Brighton and East Sussex. The London Choral Service has soloists from £250.">
+  <meta name="description" content="Wedding and funeral choirs in Brighton and Hove, at the Chapel Royal, Woodvale Crematorium and the flint churches of the South Downs. Soloists from £250.">
   <meta name="theme-color" content="#F7F3EE">
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://londonchoralservice.com/areas/brighton.html">
@@ -275,7 +341,7 @@
   <link rel="alternate" hreflang="x-default" href="https://londonchoralservice.com/areas/brighton.html">
 
   <meta property="og:title" content="Funeral and wedding choirs in Brighton | LCS">
-  <meta property="og:description" content="Hire conservatoire-trained singers for funerals, weddings, and memorials in Brighton and East Sussex. The London Choral Service has soloists from £250.">
+  <meta property="og:description" content="Wedding and funeral choirs in Brighton and Hove, at the Chapel Royal, Woodvale Crematorium and the flint churches of the South Downs. Soloists from £250.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://londonchoralservice.com/areas/brighton.html">
   <meta property="og:locale" content="en_GB">
@@ -287,7 +353,7 @@
 
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Funeral and wedding choirs in Brighton | LCS">
-  <meta name="twitter:description" content="Hire conservatoire-trained singers for funerals, weddings, and memorials in Brighton and East Sussex. The London Choral Service has soloists from £250.">
+  <meta name="twitter:description" content="Wedding and funeral choirs in Brighton and Hove, at the Chapel Royal, Woodvale Crematorium and the flint churches of the South Downs. Soloists from £250.">
   <meta name="twitter:image" content="https://londonchoralservice.com/assets/og/areas-brighton.png">
   <meta name="twitter:image:alt" content="The London Choral Service: Funeral &amp; Wedding Choirs in Brighton. Live singers for churches, crematoria and carol services">
   <link rel="dns-prefetch" href="https://www.googletagmanager.com">
@@ -3003,7 +3069,7 @@
             "name": "East Sussex"
           }
         },
-        "description": "Hire conservatoire-trained singers for funerals, weddings, and memorials in Brighton and East Sussex. The London Choral Service has soloists from £250.",
+        "description": "Wedding and funeral choirs in Brighton and Hove, at the Chapel Royal, Woodvale Crematorium and the flint churches of the South Downs. Soloists from £250.",
         "url": "https://londonchoralservice.com/areas/brighton.html",
         "serviceType": [
           "Funeral Music",
@@ -3061,7 +3127,7 @@
             "name": "Can you bring a wedding choir to St Bartholomew’s in Brighton?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Yes. Our wedding choirs sing at venues right across Brighton and East Sussex, from the dramatic Victorian interior of St Bartholomew's Church to the elegant setting of St Peter's Brighton and the flint churches dotted along the South Downs. We tailor the ensemble and repertoire to suit your ceremony and venue."
+              "text": "Yes. Our wedding choirs sing at venues across Brighton and East Sussex, from the Victorian brick interior of St Bartholomew's Church to St Peter's Brighton and the flint churches of the South Downs. We tailor the ensemble and repertoire to suit your ceremony and venue."
             }
           },
           {
@@ -3069,7 +3135,7 @@
             "name": "What funeral music suits St Bartholomew’s, St Peter’s or a Brighton crematorium?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Our repertoire spans traditional hymns, classical sacred works, and contemporary songs. Many families at St Bartholomew's or St Peter's request well-loved hymns alongside a reflective solo, while crematorium services at Woodvale or The Downs often suit gentler, more intimate pieces. We can arrange a song the person loved for the singers or players you book."
+              "text": "Our repertoire spans traditional hymns, classical sacred works, and contemporary songs. At St Bartholomew's or St Peter's you might choose well-loved hymns alongside a reflective solo; crematorium services at Woodvale or The Downs suit gentler, more intimate pieces. We can arrange a song the person loved for the singers or players you book."
             }
           },
           {
@@ -3077,7 +3143,7 @@
             "name": "Can you sing at Woodvale or The Downs Crematorium in Brighton?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Yes. We sing regularly at both Woodvale Crematorium and The Downs Crematorium, and our musicians are well used to the timing and acoustic considerations these services require. We coordinate directly with crematorium staff and your funeral director so that the music fits the order of service exactly."
+              "text": "Yes. We sing at both Woodvale Crematorium and The Downs Crematorium, and our musicians know the timing and acoustic of each chapel. We coordinate with crematorium staff and your funeral director so that the music fits the order of service."
             }
           },
           {
@@ -3085,7 +3151,7 @@
             "name": "Do you send carol singers to Brighton offices and hotels in December?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Yes. We provide carol services and roaming carol singers for offices, hotels, and community events across Brighton throughout December, singing entirely unaccompanied so no staging or equipment is needed. December is our busiest month and dates usually start to fill by mid-September, so do get in touch early — see our Christmas page for details."
+              "text": "Yes. We sing carol services, and send carol singers to move through offices, hotels and community events across Brighton in December. They sing unaccompanied, so you need no staging or equipment. See our Christmas page for details."
             }
           }
         ]
@@ -3165,9 +3231,9 @@
             <li>Brighton</li>
           </ol>
         </nav>
-        <h1>Funeral and wedding choirs in Brighton</h1>
+        <h1>Wedding and funeral choirs in Brighton, Hove and the South Downs</h1>
         <p class="guide-meta">Musicians selected by Luca Wetherall, Artistic Director &amp; Tutor in Music, University of Oxford &mdash; <a href="/luca-wetherall.html">read more about our team</a>.</p>
-        <p class="lede">The London Choral Service provides professional singers, choirs, and instrumentalists for funerals, weddings, memorials, and ceremonies across Brighton and the wider East Sussex area. Every musician we work with is conservatoire-trained, and every performance is prepared with the service, the venue, and the family in mind.</p>
+        <p class="lede">Our singers, choirs and instrumentalists work at funerals, weddings and memorials from Hove and Portslade to Lewes and the village churches of the South Downs. Every musician we work with is conservatoire-trained, and every performance is prepared with the service, the venue, and the family in mind.</p>
         <hr class="rule">
       </div>
     </section>
@@ -3175,14 +3241,14 @@
     <section class="section" style="padding-block-start: var(--space-2xl)">
       <div class="prose">
         <h2>Funeral music in Brighton</h2>
-        <p>When someone you love has died, the world feels altered in ways that are hard to put into words. Trying to organise a funeral while you are still absorbing what has happened is one of the most difficult things anyone has to face, and we are here so that the music, at least, is something you do not have to worry about. Whether you&rsquo;re planning a service at the extraordinary St Bartholomew&rsquo;s Church&thinsp;&mdash;&thinsp;whose towering brick nave is one of the most awe-inspiring sacred spaces in the country&thinsp;&mdash;&thinsp;a quieter funeral at St Peter&rsquo;s Brighton, a cremation at Woodvale Crematorium or The Downs Crematorium, or a burial at Brighton &amp; Preston Cemetery, we will work alongside you and your funeral director with gentleness and discretion to ensure the music honours the life being remembered. A single voice singing <em>The Lord is My Shepherd</em> as mourners gather in the stillness of a chapel, a quartet performing a tender arrangement of a song that meant everything to the person you have lost, a harpist playing softly as family take their seats&thinsp;&mdash;&thinsp;whatever feels right for your farewell, we can arrange it with care and compassion.</p>
-        <p>Our singers perform regularly at churches, chapels, and crematoria across East Sussex, from Hove and Portslade to Lewes, Eastbourne, Hastings, and the quiet village churches of the South Downs. Most families are not sure what music to choose at first. There is no right or wrong answer, and we never rush anyone. We are happy to listen, talk through the options, and suggest pieces that will feel fitting for the setting and for the person being remembered. Families booking in Hove, Lewes or the Downs can read about our <a href="../services.html">funeral music services</a>, and our <a href="../music-guides/funeral-music-guide.html">guide to funeral music</a> has ideas for hymns, solos and instrumental pieces in a church or crematorium.</p>
+        <p>When someone you love has died, the world feels altered in ways that are hard to put into words. Trying to organise a funeral while you are still absorbing what has happened is one of the most difficult things anyone has to face, and we are here so that the music, at least, is something you do not have to worry about. Whether you&rsquo;re planning a service under the tall brick nave of St Bartholomew&rsquo;s Church, a quieter funeral at St Peter&rsquo;s Brighton, a cremation at Woodvale Crematorium or The Downs Crematorium, or a burial at Brighton &amp; Preston Cemetery, we will work alongside you and your funeral director to make sure the music honours the life being remembered. We can arrange a single voice singing <em>The Lord is My Shepherd</em> as mourners gather, a quartet singing an arrangement of a song the person you have lost loved, or a harpist playing as family take their seats.</p>
+        <p>Our singers perform at churches, chapels, and crematoria across East Sussex, from Hove and Portslade to Lewes, Eastbourne, Hastings, and the quiet village churches of the South Downs. Most families are not sure what music to choose at first. There is no right or wrong answer, and we never rush anyone. We are happy to listen, talk through the options, and suggest pieces that will feel fitting for the setting and for the person being remembered. Families booking in Hove, Lewes or the Downs can read about our <a href="../services.html">funeral music services</a>, and our <a href="../music-guides/funeral-music-guide.html">guide to funeral music</a> has ideas for hymns, solos and instrumental pieces in a church or crematorium.</p>
 
         <h2>Brighton venues we know well</h2>
 
-        <p>St Bartholomew&rsquo;s Church on Ann Street has the highest nave of any parish church in England &mdash; an extraordinary brick interior with an acoustic to match. The reverberation is generous and slow, perfect for plainsong, polyphonic motets, and large-scale choral works. A quartet sounds rich here; a full choir of eight or twelve fills the building.</p>
+        <p>St Bartholomew&rsquo;s Church on Ann Street has the highest nave of any parish church in England, built in brick. The reverberation is generous and slow, which suits plainsong, polyphonic motets, and large-scale choral works. A quartet sounds rich here; a full choir of eight or twelve fills the building.</p>
 
-        <p>St Peter&rsquo;s Brighton, the city&rsquo;s parish church, has a more conventional acoustic with good clarity. It works equally well for funeral hymns and wedding choirs of any size. The Chapel Royal on North Street, smaller and more intimate, suits a quartet or solo voice and is often chosen for memorial services.</p>
+        <p>St Peter&rsquo;s Brighton, the city&rsquo;s parish church, has a more conventional acoustic with good clarity. It suits funeral hymns and wedding choirs of any size. The Chapel Royal on North Street, smaller and more intimate, suits a quartet or solo voice and is often chosen for memorial services.</p>
 
         <p>Woodvale Crematorium and The Downs Crematorium have differing chapel sizes and time slots. Woodvale&rsquo;s larger chapel can comfortably hold a sextet; The Downs&rsquo; chapels are better suited to a soloist, with a quartet the ideal where hymns need leading. Both run on tight schedules, which we plan around so families never feel rushed. Our <a href="../music-guides/crematorium-music.html">crematorium music guide</a> covers what to expect.</p>
 
@@ -3190,11 +3256,11 @@
 
         <p>Our singers travel to Brighton from London or from a regional base on the south coast. We arrive at least 45 minutes before the service to warm up and rehearse. Travel within central Brighton and Hove is included in the published price; for services further along the coast or inland to Lewes and the Downs, we quote any travel supplement upfront.</p>
 
-        <p>Brighton is well served by trains from London (London Bridge and Victoria) and we coordinate parking ourselves for any equipment. Funeral directors can rely on us to handle the music end-to-end &mdash; see our <a href="../for-funeral-directors.html">funeral director resource page</a> for how this works.</p>
+        <p>Brighton is well served by trains from London (London Bridge and Victoria) and we coordinate parking ourselves for any equipment. Funeral directors can leave the music to us from start to finish; our <a href="../for-funeral-directors.html">funeral director resource page</a> explains how this works.</p>
 
         <h2>Wedding music in Brighton</h2>
-        <p>Brighton and the Sussex coast have some of the more distinctive places to marry in the south of England. From the Victorian St Bartholomew&rsquo;s and the smaller St Peter&rsquo;s to the flint churches scattered along the South Downs and civil ceremony venues looking out over the sea, a live choir does what a recording cannot: keep a nervous congregation in tune and in time through the hymns, and follow them with a piece during the signing of the register that guests will go on talking about over dinner. Our choirs and soloists perform at every point of the ceremony &mdash; the processional as you make your entrance, the hymns that bring the congregation together, a reflective solo during the signing of the register, and a recessional to send you back down the aisle. We work with each couple to find music that fits them: traditional hymns, a contemporary piece, or a piece with particular meaning to you both.</p>
-        <p>If you&rsquo;re still exploring options for your wedding music, our <a href="../music-guides/choosing-wedding-hymns.html">guide to choosing wedding hymns</a> is a wonderful place to begin. It covers the most popular choices alongside a few less familiar suggestions that our couples have found moving.</p>
+        <p>Brighton and the Sussex coast have some of the more distinctive places to marry in the south of England. Whether you marry in the Victorian St Bartholomew&rsquo;s, the smaller St Peter&rsquo;s, a flint church on the South Downs or a civil venue looking out over the sea, our singers keep a nervous congregation in tune and in time through the hymns. Our choirs and soloists can sing the processional as you make your entrance, the hymns, a reflective solo while you sign the register, and a recessional to send you back down the aisle. We work with each couple to find music that fits them: traditional hymns, a contemporary piece, or a piece with particular meaning to you both.</p>
+        <p>If you&rsquo;re still exploring options for your wedding music, our <a href="../music-guides/choosing-wedding-hymns.html">guide to choosing wedding hymns</a> is a good place to begin. It covers the most popular choices alongside a few less familiar suggestions that our couples have found moving.</p>
 
         <h2>Ensembles &amp; pricing</h2>
         <p>We offer ensemble sizes for venues of any size and budget, from a solo singer or instrumentalist to a full choir of up to twelve voices. String quartets, harpists, and organists are also available for both sacred and secular settings across Brighton and East Sussex. Our pricing is transparent and straightforward, with no hidden fees or surprises. Fees for each ensemble are on our <a href="../pricing.html">pricing page</a>, and once you tell us the date and the building we&rsquo;ll send a quote for your Brighton service.</p>
@@ -3208,7 +3274,7 @@
 
         <h2>Christmas carol singers in Brighton</h2>
 
-        <p>December brings a different kind of enquiry to Brighton &mdash; offices along North Laine, hotels near St Bartholomew&rsquo;s Church, and residents&rsquo; committees planning a carol evening all get in touch for singers who can perform unaccompanied. We put together <a href="../christmas-carol-services.html">a full carol service</a> for a fixed programme or send <a href="../christmas.html">professional carol singers</a> to roam between rooms at a party, tailoring the group size to the space.</p>
+        <p>In December, offices along North Laine, hotels near St Bartholomew&rsquo;s Church, and residents&rsquo; committees planning a carol evening get in touch for singers who can perform unaccompanied. We put together <a href="../christmas-carol-services.html">a full carol service</a> for a fixed programme or send <a href="../christmas.html">professional carol singers</a> to roam between rooms at a party, tailoring the group size to the space.</p>
 
         <h2>Frequently asked questions</h2>
         
@@ -3216,16 +3282,16 @@
         <p>One singer for a funeral in Brighton or Hove costs from &pound;250. Four singers cost £1,150, five (a quintet) £1,400, six (a sextet) £1,600, and a full choir of eight £2,000. As Brighton is outside Greater London, a small travel supplement may apply depending on the venue. The fee includes our work with your funeral director.</p>
         
         <h3>Can you bring a wedding choir to St&nbsp;Bartholomew&rsquo;s in Brighton?</h3>
-        <p>Yes. Our wedding choirs sing at venues right across Brighton and East Sussex, from the dramatic Victorian interior of St Bartholomew's Church to the elegant setting of St Peter's Brighton and the flint churches dotted along the South Downs. We tailor the ensemble and repertoire to suit your ceremony and venue.</p>
+        <p>Yes. Our wedding choirs sing at venues across Brighton and East Sussex, from the Victorian brick interior of St Bartholomew's Church to St Peter's Brighton and the flint churches of the South Downs. We tailor the ensemble and repertoire to suit your ceremony and venue.</p>
 
         <h3>What funeral music suits St&nbsp;Bartholomew&rsquo;s, St&nbsp;Peter&rsquo;s or a Brighton crematorium?</h3>
-        <p>Our repertoire spans traditional hymns, classical sacred works, and contemporary songs. Many families at St Bartholomew's or St Peter's request well-loved hymns alongside a reflective solo, while crematorium services at Woodvale or The Downs often suit gentler, more intimate pieces. We can arrange a song the person loved for the singers or players you book.</p>
+        <p>Our repertoire spans traditional hymns, classical sacred works, and contemporary songs. At St Bartholomew's or St Peter's you might choose well-loved hymns alongside a reflective solo; crematorium services at Woodvale or The Downs suit gentler, more intimate pieces. We can arrange a song the person loved for the singers or players you book.</p>
         
         <h3>Can you sing at Woodvale or The Downs Crematorium in Brighton?</h3>
-        <p>Yes. We sing regularly at both Woodvale Crematorium and The Downs Crematorium, and our musicians are well used to the timing and acoustic considerations these services require. We coordinate directly with crematorium staff and your funeral director so that the music fits the order of service exactly.</p>
+        <p>Yes. We sing at both Woodvale Crematorium and The Downs Crematorium, and our musicians know the timing and acoustic of each chapel. We coordinate with crematorium staff and your funeral director so that the music fits the order of service.</p>
 
         <h3>Do you send carol singers to Brighton offices and hotels in December?</h3>
-        <p>Yes. We provide carol services and roaming carol singers for offices, hotels, and community events across Brighton throughout December, singing entirely unaccompanied so no staging or equipment is needed. December is our busiest month and dates usually start to fill by mid-September, so do get in touch early — see our <a href="../christmas.html">Christmas page</a> for details.</p>
+        <p>Yes. We sing carol services, and send carol singers to move through offices, hotels and community events across Brighton in December. They sing unaccompanied, so you need no staging or equipment. See our <a href="../christmas.html">Christmas page</a> for details.</p>
 
         <p>Whether you are arranging a funeral at Woodvale or a wedding in a South Downs church, our <a href="../music-guides/funeral-music-guide.html">funeral music guide</a>, <a href="../music-guides/popular-funeral-hymns.html">popular funeral hymns</a>, <a href="../music-guides/choosing-wedding-hymns.html">wedding hymns guide</a> and <a href="../music-guides/funeral-music-costs.html">funeral music costs guide</a> have more detail.</p>
 
