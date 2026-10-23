@@ -71,6 +71,8 @@ Descriptions:
 
 Another session is editing the page on 23 Oct (new hero, H1 "Hire a wedding choir in London"). After it lands:
 
+**Status 23 Oct, after PR #296:** 1, 2 and 6 done (reply time, "Marrying in 2027?" hero line, "No VAT is added" on pricing.html). 3 needs nothing: `scripts/sync_dates.py` rewrites the "Last updated" line from the content date at build. 4 was already so (choral tracks first, the soloist Ave Maria last). 5: the select already preselects Wedding; a venue field would change the enquiry email the reply drafter parses, so it waits for its own change. The 5 Jan and April checks are ROADMAP R22.
+
 1. **Reply time.** "How it works" step 1 says "We call you back within hours"; the hero form, the about page and the ads say "within one working day". Pick one; the ads use the working day.
 2. **2027 line in the hero offer.** The ad says "Book Your 2027 Wedding Choir"; the page has "Around six months ahead is ideal" lower down. One hero line such as "Booking for 2027? Around six months ahead is ideal, and we take later dates too" carries the message from ad to page.
 3. **"Last updated: August 2026".** Refresh it with the January edit so a couple reading in January does not see a stale date.

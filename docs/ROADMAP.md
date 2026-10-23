@@ -401,3 +401,15 @@ print('duplicate price-ladder constructions:', len(dupes))  # → 0
 - *Quote extras.* The calculator still states the Christmas Eve/Day premium and leaves longer programmes and keyboard hire "quoted upfront", as the pages do; it never prices them. Pricing those needs the owner's rules for what they cost, not just wiring.
 
 **Skills:** none
+
+## R22 — Wedding season checks: bids on 5 Jan, ad test in April  [P2] [scheduled 5 Jan and April 2027] [S]
+
+**Why:** `docs/superpowers/plans/2026-10-23-wedding-season-2027.md`. On 23 Oct 2026 wedding-leads spent about half its £4 budget and lost 32% of impressions to ad rank; both "wedding choir" keywords scored Quality Score 5 with expected CTR below average. A second ad (829372414723, unpinned) went live beside 826000407486 the same day.
+
+**Do (5 Jan 2027):** read `keyword_view` for the two "wedding choir" keywords (Quality Score, expected CTR) and campaign lost-to-rank over 28 days. If lost-to-rank is still above 25%, write a dated `scripts/ads/` bid script: [wedding choir] exact £4.50 → £5.00, "wedding choir" phrase £4.00 → £4.50 (validate-only, Luca's approval, log). Budget stays £4 unless budget-lost share passes 10% on two Mondays running (then propose £5, the cap, back to £4 from 1 April).
+
+**Do (April 2027):** once each ad has 300+ impressions, pause the one with the lower CTR (never remove) and decide whether "Book Your 2027 Wedding Choir" becomes 2028.
+
+**Verify:** the change rows in `logs/ads-changes.md`; the MCP shows the paused ad.
+
+**Skills:** claude-ads:ads-google, ad-creative
