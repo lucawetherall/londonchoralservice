@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<!-- Source of assets/print/funeral-music-sheet.pdf, the one-page sheet funeral
+     directors hand to families (linked from for-funeral-directors.html).
+     Repertoire comes only from pieces the site already says we sing
+     (music-guides/popular-funeral-hymns.html, music-guides/funeral-music-guide.html,
+     funerals.html); prices from pricing.html.
+     Render: python3 scripts/print/render_pdf.py -->
+<html lang="en-GB">
+<head>
+<meta charset="UTF-8">
+<meta name="robots" content="noindex">
+<title>Music for a funeral | The London Choral Service</title>
+<style>
+  @font-face { font-family: 'Cormorant Garamond'; font-weight: 300 600; src: url('../../fonts/cormorant-garamond.woff2') format('woff2'); }
+  @font-face { font-family: 'Cormorant Garamond'; font-style: italic; src: url('../../fonts/cormorant-garamond-italic.woff2') format('woff2'); }
+  @font-face { font-family: 'Source Serif 4'; font-weight: 400 600; src: url('../../fonts/source-serif-4.woff2') format('woff2'); }
+  @font-face { font-family: 'Source Serif 4'; font-style: italic; src: url('../../fonts/source-serif-4-italic.woff2') format('woff2'); }
+
+  @page { size: A4; margin: 0; }
+  :root { --ink: #2C2420; --mid: #6B5E56; --accent: #8B3A3A; --rule: #D9CFC4; --tint: #F7F3EE; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: #fff; color: var(--ink); }
+  body { font-family: 'Source Serif 4', Georgia, serif; font-size: 9.6pt; line-height: 1.42; }
+  .page { width: 210mm; height: 297mm; padding: 15mm 16mm 12mm; display: flex; flex-direction: column; }
+
+  header { border-bottom: 0.6pt solid var(--accent); padding-bottom: 4mm; margin-bottom: 5mm; }
+  .brand { font-family: 'Cormorant Garamond', Georgia, serif; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; font-size: 9pt; color: var(--accent); margin: 0 0 2mm; }
+  h1 { font-family: 'Cormorant Garamond', Georgia, serif; font-weight: 500; font-size: 30pt; line-height: 1.05; margin: 0 0 2mm; }
+  .intro { font-size: 10.5pt; color: var(--mid); margin: 0; max-width: 150mm; }
+
+  .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 9mm; flex: 1; }
+  h2 { font-family: 'Cormorant Garamond', Georgia, serif; font-weight: 600; font-size: 14.5pt; color: var(--accent); margin: 0 0 1.5mm; }
+  section { margin-bottom: 5mm; }
+  p { margin: 0 0 2mm; }
+  ul { margin: 0 0 2mm; padding: 0; list-style: none; }
+  li { padding: 0.55mm 0; border-bottom: 0.4pt solid var(--rule); }
+  li:last-child { border-bottom: 0; }
+  .by { color: var(--mid); font-style: italic; }
+  .note { font-size: 8.8pt; color: var(--mid); }
+
+  .prices { display: grid; grid-template-columns: 1fr auto; gap: 0.6mm 4mm; margin: 0 0 2mm; }
+  .prices dt { margin: 0; }
+  .prices dd { margin: 0; font-weight: 600; text-align: right; }
+
+  ol.steps { margin: 0 0 2mm; padding-left: 5mm; }
+  ol.steps li { border: 0; padding: 0.4mm 0; }
+
+  .contact { background: var(--tint); padding: 3.5mm 4mm; border-left: 1.6pt solid var(--accent); }
+  .contact p { margin: 0 0 1mm; }
+  .contact strong { font-size: 11pt; }
+  a { color: inherit; text-decoration: none; }
+
+  .director { margin-top: 3mm; border: 0.6pt dashed var(--mid); padding: 3mm 4mm; font-size: 9pt; color: var(--mid); }
+  .director .line { display: block; border-bottom: 0.5pt solid var(--mid); height: 6mm; margin-bottom: 1.5mm; }
+
+  footer { border-top: 0.4pt solid var(--rule); padding-top: 2.5mm; font-size: 7.8pt; color: var(--mid); display: flex; justify-content: space-between; }
+</style>
+</head>
+<body>
+<div class="page">
+  <header>
+    <p class="brand">The London Choral Service</p>
+    <h1>Music for a funeral</h1>
+    <p class="intro">Professional singers for the service, with the music planned with you by our Artistic Director, Luca Wetherall. These are the pieces families ask for most; you can choose anything else that meant something to the person.</p>
+  </header>
+
+  <div class="cols">
+    <div>
+      <section>
+        <h2>Hymns families choose most</h2>
+        <ul>
+          <li>Abide with Me</li>
+          <li>The Lord&rsquo;s My Shepherd <span class="by">(Crimond)</span></li>
+          <li>How Great Thou Art</li>
+          <li>Amazing Grace</li>
+          <li>Jerusalem</li>
+          <li>Guide Me, O Thou Great Redeemer</li>
+          <li>Make Me a Channel of Your Peace</li>
+          <li>Dear Lord and Father of Mankind</li>
+          <li>All Things Bright and Beautiful</li>
+          <li>Be Thou My Vision</li>
+        </ul>
+      </section>
+      <section>
+        <h2>Solo and choral pieces we sing</h2>
+        <ul>
+          <li>Pie Jesu <span class="by">Faur&eacute;</span></li>
+          <li>In Paradisum <span class="by">from Faur&eacute;&rsquo;s Requiem</span></li>
+          <li>Ave Maria <span class="by">Schubert</span></li>
+          <li>Panis Angelicus <span class="by">Franck</span></li>
+          <li>He Shall Feed His Flock <span class="by">from Handel&rsquo;s Messiah</span></li>
+          <li>God Be in My Head <span class="by">Rutter</span></li>
+          <li>Locus Iste <span class="by">Bruckner</span></li>
+          <li>Ubi Caritas <span class="by">Ola Gjeilo</span></li>
+          <li>Anima Christi <span class="by">Marco Frisina</span></li>
+        </ul>
+        <p class="note">If a song mattered to the person who died, whether a hymn, a pop song or a classical piece, send it to us and we will arrange it for the singers you book.</p>
+      </section>
+    </div>
+
+    <div>
+      <section>
+        <h2>What a choir of four adds</h2>
+        <p>Four singers (soprano, alto, tenor and bass) sing every hymn in full harmony and lead the congregation, so the room sings with confidence even when few people know the words. They also sing up to three pieces while everyone listens. Four voices fill a church seating 50 to 200.</p>
+        <p>In a small chapel or crematorium, one soloist can lead the hymns and sing up to three pieces.</p>
+      </section>
+      <section>
+        <h2>Prices</h2>
+        <dl class="prices">
+          <dt>Soloist</dt><dd>from &pound;250</dd>
+          <dt>Small Choir of four</dt><dd>from &pound;1,150</dd>
+          <dt>Organist or pianist</dt><dd>&pound;250</dd>
+        </dl>
+        <p class="note">Prices for Greater London, including rehearsal and sheet music. Further out, we add travel to your written quote before you book. The quote is the whole cost.</p>
+      </section>
+      <section>
+        <h2>How to book</h2>
+        <ol class="steps">
+          <li>Tell your funeral director you would like live singing, or contact us yourself.</li>
+          <li>Luca rings you, usually the same working day, to plan the music with you.</li>
+          <li>You and your funeral director receive a written running order before the service.</li>
+        </ol>
+        <div class="contact">
+          <p><strong>07356 042468</strong> &nbsp;call or WhatsApp</p>
+          <p><a href="mailto:office@londonchoralservice.com">office@londonchoralservice.com</a></p>
+          <p><a href="https://londonchoralservice.com/funerals.html?utm_source=print&amp;utm_medium=referral&amp;utm_campaign=order-of-service-insert-2026">londonchoralservice.com/funerals.html</a></p>
+        </div>
+        <div class="director">
+          Your funeral director
+          <span class="line"></span>
+          Telephone
+          <span class="line"></span>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <footer>
+    <span>Hear our singers at londonchoralservice.com/listen.html</span>
+    <span>Alma Consort Ltd, registered in England and Wales, company no. 16785727</span>
+  </footer>
+</div>
+</body>
+</html>

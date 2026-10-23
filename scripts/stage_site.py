@@ -48,6 +48,7 @@ PUBLIC = [
     'music-guides/**/*.html',
     # What the pages load, by type
     'assets/**/*.{png,jpg,jpeg,webp,avif,gif,svg,ico}',
+    'assets/print/*.pdf',      # printable sheets, rendered from scripts/print/
     'css/**/*.css',
     'fonts/**/*.{woff2,woff}',
     'js/**/*.js',
