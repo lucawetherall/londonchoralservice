@@ -21,7 +21,7 @@ matches a bank transaction. Since 14 Oct 2026 (owner hands-off: "you have full p
 to fix all Books issues. i dont ever want to manually edit books") Claude keeps Books
 correct: it may correct a draft or sent invoice's dates, payment terms, notes and terms
 text, reference number and lines (never the customer, currency, tax fields, or the number
-except on a draft, to a DDMM ref), and turn an invoice's payment reminders off (never on).
+except on a draft, to a booking ref, DDMMYY or an older DDMM), and turn an invoice's payment reminders off (never on).
 Invoice updates and client payments are checked against ~/lcs-private/books-guard.json
 (cc_sync.py books; at most an hour old) and payments against the ledger. It records only
 client payments backed by a Starling payment (one invoice, its own customer and number, sent
@@ -31,7 +31,7 @@ against its bill (unused on the free plan), both through the Starling account, a
 its automatic payment reminders are off) only once Luca's own email carrying that
 invoice is in the Sent folder. Calls that go around this hook (a script starting
 the server itself) are refused by mcp_bypass_guard.py. Invoices are created as drafts (`send`
-absent or false) and carry the DDMM booking ref as their number. The guard fails closed: any error, or a tool_input
+absent or false) and carry the booking ref (DDMMYY; older bookings DDMM) as their number. The guard fails closed: any error, or a tool_input
 of the wrong shape, denies the call.
 Design: docs/superpowers/specs/2026-09-28-zoho-books-design.md
 """
@@ -188,7 +188,8 @@ BILL_FIELDS = ("vendor_id", "bill_number", "date", "due_date", "reference_number
                "payment_terms", "payment_terms_label")
 BILL_UPDATE_FIELDS = ("notes", "due_date", "date", "reference_number")  # never the vendor or the amounts
 
-INVOICE_NUMBER = re.compile(r"[0-9]{4}[A-Z]?")  # the DDMM booking ref, e.g. 2111 or 2111B
+# the booking ref: the event's DDMMYY (211126, 211126B) or, for bookings before 14 Oct 2026, its DDMM (2111, 2111B)
+INVOICE_NUMBER = re.compile(r"(?:[0-9]{6}|[0-9]{4})[A-Z]?")
 # where make_booking_docs.py writes (iCloud Drive, since 29 Sep 2026)
 INVOICES_DIR = os.path.join("~", "Library", "Mobile Documents", "com~apple~CloudDocs", "LCS-invoices")
 SINGER_PDF_DIR = os.path.join("~", "lcs-private", "singer-invoices")  # where singer_invoices.py saves PDFs
@@ -222,10 +223,10 @@ def check_create_invoice(body, query, path):
         raise Deny(P + "invoices are saved as drafts: `send` must be absent or false. The owner sends from Books.")
     auto = query.get("ignore_auto_number_generation")
     if not (auto is True or (isinstance(auto, str) and auto.lower() == "true")):
-        raise Deny(P + "set query_params.ignore_auto_number_generation=true so Books keeps the DDMM invoice number.")
+        raise Deny(P + "set query_params.ignore_auto_number_generation=true so Books keeps the booking ref as the invoice number.")
     num = body.get("invoice_number")
     if not (isinstance(num, str) and INVOICE_NUMBER.fullmatch(num)):
-        raise Deny(P + "invoice_number must be the booking's DDMM ref (e.g. 2111 or 2111B).")
+        raise Deny(P + "invoice_number must be the booking's ref: DDMMYY (e.g. 211126 or 211126B) or an older DDMM (2111).")
     _need(body, "customer_id", "body")
 
 
@@ -423,7 +424,7 @@ def _iso_day(v, where):
 # lines' description, rate and quantity, on a draft or sent (not paid, not void) invoice. Never the customer
 # (customer_id, which the update schema requires, may only restate the invoice's own), never the currency, tax or
 # VAT fields, discounts, adjustments, email text or flags (none of those keys is listed), and the invoice number
-# only on a draft, to a DDMM ref. Books asks a sent invoice's update for a `reason` (code 110701, 14 Oct 2026): free
+# only on a draft, to a booking ref (DDMMYY, or an older DDMM). Books asks a sent invoice's update for a `reason` (code 110701, 14 Oct 2026): free
 # text, scanned like the rest. The text scan below still denies bank details, VAT wording and the word tax.
 def check_update_invoice(body, query, path):
     _need(path, "invoice_id", "path_variables")
@@ -443,7 +444,7 @@ def check_update_invoice(body, query, path):
         if inv["status"] != "draft":
             raise Deny(P + "the invoice number changes only on a draft invoice.")
         if not (isinstance(num, str) and INVOICE_NUMBER.fullmatch(num)):
-            raise Deny(P + "invoice_number must be the booking's DDMM ref (e.g. 2111 or 2111B).")
+            raise Deny(P + "invoice_number must be the booking's ref: DDMMYY (e.g. 211126 or 211126B) or an older DDMM (2111).")
     auto = query.get("ignore_auto_number_generation")
     if auto is not None and not (isinstance(auto, bool) or (isinstance(auto, str) and auto.lower() in ("true", "false"))):
         raise Deny(P + "ignore_auto_number_generation must be true or false.")
@@ -475,7 +476,7 @@ def check_create_customer_payment(body, query, path):
         raise Deny(P + "payment_mode must be \"banktransfer\".")
     ref = body.get("reference_number")
     if ref is not None and not (isinstance(ref, str) and INVOICE_NUMBER.fullmatch(ref)):
-        raise Deny(P + "reference_number may only be the booking's DDMM ref (e.g. 2111 or 2111B).")
+        raise Deny(P + "reference_number may only be the booking's ref: DDMMYY (e.g. 211126 or 211126B) or an older DDMM (2111).")
     invoices = body.get("invoices")
     if not (isinstance(invoices, list) and len(invoices) == 1 and isinstance(invoices[0], dict)):
         raise Deny(P + "a payment settles exactly one invoice: invoices must list one {invoice_id, amount_applied}.")
@@ -627,11 +628,30 @@ def _plain(text):
     return "".join(c for c in unicodedata.normalize("NFKD", text) if unicodedata.category(c) not in ("Cf", "Mn"))
 
 
+def booking_ref_digits(run):
+    """True for six bare digits that read as a DDMMYY booking ref (owner decision, 14 Oct 2026): a real day and
+    month, years 2026 to 2040, written with no separator ("211126", "Invoice 211126A"). A sort code written as one
+    plain run that happens to look like such a date passes; one written 21-11-26 or 21 11 26, or with the words
+    sort code, never does."""
+    if not (len(run) == 6 and run.isascii() and run.isdigit()):
+        return False
+    day, month, year = int(run[:2]), int(run[2:4]), int(run[4:])
+    if not 26 <= year <= 40:
+        return False
+    try:
+        datetime.date(2000 + year, month, day)
+    except ValueError:
+        return False
+    return True
+
+
 def _bank_digits(text):
     """True if a run of joined digits could be a sort code, account number or card/IBAN body."""
     for m in DIGIT_RUN.finditer(text):
         run = m.group()
         n = sum(c.isdigit() for c in run)
+        if booking_ref_digits(run):
+            continue
         if 6 <= n <= 10 or n >= 14:
             return True
         # 11-13 digits pass only as a phone number: 11 digits from 0 (UK), or after "+" (international)

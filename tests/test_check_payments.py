@@ -247,6 +247,49 @@ def test_reference_accepts_inv_prefix_forms():
         assert all(how != "reference" for _, _, how in cp.match(rows, [pay(325, "2026-08-26", ref)], T)["2111"]), ref
 
 
+def test_ddmmyy_and_older_ddmm_refs_never_cross_match():
+    # owner decision, 14 Oct 2026: new refs are DDMMYY, older ones keep DDMM, side by side in the ledger
+    rows = [row("2111", 650, "2026-08-22", "2026-11-21", name="Ann Smith"),
+            row("211126", 900, "2026-08-22", "2026-11-21", name="Bea Jones"),
+            row("2108", 650, "2026-08-22", "2026-11-21", name="Cal Brown"),
+            row("2108A", 650, "2026-08-22", "2026-11-21", name="Di Green"),
+            row("210827", 900, "2026-08-22", "2026-11-21", name="Ed White")]
+    R = ("2026-08-26", 450.0, "reference")
+    for ref, want in (("211126", "211126"), ("INV211126", "211126"), ("INV 211126 deposit", "211126"),
+                      ("INV211126DEPOSIT", "211126"), ("LCS-211126", "211126"),
+                      ("2111", "2111"), ("INV2111", "2111"), ("INV2111DEPOSIT", "2111"),
+                      ("210827", "210827"), ("INV 210827", "210827"), ("2108A", "2108A"), ("INV 2108 A", "2108A")):
+        found = cp.match(rows, [pay(450, "2026-08-26", ref)], T)
+        assert found[want] == [R], (ref, found)
+        assert all(found[k] == [] for k in found if k != want), (ref, found)
+    # "2108" names 2108 and its sibling 2108A (which one?), never 210827
+    found = cp.match(rows, [pay(450, "2026-08-26", "2108")], T)
+    assert found["210827"] == [] and found["2108"] and found["2108A"]
+    assert all(how != "reference" for _, _, how in found["2108"] + found["2108A"])
+    # a six-digit ref nobody has never falls back to its first four digits, nor four digits to a DDMMYY
+    for ref, rs in (("211127", rows[:1]), ("INV211127", rows[:1]), ("2111", rows[1:2]), ("INV 2111", rows[1:2])):
+        found = cp.match(rs, [pay(450, "2026-08-26", ref)], T)
+        assert all(how != "reference" for v in found.values() for _, _, how in v), (ref, found)
+    # "2111 26" (a DDMMYY typed with a space) names 211126; when 2111 exists too, both: a hand check on each
+    assert cp.match(rows[1:2], [pay(450, "2026-08-26", "INV 2111 26")], T)["211126"] == [R]
+    found = cp.match(rows[:2], [pay(450, "2026-08-26", "2111 26")], T)
+    assert found["2111"] == found["211126"] == [("2026-08-26", 450.0, "reference naming several bookings")], found
+
+
+def test_ddmmyy_suffixes_follow_the_sibling_rule():
+    rows = [row("211126", 900, "2026-08-22", "2026-11-21", name="Ann Smith"),
+            row("211126A", 900, "2026-08-22", "2026-11-21", name="Bea Jones")]
+    for ref, want in (("211126A", "211126A"), ("INV211126A", "211126A"), ("INV 211126 A", "211126A"),
+                      ("2111 26 A", "211126A")):
+        found = cp.match(rows, [pay(450, "2026-08-26", ref)], T)
+        assert found[want] == [("2026-08-26", 450.0, "reference")] and found[[k for k in found if k != want][0]] == [], ref
+    found = cp.match(rows, [pay(450, "2026-08-26", "211126", "B JONES")], T)  # the payer's surname picks one
+    assert found["211126A"] == [("2026-08-26", 450.0, "reference")] and found["211126"] == []
+    found = cp.match(rows, [pay(450, "2026-08-26", "211126", "X PERSON")], T)
+    assert found["211126"] and found["211126A"]
+    assert all(how != "reference" for _, _, how in found["211126"] + found["211126A"])
+
+
 def test_reference_to_a_closed_booking_never_falls_through():
     rows = [row("2401", 1150, "2026-08-01", "2026-10-10", "paid in full 2026-09-19"),
             row("2410", 1150, "2026-09-10", "2026-11-14", "PENDING: invoiced")]
