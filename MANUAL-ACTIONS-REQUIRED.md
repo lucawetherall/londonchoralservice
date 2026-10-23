@@ -545,7 +545,7 @@ Invoices and booking confirmations are saved in iCloud Drive â†’ LCS-invoices â†
 
 ## 29. Cookie-free visit counter (GoatCounter)
 
-**Done 2026-10-23:** Luca created the account; the site code `londonchoralservice` is set in `LCS_COUNTER`, and the dashboard is at https://londonchoralservice.goatcounter.com. Nothing more to do. The steps below are kept for reference.
+**Done 2026-10-23:** Luca created the account; the site code `londonchoralservice` is set in `LCS_COUNTER`, and the dashboard is at https://londonchoralservice.goatcounter.com. Luca also stored a read-only API key in the Keychain (`lcs-goatcounter-read`), so the Monday report's section 5c shows the totals. Nothing more to do. The steps below are kept for reference.
 
 Added 2026-10-23. The site has a visit counter that uses no cookies and stores nothing on the visitor's device, so it counts the visitors who refuse cookies too: page views on every page, and an `enquiry-sent-*` event when the enquiry form is accepted or a phone, email or WhatsApp link is tapped. It is switched off: `LCS_COUNTER` in `partials/analytics.html` is empty, and then no page loads anything for it. Claude can't create accounts, so it stays off until you do this:
 

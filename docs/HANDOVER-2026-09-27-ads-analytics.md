@@ -308,7 +308,7 @@ REPLY FORMAT (plain English, short, UK spelling, no preamble; built from the sub
 - Headlines: the ads agent's 3–5 numbers, then its ADS lines.
 - Search terms: its table, then its NEGATIVES line.
 - Tracking: its TRACKING line (any ALARM first, step 3's included), FLAGS if not "none", and GOOGLE RECOMMENDATIONS.
-- Web: the web agent's WEB paragraph, HIRING QUERIES 8–20 and COVERAGE.
+- Web: the web agent's VISITS line (GoatCounter: every visitor, cookies or not), WEB paragraph, HIRING QUERIES 8–20 and COVERAGE.
 - Bookings: BOOKINGS, UPLOAD, MONEY, BOOKS, HAND CHECKS, PIPELINE, ENQUIRIES THIS WEEK (the graded lines, step 3), then "dashboard updated" (or the failure).
 - Economics: ECONOMICS, BUDGET PROPOSALS, then the CHRISTMAS line and the SPEND GUARD lines.
 - Growth (first Monday of the month only): the growth agent's ADS AUDIT, AD COPY, LANDING PAGE, LISTINGS, GBP POSTS (in full: Luca posts them), AI SEARCH and ENTITIES, each shortened to its lines.
