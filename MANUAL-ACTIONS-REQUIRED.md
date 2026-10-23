@@ -95,17 +95,11 @@ When you've done the round, run a free citation scan against the homepage URL at
 
 ## 3. Post-event review request workflow
 
-**Mostly done 2026-10-14:** the enquiry assistant's daily pass now drafts one review request 3–14 days after each paid-in-full event (never after a funeral), so the day-30/60/90 cadence below is superseded. One thing remains for you: open a Trustpilot business account if you want reviews there as well as on Google (and §23, the optional review link).
+**Done 2026-10-24:** the enquiry assistant's daily pass drafts the requests in Zoho Drafts for you to send. Each request is a reply in the booking's own thread, carrying the direct review link (§23), 2–14 days after a paid-in-full event. It writes one version for couples, one for businesses (corporate and Christmas) and one for planners and venues. One reminder follows 7–14 days later, unless the client has written back or a planner booked. The reminder draft asks you to look on the Business Profile first and delete the draft if that client has already reviewed. Every client who booked is asked, including any who raised a problem (the summary flags those so you can answer them first). Google forbids asking only the happy ones. Funeral clients are never asked. The rules and wording live in `.claude/agents/lcs-daily-pass.md` (step c). The old day-30/60/90 cadence is gone: its day-60 email asked only satisfied clients for a review.
 
-The audit's #4 critical priority is a review-request cadence. Goal: 30+ Google + Trustpilot reviews in 90 days. The review velocity is what shifts the local pack ranking, not the absolute count, so the cadence matters more than getting the sequence perfect.
+Left for you, optional: open a Trustpilot business account if you want reviews there as well as on Google.
 
-Set up a simple template-based workflow. After every booking that completes, schedule three touches:
-
-- **Day 30** — Email the booker. Thank them, link directly to the GBP review form (`https://search.google.com/local/writereview?placeid=<placeid>` once you have the place ID from §1). Ask for one or two sentences and a star rating. Keep it short; long requests convert badly.
-- **Day 60** — If they didn't review on day 30, send a follow-up. Different angle: ask whether anything could have been better. Either you get a review, or you get something to fix.
-- **Day 90** — Final touch. Link to Trustpilot this time (`https://uk.trustpilot.com/evaluate/londonchoralservice.com`). Some reviewers will only post on platforms they already use; offering both broadens the pool.
-
-A lightweight way to run this: a Google Sheet of bookings with a column for "review request status", and three calendar reminders per booking. Mailchimp, ConvertKit, or even Apple Reminders all work. Don't over-engineer it before you know whether the cadence converts — pick the simplest tool you'll actually use.
+The review velocity is what shifts the local pack ranking, so the steady two-week rhythm matters more than any one email.
 
 Do not offer incentives for reviews. Both Google and Trustpilot have policies against paid or incentivised reviews, and being caught at it removes the listing.
 
