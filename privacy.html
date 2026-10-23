@@ -23,6 +23,13 @@
       'wait_for_update': 500
     });
     gtag('set', 'ads_data_redaction', true);
+    // URL passthrough: on a visit that arrived with an ad click ID, the Google
+    // Ads tag adds it (gclid, gbraid or wbraid, plus _gl=1*…*_up*MQ..) to links
+    // between our own pages, so it is not lost while ad_storage is denied. An
+    // Accept on a later page writes _gcl_aw from that page's URL, and a ticked
+    // ad-measurement box sends it (lcsClickIds below). It writes nothing to the
+    // device. GA4 opts out in loadGA(). Checked 2026-10-23 against gtag.js.
+    gtag('set', 'url_passthrough', true);
     try {
       if (localStorage.getItem('lcs-consent') === 'granted') {
         gtag('consent', 'update', {
@@ -49,7 +56,12 @@
       // in dataLayer but never load gtag.js, so tests can't reach GA4 or Ads.
       if (!/(^|\.)londonchoralservice\.com$/.test(location.hostname)) return;
       gtag('js', new Date());
-      gtag('config', 'G-9FENN7VS0E', internal ? { 'traffic_type': 'internal' } : {});
+      // GA4 keeps url_passthrough off: with it on, GA4 adds its client and
+      // session IDs (_ga, _ga_* in _gl) to every same-site link for every
+      // visitor who hasn't accepted cookies, ad click or not.
+      var ga4 = { 'url_passthrough': false };
+      if (internal) ga4['traffic_type'] = 'internal';
+      gtag('config', 'G-9FENN7VS0E', ga4);
       gtag('config', 'AW-17988388404', { 'allow_enhanced_conversions': true });
       var s = document.createElement('script');
       s.src = 'https://www.googletagmanager.com/gtag/js?id=G-9FENN7VS0E';
@@ -224,20 +236,31 @@
     // Ad visit without cookies: when this page's own URL holds an ad click ID
     // and the visitor has not allowed cookies, its messages and form carry the
     // page's name ("Ad visit: weddings"), never the click ID. It lives only in
-    // this variable: nothing is stored, so the next page carries nothing.
+    // this variable: nothing is stored. Only the landing page counts: a later
+    // page whose URL has the click ID from URL passthrough (a _gl marker, or
+    // reached from one of our own pages) carries no ad visit.
     function lcsAdVisitSlug(path) {
       var p = String(path || '').toLowerCase().replace(/^\/+/, '').replace(/\.html$/, '').replace(/(^|\/)index$/, '').replace(/\/+$/, '');
       if (!p) return 'home';
       return /^[a-z0-9-]+(\/[a-z0-9-]+)*$/.test(p) ? p : 'other';
     }
-    var LCS_AD_VISIT = /[?&](gclid|gbraid|wbraid)=[^&]/.test(location.search) ? lcsAdVisitSlug(location.pathname) : '';
+    function lcsLandedHere() {
+      if (/[?&]_gl=/.test(location.search)) return false;
+      try {
+        var host = function(h) { return h.replace(/^www\./, ''); };
+        if (document.referrer && host(new URL(document.referrer).hostname) === host(location.hostname)) return false;
+      } catch (e) {}
+      return true;
+    }
+    var LCS_AD_VISIT = /[?&](gclid|gbraid|wbraid)=[^&]/.test(location.search) && lcsLandedHere() ? lcsAdVisitSlug(location.pathname) : '';
     function lcsAdVisit() {
       if (!LCS_AD_VISIT) return '';
       try { if (localStorage.getItem('lcs-consent') === 'granted') return ''; } catch (e) {}
       return LCS_AD_VISIT;
     }
     // The click IDs in this page's own URL, for an enquiry whose sender ticked
-    // the form's ad-measurement box (read at submit, never stored).
+    // the form's ad-measurement box (read at submit, never stored). With URL
+    // passthrough that includes a form page reached from the landing page.
     function lcsClickIds() {
       var out = {};
       try {
@@ -3080,7 +3103,8 @@
         <p>Both tools set cookies only if you allow them. When you first visit, a notice at the foot of the page asks you to choose. If you decline, or make no choice, Google&rsquo;s consent settings stay at &ldquo;denied&rdquo;: no analytics or advertising cookie is written, and only cookieless, aggregated signals reach Google. If you allow them, the cookies set are Google Analytics&rsquo; <code>_ga</code> and <code>_ga_*</code> (up to two years) and Google Ads&rsquo; <code>_gcl_au</code> (three months). Your choice is stored in your browser under the name <code>lcs-consent</code> and applies to this site only. You can change it at any time from the &ldquo;Cookie choices&rdquo; link in the footer of every page.</p>
         <p>If you allow these cookies and then send an enquiry, the tag also gives Google your email address and phone number in hashed form: your browser turns each one into a scrambled code before it leaves your device. Google matches that code against its own accounts to tell us whether you clicked one of our advertisements first, perhaps on another device, and uses it for that measurement alone. So that the tag can send these after the form has gone, your browser keeps them, with the name of the page you sent the form from, in session storage under the name <code>lcs-lead</code> until our thank-you page opens. That page sends them and deletes the entry at once. If you decline, the tag sends none of this and your browser keeps nothing.</p>
         <p>If you arrived from one of our advertisements and allowed cookies, we also keep the advert&rsquo;s click reference and campaign tags for the rest of your visit and send them with your enquiry. They sit in your browser&rsquo;s session storage under the name <code>lcs-attr</code>, which your browser clears when you close the tab. We add a four-character code made from the click reference to the end of any WhatsApp message or email you start from our contact links, where you can read it or delete it before you send. When an enquiry becomes a booking, we match that code to the click in our Google Ads account and may report the booking to Google Ads with its click reference, so we can spend our advertising budget on the searches that lead to bookings.</p>
-        <p>If you arrived from one of our advertisements and did not allow cookies, we keep nothing in your browser. A WhatsApp message, email or enquiry form you start from the page you landed on carries a short tag with that page&rsquo;s name, such as &ldquo;Ad visit: weddings&rdquo;. In a message you can read or delete it before you send; the form adds it as a hidden line. The tag names a page and contains nothing from the advert&rsquo;s click reference. We use it to count which advertisements bring enquiries. Pages you open afterwards add no tag.</p>
+        <p>If you arrived from one of our advertisements and did not allow cookies, we keep nothing in your browser. A WhatsApp message, email or enquiry form you start from the page you landed on carries a short tag with that page&rsquo;s name, such as &ldquo;Ad visit: weddings&rdquo;. In a message you can read or delete it before you send; the form adds it as a hidden line. The tag names a page and contains nothing from the advert&rsquo;s click reference. We use it to count which advertisements bring enquiries. Pages you open afterwards add no such tag.</p>
+        <p id="ad-links">If you arrive from one of our Google ads, the Google Ads tag copies the advert&rsquo;s click reference into the links between our pages, so the address of each page you open next carries it, with a short <code>_gl</code> marker. Until you accept cookies, we keep it only in the page address and store nothing on your device, though your browser&rsquo;s history keeps the addresses of pages you visit. We use the reference to credit the advert if you accept cookies on a later page, or tick the ad-measurement box on our enquiry form. A WhatsApp message or email you start from a later page also says you came via a Google ad, where you can read or delete it before you send. The Google Ads tag leaves the reference out of what it sends Google until you accept cookies. Google Analytics, which sends cookieless signals while you haven&rsquo;t accepted, receives the address of each page you open, reference included, as it does for the page you land on.</p>
         <p id="ad-measurement">Our enquiry forms also have an optional box, left unticked: &ldquo;Let us tell Google if your booking came from its ads, using a scrambled copy of your email.&rdquo; If you tick it and your enquiry becomes a booking, we send Google Ads a hashed copy of your email address, a scrambled code made from it, with the booking&rsquo;s value. If the page you sent the form from had an advert&rsquo;s click reference in its address, that goes too. Google matches the code against its own accounts to tell us whether the booking followed a click on one of our advertisements, and uses it for that measurement alone. We send nothing for an enquiry that doesn&rsquo;t become a booking, or if you leave the box unticked. To change your mind before we send it, email <a href="mailto:office@londonchoralservice.com">office@londonchoralservice.com</a>.</p>
         <p>Our typefaces are served from our own website, not from a third-party font service. Our enquiry form is delivered by Web3Forms and protected by hCaptcha; when you submit the form, these services process the details you enter solely to pass your message to us and to filter out spam. Recordings are embedded from YouTube in privacy-enhanced mode and load only when you press play.</p>
         <p>You can also block Google Analytics in every website with the <a href="https://tools.google.com/dlpage/gaoptout" rel="noopener noreferrer">Google Analytics opt-out browser add-on</a>.</p>
@@ -3090,7 +3114,7 @@
     <section class="section">
       <div class="prose">
         <h2>Changes to this policy</h2>
-        <p>We may update this policy from time to time. Changes will be posted on this page. This policy was last updated on 14 October 2026.</p>
+        <p>We may update this policy from time to time. Changes will be posted on this page. This policy was last updated on 23 October 2026.</p>
       </div>
     </section>
 

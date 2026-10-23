@@ -7,6 +7,9 @@
 - Every enquiry form carries the optional, unticked ad-measurement box, inside the form and before the
   captcha, and keeps its honeypot and captcha.
 - Both form scripts send ad_visit, and the URL's click IDs only with the box ticked.
+- url_passthrough is set before any config, GA4 opts out of it, and the ad visit still names the landing
+  page only: a later page with the click ID from passthrough (a _gl marker, or our own site as referrer)
+  carries none.
 
 Stdlib only (node for the slug check; skipped without node outside CI): python3 tests/test_ad_attribution.py
 """
@@ -69,6 +72,41 @@ def test_ad_visit_is_held_in_a_variable_and_never_stored():
     # messages: the Ref with consent, else the page's name; never the click ID itself
     assert "var visit = ref ? '' : lcsAdVisit();" in PARTIAL
     assert "'Ad visit: ' + visit" in PARTIAL
+
+
+def test_url_passthrough_is_set_before_any_config_and_ga4_opts_out():
+    i = PARTIAL.index("gtag('set', 'url_passthrough', true);")
+    assert PARTIAL.index("gtag('consent', 'default'") < i < PARTIAL.index("gtag('config'")
+    assert PARTIAL.count("url_passthrough', true") == 1
+    assert "var ga4 = { 'url_passthrough': false };" in PARTIAL
+    assert "gtag('config', 'G-9FENN7VS0E', ga4);" in PARTIAL
+
+
+def ad_visit_on(search, referrer, path="/weddings.html"):
+    start = PARTIAL.index("    function lcsAdVisitSlug(path)")
+    end = PARTIAL.index("    function lcsAdVisit()")
+    env = (f"var location = {json.dumps({'search': search, 'pathname': path, 'hostname': 'londonchoralservice.com'})};"
+           f"var document = {{ referrer: {json.dumps(referrer)} }};")
+    code = env + PARTIAL[start:end] + "console.log(JSON.stringify(LCS_AD_VISIT));"
+    return json.loads(subprocess.run(["node", "-e", code], capture_output=True, text=True, check=True).stdout)
+
+
+def test_ad_visit_names_the_landing_page_only():
+    if not have_node():
+        return
+    later = "?_gl=1*1sorl1z*_up*MQ..&gclid=X"
+    cases = [
+        ("?gclid=X", "https://www.google.com/", "/weddings.html", "weddings"),
+        ("?gbraid=X", "https://www.google.co.uk/", "/funerals.html", "funerals"),
+        ("?wbraid=X", "", "/", "home"),  # an app, or a browser that strips the referrer
+        (later, "https://londonchoralservice.com/weddings.html?gclid=X", "/contact.html", ""),
+        (later, "", "/contact.html", ""),
+        ("?gclid=X", "https://londonchoralservice.com/weddings.html", "/contact.html", ""),
+        ("?gclid=X", "https://www.londonchoralservice.com/", "/contact.html", ""),
+        ("?occasion=wedding", "https://www.google.com/", "/contact.html", ""),
+    ]
+    for search, referrer, path, want in cases:
+        assert ad_visit_on(search, referrer, path) == want, (search, referrer, path)
 
 
 def form_pages():
