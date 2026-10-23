@@ -227,10 +227,21 @@ def test_booking_attributed_to_a_campaign_with_no_spend_row_still_shows():
 def test_cost_lines_format_money_and_dashes():
     t = ec.cost_table({"wedding-leads": (30_000_000, 12)}, [("wedding-leads", 1150.0)], ["wedding-leads"])
     lines = ec.cost_lines(t)
-    assert lines[0] == ("wedding-leads: spend £30.00 · clicks 12 · enquiries 1 · bookings 1 · booked £1,150.00"
+    assert lines[0] == ("wedding-leads: spend £30.00 · clicks 12 · enquiries 1 (A 1 · B 0) · bookings 1 · booked £1,150.00"
                         " · per enquiry £30.00 · per booking £30.00"), lines[0]
     assert lines[-2] == "unattributed: enquiries 0 · bookings 0 · booked £0.00", lines[-2]
     assert lines[-1].startswith("total: spend £30.00 · clicks 12"), lines[-1]
+
+
+def test_cost_table_labels_enquiries_and_bookings_credited_by_grade():
+    t = ec.cost_table({"wedding-leads": (30_000_000, 12)},
+                      [("wedding-leads", 1150.0, "click"), ("wedding-leads", 650.0, "B"), (None, 400.0, None)],
+                      [("wedding-leads", "A"), ("wedding-leads", "B"), ("wedding-leads", "B"), (None, None)])
+    w = t["campaigns"][0]
+    assert w["enquiries_by_grade"] == {"A": 1, "B": 2} and w["bookings_by_grade"] == 1, w
+    assert t["unattributed"] == {"enquiries": 1, "bookings": 1, "booked_gbp": 400.0}
+    line = ec.cost_lines(t)[0]
+    assert "enquiries 3 (A 1 · B 2) · bookings 2 (1 by their enquiry's grade, no click reference)" in line, line
 
 
 def test_divide_returns_none_on_zero():

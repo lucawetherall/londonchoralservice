@@ -83,6 +83,7 @@ The website of The London Choral Service (Alma Consort Ltd) — a choir-for-hire
 - Currency **GBP**, time zone **Europe/London**. Report dates and money in those.
 - Google Cloud project: `lcs-marketing` (ID `project-2dc388e4-c2d8-40c3-803`).
 - **Reads** go through the MCP tools (`mcp__google-ads__*`, `mcp__analytics-mcp__*`). Reusable report scripts live in `scripts/reports/`.
+- **claude-ads plugin:** before any `claude-ads:*` skill, read its profile at `~/Documents/GitHub/londonchoralservice/.claude-ads/setup-profile.json` (main checkout, gitignored; worktrees don't have their own copy). It records Google only, the budget ceilings, mutation authority none and the owner's rules. Its audits read through the Google Ads MCP and return findings as text; anything they propose goes through `scripts/ads/` below. Never use its `--apply` paths.
 - **Changes** go only through scripts in `scripts/ads/` using the `google-ads` Python library (`source .venv/bin/activate`, which sets `GOOGLE_ADS_CONFIGURATION_FILE_PATH`). Never change the account through MCP tools or any other route.
 - Every change runs first with `validate_only=True`. Show it to me as **current value → new value + reason**, and apply it only after my explicit approval of that change. Approval covers one change set, not later ones.
 - Never delete anything (campaigns, ad groups, ads, keywords, budgets, assets). Pause instead.
