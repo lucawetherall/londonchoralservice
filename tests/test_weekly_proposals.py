@@ -277,9 +277,11 @@ def test_spend_guard_fires_with_no_conversion_and_no_a_or_b_enquiry():
                         "enquiries A 0 · B 0 · C 0"), lines
     assert lines[2].endswith("under 15 clicks, too few to judge; watch next week"), lines
     assert lines[3] == "spend guard small: £30.00, 6 clicks, 0 Ads conversions in 28 days · enquiries A 0 · B 0 · C 0"
-    # a C enquiry never holds the guard
-    assert lines[4].startswith(f"spend guard {XMAS}: £150.00, 60 clicks, 0 Ads conversions in 28 days · enquiries "
-                               "A 0 · B 0 · C 1 — STOP GUARD"), lines
+    # a C enquiry never holds the guard; inside its dated £8 exception the Christmas campaign is left to its own
+    # stop rule (section 12's value check) instead of a pause proposal
+    assert lines[4] == (f"spend guard {XMAS}: £150.00, 60 clicks, 0 Ads conversions in 28 days · enquiries "
+                        "A 0 · B 0 · C 1 — deferred: inside its dated budget exception, judged by its own stop rule "
+                        "(the value check in section 12), not paused here"), lines
     assert lines[5].startswith("stop rule: £80+ in 28 days with no Ads conversion and no A or B enquiry"), lines
 
 
@@ -292,9 +294,12 @@ def test_spend_guard_is_held_by_an_a_or_b_enquiry_for_that_campaign_only():
         assert lines[4].endswith("— held: an A or B enquiry came from this campaign, so no pause"), lines
         assert "STOP GUARD" not in lines[4]
         assert "STOP GUARD" in lines[0], lines  # the wedding campaign still has none of its own
-    # outside the 28 days it no longer holds
+    # outside the 28 days it no longer holds (the dated exception then defers it; after the exception ends,
+    # 13 Dec 2026, the guard fires as for any campaign)
     lines = wr.spend_guard_lines(guard_rows, mon, graded(enq("christmas", datetime.date(2026, 9, 28), "ad visit: christmas")))
-    assert "STOP GUARD" in lines[4], lines
+    assert "deferred: inside its dated budget exception" in lines[4], lines
+    lines = wr.spend_guard_lines(guard_rows, datetime.date(2026, 12, 14), graded(enq("wedding", datetime.date(2026, 9, 28))))
+    assert "STOP GUARD" in lines[4] and "deferred" not in lines[4], lines
     # an ad enquiry that names no campaign doesn't hold it but is flagged beside the pause
     lines = wr.spend_guard_lines(guard_rows, mon, graded(enq("wedding", day, "heard: A Google ad")))
     assert lines[0].endswith("(1 ad enquiries in these 28 days name no campaign: check them first)"), lines

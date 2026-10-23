@@ -952,6 +952,11 @@ def spend_guard_lines(q, today, graded=None):
                 line += " — held: an A or B enquiry came from this campaign, so no pause"
             elif clicks < GUARD_MIN_CLICKS:
                 line += f" — under {GUARD_MIN_CLICKS} clicks, too few to judge; watch next week"
+            elif budget_cap_gbp(r.campaign.id, today) > PROPOSAL_CAP_GBP:
+                # Owner decision 23 Oct 2026: a campaign inside a dated budget exception (budget_cap.py) is judged
+                # by that exception's own stop rule (section 12's value check), not paused by this guard.
+                line += (" — deferred: inside its dated budget exception, judged by its own stop rule "
+                         "(the value check in section 12), not paused here")
             else:
                 line += " — STOP GUARD: propose pausing (never deleting) until the owner decides"
                 if n is None:
@@ -1216,6 +1221,10 @@ def failure_note(e):
         text = ""
     if not isinstance(e, OSError) and (AUTH_TYPE.search(name) or AUTH_TEXT.search(text)):
         return f"{name} (looks like a Google auth error: check the sign-in)"
+    # A missing sign-in file (google-ads.yaml or the gcloud credentials) is a sign-in problem too, so the
+    # dispatcher stops rather than running the agents on an empty Ads half. Only the type name is printed.
+    if isinstance(e, FileNotFoundError) and re.search(r"google-ads\.yaml|application_default_credentials", text):
+        return f"{name} (looks like a Google auth error: the sign-in file is missing; check the sign-in)"
     return name
 
 
