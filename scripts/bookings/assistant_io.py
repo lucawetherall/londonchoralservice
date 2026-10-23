@@ -17,9 +17,10 @@ prompts). Private data stays in ~/lcs-private/; this file holds none.
         print only the price tables of pricing.html and christmas-pricing.html, as short text
     .venv/bin/python scripts/bookings/assistant_io.py refs
         print invoice refs already used (ledger, iCloud Drive/LCS-invoices and the older ~/lcs-private/invoices/)
-    .venv/bin/python scripts/bookings/assistant_io.py next-ref <YYYY-MM-DD event date> [--taken 2111,2111A]
-        JSON {ref, instalment_1_due, instalment_2_due, short_notice}: the event's DDMM plus the first
-        free suffix (refs from the ledger, the invoices folder and --taken), the first instalment due
+    .venv/bin/python scripts/bookings/assistant_io.py next-ref <YYYY-MM-DD event date> [--taken 211126,211126A]
+        JSON {ref, instalment_1_due, instalment_2_due, short_notice}: the event's DDMMYY plus the first
+        free suffix (refs from the ledger, the invoices folder and --taken; owner decision, 14 Oct 2026:
+        older bookings keep their four-digit DDMM ref, which --taken also takes), the first instalment due
         by check_payments.deposit_due_date (the rule the payment checker uses) and the balance due
         the day before the event
     .venv/bin/python scripts/bookings/assistant_io.py ledger-add '<json object>'
@@ -60,7 +61,9 @@ ICLOUD_INVOICES = Path(os.environ.get("LCS_INVOICES_DIR", lm.ICLOUD_INVOICES))  
 REPO = Path(__file__).resolve().parents[2]
 PRICE_PAGES = ("pricing.html", "christmas-pricing.html")
 OCCASIONS = ("wedding", "funeral", "christmas", "corporate", "private event", "other")
-REF_RE = re.compile(r"[0-9]{4}[A-Z]?")
+# A booking ref: the event's DDMMYY (211126), or before 14 Oct 2026 its DDMM (2111), each with an optional
+# capital letter for another booking that day (211126A, 2111A). Older refs keep their four digits.
+REF_RE = re.compile(r"(?:[0-9]{6}|[0-9]{4})[A-Z]?")
 
 
 def private_write(path, text):
@@ -107,7 +110,7 @@ def taken_refs():
 
 def next_ref(event, taken, today):
     """{ref, instalment_1_due, instalment_2_due, short_notice} for an event on `event` (dates)."""
-    base = event.strftime("%d%m")
+    base = event.strftime("%d%m%y")  # DDMMYY (owner decision, 14 Oct 2026): a DDMM ref repeats every year
     ref = next((base + s for s in [""] + list(string.ascii_uppercase) if base + s not in taken), None)
     if ref is None:
         raise SystemExit(f"every ref from {base} to {base}Z is taken")
@@ -119,7 +122,7 @@ def next_ref(event, taken, today):
 
 def cmd_next_ref(args):
     if not args or not re.fullmatch(r"\d{4}-\d{2}-\d{2}", args[0]):
-        raise SystemExit("usage: next-ref <YYYY-MM-DD event date> [--taken 2111,2111A]")
+        raise SystemExit("usage: next-ref <YYYY-MM-DD event date> [--taken 211126,211126A]")
     try:
         event = datetime.date.fromisoformat(args[0])
     except ValueError:
@@ -128,11 +131,11 @@ def cmd_next_ref(args):
     rest = args[1:]
     if rest:
         if len(rest) != 2 or rest[0] != "--taken":
-            raise SystemExit("usage: next-ref <YYYY-MM-DD event date> [--taken 2111,2111A]")
+            raise SystemExit("usage: next-ref <YYYY-MM-DD event date> [--taken 211126,211126A]")
         extra = {t.strip() for t in rest[1].split(",") if t.strip()}
         bad = [t for t in extra if not REF_RE.fullmatch(t)]
         if bad:
-            raise SystemExit("--taken takes invoice refs such as 2111 or 2111A, comma-separated")
+            raise SystemExit("--taken takes invoice refs such as 211126, 211126A or an older 2111, comma-separated")
     today = london_today()
     if event < today:
         raise SystemExit("the event date is in the past")
@@ -299,7 +302,7 @@ def queue_add(rec, today=None):
         raise SystemExit(f"unknown keys: {', '.join(sorted(unknown))}; nothing written")
     ref = rec.get("ref")
     if not (isinstance(ref, str) and REF_RE.fullmatch(ref)):
-        raise SystemExit("ref must be a booking ref such as 2111 or 2111A; nothing written")
+        raise SystemExit("ref must be a booking ref such as 211126 or 211126A (older: 2111); nothing written")
     email = rec.get("contact_email")
     if not (isinstance(email, str) and re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", email)):
         raise SystemExit("contact_email must be the client's email address; nothing written")

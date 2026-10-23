@@ -75,10 +75,17 @@
       call: 'AW-17988388404/HHu8CJq1x4UdELSMxIFD',
       message: 'AW-17988388404/5H_QCJ21x4UdELSMxIFD'
     };
+    // done: a page change follows (js/form.js goes to the thank-you page). With
+    // cookie consent the lead is handed to that page in sessionStorage and sent
+    // from there, so the redirect can never cut its hits off before gtag.js has
+    // sent them. Without consent nothing is stored and it goes at once, as a
+    // cookieless ping.
     function lcsLead(detail, done) {
-      var finished = false;
-      function finish() { if (!finished) { finished = true; if (done) done(); } }
-      loadGA();
+      var lead = {
+        id: 'lead-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7),
+        source: detail.source,
+        occasion: detail.occasion || 'unspecified'
+      };
       // Enhanced conversions: gtag hashes these (SHA-256) before sending, and
       // sends nothing at all unless the visitor allowed ad measurement.
       var ud = {};
@@ -88,23 +95,49 @@
       if (/^0\d{9,10}$/.test(phone)) phone = '+44' + phone.slice(1);
       else if (/^44\d{9,10}$/.test(phone)) phone = '+' + phone;
       if (/^\+\d{10,15}$/.test(phone)) ud.phone_number = phone;
+      if (done) {
+        try {
+          if (localStorage.getItem('lcs-consent') === 'granted') {
+            sessionStorage.setItem('lcs-lead', JSON.stringify({ lead: lead, ud: ud }));
+            done();
+            return;
+          }
+        } catch (e) {}
+      }
+      lcsSendLead(lead, ud, done);
+    }
+    function lcsSendLead(lead, ud, done) {
+      var finished = false;
+      function finish() { if (!finished) { finished = true; if (done) done(); } }
+      loadGA();
       if (ud.email || ud.phone_number) gtag('set', 'user_data', ud);
       gtag('event', 'generate_lead', {
         'currency': 'GBP',
         'value': 1,
-        'lead_source': detail.source,
-        'occasion': detail.occasion || 'unspecified'
+        'lead_source': lead.source,
+        'occasion': lead.occasion
       });
+      // transaction_id: Google Ads counts one conversion per ID, however often it arrives.
       gtag('event', 'conversion', {
         'send_to': LCS_ADS.lead,
         'value': 1,
         'currency': 'GBP',
-        'transaction_id': 'lead-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7),
+        'transaction_id': lead.id,
         'event_callback': finish
       });
       // Never hold the visitor up if gtag.js is blocked or slow.
       setTimeout(finish, 1500);
     }
+    // The page after the form sends a lead handed to it, once: it is removed
+    // before sending, so a refresh or the back button never counts it again.
+    (function() {
+      var saved = null;
+      try {
+        saved = JSON.parse(sessionStorage.getItem('lcs-lead') || 'null');
+        sessionStorage.removeItem('lcs-lead');
+      } catch (e) {}
+      if (saved && saved.lead && saved.lead.id) lcsSendLead(saved.lead, saved.ud || {});
+    })();
     // WhatsApp messages and emails carry the page they came from (and "via a
     // Google ad" when known), so each message shows its source. The visitor sees
     // the text and can change it before sending.
@@ -1432,7 +1465,7 @@
 
             <label class="pe-check-label pe-check-label--consent">
               <input type="checkbox" id="ad-measurement" name="ad_measurement" value="yes">
-              <span>Let us tell Google if your booking came from one of its ads. Google receives a scrambled (hashed) copy of your email address, never the address itself.</span>
+              <span>Let us tell Google if your booking came from its ads, using a scrambled copy of your email.</span>
             </label>
             <p class="pe-check-note"><a href="/privacy.html#ad-measurement">How we use this</a></p>
 

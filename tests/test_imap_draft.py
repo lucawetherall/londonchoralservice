@@ -501,7 +501,8 @@ def test_sent_matches_the_exact_invoice_to_the_client():
         rc, out = run_main(["sent", *args], FakeIMAP(sent=imap.boxes["Sent"]))
         assert rc == 0 and out.strip() == "sent: no", (args, out)
     for args in (["21x1", "client@example.com", "2026-09-29"], ["2111", "a@b.com, c@d.com", "2026-09-29"],
-                 ["2111", "client@example.com", "29/09/2026"]):
+                 ["2111", "client@example.com", "29/09/2026"], ["21112", "client@example.com", "2026-09-29"],
+                 ["2111267", "client@example.com", "2026-09-29"]):
         rc, out = run_main(["sent", *args], FakeIMAP())
         assert rc == 1 and out.startswith("STOP:"), (args, out)
 
@@ -532,6 +533,26 @@ def owner_run(argv, imap, nonce_ok=True, piped=True):
         if NONCE_FILE.exists():
             NONCE_FILE.unlink()
     return rc, out.getvalue()
+
+
+def test_sent_takes_ddmmyy_refs_and_never_confuses_them_with_ddmm():
+    # owner decision, 14 Oct 2026: new refs are DDMMYY; older DDMM refs keep working
+    imap = FakeIMAP(sent=[sent_message("client@example.com", "Invoice 2111 - A Client.pdf"),
+                          sent_message("other@example.com", "Invoice 211126A - B Client.pdf")])
+    for ref, to, want in (("211126", "client@example.com", "no"), ("2111", "client@example.com", "yes 2026-09-29"),
+                          ("211126A", "other@example.com", "yes 2026-09-29"), ("211126", "other@example.com", "no")):
+        rc, out = run_main(["sent", ref, to, "2026-09-29"], FakeIMAP(sent=imap.boxes["Sent"]))
+        assert rc == 0 and out.strip() == f"sent: {want}", (ref, out)
+    for key in ("211126-confirmation", "211126A-confirmation", "2111-confirmation", "2111A-confirmation"):
+        assert d.CONFIRMATION_KEY.fullmatch(key), key
+    for key in ("21112-confirmation", "2111267-confirmation", "211126AB-confirmation"):
+        assert not d.CONFIRMATION_KEY.fullmatch(key), key
+
+
+def test_a_ddmmyy_ref_in_the_text_is_not_read_as_bank_details():
+    assert refused(spec(subject="Invoice 211126: booking confirmation",
+                        html="<p>Please use 211126 as the payment reference.</p>")) is None
+    assert refused(spec(html="<p>Sort code 21-11-26</p>"))
 
 
 def test_discard_moves_one_office_draft_to_trash_and_forgets_its_key():

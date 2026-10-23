@@ -565,9 +565,33 @@ def test_invoice_needs_ignore_auto_number_generation_true_in_query():
 
 def test_invoice_number_must_be_a_ddmm_ref():
     I = "ZohoBooks_create_invoice"
-    for bad in ("INV-2111", "211", "21111", "2111b", "2111AB", "2111\n", 2111, "٢١١١", None, ""):
+    for bad in ("INV-2111", "211", "21111", "2111b", "2111AB", "2111\n", 2111, "٢١١١", None, "",
+                "2111267", "21112", "211126AB", "21-11-26", "21/11/26", "211126 ", 211126, "211126b"):
         assert denied(I, with_(I, "body", invoice_number=bad)), bad
-    assert decide("zoho-books", I, with_(I, "body", invoice_number="2111B")) == "allow"
+    # older bookings keep DDMM; new ones are DDMMYY (owner decision, 14 Oct 2026)
+    for ok in ("2111", "2111B", "211126", "211126A", "050627"):
+        assert decide("zoho-books", I, with_(I, "body", invoice_number=ok)) == "allow", ok
+
+
+def test_a_ddmmyy_ref_is_not_read_as_a_sort_code():
+    I, C = "ZohoBooks_create_invoice", "ZohoBooks_create_customer_payment"
+    for text in ("Invoice 211126", "Booking 211126A, wedding", "ref 211126 and ref 2111", "Invoice 010127",
+                 "INV211126DEPOSIT", "Wedding, 211126"):
+        assert decide("zoho-books", I, with_(I, "body", notes=text)) == "allow", text
+    # a six-digit run that isn't a real DDMMYY in 2026-2040 stays a possible sort code, and a sort code written
+    # with separators or named as one is denied even when its digits read as a date
+    for text in ("Invoice 401126", "Invoice 211326", "Invoice 211125", "Invoice 211141", "21-11-26", "21 11 26",
+                 "sort code 211126", "211126 12345678", "2111261"):
+        assert denied(I, with_(I, "body", notes=text)), text
+    # a payment's reference must also be its invoice's own number (checked against books-guard.json), so the shape
+    # is tested on the pattern itself
+    g = guard_module()
+    assert g.INVOICE_NUMBER.fullmatch("211126A") and g.INVOICE_NUMBER.fullmatch("2111B")
+    for bad in ("2111267", "21-11-26"):
+        assert not g.INVOICE_NUMBER.fullmatch(bad), bad
+        assert denied(C, with_(C, "body", reference_number=bad)), bad
+    assert g.bank_details_in("Your invoice 211126 is attached") is False
+    assert g.bank_details_in("Sort code 20-11-26") is True
 
 
 def test_invoice_needs_customer_id():

@@ -17,8 +17,7 @@ sys.path.insert(0, os.path.join(ROOT, "scripts", "bookings"))
 import pipeline  # noqa: E402
 
 PARTIAL = open(os.path.join(ROOT, "partials", "analytics.html")).read()
-BOX_TEXT = ("Let us tell Google if your booking came from one of its ads. Google receives a scrambled (hashed) "
-            "copy of your email address, never the address itself.")
+BOX_TEXT = "Let us tell Google if your booking came from its ads, using a scrambled copy of your email."
 
 
 def slug_fn():
