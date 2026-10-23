@@ -12,11 +12,18 @@ Sections:
   7. Search Console coverage: sitemap freshness, index status of every ad landing page
   8. Tracking wiring: live tags and labels, Ads account settings, GA4 key events and links
   9. Bookings ledger: counts and totals only (no personal data)
+  9b. Enquiries by ad source: the pipeline's enquiries graded A/B/C per campaign (enquiry_sources.py), this
+      week's one per line and the last 28 days' counts (dates, occasions and grades only)
   10. Money: client receipts, deposits overdue, balances due, singer invoices (totals only)
-  11. True cost per booking: season spend, enquiries, bookings and £ booked by campaign
+  11. True cost per booking: season spend, enquiries, bookings and £ booked by campaign, crediting a campaign
+      by click reference or, failing that, by the enquiry's A or B grade
       (also writes ~/lcs-private/ads-summary.json for the dashboard)
-  12. Seasonal budget rules: proposals from data/budget-windows.yml (never above £5/day)
+  12. Seasonal budget rules: proposals from data/budget-windows.yml (never above £5/day), the Christmas value
+      check and the spend guard, both judged on Ads conversions and A or B enquiries (C never counts)
   13. Search Console shortlist: first Monday of the month, or with --gsc-shortlist
+
+Each section runs on its own: one that fails prints its heading and "SECTION <id> FAILED: <exception type>"
+(plus "looks like a Google auth error" when it does) and the rest still run.
 
 Uses google-ads.yaml for Ads and Application Default Credentials (the
 analytics.readonly and webmasters.readonly scopes) for GA4 and Search Console.
@@ -56,7 +63,9 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO / "scripts" / "bookings"))
 sys.path.insert(0, str(REPO / "scripts" / "ads"))
+sys.path.insert(0, str(REPO / "scripts" / "reports"))
 import check_payments  # noqa: E402  is_cancelled: one cancelled rule for every ledger reader
+import enquiry_sources as es  # noqa: E402  the A/B/C grades: sections 9b, 11 and 12
 import lcs_money as lm  # noqa: E402  LEDGER, parse_gbp, today
 import upload_bookings  # noqa: E402  select_ready: section 9 counts what the upload would send
 
@@ -156,6 +165,17 @@ def search_term_flag(term):
 
 
 def ads_sections(since, q):
+    """Sections 1 to 4b in a row, unguarded, and (landing pages, Ads settings): for the tests. run_sections runs
+    each on its own."""
+    campaigns_section(q, since)
+    search_terms_section(q)
+    conversions_section(q)
+    landing = ads_section(q)
+    recommendations_section(q)
+    return landing, ads_settings(q)
+
+
+def campaigns_section(q, since):
     today = lm.today()
     spans = [("last 7 days", "segments.date DURING LAST_7_DAYS", 7),
              (f"since {since}", f"segments.date BETWEEN '{since}' AND '{today}'", max((today - since).days, 1))]
@@ -174,7 +194,10 @@ def ads_sections(since, q):
                   f" · conv {m.conversions:.1f} · IS {pct(m.search_impression_share)}"
                   f" · lost to budget {pct(m.search_budget_lost_impression_share)}"
                   f" · lost to rank {pct(m.search_rank_lost_impression_share)}")
+    logged_changes_lines(today)
 
+
+def search_terms_section(q):
     print("\n== 2. Search terms, last 7 days (campaign | term | matched keyword | impr clicks cost conv)")
     import economics as ec
     negatives = defaultdict(list)
@@ -202,6 +225,9 @@ def ads_sections(since, q):
     if not daily:
         print("   (none)")
 
+
+def conversions_section(q):
+    today = lm.today()
     print("\n== 3. Conversions per action")
     start90 = today - datetime.timedelta(days=90)
     per = defaultdict(lambda: {"7": 0.0, "28": 0.0, "last": None})
@@ -221,6 +247,9 @@ def ads_sections(since, q):
         role = "primary" if action.conversion_action.primary_for_goal else "secondary"
         print(f"{name:32} {role:9} 7d {a['7']:.1f} · 28d {a['28']:.1f} · last seen {a['last'] or 'not in 90 days'}")
 
+
+def ads_section(q):
+    """Section 4; returns the enabled ads' final URLs (section 7 inspects them)."""
     print("\n== 4. Ads (enabled campaigns)")
     landing = set()
     for r in q("""SELECT campaign.name, ad_group.name, ad_group.status, ad_group_ad.ad.id, ad_group_ad.status,
@@ -242,7 +271,10 @@ def ads_sections(since, q):
         if a.status.name == "ENABLED" and a.ad_strength.name in ("POOR", "AVERAGE"):
             for item in a.action_items:
                 print(f"      to improve: {item}")
+    return sorted(landing)
 
+
+def recommendations_section(q):
     print("\n== 4b. Google's recommendations (open, not dismissed)")
     names = {str(r.campaign.id): r.campaign.name for r in q("SELECT campaign.id, campaign.name FROM campaign")}
     recs = defaultdict(set)
@@ -255,6 +287,9 @@ def ads_sections(since, q):
     if not recs:
         print("   (none)")
 
+
+def ads_settings(q):
+    """The account's tracking settings for section 8: {label: on/off}."""
     settings = {}
     for r in q("""SELECT customer.auto_tagging_enabled,
             customer.conversion_tracking_setting.accepted_customer_data_terms,
@@ -263,7 +298,77 @@ def ads_sections(since, q):
         settings = {"auto-tagging": r.customer.auto_tagging_enabled,
                     "customer data terms accepted": t.accepted_customer_data_terms,
                     "enhanced conversions for leads": t.enhanced_conversions_for_leads_enabled}
-    return sorted(landing), settings
+    return settings
+
+
+# ---------- the change log, for the ads agent's FLAGS (section 1) ----------
+
+CHANGE_LOG = "logs/ads-changes.md"
+LOG_DAYS, LOG_MAX = 21, 60
+# The date of "THE ACCOUNT AS THE OWNER SET IT" in .claude/agents/lcs-review-ads.md: every change logged since then
+# is printed (and the last LOG_DAYS days' anyway). Move both together (tests/test_enquiry_sources.py checks).
+ADS_BASELINE = datetime.date(2026, 10, 23)
+LOG_ROW = re.compile(r"^\| (\d{4}-\d{2}-\d{2})(?: \d{2}:\d{2})? \|")
+
+
+def _log_text_at_origin(runner=None):
+    """origin/main's copy of the change log (as of the last fetch; read-only, the hardened git), or None. The main
+    checkout can lag GitHub when a change set was merged from a worktree."""
+    import subprocess
+    try:
+        binary, safe, env = hardened_git()
+        p = (runner or subprocess.run)([binary, "-C", str(REPO), *safe, "show", f"origin/main:{CHANGE_LOG}"],
+                                       capture_output=True, text=True, timeout=15, env=env,
+                                       stdin=subprocess.DEVNULL, shell=False)
+        return p.stdout if p.returncode == 0 else None
+    except Exception:
+        return None
+
+
+def logged_changes(text, today, days=LOG_DAYS, baseline=None):
+    """(date, resource, field, current → new) for each change-log row dated within `days` of today or on or after
+    `baseline` (ADS_BASELINE), newest first. Rows with the same time, field and change (one bid on many keywords)
+    are one row: "<first> (+n more alike)"."""
+    since = min(today - datetime.timedelta(days=days), baseline or ADS_BASELINE)
+    out = []
+    for ln in (text or "").splitlines():
+        m = LOG_ROW.match(ln)
+        if not m:
+            continue
+        try:
+            day = datetime.date.fromisoformat(m.group(1))
+        except ValueError:
+            continue
+        cells = [c.strip() for c in ln.strip().strip("|").split("|")]
+        if day >= since and len(cells) >= 4:
+            out.append([cells[0], cells[1], cells[2], cells[3], 0])
+    merged = []
+    for row in out:
+        prev = merged[-1] if merged else None
+        if prev and (prev[0], prev[2], prev[3]) == (row[0], row[2], row[3]):
+            prev[4] += 1
+        else:
+            merged.append(row)
+    return [(w, r + (f" (+{n} more alike)" if n else ""), f, c) for w, r, f, c, n in merged]
+
+
+def logged_changes_lines(today, runner=None):
+    """Section 1's tail: the Ads changes logged in the last four weeks, newest first, so a setting that differs from
+    the agent's baseline but was changed on purpose is not reported as a finding. Whichever copy of the log is newer
+    (this checkout's or origin/main's) is used."""
+    try:
+        local = (REPO / CHANGE_LOG).read_text(encoding="utf-8")
+    except OSError:
+        local = ""
+    copies = [logged_changes(t, today) for t in (local, _log_text_at_origin(runner)) if t]
+    rows = max(copies, key=lambda rows: (rows[0][0] if rows else "", len(rows)), default=[])
+    since = min(today - datetime.timedelta(days=LOG_DAYS), ADS_BASELINE)
+    print(f"-- changes logged in {CHANGE_LOG} since {since}, newest first (the owner's own changes"
+          + (f"; the newest {LOG_MAX} of {len(rows)})" if len(rows) > LOG_MAX else ")"))
+    for when, resource, field, change in rows[:LOG_MAX]:  # "log " keeps them out of --quiet's problem lines
+        print(f"   log {when} · {resource[:180]} · {field[:40]} · {change[:160]}")
+    if not rows:
+        print("   (none)")
 
 
 GA4_API = f"https://analyticsdata.googleapis.com/v1beta/{GA4_PROPERTY}:runReport"
@@ -445,6 +550,9 @@ def coverage_section(s, landing):
     except OSError as e:
         print(f"   live sitemap.xml unreadable: {e}")
     print("-- ad landing pages (URL Inspection)")
+    if landing is None:
+        print("   not known: section 4 failed, so the ads' final URLs weren't read")
+        landing = []
     for url in landing:
         r = s.post("https://searchconsole.googleapis.com/v1/urlInspection/index:inspect",
                    json={"inspectionUrl": url, "siteUrl": GSC_SITE})
@@ -457,7 +565,7 @@ def coverage_section(s, landing):
               f"{(ir.get('lastCrawlTime') or 'never')[:10]}{flag}")
 
 
-def wiring_section(s, ads_settings):
+def wiring_section(s, q):
     print("\n== 8. Tracking wiring")
     partial = (REPO / "partials" / "analytics.html").read_text()
     labels = sorted(set(re.findall(r"AW-17988388404/[\w-]+", partial)))
@@ -473,8 +581,11 @@ def wiring_section(s, ads_settings):
             continue
         missing = [n for n in needles if n not in body]
         print(f"   {path}: " + ("all tags present" if not missing else "MISSING " + ", ".join(missing) + "  !CHECK"))
-    for k, v in ads_settings.items():
-        print(f"   Ads {k}: {'on' if v else 'OFF'}")
+    try:
+        for k, v in ads_settings(q).items():
+            print(f"   Ads {k}: {'on' if v else 'OFF'}")
+    except Exception as e:  # type name only; the GA4 lines below still print
+        print(f"   Ads settings: not read, failed: {failure_note(e)}")
     admin = f"https://analyticsadmin.googleapis.com/v1beta/{GA4_PROPERTY}"
     r = s.get(f"{admin}/keyEvents")
     if r.ok:
@@ -531,6 +642,113 @@ def ledger_section():
     print("   by occasion: " + " · ".join(f"{k} {n} (£{v:,.0f})" for k, (n, v) in c["by_occasion"].items()))
 
 
+# ---------- 9b. enquiries by ad source (enquiry_sources.py) ----------
+# Google Ads conversions can't judge a campaign here (most visitors refuse cookies), so the spend guard, the
+# Christmas value check and section 11 also count the pipeline's enquiries, graded A (a click reference), B (an ad
+# visit, or the client says "A Google ad") or C (only an ad click in the matching campaign that day or the day
+# before: shown, never counted).
+
+WEEK_DAYS = 7  # "this week": first seen on or after today minus 7 days, so last Monday after the run is kept
+
+
+class AdClicks:
+    """The Ads click lookups sections 9b and 11 share, so each is asked for once: click_view by date (a gclid's
+    campaign, through economics.attribute and its private cache, saved by section 11) and the days each campaign
+    had an ad click (grade C). Read-only on Google Ads."""
+
+    def __init__(self, q, today):
+        self.q, self.today, self.by_date, self.cache = q, today, {}, None
+
+    def clicks_on(self, day):
+        if day not in self.by_date:
+            self.by_date[day] = {r.click_view.gclid: r.campaign.name for r in self.q(
+                f"SELECT click_view.gclid, campaign.name FROM click_view WHERE segments.date = '{day}'")}
+        return self.by_date[day]
+
+    def gclid_cache(self):
+        import economics as ec
+        if self.cache is None:
+            self.cache = ec.load_gclid_cache(ec.GCLID_CACHE, self.today)
+        return self.cache
+
+    def campaign_of(self, gclid, day):
+        import economics as ec
+        return ec.attribute(gclid, day, self.clicks_on, self.gclid_cache(), self.today)
+
+    def save(self):
+        import economics as ec
+        if self.cache is not None:
+            ec.save_json_private(ec.GCLID_CACHE, self.cache)
+
+    def clicked_days(self, start):
+        """{(date, campaign key)} for every day from `start` to today a campaign had an ad click."""
+        rows = self.q(f"""SELECT campaign.id, campaign.name, segments.date, metrics.clicks FROM campaign
+                          WHERE segments.date BETWEEN '{start}' AND '{self.today}' AND metrics.clicks > 0""")
+        return {(datetime.date.fromisoformat(str(r.segments.date)), key) for r in rows
+                if (key := es.campaign_key(r.campaign.name, r.campaign.id))}
+
+
+def enquiry_grades(clicks, today, path=None):
+    """(graded enquiries, or None when there is no pipeline sheet; note lines). Read-only. Ads failures don't stop
+    the grading: without the click days there is no C, and an A whose click can't be looked up takes its campaign
+    from its ad visit, if any."""
+    import economics as ec
+    rows = es.read_rows(path or ec.ENQUIRIES)
+    if rows is None:
+        return None, ["no pipeline sheet yet (enquiries.csv): enquiries not graded"]
+    notes, failed = [], []
+    try:
+        season = ec.load_windows(BUDGET_WINDOWS)["season_start"]
+    except Exception:
+        season = None
+    starts = [d for d in (season, today - datetime.timedelta(days=GUARD_DAYS), XMAS_FROM) if d]
+    start = min(starts) - datetime.timedelta(days=1)
+    try:
+        days = clicks.clicked_days(start) if clicks else None
+    except Exception as e:
+        days = None
+        notes.append(f"ad clicks by day not read, failed: {failure_note(e)}; no C grades this week")
+
+    def campaign_of(gclid, day):
+        try:
+            return clicks.campaign_of(gclid, day)
+        except Exception as e:
+            failed.append(e)
+            return None
+    graded = es.grade_rows(rows, campaign_of if clicks else None, days)
+    if failed:
+        notes.append(f"click_view lookups failed: {failure_note(failed[0])}; those A enquiries take their campaign "
+                     f"from their ad visit, if any")
+    return graded, notes
+
+
+def guard_since(today):
+    return today - datetime.timedelta(days=GUARD_DAYS - 1)
+
+
+def enquiries_section(clicks, today, path=None):
+    """Section 9b; returns the graded enquiries (None without a pipeline sheet) for sections 11 and 12."""
+    print("\n== 9b. Enquiries by ad source (A a click reference · B an ad visit, or the client says 'A Google ad' · "
+          "C only an ad click in the matching campaign that day or the day before: shown, never counted)")
+    graded, notes = enquiry_grades(clicks, today, path)
+    for n in notes:
+        print("   " + n)
+    if graded is None:
+        return None
+    week = today - datetime.timedelta(days=WEEK_DAYS)
+    print(f"-- this week's enquiries, first seen {week} to {today} (date · occasion · source · grade campaign (why))")
+    shown = es.within(graded, week, today)
+    for g in shown:
+        print("   " + es.line(g))
+    if not shown:
+        print("   (none)")
+    since = guard_since(today)
+    print(f"-- by campaign, {since} to {today} (the spend guard's {GUARD_DAYS} days)")
+    for ln in es.counts_lines(es.counts(graded, since, today)):
+        print("   " + ln)
+    return graded
+
+
 def money_section():
     print("\n== 10. Money (totals and invoice numbers only)")
     try:
@@ -556,7 +774,40 @@ def money_section():
         print(f"   money check failed: {type(e).__name__}")
 
 
-def cost_section(q, today):
+def season_attribution(clicks, today, season, graded, names):
+    """(bookings, enquiries) for economics.cost_table over the season. A booking is credited by its own ledger
+    gclid (click_view); failing that, by its enquiry's grade (the pipeline row with its booking_ref, A or B with a
+    campaign). Each enquiry is credited by its grade (A or B with a campaign, else unattributed). Without grades
+    (graded None) enquiries fall back to their gclid alone; without a pipeline sheet enquiries is None."""
+    import economics as ec
+    by_ref = {g["booking_ref"]: g for g in graded or [] if g.get("booking_ref")}
+
+    def name(key):
+        return names.get(key) or es.label(key)
+    bookings = []
+    for r in ec.season_bookings(ec.lcs_money.read_csv(ec.lcs_money.LEDGER), season):
+        value = ec.lcs_money.money(r.get("value_gbp"))
+        camp = ec.attribute_booking(r, clicks.clicks_on, clicks.gclid_cache(), today)
+        if camp:
+            bookings.append((camp, value, "click"))
+            continue
+        g = by_ref.get((r.get("booking_ref") or "").strip())
+        if g and g["grade"] in ("A", "B") and g["campaign"]:
+            bookings.append((name(g["campaign"]), value, g["grade"]))
+        else:
+            bookings.append((None, value, None))
+    if graded is not None:
+        enquiries = [((name(g["campaign"]), g["grade"]) if g["grade"] in ("A", "B") and g["campaign"] else (None, None))
+                     for g in graded if g["first_seen"] >= season]
+    elif ec.ENQUIRIES.exists():
+        enquiries = [ec.attribute(r.get("gclid"), r.get("first_seen"), clicks.clicks_on, clicks.gclid_cache(), today)
+                     for r in ec.season_enquiries(ec.lcs_money.read_csv(ec.ENQUIRIES), season)]
+    else:
+        enquiries = None
+    return bookings, enquiries
+
+
+def cost_section(q, today, clicks=None, graded=None):
     print("\n== 11. True cost per booking (season to date, by campaign)")
     try:
         import economics as ec
@@ -567,34 +818,27 @@ def cost_section(q, today):
         print(f"   season since {season}")
         print("   bookings: ledger rows invoiced since then, cancelled ones left out (check_payments.is_cancelled),"
               " PENDING ones (deposit not yet seen) counted")
+        print("   credited to a campaign by click reference (gclid → click_view), else by the enquiry's grade (section"
+              " 9b): A a click reference, B an ad visit or 'A Google ad'; C never counts")
         spend = defaultdict(lambda: [0, 0])
-        for r in q(f"""SELECT campaign.name, metrics.cost_micros, metrics.clicks FROM campaign
+        names = {}  # campaign key (enquiry_sources) -> the Ads campaign name, matched by id
+        for r in q(f"""SELECT campaign.id, campaign.name, metrics.cost_micros, metrics.clicks FROM campaign
                 WHERE segments.date BETWEEN '{season}' AND '{today}'"""):
             spend[r.campaign.name][0] += r.metrics.cost_micros
             spend[r.campaign.name][1] += r.metrics.clicks
-        by_date = {}
-
-        def clicks_on(day):
-            if day not in by_date:
-                by_date[day] = {r.click_view.gclid: r.campaign.name for r in q(
-                    f"SELECT click_view.gclid, campaign.name FROM click_view WHERE segments.date = '{day}'")}
-            return by_date[day]
-
-        cache = ec.load_gclid_cache(ec.GCLID_CACHE, today)
+            key = es.campaign_key(None, r.campaign.id)
+            if key:
+                names[key] = r.campaign.name
+        clicks = clicks or AdClicks(q, today)
         try:
-            bookings = []
-            for r in ec.season_bookings(ec.lcs_money.read_csv(ec.lcs_money.LEDGER), season):
-                bookings.append((ec.attribute_booking(r, clicks_on, cache, today),
-                                 ec.lcs_money.money(r.get("value_gbp"))))
-            enquiries = None
-            if ec.ENQUIRIES.exists():
-                enquiries = [ec.attribute(r.get("gclid"), r.get("first_seen"), clicks_on, cache, today)
-                             for r in ec.season_enquiries(ec.lcs_money.read_csv(ec.ENQUIRIES), season)]
+            bookings, enquiries = season_attribution(clicks, today, season, graded, names)
         finally:
-            ec.save_json_private(ec.GCLID_CACHE, cache)
+            clicks.save()
         table = ec.cost_table({k: tuple(v) for k, v in spend.items()}, bookings, enquiries)
         if enquiries is None:
             print("   enquiries: pipeline sheet not set up yet")
+        elif graded is None:
+            print("   enquiries: not graded this week (section 9b), so credited by click reference only")
         for line in ec.cost_lines(table):
             print("   " + line)
         start = ec.full_weeks(today, 8)[0]
@@ -605,10 +849,11 @@ def cost_section(q, today):
         ec.save_json_private(ec.ADS_SUMMARY, summary)
         print(f"   wrote {ec.ADS_SUMMARY.name} (last 8 full weeks and the season)")
     except Exception as e:  # type name only: the message could carry ledger data
-        print(f"   true cost per booking failed: {type(e).__name__}")
+        print(f"   true cost per booking failed: {failure_note(e)}")
 
 
-def budget_section(q, today, write=False, git_runner=None, now=None):
+def budget_section(q, today, write=False, git_runner=None, now=None, graded=None):
+    """Section 12. graded: section 9b's enquiries (None: not graded, and the value check and spend guard say so)."""
     print("\n== 12. Seasonal budget rules (data/budget-windows.yml; proposals only, nothing changed)")
     try:
         import economics as ec
@@ -621,18 +866,18 @@ def budget_section(q, today, write=False, git_runner=None, now=None):
         for line in ec.proposal_lines(items):
             print("   " + line)
     except Exception as e:
-        print(f"   seasonal budget rules failed: {type(e).__name__}")
+        print(f"   seasonal budget rules failed: {failure_note(e)}")
         return
     try:
-        for line in value_check_lines(q, today):
+        for line in value_check_lines(q, today, graded):
             print("   " + line)
     except Exception as e:  # type name only
-        print(f"   Christmas value check failed: {type(e).__name__}")
+        print(f"   Christmas value check failed: {failure_note(e)}")
     try:
-        for line in spend_guard_lines(q, today):
+        for line in spend_guard_lines(q, today, graded):
             print("   " + line)
     except Exception as e:  # type name only
-        print(f"   spend guard failed: {type(e).__name__}")
+        print(f"   spend guard failed: {failure_note(e)}")
     if write:
         try:
             for line in write_proposals(items, today, git_runner=git_runner, now=now):
@@ -645,46 +890,77 @@ XMAS_ID, XMAS_FROM, XMAS_CHECK_BY, XMAS_EXTRA_LIMIT = 24295921372, datetime.date
     datetime.date(2026, 11, 2), 60.0
 
 
-def value_check_lines(q, today):
+def value_check_lines(q, today, graded=None):
     """The stop rule for the Christmas £8 cap (scripts/ads/budget_cap.py): spend above the £5/day level since
-    28 Sep 2026, and whether it has passed £60. Enquiries and the hiring share are judged by the Monday review."""
+    28 Sep 2026, whether it has passed £60, and the evidence the campaign earns it: its Ads conversions (form,
+    WhatsApp or email) and its A or B enquiries since 28 Sep (section 9b's grades; C is shown and never counts).
+    graded None: the enquiries weren't graded, and the line says so. The hiring share is judged by the review."""
     if today < XMAS_FROM:
         return []
-    extra = spent = 0.0
-    for r in q(f"""SELECT segments.date, metrics.cost_micros FROM campaign WHERE campaign.id = {XMAS_ID}
-                   AND segments.date BETWEEN '{XMAS_FROM}' AND '{today}'"""):
+    extra = spent = conv = 0.0
+    for r in q(f"""SELECT segments.date, metrics.cost_micros, metrics.conversions FROM campaign
+                   WHERE campaign.id = {XMAS_ID} AND segments.date BETWEEN '{XMAS_FROM}' AND '{today}'"""):
         cost = r.metrics.cost_micros / 1e6
         spent += cost
         extra += max(0.0, cost - 5.0)
+        conv += r.metrics.conversions
     line = (f"Christmas value check: £{spent:,.2f} spent since {XMAS_FROM:%d %b}, £{extra:,.2f} of it above the "
-            f"£5/day level")
+            f"£5/day level · {conv:g} Ads conversions")
+    n = es.counts(graded, XMAS_FROM, today)["christmas"] if graded is not None else None
+    line += (f" · enquiries from Christmas ads: A {n['A']} · B {n['B']} (C {n['C']}, never counts)" if n is not None
+             else " · enquiries not graded this week (section 9b)")
+    when = f" (checked from {XMAS_CHECK_BY:%d %b})" if today < XMAS_CHECK_BY else ""
     if extra > XMAS_EXTRA_LIMIT:
-        line += (f" — PAST £{XMAS_EXTRA_LIMIT:.0f}: back to £5 unless a real enquiry came from the campaign"
-                 f"{' (checked from ' + XMAS_CHECK_BY.strftime('%d %b') + ')' if today < XMAS_CHECK_BY else ''}")
-    return [line, "stop rule: back to £5 if the extra passes £60 by 2 Nov with no real enquiry, "
-                  "or if under 90% of a week's spend went on hiring searches"]
+        if n is None:
+            line += (f" — PAST £{XMAS_EXTRA_LIMIT:.0f}: back to £5 unless the pipeline shows an A or B enquiry from "
+                     f"Christmas ads or an Ads conversion{when}")
+        elif es.ab(n) or conv:
+            line += (f" — over £{XMAS_EXTRA_LIMIT:.0f}, but the campaign brought "
+                     + " and ".join(x for x in (f"{es.ab(n)} A/B enquiries" if es.ab(n) else "",
+                                                f"{conv:g} Ads conversions" if conv else "") if x)
+                     + ": keep £8 on this test")
+        else:
+            line += (f" — PAST £{XMAS_EXTRA_LIMIT:.0f} with no A or B enquiry from Christmas ads and no Ads "
+                     f"conversion: back to £5{when}")
+    return [line, "stop rule: back to £5 if the extra passes £60 by 2 Nov with no enquiry from Christmas ads (an A or B "
+                  "grade; C never counts) and no Ads conversion, or if under 90% of a week's spend went on hiring "
+                  "searches"]
 
 
 GUARD_DAYS, GUARD_SPEND_GBP, GUARD_MIN_CLICKS = 28, 80.0, 15
 
 
-def spend_guard_lines(q, today):
-    """The stop rule for every enabled campaign (owner, 28 Sep 2026): spend of £80 or more in the last 28 days
-    with no primary conversion (form, WhatsApp or email click) means the campaign is proposed for pausing, never
-    deletion, until the owner decides. Under 15 clicks is too little to judge and is said so."""
-    since = today - datetime.timedelta(days=GUARD_DAYS - 1)
+def spend_guard_lines(q, today, graded=None):
+    """The stop rule for every enabled campaign (owner, 28 Sep 2026; enquiry-aware since 23 Oct 2026): £80 or more
+    in the last 28 days with no Ads conversion (form, WhatsApp or email click) AND no A or B enquiry for that
+    campaign in those days (section 9b's grades) means the campaign is proposed for pausing, never deletion, until
+    the owner decides. C enquiries are shown and never count. Under 15 clicks is too little to judge and is said
+    so. graded None: the enquiries weren't graded, so a STOP GUARD says to check the pipeline first."""
+    since = guard_since(today)
+    c = es.counts(graded, since, today) if graded is not None else None
     lines = []
     for r in q(f"""SELECT campaign.id, campaign.name, metrics.cost_micros, metrics.clicks, metrics.conversions
                    FROM campaign WHERE campaign.status = 'ENABLED'
                    AND segments.date BETWEEN '{since}' AND '{today}'"""):
         cost, clicks, conv = r.metrics.cost_micros / 1e6, r.metrics.clicks, r.metrics.conversions
-        line = f"spend guard {r.campaign.name}: £{cost:,.2f}, {clicks} clicks, {conv:g} leads in {GUARD_DAYS} days"
+        key = es.campaign_key(r.campaign.name, r.campaign.id)
+        n = None if c is None else c[key] if key else dict.fromkeys(es.GRADES, 0)
+        line = (f"spend guard {r.campaign.name}: £{cost:,.2f}, {clicks} clicks, {conv:g} Ads conversions in "
+                f"{GUARD_DAYS} days · enquiries " + (es.abc(n) if n is not None else "not graded"))
         if cost >= GUARD_SPEND_GBP and conv == 0:
-            line += (" — STOP GUARD: propose pausing (never deleting) until the owner decides"
-                     if clicks >= GUARD_MIN_CLICKS else
-                     f" — under {GUARD_MIN_CLICKS} clicks, too few to judge; watch next week")
+            if n is not None and es.ab(n):
+                line += " — held: an A or B enquiry came from this campaign, so no pause"
+            elif clicks < GUARD_MIN_CLICKS:
+                line += f" — under {GUARD_MIN_CLICKS} clicks, too few to judge; watch next week"
+            else:
+                line += " — STOP GUARD: propose pausing (never deleting) until the owner decides"
+                if n is None:
+                    line += " (enquiries not graded this week: check the pipeline first)"
+                elif es.ab(c[None]):
+                    line += f" ({es.ab(c[None])} ad enquiries in these {GUARD_DAYS} days name no campaign: check them first)"
         lines.append(line)
-    return lines + [f"stop rule: £{GUARD_SPEND_GBP:.0f}+ in {GUARD_DAYS} days with no lead → propose pausing"]
+    return lines + [f"stop rule: £{GUARD_SPEND_GBP:.0f}+ in {GUARD_DAYS} days with no Ads conversion and no A or B "
+                    f"enquiry → propose pausing (C never counts)"]
 
 
 # ---------- 12b. Command Centre proposals (--write-proposals) ----------
@@ -907,7 +1183,7 @@ def shortlist_section(s, today, force):
         for line in ec.shortlist_lines(items):
             print("   " + line)
     except Exception as e:
-        print(f"   Search Console shortlist failed: {type(e).__name__}")
+        print(f"   Search Console shortlist failed: {failure_note(e)}")
 
 
 def google_session():
@@ -918,20 +1194,94 @@ def google_session():
     return AuthorizedSession(creds)
 
 
-def run_sections(args):
-    q = ads_query()
-    landing, ads_settings = ads_sections(args.since, q)
-    s = google_session()
-    ga4_section(s)
-    gsc_section(s)
-    coverage_section(s, landing)
-    wiring_section(s, ads_settings)
-    ledger_section()
-    money_section()
+# ---------- running the sections, each on its own ----------
+# The 12 Oct 2026 report died after its first Ads query and lost every section after it. Now each section runs
+# guarded: one that raises keeps what it printed, gets its heading if it never printed one, and ends with
+# "SECTION <id> FAILED: <exception type>"; the next section still runs, and --quiet lists the failure.
+
+AUTH_TYPE = re.compile(r"refresh|credential|unauthenticated|permissiondenied|forbidden|auth", re.I)
+AUTH_TEXT = re.compile(r"invalid_grant|unauthenticated|authentication_error|authorization_error|permission_denied|"
+                       r"invalid_scope|insufficient\w*\s+\w*\s*scopes?|credentials", re.I)
+
+
+def failure_note(e):
+    """The exception's type name, plus "(looks like a Google auth error: check the sign-in)" when its type or
+    Google's error text says so, so the dispatcher's stop rule still sees it (a GoogleAdsException carries it in
+    .failure and .error, not its message). Nothing but the type name is ever printed: the text could carry ledger,
+    bank or account data. A local file error (OSError) is never called an auth error."""
+    name = type(e).__name__
+    try:
+        text = " ".join(str(x)[:4000] for x in (e, getattr(e, "failure", ""), getattr(e, "error", "")))
+    except Exception:
+        text = ""
+    if not isinstance(e, OSError) and (AUTH_TYPE.search(name) or AUTH_TEXT.search(text)):
+        return f"{name} (looks like a Google auth error: check the sign-in)"
+    return name
+
+
+def run_section(sid, title, fn, *args, **kwargs):
+    """Run one report section and return its result, or None if it raised (see above)."""
+    buf = io.StringIO()
+    try:
+        with contextlib.redirect_stdout(buf):
+            result = fn(*args, **kwargs)
+    except Exception as e:
+        text = buf.getvalue()
+        if not re.search(rf"^== {re.escape(sid)}\.", text, re.M):
+            text += f"\n== {sid}. {title}\n"
+        sys.stdout.write(text)
+        print(f"   SECTION {sid} FAILED: {failure_note(e)}")
+        return None
+    sys.stdout.write(buf.getvalue())
+    return result
+
+
+class _Lazy:
+    """A Google client made on first use, once. If making it fails, every use raises that same error, so each
+    section that needs it fails on its own (SECTION <id> FAILED) and the sections that don't still run."""
+
+    def __init__(self, make):
+        self._make, self._obj, self._err = make, None, None
+
+    def _get(self):
+        if self._err is not None:
+            raise self._err
+        if self._obj is None:
+            try:
+                self._obj = self._make()
+            except Exception as e:
+                self._err = e
+                raise
+        return self._obj
+
+    def __call__(self, *a, **k):
+        return self._get()(*a, **k)
+
+    def __getattr__(self, name):
+        return getattr(self._get(), name)
+
+
+def run_sections(args, q=None, s=None):
     today = lm.today()
-    cost_section(q, today)
-    budget_section(q, today, write=args.write_proposals)
-    shortlist_section(s, today, args.gsc_shortlist)
+    q = q or _Lazy(ads_query)
+    s = s or _Lazy(google_session)
+    clicks = AdClicks(q, today)
+    run_section("1", "Campaigns", campaigns_section, q, args.since)
+    run_section("2", "Search terms, last 7 days", search_terms_section, q)
+    run_section("3", "Conversions per action", conversions_section, q)
+    landing = run_section("4", "Ads (enabled campaigns)", ads_section, q)
+    run_section("4b", "Google's recommendations (open, not dismissed)", recommendations_section, q)
+    run_section("5", "GA4, last 7 days", ga4_section, s)
+    run_section("6", "Search Console", gsc_section, s)
+    run_section("7", "Search Console coverage", coverage_section, s, landing)
+    run_section("8", "Tracking wiring", wiring_section, s, q)
+    run_section("9", "Bookings ledger (counts only)", ledger_section)
+    graded = run_section("9b", "Enquiries by ad source", enquiries_section, clicks, today)
+    run_section("10", "Money (totals and invoice numbers only)", money_section)
+    run_section("11", "True cost per booking (season to date, by campaign)", cost_section, q, today, clicks, graded)
+    run_section("12", "Seasonal budget rules", budget_section, q, today, write=args.write_proposals, graded=graded)
+    run_section("13", "Search Console shortlist (hiring intent, positions 8–20)", shortlist_section, s, today,
+                args.gsc_shortlist)
 
 
 def report_path(today=None):
@@ -963,16 +1313,17 @@ def main():
 
 
 PROBLEM_RE = re.compile(r"\b(error|failed|refused|denied|permission|invalid_grant|unauthenticated|not written|"
-                        r"CONFIG ERROR|STOP GUARD|STALE|NOT INDEXED)\b|PAST £", re.I)
+                        r"CONFIG ERROR|STOP GUARD|STALE|NOT INDEXED|SECTION \w+ FAILED)\b|PAST £", re.I)
 
 
 def quiet_summary(path):
     """What --quiet prints instead of the report: where it is, which sections it holds and every line that
-    looks like a failure or an alarm, so the Monday dispatcher can stop on an auth error without reading it."""
+    looks like a failure or an alarm (a "SECTION <id> FAILED" line included), so the Monday dispatcher can stop on
+    an auth error without reading it. The stop-rule reminders and section 1's change-log rows are never problems."""
     text = Path(path).read_text(encoding="utf-8")
     heads = re.findall(r"^== (\w+)\.", text, re.M)
     problems = [l.strip() for l in text.splitlines()
-                if PROBLEM_RE.search(l) and not l.strip().startswith("stop rule:")]
+                if PROBLEM_RE.search(l) and not l.strip().startswith(("stop rule:", "log "))]
     out = [f"report saved: {path}", f"sections: {' '.join(heads) or 'none'}"]
     out += [f"problem: {l}" for l in problems[:20]] or ["problems: none"]
     return "\n".join(out)

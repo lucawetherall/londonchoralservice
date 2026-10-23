@@ -3,7 +3,8 @@
 plus two private-file helpers; weekly_review.py does every Google call.
 
   11. True cost per booking: Ads spend by campaign joined to the ledger's
-      bookings and the pipeline's enquiries through each gclid.
+      bookings and the pipeline's enquiries through each gclid, or failing
+      that the enquiry's A or B grade (enquiry_sources.py).
   12. Seasonal budget rules: data/budget-windows.yml turned into proposals,
       never above the campaign's cap (£5/day, or a dated exception in
       scripts/ads/budget_cap.py).
@@ -176,36 +177,47 @@ def _n(x):
 
 
 def cost_table(spend, bookings, enquiries):
-    """spend: {campaign: (cost_micros, clicks)}; bookings: [(campaign or None, £ value)];
-    enquiries: [campaign or None] or None when the pipeline sheet doesn't exist."""
-    names = set(spend) | {c for c, _ in bookings if c} | {c for c in (enquiries or []) if c}
+    """spend: {campaign: (cost_micros, clicks)}; bookings: [(campaign or None, £ value[, basis])], basis "click" (its
+    own click reference, the default) or "A"/"B" (credited by its enquiry's grade, enquiry_sources.py);
+    enquiries: [campaign or None] or [(campaign or None, grade)] (a bare campaign is an A, by click reference), or
+    None when the pipeline sheet doesn't exist."""
+    bookings = [(b[0], b[1], (b[2] if len(b) > 2 else None) or ("click" if b[0] else None)) for b in bookings]
+    if enquiries is not None:
+        enquiries = [e if isinstance(e, tuple) else (e, "A" if e else None) for e in enquiries]
+    names = set(spend) | {c for c, _, _ in bookings if c} | {c for c, _ in (enquiries or []) if c}
     have_enq = enquiries is not None
     rows = []
     for name in names:
         micros, clicks = spend.get(name, (0, 0))
         s = round(micros / 1e6, 2)
-        b = [v for c, v in bookings if c == name]
-        e = sum(1 for c in enquiries if c == name) if have_enq else None
-        rows.append({"campaign": name, "spend_gbp": s, "clicks": clicks, "enquiries": e,
-                     "bookings": len(b), "booked_gbp": round(sum(b), 2),
-                     "cost_per_enquiry": divide(s, e) if have_enq else None,
-                     "cost_per_booking": divide(s, len(b))})
+        b = [(v, basis) for c, v, basis in bookings if c == name]
+        e = [g for c, g in enquiries if c == name] if have_enq else None
+        rows.append({"campaign": name, "spend_gbp": s, "clicks": clicks, "enquiries": len(e) if have_enq else None,
+                     "bookings": len(b), "booked_gbp": round(sum(v for v, _ in b), 2),
+                     "cost_per_enquiry": divide(s, len(e)) if have_enq else None,
+                     "cost_per_booking": divide(s, len(b)),
+                     "enquiries_by_grade": {k: e.count(k) for k in ("A", "B")} if have_enq else None,
+                     "bookings_by_grade": sum(1 for _, basis in b if basis in ("A", "B"))})
     rows.sort(key=lambda r: (-r["spend_gbp"], r["campaign"].lower()))
-    ub = [v for c, v in bookings if not c]
-    un = {"enquiries": sum(1 for c in enquiries if not c) if have_enq else None,
+    ub = [v for c, v, _ in bookings if not c]
+    un = {"enquiries": sum(1 for c, _ in enquiries if not c) if have_enq else None,
           "bookings": len(ub), "booked_gbp": round(sum(ub), 2)}
     ts = round(sum(r["spend_gbp"] for r in rows), 2)
     te = len(enquiries) if have_enq else None
     total = {"spend_gbp": ts, "clicks": sum(r["clicks"] for r in rows), "enquiries": te,
-             "bookings": len(bookings), "booked_gbp": round(sum(v for _, v in bookings), 2),
+             "bookings": len(bookings), "booked_gbp": round(sum(v for _, v, _ in bookings), 2),
              "cost_per_enquiry": divide(ts, te) if have_enq else None,
              "cost_per_booking": divide(ts, len(bookings))}
     return {"campaigns": rows, "unattributed": un, "total": total}
 
 
 def _cost_line(label, r):
-    return (f"{label}: spend £{r['spend_gbp']:,.2f} · clicks {r['clicks']} · enquiries {_n(r['enquiries'])}"
-            f" · bookings {r['bookings']} · booked £{r['booked_gbp']:,.2f}"
+    by = r.get("enquiries_by_grade")
+    enq = _n(r["enquiries"]) + (f" (A {by['A']} · B {by['B']})" if by and r["enquiries"] else "")
+    graded = r.get("bookings_by_grade") or 0
+    book = f"{r['bookings']}" + (f" ({graded} by their enquiry's grade, no click reference)" if graded else "")
+    return (f"{label}: spend £{r['spend_gbp']:,.2f} · clicks {r['clicks']} · enquiries {enq}"
+            f" · bookings {book} · booked £{r['booked_gbp']:,.2f}"
             f" · per enquiry {gbp_or_dash(r['cost_per_enquiry'])} · per booking {gbp_or_dash(r['cost_per_booking'])}")
 
 
