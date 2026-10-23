@@ -31,7 +31,6 @@ EMAIL = re.compile(r"[\w.+-]+@[\w-]+(\.[\w-]+)+")
 LONG_DIGITS = re.compile(r"\d(?:[ -]?\d){5,}")
 ISO_DATE = re.compile(r"(?:19|20)\d\d-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12]\d|3[01])")
 SEARCH_MIN, SEARCH_MAX, SEARCH_LIMIT = 2, 80, 50
-FOLLOWUP_GAP = {0: pl.FIRST_AFTER, 1: pl.SECOND_AFTER, 2: pl.LOST_AFTER}
 
 
 # ---------------------------------------------------------------- small helpers
@@ -870,7 +869,7 @@ def next_followup(r, today):
     event = to_date(r.get("event_date"))
     days = []
     if n is not None and last is not None:
-        days.append(max(last + datetime.timedelta(days=FOLLOWUP_GAP[n]), today))
+        days.append(max(last + datetime.timedelta(days=pl.next_step(r, n)[1]), today))
     if event:
         days.append(max(event, today))
     for day in sorted(set(days)):

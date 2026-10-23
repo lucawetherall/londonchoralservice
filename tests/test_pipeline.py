@@ -61,6 +61,25 @@ def test_mark_lost_9_days_after_the_second_is_not_due_10_is():
 
 def test_timing_constants():
     assert (pl.FIRST_AFTER, pl.SECOND_AFTER, pl.LOST_AFTER) == (5, 10, 10)
+    assert (pl.THIRD_AFTER, pl.LONG_LOST_AFTER) == (14, 14)
+
+
+def test_corporate_and_christmas_get_a_third_followup_then_lost():
+    for occasion in ("corporate", "christmas", "Christmas"):
+        assert kinds([enq(last=days(5), occasion=occasion)]) == {"1001": "first"}, occasion
+        assert kinds([enq(last=days(10), followups=1, occasion=occasion)]) == {"1001": "second"}, occasion
+        # where a wedding would be marked lost 10 days after the second, these wait 14 for a third
+        assert kinds([enq(last=days(13), followups=2, occasion=occasion)]) == {}, occasion
+        assert kinds([enq(last=days(14), followups=2, occasion=occasion)]) == {"1001": "third"}, occasion
+        assert kinds([enq(last=days(13), followups=3, occasion=occasion)]) == {}, occasion
+        assert kinds([enq(last=days(14), followups=3, occasion=occasion)]) == {"1001": "mark_lost"}, occasion
+        # the event date still closes it at once
+        assert kinds([enq(last=days(1), followups=2, occasion=occasion, event=days(1))]) == {"1001": "mark_lost"}
+
+
+def test_weddings_and_private_events_keep_two_followups():
+    for occasion in ("wedding", "private event", "other"):
+        assert kinds([enq(last=days(10), followups=2, occasion=occasion)]) == {"1001": "mark_lost"}, occasion
 
 
 def test_the_count_decides_the_kind_not_the_age():
@@ -275,7 +294,7 @@ def test_cli_add_refuses_duplicate_and_unknown_field():
 def test_cli_add_validates_values():
     d = home()
     for bad in ({"source": "carrier pigeon"}, {"status": "maybe"}, {"first_seen": "20/09/2026"},
-                {"event_date": "2027-13-01"}, {"followups": 3}, {"status": "confirmed"}, {"enquiry_id": ""},
+                {"event_date": "2027-13-01"}, {"followups": 4}, {"status": "confirmed"}, {"enquiry_id": ""},
                 {"quoted_gbp": "lots"}, {"notes": "two\nlines"}):
         p = add(d, **bad)
         assert p.returncode != 0, (bad, p.stdout)
@@ -487,6 +506,22 @@ def test_cli_chase_timeline():
     assert cli(d, "followed", "1001", "2", "2026-09-16").returncode == 0
     assert due("2026-09-25") == []
     assert due("2026-09-26") == [{"enquiry_id": "1001", "kind": "mark_lost"}]
+    # a wedding never takes a third follow-up
+    assert cli(d, "followed", "1001", "3", "2026-09-26").returncode != 0
+
+
+def test_cli_third_followup_for_a_christmas_enquiry():
+    d = home()
+    assert add(d, occasion="christmas", event_date="2026-12-10").returncode == 0
+    assert cli(d, "quoted", "1001", "Quintet (5 singers), options", "1400", "2026-10-01").returncode == 0
+    assert cli(d, "followed", "1001", "1", "2026-10-06").returncode == 0
+    assert cli(d, "followed", "1001", "2", "2026-10-16").returncode == 0
+    p = cli(d, "followups-due", "--today", "2026-10-30")
+    assert json.loads(p.stdout) == [{"enquiry_id": "1001", "kind": "third"}], p.stdout
+    assert cli(d, "followed", "1001", "3", "2026-10-30").returncode == 0
+    assert enquiries(d)["1001"]["followups"] == "3"
+    p = cli(d, "followups-due", "--today", "2026-11-13")
+    assert json.loads(p.stdout) == [{"enquiry_id": "1001", "kind": "mark_lost"}], p.stdout
 
 
 def test_cli_contact_refuses_an_older_message():

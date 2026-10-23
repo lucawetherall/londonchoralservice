@@ -25,9 +25,9 @@ report and the dashboard import summary_dict().
         new, quoted, confirmed (needs booking_ref), deposit_paid, done, lost, cancelled.
         A confirmed, deposit_paid or done enquiry never goes back to new or quoted
     .venv/bin/python scripts/bookings/pipeline.py followups-due [--today YYYY-MM-DD]
-        JSON [{enquiry_id, kind}], kind first | second | mark_lost
-    .venv/bin/python scripts/bookings/pipeline.py followed <enquiry_id> <1|2> <YYYY-MM-DD>
-        a follow-up draft was saved
+        JSON [{enquiry_id, kind}], kind first | second | third | mark_lost
+    .venv/bin/python scripts/bookings/pipeline.py followed <enquiry_id> <1|2|3> <YYYY-MM-DD>
+        a follow-up draft was saved (3 only for a corporate or Christmas enquiry)
     .venv/bin/python scripts/bookings/pipeline.py reviews-due [--today YYYY-MM-DD]
         JSON [{booking_ref, event_date}] from the bookings ledger
     .venv/bin/python scripts/bookings/pipeline.py reviewed <booking_ref> <YYYY-MM-DD>
@@ -46,7 +46,10 @@ report and the dashboard import summary_dict().
 
 Follow-ups (status quoted, no booking_ref), each counted from last_contact, which
 `quoted`, `contact` and `followed` move: the first 5 days after the quote, the second
-10 days after the first, then mark_lost 10 days after the second. An event date that
+10 days after the first, then mark_lost 10 days after the second. A corporate or Christmas
+enquiry waits longer, as business buyers wait on an end client or a budget sign-off (quote
+research, 23 Oct 2026): a third follow-up 14 days after the second, then mark_lost 14 days
+after the third. An event date that
 is today or past gives mark_lost at once and never a follow-up. A funeral (or an
 enquiry with no occasion) is never chased: it gets mark_lost once the event has
 passed, or nothing if there is no event date. reviews-due never lists a funeral
@@ -84,6 +87,8 @@ STATUSES = {"new", "quoted", "confirmed", "deposit_paid", "done", "lost", "cance
 STATUS_ORDER = ["new", "quoted", "confirmed", "deposit_paid", "done", "lost", "cancelled"]
 BOOKED = {"confirmed", "deposit_paid", "done"}
 FIRST_AFTER, SECOND_AFTER, LOST_AFTER = 5, 10, 10  # days since last_contact (the quote, then each chase)
+THIRD_AFTER, LONG_LOST_AFTER = 14, 14  # corporate and Christmas only: a third chase, then lost
+LONG_RUNWAY = {"corporate", "christmas"}
 REVIEW_FROM, REVIEW_UNTIL = 3, 14  # days after the event
 QUOTED_NOTE = re.compile(r"\bquoted (\d{4}-\d{2}-\d{2})\b")
 REVIEW_NOTE = cp.REVIEW_NOTE  # "review request drafted|skipped": one pattern, which check_payments --note refuses
@@ -181,7 +186,19 @@ def followups_of(r):
         n = int(r.get("followups") or 0)
     except ValueError:
         return None
-    return n if n in (0, 1, 2) else None
+    return n if n in (0, 1, 2, 3) else None
+
+
+def long_runway(r):
+    return (r.get("occasion") or "").strip().lower() in LONG_RUNWAY
+
+
+def next_step(r, n):
+    """(kind, days after last_contact) of the step that follows n follow-ups."""
+    if long_runway(r):
+        return {0: ("first", FIRST_AFTER), 1: ("second", SECOND_AFTER), 2: ("third", THIRD_AFTER),
+                3: ("mark_lost", LONG_LOST_AFTER)}[n]
+    return {0: ("first", FIRST_AFTER), 1: ("second", SECOND_AFTER)}.get(n, ("mark_lost", LOST_AFTER))
 
 
 # --- pure functions ------------------------------------------------------------------------------
@@ -205,7 +222,7 @@ def followups_due(rows, today):
         if last is None or n is None:
             continue
         quiet = (today - last).days
-        kind = {0: ("first", FIRST_AFTER), 1: ("second", SECOND_AFTER), 2: ("mark_lost", LOST_AFTER)}[n]
+        kind = next_step(r, n)
         if quiet >= kind[1]:
             out.append({"enquiry_id": r["enquiry_id"], "kind": kind[0]})
     return out
@@ -413,8 +430,8 @@ def clean_row(data):
         row["event_date"] = iso(row["event_date"], "event_date")
     row["last_contact"] = iso(row["last_contact"], "last_contact") if row["last_contact"] else row["first_seen"]
     row["followups"] = row["followups"] or "0"
-    if row["followups"] not in ("0", "1", "2"):
-        raise SystemExit("followups must be 0, 1 or 2")
+    if row["followups"] not in ("0", "1", "2", "3"):
+        raise SystemExit("followups must be 0, 1, 2 or 3")
     if row["quoted_gbp"]:
         row["quoted_gbp"] = gbp(row["quoted_gbp"])
     if row["booking_ref"]:
@@ -537,6 +554,8 @@ def cmd_followed(args):
     def edit(r):
         if status_of(r) != "quoted":
             raise SystemExit(f"enquiry {r['enquiry_id']} is {status_of(r) or 'blank'}, not quoted")
+        if n == 3 and not long_runway(r):
+            raise SystemExit(f"enquiry {r['enquiry_id']} is not corporate or Christmas; no third follow-up")
         if followups_of(r) != n - 1:
             raise SystemExit(f"enquiry {r['enquiry_id']} already has {r.get('followups')} follow-up(s); "
                              f"follow-up {n} not recorded")
@@ -618,7 +637,7 @@ def main(argv=None):
     p.add_argument("booking_ref", nargs="?")
     p = sub.add_parser("followed")
     p.add_argument("enquiry_id")
-    p.add_argument("number", choices=["1", "2"])
+    p.add_argument("number", choices=["1", "2", "3"])
     p.add_argument("date")
     p = sub.add_parser("heard")
     p.add_argument("enquiry_id")
