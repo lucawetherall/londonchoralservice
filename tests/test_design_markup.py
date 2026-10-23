@@ -21,9 +21,10 @@ WONDERFUL = 'csFWUu-r85Y'
 # Church carol services hero (19 Oct 2026).
 ROYAL = 'SbvqWglsbMo'
 
-# Every hero film uses maxresdefault.jpg; list an exception here if a new
-# upload has no maxres thumbnail yet.
-THUMBS = {}
+# Every hero film's still is the self-hosted WebP made from its maxresdefault.jpg
+# (assets/films/film-<id>-1280.webp; the two oldest heroes have their own names).
+# Pages not yet moved over still use YouTube's maxresdefault.jpg.
+STILLS = {PROMO: 'hero-film', WONDERFUL: 'hero-christmas'}
 
 HERO_FILMS = {
     'index.html': PROMO,
@@ -129,8 +130,8 @@ def check_heroes():
                   f'{page}: breadcrumb must come before the h1')
 
         check(f'data-video="{film}"' in video, f'{page}: hero film should be {film}')
-        thumb = THUMBS.get(film, 'maxresdefault.jpg')
-        check(f'/vi/{film}/{thumb}' in video, f'{page}: hero thumbnail should be {film}')
+        still = f"assets/films/{STILLS.get(film, 'film-' + film)}-1280.webp"
+        check(still in video or f'/vi/{film}/maxresdefault.jpg' in video, f'{page}: hero thumbnail should be {film}')
         if CAPTIONS[film] is None:
             check('class="video-caption"' not in video, f'{page}: the {film} film takes no caption')
         else:
