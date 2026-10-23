@@ -131,6 +131,27 @@ def test_bank_details_in_a_draft_are_denied():
     assert decide("sendReplyEmail", office(content="<p>The bank details are on your invoice.</p>")) == "allow"
 
 
+def test_tagged_links_to_our_own_site_pass():
+    for url in ("https://londonchoralservice.com/for-hotels.html?utm_source=outreach&utm_medium=email"
+                "&utm_campaign=hotels-2026-10",
+                "https://londonchoralservice.com/for-event-managers.html?utm_source=outreach&amp;utm_medium=email"
+                "&amp;utm_campaign=event-managers-2026-10",
+                "https://www.londonchoralservice.com/?utm_source=print&utm_medium=referral"
+                "&utm_campaign=order-of-service-insert-2026"):
+        assert decide("sendEmail", office(content=f"<p>Our page: {url}</p>")) == "allow", url
+        assert decide("sendEmail", office(content=f"Our page: <a href=\"{url}\">{url}</a>")) == "allow", url
+
+
+def test_bank_details_hidden_in_a_link_are_still_denied():
+    for text in ("https://londonchoralservice.com/x.html?utm_campaign=040004",
+                 "https://londonchoralservice.com/x.html?utm_campaign=a-04-00-04",
+                 "https://londonchoralservice.com/x.html?utm_campaign=x-2026-10&acct=12345678",
+                 "https://londonchoralservice.com/x.html?utm_campaign=x-2026-10 account 12345678",
+                 "https://evil.example/londonchoralservice.com/x.html?utm_campaign=x-2026-10 a/c 12345678",
+                 "https://example.com/x.html?utm_campaign=hotels-2026-10"):
+        assert decide("sendEmail", office(content=f"<p>{text}</p>")) == "deny", text
+
+
 def test_bank_scan_fails_closed_on_a_non_text_content():
     assert decide("sendReplyEmail", office(content={"html": "x"})) == "deny"
 

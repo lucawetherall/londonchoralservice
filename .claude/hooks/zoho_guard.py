@@ -29,7 +29,14 @@ DRAFT_FROM = {"office@londonchoralservice.com", "luca@almaconsort.com"}
 SCANNED = ("subject", "content")
 TAG = re.compile(r"<[^>]*>")
 # our own WhatsApp link and the "(0)" in "+44 (0)7356 042468" are not bank numbers
-OWN_LINKS = re.compile(r"wa\.me/\+?[0-9]+|tel:\+?[0-9]+", re.I)
+# nor is the date in a tagged link to our own site (docs/utm-conventions.md: `<audience>-<yyyy-mm>`, read
+# as a sort code otherwise). Only utm_ values of letters and hyphens, ending in at most a year and month, pass.
+_UTM_VALUE = r"[a-z](?:[a-z-]*[a-z])?(?:-20[0-9]{2}(?:-[01][0-9])?)?"
+_UTM_PAIR = rf"utm_(?:source|medium|campaign|content|term)={_UTM_VALUE}"
+OWN_LINKS = re.compile(
+    r"wa\.me/\+?[0-9]+|tel:\+?[0-9]+"
+    rf"|https://(?:www\.)?londonchoralservice\.com/[a-z0-9/-]*(?:\.html)?\?{_UTM_PAIR}(?:&(?:amp;)?{_UTM_PAIR})*(?![\w&=-])",
+    re.I)
 
 
 def plain_text(value):
