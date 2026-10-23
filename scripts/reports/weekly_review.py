@@ -5,8 +5,10 @@ Console in one report. Changes nothing and prints no personal data.
 Sections:
   1. Campaigns: last 7 days and since --since (impression share, budget use)
   2. Search terms, last 7 days, with the keyword that matched each one
-  3. Conversions per action (7 and 28 days) and the last day each was seen
-  4. Ads: approval, review status, strength, final URL
+  3. Conversions per action (7 and 28 days), primary or secondary, status, and the last day each was seen;
+     "!CHECK" when an action other than the owner's two is primary or either of those isn't primary and ENABLED
+  4. Ads: approval, review status, strength, headline and description counts, final URL; enabled sitelinks
+     per campaign
   5. GA4: lead/contact events with their parameters; sessions by channel
   6. Search Console: last 7 complete days vs the 7 before, by query and page
   7. Search Console coverage: sitemap freshness, index status of every ad landing page
@@ -226,6 +228,9 @@ def search_terms_section(q):
         print("   (none)")
 
 
+PRIMARY_ACTIONS = ("Submit lead form", "WhatsApp or email click")  # the owner's two primary conversion actions
+
+
 def conversions_section(q):
     today = lm.today()
     print("\n== 3. Conversions per action")
@@ -240,26 +245,47 @@ def conversions_section(q):
         if (today - d).days <= 28:
             a["28"] += r.metrics.all_conversions
         a["last"] = max(filter(None, [a["last"], d]))
+    seen = set()
     for action in q("SELECT conversion_action.name, conversion_action.status, conversion_action.primary_for_goal "
-                    "FROM conversion_action WHERE conversion_action.status = 'ENABLED'"):
-        name = action.conversion_action.name
+                    "FROM conversion_action WHERE conversion_action.status != 'REMOVED'"):
+        c = action.conversion_action
+        name, status = c.name, c.status.name
+        seen.add(name)
+        # Hidden actions (GA4 imports Google keeps out of view) are listed only when they matter to the check.
+        if status != "ENABLED" and name not in PRIMARY_ACTIONS and not c.primary_for_goal:
+            continue
         a = per.get(name, {"7": 0, "28": 0, "last": None})
-        role = "primary" if action.conversion_action.primary_for_goal else "secondary"
-        print(f"{name:32} {role:9} 7d {a['7']:.1f} · 28d {a['28']:.1f} · last seen {a['last'] or 'not in 90 days'}")
+        role = "primary" if c.primary_for_goal else "secondary"
+        flags = []
+        if c.primary_for_goal and name not in PRIMARY_ACTIONS:
+            flags.append("!CHECK: primary, but not one of the owner's two primary actions")
+        if name in PRIMARY_ACTIONS and not c.primary_for_goal:
+            flags.append("!CHECK: should be primary")
+        if name in PRIMARY_ACTIONS and status != "ENABLED":
+            flags.append(f"!CHECK: {status}, should be ENABLED")
+        print(f"{name:32} {role:9} {status:7} 7d {a['7']:.1f} · 28d {a['28']:.1f} · "
+              f"last seen {a['last'] or 'not in 90 days'}{''.join(' ' + f for f in flags)}")
+    for name in PRIMARY_ACTIONS:
+        if name not in seen:
+            print(f"{name:32} !CHECK: not in the account (removed or renamed); it should be primary and ENABLED")
 
 
 def ads_section(q):
     """Section 4; returns the enabled ads' final URLs (section 7 inspects them)."""
     print("\n== 4. Ads (enabled campaigns)")
-    landing = set()
+    landing, campaigns = set(), set()
     for r in q("""SELECT campaign.name, ad_group.name, ad_group.status, ad_group_ad.ad.id, ad_group_ad.status,
             ad_group_ad.policy_summary.approval_status, ad_group_ad.policy_summary.review_status,
-            ad_group_ad.ad_strength, ad_group_ad.action_items, ad_group_ad.ad.final_urls
+            ad_group_ad.ad_strength, ad_group_ad.action_items, ad_group_ad.ad.final_urls,
+            ad_group_ad.ad.responsive_search_ad.headlines, ad_group_ad.ad.responsive_search_ad.descriptions
             FROM ad_group_ad WHERE campaign.status = 'ENABLED' AND ad_group_ad.status != 'REMOVED'"""):
         a = r.ad_group_ad
         urls = list(a.ad.final_urls)
+        rsa = a.ad.responsive_search_ad
+        counts = f" headlines={len(rsa.headlines)} descriptions={len(rsa.descriptions)}"
         if a.status.name == "ENABLED" and r.ad_group.status.name == "ENABLED":
             landing.update(urls)
+            campaigns.add(r.campaign.name)
         flags = []
         if a.policy_summary.approval_status.name not in ("APPROVED",):
             flags.append("NOT APPROVED")
@@ -267,10 +293,17 @@ def ads_section(q):
             flags.append("HTTP URL")
         print(f"{r.campaign.name[:22]:22} {r.ad_group.name[:22]:22} {a.ad.id} {a.status.name}"
               f" {a.policy_summary.approval_status.name}/{a.policy_summary.review_status.name}"
-              f" strength={a.ad_strength.name} → {', '.join(urls)} {' '.join('!' + f for f in flags)}")
+              f" strength={a.ad_strength.name}{counts} → {', '.join(urls)} {' '.join('!' + f for f in flags)}")
         if a.status.name == "ENABLED" and a.ad_strength.name in ("POOR", "AVERAGE"):
             for item in a.action_items:
                 print(f"      to improve: {item}")
+    sitelinks = defaultdict(int, {c: 0 for c in campaigns})  # a campaign with ads but no sitelink shows 0
+    for r in q("""SELECT campaign.id, campaign.name, campaign.status, campaign_asset.field_type, campaign_asset.status
+            FROM campaign_asset WHERE campaign.status = 'ENABLED' AND campaign_asset.field_type = 'SITELINK'
+            AND campaign_asset.status = 'ENABLED'"""):
+        sitelinks[r.campaign.name] += 1
+    for name in sorted(sitelinks):
+        print(f"   {name[:40]:40} sitelinks={sitelinks[name]}")
     return sorted(landing)
 
 

@@ -56,7 +56,7 @@ December dates cost the same, except Christmas Eve and Christmas Day (around 25%
 
 > The London Choral Service provides professional choirs for weddings, funerals, memorial services, Christmas carol singing and corporate events in London, the home counties and beyond. A Small Choir of four voices costs £1,150, a sextet £1,600, a choir of eight £2,000 and a twelve-voice chorus £3,000, with an organist or pianist for £250. Our singers trained at the Royal Academy of Music, the Royal College of Music and Britain's other leading conservatoires, and have sung at the coronation of King Charles III, Westminster Abbey and the BBC Proms. Luca Wetherall, Tutor in Music at the University of Oxford, arranges every booking, and you get a written quote before you book.
 
-**Services to list:** Wedding choir · Funeral choir · Memorial service music · Christmas carol singers · Carol services · Corporate event choir · Organist and pianist hire.
+**Services to list:** Wedding choir · Funeral choir · Memorial service music · Christmas carol singers · Church carol services · Corporate event choir · Organist and pianist hire.
 
 ## Encore Musicians profile
 
@@ -104,11 +104,25 @@ December dates cost the same, except Christmas Eve and Christmas Day (around 25%
 
 > The London Choral Service provides professional choirs for weddings, funerals, memorial services, Christmas carol singing and corporate events in London, the home counties and beyond. Our singers trained at Britain's leading conservatoires. Choirs start at £1,150 for four voices. The London Choral Service is the trading name of Alma Consort Ltd.
 
-## GBP seasonal post
+## GBP seasonal posts
 
-**November post, linking to https://londonchoralservice.com/christmas.html** *(carol-singers.html merged into christmas.html on 19 Oct 2026)* *(adjust the availability line to the real diary before posting)*:
+Christmas 2026, drafted 23 Oct. Post type **Update**, button **Learn more**. Prices from `christmas-pricing.html`; no phone number in the text (the profile has a Call button). Photos must be real stills of our singers.
 
-> [Late availability for carol singers this December: weekday lunchtime and early-evening slots remain.] Four a cappella voices from £1,150, roaming or in sets, for offices, hotel lobbies, switch-ons and residents' evenings. Standard rates through December, with a premium only on Christmas Eve and Christmas Day.
+**1. Christmas prices, post on 27 Oct.** Photo: the It's the Most Wonderful Time of the Year still (`assets/films/hero-christmas-1280.webp` as a JPG). Link: `https://londonchoralservice.com/christmas-pricing.html?utm_source=google&utm_medium=organic&utm_campaign=gbp`
+
+> Christmas carol singers in London cost £1,150 for four voices and up to two hours of singing, breaks included, and a December date costs the same as one in June. A quintet is £1,400, a sextet £1,600, a choir of eight £2,000 and a chorus of twelve £3,000. Each price covers rehearsals, sheet music and travel within Greater London, and we add no VAT. Christmas Eve and Christmas Day carry a premium of around 25%. Send us your date and venue and we reply within one working day with a written quote.
+
+**2. Church carol services, post on 10 Nov.** Photo: a still from the Once in Royal David's City film. Link: `https://londonchoralservice.com/christmas-carol-services.html?utm_source=google&utm_medium=organic&utm_campaign=gbp`
+
+> We sing carol services in churches and livery halls across London. A choir of eight with an organist costs £2,250. For a large church, a chorus of twelve with an organist costs £3,250 and can lead a full congregation. Luca Wetherall, our Artistic Director and Tutor in Music at the University of Oxford, chooses the carols with you, and the booking runs the length of the service however the readings fall. Our carol services page has a film of the choir singing Once in Royal David's City.
+
+**3. Office and hotel carol singers, post on 24 Nov.** Photo: a still from the Ding Dong! Merrily on High or Winter Wonderland film. Link: `https://londonchoralservice.com/christmas.html?utm_source=google&utm_medium=organic&utm_campaign=gbp`
+
+> Four unaccompanied carol singers carry across an office drinks reception or a hotel lobby without a microphone. Over two hours they sing three or four sets of about twenty-five minutes, with breaks so your guests can talk. A Small Choir of four costs £1,150. Add a pianist for £250 to play between the sets, £1,400 in all. The singers dress to suit the room, in concert dress, all black or Christmas jumpers, and Luca plans the sets around your running order, from arrivals to the speeches.
+
+**4. December dates, post on 8 Dec.** Photo: a still from the Carol of the Bells film. Link: `https://londonchoralservice.com/christmas-pricing.html?utm_source=google&utm_medium=organic&utm_campaign=gbp#enquiry`
+
+> December carol bookings cost the same as bookings in any other month. A Small Choir of four costs £1,150 for up to two hours, and only Christmas Eve and Christmas Day carry a premium. Send us the date, the venue and a rough idea of numbers, however close the date is. We confirm whether we can take it and send a written quote within one working day.
 
 ## Review-request emails (§3 cadence)
 
