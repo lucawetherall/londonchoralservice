@@ -12,6 +12,36 @@ The site already references a Google Maps presence — `index.html` carries `sam
 
 **Update 2026-08-19:** the owner reports the listing has been claimed.
 
+**Audit 2026-10-23 (public listing, signed out, UK).** What a searcher sees on the cid URL:
+
+| Field | Now | Should be |
+|---|---|---|
+| Primary category | Choir | Choir. Leave it. |
+| Secondary categories | not shown publicly | Wedding Service, Funeral Service (check in the dashboard) |
+| Hours | Mon–Sat "Open 24 hours", Sun 8:30am–5pm | the hours you really answer the phone. `contact.html` says Mon–Fri 9am–6pm. 24 hours is untrue, and Google treats hours as a ranking signal, so a false figure risks a suspension report |
+| Address | hidden; pin in south-east London, no Maidenhead shown | hidden, with a service area (correct for a service-area business) |
+| Website | `https://londonchoralservice.com/`, no tags | `https://londonchoralservice.com/?utm_source=google&utm_medium=organic&utm_campaign=gbp` (`docs/utm-conventions.md`) |
+| Phone | 07356 042468 | same; matches the site |
+| Reviews | none | the first few come from §3 requests, never from funeral clients |
+| Photos | 5 | 10 or more, all real (film stills, rehearsal photos), 2–3 more a month |
+| Description, services, posts | not visible signed out | check in the dashboard against `docs/off-site-listings-pack.md` §"Google Business Profile" |
+
+A brand search for "The London Choral Service" shows no Business Profile panel yet. On Maps, "funeral singers london" and "carol singers london" jump straight to the competitor whose name matches (The London Funeral Singers: category Musician, 70 reviews, real weekday hours). Reviews and accurate hours are the gap, not the category.
+
+**Click-by-click (about 20 minutes, desktop, signed in to the account that owns the listing):**
+
+1. Go to `https://business.google.com/`, choose **The London Choral Service**, and open the profile manager (or search Google for "my business" while signed in). Click **Edit profile**.
+2. **Categories.** On the **About** tab, click the pencil beside **Business category**. Primary: **Choir**. Click **Add another business category** and add **Wedding service**, then **Funeral service**. If Google offers **Carol singer** or **Musician**, leave them off: Choir already covers them. **Save.**
+3. **Description.** Still on **About**, paste the description from `docs/off-site-listings-pack.md` §"Google Business Profile" (680 characters, limit 750). **Save.**
+4. **Contact → Website.** Replace the website with the tagged URL in the table above. **Save.**
+5. **Location → Business location.** Confirm the address is hidden (no street address on the profile). Under **Service area**, list London, Surrey, Kent, Essex, Hertfordshire, Berkshire and Buckinghamshire. **Save.**
+6. **Hours.** Set **Open with main hours**, then Monday to Friday 09:00–18:00 and Saturday and Sunday closed. If you do take calls at weekends, enter those hours instead and tell an agent, so `contact.html` says the same. **Save.** Then **More hours** is optional; skip it.
+7. **Services.** Back on the profile manager, click **Edit services**. Under **Choir**, add or check: Wedding choir; Funeral choir; Memorial service music; Christmas carol singers; Church carol services; Corporate event choir; Organist and pianist hire. Give each a one-line description and, where it asks for a price, use only `pricing.html` / `christmas-pricing.html` figures (Small Choir of four £1,150; organist or pianist £250). **Save.**
+8. **Photos.** Click **Add photo**. Upload the Christmas film still (Claude converted it to JPG) and stills from your own copies of the films. No stock or AI images.
+9. Send an agent a screenshot of the About and Services tabs once saved, so it can tick this section off.
+
+The seasonal posts are in §9 item 1. The review link is §23.
+
 What to do:
 
 1. Open the Google Business Profile dashboard at `https://business.google.com/`. Sign in with the account that controls the listing.
@@ -174,7 +204,7 @@ The audit notes that all CSS currently lives inline in each HTML file rather tha
 
 The July 2026 Christmas expansion (`docs/superpowers/plans/2026-07-29-christmas-expansion.md`) added 12 pages targeting carol-service and carol-singer hirers. These off-site and asset tasks are human-only:
 
-1. **Google Business Profile seasonal update.** Add "Christmas carol services" and "Carol singers" as services on the GBP listing; post a seasonal update (September and November) linking to `/christmas.html` and `/carol-singers.html`. Blocked on §1 (GBP claim) if still outstanding. *(Update 2026-08-20: both posts are drafted in `docs/off-site-listings-pack.md` §"GBP seasonal posts" — paste and go.)*
+1. **Google Business Profile seasonal update.** Add "Christmas carol services" and "Carol singers" as services on the GBP listing; post a seasonal update (September and November) linking to `/christmas.html` and `/carol-singers.html`. Blocked on §1 (GBP claim) if still outstanding. *(Update 2026-08-20: both posts are drafted in `docs/off-site-listings-pack.md` §"GBP seasonal posts" — paste and go.)* **Update 2026-10-23:** the services are in §1 step 7 (now "Christmas carol singers" and "Church carol services"), and four posts for 27 Oct, 10 Nov, 24 Nov and 8 Dec replace the old drafts in `docs/off-site-listings-pack.md` §"GBP seasonal posts". To post each one: profile manager → **Add update** → **Add update** (not Offer or Event) → **Add photos** (the photo named with the post) → paste the text → **Add a button**: **Learn more**, with the post's link → **Post**. Google can take a few hours to approve a post. Each stays visible until a newer one pushes it down, so nothing needs deleting after Christmas.
 2. **Google Ads seasonal conversions.** Resolved 2026-09-26: every enquiry form now fires one `generate_lead` GA4 event carrying `occasion` and `lead_source` (the page path), plus one "Submit lead form" Ads conversion. Per-source reporting comes from those parameters in GA4 (register them as custom dimensions); no per-occasion Ads actions are needed. **Done 2026-10-14:** `occasion` and `lead_source` (plus `method`, `link_location` and `error_type`) are registered as event-scoped custom dimensions in GA4.
 3. **Carol recordings.** Partly done (August 2026): one Christmas recording — Blue Christmas, `mKMjUvCCW3E`, Small Choir — now leads the "Hear our musicians" sections on christmas.html and carol-singers.html and sits under "Something different" on listen.html, with full `VideoObject` schema. Everything else in those sections is still hymn recordings. Record 1–2 actual carols (even rehearsal-quality video) and hand them to an agent to wire in the same way.
 4. **Done 2026-10-14:** christmas.html and carol-singers.html both carry `assets/og-christmas.png`. (Original: **Christmas OG image.** All ~118 pages share one generic og-image (see §6 / ROADMAP R7.3). A seasonal image for christmas.html + carol-singers.html would lift social CTR during the season.)
@@ -427,6 +457,15 @@ What to do:
 ## 23. Google review link
 
 Optional. If you want post-event review requests to go straight to the review-writing form rather than the general Maps listing, find the Business Profile's "Ask for reviews" short link (Google Business Profile → Home → "Ask for reviews", copy the link) and add it to `data/seo-fix-discovered-urls.yml` as `gbp_review_url`.
+
+**Update 2026-10-23:** the listing has no reviews yet (public view, 23 Oct), so this link matters more than it did. Steps:
+
+1. Signed in, open `https://business.google.com/` and choose the profile, or search Google for "my business".
+2. Click **Ask for reviews** (on some layouts **Get more reviews**, or **Read reviews** → **Get more reviews**).
+3. Click **Copy link**. It looks like `https://g.page/r/<code>/review`.
+4. Paste the link into a chat with an agent, which adds it to `data/seo-fix-discovered-urls.yml` as `gbp_review_url`. The daily pass (`.claude/agents/lcs-daily-pass.md`) already uses that key when it is present, so the next review request carries the direct link with no other change.
+
+Never filter who gets the link (no "were you happy?" step first), never offer anything in return for a review, and never ask a funeral client.
 
 Until this is added, review requests link to the Maps listing instead, which works but takes one extra click. Either way, review requests are never sent after a funeral booking.
 
