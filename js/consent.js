@@ -47,7 +47,7 @@
   // ad click reference and the Google Analytics / Ads cookies (set on the bare
   // host or on the parent domain, so clear both).
   function forget() {
-    try { sessionStorage.removeItem('lcs-attr'); } catch (e) {}
+    try { sessionStorage.removeItem('lcs-attr'); sessionStorage.removeItem('lcs-lead'); } catch (e) {}
     var host = location.hostname.replace(/^www\./, '');
     document.cookie.split(';').forEach(function (c) {
       var name = c.split('=')[0].trim();
