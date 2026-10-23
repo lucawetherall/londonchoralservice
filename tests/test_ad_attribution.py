@@ -75,8 +75,11 @@ ORIGIN = "https://londonchoralservice.com"
 def js_run(setup, expr):
     """Run the partial's ad-visit functions under node with a fake page (location, document.referrer,
     localStorage) and return JSON.stringify(expr)."""
+    keys = re.search(r"var LCS_ATTR_KEYS = [^;]+;", PARTIAL).group(0)
     code = ("var store = {}; var localStorage = {getItem: function (k) { return k in store ? store[k] : null; }};"
-            + setup + "\n" + js_fn("lcsAdVisitSlug") + js_fn("lcsAdVisitLabel") + js_fn("lcsAdVisit")
+            "var saved = {}; var sessionStorage = {getItem: function (k) { return k in saved ? saved[k] : null; }};"
+            + keys + setup + "\n" + js_fn("lcsAttribution") + js_fn("lcsAdVisitSlug") + js_fn("lcsAdVisitLabel")
+            + js_fn("lcsAdVisit")
             + js_fn("lcsCarryAdVisit") + "var LCS_AD_VISIT = lcsAdVisitLabel();\n"
             + f"console.log(JSON.stringify({expr}));")
     return json.loads(subprocess.run(["node", "-e", code], capture_output=True, text=True, check=True).stdout)
@@ -121,6 +124,12 @@ def test_ad_visit_label_names_the_page_and_campaign_and_travels_only_between_our
             assert pipeline.AD_VISIT_RE.fullmatch(got), got
     granted = "store['lcs-consent'] = 'granted';" + page("/pricing.html", "?gclid=X&utm_campaign=wedding-leads")
     assert js_run(granted, "[LCS_AD_VISIT, lcsAdVisit()]") == ["pricing (wedding-leads)", ""]
+    # Allowed on a later page: no click ID is left (nothing was stored before consent), so the label stays
+    later = "store['lcs-consent'] = 'granted';" + page("/contact.html", "?lcs_av=pricing+%28wedding-leads%29", here)
+    assert js_run(later, "lcsAdVisit()") == "pricing (wedding-leads)"
+    # ...unless a click ID was kept after consent: then the Ref takes over
+    kept = later + "saved['lcs-attr'] = JSON.stringify({gclid: 'X'});"
+    assert js_run(kept, "lcsAdVisit()") == ""
 
 
 def test_only_same_site_page_links_carry_the_label():
@@ -155,7 +164,7 @@ def test_ad_visit_is_held_in_a_variable_and_never_stored():
     block = PARTIAL[start:PARTIAL.index("</script>", start)]
     for banned in ("setItem", "sessionStorage", "document.cookie", "fetch(", "sendBeacon", "gtag("):
         assert banned not in block, banned
-    assert "var LCS_AD_VISIT = " in block and "'granted') return ''" in block
+    assert "var LCS_AD_VISIT = " in block and "if (a.gclid || a.gbraid || a.wbraid) return '';" in block
     # messages: the Ref with consent, else the page's name; never the click ID itself
     assert "var visit = ref ? '' : lcsAdVisit();" in PARTIAL
     assert "'Ad visit: ' + visit" in PARTIAL
