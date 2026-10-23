@@ -80,6 +80,8 @@ The site has no presence on the citation sources Google cross-references for loc
 
 **Update 2026-08-20:** drafted profile copy for all five sites above (plus Encore, Poptop, and GBP) now lives in `docs/off-site-listings-pack.md` — each listing is a paste job.
 
+**Update 2026-10-23:** the pack is checked against today's site, with a tagged website link per listing, a hidden address and the Google profile's hours. It now has click-by-click sign-up steps and field-by-field copy, in §"Per-site setup", for Bing Places, Apple Business, Hitched, Bridebook, Yell and Guides for Brides (the round to do now; Bark and FuneralGuide stay skipped, as the pack's status table says). No listing existed on Bing or Apple Maps. Bing imports the Google profile and verifies itself from it. Apple has no hide-address option, so it gets a brand presence and no Maps pin. Upload images are in `~/Pictures/LCS-listings/`. What only you can do on each site: make the account, enter passwords and codes, accept the terms, and press Publish. Claude fills the rest in the Claude app's browser once you're signed in and stops before each Publish, then records each live URL in the pack's status table.
+
 NAP consistency is the load-bearing detail. Whatever address and phone format you use on GBP, use the same one verbatim everywhere else. Different formats split the local-SEO citation graph and Google treats the variants as separate entities.
 
 When you've done the round, run a free citation scan against the homepage URL at `https://www.brightlocal.com/free-business-listings-scan/`. The report flags any further sources where the listing is missing or has inconsistent details.
