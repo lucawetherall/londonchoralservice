@@ -80,6 +80,8 @@ The site has no presence on the citation sources Google cross-references for loc
 
 **Update 2026-08-20:** drafted profile copy for all five sites above (plus Encore, Poptop, and GBP) now lives in `docs/off-site-listings-pack.md` — each listing is a paste job.
 
+**Update 2026-10-23:** the pack is checked against today's site, with a tagged website link per listing, a hidden address and the Google profile's hours. It now has click-by-click sign-up steps and field-by-field copy, in §"Per-site setup", for Bing Places, Apple Business, Hitched, Bridebook, Yell and Guides for Brides (the round to do now; Bark and FuneralGuide stay skipped, as the pack's status table says). No listing existed on Bing or Apple Maps. Bing imports the Google profile and verifies itself from it. Apple has no hide-address option, so it gets a brand presence and no Maps pin. Upload images are in `~/Pictures/LCS-listings/`. What only you can do on each site: make the account, enter passwords and codes, accept the terms, and press Publish. Claude fills the rest in the Claude app's browser once you're signed in and stops before each Publish, then records each live URL in the pack's status table.
+
 NAP consistency is the load-bearing detail. Whatever address and phone format you use on GBP, use the same one verbatim everywhere else. Different formats split the local-SEO citation graph and Google treats the variants as separate entities.
 
 When you've done the round, run a free citation scan against the homepage URL at `https://www.brightlocal.com/free-business-listings-scan/`. The report flags any further sources where the listing is missing or has inconsistent details.
@@ -574,3 +576,18 @@ Arrangement rights for the in-copyright titles on that list, and for the "any so
 **30.6 — Directory listings.** Last Minute Musicians, Add to Event, Poptop, Encore, Bark. This is where "barbershop quartet hire" buyers who never reach Google's organic results go. Extend `docs/off-site-listings-pack.md` with a Barbershop Grams profile: the £600 figure, the 48-hour notice line, the repertoire link. House rules apply off-site too — no roster-scale claims, no VAT claims, no star ratings, no incentivised reviews.
 
 **30.7 — Ads.** Held until 30.1 and 30.3 are done; see the spec's §Go-to-market for the five campaigns. Before any spend, confirm the WhatsApp-click conversion actually fires — gram enquiries arrive by WhatsApp more than by form, and the gram links carry a distinct `?text=` pre-fill so they can be told apart in GA4.
+
+---
+
+## 31. Cookie-free visit counter (GoatCounter)
+
+**Done 2026-10-23:** Luca created the account; the site code `londonchoralservice` is set in `LCS_COUNTER`, and the dashboard is at https://londonchoralservice.goatcounter.com. Nothing more to do. The steps below are kept for reference.
+
+Added 2026-10-23. The site has a visit counter that uses no cookies and stores nothing on the visitor's device, so it counts the visitors who refuse cookies too: page views on every page, and an `enquiry-sent-*` event when the enquiry form is accepted or a phone, email or WhatsApp link is tapped. It is switched off: `LCS_COUNTER` in `partials/analytics.html` is empty, and then no page loads anything for it. Claude can't create accounts, so it stays off until you do this:
+
+1. Read the ICO's current guidance on storage and access technologies, in particular the exception for statistical purposes that the Data (Use and Access) Act 2025 added to PECR, and decide that a cookie-free counter is fine for this site without asking consent.
+2. Create a free account at goatcounter.com with office@londonchoralservice.com. When it asks for a code, pick one such as `londonchoralservice`: the dashboard then lives at `https://<code>.goatcounter.com`. Leave any setting that keeps individual pageviews switched off.
+3. Tell Claude the site code. Only the code: never the password, and no API key is needed.
+4. Claude puts the code in `LCS_COUNTER` on the counter's pull request and rebuilds. The privacy policy there (`privacy.html#visit-counter`) already describes the counter, so merge it with the code set, not before. Once it is live, Claude checks that a page view reaches the dashboard.
+
+Your own visits: the counter skips any device where you opened a page with `?lcs_internal=1` (the same flag GA4 uses). A visitor can opt out from the privacy policy's link (`?lcs_count=off`), and the counter also skips browsers sending Global Privacy Control or Do Not Track.

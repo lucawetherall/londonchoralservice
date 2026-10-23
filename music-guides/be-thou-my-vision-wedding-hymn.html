@@ -90,6 +90,10 @@
         source: detail.source,
         occasion: detail.occasion || 'unspecified'
       };
+      // The cookie-free counter's event goes from here, once per accepted
+      // enquiry with or without consent (a beacon, so the redirect can't cut it
+      // off); lcsSendLead on the next page would find js/counter.js not loaded.
+      if (typeof window.lcsCount === 'function') window.lcsCount('enquiry-sent-form');
       // Enhanced conversions: gtag hashes these (SHA-256) before sending, and
       // sends nothing at all unless the visitor allowed ad measurement.
       var ud = {};
@@ -314,10 +318,22 @@
     }
   </script>
   <script src="/js/consent.js" defer></script>
+  <!-- Cookie-free visit counter (GoatCounter; privacy.html#visit-counter). Off
+       while LCS_COUNTER is empty: then no page loads anything for it. To switch
+       it on, put the GoatCounter site code between the quotes and run
+       ./build.sh. js/counter.js does the counting. -->
+  <script>
+    var LCS_COUNTER = 'londonchoralservice';
+    if (LCS_COUNTER) {
+      var lcsCounterJs = document.createElement('script');
+      lcsCounterJs.src = '/js/counter.js';
+      document.head.appendChild(lcsCounterJs);
+    }
+  </script>
   <!-- @include-end partials/analytics.html -->
 
   <title>Why Be Thou My Vision Is the Best Wedding Hymn | LCS</title>
-  <meta name="description" content="Why Be Thou My Vision is the finest wedding hymn you can choose. Full text, history, and a recording by The London Choral Service. Book singers from £250.">
+  <meta name="description" content="Be Thou My Vision at a wedding: who wrote it, the Slane tune, where it goes in the service and how a choir sings it, with a recording by our singers.">
   <meta name="theme-color" content="#F7F3EE">
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://londonchoralservice.com/music-guides/be-thou-my-vision-wedding-hymn.html">
@@ -325,7 +341,7 @@
   <link rel="alternate" hreflang="x-default" href="https://londonchoralservice.com/music-guides/be-thou-my-vision-wedding-hymn.html">
 
   <meta property="og:title" content="Why Be Thou My Vision Is the Best Wedding Hymn | LCS">
-  <meta property="og:description" content="Why Be Thou My Vision is the finest wedding hymn you can choose. Full text, history, and a recording by The London Choral Service. Book singers from £250.">
+  <meta property="og:description" content="Be Thou My Vision at a wedding: who wrote it, the Slane tune, where it goes in the service and how a choir sings it, with a recording by our singers.">
   <meta property="og:type" content="article">
   <meta property="og:url" content="https://londonchoralservice.com/music-guides/be-thou-my-vision-wedding-hymn.html">
   <meta property="og:locale" content="en_GB">
@@ -335,11 +351,11 @@
   <meta property="og:image:height" content="630">
   <meta property="og:image:alt" content="The London Choral Service: wedding choirs and singers">
   <meta property="article:published_time" content="2026-03-18">
-  <meta property="article:modified_time" content="2026-09-29">
+  <meta property="article:modified_time" content="2026-10-23">
 
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Why Be Thou My Vision Is the Best Wedding Hymn | LCS">
-  <meta name="twitter:description" content="Why Be Thou My Vision is the finest wedding hymn you can choose. Full text, history, and a recording by The London Choral Service. Book singers from £250.">
+  <meta name="twitter:description" content="Be Thou My Vision at a wedding: who wrote it, the Slane tune, where it goes in the service and how a choir sings it, with a recording by our singers.">
   <meta name="twitter:image" content="https://londonchoralservice.com/assets/og-weddings.png">
   <meta name="twitter:image:alt" content="The London Choral Service: wedding choirs and singers">
   <link rel="dns-prefetch" href="https://www.googletagmanager.com">
@@ -3046,8 +3062,8 @@
         "url": "https://londonchoralservice.com/music-guides/be-thou-my-vision-wedding-hymn.html",
         "inLanguage": "en-GB",
         "datePublished": "2026-03-18",
-        "dateModified": "2026-09-29",
-        "description": "Be Thou My Vision is the finest wedding hymn you can choose. Here's why this ancient Irish hymn moves guests, suits every ceremony, and sounds glorious with a choir.",
+        "dateModified": "2026-10-23",
+        "description": "Be Thou My Vision at a wedding: who wrote it, the Slane tune, where it goes in the service and how a choir sings it, with a recording by our singers.",
         "author": [
           {
             "@type": "Person",
@@ -3126,7 +3142,7 @@
             "name": "Who wrote Be Thou My Vision?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "The text is attributed to the sixth-century Irish monk Dallan Forgaill. Mary Byrne translated it into English prose in 1905, and Eleanor Hull versified that translation in 1912 into the hymn sung at weddings today."
+              "text": "The Old Irish text is traditionally attributed to Dallán Forgaill, a sixth-century poet, though scholars date it to the tenth or eleventh century. Mary Byrne translated it into English prose in 1905, and Eleanor Hull put that translation into verse in 1912. Hull’s version is the one sung at weddings today."
             }
           },
           {
@@ -3134,7 +3150,23 @@
             "name": "What tune is Be Thou My Vision sung to?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Slane, an old Irish folk melody named after the Hill of Slane in County Meath. Its range is narrow enough for any voice, which is why guests who have never heard it before are usually singing by the second verse."
+              "text": "Slane, an Irish folk melody named after the Hill of Slane in County Meath. Patrick Joyce published it in 1909, and it was first paired with the words in 1919. Its phrases repeat, so guests who have never heard it are usually singing by the second verse."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Where does Be Thou My Vision go in a wedding service?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Most couples sing it second of three hymns, after the readings or the address. Its slower pace suits that reflective point, with a brighter hymn such as Love Divine to open the service and Guide Me, O Thou Great Redeemer to close it."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Can Be Thou My Vision be the processional?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes, with one change. Have the choir sing the first verse alone while you walk in, and bring the congregation in from the second verse once you have reached the front. Guests find it hard to sing a hymn while they are turned towards the door."
             }
           },
           {
@@ -3142,7 +3174,7 @@
             "name": "Does Be Thou My Vision suit a Catholic or non-denominational wedding?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Yes. It works in a formal Church of England service, a Catholic Mass, and a more relaxed non-denominational celebration, and it suits couples who want the ceremony to feel timeless without feeling stuffy."
+              "text": "Yes. It appears in Anglican and Catholic hymn books and works at a Church of England service, a nuptial Mass or a non-denominational ceremony. The words are a personal prayer with no doctrine particular to one church."
             }
           },
           {
@@ -3150,7 +3182,7 @@
             "name": "Is Be Thou My Vision a wedding hymn or a funeral hymn?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Both. Its themes of devotion and trust suit weddings and funerals equally well, which is why we also publish a separate guide to Be Thou My Vision as a funeral hymn."
+              "text": "Both. Its words of devotion and trust suit a wedding and a funeral, and we sing it at both. Our separate guide covers Be Thou My Vision as a funeral hymn."
             }
           }
         ]
@@ -3247,14 +3279,16 @@
           </nav>
           <h1>Why Be Thou My Vision is the best wedding hymn</h1>
           <p class="guide-meta">By Luca Wetherall, Artistic Director &amp; Tutor in Music, University of Oxford</p>
-          <p class="guide-meta">Published <time datetime="2026-03-18">18 March 2026</time> &middot; Updated <time datetime="2026-09-29">29 September 2026</time></p>
+          <p class="guide-meta">Published <time datetime="2026-03-18">18 March 2026</time> &middot; Updated <time datetime="2026-10-23">23 October 2026</time></p>
           <hr class="rule">
         </div>
       </section>
 
       <section class="section" style="padding-block-start: var(--space-2xl)">
         <div class="prose">
-          <p class="lede">There are wedding hymns that fill a church with sound, and there are wedding hymns that fill a church with feeling. Be Thou My Vision does both&thinsp;&mdash;&thinsp;and does it with a quiet, ancient authority.</p>
+          <p class="lede">Be Thou My Vision is an Irish hymn sung to the folk tune Slane, and it is one of the hymns couples ask us for most often. The words are a prayer of single-minded devotion, the tune is easy for a congregation to pick up, and it sits well in Anglican, Catholic and non-denominational services.</p>
+          <p><strong>Is it a good wedding hymn?</strong> Yes. On a wedding day a prayer to put one love above everything else reads as a vow, and guests who have never heard Slane are singing it by the second verse. Most couples place it second of three hymns, after the readings or the address, with a brighter hymn to open and close the service.</p>
+          <p class="text-sm text-mid">We sing it at weddings with a choir of four or more and an organist. See our <a href="../weddings.html">wedding choir</a> page for what we bring on the day.</p>
           <div class="video-embed" style="margin-block-start: var(--space-lg)">
             <button class="video-thumb" aria-label="Play Be Thou My Vision" data-video="SaLTS_-I-q4">
               <img src="https://img.youtube.com/vi/SaLTS_-I-q4/maxresdefault.jpg" alt="Be Thou My Vision &mdash; The London Choral Service" loading="lazy" width="1280" height="720">
@@ -3267,85 +3301,68 @@
 
       <section class="section">
         <div class="prose">
-          <h2>The words are a love poem</h2>
-          <p>Be Thou My Vision is, at its heart, a declaration of total devotion. &ldquo;Be thou my vision, O Lord of my heart; naught be all else to me, save that thou art.&rdquo; Read those words on a wedding day and they become a vow. The language mirrors what a couple are doing at the altar: choosing one person above all others, making them the centre of everything.</p>
-          <p>Unlike many popular wedding hymns, there is nothing generic about Be Thou My Vision. It doesn&rsquo;t deal in abstractions or grand theological statements. It speaks directly, personally, intimately. &ldquo;Be thou my best thought by day or by night, waking or sleeping, thy presence my light.&rdquo; That is the language of someone in love. Your guests will hear it, and they will feel it.</p>
-          <p>The hymn builds through its verses from personal devotion to something larger&thinsp;&mdash;&thinsp;from &ldquo;my vision&rdquo; to &ldquo;my treasure&rdquo; to &ldquo;High King of heaven, my victory won.&rdquo; It starts with two people looking at each other and ends with them looking outward at the life ahead. That arc is why it lands so powerfully at a wedding.</p>
+          <h2>The words</h2>
+          <p>The hymn asks for one thing first: &ldquo;Be thou my vision, O Lord of my heart.&rdquo; Couples choose it because that is close to what they are promising each other at the altar. It is a personal prayer in the first person, with none of the grand public statements of a hymn like <i>Jerusalem</i>, and its images are ordinary ones: waking and sleeping, wisdom, riches you do not need.</p>
+          <p>The verses move from &ldquo;my vision&rdquo; through &ldquo;my wisdom&rdquo; and &ldquo;my treasure&rdquo; to the &ldquo;High King of heaven&rdquo; of the last verse. The hymn starts with one person&rsquo;s devotion and ends by looking ahead at a whole life, which is the shape of a marriage service too.</p>
         </div>
       </section>
 
       <section class="section">
         <div class="prose">
-          <h2>Everyone can sing it</h2>
-          <p>The tune&thinsp;&mdash;&thinsp;Slane, named after the Hill of Slane in County Meath&thinsp;&mdash;&thinsp;is an old Irish folk melody, and it has the qualities that make folk music endure: it is simple, it is beautiful, and once you have heard it, you do not forget it. The range is narrow enough for any voice, the rhythm is natural and unhurried, and the melody moves in a way that feels inevitable, as though it could not have gone any other way.</p>
-          <p>This matters enormously on a wedding day. Congregational singing lives or dies on whether people feel confident enough to open their mouths, and Slane gives them that confidence. Even guests who have never heard it before will pick it up within the first few bars. By the second verse, they are singing. By the final verse, the whole building is singing together&thinsp;&mdash;&thinsp;and that shared experience is one of the things guests remember most about a wedding.</p>
-          <p>Compare that to some of the other hymns couples consider. Love Divine is magnificent but requires a certain vocal reach. Jerusalem is stirring but can feel more like a national occasion than a personal one. Guide Me, O Thou Great Redeemer has the rugby crowd singing but not always the quieter half of the congregation. Be Thou My Vision invites everyone in.</p>
+          <h2>Who wrote it, and when</h2>
+          <p>The Old Irish poem, <i>Rop t&uacute; mo baile</i>, is traditionally attributed to Dall&aacute;n Forgaill, a poet of the sixth century, though scholars date the text to the tenth or eleventh century. Mary Byrne translated it into English prose in 1905 for the journal <i>&Eacute;riu</i>. Eleanor Hull turned that prose into rhymed verse in 1912, in <i>The Poem-Book of the Gael</i>, and hers are the words sung today.</p>
+          <p>The tune came separately. Patrick Joyce published it in 1909 in <i>Old Irish Folk Music and Songs</i>, as the air of a love song called &ldquo;With My Love on the Road&rdquo;. Words and tune were first printed together in the Irish <i>Church Hymnal</i> of 1919, and the hymn has been in English hymn books since.</p>
+          <p class="text-sm text-mid">Source: <a href="https://en.wikipedia.org/wiki/Be_Thou_My_Vision">&ldquo;Be Thou My Vision&rdquo;, Wikipedia</a>, which cites Byrne&rsquo;s and Hull&rsquo;s publications and Gerard Murphy&rsquo;s dating of the Irish text.</p>
         </div>
       </section>
 
       <section class="section">
         <div class="prose">
-          <p>A hymn everyone can sing makes congregational moments feel like shared celebration rather than polite participation. We help couples choose and lead their wedding music every week.</p>
-          <p><a href="../weddings.html" class="btn-link">Discuss your wedding music</a></p>
+          <h2>Why a congregation can sing it</h2>
+          <p>Slane is named after the Hill of Slane in County Meath. It is a folk melody, unhurried and repetitive in the useful sense: its phrases come back, so by the second verse guests know where the tune is going. That matters at a wedding, where half the congregation may not have sung a hymn since school.</p>
+          <p>Compare the other hymns couples shortlist. <i>Love Divine, All Loves Excelling</i> climbs higher and asks more of untrained voices. <i>Jerusalem</i> is stirring but feels more like a national occasion than a personal one. <i>Guide Me, O Thou Great Redeemer</i> rouses the loud half of the room and can leave the quieter half behind. Be Thou My Vision sits in an easier range, so more of the congregation joins in.</p>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="prose">
+          <h2>Where it goes in the service</h2>
+          <p>Second of three hymns is the usual place: after the readings or the address, where its slower pace gives everyone a few minutes to take in what has been said. Open with something brighter, such as <i>Love Divine</i> or <i>Praise, My Soul, the King of Heaven</i>, and finish with <i>Guide Me, O Thou Great Redeemer</i> or <i>Now Thank We All Our God</i>. Our guide to <a href="choosing-wedding-hymns.html">choosing wedding hymns</a> covers the alternatives.</p>
+          <p>Some couples ask for it as the processional. It can work, but a congregational hymn is awkward while everyone is turned towards the door. Ask the choir to sing the first verse alone as you walk in, and let the congregation join from the second verse once you have reached the front. For the music before and after, our guide to <a href="wedding-ceremony-music.html">wedding ceremony music</a> walks through each moment from the entrance to the recessional.</p>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="prose">
+          <h2>How a choir sings it</h2>
+          <p>We usually take the first verse in unison, so the tune is clear, then sing in harmony from the second and add a soprano descant over the last. The organ holds the harmony underneath and the choir leads from the front, loud enough that guests can hear where the melody goes and sing with it. In a large church that gives the room a full sound from the first line; in a small chapel four singers are enough. You can <a href="../listen.html">hear our recording</a> above.</p>
+          <p>A choir of four costs from &pound;1,150 and an organist &pound;250 in Greater London; our <a href="../pricing.html">pricing page</a> lists the larger choirs and travel outside London.</p>
+          <p><a href="../weddings.html" class="btn-link">Ask about a choir for your wedding</a></p>
           <p class="text-sm text-mid">Text us on WhatsApp for the fastest reply, or call us on <a href="tel:+447356042468">07356 042468</a>.</p>
-        </div>
-      </section>
-
-
-      <section class="section">
-        <div class="prose">
-          <h2>It works in any ceremony</h2>
-          <p>Be Thou My Vision is at home in a vast cathedral and a tiny village church. It works in a formal Church of England service, a Catholic Mass, and a more relaxed non-denominational celebration. It suits a morning wedding in spring and an afternoon wedding in winter. It is one of the very few hymns that works in almost any setting.</p>
-          <p>Part of the reason is its age. The text is attributed to the sixth-century Irish monk Dallan Forgaill, and the English version we sing today was translated by Mary Byrne in 1905 and versified by Eleanor Hull in 1912. A hymn that has survived fourteen centuries carries a weight of tradition that newer worship songs simply cannot match&thinsp;&mdash;&thinsp;but because the melody is a folk tune rather than a formal choral piece, it never feels stuffy or imposing.</p>
-          <p>For couples who want their ceremony to feel both timeless and personal, it is hard to beat. The Irish roots also give it a particular warmth that resonates with families of Irish heritage, though it has long since transcended any single tradition.</p>
-        </div>
-      </section>
-
-      <section class="section">
-        <div class="prose">
-          <h2>It sounds extraordinary with a choir</h2>
-          <p>Be Thou My Vision is beautiful when a congregation sings it unaccompanied. It is beautiful with an organ. But with a professional choir, it becomes something else entirely.</p>
-          <p>A good choral arrangement of Slane opens out the harmonies so that each verse feels richer than the last. The choir can take the melody in unison for the first verse, letting its simplicity speak, then build through increasingly full harmonies until the final verse arrives in a blaze of sound. The effect is cumulative. We have seen guests moved to tears by a well-sung Be Thou My Vision&thinsp;&mdash;&thinsp;tears at being caught off guard by the sound.</p>
-          <p>With an organ providing the harmonic foundation and a choir lifting the melody, the hymn fills any space. In a large church, it soars. In an intimate chapel, it envelops. Either way, it is one of those moments in a wedding that people talk about afterwards. You can <a href="../listen.html">hear our singers perform it</a> to get a sense of what it sounds like with a full choral arrangement.</p>
-        </div>
-      </section>
-
-      <section class="section">
-        <div class="prose">
-          <h2>It pairs beautifully with other wedding music</h2>
-          <p>Be Thou My Vision works well at almost any point in a wedding service, but it is particularly effective as the second hymn&thinsp;&mdash;&thinsp;placed after the readings or address, where its contemplative quality gives the congregation a moment of reflection before the rest of the service unfolds.</p>
-          <p>It pairs naturally with a more rousing opening hymn like Jerusalem or Love Divine, giving the service a satisfying emotional shape: energy and excitement at the start, depth and intimacy in the middle. If you are having three hymns, ending with something joyful like Guide Me, O Thou Great Redeemer or All Things Bright and Beautiful creates a wonderful arc from celebration through reflection and back to celebration.</p>
-          <p>For the <a href="wedding-ceremony-music.html">processional and recessional</a>, it complements virtually any organ repertoire. Its Irish folk character sits comfortably alongside Bach, Handel, Widor, or more contemporary choices. It does not compete with anything&thinsp;&mdash;&thinsp;it enhances everything around it.</p>
-        </div>
-      </section>
-
-      <section class="section">
-        <div class="prose">
-          <h2>What couples tell us</h2>
-          <p>We perform Be Thou My Vision at weddings regularly, and the response is the same each time. Couples tell us it was the moment in the service where everything felt real&thinsp;&mdash;&thinsp;where the nerves faded and they were simply present, surrounded by the people they love, singing something that meant something. Guests single it out as the highlight. Parents say it was the point where they cried.</p>
         </div>
       </section>
 
       <section class="section">
         <div class="prose">
           <h2>Frequently asked questions</h2>
-          <h3>Who wrote Be Thou My Vision?</h3>
-          <p>The text is attributed to the sixth-century Irish monk Dallan Forgaill. Mary Byrne translated it into English prose in 1905, and Eleanor Hull versified that translation in 1912 into the hymn sung at weddings today.</p>
-          <h3>What tune is Be Thou My Vision sung to?</h3>
-          <p>Slane, an old Irish folk melody named after the Hill of Slane in County Meath. Its range is narrow enough for any voice, which is why guests who have never heard it before are usually singing by the second verse.</p>
-          <h3>Does Be Thou My Vision suit a Catholic or non-denominational wedding?</h3>
-          <p>Yes. It works in a formal Church of England service, a Catholic Mass, and a more relaxed non-denominational celebration, and it suits couples who want the ceremony to feel timeless without feeling stuffy.</p>
-          <h3>Is Be Thou My Vision a wedding hymn or a funeral hymn?</h3>
-          <p>Both. Its themes of devotion and trust suit weddings and funerals equally well, which is why we also publish a separate guide to <a href="be-thou-my-vision-funeral-hymn.html">Be Thou My Vision as a funeral hymn</a>.</p>
-        </div>
-      </section>
 
-      <section class="section">
-        <div class="prose">
-          <h2>We&rsquo;re here if you&rsquo;d like a hand</h2>
-          <p>If Be Thou My Vision is on your list&thinsp;&mdash;&thinsp;or if you&rsquo;re still deciding&thinsp;&mdash;&thinsp;we&rsquo;re always happy to talk through your wedding music. We can advise on which hymns work best together, what order to put them in, and how a choir can make the whole thing sound extraordinary. There&rsquo;s no charge for an initial conversation, and no obligation.</p>
-          <p>You might also find these guides helpful: our guide to <a href="choosing-wedding-hymns.html">choosing wedding hymns</a> covers the most popular options, <a href="wedding-ceremony-music.html">wedding ceremony music</a> walks through every musical moment from processional to recessional, and our <a href="wedding-choir-guide.html">wedding choir guide</a> explains what it&rsquo;s like to have professional singers at your service.</p>
-          <p><a href="../weddings.html" class="btn-link">Tell us about your wedding</a></p>
+          <h3>Who wrote Be Thou My Vision?</h3>
+          <p>The Old Irish text is traditionally attributed to Dall&aacute;n Forgaill, a sixth-century poet, though scholars date it to the tenth or eleventh century. Mary Byrne translated it into English prose in 1905, and Eleanor Hull put that translation into verse in 1912. Hull&rsquo;s version is the one sung at weddings today.</p>
+
+          <h3>What tune is Be Thou My Vision sung to?</h3>
+          <p>Slane, an Irish folk melody named after the Hill of Slane in County Meath. Patrick Joyce published it in 1909, and it was first paired with the words in 1919. Its phrases repeat, so guests who have never heard it are usually singing by the second verse.</p>
+
+          <h3>Where does Be Thou My Vision go in a wedding service?</h3>
+          <p>Most couples sing it second of three hymns, after the readings or the address. Its slower pace suits that reflective point, with a brighter hymn such as <i>Love Divine</i> to open the service and <i>Guide Me, O Thou Great Redeemer</i> to close it.</p>
+
+          <h3>Can Be Thou My Vision be the processional?</h3>
+          <p>Yes, with one change. Have the choir sing the first verse alone while you walk in, and bring the congregation in from the second verse once you have reached the front. Guests find it hard to sing a hymn while they are turned towards the door.</p>
+
+          <h3>Does Be Thou My Vision suit a Catholic or non-denominational wedding?</h3>
+          <p>Yes. It appears in Anglican and Catholic hymn books and works at a Church of England service, a nuptial Mass or a non-denominational ceremony. The words are a personal prayer with no doctrine particular to one church.</p>
+
+          <h3>Is Be Thou My Vision a wedding hymn or a funeral hymn?</h3>
+          <p>Both. Its words of devotion and trust suit a wedding and a funeral, and we sing it at both. Our separate guide covers <a href="be-thou-my-vision-funeral-hymn.html">Be Thou My Vision as a funeral hymn</a>.</p>
         </div>
       </section>
 

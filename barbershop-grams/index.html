@@ -90,6 +90,10 @@
         source: detail.source,
         occasion: detail.occasion || 'unspecified'
       };
+      // The cookie-free counter's event goes from here, once per accepted
+      // enquiry with or without consent (a beacon, so the redirect can't cut it
+      // off); lcsSendLead on the next page would find js/counter.js not loaded.
+      if (typeof window.lcsCount === 'function') window.lcsCount('enquiry-sent-form');
       // Enhanced conversions: gtag hashes these (SHA-256) before sending, and
       // sends nothing at all unless the visitor allowed ad measurement.
       var ud = {};
@@ -314,6 +318,18 @@
     }
   </script>
   <script src="/js/consent.js" defer></script>
+  <!-- Cookie-free visit counter (GoatCounter; privacy.html#visit-counter). Off
+       while LCS_COUNTER is empty: then no page loads anything for it. To switch
+       it on, put the GoatCounter site code between the quotes and run
+       ./build.sh. js/counter.js does the counting. -->
+  <script>
+    var LCS_COUNTER = 'londonchoralservice';
+    if (LCS_COUNTER) {
+      var lcsCounterJs = document.createElement('script');
+      lcsCounterJs.src = '/js/counter.js';
+      document.head.appendChild(lcsCounterJs);
+    }
+  </script>
   <!-- @include-end partials/analytics.html -->
 
   <title>Barbershop Grams | Surprise Barbershop Quartet in London</title>
@@ -1658,6 +1674,13 @@
             throw new Error(payload.result.message || 'Submission failed');
           }
           try {
+            // The cookie-free counter's enquiry event, as partials/analytics.html
+            // fires it from lcsLead: this form has its own handler and never
+            // calls lcsLead, so without this line a gram enquiry would be the
+            // one form send the counter misses, though privacy.html#visit-counter
+            // says every accepted enquiry is counted. Link taps already count,
+            // from js/counter.js's own listener.
+            if (typeof window.lcsCount === 'function') window.lcsCount('enquiry-sent-form');
             if (typeof loadGA === 'function') loadGA();
             fireGramConversion();
           } catch (_) { /* analytics must never block the enquiry */ }
