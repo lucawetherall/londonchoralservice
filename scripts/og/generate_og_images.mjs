@@ -9,8 +9,9 @@
 //              for the destinations/ pages of the private register and
 //              planners-and-venues.html.
 //
-// Card text comes from each page's own <h1> (and .h1-sub), or from the MANUAL
-// table below, so a card never says anything the page does not.
+// Card text comes from each page's own <h1> (and .h1-sub), from the <title> on
+// area and borough pages (whose h1s vary in wording), or from the MANUAL table
+// below, so a card never says anything the page does not.
 //
 // Run from the repo root (needs Node and Playwright with Chromium):
 //   npm i -g playwright && npx playwright install chromium   (once)
@@ -85,7 +86,7 @@ function cards() {
     ...fs.readdirSync('areas').filter(n => n.endsWith('.html') && n !== 'index.html' && n !== 'london.html').map(n => 'areas/' + n),
     ...fs.readdirSync('areas/london').filter(n => n.endsWith('.html')).map(n => 'areas/london/' + n)].sort();
   for (const f of areas) {
-    const [main] = h1Parts(read(f));
+    const main = titleOf(read(f));  // the title, not the h1: area h1s vary, titles keep "X choirs in Place"
     const [what, ...rest] = main.split(' in ');
     const place = rest.join(' in ');  // "Funeral and wedding choirs" or, on wedding-led pages, "Wedding and funeral choirs"
     out.push({ f, style: 'lcs', title: titleCase(what.replace(' and ', ' & ')), title2: 'in ' + place,
