@@ -404,11 +404,25 @@ print('duplicate price-ladder constructions:', len(dupes))  # → 0
 
 ---
 
-## R22 — Barbershop Grams product line  [P1] [done 2026-09-03]
+## R22 — Wedding season checks: bids on 5 Jan, ad test in April  [P2] [scheduled 5 Jan and April 2027] [S]
+
+**Why:** `docs/superpowers/plans/2026-10-23-wedding-season-2027.md`. On 23 Oct 2026 wedding-leads spent about half its £4 budget and lost 32% of impressions to ad rank; both "wedding choir" keywords scored Quality Score 5 with expected CTR below average. A second ad (829372414723, unpinned) went live beside 826000407486 the same day.
+
+**Do (5 Jan 2027):** read `keyword_view` for the two "wedding choir" keywords (Quality Score, expected CTR) and campaign lost-to-rank over 28 days. If lost-to-rank is still above 25%, write a dated `scripts/ads/` bid script: [wedding choir] exact £4.50 → £5.00, "wedding choir" phrase £4.00 → £4.50 (validate-only, Luca's approval, log). Budget stays £4 unless budget-lost share passes 10% on two Mondays running (then propose £5, the cap, back to £4 from 1 April).
+
+**Do (April 2027):** once each ad has 300+ impressions, pause the one with the lower CTR (never remove) and decide whether "Book Your 2027 Wedding Choir" becomes 2028.
+
+**Verify:** the change rows in `logs/ads-changes.md`; the MCP shows the paused ad.
+
+**Skills:** claude-ads:ads-google, ad-creative
+
+---
+
+## R23 — Barbershop Grams product line  [P1] [done 2026-09-03]
 
 **What shipped:** a second product line at `/barbershop-grams/` (hub + repertoire page), a self-contained mini-site in its own visual register — a scoped `bs-` stylesheet plus its own nav and footer partials, insulated from the main site's CSS bundle and never including `partials/nav.html` or `partials/footer.html`. A `barbershop-gram` `<option>` on `contact.html` wiring the enquiry pre-fill, and `barbershop-grams/*.html` added to both claim validators (`validate_jsonld.py`, `validate_house_claims.py`), which previously could not see the directory at all. Sitemap and `llms.txt` entries for both pages.
 
-Inbound links from the main site: `services.html` gets a note after the ensemble grid plus a "Gifts & Surprises" `Offer` inside its `OfferCatalog` JSON-LD; `weddings.html` and `corporate.html` each get one contextual paragraph link. `sitemap.xml` now lists 165 URLs.
+Inbound links from the main site: `services.html` gets a note after the ensemble grid plus a "Gifts & Surprises" `Offer` inside its `OfferCatalog` JSON-LD; `weddings.html` and `corporate.html` each get one contextual paragraph link. `sitemap.xml` listed 165 URLs at the time.
 
 **Deliberately not done, and why:**
 - **No gram prices on `pricing.html`.** A section was added there (`a3dad63`) and reverted by owner decision (`10abc0d`): barbershop is sold separately from the choral service and its bookings are almost always a quartet, so listing its rates in the choral price table works against the separation the mini-site exists to maintain. `barbershop-grams/index.html` is the source of truth for the five gram prices; `pricing.html` stays the source of truth for choral prices. The `CLAUDE.md` convention was rewritten to carve this out.
@@ -422,9 +436,9 @@ Inbound links from the main site: `services.html` gets a note after the ensemble
 
 **Verify:**
 ```sh
-./build.sh                                 # ends "Done." — House claims clean across 169 files checked.
+./build.sh                                 # ends "Done." — all validators pass
 python3 tests/test_competitor_claims.py    # 0 failure(s)
-grep -c '<loc>' sitemap.xml                # 165
+grep -c 'barbershop-grams' sitemap.xml     # 2 — both gram pages listed
 grep -n 'barbershop' validate_jsonld.py validate_house_claims.py   # both glob barbershop-grams/*.html
 ls barbershop-grams/                       # index.html  repertoire.html
 grep -rln 'barbershop-grams/' services.html weddings.html corporate.html   # all three
