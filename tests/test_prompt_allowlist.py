@@ -149,7 +149,7 @@ def allowed(cmd, pats):
     return any(p.fullmatch(cmd) for _, p in pats)
 
 
-MONDAY_AGENTS = ("lcs-review-ads", "lcs-review-web", "lcs-review-bookings")
+MONDAY_AGENTS = ("lcs-review-ads", "lcs-review-web", "lcs-review-bookings", "lcs-review-growth")
 
 
 def test_prompts_name_commands():
