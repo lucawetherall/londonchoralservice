@@ -293,7 +293,7 @@ def enquiry_form(source_page, subject, enquiring_as_default=None, intro=None):
 
             <label class="pe-check-label pe-check-label--consent">
               <input type="checkbox" id="ad-measurement" name="ad_measurement" value="yes">
-              <span>Let us tell Google if your booking came from one of its ads. Google receives a scrambled (hashed) copy of your email address, never the address itself.</span>
+              <span>Let us tell Google if your booking came from its ads, using a scrambled copy of your email.</span>
             </label>
             <p class="pe-check-note"><a href="/privacy.html#ad-measurement">How we use this</a></p>
 
