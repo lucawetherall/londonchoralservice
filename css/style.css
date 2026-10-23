@@ -1771,6 +1771,17 @@ td.compare-us .compare-saving {
     margin-top: 0;
     margin-bottom: var(--space-xl);
   }
+
+  /* Listen pages: the visitor came to hear the singers, so the film comes
+     before the lede and the buttons. */
+  .hero--film-first {
+    grid-template-areas:
+      "crumb"
+      "head"
+      "video"
+      "offer"
+      "body";
+  }
 }
 
 /* ═══════════════════════════════════
