@@ -17,13 +17,13 @@ providers:
     name: "The London Funeral Singers"
     url: "https://www.londonfuneralsingers.co.uk/"
     pricing_url: "https://www.londonfuneralsingers.co.uk/pricing"
-    checked_date: "2026-08-18"
+    checked_date: "2026-10-23"
     vat_treatment: "quoted excluding VAT"
     travel: "Travel charges apply outside of London"
     packages:
       soloist:
         price_ex_vat: 275
-        source_quote: "Soloist: From £275 + VAT"
+        source_quote: "Classic soloist: £275 + VAT"
         includes: "One solo performance piece; Congregation leading - up to three hymns"
       organist:
         price_ex_vat: 275
