@@ -8,8 +8,9 @@ An exception names the campaign by id, never by name, so a renamed or new campai
     cap_micros("111")                                        # 5_000_000
 
 Stop rule for the Christmas exception (owner, 28 Sep 2026), checked by the Monday review: back to £5 if spend
-above the £5/day level passes £60 by 2 Nov 2026 with no real enquiry, or if less than 90% of a week's spend
-went on hiring searches.
+above the £5/day level passes £60 by 2 Nov 2026 with no real enquiry (an A or B enquiry for the campaign, graded
+by scripts/reports/enquiry_sources.py; C never counts) and no Ads conversion, or if less than 90% of a week's
+spend went on hiring searches.
 """
 
 import datetime

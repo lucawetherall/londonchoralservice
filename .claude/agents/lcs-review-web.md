@@ -14,7 +14,7 @@ SHELL COMMANDS (only this one, from the repo folder)
 
 You may use Grep (not Bash) on the repo's .html files to find a page's <title>, <h1> or <h2>s when naming a fix, and Read on MANUAL-ACTIONS-REQUIRED.md to copy the §12 entry style. Nothing else.
 
-STEPS (Search Console lags about 3 days; the report's dates say which week)
+STEPS (Search Console lags about 3 days; the report's dates say which week. A section that ends "SECTION <id> FAILED: <type>" wasn't read this week: say "<what it covers>: not in the report (<type>)" in the matching RESULT line and carry on.)
 1. Section 6: clicks, impressions, CTR and average position this week vs the week before.
 2. Money queries (funeral, wedding, carol, choir) that moved more than 3 positions either way, or appeared for the first time. Ignore moves on queries with under 10 impressions this week: a single search swings their average position.
 3. Which pages carry the organic clicks (top five).
