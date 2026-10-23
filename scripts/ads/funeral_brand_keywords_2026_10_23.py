@@ -138,6 +138,9 @@ def gbp(micros):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--apply", action="store_true")
+    ap.add_argument("--keywords-only", action="store_true",
+                    help="pause the broad variants and add the exact keywords, but leave every final URL as it is "
+                         "(owner decision 23 Oct: the compare page lacks some of the ad's claims)")
     args = ap.parse_args()
     if BID > MAX_BID:
         raise SystemExit(f"bid {gbp(BID)} is above the approved {gbp(MAX_BID)}; nothing sent")
@@ -232,16 +235,19 @@ def main():
         op = c.get_type("MutateOperation")
         u = op.ad_group_criterion_operation.update
         u.resource_name = k.resource_name
-        u.final_urls.append(COMPARE_URL)
-        op.ad_group_criterion_operation.update_mask.paths.append("final_urls")
+        if not args.keywords_only:
+            u.final_urls.append(COMPARE_URL)
+            op.ad_group_criterion_operation.update_mask.paths.append("final_urls")
         res = f'ad group "{AD_GROUP}" keyword {shown(t, m)} ({m.lower()}, {i})'
         if after == "PAUSED":
             u.status = E.AdGroupCriterionStatusEnum.PAUSED
             op.ad_group_criterion_operation.update_mask.paths.append("status")
             changes.append((res, "status", "enabled → paused", PAUSE_WHY))
-        changes.append((res, "final URL", f"none (ad's funerals.html) → {COMPARE_URL}",
-                        URL_WHY + ("" if after == "ENABLED" else "; set too so it lands there if re-enabled")))
-        ops.append(op)
+        if not args.keywords_only:
+            changes.append((res, "final URL", f"none (ad's funerals.html) → {COMPARE_URL}",
+                            URL_WHY + ("" if after == "ENABLED" else "; set too so it lands there if re-enabled")))
+        if op.ad_group_criterion_operation.update_mask.paths:
+            ops.append(op)
     for t in to_add:
         op = c.get_type("MutateOperation")
         cr = op.ad_group_criterion_operation.create
@@ -250,10 +256,13 @@ def main():
         cr.keyword.text = t
         cr.keyword.match_type = E.KeywordMatchTypeEnum.EXACT
         cr.cpc_bid_micros = BID
-        cr.final_urls.append(COMPARE_URL)
+        if not args.keywords_only:
+            cr.final_urls.append(COMPARE_URL)
         ops.append(op)
+        landing = "the ad's funerals.html" if args.keywords_only else COMPARE_URL
         changes.append((f'ad group "{AD_GROUP}" keyword [{t}] (exact, new)', "keyword",
-                        f"none → added, max CPC {gbp(BID)}, enabled, final URL {COMPARE_URL}", NEW_WHY))
+                        f"none → added, max CPC {gbp(BID)}, enabled, final URL {landing}",
+                        "exact brand search at the same £2.00, in place of the paused broad variants"))
 
     print(("APPLYING" if args.apply else "VALIDATE ONLY") + f" — {len(ops)} operation(s), one atomic request\n")
     print(f"LANDING PAGE {COMPARE_URL}")
@@ -277,13 +286,13 @@ def main():
     for i, (t, m, after) in BRAND.items():
         k = reviewed[i]
         print(f"  {shown(t, m):<34} {m.lower():<6} {gbp(k.cpc_bid_micros)}  {k.status.name.lower()} → "
-              f"{after.lower():<8} final URL none → compare page")
+              f"{after.lower():<8} final URL " + ("unchanged" if args.keywords_only else "none → compare page"))
     for t in NEW_EXACT:
         if t in exact_new:
             k = exact_new[t]
             print(f"  {shown(t, 'EXACT'):<34} exact  {gbp(k.cpc_bid_micros)}  {k.status.name.lower()} (exists; skipped)")
         else:
-            print(f"  {shown(t, 'EXACT'):<34} exact  {gbp(BID)}  none → enabled  final URL compare page (new)")
+            print(f"  {shown(t, 'EXACT'):<34} exact  {gbp(BID)}  none → enabled  final URL " + ("the ad's" if args.keywords_only else "compare page") + " (new)")
     if args.apply:
         ads_log.check_log()  # refuse before changing anything if the log can't be written
     try:
