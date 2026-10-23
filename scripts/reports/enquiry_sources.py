@@ -56,8 +56,9 @@ PAGE_CAMPAIGN = {"weddings": "wedding", "funerals": "funeral", "carol-singers": 
 # C only: the occasion picks the campaign whose clicks are looked at.
 OCCASION_CAMPAIGN = {"wedding": "wedding", "funeral": "funeral", "christmas": "christmas", "corporate": "christmas"}
 # The contact form's "How did you hear of us?" options: the only answers ever printed (anything else is "other").
-HEARD_ANSWERS = ("Searching on Google", "A Google ad", "A Google ad (marked Sponsored)", "Recommended by someone",
-                 "A funeral director", "A wedding planner or venue", "A directory or listings site", "Other")
+HEARD_ANSWERS = ("Searching on Google", "A Google ad", "A Google ad (marked Sponsored)", "A Google search result",
+                 "Google, not said which", "Recommended by someone", "A funeral director", "A wedding planner or venue",
+                 "A directory or listings site", "Prefer not to say", "Other")
 GRADES = ("A", "B", "C")
 
 AD_VISIT = re.compile(r"\bad visit:\s*([a-z0-9-]+(?:/[a-z0-9-]+)*)(?:\s*\(\s*([A-Za-z0-9_.-]{1,80})\s*\))?", re.I)
