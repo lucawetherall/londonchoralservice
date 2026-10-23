@@ -98,6 +98,10 @@
         source: detail.source,
         occasion: detail.occasion || 'unspecified'
       };
+      // The cookie-free counter's event goes from here, once per accepted
+      // enquiry with or without consent (a beacon, so the redirect can't cut it
+      // off); lcsSendLead on the next page would find js/counter.js not loaded.
+      if (typeof window.lcsCount === 'function') window.lcsCount('enquiry-sent-form');
       // Enhanced conversions: gtag hashes these (SHA-256) before sending, and
       // sends nothing at all unless the visitor allowed ad measurement.
       var ud = {};
@@ -271,6 +275,18 @@
     }
   </script>
   <script src="/js/consent.js" defer></script>
+  <!-- Cookie-free visit counter (GoatCounter; privacy.html#visit-counter). Off
+       while LCS_COUNTER is empty: then no page loads anything for it. To switch
+       it on, put the GoatCounter site code between the quotes and run
+       ./build.sh. js/counter.js does the counting. -->
+  <script>
+    var LCS_COUNTER = '';
+    if (LCS_COUNTER) {
+      var lcsCounterJs = document.createElement('script');
+      lcsCounterJs.src = '/js/counter.js';
+      document.head.appendChild(lcsCounterJs);
+    }
+  </script>
   <!-- @include-end partials/analytics.html -->
 
   <title>Privacy Policy | LCS</title>
@@ -3106,6 +3122,8 @@
         <p>If you arrived from one of our advertisements and did not allow cookies, we keep nothing in your browser. A WhatsApp message, email or enquiry form you start from the page you landed on carries a short tag with that page&rsquo;s name, such as &ldquo;Ad visit: weddings&rdquo;. In a message you can read or delete it before you send; the form adds it as a hidden line. The tag names a page and contains nothing from the advert&rsquo;s click reference. We use it to count which advertisements bring enquiries. Pages you open afterwards add no such tag.</p>
         <p id="ad-links">If you arrive from one of our Google ads, the Google Ads tag copies the advert&rsquo;s click reference into the links between our pages, so the address of each page you open next carries it, with a short <code>_gl</code> marker. Until you accept cookies, we keep it only in the page address and store nothing on your device, though your browser&rsquo;s history keeps the addresses of pages you visit. We use the reference to credit the advert if you accept cookies on a later page, or tick the ad-measurement box on our enquiry form. A WhatsApp message or email you start from a later page also says you came via a Google ad, where you can read or delete it before you send. The Google Ads tag leaves the reference out of what it sends Google until you accept cookies. Google Analytics, which sends cookieless signals while you haven&rsquo;t accepted, receives the address of each page you open, reference included, as it does for the page you land on.</p>
         <p id="ad-measurement">Our enquiry forms also have an optional box, left unticked: &ldquo;Let us tell Google if your booking came from its ads, using a scrambled copy of your email.&rdquo; If you tick it and your enquiry becomes a booking, we send Google Ads a hashed copy of your email address, a scrambled code made from it, with the booking&rsquo;s value. If the page you sent the form from had an advert&rsquo;s click reference in its address, that goes too. Google matches the code against its own accounts to tell us whether the booking followed a click on one of our advertisements, and uses it for that measurement alone. We send nothing for an enquiry that doesn&rsquo;t become a booking, or if you leave the box unticked. To change your mind before we send it, email <a href="mailto:office@londonchoralservice.com">office@londonchoralservice.com</a>.</p>
+        <p id="visit-counter">We also count visits with GoatCounter, a visitor counter that sets no cookies and stores nothing on your device, so it runs whether or not you accept cookies. For each page you open it receives the page&rsquo;s path, such as <code>/weddings.html</code>, without the rest of its address (so never an advert&rsquo;s click reference), the page&rsquo;s title, and the website that sent you, if it wasn&rsquo;t ours. When you send our enquiry form, or tap a phone, email or WhatsApp link, it receives an event name such as &ldquo;enquiry-sent-form&rdquo; and the page&rsquo;s path, never what you typed. To tell new visits from repeat views, GoatCounter works from your IP address and browser type, which it keeps in memory for up to eight hours and never writes to disk. Our dashboard shows totals only. GoatCounter is run from Ireland and keeps its data on servers in Finland and Germany.</p>
+        <p>GoatCounter doesn&rsquo;t count you if your browser sends a Global Privacy Control or Do Not Track signal. You can also <a href="/privacy.html?lcs_count=off#visit-counter">stop it counting your visits in this browser</a>: we keep that choice in your browser under the name <code>lcs-count-off</code>, and clearing this site&rsquo;s data in your browser undoes it.</p>
         <p>Our typefaces are served from our own website, not from a third-party font service. Our enquiry form is delivered by Web3Forms and protected by hCaptcha; when you submit the form, these services process the details you enter solely to pass your message to us and to filter out spam. Recordings are embedded from YouTube in privacy-enhanced mode and load only when you press play.</p>
         <p>You can also block Google Analytics in every website with the <a href="https://tools.google.com/dlpage/gaoptout" rel="noopener noreferrer">Google Analytics opt-out browser add-on</a>.</p>
       </div>

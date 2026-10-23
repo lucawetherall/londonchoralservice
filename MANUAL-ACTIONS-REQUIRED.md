@@ -488,3 +488,16 @@ The assistant saves each confirmation email with the invoice PDF and booking con
 4. Tell Claude "IMAP password added". Claude runs `imap_draft.py check` (sign-in, folders, and that iCloud Drive/LCS-invoices is writable; if macOS asks whether Claude may use iCloud Drive, allow it) and `imap_draft.py test`: a test draft to luca@almaconsort.com, with a small PDF attached, appears in Drafts. Open it to check the attachment shows and the draft can be edited, then delete it.
 
 Invoices and booking confirmations are saved in iCloud Drive → LCS-invoices → "<ref> - <client>".
+
+---
+
+## 29. Cookie-free visit counter (GoatCounter)
+
+Added 2026-10-23. The site has a visit counter that uses no cookies and stores nothing on the visitor's device, so it counts the visitors who refuse cookies too: page views on every page, and an `enquiry-sent-*` event when the enquiry form is accepted or a phone, email or WhatsApp link is tapped. It is switched off: `LCS_COUNTER` in `partials/analytics.html` is empty, and then no page loads anything for it. Claude can't create accounts, so it stays off until you do this:
+
+1. Read the ICO's current guidance on storage and access technologies, in particular the exception for statistical purposes that the Data (Use and Access) Act 2025 added to PECR, and decide that a cookie-free counter is fine for this site without asking consent.
+2. Create a free account at goatcounter.com with office@londonchoralservice.com. When it asks for a code, pick one such as `londonchoralservice`: the dashboard then lives at `https://<code>.goatcounter.com`. Leave any setting that keeps individual pageviews switched off.
+3. Tell Claude the site code. Only the code: never the password, and no API key is needed.
+4. Claude puts the code in `LCS_COUNTER` on the counter's pull request and rebuilds. The privacy policy there (`privacy.html#visit-counter`) already describes the counter, so merge it with the code set, not before. Once it is live, Claude checks that a page view reaches the dashboard.
+
+Your own visits: the counter skips any device where you opened a page with `?lcs_internal=1` (the same flag GA4 uses). A visitor can opt out from the privacy policy's link (`?lcs_count=off`), and the counter also skips browsers sending Global Privacy Control or Do Not Track.

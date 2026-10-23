@@ -97,6 +97,10 @@
         source: detail.source,
         occasion: detail.occasion || 'unspecified'
       };
+      // The cookie-free counter's event goes from here, once per accepted
+      // enquiry with or without consent (a beacon, so the redirect can't cut it
+      // off); lcsSendLead on the next page would find js/counter.js not loaded.
+      if (typeof window.lcsCount === 'function') window.lcsCount('enquiry-sent-form');
       // Enhanced conversions: gtag hashes these (SHA-256) before sending, and
       // sends nothing at all unless the visitor allowed ad measurement.
       var ud = {};
@@ -270,6 +274,18 @@
     }
   </script>
   <script src="/js/consent.js" defer></script>
+  <!-- Cookie-free visit counter (GoatCounter; privacy.html#visit-counter). Off
+       while LCS_COUNTER is empty: then no page loads anything for it. To switch
+       it on, put the GoatCounter site code between the quotes and run
+       ./build.sh. js/counter.js does the counting. -->
+  <script>
+    var LCS_COUNTER = '';
+    if (LCS_COUNTER) {
+      var lcsCounterJs = document.createElement('script');
+      lcsCounterJs.src = '/js/counter.js';
+      document.head.appendChild(lcsCounterJs);
+    }
+  </script>
   <!-- @include-end partials/analytics.html -->
   <title>Planning a Corporate Carol Service: A Complete Guide | LCS</title>
   <meta name="description" content="How to plan a carol service for your company: choosing a church or hotel, the running order, readings and readers, accompaniment, and what it costs.">
