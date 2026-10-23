@@ -300,6 +300,29 @@ def test_tracked_files_with_markers_are_only_the_reviewed_ones():
     assert not bad, bad
 
 
+def test_inline_code_may_name_tracked_prose_but_not_run_it():
+    """Owner decision, 23 Oct 2026: inline Python that only names a tracked doc (to read or edit the handover)
+    is allowed even though the doc mentions MCP internals; piping that doc into an interpreter is still code,
+    and untracked text with markers is still refused."""
+    repo = tempfile.mkdtemp(prefix="lcs-guard-prose-")
+    git = ["git", "-C", repo, "-c", "user.name=t", "-c", "user.email=t@example.invalid"]
+    subprocess.run(git + ["init", "-q"], check=True)
+    write(os.path.join(repo, "docs", "handover.md"), ATTACK)
+    write(os.path.join(repo, "scripts", "evil.py"), ATTACK)
+    subprocess.run(git + ["add", "-A"], check=True)
+    subprocess.run(git + ["commit", "-qm", "x"], check=True)
+    edit = "python3 - <<'EOF'\nfrom pathlib import Path\np = Path('docs/handover.md'); p.write_text(p.read_text())\nEOF"
+    expect("allow", bash(edit, cwd=repo, project=repo), "inline code naming tracked prose")
+    expect("deny", bash("cat docs/handover.md | python3 -", cwd=repo, project=repo), "tracked prose piped in as code")
+    expect("deny", bash("python3 - < docs/handover.md", cwd=repo, project=repo), "tracked prose fed on stdin")
+    named = "python3 - <<'EOF'\nprint(open('scripts/evil.py').read())\nEOF"
+    expect("deny", bash(named, cwd=repo, project=repo), "tracked code named in inline code is still vetted")
+    write(os.path.join(repo, "docs", "draft.md"), ATTACK)  # untracked
+    untracked = "python3 - <<'EOF'\nprint(open('docs/draft.md').read())\nEOF"
+    expect("deny", bash(untracked, cwd=repo, project=repo), "untracked prose with markers")
+    shutil.rmtree(repo)
+
+
 def test_a_tracked_script_with_markers_is_denied_unless_reviewed():
     repo = tempfile.mkdtemp(prefix="lcs-guard-repo-")
     git = ["git", "-C", repo, "-c", "user.name=t", "-c", "user.email=t@example.invalid"]

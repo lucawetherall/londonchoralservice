@@ -19,6 +19,9 @@ unguarded. This hook closes it. Wired in .claude/settings.json for:
     CODE_OK (lcs_mcp.py, the one legitimate MCP client, its tests and this guard's own files);
   - an interpreter runs inline code, a module or stdin in a folder outside the repo whose files hold a
     marker;
+  (Tracked prose, the same files the Write rule below calls prose, is never treated as a program just
+  because inline code in a heredoc names it, e.g. to edit the handover doc: owner decision, 23 Oct 2026.
+  Prose piped or fed into an interpreter is still vetted as code.)
   - a search or copy (grep, find, cp, tar…) is rooted at a folder that holds MCP configuration (/, the
     home folder, ~/Library…).
   Tracked files are reviewed code: `git ls-files` in the project repo (or one of its worktrees) decides.
@@ -310,6 +313,7 @@ class Command:
         self.repo, self.cwds = repo, [cwd]
         self.scripts, self.inline_cwds = [], []
         self.stdin_interp = False
+        self.stdin_plain = False  # an interpreter reads stdin from a pipe or a file (not only a heredoc)
         self.dirs_vetted, self.heads = set(), set()
 
     def analyse(self, cmd, depth=0):
@@ -376,11 +380,22 @@ class Command:
                 self.inline_cwds += self.cwds
             else:  # reads its program from stdin
                 self.stdin_interp = True
+                if not any("<<" in t for t in rest):  # a pipe or a file, not a heredoc body
+                    self.stdin_plain = True
                 self.inline_cwds += self.cwds
                 self.scripts += [p for w in stdin_files for p in resolve(w, self.cwds) if regular(p)]
             return
         if "/" in head:
-            self.scripts += [p for p in resolve(head, self.cwds) if regular(p)]
+            # A path in command position runs as a program, except tracked prose (docs/**.md, CLAUDE.md, ...),
+            # which is reviewed text: it shows up here when a heredoc body is split crudely as shell, e.g.
+            # Path('docs/x.md') (owner decision, 23 Oct 2026). Prose fed to an interpreter is still vetted.
+            for p in resolve(head, self.cwds):
+                if not regular(p):
+                    continue
+                loc = self.repo.locate(p)
+                if loc and self.repo.tracked(loc) and prose(loc[1]):
+                    continue
+                self.scripts.append(p)
 
 
 def vet_script(path, repo, cmd):
@@ -466,10 +481,15 @@ def check_command(text, repo, cwd):
             if p in seen or not regular(p):
                 continue
             seen.add(p)
-            if cmd.stdin_interp:  # anything named may be the program an interpreter reads on stdin
-                scripts.append(p)
-                continue
             loc = repo.locate(p)
+            if cmd.stdin_interp:  # anything named may be the program an interpreter reads on stdin
+                # ...except tracked prose (docs/**.md, CLAUDE.md, logs/*.md, agent files) when every interpreter
+                # reading stdin reads a heredoc: then the program is the heredoc body and the prose is only named,
+                # to read or edit it (owner decision, 23 Oct 2026). Prose piped or fed into an interpreter
+                # (`cat x.md | python3 -`, `python3 - < x.md`) is still vetted as code.
+                if cmd.stdin_plain or not (loc and repo.tracked(loc) and prose(loc[1])):
+                    scripts.append(p)
+                continue
             if loc and repo.tracked(loc):
                 continue
             data = read_head(p)
