@@ -28,7 +28,7 @@ SHELL COMMANDS (only these, from the repo folder)
   .venv/bin/python scripts/bookings/pipeline.py thread <invoice ref>
   .venv/bin/python scripts/bookings/pipeline.py contact <threadId> <YYYY-MM-DD>
   .venv/bin/python scripts/bookings/pipeline.py followups-due
-  .venv/bin/python scripts/bookings/pipeline.py followed <threadId> <1|2> <YYYY-MM-DD>
+  .venv/bin/python scripts/bookings/pipeline.py followed <threadId> <1|2|3> <YYYY-MM-DD>
   .venv/bin/python scripts/bookings/pipeline.py reviews-due
   .venv/bin/python scripts/bookings/pipeline.py reviewed <invoice ref> <YYYY-MM-DD>
   .venv/bin/python scripts/bookings/pipeline.py review-skipped <invoice ref> <planner|unresolved>
@@ -73,7 +73,7 @@ b. Follow-ups: `pipeline.py followups-due` (never a funeral or a booked client).
    - Client wrote since Luca's last message: `contact <id> <date>`, no draft.
    - Luca already chased by hand: `followed <id> <n> <date he sent it>`, no draft.
    - Booked by phone or elsewhere: search mail for the client's address (an invoice or booking confirmation) and ZohoBooks_list_contacts by that email, then ZohoBooks_list_invoices by its customer_id. An invoice dated after the first message: `status <id> confirmed <invoice number>`, no draft. An acceptance but no invoice: flag "accepted, no invoice yet", no draft.
-   - Otherwise first: a light two- or three-sentence check-in, then `followed <id> 1 <today>`; second: a last friendly note, door open, then `followed <id> 2 <today>`; mark_lost: `status <id> lost`, no draft. A follow-up never asks how they found us (only the reply drafter's first reply does).
+   - Otherwise first: two or three sentences that bring one new thing: an answer to anything the quote left open, or one recording from listen.html that suits their event; for a business, agency or planner, also ask "Is there anything your client needs from us to decide?". Then `followed <id> 1 <today>`. Second: a short note that names their date and asks whether to keep it pencilled in, door open, then `followed <id> 2 <today>`. Third (corporate and Christmas only; pipeline.py gives it 14 days after the second): two sentences: you'll stop chasing, and they can come back to us any time before the date. Then `followed <id> 3 <today>`. mark_lost: `status <id> lost`, no draft. Never claim the date is filling up or that another client wants it unless the thread or Luca says so. A follow-up never asks how they found us (only the reply drafter's first reply does).
 c. Reviews: `pipeline.py reviews-due` (never a funeral). For each ref read the thread. Anything wrong or unresolved, or the correspondent is a planner or venue: `review-skipped <ref> <unresolved|planner>`, flag once, no draft. Otherwise a short thank-you: thanks for having us, a line about the day if the thread gives one, and one sentence asking whether they'd leave a Google review, with the link from data/seo-fix-discovered-urls.yml (Read tool): `gbp_review_url` if present, else `gbp_canonical_maps_url`. Never offer anything for a review or ask only for a good one. Then `reviewed <ref> <today>`.
 d. Done: `pipeline.py done-due`, then `status <enquiry_id> done` for each.
 e. Dashboard: run `scripts/reports/dashboard.py` (it prints "dashboard written: <path>"); on failure note the error's type name only.
@@ -85,7 +85,7 @@ SUMMARY (your whole reply, no preamble; refs and first names only)
 - "Added to Books:" the invoices a00 added from the queue (refs), or "Books queue: empty", or "Books queue: <n> waiting" when Books was unavailable.
 - "Marked sent in Books:" the invoice numbers from a0. "Recorded in Books:" one line per client payment recorded (ref, £, date, and any bank charges; "closed booking" for a2's). "Fixed in Books:" a3's due-date changes and a4's reminders turned off (refs).
 - One line per draft (kind, ref or thread id, first name, what Luca must check).
-- Follow-ups drafted (thread ids, first or second), enquiries marked lost or found booked, "accepted, no invoice yet", reviews drafted or skipped (refs, reason).
+- Follow-ups drafted (thread ids, first, second or third), enquiries marked lost or found booked, "accepted, no invoice yet", reviews drafted or skipped (refs, reason).
 - "Money to check by hand:" lines (refs, states, amounts).
 - "dashboard updated" or "dashboard failed (<type name>)".
 - e2's lines as printed ("books: …", then "calendar: …" or "diary not synced", then "drafts-sync: …" or "drafts not synced").
