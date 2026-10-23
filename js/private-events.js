@@ -244,6 +244,37 @@
       captchaBox.setAttribute('data-size', 'compact');
     }
 
+    // Web3Forms' client script only adds the hCaptcha widget, about 1 MB of
+    // scripts and images. Fetch it as the form comes within 800px of the
+    // screen, or as soon as the visitor clicks or tabs into the form, so it
+    // stays out of the page's first paint. (Same loader as js/form.js.)
+    var CAPTCHA_LOADER = 'https://web3forms.com/client/script.js';
+    var captchaRequested = false;
+    var loadCaptcha = function () {
+      if (captchaRequested) return;
+      captchaRequested = true;
+      if (document.querySelector('script[src="' + CAPTCHA_LOADER + '"]')) return;
+      var s = document.createElement('script');
+      s.src = CAPTCHA_LOADER;
+      s.async = true;
+      document.body.appendChild(s);
+    };
+    if (captchaBox) {
+      form.addEventListener('focusin', loadCaptcha);
+      form.addEventListener('pointerdown', loadCaptcha);
+      if ('IntersectionObserver' in window) {
+        var captchaWatch = new IntersectionObserver(function (entries) {
+          if (entries.some(function (en) { return en.isIntersecting; })) {
+            captchaWatch.disconnect();
+            loadCaptcha();
+          }
+        }, { rootMargin: '800px 0px' });
+        captchaWatch.observe(form);
+      } else {
+        loadCaptcha();
+      }
+    }
+
     var successBox = document.getElementById('pe-form-success');
     var errorBox = document.querySelector('.pe-form-error:not(.pe-captcha-error)');
     var captchaError = document.getElementById('captcha-error');

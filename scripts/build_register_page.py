@@ -325,7 +325,6 @@ FOOT = '''
   <!-- @include-start partials/private-footer.html -->
   <!-- @include-end partials/private-footer.html -->
 
-  <script src="https://web3forms.com/client/script.js" async defer></script>
   <script src="/js/private-events.js" defer></script>
 </body>
 </html>
