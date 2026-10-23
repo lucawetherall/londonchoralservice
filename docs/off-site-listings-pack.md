@@ -10,7 +10,7 @@ Claude can't create accounts, enter passwords or solve CAPTCHAs, even with the o
 
 | Site | Cost (researched 4 Oct 2026) | Account | Listing live | URL |
 | --- | --- | --- | --- | --- |
-| Google Business Profile | free | yes | yes (anchored Maidenhead) | https://www.google.com/maps?cid=12581882416994311757 |
+| Google Business Profile | free | yes | yes (address hidden, service area) | https://www.google.com/maps?cid=12581882416994311757 |
 | Bing Places | free; imports from the Google profile | no | no | |
 | Apple Business | free; Apple Account, verified by phone or documents | no | no | |
 | Yell | free listing (paid upsells declined) | no | no | |
@@ -31,7 +31,7 @@ Skipped: FuneralGuide (lists funeral directors only), Bark and Add to Event (sha
 | Phone | 07356 042468 |
 | Email | office@londonchoralservice.com |
 | Website | https://londonchoralservice.com |
-| Address | Copy whatever the Google Business Profile shows (the Maps listing is anchored "The London Choral Service, Maidenhead"), character for character. The registered office is N1 7GU. |
+| Address | The Google Business Profile hides its address (service-area business; public view checked 23 Oct 2026), so where a site insists on one, use the registered office and mark it hidden or "service area only" if the site allows. Never invent a street address. The registered office is N1 7GU. |
 | Legal entity | Alma Consort Ltd (Companies House 16785727) |
 | Service area | London and the home counties (Surrey, Kent, Essex, Hertfordshire, Berkshire, Buckinghamshire); further afield on request |
 
