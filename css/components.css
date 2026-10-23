@@ -349,6 +349,116 @@ td.compare-us .compare-saving {
 }
 
 /* ═══════════════════════════════════
+   Film Grid (Listen pages)
+   Cards of click-to-play films (js/video.js). Inside .wide three fit a
+   row; two cards share a row between them; phones get one per row.
+   ═══════════════════════════════════ */
+.film-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+  gap: var(--space-2xl) var(--space-xl);
+  list-style: none;
+  padding: 0;
+  margin: var(--space-xl) 0 0;
+}
+
+.film-card {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+}
+
+.film-card .video-embed {
+  margin-bottom: var(--space-md);
+}
+
+.film-card h3 {
+  font-size: var(--text-lg);
+  font-weight: 500;
+  margin-bottom: var(--space-xs);
+}
+
+.film-card__meta {
+  font-size: var(--text-sm);
+  color: var(--color-text-mid);
+  margin-bottom: var(--space-sm);
+}
+
+.film-card p {
+  margin-bottom: var(--space-sm);
+}
+
+.film-card__link {
+  margin-top: auto;
+  padding-top: var(--space-xs);
+  font-family: var(--font-heading);
+  font-size: var(--text-md);
+  font-weight: 500;
+}
+
+/* A paragraph under a heading in a .wide section, held to prose width. */
+.section-intro {
+  max-width: var(--width-prose);
+  color: var(--color-text-mid);
+}
+
+/* Pieces without a film: title, ensemble, one line each. */
+.repertoire-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-lg) var(--space-2xl);
+  margin: var(--space-lg) 0 var(--space-2xl);
+}
+
+.repertoire-list > div {
+  border-top: 1px solid var(--color-rule);
+  padding-top: var(--space-md);
+}
+
+.repertoire-list dt {
+  font-family: var(--font-heading);
+  font-size: var(--text-md);
+  font-weight: 500;
+  line-height: var(--leading-tight);
+  margin-bottom: var(--space-xs);
+}
+
+.repertoire-list dt span {
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  font-weight: 400;
+  color: var(--color-text-mid);
+}
+
+.repertoire-list dd {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--color-text-mid);
+}
+
+/* Titles only, in two columns. */
+.piece-list {
+  columns: 2;
+  column-gap: var(--space-2xl);
+  padding-left: 1.2em;
+  margin-bottom: var(--space-xl);
+}
+
+.piece-list li {
+  break-inside: avoid;
+}
+
+@media (max-width: 599px) {
+  .repertoire-list {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .piece-list {
+    columns: 1;
+  }
+}
+
+/* ═══════════════════════════════════
    Contact Form
    ═══════════════════════════════════ */
 .contact-form fieldset {
@@ -1160,6 +1270,23 @@ td.compare-us .compare-saving {
   font-size: var(--text-sm);
   font-weight: 500;
   color: var(--color-accent);
+}
+
+/* Three film stills in a start-here card (listen.html's Christmas card).
+   Decorative: the card's heading link carries the destination. */
+.start-here__films {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-sm);
+  margin-top: var(--space-lg);
+}
+
+.start-here__films img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
 }
 
 /* ═══════════════════════════════════
