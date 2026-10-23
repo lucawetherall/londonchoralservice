@@ -275,16 +275,19 @@ def enquiry_form(source_page, subject, enquiring_as_default=None, intro=None):
               <textarea id="pe-message" name="message" rows="5"></textarea>
             </div>
             <div class="pe-field">
-              <label for="hear">How did you hear of us?</label>
-              <select id="hear" name="hear">
+              <label for="hear">How did you hear about us? <span aria-hidden="true">*</span></label>
+              <select id="hear" name="hear" required aria-describedby="hear-error">
                 <option value="" selected>Please choose</option>
+                <option>A Google ad (marked Sponsored)</option>
+                <option>A Google search result</option>
                 <option>Referred by a planner</option>
                 <option>Referred by a venue</option>
                 <option>Recommended by a past client</option>
-                <option>Search</option>
                 <option>Press or social media</option>
                 <option>Other</option>
+                <option>Prefer not to say</option>
               </select>
+              <p class="pe-field-error" id="hear-error" data-visible="false">Please choose how you heard about us.</p>
             </div>
             <div class="pe-field pe-field--hear-detail" hidden>
               <label for="hear-detail">Who referred you?</label>

@@ -65,11 +65,15 @@
       window.addEventListener(evt, loadGA, { once: true, passive: true });
     });
 
-    // Conversion tracking. A lead is one "Submit lead form" conversion, fired by
-    // js/form.js and js/private-events.js only after Web3Forms accepts the
-    // enquiry. Phone, email and WhatsApp taps are contact_click events (their
-    // own secondary Ads actions "Call click" and "WhatsApp or email click"),
-    // never leads. Labels come from Google Ads (conversion action tag snippets).
+    // Conversion tracking. A lead is one "Submit lead form" conversion plus a GA4
+    // generate_lead, started by js/form.js and js/private-events.js only after
+    // Web3Forms accepts the enquiry. With cookie consent, js/form.js's lead is
+    // sent from thank-you.html (lcsLead below hands it over); without consent,
+    // and on the private register's inline success, it goes from the form's own
+    // page at once. Phone, email and WhatsApp taps are contact_click events, never
+    // leads, each with its own Ads action: "WhatsApp or email click" is a
+    // primary goal (owner decision, 26 Sep 2026) and "Call click" a secondary
+    // one. Labels come from Google Ads (conversion action tag snippets).
     var LCS_ADS = {
       lead: 'AW-17988388404/RjhECKGP7akcELSMxIFD',
       call: 'AW-17988388404/HHu8CJq1x4UdELSMxIFD',
@@ -161,7 +165,7 @@
         var h1 = document.querySelector('h1');
         var page = ((h1 && h1.childNodes[0] && h1.childNodes[0].textContent) || document.title.split('|')[0]).replace(/\s+/g, ' ').trim();
         var attr = lcsAttribution();
-        var ad = attr.gclid || attr.gbraid || attr.wbraid || attr.utm_medium === 'cpc' ? ', via a Google ad' : '';
+        var ad = attr.gclid || attr.gbraid || attr.wbraid || attr.utm_medium === 'cpc' || lcsAdVisit() ? ', via a Google ad' : '';
         var source = 'your \u201c' + page + '\u201d page' + ad;
         // With cookie consent, a short reference to the ad click rides along too,
         // so a booking that starts on WhatsApp or email can be reported to Google
@@ -172,7 +176,8 @@
             ref = lcsShortRef(attr.gclid || attr.gbraid || attr.wbraid || '');
           }
         } catch (e) {}
-        // Without consent, only the landing page's name (never the click ID).
+        // Without consent, only the landing page's name and the ad's campaign
+        // (never the click ID).
         var visit = ref ? '' : lcsAdVisit();
         var tag = ref ? 'Ref: ' + ref : visit ? 'Ad visit: ' + visit : '';
         if (method === 'whatsapp') {
@@ -223,18 +228,79 @@
 
     // Ad visit without cookies: when this page's own URL holds an ad click ID
     // and the visitor has not allowed cookies, its messages and form carry the
-    // page's name ("Ad visit: weddings"), never the click ID. It lives only in
-    // this variable: nothing is stored, so the next page carries nothing.
+    // landing page's name and the ad's campaign from utm_campaign ("Ad visit:
+    // pricing (wedding-leads)"), never the click ID. Nothing is stored: the
+    // label lives in this variable, and same-site links on the page carry it in
+    // their address (lcs_av=<label>), so the next page the visitor opens knows
+    // it too and passes it on. scripts/bookings/pipeline.py reads the same format.
     function lcsAdVisitSlug(path) {
       var p = String(path || '').toLowerCase().replace(/^\/+/, '').replace(/\.html$/, '').replace(/(^|\/)index$/, '').replace(/\/+$/, '');
       if (!p) return 'home';
-      return /^[a-z0-9-]+(\/[a-z0-9-]+)*$/.test(p) ? p : 'other';
+      return p.length <= 80 && /^[a-z0-9-]+(\/[a-z0-9-]+)*$/.test(p) ? p : 'other';
     }
-    var LCS_AD_VISIT = /[?&](gclid|gbraid|wbraid)=[^&]/.test(location.search) ? lcsAdVisitSlug(location.pathname) : '';
+    function lcsAdVisitLabel() {
+      try {
+        var q = new URLSearchParams(location.search);
+        if (/[?&](gclid|gbraid|wbraid)=[^&]/.test(location.search)) {
+          var slug = lcsAdVisitSlug(location.pathname), campaign = q.get('utm_campaign') || '';
+          return /^[a-z0-9-]{1,40}$/.test(campaign) ? slug + ' (' + campaign + ')' : slug;
+        }
+        // Carried from the previous page, and only from a page of this site, so
+        // a shared or bookmarked address never counts as an ad visit.
+        var carried = q.get('lcs_av') || '';
+        var from = document.referrer ? new URL(document.referrer).origin : '';
+        // The page at most 80 characters, the campaign at most 40 (as pipeline.py's AD_VISIT_RE).
+        if (from === location.origin &&
+            /^(?=[a-z0-9\/-]{1,80}( \(|$))[a-z0-9-]+(\/[a-z0-9-]+)*( \([a-z0-9-]{1,40}\))?$/.test(carried)) return carried;
+      } catch (e) {}
+      return '';
+    }
+    var LCS_AD_VISIT = lcsAdVisitLabel();
     function lcsAdVisit() {
       if (!LCS_AD_VISIT) return '';
-      try { if (localStorage.getItem('lcs-consent') === 'granted') return ''; } catch (e) {}
+      // Once cookies are allowed the click reference (lcsAttribution) takes over, but only if there is one: a
+      // visitor who accepts on a later page has no click ID left, so the label stays.
+      try {
+        if (localStorage.getItem('lcs-consent') === 'granted') {
+          var a = lcsAttribution();
+          if (a.gclid || a.gbraid || a.wbraid) return '';
+        }
+      } catch (e) {}
       return LCS_AD_VISIT;
+    }
+    // Same-site page links (.html or folder addresses) get lcs_av=<label> at
+    // run time, for ad visitors only, so crawlers never see it. Never tel:,
+    // mailto:, WhatsApp, other sites or links within the page. Once the visitor
+    // allows cookies the label comes off again where a click ID remains
+    // (lcsAttribution takes over); after accepting on a later page it stays.
+    function lcsCarryAdVisit(a) {
+      try {
+        var raw = a.getAttribute('href') || '';
+        if (!raw || raw.charAt(0) === '#' || /^(tel|mailto|sms|javascript):/i.test(raw) ||
+            raw.indexOf('wa.me/') !== -1 || a.hasAttribute('download')) return;
+        var url = new URL(raw, location.href);
+        if (url.origin !== location.origin || !/(\.html|\/)$/.test(url.pathname)) return;
+        var visit = lcsAdVisit();
+        if (visit) url.searchParams.set('lcs_av', visit);
+        else if (url.searchParams.has('lcs_av')) url.searchParams.delete('lcs_av');
+        else return;
+        a.setAttribute('href', url.pathname + url.search + url.hash);
+      } catch (e) {}
+    }
+    if (LCS_AD_VISIT) {
+      var lcsCarryAll = function() {
+        if (lcsAdVisit()) Array.prototype.forEach.call(document.querySelectorAll('a[href]'), lcsCarryAdVisit);
+      };
+      if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', lcsCarryAll);
+      else lcsCarryAll();
+      // Links added later, and a choice made on the cookie sheet since, are
+      // settled as each link is used.
+      ['click', 'auxclick', 'contextmenu'].forEach(function(evt) {
+        document.addEventListener(evt, function(e) {
+          var a = e.target.closest && e.target.closest('a[href]');
+          if (a) lcsCarryAdVisit(a);
+        }, true);
+      });
     }
     // The click IDs in this page's own URL, for an enquiry whose sender ticked
     // the form's ad-measurement box (read at submit, never stored).
@@ -251,7 +317,7 @@
   <!-- @include-end partials/analytics.html -->
 
   <title>Funeral and wedding choirs in Oxford | LCS</title>
-  <meta name="description" content="Hire conservatoire-trained singers for funerals, weddings, and memorials in Oxford and Oxfordshire. The London Choral Service has soloists from £250.">
+  <meta name="description" content="Funeral singers and wedding choirs in Oxford, from New College Chapel to Oxford Crematorium on Bayswater Road. Soloists from £250, choirs of four £1,150.">
   <meta name="theme-color" content="#F7F3EE">
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://londonchoralservice.com/areas/oxford.html">
@@ -259,7 +325,7 @@
   <link rel="alternate" hreflang="x-default" href="https://londonchoralservice.com/areas/oxford.html">
 
   <meta property="og:title" content="Funeral and wedding choirs in Oxford | LCS">
-  <meta property="og:description" content="Hire conservatoire-trained singers for funerals, weddings, and memorials in Oxford and Oxfordshire. The London Choral Service has soloists from £250.">
+  <meta property="og:description" content="Funeral singers and wedding choirs in Oxford, from New College Chapel to Oxford Crematorium on Bayswater Road. Soloists from £250, choirs of four £1,150.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://londonchoralservice.com/areas/oxford.html">
   <meta property="og:locale" content="en_GB">
@@ -271,7 +337,7 @@
 
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Funeral and wedding choirs in Oxford | LCS">
-  <meta name="twitter:description" content="Hire conservatoire-trained singers for funerals, weddings, and memorials in Oxford and Oxfordshire. The London Choral Service has soloists from £250.">
+  <meta name="twitter:description" content="Funeral singers and wedding choirs in Oxford, from New College Chapel to Oxford Crematorium on Bayswater Road. Soloists from £250, choirs of four £1,150.">
   <meta name="twitter:image" content="https://londonchoralservice.com/assets/og/areas-oxford.png">
   <meta name="twitter:image:alt" content="The London Choral Service: Funeral &amp; Wedding Choirs in Oxford. Live singers for churches, crematoria and carol services">
   <link rel="dns-prefetch" href="https://www.googletagmanager.com">
@@ -2976,7 +3042,7 @@
         "@type": "Service",
         "name": "Funeral Singers & Wedding Choirs in Oxford",
         "url": "https://londonchoralservice.com/areas/oxford.html",
-        "description": "Hire conservatoire-trained singers for funerals, weddings, and memorials in Oxford and Oxfordshire. The London Choral Service has soloists from £250.",
+        "description": "Funeral singers and wedding choirs in Oxford, from New College Chapel to Oxford Crematorium on Bayswater Road. Soloists from £250, choirs of four £1,150.",
         "provider": {
           "@type": "LocalBusiness",
           "@id": "https://londonchoralservice.com/#organization",
@@ -3035,7 +3101,7 @@
             "name": "What does an eight-voice funeral choir cost in Oxford?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "A soloist at Oxford Crematorium or in a college chapel starts from £250. A small choir of four is £1,150, a quintet is £1,400, a sextet is £1,600, and a full eight-voice choir is £2,000. Our Artistic Director is a Tutor in Music at the University of Oxford, so we have a particularly close connection to the city. As Oxford sits outside Greater London, a modest travel supplement applies, quoted upfront."
+              "text": "A soloist at Oxford Crematorium or in a college chapel starts from £250. A choir of four, which sounds substantial in most college chapels, is £1,150, and a full eight-voice choir for a large funeral at the University Church is £2,000. Our Artistic Director is a Tutor in Music at the University of Oxford, and many of our singers are based in the city. As Oxford sits outside Greater London, a modest travel supplement applies, quoted upfront."
             }
           },
           {
@@ -3067,7 +3133,7 @@
             "name": "Do you provide Oxford carol services as well as roaming carol singers?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Yes. We provide carol services in the college and cathedral tradition, along with roaming carol singers for offices, hotels, and residents' Christmas events across Oxford and Oxfordshire. December dates usually start to fill by mid-September, so we'd encourage early enquiries. Full details are on our Christmas page."
+              "text": "Yes. We sing carol services in the college and cathedral tradition, and our carol singers also move through offices, hotels and residents' Christmas events across Oxford and Oxfordshire. Oxford December dates start going from mid-September. Full details are on our Christmas page."
             }
           }
         ]
@@ -3148,9 +3214,9 @@
           </ol>
         </nav>
 
-        <h1>Funeral and wedding choirs in Oxford</h1>
+        <h1>Singers and choirs for Oxford&rsquo;s college chapels and churches</h1>
         <p class="guide-meta">Musicians selected by Luca Wetherall, Artistic Director &amp; Tutor in Music, University of Oxford &mdash; <a href="/luca-wetherall.html">read more about our team</a>.</p>
-        <p class="lede">Oxford is one of the great choral cities of the world. From the candlelit evensongs of Christ Church Cathedral to the soaring acoustics of New College Chapel, sacred music has been part of the fabric of this city for centuries. The London Choral Service provides professional singers, choirs, and instrumentalists for funerals, weddings, memorials, and ceremonies across Oxford and the wider Oxfordshire countryside. Our Artistic Director, Luca Wetherall, is a Tutor in Music at the University of Oxford, giving our service a special and personal connection to the city and its musical life.</p>
+        <p class="lede">Oxford is one of the great choral cities of the world. From the candlelit evensongs of Christ Church Cathedral to the soaring acoustics of New College Chapel, sacred music has been part of the fabric of this city for centuries. We send singers, choirs and instrumentalists to funerals, weddings and memorials in the city and out to Witney, Bicester, Banbury and Henley. Our Artistic Director, Luca Wetherall, is a Tutor in Music at the University of Oxford, giving our service a special and personal connection to the city and its musical life.</p>
 
         <hr class="rule">
 
@@ -3202,7 +3268,7 @@
         <h2>Frequently asked questions</h2>
         
         <h3>What does an eight-voice funeral choir cost in Oxford?</h3>
-        <p>A soloist at Oxford Crematorium or in a college chapel starts from &pound;250. A small choir of four is &pound;1,150, a quintet is &pound;1,400, a sextet is &pound;1,600, and a full eight-voice choir is &pound;2,000. Our Artistic Director is a Tutor in Music at the University of Oxford, so we have a particularly close connection to the city. As Oxford sits outside Greater London, a modest travel supplement applies, quoted upfront.</p>
+        <p>A soloist at Oxford Crematorium or in a college chapel starts from &pound;250. A choir of four, which sounds substantial in most college chapels, is &pound;1,150, and a full eight-voice choir for a large funeral at the University Church is &pound;2,000. Our Artistic Director is a Tutor in Music at the University of Oxford, and many of our singers are based in the city. As Oxford sits outside Greater London, a modest travel supplement applies, quoted upfront.</p>
 
         <h3>Can you provide a wedding choir for Exeter College Chapel or New College?</h3>
         <p>Yes. Our choirs and soloists sing at weddings in Oxford&rsquo;s college chapels &mdash; including Exeter College Chapel and New College Chapel &mdash; as well as the University Church of St Mary the Virgin and parish churches across Oxfordshire. Ensembles range from a solo vocalist to a twelve-voice chorus, and we handle all the musical planning.</p>
@@ -3214,7 +3280,7 @@
         <p>Yes, we regularly sing at Oxford Crematorium and at parish churches throughout the city and county. Our musicians are familiar with the chapel&rsquo;s acoustics and timing requirements, and liaise directly with crematorium staff and funeral directors to ensure the service runs smoothly.</p>
 
         <h3>Do you provide Oxford carol services as well as roaming carol singers?</h3>
-        <p>Yes. We provide carol services in the college and cathedral tradition, along with roaming carol singers for offices, hotels, and residents&rsquo; Christmas events across Oxford and Oxfordshire. December dates usually start to fill by mid-September, so we&rsquo;d encourage early enquiries. Full details are on our <a href="../christmas.html">Christmas page</a>.</p>
+        <p>Yes. We sing carol services in the college and cathedral tradition, and our carol singers also move through offices, hotels and residents&rsquo; Christmas events across Oxford and Oxfordshire. Oxford December dates start going from mid-September. Full details are on our <a href="../christmas.html">Christmas page</a>.</p>
 
         <p>Before you contact us about a college chapel or Oxford Crematorium, you may want to read our <a href="../music-guides/funeral-music-guide.html">funeral music guide</a>, <a href="../music-guides/popular-funeral-hymns.html">popular funeral hymns</a>, <a href="../music-guides/choosing-wedding-hymns.html">wedding hymns guide</a> or <a href="../music-guides/funeral-music-costs.html">funeral music costs guide</a>.</p>
 

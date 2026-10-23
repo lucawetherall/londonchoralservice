@@ -344,6 +344,85 @@ def test_cli_add_refuses_a_bad_ad_visit_or_ad_measurement():
     assert not os.path.exists(os.path.join(d, "enquiries.csv")) or enquiries(d) == {}
 
 
+def test_cli_add_takes_an_ad_visit_with_its_campaign():
+    d = home()
+    assert add(d, ad_visit="pricing (wedding-leads)").returncode == 0
+    assert enquiries(d)["1001"]["notes"] == "ad visit: pricing (wedding-leads)"
+    p = add(d, enquiry_id="1002", ad_visit="areas/london/camden (christmas-carol-singers-2026)", notes="heard: Other")
+    assert p.returncode == 0, p.stderr
+    assert enquiries(d)["1002"]["notes"] == "heard: Other; ad visit: areas/london/camden (christmas-carol-singers-2026)"
+    for bad in ("pricing (Wedding Leads)", "pricing ()", "pricing (wedding-leads", "pricing(wedding-leads)",
+                "pricing (" + "a" * 41 + ")", "a" * 81 + " (wedding-leads)", "pricing (wedding-leads) (x)",
+                "pricing (gclid=Cj0KCQjw)"):
+        p = add(d, enquiry_id="BAD", ad_visit=bad)
+        assert p.returncode != 0 and "ad_visit" in p.stderr, (bad, p.stderr)
+        assert "Cj0KCQjw" not in p.stderr + p.stdout
+    assert "BAD" not in enquiries(d)
+
+
+def test_ad_visit_parsers_read_page_and_campaign_and_the_campaign_outranks_the_page():
+    assert pl.ad_visit_parts("pricing (wedding-leads)") == ("pricing", "wedding-leads")
+    assert pl.ad_visit_parts("weddings") == ("weddings", None)
+    assert pl.ad_visit_parts("areas/london/camden (funeral-expert)") == ("areas/london/camden", "funeral-expert")
+    assert pl.ad_visit_parts("Ann Smith") is None and pl.ad_visit_parts("") is None
+    assert pl.ad_visit_parts("a" * 80) == ("a" * 80, None) and pl.ad_visit_parts("a" * 81) is None
+    notes = "heard: A Google ad (marked Sponsored); ad visit: pricing (wedding-leads); ad measurement: yes"
+    assert pl.ad_visit_from_notes(notes) == ("pricing", "wedding-leads")
+    assert pl.ad_visit_from_notes("ad visit: weddings") == ("weddings", None)
+    assert pl.ad_visit_from_notes("quoted 2026-10-01") is None and pl.ad_visit_from_notes("") is None
+    # the campaign named in the visit outranks the page's; without one, the page's (old notes)
+    assert pl.ad_visit_campaign("funerals (wedding-leads)") == "wedding-leads"
+    assert pl.ad_visit_campaign("pricing (christmas-carol-singers-2026)") == "christmas-carol-singers-2026"
+    assert pl.ad_visit_campaign(("pricing", "wedding-leads")) == "wedding-leads"
+    assert pl.ad_visit_campaign("weddings") == "wedding-leads"
+    assert pl.ad_visit_campaign("funerals") == "funeral-expert"
+    for page in ("christmas", "christmas-pricing", "christmas-carol-services", "carol-singers"):
+        assert pl.ad_visit_campaign(page) == "christmas-carol-singers-2026", page
+    assert pl.ad_visit_campaign("pricing") is None and pl.ad_visit_campaign("nonsense!") is None
+    assert pl.ad_visit_campaign("pricing (summer-2027)") == "summer-2027"  # named, even if not in CAMPAIGN_IDS
+    assert set(pl.PAGE_CAMPAIGNS.values()) <= set(pl.CAMPAIGN_IDS)
+
+
+def test_heard_kind_reads_old_and_new_answers():
+    for ad in ("A Google ad", "A Google ad (marked Sponsored)", " a google AD  (marked sponsored) "):
+        assert pl.heard_kind(ad) == "ad", ad
+    assert pl.heard_kind("A Google search result") == "search"
+    for unknown in ("Searching on Google", "Search", "Prefer not to say", "Google, not said which", "", None):
+        assert pl.heard_kind(unknown) == "unknown", unknown
+    for other in ("Recommended by someone", "A funeral director", "Referred by a planner", "Other"):
+        assert pl.heard_kind(other) == "other", other
+    assert pl.heard_from_notes("4 singers; heard: A Google search result; quoted 2026-10-01") == "A Google search result"
+    assert pl.heard_from_notes("heard: A Google ad (marked Sponsored)") == "A Google ad (marked Sponsored)"
+    assert pl.heard_from_notes("ad visit: weddings") == ""
+
+
+def test_cli_heard_records_the_answer_once():
+    d = home()
+    assert add(d, notes="4 singers").returncode == 0
+    p = cli(d, "heard", "1001", "A Google search result")
+    assert p.returncode == 0 and "heard (search)" in p.stdout, p.stderr
+    assert enquiries(d)["1001"]["notes"] == "4 singers; heard: A Google search result"
+    p = cli(d, "heard", "1001", "A Google ad (marked Sponsored)")
+    assert p.returncode != 0 and "already has an answer" in p.stderr, p.stderr
+    assert enquiries(d)["1001"]["notes"] == "4 singers; heard: A Google search result"
+    assert add(d, enquiry_id="1002", notes="heard: A Google ad").returncode == 0
+    assert cli(d, "heard", "1002", "Other").returncode != 0
+    assert cli(d, "heard", "9999", "Other").returncode != 0  # no such enquiry
+
+
+def test_cli_heard_refuses_contact_details_and_long_answers():
+    d = home()
+    assert add(d).returncode == 0
+    for bad in ("", "   ", "x" * 61, "my friend; at the church", "ann@example.com told me", "call 07356 042468",
+                "07356042468"):
+        p = cli(d, "heard", "1001", bad)
+        assert p.returncode != 0 and "nothing changed" in p.stderr, (bad, p.stderr)
+        assert "example.com" not in p.stdout + p.stderr and "042468" not in p.stdout + p.stderr
+    assert enquiries(d)["1001"]["notes"] == ""
+    assert cli(d, "heard", "1001", "Recommended by a friend").returncode == 0
+    assert enquiries(d)["1001"]["notes"] == "heard: Recommended by a friend"
+
+
 def test_cli_add_reads_json_from_stdin():
     d = home()
     row = {"enquiry_id": "1001", "first_seen": "2026-09-20", "source": "email", "occasion": "wedding",

@@ -262,6 +262,24 @@
       if (scroll) errorBox.scrollIntoView({ block: 'center' });
     }
 
+    // A field's own message (the <p class="pe-field-error"> its
+    // aria-describedby names), shown while the field is invalid, so a screen
+    // reader hears what is missing when the field takes focus. (As js/form.js.)
+    function setFieldError(el, on) {
+      if (on) el.setAttribute('aria-invalid', 'true');
+      else el.removeAttribute('aria-invalid');
+      (el.getAttribute('aria-describedby') || '').split(/\s+/).forEach(function (id) {
+        var msg = id && document.getElementById(id);
+        if (msg && msg.classList.contains('pe-field-error')) msg.setAttribute('data-visible', on ? 'true' : 'false');
+      });
+    }
+    ['input', 'change'].forEach(function (evt) {
+      form.addEventListener(evt, function (e) {
+        var el = e.target;
+        if (el.getAttribute('aria-invalid') === 'true' && el.validity && el.validity.valid) setFieldError(el, false);
+      });
+    });
+
     form.addEventListener('submit', function (e) {
       e.preventDefault();
 
@@ -272,6 +290,7 @@
         return el.willValidate && !el.validity.valid;
       });
       if (invalid.length) {
+        invalid.forEach(function (el) { setFieldError(el, true); });
         showError('incomplete', false);
         invalid[0].focus();
         return;
@@ -337,10 +356,10 @@
       fd.forEach(function (value, key) {
         data[key] = value;
       });
-      // Without consent: the landing page's name when this page's URL came
-      // from an ad (never the click ID), and the click ID itself only if the
-      // sender ticked the ad-measurement box. Nothing is stored. (Mirrors
-      // js/form.js; helpers in partials/analytics.html.)
+      // Without consent: the ad visit label when this visit came from an ad
+      // (the landing page and campaign, never the click ID), and the click ID
+      // itself only if the sender ticked the ad-measurement box. Nothing is
+      // stored. (Mirrors js/form.js; helpers in partials/analytics.html.)
       if (!consented) {
         try {
           if (typeof window.lcsAdVisit === 'function') {

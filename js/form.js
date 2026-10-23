@@ -147,9 +147,10 @@
       var attr = window.lcsAttribution();
       Object.keys(attr).forEach(function (k) { if (!data[k]) data[k] = attr[k]; });
     }
-    // Without consent: the landing page's name when this page's URL came from
-    // an ad (never the click ID), and the click ID itself only if the sender
-    // ticked the ad-measurement box (ad_measurement=yes). Nothing is stored.
+    // Without consent: the ad visit label when this visit came from an ad
+    // (the landing page and campaign, "pricing (wedding-leads)", never the
+    // click ID), and the click ID itself only if the sender ticked the
+    // ad-measurement box (ad_measurement=yes). Nothing is stored.
     if (!consented) {
       try {
         if (typeof window.lcsAdVisit === 'function') {
