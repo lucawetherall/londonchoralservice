@@ -31,7 +31,7 @@ Skipped: FuneralGuide (lists funeral directors only), Bark and Add to Event (sha
 | Phone | 07356 042468 |
 | Email | office@londonchoralservice.com |
 | Website | https://londonchoralservice.com/?utm_source=<site>&utm_medium=referral&utm_campaign=listing, with `<site>` from the table below (`docs/utm-conventions.md`) |
-| Address | None shown. We are a service-area business, and the Google profile hides its address. Where a site needs an address to verify the business, give the registered office (Alma Consort Ltd, postcode N1 7GU, as on Companies House) and tick "hide address" or "I serve customers at their location". Never type a Maidenhead or home address. |
+| Address | None shown. We are a service-area business, and the Google profile hides its address. Where a site needs an address to verify the business, give the registered office (Alma Consort Ltd, postcode N1 7GU, as on Companies House) and tick "hide address" or "I serve customers at their location". Never type a Maidenhead or home address, and never invent a street address. |
 | Hours | Monday to Friday 9am–6pm, weekends closed (as on `contact.html` and the Google profile) |
 | Legal entity | The London Choral Service is a trading name of Alma Consort Ltd (Companies House 16785727) |
 | Service area | London, Surrey, Kent, Essex, Hertfordshire, Berkshire and Buckinghamshire (as on the Google profile); further afield on request |
