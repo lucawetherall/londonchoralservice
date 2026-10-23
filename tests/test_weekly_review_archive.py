@@ -341,6 +341,64 @@ def test_logged_changes_are_newest_first_merged_and_dated():
     assert rows[-1] == ("2026-09-01 00:00", "old", "budget", "£1 → £2"), rows
 
 
+def _ns(**kw):
+    import types
+    return types.SimpleNamespace(**kw)
+
+
+def _enum(name):
+    return _ns(name=name)
+
+
+def test_section_3_flags_a_wrong_primary_and_a_missing_one():
+    actions = [("Submit lead form", "ENABLED", True), ("Contact", "ENABLED", True),
+               ("Call click", "ENABLED", False), ("GA4 import", "HIDDEN", False)]
+
+    def q(query):
+        if "FROM conversion_action" in query:
+            assert "!= 'REMOVED'" in query, query
+            return [_ns(conversion_action=_ns(name=n, status=_enum(s), primary_for_goal=p)) for n, s, p in actions]
+        return []
+    out = io.StringIO()
+    with contextlib.redirect_stdout(out):
+        wr.conversions_section(q)
+    lines = out.getvalue().splitlines()
+    by = {l.split("  ")[0]: l for l in lines[1:]}
+    assert "!CHECK" not in by["Submit lead form"] and "ENABLED" in by["Submit lead form"], lines
+    assert "!CHECK: primary, but not one of the owner's two" in by["Contact"], lines
+    assert "!CHECK" not in by["Call click"], lines
+    assert "GA4 import" not in out.getvalue(), lines  # hidden and secondary: left out
+    assert "!CHECK: not in the account" in by["WhatsApp or email click"], lines
+
+
+def test_section_4_prints_rsa_counts_and_sitelinks_per_campaign():
+    def ad(campaign, n_head, n_desc):
+        return _ns(campaign=_ns(name=campaign), ad_group=_ns(name="g", status=_enum("ENABLED")),
+                   ad_group_ad=_ns(status=_enum("ENABLED"), ad_strength=_enum("GOOD"), action_items=[],
+                                   policy_summary=_ns(approval_status=_enum("APPROVED"),
+                                                      review_status=_enum("REVIEWED")),
+                                   ad=_ns(id=1, final_urls=["https://londonchoralservice.com/funerals.html"],
+                                          responsive_search_ad=_ns(headlines=[0] * n_head,
+                                                                   descriptions=[0] * n_desc))))
+
+    def q(query):
+        if "FROM ad_group_ad" in query:
+            assert "responsive_search_ad.headlines" in query and "responsive_search_ad.descriptions" in query
+            return [ad("funeral expert campaign", 15, 4), ad("wedding-leads", 9, 3)]
+        if "FROM campaign_asset" in query:
+            assert "SITELINK" in query and "campaign_asset.status = 'ENABLED'" in query, query
+            return [_ns(campaign=_ns(name="funeral expert campaign"))] * 6
+        return []
+    out = io.StringIO()
+    with contextlib.redirect_stdout(out):
+        landing = wr.ads_section(q)
+    text = out.getvalue()
+    assert "headlines=15 descriptions=4" in text and "headlines=9 descriptions=3" in text, text
+    assert "funeral expert campaign" in text and "sitelinks=6" in text, text
+    assert [l for l in text.splitlines() if "wedding-leads" in l and "sitelinks=0" in l], text
+    assert landing == ["https://londonchoralservice.com/funerals.html"]
+
+
 if __name__ == "__main__":
     import inspect
 
