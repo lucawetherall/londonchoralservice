@@ -572,3 +572,45 @@ Only you can do it, since it needs your ID and the company's details:
 2. Answer the questions about who pays for the ads and who the advertiser is: Alma Consort Ltd, Companies House 16785727, trading as The London Choral Service.
 3. Upload what Google asks for, usually a photo ID for you and a company document such as the Companies House certificate of incorporation.
 4. Google usually replies within a few working days. Tell an agent when it's approved, so this section can be closed.
+
+---
+
+## 31. Bing Webmaster Tools (import from Search Console)
+
+Added 2026-10-24. Bing's index feeds ChatGPT search and Copilot, and a check on 24 Oct found the site missing from Bing even for its own name. Nothing on the site blocks Bing: robots.txt allows it, no page in the sitemap is noindex, and the IndexNow ping after each deploy gets HTTP 200 (the key is verified). IndexNow tells Bing the URLs exist, but Bing indexes a new, little-linked site slowly until it is verified in Bing Webmaster Tools. Claude can't create accounts, so this step is yours (about five minutes):
+
+1. Go to https://www.bing.com/webmasters and click **Sign in**. Use the Google account that owns the Search Console property, or a Microsoft account.
+2. On **Add a site**, choose **Import your sites from GSC** (the left-hand card), not "Add your site manually".
+3. Click **Continue**, pick the same Google account, and allow Bing to view your Search Console data (read-only).
+4. Tick **londonchoralservice.com** and click **Import**. The import verifies the site and brings the sitemap with it, so you don't need a meta tag or a DNS record.
+5. Open **Sitemaps** in the left menu. If `https://londonchoralservice.com/sitemap.xml` isn't listed, click **Submit sitemap**, paste that URL and click **Submit**.
+6. Open **URL Inspection**, inspect `https://londonchoralservice.com/` and click **Request indexing** if it isn't indexed. Do the same for `/weddings.html`, `/funerals.html`, `/christmas.html` and `/pricing.html`. The IndexNow ping covers the other pages.
+7. Tell an agent when it's done. Bing usually shows first results within a week; **Site Explorer** in Bing Webmaster Tools then shows which pages are indexed, and this section can be closed.
+
+---
+
+## 32. Ask Google to recrawl 12 pages
+
+Added 2026-10-24. `scripts/reports/index_coverage.py` inspected all 165 sitemap URLs on 24 Oct: 153 are indexed, and every page's Google-chosen canonical matches ours. The 12 that aren't fall into two groups:
+
+- **Never crawled:** `christmas-carol-services.html` (added 19 Oct), `christmas-listen.html` (23 Oct), `professionals.html` (29 Sep; until 24 Oct only the footer linked to it, and now every `for-*` page does too) and `music-guides/popular-funeral-hymns.html` (added in February and well linked, yet Google has it as "Discovered" and has never fetched it).
+- **Crawled in the spring, not indexed, and not re-crawled since:** the borough pages for Barnet, Hammersmith & Fulham, Hillingdon, Kingston, Newham, Richmond and Tower Hamlets (last crawled 5 Mar to 10 May), and `music-guides/wedding-ceremony-music.html` (10 Jul). Google judged the old versions of these pages. Their content has been rewritten since: each one overlaps its nearest sibling by 5% or less and has as many internal links as the indexed boroughs. They need a fresh crawl.
+
+The API can't request indexing, so this is a manual step. In Search Console (property `londonchoralservice.com`), paste each URL into the search bar at the top, wait for the result, then click **Request indexing**. Google allows about ten requests a day, so do the eight crawled pages first (the boroughs, then `wedding-ceremony-music.html`) and the four never-crawled pages the next day:
+
+```
+https://londonchoralservice.com/areas/london/barnet.html
+https://londonchoralservice.com/areas/london/hammersmith-fulham.html
+https://londonchoralservice.com/areas/london/hillingdon.html
+https://londonchoralservice.com/areas/london/kingston.html
+https://londonchoralservice.com/areas/london/newham.html
+https://londonchoralservice.com/areas/london/richmond.html
+https://londonchoralservice.com/areas/london/tower-hamlets.html
+https://londonchoralservice.com/music-guides/wedding-ceremony-music.html
+https://londonchoralservice.com/professionals.html
+https://londonchoralservice.com/christmas-carol-services.html
+https://londonchoralservice.com/christmas-listen.html
+https://londonchoralservice.com/music-guides/popular-funeral-hymns.html
+```
+
+The sitemap doesn't need resubmitting: Google last read it on 23 Oct. Rerun `.venv/bin/python scripts/reports/index_coverage.py` two weeks later. Any page still "Crawled - currently not indexed" after a fresh crawl needs a content fix, not another request.
