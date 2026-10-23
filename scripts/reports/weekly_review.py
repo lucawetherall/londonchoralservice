@@ -68,6 +68,7 @@ sys.path.insert(0, str(REPO / "scripts" / "ads"))
 sys.path.insert(0, str(REPO / "scripts" / "reports"))
 import check_payments  # noqa: E402  is_cancelled: one cancelled rule for every ledger reader
 import enquiry_sources as es  # noqa: E402  the A/B/C grades: sections 9b, 11 and 12
+import goatcounter  # noqa: E402  section 5c: visits from every visitor, no cookies needed
 import lcs_money as lm  # noqa: E402  LEDGER, parse_gbp, today
 import upload_bookings  # noqa: E402  select_ready: section 9 counts what the upload would send
 
@@ -510,6 +511,11 @@ def ga4_section(s):
     if thresholded:
         print("   !THRESHOLDED: GA4 withheld small numbers (Google signals data thresholds) in: " + "; ".join(thresholded)
               + ". Low counts may show as zero here; use the Ads conversions in section 3 instead.")
+
+
+def goatcounter_section(today):
+    """Section 5c: GoatCounter's totals (read-only key in the Keychain; scripts/reports/goatcounter.py)."""
+    print("\n".join(goatcounter.section(today)))
 
 
 def gsc_section(s):
@@ -1314,6 +1320,7 @@ def run_sections(args, q=None, s=None):
     landing = run_section("4", "Ads (enabled campaigns)", ads_section, q)
     run_section("4b", "Google's recommendations (open, not dismissed)", recommendations_section, q)
     run_section("5", "GA4, last 7 days", ga4_section, s)
+    run_section("5c", "Visits from every visitor (GoatCounter)", goatcounter_section, today)
     run_section("6", "Search Console", gsc_section, s)
     run_section("7", "Search Console coverage", coverage_section, s, landing)
     run_section("8", "Tracking wiring", wiring_section, s, q)
