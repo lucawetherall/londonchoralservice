@@ -25,6 +25,13 @@ ROYAL = 'SbvqWglsbMo'
 # upload has no maxres thumbnail yet.
 THUMBS = {}
 
+# The ad landing pages show a local WebP still instead of the YouTube thumbnail
+# (PR #296, 23 Oct 2026), for a faster first paint on phones.
+LOCAL_STILLS = {
+    PROMO: 'assets/films/hero-film-1280.webp',
+    WONDERFUL: 'assets/films/hero-christmas-1280.webp',
+}
+
 HERO_FILMS = {
     'index.html': PROMO,
     'weddings.html': PROMO,
@@ -130,11 +137,12 @@ def check_heroes():
 
         check(f'data-video="{film}"' in video, f'{page}: hero film should be {film}')
         thumb = THUMBS.get(film, 'maxresdefault.jpg')
-        check(f'/vi/{film}/{thumb}' in video, f'{page}: hero thumbnail should be {film}')
+        check(f'/vi/{film}/{thumb}' in video or LOCAL_STILLS.get(film, "\0") in video,
+              f'{page}: hero thumbnail should be {film}')
         if CAPTIONS[film] is None:
             check('class="video-caption"' not in video, f'{page}: the {film} film takes no caption')
         else:
-            caption = f'<p class="video-caption">{CAPTIONS[film]}</p>'
+            caption = f'<p class="video-caption">{CAPTIONS[film]}'
             check(video.count(caption) == 1, f'{page}: needs exactly one caption "{CAPTIONS[film]}"')
 
 
