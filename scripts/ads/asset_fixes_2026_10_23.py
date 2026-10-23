@@ -57,13 +57,10 @@ REP_OLD = {"link_text": "Our Repertoire", "url": SITE + "listen.html",
 REP_NEW = {"url": SITE + "music-guides/wedding-choral-repertoire.html",
            "d1": "Pieces for arrivals and signing", "d2": "Ave Maria, Rutter, Gjeilo and more"}
 
-FUNERAL_SITELINKS_NOW = {348071213212, 424677730988, 424863742104, 424863742110}
-NEW_FUNERAL_SITELINKS = [
-    ("Funeral Choir Guide", SITE + "music-guides/funeral-choir-guide.html",
-     "Choir sizes from four to twelve", "Hymns, solo and choral pieces"),
-    ("Short-Notice Funerals", SITE + "music-guides/last-minute-funeral-singers.html",
-     "We confirm availability same day", "No extra charge for short notice"),
-]
+# Part c is dropped: the 23 Oct 15:32 copy refresh (PR #287) added "Funeral Music Guide" and "Popular
+# Funeral Hymns", so the campaign already has the six sitelinks Google asks for. The check stays.
+FUNERAL_SITELINKS_NOW = {348071213212, 424677730988, 424863742104, 424863742110, 432608261348, 432796409451}
+NEW_FUNERAL_SITELINKS = []
 
 BUSINESS_NAME_ASSET, BUSINESS_NAME = 348134569764, "The London Choral Service"
 

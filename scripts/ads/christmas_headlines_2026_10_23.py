@@ -40,8 +40,9 @@ HIRE_AD = 825999587211
 PRICE_HEADLINE = "4 Carol Singers from £1,150"
 PRICE_DESCRIPTION = "Four professional carol singers for up to two hours, breaks included. £1,150, all in."
 ALL_ADS = {"Two Hours of Carols Included": "Up to 2 Hours, Breaks Included"}
-HIRE_ONLY = {"Unaccompanied 4-Part Carols": "Christmas Choir for Hire",
-             "Book Your December Date": "Christmas Carol Singers"}
+# The Hire-ad swaps planned here ("Christmas Choir for Hire", a carol singers headline) were made by the
+# 23 Oct 15:32 copy refresh (PR #287), so only the two-hours headline is left to change.
+HIRE_ONLY = {}
 WHY = {
     "Two Hours of Carols Included": "the booking is up to two hours including breaks (christmas.html: 'A standard booking "
                                     "runs up to two hours including breaks'); 'two hours of carols' overstates the singing",

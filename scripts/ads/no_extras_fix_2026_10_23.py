@@ -132,8 +132,8 @@ def main():
         d_old = [d.text for d in rsa.descriptions]
         todo_h = [t for t in h_old if t in HEADLINES]
         todo_d = [t for t in d_old if t in DESCRIPTIONS]
-        if "No VAT Added, No Extras" not in todo_h:
-            raise SystemExit(f'ad {ad_id} lacks the headline "No VAT Added, No Extras"; nothing sent')
+        # The 23 Oct 15:32 copy refresh (PR #287) already replaced the "No VAT Added, No Extras" headline;
+        # the descriptions and sitelinks below still carry the claim.
         if not any("nothing on top" in t for t in todo_d):
             raise SystemExit(f'ad {ad_id} lacks the "nothing on top" description; nothing sent')
         h_new = [HEADLINES.get(t, t) for t in h_old]
