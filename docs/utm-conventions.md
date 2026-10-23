@@ -17,7 +17,7 @@ How we tag links that point at londonchoralservice.com from outside the site, so
 |---|---|---|---|
 | Google Ads (final URL suffix, already set) | `google` | `cpc` | `funeral-expert`, `wedding-leads`, `christmas-carol-singers-2026` |
 | Google Business Profile website link | `google` | `organic` | `gbp` |
-| First-contact email to a firm (Zoho draft) | `outreach` | `email` | `<audience>-<yyyy-mm>`, e.g. `funeral-directors-2026-12`, `event-managers-2026-10` |
+| First-contact email to a firm (Zoho draft) | `outreach` | `email` | `<audience>-<mon>-<yyyy>`, e.g. `funeral-directors-dec-2026`, `event-managers-oct-2026` (month as three letters: a `2026-10` style date reads as a sort code to the Zoho bank-details guard, which then refuses the draft) |
 | Follow-up in the same outreach thread | `outreach` | `email` | same campaign as the first email |
 | A partner's own website or referral sheet | `partner-<slug>` | `referral` | `partner-programme` |
 | Marketplace or directory listing (Hitched, Bridebook, Yell, Bing Places, Apple Business) | `<site>` e.g. `hitched` | `referral` | `listing` |
@@ -27,7 +27,7 @@ How we tag links that point at londonchoralservice.com from outside the site, so
 
 ## Example
 
-`https://londonchoralservice.com/for-funeral-directors.html?utm_source=outreach&utm_medium=email&utm_campaign=funeral-directors-2026-12`
+`https://londonchoralservice.com/for-funeral-directors.html?utm_source=outreach&utm_medium=email&utm_campaign=funeral-directors-dec-2026`
 
 ## How the site uses them
 

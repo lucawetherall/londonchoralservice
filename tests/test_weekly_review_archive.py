@@ -188,6 +188,159 @@ def test_report_sections_prints_only_the_chosen_sections(monkeypatch):
         assert rs.main(["--date", "2026-10-12", "1"]) == 2
 
 
+# ---------- each section on its own (the 12 Oct report died after its first Ads query) ----------
+
+class RefreshError(Exception):
+    """Stands in for google.auth.exceptions.RefreshError (an expired or revoked sign-in)."""
+
+
+class FakeAdsException(Exception):
+    """Shaped like GoogleAdsException: no message, the reason in .failure."""
+    def __init__(self, failure):
+        super().__init__()
+        self.failure = failure
+
+
+def test_failure_note_names_the_type_and_spots_google_sign_in_errors():
+    assert wr.failure_note(ValueError("Some Client, 12 Example Road")) == "ValueError"
+    hint = " (looks like a Google auth error: check the sign-in)"
+    assert wr.failure_note(RefreshError("invalid_grant: Token has been expired or revoked.")) == "RefreshError" + hint
+    assert wr.failure_note(FakeAdsException("errors { error_code { authentication_error: OAUTH_TOKEN_INVALID } }")) \
+        == "FakeAdsException" + hint
+    assert wr.failure_note(FakeAdsException("errors { error_code { query_error: BAD_FIELD } }")) == "FakeAdsException"
+    assert wr.failure_note(PermissionError(13, "Permission denied")) == "PermissionError"  # a local file, not Google
+    assert "Example" not in wr.failure_note(RuntimeError("credentials for Some Client at Example Road"))
+
+
+def test_run_section_keeps_going_and_adds_the_heading_when_missing():
+    def boom_before_heading():
+        raise KeyError("x")
+
+    def boom_after_heading():
+        print("\n== 6. Search Console, a to b")
+        print("   this week clicks 3")
+        raise RefreshError("invalid_grant")
+
+    out = io.StringIO()
+    with contextlib.redirect_stdout(out):
+        assert wr.run_section("5", "GA4, last 7 days", boom_before_heading) is None
+        assert wr.run_section("6", "Search Console", boom_after_heading) is None
+        assert wr.run_section("9", "Bookings ledger", lambda: print("\n== 9. Bookings ledger") or 42) == 42
+    text = out.getvalue()
+    assert text == ("\n== 5. GA4, last 7 days\n   SECTION 5 FAILED: KeyError\n"
+                    "\n== 6. Search Console, a to b\n   this week clicks 3\n"
+                    "   SECTION 6 FAILED: RefreshError (looks like a Google auth error: check the sign-in)\n"
+                    "\n== 9. Bookings ledger\n"), repr(text)
+
+
+def test_lazy_client_is_made_once_and_its_error_repeats():
+    made = []
+
+    def make():
+        made.append(1)
+        raise RefreshError("invalid_grant")
+    q = wr._Lazy(make)
+    for _ in range(3):
+        try:
+            q("SELECT campaign.id FROM campaign")
+        except RefreshError:
+            pass
+        else:
+            raise AssertionError("should raise")
+    assert made == [1]
+    ok = wr._Lazy(lambda: (lambda query: ["row"]))
+    assert ok("SELECT 1") == ["row"] and ok("SELECT 2") == ["row"]
+
+
+def test_with_google_signed_out_every_section_still_reports(monkeypatch):
+    """Ads and the Google session both fail to sign in: each Google section says SECTION <id> FAILED with the
+    auth hint, the ledger and enquiry sections still run (9b grades from the sheet alone), and --quiet's problem
+    lines carry the auth wording the dispatcher stops on. No network: the live-page fetches are stubbed."""
+    reset()
+    import datetime
+    import types
+    import urllib.request
+    today = datetime.date(2026, 10, 26)
+    monkeypatch.setattr(wr.lm, "today", lambda *a, **k: today)
+
+    def no_network(*a, **k):
+        raise OSError("no network in tests")
+    monkeypatch.setattr(urllib.request, "urlopen", no_network)
+
+    def money_down():
+        print("\n== 10. Money (totals and invoice numbers only)")
+        raise ValueError("ledger row text that must never print")
+    monkeypatch.setattr(wr, "money_section", money_down)
+    import csv as _csv
+    with open(os.path.join(TMP, "enquiries.csv"), "w", newline="") as f:
+        w = _csv.DictWriter(f, fieldnames=["enquiry_id", "first_seen", "source", "occasion", "gclid", "notes"])
+        w.writeheader()
+        w.writerow({"enquiry_id": "t1", "first_seen": "2026-10-22", "source": "web form", "occasion": "christmas",
+                    "gclid": "", "notes": "ad visit: christmas; The Example Hall"})
+
+    def signed_out():
+        raise RefreshError("invalid_grant: Token has been expired or revoked.")
+    q, s = wr._Lazy(signed_out), wr._Lazy(signed_out)
+    args = types.SimpleNamespace(since=datetime.date(2026, 9, 26), write_proposals=False, gsc_shortlist=False)
+    out = io.StringIO()
+    with contextlib.redirect_stdout(out):
+        wr.run_sections(args, q=q, s=s)
+    text = out.getvalue()
+    heads = __import__("re").findall(r"^== (\w+)\.", text, __import__("re").M)
+    assert heads == ["1", "2", "3", "4", "4b", "5", "6", "7", "8", "9", "9b", "10", "11", "12", "13"], heads
+    hint = "RefreshError (looks like a Google auth error: check the sign-in)"
+    for sid in ("1", "2", "3", "4", "4b", "5", "6", "7", "8"):
+        assert f"   SECTION {sid} FAILED: {hint}" in text.splitlines(), (sid, text)
+    assert "   SECTION 10 FAILED: ValueError" in text.splitlines() and "must never print" not in text, text
+    assert "2026-10-22 · christmas · web form · B Christmas carol singers – events 2026 (ad visit: christmas)" in text, text
+    assert "Example Hall" not in text
+    assert f"true cost per booking failed: {hint}" in text and f"seasonal budget rules failed: {hint}" in text, text
+    path = os.path.join(TMP, "reports", "2026-10-26.txt")
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w", encoding="utf-8") as f:
+        f.write(text)
+    summary = wr.quiet_summary(path)
+    assert "sections: 1 2 3 4 4b 5 6 7 8 9 9b 10 11 12 13" in summary, summary
+    assert f"problem: SECTION 1 FAILED: {hint}" in summary.splitlines(), summary
+
+
+def test_quiet_lists_failed_sections_but_not_log_rows_held_guards_or_c_grades():
+    reset()
+    path = os.path.join(TMP, "reports", "2026-10-26.txt")
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w", encoding="utf-8") as f:
+        f.write("== 1. Campaigns\n"
+                "   log 2026-10-19 23:16 · campaign X · final URL · error page → christmas.html\n"
+                "\n== 9b. Enquiries by ad source\n"
+                "   2026-10-22 · christmas · web form · C Christmas (only a Christmas ad click that day or the day "
+                "before, cookies declined?; never counts)\n"
+                "\n== 12. Seasonal budget rules\n"
+                "   spend guard X: £90.00, 20 clicks, 0 Ads conversions in 28 days · enquiries A 0 · B 1 · C 0 — held: "
+                "an A or B enquiry came from this campaign, so no pause\n"
+                "   spend guard Y: £90.00, 20 clicks, 0 Ads conversions in 28 days · enquiries A 0 · B 0 · C 0 — STOP "
+                "GUARD: propose pausing (never deleting) until the owner decides\n"
+                "   stop rule: £80+ in 28 days with no Ads conversion and no A or B enquiry → propose pausing\n"
+                "\n== 13. Search Console shortlist\n   SECTION 13 FAILED: KeyError\n")
+    lines = wr.quiet_summary(path).splitlines()
+    problems = [l for l in lines if l.startswith("problem:")]
+    assert len(problems) == 2, lines
+    assert problems[0].startswith("problem: spend guard Y:") and problems[1] == "problem: SECTION 13 FAILED: KeyError"
+
+
+def test_logged_changes_are_newest_first_merged_and_dated():
+    import datetime
+    text = ("| Date | Resource | Field | Current → New | Reason | Script |\n|---|---|---|---|---|---|\n"
+            "| 2026-10-19 23:42 | kw \"a\" (exact) | max CPC | £2.50 → £3.50 | r | s |\n"
+            "| 2026-10-19 23:42 | kw \"b\" (exact) | max CPC | £2.50 → £3.50 | r | s |\n"
+            "| 2026-10-19 23:16 | ad 1 | final URL | x → y | r | s |\n"
+            "| 2026-09-01 00:00 | old | budget | £1 → £2 | r | s |\n")
+    rows = wr.logged_changes(text, datetime.date(2026, 10, 26), days=21, baseline=datetime.date(2026, 10, 23))
+    assert rows == [("2026-10-19 23:42", 'kw "a" (exact) (+1 more alike)', "max CPC", "£2.50 → £3.50"),
+                    ("2026-10-19 23:16", "ad 1", "final URL", "x → y")], rows
+    rows = wr.logged_changes(text, datetime.date(2026, 10, 26), days=21, baseline=datetime.date(2026, 8, 30))
+    assert rows[-1] == ("2026-09-01 00:00", "old", "budget", "£1 → £2"), rows
+
+
 if __name__ == "__main__":
     import inspect
 
