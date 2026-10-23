@@ -22,13 +22,6 @@
       'wait_for_update': 500
     });
     gtag('set', 'ads_data_redaction', true);
-    // URL passthrough: on a visit that arrived with an ad click ID, the Google
-    // Ads tag adds it (gclid, gbraid or wbraid, plus _gl=1*…*_up*MQ..) to links
-    // between our own pages, so it is not lost while ad_storage is denied. An
-    // Accept on a later page writes _gcl_aw from that page's URL, and a ticked
-    // ad-measurement box sends it (lcsClickIds below). It writes nothing to the
-    // device. GA4 opts out in loadGA(). Checked 2026-10-23 against gtag.js.
-    gtag('set', 'url_passthrough', true);
     try {
       if (localStorage.getItem('lcs-consent') === 'granted') {
         gtag('consent', 'update', {
@@ -55,12 +48,7 @@
       // in dataLayer but never load gtag.js, so tests can't reach GA4 or Ads.
       if (!/(^|\.)londonchoralservice\.com$/.test(location.hostname)) return;
       gtag('js', new Date());
-      // GA4 keeps url_passthrough off: with it on, GA4 adds its client and
-      // session IDs (_ga, _ga_* in _gl) to every same-site link for every
-      // visitor who hasn't accepted cookies, ad click or not.
-      var ga4 = { 'url_passthrough': false };
-      if (internal) ga4['traffic_type'] = 'internal';
-      gtag('config', 'G-9FENN7VS0E', ga4);
+      gtag('config', 'G-9FENN7VS0E', internal ? { 'traffic_type': 'internal' } : {});
       gtag('config', 'AW-17988388404', { 'allow_enhanced_conversions': true });
       var s = document.createElement('script');
       s.src = 'https://www.googletagmanager.com/gtag/js?id=G-9FENN7VS0E';
@@ -239,31 +227,20 @@
     // Ad visit without cookies: when this page's own URL holds an ad click ID
     // and the visitor has not allowed cookies, its messages and form carry the
     // page's name ("Ad visit: weddings"), never the click ID. It lives only in
-    // this variable: nothing is stored. Only the landing page counts: a later
-    // page whose URL has the click ID from URL passthrough (a _gl marker, or
-    // reached from one of our own pages) carries no ad visit.
+    // this variable: nothing is stored, so the next page carries nothing.
     function lcsAdVisitSlug(path) {
       var p = String(path || '').toLowerCase().replace(/^\/+/, '').replace(/\.html$/, '').replace(/(^|\/)index$/, '').replace(/\/+$/, '');
       if (!p) return 'home';
       return /^[a-z0-9-]+(\/[a-z0-9-]+)*$/.test(p) ? p : 'other';
     }
-    function lcsLandedHere() {
-      if (/[?&]_gl=/.test(location.search)) return false;
-      try {
-        var host = function(h) { return h.replace(/^www\./, ''); };
-        if (document.referrer && host(new URL(document.referrer).hostname) === host(location.hostname)) return false;
-      } catch (e) {}
-      return true;
-    }
-    var LCS_AD_VISIT = /[?&](gclid|gbraid|wbraid)=[^&]/.test(location.search) && lcsLandedHere() ? lcsAdVisitSlug(location.pathname) : '';
+    var LCS_AD_VISIT = /[?&](gclid|gbraid|wbraid)=[^&]/.test(location.search) ? lcsAdVisitSlug(location.pathname) : '';
     function lcsAdVisit() {
       if (!LCS_AD_VISIT) return '';
       try { if (localStorage.getItem('lcs-consent') === 'granted') return ''; } catch (e) {}
       return LCS_AD_VISIT;
     }
     // The click IDs in this page's own URL, for an enquiry whose sender ticked
-    // the form's ad-measurement box (read at submit, never stored). With URL
-    // passthrough that includes a form page reached from the landing page.
+    // the form's ad-measurement box (read at submit, never stored).
     function lcsClickIds() {
       var out = {};
       try {

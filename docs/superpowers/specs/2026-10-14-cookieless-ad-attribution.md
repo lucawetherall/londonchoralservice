@@ -18,7 +18,7 @@ Most visitors ignore or reject the cookie sheet. From 16 Sep to 13 Oct, Google A
   - Email: the subject as now; the body gets `Ad visit: weddings`.
   - Web form (`js/form.js`, `js/private-events.js`): a field `ad_visit` = `weddings`, which Web3Forms prints as its own line in the notification.
   
-  Another page opened later carries no ad visit. Since 2026-10-23 (`url_passthrough` in `partials/analytics.html`) a later page reached from the landing page has the click ID in its URL too, with a `_gl` marker and our own site as referrer; `lcsLandedHere()` tells it apart, so the tag still names the landing page only. On that later page a ticked ad-measurement box sends the click ID, and an Accept writes `_gcl_aw` and the Ref from its URL.
+  Another page opened later has no click ID in its URL, so it carries nothing.
 - Campaign mapping (in the handover's Appendix A and `lcs-review-bookings.md`): `weddings` → wedding-leads; `funerals` → funeral expert; `carol-singers`, `christmas-pricing`, `christmas` → Christmas. Any other page is "from an ad (landing URL)" with no campaign named.
 - Recording: the reply drafter passes `ad_visit` to `pipeline.py add`, which checks the slug and writes `ad visit: <slug>` into notes. The enquiries sheet still holds no name or email. The Monday ENQUIRIES line shows `ad ref: no · ad visit: weddings`, and the enquiry-source cross-check counts an ad visit as "from an ad (landing URL)".
 
