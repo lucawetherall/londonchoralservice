@@ -105,8 +105,8 @@ SAVED_COLUMNS = ["key", "saved_at"]
 
 SPEC_KEYS = {"key", "to", "subject", "in_reply_to", "references", "html", "attachments"}
 KEY = re.compile(r"[0-9A-Za-z-]{1,40}")
-REF = re.compile(r"[0-9]{4}[A-Z]?")
-CONFIRMATION_KEY = re.compile(r"([0-9]{4}[A-Z]?)-confirmation(?:-r[2-9])?")  # -r2…-r9: a reissue (21 Oct 2026)
+REF = re.compile(r"(?:[0-9]{6}|[0-9]{4})[A-Z]?")  # DDMMYY (211126), or an older DDMM (2111), maybe a letter
+CONFIRMATION_KEY = re.compile(r"((?:[0-9]{6}|[0-9]{4})[A-Z]?)-confirmation(?:-r[2-9])?")  # -r2…-r9: a reissue (21 Oct 2026)
 ADDRESS = re.compile(r"[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+@[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?"
                      r"(?:\.[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?)+")
 ID_CHARS = r"[!-;=?A-~]+"  # printable ASCII except space, "<", ">" and "@"
@@ -725,7 +725,7 @@ def run(argv, factory=None, password=None, stdin_fd=0):
     if argv[:1] == ["sent"] and len(argv) == 4:
         ref, to, since = argv[1], argv[2].strip(), argv[3]
         if not REF.fullmatch(ref):
-            fail("the ref must be a DDMM booking ref, e.g. 2111 or 2111B")
+            fail("the ref must be a booking ref: DDMMYY (e.g. 211126 or 211126B) or an older DDMM (2111)")
         if not ADDRESS.fullmatch(to):
             fail("the client email must be one address")
         try:

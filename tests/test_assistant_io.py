@@ -68,37 +68,55 @@ def test_daily_due_follows_the_london_date_not_utc():
 # --- next-ref ------------------------------------------------------------------------------------
 
 def test_next_ref_takes_the_first_free_suffix_and_the_checker_due_dates():
-    fresh(refs=["2111"], folders=["2111A - Smith"])
-    code, out, err = run("next-ref", "2026-11-21", "--taken", "2111B")
+    fresh(refs=["211126"], folders=["211126A - Smith"])
+    code, out, err = run("next-ref", "2026-11-21", "--taken", "211126B")
     assert code == 0, err
     got = json.loads(out)
-    assert got["ref"] == "2111C", got
+    assert got["ref"] == "211126C", got
     today = aio.london_today()
     assert got["instalment_1_due"] == cp.deposit_due_date(today, datetime.date(2026, 11, 21)).isoformat()
     assert got["instalment_2_due"] == "2026-11-20"
 
 
 def test_next_ref_counts_the_icloud_invoice_folders_too():
-    fresh(refs=["2111"], folders=["2111A - Smith"], icloud=["2111B - Jones"])
+    fresh(refs=["211126"], folders=["211126A - Smith"], icloud=["211126B - Jones"])
     code, out, err = run("next-ref", "2026-11-21")
     assert code == 0, err
-    assert json.loads(out)["ref"] == "2111C", out
+    assert json.loads(out)["ref"] == "211126C", out
 
 
-def test_next_ref_with_nothing_taken_is_plain_ddmm():
+def test_next_ref_with_nothing_taken_is_plain_ddmmyy():
     fresh()
-    assert json.loads(run("next-ref", "2027-06-05")[1])["ref"] == "0506"
+    assert json.loads(run("next-ref", "2027-06-05")[1])["ref"] == "050627"
+
+
+def test_next_ref_older_ddmm_refs_never_block_a_new_ddmmyy_one():
+    # owner decision, 14 Oct 2026: 2111 and 2111A (older bookings) keep their refs; events on 21 Nov 2026
+    # and 21 Nov 2027 get 211126 and 211127, so a year never repeats a ref
+    fresh(refs=["2111", "2111A"], folders=["2111B - Smith"])
+    code, out, err = run("next-ref", "2026-11-21", "--taken", "2111C,211127")
+    assert code == 0, err
+    assert json.loads(out)["ref"] == "211126", out
+    assert json.loads(run("next-ref", "2027-11-21", "--taken", "211127")[1])["ref"] == "211127A"
 
 
 def test_next_ref_pure_function_and_short_notice():
     today = datetime.date(2026, 11, 10)
-    got = aio.next_ref(datetime.date(2026, 11, 14), {"1411", "1411A"}, today)
-    assert got["ref"] == "1411B"
+    got = aio.next_ref(datetime.date(2026, 11, 14), {"141126", "141126A", "1411"}, today)
+    assert got["ref"] == "141126B"
     assert got["instalment_1_due"] == "2026-11-11"  # 3 days before the event, never the invoice day
     assert got["instalment_2_due"] == "2026-11-13"
     assert got["short_notice"] is True
     far = aio.next_ref(datetime.date(2027, 6, 5), set(), today)
+    assert far["ref"] == "050627"
     assert far["instalment_1_due"] == "2026-11-17" and far["short_notice"] is False
+
+
+def test_ref_re_takes_both_forms_and_nothing_else():
+    for ok in ("2111", "2111A", "211126", "211126A", "0506", "050627"):
+        assert aio.REF_RE.fullmatch(ok), ok
+    for bad in ("211", "21112", "2111267", "211126AB", "2111a", "21/11/26", "21-11-26", "", "211126 "):
+        assert not aio.REF_RE.fullmatch(bad), bad
 
 
 def test_next_ref_refuses_a_bad_or_past_date():
@@ -106,6 +124,9 @@ def test_next_ref_refuses_a_bad_or_past_date():
     assert run("next-ref", "21/11/2026")[0] != 0
     assert run("next-ref", "2020-01-01")[0] != 0
     assert run("next-ref", "2026-11-21", "--taken", "21 11")[0] != 0
+    assert run("next-ref", "2026-11-21", "--taken", "21112")[0] != 0  # five digits
+    assert run("next-ref", "2026-11-21", "--taken", "2111267")[0] != 0  # seven digits
+    assert run("next-ref", "2026-11-21", "--taken", "21/11/26")[0] != 0
 
 
 # --- prices --------------------------------------------------------------------------------------
@@ -267,6 +288,8 @@ def test_books_queue_add_refuses_bad_records():
         json.dumps([1]),
         queued(extra="x"),
         queued(ref="21-11"),
+        queued(ref="21112"),
+        queued(ref="2111267"),
         queued(contact_email="nobody"),
         queued(contact={"contact_type": "customer"}),
         queued(invoice={"invoice_number": "9999", "line_items": [{"rate": 1}]}),

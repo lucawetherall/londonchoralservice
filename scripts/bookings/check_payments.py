@@ -43,7 +43,8 @@ Matching (against every ledger row, closed ones too, so a payment is never
 credited to the wrong booking): an incoming payment belongs to a booking when its
 reference names the invoice number ("INV2111", "INV 2111", "INV-2111",
 "LCS2111", "INV2111DEPOSIT" and "2111" all name 2111; "24081" does not name
-2408). A letter names a suffixed ref only as the reference's last token ("INV
+2408). New refs are DDMMYY (211126; owner decision, 14 Oct 2026) and older ones keep
+DDMM: each token matches whole, so "211126" never names 2111 nor "2111" 211126. A letter names a suffixed ref only as the reference's last token ("INV
 1212 A") or a glued one-letter tail ("1212A", "INV1212A"); "1212 A SMITH" and
 "INV1212BAL" name 1212. A reference that names any booking is final, but it is
 only CONFIDENT when nothing contradicts it: "1212" when 1212A also exists names
@@ -268,7 +269,10 @@ def norm_ref(ref):
 def named_keys(text, known):
     """Known refs a payment reference names. A single letter names a suffixed ref only when it is the
     reference's LAST token ("INV 1212 A") or the whole glued tail ("1212A", "INV1212A"); "2111 A SMITH"
-    and "INV2111BAL" name 2111 (and so every 2111 sibling). "24081" never names 2408."""
+    and "INV2111BAL" name 2111 (and so every 2111 sibling). "24081" never names 2408. Refs are DDMMYY since
+    14 Oct 2026 (211126) and DDMM before (2111): tokens match whole, so "211126" never names 2111 nor "2111"
+    211126. A DDMMYY typed with a space ("2111 26") names 211126 too, and also 2111 when that exists (several
+    bookings: a hand check)."""
     toks = [(bool(m.group(1)), m.group(2)) for m in REF_TOKEN.finditer((text or "").upper())]
     out = set()
     for i, (prefixed, t) in enumerate(toks):
@@ -276,12 +280,19 @@ def named_keys(text, known):
         if not m:
             continue
         digits, letters = m.groups()
+        if (not letters and len(digits) == 4 and i + 1 < len(toks) and not toks[i + 1][0]
+                and re.fullmatch(r"\d{2}", toks[i + 1][1])):
+            six = digits + toks[i + 1][1]
+            tail = (i == len(toks) - 3 and not toks[i + 2][0] and re.fullmatch(r"[A-Z]", toks[i + 2][1]))
+            hit = next((c for c in ([six + toks[i + 2][1]] if tail else []) + [six] if c in known), None)
+            if hit:
+                out.add(hit)
         last_letter = (not letters and i == len(toks) - 2 and not toks[i + 1][0]
                        and re.fullmatch(r"[A-Z]", toks[i + 1][1]))
         cands = [digits + toks[i + 1][1]] if last_letter else []
         cands.append(t)
-        if prefixed and letters and len(digits) == 4:
-            cands.append(digits)  # "INV2111DEPOSIT", "INV2111A" when there is no 2111A
+        if prefixed and letters and len(digits) in (4, 6):
+            cands.append(digits)  # "INV2111DEPOSIT", "INV211126A" when there is no 211126A
         hit = next((c for c in cands if c in known), None)
         if hit:
             out.add(hit)
