@@ -9,7 +9,9 @@ ad rank over the last 14 days, and predicted CTR is below average on its busiest
    repeats ("Hire Carol Singers in London" / "Carol Singers for Hire"). Each ad swaps five to eight of them for
    headlines on its own keywords (prices, office parties, hotel lobbies) and facts from its landing page.
    "4 Carol Singers from £1,150" stays pinned to headline 2 and the £1,150 description to description 1.
-   Three ads get a new second description written for their ad group.
+   Three ads get a new second description written for their ad group. Only "Hire carol singers" serves: every
+   keyword in the other three groups is rarely served (low search volume), so their copy matters only if
+   those searches pick up in December.
 2. Funeral and wedding ads: both pinned two headlines to headline 1. The keyword headline is unpinned and the
    price headline moves to headline 2 (the pattern the Christmas ads use), and two near-repeats are replaced.
    The wedding ad's last two descriptions now carry "wedding choir", as Google asks.
@@ -61,11 +63,11 @@ ADS = {
         ("Christmas Carol Singers London", None), ("Christmas Choir for Hire", None),
         ("Professional Carol Singers", None), ("Roaming Carols or Fixed Sets", None),
         ("Royal Academy-Trained Voices", None), ("Last-Minute Dates Welcome", None),
-        ("Concert Dress or Xmas Jumpers", None), ("4 to 12 Voices Available", None),
+        ("Concert Dress or Xmas Jumpers", None), ("Christmas Choir in London", None),
         ("Book Your December Date", None)] + [(t, None) for t in XMAS_KEEP],
         [(PRICE_DESCRIPTION, D1), (XMAS_D2_OLD, None), (XMAS_D3, None), (XMAS_D4, None)],
-        "headlines on its own keywords (christmas carol singers london, christmas choir for hire) "
-        "replace near-repeats"),
+        "the only Christmas ad group that serves; headlines on its keywords and search terms "
+        "(christmas carol singers london, christmas choir london) replace near-repeats"),
     825999576408: (CHRISTMAS, "Carol singer prices", [
         ("Prices for Carol Singers", None), (PRICE_HEADLINE, H2),
         ("How Much Do Carol Singers Cost", None), ("Carol Singers Rates for 2026", None),
