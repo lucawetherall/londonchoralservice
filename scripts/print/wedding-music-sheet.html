@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<!-- Source of assets/print/wedding-music-sheet.pdf, the one-page sheet wedding
+     venues and planners hand to couples (linked from planners-and-venues.html).
+     Repertoire comes only from pieces the site already says we sing
+     (weddings.html, music-guides/wedding-choral-repertoire.html,
+     music-guides/choosing-wedding-hymns.html); the civil-ceremony rule from
+     music-guides/wedding-ceremony-music.html; prices from pricing.html.
+     Render: python3 scripts/print/render_pdf.py -->
+<html lang="en-GB">
+<head>
+<meta charset="UTF-8">
+<meta name="robots" content="noindex">
+<title>Music for your wedding | The London Choral Service</title>
+<style>
+  @font-face { font-family: 'Cormorant Garamond'; font-weight: 300 600; src: url('../../fonts/cormorant-garamond.woff2') format('woff2'); }
+  @font-face { font-family: 'Cormorant Garamond'; font-style: italic; src: url('../../fonts/cormorant-garamond-italic.woff2') format('woff2'); }
+  @font-face { font-family: 'Source Serif 4'; font-weight: 400 600; src: url('../../fonts/source-serif-4.woff2') format('woff2'); }
+  @font-face { font-family: 'Source Serif 4'; font-style: italic; src: url('../../fonts/source-serif-4-italic.woff2') format('woff2'); }
+
+  @page { size: A4; margin: 0; }
+  :root { --ink: #2C2420; --mid: #6B5E56; --accent: #8B3A3A; --rule: #D9CFC4; --tint: #F7F3EE; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: #fff; color: var(--ink); }
+  body { font-family: 'Source Serif 4', Georgia, serif; font-size: 9.4pt; line-height: 1.4; }
+  .page { width: 210mm; height: 297mm; padding: 14mm 16mm 11mm; display: flex; flex-direction: column; }
+
+  header { border-bottom: 0.6pt solid var(--accent); padding-bottom: 4mm; margin-bottom: 5mm; }
+  .brand { font-family: 'Cormorant Garamond', Georgia, serif; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; font-size: 9pt; color: var(--accent); margin: 0 0 2mm; }
+  h1 { font-family: 'Cormorant Garamond', Georgia, serif; font-weight: 500; font-size: 30pt; line-height: 1.05; margin: 0 0 2mm; }
+  .intro { font-size: 10.5pt; color: var(--mid); margin: 0; max-width: 155mm; }
+
+  .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 9mm; flex: 1; }
+  h2 { font-family: 'Cormorant Garamond', Georgia, serif; font-weight: 600; font-size: 14.5pt; color: var(--accent); margin: 0 0 1.5mm; }
+  section { margin-bottom: 4.5mm; }
+  p { margin: 0 0 2mm; }
+  ul { margin: 0 0 2mm; padding: 0; list-style: none; }
+  li { padding: 0.5mm 0; border-bottom: 0.4pt solid var(--rule); }
+  li:last-child { border-bottom: 0; }
+  .by { color: var(--mid); font-style: italic; }
+  .note { font-size: 8.7pt; color: var(--mid); }
+
+  .moments li { display: grid; grid-template-columns: 30mm 1fr; gap: 2mm; }
+  .moments b { font-weight: 600; }
+
+  .prices { display: grid; grid-template-columns: 1fr auto; gap: 0.6mm 4mm; margin: 0 0 2mm; }
+  .prices dt { margin: 0; }
+  .prices dd { margin: 0; font-weight: 600; text-align: right; }
+
+  ol.steps { margin: 0 0 2mm; padding-left: 5mm; }
+  ol.steps li { border: 0; padding: 0.4mm 0; }
+
+  .contact { background: var(--tint); padding: 3.5mm 4mm; border-left: 1.6pt solid var(--accent); }
+  .contact p { margin: 0 0 1mm; }
+  .contact strong { font-size: 11pt; }
+  a { color: inherit; text-decoration: none; }
+
+  .venue { margin-top: 3mm; border: 0.6pt dashed var(--mid); padding: 3mm 4mm; font-size: 9pt; color: var(--mid); }
+  .venue .line { display: block; border-bottom: 0.5pt solid var(--mid); height: 6mm; margin-bottom: 1.5mm; }
+
+  footer { border-top: 0.4pt solid var(--rule); padding-top: 2.5mm; font-size: 7.8pt; color: var(--mid); display: flex; justify-content: space-between; }
+</style>
+</head>
+<body>
+<div class="page">
+  <header>
+    <p class="brand">The London Choral Service</p>
+    <h1>Music for your wedding</h1>
+    <p class="intro">Professional singers for your ceremony, with the music planned with you by our Artistic Director, Luca Wetherall. Below are the moments a choir usually sings and the pieces couples ask for most. If a song means something to you, send it to us and we will arrange it for your singers.</p>
+  </header>
+
+  <div class="cols">
+    <div>
+      <section>
+        <h2>When the singers sing</h2>
+        <ul class="moments">
+          <li><b>Arrival</b><span>while guests take their seats</span></li>
+          <li><b>Processional</b><span>as you walk in</span></li>
+          <li><b>Hymns</b><span>led in four-part harmony</span></li>
+          <li><b>The signing</b><span>a piece while the register is signed</span></li>
+          <li><b>Recessional</b><span>as you leave together</span></li>
+          <li><b>Reception</b><span>drinks and the wedding breakfast, if you want music to carry on</span></li>
+        </ul>
+      </section>
+      <section>
+        <h2>Pieces couples choose</h2>
+        <ul>
+          <li>Ave Maria <span class="by">Schubert</span></li>
+          <li>Ubi Caritas <span class="by">Ola Gjeilo</span></li>
+          <li>The Lord Bless You and Keep You <span class="by">Rutter</span></li>
+          <li>Locus Iste <span class="by">Bruckner</span></li>
+          <li>Panis Angelicus <span class="by">Franck</span></li>
+          <li>Laudate Dominum <span class="by">Mozart</span></li>
+          <li>Anima Christi <span class="by">Marco Frisina</span></li>
+          <li>A Thousand Years <span class="by">arranged for voices</span></li>
+        </ul>
+      </section>
+      <section>
+        <h2>Hymns couples know</h2>
+        <p>Love Divine, All Loves Excelling; Jerusalem; Guide Me, O Thou Great Redeemer; Be Thou My Vision; Lord of All Hopefulness; Dear Lord and Father of Mankind.</p>
+        <p class="note">At a civil ceremony on approved premises in England and Wales, the registrar keeps religious music out, so hymns and sacred pieces move to the drinks reception. For the ceremony itself we sing secular pieces and songs arranged for voices, such as Make You Feel My Love or Songbird.</p>
+      </section>
+    </div>
+
+    <div>
+      <section>
+        <h2>Prices</h2>
+        <dl class="prices">
+          <dt>Soloist</dt><dd>from &pound;250</dd>
+          <dt>Small Choir of four</dt><dd>from &pound;1,150</dd>
+          <dt>Quintet</dt><dd>from &pound;1,400</dd>
+          <dt>Sextet</dt><dd>from &pound;1,600</dd>
+          <dt>Full Choir of eight</dt><dd>from &pound;2,000</dd>
+          <dt>Organist or pianist</dt><dd>&pound;250</dd>
+        </dl>
+        <p class="note">Each price covers up to two hours, with a rehearsal before the ceremony, the sheet music and the planning call. Prices are for Greater London; further out, we add travel to your written quote before you book. The quote is the whole cost, and no VAT is added.</p>
+        <p class="note">Four voices fill most parish churches and ceremony rooms. Six or eight suit a large church or a long guest list.</p>
+      </section>
+      <section>
+        <h2>How to book</h2>
+        <ol class="steps">
+          <li>Send us your date, your venue and any music you already have in mind.</li>
+          <li>Within one working day, Luca sends you suggestions, recordings and a written quote.</li>
+          <li>You sign a booking confirmation and pay in full or in two halves. The first half holds your date; the second is due 48 hours before the wedding.</li>
+          <li>A week before, you, your venue and your planner receive the running order. On the day, the musicians arrive an hour early.</li>
+        </ol>
+        <div class="contact">
+          <p><strong>07356 042468</strong> &nbsp;call or WhatsApp</p>
+          <p><a href="mailto:office@londonchoralservice.com">office@londonchoralservice.com</a></p>
+          <p><a href="https://londonchoralservice.com/weddings.html?utm_source=print&amp;utm_medium=referral&amp;utm_campaign=venue-wedding-sheet-2026">londonchoralservice.com/weddings.html</a></p>
+        </div>
+        <div class="venue">
+          Recommended by your venue or planner
+          <span class="line"></span>
+          Mention them when you enquire, so we can work with them on the day.
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <footer>
+    <span>Hear our singers at londonchoralservice.com/listen.html</span>
+    <span>Alma Consort Ltd, registered in England and Wales, company no. 16785727</span>
+  </footer>
+</div>
+</body>
+</html>

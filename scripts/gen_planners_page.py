@@ -64,6 +64,18 @@ def jsonld():
     return '  ' + json.dumps({'@context': 'https://schema.org', '@graph': graph},
                              indent=2, ensure_ascii=False).replace('\n', '\n  ')
 
+# Venues and planners on our supplier-list arrangement, as (name, url, what they are),
+# e.g. ('Example House', 'https://example.com/', 'Wedding venue, Surrey').
+# Add a firm only once it has agreed in writing to be named here, and note the date
+# of that agreement in a comment beside it. The list stays off the page while empty.
+PARTNERS = []
+
+partners_html = '' if not PARTNERS else (
+    '          <h3>Venues and planners we work with</h3>\n          <ul class="pe-venues" role="list">\n'
+    + '\n'.join(f'            <li><a href="{url}" rel="noopener">{name}</a>, {what}</li>'
+                for name, url, what in PARTNERS)
+    + '\n          </ul>\n')
+
 faq_html = '\n\n'.join(f'          <h3>{q}</h3>\n          <p>{a}</p>' for q, a in FAQS)
 
 BODY = f'''
@@ -156,14 +168,37 @@ BODY = f'''
             carry over the room, and the noise a room makes rises with the number of people in it. A
             party that wanted eight voices for the ceremony can want twelve for the reception in the same
             building, and it is worth pricing both rather than assuming one figure covers the day.</p>
-          <p>If you keep a preferred-supplier list, we are glad to go on it and to hold whatever paperwork
-            your compliance process needs on file.</p>
         </div>
       </div>
     </section>
 
+    <!-- Preferred-supplier arrangement (UK weddings) -->
+    <section class="pe-section pe-section--light" id="supplier-list">
+      <div class="pe-rail">
+        <p class="pe-rail-label" aria-hidden="true">Supplier lists</p>
+        <div class="pe-body" data-fade>
+          <h2>Putting us on your supplier list</h2>
+          <p>For weddings in the United Kingdom, couples book us through The London Choral Service at its
+            published prices: a soloist from &pound;250, or a choir of four from &pound;1,150 in Greater
+            London. If you keep a list of recommended suppliers for your couples, this is what we offer in
+            return for a place on it.</p>
+          <p>First, a <a href="/assets/print/wedding-music-sheet.pdf">one-page sheet for your couples</a>
+            (PDF, A4) with the moments a choir sings, the pieces couples choose, our prices and how to
+            book. It has a space to write your name, and you can print as many copies as you like.</p>
+          <p>Couples deal with one contact. They ring or message Luca, who replies within one working day,
+            and you or your coordinator receive the running order a week before the wedding. Our insurance
+            certificate and risk assessment go on your file before the first booking, in whatever format
+            your events team uses.</p>
+          <p>Once you have agreed to it in writing, we list your venue or firm on this page with a link to
+            your website.</p>
+          <p>Couples pay the same published prices whichever way they reach us. To set it up, use the form
+            below or ring Luca on 07356 042468.</p>
+{partners_html}        </div>
+      </div>
+    </section>
+
     <!-- Destinations pointer -->
-    <section class="pe-section pe-section--light">
+    <section class="pe-section pe-section--mid">
       <div class="pe-rail">
         <p class="pe-rail-label" aria-hidden="true">Abroad</p>
         <div class="pe-body" data-fade>
@@ -181,7 +216,7 @@ BODY = f'''
     </section>
 
     <!-- Questions -->
-    <section class="pe-section pe-section--mid">
+    <section class="pe-section pe-section--light">
       <div class="pe-rail">
         <p class="pe-rail-label" aria-hidden="true">Questions</p>
         <div class="pe-body" data-fade>
