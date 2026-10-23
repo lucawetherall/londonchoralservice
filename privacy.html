@@ -75,10 +75,17 @@
       call: 'AW-17988388404/HHu8CJq1x4UdELSMxIFD',
       message: 'AW-17988388404/5H_QCJ21x4UdELSMxIFD'
     };
+    // done: a page change follows (js/form.js goes to the thank-you page). With
+    // cookie consent the lead is handed to that page in sessionStorage and sent
+    // from there, so the redirect can never cut its hits off before gtag.js has
+    // sent them. Without consent nothing is stored and it goes at once, as a
+    // cookieless ping.
     function lcsLead(detail, done) {
-      var finished = false;
-      function finish() { if (!finished) { finished = true; if (done) done(); } }
-      loadGA();
+      var lead = {
+        id: 'lead-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7),
+        source: detail.source,
+        occasion: detail.occasion || 'unspecified'
+      };
       // Enhanced conversions: gtag hashes these (SHA-256) before sending, and
       // sends nothing at all unless the visitor allowed ad measurement.
       var ud = {};
@@ -88,23 +95,49 @@
       if (/^0\d{9,10}$/.test(phone)) phone = '+44' + phone.slice(1);
       else if (/^44\d{9,10}$/.test(phone)) phone = '+' + phone;
       if (/^\+\d{10,15}$/.test(phone)) ud.phone_number = phone;
+      if (done) {
+        try {
+          if (localStorage.getItem('lcs-consent') === 'granted') {
+            sessionStorage.setItem('lcs-lead', JSON.stringify({ lead: lead, ud: ud }));
+            done();
+            return;
+          }
+        } catch (e) {}
+      }
+      lcsSendLead(lead, ud, done);
+    }
+    function lcsSendLead(lead, ud, done) {
+      var finished = false;
+      function finish() { if (!finished) { finished = true; if (done) done(); } }
+      loadGA();
       if (ud.email || ud.phone_number) gtag('set', 'user_data', ud);
       gtag('event', 'generate_lead', {
         'currency': 'GBP',
         'value': 1,
-        'lead_source': detail.source,
-        'occasion': detail.occasion || 'unspecified'
+        'lead_source': lead.source,
+        'occasion': lead.occasion
       });
+      // transaction_id: Google Ads counts one conversion per ID, however often it arrives.
       gtag('event', 'conversion', {
         'send_to': LCS_ADS.lead,
         'value': 1,
         'currency': 'GBP',
-        'transaction_id': 'lead-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7),
+        'transaction_id': lead.id,
         'event_callback': finish
       });
       // Never hold the visitor up if gtag.js is blocked or slow.
       setTimeout(finish, 1500);
     }
+    // The page after the form sends a lead handed to it, once: it is removed
+    // before sending, so a refresh or the back button never counts it again.
+    (function() {
+      var saved = null;
+      try {
+        saved = JSON.parse(sessionStorage.getItem('lcs-lead') || 'null');
+        sessionStorage.removeItem('lcs-lead');
+      } catch (e) {}
+      if (saved && saved.lead && saved.lead.id) lcsSendLead(saved.lead, saved.ud || {});
+    })();
     // WhatsApp messages and emails carry the page they came from (and "via a
     // Google ad" when known), so each message shows its source. The visitor sees
     // the text and can change it before sending.
@@ -3045,7 +3078,7 @@
         <h2 id="cookies">Cookies and tracking</h2>
         <p>We use Google Analytics to see which pages are visited and how people find the site. Google Analytics uses Google signals: for visitors signed in to a Google account with ad personalisation turned on, Google adds broad details such as age range, interests and the devices they use, and we see these only as totals. Like the rest of our analytics, it runs only if you allow cookies, and you can turn it off for your account in <a href="https://myadcenter.google.com/" target="_blank" rel="noopener">Google&rsquo;s ad settings</a>. A Google Ads conversion tag records when someone sends an enquiry after clicking one of our advertisements, and when someone taps our phone, email or WhatsApp links. We do not use remarketing.</p>
         <p>Both tools set cookies only if you allow them. When you first visit, a notice at the foot of the page asks you to choose. If you decline, or make no choice, Google&rsquo;s consent settings stay at &ldquo;denied&rdquo;: no analytics or advertising cookie is written, and only cookieless, aggregated signals reach Google. If you allow them, the cookies set are Google Analytics&rsquo; <code>_ga</code> and <code>_ga_*</code> (up to two years) and Google Ads&rsquo; <code>_gcl_au</code> (three months). Your choice is stored in your browser under the name <code>lcs-consent</code> and applies to this site only. You can change it at any time from the &ldquo;Cookie choices&rdquo; link in the footer of every page.</p>
-        <p>If you allow these cookies and then send an enquiry, the tag also gives Google your email address and phone number in hashed form: your browser turns each one into a scrambled code before it leaves your device. Google matches that code against its own accounts to tell us whether you clicked one of our advertisements first, perhaps on another device, and uses it for that measurement alone. If you decline, the tag sends none of this.</p>
+        <p>If you allow these cookies and then send an enquiry, the tag also gives Google your email address and phone number in hashed form: your browser turns each one into a scrambled code before it leaves your device. Google matches that code against its own accounts to tell us whether you clicked one of our advertisements first, perhaps on another device, and uses it for that measurement alone. So that the tag can send these after the form has gone, your browser keeps them, with the name of the page you sent the form from, in session storage under the name <code>lcs-lead</code> until our thank-you page opens. That page sends them and deletes the entry at once. If you decline, the tag sends none of this and your browser keeps nothing.</p>
         <p>If you arrived from one of our advertisements and allowed cookies, we also keep the advert&rsquo;s click reference and campaign tags for the rest of your visit and send them with your enquiry. They sit in your browser&rsquo;s session storage under the name <code>lcs-attr</code>, which your browser clears when you close the tab. We add a four-character code made from the click reference to the end of any WhatsApp message or email you start from our contact links, where you can read it or delete it before you send. When an enquiry becomes a booking, we match that code to the click in our Google Ads account and may report the booking to Google Ads with its click reference, so we can spend our advertising budget on the searches that lead to bookings.</p>
         <p>If you arrived from one of our advertisements and did not allow cookies, we keep nothing in your browser. A WhatsApp message, email or enquiry form you start from the page you landed on carries a short tag with that page&rsquo;s name, such as &ldquo;Ad visit: weddings&rdquo;. In a message you can read or delete it before you send; the form adds it as a hidden line. The tag names a page and contains nothing from the advert&rsquo;s click reference. We use it to count which advertisements bring enquiries. Pages you open afterwards add no tag.</p>
         <p id="ad-measurement">Our enquiry forms also have an optional box, left unticked: &ldquo;Let us tell Google if your booking came from one of its ads.&rdquo; If you tick it and your enquiry becomes a booking, we send Google Ads a hashed copy of your email address, a scrambled code made from it, with the booking&rsquo;s value. If the page you sent the form from had an advert&rsquo;s click reference in its address, that goes too. Google matches the code against its own accounts to tell us whether the booking followed a click on one of our advertisements, and uses it for that measurement alone. We send nothing for an enquiry that doesn&rsquo;t become a booking, or if you leave the box unticked. To change your mind before we send it, email <a href="mailto:office@londonchoralservice.com">office@londonchoralservice.com</a>.</p>
