@@ -11,7 +11,8 @@
  * The sheet is full width at the foot of the window, with Accept and Reject
  * the same size and style (PECR/ICO: rejecting is as easy as accepting). It
  * has no overlay and no scroll lock. On first view it takes keyboard focus
- * without scrolling the page. On phones it sits above the mobile CTA bar.
+ * without scrolling the page. On phones it covers the mobile CTA bar while
+ * open (the bar comes back once a choice is made), so the two never stack.
  * Styles: the "Cookie consent sheet" block in css/components.css and its twin
  * in partials/private-register.css.html.
  */
@@ -31,8 +32,17 @@
     'analytics_storage': 'denied'
   };
 
+  // KEY_AT dates the choice; partials/analytics.html forgets it after 12
+  // months, so the sheet asks again.
+  var KEY_AT = 'lcs-consent-at';
   function read() { try { return localStorage.getItem(KEY); } catch (e) { return null; } }
-  function write(v) { try { localStorage.setItem(KEY, v); } catch (e) {} }
+  function write(v) {
+    try { localStorage.setItem(KEY, v); localStorage.setItem(KEY_AT, String(Date.now())); } catch (e) {}
+  }
+  // Choices stored before dates were kept start their 12 months today.
+  function dateOld() {
+    try { if (!localStorage.getItem(KEY_AT)) localStorage.setItem(KEY_AT, String(Date.now())); } catch (e) {}
+  }
 
   function apply(choice) {
     if (typeof window.gtag === 'function') {
@@ -63,18 +73,20 @@
   var returnFocus = null;
   var bodyPadding = '';
 
-  // Keep the sheet above the mobile CTA bar while that bar is on screen
-  // (nav.js slides it away when the footer comes into view), and pad the
-  // page by the sheet's height so the last of the content can still be
-  // scrolled into view while the sheet is open.
+  // Pad the page by the sheet's height so the last of the content can still
+  // be scrolled into view while the sheet is open, and keep keyboard focus
+  // from landing behind it (WCAG 2.4.11). The sheet covers the CTA bar, so
+  // its height replaces the bar's scroll-padding from css/base.css.
   function place() {
     if (!banner || banner.hidden) return;
-    var lift = 0;
-    if (cta && !cta.classList.contains('is-hidden') && getComputedStyle(cta).display !== 'none') {
-      lift = cta.offsetHeight;
-    }
-    banner.style.setProperty('--consent-offset', lift + 'px');
-    document.body.style.paddingBottom = (banner.offsetHeight + lift) + 'px';
+    document.body.style.paddingBottom = banner.offsetHeight + 'px';
+    document.documentElement.style.scrollPaddingBottom = banner.offsetHeight + 'px';
+  }
+
+  // The sheet covers the mobile CTA bar while open; take the bar's links out
+  // of the tab order and the accessibility tree until it is visible again.
+  function coverCta(covered) {
+    if (cta) cta.inert = covered;
   }
 
   function build() {
@@ -89,9 +101,8 @@
     var ads = document.querySelector('.pe-header') ? 'which Google ads' : 'which of our Google ads';
     banner.innerHTML =
       '<div class="consent__inner">' +
-        '<p class="consent__text">We&rsquo;d like to use cookies to count visits and see ' + ads + ' ' +
-        'lead to enquiries, and we set none unless you accept. ' +
-        '<a href="/privacy.html#cookies">How we use cookies</a></p>' +
+        '<p class="consent__text">May we use cookies to count visits and see ' + ads + ' ' +
+        'lead to enquiries? <a href="/privacy.html#cookies">How we use cookies</a></p>' +
         '<div class="consent__actions">' +
           '<button type="button" class="consent__btn" data-consent="granted">Accept</button>' +
           '<button type="button" class="consent__btn" data-consent="denied">Reject</button>' +
@@ -108,9 +119,12 @@
     document.body.appendChild(banner);
 
     cta = document.querySelector('.mobile-cta');
-    window.addEventListener('resize', place);
-    if (cta && 'MutationObserver' in window) {
-      new MutationObserver(place).observe(cta, { attributes: true, attributeFilter: ['class'] });
+    // The sheet's height changes with the window and when the web fonts
+    // arrive and rewrap the text.
+    if ('ResizeObserver' in window) {
+      new ResizeObserver(place).observe(banner);
+    } else {
+      window.addEventListener('resize', place);
     }
     return banner;
   }
@@ -119,6 +133,7 @@
     var b = build();
     if (b.hidden) bodyPadding = document.body.style.paddingBottom;
     b.hidden = false;
+    coverCta(true);
     place();
   }
 
@@ -128,7 +143,9 @@
   // dropped at the end of the document.
   function hide(byKeyboard) {
     banner.hidden = true;
+    coverCta(false);
     document.body.style.paddingBottom = bodyPadding;
+    document.documentElement.style.scrollPaddingBottom = '';
     if (returnFocus && document.contains(returnFocus)) {
       returnFocus.focus();
     } else if (byKeyboard) {
@@ -143,7 +160,9 @@
 
   function init() {
     var stored = read();
-    if (stored !== 'granted' && stored !== 'denied') {
+    if (stored === 'granted' || stored === 'denied') {
+      dateOld();
+    } else {
       show();
       // First view: move keyboard focus to the sheet, without scrolling, but
       // only if the visitor has not already started using the page.
