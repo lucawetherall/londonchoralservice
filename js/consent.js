@@ -74,10 +74,13 @@
   var bodyPadding = '';
 
   // Pad the page by the sheet's height so the last of the content can still
-  // be scrolled into view while the sheet is open.
+  // be scrolled into view while the sheet is open, and keep keyboard focus
+  // from landing behind it (WCAG 2.4.11). The sheet covers the CTA bar, so
+  // its height replaces the bar's scroll-padding from css/base.css.
   function place() {
     if (!banner || banner.hidden) return;
     document.body.style.paddingBottom = banner.offsetHeight + 'px';
+    document.documentElement.style.scrollPaddingBottom = banner.offsetHeight + 'px';
   }
 
   // The sheet covers the mobile CTA bar while open; take the bar's links out
@@ -142,6 +145,7 @@
     banner.hidden = true;
     coverCta(false);
     document.body.style.paddingBottom = bodyPadding;
+    document.documentElement.style.scrollPaddingBottom = '';
     if (returnFocus && document.contains(returnFocus)) {
       returnFocus.focus();
     } else if (byKeyboard) {
