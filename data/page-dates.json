@@ -1,11 +1,11 @@
 {
  "/": {
-  "hash": "0ad236b9ba34ba24",
+  "hash": "296d24771aa54f5a",
   "lastmod": "2026-10-24"
  },
  "/about.html": {
-  "hash": "9f9cf5539ab17f39",
-  "lastmod": "2026-09-28"
+  "hash": "85628c8d056f9b3a",
+  "lastmod": "2026-10-24"
  },
  "/accessibility.html": {
   "hash": "9f986be1c5456925",
@@ -224,23 +224,23 @@
   "lastmod": "2026-10-24"
  },
  "/christmas-carol-services.html": {
-  "hash": "1ffbd97a5ac86dbf",
+  "hash": "c1b58560c47cf073",
   "lastmod": "2026-10-24"
  },
  "/christmas-listen.html": {
-  "hash": "4e86f793cde7e12b",
-  "lastmod": "2026-10-23"
+  "hash": "cd53d776c3216a96",
+  "lastmod": "2026-10-24"
  },
  "/christmas-pricing.html": {
   "hash": "1ce702d849639462",
   "lastmod": "2026-10-24"
  },
  "/christmas.html": {
-  "hash": "84d78d9da7984dde",
+  "hash": "d16d66c29ef4ecde",
   "lastmod": "2026-10-24"
  },
  "/compare/london-funeral-singers.html": {
-  "hash": "a52fb6dea567336e",
+  "hash": "daf725682a2b732d",
   "lastmod": "2026-10-24"
  },
  "/contact.html": {
@@ -248,7 +248,7 @@
   "lastmod": "2026-10-24"
  },
  "/corporate.html": {
-  "hash": "deb8aca721a3ed1b",
+  "hash": "f9d7b007ba0d59b1",
   "lastmod": "2026-10-24"
  },
  "/destinations/": {
@@ -343,44 +343,48 @@
   "hash": "634dabedaf80d33b",
   "lastmod": "2026-10-23"
  },
+ "/facts.html": {
+  "hash": "fe762216912751f6",
+  "lastmod": "2026-10-24"
+ },
  "/faq.html": {
   "hash": "72c58cf3efa96c47",
   "lastmod": "2026-10-24"
  },
  "/for-charities.html": {
-  "hash": "fa268bb1b7c08f04",
+  "hash": "0e263abc9054cccc",
   "lastmod": "2026-10-24"
  },
  "/for-event-managers.html": {
-  "hash": "16643e7e963e477c",
+  "hash": "1cba50813492f110",
   "lastmod": "2026-10-24"
  },
  "/for-funeral-directors.html": {
-  "hash": "79dc25b184ec68d4",
-  "lastmod": "2026-10-23"
+  "hash": "e45b4be2813f44d0",
+  "lastmod": "2026-10-24"
  },
  "/for-hotels.html": {
-  "hash": "a23aa823191e39b3",
+  "hash": "503e6cedc3949a1f",
   "lastmod": "2026-10-24"
  },
  "/for-livery-companies.html": {
-  "hash": "89eeabb5d6b1cfa5",
-  "lastmod": "2026-10-23"
+  "hash": "0338b98f708820ca",
+  "lastmod": "2026-10-24"
  },
  "/for-property-managers.html": {
-  "hash": "e8dfff564d69b5ed",
+  "hash": "bec725f6e5a08121",
   "lastmod": "2026-10-24"
  },
  "/for-wedding-planners.html": {
-  "hash": "0f6944492a96c216",
+  "hash": "f6a12ab1e8c98751",
   "lastmod": "2026-10-24"
  },
  "/funerals.html": {
-  "hash": "b4641656735ee235",
+  "hash": "1eab48f95c723cda",
   "lastmod": "2026-10-24"
  },
  "/listen.html": {
-  "hash": "9ddbaa2bd4ccb3ff",
+  "hash": "b0397b243b568a48",
   "lastmod": "2026-10-24"
  },
  "/luca-wetherall.html": {
@@ -388,7 +392,7 @@
   "lastmod": "2026-09-04"
  },
  "/music-guides/": {
-  "hash": "36fdfb5ae3a77ff1",
+  "hash": "b16a5cb996756c41",
   "lastmod": "2026-10-24"
  },
  "/music-guides/a-cappella-christmas-songs.html": {
@@ -400,24 +404,24 @@
   "lastmod": "2026-10-23"
  },
  "/music-guides/advent-carols-vs-christmas-carols.html": {
-  "hash": "42bacf3d0a8b02b8",
-  "lastmod": "2026-10-23"
+  "hash": "2cd0ea69b4cd8a79",
+  "lastmod": "2026-10-24"
  },
  "/music-guides/anima-christi-catholic-funeral.html": {
-  "hash": "7c39f0e19657c32e",
-  "lastmod": "2026-10-23"
+  "hash": "dca514b96a0fc1bd",
+  "lastmod": "2026-10-24"
  },
  "/music-guides/anima-christi-catholic-wedding.html": {
-  "hash": "bf9025b630db7f62",
-  "lastmod": "2026-10-05"
+  "hash": "17af03cbfbd259cb",
+  "lastmod": "2026-10-24"
  },
  "/music-guides/be-thou-my-vision-funeral-hymn.html": {
   "hash": "eaff24f36fd65b5f",
   "lastmod": "2026-10-23"
  },
  "/music-guides/be-thou-my-vision-wedding-hymn.html": {
-  "hash": "4d484f00e5d16b9e",
-  "lastmod": "2026-10-23"
+  "hash": "74431141856838bb",
+  "lastmod": "2026-10-24"
  },
  "/music-guides/best-carols-for-four-voices.html": {
   "hash": "a83238e4dd81d4fe",
@@ -432,8 +436,8 @@
   "lastmod": "2026-09-27"
  },
  "/music-guides/best-wedding-choirs-london.html": {
-  "hash": "9dce1d0354954220",
-  "lastmod": "2026-10-14"
+  "hash": "4b0a7b4e6892a041",
+  "lastmod": "2026-10-24"
  },
  "/music-guides/booking-carol-singers-agency-vs-direct.html": {
   "hash": "df5fa3b46d3f6f33",
@@ -448,12 +452,12 @@
   "lastmod": "2026-10-24"
  },
  "/music-guides/carols-by-candlelight.html": {
-  "hash": "908737e5f2e31d4a",
+  "hash": "cd959c489f6ed56c",
   "lastmod": "2026-10-24"
  },
  "/music-guides/catholic-funeral-hymns.html": {
-  "hash": "92e44c2faeefa84b",
-  "lastmod": "2026-09-29"
+  "hash": "9c97310257c3ca97",
+  "lastmod": "2026-10-24"
  },
  "/music-guides/celebration-of-life-music.html": {
   "hash": "d5a4f0923df59ed5",
@@ -464,12 +468,12 @@
   "lastmod": "2026-10-24"
  },
  "/music-guides/choosing-wedding-hymns.html": {
-  "hash": "3dfbd99c72997c6a",
+  "hash": "748ec7eb2c43037b",
   "lastmod": "2026-10-24"
  },
  "/music-guides/christmas-carol-lyrics-meanings.html": {
-  "hash": "d5fba6e50ac01416",
-  "lastmod": "2026-10-23"
+  "hash": "f534ad3b08ef3b71",
+  "lastmod": "2026-10-24"
  },
  "/music-guides/christmas-carols-guide.html": {
   "hash": "0b26b30699338c77",
@@ -508,11 +512,11 @@
   "lastmod": "2026-08-29"
  },
  "/music-guides/funeral-choir-guide.html": {
-  "hash": "b0f71244cd63fcfb",
-  "lastmod": "2026-08-22"
+  "hash": "2c049edff9ec0916",
+  "lastmod": "2026-10-24"
  },
  "/music-guides/funeral-music-costs.html": {
-  "hash": "bbff79ed90b4c678",
+  "hash": "ea4c2715b82665b5",
   "lastmod": "2026-10-24"
  },
  "/music-guides/funeral-music-guide.html": {
@@ -532,7 +536,7 @@
   "lastmod": "2026-10-24"
  },
  "/music-guides/how-many-carol-singers.html": {
-  "hash": "f03313851f112f83",
+  "hash": "b1958a0117e1a93f",
   "lastmod": "2026-10-24"
  },
  "/music-guides/humanist-wedding-music.html": {
@@ -540,16 +544,16 @@
   "lastmod": "2026-10-05"
  },
  "/music-guides/jerusalem.html": {
-  "hash": "479004674bc38f4a",
-  "lastmod": "2026-09-27"
+  "hash": "5f37bf0c989ee3e5",
+  "lastmod": "2026-10-24"
  },
  "/music-guides/last-minute-funeral-singers.html": {
   "hash": "6a3d538f765504ed",
   "lastmod": "2026-10-24"
  },
  "/music-guides/lesser-known-wedding-choral-pieces.html": {
-  "hash": "29e413aad1dd020a",
-  "lastmod": "2026-09-27"
+  "hash": "a98931816eb709f5",
+  "lastmod": "2026-10-24"
  },
  "/music-guides/memorial-service-planning.html": {
   "hash": "a93e1a5593afaf1f",
@@ -560,8 +564,8 @@
   "lastmod": "2026-10-23"
  },
  "/music-guides/non-religious-funeral-music.html": {
-  "hash": "220dcfe296907455",
-  "lastmod": "2026-08-29"
+  "hash": "c1e7b60469d6853b",
+  "lastmod": "2026-10-24"
  },
  "/music-guides/office-carol-service-planning.html": {
   "hash": "92d0af939edccd9d",
@@ -576,56 +580,52 @@
   "lastmod": "2026-10-23"
  },
  "/music-guides/popular-wedding-organ-music.html": {
-  "hash": "aeb6316c94dc6197",
-  "lastmod": "2026-09-27"
+  "hash": "455f63879f7be243",
+  "lastmod": "2026-10-24"
  },
  "/music-guides/residents-christmas-carol-event.html": {
   "hash": "ef84d4b1f06897d8",
   "lastmod": "2026-10-24"
  },
  "/music-guides/ubi-caritas-wedding.html": {
-  "hash": "50dd9885d7be462b",
+  "hash": "c55d3646de4aebdf",
   "lastmod": "2026-10-24"
  },
  "/music-guides/wedding-ceremony-music.html": {
-  "hash": "c0ee773cb8f67a4c",
-  "lastmod": "2026-08-30"
+  "hash": "caa98bd8e4d8d114",
+  "lastmod": "2026-10-24"
  },
  "/music-guides/wedding-choir-guide.html": {
-  "hash": "724794b32f78f536",
+  "hash": "f0982ddb6d512367",
   "lastmod": "2026-10-24"
  },
  "/music-guides/wedding-choral-repertoire.html": {
-  "hash": "35f14a860498c843",
-  "lastmod": "2026-09-29"
+  "hash": "36666d75be99eaef",
+  "lastmod": "2026-10-24"
  },
  "/music-guides/wedding-music-costs.html": {
-  "hash": "31778e9de312a9e4",
+  "hash": "7b2584366fdf38bd",
   "lastmod": "2026-10-24"
  },
  "/music-guides/wedding-music-ideas.html": {
-  "hash": "8a2c99cd74e205d2",
-  "lastmod": "2026-08-29"
+  "hash": "e202293006cb5251",
+  "lastmod": "2026-10-24"
  },
  "/music-guides/wedding-organ-pop-songs.html": {
-  "hash": "0710aed44c3983ab",
-  "lastmod": "2026-09-27"
- },
- "/music-guides/wedding-organ-repertoire.html": {
-  "hash": "4aa2b3b571efdbc6",
-  "lastmod": "2026-08-29"
+  "hash": "8e919ae0c480b4df",
+  "lastmod": "2026-10-24"
  },
  "/music-guides/wedding-organist-guide.html": {
-  "hash": "f547af97672b213f",
-  "lastmod": "2026-08-29"
+  "hash": "1ef0cc4b58d7dbe3",
+  "lastmod": "2026-10-24"
  },
  "/music-guides/wedding-pop-songs-choir.html": {
-  "hash": "072bba292d77dd31",
-  "lastmod": "2026-09-27"
+  "hash": "0ff0ee00d7f813ca",
+  "lastmod": "2026-10-24"
  },
  "/music-guides/wedding-readings-and-music.html": {
-  "hash": "2a5ec57f9db26330",
-  "lastmod": "2026-09-27"
+  "hash": "3e6befc903fff201",
+  "lastmod": "2026-10-24"
  },
  "/music-guides/when-to-book-christmas-entertainment.html": {
   "hash": "84e7f61123cc30e1",
@@ -636,7 +636,7 @@
   "lastmod": "2026-10-24"
  },
  "/pricing.html": {
-  "hash": "736358833fc34a5b",
+  "hash": "3f95f1200f61a1b9",
   "lastmod": "2026-10-24"
  },
  "/private-events.html": {
@@ -656,7 +656,7 @@
   "lastmod": "2026-09-04"
  },
  "/weddings.html": {
-  "hash": "ed1e5816a71c2b58",
+  "hash": "921f575c7fc9e008",
   "lastmod": "2026-10-24"
  }
 }

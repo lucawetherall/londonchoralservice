@@ -267,6 +267,8 @@ def test_with_google_signed_out_every_section_still_reports(monkeypatch):
         raise OSError("no network in tests")
     monkeypatch.setattr(urllib.request, "urlopen", no_network)
     monkeypatch.setattr(wr.goatcounter, "keychain_token", lambda *a, **k: None)  # no Keychain in tests
+    import cwv  # section 5d imports it when it runs; the same module object
+    monkeypatch.setattr(cwv, "keychain_key", lambda *a, **k: None)
 
     def money_down():
         print("\n== 10. Money (totals and invoice numbers only)")
@@ -288,7 +290,7 @@ def test_with_google_signed_out_every_section_still_reports(monkeypatch):
         wr.run_sections(args, q=q, s=s)
     text = out.getvalue()
     heads = __import__("re").findall(r"^== (\w+)\.", text, __import__("re").M)
-    assert heads == ["1", "2", "3", "4", "4b", "5", "5c", "6", "7", "8", "9", "9b", "10", "11", "12", "13"], heads
+    assert heads == ["1", "2", "3", "4", "4b", "5", "5c", "5d", "6", "7", "8", "9", "9b", "10", "11", "12", "13"], heads
     hint = "RefreshError (looks like a Google auth error: check the sign-in)"
     for sid in ("1", "2", "3", "4", "4b", "5", "6", "7", "8"):
         assert f"   SECTION {sid} FAILED: {hint}" in text.splitlines(), (sid, text)
@@ -301,7 +303,7 @@ def test_with_google_signed_out_every_section_still_reports(monkeypatch):
     with open(path, "w", encoding="utf-8") as f:
         f.write(text)
     summary = wr.quiet_summary(path)
-    assert "sections: 1 2 3 4 4b 5 5c 6 7 8 9 9b 10 11 12 13" in summary, summary
+    assert "sections: 1 2 3 4 4b 5 5c 5d 6 7 8 9 9b 10 11 12 13" in summary, summary
     assert f"problem: SECTION 1 FAILED: {hint}" in summary.splitlines(), summary
 
 

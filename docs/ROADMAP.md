@@ -75,7 +75,7 @@ grep -c '2026-05-14' sitemap.xml   # ≈0 (only files genuinely last touched tha
 
 All seven VideoObject nodes now carry real `uploadDate` and `duration` values, verified via `ytInitialPlayerResponse` on the YouTube watch pages. Zero placeholder dates remain (`grep -rn '2025-01-01' --include='*.html' .` → empty). Updated files: listen.html (6 videos), pricing.html (1), music-guides/anima-christi-catholic-wedding.html, music-guides/anima-christi-catholic-funeral.html, music-guides/ubi-caritas-wedding.html, christmas.html, carol-singers.html. `data/seo-fix-discovered-urls.yml` updated with all values.
 
-**Still blocked:** GBP canonical Maps URL, LinkedIn company page, and ORCID for sameAs fields — see MANUAL-ACTIONS-REQUIRED.md.
+**Still blocked:** the LinkedIn company page — see MANUAL-ACTIONS-REQUIRED.md. The GBP Maps URL (20 Aug), the ORCID record (23 Oct) and the Oxford faculty page are in `data/seo-fix-discovered-urls.yml` and on the `#organization` and `#person` entities; both Person URLs re-checked 24 Oct 2026 (200, and the ORCID record's name is Luca Wetherall).
 
 **Skills:** build-and-verify
 

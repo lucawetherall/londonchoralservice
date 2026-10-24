@@ -1,0 +1,800 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:video="http://www.google.com/schemas/sitemap-video/1.1"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
+  <url>
+    <loc>https://londonchoralservice.com/</loc>
+    <image:image>
+      <image:loc>https://londonchoralservice.com/assets/films/hero-film-1280.webp</image:loc>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://londonchoralservice.com/listen.html</loc>
+    <image:image>
+      <image:loc>https://londonchoralservice.com/assets/films/film--GQaQEGhYEs-1280.webp</image:loc>
+    </image:image>
+    <image:image>
+      <image:loc>https://londonchoralservice.com/assets/films/film-G9-R6k5n7Io-1280.webp</image:loc>
+    </image:image>
+    <image:image>
+      <image:loc>https://londonchoralservice.com/assets/films/film-SaLTS_-I-q4-1280.webp</image:loc>
+    </image:image>
+    <image:image>
+      <image:loc>https://londonchoralservice.com/assets/films/film-39MyhPogl6A-1280.webp</image:loc>
+    </image:image>
+    <image:image>
+      <image:loc>https://londonchoralservice.com/assets/films/film-ZVSQ2Ts4GZE-1280.webp</image:loc>
+    </image:image>
+    <image:image>
+      <image:loc>https://londonchoralservice.com/assets/films/film-nasqXWlbf1g-1280.webp</image:loc>
+    </image:image>
+    <video:video>
+      <video:thumbnail_loc>https://img.youtube.com/vi/-GQaQEGhYEs/maxresdefault.jpg</video:thumbnail_loc>
+      <video:title>Ubi Caritas (Ola Gjeilo) — Quintet</video:title>
+      <video:description>Live performance by The London Choral Service.</video:description>
+      <video:player_loc>https://www.youtube-nocookie.com/embed/-GQaQEGhYEs</video:player_loc>
+      <video:duration>208</video:duration>
+      <video:publication_date>2026-08-14</video:publication_date>
+      <video:family_friendly>yes</video:family_friendly>
+    </video:video>
+    <video:video>
+      <video:thumbnail_loc>https://img.youtube.com/vi/G9-R6k5n7Io/maxresdefault.jpg</video:thumbnail_loc>
+      <video:title>Abide With Me — Full Choir</video:title>
+      <video:description>Live performance by The London Choral Service.</video:description>
+      <video:player_loc>https://www.youtube-nocookie.com/embed/G9-R6k5n7Io</video:player_loc>
+      <video:duration>62</video:duration>
+      <video:publication_date>2026-04-02</video:publication_date>
+      <video:family_friendly>yes</video:family_friendly>
+    </video:video>
+    <video:video>
+      <video:thumbnail_loc>https://img.youtube.com/vi/SaLTS_-I-q4/maxresdefault.jpg</video:thumbnail_loc>
+      <video:title>Be Thou My Vision — Full Choir</video:title>
+      <video:description>Live performance by The London Choral Service.</video:description>
+      <video:player_loc>https://www.youtube-nocookie.com/embed/SaLTS_-I-q4</video:player_loc>
+      <video:duration>43</video:duration>
+      <video:publication_date>2026-03-18</video:publication_date>
+      <video:family_friendly>yes</video:family_friendly>
+    </video:video>
+    <video:video>
+      <video:thumbnail_loc>https://img.youtube.com/vi/39MyhPogl6A/maxresdefault.jpg</video:thumbnail_loc>
+      <video:title>There's a Wideness in God's Mercy (Coverdale) — Chorus of twelve</video:title>
+      <video:description>Live performance by The London Choral Service.</video:description>
+      <video:player_loc>https://www.youtube-nocookie.com/embed/39MyhPogl6A</video:player_loc>
+      <video:duration>161</video:duration>
+      <video:publication_date>2026-10-23</video:publication_date>
+      <video:family_friendly>yes</video:family_friendly>
+    </video:video>
+    <video:video>
+      <video:thumbnail_loc>https://img.youtube.com/vi/ZVSQ2Ts4GZE/maxresdefault.jpg</video:thumbnail_loc>
+      <video:title>Anima Christi — Marco Frisina</video:title>
+      <video:description>Live performance by The London Choral Service.</video:description>
+      <video:player_loc>https://www.youtube-nocookie.com/embed/ZVSQ2Ts4GZE</video:player_loc>
+      <video:duration>161</video:duration>
+      <video:publication_date>2026-07-31</video:publication_date>
+      <video:family_friendly>yes</video:family_friendly>
+    </video:video>
+    <video:video>
+      <video:thumbnail_loc>https://img.youtube.com/vi/nasqXWlbf1g/maxresdefault.jpg</video:thumbnail_loc>
+      <video:title>He Shall Feed His Flock — Soloist, from Handel's Messiah</video:title>
+      <video:description>Live performance by The London Choral Service.</video:description>
+      <video:player_loc>https://www.youtube-nocookie.com/embed/nasqXWlbf1g</video:player_loc>
+      <video:duration>279</video:duration>
+      <video:publication_date>2026-03-27</video:publication_date>
+      <video:family_friendly>yes</video:family_friendly>
+    </video:video>
+  </url>
+  <url>
+    <loc>https://londonchoralservice.com/pricing.html</loc>
+    <image:image>
+      <image:loc>https://londonchoralservice.com/assets/films/hero-film-1280.webp</image:loc>
+    </image:image>
+    <video:video>
+      <video:thumbnail_loc>https://img.youtube.com/vi/Lov_NegzVhM/maxresdefault.jpg</video:thumbnail_loc>
+      <video:title>Singers for Funerals, Weddings, and Events across the UK</video:title>
+      <video:description>The London Choral Service — professional singers, choirs, and instrumentalists for funerals, weddings, memorials, and ceremonies across the United Kingdom.</video:description>
+      <video:player_loc>https://www.youtube-nocookie.com/embed/Lov_NegzVhM</video:player_loc>
+      <video:duration>43</video:duration>
+      <video:publication_date>2026-03-13</video:publication_date>
+      <video:family_friendly>yes</video:family_friendly>
+    </video:video>
+  </url>
+  <url>
+    <loc>https://londonchoralservice.com/compare/london-funeral-singers.html</loc>
+    <image:image>
+      <image:loc>https://londonchoralservice.com/assets/films/film-G9-R6k5n7Io-1280.webp</image:loc>
+    </image:image>
+    <image:image>
+      <image:loc>https://londonchoralservice.com/assets/films/film-ZVSQ2Ts4GZE-1280.webp</image:loc>
+    </image:image>
+    <video:video>
+      <video:thumbnail_loc>https://img.youtube.com/vi/G9-R6k5n7Io/maxresdefault.jpg</video:thumbnail_loc>
+      <video:title>Abide With Me — Full Choir</video:title>
+      <video:description>Live performance by The London Choral Service.</video:description>
+      <video:player_loc>https://www.youtube-nocookie.com/embed/G9-R6k5n7Io</video:player_loc>
+      <video:duration>62</video:duration>
+      <video:publication_date>2026-04-02</video:publication_date>
+      <video:family_friendly>yes</video:family_friendly>
+    </video:video>
+    <video:video>
+      <video:thumbnail_loc>https://img.youtube.com/vi/ZVSQ2Ts4GZE/maxresdefault.jpg</video:thumbnail_loc>
+      <video:title>Anima Christi — Marco Frisina</video:title>
+      <video:description>Live performance by The London Choral Service.</video:description>
+      <video:player_loc>https://www.youtube-nocookie.com/embed/ZVSQ2Ts4GZE</video:player_loc>
+      <video:duration>161</video:duration>
+      <video:publication_date>2026-07-31</video:publication_date>
+      <video:family_friendly>yes</video:family_friendly>
+    </video:video>
+  </url>
+  <url>
+    <loc>https://londonchoralservice.com/weddings.html</loc>
+    <image:image>
+      <image:loc>https://londonchoralservice.com/assets/films/hero-film-1280.webp</image:loc>
+    </image:image>
+    <image:image>
+      <image:loc>https://londonchoralservice.com/assets/films/film-SaLTS_-I-q4-1280.webp</image:loc>
+    </image:image>
+    <image:image>
+      <image:loc>https://londonchoralservice.com/assets/films/film--GQaQEGhYEs-1280.webp</image:loc>
+    </image:image>
+    <image:image>
+      <image:loc>https://londonchoralservice.com/assets/films/film-ZVSQ2Ts4GZE-1280.webp</image:loc>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://londonchoralservice.com/funerals.html</loc>
+    <image:image>
+      <image:loc>https://londonchoralservice.com/assets/films/hero-film-1280.webp</image:loc>
+    </image:image>
+    <image:image>
+      <image:loc>https://londonchoralservice.com/assets/films/film-G9-R6k5n7Io-1280.webp</image:loc>
+    </image:image>
+    <image:image>
+      <image:loc>https://londonchoralservice.com/assets/films/film-nasqXWlbf1g-1280.webp</image:loc>
+    </image:image>
+    <image:image>
+      <image:loc>https://londonchoralservice.com/assets/films/film--GQaQEGhYEs-1280.webp</image:loc>
+    </image:image>
+    <image:image>
+      <image:loc>https://londonchoralservice.com/assets/films/film-ZVSQ2Ts4GZE-1280.webp</image:loc>
+    </image:image>
+    <image:image>
+      <image:loc>https://londonchoralservice.com/assets/films/film-39MyhPogl6A-1280.webp</image:loc>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://londonchoralservice.com/christmas.html</loc>
+    <image:image>
+      <image:loc>https://londonchoralservice.com/assets/films/hero-christmas-1280.webp</image:loc>
+    </image:image>
+    <image:image>
+      <image:loc>https://londonchoralservice.com/assets/films/film-zDlSFb74p4E-1280.webp</image:loc>
+    </image:image>
+    <image:image>
+      <image:loc>https://londonchoralservice.com/assets/films/film-UaVhyyidlTs-1280.webp</image:loc>
+    </image:image>
+    <video:video>
+      <video:thumbnail_loc>https://img.youtube.com/vi/csFWUu-r85Y/maxresdefault.jpg</video:thumbnail_loc>
+      <video:title>It’s the Most Wonderful Time of the Year — Full Choir</video:title>
+      <video:description>Live performance by The London Choral Service.</video:description>
+      <video:player_loc>https://www.youtube-nocookie.com/embed/csFWUu-r85Y</video:player_loc>
+      <video:duration>110</video:duration>
+      <video:publication_date>2026-10-19</video:publication_date>
+      <video:family_friendly>yes</video:family_friendly>
+    </video:video>
+    <video:video>
+      <video:thumbnail_loc>https://img.youtube.com/vi/zDlSFb74p4E/maxresdefault.jpg</video:thumbnail_loc>
+      <video:title>Ding Dong! Merrily on High — Full Choir</video:title>
+      <video:description>Live performance by The London Choral Service.</video:description>
+      <video:player_loc>https://www.youtube-nocookie.com/embed/zDlSFb74p4E</video:player_loc>
+      <video:duration>105</video:duration>
+      <video:publication_date>2026-10-19</video:publication_date>
+      <video:family_friendly>yes</video:family_friendly>
+    </video:video>
+    <video:video>
+      <video:thumbnail_loc>https://img.youtube.com/vi/UaVhyyidlTs/maxresdefault.jpg</video:thumbnail_loc>
+      <video:title>Winter Wonderland — Full Choir</video:title>
+      <video:description>Live performance by The London Choral Service.</video:description>
+      <video:player_loc>https://www.youtube-nocookie.com/embed/UaVhyyidlTs</video:player_loc>
+      <video:duration>69</video:duration>
+      <video:publication_date>2026-10-19</video:publication_date>
+      <video:family_friendly>yes</video:family_friendly>
+    </video:video>
+  </url>
+  <url>
+    <loc>https://londonchoralservice.com/for-funeral-directors.html</loc>
+    <image:image>
+      <image:loc>https://londonchoralservice.com/assets/films/film-G9-R6k5n7Io-1280.webp</image:loc>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://londonchoralservice.com/for-wedding-planners.html</loc>
+    <image:image>
+      <image:loc>https://londonchoralservice.com/assets/films/film--GQaQEGhYEs-1280.webp</image:loc>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://londonchoralservice.com/for-hotels.html</loc>
+    <image:image>
+      <image:loc>https://londonchoralservice.com/assets/films/hero-film-1280.webp</image:loc>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://londonchoralservice.com/for-property-managers.html</loc>
+    <image:image>
+      <image:loc>https://londonchoralservice.com/assets/films/hero-film-1280.webp</image:loc>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://londonchoralservice.com/for-livery-companies.html</loc>
+    <image:image>
+      <image:loc>https://londonchoralservice.com/assets/films/hero-film-1280.webp</image:loc>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://londonchoralservice.com/for-charities.html</loc>
+    <image:image>
+      <image:loc>https://londonchoralservice.com/assets/films/hero-film-1280.webp</image:loc>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://londonchoralservice.com/corporate.html</loc>
+    <image:image>
+      <image:loc>https://londonchoralservice.com/assets/films/hero-film-1280.webp</image:loc>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://londonchoralservice.com/music-guides/anima-christi-catholic-wedding.html</loc>
+    <video:video>
+      <video:thumbnail_loc>https://img.youtube.com/vi/ZVSQ2Ts4GZE/maxresdefault.jpg</video:thumbnail_loc>
+      <video:title>Anima Christi — Marco Frisina</video:title>
+      <video:description>Marco Frisina's setting of the Latin prayer Anima Christi, sung by a quintet from The London Choral Service.</video:description>
+      <video:player_loc>https://www.youtube-nocookie.com/embed/ZVSQ2Ts4GZE</video:player_loc>
+      <video:duration>161</video:duration>
+      <video:publication_date>2026-07-31</video:publication_date>
+      <video:family_friendly>yes</video:family_friendly>
+    </video:video>
+  </url>
+  <url>
+    <loc>https://londonchoralservice.com/music-guides/anima-christi-catholic-funeral.html</loc>
+    <video:video>
+      <video:thumbnail_loc>https://img.youtube.com/vi/ZVSQ2Ts4GZE/maxresdefault.jpg</video:thumbnail_loc>
+      <video:title>Anima Christi — Marco Frisina</video:title>
+      <video:description>Marco Frisina's setting of the Latin prayer Anima Christi, sung by a quintet from The London Choral Service.</video:description>
+      <video:player_loc>https://www.youtube-nocookie.com/embed/ZVSQ2Ts4GZE</video:player_loc>
+      <video:duration>161</video:duration>
+      <video:publication_date>2026-07-31</video:publication_date>
+      <video:family_friendly>yes</video:family_friendly>
+    </video:video>
+  </url>
+  <url>
+    <loc>https://londonchoralservice.com/music-guides/last-minute-funeral-singers.html</loc>
+    <video:video>
+      <video:thumbnail_loc>https://img.youtube.com/vi/G9-R6k5n7Io/maxresdefault.jpg</video:thumbnail_loc>
+      <video:title>Abide With Me (Eventide)</video:title>
+      <video:description>Abide With Me sung by The London Choral Service — one of the most-requested funeral hymns, performed by the singers available for short-notice bookings.</video:description>
+      <video:player_loc>https://www.youtube-nocookie.com/embed/G9-R6k5n7Io</video:player_loc>
+      <video:duration>62</video:duration>
+      <video:publication_date>2026-04-02</video:publication_date>
+      <video:family_friendly>yes</video:family_friendly>
+    </video:video>
+  </url>
+  <url>
+    <loc>https://londonchoralservice.com/music-guides/corporate-carol-service.html</loc>
+    <video:video>
+      <video:thumbnail_loc>https://img.youtube.com/vi/SbvqWglsbMo/maxresdefault.jpg</video:thumbnail_loc>
+      <video:title>Once in Royal David’s City — Full Choir</video:title>
+      <video:description>Live performance by The London Choral Service.</video:description>
+      <video:player_loc>https://www.youtube-nocookie.com/embed/SbvqWglsbMo</video:player_loc>
+      <video:duration>113</video:duration>
+      <video:publication_date>2026-10-19</video:publication_date>
+      <video:family_friendly>yes</video:family_friendly>
+    </video:video>
+  </url>
+  <url>
+    <loc>https://londonchoralservice.com/music-guides/christmas-choir-hire.html</loc>
+    <video:video>
+      <video:thumbnail_loc>https://img.youtube.com/vi/csFWUu-r85Y/maxresdefault.jpg</video:thumbnail_loc>
+      <video:title>It’s the Most Wonderful Time of the Year — Full Choir</video:title>
+      <video:description>Live performance by The London Choral Service.</video:description>
+      <video:player_loc>https://www.youtube-nocookie.com/embed/csFWUu-r85Y</video:player_loc>
+      <video:duration>110</video:duration>
+      <video:publication_date>2026-10-19</video:publication_date>
+      <video:family_friendly>yes</video:family_friendly>
+    </video:video>
+  </url>
+  <url>
+    <loc>https://londonchoralservice.com/music-guides/company-christmas-party-entertainment.html</loc>
+    <video:video>
+      <video:thumbnail_loc>https://img.youtube.com/vi/UaVhyyidlTs/maxresdefault.jpg</video:thumbnail_loc>
+      <video:title>Winter Wonderland — Full Choir</video:title>
+      <video:description>Live performance by The London Choral Service.</video:description>
+      <video:player_loc>https://www.youtube-nocookie.com/embed/UaVhyyidlTs</video:player_loc>
+      <video:duration>69</video:duration>
+      <video:publication_date>2026-10-19</video:publication_date>
+      <video:family_friendly>yes</video:family_friendly>
+    </video:video>
+    <video:video>
+      <video:thumbnail_loc>https://img.youtube.com/vi/csFWUu-r85Y/maxresdefault.jpg</video:thumbnail_loc>
+      <video:title>It’s the Most Wonderful Time of the Year — Full Choir</video:title>
+      <video:description>Live performance by The London Choral Service.</video:description>
+      <video:player_loc>https://www.youtube-nocookie.com/embed/csFWUu-r85Y</video:player_loc>
+      <video:duration>110</video:duration>
+      <video:publication_date>2026-10-19</video:publication_date>
+      <video:family_friendly>yes</video:family_friendly>
+    </video:video>
+  </url>
+  <url>
+    <loc>https://londonchoralservice.com/music-guides/christmas-carols-guide.html</loc>
+    <video:video>
+      <video:thumbnail_loc>https://img.youtube.com/vi/SbvqWglsbMo/maxresdefault.jpg</video:thumbnail_loc>
+      <video:title>Once in Royal David’s City — Full Choir</video:title>
+      <video:description>Live performance by The London Choral Service.</video:description>
+      <video:player_loc>https://www.youtube-nocookie.com/embed/SbvqWglsbMo</video:player_loc>
+      <video:duration>113</video:duration>
+      <video:publication_date>2026-10-19</video:publication_date>
+      <video:family_friendly>yes</video:family_friendly>
+    </video:video>
+    <video:video>
+      <video:thumbnail_loc>https://img.youtube.com/vi/zDlSFb74p4E/maxresdefault.jpg</video:thumbnail_loc>
+      <video:title>Ding Dong! Merrily on High — Full Choir</video:title>
+      <video:description>Live performance by The London Choral Service.</video:description>
+      <video:player_loc>https://www.youtube-nocookie.com/embed/zDlSFb74p4E</video:player_loc>
+      <video:duration>105</video:duration>
+      <video:publication_date>2026-10-19</video:publication_date>
+      <video:family_friendly>yes</video:family_friendly>
+    </video:video>
+  </url>
+  <url>
+    <loc>https://londonchoralservice.com/music-guides/office-carol-service-planning.html</loc>
+    <video:video>
+      <video:thumbnail_loc>https://img.youtube.com/vi/dGYqQf6BDAk/maxresdefault.jpg</video:thumbnail_loc>
+      <video:title>Carol of the Bells — Full Choir</video:title>
+      <video:description>Live performance by The London Choral Service.</video:description>
+      <video:player_loc>https://www.youtube-nocookie.com/embed/dGYqQf6BDAk</video:player_loc>
+      <video:duration>81</video:duration>
+      <video:publication_date>2026-09-29</video:publication_date>
+      <video:family_friendly>yes</video:family_friendly>
+    </video:video>
+  </url>
+  <url>
+    <loc>https://londonchoralservice.com/music-guides/be-thou-my-vision-wedding-hymn.html</loc>
+    <video:video>
+      <video:thumbnail_loc>https://img.youtube.com/vi/SaLTS_-I-q4/maxresdefault.jpg</video:thumbnail_loc>
+      <video:title>Be Thou My Vision — Full Choir</video:title>
+      <video:description>Live performance by The London Choral Service.</video:description>
+      <video:player_loc>https://www.youtube-nocookie.com/embed/SaLTS_-I-q4</video:player_loc>
+      <video:duration>43</video:duration>
+      <video:publication_date>2026-03-18</video:publication_date>
+      <video:family_friendly>yes</video:family_friendly>
+    </video:video>
+  </url>
+  <url>
+    <loc>https://londonchoralservice.com/music-guides/be-thou-my-vision-funeral-hymn.html</loc>
+    <video:video>
+      <video:thumbnail_loc>https://img.youtube.com/vi/SaLTS_-I-q4/maxresdefault.jpg</video:thumbnail_loc>
+      <video:title>Be Thou My Vision — Full Choir</video:title>
+      <video:description>Live performance by The London Choral Service.</video:description>
+      <video:player_loc>https://www.youtube-nocookie.com/embed/SaLTS_-I-q4</video:player_loc>
+      <video:duration>43</video:duration>
+      <video:publication_date>2026-03-18</video:publication_date>
+      <video:family_friendly>yes</video:family_friendly>
+    </video:video>
+  </url>
+  <url>
+    <loc>https://londonchoralservice.com/for-event-managers.html</loc>
+    <image:image>
+      <image:loc>https://londonchoralservice.com/assets/films/hero-film-1280.webp</image:loc>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://londonchoralservice.com/music-guides/best-christmas-carol-singers.html</loc>
+    <video:video>
+      <video:thumbnail_loc>https://img.youtube.com/vi/csFWUu-r85Y/maxresdefault.jpg</video:thumbnail_loc>
+      <video:title>It’s the Most Wonderful Time of the Year — Full Choir</video:title>
+      <video:description>Live performance by The London Choral Service.</video:description>
+      <video:player_loc>https://www.youtube-nocookie.com/embed/csFWUu-r85Y</video:player_loc>
+      <video:duration>110</video:duration>
+      <video:publication_date>2026-10-19</video:publication_date>
+      <video:family_friendly>yes</video:family_friendly>
+    </video:video>
+  </url>
+  <url>
+    <loc>https://londonchoralservice.com/music-guides/nine-lessons-and-carols.html</loc>
+    <video:video>
+      <video:thumbnail_loc>https://img.youtube.com/vi/SbvqWglsbMo/maxresdefault.jpg</video:thumbnail_loc>
+      <video:title>Once in Royal David’s City — Full Choir</video:title>
+      <video:description>Live performance by The London Choral Service.</video:description>
+      <video:player_loc>https://www.youtube-nocookie.com/embed/SbvqWglsbMo</video:player_loc>
+      <video:duration>113</video:duration>
+      <video:publication_date>2026-10-19</video:publication_date>
+      <video:family_friendly>yes</video:family_friendly>
+    </video:video>
+  </url>
+  <url>
+    <loc>https://londonchoralservice.com/music-guides/carol-singers-cost.html</loc>
+    <video:video>
+      <video:thumbnail_loc>https://img.youtube.com/vi/csFWUu-r85Y/maxresdefault.jpg</video:thumbnail_loc>
+      <video:title>It’s the Most Wonderful Time of the Year — Full Choir</video:title>
+      <video:description>Live performance by The London Choral Service.</video:description>
+      <video:player_loc>https://www.youtube-nocookie.com/embed/csFWUu-r85Y</video:player_loc>
+      <video:duration>110</video:duration>
+      <video:publication_date>2026-10-19</video:publication_date>
+      <video:family_friendly>yes</video:family_friendly>
+    </video:video>
+  </url>
+  <url>
+    <loc>https://londonchoralservice.com/music-guides/charity-carol-concert.html</loc>
+    <video:video>
+      <video:thumbnail_loc>https://img.youtube.com/vi/dGYqQf6BDAk/maxresdefault.jpg</video:thumbnail_loc>
+      <video:title>Carol of the Bells — Full Choir</video:title>
+      <video:description>Live performance by The London Choral Service.</video:description>
+      <video:player_loc>https://www.youtube-nocookie.com/embed/dGYqQf6BDAk</video:player_loc>
+      <video:duration>81</video:duration>
+      <video:publication_date>2026-09-29</video:publication_date>
+      <video:family_friendly>yes</video:family_friendly>
+    </video:video>
+  </url>
+  <url>
+    <loc>https://londonchoralservice.com/music-guides/hotel-christmas-entertainment.html</loc>
+    <video:video>
+      <video:thumbnail_loc>https://img.youtube.com/vi/csFWUu-r85Y/maxresdefault.jpg</video:thumbnail_loc>
+      <video:title>It’s the Most Wonderful Time of the Year — Full Choir</video:title>
+      <video:description>Live performance by The London Choral Service.</video:description>
+      <video:player_loc>https://www.youtube-nocookie.com/embed/csFWUu-r85Y</video:player_loc>
+      <video:duration>110</video:duration>
+      <video:publication_date>2026-10-19</video:publication_date>
+      <video:family_friendly>yes</video:family_friendly>
+    </video:video>
+  </url>
+  <url>
+    <loc>https://londonchoralservice.com/music-guides/residents-christmas-carol-event.html</loc>
+    <video:video>
+      <video:thumbnail_loc>https://img.youtube.com/vi/csFWUu-r85Y/maxresdefault.jpg</video:thumbnail_loc>
+      <video:title>It’s the Most Wonderful Time of the Year — Full Choir</video:title>
+      <video:description>Live performance by The London Choral Service.</video:description>
+      <video:player_loc>https://www.youtube-nocookie.com/embed/csFWUu-r85Y</video:player_loc>
+      <video:duration>110</video:duration>
+      <video:publication_date>2026-10-19</video:publication_date>
+      <video:family_friendly>yes</video:family_friendly>
+    </video:video>
+  </url>
+  <url>
+    <loc>https://londonchoralservice.com/music-guides/when-to-book-christmas-entertainment.html</loc>
+    <video:video>
+      <video:thumbnail_loc>https://img.youtube.com/vi/csFWUu-r85Y/maxresdefault.jpg</video:thumbnail_loc>
+      <video:title>It’s the Most Wonderful Time of the Year — Full Choir</video:title>
+      <video:description>Live performance by The London Choral Service.</video:description>
+      <video:player_loc>https://www.youtube-nocookie.com/embed/csFWUu-r85Y</video:player_loc>
+      <video:duration>110</video:duration>
+      <video:publication_date>2026-10-19</video:publication_date>
+      <video:family_friendly>yes</video:family_friendly>
+    </video:video>
+  </url>
+  <url>
+    <loc>https://londonchoralservice.com/music-guides/booking-carol-singers-agency-vs-direct.html</loc>
+    <video:video>
+      <video:thumbnail_loc>https://img.youtube.com/vi/csFWUu-r85Y/maxresdefault.jpg</video:thumbnail_loc>
+      <video:title>It’s the Most Wonderful Time of the Year — Full Choir</video:title>
+      <video:description>Live performance by The London Choral Service.</video:description>
+      <video:player_loc>https://www.youtube-nocookie.com/embed/csFWUu-r85Y</video:player_loc>
+      <video:duration>110</video:duration>
+      <video:publication_date>2026-10-19</video:publication_date>
+      <video:family_friendly>yes</video:family_friendly>
+    </video:video>
+  </url>
+  <url>
+    <loc>https://londonchoralservice.com/music-guides/how-many-carol-singers.html</loc>
+    <video:video>
+      <video:thumbnail_loc>https://img.youtube.com/vi/csFWUu-r85Y/maxresdefault.jpg</video:thumbnail_loc>
+      <video:title>It’s the Most Wonderful Time of the Year — Full Choir</video:title>
+      <video:description>Live performance by The London Choral Service.</video:description>
+      <video:player_loc>https://www.youtube-nocookie.com/embed/csFWUu-r85Y</video:player_loc>
+      <video:duration>110</video:duration>
+      <video:publication_date>2026-10-19</video:publication_date>
+      <video:family_friendly>yes</video:family_friendly>
+    </video:video>
+  </url>
+  <url>
+    <loc>https://londonchoralservice.com/music-guides/best-carols-for-four-voices.html</loc>
+    <video:video>
+      <video:thumbnail_loc>https://img.youtube.com/vi/zDlSFb74p4E/maxresdefault.jpg</video:thumbnail_loc>
+      <video:title>Ding Dong! Merrily on High — Full Choir</video:title>
+      <video:description>Live performance by The London Choral Service.</video:description>
+      <video:player_loc>https://www.youtube-nocookie.com/embed/zDlSFb74p4E</video:player_loc>
+      <video:duration>105</video:duration>
+      <video:publication_date>2026-10-19</video:publication_date>
+      <video:family_friendly>yes</video:family_friendly>
+    </video:video>
+    <video:video>
+      <video:thumbnail_loc>https://img.youtube.com/vi/mKMjUvCCW3E/maxresdefault.jpg</video:thumbnail_loc>
+      <video:title>Blue Christmas — Small Choir</video:title>
+      <video:description>Live performance by The London Choral Service.</video:description>
+      <video:player_loc>https://www.youtube-nocookie.com/embed/mKMjUvCCW3E</video:player_loc>
+      <video:duration>100</video:duration>
+      <video:publication_date>2026-08-14</video:publication_date>
+      <video:family_friendly>yes</video:family_friendly>
+    </video:video>
+  </url>
+  <url>
+    <loc>https://londonchoralservice.com/music-guides/carols-by-candlelight.html</loc>
+    <video:video>
+      <video:thumbnail_loc>https://img.youtube.com/vi/SbvqWglsbMo/maxresdefault.jpg</video:thumbnail_loc>
+      <video:title>Once in Royal David’s City — Full Choir</video:title>
+      <video:description>Live performance by The London Choral Service.</video:description>
+      <video:player_loc>https://www.youtube-nocookie.com/embed/SbvqWglsbMo</video:player_loc>
+      <video:duration>113</video:duration>
+      <video:publication_date>2026-10-19</video:publication_date>
+      <video:family_friendly>yes</video:family_friendly>
+    </video:video>
+  </url>
+  <url>
+    <loc>https://londonchoralservice.com/music-guides/outdoor-carol-singing.html</loc>
+    <video:video>
+      <video:thumbnail_loc>https://img.youtube.com/vi/zDlSFb74p4E/maxresdefault.jpg</video:thumbnail_loc>
+      <video:title>Ding Dong! Merrily on High — Full Choir</video:title>
+      <video:description>Live performance by The London Choral Service.</video:description>
+      <video:player_loc>https://www.youtube-nocookie.com/embed/zDlSFb74p4E</video:player_loc>
+      <video:duration>105</video:duration>
+      <video:publication_date>2026-10-19</video:publication_date>
+      <video:family_friendly>yes</video:family_friendly>
+    </video:video>
+  </url>
+  <url>
+    <loc>https://londonchoralservice.com/music-guides/a-cappella-christmas-songs.html</loc>
+    <video:video>
+      <video:thumbnail_loc>https://img.youtube.com/vi/UaVhyyidlTs/maxresdefault.jpg</video:thumbnail_loc>
+      <video:title>Winter Wonderland — Full Choir</video:title>
+      <video:description>Live performance by The London Choral Service.</video:description>
+      <video:player_loc>https://www.youtube-nocookie.com/embed/UaVhyyidlTs</video:player_loc>
+      <video:duration>69</video:duration>
+      <video:publication_date>2026-10-19</video:publication_date>
+      <video:family_friendly>yes</video:family_friendly>
+    </video:video>
+    <video:video>
+      <video:thumbnail_loc>https://img.youtube.com/vi/mKMjUvCCW3E/maxresdefault.jpg</video:thumbnail_loc>
+      <video:title>Blue Christmas — Small Choir</video:title>
+      <video:description>Live performance by The London Choral Service.</video:description>
+      <video:player_loc>https://www.youtube-nocookie.com/embed/mKMjUvCCW3E</video:player_loc>
+      <video:duration>100</video:duration>
+      <video:publication_date>2026-08-14</video:publication_date>
+      <video:family_friendly>yes</video:family_friendly>
+    </video:video>
+  </url>
+  <url>
+    <loc>https://londonchoralservice.com/music-guides/church-carol-service-choir-hire.html</loc>
+    <video:video>
+      <video:thumbnail_loc>https://img.youtube.com/vi/SbvqWglsbMo/maxresdefault.jpg</video:thumbnail_loc>
+      <video:title>Once in Royal David’s City — Full Choir</video:title>
+      <video:description>Live performance by The London Choral Service.</video:description>
+      <video:player_loc>https://www.youtube-nocookie.com/embed/SbvqWglsbMo</video:player_loc>
+      <video:duration>113</video:duration>
+      <video:publication_date>2026-10-19</video:publication_date>
+      <video:family_friendly>yes</video:family_friendly>
+    </video:video>
+  </url>
+  <url>
+    <loc>https://londonchoralservice.com/music-guides/christmas-drinks-reception-music.html</loc>
+    <video:video>
+      <video:thumbnail_loc>https://img.youtube.com/vi/UaVhyyidlTs/maxresdefault.jpg</video:thumbnail_loc>
+      <video:title>Winter Wonderland — Full Choir</video:title>
+      <video:description>Live performance by The London Choral Service.</video:description>
+      <video:player_loc>https://www.youtube-nocookie.com/embed/UaVhyyidlTs</video:player_loc>
+      <video:duration>69</video:duration>
+      <video:publication_date>2026-10-19</video:publication_date>
+      <video:family_friendly>yes</video:family_friendly>
+    </video:video>
+    <video:video>
+      <video:thumbnail_loc>https://img.youtube.com/vi/csFWUu-r85Y/maxresdefault.jpg</video:thumbnail_loc>
+      <video:title>It’s the Most Wonderful Time of the Year — Full Choir</video:title>
+      <video:description>Live performance by The London Choral Service.</video:description>
+      <video:player_loc>https://www.youtube-nocookie.com/embed/csFWUu-r85Y</video:player_loc>
+      <video:duration>110</video:duration>
+      <video:publication_date>2026-10-19</video:publication_date>
+      <video:family_friendly>yes</video:family_friendly>
+    </video:video>
+  </url>
+  <url>
+    <loc>https://londonchoralservice.com/music-guides/christmas-gala-dinner-music.html</loc>
+    <video:video>
+      <video:thumbnail_loc>https://img.youtube.com/vi/csFWUu-r85Y/maxresdefault.jpg</video:thumbnail_loc>
+      <video:title>It’s the Most Wonderful Time of the Year — Full Choir</video:title>
+      <video:description>Live performance by The London Choral Service.</video:description>
+      <video:player_loc>https://www.youtube-nocookie.com/embed/csFWUu-r85Y</video:player_loc>
+      <video:duration>110</video:duration>
+      <video:publication_date>2026-10-19</video:publication_date>
+      <video:family_friendly>yes</video:family_friendly>
+    </video:video>
+  </url>
+  <url>
+    <loc>https://londonchoralservice.com/music-guides/carol-singers-law-firms.html</loc>
+    <video:video>
+      <video:thumbnail_loc>https://img.youtube.com/vi/csFWUu-r85Y/maxresdefault.jpg</video:thumbnail_loc>
+      <video:title>It’s the Most Wonderful Time of the Year — Full Choir</video:title>
+      <video:description>Live performance by The London Choral Service.</video:description>
+      <video:player_loc>https://www.youtube-nocookie.com/embed/csFWUu-r85Y</video:player_loc>
+      <video:duration>110</video:duration>
+      <video:publication_date>2026-10-19</video:publication_date>
+      <video:family_friendly>yes</video:family_friendly>
+    </video:video>
+  </url>
+  <url>
+    <loc>https://londonchoralservice.com/music-guides/christmas-carol-lyrics-meanings.html</loc>
+    <video:video>
+      <video:thumbnail_loc>https://img.youtube.com/vi/SbvqWglsbMo/maxresdefault.jpg</video:thumbnail_loc>
+      <video:title>Once in Royal David’s City — Full Choir</video:title>
+      <video:description>Live performance by The London Choral Service.</video:description>
+      <video:player_loc>https://www.youtube-nocookie.com/embed/SbvqWglsbMo</video:player_loc>
+      <video:duration>113</video:duration>
+      <video:publication_date>2026-10-19</video:publication_date>
+      <video:family_friendly>yes</video:family_friendly>
+    </video:video>
+    <video:video>
+      <video:thumbnail_loc>https://img.youtube.com/vi/zDlSFb74p4E/maxresdefault.jpg</video:thumbnail_loc>
+      <video:title>Ding Dong! Merrily on High — Full Choir</video:title>
+      <video:description>Live performance by The London Choral Service.</video:description>
+      <video:player_loc>https://www.youtube-nocookie.com/embed/zDlSFb74p4E</video:player_loc>
+      <video:duration>105</video:duration>
+      <video:publication_date>2026-10-19</video:publication_date>
+      <video:family_friendly>yes</video:family_friendly>
+    </video:video>
+    <video:video>
+      <video:thumbnail_loc>https://img.youtube.com/vi/dGYqQf6BDAk/maxresdefault.jpg</video:thumbnail_loc>
+      <video:title>Carol of the Bells — Full Choir</video:title>
+      <video:description>Live performance by The London Choral Service.</video:description>
+      <video:player_loc>https://www.youtube-nocookie.com/embed/dGYqQf6BDAk</video:player_loc>
+      <video:duration>81</video:duration>
+      <video:publication_date>2026-09-29</video:publication_date>
+      <video:family_friendly>yes</video:family_friendly>
+    </video:video>
+  </url>
+  <url>
+    <loc>https://londonchoralservice.com/music-guides/advent-carols-vs-christmas-carols.html</loc>
+    <video:video>
+      <video:thumbnail_loc>https://img.youtube.com/vi/SbvqWglsbMo/maxresdefault.jpg</video:thumbnail_loc>
+      <video:title>Once in Royal David’s City — Full Choir</video:title>
+      <video:description>Live performance by The London Choral Service.</video:description>
+      <video:player_loc>https://www.youtube-nocookie.com/embed/SbvqWglsbMo</video:player_loc>
+      <video:duration>113</video:duration>
+      <video:publication_date>2026-10-19</video:publication_date>
+      <video:family_friendly>yes</video:family_friendly>
+    </video:video>
+  </url>
+  <url>
+    <loc>https://londonchoralservice.com/music-guides/ubi-caritas-wedding.html</loc>
+    <video:video>
+      <video:thumbnail_loc>https://img.youtube.com/vi/-GQaQEGhYEs/maxresdefault.jpg</video:thumbnail_loc>
+      <video:title>Ubi Caritas (Ola Gjeilo) — Quintet</video:title>
+      <video:description>Live performance by The London Choral Service.</video:description>
+      <video:player_loc>https://www.youtube-nocookie.com/embed/-GQaQEGhYEs</video:player_loc>
+      <video:duration>208</video:duration>
+      <video:publication_date>2026-08-14</video:publication_date>
+      <video:family_friendly>yes</video:family_friendly>
+    </video:video>
+  </url>
+  <url>
+    <loc>https://londonchoralservice.com/christmas-pricing.html</loc>
+    <image:image>
+      <image:loc>https://londonchoralservice.com/assets/films/hero-christmas-1280.webp</image:loc>
+    </image:image>
+    <video:video>
+      <video:thumbnail_loc>https://img.youtube.com/vi/csFWUu-r85Y/maxresdefault.jpg</video:thumbnail_loc>
+      <video:title>It’s the Most Wonderful Time of the Year — Full Choir</video:title>
+      <video:description>Live performance by The London Choral Service.</video:description>
+      <video:player_loc>https://www.youtube-nocookie.com/embed/csFWUu-r85Y</video:player_loc>
+      <video:duration>110</video:duration>
+      <video:publication_date>2026-10-19</video:publication_date>
+      <video:family_friendly>yes</video:family_friendly>
+    </video:video>
+  </url>
+  <url>
+    <loc>https://londonchoralservice.com/christmas-carol-services.html</loc>
+    <image:image>
+      <image:loc>https://londonchoralservice.com/assets/films/film-SbvqWglsbMo-1280.webp</image:loc>
+    </image:image>
+    <image:image>
+      <image:loc>https://londonchoralservice.com/assets/films/film-zDlSFb74p4E-1280.webp</image:loc>
+    </image:image>
+    <video:video>
+      <video:thumbnail_loc>https://img.youtube.com/vi/SbvqWglsbMo/maxresdefault.jpg</video:thumbnail_loc>
+      <video:title>Once in Royal David’s City — Full Choir</video:title>
+      <video:description>Live performance by The London Choral Service.</video:description>
+      <video:player_loc>https://www.youtube-nocookie.com/embed/SbvqWglsbMo</video:player_loc>
+      <video:duration>113</video:duration>
+      <video:publication_date>2026-10-19</video:publication_date>
+      <video:family_friendly>yes</video:family_friendly>
+    </video:video>
+    <video:video>
+      <video:thumbnail_loc>https://img.youtube.com/vi/zDlSFb74p4E/maxresdefault.jpg</video:thumbnail_loc>
+      <video:title>Ding Dong! Merrily on High — Full Choir</video:title>
+      <video:description>Live performance by The London Choral Service.</video:description>
+      <video:player_loc>https://www.youtube-nocookie.com/embed/zDlSFb74p4E</video:player_loc>
+      <video:duration>105</video:duration>
+      <video:publication_date>2026-10-19</video:publication_date>
+      <video:family_friendly>yes</video:family_friendly>
+    </video:video>
+  </url>
+  <url>
+    <loc>https://londonchoralservice.com/christmas-listen.html</loc>
+    <image:image>
+      <image:loc>https://londonchoralservice.com/assets/films/hero-christmas-1280.webp</image:loc>
+    </image:image>
+    <image:image>
+      <image:loc>https://londonchoralservice.com/assets/films/film-SbvqWglsbMo-1280.webp</image:loc>
+    </image:image>
+    <image:image>
+      <image:loc>https://londonchoralservice.com/assets/films/film-zDlSFb74p4E-1280.webp</image:loc>
+    </image:image>
+    <image:image>
+      <image:loc>https://londonchoralservice.com/assets/films/film-dGYqQf6BDAk-1280.webp</image:loc>
+    </image:image>
+    <image:image>
+      <image:loc>https://londonchoralservice.com/assets/films/film-UaVhyyidlTs-1280.webp</image:loc>
+    </image:image>
+    <image:image>
+      <image:loc>https://londonchoralservice.com/assets/films/film-mKMjUvCCW3E-1280.webp</image:loc>
+    </image:image>
+    <video:video>
+      <video:thumbnail_loc>https://img.youtube.com/vi/csFWUu-r85Y/maxresdefault.jpg</video:thumbnail_loc>
+      <video:title>It’s the Most Wonderful Time of the Year — Full Choir</video:title>
+      <video:description>Live performance by The London Choral Service.</video:description>
+      <video:player_loc>https://www.youtube-nocookie.com/embed/csFWUu-r85Y</video:player_loc>
+      <video:duration>110</video:duration>
+      <video:publication_date>2026-10-19</video:publication_date>
+      <video:family_friendly>yes</video:family_friendly>
+    </video:video>
+    <video:video>
+      <video:thumbnail_loc>https://img.youtube.com/vi/SbvqWglsbMo/maxresdefault.jpg</video:thumbnail_loc>
+      <video:title>Once in Royal David’s City — Full Choir</video:title>
+      <video:description>Live performance by The London Choral Service.</video:description>
+      <video:player_loc>https://www.youtube-nocookie.com/embed/SbvqWglsbMo</video:player_loc>
+      <video:duration>113</video:duration>
+      <video:publication_date>2026-10-19</video:publication_date>
+      <video:family_friendly>yes</video:family_friendly>
+    </video:video>
+    <video:video>
+      <video:thumbnail_loc>https://img.youtube.com/vi/zDlSFb74p4E/maxresdefault.jpg</video:thumbnail_loc>
+      <video:title>Ding Dong! Merrily on High — Full Choir</video:title>
+      <video:description>Live performance by The London Choral Service.</video:description>
+      <video:player_loc>https://www.youtube-nocookie.com/embed/zDlSFb74p4E</video:player_loc>
+      <video:duration>105</video:duration>
+      <video:publication_date>2026-10-19</video:publication_date>
+      <video:family_friendly>yes</video:family_friendly>
+    </video:video>
+    <video:video>
+      <video:thumbnail_loc>https://img.youtube.com/vi/dGYqQf6BDAk/maxresdefault.jpg</video:thumbnail_loc>
+      <video:title>Carol of the Bells — Full Choir</video:title>
+      <video:description>Live performance by The London Choral Service.</video:description>
+      <video:player_loc>https://www.youtube-nocookie.com/embed/dGYqQf6BDAk</video:player_loc>
+      <video:duration>81</video:duration>
+      <video:publication_date>2026-09-29</video:publication_date>
+      <video:family_friendly>yes</video:family_friendly>
+    </video:video>
+    <video:video>
+      <video:thumbnail_loc>https://img.youtube.com/vi/UaVhyyidlTs/maxresdefault.jpg</video:thumbnail_loc>
+      <video:title>Winter Wonderland — Full Choir</video:title>
+      <video:description>Live performance by The London Choral Service.</video:description>
+      <video:player_loc>https://www.youtube-nocookie.com/embed/UaVhyyidlTs</video:player_loc>
+      <video:duration>69</video:duration>
+      <video:publication_date>2026-10-19</video:publication_date>
+      <video:family_friendly>yes</video:family_friendly>
+    </video:video>
+    <video:video>
+      <video:thumbnail_loc>https://img.youtube.com/vi/mKMjUvCCW3E/maxresdefault.jpg</video:thumbnail_loc>
+      <video:title>Blue Christmas — Small Choir</video:title>
+      <video:description>Live performance by The London Choral Service.</video:description>
+      <video:player_loc>https://www.youtube-nocookie.com/embed/mKMjUvCCW3E</video:player_loc>
+      <video:duration>100</video:duration>
+      <video:publication_date>2026-08-14</video:publication_date>
+      <video:family_friendly>yes</video:family_friendly>
+    </video:video>
+  </url>
+  <url>
+    <loc>https://londonchoralservice.com/facts.html</loc>
+    <image:image>
+      <image:loc>https://londonchoralservice.com/assets/films/hero-film-1280.webp</image:loc>
+    </image:image>
+    <image:image>
+      <image:loc>https://londonchoralservice.com/assets/films/hero-christmas-1280.webp</image:loc>
+    </image:image>
+  </url>
+</urlset>
