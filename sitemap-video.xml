@@ -224,18 +224,6 @@
     </video:video>
   </url>
   <url>
-    <loc>https://londonchoralservice.com/music-guides/office-carol-service-planning.html</loc>
-    <video:video>
-      <video:thumbnail_loc>https://img.youtube.com/vi/dGYqQf6BDAk/maxresdefault.jpg</video:thumbnail_loc>
-      <video:title>Carol of the Bells — Full Choir</video:title>
-      <video:description>Live performance by The London Choral Service.</video:description>
-      <video:player_loc>https://www.youtube-nocookie.com/embed/dGYqQf6BDAk</video:player_loc>
-      <video:duration>81</video:duration>
-      <video:publication_date>2026-09-29</video:publication_date>
-      <video:family_friendly>yes</video:family_friendly>
-    </video:video>
-  </url>
-  <url>
     <loc>https://londonchoralservice.com/music-guides/be-thou-my-vision-wedding-hymn.html</loc>
     <video:video>
       <video:thumbnail_loc>https://img.youtube.com/vi/SaLTS_-I-q4/maxresdefault.jpg</video:thumbnail_loc>
