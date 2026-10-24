@@ -104,7 +104,7 @@ videos:
   # Added 2026-10-19. Same eight singers and session as Carol of the Bells; all labelled "Full Choir".
   # Upload times 14:02-14:06 PDT on 19 Oct = 22:02-22:06 BST, so the UK date is 2026-10-19.
   # Plan: docs/superpowers/plans/2026-10-19-christmas-carol-videos.md
-  - page: "christmas-carol-services.html (hero), christmas-listen.html"  # christmas.html hero until 2026-10-19
+  - page: "christmas-carol-services.html (hero), christmas-listen.html, christmas.html"  # christmas.html hero until 2026-10-19; a track there again from 2026-10-24
     position: 9
     youtube_id: "SbvqWglsbMo"
     title: "Once in Royal David's City"  # YouTube title "Once In Royal David's City"
@@ -142,7 +142,9 @@ videos:
     duration: "PT2M41S"  # lengthSeconds 161
     # Also embedded on: music-guides/popular-funeral-hymns.html (no VideoObject there)
   # Added 2026-10-24. Sung by an octet, the same eight-voice Full Choir as the 19 Oct carols.
-  - page: "christmas-listen.html, christmas-carol-services.html"
+  # Owner, 24 Oct 2026: Royal David's and O Little Town are sung at all kinds of carol gigs, not
+  # only in church, so both are tracks on christmas.html (events) as well as the carol-service pages.
+  - page: "christmas-listen.html, christmas-carol-services.html, christmas.html"
     position: 13
     youtube_id: "F0zpijMTlbM"
     title: "O Little Town of Bethlehem"
