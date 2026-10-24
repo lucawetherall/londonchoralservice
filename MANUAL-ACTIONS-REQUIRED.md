@@ -10,7 +10,7 @@ Finished work, old notes and reference material are in `docs/MANUAL-ACTIONS-ARCH
 
 | # | Action | Time | When |
 |---|---|---|---|
-| 1 | Ask Google to recrawl the last page | 2 min | tomorrow (25 Oct) |
+| 1 | Ask Google to recrawl twelve pages (Search Console) | 15 min over three days | 25, 26 and 27 Oct |
 | 2 | Directory sign-ups (seven sites) | 15–20 min each | this week |
 | 3 | Fix the `www` address at Porkbun | 10 min | this week |
 | 4 | Check the Google Business Profile edits | 5 min | from 30 Oct |
@@ -23,22 +23,49 @@ Finished work, old notes and reference material are in `docs/MANUAL-ACTIONS-ARCH
 
 ---
 
-## 1. Ask Google to recrawl the last page
+## 1. Ask Google to recrawl twelve pages (Search Console)
 
-Eleven of the twelve pages are requested. Google refused the twelfth on 24 Oct because the day's quota was used up. The page is a funeral-hymns guide that Google found in February but has never fetched.
+On 24 Oct you requested eleven of twelve pages; Google refused the twelfth (the funeral-hymns guide) because the day's quota was used up. Later that day PR #370 rewrote seven more pages to match what people search for, so Google needs to fetch the new versions. That includes three you had already requested (Newham, wedding ceremony music, carol services): their earlier requests are for versions that no longer exist.
 
-**How:**
+- **Funeral hymns guide:** Google found it in February and has never fetched it. It now carries the hymn table and is the page for "funeral hymns" searches.
+- **Nine Lessons and Carols:** the fastest-growing page on the site, now with the readings and order of service at the top. Its searches peak in December, so it comes first.
+- **Christmas carol services:** a new section on where we sing carol services.
+- **Newham:** Google crawled it and chose not to index it; it now has local cemeteries, churches and the register office.
+- **Wedding ceremony music:** now aimed at processional, signing the register and recessional searches.
+- **Listen, Be Thou My Vision, Abide With Me:** new titles; the two hymn pages now carry the full words.
 
-1. Tomorrow, open Search Console (https://search.google.com/search-console) and choose the property `londonchoralservice.com`.
-2. Paste this URL into the search bar at the top ("Inspect any URL") and wait for the result:
+**How:** open Search Console (https://search.google.com/search-console) and choose the property `londonchoralservice.com`. For each URL, paste it into the search bar at the top ("Inspect any URL"), wait for the result, click **Request indexing** and wait for the confirmation. Google allows about ten requests a day.
 
-   ```
-   https://londonchoralservice.com/music-guides/popular-funeral-hymns.html
-   ```
+**25 Oct, these five first:**
 
-3. Click **Request indexing** and wait for the confirmation.
+```
+https://londonchoralservice.com/music-guides/nine-lessons-and-carols.html
+https://londonchoralservice.com/music-guides/popular-funeral-hymns.html
+https://londonchoralservice.com/christmas-carol-services.html
+https://londonchoralservice.com/areas/london/newham.html
+https://londonchoralservice.com/music-guides/wedding-ceremony-music.html
+```
 
-**Done when:** the request is accepted. About 7 Nov an agent reruns the index-coverage report on all twelve; any page still "Crawled - currently not indexed" then needs a content fix, not another request.
+**26 Oct, these three:**
+
+```
+https://londonchoralservice.com/listen.html
+https://londonchoralservice.com/music-guides/be-thou-my-vision-wedding-hymn.html
+https://londonchoralservice.com/music-guides/abide-with-me.html
+```
+
+**27 Oct, these four.** They are new guides from PR #373 (memorial service songs, and three hymns whose words are out of copyright). Google would find them through the sitemap anyway; a request gets them crawled sooner.
+
+```
+https://londonchoralservice.com/music-guides/memorial-service-songs.html
+https://londonchoralservice.com/music-guides/it-is-well-with-my-soul.html
+https://londonchoralservice.com/music-guides/love-divine-all-loves-excelling.html
+https://londonchoralservice.com/music-guides/the-lords-my-shepherd.html
+```
+
+The sitemap doesn't need resubmitting: the build updated each page's date in it, and Google reads it every few days.
+
+**Done when:** all twelve requests are accepted. About 7 Nov an agent reruns the index-coverage report on these pages and the eleven from 24 Oct. Any page still "Crawled - currently not indexed" then needs a content fix, not another request.
 
 ---
 
