@@ -31,4 +31,4 @@ How we tag links that point at londonchoralservice.com from outside the site, so
 
 ## How the site uses them
 
-`partials/analytics.html` keeps the five UTM values for the tab once the visitor has allowed cookies, and the web form sends them with the enquiry, so a booking can be traced to its campaign in the pipeline. Without consent nothing is kept. `robots.txt` already disallows `?utm_` URLs, so tagged links don't create duplicate pages in search.
+`partials/analytics.html` keeps the five UTM values for the tab once the visitor has allowed cookies, and the web form sends them with the enquiry, so a booking can be traced to its campaign in the pipeline. Without consent nothing is kept. `robots.txt` lets search engines crawl tagged URLs (`?utm_`, `?gclid=` and the rest). Every page carries a self-referencing canonical with no query string, so Google folds a tagged link into the plain page rather than indexing a duplicate. Blocking those URLs in robots.txt would stop Google reading that canonical.
