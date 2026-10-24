@@ -9,7 +9,7 @@ Only the things that need you: your identity, an account in your name, accepting
 **Do first**
 
 1. **Google Ads identity check, due 4 Nov (§30).** Without it Google can stop the ads, the Christmas campaign included. Use the "Get started" button on the yellow banner in Google Ads, or Billing → Advertiser verification. Have ready: your passport or driving licence, and the certificate of incorporation (free from Companies House, company 16785727, Filing history).
-2. **Ask Google to recrawl 12 pages (§32).** Search Console → paste each URL → Request indexing. Do eight today and four tomorrow (Google allows about ten a day).
+2. **Ask Google to recrawl 12 pages (§32).** Search Console → paste each URL → Request indexing. Do eight today and four tomorrow (Google allows about ten a day). The two music guides in the list were rewritten on 24 Oct, so a request now gets the new versions judged.
 3. **Bing Webmaster Tools (§31), five minutes.** Import the site from Search Console. Bing's index feeds ChatGPT search and Copilot, and Bing has no page of ours yet.
 
 **This week**
@@ -36,9 +36,10 @@ Only the things that need you: your identity, an account in your name, accepting
 **Decisions only you can make**
 
 16. **Lambeth testimonial (§10.4):** it describes a trio, which you no longer offer. Keep it or remove it?
-17. **Ireland and Scotland regions (§14.1):** confirm or change the provisional ones.
-18. **US lead time (§14.3)**, given performance visas.
-19. **Read and sign off (§16.2, 16.3, 16.5):** `terms.html` against your booking confirmation, `accessibility.html`, and the reply-time promises (one working day; the same working day on the funeral pages). Optionally check the menu on an iPad (§16.6).
+17. **Four testimonials on one guide each (§35):** David R., Eleanor M., Margaret K., and Sophie and Tom W. Are they real clients? Keep or remove each.
+18. **Ireland and Scotland regions (§14.1):** confirm or change the provisional ones.
+19. **US lead time (§14.3)**, given performance visas.
+20. **Read and sign off (§16.2, 16.3, 16.5):** `terms.html` against your booking confirmation, `accessibility.html`, and the reply-time promises (one working day; the same working day on the funeral pages). Optionally check the menu on an iPad (§16.6).
 
 **Closed since 23 Oct:** §1 Business Profile edits (made, pending Google), ORCID; §9.9 church costs (your 24 Oct rule: copy points only to our organist at £250, no church fees, and the carol services page already does); §11 competitor prices (checked 23 Oct); §13.1 test enquiry (arrived); §16.1 consent mode (Excellent); §21 the key is in the nightly backup; §23 review link.
 
@@ -653,6 +654,8 @@ https://londonchoralservice.com/christmas-listen.html
 https://londonchoralservice.com/music-guides/popular-funeral-hymns.html
 ```
 
+Update, 24 Oct: both music guides here were rewritten in the music-guides round 3 (PRs #339–#351). `wedding-ceremony-music.html` is now the wedding cluster's lead guide, with an answer to its main question near the top and a link to every wedding guide, and `popular-funeral-hymns.html` carries the 2025 Co-op chart. The hub (`music-guides/`) links both from the top of their sections.
+
 The sitemap doesn't need resubmitting: Google last read it on 23 Oct, and the new sitemap index (pages, films and film stills) was submitted through the API on 24 Oct (`logs/gsc-changes.md`). Rerun `.venv/bin/python scripts/reports/index_coverage.py` two weeks later. Any page still "Crawled - currently not indexed" after a fresh crawl needs a content fix, not another request.
 
 ---
@@ -677,3 +680,18 @@ Added 2026-10-24. `facts.html` (the public fact sheet, linked from the footer, `
 1. Pick three to six photographs you own the rights to: the singers in a church, a choir at a wedding or carol service, and one portrait of you. Real photographs only, never stock or AI images. Get the photographer's permission to publish, and the client's if a client or guest can be recognised (never use a funeral).
 2. Put them in `~/Pictures/LCS-listings/` as JPGs, at least 1600 pixels on the long side, and send each photographer's name for the credit.
 3. Tell an agent. It will make web-sized copies, put them on the fact sheet with credits and alt text, and replace the "no press photographs yet" line. It will also list them for upload to the Google profile and the directories in §2.
+
+---
+
+## 35. Four testimonials that appear on one guide each
+
+Added 2026-10-24 from the music-guides round 3 (plan: `docs/superpowers/plans/2026-10-24-music-guides-clusters.md`). Each of these pull-quotes appears on one page only, and nothing in the repo or the ledger ties it to a booking. They are untouched under ROADMAP R12 (agents never edit testimonials), so only you can say whether each is a real client:
+
+| Quote attributed to | Page |
+|---|---|
+| David R., Battersea | `music-guides/celebration-of-life-music.html` |
+| Eleanor M., Hampstead | `music-guides/funeral-songs.html` |
+| Margaret K., Islington (names "Father O'Brien") | `music-guides/catholic-funeral-hymns.html` |
+| Sophie and Tom W., Greenwich | `music-guides/wedding-ceremony-music.html` |
+
+For each one, reply "keep" or "remove". An agent then removes the ones you name and rebuilds; a kept quote needs nothing. The same question for the Lambeth trio quote is §10.4.
