@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Address every actionable finding in `SEO-AUDIT-2026-05-08.md` (sections 1–13) on a single feature branch, single comprehensive PR, with items requiring user action documented in `MANUAL-ACTIONS-REQUIRED.md`.
+**Goal:** Address every actionable finding in `docs/SEO-AUDIT-2026-05-08.md` (sections 1–13) on a single feature branch, single comprehensive PR, with items requiring user action documented in `MANUAL-ACTIONS-REQUIRED.md`.
 
 **Architecture:** Static site (GitHub Pages on Fastly). 99 indexable HTML pages. Build pipeline (`build.sh`) inlines partials and CSS into every HTML. Sequential phases (P1 → P2 → P3 → P4 → P5 → P6 → P7 → P8) avoid file-edit conflicts. P6 parallelises internally (5 new pages = 5 fully independent files).
 
@@ -2064,7 +2064,7 @@ git push -u origin claude/recursing-johnson-cfffdc
 gh pr create --title "fix(seo): comprehensive 2026-05-08 audit fixes (55 findings)" --body "$(cat <<'EOF'
 ## Summary
 
-Implements every actionable finding from `SEO-AUDIT-2026-05-08.md` (sections 1–13, 55 findings across 13 themes). Items requiring user action (GBP claim, citation building, GSC creds, Fastly headers, etc) are documented in the new `MANUAL-ACTIONS-REQUIRED.md`.
+Implements every actionable finding from `docs/SEO-AUDIT-2026-05-08.md` (sections 1–13, 55 findings across 13 themes). Items requiring user action (GBP claim, citation building, GSC creds, Fastly headers, etc) are documented in the new `MANUAL-ACTIONS-REQUIRED.md`.
 
 Spec: [docs/superpowers/specs/2026-05-08-seo-audit-fixes-design.md](docs/superpowers/specs/2026-05-08-seo-audit-fixes-design.md)
 Plan: [docs/superpowers/plans/2026-05-08-seo-audit-fixes.md](docs/superpowers/plans/2026-05-08-seo-audit-fixes.md)
