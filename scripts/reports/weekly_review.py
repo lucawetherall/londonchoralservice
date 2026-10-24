@@ -10,6 +10,8 @@ Sections:
   4. Ads: approval, review status, strength, headline and description counts, final URL; enabled sitelinks
      per campaign
   5. GA4: lead/contact events with their parameters; sessions by channel
+  5c. GoatCounter: visits and enquiry events from every visitor
+  5d. Core Web Vitals: CrUX field data (phones, p75) for the money pages, with a PageSpeed lab fallback
   6. Search Console: last 7 complete days vs the 7 before, by query and page
   7. Search Console coverage: sitemap freshness, index status of every ad landing page
   8. Tracking wiring: live tags and labels, Ads account settings, GA4 key events and links
@@ -516,6 +518,12 @@ def ga4_section(s):
 def goatcounter_section(today):
     """Section 5c: GoatCounter's totals (read-only key in the Keychain; scripts/reports/goatcounter.py)."""
     print("\n".join(goatcounter.section(today)))
+
+
+def cwv_section():
+    """Section 5d: Core Web Vitals, CrUX field data with a lab fallback (scripts/reports/cwv.py)."""
+    import cwv  # read-only; its API key is in the Keychain as lcs-pagespeed, the owner approved it 24 Oct 2026
+    print("\n".join(cwv.section()))
 
 
 def gsc_section(s):
@@ -1321,6 +1329,7 @@ def run_sections(args, q=None, s=None):
     run_section("4b", "Google's recommendations (open, not dismissed)", recommendations_section, q)
     run_section("5", "GA4, last 7 days", ga4_section, s)
     run_section("5c", "Visits from every visitor (GoatCounter)", goatcounter_section, today)
+    run_section("5d", "Core Web Vitals", cwv_section)
     run_section("6", "Search Console", gsc_section, s)
     run_section("7", "Search Console coverage", coverage_section, s, landing)
     run_section("8", "Tracking wiring", wiring_section, s, q)

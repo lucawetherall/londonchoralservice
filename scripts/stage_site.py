@@ -56,6 +56,7 @@ PUBLIC = [
     'favicon.ico',
     'robots.txt',
     'sitemap.xml',
+    'sitemap-video.xml',       # films and hero stills, scripts/generate_video_sitemap.py
     'site.webmanifest',
     'llms.txt',
     'llms-full.txt',

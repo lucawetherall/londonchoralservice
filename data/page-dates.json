@@ -1,11 +1,11 @@
 {
  "/": {
-  "hash": "0ad236b9ba34ba24",
+  "hash": "296d24771aa54f5a",
   "lastmod": "2026-10-24"
  },
  "/about.html": {
-  "hash": "9f9cf5539ab17f39",
-  "lastmod": "2026-09-28"
+  "hash": "85628c8d056f9b3a",
+  "lastmod": "2026-10-24"
  },
  "/accessibility.html": {
   "hash": "9f986be1c5456925",
@@ -224,23 +224,23 @@
   "lastmod": "2026-10-24"
  },
  "/christmas-carol-services.html": {
-  "hash": "087bc91ffa3bf07a",
+  "hash": "7af1cae5b47522b8",
   "lastmod": "2026-10-24"
  },
  "/christmas-listen.html": {
-  "hash": "4e86f793cde7e12b",
-  "lastmod": "2026-10-23"
+  "hash": "cd53d776c3216a96",
+  "lastmod": "2026-10-24"
  },
  "/christmas-pricing.html": {
   "hash": "cc6a287cc5967ed8",
   "lastmod": "2026-10-23"
  },
  "/christmas.html": {
-  "hash": "7663fc778daf40b2",
+  "hash": "05d14611d88f2b40",
   "lastmod": "2026-10-24"
  },
  "/compare/london-funeral-singers.html": {
-  "hash": "a52fb6dea567336e",
+  "hash": "daf725682a2b732d",
   "lastmod": "2026-10-24"
  },
  "/contact.html": {
@@ -248,7 +248,7 @@
   "lastmod": "2026-10-24"
  },
  "/corporate.html": {
-  "hash": "deb8aca721a3ed1b",
+  "hash": "f9d7b007ba0d59b1",
   "lastmod": "2026-10-24"
  },
  "/destinations/": {
@@ -343,44 +343,48 @@
   "hash": "634dabedaf80d33b",
   "lastmod": "2026-10-23"
  },
+ "/facts.html": {
+  "hash": "fe762216912751f6",
+  "lastmod": "2026-10-24"
+ },
  "/faq.html": {
   "hash": "72c58cf3efa96c47",
   "lastmod": "2026-10-24"
  },
  "/for-charities.html": {
-  "hash": "fb8b887a0d25ff9f",
+  "hash": "0e263abc9054cccc",
   "lastmod": "2026-10-24"
  },
  "/for-event-managers.html": {
-  "hash": "be6fac22df9b1513",
+  "hash": "1cba50813492f110",
   "lastmod": "2026-10-24"
  },
  "/for-funeral-directors.html": {
-  "hash": "f183beff7a283d3f",
+  "hash": "e45b4be2813f44d0",
   "lastmod": "2026-10-24"
  },
  "/for-hotels.html": {
-  "hash": "3ae84821effefa14",
+  "hash": "503e6cedc3949a1f",
   "lastmod": "2026-10-24"
  },
  "/for-livery-companies.html": {
-  "hash": "22d348b0c0f7f6b6",
+  "hash": "0338b98f708820ca",
   "lastmod": "2026-10-24"
  },
  "/for-property-managers.html": {
-  "hash": "3d5e4b0f642a76d5",
+  "hash": "bec725f6e5a08121",
   "lastmod": "2026-10-24"
  },
  "/for-wedding-planners.html": {
-  "hash": "45780536673a5102",
+  "hash": "f6a12ab1e8c98751",
   "lastmod": "2026-10-24"
  },
  "/funerals.html": {
-  "hash": "4a3cf76e00260b40",
+  "hash": "675f06255b96df76",
   "lastmod": "2026-10-24"
  },
  "/listen.html": {
-  "hash": "9ddbaa2bd4ccb3ff",
+  "hash": "b0397b243b568a48",
   "lastmod": "2026-10-24"
  },
  "/luca-wetherall.html": {
@@ -636,7 +640,7 @@
   "lastmod": "2026-10-24"
  },
  "/pricing.html": {
-  "hash": "fac0fb3236884205",
+  "hash": "48d06bde19777859",
   "lastmod": "2026-10-24"
  },
  "/private-events.html": {
@@ -656,7 +660,7 @@
   "lastmod": "2026-09-04"
  },
  "/weddings.html": {
-  "hash": "df4e824fa28f4590",
-  "lastmod": "2026-10-23"
+  "hash": "e3bc1cd37a9c14c5",
+  "lastmod": "2026-10-24"
  }
 }
