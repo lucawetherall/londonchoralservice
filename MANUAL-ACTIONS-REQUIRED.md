@@ -18,8 +18,7 @@ Finished work, old notes and reference material are in `docs/MANUAL-ACTIONS-ARCH
 | 6 | Ask Kensington and Chelsea how to join their supplier list | 5 min | this week |
 | 7 | Link to the private-events page from almaconsort.com | 5 min | when you can |
 | 8–9 | Optional: Trustpilot, LinkedIn | 10 min each | none |
-| 10 | When a singer's bank details change | | when it happens |
-| 11 | Dates to remember | | |
+| 10 | Dates to remember | | |
 
 ---
 
@@ -199,19 +198,7 @@ The page `linkedin.com/company/london-choral-service` doesn't exist. A company p
 
 ---
 
-## 10. When a singer's bank details change
-
-This is a standing procedure, not a task. If the enquiry assistant's summary shows "BANK DETAILS CHANGED" or "DIFFER" against a singer's invoice, the bank details on the new invoice don't match what's on file. The check exists so a changed account always gets a phone call before anyone is paid; Claude never confirms bank details.
-
-**How:**
-
-1. Ring the singer on a number you already hold for them, never a number from the new invoice, and confirm the new bank details by voice.
-2. Open the Command Centre → **Singers**, choose **Act on <name>'s invoice → Confirm bank details**, and approve with Face ID or Touch ID.
-3. If the Command Centre is down, set `bank_confirmed` to `yes` for that invoice in `~/lcs-private/singer-invoices.csv`. It counts until a rescan changes the details.
-
----
-
-## 11. Dates to remember
+## 10. Dates to remember
 
 | When | What | Who |
 |---|---|---|

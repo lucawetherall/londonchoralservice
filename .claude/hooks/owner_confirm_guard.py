@@ -79,6 +79,11 @@ NOT_PLAIN = (P + "an --owner action must run as one plain command: .venv/bin/pyt
              "&&, redirects, $, backticks, globs, env prefixes or newlines; quote text with '…'). Nothing was run.")
 SUBAGENT = (P + "owner actions run only in Luca's own conversation, never in a subagent. Hand the command back to the "
             "main conversation, which runs it on its own so Luca can approve it.")
+# singer_invoices.py confirm without --owner (owner decision, 24 Oct 2026: Luca pays every singer by hand, so he
+# confirms bank details by telling Claude in writing, with no Allow click). Only his own conversation runs it.
+CHAT_CONFIRM = re.compile(r"singer_invoices\.py\s+confirm\b")
+CONFIRM_SUBAGENT = (P + "singer_invoices.py confirm runs only in Luca's own conversation, when he says he has rung the "
+                    "singer, never in a subagent or a scheduled run. Nothing was run.")
 
 
 def decide(command):
@@ -243,6 +248,10 @@ def main():
             emit("deny", f"{P}unreadable event ({type(e).__name__}); an --owner action is refused.")
         else:
             emit("ask", f"Owner confirm guard error ({type(e).__name__}); Luca must approve this command.")
+        sys.exit(0)
+    if (isinstance(command, str) and event.get("agent_id")
+            and CHAT_CONFIRM.search(re.sub(r"[\"'\\]", "", command))):
+        emit("deny", CONFIRM_SUBAGENT)
         sys.exit(0)
     if isinstance(command, str) and owner_command(command):
         try:

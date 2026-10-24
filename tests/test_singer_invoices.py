@@ -858,11 +858,33 @@ def test_before_the_migration_the_singer_writers_write_as_before():
     assert r["bank_confirmed"] == "yes" and "paid reply drafted" in r["notes"] and si.confirmed(r)
 
 
-def test_confirm_and_settled_are_the_command_centres_only():
+def test_confirm_runs_on_lucas_word_and_is_recorded_as_the_scripts():
+    """Owner decision, 24 Oct 2026: Luca confirms bank details in writing in a live chat (he pays every singer by
+    hand), so confirm without --owner works and records bank-confirmed by "script"; --expect-fp still guards it."""
+    fresh_store()
+    scan(GEN.format(n=1), "g1", "2026-08-01")
+    fp = rows_by_id()["g1"]["bank_fp"]
+    other = ("0" if fp[0] != "0" else "1") + fp[1:]
+    before = si.STORE.read_text()
+    try:
+        with contextlib.redirect_stdout(io.StringIO()):
+            si.cmd_confirm(Args(message_id="g1", expect_fp=other))
+        raise AssertionError("confirm ran with a stale fingerprint")
+    except SystemExit as e:
+        assert "changed since" in str(e), e
+    assert si.STORE.read_text() == before
+    with contextlib.redirect_stdout(io.StringIO()):
+        si.cmd_confirm(Args(message_id="g1", expect_fp=fp))
+    e = log_lines()[-1]
+    assert (e["kind"], e["by"], e["fields"]) == ("bank-confirmed", "script", {"fp8": fp[:8]}), e
+    assert si.confirmed(rows_by_id()["g1"])
+
+
+def test_settled_is_the_owners_only():
     fresh_store()
     scan(GEN.format(n=1), "g1", "2026-08-01")
     before, events = si.STORE.read_text(), log_lines()
-    for fn, args in ((si.cmd_confirm, Args(message_id="g1")), (si.cmd_settled, Args(message_id="g1", date="2026-08-03")),
+    for fn, args in ((si.cmd_settled, Args(message_id="g1", date="2026-08-03")),
                      (si.cmd_confirm, Args(message_id="g1", owner=True)),  # --owner without the nonce
                      (si.cmd_settled, Args(message_id="g1", date="2026-08-03", owner=True))):
         try:
@@ -873,7 +895,7 @@ def test_confirm_and_settled_are_the_command_centres_only():
             assert "Command Centre" in str(e) and "nothing" in str(e), e
         assert si.STORE.read_text() == before and log_lines() == events
     nonce_file()
-    for args, nonce in ((["confirm", "g1"], True), (["settled", "g1", "2026-08-03"], True),  # a nonce waiting, no --owner
+    for args, nonce in ((["settled", "g1", "2026-08-03"], True),  # a nonce waiting, no --owner
                         (["confirm", "g1", "--owner"], False), (["settled", "g1", "2026-08-03", "--owner"], False)):
         p = cli_owner(args, nonce=nonce)
         assert p.returncode != 0 and si.STORE.read_text() == before and log_lines() == events, (args, p.stderr)

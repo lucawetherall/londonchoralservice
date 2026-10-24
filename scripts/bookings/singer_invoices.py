@@ -34,12 +34,13 @@ already made.
         minutes, so a payment is often recorded before the enquiry assistant would see it as NEWLY PAID.
     singer_invoices.py status              # unpaid invoices and totals
     singer_invoices.py thanked <message id>  # note that the "Paid!" reply was drafted
-    singer_invoices.py confirm <message id> --expect-fp <bank_fp, all 16 hex> --owner  # the owner rang the singer:
-        trust these bank details. Luca's approval only (a one-time nonce on a pipe, lcs_owner: the Command
-        Centre's passkey, or his Allow on Claude Code's prompt in a live chat; owner decisions, 29 Sep and
-        19 Oct 2026): refused unless the recorded details are still the ones the owner approved
+    singer_invoices.py confirm <message id> [--expect-fp <bank_fp, all 16 hex>] [--owner]  # the owner rang the
+        singer: trust these bank details. Claude runs it, without --owner, when Luca says so in writing in a live
+        chat (owner decision, 24 Oct 2026; never from a subagent or a scheduled run); the Command Centre runs it
+        with --owner and its passkey nonce. With --expect-fp it is refused unless the recorded details are still
+        those
     singer_invoices.py settled <message id> YYYY-MM-DD --owner  # the owner paid it outside the feed's reach: mark
-        it paid (Luca's approval only, as confirm)
+        it paid (Luca's approval only: --owner and the one-time nonce from his Allow or the Command Centre)
     singer_invoices.py pdf <message id> [--fetch | <saved message>]  # save the invoice PDF for the Books bill
         (scan saves it too and ends with "pdf: <path>" or "pdf: none")
     singer_invoices.py withdrawn <message id> <reason word> [--owner]  # sent to us by mistake (another
@@ -114,9 +115,9 @@ REASON_RE = re.compile(r"^[a-z][a-z-]{0,19}$")  # one lower-case word, such as n
 NEW_PAYEE = "NEW: add as a payee in the Starling app"
 NEW_DETAILS = "NEW BANK DETAILS: confirm them by phone on a number you already hold before adding the payee"
 NOT_YET_VERIFIED = "BANK DETAILS NOT YET VERIFIED (seen on an earlier invoice): confirm by phone"
-# confirm is the owner's (owner decision, 29 Sep 2026: it needs his approval's nonce); the hint names the Command
-# Centre's page, which still works, and Luca may equally ask Claude in a live chat and click Allow (19 Oct 2026)
-CONFIRM_HINT = ", then confirm them in the Command Centre (Singers)"
+# Luca confirms by telling Claude in writing in a live chat (owner decision, 24 Oct 2026); the Command Centre's
+# Singers page still works too. Notes written earlier keep the old Command Centre hint, which stays true.
+CONFIRM_HINT = ", then tell Claude in a chat that you've rung them"
 # the hint older invoices carry in their notes: shown as CONFIRM_HINT (the notes themselves are never rewritten)
 LEGACY_HINT = re.compile(r", then run singer_invoices\.py confirm \S+$")
 LOOKBACK = datetime.timedelta(days=14)  # a payment up to 14 days before an invoice arrived is reported, not applied
@@ -1909,8 +1910,8 @@ def update_invoice(message_id, fn):
 
 
 def owner_run(args, what, only=False):
-    """The owner barrier for confirm and settled (only=True: they are the owner's alone; owner decision, 29 Sep 2026)
-    and for withdrawn --owner: --owner, the store and the state log in the nonce's private folder with no
+    """The owner barrier for settled (only=True: the owner's alone; owner decision, 29 Sep 2026) and for confirm
+    --owner and withdrawn --owner (confirm without it is Luca's word in a chat, 24 Oct 2026): --owner, the store and the state log in the nonce's private folder with no
     LCS_BOOKINGS_CSV, and Luca's one-time approval nonce over a pipe (lcs_owner: the Command Centre's passkey, or his
     Allow on Claude Code's prompt in a live chat). SystemExit otherwise, with nothing written. Returns "owner", or
     "script" for a withdrawn without --owner."""
@@ -1947,14 +1948,16 @@ FP_RE = re.compile(r"^[0-9a-f]{16}$")
 
 def cmd_confirm(args, client=None):
     """The owner rang the singer on a number already held: trust this invoice's bank details, and record
-    bank-confirmed {fp8} in the state log. The owner's only (--owner and his approval's nonce; owner decisions, 29 Sep
-    and 19 Oct 2026). The Command Centre passes --expect-fp, the whole 16-character fingerprint its passkey summary
+    bank-confirmed {fp8} in the state log. Claude runs it without --owner when Luca says so in writing in a live chat
+    (owner decision, 24 Oct 2026: he pays every singer by hand; the fact is recorded by "script", and
+    owner_confirm_guard denies it from a subagent); the Command Centre still runs it with --owner and its passkey
+    nonce (recorded by "owner"). The Command Centre passes --expect-fp, the whole 16-character fingerprint its passkey summary
     showed, and this refuses unless the recorded fingerprint is still exactly that, so a rescan between approval and
     run confirms nothing; a confirm Luca allows in a live chat may pass it too."""
     expect = getattr(args, "expect_fp", None)
     if expect is not None and not FP_RE.fullmatch(expect):
         raise SystemExit(f"{args.message_id}: --expect-fp takes all 16 lower-case hex characters; nothing confirmed")
-    owner_run(args, "confirmed", only=True)
+    by = owner_run(args, "confirmed")  # "script" without --owner: Luca said so in writing (owner decision, 24 Oct 2026)
 
     def edit(r):
         if not r.get("bank_fp"):
@@ -1964,7 +1967,7 @@ def cmd_confirm(args, client=None):
         r["bank_confirmed"] = "yes"
         clause = f"bank details confirmed by phone {lm.today()}"
         note(r, clause)
-        return "bank-confirmed", {"fp8": r["bank_fp"][:8]}, "owner", clause, None
+        return "bank-confirmed", {"fp8": r["bank_fp"][:8]}, by, clause, None
     r = update_invoice(args.message_id, edit)
     print(f"{args.message_id}: bank details confirmed")
     print(f"   trusted from now on: the account ending ••••{r.get('bank_last4', '')}")
@@ -2136,7 +2139,8 @@ def main():
     c = sub.add_parser("confirm")
     c.add_argument("message_id")
     c.add_argument("--expect-fp", metavar="FINGERPRINT", help="refuse unless bank_fp is exactly this (16 hex)")
-    c.add_argument("--owner", action="store_true", help=owner_help)
+    c.add_argument("--owner", action="store_true",
+                   help="the Command Centre's form (its passkey nonce on stdin); without it, Luca's word in a live chat")
     st = sub.add_parser("settled")
     st.add_argument("message_id")
     st.add_argument("date")
