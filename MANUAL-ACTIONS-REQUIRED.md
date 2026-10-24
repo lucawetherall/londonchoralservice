@@ -198,7 +198,23 @@ The page `linkedin.com/company/london-choral-service` doesn't exist. A company p
 
 ---
 
-## 10. Dates to remember
+## 10. Barbershop Grams: what the launch still needs
+
+The gram pages (`/barbershop-grams/`) ship without these, but the product does not really launch until the recording exists. Spec: `docs/superpowers/specs/2026-09-03-barbershop-grams-design.md` §Go-to-market. Plan: `docs/superpowers/plans/2026-09-03-barbershop-grams.md`. Done already: the 43-title repertoire list (confirmed 4 Sep, arrangement rights handled) and `assets/og-barbershop-grams.png`.
+
+**1. Record a barbershop demo. This is the critical path.** Happy Birthday in four parts plus one standard, filmed, two to three minutes. Two things wait on it: the comparison page (`compare/barbershopogram.html`) is deliberately gated, because a page whose job is to beat a competitor matched at £600, offering only a funeral hymn as proof, would hurt more than no page; and the hub has no proof of sound at all, so a buyer with both tabs open cannot hear us, while the competitor has video on their homepage. Not worked around on purpose: `listen.html` is hymns and service music, so sending a gift buyer there lands them on funeral repertoire — the collision the separate register exists to prevent. Once it exists, give an agent the YouTube id, upload date and duration for `data/seo-fix-discovered-urls.yml` (never invented), and the gated work can run.
+
+**2. Seed one or two grams.** Colleagues or friends. Produces real footage, the first honest client quote, and a rehearsal of the logistics before a paying customer meets them.
+
+**3. Decide the consent wording for filming.** The buyer confirms on enquiry whether we may film; the recipient is asked *after* the surprise, before anything is posted. It belongs in the FAQ and the booking agreement. Short-form video of surprise reactions is this product's strongest organic channel and cannot run without a clean consent routine.
+
+**4. Directory listings.** Last Minute Musicians, Add to Event, Poptop, Encore, Bark — where "barbershop quartet hire" buyers who never reach Google's organic results go. Extend `docs/off-site-listings-pack.md` with a Barbershop Grams profile: the £600 figure, the 48-hour notice line, the repertoire link. The house rules apply off-site too: no roster-scale claims, no VAT claims, no star ratings, no incentivised reviews.
+
+**5. Ads.** Held until 1 and 2 are done; the spec's §Go-to-market has the five campaigns. Before any spend, confirm the WhatsApp-click conversion fires — gram enquiries arrive by WhatsApp more than by form, and the gram links carry their own `?text=` pre-fill so they can be told apart in GA4.
+
+---
+
+## 11. Dates to remember
 
 | When | What | Who |
 |---|---|---|
