@@ -214,6 +214,15 @@
       <video:family_friendly>yes</video:family_friendly>
     </video:video>
     <video:video>
+      <video:thumbnail_loc>https://img.youtube.com/vi/F0zpijMTlbM/maxresdefault.jpg</video:thumbnail_loc>
+      <video:title>O Little Town of Bethlehem — Full Choir</video:title>
+      <video:description>Live performance by The London Choral Service.</video:description>
+      <video:player_loc>https://www.youtube-nocookie.com/embed/F0zpijMTlbM</video:player_loc>
+      <video:duration>144</video:duration>
+      <video:publication_date>2026-10-24</video:publication_date>
+      <video:family_friendly>yes</video:family_friendly>
+    </video:video>
+    <video:video>
       <video:thumbnail_loc>https://img.youtube.com/vi/zDlSFb74p4E/maxresdefault.jpg</video:thumbnail_loc>
       <video:title>Ding Dong! Merrily on High — Full Choir</video:title>
       <video:description>Live performance by The London Choral Service.</video:description>
@@ -556,6 +565,15 @@
       <video:family_friendly>yes</video:family_friendly>
     </video:video>
     <video:video>
+      <video:thumbnail_loc>https://img.youtube.com/vi/F0zpijMTlbM/maxresdefault.jpg</video:thumbnail_loc>
+      <video:title>O Little Town of Bethlehem — Full Choir</video:title>
+      <video:description>Live performance by The London Choral Service.</video:description>
+      <video:player_loc>https://www.youtube-nocookie.com/embed/F0zpijMTlbM</video:player_loc>
+      <video:duration>144</video:duration>
+      <video:publication_date>2026-10-24</video:publication_date>
+      <video:family_friendly>yes</video:family_friendly>
+    </video:video>
+    <video:video>
       <video:thumbnail_loc>https://img.youtube.com/vi/zDlSFb74p4E/maxresdefault.jpg</video:thumbnail_loc>
       <video:title>Ding Dong! Merrily on High — Full Choir</video:title>
       <video:description>Live performance by The London Choral Service.</video:description>
@@ -583,6 +601,15 @@
       <video:player_loc>https://www.youtube-nocookie.com/embed/SbvqWglsbMo</video:player_loc>
       <video:duration>113</video:duration>
       <video:publication_date>2026-10-19</video:publication_date>
+      <video:family_friendly>yes</video:family_friendly>
+    </video:video>
+    <video:video>
+      <video:thumbnail_loc>https://img.youtube.com/vi/F0zpijMTlbM/maxresdefault.jpg</video:thumbnail_loc>
+      <video:title>O Little Town of Bethlehem — Full Choir</video:title>
+      <video:description>Live performance by The London Choral Service.</video:description>
+      <video:player_loc>https://www.youtube-nocookie.com/embed/F0zpijMTlbM</video:player_loc>
+      <video:duration>144</video:duration>
+      <video:publication_date>2026-10-24</video:publication_date>
       <video:family_friendly>yes</video:family_friendly>
     </video:video>
     <video:video>

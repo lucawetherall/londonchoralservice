@@ -141,6 +141,15 @@ videos:
     upload_date: "2026-10-23"  # verified via the watch page's uploadDate meta 2026-10-23 (10:09 PDT = 18:09 BST)
     duration: "PT2M41S"  # lengthSeconds 161
     # Also embedded on: music-guides/popular-funeral-hymns.html (no VideoObject there)
+  # Added 2026-10-24. Sung by an octet, the same eight-voice Full Choir as the 19 Oct carols.
+  - page: "christmas-listen.html, christmas-carol-services.html"
+    position: 13
+    youtube_id: "F0zpijMTlbM"
+    title: "O Little Town of Bethlehem"
+    upload_date: "2026-10-24"  # watch page publishDate "24 Oct 2026" (en-GB), checked 2026-10-24
+    duration: "PT2M24S"  # 144 s, from the embedded player's info.duration 2026-10-24 (the watch page asked for sign-in)
+    # Self-hosted stills: assets/films/film-F0zpijMTlbM-{640,1280}.webp, made from maxresdefault.jpg.
+    # Also embedded on: music-guides/christmas-carols-guide.html (inline under its h3, with a VideoObject)
 
 geo_areas:
   westminster: [51.49594, -0.13495]
