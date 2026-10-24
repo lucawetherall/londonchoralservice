@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+  <meta charset="UTF-8">
+  <!-- @include-start partials/head-extras.html -->
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<link rel="preload" href="/fonts/cormorant-garamond.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/source-serif-4.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="manifest" href="/site.webmanifest">
+  <!-- @include-end partials/head-extras.html -->
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+
+  <!-- @include-start partials/analytics.html -->
+  <!-- Google Analytics (GA4) and Google Ads — Consent Mode v2, deferred until after load.
+       Source of truth: partials/analytics.html. The consent banner lives in js/consent.js. -->
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('consent', 'default', {
+      'ad_storage': 'denied',
+      'ad_user_data': 'denied',
+      'ad_personalization': 'denied',
+      'analytics_storage': 'denied',
+      'wait_for_update': 500
+    });
+    gtag('set', 'ads_data_redaction', true);
+    try {
+      // A choice lasts 12 months (lcs-consent-at, ms, written by js/consent.js);
+      // after that it is forgotten here, before anything reads it, and the
+      // sheet asks again. A choice with no date yet is dated by consent.js.
+      var consentAt = +localStorage.getItem('lcs-consent-at');
+      if (consentAt && Date.now() - consentAt > 365 * 864e5) {
+        localStorage.removeItem('lcs-consent');
+        localStorage.removeItem('lcs-consent-at');
+      }
+      if (localStorage.getItem('lcs-consent') === 'granted') {
+        gtag('consent', 'update', {
+          'ad_storage': 'granted',
+          'ad_user_data': 'granted',
+          'ad_personalization': 'denied',
+          'analytics_storage': 'granted'
+        });
+      }
+    } catch (e) {}
+    function loadGA() {
+      if (loadGA.done) return;
+      loadGA.done = true;
+      // The owner's own devices: open any page once with ?lcs_internal=1 (=0 to
+      // undo) and GA4 tags the traffic as internal, which its filter excludes.
+      var internal = false;
+      try {
+        var flag = new URLSearchParams(location.search).get('lcs_internal');
+        if (flag === '1') localStorage.setItem('lcs-internal', '1');
+        if (flag === '0') localStorage.removeItem('lcs-internal');
+        internal = localStorage.getItem('lcs-internal') === '1';
+      } catch (e) {}
+      // Only the live site reports: local previews and test copies queue events
+      // in dataLayer but never load gtag.js, so tests can't reach GA4 or Ads.
+      if (!/(^|\.)londonchoralservice\.com$/.test(location.hostname)) return;
+      gtag('js', new Date());
+      gtag('config', 'G-9FENN7VS0E', internal ? { 'traffic_type': 'internal' } : {});
+      gtag('config', 'AW-17988388404', { 'allow_enhanced_conversions': true });
+      var s = document.createElement('script');
+      s.src = 'https://www.googletagmanager.com/gtag/js?id=G-9FENN7VS0E';
+      document.head.appendChild(s);
+    }
+    if ('requestIdleCallback' in window) {
+      requestIdleCallback(loadGA, { timeout: 3000 });
+    } else {
+      window.addEventListener('load', function() { setTimeout(loadGA, 100); });
+    }
+    if (/[?&](gclid|gbraid|wbraid)=/.test(location.search)) loadGA();
+    ['scroll', 'click', 'touchstart', 'keydown'].forEach(function(evt) {
+      window.addEventListener(evt, loadGA, { once: true, passive: true });
+    });
+
+    // Conversion tracking. A lead is one "Submit lead form" conversion plus a GA4
+    // generate_lead, started by js/form.js and js/private-events.js only after
+    // Web3Forms accepts the enquiry. With cookie consent, js/form.js's lead is
+    // sent from thank-you.html (lcsLead below hands it over); without consent,
+    // and on the private register's inline success, it goes from the form's own
+    // page at once. Phone, email and WhatsApp taps are contact_click events, never
+    // leads, each with its own Ads action: "WhatsApp or email click" is a
+    // primary goal (owner decision, 26 Sep 2026) and "Call click" a secondary
+    // one. Labels come from Google Ads (conversion action tag snippets).
+    var LCS_ADS = {
+      lead: 'AW-17988388404/RjhECKGP7akcELSMxIFD',
+      call: 'AW-17988388404/HHu8CJq1x4UdELSMxIFD',
+      message: 'AW-17988388404/5H_QCJ21x4UdELSMxIFD'
+    };
+    // done: a page change follows (js/form.js goes to the thank-you page). With
+    // cookie consent the lead is handed to that page in sessionStorage and sent
+    // from there, so the redirect can never cut its hits off before gtag.js has
+    // sent them. Without consent nothing is stored and it goes at once, as a
+    // cookieless ping.
+    function lcsLead(detail, done) {
+      var lead = {
+        id: 'lead-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7),
+        source: detail.source,
+        occasion: detail.occasion || 'unspecified'
+      };
+      // The cookie-free counter's event goes from here, once per accepted
+      // enquiry with or without consent (a beacon, so the redirect can't cut it
+      // off); lcsSendLead on the next page would find js/counter.js not loaded.
+      if (typeof window.lcsCount === 'function') window.lcsCount('enquiry-sent-form');
+      // Enhanced conversions: gtag hashes these (SHA-256) before sending, and
+      // sends nothing at all unless the visitor allowed ad measurement.
+      var ud = {};
+      var email = (detail.email || '').trim().toLowerCase();
+      if (/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) ud.email = email;
+      var phone = (detail.phone || '').replace(/[^\d+]/g, '');
+      if (/^0\d{9,10}$/.test(phone)) phone = '+44' + phone.slice(1);
+      else if (/^44\d{9,10}$/.test(phone)) phone = '+' + phone;
+      if (/^\+\d{10,15}$/.test(phone)) ud.phone_number = phone;
+      if (done) {
+        try {
+          if (localStorage.getItem('lcs-consent') === 'granted') {
+            sessionStorage.setItem('lcs-lead', JSON.stringify({ lead: lead, ud: ud }));
+            done();
+            return;
+          }
+        } catch (e) {}
+      }
+      lcsSendLead(lead, ud, done);
+    }
+    function lcsSendLead(lead, ud, done) {
+      var finished = false;
+      function finish() { if (!finished) { finished = true; if (done) done(); } }
+      loadGA();
+      if (ud.email || ud.phone_number) gtag('set', 'user_data', ud);
+      gtag('event', 'generate_lead', {
+        'currency': 'GBP',
+        'value': 1,
+        'lead_source': lead.source,
+        'occasion': lead.occasion
+      });
+      // transaction_id: Google Ads counts one conversion per ID, however often it arrives.
+      gtag('event', 'conversion', {
+        'send_to': LCS_ADS.lead,
+        'value': 1,
+        'currency': 'GBP',
+        'transaction_id': lead.id,
+        'event_callback': finish
+      });
+      // Never hold the visitor up if gtag.js is blocked or slow.
+      setTimeout(finish, 1500);
+    }
+    // The page after the form sends a lead handed to it, once: it is removed
+    // before sending, so a refresh or the back button never counts it again.
+    (function() {
+      var saved = null;
+      try {
+        saved = JSON.parse(sessionStorage.getItem('lcs-lead') || 'null');
+        sessionStorage.removeItem('lcs-lead');
+      } catch (e) {}
+      if (saved && saved.lead && saved.lead.id) lcsSendLead(saved.lead, saved.ud || {});
+    })();
+    // WhatsApp messages and emails carry the page they came from (and "via a
+    // Google ad" when known), so each message shows its source. The visitor sees
+    // the text and can change it before sending.
+    // Four characters from a 32-bit FNV-1a hash of the click ID, in an alphabet
+    // without 0/O or 1/I. scripts/ads/lookup_ref.py computes the same value.
+    function lcsShortRef(id) {
+      if (!id) return '';
+      var h = 0x811c9dc5;
+      for (var i = 0; i < id.length; i++) {
+        h ^= id.charCodeAt(i) & 0xff;
+        h = Math.imul(h, 0x01000193) >>> 0;
+      }
+      var abc = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789', out = '';
+      for (var j = 0; j < 4; j++) { out += abc[h & 31]; h >>>= 5; }
+      return out;
+    }
+    function lcsLabelMessage(a, method) {
+      try {
+        var original = a.getAttribute('data-lcs-href') || a.getAttribute('href');
+        a.setAttribute('data-lcs-href', original);
+        var h1 = document.querySelector('h1');
+        var page = ((h1 && h1.childNodes[0] && h1.childNodes[0].textContent) || document.title.split('|')[0]).replace(/\s+/g, ' ').trim();
+        var attr = lcsAttribution();
+        var ad = attr.gclid || attr.gbraid || attr.wbraid || attr.utm_medium === 'cpc' || lcsAdVisit() ? ', via a Google ad' : '';
+        var source = 'your \u201c' + page + '\u201d page' + ad;
+        // With cookie consent, a short reference to the ad click rides along too,
+        // so a booking that starts on WhatsApp or email can be reported to Google
+        // Ads: scripts/ads/lookup_ref.py finds the click whose ID gives this ref.
+        var ref = '';
+        try {
+          if (localStorage.getItem('lcs-consent') === 'granted') {
+            ref = lcsShortRef(attr.gclid || attr.gbraid || attr.wbraid || '');
+          }
+        } catch (e) {}
+        // Without consent, only the landing page's name and the ad's campaign
+        // (never the click ID).
+        var visit = ref ? '' : lcsAdVisit();
+        var tag = ref ? 'Ref: ' + ref : visit ? 'Ad visit: ' + visit : '';
+        if (method === 'whatsapp') {
+          var url = new URL(original);
+          var text = url.searchParams.get('text') || 'Hello, I\u2019d like to ask about a booking.';
+          a.setAttribute('href', original.split('?')[0] + '?text=' + encodeURIComponent(text + ' (Sent from ' + source + '.' + (tag ? ' ' + tag : '') + ')'));
+        } else if (original.indexOf('?') === -1) {
+          a.setAttribute('href', original + '?subject=' + encodeURIComponent('Enquiry from ' + source) +
+            (tag ? '&body=' + encodeURIComponent('\r\n\r\n\r\n' + tag) : ''));
+        }
+      } catch (e) {}
+    }
+    function lcsWhere(a) {
+      return a.closest('.mobile-cta') ? 'mobile_bar' : a.closest('.site-footer') ? 'footer' :
+        a.closest('.site-header') ? 'header' : 'body';
+    }
+    // Enquiry buttons that lead to a form: the on-page #enquiry / #enquire
+    // anchors and the contact page. link_location is the header, footer or
+    // mobile bar, then the hero, then the nearest section's id.
+    function lcsCtaWhere(a) {
+      var where = lcsWhere(a);
+      if (where !== 'body') return where;
+      if (a.closest('.hero, [class*="hero"]')) return 'hero';
+      var sec = a.closest('section[id], [id]');
+      return (sec && sec.id) || 'body';
+    }
+    function lcsClickHandler(e) {
+      // auxclick also reports right-clicks; only a middle-click opens the link.
+      if (e.type === 'auxclick' && e.button !== 1) return;
+      var t = e.target;
+      var a = t && t.closest && t.closest('a[href^="tel:"], a[href^="mailto:"], a[href*="wa.me/"]');
+      if (a) {
+        var href = a.getAttribute('href');
+        var method = href.indexOf('tel:') === 0 ? 'call' : href.indexOf('mailto:') === 0 ? 'email' : 'whatsapp';
+        if (method !== 'call') lcsLabelMessage(a, method);
+        loadGA();
+        gtag('event', 'contact_click', { 'method': method, 'link_location': lcsWhere(a) });
+        var label = method === 'call' ? LCS_ADS.call : LCS_ADS.message;
+        if (label) gtag('event', 'conversion', { 'send_to': label, 'value': 1, 'currency': 'GBP' });
+        return;
+      }
+      var cta = t && t.closest && t.closest('a[href*="#enquiry"], a[href*="#enquire"], a[href*="contact.html"]');
+      if (cta) {
+        loadGA();
+        gtag('event', 'cta_click', { 'link_location': lcsCtaWhere(cta), 'link_url': cta.getAttribute('href') });
+      }
+    }
+    document.addEventListener('click', lcsClickHandler);
+    document.addEventListener('auxclick', lcsClickHandler);
+
+    // Ad click ID and UTM tags from the landing URL, kept for this tab (only once
+    // the visitor has allowed cookies) so an enquiry sent from a later page still
+    // carries its source for offline conversion import.
+    var LCS_ATTR_KEYS = ['gclid', 'gbraid', 'wbraid', 'utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content'];
+    function lcsAttribution() {
+      var out = {};
+      try {
+        var saved = JSON.parse(sessionStorage.getItem('lcs-attr') || '{}');
+        var q = new URLSearchParams(location.search);
+        LCS_ATTR_KEYS.forEach(function(k) { var v = q.get(k) || saved[k]; if (v) out[k] = v; });
+      } catch (e) {}
+      return out;
+    }
+    function lcsKeepAttribution() {
+      try {
+        if (localStorage.getItem('lcs-consent') !== 'granted') return;
+        var a = lcsAttribution();
+        if (Object.keys(a).length) sessionStorage.setItem('lcs-attr', JSON.stringify(a));
+      } catch (e) {}
+    }
+    lcsKeepAttribution();
+
+    // Ad visit without cookies: when this page's own URL holds an ad click ID
+    // and the visitor has not allowed cookies, its messages and form carry the
+    // landing page's name and the ad's campaign from utm_campaign ("Ad visit:
+    // pricing (wedding-leads)"), never the click ID. Nothing is stored: the
+    // label lives in this variable, and same-site links on the page carry it in
+    // their address (lcs_av=<label>), so the next page the visitor opens knows
+    // it too and passes it on. scripts/bookings/pipeline.py reads the same format.
+    function lcsAdVisitSlug(path) {
+      var p = String(path || '').toLowerCase().replace(/^\/+/, '').replace(/\.html$/, '').replace(/(^|\/)index$/, '').replace(/\/+$/, '');
+      if (!p) return 'home';
+      return p.length <= 80 && /^[a-z0-9-]+(\/[a-z0-9-]+)*$/.test(p) ? p : 'other';
+    }
+    function lcsAdVisitLabel() {
+      try {
+        var q = new URLSearchParams(location.search);
+        if (/[?&](gclid|gbraid|wbraid)=[^&]/.test(location.search)) {
+          var slug = lcsAdVisitSlug(location.pathname), campaign = q.get('utm_campaign') || '';
+          return /^[a-z0-9-]{1,40}$/.test(campaign) ? slug + ' (' + campaign + ')' : slug;
+        }
+        // Carried from the previous page, and only from a page of this site, so
+        // a shared or bookmarked address never counts as an ad visit.
+        var carried = q.get('lcs_av') || '';
+        var from = document.referrer ? new URL(document.referrer).origin : '';
+        // The page at most 80 characters, the campaign at most 40 (as pipeline.py's AD_VISIT_RE).
+        if (from === location.origin &&
+            /^(?=[a-z0-9\/-]{1,80}( \(|$))[a-z0-9-]+(\/[a-z0-9-]+)*( \([a-z0-9-]{1,40}\))?$/.test(carried)) return carried;
+      } catch (e) {}
+      return '';
+    }
+    var LCS_AD_VISIT = lcsAdVisitLabel();
+    function lcsAdVisit() {
+      if (!LCS_AD_VISIT) return '';
+      // Once cookies are allowed the click reference (lcsAttribution) takes over, but only if there is one: a
+      // visitor who accepts on a later page has no click ID left, so the label stays.
+      try {
+        if (localStorage.getItem('lcs-consent') === 'granted') {
+          var a = lcsAttribution();
+          if (a.gclid || a.gbraid || a.wbraid) return '';
+        }
+      } catch (e) {}
+      return LCS_AD_VISIT;
+    }
+    // Same-site page links (.html or folder addresses) get lcs_av=<label> at
+    // run time, for ad visitors only, so crawlers never see it. Never tel:,
+    // mailto:, WhatsApp, other sites or links within the page. Once the visitor
+    // allows cookies the label comes off again where a click ID remains
+    // (lcsAttribution takes over); after accepting on a later page it stays.
+    function lcsCarryAdVisit(a) {
+      try {
+        var raw = a.getAttribute('href') || '';
+        if (!raw || raw.charAt(0) === '#' || /^(tel|mailto|sms|javascript):/i.test(raw) ||
+            raw.indexOf('wa.me/') !== -1 || a.hasAttribute('download')) return;
+        var url = new URL(raw, location.href);
+        if (url.origin !== location.origin || !/(\.html|\/)$/.test(url.pathname)) return;
+        var visit = lcsAdVisit();
+        if (visit) url.searchParams.set('lcs_av', visit);
+        else if (url.searchParams.has('lcs_av')) url.searchParams.delete('lcs_av');
+        else return;
+        a.setAttribute('href', url.pathname + url.search + url.hash);
+      } catch (e) {}
+    }
+    if (LCS_AD_VISIT) {
+      var lcsCarryAll = function() {
+        if (lcsAdVisit()) Array.prototype.forEach.call(document.querySelectorAll('a[href]'), lcsCarryAdVisit);
+      };
+      if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', lcsCarryAll);
+      else lcsCarryAll();
+      // Links added later, and a choice made on the cookie sheet since, are
+      // settled as each link is used.
+      ['click', 'auxclick', 'contextmenu'].forEach(function(evt) {
+        document.addEventListener(evt, function(e) {
+          var a = e.target.closest && e.target.closest('a[href]');
+          if (a) lcsCarryAdVisit(a);
+        }, true);
+      });
+    }
+    // The click IDs in this page's own URL, for an enquiry whose sender ticked
+    // the form's ad-measurement box (read at submit, never stored).
+    function lcsClickIds() {
+      var out = {};
+      try {
+        var q = new URLSearchParams(location.search);
+        ['gclid', 'gbraid', 'wbraid'].forEach(function(k) { var v = q.get(k); if (v) out[k] = v; });
+      } catch (e) {}
+      return out;
+    }
+  </script>
+  <script src="/js/consent.js" defer></script>
+  <!-- Cookie-free visit counter (GoatCounter; privacy.html#visit-counter). Off
+       while LCS_COUNTER is empty: then no page loads anything for it. To switch
+       it on, put the GoatCounter site code between the quotes and run
+       ./build.sh. js/counter.js does the counting. -->
+  <script>
+    var LCS_COUNTER = 'londonchoralservice';
+    if (LCS_COUNTER) {
+      var lcsCounterJs = document.createElement('script');
+      lcsCounterJs.src = '/js/counter.js';
+      document.head.appendChild(lcsCounterJs);
+    }
+  </script>
+  <!-- @include-end partials/analytics.html -->
+
+  <title>It Is Well With My Soul: Words and Story | London Choral Service</title>
+  <meta name="description" content="It Is Well With My Soul: Spafford's words after his daughters died at sea in 1873, Bliss's tune and its place at a funeral. Book singers from £250.">
+  <meta name="theme-color" content="#F7F3EE">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://londonchoralservice.com/music-guides/it-is-well-with-my-soul.html">
+  <link rel="alternate" hreflang="en-gb" href="https://londonchoralservice.com/music-guides/it-is-well-with-my-soul.html">
+  <link rel="alternate" hreflang="x-default" href="https://londonchoralservice.com/music-guides/it-is-well-with-my-soul.html">
+
+  <meta property="og:title" content="It Is Well With My Soul: Words and Story | London Choral Service">
+  <meta property="og:description" content="It Is Well With My Soul: Spafford's words after his daughters died at sea in 1873, Bliss's tune and its place at a funeral. Book singers from £250.">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://londonchoralservice.com/music-guides/it-is-well-with-my-soul.html">
+  <meta property="og:locale" content="en_GB">
+  <meta property="og:site_name" content="London Choral Service">
+  <meta property="og:image" content="https://londonchoralservice.com/assets/og-funerals.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="The London Choral Service: funeral singers and choirs">
+  <meta property="article:published_time" content="2026-10-24">
+  <meta property="article:modified_time" content="2026-10-24">
+
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="It Is Well With My Soul: Words and Story | London Choral Service">
+  <meta name="twitter:description" content="It Is Well With My Soul: Spafford's words after his daughters died at sea in 1873, Bliss's tune and its place at a funeral. Book singers from £250.">
+  <meta name="twitter:image" content="https://londonchoralservice.com/assets/og-funerals.png">
+  <meta name="twitter:image:alt" content="The London Choral Service: funeral singers and choirs">
+  <link rel="dns-prefetch" href="https://www.googletagmanager.com">
+  <link rel="dns-prefetch" href="https://api.web3forms.com">
+
+  <!-- @css-start: generated by build.sh (scripts/inline_css.py); never hand-edit -->
+  <style>
+    :root{--color-bg:#F7F3EE;--color-bg-alt:#EDE8E1;--color-text:#2C2420;--color-text-mid:#6B5E56;--color-accent:#8B3A3A;--color-accent-hover:#9E4A4A;--color-rule:#D6CEC6;--color-field-rule:#8F827A;--color-error:#9B2C2C;--color-error-bg:#FBEBE9;--color-error-border:#E0A8A8;--color-success:#2D5016;--color-success-bg:#E8F0E4;--color-success-border:#A8C99B;--text-xs:0.8rem;--text-sm:0.875rem;--text-base:1.125rem;--text-md:1.25rem;--text-lg:1.563rem;--text-xl:1.953rem;--text-2xl:2.441rem;--text-3xl:3.052rem;--text-display:3.815rem;--space-xs:0.25rem;--space-sm:0.5rem;--space-md:1rem;--space-lg:1.5rem;--space-xl:2rem;--space-2xl:3rem;--space-3xl:4rem;--space-4xl:6rem;--space-5xl:8rem;--width-prose:42rem;--width-wide:60rem;--width-max:72rem;--font-heading:'Cormorant Garamond','Georgia','Times New Roman',serif;--font-body:'Source Serif 4','Georgia','Times New Roman',serif;--leading-tight:1.2;--leading-normal:1.6;--leading-loose:1.8;--transition-fast:150ms ease;--transition-base:250ms ease;}
+    @media (max-width: 599px){:root{--text-3xl:2.2rem;--text-2xl:1.953rem;--text-xl:1.563rem;--text-display:2.6rem;--space-4xl:3rem;}}
+    @media (min-width: 600px) and (max-width: 899px){:root{--text-3xl:2.6rem;--text-display:3.2rem;}}
+    @font-face{font-family:'Cormorant Garamond';font-style:normal;font-weight:300 600;font-display:swap;src:url('/fonts/cormorant-garamond.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;}
+    @font-face{font-family:'Cormorant Garamond';font-style:italic;font-weight:400;font-display:swap;src:url('/fonts/cormorant-garamond-italic.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;}
+    @font-face{font-family:'Source Serif 4';font-style:normal;font-weight:400 600;font-display:swap;src:url('/fonts/source-serif-4.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;}
+    @font-face{font-family:'Source Serif 4';font-style:italic;font-weight:400;font-display:swap;src:url('/fonts/source-serif-4-italic.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;}
+    *, *::before, *::after{box-sizing:border-box;margin:0;padding:0;}
+    html{-webkit-text-size-adjust:100%;scroll-behavior:smooth;}
+    @media (max-width: 1080px){html{scroll-padding-bottom:5.5rem;}}
+    @media (prefers-reduced-motion: reduce){html{scroll-behavior:auto;}}
+    body{font-family:var(--font-body);font-size:var(--text-base);line-height:var(--leading-normal);color:var(--color-text);background-color:var(--color-bg);-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;}
+    h1, h2, h3, h4, h5, h6{font-family:var(--font-heading);line-height:var(--leading-tight);text-wrap:balance;}
+    h1{font-size:var(--text-display);font-weight:300;letter-spacing:-0.02em;margin-bottom:var(--space-lg);}
+    h2{font-size:var(--text-2xl);font-weight:400;margin-bottom:var(--space-lg);}
+    p{margin-bottom:var(--space-lg);}
+    p:last-child{margin-bottom:0;}
+    a{color:var(--color-accent);text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:0.15em;transition:color var(--transition-fast);}
+    a:visited{color:#6E3333;}
+    a:hover{color:var(--color-accent-hover);}
+    :focus-visible{outline:2px solid var(--color-accent);outline-offset:2px;}
+    ::selection{background-color:#8B3A3A30;color:var(--color-text);}
+    ul, ol{padding-left:var(--space-xl);margin-bottom:var(--space-lg);}
+    li{margin-bottom:var(--space-sm);}
+    blockquote{margin:0;padding:0;border:none;}
+    hr{border:none;border-top:1px solid var(--color-rule);margin-block:var(--space-2xl);}
+    img{max-width:100%;height:auto;display:block;}
+    .text-sm{font-size:var(--text-sm);}
+    .text-mid{color:var(--color-text-mid);}
+    .skip-link{position:absolute;top:-3rem;left:var(--space-lg);padding:var(--space-sm) var(--space-md);background-color:var(--color-accent);color:var(--color-bg);font-family:var(--font-heading);font-size:var(--text-sm);font-weight:500;text-decoration:none;z-index:200;transition:top var(--transition-fast);}
+    .skip-link:focus{top:var(--space-sm);outline:2px solid var(--color-text);outline-offset:2px;}
+    .skip-link:visited{color:var(--color-bg);}
+    @media (prefers-reduced-motion: reduce){*, *::before, *::after{animation-duration:0.01ms !important;animation-iteration-count:1 !important;transition-duration:0.01ms !important;}}
+    .prose{max-width:var(--width-prose);margin-inline:auto;padding-inline:var(--space-lg);}
+    .page-wrap{max-width:var(--width-max);margin-inline:auto;padding-inline:var(--space-lg);}
+    .section{padding-block:var(--space-4xl);}
+    .section + .section{border-top:1px solid var(--color-rule);}
+    .lede{font-size:var(--text-md);line-height:var(--leading-loose);color:var(--color-text-mid);max-width:36rem;}
+    .rule{border:none;border-top:2px solid var(--color-accent);width:3rem;margin-block:var(--space-2xl);margin-inline:0;}
+    .site-header{border-bottom:1px solid var(--color-rule);}
+    .site-nav{display:flex;align-items:baseline;justify-content:space-between;padding-block:var(--space-lg);gap:var(--space-lg);}
+    .site-name{font-family:var(--font-heading);font-size:var(--text-lg);font-weight:300;color:var(--color-text);text-decoration:none;white-space:nowrap;}
+    .site-name:hover{color:var(--color-accent);}
+    .nav-links{display:flex;flex-wrap:nowrap;gap:clamp(0.75rem,1.6vw,var(--space-xl));list-style:none;padding:0;margin:0;}
+    @media (min-width: 1081px) and (max-width: 1119px){.nav-links{gap:0.8rem;}}
+    .nav-links li{margin-bottom:0;}
+    .nav-links a{font-family:var(--font-heading);font-size:var(--text-sm);font-weight:500;letter-spacing:0.05em;text-transform:uppercase;color:var(--color-text);text-decoration:none;transition:color var(--transition-fast);white-space:nowrap;}
+    .nav-links a:hover{color:var(--color-accent);}
+    .nav-links a[aria-current="page"]{text-decoration-line:underline;text-decoration-thickness:1px;text-decoration-color:var(--color-accent);text-underline-offset:0.45em;}
+    .nav-toggle{display:none;background:none;border:none;cursor:pointer;padding:var(--space-sm);width:2.75rem;height:2.75rem;flex-shrink:0;position:relative;}
+    .nav-toggle:hover, .nav-toggle:focus-visible{background-color:var(--color-bg-alt);border-radius:4px;}
+    .nav-toggle-bar, .nav-toggle-bar::before, .nav-toggle-bar::after{display:block;width:1.5rem;height:2px;background-color:var(--color-text);position:absolute;left:50%;transform:translateX(-50%);transition:all var(--transition-base);}
+    .nav-toggle-bar{top:50%;transform:translate(-50%,-50%);}
+    .nav-toggle-bar::before{content:'';top:-7px;left:50%;}
+    .nav-toggle-bar::after{content:'';top:7px;left:50%;}
+    .nav-toggle[aria-expanded="true"] .nav-toggle-bar{background-color:transparent;}
+    .nav-toggle[aria-expanded="true"] .nav-toggle-bar::before{top:0;transform:translateX(-50%) rotate(45deg);}
+    .nav-toggle[aria-expanded="true"] .nav-toggle-bar::after{top:0;transform:translateX(-50%) rotate(-45deg);}
+    @media (max-width: 1080px){.nav-toggle{display:block;flex-shrink:0;}
+    .site-name{white-space:normal;}
+    .nav-links{display:none;position:absolute;top:100%;left:0;right:0;flex-direction:column;background-color:var(--color-bg);border-bottom:1px solid var(--color-rule);padding:var(--space-lg);gap:0;z-index:100;}
+    .nav-links.is-open{display:flex;}
+    .nav-links a{display:block;padding:var(--space-md) 0;font-size:var(--text-base);border-bottom:1px solid var(--color-rule);}
+    .nav-links li:last-child a{border-bottom:none;}
+    .site-nav{position:relative;align-items:center;}}
+    @media (max-width: 420px){.site-name{font-size:clamp(1.125rem,6vw,var(--text-lg));}
+    .site-nav{gap:var(--space-md);}}
+    .guide-meta{font-family:var(--font-body);font-size:var(--text-sm);color:var(--color-text-mid);letter-spacing:0.02em;}
+    .breadcrumb{margin-bottom:var(--space-lg);}
+    .breadcrumb ol{list-style:none;padding:0;margin:0;display:flex;flex-wrap:wrap;gap:0;font-family:var(--font-body);font-size:var(--text-sm);color:var(--color-text-mid);}
+    .breadcrumb li::after{content:'\203A';margin-inline:0.5em;color:var(--color-rule);}
+    .breadcrumb li:last-child::after{display:none;}
+    .breadcrumb a{color:var(--color-text-mid);text-decoration:none;display:inline-block;padding-block:0.3em;margin-block:-0.3em;}
+    .breadcrumb a:hover{color:var(--color-accent);}
+    .mobile-cta{display:none;}
+    @media (max-width: 1080px){.mobile-cta{display:flex;position:fixed;bottom:0;left:0;right:0;z-index:200;background-color:var(--color-bg);border-top:1px solid var(--color-rule);padding:var(--space-sm) var(--space-lg);padding-bottom:calc(var(--space-sm) + env(safe-area-inset-bottom,0px));gap:var(--space-sm);align-items:center;justify-content:center;transition:transform 0.3s ease;}
+    .mobile-cta.is-hidden{transform:translateY(100%);pointer-events:none;}
+    .mobile-cta a{text-decoration:none;font-family:var(--font-heading);font-weight:500;font-size:var(--text-sm);letter-spacing:0.02em;padding:var(--space-sm) var(--space-sm);text-align:center;flex:1;}
+    .mobile-cta .mobile-cta-enquire, .mobile-cta .mobile-cta-enquire:visited, .mobile-cta .mobile-cta-enquire:active{background-color:var(--color-accent);color:var(--color-bg);}
+    .mobile-cta .mobile-cta-enquire:hover{background-color:var(--color-accent-hover);color:var(--color-bg);}
+    .mobile-cta .mobile-cta-whatsapp, .mobile-cta .mobile-cta-whatsapp:visited, .mobile-cta .mobile-cta-whatsapp:active, .mobile-cta .mobile-cta-email, .mobile-cta .mobile-cta-email:visited, .mobile-cta .mobile-cta-email:active{border:1px solid var(--color-rule);color:var(--color-text);display:flex;align-items:center;justify-content:center;gap:var(--space-xs);}
+    .mobile-cta .mobile-cta-whatsapp:hover, .mobile-cta .mobile-cta-email:hover{border-color:var(--color-accent);}
+    .mobile-cta .mobile-cta-whatsapp svg{width:1em;height:1em;flex-shrink:0;}}
+    .video-embed{position:relative;aspect-ratio:16 / 9;overflow:hidden;}
+    .video-thumb{position:absolute;inset:0;width:100%;height:100%;padding:0;border:0;cursor:pointer;background:#000;}
+    .video-thumb img{width:100%;height:100%;object-fit:cover;display:block;}
+    .play-btn{position:absolute;left:var(--space-md);bottom:var(--space-md);width:3.5rem;height:3.5rem;overflow:visible;}
+    .play-btn circle{fill:rgba(28,22,20,0.45);stroke:var(--color-bg);stroke-width:1.5;transition:fill var(--transition-fast),stroke var(--transition-fast);}
+    .play-btn path{fill:var(--color-bg);}
+    .video-thumb:hover .play-btn circle, .video-thumb:focus-visible .play-btn circle{fill:var(--color-accent);stroke:var(--color-accent);}
+    @media (max-width: 599px){.play-btn{left:var(--space-sm);bottom:var(--space-sm);width:3rem;height:3rem;}}
+    .video-thumb:focus-visible{outline:3px solid #fff;outline-offset:-6px;box-shadow:inset 0 0 0 3px var(--color-accent);}
+    .has-dropdown{position:relative;}
+    .dropdown-caret{--caret-lift:-0.3em;display:inline-block;width:0.4em;height:0.4em;margin-left:0.3em;border-right:1px solid currentColor;border-bottom:1px solid currentColor;transform:translateY(var(--caret-lift)) rotate(45deg);transition:transform var(--transition-fast);}
+    .dropdown-menu{display:none;position:absolute;top:100%;left:calc(-1 * (var(--space-lg) + 1px));min-width:12rem;list-style:none;padding:var(--space-sm) 0;margin:0;background-color:var(--color-bg);border:1px solid var(--color-rule);z-index:150;}
+    .dropdown-menu li{margin:0;}
+    .dropdown-menu a{display:block;padding:var(--space-sm) var(--space-lg);font-family:var(--font-heading);font-size:var(--text-sm);font-weight:500;letter-spacing:0.04em;text-transform:uppercase;color:var(--color-text);text-decoration:none;transition:background-color var(--transition-fast),color var(--transition-fast);}
+    .dropdown-menu a:hover, .dropdown-menu a:focus-visible{background-color:var(--color-bg-alt);color:var(--color-accent);outline:none;}
+    .dropdown-menu a:focus-visible{outline:2px solid var(--color-accent);outline-offset:-2px;}
+    .dropdown-separator{height:1px;background-color:var(--color-rule);margin:var(--space-sm) var(--space-md);}
+    .has-dropdown:hover > .dropdown-menu, .has-dropdown:focus-within > .dropdown-menu, .has-dropdown[data-open="true"] > .dropdown-menu{display:block;}
+    .has-dropdown:hover > .dropdown-trigger .dropdown-caret, .has-dropdown:focus-within > .dropdown-trigger .dropdown-caret, .has-dropdown[data-open="true"] > .dropdown-trigger .dropdown-caret{transform:translateY(calc(var(--caret-lift) + 0.28em)) rotate(225deg);}
+    .has-dropdown[data-dismissed] > .dropdown-menu{display:none;}
+    .has-dropdown[data-dismissed] > .dropdown-trigger .dropdown-caret{transform:translateY(var(--caret-lift)) rotate(45deg);}
+    @media (max-width: 1080px){.dropdown-menu{display:none;position:static;border:none;border-top:1px solid var(--color-rule);padding:0;background:transparent;}
+    .has-dropdown[data-open="true"] > .dropdown-menu{display:block;}
+    .has-dropdown:hover > .dropdown-menu, .has-dropdown:focus-within > .dropdown-menu{display:none;}
+    .has-dropdown[data-open="true"] > .dropdown-menu{display:block;}
+    .dropdown-menu a{padding-left:var(--space-2xl);text-transform:none;font-size:var(--text-base);border-bottom:1px solid var(--color-rule);}
+    .dropdown-menu li:last-child a{border-bottom:none;}
+    .dropdown-separator{display:none;}}
+    .consent{position:fixed;left:0;right:0;bottom:0;z-index:1000;max-height:100vh;max-height:100dvh;overflow-y:auto;background-color:var(--color-bg-alt,var(--parchmentLight,#EDE8E1));color:var(--color-text,var(--choirStall,#2C2420));border-top:1px solid var(--color-rule,var(--limestone,#D6CEC6));box-shadow:0 -6px 24px rgba(44,36,32,0.1);font-family:var(--font-body,'Source Serif 4',Georgia,serif);font-size:1rem;line-height:1.45;animation:consent-in 0.25s ease-out;}
+    @keyframes consent-in{from { transform:translateY(100%);} to { transform:none;}}
+    @media (prefers-reduced-motion: reduce){.consent{animation:none;}}
+    .consent[hidden]{display:none;}
+    .consent:focus{outline:none;}
+    .consent:focus-visible{outline:2px solid var(--color-text,var(--choirStall,#2C2420));outline-offset:-4px;}
+    .consent__inner{max-width:72rem;margin:0 auto;padding:1rem 1.5rem;padding-bottom:calc(1rem + env(safe-area-inset-bottom,0px));display:flex;align-items:center;gap:0.75rem 2.5rem;}
+    .consent__text{flex:1 1 auto;max-width:44rem;margin:0;}
+    .consent__text a{color:inherit;text-decoration:underline;text-underline-offset:0.15em;white-space:nowrap;}
+    .consent__actions{flex:0 0 auto;margin-left:auto;display:grid;grid-template-columns:1fr 1fr;gap:0.625rem;}
+    .consent__btn{min-width:8rem;min-height:2.75rem;margin:0;padding:0.5rem 1.25rem;font-family:var(--font-heading,var(--font-display,'Cormorant Garamond',Georgia,serif));font-size:1.125rem;font-weight:500;letter-spacing:0.02em;line-height:1.2;color:var(--color-bg,var(--parchment,#F7F3EE));background-color:var(--color-text,var(--choirStall,#2C2420));border:1px solid var(--color-text,var(--choirStall,#2C2420));border-radius:0;cursor:pointer;touch-action:manipulation;}
+    .consent__btn:hover{text-decoration:underline;text-underline-offset:0.2em;}
+    .consent__btn:focus-visible{outline:2px solid var(--color-text,var(--choirStall,#2C2420));outline-offset:3px;}
+    .consent__btn[aria-pressed="true"]{text-decoration:underline;text-underline-offset:0.2em;}
+    @media (max-width: 760px){.consent{font-size:0.9375rem;}
+    .consent__inner{flex-direction:column;align-items:stretch;gap:0.625rem;padding:0.75rem 1rem;padding-bottom:calc(0.75rem + env(safe-area-inset-bottom,0px));}
+    .consent__text{max-width:none;}
+    .consent__actions{margin-left:0;}
+    .consent__btn{min-width:0;}}
+    body:has(#nav-menu.is-open) .consent{display:none;}
+    @media print{.consent{display:none !important;}}
+    @media print{:root{--color-bg:#fff;--color-text:#000;--color-text-mid:#333;--color-accent:#000;--color-rule:#ccc;}
+    body{font-size:11pt;line-height:1.5;background:#fff;color:#000;}
+    .site-header, .nav-toggle, .skip-link, .contact-form, .btn, .video-embed, .video-caption, .mobile-cta{display:none !important;}
+    .section{padding-block:1.5em;break-inside:avoid;}
+    .prose, .wide, .page-wrap{max-width:none;padding:0;}
+    a{color:#000;text-decoration:underline;}
+    a[href^="http"]::after{content:" (" attr(href) ")";font-size:0.85em;color:#555;}
+    a[href^="mailto"]::after, a[href^="tel"]::after{content:none;}
+    h1, h2, h3{break-after:avoid;}
+    img{max-width:100% !important;}}
+  </style>
+  <link rel="preload" href="/css/style.css?v=60a4d0a3c5" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <noscript><link rel="stylesheet" href="/css/style.css?v=60a4d0a3c5"></noscript>
+  <!-- @css-end -->
+
+  <link rel="icon" href="../assets/favicon.ico" sizes="any">
+  <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="../assets/apple-touch-icon.png">
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Article",
+        "headline": "It Is Well With My Soul: the words, the story and its place at a funeral",
+        "url": "https://londonchoralservice.com/music-guides/it-is-well-with-my-soul.html",
+        "inLanguage": "en-GB",
+        "datePublished": "2026-10-24",
+        "dateModified": "2026-10-24",
+        "description": "It Is Well With My Soul: Spafford's words after his daughters died at sea in 1873, Bliss's tune and its place at a funeral. Book singers from £250.",
+        "author": [
+          {
+            "@type": "Person",
+            "name": "Luca Wetherall",
+            "jobTitle": "Artistic Director",
+            "url": "https://londonchoralservice.com/about.html"
+          },
+          {
+            "@id": "https://londonchoralservice.com/#organization"
+          }
+        ],
+        "image": {
+          "@type": "ImageObject",
+          "url": "https://londonchoralservice.com/assets/og-funerals.png",
+          "width": 1200,
+          "height": 630
+        },
+        "wordCount": 1100,
+        "speakable": {
+          "@type": "SpeakableSpecification",
+          "cssSelector": [
+            ".lede",
+            ".guide-body p:first-of-type"
+          ]
+        },
+        "publisher": {
+          "@id": "https://londonchoralservice.com/#organization"
+        },
+        "mainEntityOfPage": {
+          "@type": "WebPage",
+          "@id": "https://londonchoralservice.com/music-guides/it-is-well-with-my-soul.html"
+        }
+      },
+      {
+        "@type": [
+          "LocalBusiness",
+          "PerformingGroup",
+          "MusicGroup"
+        ],
+        "@id": "https://londonchoralservice.com/#organization",
+        "name": "The London Choral Service"
+      },
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "https://londonchoralservice.com/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Music Guides",
+            "item": "https://londonchoralservice.com/music-guides/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 3,
+            "name": "It Is Well With My Soul: the words, the story and its place at a funeral"
+          }
+        ]
+      },
+      {
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "Who wrote It Is Well With My Soul?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Horatio Spafford, a Chicago lawyer, wrote the words in 1873 after his four daughters died when the Ville du Havre sank in the Atlantic. Philip Bliss wrote the tune, named after the ship, and published it in 1876."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Is It Is Well With My Soul suitable for a funeral?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes. The words face grief directly and end in trust, and the refrain is easy for a congregation to pick up. It suits a Christian funeral of any denomination."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Are the words of It Is Well With My Soul out of copyright?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes. Spafford died in 1888 and Bliss in 1876, so both the words and the tune are in the public domain and can be printed in an order of service. A modern arrangement may still be in copyright."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "How many verses of It Is Well should we sing?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Most hymn books print four. For a shorter service, sing the first, second and last, each with the refrain."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "How much does it cost to have It Is Well With My Soul sung at a funeral?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "In Greater London a soloist costs £250, a soloist with an organist £500, and a choir of four £1,150, which covers the rehearsal and the service. We add travel for funerals outside London."
+            }
+          }
+        ]
+      }
+    ]
+  }
+  </script>
+
+</head>
+<body>
+
+  <a href="#main" class="skip-link">Skip to main content</a>
+
+    <!-- @include-start partials/nav.html -->
+  <header class="site-header">
+    <nav class="site-nav page-wrap" aria-label="Main navigation">
+      <a href="/" class="site-name">The London Choral Service</a>
+      <button type="button" class="nav-toggle" aria-expanded="false" aria-controls="nav-menu" aria-label="Menu">
+        <span class="nav-toggle-bar"></span>
+      </button>
+      <ul id="nav-menu" class="nav-links" role="list">
+        <li><a href="/about.html">About</a></li>
+        <li class="has-dropdown">
+          <a href="/services.html" aria-expanded="false" class="dropdown-trigger">Services<span class="dropdown-caret" aria-hidden="true"></span></a>
+          <ul class="dropdown-menu">
+            <li><a href="/weddings.html">Weddings</a></li>
+            <li><a href="/funerals.html">Funerals</a></li>
+            <li><a href="/corporate.html">Corporate</a></li>
+            <li><a href="/private-events.html">Private Events</a></li>
+            <li><a href="/destinations/">Weddings Abroad</a></li>
+            <li class="dropdown-separator" aria-hidden="true"></li>
+            <li><a href="/services.html">All services</a></li>
+          </ul>
+        </li>
+        <li class="has-dropdown">
+          <a href="/professionals.html" aria-expanded="false" class="dropdown-trigger">Professionals<span class="dropdown-caret" aria-hidden="true"></span></a>
+          <ul class="dropdown-menu">
+            <li><a href="/for-funeral-directors.html">Funeral Directors</a></li>
+            <li><a href="/for-wedding-planners.html">Wedding Planners</a></li>
+            <li><a href="/for-event-managers.html">Event Managers</a></li>
+            <li><a href="/for-hotels.html">Hotels &amp; Venues</a></li>
+            <li><a href="/for-property-managers.html">Property Managers</a></li>
+            <li><a href="/for-livery-companies.html">Livery Companies</a></li>
+            <li><a href="/for-charities.html">Charities</a></li>
+            <li class="dropdown-separator" aria-hidden="true"></li>
+            <li><a href="/planners-and-venues.html">Alma Consort for Planners</a></li>
+            <li><a href="/professionals.html">All professionals</a></li>
+          </ul>
+        </li>
+        <li><a href="/listen.html">Listen</a></li>
+        <li class="has-dropdown">
+          <a href="/music-guides/" aria-expanded="false" class="dropdown-trigger">Music Guides<span class="dropdown-caret" aria-hidden="true"></span></a>
+          <ul class="dropdown-menu">
+            <li><a href="/music-guides/weddings.html">Weddings</a></li>
+            <li><a href="/music-guides/funerals.html">Funerals</a></li>
+            <li><a href="/music-guides/christmas.html">Christmas</a></li>
+            <li class="dropdown-separator" aria-hidden="true"></li>
+            <li><a href="/music-guides/">Browse all</a></li>
+          </ul>
+        </li>
+        <li class="has-dropdown">
+          <a href="/christmas.html" aria-expanded="false" class="dropdown-trigger">Christmas<span class="dropdown-caret" aria-hidden="true"></span></a>
+          <ul class="dropdown-menu">
+            <li><a href="/christmas.html">Christmas carol singers</a></li>
+            <li><a href="/christmas-carol-services.html">Church carol services</a></li>
+            <li><a href="/christmas-pricing.html">Christmas prices</a></li>
+            <li><a href="/christmas-listen.html">Hear the carols</a></li>
+          </ul>
+        </li>
+        <li><a href="/pricing.html">Pricing</a></li>
+        <li><a href="/contact.html">Contact</a></li>
+      </ul>
+    </nav>
+  </header>
+  <!-- @include-end partials/nav.html -->
+  <main id="main">
+    <article>
+
+      <section class="section" style="padding-block-end: var(--space-2xl)">
+        <div class="prose">
+          <nav class="breadcrumb" aria-label="Breadcrumb">
+            <ol>
+              <li><a href="/">Home</a></li>
+              <li><a href="./">Music Guides</a></li>
+              <li>It Is Well With My Soul</li>
+            </ol>
+          </nav>
+          <h1>It Is Well With My Soul: the words, the story and its place at a funeral</h1>
+          <p class="guide-meta">By Luca Wetherall, Artistic Director &amp; Tutor in Music, University of Oxford</p>
+          <p class="guide-meta">Published <time datetime="2026-10-24">24 October 2026</time></p>
+          <hr class="rule">
+        </div>
+      </section>
+
+      <section class="section" style="padding-block-start: var(--space-2xl)">
+        <div class="prose">
+          <p class="lede">Horatio Spafford wrote It Is Well With My Soul in 1873, weeks after his four daughters drowned in the Atlantic. Families who know the story choose it for a funeral because the man who wrote &ldquo;whatever my lot&rdquo; had lost more than most people in the room.</p>
+          <p><strong>Why is It Is Well With My Soul sung at funerals?</strong> Its words hold grief and trust together: the first verse names &ldquo;sorrows like sea billows&rdquo; and still ends &ldquo;it is well with my soul&rdquo;. The refrain repeats one short phrase, so a congregation that has never sung the hymn can join in by the second verse.</p>
+          <p class="text-sm text-mid">We provide soloists, organists and choirs for <a href="../funerals.html">funerals</a> across London and the rest of the UK, and can lead the congregation in It Is Well With My Soul.</p>
+          <div class="video-embed" style="margin-block-start: var(--space-lg)">
+            <button class="video-thumb" aria-label="Play There&rsquo;s a Wideness in God&rsquo;s Mercy" data-video="39MyhPogl6A">
+              <img src="https://img.youtube.com/vi/39MyhPogl6A/maxresdefault.jpg" alt="There&rsquo;s a Wideness in God&rsquo;s Mercy &mdash; The London Choral Service" loading="lazy" width="1280" height="720">
+              <svg class="play-btn" viewBox="0 0 56 56" aria-hidden="true"><circle cx="28" cy="28" r="27"/><path d="M23 19v18l15-9z"/></svg>
+            </button>
+          </div>
+          <p class="text-sm text-mid">We have not filmed It Is Well With My Soul yet. This is our chorus of twelve leading There&rsquo;s a Wideness in God&rsquo;s Mercy, which shows how a choir carries a congregation through a hymn. <a href="../listen.html">Hear more recordings</a>.</p>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="prose">
+          <h2>The words of It Is Well With My Soul</h2>
+          <p>Spafford&rsquo;s text is out of copyright. Most hymn books print four verses, each followed by the refrain; the wording below is the common one, and some books change &ldquo;my faith&rdquo; to &ldquo;the faith&rdquo; in the last verse, as Spafford&rsquo;s manuscript has it.</p>
+          <blockquote>
+            <p>When peace, like a river, attendeth my way,<br>
+When sorrows like sea billows roll;<br>
+Whatever my lot, thou hast taught me to say,<br>
+It is well, it is well with my soul.</p>
+            <p><i>Refrain:</i><br>
+It is well with my soul,<br>
+It is well, it is well with my soul.</p>
+            <p>Though Satan should buffet, though trials should come,<br>
+Let this blest assurance control,<br>
+That Christ has regarded my helpless estate,<br>
+And hath shed his own blood for my soul.</p>
+            <p>My sin, oh, the bliss of this glorious thought!<br>
+My sin, not in part but the whole,<br>
+Is nailed to the cross, and I bear it no more,<br>
+Praise the Lord, praise the Lord, O my soul!</p>
+            <p>And Lord, haste the day when my faith shall be sight,<br>
+The clouds be rolled back as a scroll;<br>
+The trump shall resound, and the Lord shall descend,<br>
+Even so, it is well with my soul.</p>
+          </blockquote>
+          <p>For a shorter hymn, sing the first, second and last verses. Tell us which verses the order of service prints and we will sing those.</p>
+        </div>
+      </section>
+      <section class="section">
+        <div class="prose">
+          <h2>Spafford wrote it after losing his daughters</h2>
+          <p>Horatio Spafford was a Chicago lawyer and a friend of the evangelist Dwight L. Moody. In November 1873 he planned to take his family to England, where Moody was preaching. Business after the Great Chicago Fire kept him at home, so he sent his wife, Anna, and their four daughters ahead on the French steamer <i>Ville du Havre</i>.</p>
+          <p>On 22 November the ship collided with the <i>Loch Earn</i>, an iron sailing ship, in mid-Atlantic and sank; 226 people died. Annie, Maggie, Bessie and Tanetta Spafford were among them. Anna survived and, on landing at Cardiff, sent her husband a telegram that began &ldquo;Saved alone&rdquo;.</p>
+          <p>Spafford sailed to join her. The traditional account says he wrote the hymn as his ship passed near the place where his daughters had drowned. Whether or not he wrote it on that crossing, he wrote it within weeks of the news, and a family at a funeral can hear that in the first verse.</p>
+          <p class="text-sm text-mid">Sources: <a href="https://en.wikipedia.org/wiki/It_Is_Well_with_My_Soul">&ldquo;It Is Well with My Soul&rdquo;</a> and <a href="https://en.wikipedia.org/wiki/Horatio_Spafford">&ldquo;Horatio Spafford&rdquo;</a>, Wikipedia.</p>
+        </div>
+      </section>
+      <section class="section">
+        <div class="prose">
+          <h2>Philip Bliss wrote the tune</h2>
+          <p>The American gospel composer Philip Bliss set Spafford&rsquo;s words and named the tune <i>Ville du Havre</i>, after the ship. It was published in 1876 in <i>Gospel Hymns No. 2</i>, which Bliss edited with Ira Sankey, Moody&rsquo;s song leader.</p>
+          <p>The tune is gentle and moves mostly by step. In the refrain the lower voices echo &ldquo;it is well&rdquo; after the melody, which gives a choir something to do and the congregation a clear cue. The organ can carry the hymn alone; with even four singers the echo comes through.</p>
+          <p>British congregations know the hymn less well than Abide With Me or The Lord&rsquo;s My Shepherd. Free Church and evangelical congregations sing it often; in a parish church or crematorium chapel, one strong voice leading from the front helps the room find the tune.</p>
+          <p class="text-sm text-mid">Source: <a href="https://en.wikipedia.org/wiki/Philip_Bliss">&ldquo;Philip Bliss&rdquo;</a>, Wikipedia.</p>
+        </div>
+      </section>
+      <section class="section">
+        <div class="prose">
+          <h2>Where it sits in a funeral</h2>
+          <p>We suggest it after the eulogy or tributes. By then the congregation has heard about the person&rsquo;s life, and the refrain lets everyone answer together. It also works as the closing hymn if the family wants the service to end on trust more than farewell.</p>
+          <p>It pairs well with a hymn the whole room knows. Open with The Lord&rsquo;s My Shepherd, sing It Is Well after the tributes, and close with <a href="abide-with-me.html">Abide With Me</a> or <a href="love-divine-all-loves-excelling.html">Love Divine</a>. Our guide to <a href="popular-funeral-hymns.html">popular funeral hymns</a> covers the other common choices, and our <a href="memorial-service-songs.html">memorial service songs</a> guide covers a thanksgiving service held later.</p>
+          <p>In Greater London a soloist costs &pound;250, a soloist with an organist &pound;500 and a choir of four &pound;1,150, with travel added outside London. The <a href="/pricing.html">pricing page</a> lists every size.</p>
+        </div>
+      </section>
+      <section class="section">
+        <div class="prose">
+          <h2>Frequently asked questions</h2>
+
+          <h3>Who wrote It Is Well With My Soul?</h3>
+          <p>Horatio Spafford, a Chicago lawyer, wrote the words in 1873 after his four daughters died when the <i>Ville du Havre</i> sank in the Atlantic. Philip Bliss wrote the tune, named after the ship, and published it in 1876.</p>
+
+          <h3>Is It Is Well With My Soul suitable for a funeral?</h3>
+          <p>Yes. The words face grief directly and end in trust, and the refrain is easy for a congregation to pick up. It suits a Christian funeral of any denomination.</p>
+
+          <h3>Are the words of It Is Well With My Soul out of copyright?</h3>
+          <p>Yes. Spafford died in 1888 and Bliss in 1876, so both the words and the tune are in the public domain and can be printed in an order of service. A modern arrangement may still be in copyright.</p>
+
+          <h3>How many verses of It Is Well should we sing?</h3>
+          <p>Most hymn books print four. For a shorter service, sing the first, second and last, each with the refrain.</p>
+
+          <h3>How much does it cost to have It Is Well With My Soul sung at a funeral?</h3>
+          <p>In Greater London a soloist costs &pound;250, a soloist with an organist &pound;500, and a choir of four &pound;1,150, which covers the rehearsal and the service. We add travel for funerals outside London.</p>
+        </div>
+      </section>
+      <section class="section">
+        <div class="prose">
+          <h2>Ask us about the hymns</h2>
+          <p>If you would like It Is Well With My Soul in the service and want to know where it fits, or whether the congregation will know it, get in touch. Asking costs nothing.</p>
+          <p><a href="../funerals.html" class="btn-link">Tell us about the service you&rsquo;re planning</a></p>
+          <p class="text-sm text-mid">Text us on WhatsApp for the fastest reply, or email <a href="mailto:office@londonchoralservice.com">office@londonchoralservice.com</a>.</p>
+        </div>
+      </section>
+
+    </article>
+
+    <section class="section">
+      <div class="prose">
+        <p class="text-sm text-mid">We provide singers and musicians for funerals and memorial services across the UK, including
+          <a href="../areas/london.html">London</a>,
+          <a href="../areas/birmingham.html">Birmingham</a>,
+          <a href="../areas/manchester.html">Manchester</a>,
+          <a href="../areas/oxford.html">Oxford</a>, and
+          <a href="../areas/cambridge.html">Cambridge</a>.
+          <a href="../areas/">See all areas</a>.</p>
+      </div>
+    </section>
+
+
+    <section class="related-guides">
+      <h2>Related</h2>
+      <p><strong>If you&rsquo;re planning a funeral</strong> &mdash; see our <a href="../funerals.html">Funerals</a> page or <a href="../for-funeral-directors.html">information for funeral directors</a>.</p>
+      <ul>
+        <li><a href="popular-funeral-hymns.html">The Most Popular Funeral Hymns</a></li>
+        <li><a href="abide-with-me.html">Abide With Me</a></li>
+        <li><a href="the-lords-my-shepherd.html">The Lord&rsquo;s My Shepherd</a></li>
+        <li><a href="memorial-service-songs.html">Memorial Service Songs and Hymns</a></li>
+      </ul>
+    </section>
+
+  </main>
+
+    <!-- @include-start partials/footer.html -->
+  <footer class="site-footer">
+    <div class="page-wrap">
+      <hr>
+      <div class="footer-grid">
+        <div class="footer-col footer-col--brand">
+          <p class="footer-name">The London Choral Service</p>
+          <p class="text-sm text-mid">Exceptional singers, choirs, and instrumentalists for funerals, weddings, memorials, Christmas, and corporate events across the United Kingdom.</p>
+          <p class="text-sm text-mid">
+            Text us on <a href="https://wa.me/447356042468" target="_blank" rel="noopener" data-whatsapp>WhatsApp</a> (fastest reply)
+            &ensp;|&ensp;
+            <a href="tel:+447356042468">07356 042468</a>
+            &ensp;|&ensp;
+            <a href="mailto:office@londonchoralservice.com">office@londonchoralservice.com</a>
+          </p>
+        </div>
+        <div class="footer-col">
+          <p class="footer-heading">Services</p>
+          <ul role="list">
+            <li><a href="/weddings.html">Weddings</a></li>
+            <li><a href="/funerals.html">Funerals</a></li>
+            <li><a href="/corporate.html">Corporate events</a></li>
+            <li><a href="/christmas.html">Christmas carol singers</a></li>
+            <li><a href="/christmas-carol-services.html">Church carol services</a></li>
+            <li><a href="/private-events.html">Private events</a></li>
+            <li><a href="/destinations/">Weddings abroad</a></li>
+            <li><a href="/pricing.html">Pricing</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <p class="footer-heading">For professionals</p>
+          <ul role="list">
+            <li><a href="/for-funeral-directors.html">Funeral directors</a></li>
+            <li><a href="/for-wedding-planners.html">Wedding planners</a></li>
+            <li><a href="/for-event-managers.html">Event managers</a></li>
+            <li><a href="/for-hotels.html">Hotels and venues</a></li>
+            <li><a href="/for-property-managers.html">Property managers</a></li>
+            <li><a href="/for-livery-companies.html">Livery companies</a></li>
+            <li><a href="/for-charities.html">Charities</a></li>
+            <li><a href="/planners-and-venues.html">Alma Consort for planners</a></li>
+            <li><a href="/professionals.html">All professionals</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <p class="footer-heading">Guides and areas</p>
+          <ul role="list">
+            <li><a href="/music-guides/">All music guides</a></li>
+            <li><a href="/music-guides/weddings.html">Wedding music</a></li>
+            <li><a href="/music-guides/funerals.html">Funeral music</a></li>
+            <li><a href="/music-guides/christmas.html">Christmas music</a></li>
+            <li><a href="/listen.html">Listen</a></li>
+            <li><a href="/areas/london.html">London and its boroughs</a></li>
+            <li><a href="/areas/">All areas we serve</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <p class="footer-heading">Company</p>
+          <ul role="list">
+            <li><a href="/about.html">About us</a></li>
+            <li><a href="/luca-wetherall.html">Luca Wetherall</a></li>
+            <li><a href="/faq.html">FAQ</a></li>
+            <li><a href="/contact.html">Contact</a></li>
+            <li><a href="/terms.html">Terms of booking</a></li>
+            <li><a href="/privacy.html">Privacy policy</a></li>
+            <li><a href="/accessibility.html">Accessibility</a></li>
+            <li><a href="/facts.html">Fact sheet</a></li>
+            <li><a href="/privacy.html#cookies" data-consent-open>Cookie choices</a></li>
+          </ul>
+        </div>
+      </div>
+      <p class="text-xs text-mid">
+        Areas we serve: <a href="/areas/london.html">London</a> &middot; <a href="/areas/birmingham.html">Birmingham</a> &middot; <a href="/areas/manchester.html">Manchester</a> &middot; <a href="/areas/liverpool.html">Liverpool</a> &middot; <a href="/areas/oxford.html">Oxford</a> &middot; <a href="/areas/cambridge.html">Cambridge</a> &middot; <a href="/areas/reading.html">Reading</a> &middot; <a href="/areas/slough-maidenhead.html">Slough &amp; Maidenhead</a> &middot; <a href="/areas/guildford.html">Guildford</a> &middot; <a href="/areas/brighton.html">Brighton</a> &middot; <a href="/areas/chester.html">Chester</a> &middot; <a href="/areas/st-albans.html">St Albans</a> &middot; <a href="/areas/canterbury.html">Canterbury</a> &middot; <a href="/areas/windsor.html">Windsor</a> &middot; <a href="/areas/winchester.html">Winchester</a> &middot; <a href="/areas/salisbury.html">Salisbury</a> &middot; <a href="/areas/bath.html">Bath</a> &middot; <a href="/areas/chelmsford.html">Chelmsford</a> &middot; <a href="/areas/rochester.html">Rochester</a> &middot; <a href="/areas/">All areas</a>
+      </p>
+      <p class="text-xs text-mid">The London Choral Service is the operating name of Alma Consort Ltd, registered in England and Wales, company no. 16785727, registered office 20 Wenlock Road, London N1 7GU. Based in London, serving the whole of the United Kingdom.</p>
+      <p class="text-xs text-mid">&copy; <span data-year>2026</span> The London Choral Service. All rights reserved.</p>
+    </div>
+  </footer>
+  <!-- @include-end partials/footer.html -->
+
+  <nav class="mobile-cta" aria-label="Quick contact">
+    <a href="https://wa.me/447356042468" target="_blank" rel="noopener" class="mobile-cta-whatsapp" data-whatsapp><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" aria-hidden="true" focusable="false"><path fill="currentColor" d="M16 .395a15.6 15.6 0 0 0-13.534 23.36L0 32l8.43-2.42A15.6 15.6 0 0 0 31.6 16.005 15.6 15.6 0 0 0 16 .395Zm0 28.41a12.78 12.78 0 0 1-6.523-1.79l-.467-.28-4.846 1.39 1.42-4.738-.305-.486A12.78 12.78 0 0 1 16 3.214a12.81 12.81 0 0 1 12.81 12.81A12.81 12.81 0 0 1 16 28.805Zm7.025-9.575c-.385-.193-2.275-1.122-2.628-1.25-.353-.13-.609-.193-.866.193s-.994 1.25-1.218 1.508c-.225.257-.45.29-.834.097-.385-.193-1.626-.6-3.097-1.911-1.144-1.02-1.916-2.28-2.14-2.665-.225-.385-.024-.594.169-.787.174-.173.385-.45.578-.674.193-.225.257-.385.385-.642.13-.257.064-.482-.032-.674-.097-.193-.866-2.087-1.187-2.857-.312-.75-.628-.65-.866-.66l-.738-.013a1.42 1.42 0 0 0-1.027.482c-.353.385-1.347 1.315-1.347 3.207s1.379 3.72 1.572 3.977c.193.257 2.715 4.146 6.578 5.815.92.397 1.637.633 2.196.81.923.293 1.762.252 2.426.153.74-.11 2.275-.93 2.595-1.829.32-.898.32-1.668.225-1.829-.097-.16-.353-.257-.738-.45Z"/></svg>WhatsApp</a>
+    <a href="mailto:office@londonchoralservice.com" class="mobile-cta-email">Email</a>
+    <a href="/funerals.html" class="mobile-cta-enquire">Enquire</a>
+  </nav>
+  <script src="../js/nav.js" defer></script>
+  <script src="../js/video.js" defer></script>
+</body>
+</html>
