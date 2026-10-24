@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  var VALID = ['weddings', 'funerals', 'christmas'];
+  var VALID = ['weddings', 'funerals', 'christmas', 'booking'];
 
   function getCategoryFromURL() {
     var params = new URLSearchParams(window.location.search);

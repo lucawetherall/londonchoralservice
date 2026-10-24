@@ -352,7 +352,7 @@ One new case using the real YAML: a compare page containing `&pound;750` (one of
 
 ### Human cadence
 
-`MANUAL-ACTIONS-REQUIRED.md` §11's quarterly re-check now covers two providers. Same rule: update `checked_date` and the page in one commit.
+The quarterly competitor re-check in `MANUAL-ACTIONS-REQUIRED.md` §12's "Dates to remember" table now covers two providers. Same rule: update `checked_date` and the page in one commit.
 
 ---
 

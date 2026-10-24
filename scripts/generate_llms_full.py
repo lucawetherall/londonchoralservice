@@ -24,6 +24,7 @@ os.chdir(ROOT)
 
 SITE = 'https://londonchoralservice.com'
 TARGET_BYTES = 300_000
+ANSWER_PARAS = 2
 # In this order, in full.
 MONEY_PAGES = [
     'facts.html', 'pricing.html', 'christmas-pricing.html', 'funerals.html', 'weddings.html',
@@ -56,11 +57,18 @@ def page_markdown(url, path, trim=False):
     body = re.sub(r'<(nav|footer)\b.*?</\1>', '', body, flags=re.S)
     out = []
     past_first_h2 = False
+    kept_paras = 0
     for tag, attrs, inner in BLOCK.findall(body):
         if tag == 'h2':
             past_first_h2 = True
-        if trim and (past_first_h2 and tag in ('p', 'li') or 'guide-meta' in attrs):
+        # A trimmed page keeps its answer (the lede and the bold-question paragraph: the first
+        # ANSWER_PARAS paragraphs), not the small print around it (date lines, hiring lines, captions).
+        small = re.search(r'class="[^"]*\b(guide-meta|text-sm|video-caption)\b', attrs)
+        if trim and (past_first_h2 and tag in ('p', 'li') or small
+                     or tag in ('p', 'li') and kept_paras >= ANSWER_PARAS):
             continue
+        if tag in ('p', 'li'):
+            kept_paras += 1
         text = re.sub(r'<[^>]+>', ' ', inner)
         text = html.unescape(text)
         text = re.sub(r'[\s  ]+', ' ', text).strip()

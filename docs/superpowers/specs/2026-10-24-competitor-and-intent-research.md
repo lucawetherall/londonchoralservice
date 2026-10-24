@@ -100,7 +100,7 @@ Three of these rivals print no VAT treatment. The validator now accepts `price_a
 
 ### 2.3 Proposed ad changes (for scripts/ads, with Luca's approval; nothing applied)
 
-1. **funeral expert campaign** and **wedding-leads**: add the headline "No VAT Added, No Extras" (already in the asset library, used only by Christmas). Against LFS's "+ VAT" price list, it is the strongest fact we have.
+1. **No VAT headline: not needed.** (Corrected 24 Oct.) The 23 Oct change set removed "No VAT Added, No Extras" from the funeral and wedding ads on purpose, because "no extras" is false for the home-counties audience, who pay travel. Those ads already say "no VAT" through the account callout "No VAT Added" and the price sitelinks ("No VAT, travel in London included"), so there is nothing to add.
 2. **funeral expert campaign**: test one headline naming the Home Counties ("Funeral Choirs in Surrey & Kent"), matching where LFS bids, but only if the search-terms report shows impressions from those places. Location targeting stays as it is.
 3. No change to Christmas copy: it already answers the only priced carol rival on length and travel.
 
@@ -170,7 +170,7 @@ The incorporated firms worth contacting from this table (four, each checked at C
 1. **/weddings.html and the homepage title:** retitle index.html so it stops competing for "wedding choir" and "choir for hire". Add the wedding size-and-price table and move proof to the first screen of /weddings.html. Ranking 35–64 against marketplace lists is the biggest gap.
 2. **/music-guides/hiring-a-choir.html:** match the H1 to "hire a choir" and "how to book a choir", and add the costs table and the "three ways to hire" table. It already sits at 12–14, the closest of our pages to page 1 on a generic hiring query.
 3. **Google Business Profile reviews:** the local pack for "hire a choir" and the panels for "wedding choir hire london" and "carol singers for hire london" go to acts with 14–83 Google reviews. Our profile had none at the 23 October audit. The daily pass already drafts review requests (never to funeral clients), but they carry the direct Google review link only once `gbp_review_url` is filled in (MANUAL-ACTIONS §23). That link is the one step blocking the only route into those boxes.
-4. **funeral expert campaign and wedding-leads:** add the "No VAT Added, No Extras" headline (already in the library). LFS, the only serious funeral bidder, prices at + VAT and shows no price in its ads. This goes through scripts/ads with approval.
+4. **funerals.html and weddings.html hero facts:** say "no VAT added" next to the £1,150 price (done in PR #338). The ads already carry it through the account callout and price sitelinks; LFS, the only serious funeral bidder, prices at + VAT and shows no price in its ads.
 5. **Poetic Endings, Stationers' Hall and the Kensington and Chelsea supplier list:** one sends families to LFS today; the other two list music suppliers but no choir. Draft the outreach emails, and send the two supplier applications.
 
 Also worth doing: the funeral size table and PAA answers on /funerals.html; the carol format table and guide links on /christmas.html; the free FreeIndex listing and the £59.99 Last Minute Musicians listing in the next listings round.

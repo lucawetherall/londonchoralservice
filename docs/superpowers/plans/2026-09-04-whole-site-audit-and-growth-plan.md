@@ -3,7 +3,7 @@
 **Date:** 2026-09-04
 **Author:** Luca Wetherall (with Claude)
 **Status:** Proposed. The four items the owner asked for first (structural dead ends, freshness signals, trust gaps, Appendix B accuracy corrections) were implemented on 2026-09-04 in the same PR; see the commit messages and Appendix C. The programmes in Part 3 remain proposals.
-**Related:** [docs/ROADMAP.md](../../ROADMAP.md), [MANUAL-ACTIONS-REQUIRED.md](../../../MANUAL-ACTIONS-REQUIRED.md), [SEO-AUDIT-2026-05-08.md](../../../SEO-AUDIT-2026-05-08.md), [SITE-STOP-SLOP-PLAN.md](../../../SITE-STOP-SLOP-PLAN.md), [2026-08-29-international-luxury-weddings.md](2026-08-29-international-luxury-weddings.md)
+**Related:** [docs/ROADMAP.md](../../ROADMAP.md), [MANUAL-ACTIONS-REQUIRED.md](../../../MANUAL-ACTIONS-REQUIRED.md), [SEO-AUDIT-2026-05-08.md](../../SEO-AUDIT-2026-05-08.md), [SITE-STOP-SLOP-PLAN.md](../../../SITE-STOP-SLOP-PLAN.md), [2026-08-29-international-luxury-weddings.md](2026-08-29-international-luxury-weddings.md)
 
 > **For agentic workers:** this is a strategy document, not an execution plan. Each programme in Part 3 is sized and scoped so that it can be turned into its own `YYYY-MM-DD-<name>-design.md` spec and plan. Nothing here is pre-approved; items marked **owner decision** or **human only** must not be attempted by an agent. Do not re-derive the audit numbers in Part 2; they were measured on commit `ae513f6` and are reproducible with the commands in Appendix A.
 

@@ -2601,6 +2601,15 @@ td.compare-us .compare-saving {
     display: none !important;
   }
 }
+
+/* ── Press stills (facts.html, private-events.html) ── */
+.press-figure {
+  margin: var(--space-md) 0;
+}
+
+.press-figure figcaption {
+  margin-block-start: var(--space-xs);
+}
 /* ═══════════════════════════════════
    Print Styles
    ═══════════════════════════════════ */

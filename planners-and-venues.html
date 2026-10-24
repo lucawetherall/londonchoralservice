@@ -754,14 +754,18 @@
     }
 
     /* ── Voicing media: click-to-load video (site pattern, restyled) ── */
-    #voicing-media:not(:empty) {
+    /* .pe-media is the same frame for a fixed film (destination pages). */
+    #voicing-media:not(:empty),
+    .pe-media {
       position: relative;
       aspect-ratio: 16 / 9;
       margin-top: 2rem;
       overflow: hidden;
       background: var(--choirStall);
     }
-    #voicing-media iframe {
+    .press-figure { margin: 2rem 0; }
+    #voicing-media iframe,
+    .pe-media iframe {
       position: absolute;
       inset: 0;
       width: 100%;

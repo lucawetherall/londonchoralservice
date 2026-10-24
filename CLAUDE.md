@@ -4,7 +4,7 @@ The website of The London Choral Service (Alma Consort Ltd) — a choir-for-hire
 
 ## Critical: the build pipeline
 
-- **Never hand-edit the inlined `<style>` block in any page** — edit `css/tokens|base|layout|components|pages.css` and run `./build.sh`. `css/style.css` is generated too.
+- **Never hand-edit the generated CSS block in any page** (`<!-- @css-start … -->` to `<!-- @css-end -->`: the page's critical first-screen CSS from `scripts/inline_css.py`, then a non-blocking link to `css/style.css?v=<hash>`) — edit `css/tokens|base|layout|components|pages.css` and run `./build.sh`. `css/style.css` is generated too. After a CSS or first-screen markup change, check the first screen with and without the bundle (`build-and-verify`).
 - **Never hand-edit content between `<!-- @include-start … -->` / `@include-end` markers** — edit `partials/*.html` and run `./build.sh`.
 - Run `./build.sh` after any `css/` or `partials/` change or new page; a ~165-file diff afterwards is normal. **Load the `build-and-verify` skill before touching styles, nav, footer, or doing any bulk edit.**
 - The built output is what gets committed and deployed — there is no CI build step. On each push to `main`, `.github/workflows/deploy-pages.yml` copies the files `scripts/stage_site.py` publishes into the Pages artifact, byte for byte, and deploys them. It never builds or edits a page.
@@ -53,7 +53,7 @@ The website of The London Choral Service (Alma Consort Ltd) — a choir-for-hire
 - UK English everywhere. All visible copy must pass the `writing-site-copy` skill.
 - GA4/Ads IDs `G-9FENN7VS0E` / `AW-17988388404` live in `partials/analytics.html` (Consent Mode v2, defaults denied; banner in `js/consent.js`). Edit the partial and rebuild; never edit the expanded copy in a page.
 - Choral prices quoted anywhere must match `pricing.html` (singers, choirs, instrumentalists, Christmas). Barbershop Grams is a separate product sold outside the choral service: its prices live only in `barbershop-grams/index.html`, which is their source of truth, and never appear on `pricing.html`.
-- Competitor figures must match `data/competitor-pricing.yml`, quote the source verbatim, and carry a visible checked date. `build.sh` fails if a price on a `compare/` page is not derivable from that file. Re-check quarterly (`MANUAL-ACTIONS-REQUIRED.md` §11).
+- Competitor figures must match `data/competitor-pricing.yml`, quote the source verbatim, and carry a visible checked date. `build.sh` fails if a price on a `compare/` page is not derivable from that file. Re-check quarterly (a recurring item in `MANUAL-ACTIONS-REQUIRED.md`).
 - `compare/` addresses families. Never link to it from a `for-*.html` page or reuse its inc-VAT figures there — a VAT-registered business buyer reclaims VAT, so those figures do not describe their position.
 - **Alma Consort Ltd is not VAT-registered.** Never state or imply otherwise.
 - Forms POST to Web3Forms with an hCaptcha guard — don't remove the `h-captcha-response` check or the `botcheck` honeypot.

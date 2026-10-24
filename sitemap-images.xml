@@ -134,9 +134,21 @@
     </image:image>
   </url>
   <url>
+    <loc>https://londonchoralservice.com/music-guides/wedding-choral-repertoire.html</loc>
+    <image:image>
+      <image:loc>https://londonchoralservice.com/assets/films/film--GQaQEGhYEs-1280.webp</image:loc>
+    </image:image>
+  </url>
+  <url>
     <loc>https://londonchoralservice.com/for-event-managers.html</loc>
     <image:image>
       <image:loc>https://londonchoralservice.com/assets/films/hero-film-1280.webp</image:loc>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://londonchoralservice.com/music-guides/ubi-caritas-wedding.html</loc>
+    <image:image>
+      <image:loc>https://londonchoralservice.com/assets/films/film--GQaQEGhYEs-1280.webp</image:loc>
     </image:image>
   </url>
   <url>
@@ -173,15 +185,6 @@
     </image:image>
     <image:image>
       <image:loc>https://londonchoralservice.com/assets/films/film-mKMjUvCCW3E-1280.webp</image:loc>
-    </image:image>
-  </url>
-  <url>
-    <loc>https://londonchoralservice.com/facts.html</loc>
-    <image:image>
-      <image:loc>https://londonchoralservice.com/assets/films/hero-film-1280.webp</image:loc>
-    </image:image>
-    <image:image>
-      <image:loc>https://londonchoralservice.com/assets/films/hero-christmas-1280.webp</image:loc>
     </image:image>
   </url>
 </urlset>
