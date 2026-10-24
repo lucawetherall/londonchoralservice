@@ -461,6 +461,11 @@
     .site-nav{position:relative;align-items:center;}}
     @media (max-width: 420px){.site-name{font-size:clamp(1.125rem,6vw,var(--text-lg));}
     .site-nav{gap:var(--space-md);}}
+    .btn-link{display:inline-block;font-family:var(--font-heading);font-weight:500;font-size:var(--text-base);letter-spacing:0.02em;padding:var(--space-md) var(--space-2xl);background-color:var(--color-accent);color:var(--color-bg);text-decoration:none;border:none;cursor:pointer;transition:background-color var(--transition-fast);}
+    .btn-link:hover{background-color:var(--color-accent-hover);color:var(--color-bg);}
+    .btn-link:visited, .btn-link:active{color:var(--color-bg);}
+    .btn-link:focus-visible{outline:2px solid var(--color-text);outline-offset:2px;}
+    @media (max-width: 480px){.btn, .btn-link{padding-inline:var(--space-lg);}}
     .has-dropdown{position:relative;}
     .dropdown-caret{--caret-lift:-0.3em;display:inline-block;width:0.4em;height:0.4em;margin-left:0.3em;border-right:1px solid currentColor;border-bottom:1px solid currentColor;transform:translateY(var(--caret-lift)) rotate(45deg);transition:transform var(--transition-fast);}
     .dropdown-menu{display:none;position:absolute;top:100%;left:calc(-1 * (var(--space-lg) + 1px));min-width:12rem;list-style:none;padding:var(--space-sm) 0;margin:0;background-color:var(--color-bg);border:1px solid var(--color-rule);z-index:150;}
@@ -606,7 +611,48 @@
       </div>
     </section>
 
-    <section class="section" style="padding-block-start: var(--space-2xl)">
+    <section class="section" id="ty-funeral" hidden style="padding-block-start: var(--space-2xl)">
+      <div class="prose">
+        <h2>Is the service within 48 hours?</h2>
+        <p><a href="https://wa.me/447356042468?text=Hello%2C%20I%20have%20just%20sent%20an%20enquiry%20about%20a%20funeral%20service%20within%2048%20hours." target="_blank" rel="noopener" class="btn-link" data-whatsapp>WhatsApp us now</a></p>
+        <p>Luca or a member of our team will read your message and reply within one working day, usually the same day. We check the diary for your date, then send ensemble options, two or three programme suggestions, and a quote. <a href="tel:+447356042468">07356 042468</a> reaches us by phone.</p>
+      </div>
+    </section>
+
+    <section class="section" id="ty-wedding" hidden style="padding-block-start: var(--space-2xl)">
+      <div class="prose">
+        <p>Luca or a member of our team will reply within one working day, usually the same day, with music suggestions for your wedding. While you wait, <a href="listen.html">hear our singers on the Listen page</a>.</p>
+        <figure class="pull-quote">
+          <blockquote><p>&ldquo;Our guests kept saying the music was the highlight. The choir sang during the signing of the register and you could hear a pin drop. Perfect.&rdquo;</p></blockquote>
+          <figcaption>&mdash;&ensp;Sophie &amp; James, Richmond</figcaption>
+        </figure>
+        <p>If you need to reach us sooner, message us on <a href="https://wa.me/447356042468" target="_blank" rel="noopener" data-whatsapp>WhatsApp</a>.</p>
+      </div>
+    </section>
+
+    <section class="section" id="ty-christmas" hidden style="padding-block-start: var(--space-2xl)">
+      <div class="prose">
+        <p>Luca or a member of our team will reply within one working day, usually the same day, with a proposal for your event. While you wait, <a href="christmas-listen.html">hear the carols</a>.</p>
+        <figure class="pull-quote">
+          <blockquote><p>&ldquo;The choir were the highlight of our Christmas drinks. They moved through the crowd singing carols and it completely transformed the atmosphere. Several clients have already asked if we&rsquo;re doing it again next year.&rdquo;</p></blockquote>
+          <figcaption>&mdash;&ensp;James, London Law Firm Partner</figcaption>
+        </figure>
+        <p>If you need to reach us sooner, message us on <a href="https://wa.me/447356042468" target="_blank" rel="noopener" data-whatsapp>WhatsApp</a>.</p>
+      </div>
+    </section>
+
+    <section class="section" id="ty-other" hidden style="padding-block-start: var(--space-2xl)">
+      <div class="prose">
+        <p>Luca or a member of our team will reply within one working day, usually the same day, with a proposal for your event. While you wait, <a href="listen.html">hear our singers on the Listen page</a>.</p>
+        <figure class="pull-quote">
+          <blockquote><p>&ldquo;We hire the London Choral Service for our annual carol service every December. The choir knows the building, the format, and exactly what we need. Our partners and clients look forward to it each year.&rdquo;</p></blockquote>
+          <figcaption>&mdash;&ensp;Helen, Events Manager, City of London</figcaption>
+        </figure>
+        <p>If you need to reach us sooner, message us on <a href="https://wa.me/447356042468" target="_blank" rel="noopener" data-whatsapp>WhatsApp</a>.</p>
+      </div>
+    </section>
+
+    <section class="section" id="ty-default" style="padding-block-start: var(--space-2xl)">
       <div class="prose">
         <p id="ty-detail">Luca or a member of our team will read your message and come back to you with music suggestions tailored to your occasion. In the meantime, you might find these useful:</p>
         <ul>
@@ -706,6 +752,16 @@
     var h1 = document.getElementById('ty-heading');
     var lede = document.getElementById('ty-lede');
     var detail = document.getElementById('ty-detail');
+
+    // One next-steps block per occasion; the default stays for anything else.
+    var blockFor = { funeral: 'ty-funeral', wedding: 'ty-wedding', christmas: 'ty-christmas',
+      'carol-service': 'ty-christmas', corporate: 'ty-other', 'event-managers': 'ty-other' };
+    var blockId = Object.prototype.hasOwnProperty.call(blockFor, from) ? blockFor[from] : null;
+    if (blockId) {
+      var shown = document.getElementById(blockId);
+      var fallback = document.getElementById('ty-default');
+      if (shown && fallback) { shown.hidden = false; fallback.hidden = true; }
+    }
 
     if (from === 'call') {
       if (h1) h1.textContent = 'Thank you for calling';

@@ -812,6 +812,22 @@
               <input type="text" id="date" name="date" placeholder="e.g. 12 June 2027, summer, undecided" autocomplete="off">
             </div>
             <div class="form-field">
+              <label for="venue">Venue <span class="optional">(if you know it)</span></label>
+              <input type="text" id="venue" name="venue" placeholder="e.g. St Mary&rsquo;s, Richmond" autocomplete="off">
+            </div>
+            <div class="form-field">
+              <label for="choir_size">Choir size <span class="optional">(if you know it)</span></label>
+              <select id="choir_size" name="choir_size">
+                <option value="" selected>Not sure yet</option>
+                <option>Soloist</option>
+                <option>Small Choir (4 singers)</option>
+                <option>Quintet (5 singers)</option>
+                <option>Sextet (6 singers)</option>
+                <option>Full Choir (8 singers)</option>
+                <option>Chorus (12 singers)</option>
+              </select>
+            </div>
+            <div class="form-field">
               <label for="message">Your message</label>
               <textarea id="message" name="message" rows="6" required aria-describedby="message-error"></textarea>
               <p class="form-error" id="message-error">Please enter a message.</p>
@@ -838,6 +854,7 @@
             <div class="h-captcha" data-captcha="true"></div>
             <p class="form-error" id="captcha-error" role="alert">Please tick the box above to confirm you&rsquo;re not a robot, then try again.</p>
             <p class="text-sm text-mid" style="margin-bottom: var(--space-sm)">We use your details only to reply and arrange the music. See our <a href="/privacy.html">privacy notice</a>.</p>
+            <p class="text-sm text-mid" style="margin-bottom: var(--space-sm)">Takes about a minute.</p>
             <button type="submit" class="btn">Send enquiry</button>
             <p class="text-sm text-mid" style="margin-top: var(--space-md)">Luca replies within one working day, usually the same day.</p>
           </fieldset>
