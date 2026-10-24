@@ -233,8 +233,8 @@ def church_guides_point_to_church_page():
     for slug in CHURCH_GUIDES:
         rel = f'music-guides/{slug}.html'
         bar = read(rel).split('class="mobile-cta"', 1)[1].split('</div>', 1)[0]
-        check('christmas-carol-services.html" class="mobile-cta-enquire"' in bar,
-              f'{rel}: sticky Enquire should go to the church page')
+        check('christmas-carol-services.html#enquiry" class="mobile-cta-enquire"' in bar,
+              f'{rel}: sticky Get a quote should go to the church page form')
 
 
 def anchor_text_matches():
