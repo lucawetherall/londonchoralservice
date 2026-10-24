@@ -3,7 +3,7 @@
 # 1) Concatenates CSS source files
 # 2) Populates HTML partials between @include-start / @include-end markers
 # 3) Inlines the concatenated CSS into HTML files
-# 4) Generates sitemap.xml + data/page-dates.json and syncs article dates
+# 4) Generates sitemap.xml + data/page-dates.json and sitemap-video.xml, and syncs article dates
 # 5) Generates llms-full.txt and runs the validators
 # 6) Checks the deploy allowlist: everything the pages use will be served,
 #    nothing internal will (scripts/stage_site.py)
@@ -152,6 +152,9 @@ fi
 
 echo "Generating sitemap.xml from page content..."
 "$PY" scripts/generate_sitemap.py
+
+echo "Generating sitemap-video.xml (VideoObject JSON-LD), sitemap-images.xml (film stills) and sitemap_index.xml..."
+"$PY" scripts/generate_video_sitemap.py
 
 echo "Synchronising article dates..."
 "$PY" scripts/sync_dates.py

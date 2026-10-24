@@ -35,6 +35,7 @@ Skipped: FuneralGuide (lists funeral directors only), Bark and Add to Event (sha
 | Hours | Monday to Friday 9am–6pm, weekends closed (as on `contact.html` and the Google profile) |
 | Legal entity | The London Choral Service is a trading name of Alma Consort Ltd (Companies House 16785727) |
 | Service area | London, Surrey, Kent, Essex, Hertfordshire, Berkshire and Buckinghamshire (as on the Google profile); further afield on request |
+| Fact sheet | https://londonchoralservice.com/facts.html: company number, incorporation date, director, prices, logo and contact on one page, each with its source. Give it to any site, journalist or venue that asks for company details or a press page. |
 
 | Site | `utm_source` | Website link to paste |
 | --- | --- | --- |

@@ -73,6 +73,7 @@ const MANUAL = {
   'accessibility.html': ['Accessibility', 'How this website works for every visitor'],
   'privacy.html': ['Privacy Policy', 'What we collect, and why'],
   'terms.html': ['Terms of Booking', 'The terms that govern every booking'],
+  'facts.html': ['Fact Sheet', 'Company, prices and contact'],
   'compare/london-funeral-singers.html': ['Funeral Singers in London', 'Two providers compared, with sourced prices'],
   'music-guides/index.html': ['Music Guides', 'For weddings, funerals and Christmas'],
   'areas/index.html': ['Areas We Serve', 'Singers and choirs across the United Kingdom'],
