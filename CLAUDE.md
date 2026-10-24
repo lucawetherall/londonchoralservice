@@ -46,7 +46,7 @@ The website of The London Choral Service (Alma Consort Ltd) — a choir-for-hire
 ## Conventions
 
 - Meta descriptions: unique, 141–161 chars. Every page: canonical + hreflang (en-gb, x-default) + full OG/Twitter tags.
-- `sitemap.xml` and `data/page-dates.json` are **generated** by `build.sh` (`scripts/generate_sitemap.py`): `lastmod` moves only when a page's body content changes. Never hand-edit either. `sitemap-video.xml` is generated straight after it (`scripts/generate_video_sitemap.py`): every VideoObject in a page's JSON-LD plus the film stills it shows from `assets/films/`. `llms.txt` is still hand-maintained — add new pages to it, and keep its "Key facts" block in line with `pricing.html` and `terms.html`.
+- `sitemap.xml` and `data/page-dates.json` are **generated** by `build.sh` (`scripts/generate_sitemap.py`): `lastmod` moves only when a page's body content changes. Never hand-edit either. `sitemap-video.xml` (every VideoObject in a page's JSON-LD), `sitemap-images.xml` (the film stills it shows from `assets/films/`) and `sitemap_index.xml` (those two plus `sitemap.xml`; the only Sitemap line in `robots.txt`) are generated straight after it by `scripts/generate_video_sitemap.py`. `llms.txt` is still hand-maintained — add new pages to it, and keep its "Key facts" block in line with `pricing.html` and `terms.html`.
 - Article dates (`dateModified`, `article:modified_time`, the visible Published/Updated line) are set by `scripts/sync_dates.py` in the build from the same date. Never hand-edit them.
 - `llms-full.txt` is **generated** by `build.sh` (`scripts/generate_llms_full.py`) from the built pages — never hand-edit it.
 - **Never add `AggregateRating`/`Review`/star-rating schema** — self-serving review markup violates Google policy.

@@ -1,33 +1,8 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
-        xmlns:video="http://www.google.com/schemas/sitemap-video/1.1"
-        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
-  <url>
-    <loc>https://londonchoralservice.com/</loc>
-    <image:image>
-      <image:loc>https://londonchoralservice.com/assets/films/hero-film-1280.webp</image:loc>
-    </image:image>
-  </url>
+        xmlns:video="http://www.google.com/schemas/sitemap-video/1.1">
   <url>
     <loc>https://londonchoralservice.com/listen.html</loc>
-    <image:image>
-      <image:loc>https://londonchoralservice.com/assets/films/film--GQaQEGhYEs-1280.webp</image:loc>
-    </image:image>
-    <image:image>
-      <image:loc>https://londonchoralservice.com/assets/films/film-G9-R6k5n7Io-1280.webp</image:loc>
-    </image:image>
-    <image:image>
-      <image:loc>https://londonchoralservice.com/assets/films/film-SaLTS_-I-q4-1280.webp</image:loc>
-    </image:image>
-    <image:image>
-      <image:loc>https://londonchoralservice.com/assets/films/film-39MyhPogl6A-1280.webp</image:loc>
-    </image:image>
-    <image:image>
-      <image:loc>https://londonchoralservice.com/assets/films/film-ZVSQ2Ts4GZE-1280.webp</image:loc>
-    </image:image>
-    <image:image>
-      <image:loc>https://londonchoralservice.com/assets/films/film-nasqXWlbf1g-1280.webp</image:loc>
-    </image:image>
     <video:video>
       <video:thumbnail_loc>https://img.youtube.com/vi/-GQaQEGhYEs/maxresdefault.jpg</video:thumbnail_loc>
       <video:title>Ubi Caritas (Ola Gjeilo) — Quintet</video:title>
@@ -85,9 +60,6 @@
   </url>
   <url>
     <loc>https://londonchoralservice.com/pricing.html</loc>
-    <image:image>
-      <image:loc>https://londonchoralservice.com/assets/films/hero-film-1280.webp</image:loc>
-    </image:image>
     <video:video>
       <video:thumbnail_loc>https://img.youtube.com/vi/Lov_NegzVhM/maxresdefault.jpg</video:thumbnail_loc>
       <video:title>Singers for Funerals, Weddings, and Events across the UK</video:title>
@@ -100,12 +72,6 @@
   </url>
   <url>
     <loc>https://londonchoralservice.com/compare/london-funeral-singers.html</loc>
-    <image:image>
-      <image:loc>https://londonchoralservice.com/assets/films/film-G9-R6k5n7Io-1280.webp</image:loc>
-    </image:image>
-    <image:image>
-      <image:loc>https://londonchoralservice.com/assets/films/film-ZVSQ2Ts4GZE-1280.webp</image:loc>
-    </image:image>
     <video:video>
       <video:thumbnail_loc>https://img.youtube.com/vi/G9-R6k5n7Io/maxresdefault.jpg</video:thumbnail_loc>
       <video:title>Abide With Me — Full Choir</video:title>
@@ -126,52 +92,7 @@
     </video:video>
   </url>
   <url>
-    <loc>https://londonchoralservice.com/weddings.html</loc>
-    <image:image>
-      <image:loc>https://londonchoralservice.com/assets/films/hero-film-1280.webp</image:loc>
-    </image:image>
-    <image:image>
-      <image:loc>https://londonchoralservice.com/assets/films/film-SaLTS_-I-q4-1280.webp</image:loc>
-    </image:image>
-    <image:image>
-      <image:loc>https://londonchoralservice.com/assets/films/film--GQaQEGhYEs-1280.webp</image:loc>
-    </image:image>
-    <image:image>
-      <image:loc>https://londonchoralservice.com/assets/films/film-ZVSQ2Ts4GZE-1280.webp</image:loc>
-    </image:image>
-  </url>
-  <url>
-    <loc>https://londonchoralservice.com/funerals.html</loc>
-    <image:image>
-      <image:loc>https://londonchoralservice.com/assets/films/hero-film-1280.webp</image:loc>
-    </image:image>
-    <image:image>
-      <image:loc>https://londonchoralservice.com/assets/films/film-G9-R6k5n7Io-1280.webp</image:loc>
-    </image:image>
-    <image:image>
-      <image:loc>https://londonchoralservice.com/assets/films/film-nasqXWlbf1g-1280.webp</image:loc>
-    </image:image>
-    <image:image>
-      <image:loc>https://londonchoralservice.com/assets/films/film--GQaQEGhYEs-1280.webp</image:loc>
-    </image:image>
-    <image:image>
-      <image:loc>https://londonchoralservice.com/assets/films/film-ZVSQ2Ts4GZE-1280.webp</image:loc>
-    </image:image>
-    <image:image>
-      <image:loc>https://londonchoralservice.com/assets/films/film-39MyhPogl6A-1280.webp</image:loc>
-    </image:image>
-  </url>
-  <url>
     <loc>https://londonchoralservice.com/christmas.html</loc>
-    <image:image>
-      <image:loc>https://londonchoralservice.com/assets/films/hero-christmas-1280.webp</image:loc>
-    </image:image>
-    <image:image>
-      <image:loc>https://londonchoralservice.com/assets/films/film-zDlSFb74p4E-1280.webp</image:loc>
-    </image:image>
-    <image:image>
-      <image:loc>https://londonchoralservice.com/assets/films/film-UaVhyyidlTs-1280.webp</image:loc>
-    </image:image>
     <video:video>
       <video:thumbnail_loc>https://img.youtube.com/vi/csFWUu-r85Y/maxresdefault.jpg</video:thumbnail_loc>
       <video:title>It’s the Most Wonderful Time of the Year — Full Choir</video:title>
@@ -199,48 +120,6 @@
       <video:publication_date>2026-10-19</video:publication_date>
       <video:family_friendly>yes</video:family_friendly>
     </video:video>
-  </url>
-  <url>
-    <loc>https://londonchoralservice.com/for-funeral-directors.html</loc>
-    <image:image>
-      <image:loc>https://londonchoralservice.com/assets/films/film-G9-R6k5n7Io-1280.webp</image:loc>
-    </image:image>
-  </url>
-  <url>
-    <loc>https://londonchoralservice.com/for-wedding-planners.html</loc>
-    <image:image>
-      <image:loc>https://londonchoralservice.com/assets/films/film--GQaQEGhYEs-1280.webp</image:loc>
-    </image:image>
-  </url>
-  <url>
-    <loc>https://londonchoralservice.com/for-hotels.html</loc>
-    <image:image>
-      <image:loc>https://londonchoralservice.com/assets/films/hero-film-1280.webp</image:loc>
-    </image:image>
-  </url>
-  <url>
-    <loc>https://londonchoralservice.com/for-property-managers.html</loc>
-    <image:image>
-      <image:loc>https://londonchoralservice.com/assets/films/hero-film-1280.webp</image:loc>
-    </image:image>
-  </url>
-  <url>
-    <loc>https://londonchoralservice.com/for-livery-companies.html</loc>
-    <image:image>
-      <image:loc>https://londonchoralservice.com/assets/films/hero-film-1280.webp</image:loc>
-    </image:image>
-  </url>
-  <url>
-    <loc>https://londonchoralservice.com/for-charities.html</loc>
-    <image:image>
-      <image:loc>https://londonchoralservice.com/assets/films/hero-film-1280.webp</image:loc>
-    </image:image>
-  </url>
-  <url>
-    <loc>https://londonchoralservice.com/corporate.html</loc>
-    <image:image>
-      <image:loc>https://londonchoralservice.com/assets/films/hero-film-1280.webp</image:loc>
-    </image:image>
   </url>
   <url>
     <loc>https://londonchoralservice.com/music-guides/anima-christi-catholic-wedding.html</loc>
@@ -379,12 +258,6 @@
       <video:publication_date>2026-03-18</video:publication_date>
       <video:family_friendly>yes</video:family_friendly>
     </video:video>
-  </url>
-  <url>
-    <loc>https://londonchoralservice.com/for-event-managers.html</loc>
-    <image:image>
-      <image:loc>https://londonchoralservice.com/assets/films/hero-film-1280.webp</image:loc>
-    </image:image>
   </url>
   <url>
     <loc>https://londonchoralservice.com/music-guides/best-christmas-carol-singers.html</loc>
@@ -673,9 +546,6 @@
   </url>
   <url>
     <loc>https://londonchoralservice.com/christmas-pricing.html</loc>
-    <image:image>
-      <image:loc>https://londonchoralservice.com/assets/films/hero-christmas-1280.webp</image:loc>
-    </image:image>
     <video:video>
       <video:thumbnail_loc>https://img.youtube.com/vi/csFWUu-r85Y/maxresdefault.jpg</video:thumbnail_loc>
       <video:title>It’s the Most Wonderful Time of the Year — Full Choir</video:title>
@@ -688,12 +558,6 @@
   </url>
   <url>
     <loc>https://londonchoralservice.com/christmas-carol-services.html</loc>
-    <image:image>
-      <image:loc>https://londonchoralservice.com/assets/films/film-SbvqWglsbMo-1280.webp</image:loc>
-    </image:image>
-    <image:image>
-      <image:loc>https://londonchoralservice.com/assets/films/film-zDlSFb74p4E-1280.webp</image:loc>
-    </image:image>
     <video:video>
       <video:thumbnail_loc>https://img.youtube.com/vi/SbvqWglsbMo/maxresdefault.jpg</video:thumbnail_loc>
       <video:title>Once in Royal David’s City — Full Choir</video:title>
@@ -715,24 +579,6 @@
   </url>
   <url>
     <loc>https://londonchoralservice.com/christmas-listen.html</loc>
-    <image:image>
-      <image:loc>https://londonchoralservice.com/assets/films/hero-christmas-1280.webp</image:loc>
-    </image:image>
-    <image:image>
-      <image:loc>https://londonchoralservice.com/assets/films/film-SbvqWglsbMo-1280.webp</image:loc>
-    </image:image>
-    <image:image>
-      <image:loc>https://londonchoralservice.com/assets/films/film-zDlSFb74p4E-1280.webp</image:loc>
-    </image:image>
-    <image:image>
-      <image:loc>https://londonchoralservice.com/assets/films/film-dGYqQf6BDAk-1280.webp</image:loc>
-    </image:image>
-    <image:image>
-      <image:loc>https://londonchoralservice.com/assets/films/film-UaVhyyidlTs-1280.webp</image:loc>
-    </image:image>
-    <image:image>
-      <image:loc>https://londonchoralservice.com/assets/films/film-mKMjUvCCW3E-1280.webp</image:loc>
-    </image:image>
     <video:video>
       <video:thumbnail_loc>https://img.youtube.com/vi/csFWUu-r85Y/maxresdefault.jpg</video:thumbnail_loc>
       <video:title>It’s the Most Wonderful Time of the Year — Full Choir</video:title>
@@ -787,14 +633,5 @@
       <video:publication_date>2026-08-14</video:publication_date>
       <video:family_friendly>yes</video:family_friendly>
     </video:video>
-  </url>
-  <url>
-    <loc>https://londonchoralservice.com/facts.html</loc>
-    <image:image>
-      <image:loc>https://londonchoralservice.com/assets/films/hero-film-1280.webp</image:loc>
-    </image:image>
-    <image:image>
-      <image:loc>https://londonchoralservice.com/assets/films/hero-christmas-1280.webp</image:loc>
-    </image:image>
   </url>
 </urlset>

@@ -153,7 +153,7 @@ fi
 echo "Generating sitemap.xml from page content..."
 "$PY" scripts/generate_sitemap.py
 
-echo "Generating sitemap-video.xml (films from VideoObject JSON-LD, hero stills)..."
+echo "Generating sitemap-video.xml (VideoObject JSON-LD), sitemap-images.xml (film stills) and sitemap_index.xml..."
 "$PY" scripts/generate_video_sitemap.py
 
 echo "Synchronising article dates..."
