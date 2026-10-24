@@ -22,7 +22,7 @@ prompts). Private data stays in ~/lcs-private/; this file holds none.
         free suffix (refs from the ledger, the invoices folder and --taken; owner decision, 14 Oct 2026:
         older bookings keep their four-digit DDMM ref, which --taken also takes), the first instalment due
         by check_payments.deposit_due_date (the rule the payment checker uses) and the balance due
-        the day before the event
+        two days (48 hours) before the event (terms 4(c))
     .venv/bin/python scripts/bookings/assistant_io.py ledger-add '<json object>'
         append one booking row (columns as in the ledger header); refuses duplicates and an
         occasion that isn't wedding, funeral, christmas, corporate, private event or other
@@ -116,7 +116,7 @@ def next_ref(event, taken, today):
         raise SystemExit(f"every ref from {base} to {base}Z is taken")
     return {"ref": ref,
             "instalment_1_due": cp.deposit_due_date(today, event).isoformat(),
-            "instalment_2_due": (event - datetime.timedelta(days=1)).isoformat(),
+            "instalment_2_due": (event - datetime.timedelta(days=2)).isoformat(),  # 48 hours before (terms 4(c))
             "short_notice": (event - today).days <= cp.SHORT_NOTICE_DAYS}
 
 

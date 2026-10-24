@@ -34,7 +34,7 @@ def jsonld(slug, name, title, desc, faqs):
         {'@type': 'BreadcrumbList', '@id': f'{url}#breadcrumb', 'itemListElement': [
             {'@type': 'ListItem', 'position': 1, 'name': 'Private Events',
              'item': f'{B.SITE}/private-events.html'},
-            {'@type': 'ListItem', 'position': 2, 'name': 'Destinations',
+            {'@type': 'ListItem', 'position': 2, 'name': 'Weddings Abroad',
              'item': f'{B.SITE}/destinations/'},
             {'@type': 'ListItem', 'position': 3, 'name': name, 'item': url}]},
         {'@type': 'FAQPage', '@id': f'{url}#faq', 'mainEntity': [
@@ -203,7 +203,7 @@ def build(slug, name, title, desc, hero_h1, hero_sub, sections, regions, faqs,
         title=title, description=desc, path=f'destinations/{slug}.html',
         jsonld=jsonld(slug, name, title, desc, faqs),
         crumbs=[('Private Events', '/private-events.html'),
-                ('Destinations', '/destinations/'), (name, None)],
+                ('Weddings Abroad', '/destinations/'), (name, None)],
         body=body, source_page=f'destinations/{slug}.html',
         subject=f'{name} wedding enquiry — Alma Consort / LCS',
         form_intro=f'Tell us where in {name} you are marrying and when. If the date is free, Luca '

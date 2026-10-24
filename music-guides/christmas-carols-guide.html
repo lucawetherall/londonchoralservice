@@ -468,11 +468,11 @@
     .mobile-cta{display:none;}
     @media (max-width: 1080px){.mobile-cta{display:flex;position:fixed;bottom:0;left:0;right:0;z-index:200;background-color:var(--color-bg);border-top:1px solid var(--color-rule);padding:var(--space-sm) var(--space-lg);padding-bottom:calc(var(--space-sm) + env(safe-area-inset-bottom,0px));gap:var(--space-sm);align-items:center;justify-content:center;transition:transform 0.3s ease;}
     .mobile-cta.is-hidden{transform:translateY(100%);pointer-events:none;}
-    .mobile-cta a{text-decoration:none;font-family:var(--font-heading);font-weight:500;font-size:var(--text-sm);letter-spacing:0.02em;padding:var(--space-sm) var(--space-lg);text-align:center;flex:1;}
+    .mobile-cta a{text-decoration:none;font-family:var(--font-heading);font-weight:500;font-size:var(--text-sm);letter-spacing:0.02em;padding:var(--space-sm) var(--space-sm);text-align:center;flex:1;}
     .mobile-cta .mobile-cta-enquire, .mobile-cta .mobile-cta-enquire:visited, .mobile-cta .mobile-cta-enquire:active{background-color:var(--color-accent);color:var(--color-bg);}
     .mobile-cta .mobile-cta-enquire:hover{background-color:var(--color-accent-hover);color:var(--color-bg);}
-    .mobile-cta .mobile-cta-whatsapp, .mobile-cta .mobile-cta-whatsapp:visited, .mobile-cta .mobile-cta-whatsapp:active{border:1px solid var(--color-rule);color:var(--color-text);display:flex;align-items:center;justify-content:center;gap:var(--space-xs);}
-    .mobile-cta .mobile-cta-whatsapp:hover{border-color:var(--color-accent);}
+    .mobile-cta .mobile-cta-whatsapp, .mobile-cta .mobile-cta-whatsapp:visited, .mobile-cta .mobile-cta-whatsapp:active, .mobile-cta .mobile-cta-email, .mobile-cta .mobile-cta-email:visited, .mobile-cta .mobile-cta-email:active{border:1px solid var(--color-rule);color:var(--color-text);display:flex;align-items:center;justify-content:center;gap:var(--space-xs);}
+    .mobile-cta .mobile-cta-whatsapp:hover, .mobile-cta .mobile-cta-email:hover{border-color:var(--color-accent);}
     .mobile-cta .mobile-cta-whatsapp svg{width:1em;height:1em;flex-shrink:0;}}
     .video-embed{position:relative;aspect-ratio:16 / 9;overflow:hidden;}
     .video-thumb{position:absolute;inset:0;width:100%;height:100%;padding:0;border:0;cursor:pointer;background:#000;}
@@ -534,8 +534,8 @@
     h1, h2, h3{break-after:avoid;}
     img{max-width:100% !important;}}
   </style>
-  <link rel="preload" href="/css/style.css?v=44640bbffc" as="style" onload="this.onload=null;this.rel='stylesheet'">
-  <noscript><link rel="stylesheet" href="/css/style.css?v=44640bbffc"></noscript>
+  <link rel="preload" href="/css/style.css?v=60a4d0a3c5" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <noscript><link rel="stylesheet" href="/css/style.css?v=60a4d0a3c5"></noscript>
   <!-- @css-end -->
   <link rel="icon" href="../assets/favicon.ico" sizes="any">
   <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
@@ -869,7 +869,7 @@
         <div class="prose">
           <p>Darke&rsquo;s <i>In the Bleak Midwinter</i> and <i>O Holy Night</i> need singers who have performed them before. We provide the choir, and an organist if you want one, for <a href="../christmas-carol-services.html">church carol services</a>, from small parish evenings to large corporate services. In Greater London four singers cost &pound;1,150, eight &pound;2,000, and an organist &pound;250; Christmas Eve and Christmas Day carry a premium of around 25%.</p>
           <p><a href="../christmas-carol-services.html" class="btn-link">Talk to us about your carol service</a></p>
-          <p class="text-sm text-mid">Text us on WhatsApp for the fastest reply, or call us on <a href="tel:+447356042468">07356 042468</a>.</p>
+          <p class="text-sm text-mid">Text us on WhatsApp for the fastest reply, or email <a href="mailto:office@londonchoralservice.com">office@londonchoralservice.com</a>.</p>
         </div>
       </section>
 
@@ -961,6 +961,7 @@
           <p>We plan and sing carol services every Christmas, from small church services to <a href="corporate-carol-service.html">corporate events</a> and office carol services. We provide the singers and, if you want one, an organist or pianist. If you already know your running order, send it to us and we will sing it. If you would rather hand the programme over, we will build one around your readings and your congregation. For carol singers at an office party, hotel or private event, see our <a href="../christmas.html">Christmas carol singers</a> page.</p>
           <p>You can see the full range of what we offer on our <a href="../services.html">services page</a>, or get in touch and tell us what you have in mind.</p>
           <p><a href="../christmas-carol-services.html" class="btn-link">Get in touch about your carol service</a></p>
+          <p class="text-sm text-mid">Booking singers for any of these carols? Four voices are &pound;1,150 and twelve &pound;3,000, as listed under <a href="/christmas-pricing.html">Christmas prices</a>. Send the date and venue through the <a href="/contact.html">contact page</a>.</p>
         </div>
       </section>
 
@@ -1070,10 +1071,11 @@
   </footer>
   <!-- @include-end partials/footer.html -->
 
-  <div class="mobile-cta" role="group" aria-label="Quick contact">
+  <nav class="mobile-cta" aria-label="Quick contact">
     <a href="https://wa.me/447356042468" target="_blank" rel="noopener" class="mobile-cta-whatsapp" data-whatsapp><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" aria-hidden="true" focusable="false"><path fill="currentColor" d="M16 .395a15.6 15.6 0 0 0-13.534 23.36L0 32l8.43-2.42A15.6 15.6 0 0 0 31.6 16.005 15.6 15.6 0 0 0 16 .395Zm0 28.41a12.78 12.78 0 0 1-6.523-1.79l-.467-.28-4.846 1.39 1.42-4.738-.305-.486A12.78 12.78 0 0 1 16 3.214a12.81 12.81 0 0 1 12.81 12.81A12.81 12.81 0 0 1 16 28.805Zm7.025-9.575c-.385-.193-2.275-1.122-2.628-1.25-.353-.13-.609-.193-.866.193s-.994 1.25-1.218 1.508c-.225.257-.45.29-.834.097-.385-.193-1.626-.6-3.097-1.911-1.144-1.02-1.916-2.28-2.14-2.665-.225-.385-.024-.594.169-.787.174-.173.385-.45.578-.674.193-.225.257-.385.385-.642.13-.257.064-.482-.032-.674-.097-.193-.866-2.087-1.187-2.857-.312-.75-.628-.65-.866-.66l-.738-.013a1.42 1.42 0 0 0-1.027.482c-.353.385-1.347 1.315-1.347 3.207s1.379 3.72 1.572 3.977c.193.257 2.715 4.146 6.578 5.815.92.397 1.637.633 2.196.81.923.293 1.762.252 2.426.153.74-.11 2.275-.93 2.595-1.829.32-.898.32-1.668.225-1.829-.097-.16-.353-.257-.738-.45Z"/></svg>WhatsApp</a>
+    <a href="mailto:office@londonchoralservice.com" class="mobile-cta-email">Email</a>
     <a href="/christmas-carol-services.html" class="mobile-cta-enquire">Enquire</a>
-  </div>
+  </nav>
   <script src="../js/nav.js" defer></script>
   <script src="../js/video.js" defer></script>
 </body>
