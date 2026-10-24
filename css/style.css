@@ -121,6 +121,13 @@ html {
   scroll-behavior: smooth;
 }
 
+/* Keep a focused link clear of the fixed .mobile-cta bar. */
+@media (max-width: 1080px) {
+  html {
+    scroll-padding-bottom: 5.5rem;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
@@ -432,8 +439,9 @@ table {
   border: none;
   cursor: pointer;
   padding: var(--space-sm);
-  width: 2.5rem;
-  height: 2.5rem;
+  width: 2.75rem;
+  height: 2.75rem;
+  flex-shrink: 0;
   position: relative;
 }
 
@@ -493,6 +501,12 @@ table {
   .nav-toggle {
     display: block;
     flex-shrink: 0;
+  }
+
+  /* Lets the name wrap under the WCAG 1.4.12 text-spacing override instead of
+     pushing the toggle off-screen; at default spacing it still fits one line. */
+  .site-name {
+    white-space: normal;
   }
 
   .nav-links {
@@ -938,6 +952,11 @@ td.compare-us .compare-saving {
   margin-block: var(--space-xs);
 }
 
+.related-guides li a {
+  display: inline-block;
+  padding-block: 0.25rem;
+}
+
 /* ═══════════════════════════════════
    Track Listing (Listen Page)
    ═══════════════════════════════════ */
@@ -1107,6 +1126,12 @@ td.compare-us .compare-saving {
   font-size: var(--text-sm);
 }
 
+.form-field input::placeholder,
+.form-field textarea::placeholder {
+  color: var(--color-text-mid);
+  opacity: 1;
+}
+
 .form-field input,
 .form-field select {
   width: 100%;
@@ -1196,9 +1221,9 @@ td.compare-us .compare-saving {
 }
 .form-check input {
   flex: none;
-  width: 1.125rem;
-  height: 1.125rem;
-  margin: 0.2em 0 0;
+  width: 1.5rem;
+  height: 1.5rem;
+  margin: 0.05em 0 0;
   accent-color: var(--color-accent);
   cursor: pointer;
 }
@@ -1444,6 +1469,9 @@ td.compare-us .compare-saving {
 .breadcrumb a {
   color: var(--color-text-mid);
   text-decoration: none;
+  display: inline-block;
+  padding-block: 0.3em;
+  margin-block: -0.3em;
 }
 
 .breadcrumb a:hover {
@@ -1753,6 +1781,33 @@ td.compare-us .compare-saving {
   box-shadow: inset 0 0 0 3px var(--color-accent);
 }
 
+/* Full screen button inside a playing film (js/video.js): the player runs
+   without YouTube's own controls, so this is the keyboard route to it. */
+.video-fs {
+  position: absolute;
+  right: 0.5rem;
+  bottom: 0.5rem;
+  z-index: 2;
+  min-width: 24px;
+  min-height: 32px;
+  padding: 0.25rem 0.6rem;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  background: rgba(0, 0, 0, 0.7);
+  color: #fff;
+  font: 600 0.75rem/1 var(--font-body);
+  letter-spacing: 0.04em;
+  cursor: pointer;
+}
+
+.video-fs:hover {
+  background: rgba(0, 0, 0, 0.9);
+}
+
+.video-fs:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
 /* Phones and portrait tablets: the film comes straight after the heading. */
 @media (max-width: 805px) {
   .hero {
@@ -1816,7 +1871,9 @@ td.compare-us .compare-saving {
 }
 
 .filter-chip {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
   font-family: var(--font-heading);
   font-size: var(--text-sm);
   font-weight: 500;

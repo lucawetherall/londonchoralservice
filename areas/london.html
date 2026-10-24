@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <!-- @include-start partials/head-extras.html -->
+<meta name="referrer" content="strict-origin-when-cross-origin">
 <link rel="preload" href="/fonts/cormorant-garamond.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/fonts/source-serif-4.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="manifest" href="/site.webmanifest">
@@ -202,19 +203,43 @@
         }
       } catch (e) {}
     }
-    document.addEventListener('click', function(e) {
-      var a = e.target.closest && e.target.closest('a[href^="tel:"], a[href^="mailto:"], a[href*="wa.me/"]');
-      if (!a) return;
-      var href = a.getAttribute('href');
-      var method = href.indexOf('tel:') === 0 ? 'call' : href.indexOf('mailto:') === 0 ? 'email' : 'whatsapp';
-      var where = a.closest('.mobile-cta') ? 'mobile_bar' : a.closest('.site-footer') ? 'footer' :
+    function lcsWhere(a) {
+      return a.closest('.mobile-cta') ? 'mobile_bar' : a.closest('.site-footer') ? 'footer' :
         a.closest('.site-header') ? 'header' : 'body';
-      if (method !== 'call') lcsLabelMessage(a, method);
-      loadGA();
-      gtag('event', 'contact_click', { 'method': method, 'link_location': where });
-      var label = method === 'call' ? LCS_ADS.call : LCS_ADS.message;
-      if (label) gtag('event', 'conversion', { 'send_to': label, 'value': 1, 'currency': 'GBP' });
-    });
+    }
+    // Enquiry buttons that lead to a form: the on-page #enquiry / #enquire
+    // anchors and the contact page. link_location is the header, footer or
+    // mobile bar, then the hero, then the nearest section's id.
+    function lcsCtaWhere(a) {
+      var where = lcsWhere(a);
+      if (where !== 'body') return where;
+      if (a.closest('.hero, [class*="hero"]')) return 'hero';
+      var sec = a.closest('section[id], [id]');
+      return (sec && sec.id) || 'body';
+    }
+    function lcsClickHandler(e) {
+      // auxclick also reports right-clicks; only a middle-click opens the link.
+      if (e.type === 'auxclick' && e.button !== 1) return;
+      var t = e.target;
+      var a = t && t.closest && t.closest('a[href^="tel:"], a[href^="mailto:"], a[href*="wa.me/"]');
+      if (a) {
+        var href = a.getAttribute('href');
+        var method = href.indexOf('tel:') === 0 ? 'call' : href.indexOf('mailto:') === 0 ? 'email' : 'whatsapp';
+        if (method !== 'call') lcsLabelMessage(a, method);
+        loadGA();
+        gtag('event', 'contact_click', { 'method': method, 'link_location': lcsWhere(a) });
+        var label = method === 'call' ? LCS_ADS.call : LCS_ADS.message;
+        if (label) gtag('event', 'conversion', { 'send_to': label, 'value': 1, 'currency': 'GBP' });
+        return;
+      }
+      var cta = t && t.closest && t.closest('a[href*="#enquiry"], a[href*="#enquire"], a[href*="contact.html"]');
+      if (cta) {
+        loadGA();
+        gtag('event', 'cta_click', { 'link_location': lcsCtaWhere(cta), 'link_url': cta.getAttribute('href') });
+      }
+    }
+    document.addEventListener('click', lcsClickHandler);
+    document.addEventListener('auxclick', lcsClickHandler);
 
     // Ad click ID and UTM tags from the landing URL, kept for this tab (only once
     // the visitor has allowed cookies) so an enquiry sent from a later page still
@@ -378,6 +403,7 @@
     @font-face{font-family:'Source Serif 4';font-style:italic;font-weight:400;font-display:swap;src:url('/fonts/source-serif-4-italic.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;}
     *, *::before, *::after{box-sizing:border-box;margin:0;padding:0;}
     html{-webkit-text-size-adjust:100%;scroll-behavior:smooth;}
+    @media (max-width: 1080px){html{scroll-padding-bottom:5.5rem;}}
     @media (prefers-reduced-motion: reduce){html{scroll-behavior:auto;}}
     body{font-family:var(--font-body);font-size:var(--text-base);line-height:var(--leading-normal);color:var(--color-text);background-color:var(--color-bg);-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;}
     h1, h2, h3, h4, h5, h6{font-family:var(--font-heading);line-height:var(--leading-tight);text-wrap:balance;}
@@ -396,6 +422,8 @@
     li{margin-bottom:var(--space-sm);}
     blockquote{margin:0;padding:0;border:none;}
     hr{border:none;border-top:1px solid var(--color-rule);margin-block:var(--space-2xl);}
+    .text-sm{font-size:var(--text-sm);}
+    .text-mid{color:var(--color-text-mid);}
     .skip-link{position:absolute;top:-3rem;left:var(--space-lg);padding:var(--space-sm) var(--space-md);background-color:var(--color-accent);color:var(--color-bg);font-family:var(--font-heading);font-size:var(--text-sm);font-weight:500;text-decoration:none;z-index:200;transition:top var(--transition-fast);}
     .skip-link:focus{top:var(--space-sm);outline:2px solid var(--color-text);outline-offset:2px;}
     .skip-link:visited{color:var(--color-bg);}
@@ -416,7 +444,7 @@
     .nav-links a{font-family:var(--font-heading);font-size:var(--text-sm);font-weight:500;letter-spacing:0.05em;text-transform:uppercase;color:var(--color-text);text-decoration:none;transition:color var(--transition-fast);white-space:nowrap;}
     .nav-links a:hover{color:var(--color-accent);}
     .nav-links a[aria-current="page"]{text-decoration-line:underline;text-decoration-thickness:1px;text-decoration-color:var(--color-accent);text-underline-offset:0.45em;}
-    .nav-toggle{display:none;background:none;border:none;cursor:pointer;padding:var(--space-sm);width:2.5rem;height:2.5rem;position:relative;}
+    .nav-toggle{display:none;background:none;border:none;cursor:pointer;padding:var(--space-sm);width:2.75rem;height:2.75rem;flex-shrink:0;position:relative;}
     .nav-toggle:hover, .nav-toggle:focus-visible{background-color:var(--color-bg-alt);border-radius:4px;}
     .nav-toggle-bar, .nav-toggle-bar::before, .nav-toggle-bar::after{display:block;width:1.5rem;height:2px;background-color:var(--color-text);position:absolute;left:50%;transform:translateX(-50%);transition:all var(--transition-base);}
     .nav-toggle-bar{top:50%;transform:translate(-50%,-50%);}
@@ -426,6 +454,7 @@
     .nav-toggle[aria-expanded="true"] .nav-toggle-bar::before{top:0;transform:translateX(-50%) rotate(45deg);}
     .nav-toggle[aria-expanded="true"] .nav-toggle-bar::after{top:0;transform:translateX(-50%) rotate(-45deg);}
     @media (max-width: 1080px){.nav-toggle{display:block;flex-shrink:0;}
+    .site-name{white-space:normal;}
     .nav-links{display:none;position:absolute;top:100%;left:0;right:0;flex-direction:column;background-color:var(--color-bg);border-bottom:1px solid var(--color-rule);padding:var(--space-lg);gap:0;z-index:100;}
     .nav-links.is-open{display:flex;}
     .nav-links a{display:block;padding:var(--space-md) 0;font-size:var(--text-base);border-bottom:1px solid var(--color-rule);}
@@ -454,7 +483,7 @@
     .breadcrumb ol{list-style:none;padding:0;margin:0;display:flex;flex-wrap:wrap;gap:0;font-family:var(--font-body);font-size:var(--text-sm);color:var(--color-text-mid);}
     .breadcrumb li::after{content:'\203A';margin-inline:0.5em;color:var(--color-rule);}
     .breadcrumb li:last-child::after{display:none;}
-    .breadcrumb a{color:var(--color-text-mid);text-decoration:none;}
+    .breadcrumb a{color:var(--color-text-mid);text-decoration:none;display:inline-block;padding-block:0.3em;margin-block:-0.3em;}
     .breadcrumb a:hover{color:var(--color-accent);}
     .mobile-cta{display:none;}
     @media (max-width: 1080px){.mobile-cta{display:flex;position:fixed;bottom:0;left:0;right:0;z-index:200;background-color:var(--color-bg);border-top:1px solid var(--color-rule);padding:var(--space-sm) var(--space-lg);padding-bottom:calc(var(--space-sm) + env(safe-area-inset-bottom,0px));gap:var(--space-sm);align-items:center;justify-content:center;transition:transform 0.3s ease;}
@@ -517,8 +546,8 @@
     .pull-quote::before{display:none;}
     h1, h2, h3{break-after:avoid;}}
   </style>
-  <link rel="preload" href="/css/style.css?v=76ead049b8" as="style" onload="this.onload=null;this.rel='stylesheet'">
-  <noscript><link rel="stylesheet" href="/css/style.css?v=76ead049b8"></noscript>
+  <link rel="preload" href="/css/style.css?v=44640bbffc" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <noscript><link rel="stylesheet" href="/css/style.css?v=44640bbffc"></noscript>
   <!-- @css-end -->
 
   <link rel="icon" href="../assets/favicon.ico" sizes="any">
@@ -535,8 +564,9 @@
         "url": "https://londonchoralservice.com/areas/london.html",
         "description": "Professional funeral singers and wedding choirs in London. Conservatoire-trained musicians for funerals, weddings, memorials, and ceremonies across all London boroughs.",
         "provider": {
-          "@type": "LocalBusiness",
-          "@id": "https://londonchoralservice.com/#organization"
+          "@type": ["LocalBusiness", "PerformingGroup", "MusicGroup"],
+          "@id": "https://londonchoralservice.com/#organization",
+          "name": "The London Choral Service"
         },
         "areaServed": {
           "@type": "City",
@@ -557,7 +587,7 @@
         }
       },
       {
-        "@type": "LocalBusiness",
+        "@type": ["LocalBusiness", "PerformingGroup", "MusicGroup"],
         "@id": "https://londonchoralservice.com/#organization",
         "name": "The London Choral Service"
       },
@@ -607,7 +637,7 @@
             "name": "What types of music can you perform at a funeral in London?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Our repertoire spans traditional hymns, classical sacred works, and contemporary songs. We sing pieces ranging from Fauré's Pie Jesu at a small parish church service to a full choral requiem. At St Paul's Cathedral and Southwark Cathedral we sing only with the church's permission, as a separate ensemble. We can also arrange any piece you have in mind."
+              "text": "Our repertoire spans traditional hymns, classical sacred works, and contemporary songs. We sing pieces ranging from Fauré's Pie Jesu at a small parish church service to a full choral requiem. At St Paul's Cathedral and Southwark Cathedral we sing only with the church's permission, as a separate ensemble. We can also arrange any piece you have in mind; a new arrangement may carry an extra charge."
             }
           },
           {
@@ -651,8 +681,6 @@
             <li><a href="/weddings.html">Weddings</a></li>
             <li><a href="/funerals.html">Funerals</a></li>
             <li><a href="/corporate.html">Corporate</a></li>
-            <li><a href="/christmas.html">Christmas carol singers</a></li>
-            <li><a href="/christmas-carol-services.html">Church carol services</a></li>
             <li><a href="/private-events.html">Private Events</a></li>
             <li><a href="/destinations/">Weddings Abroad</a></li>
             <li class="dropdown-separator" aria-hidden="true"></li>
@@ -685,7 +713,15 @@
             <li><a href="/music-guides/">Browse all</a></li>
           </ul>
         </li>
-        <li><a href="/christmas.html">Christmas</a></li>
+        <li class="has-dropdown">
+          <a href="/christmas.html" aria-expanded="false" class="dropdown-trigger">Christmas<span class="dropdown-caret" aria-hidden="true"></span></a>
+          <ul class="dropdown-menu">
+            <li><a href="/christmas.html">Christmas carol singers</a></li>
+            <li><a href="/christmas-carol-services.html">Church carol services</a></li>
+            <li><a href="/christmas-pricing.html">Christmas prices</a></li>
+            <li><a href="/christmas-listen.html">Hear the carols</a></li>
+          </ul>
+        </li>
         <li><a href="/pricing.html">Pricing</a></li>
         <li><a href="/contact.html">Contact</a></li>
       </ul>
@@ -717,18 +753,18 @@
         <p>Our musicians perform throughout London, from the Brompton Oratory to parish churches and chapels in every borough. At Southwark Cathedral we sing only with the cathedral&rsquo;s permission, as a separate ensemble. Individually, our singers&rsquo; credits include the coronation of King Charles III, Westminster Abbey, the Royal Albert Hall, and the BBC Proms. We also provide music at crematoriums across the capital, including City of London Crematorium, Mortlake Crematorium, and Putney Vale Crematorium. Every venue has its own acoustic and its own atmosphere, and our musicians adjust to each one. If you&rsquo;re not sure where to begin with choosing music, our <a href="../music-guides/funeral-music-guide.html">guide to funeral music</a> may help, or you&rsquo;re welcome to <a href="../contact.html">get in touch</a> and we&rsquo;ll talk it through with you. You can also read more about our full range of <a href="../services.html">funeral music services</a>. If you are looking for funeral singers near you in London, our <a href="../funerals.html">funeral choir page</a> has the prices and the booking steps.</p>
 
         <h2>Wedding choirs in London</h2>
-        <p>London has an unmatched range of wedding venues, from grand churches and historic chapels to licensed hotels and private gardens. In church, a choir can lead a congregation through a hymn most of them only half-remember. Our wedding choirs and soloists sing one piece while you sign the register, which takes around five minutes, and we choose with you between the full Anglican choral tradition and something smaller and more personal.</p>
+        <p>London has an unmatched range of wedding venues, from grand churches and historic chapels to licensed hotels and private gardens. In church, a choir can lead a congregation through a hymn most of them only half-remember. Our <a href="../weddings.html">wedding choirs</a> and soloists sing one piece while you sign the register, which takes around five minutes, and we choose with you between the full Anglican choral tradition and something smaller and more personal.</p>
         <p>We&rsquo;ve sung at weddings in venues across London, from St&nbsp;Martin-in-the-Fields and the Temple Church to Chelsea Old Church and smaller parish churches in every corner of the city. If you&rsquo;re still deciding on hymns or music, our <a href="../music-guides/choosing-wedding-hymns.html">guide to choosing wedding hymns</a> is a good place to start.</p>
 
         <h2>Ensembles for weddings, funerals, and memorials</h2>
-        <p>The right size of ensemble depends on the occasion, and part of our job is helping you find the balance for your venue and your budget. We offer everything from a single soloist through to duets, quartets, octets, and a full twelve-voice chorus with instrumental accompaniment. Organists, harpists, and string players are also available. Visit our <a href="../pricing.html">pricing page</a> for a clear guide to ensemble sizes and costs.</p>
+        <p>The right size of ensemble depends on the occasion, and part of our job is helping you find the balance for your venue and your budget. We offer everything from a soloist through quartets and eight-voice choirs to a twelve-voice chorus, with an organist, pianist, harpist or strings added to any of them. Visit our <a href="../pricing.html">pricing page</a> for a clear guide to ensemble sizes and costs.</p>
 
         <h2>London boroughs we serve</h2>
         <p>We provide funeral singers, wedding choirs, and ceremony musicians in every London borough. Select your area below to find out more about our services near you.</p>
 
         <h3>Central London</h3>
         <ul class="guide-list">
-          <li><h4><a href="london/westminster.html">Westminster</a></h4><p>Westminster Abbey, St&nbsp;Margaret&rsquo;s, St&nbsp;Martin-in-the-Fields, Guards&rsquo; Chapel, and churches across the City of Westminster.</p></li>
+          <li><h4><a href="london/westminster.html">Westminster</a></h4><p>St&nbsp;Margaret&rsquo;s, St&nbsp;Martin-in-the-Fields, Guards&rsquo; Chapel, and churches across the City of Westminster.</p></li>
           <li><h4><a href="london/city-of-london.html">City of London</a></h4><p>St&nbsp;Paul&rsquo;s Cathedral, Temple Church, St&nbsp;Bartholomew-the-Great, and the historic churches of the Square Mile.</p></li>
           <li><h4><a href="london/kensington-chelsea.html">Kensington &amp; Chelsea</a></h4><p>Brompton Oratory, Holy Trinity Brompton, Chelsea Old Church, and St&nbsp;Mary Abbots.</p></li>
           <li><h4><a href="london/camden.html">Camden</a></h4><p>Hampstead Parish Church, St&nbsp;Pancras New Church, St&nbsp;Michael&rsquo;s Highgate, and venues across NW London.</p></li>
@@ -802,7 +838,7 @@
         <p>Yes. We provide wedding choirs from a solo vocalist up to a twelve-voice chorus, and sing at venues including St Martin-in-the-Fields, the Temple Church, Chelsea Old Church and Brompton Oratory. We take care of the musical planning and deal with your venue ourselves.</p>
 
         <h3>What types of music can you perform at a funeral in London?</h3>
-        <p>Our repertoire spans traditional hymns, classical sacred works, and contemporary songs. We sing pieces ranging from Faur&eacute;&rsquo;s Pie Jesu at a small parish church service to a full choral requiem. At St Paul&rsquo;s Cathedral and Southwark Cathedral we sing only with the church&rsquo;s permission, as a separate ensemble. We can also arrange any piece you have in mind.</p>
+        <p>Our repertoire spans traditional hymns, classical sacred works, and contemporary songs. We sing pieces ranging from Faur&eacute;&rsquo;s Pie Jesu at a small parish church service to a full choral requiem. At St Paul&rsquo;s Cathedral and Southwark Cathedral we sing only with the church&rsquo;s permission, as a separate ensemble. We can also arrange any piece you have in mind; a new arrangement may carry an extra charge.</p>
 
         <h3>Do you cover crematorium services in London?</h3>
         <p>Yes, we sing at crematoriums right across the capital, including City of London Crematorium, Mortlake, Putney Vale, Golders Green, and Hendon. Our musicians know these venues well and are experienced in working within their specific timings and acoustics.</p>
@@ -813,6 +849,12 @@
         <p>For more guidance, explore our <a href="../music-guides/funeral-music-guide.html">funeral music guide</a>, <a href="../music-guides/popular-funeral-hymns.html">popular funeral hymns</a>, <a href="../music-guides/choosing-wedding-hymns.html">wedding hymns guide</a>, or <a href="../music-guides/funeral-music-costs.html">funeral music costs guide</a>.</p>
 
         <p><a href="../contact.html" class="btn-link">Get in touch about your occasion in London</a></p>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="prose">
+        <p class="text-sm text-mid">Cities near London: <a href="windsor.html">Windsor</a> &middot; <a href="st-albans.html">St Albans</a> &middot; <a href="guildford.html">Guildford</a> &middot; <a href="rochester.html">Rochester</a> &middot; <a href="chelmsford.html">Chelmsford</a></p>
       </div>
     </section>
 
@@ -891,7 +933,7 @@
       <p class="text-xs text-mid">
         Areas we serve: <a href="/areas/london.html">London</a> &middot; <a href="/areas/birmingham.html">Birmingham</a> &middot; <a href="/areas/manchester.html">Manchester</a> &middot; <a href="/areas/liverpool.html">Liverpool</a> &middot; <a href="/areas/oxford.html">Oxford</a> &middot; <a href="/areas/cambridge.html">Cambridge</a> &middot; <a href="/areas/reading.html">Reading</a> &middot; <a href="/areas/slough-maidenhead.html">Slough &amp; Maidenhead</a> &middot; <a href="/areas/guildford.html">Guildford</a> &middot; <a href="/areas/brighton.html">Brighton</a> &middot; <a href="/areas/chester.html">Chester</a> &middot; <a href="/areas/st-albans.html">St Albans</a> &middot; <a href="/areas/canterbury.html">Canterbury</a> &middot; <a href="/areas/windsor.html">Windsor</a> &middot; <a href="/areas/winchester.html">Winchester</a> &middot; <a href="/areas/salisbury.html">Salisbury</a> &middot; <a href="/areas/bath.html">Bath</a> &middot; <a href="/areas/chelmsford.html">Chelmsford</a> &middot; <a href="/areas/rochester.html">Rochester</a> &middot; <a href="/areas/">All areas</a>
       </p>
-      <p class="text-xs text-mid">The London Choral Service is the operating name of Alma Consort Ltd, registered in England and Wales, company no. 16785727. Based in London, serving the whole of the United Kingdom.</p>
+      <p class="text-xs text-mid">The London Choral Service is the operating name of Alma Consort Ltd, registered in England and Wales, company no. 16785727, registered office 20 Wenlock Road, London N1 7GU. Based in London, serving the whole of the United Kingdom.</p>
       <p class="text-xs text-mid">&copy; <span data-year>2026</span> The London Choral Service. All rights reserved.</p>
     </div>
   </footer>

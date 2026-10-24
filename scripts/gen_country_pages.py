@@ -60,6 +60,19 @@ READING = ('<p>Reading: <a href="/music-guides/destination-wedding-choir.html">h
 
 # One film for every country page until footage from an engagement abroad exists
 # (owner, 24 Oct 2026). The id is in data/seo-fix-discovered-urls.yml.
+FILM_ID = '-GQaQEGhYEs'
+
+
+def _poster(film_id):
+    """The local still from assets/films/ when it exists, else YouTube's thumbnail."""
+    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    if all(os.path.exists(os.path.join(root, 'assets', 'films', f'film-{film_id}-{w}.webp')) for w in (640, 1280)):
+        return (f'<img src="/assets/films/film-{film_id}-640.webp" '
+                f'srcset="/assets/films/film-{film_id}-640.webp 640w, /assets/films/film-{film_id}-1280.webp 1280w" '
+                'sizes="(max-width: 805px) 100vw, 624px" alt="" loading="lazy" width="1280" height="720">')
+    return f'<img src="https://i.ytimg.com/vi/{film_id}/hqdefault.jpg" alt="" loading="lazy" width="480" height="360">'
+
+
 FILM = '''
     <!-- Film -->
     <section class="pe-section pe-section--mid">
@@ -71,7 +84,7 @@ FILM = '''
             works in a garden, on a terrace or in a chapel with no instrument.</p>
           <div class="pe-media">
             <button type="button" class="video-thumb" data-video="-GQaQEGhYEs" aria-label="Play Ubi Caritas">
-              <img src="https://i.ytimg.com/vi/-GQaQEGhYEs/hqdefault.jpg" alt="" loading="lazy" width="480" height="360">
+              {POSTER}
               <svg class="play-btn" viewBox="0 0 68 48" aria-hidden="true"><path d="M66.52 7.74c-.78-2.93-2.49-5.41-5.42-6.19C55.79.13 34 0 34 0S12.21.13 6.9 1.55c-2.93.78-4.63 3.26-5.42 6.19C.06 13.05 0 24 0 24s.06 10.95 1.48 16.26c.78 2.93 2.49 5.41 5.42 6.19C12.21 47.87 34 48 34 48s21.79-.13 27.1-1.55c2.93-.78 4.63-3.26 5.42-6.19C67.94 34.95 68 24 68 24s-.06-10.95-1.48-16.26z" fill="rgba(42, 23, 8, .72)"/><path d="M45 24 27 14v20z" fill="#FAF6EE"/></svg>
             </button>
           </div>
@@ -128,7 +141,7 @@ def build(slug, name, title, desc, hero_h1, hero_sub, sections, regions, faqs,
         <p class="pe-hero__cta"><a class="pe-btn" href="#enquire">Enquire about your wedding</a></p>
       </div>
     </section>
-''' + FILM
+''' + FILM.replace('{POSTER}', _poster(FILM_ID))
     shade = ['mid', 'light']
     i = 1  # the film section above is 'mid'
     for label, heading, paras in sections:

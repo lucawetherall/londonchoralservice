@@ -120,6 +120,10 @@
   form.addEventListener('submit', function (e) {
     e.preventDefault();
 
+    // Honeypot: a bot ticked the hidden box. Drop the submission silently.
+    var honeypot = form.querySelector('input[name=botcheck]');
+    if (honeypot && honeypot.checked) return;
+
     // Required-field guard. Filter form.elements rather than querying
     // :invalid, which also matches a <fieldset> holding an invalid field
     // (contact.html) — and a fieldset cannot take focus.
@@ -195,15 +199,21 @@
       } catch (_) { /* attribution must never block the enquiry */ }
     }
 
-    fetch('https://api.web3forms.com/submit', {
+    // A hung request must fall through to the error path, not leave the button on "Sending…".
+    var ctrl = typeof AbortController === 'function' ? new AbortController() : null;
+    var abortTimer = ctrl ? setTimeout(function () { ctrl.abort(); }, 20000) : null;
+    var fetchOpts = {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json'
       },
       body: JSON.stringify(data)
-    })
+    };
+    if (ctrl) fetchOpts.signal = ctrl.signal;
+    fetch('https://api.web3forms.com/submit', fetchOpts)
       .then(function (response) {
+        if (abortTimer) clearTimeout(abortTimer);
         return response.json().then(function (result) {
           return { ok: response.ok, result: result };
         });
@@ -222,6 +232,7 @@
         }
       })
       .catch(function (err) {
+        if (abortTimer) clearTimeout(abortTimer);
         console.error('Form submission error:', err);
         trackError('submit');
         if (errorBox) {

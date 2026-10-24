@@ -16,6 +16,8 @@
       'sixteen': null,
       'twenty-four': null
     },
+    // Film IDs with a still in assets/films/ (film-<id>-640.webp and -1280.webp).
+    LOCAL_POSTERS: ['SbvqWglsbMo', '39MyhPogl6A'],
     MIN_SECONDS: 5
   };
 
@@ -48,7 +50,10 @@
   // ── Fixed films (destination pages) ──
   // A .pe-media .video-thumb[data-video] loads its YouTube player only on click.
   document.querySelectorAll('.pe-media .video-thumb[data-video]').forEach(function (btn) {
+    if (btn.hasAttribute('data-lcs-bound')) return;
+    btn.setAttribute('data-lcs-bound', '');
     btn.addEventListener('click', function () {
+      if (!btn.parentNode) return;
       var id = btn.getAttribute('data-video');
       var label = (btn.getAttribute('aria-label') || 'Play recording').replace(/^Play /, '');
       if (window.lcsPlayFilm) {
@@ -84,7 +89,9 @@
     btn.className = 'video-thumb';
     btn.setAttribute('aria-label', playLabel);
     btn.innerHTML =
-      '<img src="https://i.ytimg.com/vi/' + videoId + '/hqdefault.jpg" alt="" loading="lazy" width="480" height="360">' +
+      (PE.LOCAL_POSTERS.indexOf(videoId) !== -1
+        ? '<img src="/assets/films/film-' + videoId + '-640.webp" srcset="/assets/films/film-' + videoId + '-640.webp 640w, /assets/films/film-' + videoId + '-1280.webp 1280w" sizes="(max-width: 805px) 100vw, 624px" alt="" loading="lazy" width="1280" height="720">'
+        : '<img src="https://i.ytimg.com/vi/' + videoId + '/hqdefault.jpg" alt="" loading="lazy" width="480" height="360">') +
       '<svg class="play-btn" viewBox="0 0 68 48" aria-hidden="true">' +
       '<path d="M66.52 7.74c-.78-2.93-2.49-5.41-5.42-6.19C55.79.13 34 0 34 0S12.21.13 6.9 1.55c-2.93.78-4.63 3.26-5.42 6.19C.06 13.05 0 24 0 24s.06 10.95 1.48 16.26c.78 2.93 2.49 5.41 5.42 6.19C12.21 47.87 34 48 34 48s21.79-.13 27.1-1.55c2.93-.78 4.63-3.26 5.42-6.19C67.94 34.95 68 24 68 24s-.06-10.95-1.48-16.26z" fill="rgba(42, 23, 8, .72)"/>' +
       '<path d="M45 24 27 14v20z" fill="#FAF6EE"/>' +
@@ -92,7 +99,9 @@
 
     // Third-party embed loads only on click (site-wide pattern), through the
     // shared player in js/video.js, which keeps YouTube's overlay hidden.
+    btn.setAttribute('data-lcs-bound', '');
     btn.addEventListener('click', function () {
+      if (!btn.parentNode) return;
       if (window.lcsPlayFilm) {
         window.lcsPlayFilm(btn, videoId, playLabel.replace(/^Play /, ''), 'Alma Consort');
         return;
@@ -129,6 +138,12 @@
       if (voicingExplored) voicingExplored.value = value;
     }
 
+    // Selected state as a class too, for browsers without :has().
+    voicingRadios.forEach(function (r) {
+      var card = r.closest ? r.closest('.pe-voice-card') : null;
+      if (card) card.classList.toggle('is-selected', r === radio);
+    });
+
     renderVoicingMedia(value, radio);
   }
 
@@ -148,7 +163,7 @@
     try {
       var consented = localStorage.getItem('lcs-consent') === 'granted';
       var kept = consented && typeof window.lcsAttribution === 'function' ? window.lcsAttribution() : {};
-      ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'gclid'].forEach(function (key) {
+      ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'gclid', 'gbraid', 'wbraid'].forEach(function (key) {
         var input = document.querySelector('input[name="' + key + '"]');
         if (input) input.value = kept[key] || '';
       });
@@ -384,7 +399,7 @@
       var consented = false;
       try { consented = localStorage.getItem('lcs-consent') === 'granted'; } catch (_) {}
       if (!consented) {
-        ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'gclid'].forEach(function (key) {
+        ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'gclid', 'gbraid', 'wbraid'].forEach(function (key) {
           var input = form.querySelector('input[name="' + key + '"]');
           if (input) input.value = '';
         });
@@ -423,15 +438,21 @@
         } catch (_) { /* attribution must never block the enquiry */ }
       }
 
-      fetch('https://api.web3forms.com/submit', {
+      // A hung request must fall through to the error path and reset the button.
+      var ctrl = typeof AbortController === 'function' ? new AbortController() : null;
+      var abortTimer = ctrl ? setTimeout(function () { ctrl.abort(); }, 20000) : null;
+      var fetchOpts = {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json'
         },
         body: JSON.stringify(data)
-      })
+      };
+      if (ctrl) fetchOpts.signal = ctrl.signal;
+      fetch('https://api.web3forms.com/submit', fetchOpts)
         .then(function (response) {
+          if (abortTimer) clearTimeout(abortTimer);
           return response.json().then(function (result) {
             return { ok: response.ok, result: result };
           });
@@ -451,6 +472,7 @@
           }
         })
         .catch(function () {
+          if (abortTimer) clearTimeout(abortTimer);
           // hCaptcha tokens are single-use — reset so a retry can succeed.
           try {
             if (window.hcaptcha && typeof window.hcaptcha.reset === 'function') window.hcaptcha.reset();

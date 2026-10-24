@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <!-- @include-start partials/head-extras.html -->
+<meta name="referrer" content="strict-origin-when-cross-origin">
 <link rel="preload" href="/fonts/cormorant-garamond.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/fonts/source-serif-4.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="manifest" href="/site.webmanifest">
@@ -202,19 +203,43 @@
         }
       } catch (e) {}
     }
-    document.addEventListener('click', function(e) {
-      var a = e.target.closest && e.target.closest('a[href^="tel:"], a[href^="mailto:"], a[href*="wa.me/"]');
-      if (!a) return;
-      var href = a.getAttribute('href');
-      var method = href.indexOf('tel:') === 0 ? 'call' : href.indexOf('mailto:') === 0 ? 'email' : 'whatsapp';
-      var where = a.closest('.mobile-cta') ? 'mobile_bar' : a.closest('.site-footer') ? 'footer' :
+    function lcsWhere(a) {
+      return a.closest('.mobile-cta') ? 'mobile_bar' : a.closest('.site-footer') ? 'footer' :
         a.closest('.site-header') ? 'header' : 'body';
-      if (method !== 'call') lcsLabelMessage(a, method);
-      loadGA();
-      gtag('event', 'contact_click', { 'method': method, 'link_location': where });
-      var label = method === 'call' ? LCS_ADS.call : LCS_ADS.message;
-      if (label) gtag('event', 'conversion', { 'send_to': label, 'value': 1, 'currency': 'GBP' });
-    });
+    }
+    // Enquiry buttons that lead to a form: the on-page #enquiry / #enquire
+    // anchors and the contact page. link_location is the header, footer or
+    // mobile bar, then the hero, then the nearest section's id.
+    function lcsCtaWhere(a) {
+      var where = lcsWhere(a);
+      if (where !== 'body') return where;
+      if (a.closest('.hero, [class*="hero"]')) return 'hero';
+      var sec = a.closest('section[id], [id]');
+      return (sec && sec.id) || 'body';
+    }
+    function lcsClickHandler(e) {
+      // auxclick also reports right-clicks; only a middle-click opens the link.
+      if (e.type === 'auxclick' && e.button !== 1) return;
+      var t = e.target;
+      var a = t && t.closest && t.closest('a[href^="tel:"], a[href^="mailto:"], a[href*="wa.me/"]');
+      if (a) {
+        var href = a.getAttribute('href');
+        var method = href.indexOf('tel:') === 0 ? 'call' : href.indexOf('mailto:') === 0 ? 'email' : 'whatsapp';
+        if (method !== 'call') lcsLabelMessage(a, method);
+        loadGA();
+        gtag('event', 'contact_click', { 'method': method, 'link_location': lcsWhere(a) });
+        var label = method === 'call' ? LCS_ADS.call : LCS_ADS.message;
+        if (label) gtag('event', 'conversion', { 'send_to': label, 'value': 1, 'currency': 'GBP' });
+        return;
+      }
+      var cta = t && t.closest && t.closest('a[href*="#enquiry"], a[href*="#enquire"], a[href*="contact.html"]');
+      if (cta) {
+        loadGA();
+        gtag('event', 'cta_click', { 'link_location': lcsCtaWhere(cta), 'link_url': cta.getAttribute('href') });
+      }
+    }
+    document.addEventListener('click', lcsClickHandler);
+    document.addEventListener('auxclick', lcsClickHandler);
 
     // Ad click ID and UTM tags from the landing URL, kept for this tab (only once
     // the visitor has allowed cookies) so an enquiry sent from a later page still
@@ -568,7 +593,8 @@
       color: var(--choirStall);
       text-decoration: none;
       border-bottom: 1px solid var(--limestone);
-      padding-bottom: .2rem;
+      display: inline-block;
+      padding-block: .4rem;
     }
     .pe-nav-enquire:hover { border-bottom-color: var(--choirStall); }
 
@@ -731,6 +757,7 @@
     .pe-voice-card input {
       accent-color: var(--cassockRed); /* cassockRed use 2 of 4: checked controls */
     }
+    .pe-voice-card.is-selected,
     .pe-voice-card:has(input:checked) {
       border-color: var(--cassockRed); /* cassockRed use 3 of 4: selected card rule */
       box-shadow: inset 0 0 0 1px var(--cassockRed);
@@ -816,7 +843,8 @@
     /* The playing film (js/video.js) is taller than the frame, which clips
        YouTube's title bar and logo; the shield over it hides the hover UI
        and shows the thumbnail while loading and when paused. */
-    #voicing-media iframe.video-frame {
+    #voicing-media iframe.video-frame,
+    .pe-media iframe.video-frame {
       top: -5rem;
       height: calc(100% + 10rem);
     }
@@ -848,6 +876,26 @@
       outline: none;
       box-shadow: inset 0 0 0 3px var(--parchmentLight);
     }
+    /* Keyboard-reachable full screen button inside the player (js/video.js). */
+    .video-fs {
+      position: absolute;
+      right: .5rem;
+      bottom: .5rem;
+      z-index: 2;
+      min-width: 24px;
+      min-height: 32px;
+      padding: .25rem .6rem;
+      border: 1px solid rgba(250, 246, 238, .6);
+      background: rgba(42, 23, 8, .72);
+      color: #FAF6EE;
+      font: 600 .75rem/1 var(--font-ui);
+      letter-spacing: .06em;
+      cursor: pointer;
+    }
+    .video-fs:hover { background: rgba(42, 23, 8, .9); }
+    .video-fs:focus-visible { outline: 2px solid #FAF6EE; outline-offset: 2px; }
+    .pe-media:fullscreen .video-fs,
+    .pe-media:-webkit-full-screen .video-fs { display: none; }
     #voicing-media:empty + .pe-media-caption { display: none; }
     .pe-media-caption { margin-top: .75rem; }
 
@@ -955,7 +1003,7 @@
       cursor: pointer;
     }
     .pe-check-label span { margin-bottom: 0; }
-    .pe-check-label input { accent-color: var(--cassockRed); }
+    .pe-check-label input { accent-color: var(--cassockRed); width: 1.5rem; height: 1.5rem; flex-shrink: 0; }
     /* Optional ad-measurement checkbox: a sentence, so not the small capitals of a field label. */
     .pe-check-label--consent { margin-top: 1.75rem; }
     .pe-check-label--consent span {
@@ -1218,7 +1266,7 @@
         "description": "Private and international choral engagements sung by Alma Consort, a professional consort of eight to twenty-four voices based in London, for weddings, memorials, private concerts, and ceremonies in the United Kingdom and at destinations across Europe, the Caribbean, the Americas, Africa, the Indian Ocean, and Asia.",
         "url": "https://londonchoralservice.com/private-events.html",
         "provider": {
-          "@type": "LocalBusiness",
+          "@type": ["LocalBusiness", "PerformingGroup", "MusicGroup"],
           "@id": "https://londonchoralservice.com/#organization",
           "name": "The London Choral Service"
         },
@@ -1324,7 +1372,7 @@
         ],
         "description": "Alma Consort is a professional ensemble of consort singers based in London, directed by Luca Wetherall. The London Choral Service is its booking office; the same singers perform every engagement.",
         "parentOrganization": {
-          "@type": "LocalBusiness",
+          "@type": ["LocalBusiness", "PerformingGroup", "MusicGroup"],
           "@id": "https://londonchoralservice.com/#organization",
           "name": "The London Choral Service"
         }
@@ -1362,7 +1410,7 @@
             "name": "What determines the cost?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "The number of singers, the distance they travel, and the nights they stay. Our UK rates for each ensemble size are published on the pricing page. An engagement abroad also carries return flights and accommodation for the whole consort, who arrive the day before to rehearse in the building. We quote for the whole engagement before you commit, and we invoice in pounds sterling, euros, or US dollars."
+              "text": "The number of singers, the distance they travel, and the nights they stay. Our UK rates for four to twelve singers are on the pricing page. Sixteen and twenty-four voices are quoted for the engagement. An engagement abroad also carries return flights and accommodation for the whole consort, who arrive the day before to rehearse in the building. We quote for the whole engagement before you commit, and we invoice in pounds sterling, euros, or US dollars."
             }
           },
           {
@@ -1436,13 +1484,6 @@
         <p class="pe-hero__sub">A professional consort of eight to twenty-four voices, travelling from London to sing weddings, memorials, private concerts, and ceremonies of state and celebration across Europe, the Caribbean, the Americas, Africa, the Indian Ocean, and Asia.</p>
         <p class="pe-hero__cta"><a class="pe-btn" href="#enquire">Enquire about your event</a></p>
       </div>
-      <!-- Hero H1 A/B alternatives (for later testing — do not delete):
-        B: Four hundred years of English choral singing, at your ceremony.
-        C: English choral singing, wherever you are marrying.
-           (C is occasion-narrow: use it only for wedding-targeted paid
-           traffic, never as the default — this page serves memorials,
-           private concerts and civic occasions too.)
-      -->
     </section>
 
     <!-- §2 The ensemble -->
@@ -1520,9 +1561,6 @@
             <li>St Martin-in-the-Fields</li>
             <li>Chelsea Old Church</li>
           </ul>
-          <!-- Fuller venue list (fifteen-plus venues) to be supplied by Luca —
-               see MANUAL-ACTIONS-REQUIRED.md. Add further list items above;
-               every venue must be one our singers have actually sung in. -->
         </div>
       </div>
     </section>
@@ -1589,7 +1627,7 @@
           <p>Six to twelve months is usual, and dates abroad want the longer end of that: booking flights and rooms for twelve to twenty-four people takes longer than clearing the singers&rsquo; diaries. A date six weeks out is still worth asking about if it happens to be free. Tell us your date as soon as it is fixed, even if the music is nowhere near settled.</p>
 
           <h3>What determines the cost?</h3>
-          <p>The number of singers, the distance they travel, and the nights they stay. Our UK rates for each ensemble size are published on the <a href="/pricing.html">pricing page</a>. An engagement abroad also carries return flights and accommodation for the whole consort, who arrive the day before to rehearse in the building. We quote for the whole engagement before you commit, and we invoice in pounds sterling, euros, or US dollars.</p>
+          <p>The number of singers, the distance they travel, and the nights they stay. Our UK rates for four to twelve singers are on the <a href="/pricing.html">pricing page</a>. Sixteen and twenty-four voices are quoted for the engagement. An engagement abroad also carries return flights and accommodation for the whole consort, who arrive the day before to rehearse in the building. We quote for the whole engagement before you commit, and we invoice in pounds sterling, euros, or US dollars.</p>
 
           <h3>What do you need from the venue?</h3>
           <p>Room for the consort to stand where the guests can hear them, which in a church usually means the chancel, a gallery, or the west end. A stone building needs no amplification. For a ballroom or a marquee, send us the dimensions and tell us whether the floor is carpeted: a soft room absorbs sound that a chapel would carry, and that changes the number of singers we recommend. Tell us as well whether we are singing to a room that is listening or to one that is talking over drinks &mdash; a reception needs voices enough to clear the noise, and that is the one case where the size of the party moves the answer.</p>
@@ -1624,6 +1662,8 @@
             <input type="hidden" name="utm_term" value="">
             <input type="hidden" name="utm_content" value="">
             <input type="hidden" name="gclid" value="">
+            <input type="hidden" name="gbraid" value="">
+            <input type="hidden" name="wbraid" value="">
             <input type="hidden" name="voicing_explored" value="">
             <input type="hidden" name="time_on_page" value="">
             <input type="checkbox" name="botcheck" class="sr-only" tabindex="-1" aria-hidden="true" autocomplete="off">
@@ -1738,6 +1778,7 @@
               <p data-error-msg="network">We could not send your enquiry. Email <a href="mailto:office@londonchoralservice.com">office@londonchoralservice.com</a> or call <a href="tel:+447356042468">+44 7356 042468</a> and we will take it from there.</p>
             </div>
 
+            <p class="pe-check-note">We use your details only to reply and arrange the music. See our <a href="/privacy.html">privacy notice</a>.</p>
             <button type="submit" class="pe-btn">Send enquiry</button>
           </form>
 

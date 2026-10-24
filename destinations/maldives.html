@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <!-- @include-start partials/head-extras.html -->
+<meta name="referrer" content="strict-origin-when-cross-origin">
 <link rel="preload" href="/fonts/cormorant-garamond.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/fonts/source-serif-4.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="manifest" href="/site.webmanifest">
@@ -202,19 +203,43 @@
         }
       } catch (e) {}
     }
-    document.addEventListener('click', function(e) {
-      var a = e.target.closest && e.target.closest('a[href^="tel:"], a[href^="mailto:"], a[href*="wa.me/"]');
-      if (!a) return;
-      var href = a.getAttribute('href');
-      var method = href.indexOf('tel:') === 0 ? 'call' : href.indexOf('mailto:') === 0 ? 'email' : 'whatsapp';
-      var where = a.closest('.mobile-cta') ? 'mobile_bar' : a.closest('.site-footer') ? 'footer' :
+    function lcsWhere(a) {
+      return a.closest('.mobile-cta') ? 'mobile_bar' : a.closest('.site-footer') ? 'footer' :
         a.closest('.site-header') ? 'header' : 'body';
-      if (method !== 'call') lcsLabelMessage(a, method);
-      loadGA();
-      gtag('event', 'contact_click', { 'method': method, 'link_location': where });
-      var label = method === 'call' ? LCS_ADS.call : LCS_ADS.message;
-      if (label) gtag('event', 'conversion', { 'send_to': label, 'value': 1, 'currency': 'GBP' });
-    });
+    }
+    // Enquiry buttons that lead to a form: the on-page #enquiry / #enquire
+    // anchors and the contact page. link_location is the header, footer or
+    // mobile bar, then the hero, then the nearest section's id.
+    function lcsCtaWhere(a) {
+      var where = lcsWhere(a);
+      if (where !== 'body') return where;
+      if (a.closest('.hero, [class*="hero"]')) return 'hero';
+      var sec = a.closest('section[id], [id]');
+      return (sec && sec.id) || 'body';
+    }
+    function lcsClickHandler(e) {
+      // auxclick also reports right-clicks; only a middle-click opens the link.
+      if (e.type === 'auxclick' && e.button !== 1) return;
+      var t = e.target;
+      var a = t && t.closest && t.closest('a[href^="tel:"], a[href^="mailto:"], a[href*="wa.me/"]');
+      if (a) {
+        var href = a.getAttribute('href');
+        var method = href.indexOf('tel:') === 0 ? 'call' : href.indexOf('mailto:') === 0 ? 'email' : 'whatsapp';
+        if (method !== 'call') lcsLabelMessage(a, method);
+        loadGA();
+        gtag('event', 'contact_click', { 'method': method, 'link_location': lcsWhere(a) });
+        var label = method === 'call' ? LCS_ADS.call : LCS_ADS.message;
+        if (label) gtag('event', 'conversion', { 'send_to': label, 'value': 1, 'currency': 'GBP' });
+        return;
+      }
+      var cta = t && t.closest && t.closest('a[href*="#enquiry"], a[href*="#enquire"], a[href*="contact.html"]');
+      if (cta) {
+        loadGA();
+        gtag('event', 'cta_click', { 'link_location': lcsCtaWhere(cta), 'link_url': cta.getAttribute('href') });
+      }
+    }
+    document.addEventListener('click', lcsClickHandler);
+    document.addEventListener('auxclick', lcsClickHandler);
 
     // Ad click ID and UTM tags from the landing URL, kept for this tab (only once
     // the visitor has allowed cookies) so an enquiry sent from a later page still
@@ -568,7 +593,8 @@
       color: var(--choirStall);
       text-decoration: none;
       border-bottom: 1px solid var(--limestone);
-      padding-bottom: .2rem;
+      display: inline-block;
+      padding-block: .4rem;
     }
     .pe-nav-enquire:hover { border-bottom-color: var(--choirStall); }
 
@@ -731,6 +757,7 @@
     .pe-voice-card input {
       accent-color: var(--cassockRed); /* cassockRed use 2 of 4: checked controls */
     }
+    .pe-voice-card.is-selected,
     .pe-voice-card:has(input:checked) {
       border-color: var(--cassockRed); /* cassockRed use 3 of 4: selected card rule */
       box-shadow: inset 0 0 0 1px var(--cassockRed);
@@ -816,7 +843,8 @@
     /* The playing film (js/video.js) is taller than the frame, which clips
        YouTube's title bar and logo; the shield over it hides the hover UI
        and shows the thumbnail while loading and when paused. */
-    #voicing-media iframe.video-frame {
+    #voicing-media iframe.video-frame,
+    .pe-media iframe.video-frame {
       top: -5rem;
       height: calc(100% + 10rem);
     }
@@ -848,6 +876,26 @@
       outline: none;
       box-shadow: inset 0 0 0 3px var(--parchmentLight);
     }
+    /* Keyboard-reachable full screen button inside the player (js/video.js). */
+    .video-fs {
+      position: absolute;
+      right: .5rem;
+      bottom: .5rem;
+      z-index: 2;
+      min-width: 24px;
+      min-height: 32px;
+      padding: .25rem .6rem;
+      border: 1px solid rgba(250, 246, 238, .6);
+      background: rgba(42, 23, 8, .72);
+      color: #FAF6EE;
+      font: 600 .75rem/1 var(--font-ui);
+      letter-spacing: .06em;
+      cursor: pointer;
+    }
+    .video-fs:hover { background: rgba(42, 23, 8, .9); }
+    .video-fs:focus-visible { outline: 2px solid #FAF6EE; outline-offset: 2px; }
+    .pe-media:fullscreen .video-fs,
+    .pe-media:-webkit-full-screen .video-fs { display: none; }
     #voicing-media:empty + .pe-media-caption { display: none; }
     .pe-media-caption { margin-top: .75rem; }
 
@@ -955,7 +1003,7 @@
       cursor: pointer;
     }
     .pe-check-label span { margin-bottom: 0; }
-    .pe-check-label input { accent-color: var(--cassockRed); }
+    .pe-check-label input { accent-color: var(--cassockRed); width: 1.5rem; height: 1.5rem; flex-shrink: 0; }
     /* Optional ad-measurement checkbox: a sentence, so not the small capitals of a field label. */
     .pe-check-label--consent { margin-top: 1.75rem; }
     .pe-check-label--consent span {
@@ -1338,7 +1386,7 @@
             works in a garden, on a terrace or in a chapel with no instrument.</p>
           <div class="pe-media">
             <button type="button" class="video-thumb" data-video="-GQaQEGhYEs" aria-label="Play Ubi Caritas">
-              <img src="https://i.ytimg.com/vi/-GQaQEGhYEs/hqdefault.jpg" alt="" loading="lazy" width="480" height="360">
+              <img src="/assets/films/film--GQaQEGhYEs-640.webp" srcset="/assets/films/film--GQaQEGhYEs-640.webp 640w, /assets/films/film--GQaQEGhYEs-1280.webp 1280w" sizes="(max-width: 805px) 100vw, 624px" alt="" loading="lazy" width="1280" height="720">
               <svg class="play-btn" viewBox="0 0 68 48" aria-hidden="true"><path d="M66.52 7.74c-.78-2.93-2.49-5.41-5.42-6.19C55.79.13 34 0 34 0S12.21.13 6.9 1.55c-2.93.78-4.63 3.26-5.42 6.19C.06 13.05 0 24 0 24s.06 10.95 1.48 16.26c.78 2.93 2.49 5.41 5.42 6.19C12.21 47.87 34 48 34 48s21.79-.13 27.1-1.55c2.93-.78 4.63-3.26 5.42-6.19C67.94 34.95 68 24 68 24s-.06-10.95-1.48-16.26z" fill="rgba(42, 23, 8, .72)"/><path d="M45 24 27 14v20z" fill="#FAF6EE"/></svg>
             </button>
           </div>
@@ -1499,6 +1547,8 @@
             <input type="hidden" name="utm_term" value="">
             <input type="hidden" name="utm_content" value="">
             <input type="hidden" name="gclid" value="">
+            <input type="hidden" name="gbraid" value="">
+            <input type="hidden" name="wbraid" value="">
             <input type="hidden" name="time_on_page" value="">
             <input type="checkbox" name="botcheck" class="sr-only" tabindex="-1" aria-hidden="true" autocomplete="off">
 
@@ -1612,6 +1662,7 @@
               <p data-error-msg="network">We could not send your enquiry. Email <a href="mailto:office@londonchoralservice.com">office@londonchoralservice.com</a> or call <a href="tel:+447356042468">+44 7356 042468</a> and we will take it from there.</p>
             </div>
 
+            <p class="pe-check-note">We use your details only to reply and arrange the music. See our <a href="/privacy.html">privacy notice</a>.</p>
             <button type="submit" class="pe-btn">Send enquiry</button>
           </form>
 
@@ -1632,6 +1683,7 @@
   </footer>
   <!-- @include-end partials/private-footer.html -->
 
+  <script src="/js/video.js" defer></script>
   <script src="/js/private-events.js" defer></script>
 </body>
 </html>

@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <!-- @include-start partials/head-extras.html -->
+<meta name="referrer" content="strict-origin-when-cross-origin">
 <link rel="preload" href="/fonts/cormorant-garamond.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/fonts/source-serif-4.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="manifest" href="/site.webmanifest">
@@ -202,19 +203,43 @@
         }
       } catch (e) {}
     }
-    document.addEventListener('click', function(e) {
-      var a = e.target.closest && e.target.closest('a[href^="tel:"], a[href^="mailto:"], a[href*="wa.me/"]');
-      if (!a) return;
-      var href = a.getAttribute('href');
-      var method = href.indexOf('tel:') === 0 ? 'call' : href.indexOf('mailto:') === 0 ? 'email' : 'whatsapp';
-      var where = a.closest('.mobile-cta') ? 'mobile_bar' : a.closest('.site-footer') ? 'footer' :
+    function lcsWhere(a) {
+      return a.closest('.mobile-cta') ? 'mobile_bar' : a.closest('.site-footer') ? 'footer' :
         a.closest('.site-header') ? 'header' : 'body';
-      if (method !== 'call') lcsLabelMessage(a, method);
-      loadGA();
-      gtag('event', 'contact_click', { 'method': method, 'link_location': where });
-      var label = method === 'call' ? LCS_ADS.call : LCS_ADS.message;
-      if (label) gtag('event', 'conversion', { 'send_to': label, 'value': 1, 'currency': 'GBP' });
-    });
+    }
+    // Enquiry buttons that lead to a form: the on-page #enquiry / #enquire
+    // anchors and the contact page. link_location is the header, footer or
+    // mobile bar, then the hero, then the nearest section's id.
+    function lcsCtaWhere(a) {
+      var where = lcsWhere(a);
+      if (where !== 'body') return where;
+      if (a.closest('.hero, [class*="hero"]')) return 'hero';
+      var sec = a.closest('section[id], [id]');
+      return (sec && sec.id) || 'body';
+    }
+    function lcsClickHandler(e) {
+      // auxclick also reports right-clicks; only a middle-click opens the link.
+      if (e.type === 'auxclick' && e.button !== 1) return;
+      var t = e.target;
+      var a = t && t.closest && t.closest('a[href^="tel:"], a[href^="mailto:"], a[href*="wa.me/"]');
+      if (a) {
+        var href = a.getAttribute('href');
+        var method = href.indexOf('tel:') === 0 ? 'call' : href.indexOf('mailto:') === 0 ? 'email' : 'whatsapp';
+        if (method !== 'call') lcsLabelMessage(a, method);
+        loadGA();
+        gtag('event', 'contact_click', { 'method': method, 'link_location': lcsWhere(a) });
+        var label = method === 'call' ? LCS_ADS.call : LCS_ADS.message;
+        if (label) gtag('event', 'conversion', { 'send_to': label, 'value': 1, 'currency': 'GBP' });
+        return;
+      }
+      var cta = t && t.closest && t.closest('a[href*="#enquiry"], a[href*="#enquire"], a[href*="contact.html"]');
+      if (cta) {
+        loadGA();
+        gtag('event', 'cta_click', { 'link_location': lcsCtaWhere(cta), 'link_url': cta.getAttribute('href') });
+      }
+    }
+    document.addEventListener('click', lcsClickHandler);
+    document.addEventListener('auxclick', lcsClickHandler);
 
     // Ad click ID and UTM tags from the landing URL, kept for this tab (only once
     // the visitor has allowed cookies) so an enquiry sent from a later page still
@@ -341,7 +366,7 @@
   <!-- @include-end partials/analytics.html -->
 
   <title>How Much Does Wedding Music Cost? | London Choral Service</title>
-  <meta name="description" content="What wedding music costs in 2026: a soloist or organist £250, a choir of four £1,150, and what a church organist charges. Flat prices with no VAT added.">
+  <meta name="description" content="What wedding music costs in 2026: a soloist or organist £250, a choir of four £1,150, and what the price covers. Flat prices with no VAT added.">
   <meta name="theme-color" content="#F7F3EE">
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://londonchoralservice.com/music-guides/wedding-music-costs.html">
@@ -349,7 +374,7 @@
   <link rel="alternate" hreflang="x-default" href="https://londonchoralservice.com/music-guides/wedding-music-costs.html">
 
   <meta property="og:title" content="How Much Does Wedding Music Cost? | London Choral Service">
-  <meta property="og:description" content="What wedding music costs in 2026: a soloist or organist £250, a choir of four £1,150, and what a church organist charges. Flat prices with no VAT added.">
+  <meta property="og:description" content="What wedding music costs in 2026: a soloist or organist £250, a choir of four £1,150, and what the price covers. Flat prices with no VAT added.">
   <meta property="og:type" content="article">
   <meta property="og:url" content="https://londonchoralservice.com/music-guides/wedding-music-costs.html">
   <meta property="og:locale" content="en_GB">
@@ -363,7 +388,7 @@
 
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="How Much Does Wedding Music Cost? | London Choral Service">
-  <meta name="twitter:description" content="What wedding music costs in 2026: a soloist or organist £250, a choir of four £1,150, and what a church organist charges. Flat prices with no VAT added.">
+  <meta name="twitter:description" content="What wedding music costs in 2026: a soloist or organist £250, a choir of four £1,150, and what the price covers. Flat prices with no VAT added.">
   <meta name="twitter:image" content="https://londonchoralservice.com/assets/og-weddings.png">
   <meta name="twitter:image:alt" content="The London Choral Service: wedding choirs and singers">
   <link rel="dns-prefetch" href="https://www.googletagmanager.com">
@@ -380,6 +405,7 @@
     @font-face{font-family:'Source Serif 4';font-style:italic;font-weight:400;font-display:swap;src:url('/fonts/source-serif-4-italic.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;}
     *, *::before, *::after{box-sizing:border-box;margin:0;padding:0;}
     html{-webkit-text-size-adjust:100%;scroll-behavior:smooth;}
+    @media (max-width: 1080px){html{scroll-padding-bottom:5.5rem;}}
     @media (prefers-reduced-motion: reduce){html{scroll-behavior:auto;}}
     body{font-family:var(--font-body);font-size:var(--text-base);line-height:var(--leading-normal);color:var(--color-text);background-color:var(--color-bg);-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;}
     h1, h2, h3, h4, h5, h6{font-family:var(--font-heading);line-height:var(--leading-tight);text-wrap:balance;}
@@ -417,7 +443,7 @@
     .nav-links a{font-family:var(--font-heading);font-size:var(--text-sm);font-weight:500;letter-spacing:0.05em;text-transform:uppercase;color:var(--color-text);text-decoration:none;transition:color var(--transition-fast);white-space:nowrap;}
     .nav-links a:hover{color:var(--color-accent);}
     .nav-links a[aria-current="page"]{text-decoration-line:underline;text-decoration-thickness:1px;text-decoration-color:var(--color-accent);text-underline-offset:0.45em;}
-    .nav-toggle{display:none;background:none;border:none;cursor:pointer;padding:var(--space-sm);width:2.5rem;height:2.5rem;position:relative;}
+    .nav-toggle{display:none;background:none;border:none;cursor:pointer;padding:var(--space-sm);width:2.75rem;height:2.75rem;flex-shrink:0;position:relative;}
     .nav-toggle:hover, .nav-toggle:focus-visible{background-color:var(--color-bg-alt);border-radius:4px;}
     .nav-toggle-bar, .nav-toggle-bar::before, .nav-toggle-bar::after{display:block;width:1.5rem;height:2px;background-color:var(--color-text);position:absolute;left:50%;transform:translateX(-50%);transition:all var(--transition-base);}
     .nav-toggle-bar{top:50%;transform:translate(-50%,-50%);}
@@ -427,6 +453,7 @@
     .nav-toggle[aria-expanded="true"] .nav-toggle-bar::before{top:0;transform:translateX(-50%) rotate(45deg);}
     .nav-toggle[aria-expanded="true"] .nav-toggle-bar::after{top:0;transform:translateX(-50%) rotate(-45deg);}
     @media (max-width: 1080px){.nav-toggle{display:block;flex-shrink:0;}
+    .site-name{white-space:normal;}
     .nav-links{display:none;position:absolute;top:100%;left:0;right:0;flex-direction:column;background-color:var(--color-bg);border-bottom:1px solid var(--color-rule);padding:var(--space-lg);gap:0;z-index:100;}
     .nav-links.is-open{display:flex;}
     .nav-links a{display:block;padding:var(--space-md) 0;font-size:var(--text-base);border-bottom:1px solid var(--color-rule);}
@@ -439,7 +466,7 @@
     .breadcrumb ol{list-style:none;padding:0;margin:0;display:flex;flex-wrap:wrap;gap:0;font-family:var(--font-body);font-size:var(--text-sm);color:var(--color-text-mid);}
     .breadcrumb li::after{content:'\203A';margin-inline:0.5em;color:var(--color-rule);}
     .breadcrumb li:last-child::after{display:none;}
-    .breadcrumb a{color:var(--color-text-mid);text-decoration:none;}
+    .breadcrumb a{color:var(--color-text-mid);text-decoration:none;display:inline-block;padding-block:0.3em;margin-block:-0.3em;}
     .breadcrumb a:hover{color:var(--color-accent);}
     .mobile-cta{display:none;}
     @media (max-width: 1080px){.mobile-cta{display:flex;position:fixed;bottom:0;left:0;right:0;z-index:200;background-color:var(--color-bg);border-top:1px solid var(--color-rule);padding:var(--space-sm) var(--space-lg);padding-bottom:calc(var(--space-sm) + env(safe-area-inset-bottom,0px));gap:var(--space-sm);align-items:center;justify-content:center;transition:transform 0.3s ease;}
@@ -500,8 +527,8 @@
     a[href^="mailto"]::after, a[href^="tel"]::after{content:none;}
     h1, h2, h3{break-after:avoid;}}
   </style>
-  <link rel="preload" href="/css/style.css?v=76ead049b8" as="style" onload="this.onload=null;this.rel='stylesheet'">
-  <noscript><link rel="stylesheet" href="/css/style.css?v=76ead049b8"></noscript>
+  <link rel="preload" href="/css/style.css?v=44640bbffc" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <noscript><link rel="stylesheet" href="/css/style.css?v=44640bbffc"></noscript>
   <!-- @css-end -->
 
   <link rel="icon" href="../assets/favicon.ico" sizes="any">
@@ -519,7 +546,7 @@
         "inLanguage": "en-GB",
         "datePublished": "2026-03-04",
         "dateModified": "2026-10-24",
-        "description": "What wedding music costs in 2026: a soloist or organist £250, a choir of four £1,150, and what a church organist charges. Flat prices with no VAT added.",
+        "description": "What wedding music costs in 2026: a soloist or organist £250, a choir of four £1,150, and what the price covers. Flat prices with no VAT added.",
         "author": [
           {
             "@type": "Person",
@@ -528,10 +555,7 @@
             "url": "https://londonchoralservice.com/about.html"
           },
           {
-            "@type": "Organization",
-            "name": "The London Choral Service",
-            "alternateName": "London Choral Service",
-            "url": "https://londonchoralservice.com"
+            "@id": "https://londonchoralservice.com/#organization"
           }
         ],
         "image": {
@@ -549,14 +573,7 @@
           ]
         },
         "publisher": {
-          "@type": "Organization",
-          "name": "The London Choral Service",
-          "alternateName": "London Choral Service",
-          "url": "https://londonchoralservice.com",
-          "logo": {
-            "@type": "ImageObject",
-            "url": "https://londonchoralservice.com/assets/og-image.png"
-          }
+          "@id": "https://londonchoralservice.com/#organization"
         },
         "mainEntityOfPage": {
           "@type": "WebPage",
@@ -564,7 +581,7 @@
         }
       },
       {
-        "@type": "LocalBusiness",
+        "@type": ["LocalBusiness", "PerformingGroup", "MusicGroup"],
         "@id": "https://londonchoralservice.com/#organization",
         "name": "The London Choral Service"
       },
@@ -651,8 +668,6 @@
             <li><a href="/weddings.html">Weddings</a></li>
             <li><a href="/funerals.html">Funerals</a></li>
             <li><a href="/corporate.html">Corporate</a></li>
-            <li><a href="/christmas.html">Christmas carol singers</a></li>
-            <li><a href="/christmas-carol-services.html">Church carol services</a></li>
             <li><a href="/private-events.html">Private Events</a></li>
             <li><a href="/destinations/">Weddings Abroad</a></li>
             <li class="dropdown-separator" aria-hidden="true"></li>
@@ -685,7 +700,15 @@
             <li><a href="/music-guides/">Browse all</a></li>
           </ul>
         </li>
-        <li><a href="/christmas.html">Christmas</a></li>
+        <li class="has-dropdown">
+          <a href="/christmas.html" aria-expanded="false" class="dropdown-trigger">Christmas<span class="dropdown-caret" aria-hidden="true"></span></a>
+          <ul class="dropdown-menu">
+            <li><a href="/christmas.html">Christmas carol singers</a></li>
+            <li><a href="/christmas-carol-services.html">Church carol services</a></li>
+            <li><a href="/christmas-pricing.html">Christmas prices</a></li>
+            <li><a href="/christmas-listen.html">Hear the carols</a></li>
+          </ul>
+        </li>
         <li><a href="/pricing.html">Pricing</a></li>
         <li><a href="/contact.html">Contact</a></li>
       </ul>
@@ -713,7 +736,7 @@
 
       <section class="section" style="padding-block-start: var(--space-2xl)">
         <div class="prose">
-          <p class="lede">Few musicians publish their wedding prices, so couples often book without knowing what a fair fee looks like. This guide sets out what we charge for soloists, choirs and organists in 2026, what a church&rsquo;s own organist costs, what the price should cover and what can add to it.</p>
+          <p class="lede">Few musicians publish their wedding prices, so couples often book without knowing what a fair fee looks like. This guide sets out what we charge for soloists, choirs and organists in 2026, what the price should cover and what can add to it.</p>
           <p><strong>How much does wedding music cost?</strong> With us, a soloist or an organist costs &pound;250 and the two together &pound;500. A Small Choir of four costs &pound;1,150 and a choir of eight &pound;2,000, and an organist adds &pound;250 to any choir, so four singers with organ come to &pound;1,400. Each price covers up to two hours, including a rehearsal, in Greater London.</p>
           <p class="text-sm text-mid">We provide singers, choirs and organists for <a href="../weddings.html">weddings</a> across London and the UK, from a soloist at &pound;250 to a chorus of twelve at &pound;3,000, with no VAT added.</p>
         </div>
@@ -729,7 +752,7 @@
           <p><strong>Sextet (6 singers): from &pound;1,600.</strong> Six singers make a far bigger sound than a quartet for &pound;400 less than a choir of eight.</p>
           <p><strong>Full choir (8 singers): from &pound;2,000.</strong> Eight voices suit larger churches and bigger congregations, and they can divide into eight parts for pieces by Parry or Stanford. In a resonant building the sound reaches the back pews.</p>
           <p><strong>12-voice chorus: from &pound;3,000.</strong> Twelve singers for the largest churches and cathedrals, or for couples who want anthems on the scale of a state occasion.</p>
-          <p><strong>Organist: from &pound;250.</strong> A professional organist plays the entrance, the hymns, music for the signing of the register and the exit. The fee is the same booked alone or added to a choir, and covers preparation, a rehearsal and travel within Greater London.</p>
+          <p><strong>Organist: &pound;250.</strong> A professional organist plays the entrance, the hymns, music for the signing of the register and the exit. The fee is the same booked alone or added to a choir, and covers preparation, a rehearsal and travel within Greater London.</p>
           <p>We also provide <strong>string quartets, harpists and other instrumentalists</strong> for ceremonies, drinks receptions and wedding breakfasts, from &pound;250. A string quartet often plays as guests arrive, and a harpist suits the signing of the register. If you have something particular in mind, <a href="../contact.html">get in touch</a> and we will quote for it.</p>
           <p>Every option is set out on our <a href="../pricing.html">pricing page</a>.</p>
         </div>
@@ -787,7 +810,7 @@
           <h2>Common combinations and what they cost</h2>
           <p>Most couples book singers and an organist together. These are the usual pairings and their totals:</p>
           <ul>
-            <li><strong><a href="wedding-organist-guide.html">Organist</a> alone: from &pound;250.</strong> The organist plays the entrance, the hymns, the signing of the register and the exit. In a church with a good organ, this can be all you need.</li>
+            <li><strong><a href="wedding-organist-guide.html">Organist</a> alone: &pound;250.</strong> The organist plays the entrance, the hymns, the signing of the register and the exit. In a church with a good organ, this can be all you need.</li>
             <li><strong>Organist + soloist: from &pound;500.</strong> The organ supports the hymns, and the soloist leads the singing and sings a piece or two. It suits smaller weddings well.</li>
             <li><strong>Small <a href="wedding-choir-guide.html">choir</a> + organist: from &pound;1,400.</strong> Four singers with organ is the combination couples choose most. The choir sings the hymns in four parts and an anthem during the signing of the register, and the organ fills the building.</li>
             <li><strong>Quintet + organist: from &pound;1,650.</strong> Five singers with organ. The second soprano strengthens the melody and widens the repertoire.</li>
@@ -955,7 +978,7 @@
       <p class="text-xs text-mid">
         Areas we serve: <a href="/areas/london.html">London</a> &middot; <a href="/areas/birmingham.html">Birmingham</a> &middot; <a href="/areas/manchester.html">Manchester</a> &middot; <a href="/areas/liverpool.html">Liverpool</a> &middot; <a href="/areas/oxford.html">Oxford</a> &middot; <a href="/areas/cambridge.html">Cambridge</a> &middot; <a href="/areas/reading.html">Reading</a> &middot; <a href="/areas/slough-maidenhead.html">Slough &amp; Maidenhead</a> &middot; <a href="/areas/guildford.html">Guildford</a> &middot; <a href="/areas/brighton.html">Brighton</a> &middot; <a href="/areas/chester.html">Chester</a> &middot; <a href="/areas/st-albans.html">St Albans</a> &middot; <a href="/areas/canterbury.html">Canterbury</a> &middot; <a href="/areas/windsor.html">Windsor</a> &middot; <a href="/areas/winchester.html">Winchester</a> &middot; <a href="/areas/salisbury.html">Salisbury</a> &middot; <a href="/areas/bath.html">Bath</a> &middot; <a href="/areas/chelmsford.html">Chelmsford</a> &middot; <a href="/areas/rochester.html">Rochester</a> &middot; <a href="/areas/">All areas</a>
       </p>
-      <p class="text-xs text-mid">The London Choral Service is the operating name of Alma Consort Ltd, registered in England and Wales, company no. 16785727. Based in London, serving the whole of the United Kingdom.</p>
+      <p class="text-xs text-mid">The London Choral Service is the operating name of Alma Consort Ltd, registered in England and Wales, company no. 16785727, registered office 20 Wenlock Road, London N1 7GU. Based in London, serving the whole of the United Kingdom.</p>
       <p class="text-xs text-mid">&copy; <span data-year>2026</span> The London Choral Service. All rights reserved.</p>
     </div>
   </footer>

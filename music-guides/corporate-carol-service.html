@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <!-- @include-start partials/head-extras.html -->
+<meta name="referrer" content="strict-origin-when-cross-origin">
 <link rel="preload" href="/fonts/cormorant-garamond.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/fonts/source-serif-4.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="manifest" href="/site.webmanifest">
@@ -201,19 +202,43 @@
         }
       } catch (e) {}
     }
-    document.addEventListener('click', function(e) {
-      var a = e.target.closest && e.target.closest('a[href^="tel:"], a[href^="mailto:"], a[href*="wa.me/"]');
-      if (!a) return;
-      var href = a.getAttribute('href');
-      var method = href.indexOf('tel:') === 0 ? 'call' : href.indexOf('mailto:') === 0 ? 'email' : 'whatsapp';
-      var where = a.closest('.mobile-cta') ? 'mobile_bar' : a.closest('.site-footer') ? 'footer' :
+    function lcsWhere(a) {
+      return a.closest('.mobile-cta') ? 'mobile_bar' : a.closest('.site-footer') ? 'footer' :
         a.closest('.site-header') ? 'header' : 'body';
-      if (method !== 'call') lcsLabelMessage(a, method);
-      loadGA();
-      gtag('event', 'contact_click', { 'method': method, 'link_location': where });
-      var label = method === 'call' ? LCS_ADS.call : LCS_ADS.message;
-      if (label) gtag('event', 'conversion', { 'send_to': label, 'value': 1, 'currency': 'GBP' });
-    });
+    }
+    // Enquiry buttons that lead to a form: the on-page #enquiry / #enquire
+    // anchors and the contact page. link_location is the header, footer or
+    // mobile bar, then the hero, then the nearest section's id.
+    function lcsCtaWhere(a) {
+      var where = lcsWhere(a);
+      if (where !== 'body') return where;
+      if (a.closest('.hero, [class*="hero"]')) return 'hero';
+      var sec = a.closest('section[id], [id]');
+      return (sec && sec.id) || 'body';
+    }
+    function lcsClickHandler(e) {
+      // auxclick also reports right-clicks; only a middle-click opens the link.
+      if (e.type === 'auxclick' && e.button !== 1) return;
+      var t = e.target;
+      var a = t && t.closest && t.closest('a[href^="tel:"], a[href^="mailto:"], a[href*="wa.me/"]');
+      if (a) {
+        var href = a.getAttribute('href');
+        var method = href.indexOf('tel:') === 0 ? 'call' : href.indexOf('mailto:') === 0 ? 'email' : 'whatsapp';
+        if (method !== 'call') lcsLabelMessage(a, method);
+        loadGA();
+        gtag('event', 'contact_click', { 'method': method, 'link_location': lcsWhere(a) });
+        var label = method === 'call' ? LCS_ADS.call : LCS_ADS.message;
+        if (label) gtag('event', 'conversion', { 'send_to': label, 'value': 1, 'currency': 'GBP' });
+        return;
+      }
+      var cta = t && t.closest && t.closest('a[href*="#enquiry"], a[href*="#enquire"], a[href*="contact.html"]');
+      if (cta) {
+        loadGA();
+        gtag('event', 'cta_click', { 'link_location': lcsCtaWhere(cta), 'link_url': cta.getAttribute('href') });
+      }
+    }
+    document.addEventListener('click', lcsClickHandler);
+    document.addEventListener('auxclick', lcsClickHandler);
 
     // Ad click ID and UTM tags from the landing URL, kept for this tab (only once
     // the visitor has allowed cookies) so an enquiry sent from a later page still
@@ -375,6 +400,7 @@
     @font-face{font-family:'Source Serif 4';font-style:italic;font-weight:400;font-display:swap;src:url('/fonts/source-serif-4-italic.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;}
     *, *::before, *::after{box-sizing:border-box;margin:0;padding:0;}
     html{-webkit-text-size-adjust:100%;scroll-behavior:smooth;}
+    @media (max-width: 1080px){html{scroll-padding-bottom:5.5rem;}}
     @media (prefers-reduced-motion: reduce){html{scroll-behavior:auto;}}
     body{font-family:var(--font-body);font-size:var(--text-base);line-height:var(--leading-normal);color:var(--color-text);background-color:var(--color-bg);-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;}
     h1, h2, h3, h4, h5, h6{font-family:var(--font-heading);line-height:var(--leading-tight);text-wrap:balance;}
@@ -413,7 +439,7 @@
     .nav-links a{font-family:var(--font-heading);font-size:var(--text-sm);font-weight:500;letter-spacing:0.05em;text-transform:uppercase;color:var(--color-text);text-decoration:none;transition:color var(--transition-fast);white-space:nowrap;}
     .nav-links a:hover{color:var(--color-accent);}
     .nav-links a[aria-current="page"]{text-decoration-line:underline;text-decoration-thickness:1px;text-decoration-color:var(--color-accent);text-underline-offset:0.45em;}
-    .nav-toggle{display:none;background:none;border:none;cursor:pointer;padding:var(--space-sm);width:2.5rem;height:2.5rem;position:relative;}
+    .nav-toggle{display:none;background:none;border:none;cursor:pointer;padding:var(--space-sm);width:2.75rem;height:2.75rem;flex-shrink:0;position:relative;}
     .nav-toggle:hover, .nav-toggle:focus-visible{background-color:var(--color-bg-alt);border-radius:4px;}
     .nav-toggle-bar, .nav-toggle-bar::before, .nav-toggle-bar::after{display:block;width:1.5rem;height:2px;background-color:var(--color-text);position:absolute;left:50%;transform:translateX(-50%);transition:all var(--transition-base);}
     .nav-toggle-bar{top:50%;transform:translate(-50%,-50%);}
@@ -423,6 +449,7 @@
     .nav-toggle[aria-expanded="true"] .nav-toggle-bar::before{top:0;transform:translateX(-50%) rotate(45deg);}
     .nav-toggle[aria-expanded="true"] .nav-toggle-bar::after{top:0;transform:translateX(-50%) rotate(-45deg);}
     @media (max-width: 1080px){.nav-toggle{display:block;flex-shrink:0;}
+    .site-name{white-space:normal;}
     .nav-links{display:none;position:absolute;top:100%;left:0;right:0;flex-direction:column;background-color:var(--color-bg);border-bottom:1px solid var(--color-rule);padding:var(--space-lg);gap:0;z-index:100;}
     .nav-links.is-open{display:flex;}
     .nav-links a{display:block;padding:var(--space-md) 0;font-size:var(--text-base);border-bottom:1px solid var(--color-rule);}
@@ -435,7 +462,7 @@
     .breadcrumb ol{list-style:none;padding:0;margin:0;display:flex;flex-wrap:wrap;gap:0;font-family:var(--font-body);font-size:var(--text-sm);color:var(--color-text-mid);}
     .breadcrumb li::after{content:'\203A';margin-inline:0.5em;color:var(--color-rule);}
     .breadcrumb li:last-child::after{display:none;}
-    .breadcrumb a{color:var(--color-text-mid);text-decoration:none;}
+    .breadcrumb a{color:var(--color-text-mid);text-decoration:none;display:inline-block;padding-block:0.3em;margin-block:-0.3em;}
     .breadcrumb a:hover{color:var(--color-accent);}
     .mobile-cta{display:none;}
     @media (max-width: 1080px){.mobile-cta{display:flex;position:fixed;bottom:0;left:0;right:0;z-index:200;background-color:var(--color-bg);border-top:1px solid var(--color-rule);padding:var(--space-sm) var(--space-lg);padding-bottom:calc(var(--space-sm) + env(safe-area-inset-bottom,0px));gap:var(--space-sm);align-items:center;justify-content:center;transition:transform 0.3s ease;}
@@ -506,8 +533,8 @@
     h1, h2, h3{break-after:avoid;}
     img{max-width:100% !important;}}
   </style>
-  <link rel="preload" href="/css/style.css?v=76ead049b8" as="style" onload="this.onload=null;this.rel='stylesheet'">
-  <noscript><link rel="stylesheet" href="/css/style.css?v=76ead049b8"></noscript>
+  <link rel="preload" href="/css/style.css?v=44640bbffc" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <noscript><link rel="stylesheet" href="/css/style.css?v=44640bbffc"></noscript>
   <!-- @css-end -->
   <link rel="icon" href="../assets/favicon.ico" sizes="any">
   <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
@@ -532,10 +559,7 @@
             "url": "https://londonchoralservice.com/about.html"
           },
           {
-            "@type": "Organization",
-            "name": "The London Choral Service",
-            "alternateName": "London Choral Service",
-            "url": "https://londonchoralservice.com"
+            "@id": "https://londonchoralservice.com/#organization"
           }
         ],
         "image": {
@@ -553,14 +577,7 @@
           ]
         },
         "publisher": {
-          "@type": "Organization",
-          "name": "The London Choral Service",
-          "alternateName": "London Choral Service",
-          "url": "https://londonchoralservice.com",
-          "logo": {
-            "@type": "ImageObject",
-            "url": "https://londonchoralservice.com/assets/og-image.png"
-          }
+          "@id": "https://londonchoralservice.com/#organization"
         },
         "mainEntityOfPage": {
           "@type": "WebPage",
@@ -568,7 +585,7 @@
         }
       },
       {
-        "@type": "LocalBusiness",
+        "@type": ["LocalBusiness", "PerformingGroup", "MusicGroup"],
         "@id": "https://londonchoralservice.com/#organization",
         "name": "The London Choral Service"
       },
@@ -602,7 +619,7 @@
               "name": "How do you plan a corporate carol service?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "Choose a date in the second or third week of December and a venue: a church, your own offices or a hotel function room. Book a professional choir by September, choose six to eight carols and three to six readings, ask colleagues to read, and print a programme with the words of every carol."
+                "text": "Choose a date in the second or third week of December and a venue: a church, your own offices or a hotel function room. Book a professional choir as soon as you have a date, choose six to eight carols and three to six readings, ask colleagues to read, and print a programme with the words of every carol."
               }
             },
             {
@@ -642,7 +659,7 @@
               "name": "How far in advance should I plan a corporate carol service?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "Start in September for a December service. Churches and professional musicians are at their busiest in December, and the best dates go first. If your date is already close, ask anyway: last-minute bookings are possible when singers are free."
+                "text": "Start eight to twelve weeks ahead for a December service. Churches and professional musicians are at their busiest in December, and the best dates go first. If your date is already close, ask anyway: last-minute bookings are possible when singers are free."
               }
             }
           ]
@@ -681,8 +698,6 @@
             <li><a href="/weddings.html">Weddings</a></li>
             <li><a href="/funerals.html">Funerals</a></li>
             <li><a href="/corporate.html">Corporate</a></li>
-            <li><a href="/christmas.html">Christmas carol singers</a></li>
-            <li><a href="/christmas-carol-services.html">Church carol services</a></li>
             <li><a href="/private-events.html">Private Events</a></li>
             <li><a href="/destinations/">Weddings Abroad</a></li>
             <li class="dropdown-separator" aria-hidden="true"></li>
@@ -715,7 +730,15 @@
             <li><a href="/music-guides/">Browse all</a></li>
           </ul>
         </li>
-        <li><a href="/christmas.html">Christmas</a></li>
+        <li class="has-dropdown">
+          <a href="/christmas.html" aria-expanded="false" class="dropdown-trigger">Christmas<span class="dropdown-caret" aria-hidden="true"></span></a>
+          <ul class="dropdown-menu">
+            <li><a href="/christmas.html">Christmas carol singers</a></li>
+            <li><a href="/christmas-carol-services.html">Church carol services</a></li>
+            <li><a href="/christmas-pricing.html">Christmas prices</a></li>
+            <li><a href="/christmas-listen.html">Hear the carols</a></li>
+          </ul>
+        </li>
         <li><a href="/pricing.html">Pricing</a></li>
         <li><a href="/contact.html">Contact</a></li>
       </ul>
@@ -742,7 +765,7 @@
       <section class="section" style="padding-block-start: var(--space-2xl)">
         <div class="prose">
           <p class="lede">A carol service gives a company something a drinks reception can&rsquo;t: an hour in which the whole office, from new joiners to senior partners, sings the same carols in the same room. This guide covers the date, the venue, the music and readings, a sample running order and the costs, whether the service is for staff in your own atrium or for clients in a City church.</p>
-          <p><strong>How do you plan a corporate or office carol service?</strong> Pick a Tuesday, Wednesday or Thursday in the second or third week of December, then a room: a church, your own atrium or a hotel function room. Book the singers by September. Choose six to eight carols and three to six readings, print the words in a programme, and allow 45 minutes at lunchtime or an hour after work.</p>
+          <p><strong>How do you plan a corporate or office carol service?</strong> Pick a Tuesday, Wednesday or Thursday in the second or third week of December, then a room: a church, your own atrium or a hotel function room. Book the singers as soon as you have the date. Choose six to eight carols and three to six readings, print the words in a programme, and allow 45 minutes at lunchtime or an hour after work.</p>
           <p class="text-sm text-mid">We supply the choir for <a href="../christmas-carol-services.html">workplace carol services</a>: in Greater London four singers cost from &pound;1,150 and eight from &pound;2,000, with an organist or pianist at &pound;250. See our <a href="../corporate.html">corporate events page</a> for music beyond Christmas.</p>
           <div class="video-embed" style="margin-block-start: var(--space-lg)">
             <button class="video-thumb" aria-label="Play Once in Royal David&rsquo;s City" data-video="SbvqWglsbMo">
@@ -779,7 +802,7 @@
           <p>Whichever you choose, test the room before you commit. Clap your hands in it and listen to how long the sound hangs.</p>
 
           <h3>3. Book the musicians early</h3>
-          <p>December is the busiest month of the musical year, so the earlier you start <a href="christmas-choir-hire.html">booking your choir</a>, the wider your choice of date and ensemble. September is ideal for a December service. If your date is already close, ask anyway: we take last-minute Christmas bookings when we have singers free.</p>
+          <p>December is the busiest month of the musical year, so the earlier you start <a href="christmas-choir-hire.html">booking your choir</a>, the wider your choice of date and ensemble. Eight to twelve weeks ahead is ideal for a December service. If your date is already close, ask anyway: we take last-minute Christmas bookings when we have singers free.</p>
           <p>The choir does two jobs. It leads the room&rsquo;s singing, holding the tempo and filling in the harmony so that hesitant singers have something to lean on, and it sings two or three pieces on its own: an unaccompanied anthem, or a descant on the last verse of a carol. Four singers will lead a room of about 150; eight will carry a church of 400.</p>
           <p><strong>Accompaniment.</strong> Most carol services use an organ, a piano or both. In a church with a good organ, use it: a full organ on the last verse of <em>O Come, All Ye Faithful</em> is hard to beat. In an office or hotel, a piano or a good digital keyboard does the same job. We can supply an organist or pianist at &pound;250 alongside the choir.</p>
 
@@ -865,10 +888,10 @@
         <div class="prose">
           <h2>Planning timeline</h2>
           <ul>
-            <li><strong>September</strong>&thinsp;&mdash;&thinsp;decide on a date, start venue enquiries, and ask musicians for availability and a quote.</li>
-            <li><strong>October</strong>&thinsp;&mdash;&thinsp;confirm the venue and book the choir. Start choosing carols and readings, and pick your readers.</li>
-            <li><strong>November</strong>&thinsp;&mdash;&thinsp;finalise the running order, order the programmes, arrange catering, and send invitations to clients and colleagues.</li>
-            <li><strong>Early December</strong>&thinsp;&mdash;&thinsp;brief your readers. Confirm access times, seating, candles and parking with the venue, and send the final running order to the musicians.</li>
+            <li><strong>Twelve weeks before</strong>&thinsp;&mdash;&thinsp;decide on a date, start venue enquiries, and ask musicians for availability and a quote.</li>
+            <li><strong>Eight weeks before</strong>&thinsp;&mdash;&thinsp;confirm the venue and book the choir. Start choosing carols and readings, and pick your readers.</li>
+            <li><strong>Four weeks before</strong>&thinsp;&mdash;&thinsp;finalise the running order, order the programmes, arrange catering, and send invitations to clients and colleagues.</li>
+            <li><strong>The week before</strong>&thinsp;&mdash;&thinsp;brief your readers. Confirm access times, seating, candles and parking with the venue, and send the final running order to the musicians.</li>
             <li><strong>The day</strong>&thinsp;&mdash;&thinsp;the musicians arrive early to rehearse in the room. You welcome your guests.</li>
           </ul>
           <p><strong>Sound and amplification.</strong> In a church the choir won&rsquo;t need amplification, though readers may want a lectern microphone in a large space. In an office or hotel, discuss it with the musicians beforehand; a small PA for the readers is often enough.</p>
@@ -880,7 +903,7 @@
         <div class="prose">
           <h2>Common mistakes to avoid</h2>
           <ul>
-            <li><strong>Leaving the musicians until last.</strong> Start in September and you&rsquo;ll have the widest choice of date and ensemble.</li>
+            <li><strong>Leaving the musicians until last.</strong> Start eight to twelve weeks ahead and you&rsquo;ll have the widest choice of date and ensemble.</li>
             <li><strong>Too many carols.</strong> People flag after eight, especially if they&rsquo;re standing.</li>
             <li><strong>No printed words.</strong> This is the most common mistake. Without the words in front of them, people won&rsquo;t sing, and the room singing is the point of the event.</li>
             <li><strong>An untested room.</strong> A low-ceilinged, carpeted open-plan office needs more singers than a hard-floored atrium. Describe the space to your <a href="hiring-a-choir.html">musicians</a> and they will tell you what it needs.</li>
@@ -894,7 +917,7 @@
         <div class="prose">
           <h2>Frequently asked questions</h2>
           <h3>How do you plan a corporate carol service?</h3>
-          <p>Choose a date in the second or third week of December and a venue: a church, your own offices or a hotel function room. Book a professional choir by September, choose six to eight carols and three to six readings, ask colleagues to read, and print a programme with the words of every carol.</p>
+          <p>Choose a date in the second or third week of December and a venue: a church, your own offices or a hotel function room. Book a professional choir as soon as you have a date, choose six to eight carols and three to six readings, ask colleagues to read, and print a programme with the words of every carol.</p>
           <h3>What do you need for an office carol service?</h3>
           <p>A room where everyone can stand together, a professional choir to lead the singing, a pianist or organist if you want accompaniment, printed programmes with the carol words, three or four readings with colleagues to read them, and someone to run the day. Mince pies and mulled wine afterwards are optional.</p>
           <h3>How long should an office carol service last?</h3>
@@ -904,7 +927,7 @@
           <h3>Does a workplace carol service have to be religious?</h3>
           <p>No. You can mix traditional carols with secular songs such as Jingle Bells and Winter Wonderland, choose readings from Dickens or Dylan Thomas, and call the event a winter celebration. Say on the invitation that everyone is welcome regardless of belief and that attendance is optional.</p>
           <h3>How far in advance should I plan a corporate carol service?</h3>
-          <p>Start in September for a December service. Churches and professional musicians are at their busiest in December, and the best dates go first. If your date is already close, ask anyway: last-minute bookings are possible when singers are free.</p>
+          <p>Start eight to twelve weeks ahead for a December service. Churches and professional musicians are at their busiest in December, and the best dates go first. If your date is already close, ask anyway: last-minute bookings are possible when singers are free.</p>
         </div>
       </section>
 
@@ -1016,7 +1039,7 @@
       <p class="text-xs text-mid">
         Areas we serve: <a href="/areas/london.html">London</a> &middot; <a href="/areas/birmingham.html">Birmingham</a> &middot; <a href="/areas/manchester.html">Manchester</a> &middot; <a href="/areas/liverpool.html">Liverpool</a> &middot; <a href="/areas/oxford.html">Oxford</a> &middot; <a href="/areas/cambridge.html">Cambridge</a> &middot; <a href="/areas/reading.html">Reading</a> &middot; <a href="/areas/slough-maidenhead.html">Slough &amp; Maidenhead</a> &middot; <a href="/areas/guildford.html">Guildford</a> &middot; <a href="/areas/brighton.html">Brighton</a> &middot; <a href="/areas/chester.html">Chester</a> &middot; <a href="/areas/st-albans.html">St Albans</a> &middot; <a href="/areas/canterbury.html">Canterbury</a> &middot; <a href="/areas/windsor.html">Windsor</a> &middot; <a href="/areas/winchester.html">Winchester</a> &middot; <a href="/areas/salisbury.html">Salisbury</a> &middot; <a href="/areas/bath.html">Bath</a> &middot; <a href="/areas/chelmsford.html">Chelmsford</a> &middot; <a href="/areas/rochester.html">Rochester</a> &middot; <a href="/areas/">All areas</a>
       </p>
-      <p class="text-xs text-mid">The London Choral Service is the operating name of Alma Consort Ltd, registered in England and Wales, company no. 16785727. Based in London, serving the whole of the United Kingdom.</p>
+      <p class="text-xs text-mid">The London Choral Service is the operating name of Alma Consort Ltd, registered in England and Wales, company no. 16785727, registered office 20 Wenlock Road, London N1 7GU. Based in London, serving the whole of the United Kingdom.</p>
       <p class="text-xs text-mid">&copy; <span data-year>2026</span> The London Choral Service. All rights reserved.</p>
     </div>
   </footer>

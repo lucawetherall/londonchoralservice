@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <!-- @include-start partials/head-extras.html -->
+<meta name="referrer" content="strict-origin-when-cross-origin">
 <link rel="preload" href="/fonts/cormorant-garamond.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/fonts/source-serif-4.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="manifest" href="/site.webmanifest">
@@ -202,19 +203,43 @@
         }
       } catch (e) {}
     }
-    document.addEventListener('click', function(e) {
-      var a = e.target.closest && e.target.closest('a[href^="tel:"], a[href^="mailto:"], a[href*="wa.me/"]');
-      if (!a) return;
-      var href = a.getAttribute('href');
-      var method = href.indexOf('tel:') === 0 ? 'call' : href.indexOf('mailto:') === 0 ? 'email' : 'whatsapp';
-      var where = a.closest('.mobile-cta') ? 'mobile_bar' : a.closest('.site-footer') ? 'footer' :
+    function lcsWhere(a) {
+      return a.closest('.mobile-cta') ? 'mobile_bar' : a.closest('.site-footer') ? 'footer' :
         a.closest('.site-header') ? 'header' : 'body';
-      if (method !== 'call') lcsLabelMessage(a, method);
-      loadGA();
-      gtag('event', 'contact_click', { 'method': method, 'link_location': where });
-      var label = method === 'call' ? LCS_ADS.call : LCS_ADS.message;
-      if (label) gtag('event', 'conversion', { 'send_to': label, 'value': 1, 'currency': 'GBP' });
-    });
+    }
+    // Enquiry buttons that lead to a form: the on-page #enquiry / #enquire
+    // anchors and the contact page. link_location is the header, footer or
+    // mobile bar, then the hero, then the nearest section's id.
+    function lcsCtaWhere(a) {
+      var where = lcsWhere(a);
+      if (where !== 'body') return where;
+      if (a.closest('.hero, [class*="hero"]')) return 'hero';
+      var sec = a.closest('section[id], [id]');
+      return (sec && sec.id) || 'body';
+    }
+    function lcsClickHandler(e) {
+      // auxclick also reports right-clicks; only a middle-click opens the link.
+      if (e.type === 'auxclick' && e.button !== 1) return;
+      var t = e.target;
+      var a = t && t.closest && t.closest('a[href^="tel:"], a[href^="mailto:"], a[href*="wa.me/"]');
+      if (a) {
+        var href = a.getAttribute('href');
+        var method = href.indexOf('tel:') === 0 ? 'call' : href.indexOf('mailto:') === 0 ? 'email' : 'whatsapp';
+        if (method !== 'call') lcsLabelMessage(a, method);
+        loadGA();
+        gtag('event', 'contact_click', { 'method': method, 'link_location': lcsWhere(a) });
+        var label = method === 'call' ? LCS_ADS.call : LCS_ADS.message;
+        if (label) gtag('event', 'conversion', { 'send_to': label, 'value': 1, 'currency': 'GBP' });
+        return;
+      }
+      var cta = t && t.closest && t.closest('a[href*="#enquiry"], a[href*="#enquire"], a[href*="contact.html"]');
+      if (cta) {
+        loadGA();
+        gtag('event', 'cta_click', { 'link_location': lcsCtaWhere(cta), 'link_url': cta.getAttribute('href') });
+      }
+    }
+    document.addEventListener('click', lcsClickHandler);
+    document.addEventListener('auxclick', lcsClickHandler);
 
     // Ad click ID and UTM tags from the landing URL, kept for this tab (only once
     // the visitor has allowed cookies) so an enquiry sent from a later page still
@@ -343,7 +368,7 @@
   <title>Privacy Policy | London Choral Service</title>
   <meta name="description" content="Privacy policy for The London Choral Service (Alma Consort Ltd). How we collect, use, store, and protect your personal data under UK data protection law.">
   <meta name="theme-color" content="#F7F3EE">
-  <meta name="robots" content="noindex, nofollow">
+  <meta name="robots" content="noindex, follow">
   <link rel="canonical" href="https://londonchoralservice.com/privacy.html">
   <link rel="alternate" hreflang="en-gb" href="https://londonchoralservice.com/privacy.html">
   <link rel="alternate" hreflang="x-default" href="https://londonchoralservice.com/privacy.html">
@@ -378,6 +403,7 @@
     @font-face{font-family:'Source Serif 4';font-style:italic;font-weight:400;font-display:swap;src:url('/fonts/source-serif-4-italic.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;}
     *, *::before, *::after{box-sizing:border-box;margin:0;padding:0;}
     html{-webkit-text-size-adjust:100%;scroll-behavior:smooth;}
+    @media (max-width: 1080px){html{scroll-padding-bottom:5.5rem;}}
     @media (prefers-reduced-motion: reduce){html{scroll-behavior:auto;}}
     body{font-family:var(--font-body);font-size:var(--text-base);line-height:var(--leading-normal);color:var(--color-text);background-color:var(--color-bg);-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;}
     h1, h2, h3, h4, h5, h6{font-family:var(--font-heading);line-height:var(--leading-tight);text-wrap:balance;}
@@ -413,7 +439,7 @@
     .nav-links a{font-family:var(--font-heading);font-size:var(--text-sm);font-weight:500;letter-spacing:0.05em;text-transform:uppercase;color:var(--color-text);text-decoration:none;transition:color var(--transition-fast);white-space:nowrap;}
     .nav-links a:hover{color:var(--color-accent);}
     .nav-links a[aria-current="page"]{text-decoration-line:underline;text-decoration-thickness:1px;text-decoration-color:var(--color-accent);text-underline-offset:0.45em;}
-    .nav-toggle{display:none;background:none;border:none;cursor:pointer;padding:var(--space-sm);width:2.5rem;height:2.5rem;position:relative;}
+    .nav-toggle{display:none;background:none;border:none;cursor:pointer;padding:var(--space-sm);width:2.75rem;height:2.75rem;flex-shrink:0;position:relative;}
     .nav-toggle:hover, .nav-toggle:focus-visible{background-color:var(--color-bg-alt);border-radius:4px;}
     .nav-toggle-bar, .nav-toggle-bar::before, .nav-toggle-bar::after{display:block;width:1.5rem;height:2px;background-color:var(--color-text);position:absolute;left:50%;transform:translateX(-50%);transition:all var(--transition-base);}
     .nav-toggle-bar{top:50%;transform:translate(-50%,-50%);}
@@ -423,6 +449,7 @@
     .nav-toggle[aria-expanded="true"] .nav-toggle-bar::before{top:0;transform:translateX(-50%) rotate(45deg);}
     .nav-toggle[aria-expanded="true"] .nav-toggle-bar::after{top:0;transform:translateX(-50%) rotate(-45deg);}
     @media (max-width: 1080px){.nav-toggle{display:block;flex-shrink:0;}
+    .site-name{white-space:normal;}
     .nav-links{display:none;position:absolute;top:100%;left:0;right:0;flex-direction:column;background-color:var(--color-bg);border-bottom:1px solid var(--color-rule);padding:var(--space-lg);gap:0;z-index:100;}
     .nav-links.is-open{display:flex;}
     .nav-links a{display:block;padding:var(--space-md) 0;font-size:var(--text-base);border-bottom:1px solid var(--color-rule);}
@@ -480,8 +507,8 @@
     a[href^="mailto"]::after, a[href^="tel"]::after{content:none;}
     h1, h2, h3{break-after:avoid;}}
   </style>
-  <link rel="preload" href="/css/style.css?v=76ead049b8" as="style" onload="this.onload=null;this.rel='stylesheet'">
-  <noscript><link rel="stylesheet" href="/css/style.css?v=76ead049b8"></noscript>
+  <link rel="preload" href="/css/style.css?v=44640bbffc" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <noscript><link rel="stylesheet" href="/css/style.css?v=44640bbffc"></noscript>
   <!-- @css-end -->
 
   <link rel="icon" href="assets/favicon.ico" sizes="any">
@@ -507,8 +534,6 @@
             <li><a href="/weddings.html">Weddings</a></li>
             <li><a href="/funerals.html">Funerals</a></li>
             <li><a href="/corporate.html">Corporate</a></li>
-            <li><a href="/christmas.html">Christmas carol singers</a></li>
-            <li><a href="/christmas-carol-services.html">Church carol services</a></li>
             <li><a href="/private-events.html">Private Events</a></li>
             <li><a href="/destinations/">Weddings Abroad</a></li>
             <li class="dropdown-separator" aria-hidden="true"></li>
@@ -541,7 +566,15 @@
             <li><a href="/music-guides/">Browse all</a></li>
           </ul>
         </li>
-        <li><a href="/christmas.html">Christmas</a></li>
+        <li class="has-dropdown">
+          <a href="/christmas.html" aria-expanded="false" class="dropdown-trigger">Christmas<span class="dropdown-caret" aria-hidden="true"></span></a>
+          <ul class="dropdown-menu">
+            <li><a href="/christmas.html">Christmas carol singers</a></li>
+            <li><a href="/christmas-carol-services.html">Church carol services</a></li>
+            <li><a href="/christmas-pricing.html">Christmas prices</a></li>
+            <li><a href="/christmas-listen.html">Hear the carols</a></li>
+          </ul>
+        </li>
         <li><a href="/pricing.html">Pricing</a></li>
         <li><a href="/contact.html">Contact</a></li>
       </ul>
@@ -561,35 +594,62 @@
     <section class="section" style="padding-block-start: var(--space-2xl)">
       <div class="prose">
         <h2>Who we are</h2>
-        <p>The London Choral Service (operating name of Alma Consort Ltd) provides singers, choirs, and instrumentalists for funerals, weddings, memorials, and ceremonies across the UK. We take your privacy seriously. This policy explains clearly how we handle your personal data when you use our website or contact us.</p>
+        <p>The data controller is Alma Consort Ltd, trading as The London Choral Service. It is a company registered in England and Wales, company no. 16785727, with its registered office at 20 Wenlock Road, London N1 7GU. We provide singers, choirs, and instrumentalists for funerals, weddings, memorials, and ceremonies across the UK. For anything in this policy, email <a href="mailto:office@londonchoralservice.com">office@londonchoralservice.com</a>.</p>
       </div>
     </section>
 
     <section class="section">
       <div class="prose">
         <h2>What we collect</h2>
-        <p>When you contact us via our enquiry form, email, or telephone, we collect only what's necessary: your name, email address, phone number (if you provide it), and information about your occasion. We collect this data solely to respond to your enquiry and deliver the services you've asked for. Nothing more.</p>
+        <p>Our enquiry form asks for your name, email address, phone number (optional), the occasion, the date, the venue and a message, and how you heard about us. It also has an optional, unticked box for ad measurement, described under <a href="#ad-measurement">Cookies and tracking</a>. If you write, ring or message us on WhatsApp instead, we keep what you tell us there. Once you book, we also keep the booking confirmation, the invoice and a record of your payments.</p>
+        <p>A message about a funeral may reveal religious belief, health or other sensitive details. You do not have to include any, and we use what you choose to tell us only to arrange the music.</p>
       </div>
     </section>
 
     <section class="section">
       <div class="prose">
-        <h2>How we use your information</h2>
-        <p>We use your data to respond to your enquiry, arrange your booking, and communicate about your service. We will never use your data for marketing, newsletters, or any other purpose without asking for your explicit consent first. No surprises.</p>
+        <h2>Why we use it, and our legal basis</h2>
+        <ul>
+          <li>To reply to your enquiry, send a quote and arrange and perform your booking. The basis is steps you ask us to take before a contract, and performing the contract.</li>
+          <li>To keep accounts and invoices. The basis is our legal obligation.</li>
+          <li>To measure how the site and our advertising perform, using cookies and similar technology. The basis is your consent. The cookie-free visitor counter described below runs on our legitimate interest in knowing which pages people use.</li>
+          <li>To tell Google if a booking followed one of our advertisements, if you tick the optional box. The basis is your consent.</li>
+        </ul>
+        <p>We do not use your data for marketing or newsletters without asking you first.</p>
       </div>
     </section>
 
     <section class="section">
       <div class="prose">
-        <h2>How we store your information</h2>
-        <p>Your data is stored securely and kept only as long as needed. We never sell, trade, or share your personal data with anyone&thinsp;&mdash;&thinsp;ever&thinsp;&mdash;&thinsp;except where absolutely necessary to deliver your booking (for example, sharing your venue details with the musicians performing at your event). The one other case is the hashed contact details and advert reference described under <a href="#cookies">Cookies and tracking</a>, which reach Google only if you allow advertising cookies or tick the ad-measurement box on our enquiry form. That's it.</p>
+        <h2>Who receives it</h2>
+        <p>We never sell your data. We share it only with the people and services listed here.</p>
+        <ul>
+          <li>The singers and musicians booked for your event, who need the date, venue and arrangements.</li>
+          <li>Web3Forms, which delivers the enquiry form to us, and hCaptcha, which checks the form is not spam and may process data about your device and browser to do so.</li>
+          <li>Zoho, which hosts our email and accounting records.</li>
+          <li>Starling Bank, which receives and records your payments.</li>
+          <li>WhatsApp (Meta), if you message us there.</li>
+          <li>Google, for Analytics and Ads, as described under <a href="#cookies">Cookies and tracking</a>.</li>
+          <li>GoatCounter, for the cookie-free visitor count described below.</li>
+          <li>YouTube, only when you press play on a recording, through its privacy-enhanced <code>youtube-nocookie.com</code> player.</li>
+        </ul>
+        <p>We may also disclose data where the law or HMRC requires it.</p>
+        <p>Some of these providers are outside the UK, for example in the United States. Where that happens, the transfer relies on a UK adequacy decision or on standard contractual clauses or the UK&rsquo;s International Data Transfer Agreement, whichever applies to the provider.</p>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="prose">
+        <h2>How long we keep it</h2>
+        <p>We keep accounting records, including invoices and payment records, for six years, as HMRC requires. We keep enquiries that do not become bookings for up to two years, then delete them. We keep the rest only as long as we need it for the purposes above.</p>
       </div>
     </section>
 
     <section class="section">
       <div class="prose">
         <h2>Your rights</h2>
-        <p>Under UK data protection law, you can ask us to show you the personal data we hold, correct it, or delete it entirely. You can withdraw your consent to contact you at any time. Just email <a href="mailto:office@londonchoralservice.com">office@londonchoralservice.com</a> and we'll handle it immediately.</p>
+        <p>Under UK data protection law you can ask us to show you the personal data we hold, correct it, delete it, restrict how we use it, or object to our using it. You can ask for the data you gave us in a portable format. Where we rely on your consent, you can withdraw it at any time, for example with the <a href="/privacy.html#cookies" data-consent-open>Cookie choices</a> link in the footer, or by email. Email <a href="mailto:office@londonchoralservice.com">office@londonchoralservice.com</a> and we will reply within one month.</p>
+        <p>If you are unhappy with how we handle your data, you can complain to the Information Commissioner&rsquo;s Office at <a href="https://ico.org.uk/make-a-complaint/" rel="noopener noreferrer">ico.org.uk</a> or on 0303 123 1113.</p>
       </div>
     </section>
 
@@ -605,6 +665,7 @@
         <p id="visit-counter">We also count visits with GoatCounter, a visitor counter that sets no cookies and stores nothing on your device, so it runs whether or not you accept cookies. For each page you open it receives the page&rsquo;s path, such as <code>/weddings.html</code>, without the rest of its address (so never an advert&rsquo;s click reference), the page&rsquo;s title, and the website that sent you, if it wasn&rsquo;t ours. When you send our enquiry form, or tap a phone, email or WhatsApp link, it receives an event name such as &ldquo;enquiry-sent-form&rdquo; and the page&rsquo;s path, never what you typed. To tell new visits from repeat views, GoatCounter works from your IP address and browser type, which it keeps in memory for up to eight hours and never writes to disk. Our dashboard shows totals only. GoatCounter is run from Ireland and keeps its data on servers in Finland and Germany.</p>
         <p>GoatCounter doesn&rsquo;t count you if your browser sends a Global Privacy Control or Do Not Track signal. You can also <a href="/privacy.html?lcs_count=off#visit-counter">stop it counting your visits in this browser</a>: we keep that choice in your browser under the name <code>lcs-count-off</code>, and clearing this site&rsquo;s data in your browser undoes it.</p>
         <p>Our typefaces are served from our own website, not from a third-party font service. Our enquiry form is delivered by Web3Forms and protected by hCaptcha; when you submit the form, these services process the details you enter solely to pass your message to us and to filter out spam. Recordings are embedded from YouTube in privacy-enhanced mode and load only when you press play.</p>
+        <p>In summary, this site uses your browser&rsquo;s storage for these names only: <code>lcs-consent</code> (your cookie choice), <code>lcs-count-off</code> (you stopped the visit counter), <code>lcs-internal</code> (set on the owner&rsquo;s own devices to keep their visits out of our figures), and, in session storage and only if you allowed cookies, <code>lcs-attr</code> (advert click details) and <code>lcs-lead</code> (your enquiry details until the thank-you page opens). Each is described above.</p>
         <p>You can also block Google Analytics in every website with the <a href="https://tools.google.com/dlpage/gaoptout" rel="noopener noreferrer">Google Analytics opt-out browser add-on</a>.</p>
       </div>
     </section>
@@ -612,7 +673,7 @@
     <section class="section">
       <div class="prose">
         <h2>Changes to this policy</h2>
-        <p>We may update this policy from time to time. Changes will be posted on this page. This policy was last updated on 23 October 2026.</p>
+        <p>We may update this policy from time to time. Changes will be posted on this page. This policy was last updated on 24 October 2026.</p>
       </div>
     </section>
 
@@ -691,7 +752,7 @@
       <p class="text-xs text-mid">
         Areas we serve: <a href="/areas/london.html">London</a> &middot; <a href="/areas/birmingham.html">Birmingham</a> &middot; <a href="/areas/manchester.html">Manchester</a> &middot; <a href="/areas/liverpool.html">Liverpool</a> &middot; <a href="/areas/oxford.html">Oxford</a> &middot; <a href="/areas/cambridge.html">Cambridge</a> &middot; <a href="/areas/reading.html">Reading</a> &middot; <a href="/areas/slough-maidenhead.html">Slough &amp; Maidenhead</a> &middot; <a href="/areas/guildford.html">Guildford</a> &middot; <a href="/areas/brighton.html">Brighton</a> &middot; <a href="/areas/chester.html">Chester</a> &middot; <a href="/areas/st-albans.html">St Albans</a> &middot; <a href="/areas/canterbury.html">Canterbury</a> &middot; <a href="/areas/windsor.html">Windsor</a> &middot; <a href="/areas/winchester.html">Winchester</a> &middot; <a href="/areas/salisbury.html">Salisbury</a> &middot; <a href="/areas/bath.html">Bath</a> &middot; <a href="/areas/chelmsford.html">Chelmsford</a> &middot; <a href="/areas/rochester.html">Rochester</a> &middot; <a href="/areas/">All areas</a>
       </p>
-      <p class="text-xs text-mid">The London Choral Service is the operating name of Alma Consort Ltd, registered in England and Wales, company no. 16785727. Based in London, serving the whole of the United Kingdom.</p>
+      <p class="text-xs text-mid">The London Choral Service is the operating name of Alma Consort Ltd, registered in England and Wales, company no. 16785727, registered office 20 Wenlock Road, London N1 7GU. Based in London, serving the whole of the United Kingdom.</p>
       <p class="text-xs text-mid">&copy; <span data-year>2026</span> The London Choral Service. All rights reserved.</p>
     </div>
   </footer>
