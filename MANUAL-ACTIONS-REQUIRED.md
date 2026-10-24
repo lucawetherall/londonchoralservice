@@ -10,7 +10,7 @@ Finished work, old notes and reference material are in `docs/MANUAL-ACTIONS-ARCH
 
 | # | Action | Time | When |
 |---|---|---|---|
-| 1 | Ask Google to recrawl eight pages (Search Console) | 10 min over two days | 25 and 26 Oct |
+| 1 | Ask Google to recrawl twelve pages (Search Console) | 15 min over three days | 25, 26 and 27 Oct |
 | 2 | Directory sign-ups (seven sites) | 15–20 min each | this week |
 | 3 | Fix the `www` address at Porkbun | 10 min | this week |
 | 4 | Check the Google Business Profile edits | 5 min | from 30 Oct |
@@ -23,7 +23,7 @@ Finished work, old notes and reference material are in `docs/MANUAL-ACTIONS-ARCH
 
 ---
 
-## 1. Ask Google to recrawl eight pages (Search Console)
+## 1. Ask Google to recrawl twelve pages (Search Console)
 
 On 24 Oct you requested eleven of twelve pages; Google refused the twelfth (the funeral-hymns guide) because the day's quota was used up. Later that day PR #370 rewrote seven more pages to match what people search for, so Google needs to fetch the new versions. That includes three you had already requested (Newham, wedding ceremony music, carol services): their earlier requests are for versions that no longer exist.
 
@@ -54,9 +54,18 @@ https://londonchoralservice.com/music-guides/be-thou-my-vision-wedding-hymn.html
 https://londonchoralservice.com/music-guides/abide-with-me.html
 ```
 
+**27 Oct, these four.** They are new guides from PR #373 (memorial service songs, and three hymns whose words are out of copyright). Google would find them through the sitemap anyway; a request gets them crawled sooner.
+
+```
+https://londonchoralservice.com/music-guides/memorial-service-songs.html
+https://londonchoralservice.com/music-guides/it-is-well-with-my-soul.html
+https://londonchoralservice.com/music-guides/love-divine-all-loves-excelling.html
+https://londonchoralservice.com/music-guides/the-lords-my-shepherd.html
+```
+
 The sitemap doesn't need resubmitting: the build updated each page's date in it, and Google reads it every few days.
 
-**Done when:** all eight requests are accepted. About 7 Nov an agent reruns the index-coverage report on these pages and the eleven from 24 Oct. Any page still "Crawled - currently not indexed" then needs a content fix, not another request.
+**Done when:** all twelve requests are accepted. About 7 Nov an agent reruns the index-coverage report on these pages and the eleven from 24 Oct. Any page still "Crawled - currently not indexed" then needs a content fix, not another request.
 
 ---
 
