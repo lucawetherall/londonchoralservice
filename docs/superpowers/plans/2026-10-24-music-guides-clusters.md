@@ -55,3 +55,15 @@ Skipped (done in #309/#317): nine-lessons-and-carols, be-thou-my-vision-wedding-
 5. residents-christmas-carol-event, best-christmas-carol-singers, wedding-music-ideas, carol-singers-law-firms, christmas-gala-dinner-music, wedding-organist-guide, christmas-drinks-reception-music, wedding-ceremony-music; then the hub (`music-guides/index.html`) grouped by cluster
 
 One PR per two batches (`copy(guides): …`): 1+2, 3+4, 5 + hub.
+
+## Outcome (24 Oct 2026)
+
+All 58 live guides have now had the pass: the 10 from #309/#317, batches 1–2 in #339, batches 3–4 in #349, and batch 5 with the hub in the PR that adds this section. Two guides became redirect stubs (wedding-organ-repertoire, office-carol-service-planning). In the same PR every guide `<title>` moved from "| LCS" to "| London Choral Service" (at most 60 characters, shorter fronts where needed; og/twitter titles keep the full front), following the rule from #332.
+
+The hub groups the guides by the four clusters above, each section opening with its lead guide, with a fourth filter ("Booking & cost").
+
+**For Luca (manual):**
+- Search Console → URL Inspection → Request indexing for `music-guides/wedding-ceremony-music.html` (crawled, not indexed) and `music-guides/popular-funeral-hymns.html` (discovered, not crawled).
+- Testimonials left untouched under R12 that no other page carries, in case any should go: "David R., Battersea" (celebration-of-life-music), "Eleanor M., Hampstead" (funeral-songs), "Margaret K., Islington" (catholic-funeral-hymns), "Sophie and Tom W., Greenwich" (wedding-ceremony-music).
+
+**Not worth more work now:** the guides under ~20 impressions in 90 days (outdoor-carol-singing, residents-christmas-carol-event, carol-singers-law-firms, christmas-gala-dinner-music, christmas-drinks-reception-music, wedding-organist-guide, wedding-music-ideas, best-christmas-carol-singers, last-minute-funeral-singers, destination-wedding-choir, celebration-of-life-music) have had one pass; look again only if Search Console shows them picking up queries.
