@@ -2,6 +2,23 @@
 
 This is the full history of `MANUAL-ACTIONS-REQUIRED.md` as it stood on 24 Oct 2026, before that file was cut down to the open actions only. Nothing here needs doing. It is kept because code comments, `docs/ROADMAP.md` and the Monday review's agent prompts refer to its section numbers (for example "§12", "§28", "§29"), and §12 is where the Monday review's weekly Search Console lines are filed.
 
+## Closed 24 Oct 2026 (owner's update)
+
+- **Google Ads advertiser verification (§30):** submitted by the owner; awaiting Google's reply.
+- **Recrawl requests (§32):** 11 of 12 made; `popular-funeral-hymns.html` hit the daily quota and moved to the open list.
+- **Bing Webmaster Tools (§31):** imported from Search Console and `sitemap_index.xml` submitted.
+- **GitHub Support (§15):** ticket 4899127 closed unread (free accounts get self-service support only). The open list now has the Porkbun forwarding fix instead.
+- **Press photographs (§34):** five stills taken from our films (Ding Dong! Merrily on High ×3, Ubi Caritas, There's a Wideness in God's Mercy), full size in `~/Pictures/LCS-listings/press/`, web copies in `assets/press/`, on `facts.html` and one on `private-events.html`.
+- **Backup key (§21):** in Apple Passwords. **Books VAT setting (§18.4):** checked. **Pinned git origin (§25):** done.
+- **Carol recordings (§9.3):** already done (the Christmas films of 19 Oct).
+- **Private-events page (§13.2–3):** owner delegated. Voicing films mapped: eight voices → Once in Royal David's City, twelve → There's a Wideness in God's Mercy; sixteen and twenty-four stay empty (no film at those sizes). One press still added to the ensemble section. The venue list stays as the eight vetted London venues, since only the owner knows where else the singers have sung.
+- **Wedding-abroad footage (§14.5):** none exists; every destination page now carries a "Hear the consort" section with Ubi Caritas (`scripts/gen_country_pages.py`).
+- **Testimonials (§10.4, §35):** all five are real clients; keep all. The Lambeth quote said "trio" in error and now says "quartet".
+- **Ireland and Scotland regions (§14.1):** confirmed as set.
+- **US lead time (§14.3):** owner asked for an estimate. The page now says the visa work takes four to six months (union consultation, petition, embassy interview), asks for at least nine months and prefers twelve, and says under six months is unlikely to work.
+- **Sign-offs (§16.2, 16.3, 16.5, 16.6):** owner delegated. Kept `terms.html`, `accessibility.html` and the reply-time promises as published: the enquiry assistant drafts replies every two hours from 06:00 to 22:00, so one working day (same working day for funerals) is realistic. The booking-confirmation template wasn't on this Mac to compare against the terms page. The iPad menu check was dropped.
+- **Singer bank details (§22):** procedure confirmed; it stays on the open list as a standing procedure.
+
 ---
 
 # Manual actions required — SEO audit fix programme

@@ -754,14 +754,18 @@
     }
 
     /* ── Voicing media: click-to-load video (site pattern, restyled) ── */
-    #voicing-media:not(:empty) {
+    /* .pe-media is the same frame for a fixed film (destination pages). */
+    #voicing-media:not(:empty),
+    .pe-media {
       position: relative;
       aspect-ratio: 16 / 9;
       margin-top: 2rem;
       overflow: hidden;
       background: var(--choirStall);
     }
-    #voicing-media iframe {
+    .press-figure { margin: 2rem 0; }
+    #voicing-media iframe,
+    .pe-media iframe {
       position: absolute;
       inset: 0;
       width: 100%;
@@ -1241,7 +1245,7 @@
             "name": "How far ahead do we need to book?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Far further than anywhere else we sing. Where Europe works at six to twelve months, the States needs the visa timeline built in on top, so the advice is to raise it before you fix the date rather than after. If your wedding is sooner than that, ask us anyway. The position depends on the visa route and on how the calendar is running, and we would rather look at your specific dates than turn you away on a general rule."
+              "text": "Far further than anywhere else we sing. Where Europe works at six to twelve months, for the States we ask for at least nine months and prefer twelve. The visa work takes four to six months: a consultation letter from the American musicians’ union, the petition to US immigration (faster with premium processing, at extra cost), and an interview at the US Embassy in London for each singer. A date less than six months away is unlikely to work. If your wedding is sooner than that, ask us anyway. The position depends on the visa route and on how the calendar is running, and we would rather look at your specific dates than turn you away on a general rule."
             }
           },
           {
@@ -1301,7 +1305,25 @@
       </div>
     </section>
 
+    <!-- Film -->
     <section class="pe-section pe-section--mid">
+      <div class="pe-rail">
+        <p class="pe-rail-label" aria-hidden="true">Listen</p>
+        <div class="pe-body" data-fade>
+          <h2>Hear the consort</h2>
+          <p>Ola Gjeilo&rsquo;s Ubi Caritas, sung unaccompanied in a London church. It needs no organ, so it
+            works in a garden, on a terrace or in a chapel with no instrument.</p>
+          <div class="pe-media">
+            <button type="button" class="video-thumb" data-video="-GQaQEGhYEs" aria-label="Play Ubi Caritas">
+              <img src="https://i.ytimg.com/vi/-GQaQEGhYEs/hqdefault.jpg" alt="" loading="lazy" width="480" height="360">
+              <svg class="play-btn" viewBox="0 0 68 48" aria-hidden="true"><path d="M66.52 7.74c-.78-2.93-2.49-5.41-5.42-6.19C55.79.13 34 0 34 0S12.21.13 6.9 1.55c-2.93.78-4.63 3.26-5.42 6.19C.06 13.05 0 24 0 24s.06 10.95 1.48 16.26c.78 2.93 2.49 5.41 5.42 6.19C12.21 47.87 34 48 34 48s21.79-.13 27.1-1.55c2.93-.78 4.63-3.26 5.42-6.19C67.94 34.95 68 24 68 24s-.06-10.95-1.48-16.26z" fill="rgba(42, 23, 8, .72)"/><path d="M45 24 27 14v20z" fill="#FAF6EE"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="pe-section pe-section--light">
       <div class="pe-rail">
         <p class="pe-rail-label" aria-hidden="true">Your ceremony</p>
         <div class="pe-body" data-fade>
@@ -1313,7 +1335,7 @@
       </div>
     </section>
 
-    <section class="pe-section pe-section--light">
+    <section class="pe-section pe-section--mid">
       <div class="pe-rail">
         <p class="pe-rail-label" aria-hidden="true">The weekend</p>
         <div class="pe-body" data-fade>
@@ -1325,20 +1347,20 @@
       </div>
     </section>
 
-    <section class="pe-section pe-section--mid">
+    <section class="pe-section pe-section--light">
       <div class="pe-rail">
         <p class="pe-rail-label" aria-hidden="true">The constraint</p>
         <div class="pe-body" data-fade>
           <h2>Why the United States is different from everywhere else we sing</h2>
           <p>This page leads with paperwork rather than music, because on this one destination the paperwork decides whether there is any music at all.</p>
           <p>Performing for a fee in the United States is not something a British musician can do on a tourist visa or under the visa waiver programme. It requires a petition-based performance visa, filed in advance, for the musicians travelling. That process takes months rather than weeks, it costs real money per engagement, and it cannot be compressed because a wedding date is approaching.</p>
-          <p>The practical consequence is simple: the visa calendar, not the flight schedule, decides when we can come. A couple planning a New York wedding eighteen months out has no difficulty at all; one asking about a date six months away needs us to look at the specific timings before anyone promises anything. So raise it early. The earlier this conversation starts, the more of the calendar is open to you.</p>
+          <p>The practical consequence is simple: the visa calendar, not the flight schedule, decides when we can come. The visa work alone takes four to six months, so a couple planning a New York wedding a year out has no difficulty, and one asking about a date less than six months away is usually too late. So raise it early. The earlier this conversation starts, the more of the calendar is open to you.</p>
           <p>Where the timeline does work, everything else about the States is straightforward: excellent flights, no language barrier, and venues used to handling suppliers professionally.</p>
         </div>
       </div>
     </section>
 
-    <section class="pe-section pe-section--light">
+    <section class="pe-section pe-section--mid">
       <div class="pe-rail">
         <p class="pe-rail-label" aria-hidden="true">The rite</p>
         <div class="pe-body" data-fade>
@@ -1349,7 +1371,7 @@
       </div>
     </section>
 
-    <section class="pe-section pe-section--mid">
+    <section class="pe-section pe-section--light">
       <div class="pe-rail">
         <p class="pe-rail-label" aria-hidden="true">Buildings</p>
         <div class="pe-body" data-fade>
@@ -1360,7 +1382,7 @@
       </div>
     </section>
 
-    <section class="pe-section pe-section--light">
+    <section class="pe-section pe-section--mid">
       <div class="pe-rail">
         <p class="pe-rail-label" aria-hidden="true">Travel</p>
         <div class="pe-body" data-fade>
@@ -1371,7 +1393,7 @@
       </div>
     </section>
 
-    <section class="pe-section pe-section--mid">
+    <section class="pe-section pe-section--light">
       <div class="pe-rail">
         <p class="pe-rail-label" aria-hidden="true">Where</p>
         <div class="pe-body" data-fade>
@@ -1396,7 +1418,7 @@
       </div>
     </section>
 
-    <section class="pe-section pe-section--light">
+    <section class="pe-section pe-section--mid">
       <div class="pe-rail">
         <p class="pe-rail-label" aria-hidden="true">Questions</p>
         <div class="pe-body" data-fade>
@@ -1406,7 +1428,7 @@
           <p>Yes. Paid performance in the United States requires a petition-based performance visa; it cannot be done on the visa waiver programme or a tourist visa. The petition takes months and costs money per engagement. This is the single most important thing to know about booking a British choir for an American wedding, and it is why the answer depends on your timeline before it depends on our diary.</p>
 
           <h3>How far ahead do we need to book?</h3>
-          <p>Far further than anywhere else we sing. Where Europe works at six to twelve months, the States needs the visa timeline built in on top, so the advice is to raise it before you fix the date rather than after. If your wedding is sooner than that, ask us anyway. The position depends on the visa route and on how the calendar is running, and we would rather look at your specific dates than turn you away on a general rule.</p>
+          <p>Far further than anywhere else we sing. Where Europe works at six to twelve months, for the States we ask for at least nine months and prefer twelve. The visa work takes four to six months: a consultation letter from the American musicians&rsquo; union, the petition to US immigration (faster with premium processing, at extra cost), and an interview at the US Embassy in London for each singer. A date less than six months away is unlikely to work. If your wedding is sooner than that, ask us anyway. The position depends on the visa route and on how the calendar is running, and we would rather look at your specific dates than turn you away on a general rule.</p>
 
           <h3>Why is a US booking more expensive?</h3>
           <p>Three things stack: transatlantic flights for the whole consort, two nights rather than one because we will not sing well the morning after an overnight flight and a large time change, and the visa cost per engagement. We itemise all three in the quote rather than hiding them in one number, because you should be able to see what you are paying for.</p>
@@ -1421,7 +1443,7 @@
     </section>
 
     <!-- Nearby -->
-    <section class="pe-section pe-section--mid">
+    <section class="pe-section pe-section--light">
       <div class="pe-rail">
         <p class="pe-rail-label" aria-hidden="true">Nearby</p>
         <div class="pe-body" data-fade>

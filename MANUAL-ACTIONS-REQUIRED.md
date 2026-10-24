@@ -8,114 +8,45 @@ Finished work, old notes and reference material are in `docs/MANUAL-ACTIONS-ARCH
 
 **At a glance**
 
-| # | Action | Time | Deadline |
+| # | Action | Time | When |
 |---|---|---|---|
-| 1 | Google Ads identity check | 15 min | **4 Nov** |
-| 2 | Ask Google to recrawl 12 pages | 10 min a day, two days | this weekend |
-| 3 | Submit the sitemaps to Bing Webmaster Tools | 5 min | this weekend |
-| 4 | Directory sign-ups (seven sites) | 15–20 min each | this week |
-| 5 | Fix the `www` certificate (GitHub Support) | 5 min | this week |
-| 6 | Check the Google Business Profile edits | 5 min | from 30 Oct |
-| 7 | Send four outreach drafts | 10 min | this week |
-| 8 | Ask Kensington and Chelsea how to join their supplier list | 5 min | this week |
-| 9 | Choose press photographs | 30 min | when you can |
-| 10–14 | Optional: Trustpilot, LinkedIn, backup key, Books VAT check, pinned git origin | 5 min each | none |
-| 15–18 | Material only you have: carol recordings, private-events assets, wedding-abroad footage, almaconsort.com link | | none |
-| 19–22 | Decisions: testimonials, Ireland and Scotland regions, US lead time, sign-offs | | none |
-| 23 | When a singer's bank details change | | when it happens |
-| 24 | Dates to remember | | |
+| 1 | Ask Google to recrawl the last page | 2 min | tomorrow (25 Oct) |
+| 2 | Directory sign-ups (seven sites) | 15–20 min each | this week |
+| 3 | Fix the `www` address at Porkbun | 10 min | this week |
+| 4 | Check the Google Business Profile edits | 5 min | from 30 Oct |
+| 5 | Send four outreach drafts | 10 min | this week |
+| 6 | Ask Kensington and Chelsea how to join their supplier list | 5 min | this week |
+| 7 | Link to the private-events page from almaconsort.com | 5 min | when you can |
+| 8–9 | Optional: Trustpilot, LinkedIn | 10 min each | none |
+| 10 | When a singer's bank details change | | when it happens |
+| 11 | Dates to remember | | |
 
 ---
 
-## 1. Google Ads identity check (due 4 Nov 2026)
+## 1. Ask Google to recrawl the last page
 
-Google Ads shows a yellow banner on every page: "Verify your identity. Some of your ads may be paused or limited." If verification isn't done by 4 Nov, Google can stop serving the ads, the Christmas campaign included. Only you can do it, because it needs your ID and the company's details.
-
-**Have ready:** your passport or driving licence, and the certificate of incorporation (free from Companies House: company number 16785727 → Filing history → download the certificate).
+Eleven of the twelve pages are requested. Google refused the twelfth on 24 Oct because the day's quota was used up. The page is a funeral-hymns guide that Google found in February but has never fetched.
 
 **How:**
 
-1. Sign in to Google Ads (account 873-388-1378).
-2. Click **Get started** on the yellow banner. If the banner has gone, go to **Billing → Advertiser verification**.
-3. Answer the questions: who pays for the ads, and who the advertiser is. The advertiser is Alma Consort Ltd, Companies House 16785727, trading as The London Choral Service.
-4. Upload your photo ID and the certificate of incorporation when asked.
-5. Submit. Google usually replies within a few working days.
+1. Tomorrow, open Search Console (https://search.google.com/search-console) and choose the property `londonchoralservice.com`.
+2. Paste this URL into the search bar at the top ("Inspect any URL") and wait for the result:
 
-**Done when:** Google Ads shows the verification as approved and the banner is gone. Tell an agent.
+   ```
+   https://londonchoralservice.com/music-guides/popular-funeral-hymns.html
+   ```
 
----
+3. Click **Request indexing** and wait for the confirmation.
 
-## 2. Ask Google to recrawl 12 pages
-
-Google has indexed 153 of our 165 sitemap pages. These 12 are the exceptions. Some Google has never fetched; the others it judged in the spring, before they were rewritten, and hasn't looked at since. The Search Console API can't request indexing, so you do it by hand. Google allows about ten requests a day, so split it over two days.
-
-**How, for each URL:**
-
-1. Open Search Console (https://search.google.com/search-console) and choose the property `londonchoralservice.com`.
-2. Paste the URL into the search bar at the top ("Inspect any URL"). Wait for the result.
-3. Click **Request indexing** and wait for the confirmation. (If it says "URL is on Google" it is already indexed; request anyway, since the page was rewritten.)
-
-**Today, the eight pages Google crawled before they were rewritten:**
-
-```
-https://londonchoralservice.com/areas/london/barnet.html
-https://londonchoralservice.com/areas/london/hammersmith-fulham.html
-https://londonchoralservice.com/areas/london/hillingdon.html
-https://londonchoralservice.com/areas/london/kingston.html
-https://londonchoralservice.com/areas/london/newham.html
-https://londonchoralservice.com/areas/london/richmond.html
-https://londonchoralservice.com/areas/london/tower-hamlets.html
-https://londonchoralservice.com/music-guides/wedding-ceremony-music.html
-```
-
-**Tomorrow, the four pages Google has never crawled:**
-
-```
-https://londonchoralservice.com/professionals.html
-https://londonchoralservice.com/christmas-carol-services.html
-https://londonchoralservice.com/christmas-listen.html
-https://londonchoralservice.com/music-guides/popular-funeral-hymns.html
-```
-
-**You don't need to resubmit the sitemap.** Google read it on 23 Oct, and the new sitemap index was submitted through the API on 24 Oct.
-
-**Done when:** all 12 requests are made. Two weeks later (about 7 Nov) an agent reruns the index-coverage report; any page still "Crawled - currently not indexed" then needs a content fix, not another request.
+**Done when:** the request is accepted. About 7 Nov an agent reruns the index-coverage report on all twelve; any page still "Crawled - currently not indexed" then needs a content fix, not another request.
 
 ---
 
-## 3. Submit the sitemaps to Bing Webmaster Tools
-
-Bing's index feeds ChatGPT search and Copilot. A check on 24 Oct found the site missing from Bing even for its own name. Nothing on the site blocks Bing (robots.txt allows it, no sitemap page is noindex, and the IndexNow ping after each deploy gets HTTP 200), but Bing indexes a little-linked new site slowly until it is verified in Bing Webmaster Tools.
-
-**The sitemaps (all four return HTTP 200 today):**
-
-| Sitemap | URL | What it lists | Do you submit it? |
-|---|---|---|---|
-| **Sitemap index** | `https://londonchoralservice.com/sitemap_index.xml` | the three below, in one file; the only one `robots.txt` names | **Yes. This is the one submission you need.** |
-| Pages | `https://londonchoralservice.com/sitemap.xml` | 164 pages | Not separately; the index covers it. If the import below brings it in on its own, leave it. |
-| Video | `https://londonchoralservice.com/sitemap-video.xml` | 36 film entries | Not separately; the index covers it. |
-| Images | `https://londonchoralservice.com/sitemap-images.xml` | 21 film stills | Not separately; the index covers it. |
-
-Do **not** submit `llms.txt` or `llms-full.txt`: they are not sitemaps. If you'd rather see each file's status in Bing's report, submitting the three children as well as the index does no harm (Bing treats a repeat as the same sitemap).
-
-**How:**
-
-1. Go to https://www.bing.com/webmasters and click **Sign in**. Use the Google account that owns the Search Console property, or a Microsoft account.
-2. On **Add a site**, choose **Import your sites from GSC** (the left-hand card), not "Add your site manually".
-3. Click **Continue**, pick the same Google account, and allow Bing to view your Search Console data (read-only).
-4. Tick **londonchoralservice.com** and click **Import**. This verifies the site, so you need no meta tag or DNS record.
-5. Open **Sitemaps** in the left menu. If `https://londonchoralservice.com/sitemap_index.xml` isn't listed, click **Submit sitemap**, paste that URL and click **Submit**.
-6. Open **URL Inspection**, inspect `https://londonchoralservice.com/` and click **Request indexing** if it isn't indexed. Do the same for `/weddings.html`, `/funerals.html`, `/christmas.html` and `/pricing.html`. The IndexNow ping covers every other page.
-
-**Done when:** the Sitemaps page lists `sitemap_index.xml` with status "Success" (it can read "Pending" for a day) and the five pages are requested. Tell an agent. Bing usually shows first results within a week; **Site Explorer** then shows which pages are indexed.
-
----
-
-## 4. Directory sign-ups
+## 2. Directory sign-ups
 
 No third-party listing is live yet except Google Business Profile. Google cross-checks listings like these for local rankings, and the marketplaces hold most of the first page for our searches. For each site below you make the account, enter the passwords and codes, accept the terms, and press Publish. Claude can't do any of those, even with your go-ahead. Everything else, Claude does: once you are signed in (in the Claude app's browser, or Chrome with Claude in Chrome), say "fill the Hitched listing from the pack" and it enters every field, uploads the logo and photos, and stops before Publish. Then Claude records the live link.
 
-**Before you start:** sign up with `office@londonchoralservice.com` so leads reach the enquiry inbox. Upload images are in `~/Pictures/LCS-listings/`. All copy, prices, the tagged website link for each site, and the exact name, phone, hours and service area to use are in `docs/off-site-listings-pack.md`. Use that name, phone number and hours **word for word** on every site: different formats split Google's picture of the business into separate entities. Where a Christmas link is needed, use `christmas.html` (the old `carol-singers.html` is now a redirect).
+**Before you start:** sign up with `office@londonchoralservice.com` so leads reach the enquiry inbox. All copy, prices, the tagged website link for each site, and the exact name, phone, hours and service area to use are in `docs/off-site-listings-pack.md`. Use that name, phone number and hours **word for word** on every site: different formats split Google's picture of the business into separate entities. Where a Christmas link is needed, use `christmas.html` (the old `carol-singers.html` is now a redirect). Photos for upload: the five press stills in `~/Pictures/LCS-listings/press/` (full size, 2560 × 1440).
 
 **In this order. Your steps are listed for each site; once you've done them and are signed in, say "fill the <site> listing from the pack" and Claude does the rest.**
 
@@ -171,28 +102,30 @@ Skipped on purpose, don't sign up: Bark and Add to Event (pay-per-lead credits t
 
 ---
 
-## 5. Fix the `www` certificate (GitHub Support ticket)
+## 3. Fix the `www` address at Porkbun
 
-`https://www.londonchoralservice.com` shows a browser security warning, because GitHub's certificate for the site covers only `londonchoralservice.com`. Anyone who types `www.` from habit, and any link built to the `www` address, lands on that warning. The DNS is right, and the remove-and-re-add of the custom domain has already been done (doing it again won't help), but GitHub still hasn't issued a certificate for `www`. Only GitHub can fix this now.
+`https://www.londonchoralservice.com` shows a browser security warning (checked again on 24 Oct), because GitHub's certificate covers only `londonchoralservice.com`. Anyone who types `www.` from habit lands on that warning. GitHub closed the support ticket without looking at it: on a free account, Pages support is self-service only. So the fix moves to the domain registrar. Porkbun can redirect `www` to the main address itself, with its own certificate, so GitHub no longer has to serve `www` at all.
 
 **How:**
 
-1. Go to https://support.github.com → **Contact support** → choose **GitHub Pages**.
-2. Paste this ticket:
+1. Sign in at https://porkbun.com → **Domain Management** → `londonchoralservice.com` → **DNS**.
+2. Find the `CNAME` record for `www` (it points to `lucawetherall.github.io`) and delete it. Don't touch the four `A` records for the main address: they keep the site up.
+3. Back in Domain Management, open **URL Forwarding** for the domain and add a forward:
+   - **Host:** `www`
+   - **Forward to:** `https://londonchoralservice.com`
+   - **Type:** Permanent (301)
+   - **Include path:** yes (so `www…/weddings.html` lands on `/weddings.html`)
+   - **Wildcard:** no
+4. Save. Porkbun issues a certificate for the forward on its own; allow up to an hour.
+5. Don't change anything in GitHub's Pages settings. It may now say the `www` record isn't set up; that is expected and harmless.
 
-   > Subject: Certificate missing for the www host of my Pages custom domain
-   >
-   > Repository: lucawetherall/londonchoralservice. Custom domain: londonchoralservice.com (Settings → Pages, deployed with GitHub Actions). The `www` host has a CNAME to lucawetherall.github.io and the Pages health check lists www.londonchoralservice.com as valid and eligible for HTTPS. But https://www.londonchoralservice.com/ still serves the *.github.io certificate, and the certificate for londonchoralservice.com lists only the apex name. I removed and re-saved the custom domain on 23 Oct 2026 and toggled Enforce HTTPS off and on; a day later nothing had changed. There are no CAA records on the domain. Please issue a certificate that covers www.londonchoralservice.com.
+**If Porkbun's forward still shows a certificate warning after a day:** delete the forward too. The `www` address then stops resolving, which is cleaner than a security warning.
 
-3. Send it.
-
-**If GitHub can't fix it:** delete the `www` CNAME record at Porkbun (the registrar's DNS panel). The `www` address then stops resolving, which is cleaner than showing a warning.
-
-**Done when:** `curl -I https://www.londonchoralservice.com/` returns `301` (a redirect to the main address) instead of a certificate error. An agent can run that for you.
+**Done when:** `curl -I https://www.londonchoralservice.com/` returns `301` with `location: https://londonchoralservice.com/` and no certificate error. Ask an agent to run that check.
 
 ---
 
-## 6. Check the Google Business Profile edits (from 30 Oct)
+## 4. Check the Google Business Profile edits (from 30 Oct)
 
 On 23 Oct Claude made a batch of edits to the profile; Google shows each as "pending review" until it approves it, which can take days. Check they all went through.
 
@@ -204,15 +137,15 @@ On 23 Oct Claude made a batch of edits to the profile; Google shows each as "pen
 - **Service area:** London, Greater London, Surrey, Kent, Essex, Hertfordshire, Berkshire, Buckinghamshire; address hidden.
 - **Hours:** Monday to Friday 09:00–18:00, weekends closed.
 - **Services:** seven, six at "From £1,150" and Organist and pianist hire at £250.
-- **Photos:** nine (more are wanted: see action 9).
+- **Photos:** nine. While you're there, add the five press stills from `~/Pictures/LCS-listings/press/` (**Photos → Add photos**), which takes it past the ten Google likes to see.
 
-If one was rejected or reverted, tell an agent which and it will redo it in a live chat. Three Christmas posts are already scheduled for 09:00 on 10 Nov, 24 Nov and 8 Dec; you can edit or cancel one under **Posts** before its date.
+If an edit was rejected or reverted, tell an agent which and it will redo it in a live chat. Three Christmas posts are already scheduled for 09:00 on 10 Nov, 24 Nov and 8 Dec; you can edit or cancel one under **Posts** before its date.
 
 **Done when:** every item above shows on the public listing. Recheck the categories each quarter in case Google adds a funeral category.
 
 ---
 
-## 7. Send four outreach drafts
+## 5. Send four outreach drafts
 
 Claude drafted four first-contact emails to firms that list or link to rival choirs. They are in Zoho Drafts, from `office@londonchoralservice.com`, each with an opt-out line and a tagged link. Claude never sends them.
 
@@ -230,7 +163,7 @@ All four are limited companies, checked at Companies House on 24 Oct.
 
 ---
 
-## 8. Ask Kensington and Chelsea how to join their supplier list
+## 6. Ask Kensington and Chelsea how to join their supplier list
 
 The council keeps an approved-suppliers list for weddings at Chelsea Old Town Hall and the Kensington register office (https://www.rbkc.gov.uk/marry-me-in-kensington-and-chelsea/node/733, section "Music and musicians"). It has no choir. The council publishes no email address, only an "Email us" form and the phone number 020 7361 4100, so the application is yours to make.
 
@@ -240,21 +173,17 @@ The council keeps an approved-suppliers list for weddings at Chelsea Old Town Ha
 
 ---
 
-## 9. Choose press photographs
+## 7. Link to the private-events page from almaconsort.com
 
-`facts.html` (the public fact sheet) says we have no press photographs yet and offers two film stills instead. Directories, journalists and venues ask for real photographs, and the Google profile wants ten or more (it has nine). Claude can't take or choose photographs.
+almaconsort.com links only to the London Choral Service homepage (checked 23 Oct). A link to the private-events page helps that page rank, and a planner checking the Alma Consort name finds the right page straight away. Claude can't edit almaconsort.com.
 
-**How:**
+**How:** add a link on almaconsort.com, ideally on its home or contact page, to `https://londonchoralservice.com/private-events.html`, with text such as "Private events and weddings abroad".
 
-1. Pick three to six photographs you own the rights to: the singers in a church, a choir at a wedding or carol service, and one portrait of you. Real photographs only, never stock or AI images. Get the photographer's permission to publish, and the client's if a client or guest can be recognised. Never use a funeral.
-2. Save them in `~/Pictures/LCS-listings/` as JPGs, at least 1600 pixels on the long side.
-3. Tell an agent, with each photographer's name for the credit. It makes web-sized copies, puts them on the fact sheet with credits and alt text, replaces the "no press photographs yet" line, and lists them for upload to the Google profile and the directories in action 4.
-
-**Done when:** the fact sheet shows the photographs.
+**Done when:** the link is live. Tell an agent so it can check it.
 
 ---
 
-## 10. Optional: Trustpilot business account
+## 8. Optional: Trustpilot business account
 
 Reviews already come through Google (the enquiry assistant drafts a review request after each paid-in-full event, except funerals, for you to send). Trustpilot would add a second place for reviews, but it isn't needed.
 
@@ -262,7 +191,7 @@ Reviews already come through Google (the enquiry assistant drafts a review reque
 
 ---
 
-## 11. Optional: LinkedIn company page
+## 9. Optional: LinkedIn company page
 
 The page `linkedin.com/company/london-choral-service` doesn't exist. A company page strengthens how Google and AI assistants recognise the business as one entity.
 
@@ -270,107 +199,9 @@ The page `linkedin.com/company/london-choral-service` doesn't exist. A company p
 
 ---
 
-## 12. Optional: check the backup key is saved
+## 10. When a singer's bank details change
 
-The Command Centre's nightly job writes an encrypted copy of your whole `~/lcs-private` folder to iCloud Drive → LCS-backups at 02:30 (the newest was made on 23 Oct). The copies can't be opened without the secret key, a long string starting `AGE-SECRET-KEY-1…`, which was shown once when the backup was set up.
-
-**How:** open your password manager and check that key is saved. If you can't find it, tell an agent: it can generate a new one, but backups made with the lost key stay unreadable.
-
----
-
-## 13. Optional: confirm Zoho Books isn't set to VAT
-
-Alma Consort Ltd is not VAT-registered, and invoices must carry no tax. Claude has checked the invoices (none carry tax), but the organisation's own VAT setting can't be read through the API.
-
-**How:** in Zoho Books, go to **Settings → Taxes** and confirm the organisation is marked **not VAT-registered**. If it says otherwise, change it. Don't ask Claude to: it has no access to that setting.
-
----
-
-## 14. Optional: pin this repository's git origin
-
-This lets Claude sync branches with `main` using the Claude app's own git tool rather than asking you to run git commands by hand.
-
-**How:** in the Claude app, open **Help → Troubleshooting → Review Pinned Git Origins** and confirm this repository's origin is in the list.
-
----
-
-## 15. Material only you have: carol recordings
-
-The "Hear our musicians" sections on `christmas.html` and the Christmas pages show one Christmas recording (Blue Christmas); everything else is hymns. Record one or two real carols (rehearsal-quality video is fine) and upload them to YouTube. Give an agent the links and it wires them in, with the upload date and duration the structured data needs.
-
----
-
-## 16. Material only you have: private-events page
-
-`private-events.html` ships typographic-only. Three things would lift it. Send each to an agent when ready:
-
-1. **Photographs** from real engagements, for the hero and the sections.
-2. **The fuller venue list** (fifteen or more) for the "Where we have sung" section. Only venues the singers have actually performed in. Venues abroad are the strongest addition.
-3. **One video per voicing** (8, 12, 16 and 24 voices) on YouTube. A voicing with no video shows no player, which is the shipped state.
-
----
-
-## 17. Material only you have: footage from a wedding abroad
-
-Photography or video from an overseas engagement is the highest-value asset for the destination-weddings pages, which all ship typographic-only. Send an agent the footage or the YouTube link, with the venue, country and date.
-
----
-
-## 18. Material only you have: a link from almaconsort.com
-
-almaconsort.com links only to the London Choral Service homepage. A link to the private-events page would strengthen it, and a planner vetting the Alma Consort name would find it.
-
-**How:** add a link on almaconsort.com to `https://londonchoralservice.com/private-events.html` (text such as "Private events and weddings abroad"). Then tell an agent so it can confirm the link is live.
-
----
-
-## 19. Decision: five testimonials, keep or remove
-
-Each of these client quotes appears on one page only, and nothing in the repo or the bookings ledger ties it to a real booking. Agents never edit testimonials, because changing a genuine quote would be fabricating it, so only you can say whether each is a real client.
-
-| Quote attributed to | Page | Note |
-|---|---|---|
-| Lambeth quote | `areas/london/lambeth.html` | describes a *trio* at an outdoor committal, which you no longer offer |
-| David R., Battersea | `music-guides/celebration-of-life-music.html` | |
-| Eleanor M., Hampstead | `music-guides/funeral-songs.html` | |
-| Margaret K., Islington | `music-guides/catholic-funeral-hymns.html` | names "Father O'Brien" |
-| Sophie and Tom W., Greenwich | `music-guides/wedding-ceremony-music.html` | |
-
-**How:** reply to an agent, for each one, "keep" or "remove". It removes the ones you name and rebuilds. A kept quote needs nothing.
-
----
-
-## 20. Decision: Ireland and Scotland regions
-
-You named regions for twenty destination countries but not these two. To keep their pages as full as the others, regions were set provisionally on 29 Aug: **Ireland** as Dublin, County Wicklow, the south west and the west; **Scotland** as Edinburgh, the Highlands, Loch Lomond and Perthshire. They drive the region sections on those pages and the cards on `/destinations/`.
-
-**How:** reply to an agent "keep both", or give replacement regions.
-
----
-
-## 21. Decision: United States lead time
-
-Paid performance in the US needs a petition-based performance visa for each musician, on a months-long timeline. The US destination page must not imply a booking is practical if it isn't.
-
-**How:** tell an agent the real working lead time, for example "at least nine months". If a booking is impractical under six months, the page says so.
-
----
-
-## 22. Read and sign off
-
-Three published pages make promises on your behalf. Read each and tell an agent "fine" or what to change.
-
-1. **`terms.html`:** it publishes the fourteen Terms of Booking clauses from your booking agreement, adapted for the web (the funeral invoice-after-the-service exception is under clause 4, and a complaints paragraph is added). Check the wording matches what goes out on your booking confirmations. If not, the page and the agreement are edited together.
-2. **`accessibility.html`:** check you are happy to stand behind the alternative-format promise and the one-working-day reply.
-3. **Reply-time promises:** the site says you reply within one working day (usually the same day) everywhere, and the same working day (usually within a few hours) on the funeral and funeral-director pages. If the office can't keep those, say which to soften.
-
-Optional: open the site on an iPad in portrait. The menu switched to the hamburger layout below 1080 pixels wide so the eight items never clip; check it looks right.
-
----
-
-## 23. When a singer's bank details change
-
-If the enquiry assistant's summary shows "BANK DETAILS CHANGED" or "DIFFER" against a singer's invoice, the bank details on the new invoice don't match what's on file. This check exists so a changed account always gets a phone call before anyone is paid; Claude never confirms bank details.
+This is a standing procedure, not a task. If the enquiry assistant's summary shows "BANK DETAILS CHANGED" or "DIFFER" against a singer's invoice, the bank details on the new invoice don't match what's on file. The check exists so a changed account always gets a phone call before anyone is paid; Claude never confirms bank details.
 
 **How:**
 
@@ -380,13 +211,16 @@ If the enquiry assistant's summary shows "BANK DETAILS CHANGED" or "DIFFER" agai
 
 ---
 
-## 24. Dates to remember
+## 11. Dates to remember
 
 | When | What | Who |
 |---|---|---|
-| **4 Nov 2026** | Google Ads identity check due (action 1) | you |
-| About 7 Nov | Rerun the index-coverage report on the 12 pages (action 2) | agent, on your word |
+| 25 Oct | Request indexing for the last page (action 1) | you |
+| About 28 Oct | Google Ads: check the identity-verification banner has gone (submitted 24 Oct). If Google asks for more, it emails you | you |
+| About 31 Oct | Bing Webmaster Tools → **Site Explorer**: check pages are appearing (sitemap index submitted 24 Oct) | you, or tell an agent what you see |
+| 30 Oct onwards | Check the Business Profile edits (action 4) | you |
+| About 7 Nov | Rerun the index-coverage report on the twelve recrawled pages | agent, on your word |
 | 10 Nov, 24 Nov, 8 Dec | Scheduled Business Profile posts publish at 09:00 | automatic |
-| November | Look again at whether `christmas.html` and the Christmas guides compete for the same Search Console queries; too little data on 14 Oct | agent |
+| November | Look again at whether `christmas.html` and the Christmas guides compete for the same Search Console queries (too little data on 14 Oct) | agent |
 | **Late January 2027** | **Re-check competitor prices.** Open https://www.londonfuneralsingers.co.uk/pricing and compare each `source_quote` in `data/competitor-pricing.yml` with what is published. Update the figures, the `checked_date` and `compare/london-funeral-singers.html` in the same commit (a figure and its date must never disagree). `build.sh` prints a STALE warning past 120 days. Last checked 23 Oct 2026: every figure unchanged. The file also holds Dream Gospel Choir, Music for London, Julia Charles and Alive Network figures checked 24 Oct, used by no page yet; re-check them too | agent, on your word |
 | Each quarter | Re-verify the permit and travel facts on the destination pages (visible checked date: 29 Aug 2026), and check whether Google has added a funeral category for the Business Profile | agent / you |
