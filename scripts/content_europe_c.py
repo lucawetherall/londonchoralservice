@@ -204,8 +204,8 @@ n = build('scotland', 'Scotland',
      'directly in what you pay. There are no flights for the whole consort to price, no international '
      'accommodation, no permits and no currency question. Our standard rates apply, and they are '
      'published in full on the <a href="/pricing.html">pricing page</a> &mdash; a soloist from '
-     '&pound;250, a choir of eight at &pound;2,000, twelve voices at &pound;3,000, with fees and taxes '
-     'included.',
+     '&pound;250, a choir of eight at &pound;2,000, twelve voices at &pound;3,000, with no VAT '
+     'added.',
      'What a Scottish booking may add is travel and, for the Highlands and islands, a night&rsquo;s '
      'accommodation, because a group cannot reasonably drive from London and sing the same afternoon. '
      'For Edinburgh and Glasgow that is often unnecessary. We set it out in the quote rather than '
