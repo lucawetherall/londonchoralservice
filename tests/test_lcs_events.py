@@ -46,6 +46,7 @@ GOOD = [
     ("singer_invoice", "bank-warning", {"fp8": "0123abcd", "codes": ["changed", "not-yet-verified"]}, "script"),
     ("singer_invoice", "bank-warning", {"fp8": "", "codes": []}, "script"),
     ("singer_invoice", "bank-confirmed", {"fp8": "0123abcd"}, "owner"),
+    ("singer_invoice", "bank-confirmed", {"fp8": "0123abcd"}, "script"),  # Luca's word in a chat (24 Oct 2026)
     ("singer_invoice", "settled", {"amount": "250.00"}, "owner"),
     ("singer_invoice", "withdrawn", {"reason": "not-ours"}, "script"),
     ("singer_invoice", "paid-reply-drafted", {}, "script"),
@@ -108,7 +109,7 @@ BAD = [
     ("singer_invoice", "bank-warning", {"fp8": "0123abcd", "codes": ["changed", "changed"]}, "script", "repeated code"),
     ("singer_invoice", "bank-warning", {"fp8": "0123abcd", "codes": []}, "owner", "script only"),
     ("singer_invoice", "bank-confirmed", {"fp8": ""}, "owner", "nothing to confirm"),
-    ("singer_invoice", "bank-confirmed", {"fp8": "0123abcd"}, "script", "owner only"),
+    ("singer_invoice", "bank-confirmed", {"fp8": "0123ABCD"}, "script", "upper-case fp8"),
     ("singer_invoice", "bank-confirmed", {"fp8": "0123abcd0123abcd"}, "owner", "the whole fingerprint"),
     ("singer_invoice", "settled", {"amount": "250"}, "owner", "no pence"),
     ("singer_invoice", "settled", {"amount": "250.00"}, "script", "owner only"),

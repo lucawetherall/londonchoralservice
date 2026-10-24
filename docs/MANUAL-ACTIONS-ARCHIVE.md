@@ -17,7 +17,7 @@ This is the full history of `MANUAL-ACTIONS-REQUIRED.md` as it stood on 24 Oct 2
 - **Ireland and Scotland regions (§14.1):** confirmed as set.
 - **US lead time (§14.3):** owner asked for an estimate. The page now says the visa work takes four to six months (union consultation, petition, embassy interview), asks for at least nine months and prefers twelve, and says under six months is unlikely to work.
 - **Sign-offs (§16.2, 16.3, 16.5, 16.6):** owner delegated. Kept `terms.html`, `accessibility.html` and the reply-time promises as published: the enquiry assistant drafts replies every two hours from 06:00 to 22:00, so one working day (same working day for funerals) is realistic. The booking-confirmation template wasn't on this Mac to compare against the terms page. The iPad menu check was dropped.
-- **Singer bank details (§22):** procedure confirmed; it stays on the open list as a standing procedure.
+- **Singer bank details (§22):** off the list (owner, 24 Oct: he pays every singer by hand). When a changed-details warning appears, he rings the singer and tells Claude in a chat; Claude runs `singer_invoices.py confirm <id>`, with no Allow click or passkey.
 
 ---
 

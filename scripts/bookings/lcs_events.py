@@ -120,9 +120,11 @@ KINDS = {
 }
 RESERVED = {"payment-confirmed", "discount-agreed", "goodwill-reduction", "overpayment-refunded"}
 # Who may write which kind (spec, "Who may write which kind"). paid-in-full is the script's only as basis bank
-# (from --apply), the owner's only as basis owner; retract {why: mistake} is the owner's.
+# (from --apply), the owner's only as basis owner; retract {why: mistake} is the owner's. bank-confirmed may be
+# either: the owner's from the Command Centre, the script's when Luca confirms in writing in a live chat (owner
+# decision, 24 Oct 2026: he pays every singer by hand, so it needs no proof).
 OWNER_ONLY = {"fees-accepted", "reinstated", "deposit-kept", "refunded", "payment-checked", "notes-checked",
-              "bank-confirmed", "settled"} | RESERVED
+              "settled"} | RESERVED
 SCRIPT_ONLY = {"deposit-seen", "reminder-drafted", "review-drafted", "review-skipped", "review-reminded",
                "bank-warning", "paid-reply-drafted"}
 

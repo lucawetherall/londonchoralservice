@@ -1352,7 +1352,7 @@ Expected: `0 failure(s)`, with both new tests passing.
 
 - [ ] **Step 5: Extend the quarterly re-check**
 
-In `MANUAL-ACTIONS-REQUIRED.md` §12's "Dates to remember" table, note that the competitor re-check now covers two providers: `londonfuneralsingers.co.uk/pricing` and `barbershopogram.co.uk/prices`, updating each `checked_date` and any affected page in the same commit.
+In `MANUAL-ACTIONS-REQUIRED.md` §11's "Dates to remember" table, note that the competitor re-check now covers two providers: `londonfuneralsingers.co.uk/pricing` and `barbershopogram.co.uk/prices`, updating each `checked_date` and any affected page in the same commit.
 
 - [ ] **Step 6: Commit**
 
