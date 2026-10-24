@@ -1,6 +1,6 @@
 {
  "/": {
-  "hash": "d71ad4de5fa54272",
+  "hash": "0ad236b9ba34ba24",
   "lastmod": "2026-10-24"
  },
  "/about.html": {
@@ -16,215 +16,215 @@
   "lastmod": "2026-09-04"
  },
  "/areas/bath.html": {
-  "hash": "8a8e984fdb63fe5a",
-  "lastmod": "2026-10-23"
+  "hash": "4879eaf97b4f3fba",
+  "lastmod": "2026-10-24"
  },
  "/areas/birmingham.html": {
-  "hash": "48e316a2e41ac026",
-  "lastmod": "2026-10-23"
+  "hash": "ad60272abc89cb37",
+  "lastmod": "2026-10-24"
  },
  "/areas/brighton.html": {
-  "hash": "a52efb28ba86d713",
-  "lastmod": "2026-10-23"
+  "hash": "1e7a7e9d7f272c82",
+  "lastmod": "2026-10-24"
  },
  "/areas/cambridge.html": {
-  "hash": "77bc8ea099a881c4",
-  "lastmod": "2026-10-23"
+  "hash": "513c8df25760cad8",
+  "lastmod": "2026-10-24"
  },
  "/areas/canterbury.html": {
-  "hash": "c246faaf6200a78d",
-  "lastmod": "2026-10-23"
+  "hash": "7f1c50ccdf82e284",
+  "lastmod": "2026-10-24"
  },
  "/areas/chelmsford.html": {
-  "hash": "4179f34ab9897d58",
-  "lastmod": "2026-10-23"
+  "hash": "49b50fadd0f2f67d",
+  "lastmod": "2026-10-24"
  },
  "/areas/chester.html": {
-  "hash": "55327b75322c006d",
-  "lastmod": "2026-10-23"
+  "hash": "6fade6f4ca4777f3",
+  "lastmod": "2026-10-24"
  },
  "/areas/guildford.html": {
-  "hash": "f55c70ef5aeb47c5",
-  "lastmod": "2026-10-23"
+  "hash": "e228066a25ff73de",
+  "lastmod": "2026-10-24"
  },
  "/areas/liverpool.html": {
-  "hash": "e2c146d78221c4ec",
-  "lastmod": "2026-10-23"
+  "hash": "75576cad7cc6bfda",
+  "lastmod": "2026-10-24"
  },
  "/areas/london.html": {
-  "hash": "03cbcf30b5d86007",
+  "hash": "b45a40f3af3d9af9",
   "lastmod": "2026-10-24"
  },
  "/areas/london/barking-dagenham.html": {
-  "hash": "7ce5e11793ea4f7a",
-  "lastmod": "2026-10-23"
+  "hash": "b3efb282270974d6",
+  "lastmod": "2026-10-24"
  },
  "/areas/london/barnet.html": {
-  "hash": "d1e89e09f958ee11",
-  "lastmod": "2026-10-23"
+  "hash": "1b5f78b1f9df49f8",
+  "lastmod": "2026-10-24"
  },
  "/areas/london/bexley.html": {
-  "hash": "d4ab00f12019c40a",
-  "lastmod": "2026-10-23"
+  "hash": "d8938def2c701106",
+  "lastmod": "2026-10-24"
  },
  "/areas/london/brent.html": {
-  "hash": "5e124ae28cc8bef5",
-  "lastmod": "2026-10-23"
+  "hash": "ab82d56abbfc655a",
+  "lastmod": "2026-10-24"
  },
  "/areas/london/bromley.html": {
-  "hash": "7a743a5b14f1283e",
-  "lastmod": "2026-10-23"
+  "hash": "330497ee9e30416b",
+  "lastmod": "2026-10-24"
  },
  "/areas/london/camden.html": {
-  "hash": "dcb71336fa785d31",
-  "lastmod": "2026-10-23"
+  "hash": "6a4bb5559fbc741b",
+  "lastmod": "2026-10-24"
  },
  "/areas/london/city-of-london.html": {
-  "hash": "e69487b0d861a565",
-  "lastmod": "2026-10-23"
+  "hash": "0d9db3327e3b403c",
+  "lastmod": "2026-10-24"
  },
  "/areas/london/croydon.html": {
-  "hash": "97c87bec82b1b647",
-  "lastmod": "2026-10-23"
+  "hash": "dfe81d58c6573692",
+  "lastmod": "2026-10-24"
  },
  "/areas/london/ealing.html": {
-  "hash": "f535e98a7ddfeb63",
-  "lastmod": "2026-10-23"
+  "hash": "652343ae3b55878b",
+  "lastmod": "2026-10-24"
  },
  "/areas/london/enfield.html": {
-  "hash": "9cf73024e3094538",
-  "lastmod": "2026-10-23"
+  "hash": "82ef28861b3178bf",
+  "lastmod": "2026-10-24"
  },
  "/areas/london/greenwich.html": {
-  "hash": "2f52a3a0cdd0c791",
-  "lastmod": "2026-10-23"
+  "hash": "cd6d055b8e4ee54c",
+  "lastmod": "2026-10-24"
  },
  "/areas/london/hackney.html": {
-  "hash": "fadc8b85ffc34b1f",
-  "lastmod": "2026-10-23"
+  "hash": "61e64b5e8c0aa71d",
+  "lastmod": "2026-10-24"
  },
  "/areas/london/hammersmith-fulham.html": {
-  "hash": "719f7a587f3cc382",
-  "lastmod": "2026-10-23"
+  "hash": "47ae299518767d60",
+  "lastmod": "2026-10-24"
  },
  "/areas/london/haringey.html": {
-  "hash": "c4b357e0d814d2d1",
-  "lastmod": "2026-10-23"
+  "hash": "699a1915721017fa",
+  "lastmod": "2026-10-24"
  },
  "/areas/london/harrow.html": {
-  "hash": "85a861258a09069c",
-  "lastmod": "2026-10-23"
+  "hash": "28b6debf4d87b7f6",
+  "lastmod": "2026-10-24"
  },
  "/areas/london/havering.html": {
-  "hash": "54d99276b08fc412",
-  "lastmod": "2026-10-23"
+  "hash": "fe7760fcdf62f0e3",
+  "lastmod": "2026-10-24"
  },
  "/areas/london/hillingdon.html": {
-  "hash": "e0e2d0d2cd1e9131",
-  "lastmod": "2026-10-23"
+  "hash": "3f9737033eee0dfc",
+  "lastmod": "2026-10-24"
  },
  "/areas/london/hounslow.html": {
-  "hash": "b0b39ebbf81b6959",
-  "lastmod": "2026-10-23"
+  "hash": "37d6467b976ea04c",
+  "lastmod": "2026-10-24"
  },
  "/areas/london/islington.html": {
-  "hash": "bb6fa065eb4f2b6c",
-  "lastmod": "2026-10-23"
+  "hash": "1d1b14707bd3a439",
+  "lastmod": "2026-10-24"
  },
  "/areas/london/kensington-chelsea.html": {
-  "hash": "88f5794a7330f5f1",
-  "lastmod": "2026-10-23"
+  "hash": "318363115c87d9b9",
+  "lastmod": "2026-10-24"
  },
  "/areas/london/kingston.html": {
-  "hash": "270e373dac2c9691",
-  "lastmod": "2026-10-23"
+  "hash": "84d2314c258efb49",
+  "lastmod": "2026-10-24"
  },
  "/areas/london/lambeth.html": {
-  "hash": "05a35520ead2d0ef",
-  "lastmod": "2026-10-23"
+  "hash": "37fcd12e490e30a1",
+  "lastmod": "2026-10-24"
  },
  "/areas/london/lewisham.html": {
-  "hash": "2959921bd6cb9ae0",
-  "lastmod": "2026-10-23"
+  "hash": "fc2354875733e773",
+  "lastmod": "2026-10-24"
  },
  "/areas/london/merton.html": {
-  "hash": "f32366d4ae08f665",
-  "lastmod": "2026-10-23"
+  "hash": "0be949b7a3a6bb6c",
+  "lastmod": "2026-10-24"
  },
  "/areas/london/newham.html": {
-  "hash": "6d249b7e228f94ff",
-  "lastmod": "2026-10-23"
+  "hash": "ecb1df69883d675a",
+  "lastmod": "2026-10-24"
  },
  "/areas/london/redbridge.html": {
-  "hash": "15bdab29cb6ea644",
-  "lastmod": "2026-10-23"
+  "hash": "75df725c3b7eaf31",
+  "lastmod": "2026-10-24"
  },
  "/areas/london/richmond.html": {
-  "hash": "2c4ee5fdf5872e73",
-  "lastmod": "2026-10-23"
+  "hash": "54834756158ed9dd",
+  "lastmod": "2026-10-24"
  },
  "/areas/london/southwark.html": {
-  "hash": "a1adafbfcb99f14e",
-  "lastmod": "2026-10-23"
+  "hash": "3c69f9678958b35d",
+  "lastmod": "2026-10-24"
  },
  "/areas/london/sutton.html": {
-  "hash": "94d094662f27d59f",
-  "lastmod": "2026-10-23"
+  "hash": "b79044ff96121923",
+  "lastmod": "2026-10-24"
  },
  "/areas/london/tower-hamlets.html": {
-  "hash": "6f1cb798ca32965d",
-  "lastmod": "2026-10-23"
+  "hash": "44aa0cd9dcc2877b",
+  "lastmod": "2026-10-24"
  },
  "/areas/london/waltham-forest.html": {
-  "hash": "d92a1ceb0d9634fc",
-  "lastmod": "2026-10-23"
+  "hash": "ab192f4accbf46e2",
+  "lastmod": "2026-10-24"
  },
  "/areas/london/wandsworth.html": {
-  "hash": "145a8535e18958e3",
-  "lastmod": "2026-10-23"
+  "hash": "523bfe2f0a7e9cba",
+  "lastmod": "2026-10-24"
  },
  "/areas/london/westminster.html": {
-  "hash": "60171937f2953601",
-  "lastmod": "2026-10-23"
+  "hash": "478733fae5f13e70",
+  "lastmod": "2026-10-24"
  },
  "/areas/manchester.html": {
-  "hash": "1b7668b565c4cea6",
-  "lastmod": "2026-10-23"
+  "hash": "3c8f163bac936b30",
+  "lastmod": "2026-10-24"
  },
  "/areas/oxford.html": {
-  "hash": "fb8e065998cf4db9",
-  "lastmod": "2026-10-23"
+  "hash": "f47d6a9eaf137e56",
+  "lastmod": "2026-10-24"
  },
  "/areas/reading.html": {
-  "hash": "4549d7b55fafa9a7",
-  "lastmod": "2026-10-23"
+  "hash": "ba7013ec23957d27",
+  "lastmod": "2026-10-24"
  },
  "/areas/rochester.html": {
-  "hash": "3ed2a3808854ff63",
-  "lastmod": "2026-10-23"
+  "hash": "d0eccb3791d6c6a9",
+  "lastmod": "2026-10-24"
  },
  "/areas/salisbury.html": {
-  "hash": "abbc91b258b6b808",
-  "lastmod": "2026-10-23"
+  "hash": "e873666bad193e14",
+  "lastmod": "2026-10-24"
  },
  "/areas/slough-maidenhead.html": {
-  "hash": "aad9a0517710fbb9",
-  "lastmod": "2026-10-23"
+  "hash": "5b10656da307d9f9",
+  "lastmod": "2026-10-24"
  },
  "/areas/st-albans.html": {
-  "hash": "6214694a5d2faa90",
-  "lastmod": "2026-10-23"
+  "hash": "80d9c0aa737141cb",
+  "lastmod": "2026-10-24"
  },
  "/areas/winchester.html": {
-  "hash": "15108cc206c36b69",
-  "lastmod": "2026-10-23"
+  "hash": "724487beaf9de4bb",
+  "lastmod": "2026-10-24"
  },
  "/areas/windsor.html": {
-  "hash": "87b0885cb9978ed8",
-  "lastmod": "2026-10-23"
+  "hash": "6a03fa9e8de6822a",
+  "lastmod": "2026-10-24"
  },
  "/christmas-carol-services.html": {
-  "hash": "1aa14350bde7f71f",
+  "hash": "1ffbd97a5ac86dbf",
   "lastmod": "2026-10-24"
  },
  "/christmas-listen.html": {
@@ -244,11 +244,11 @@
   "lastmod": "2026-10-24"
  },
  "/contact.html": {
-  "hash": "ab44548a3afda47d",
+  "hash": "3f9bd89106a65600",
   "lastmod": "2026-10-24"
  },
  "/corporate.html": {
-  "hash": "9a821b0b58af1dcd",
+  "hash": "deb8aca721a3ed1b",
   "lastmod": "2026-10-24"
  },
  "/destinations/": {
@@ -348,8 +348,8 @@
   "lastmod": "2026-10-24"
  },
  "/for-charities.html": {
-  "hash": "0c9014cabea56c75",
-  "lastmod": "2026-10-23"
+  "hash": "fa268bb1b7c08f04",
+  "lastmod": "2026-10-24"
  },
  "/for-event-managers.html": {
   "hash": "16643e7e963e477c",
@@ -360,16 +360,16 @@
   "lastmod": "2026-10-23"
  },
  "/for-hotels.html": {
-  "hash": "1726cd34093d7251",
-  "lastmod": "2026-10-23"
+  "hash": "a23aa823191e39b3",
+  "lastmod": "2026-10-24"
  },
  "/for-livery-companies.html": {
   "hash": "89eeabb5d6b1cfa5",
   "lastmod": "2026-10-23"
  },
  "/for-property-managers.html": {
-  "hash": "040eb157a9e48819",
-  "lastmod": "2026-10-23"
+  "hash": "e8dfff564d69b5ed",
+  "lastmod": "2026-10-24"
  },
  "/for-wedding-planners.html": {
   "hash": "0f6944492a96c216",
