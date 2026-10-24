@@ -250,6 +250,8 @@ Conversion modelling is degraded until Consent Mode v2 exists (ROADMAP R4). Read
 
 **Checked 2026-10-23:** every figure is unchanged (soloist, organist and instrumentalists £275, Small Choir £1,400, Full Choir £2,400, Chorus £4,000, all + VAT). The soloist line now reads "Classic soloist … £275 + VAT", without "From", and the YAML quote follows it. `checked_date` and the page's visible date are now 23 October 2026. Next check due by late January 2027.
 
+**Added 2026-10-24:** `data/competitor-pricing.yml` also holds Dream Gospel Choir (funeral 4, 8 and 11 voices), Music for London (carol trio and quartet), Julia Charles (Victorian carollers, + VAT) and Alive Network (Victorian quartet), each with a verbatim quote, checked 24 October 2026, plus The London Funeral Singers' £35 + VAT Mass-responses add-on. No page uses them yet. Re-check them with the others in late January 2027.
+
 `data/competitor-pricing.yml` carries a `checked_date`, and `build.sh` prints a STALE warning once it passes 120 days. Every quarter, open https://www.londonfuneralsingers.co.uk/pricing, compare each `source_quote` against what is published, and update the figures, the `checked_date`, and `compare/london-funeral-singers.html` **in the same commit** — a figure and its date must never disagree. If their prices moved, the `derived_figures` totals and savings need recomputing too, and the build will fail until they are.
 
 ---
@@ -613,7 +615,20 @@ The sitemap doesn't need resubmitting: Google last read it on 23 Oct, and the ne
 
 ---
 
-## 33. Press photographs for the fact sheet
+## 33. Competitor and link-gap follow-ups, 2026-10-24
+
+Added 2026-10-24 from `docs/superpowers/specs/2026-10-24-competitor-and-intent-research.md`. The site changes it proposed are live (PR #338); these steps need you.
+
+1. **Send four outreach drafts.** They are in Zoho Drafts, from office@londonchoralservice.com, each with an opt-out line and a tagged link: a funeral planner whose London funeral-music page links only to The London Funeral Singers, a City livery hall whose music suppliers list has no choir, and two event agencies whose act lists carry rival carol choirs. The firms are the `link-gap-oct-2026` rows in `~/lcs-private/outreach.csv`, all checked at Companies House on 24 Oct. Read each draft, then press Send. If one replies "no thanks", tell an agent, which marks it opted out.
+2. **Kensington and Chelsea approved wedding suppliers.** The council's list for Chelsea Old Town Hall and the Kensington register office (https://www.rbkc.gov.uk/marry-me-in-kensington-and-chelsea/node/733, "Music and musicians") has no choir. The council publishes no email address, only an "Email us" form and 020 7361 4100, so the application is yours. Ask how a supplier joins the list, and point them to `https://londonchoralservice.com/weddings.html`.
+3. **FreeIndex (free listing).** https://www.freeindex.co.uk/ lists Euphony Voices as a London wedding and funeral choir; we aren't there. It needs an account, which only you can make. Once you're signed in, an agent fills the listing from `docs/off-site-listings-pack.md` and stops before Publish. Skip the paid upgrade.
+4. **Last Minute Musicians: skipped (owner decision, 24 Oct).** The London Funeral Singers' profile there has lapsed. A listing costs £59.99 for six months with no commission. Revisit only if the free listings bring nothing.
+
+Unchecked because the sites refuse automated reading: Hitched, The Wedding Directory, Warble and Funeral Service Times. Hitched is already in the §2 listings round.
+
+---
+
+## 34. Press photographs for the fact sheet
 
 Added 2026-10-24. `facts.html` (the public fact sheet, linked from the footer, `about.html`, `llms.txt` and the listings pack) says we have no press photographs yet and offers two film stills instead. Directories, journalists and venues ask for real photographs, and Google Business Profile wants 10 or more (§1). Claude can't take or choose photographs, so this one is yours:
 
