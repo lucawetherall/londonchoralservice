@@ -142,25 +142,48 @@ def test_followups_due_output_has_only_id_and_kind():
 
 def test_reviews_due_includes_and_excludes_the_right_rows():
     rows = [
-        booking("OK3", days(3), "deposit seen 2026-06-05 (Starling); paid in full 2026-09-20"),
+        booking("OK2", days(2), "deposit seen 2026-06-05 (Starling); paid in full 2026-09-20"),
         booking("OK14", days(14), "paid in full 2026-09-01"),
         booking("NOTPAID", days(5), "deposit seen 2026-06-05 (Starling)"),
         booking("CANC", days(5), "paid in full 2026-09-01; cancelled 2026-09-10"),
         booking("DONE", days(5), "paid in full 2026-09-01; review request drafted 2026-09-26"),
-        booking("RECENT", days(2), "paid in full 2026-09-01"),
+        booking("RECENT", days(1), "paid in full 2026-09-01"),
         booking("OLD", days(15), "paid in full 2026-09-01"),
         booking("FUTURE", "2026-10-10", "paid in full 2026-09-01"),
         booking("NODATE", "", "paid in full 2026-09-01"),
         booking("VAGUE", days(5), "paid in full"),
     ]
     got = pl.reviews_due(rows, T)
-    assert got == [{"booking_ref": "OK3", "event_date": days(3)}, {"booking_ref": "OK14", "event_date": days(14)}], got
+    assert got == [{"booking_ref": "OK2", "event_date": days(2), "kind": "request"},
+                   {"booking_ref": "OK14", "event_date": days(14), "kind": "request"}], got
 
 
 def test_reviews_due_never_asks_a_funeral_or_an_unknown_occasion():
     rows = [booking(f"R{i}", days(5), "paid in full 2026-09-20", occasion=o)
             for i, o in enumerate(["Funeral", "FUNERAL SERVICE", "Memorial service", "", "  ", "Wedding"])]
-    assert pl.reviews_due(rows, T) == [{"booking_ref": "R5", "event_date": days(5)}], pl.reviews_due(rows, T)
+    assert pl.reviews_due(rows, T) == [{"booking_ref": "R5", "event_date": days(5), "kind": "request"}], \
+        pl.reviews_due(rows, T)
+    # nor a reminder to a funeral client, even with a request in the notes
+    rows = [booking("F", days(12), f"paid in full 2026-09-01; review request drafted {days(8)}", occasion="Funeral")]
+    assert pl.reviews_due(rows, T) == []
+
+
+def test_reviews_due_lists_one_reminder_7_to_14_days_after_the_request():
+    paid = "paid in full 2026-09-01"
+    rows = [
+        booking("R7", days(10), f"{paid}; review request drafted {days(7)}"),
+        booking("R14", days(20), f"{paid}; review request drafted {days(14)}"),
+        booking("R6", days(9), f"{paid}; review request drafted {days(6)}"),
+        booking("R15", days(20), f"{paid}; review request drafted {days(15)}"),
+        booking("SKIPPED", days(10), f"{paid}; review request skipped {days(7)} (unresolved)"),
+        booking("DONE", days(12), f"{paid}; review request drafted {days(8)}; review reminder drafted {days(1)}"),
+        booking("NOREM", days(12), f"{paid}; review request drafted {days(8)}; review reminder skipped {days(1)} (planner)"),
+        booking("CANC", days(12), f"{paid}; review request drafted {days(8)}; cancelled {days(2)}"),
+        booking("FAR", days(29), f"{paid}; review request drafted {days(7)}"),
+    ]
+    got = pl.reviews_due(rows, T)
+    assert got == [{"booking_ref": "R7", "event_date": days(10), "kind": "reminder"},
+                   {"booking_ref": "R14", "event_date": days(20), "kind": "reminder"}], got
 
 
 # --- pure: summary_dict --------------------------------------------------------------------------
@@ -640,7 +663,8 @@ def test_cli_reviews_due_and_reviewed_keep_columns_and_mode():
     rows[0]["extra_col"] = "keep me"
     path = write_ledger(d, rows, cols)
     p = cli(d, "reviews-due", "--today", "2026-09-28")
-    assert p.returncode == 0 and json.loads(p.stdout) == [{"booking_ref": "2009", "event_date": "2026-09-20"}], p.stdout
+    assert p.returncode == 0 and json.loads(p.stdout) == [{"booking_ref": "2009", "event_date": "2026-09-20",
+                                                           "kind": "request"}], p.stdout
     p = cli(d, "reviewed", "2009", "2026-09-28")
     assert p.returncode == 0 and p.stdout.strip() == "2009: review request drafted 2026-09-28", (p.stdout, p.stderr)
     with open(path, newline="") as f:
@@ -703,6 +727,34 @@ def test_cli_review_skipped_stops_reviews_due_listing_it():
     assert p.returncode != 0 and "already" in p.stderr, p.stderr
     p = cli(d, "reviewed", "2009", "2026-09-28")
     assert p.returncode != 0 and "already" in p.stderr, "no review request after a skip"
+
+
+def test_cli_review_reminder_once_after_a_drafted_request():
+    d = home()
+    path = write_ledger(d, [booking("2009", "2026-09-14", "paid in full 2026-09-13; review request drafted 2026-09-21"),
+                            booking("2010", "2026-09-14", "paid in full 2026-09-13; review request drafted 2026-09-21"),
+                            booking("2011", "2026-09-26", "paid in full 2026-09-25")])
+    due = json.loads(cli(d, "reviews-due", "--today", "2026-09-28").stdout)
+    assert due == [{"booking_ref": "2009", "event_date": "2026-09-14", "kind": "reminder"},
+                   {"booking_ref": "2010", "event_date": "2026-09-14", "kind": "reminder"},
+                   {"booking_ref": "2011", "event_date": "2026-09-26", "kind": "request"}], due
+    p = cli(d, "review-reminded", "2009", "2026-09-28")
+    assert p.returncode == 0 and p.stdout.strip() == "2009: review reminder drafted 2026-09-28", (p.stdout, p.stderr)
+    p = cli(d, "review-reminder-skipped", "2010", "planner")
+    assert p.returncode == 0 and "review reminder skipped" in p.stdout, (p.stdout, p.stderr)
+    with open(path, newline="") as f:
+        notes = {r["booking_ref"]: r["notes"] for r in csv.DictReader(f)}
+    assert notes["2009"].endswith("; review reminder drafted 2026-09-28"), notes
+    assert notes["2010"].endswith("(planner)"), notes
+    assert [x["booking_ref"] for x in json.loads(cli(d, "reviews-due", "--today", "2026-09-28").stdout)] == ["2011"]
+    for args in (("review-reminded", "2009", "2026-09-28"), ("review-reminder-skipped", "2010", "replied")):
+        p = cli(d, *args)
+        assert p.returncode != 0 and "already" in p.stderr, (args, p.stderr)
+    p = cli(d, "review-reminded", "2011", "2026-09-28")
+    assert p.returncode != 0 and "no review request" in p.stderr, "no reminder before a request"
+    p = cli(d, "review-reminder-skipped", "2011", "unhappy")
+    assert p.returncode != 0 and "planner or replied" in p.stderr, p.stderr
+    assert mode(path) == 0o600
 
 
 def test_cli_review_skipped_takes_one_plain_word():

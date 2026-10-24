@@ -45,6 +45,76 @@ providers:
         price_ex_vat: 4000
         source_quote: "Chorus: £4,000 + VAT"
         includes: "Twelve singers; Two performance pieces; Leading the congregation - up to four hymns; organist-conductor"
+      mass_responses_addon:
+        price_ex_vat: 35
+        source_quote: "Add singing Mass responses £35 + VAT"
+        includes: "Add-on to the soloist package"
+
+  # Added 2026-10-24 (docs/superpowers/specs/2026-10-24-competitor-and-intent-research.md).
+  # Not used on any page yet. A package with price_as_quoted instead of price_ex_vat is one
+  # whose page states no VAT treatment: the validator then allows only the printed figure.
+  dream-gospel-choir:
+    name: "Dream Gospel Choir"
+    url: "https://www.lastminutemusicians.com/members/dreamgospelchoir.html"
+    pricing_url: "https://www.lastminutemusicians.com/members/dreamgospelchoir.html"
+    checked_date: "2026-10-24"
+    vat_treatment: "not stated"
+    travel: "within 25 miles of East London included; beyond that 45p per mile per vehicle"
+    packages:
+      funeral_4:
+        price_as_quoted: 1349
+        source_quote: "4 Piece Choir : £1349"
+        includes: "Funeral, four singers"
+      funeral_8:
+        price_as_quoted: 2339
+        source_quote: "8 Piece Choir : £2339"
+        includes: "Funeral, eight singers"
+      funeral_11:
+        price_as_quoted: 3119
+        source_quote: "11 Piece Choir : £3119"
+        includes: "Funeral, eleven singers"
+
+  music-for-london:
+    name: "Music for London"
+    url: "https://musicforlondon.co.uk/"
+    pricing_url: "https://musicforlondon.co.uk/christmas-carolers/"
+    checked_date: "2026-10-24"
+    vat_treatment: "not stated"
+    packages:
+      carol_trio_from:
+        price_as_quoted: 650
+        source_quote: "Costs start from £650.00 for a traditional vocal trio and range from £750.00 to £1,250+ for 4-part SATB or Victorian quartets."
+        includes: "Carol trio, from"
+      carol_quartet_from:
+        price_as_quoted: 750
+        source_quote: "Costs start from £650.00 for a traditional vocal trio and range from £750.00 to £1,250+ for 4-part SATB or Victorian quartets."
+        includes: "SATB or Victorian carol quartet, lower end of range"
+
+  julia-charles:
+    name: "Julia Charles Event Management"
+    url: "https://www.juliacharleseventmanagement.co.uk/"
+    pricing_url: "https://www.juliacharleseventmanagement.co.uk/entertainment/christmas-carol-singers-and-musicians/comedy-victorian-carol-singers/"
+    checked_date: "2026-10-24"
+    vat_treatment: "quoted excluding VAT"
+    travel: "extra (\"Subject to VAT + Travel\")"
+    packages:
+      victorian_carollers_from:
+        price_ex_vat: 945
+        source_quote: "Price From £945 Subject to VAT + Travel"
+        includes: "Comedy Victorian carol singers, in costume"
+
+  alive-network:
+    name: "Alive Network"
+    url: "https://www.alivenetwork.com/"
+    pricing_url: "https://www.alivenetwork.com/bandpage.asp?bandname=Victorian+Carol+Singers"
+    checked_date: "2026-10-24"
+    vat_treatment: "not stated"
+    travel: "extra"
+    packages:
+      victorian_quartet_from:
+        price_as_quoted: 1079
+        source_quote: "From £1,079 Price based on 4 members performing up"
+        includes: "Four Victorian carol singers in costume, up to 60 minutes"
 
 # LCS figures are mirrored here only so the validator can whitelist them on comparison pages.
 # pricing.html remains the source of truth for LCS prices; these must match it.
