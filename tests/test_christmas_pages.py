@@ -61,7 +61,7 @@ def stub_is_noindex_canonical():
 
 # ── christmas.html: the carol singers landing page ──
 
-EVENT_FILMS = {'csFWUu-r85Y', 'zDlSFb74p4E', 'UaVhyyidlTs'}  # Most Wonderful Time, Ding Dong, Winter Wonderland
+EVENT_FILMS = {'csFWUu-r85Y', 'zDlSFb74p4E', 'UaVhyyidlTs', 'SbvqWglsbMo', 'F0zpijMTlbM'}  # Most Wonderful Time, Ding Dong, Winter Wonderland, Royal David's, O Little Town
 HYMNS = ('Be Thou My Vision', 'Guide Me, O Thou', 'All Things Bright')
 INCLUDE = re.compile(r'<!-- @include-start (\S+) -->.*?<!-- @include-end \1 -->', re.S)
 
@@ -170,7 +170,7 @@ def christmas_hero_offer():
 
 # ── christmas-carol-services.html: the church carol services page ──
 
-CHURCH_FILMS = {'SbvqWglsbMo', 'zDlSFb74p4E'}  # Once in Royal David's City, Ding Dong
+CHURCH_FILMS = {'SbvqWglsbMo', 'zDlSFb74p4E', 'F0zpijMTlbM'}  # Once in Royal David's City, Ding Dong, O Little Town
 
 
 def church_page():

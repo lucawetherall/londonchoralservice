@@ -19,6 +19,7 @@ Finished work, old notes and reference material are in `docs/MANUAL-ACTIONS-ARCH
 | 7 | Link to the private-events page from almaconsort.com | 5 min | when you can |
 | 8–9 | Optional: Trustpilot, LinkedIn | 10 min each | none |
 | 10 | Dates to remember | | |
+| 11 | Web3Forms: restrict the form key to the site and enforce hCaptcha | 5 min | this week |
 
 ---
 
@@ -211,3 +212,15 @@ The page `linkedin.com/company/london-choral-service` doesn't exist. A company p
 | November | Look again at whether `christmas.html` and the Christmas guides compete for the same Search Console queries (too little data on 14 Oct) | agent |
 | **Late January 2027** | **Re-check competitor prices.** Open https://www.londonfuneralsingers.co.uk/pricing and compare each `source_quote` in `data/competitor-pricing.yml` with what is published. Update the figures, the `checked_date` and `compare/london-funeral-singers.html` in the same commit (a figure and its date must never disagree). `build.sh` prints a STALE warning past 120 days. Last checked 23 Oct 2026: every figure unchanged. The file also holds Dream Gospel Choir, Music for London, Julia Charles and Alive Network figures checked 24 Oct, used by no page yet; re-check them too | agent, on your word |
 | Each quarter | Re-verify the permit and travel facts on the destination pages (visible checked date: 29 Aug 2026), and check whether Google has added a funeral category for the Business Profile | agent / you |
+
+---
+
+## 11. Web3Forms: restrict the form key to the site and enforce hCaptcha
+
+The site's Web3Forms access key is public by design (it is in every form's HTML). The key should only work from londonchoralservice.com, and Web3Forms should reject any submission without a valid hCaptcha token, so a bot can't post straight to the API and skip the checkbox.
+
+**How:** sign in at https://app.web3forms.com, open the form that sends to office@londonchoralservice.com, and under its settings:
+1. Set the allowed domain to `londonchoralservice.com`.
+2. Turn on hCaptcha verification (server-side), if it isn't already on.
+
+**Done when:** both settings show as saved. Send a test enquiry from the contact page afterwards to check it still arrives.

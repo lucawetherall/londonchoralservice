@@ -81,7 +81,7 @@ def check_nav_carets():
     nav = read('partials/nav.html')
     check('&#9662;' not in nav, 'partials/nav.html still has the ▾ glyph')
     carets = re.findall(r'<span class="dropdown-caret" aria-hidden="true">(.*?)</span>', nav)
-    check(len(carets) == 3, f'expected 3 dropdown carets, found {len(carets)}')
+    check(len(carets) == 4, f'expected 4 dropdown carets, found {len(carets)}')
     check(all(c == '' for c in carets), 'dropdown carets must be empty spans')
 
 

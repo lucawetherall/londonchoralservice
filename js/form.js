@@ -236,6 +236,13 @@
         console.error('Form submission error:', err);
         trackError('submit');
         if (errorBox) {
+          // A timed-out request may still have reached Web3Forms: say so, to head off a duplicate.
+          if (err && err.name === 'AbortError' && !errorBox.querySelector('[data-timeout-note]')) {
+            var note = document.createElement('p');
+            note.setAttribute('data-timeout-note', '');
+            note.textContent = 'It may still have reached us. If you have no reply within one working day, send it again.';
+            errorBox.appendChild(note);
+          }
           errorBox.setAttribute('data-visible', 'true');
           errorBox.scrollIntoView({ block: 'center' });
         }

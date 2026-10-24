@@ -4,6 +4,7 @@ This is the full history of `MANUAL-ACTIONS-REQUIRED.md` as it stood on 24 Oct 2
 
 ## Closed 24 Oct 2026 (owner's update)
 
+- **ICO data protection fee:** the owner answered the ICO self-assessment for Alma Consort Ltd and submitted the exemption (24 Oct). No fee and no registration number; nothing on the site changes. Revisit if the company starts processing personal data for other purposes (CCTV, selling or sharing lists, credit checks).
 - **Google Ads advertiser verification (§30):** submitted by the owner; awaiting Google's reply.
 - **Recrawl requests (§32):** 11 of 12 made; `popular-funeral-hymns.html` hit the daily quota and moved to the open list.
 - **Bing Webmaster Tools (§31):** imported from Search Console and `sitemap_index.xml` submitted.

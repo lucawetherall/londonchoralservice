@@ -251,7 +251,7 @@ def hrow(email, name, sc, acc, received, paid_on="", changed="no", mid="h", veri
 
 def test_new_address_with_new_details_warns():
     history = [hrow("ben@example.com", "Ben Fenwick", "123456", "11112222", "2026-08-01", paid_on="2026-08-05", verified="yes")]
-    a = si.assess_new(inv(), "ben.fenwick.tenor@gmail.com", "Fenwick, Ben", history, {}, [])
+    a = si.assess_new(inv(), "ben.fenwick.tenor@example.net", "Fenwick, Ben", history, {}, [])
     assert a["bank_changed"] == "yes" and any("BANK DETAILS CHANGED" in w and "••••2222" in w for w in a["warnings"])
 
 

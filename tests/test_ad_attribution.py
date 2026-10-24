@@ -205,14 +205,14 @@ def test_every_enquiry_form_asks_how_they_heard_with_the_google_answers_first():
     pages = form_pages()
     for p, s in pages:
         form = s[s.index("<form"):s.index("</form>")]
-        m = re.search(r'<label for="([^"]+)">How did you hear about us\?(?: <span aria-hidden="true">\*</span>)?</label>\s*'
-                      r'<select id="([^"]+)" name="hear" required aria-describedby="hear-error">(.*?)</select>\s*'
-                      r'<p class="(form-error|pe-field-error)" id="hear-error"[^>]*>Please choose how you heard about us\.</p>',
+        # Optional since 24 Oct 2026 (owner): it must never block an enquiry.
+        m = re.search(r'<label for="([^"]+)">How did you hear about us\? \(optional\)</label>\s*'
+                      r'<select id="([^"]+)" name="hear">(.*?)</select>',
                       form, re.S)
         assert m, p
         label_for, select_id, options = m.group(1), m.group(2), re.findall(r"<option[^>]*>([^<]*)</option>", m.group(3))
         assert label_for == select_id and s.count(f'id="{select_id}"') == 1, (p, select_id)  # the label names it
-        assert s.count('id="hear-error"') == 1, p
+        assert 'id="hear-error"' not in s, p
         assert options[:3] == ["Please choose", "A Google ad (marked Sponsored)", "A Google search result"], (p, options)
         assert options[-1] == "Prefer not to say" and len(options) == len(set(options)), (p, options)
         for old in ("Searching on Google", "A Google ad", "Search"):
