@@ -7,7 +7,7 @@ metadata:
 
 # Creating a New Page
 
-Every page on this site is a standalone HTML file carrying ~60 lines of head boilerplate, an inlined CSS block, expanded partials, and page-type-specific JSON-LD. **Never write a page from scratch.**
+Every page on this site is a standalone HTML file carrying ~60 lines of head boilerplate, a generated critical-CSS block, expanded partials, and page-type-specific JSON-LD. **Never write a page from scratch.**
 
 ## Method: clone the nearest exemplar
 
@@ -26,7 +26,7 @@ Every page on this site is a standalone HTML file carrying ~60 lines of head boi
 **Keep verbatim** (invariant across the site):
 - The `partials/analytics.html` include markers (GA4/Google Ads + Consent Mode); the build expands them.
 - The `@include-start`/`@include-end` marker pairs and everything between them — stale expanded content from the cloned page is fine; `./build.sh` re-expands it.
-- The inlined `<style>` block — again, the build refreshes it.
+- The generated CSS block (`<!-- @css-start … -->` to `<!-- @css-end -->`): the build writes this page's critical CSS into it.
 - `theme-color`, `robots`, `dns-prefetch` lines, favicon links.
 - `og:image` / `twitter:image`: area, borough, destination, `for-*` and hub pages each have their own card in `assets/og/`. After creating one of those pages, run `node scripts/og/generate_og_images.mjs --wire` (needs Playwright + Chromium) to render its card and point the tags at it; guides keep their category card (`og-weddings.png`, `og-funerals.png`, `og-christmas.png`, …).
 

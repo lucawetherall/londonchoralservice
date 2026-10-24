@@ -4,7 +4,7 @@ The website of The London Choral Service (Alma Consort Ltd) — a choir-for-hire
 
 ## Critical: the build pipeline
 
-- **Never hand-edit the inlined `<style>` block in any page** — edit `css/tokens|base|layout|components|pages.css` and run `./build.sh`. `css/style.css` is generated too.
+- **Never hand-edit the generated CSS block in any page** (`<!-- @css-start … -->` to `<!-- @css-end -->`: the page's critical first-screen CSS from `scripts/inline_css.py`, then a non-blocking link to `css/style.css?v=<hash>`) — edit `css/tokens|base|layout|components|pages.css` and run `./build.sh`. `css/style.css` is generated too. After a CSS or first-screen markup change, check the first screen with and without the bundle (`build-and-verify`).
 - **Never hand-edit content between `<!-- @include-start … -->` / `@include-end` markers** — edit `partials/*.html` and run `./build.sh`.
 - Run `./build.sh` after any `css/` or `partials/` change or new page; a ~165-file diff afterwards is normal. **Load the `build-and-verify` skill before touching styles, nav, footer, or doing any bulk edit.**
 - The built output is what gets committed and deployed — there is no CI build step. On each push to `main`, `.github/workflows/deploy-pages.yml` copies the files `scripts/stage_site.py` publishes into the Pages artifact, byte for byte, and deploys them. It never builds or edits a page.
