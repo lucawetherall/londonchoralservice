@@ -2688,12 +2688,13 @@ Summary: Free guides to choosing funeral hymns, wedding music and Christmas caro
 
 ## Music guides
 
-Honest, practical advice on choosing music for the occasions that matter most — from the musicians who perform at them every week.
+Guides to the music for weddings, funerals and Christmas services, and to booking the singers. Each guide answers one question, and each group below opens with the overview for that occasion.
 
 ### How to book a choir
 ### Wedding music
 ### Funeral & memorial music
-### Christmas & corporate events
+### Christmas & carol services
+### Booking & cost
 
 
 ---
@@ -3025,7 +3026,9 @@ Summary: Everything you need to know about booking an organist for your wedding:
 
 ## Hiring an organist for your wedding
 
-The organist is the musical backbone of a church wedding. From the moment your guests arrive and take their seats to the moment you walk back down the aisle as a married couple, the organ is what holds everything together — setting the mood, accompanying the hymns, and providing the musical landmarks that shape the whole ceremony. Getting the right organist matters more than most couples realise.
+At a church wedding the organist plays from the moment your guests sit down to the moment you walk back down the aisle married. They play you in, lead the hymns and play you out, so the choice of player shapes the whole ceremony.
+
+How do you hire an organist for a wedding? Book one of our organists for £250, alone or added to a choir: up to two hours, rehearsal included, in Greater London (travel added further out). Your organist plays the hymns and up to three pieces, usually the entrance, the signing of the register and the walk out. Send us your music list. If the church has its own organist, tell us and we’ll speak to the church.
 
 ### What a wedding organist does
 ### The church organist or your own?
@@ -3040,6 +3043,8 @@ The organist is the musical backbone of a church wedding. From the moment your g
 #### How much does a wedding organist cost?
 #### Does the church provide an organist?
 #### When should I book a wedding organist?
+#### What music should I send the organist?
+#### What if the venue has no organ?
 ### Let us find the right organist for your wedding
 ### Related
 
@@ -3081,7 +3086,9 @@ Summary: A step-by-step guide to every musical moment in a wedding ceremony: pro
 
 ## A complete guide to wedding ceremony music
 
-A wedding ceremony has a natural musical shape — a quiet opening that builds through moments of collective singing and private reflection, then releases into celebration. Get the right music at each point and you carry your guests through the day with you. Get it wrong and the moments that should feel effortless start to feel awkward. This guide walks through every musical slot in a typical ceremony, from the first notes your guests hear as they take their seats to the triumphant exit at the end.
+A church wedding has five places for music, and each has its own job: settling the guests, bringing the bride in, giving everyone something to sing, filling the signing of the register and sending the couple out. This guide takes the moments in order, with the pieces couples choose most for each and the guide that covers it in more depth.
+
+What music do you need for a wedding ceremony? Music for five moments: a prelude as guests arrive, often Bach on the organ; a processional for the entrance, such as Clarke’s Trumpet Voluntary ; two or three hymns, such as Love Divine, All Loves Excelling ; a piece during the signing of the register, often Schubert’s Ave Maria ; and a recessional, usually Widor’s Toccata or Mendelssohn’s Wedding March .
 
 ### The musical shape of a wedding ceremony
 ### Before the ceremony — the prelude
@@ -3089,13 +3096,16 @@ A wedding ceremony has a natural musical shape — a quiet opening that builds t
 ### Hymns during the service
 ### Signing the register
 ### The recessional
+### Civil and humanist ceremonies
 ### Putting it all together
-#### Organist only
-#### Organist and soloist
-#### Organist and small choir
+#### Organist only (£250)
+#### Organist and soloist (£500)
+#### Organist and Small Choir of four (£1,400)
 ### Frequently asked questions
 #### What music do you need for a wedding ceremony?
 #### When is music played during a wedding?
+#### How many hymns do you have at a wedding?
+#### How long does the signing of the register take?
 #### Can you have live music at a civil ceremony?
 ### Let us help you plan your wedding music
 ### Related
@@ -3459,19 +3469,24 @@ Summary: Creative wedding music ideas beyond the standard hymn-and-organ formula
 
 ## Wedding music ideas your guests will remember
 
-Most weddings follow the same musical formula: an organ plays something as the bride walks in, the guests sing two hymns, the organ plays something triumphant at the end. There is nothing wrong with that formula — it works, and it has worked for a very long time. But if you want your ceremony to feel different — to take people’s breath away rather than meet their expectations — there are things you can do that most couples do not think of. We play at weddings every week, and the ceremonies that stay with us are the ones where someone made a bold, thoughtful choice about the music. Here are some ideas.
+Most church weddings follow one musical formula: the organ for the entrance, two hymns, something triumphant on the organ at the end. It works, and our guide to wedding ceremony music walks through it moment by moment. This guide is for couples who want to go further: where the singers stand, which instruments play when, and the one piece your guests won’t expect.
 
-### Start with silence, then surprise them
+What are some unusual wedding music ideas? Open with one unaccompanied voice. Put a singer in the organ gallery so the sound comes from above and behind. Change the instruments between sections, with strings for the prelude and organ for the entrance. Add one piece nobody expects, such as a folk song or a film theme arranged for choir, or have a song of your own arranged for voices.
+
+### Start with silence, then a single voice
 ### Use the building
 ### Mix your musicians
+### Drop the organ for one verse
 ### Choose one piece nobody expects
-### The power of a single voice
-### Commission something personal
-### Think about the emotional arc
+### A single voice
+### Have something arranged for you
+### Keep the singers for the drinks reception
+### Build towards the exit
 ### Frequently asked questions
 #### What music should I have at my wedding?
 #### Can I have modern music at a church wedding?
-#### What makes wedding music memorable?
+#### Can a song be arranged specially for our wedding?
+#### Can the choir sing at the drinks reception as well?
 ### Tell us what you are imagining
 ### Related
 
@@ -4925,12 +4940,14 @@ Summary: Choirs and singers for corporate event managers: awards dinners, produc
 ---
 
 Source: https://londonchoralservice.com/music-guides/best-christmas-carol-singers.html
-Summary: What to look for when hiring Christmas carol singers — qualifications, ensemble sizes, market price ranges, and the questions to ask any provider.
+Summary: How to choose the best Christmas carol singers: the training to look for, how many voices suit the room, what the fee should include and the questions to ask.
 (Shortened to its answer and headings; the page has the full text.)
 
 ## Best Christmas carol singers — what to look for when hiring
 
-Hiring carol singers used to be a parish-organised affair. Now it is a small but real corner of the live-music market, and once you start looking around, the offer ranges from a costumed quartet in a department-store atrium to eight Royal Academy graduates singing in a private members’ club. Prices vary by a factor of five for what looks, on the surface, like the same thing. This guide is for the person who has been asked to book carol singers for a corporate Christmas party, an in-store event, a hotel lobby, a gala dinner, a charity fundraiser, or a residential street — and who wants to know what they are actually choosing between. London prices and conventions are slightly different from the rest of the UK, so most of what follows is calibrated for the London market with notes where it varies elsewhere.
+Carol singers range from a costumed quartet in a department-store atrium to eight conservatoire graduates in a members’ club, and two quotes for four singers can be hundreds of pounds apart. This guide is for whoever has been asked to book carol singers for an office party, a shop, a hotel lobby, a gala dinner, a charity fundraiser or a residents’ evening. It covers the training to look for, how many voices suit the room, what the fee should include and six questions to ask any provider.
+
+How do you choose the best carol singers? Check that the singers are trained, have sung together, and can move between traditional carols and close-harmony songs such as Winter Wonderland . Match the number to the room: four for an office reception or hotel lobby, six for a busy party, eight for a loud one. Get what the fee includes in writing, and ask whether December costs more.
 
 ### What to look for
 ### Ensemble size guidance
@@ -4938,7 +4955,7 @@ Hiring carol singers used to be a parish-organised affair. Now it is a small but
 #### Small Choir (4)
 #### Sextet
 #### Full carollers (eight or more)
-### Price ranges across the market in 2026
+### What carol singers cost
 ### Six questions to ask any provider
 ### How LCS approaches this
 ### Frequently asked questions
@@ -4947,6 +4964,8 @@ Hiring carol singers used to be a parish-organised affair. Now it is a small but
 #### Can carol singers perform alongside a string quartet or DJ?
 #### Do you sing only traditional carols, or modern festive songs too?
 #### What is the booking lead time for December events?
+#### Do carol singers need public liability insurance?
+#### How much do professional carol singers cost?
 ### Related
 
 
@@ -5091,7 +5110,9 @@ Summary: Planning a residents' carol evening in a lobby or courtyard — the run
 
 ## Hosting a residents’ carol event
 
-A carol evening is the least complicated event a building runs all year. Nothing needs catering beyond mulled wine and a tray of mince pies, and because a professional choir sings unaccompanied there is no stage to build, no power to run, and no sound system to hire. A lobby will do. This guide is for property managers, estate teams, and residents’ association committees working out where to hold one, how to shape the evening, and what booking a choir for it costs.
+A carol evening asks less of a building than any other residents’ event. You need mulled wine and a tray of mince pies, and a professional choir sings unaccompanied, so there is no stage to build, no power to run and no sound system to hire. A lobby will do. This guide is for property managers, estate teams, residents’ association committees and care home activity coordinators working out where to hold one, how to shape the evening and what a choir costs.
+
+How do you host a Christmas carol event for residents? Choose a space everyone can reach (the lobby, a courtyard with an indoor fallback, or a care home lounge), put out mulled wine and mince pies, and book a choir for about ninety minutes: two or three sets of carols, then a singalong from printed word sheets. Four unaccompanied singers cost £1,150, and the singing needs no stage, power or entertainment licence.
 
 ### Why a carol evening works as a residents’ event
 ### Choosing the space
@@ -5107,6 +5128,8 @@ A carol evening is the least complicated event a building runs all year. Nothing
 #### Can carol singers perform in an apartment lobby or courtyard?
 #### How much does a residents’ carol event cost?
 #### Do residents sing along, or just listen?
+#### Do we need a licence for a residents’ carol evening?
+#### Can you sing carols at a care home?
 ### Related
 
 
@@ -5394,7 +5417,9 @@ Summary: How live music works at a Christmas drinks reception: when the singing 
 
 ## Music for a Christmas drinks reception
 
-A drinks reception is the hardest room a choir sings in, and the one they are booked for most. Guests arrive across an hour, nobody is seated, nobody has come to listen, and the volume climbs steadily as the wine goes round. Music that works here is planned around those facts rather than in spite of them.
+A drinks reception is the hardest room a choir sings in, and the Christmas booking we take most often. Guests arrive across an hour, nobody sits down or has come to listen, and the noise climbs as the wine goes round. This guide plans the music around those facts: when to start, where the singers stand, what they sing and how many you need.
+
+What music works at a Christmas drinks reception? Unaccompanied singers who start fifteen minutes before guests arrive, roam while people come in, then gather for one stationary set of three or four pieces at the toast or speech. Close-harmony songs such as Winter Wonderland suit a talking room better than carols. Four singers (£1,150) cover a room of up to about 150; six (£1,600) hold their own at a busy reception.
 
 ### What the music is actually for
 ### Start before the doors open
@@ -5411,6 +5436,8 @@ A drinks reception is the hardest room a choir sings in, and the one they are bo
 #### Should carol singers roam or stay in one place at a reception?
 #### Will live singing be too loud for guests to talk?
 #### How many singers for a Christmas drinks reception?
+#### How long do carol singers perform at a drinks reception?
+#### How much does music for a Christmas drinks reception cost?
 ### Related
 
 
@@ -5422,7 +5449,9 @@ Summary: Live music at a seated Christmas dinner: a sung grace, set pieces betwe
 
 ## Music for a Christmas gala or awards dinner
 
-A seated dinner is a fixed running order with other people’s speeches in it, and music at one succeeds or fails on timing rather than on repertoire. The pieces are short, the moments are specific, and the whole thing has to survive a starter arriving late. This guide covers the three places music usually goes and how to brief the room.
+A seated dinner runs to a fixed order with other people’s speeches in it, so music there depends on timing first and repertoire second. The pieces are short, each one has its moment, and the plan has to survive a starter arriving late. This guide covers the three places music usually goes and how to brief the room.
+
+What music works at a Christmas gala or awards dinner? A sung grace before the meal, by one unaccompanied voice, then pieces of two or three minutes between courses or award categories, cued by the toastmaster. Save the carols and the choir’s best piece for a set once the formal business is done. A soloist for the grace costs £250; carol sets start with four singers at £1,150.
 
 ### Three places music goes at a dinner
 ### The sung grace
@@ -5438,6 +5467,8 @@ A seated dinner is a fixed running order with other people’s speeches in it, a
 #### How long should music between dinner courses last?
 #### Where should music go in an awards dinner running order?
 #### How many singers for a Christmas gala dinner?
+#### Can a soloist sing carols at a Christmas dinner?
+#### What does music for a Christmas gala dinner cost?
 ### Related
 
 
@@ -5449,7 +5480,9 @@ Summary: Christmas music for law firms, accountants and consultancies: client en
 
 ## Carol singers for law firms and professional services
 
-Professional services firms book more carol singing than any other sector we work with, and they book it for a specific reason: December is when clients are entertained, and a choir in an atrium is one of the few things at a client event that nobody has to be persuaded to enjoy. This guide covers how those bookings usually work.
+December is when law firms entertain clients, and a choir in the atrium is one of the few things at a client event that nobody has to be persuaded to enjoy. This guide covers the events firms book, how City office buildings sound, clearing the singing with building management, and how the booking is invoiced.
+
+What carol singers suit a law firm’s Christmas event? For client drinks, four to six singers in all black, singing well-known carols and close-harmony Christmas songs unaccompanied in the atrium; four cost £1,150 and six £1,600. A partners’ dinner takes a sung grace and a short set after the meal. A carol service in a City church wants a choir of eight and an organist, £2,250 together.
 
 ### Why this sector books carols
 ### The events firms book
@@ -5465,6 +5498,8 @@ Professional services firms book more carol singing than any other sector we wor
 #### Do we need permission from the building to have carol singers?
 #### Is live music worth it for a client Christmas party?
 #### Should a firm run one Christmas event for clients and staff together?
+#### Can you invoice the firm against a purchase order?
+#### Do carol singers in the office need a licence?
 ### Related
 
 
