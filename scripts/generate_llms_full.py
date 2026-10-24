@@ -65,7 +65,8 @@ def page_markdown(url, path, trim=False):
         # A trimmed page keeps its answer (the lede and the bold-question paragraph: the first
         # ANSWER_PARAS paragraphs), not the small print around it (date lines, hiring lines, captions).
         small = re.search(r'class="[^"]*\b(guide-meta|text-sm|video-caption)\b', attrs)
-        if trim and (past_first_h2 and tag in ('p', 'li') or small
+        # Its outline is the h2s: the h3s under them, mostly FAQ questions, stay on the page.
+        if trim and (past_first_h2 and tag in ('p', 'li', 'h3') or small
                      or tag in ('p', 'li') and kept_paras >= ANSWER_PARAS):
             continue
         if tag in ('p', 'li'):
@@ -89,7 +90,7 @@ def page_markdown(url, path, trim=False):
     if desc:
         header += f'Summary: {desc}\n'
     if trim:
-        header += '(Shortened to its answer and headings; the page has the full text.)\n'
+        header += '(Shortened to its answer and section headings; the page has the full text and its FAQs.)\n'
     return header + '\n'.join(out) + '\n'
 
 

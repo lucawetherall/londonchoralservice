@@ -1418,7 +1418,7 @@ Text us on WhatsApp for the fastest reply, or email office@londonchoralservice.c
 
 Source: https://londonchoralservice.com/about.html
 Summary: London Choral Service is a handpicked team of professional singers and instrumentalists for funerals, weddings, and ceremonies across the UK.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## About our musicians
 
@@ -1434,7 +1434,7 @@ We put the right singers in the right building, prepared and rehearsed, for the 
 
 Source: https://londonchoralservice.com/luca-wetherall.html
 Summary: Luca Wetherall, Artistic Director of The London Choral Service: choral scholar at Merton College Oxford, Clarendon Scholar, conductor, bass, and Tutor in Music.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## Luca Wetherall
 
@@ -1451,7 +1451,7 @@ Artistic Director of The London Choral Service. He chooses every musician on the
 
 Source: https://londonchoralservice.com/listen.html
 Summary: Watch our choir sing funeral hymns such as Abide With Me and Be Thou My Vision, plus wedding anthems and solos from the singers you would book.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## Hear our singers Hymns, anthems and solos for weddings and funerals
 
@@ -1463,8 +1463,6 @@ Gjeilo set the Latin antiphon “where charity and love are, God is there” for
 ### Hymns
 ### Choir pieces and solos
 ### More pieces we are asked for
-#### More hymns
-#### More choir pieces and solos
 ### Ask for a piece
 
 
@@ -1472,7 +1470,7 @@ Gjeilo set the Latin antiphon “where charity and love are, God is there” for
 
 Source: https://londonchoralservice.com/compare/london-funeral-singers.html
 Summary: Comparing quotes for funeral singers in London? See what The London Funeral Singers charge, what we charge, and what each price actually includes.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## London Funeral Singers vs The London Choral Service
 
@@ -1482,18 +1480,9 @@ If you are comparing quotes for funeral singers in London, you are doing it in a
 ### How much singing you get
 ### Who sings
 ### Listen
-#### Abide With Me — Full Choir
-#### Anima Christi — Quintet
 ### What each price covers
-#### What they publish
-#### What we include
 ### Already have a quote?
 ### Frequently asked questions
-#### Why are your prices lower?
-#### Do you charge VAT?
-#### What is included in the price?
-#### How many pieces will the choir sing?
-#### Can you arrange singers at short notice?
 ### Related
 
 
@@ -1501,7 +1490,7 @@ If you are comparing quotes for funeral singers in London, you are doing it in a
 
 Source: https://londonchoralservice.com/for-funeral-directors.html
 Summary: Live singers for funeral directors in London and the UK: we ring the family the same working day, confirm most choirs in 48 hours and send a running order.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## For funeral directors Professional singers, without the admin
 
@@ -1511,19 +1500,11 @@ Refer a family to us
 
 ### How to book us at short notice
 ### How we work with you, the officiant and the venue
-#### With you
-#### With the officiant
-#### With the venue
 ### What the family receives
 ### What it costs, and who pays
 ### A music sheet to hand to families
 ### Useful resources for families
 ### Frequently asked questions
-#### How much notice do you need?
-#### What does the family see from us?
-#### Does the officiant see the music in advance?
-#### Do you cover the whole UK?
-#### How do you invoice?
 ### Refer a family to us
 
 
@@ -1531,7 +1512,7 @@ Refer a family to us
 
 Source: https://londonchoralservice.com/for-wedding-planners.html
 Summary: How professional wedding singers and choirs work with wedding planners and venue coordinators. The London Choral Service handles logistics on the day.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## For wedding planners Music your couples will talk about for years, with none of the chasing
 
@@ -1545,11 +1526,6 @@ Refer a couple to us
 ### What it costs the couple
 ### Useful resources for couples
 ### Frequently asked questions
-#### How far ahead should couples book their wedding musicians?
-#### Can you arrange custom pieces?
-#### What technical setup do you need?
-#### Do you perform at outdoor ceremonies?
-#### Can you invoice the planner instead of the couple?
 ### Refer a couple to us
 
 
@@ -1557,7 +1533,7 @@ Refer a couple to us
 
 Source: https://londonchoralservice.com/private-events.html
 Summary: Alma Consort, the ensemble of the London Choral Service, sings weddings, memorials and private ceremonies in the UK and at destinations worldwide.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 Alma Consort · London
 
 
@@ -1568,17 +1544,9 @@ A professional consort of eight to twenty-four voices, travelling from London to
 ### The ensemble
 ### Choosing a voicing
 ### Repertoire
-#### Where we have sung
 ### How it works
 ### For planners and venues
 ### Private engagement questions
-#### Where do you travel?
-#### Can you sing more than once across a wedding weekend?
-#### How much notice do private events need?
-#### What determines the cost?
-#### What do you need from the venue?
-#### What happens if a singer falls ill?
-#### Do you sing outside churches, and beyond sacred music?
 ### Enquire
 
 
@@ -1586,7 +1554,7 @@ A professional consort of eight to twenty-four voices, travelling from London to
 
 Source: https://londonchoralservice.com/destinations/
 Summary: Alma Consort travels from London to sing weddings abroad. Country guides to the rite, the sung language, and the travel and permit position for a British choir.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 Alma Consort · London
 
 
@@ -1595,23 +1563,10 @@ Alma Consort · London
 Your guests have travelled to be there, and they will be together for days. A consort of eight to twenty-four voices travels too, and sings across the whole weekend: the welcome dinner, the ceremony, the reception.
 
 ### A wedding that lasts a weekend
-#### Whatever kind of ceremony you are having
-#### What travels with us
 ### Country guides
-#### Europe and the Mediterranean
-#### The Americas and the Caribbean
-#### The Indian Ocean, Asia and Africa
 ### What moves the cost
 ### Permits and paperwork
 ### Destination wedding questions
-#### Can a British choir sing at a wedding abroad?
-#### Can you sing more than once across the weekend?
-#### We live in the country rather than flying out. Does that change anything?
-#### Do we have to have a religious ceremony?
-#### How far ahead should we book a wedding abroad?
-#### What does it cost to bring a choir abroad?
-#### Do you sing in languages other than English?
-#### What if there is no church and no organ?
 ### Enquire
 
 
@@ -1619,7 +1574,7 @@ Your guests have travelled to be there, and they will be together for days. A co
 
 Source: https://londonchoralservice.com/destinations/italy.html
 Summary: A British consort singing at Italian weddings: the nuptial Mass, what many parishes allow and refuse, Latin and Italian, and the acoustics of a Tuscan pieve.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 Alma Consort · Destinations
 
 
@@ -1635,16 +1590,7 @@ Alma Consort flies from London to sing nuptial Masses and blessings in Tuscany, 
 ### What Italian churches do to a consort
 ### Getting a consort to Italy
 ### Where in Italy
-#### Tuscany
-#### The Amalfi Coast
-#### Lake Como
-#### Puglia
-#### Florence
 ### Questions about singing in Italy
-#### Can we have a choir at a Catholic wedding in Italy?
-#### Should the Mass be sung in Latin or Italian?
-#### How many singers do we need for a Tuscan church?
-#### How far ahead should we book for an Italian wedding?
 ### Other destinations: Europe and the Mediterranean
 ### Enquire
 
@@ -1653,7 +1599,7 @@ Alma Consort flies from London to sing nuptial Masses and blessings in Tuscany, 
 
 Source: https://londonchoralservice.com/destinations/france.html
 Summary: A British consort singing at French weddings: why there are two ceremonies, where the music actually goes, and what a château terrace does to eight voices.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 Alma Consort · Destinations
 
 
@@ -1669,15 +1615,7 @@ Alma Consort travels from London to sing church blessings, château ceremonies a
 ### Churches, châteaux and the terrace problem
 ### Getting a consort to France
 ### Where in France
-#### Provence
-#### The Côte d’Azur
-#### The Loire Valley
-#### The Dordogne
 ### Questions about singing in France
-#### Do we need a choir at the mairie as well as the church?
-#### Can you sing at a château ceremony rather than in a church?
-#### Will the music be in French?
-#### Is it cheaper because France is close?
 ### Other destinations: Europe and the Mediterranean
 ### Enquire
 
@@ -1686,7 +1624,7 @@ Alma Consort travels from London to sing church blessings, château ceremonies a
 
 Source: https://londonchoralservice.com/destinations/spain.html
 Summary: A British consort singing at Spanish weddings: the nuptial Mass on the mainland, villa ceremonies in the Balearics, and what changes between the two.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 Alma Consort · Destinations
 
 
@@ -1702,15 +1640,7 @@ Alma Consort travels from London to sing nuptial Masses, blessings and villa cer
 ### Stone churches and stone terraces
 ### Getting a consort to Spain
 ### Where in Spain
-#### Mallorca
-#### Ibiza
-#### Marbella
-#### Tenerife
 ### Questions about singing in Spain
-#### Can a British choir sing at a Catholic wedding in Spain?
-#### What music suits a villa ceremony in Ibiza or Mallorca?
-#### Do we need more singers for an outdoor ceremony?
-#### Will you sing in Spanish?
 ### Other destinations: Europe and the Mediterranean
 ### Enquire
 
@@ -1719,7 +1649,7 @@ Alma Consort travels from London to sing nuptial Masses, blessings and villa cer
 
 Source: https://londonchoralservice.com/destinations/portugal.html
 Summary: A British consort singing at Portuguese weddings: quinta ceremonies in the Algarve, palace weddings at Sintra, and city churches in Lisbon and Porto.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 Alma Consort · Destinations
 
 
@@ -1735,15 +1665,7 @@ Alma Consort travels from London to sing at quintas in the Algarve, palaces and 
 ### Azulejo churches, palace rooms and open lawns
 ### Getting a consort to Portugal
 ### Where in Portugal
-#### The Algarve
-#### Sintra
-#### Lisbon
-#### Porto
 ### Questions about singing in Portugal
-#### Can you sing at a quinta wedding rather than in a church?
-#### Is it worth having us sing during the reception drinks?
-#### What is the acoustic like in Portuguese churches?
-#### How does the cost compare with Italy or Greece?
 ### Other destinations: Europe and the Mediterranean
 ### Enquire
 
@@ -1752,7 +1674,7 @@ Alma Consort travels from London to sing at quintas in the Algarve, palaces and 
 
 Source: https://londonchoralservice.com/destinations/greece.html
 Summary: A British consort at Greek weddings: why an Orthodox service works differently, and how music is placed at a clifftop ceremony in Santorini or Mykonos.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 Alma Consort · Destinations
 
 
@@ -1768,16 +1690,7 @@ Alma Consort travels from London to sing at clifftop and resort ceremonies in Sa
 ### Terraces, caldera edges and the wind
 ### Getting a consort to the Greek islands
 ### Where in Greece
-#### Santorini
-#### Mykonos
-#### Crete
-#### Rhodes
-#### Zakynthos
 ### Questions about singing in Greece
-#### Where do you sing at a Greek wedding?
-#### What if our ceremony is symbolic rather than religious?
-#### Will the wind be a problem on a clifftop?
-#### How much of the cost is accommodation?
 ### Other destinations: Europe and the Mediterranean
 ### Enquire
 
@@ -1786,7 +1699,7 @@ Alma Consort travels from London to sing at clifftop and resort ceremonies in Sa
 
 Source: https://londonchoralservice.com/destinations/cyprus.html
 Summary: A British consort at Cypriot weddings: town hall ceremonies, hotel and villa weddings, and an honest word about which end of the Cyprus market this suits.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 Alma Consort · Destinations
 
 
@@ -1802,14 +1715,7 @@ Alma Consort travels from London to sing at civil, hotel and villa ceremonies in
 ### Terraces, town halls and a good deal of stone
 ### Getting a consort to Cyprus
 ### Where in Cyprus
-#### Paphos
-#### Protaras
-#### Ayia Napa
 ### Questions about singing in Cyprus
-#### How many singers suit a Cyprus wedding?
-#### Can you sing at a Cypriot civil ceremony?
-#### What about a Greek Orthodox ceremony in Cyprus?
-#### When is the best time of year?
 ### Other destinations: Europe and the Mediterranean
 ### Enquire
 
@@ -1818,7 +1724,7 @@ Alma Consort travels from London to sing at civil, hotel and villa ceremonies in
 
 Source: https://londonchoralservice.com/destinations/malta.html
 Summary: A British consort at Maltese weddings: baroque churches built for singing, English as an official language, and the shortest paperwork in the Mediterranean.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 Alma Consort · Destinations
 
 
@@ -1835,14 +1741,7 @@ Alma Consort travels from London to sing nuptial Masses and blessings in Vallett
 ### Stone, height and a great deal of reverberation
 ### Getting a consort to Malta
 ### Where in Malta
-#### Valletta
-#### Mdina
-#### Gozo
 ### Questions about singing in Malta
-#### Why is Malta better for a choir than Italy or Spain?
-#### Will the church have its own organist?
-#### How many singers for a Maltese church?
-#### Can our guests sing hymns?
 ### Other destinations: Europe and the Mediterranean
 ### Enquire
 
@@ -1851,7 +1750,7 @@ Alma Consort travels from London to sing nuptial Masses and blessings in Vallett
 
 Source: https://londonchoralservice.com/destinations/croatia.html
 Summary: A British consort at Croatian weddings: Adriatic stone churches, old-town cloisters, and what an island ceremony asks of a group of twelve singers.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 Alma Consort · Destinations
 
 
@@ -1867,15 +1766,7 @@ Alma Consort travels from London to sing in the old towns of Dubrovnik and Split
 ### Cloisters, old-town churches and enclosed courtyards
 ### Getting a consort to Croatia, and the island question
 ### Where in Croatia
-#### Dubrovnik
-#### Split
-#### Hvar
-#### Istria
 ### Questions about singing in Croatia
-#### Is a cloister really better than a terrace?
-#### Why do you need two nights for an island wedding?
-#### Can you sing at a Catholic wedding in a Croatian church?
-#### When is the best time of year to marry in Croatia?
 ### Other destinations: Europe and the Mediterranean
 ### Enquire
 
@@ -1884,7 +1775,7 @@ Alma Consort travels from London to sing in the old towns of Dubrovnik and Split
 
 Source: https://londonchoralservice.com/destinations/gibraltar.html
 Summary: A British consort at Gibraltar weddings: British law, two cathedrals, English throughout, and no work permit needed for visiting British musicians.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 Alma Consort · Destinations
 
 
@@ -1900,13 +1791,7 @@ Alma Consort travels from London to sing at cathedral, registry and Botanic Gard
 ### Cathedral stone and an open garden
 ### Getting a consort to Gibraltar
 ### Where in Gibraltar
-#### The Rock and the town
-#### The Botanic Gardens
 ### Questions about singing in Gibraltar
-#### Do you need a work permit to sing in Gibraltar?
-#### Which is better for music, a cathedral or the Botanic Gardens?
-#### Will our guests be able to sing hymns?
-#### How quickly could you come?
 ### Other destinations: Europe and the Mediterranean
 ### Enquire
 
@@ -1915,7 +1800,7 @@ Alma Consort travels from London to sing at cathedral, registry and Botanic Gard
 
 Source: https://londonchoralservice.com/destinations/ireland.html
 Summary: A British consort at Irish weddings: Catholic and Church of Ireland services, castle and country house ceremonies, and no permits or long-haul cost.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 Alma Consort · Destinations
 
 
@@ -1931,15 +1816,7 @@ Alma Consort travels from London to sing nuptial Masses, Church of Ireland servi
 ### Churches, castles and the big draughty hall
 ### The easiest journey we make
 ### Where in Ireland
-#### Dublin and the east
-#### County Wicklow
-#### The south west
-#### The west
 ### Questions about singing in Ireland
-#### Is Ireland cheaper than the rest of Europe?
-#### Will a Church of Ireland service feel familiar?
-#### Can you sing at a castle or country house ceremony?
-#### What about rain?
 ### Other destinations: Europe and the Mediterranean
 ### Enquire
 
@@ -1948,7 +1825,7 @@ Alma Consort travels from London to sing nuptial Masses, Church of Ireland servi
 
 Source: https://londonchoralservice.com/destinations/scotland.html
 Summary: A British consort at Scottish weddings: why Scots law allows a legal ceremony anywhere, what that means for the music, and our published UK rates.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 Alma Consort · Destinations
 
 
@@ -1964,15 +1841,7 @@ Alma Consort travels from London to sing at castle, Highland and city ceremonies
 ### Great halls, chapels and standing in a field
 ### Scotland is a UK engagement
 ### Where in Scotland
-#### Edinburgh and the Lothians
-#### The Highlands
-#### Loch Lomond and the Trossachs
-#### Fife and Perthshire
 ### Questions about singing in Scotland
-#### Can we have a legally binding ceremony outdoors in Scotland?
-#### Do you charge extra because Scotland is far from London?
-#### How many singers for an outdoor Highland ceremony?
-#### What happens if the weather turns?
 ### Other destinations: Europe and the Mediterranean
 ### Enquire
 
@@ -1981,7 +1850,7 @@ Alma Consort travels from London to sing at castle, Highland and city ceremonies
 
 Source: https://londonchoralservice.com/destinations/united-states.html
 Summary: A British consort at American weddings: the performance visa that governs the timeline, what it means for your date, and where the music goes at a US ceremony.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 Alma Consort · Destinations
 
 
@@ -1997,14 +1866,7 @@ Alma Consort travels from London to sing at weddings in New York, Florida and La
 ### East coast stone against Florida sun
 ### Getting a consort to the United States, once the visas exist
 ### Where in United States
-#### New York City
-#### Florida
-#### Las Vegas
 ### Questions about singing in United States
-#### Do British musicians need a visa to perform at a US wedding?
-#### How far ahead do we need to book?
-#### Why is a US booking more expensive?
-#### Where does the music go at an American wedding?
 ### Other destinations: the Americas and the Caribbean
 ### Enquire
 
@@ -2013,7 +1875,7 @@ Alma Consort travels from London to sing at weddings in New York, Florida and La
 
 Source: https://londonchoralservice.com/destinations/mexico.html
 Summary: A British consort at Mexican weddings: beach and cenote ceremonies, colonial stone churches, and what tropical heat asks of singers who have flown overnight.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 Alma Consort · Destinations
 
 
@@ -2029,14 +1891,7 @@ Alma Consort travels from London to sing at beach, jungle and church ceremonies 
 ### Sand, jungle, limestone and stone
 ### Getting a consort to Mexico
 ### Where in Mexico
-#### The Riviera Maya
-#### Tulum
-#### Cancún
 ### Questions about singing in Mexico
-#### Can you sing at a beach wedding?
-#### What about a cenote ceremony?
-#### Is the heat a problem for the singers?
-#### How does the cost compare with Europe?
 ### Other destinations: the Americas and the Caribbean
 ### Enquire
 
@@ -2045,7 +1900,7 @@ Alma Consort travels from London to sing at beach, jungle and church ceremonies 
 
 Source: https://londonchoralservice.com/destinations/barbados.html
 Summary: A British consort at Barbadian weddings: an Anglican tradition three centuries deep, coral stone parish churches, and a service British guests will recognise.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 Alma Consort · Destinations
 
 
@@ -2061,14 +1916,7 @@ Alma Consort travels from London to sing in the parish churches of St James, Chr
 ### Coral stone and the trade wind
 ### Getting a consort to Barbados
 ### Where in Barbados
-#### St James
-#### Christ Church
-#### St Peter
 ### Questions about singing in Barbados
-#### Will a Barbadian church wedding feel familiar?
-#### Church or beach?
-#### How many singers do we need?
-#### Is Barbados easier than the other long-haul destinations?
 ### Other destinations: the Americas and the Caribbean
 ### Enquire
 
@@ -2077,7 +1925,7 @@ Alma Consort travels from London to sing in the parish churches of St James, Chr
 
 Source: https://londonchoralservice.com/destinations/st-lucia.html
 Summary: A British consort at St Lucian weddings: a Catholic island with real churches, resort ceremonies under the Pitons, and what the terrain asks of twelve singers.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 Alma Consort · Destinations
 
 
@@ -2093,13 +1941,7 @@ Alma Consort travels from London to sing at church and resort ceremonies at Souf
 ### Churches, resorts, and a great deal of hillside
 ### Getting a consort to St Lucia
 ### Where in St Lucia
-#### Souffrière
-#### Rodney Bay
 ### Questions about singing in St Lucia
-#### Can we have a nuptial Mass in St Lucia?
-#### Is the hillside really a problem?
-#### Church or resort?
-#### How far ahead should a St Lucia wedding be booked?
 ### Other destinations: the Americas and the Caribbean
 ### Enquire
 
@@ -2108,7 +1950,7 @@ Alma Consort travels from London to sing at church and resort ceremonies at Souf
 
 Source: https://londonchoralservice.com/destinations/jamaica.html
 Summary: A British consort at Jamaican weddings: an Anglican and Baptist choral tradition, great house ceremonies, and resort weddings on the north coast.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 Alma Consort · Destinations
 
 
@@ -2123,14 +1965,7 @@ Alma Consort travels from London to sing at church, great house and resort cerem
 ### Parish churches, great houses and the north coast
 ### Getting a consort to Jamaica
 ### Where in Jamaica
-#### Montego Bay
-#### Ocho Rios
-#### Negril
 ### Questions about singing in Jamaica
-#### Will Jamaican guests expect to sing?
-#### Can you sing at a great house wedding?
-#### How does the heat affect the singing?
-#### What does it cost compared with Barbados?
 ### Other destinations: the Americas and the Caribbean
 ### Enquire
 
@@ -2139,7 +1974,7 @@ Alma Consort travels from London to sing at church, great house and resort cerem
 
 Source: https://londonchoralservice.com/destinations/mauritius.html
 Summary: A British consort at Mauritian weddings: beach and resort ceremonies, colonial churches, and what a long flight and tropical humidity ask of singers.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 Alma Consort · Destinations
 
 
@@ -2155,14 +1990,7 @@ Alma Consort travels from London to sing at resort and church ceremonies at Bell
 ### Lagoon decks, gardens and colonial stone
 ### What a Mauritian engagement costs
 ### Where in Mauritius
-#### Belle Mare
-#### Le Morne
-#### Grand Baie
 ### Questions about singing in Mauritius
-#### Is there anywhere with a proper acoustic in Mauritius?
-#### How long is the flight and does it matter?
-#### How many singers for a beach ceremony?
-#### What will this cost?
 ### Other destinations: the Indian Ocean, Asia and Africa
 ### Enquire
 
@@ -2171,7 +1999,7 @@ Alma Consort travels from London to sing at resort and church ceremonies at Bell
 
 Source: https://londonchoralservice.com/destinations/maldives.html
 Summary: A British consort at Maldivian weddings: island resort ceremonies, seaplane logistics, and an honest account of what bringing twelve singers this far involves.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 Alma Consort · Destinations
 
 
@@ -2187,13 +2015,7 @@ Alma Consort travels from London to sing at resort ceremonies in the North Malé
 ### There are none, and that is the whole point
 ### Heat, humidity and salt air
 ### Where in Maldives
-#### North Malé Atoll
-#### South Ari Atoll
 ### Questions about singing in Maldives
-#### Can you really bring singers to a Maldives resort island?
-#### How many singers would you recommend?
-#### Why do you need two days on the island first?
-#### Is there anywhere with an acoustic?
 ### Other destinations: the Indian Ocean, Asia and Africa
 ### Enquire
 
@@ -2202,7 +2024,7 @@ Alma Consort travels from London to sing at resort ceremonies in the North Malé
 
 Source: https://londonchoralservice.com/destinations/seychelles.html
 Summary: A British consort at Seychellois weddings: granite island ceremonies, Catholic churches on Mahé, and inter-island logistics for a group of twelve.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 Alma Consort · Destinations
 
 
@@ -2218,14 +2040,7 @@ Alma Consort travels from London to sing at church and beach ceremonies on Mahé
 ### Granite, palms and open water
 ### Why the island you choose changes the price
 ### Where in Seychelles
-#### Mahé
-#### Praslin
-#### La Digue
 ### Questions about singing in Seychelles
-#### Should we get married on Mahé rather than La Digue?
-#### Is there a church option?
-#### Why the extra nights?
-#### Would a smaller group be better?
 ### Other destinations: the Indian Ocean, Asia and Africa
 ### Enquire
 
@@ -2234,7 +2049,7 @@ Alma Consort travels from London to sing at church and beach ceremonies on Mahé
 
 Source: https://londonchoralservice.com/destinations/thailand.html
 Summary: A British consort at Thai weddings: villa and beach ceremonies, a Buddhist blessing alongside a Western one, and what a twelve-hour flight asks of singers.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 Alma Consort · Destinations
 
 
@@ -2250,13 +2065,7 @@ Alma Consort travels from London to sing at villa, resort and beach ceremonies i
 ### Villas, beaches and no church to speak of
 ### What twelve hours in the air adds
 ### Where in Thailand
-#### Phuket
-#### Koh Samui
 ### Questions about singing in Thailand
-#### How does a Thai blessing fit alongside what you sing?
-#### Where should the ceremony be for the music to work?
-#### How bad is the heat for singers?
-#### How many singers suit a Thai villa wedding?
 ### Other destinations: the Indian Ocean, Asia and Africa
 ### Enquire
 
@@ -2265,7 +2074,7 @@ Alma Consort travels from London to sing at villa, resort and beach ceremonies i
 
 Source: https://londonchoralservice.com/destinations/indonesia.html
 Summary: A British consort at Balinese weddings: clifftop chapels, jungle ceremonies, and the glass chapels that turn out to be the best rooms on the island.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 Alma Consort · Destinations
 
 
@@ -2281,14 +2090,7 @@ Alma Consort travels from London to sing at clifftop, jungle and resort ceremoni
 ### A long way, and humid at the end of it
 ### The longest journey on the list
 ### Where in Bali
-#### Uluwatu
-#### Ubud
-#### Seminyak
 ### Questions about singing in Bali
-#### Where do you sing at a Balinese wedding?
-#### Which Bali venue is best for a choir?
-#### How long does it take to get there?
-#### Would a smaller group work?
 ### Other destinations: the Indian Ocean, Asia and Africa
 ### Enquire
 
@@ -2297,7 +2099,7 @@ Alma Consort travels from London to sing at clifftop, jungle and resort ceremoni
 
 Source: https://londonchoralservice.com/destinations/south-africa.html
 Summary: A British consort at South African weddings: Cape Dutch wine estates, Anglican cathedrals, barrel cellars, and a country with a choral tradition of its own.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 Alma Consort · Destinations
 
 
@@ -2313,14 +2115,7 @@ Alma Consort travels from London to sing at wine estate, cathedral and safari-lo
 ### Cape Dutch stone, barrel cellars and the open veld
 ### Getting a consort to South Africa
 ### Where in South Africa
-#### Cape Town
-#### Franschhoek and the Winelands
-#### The Kruger area
 ### Questions about singing in South Africa
-#### Will South African guests sing?
-#### What is the best room at a wine estate?
-#### Is the jet lag as bad as other long-haul destinations?
-#### How does the cost compare with the Caribbean?
 ### Other destinations: the Indian Ocean, Asia and Africa
 ### Enquire
 
@@ -2329,7 +2124,7 @@ Alma Consort travels from London to sing at wine estate, cathedral and safari-lo
 
 Source: https://londonchoralservice.com/planners-and-venues.html
 Summary: How Alma Consort works with wedding planners, venues and private offices: lead times, paperwork and confidentiality, standing arrangements, and invoicing.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 Alma Consort · London
 
 
@@ -2343,12 +2138,6 @@ How we work with wedding and event planners, venue and hotel event teams, and pr
 ### Putting us on your supplier list
 ### Engagements abroad
 ### Trade questions
-#### What do you need from us, and by when?
-#### Can you provide venue paperwork?
-#### Will the consort sign a confidentiality agreement?
-#### What does the consort need from the venue?
-#### Who do you invoice — the couple, the agency, or the venue?
-#### Can we set up a standing arrangement?
 ### Enquire
 
 
@@ -2356,7 +2145,7 @@ How we work with wedding and event planners, venue and hotel event teams, and pr
 
 Source: https://londonchoralservice.com/for-hotels.html
 Summary: Carol singers and Christmas music for hotels and venues: lobby carols, festive afternoon teas, switch-ons and party-season sets. A cappella, so no stage or PA.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## For hotels & venues Carol singers who need no stage, no PA, and no piano
 
@@ -2369,11 +2158,6 @@ Send your December dates
 ### Booking and invoicing
 ### Useful resources for hotel teams
 ### Frequently asked questions
-#### Can the choir perform several short sets across one evening?
-#### Do carol singers need a stage or a PA system in a hotel lobby?
-#### How does pricing work for one date compared with several dates in December?
-#### Can you send venue paperwork?
-#### When should hotels book carol singers for the party season?
 ### Related
 ### Send us your December dates
 
@@ -2382,7 +2166,7 @@ Send your December dates
 
 Source: https://londonchoralservice.com/for-property-managers.html
 Summary: Residents’ carol events for property managers: carol singers for apartment lobbies, courtyards, and estate Christmas light switch-ons. Choirs from £1,150.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## For property managers Carol singers for the one evening in December your residents come downstairs
 
@@ -2395,11 +2179,6 @@ Enquire about a date
 ### Booking and invoicing
 ### Useful resources for property managers
 ### Frequently asked questions
-#### What kind of carol performance works in an apartment lobby or courtyard?
-#### Can residents join in and sing, or do the singers perform on their own?
-#### How does invoicing work for a managing agent?
-#### How long does a residents’ carol evening run?
-#### When do we need to book carol singers for a December residents’ event?
 ### Related
 ### Enquire about a date
 
@@ -2408,7 +2187,7 @@ Enquire about a date
 
 Source: https://londonchoralservice.com/for-livery-companies.html
 Summary: Professional choirs for City livery companies: carol services in livery halls and City churches, Nine Lessons and Carols, and grace at Christmas court dinners.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## For livery companies Carol services in livery halls and City churches, and grace at the Christmas court dinner
 
@@ -2421,11 +2200,6 @@ Send us the date
 ### Booking and invoicing
 ### Useful resources for clerks and beadles
 ### Frequently asked questions
-#### Can you sing a full Nine Lessons and Carols with an organist in a City church?
-#### Can the choir sing grace at a Christmas court dinner?
-#### How do you coordinate with the hall staff and the beadle on timings and access?
-#### How formal can the repertoire be?
-#### Can we book the same date every year?
 ### Related
 ### Tell us about your service
 
@@ -2434,7 +2208,7 @@ Send us the date
 
 Source: https://londonchoralservice.com/for-charities.html
 Summary: Professional choirs for charity carol concerts. We lead the congregational carols, sing choir-only items, and work to your running order. Organist available.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## For charities A choir that can fill a hired church and still sit quietly through the appeal
 
@@ -2447,11 +2221,6 @@ Send a brief
 ### Booking and invoicing
 ### Useful resources for charity event teams
 ### Frequently asked questions
-#### Can a choir lead congregational carols and perform its own pieces in the same concert?
-#### How does the choir fit around celebrity readers and the appeal in a carol concert?
-#### What happens on the day in a church we have hired for a carol concert?
-#### What drives the cost of a charity carol concert choir?
-#### How far ahead should a charity book singers for a December carol concert?
 ### Related
 ### Send us a brief
 
@@ -2460,7 +2229,7 @@ Send a brief
 
 Source: https://londonchoralservice.com/corporate.html
 Summary: Hire professional choirs and ensembles for corporate events: awards dinners, product launches, charity galas, and conferences across London and the UK.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## Live music for corporate events Pianists, singers, and choirs, all year round
 
@@ -2470,22 +2239,12 @@ Tell us about your event
 
 ### Included with every booking
 ### How it works
-#### Tell us about your event
-#### We plan the programme
-#### We perform
 ### Events we perform at
 ### What we provide
 ### Pricing
 ### Christmas bookings
 ### Guides for corporate events
 ### Frequently asked questions
-#### What kinds of corporate events do you perform at?
-#### How much does corporate live music cost?
-#### Can you provide just a pianist?
-#### Can you arrange custom repertoire for our event?
-#### How does payment work for a corporate booking?
-#### How far ahead should we book?
-#### Can you provide venue paperwork?
 ### Tell us about your event
 
 
@@ -2493,7 +2252,7 @@ Tell us about your event
 
 Source: https://londonchoralservice.com/music-guides/abide-with-me.html
 Summary: Abide With Me: the words of Lyte's 1847 hymn as sung at funerals, the tune Eventide and where it fits. Hear our choir, then book singers from £250.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## Abide With Me — one of the most-requested funeral hymns
 
@@ -2509,13 +2268,6 @@ Who wrote Abide With Me, and why is it sung at funerals? Henry Francis Lyte, the
 ### Where to place it in the service
 ### What families tell us
 ### Frequently asked questions
-#### Who wrote Abide With Me?
-#### What tune is Abide With Me sung to?
-#### Can Abide With Me be sung at a Catholic or non-religious funeral?
-#### Why is Abide With Me associated with the FA Cup Final?
-#### Where can I find the words of Abide With Me?
-#### Who has recorded Abide With Me?
-#### How much does it cost to have Abide With Me sung at a funeral?
 ### We’re here if you’d like a hand
 ### Related
 
@@ -2524,7 +2276,7 @@ Who wrote Abide With Me, and why is it sung at funerals? Henry Francis Lyte, the
 
 Source: https://londonchoralservice.com/music-guides/jerusalem.html
 Summary: Yes, William Blake wrote Jerusalem, around 1804, and Parry set it in 1916. Its history, why a few clergy decline it, and how a choir leads it at a wedding.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## Jerusalem: Blake’s poem, Parry’s hymn and singing it at a wedding
 
@@ -2538,12 +2290,6 @@ Did William Blake write Jerusalem? Yes. William Blake wrote the words, beginning
 ### What it sounds like with a choir
 ### Where to place it in the service
 ### Frequently asked questions
-#### Who wrote the words to Jerusalem?
-#### Is the hymn Jerusalem the same as Blake’s poem Jerusalem?
-#### Can you sing Jerusalem at a Church of England wedding?
-#### Is Jerusalem a religious hymn?
-#### Is Jerusalem too grand for a small wedding?
-#### Should Jerusalem open or close a wedding?
 ### We’re here if you’d like a hand
 ### Related
 
@@ -2552,7 +2298,7 @@ Did William Blake write Jerusalem? Yes. William Blake wrote the words, beginning
 
 Source: https://londonchoralservice.com/music-guides/anima-christi-catholic-wedding.html
 Summary: Why Marco Frisina's Anima Christi suits a Catholic wedding Mass, where the Latin prayer sits in the liturgy, and what it sounds like sung by our choir.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## Anima Christi at a Catholic wedding
 
@@ -2567,11 +2313,6 @@ Who wrote Anima Christi? Nobody knows. The Latin prayer appears in manuscripts f
 ### The line about death
 ### Who sings it, and what it costs
 ### Frequently asked questions
-#### Is Anima Christi allowed at a Catholic wedding?
-#### Where does Anima Christi go in a Catholic wedding?
-#### Does the congregation sing Anima Christi, or the choir?
-#### What does Anima Christi mean in English?
-#### How long is Frisina’s Anima Christi?
 ### Send us your running order
 ### Related
 
@@ -2580,7 +2321,7 @@ Who wrote Anima Christi? Nobody knows. The Latin prayer appears in manuscripts f
 
 Source: https://londonchoralservice.com/music-guides/anima-christi-catholic-funeral.html
 Summary: Why Marco Frisina's Anima Christi suits a Catholic funeral Mass, where the Latin prayer sits in the Requiem, and what it sounds like sung by our singers.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## Anima Christi at a Catholic funeral
 
@@ -2594,11 +2335,6 @@ Who wrote Anima Christi? The words are an anonymous Latin prayer from the early 
 ### Where it goes in a Requiem Mass
 ### Who sings it, and what it costs
 ### Frequently asked questions
-#### What does Anima Christi mean?
-#### Who wrote Anima Christi?
-#### Is Anima Christi suitable for a Catholic funeral Mass?
-#### Does the congregation sing Anima Christi at a funeral?
-#### Should the order of service print the Latin?
 ### We’re here if you’d like a hand
 ### Related
 
@@ -2607,7 +2343,7 @@ Who wrote Anima Christi? The words are an anonymous Latin prayer from the early 
 
 Source: https://londonchoralservice.com/music-guides/
 Summary: Free guides to choosing funeral hymns, wedding music and Christmas carols, with recordings by our singers and the prices to book a choir for the day.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## Music guides
 
@@ -2624,7 +2360,7 @@ Guides to the music for weddings, funerals and Christmas services, and to bookin
 
 Source: https://londonchoralservice.com/music-guides/funeral-music-guide.html
 Summary: How to choose funeral music: the hymns, solo pieces and organ music families choose, how many fit a church or crematorium service, and what live singers cost.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## How to choose music for a funeral
 
@@ -2640,11 +2376,6 @@ How do you choose music for a funeral? Start with what the person loved or sang,
 ### More detailed guides
 ### Talk it through with us
 ### Frequently asked questions
-#### How do you choose music for a funeral?
-#### How many songs are played at a funeral?
-#### How many hymns are sung at a funeral?
-#### What are the most popular funeral hymns?
-#### Can I have modern songs at a funeral?
 ### Related
 
 
@@ -2652,7 +2383,7 @@ How do you choose music for a funeral? Start with what the person loved or sang,
 
 Source: https://londonchoralservice.com/music-guides/popular-funeral-hymns.html
 Summary: Funeral hymns UK families choose most, with the tune, the words and where each sits in the service. Hear our choir sing them and book singers from £250.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## Funeral hymns: the most popular choices in the UK
 
@@ -2661,27 +2392,10 @@ Most funerals have two or three hymns, and they are the moments when everyone in
 What are the most popular funeral hymns? The hymns UK families ask us for most are The Lord’s My Shepherd, sung to Crimond, for its Psalm 23 words; Abide with Me, Henry Francis Lyte’s hymn of 1847; The Day Thou Gavest, Lord, Is Ended, a gentle last hymn; Dear Lord and Father of Mankind, a prayer for stillness; and Guide Me, O Thou Great Redeemer, for full voice.
 
 ### The hymns families choose most
-#### The Lord’s My Shepherd (Crimond)
-#### Abide with Me
-#### The Day Thou Gavest, Lord, Is Ended
-#### How Great Thou Art
-#### Amazing Grace
-#### Jerusalem
-#### Guide Me, O Thou Great Redeemer
-#### Make Me a Channel of Your Peace
-#### Dear Lord and Father of Mankind
-#### All Things Bright and Beautiful
-#### Be Thou My Vision
 ### Hymns with personal meaning
 ### How many hymns should you have?
 ### Choosing the right hymns
 ### Frequently asked questions
-#### What are the most popular funeral hymns?
-#### What hymn is most commonly sung at funerals?
-#### What is a good hymn to end a funeral?
-#### What hymns were sung at Queen Elizabeth II’s funeral?
-#### Are hymns still sung at UK funerals?
-#### Are there funeral hymns for non-churchgoers?
 ### Related
 
 
@@ -2689,7 +2403,7 @@ What are the most popular funeral hymns? The hymns UK families ask us for most a
 
 Source: https://londonchoralservice.com/music-guides/choosing-wedding-hymns.html
 Summary: The wedding hymns couples choose most, from Love Divine to Jerusalem, how many to have and where they go in a Church of England service. Singers from £250.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## Wedding hymns: the most popular and how to choose
 
@@ -2698,24 +2412,10 @@ A church wedding usually has two or three hymns, and they are the moments when e
 What are the most popular wedding hymns? The hymns couples ask us for most are Love Divine, All Loves Excelling (Charles Wesley, 1747); Jerusalem (William Blake’s words, Hubert Parry’s 1916 tune); Guide Me, O Thou Great Redeemer, sung to Cwm Rhondda; Dear Lord and Father of Mankind; and Be Thou My Vision. On the Church of England’s own wedding planner in 2009, Amazing Grace was the hymn couples chose most.
 
 ### How many hymns at a wedding?
-#### Church of England practice
 ### The wedding hymns couples choose most
-#### Love Divine, All Loves Excelling
-#### Jerusalem
-#### Guide Me, O Thou Great Redeemer
-#### Dear Lord and Father of Mankind
-#### Be Thou My Vision
-#### Lord of All Hopefulness
-#### Amazing Grace
-#### All Things Bright and Beautiful
-#### Morning Has Broken
 ### Less traditional choices
 ### Getting your congregation to sing
 ### Frequently asked questions
-#### How many hymns are there at a wedding?
-#### What are the most popular wedding hymns?
-#### Can we choose any hymn at a Church of England wedding?
-#### Can we choose hymns if we are not religious?
 ### We’re here if you’d like a hand
 ### Related
 
@@ -2724,7 +2424,7 @@ What are the most popular wedding hymns? The hymns couples ask us for most are L
 
 Source: https://londonchoralservice.com/music-guides/celebration-of-life-music.html
 Summary: How to choose music for a celebration of life, from uplifting songs and personal favourites to live performance. A guide by The London Choral Service.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## Music for a celebration of life
 
@@ -2735,19 +2435,9 @@ What music suits a celebration of life? The music the person loved, from any gen
 ### How a celebration of life differs musically
 ### Popular choices for a celebration of life
 ### Music by genre
-#### Jazz standards
-#### Show tunes
-#### Folk and acoustic
-#### Rock and pop classics
-#### Classical crossover
 ### Live music vs. recorded music
 ### Planning the music
 ### Frequently asked questions
-#### What music is played at a celebration of life?
-#### How is a celebration of life different from a funeral?
-#### Can you have upbeat music at a celebration of life?
-#### Is a celebration of life the same as a memorial service?
-#### Can you have hymns at a celebration of life?
 ### We can help
 ### Related
 
@@ -2756,7 +2446,7 @@ What music suits a celebration of life? The music the person loved, from any gen
 
 Source: https://londonchoralservice.com/music-guides/hiring-a-choir.html
 Summary: How to book a choir for a funeral, wedding or ceremony: the four steps, what happens on the day and what it costs. A choir of four singers from £1,150.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## How to book a choir: steps, costs and the day
 
@@ -2765,20 +2455,13 @@ You can hire a choir with one message and a deposit. Most people have never done
 How do you hire a choir? Send the date, the venue and the occasion to a choir provider. You get back a written quote naming the ensemble size, the repertoire and the full cost, travel included. A non-refundable deposit of half the fee secures the date, and the singers rehearse before the service. In Greater London a soloist costs £250 and a choir of four £1,150.
 
 ### How to book a choir
-#### Booking for a funeral, a wedding or an event
 ### The first conversation
 ### Finding the right choir to hire
-#### Three ways to hire a choir
 ### Repertoire and planning
 ### What it costs to hire a choir
 ### On the day
 ### Talk to us
 ### Frequently asked questions
-#### How do I hire a choir?
-#### How do you hire a choir for a funeral?
-#### How much does it cost to hire a choir?
-#### Can I hire a choir for a corporate event?
-#### How far in advance should I book a choir?
 ### Related
 
 
@@ -2786,7 +2469,7 @@ How do you hire a choir? Send the date, the venue and the occasion to a choir pr
 
 Source: https://londonchoralservice.com/music-guides/funeral-songs.html
 Summary: The funeral songs UK families choose most, including songs for a mum or a dad, from Time to Say Goodbye to My Way. Hear our singers and book from £250.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## The most popular funeral songs
 
@@ -2795,31 +2478,11 @@ A funeral song is a piece the room listens to: a solo voice, an instrumental, or
 What are the most popular funeral songs? In Co-op Funeralcare’s 2025 chart, drawn from a firm that conducts more than 90,000 funerals a year, the top five were Time to Say Goodbye (Andrea Bocelli and Sarah Brightman), My Way (Frank Sinatra), Somewhere Over the Rainbow (Eva Cassidy), You’ll Never Walk Alone and Tina Turner’s The Best. Supermarket Flowers, Wind Beneath My Wings, Abide with Me, We’ll Meet Again and You Raise Me Up completed the top ten.
 
 ### The songs families choose most
-#### Time to Say Goodbye ( Con te partirò )
-#### My Way
-#### Somewhere Over the Rainbow
-#### You’ll Never Walk Alone
-#### Supermarket Flowers
-#### Wind Beneath My Wings
-#### We’ll Meet Again
-#### You Raise Me Up
-#### Ave Maria (Schubert)
-#### Pie Jesu (Fauré)
-#### The Lord Is My Shepherd (Howard Goodall)
-#### Nimrod (Elgar)
-#### Candle in the Wind
 ### Funeral songs for a mum
 ### Funeral songs for a dad
 ### Live music or a recording?
 ### Combining songs with hymns
 ### Frequently asked questions
-#### What are the most popular funeral songs?
-#### What is the number one funeral song in the UK?
-#### Can you have pop music at a funeral?
-#### Can a singer perform a pop song live at a funeral?
-#### What songs are appropriate for a celebration of life?
-#### What is a good funeral song for a mum?
-#### What is a good funeral song for a dad?
 ### We can help you choose
 ### Related
 
@@ -2828,7 +2491,7 @@ What are the most popular funeral songs? In Co-op Funeralcare’s 2025 chart, dr
 
 Source: https://londonchoralservice.com/music-guides/crematorium-music.html
 Summary: A practical guide to choosing music for a crematorium funeral. Covers timings, what works in the space, and how to book live singers. Singers from £250.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## Choosing music for a crematorium service
 
@@ -2843,12 +2506,6 @@ What music can you have at a crematorium? Almost anything. Most services have mu
 ### Choosing hymns for a crematorium
 ### Making the most of a shorter service
 ### Frequently asked questions
-#### Can you have live music at a crematorium?
-#### How long is a crematorium service?
-#### What music works best at a crematorium?
-#### Can I play my own song at a crematorium?
-#### Does a crematorium have an organ?
-#### Can you book a longer crematorium service?
 ### We can help
 ### Crematoria we serve in London
 ### Related
@@ -2858,7 +2515,7 @@ What music can you have at a crematorium? Almost anything. Most services have mu
 
 Source: https://londonchoralservice.com/music-guides/funeral-music-costs.html
 Summary: What funeral music costs in 2026: a soloist or organist £250, a choir of four £1,150, and what UK funerals cost on average. Flat prices, no VAT added.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## How much does funeral music cost?
 
@@ -2874,11 +2531,6 @@ How much does funeral music cost? With us, a soloist or an organist costs £250,
 ### Live music vs recorded music
 ### Is it worth the cost?
 ### Frequently asked questions
-#### How much does a funeral singer cost?
-#### How much does a funeral choir cost?
-#### How much does a funeral organist cost?
-#### How much does a funeral cost in the UK?
-#### What is included in the price of funeral music?
 ### Getting a quote
 ### Further reading
 ### Related
@@ -2888,7 +2540,7 @@ How much does funeral music cost? With us, a soloist or an organist costs £250,
 
 Source: https://londonchoralservice.com/music-guides/last-minute-funeral-singers.html
 Summary: How to book funeral singers at short notice: what we confirm the same day, what to have ready when you call, and what is possible within forty-eight hours.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## Booking funeral singers at short notice
 
@@ -2902,12 +2554,6 @@ Can you book funeral singers at short notice? Yes. We hold diary space for short
 ### What happens after you get in touch
 ### What it costs
 ### Frequently asked questions
-#### Can you sing at a funeral this week?
-#### How quickly will you reply to a short-notice enquiry?
-#### Is there an extra charge for a short-notice funeral booking?
-#### How do we pay when the funeral is only days away?
-#### What music can a choir prepare in a few days?
-#### Can our funeral director make the booking for us?
 ### We’re here if you’d like a hand
 ### Related
 
@@ -2916,7 +2562,7 @@ Can you book funeral singers at short notice? Yes. We hold diary space for short
 
 Source: https://londonchoralservice.com/music-guides/wedding-choir-guide.html
 Summary: A practical guide to hiring a professional choir for your wedding — ensemble sizes, what they sing, and how to book the right group for your ceremony.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## How to hire a wedding choir
 
@@ -2926,21 +2572,10 @@ How do you hire a choir for a wedding? Send the provider your date, venue and ro
 
 ### What does a wedding choir actually do?
 ### Choosing the right size
-#### Solo singer — from £250
-#### Small choir of four — from £1,150
-#### Quintet of five — from £1,400
-#### Sextet of six — from £1,600
-#### Full choir of eight — from £2,000
-#### Twelve-voice chorus — from £3,000
 ### Church weddings and civil ceremonies
 ### What a wedding choir sings
 ### How to book and what to expect
 ### Frequently asked questions
-#### How much does a wedding choir cost?
-#### How many singers do I need for a wedding choir?
-#### How far in advance should I book a wedding choir?
-#### Can a choir sing at a civil ceremony?
-#### Do we need an organist as well as a choir?
 ### Talk to us about your wedding
 ### Related
 
@@ -2949,7 +2584,7 @@ How do you hire a choir for a wedding? Send the provider your date, venue and ro
 
 Source: https://londonchoralservice.com/music-guides/wedding-organist-guide.html
 Summary: Everything you need to know about booking an organist for your wedding: repertoire, fees, and how to find the right player for your church. From £250.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## Hiring an organist for your wedding
 
@@ -2960,18 +2595,10 @@ How do you hire an organist for a wedding? Book one of our organists for £250, 
 ### What a wedding organist does
 ### The church organist or your own?
 ### Popular wedding organ music
-#### Walking down the aisle
-#### During the signing of the register
-#### Walking out
 ### Working with your organist
 ### Organ and choir together
 ### What does a wedding organist cost?
 ### Frequently asked questions
-#### How much does a wedding organist cost?
-#### Does the church provide an organist?
-#### When should I book a wedding organist?
-#### What music should I send the organist?
-#### What if the venue has no organ?
 ### Let us find the right organist for your wedding
 ### Related
 
@@ -2980,7 +2607,7 @@ How do you hire an organist for a wedding? Book one of our organists for £250, 
 
 Source: https://londonchoralservice.com/music-guides/destination-wedding-choir.html
 Summary: What it takes to bring a British choir to a wedding abroad: lead times, work permits, costs, and what changes when there is no organ and no stone building.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## Hiring a UK choir for a destination wedding
 
@@ -2994,13 +2621,6 @@ Can you hire a UK choir for a wedding abroad? Yes. Alma Consort, our performing 
 ### Which parts get sung, and in what language
 ### No organ, no stage, no stone
 ### Questions couples ask
-#### Can you hire a UK choir for a wedding abroad?
-#### How much does it cost to fly a choir to your wedding?
-#### How far in advance should we book?
-#### Do British musicians need a visa or work permit to perform abroad?
-#### What if there is no church, no organ and no stage?
-#### Can the choir sing at the welcome dinner and the reception as well?
-#### Do you invoice in euros or US dollars?
 ### If you are marrying abroad
 ### Related
 
@@ -3009,7 +2629,7 @@ Can you hire a UK choir for a wedding abroad? Yes. Alma Consort, our performing 
 
 Source: https://londonchoralservice.com/music-guides/wedding-ceremony-music.html
 Summary: Wedding ceremony music for the processional, signing the register and recessional: choral and organ pieces with timings. Choir hire from £1,150.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## Wedding ceremony music: processional, register and recessional
 
@@ -3026,16 +2646,7 @@ What music do you need for a wedding ceremony? Music for five moments: a prelude
 ### Hymns during the service
 ### Civil and humanist ceremonies
 ### Putting it all together
-#### Organist only (£250)
-#### Organist and soloist (£500)
-#### Organist and Small Choir of four (£1,400)
 ### Frequently asked questions
-#### What music do you need for a wedding ceremony?
-#### What music is played when the bride walks down the aisle?
-#### When is music played during a wedding?
-#### How many hymns do you have at a wedding?
-#### How long does the signing of the register take?
-#### Can you have live music at a civil ceremony?
 ### Let us help you plan your wedding music
 ### Related
 
@@ -3044,7 +2655,7 @@ What music do you need for a wedding ceremony? Music for five moments: a prelude
 
 Source: https://londonchoralservice.com/music-guides/wedding-music-costs.html
 Summary: What wedding music costs in 2026: a soloist or organist £250, a choir of four £1,150, and what the price covers. Flat prices with no VAT added.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## How much does wedding music cost?
 
@@ -3059,10 +2670,6 @@ How much does wedding music cost? With us, a soloist or an organist costs £250 
 ### Common combinations and what they cost
 ### Is live wedding music worth it?
 ### Frequently asked questions
-#### How much does wedding music cost?
-#### How much do you pay an organist for a wedding?
-#### What is the cheapest option for wedding music?
-#### Are there any hidden costs?
 ### Get a quote for your wedding
 ### Further reading
 ### Related
@@ -3072,7 +2679,7 @@ How much does wedding music cost? With us, a soloist or an organist costs £250 
 
 Source: https://londonchoralservice.com/music-guides/wedding-readings-and-music.html
 Summary: How to choose readings and music that complement each other, creating flow and emotional shape throughout your wedding ceremony. A guide from our experts.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## Pairing readings with music at your wedding
 
@@ -3083,26 +2690,10 @@ How do you pair wedding readings with music? Match each piece to the reading bef
 ### Why the pairing matters
 ### The typical order of a wedding service
 ### Matching mood and tone
-#### After a reflective reading
-#### After a celebratory or humorous reading
-#### Avoiding tonal whiplash
 ### Pairings that work
-#### 1 Corinthians 13 with Love Divine, All Loves Excelling
-#### Song of Songs 8:6–7 with Set Me as a Seal
-#### Ruth 1:16–17 with Ubi caritas
-#### Shakespeare’s Sonnet 116 with Lord of All Hopefulness
-#### Captain Corelli’s Mandolin with Morning Has Broken
-#### At a civil ceremony
 ### Practical timing
-#### Briefing your readers
-#### Coordinating with your musicians
 ### Working with your vicar or officiant
 ### Frequently asked questions
-#### How do you pair readings with music at a wedding?
-#### How many readings should a wedding have?
-#### Should music be played during readings?
-#### Can you have religious readings or hymns at a civil ceremony?
-#### Can a non-religious reading be used at a church wedding?
 ### We can help you plan the whole programme
 ### Related
 
@@ -3111,7 +2702,7 @@ How do you pair wedding readings with music? Match each piece to the reading bef
 
 Source: https://londonchoralservice.com/music-guides/corporate-carol-service.html
 Summary: How to plan a corporate or office carol service: the date, the venue, carols and readings, a sample running order, how long it should last and what it costs.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## Planning a corporate or office carol service
 
@@ -3121,12 +2712,6 @@ How do you plan a corporate or office carol service? Pick a Tuesday, Wednesday o
 
 ### Why a carol service works for businesses
 ### Step by step
-#### 1. Set a date
-#### 2. Choose a venue
-#### 3. Book the musicians early
-#### 4. Choose the carols and readings
-#### 5. Make a programme
-#### 6. Send the invitations
 ### What the service looks like
 ### A sample running order
 ### Keeping it inclusive
@@ -3134,12 +2719,6 @@ How do you plan a corporate or office carol service? Pick a Tuesday, Wednesday o
 ### Planning timeline
 ### Common mistakes to avoid
 ### Frequently asked questions
-#### How do you plan a corporate carol service?
-#### What do you need for an office carol service?
-#### How long should an office carol service last?
-#### How much does a corporate carol service cost?
-#### Does a workplace carol service have to be religious?
-#### How far in advance should I plan a corporate carol service?
 ### Let us plan your carol service
 ### Related
 
@@ -3148,7 +2727,7 @@ How do you plan a corporate or office carol service? Pick a Tuesday, Wednesday o
 
 Source: https://londonchoralservice.com/music-guides/christmas-choir-hire.html
 Summary: Hiring a Christmas choir: which of four, six, eight or twelve singers suits your room, how the sets run across two hours, and what each costs, from £1,150.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## Hiring a choir for your Christmas event
 
@@ -3164,12 +2743,6 @@ How do you hire a choir for a Christmas event? Send us the date, the venue and r
 ### How much does it cost?
 ### When to book
 ### Frequently asked questions
-#### How much does it cost to hire a Christmas choir?
-#### How far in advance should I book a Christmas choir?
-#### What do Christmas choirs sing?
-#### Can we book fewer than four carol singers?
-#### How long does a Christmas choir sing for?
-#### Does a Christmas choir need a microphone?
 ### Book your Christmas choir
 ### Related
 
@@ -3178,7 +2751,7 @@ How do you hire a choir for a Christmas event? Send us the date, the venue and r
 
 Source: https://londonchoralservice.com/music-guides/company-christmas-party-entertainment.html
 Summary: Live choral music at a company Christmas party: roaming carol singers, seated-dinner sets, and full performances, with costs and venue acoustics.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## Live choral music for company Christmas parties
 
@@ -3188,20 +2761,11 @@ What live entertainment works at a company Christmas party? Professional carol s
 
 ### Why live music works
 ### Formats across the evening
-#### Drinks reception and arrival
-#### During dinner
-#### A featured performance slot
-#### A small team dinner
 ### What the choir performs
 ### Making it work with your venue
 ### What it costs
 ### Booking for Christmas
 ### Frequently asked questions
-#### Can you hire a choir for a company Christmas party?
-#### How much does a choir cost for a Christmas party?
-#### What does a choir perform at a corporate Christmas party?
-#### How many carol singers do we need for an office party?
-#### Can you invoice our company against a purchase order?
 ### Talk to us about your Christmas party
 ### Related
 
@@ -3210,7 +2774,7 @@ What live entertainment works at a company Christmas party? Professional carol s
 
 Source: https://londonchoralservice.com/music-guides/christmas-carols-guide.html
 Summary: Which carols to choose for a carol service and how many: congregational favourites, choir pieces, less familiar carols and a sample running order.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## The best Christmas carols for a carol service
 
@@ -3219,31 +2783,11 @@ Get the carols right and a room of three hundred sings without being asked twice
 Which carols make the best carol service, and how many? Plan six to eight carols for a service of 45 minutes to an hour. Give the congregation three or four it knows, such as Once in Royal David’s City , O Come, All Ye Faithful and Hark! The Herald Angels Sing . Add two or three choir pieces, such as Darke’s In the Bleak Midwinter , and finish with a big congregational carol.
 
 ### Carols everyone knows
-#### O Come, All Ye Faithful
-#### Hark! The Herald Angels Sing
-#### Once in Royal David’s City
-#### Silent Night
-#### O Little Town of Bethlehem
-#### Away in a Manger
 ### Carols that shine as choir pieces
-#### In the Bleak Midwinter
-#### O Holy Night
-#### Sussex Carol
-#### Ding Dong! Merrily on High
 ### Less common carols worth discovering
-#### Coventry Carol
-#### Adam Lay Ybounden
-#### A Spotless Rose
-#### Tomorrow Shall Be My Dancing Day
 ### Building a carol service programme
 ### Getting your audience to sing
 ### Frequently asked questions
-#### What are the best carols for a carol service?
-#### How many carols should a carol service have?
-#### What is the most popular Christmas carol?
-#### How do you put together a carol service programme?
-#### Which carols should the choir sing on its own?
-#### What should we budget for a carol service choir?
 ### We can help you plan your carol service
 ### Related
 
@@ -3252,7 +2796,7 @@ Which carols make the best carol service, and how many? Plan six to eight carols
 
 Source: https://londonchoralservice.com/music-guides/catholic-funeral-hymns.html
 Summary: The hymns and sacred music most often chosen for a Catholic funeral Mass, from Ave Maria to Be Not Afraid. Includes recordings and booking details from £250.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## Best hymns for a Catholic funeral
 
@@ -3262,25 +2806,9 @@ What are the most popular hymns for a Catholic funeral? Nobody keeps an official
 
 ### How music fits into a Catholic funeral Mass
 ### The hymns families choose most
-#### Be Not Afraid
-#### Here I Am, Lord
-#### Ave Maria (Schubert)
-#### Panis Angelicus (Franck)
-#### How Great Thou Art
-#### The Lord’s My Shepherd (Crimond)
-#### Make Me a Channel of Your Peace
-#### On Eagle’s Wings
-#### Soul of My Saviour
-#### Anima Christi (Frisina)
-#### Abide with Me
 ### The Responsorial Psalm
 ### Working with the parish
 ### Frequently asked questions
-#### What hymns are sung at a Catholic funeral?
-#### What is the most popular Catholic funeral hymn?
-#### What are the traditional Catholic hymns for a funeral?
-#### Can you have non-religious music at a Catholic funeral?
-#### What is sung at the end of a Catholic funeral?
 ### We can help you choose
 ### Related
 
@@ -3289,7 +2817,7 @@ What are the most popular hymns for a Catholic funeral? Nobody keeps an official
 
 Source: https://londonchoralservice.com/music-guides/non-religious-funeral-music.html
 Summary: A practical guide to choosing music for a non-religious, secular, or humanist funeral — from popular songs and classical pieces to live performance.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## Non-religious funeral music
 
@@ -3299,23 +2827,10 @@ What music can you have at a non-religious funeral? Any music you like. Humanist
 
 ### What makes non-religious funeral music different
 ### Songs families choose most
-#### Time to Say Goodbye ( Con te partirò )
-#### Somewhere Over the Rainbow
-#### My Way
-#### What a Wonderful World
-#### Fields of Gold
-#### Bring Him Home
-#### Danny Boy
-#### You Raise Me Up
 ### Classical pieces for a non-religious funeral
 ### Live music at a non-religious service
 ### Structuring the music
 ### Frequently asked questions
-#### What music is played at a humanist funeral?
-#### Can you have hymns at a humanist funeral?
-#### What are popular songs for a secular funeral?
-#### How many pieces of music are there at a humanist funeral?
-#### Can you have live singers at a crematorium?
 ### We can help you plan the music
 ### Related
 
@@ -3324,7 +2839,7 @@ What music can you have at a non-religious funeral? Any music you like. Humanist
 
 Source: https://londonchoralservice.com/music-guides/funeral-choir-guide.html
 Summary: Everything you need to know about having a choir at a funeral: what they do, what they sing, and how they work with the funeral director on the day.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## What to expect from a funeral choir
 
@@ -3339,11 +2854,6 @@ What does a funeral choir do? A funeral choir leads the congregation in the hymn
 ### Churches and crematoriums
 ### What it actually feels like
 ### Frequently asked questions
-#### What does a funeral choir do?
-#### How many singers are in a funeral choir?
-#### What time do funeral singers arrive?
-#### Do we need an organist as well as a choir?
-#### When should I book a funeral choir?
 ### Talk to us
 ### Related
 
@@ -3352,7 +2862,7 @@ What does a funeral choir do? A funeral choir leads the congregation in the hymn
 
 Source: https://londonchoralservice.com/music-guides/wedding-choral-repertoire.html
 Summary: The choral anthems, motets, and solo pieces that make a wedding ceremony extraordinary — from Ave Maria to Ubi Caritas. What a choir sings and when.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## The best choral pieces for a wedding
 
@@ -3361,31 +2871,10 @@ At a wedding the choir leads the hymns, and it also sings on its own where the c
 What are the best choral pieces for a wedding? The standards are Schubert’s Ave Maria (1825) and the Bach/Gounod Ave Maria (1859), Franck’s Panis Angelicus (1872), Mozart’s Ave Verum Corpus (1791) and Laudate Dominum (1780), Fauré’s Pie Jesu , the Ubi Caritas of Duruflé (1960) or Ola Gjeilo (1999), and John Rutter’s The Lord Bless You and Keep You (1981).
 
 ### Music as guests arrive
-#### Ubi Caritas (Duruflé)
-#### Ubi Caritas (Gjeilo)
-#### Ave Verum Corpus (Mozart)
-#### Locus Iste (Bruckner)
 ### During the signing of the register
-#### Ave Maria (Bach/Gounod or Schubert)
-#### Panis Angelicus (Franck)
-#### Pie Jesu (Fauré or Lloyd Webber)
-#### Laudate Dominum (Mozart)
-#### The Lord Bless You and Keep You (Rutter)
-#### O Mio Babbino Caro (Puccini)
 ### After the vows
-#### An Irish Blessing (traditional words)
-#### A Gaelic Blessing (Rutter)
-#### Brother James’s Air
 ### Contemporary and less traditional choices
-#### A Thousand Years (Christina Perri, choral arr.)
-#### Make You Feel My Love (Bob Dylan/Adele, choral arr.)
-#### Songbird (Fleetwood Mac, choral arr.)
 ### Frequently asked questions
-#### What are the best choral pieces for a wedding?
-#### What is the most popular choral wedding piece?
-#### Do these pieces need an organ?
-#### How many choral pieces does a wedding need?
-#### Can a choir sing contemporary songs at a wedding?
 ### Talk to us
 ### Related
 
@@ -3394,7 +2883,7 @@ What are the best choral pieces for a wedding? The standards are Schubert’s Av
 
 Source: https://londonchoralservice.com/music-guides/wedding-music-ideas.html
 Summary: Creative wedding music ideas beyond the standard hymn-and-organ formula — a cappella openings, mixed ensembles, and pop songs for choir. Singers from £250.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## Wedding music ideas your guests will remember
 
@@ -3412,10 +2901,6 @@ What are some unusual wedding music ideas? Open with one unaccompanied voice. Pu
 ### Keep the singers for the drinks reception
 ### Build towards the exit
 ### Frequently asked questions
-#### What music should I have at my wedding?
-#### Can I have modern music at a church wedding?
-#### Can a song be arranged specially for our wedding?
-#### Can the choir sing at the drinks reception as well?
 ### Tell us what you are imagining
 ### Related
 
@@ -3424,26 +2909,18 @@ What are some unusual wedding music ideas? Open with one unaccompanied voice. Pu
 
 Source: https://londonchoralservice.com/areas/
 Summary: Professional funeral singers, wedding choirs, and ceremony musicians available across the UK. From London to Manchester, Birmingham to Canterbury.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## Areas we serve across the United Kingdom
 
 Based in London, available nationwide. Our conservatoire-trained singers, choirs, and instrumentalists perform at funerals, weddings, memorials, and ceremonies in every corner of England — from cathedral cities to village churches, crematoriums to private estates.
 
 ### How our coverage works
-#### The London boroughs
-#### Cities outside London
-#### Travel costs
-#### Borough page or city page — which to use
 ### London & the South East
 ### Thames Valley & the Home Counties
 ### The South & South West
 ### The Midlands & the North
 ### Frequently asked questions
-#### How quickly can you arrange singers in cities outside London?
-#### Do you charge travel for outer cities?
-#### Can you cover venues outside the listed cities?
-#### How do you choose musicians for each location?
 ### Don’t see your area listed?
 
 
@@ -3451,7 +2928,7 @@ Based in London, available nationwide. Our conservatoire-trained singers, choirs
 
 Source: https://londonchoralservice.com/areas/london.html
 Summary: Funeral singers and wedding choirs in every London borough, from St Martin-in-the-Fields to Mortlake and Putney Vale. Soloists from £250, choirs of four £1,150.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## Choirs and funeral singers in every London borough
 
@@ -3461,26 +2938,15 @@ London is our home. With a handpicked team of professional singers and instrumen
 ### Wedding choirs in London
 ### Ensembles for weddings, funerals, and memorials
 ### London boroughs we serve
-#### Central London
-#### North London
-#### East London
-#### South London
-#### West London
-#### South-West London
 ### Christmas carol singers in London
 ### Frequently asked questions
-#### What does a funeral choir cost at a London church or crematorium?
-#### Can you bring a wedding choir to St Martin-in-the-Fields or the Temple Church?
-#### What types of music can you perform at a funeral in London?
-#### Do you cover crematorium services in London?
-#### Do you provide carol singers in London in December?
 
 
 ---
 
 Source: https://londonchoralservice.com/areas/birmingham.html
 Summary: Funeral and wedding choirs in Birmingham, at the Cathedral, the Oratory in Edgbaston and Lodge Hill Crematorium. Soloists from £250, choirs from £1,150.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## Birmingham funeral and wedding choirs, from St Philip’s to Lodge Hill
 
@@ -3494,18 +2960,13 @@ From requiem masses at St Martin in the Bull Ring to weddings in Warwickshire co
 ### Ensembles & pricing
 ### Christmas carol singers in Birmingham
 ### Frequently asked questions
-#### What does a funeral choir cost in Birmingham?
-#### Can you provide a wedding choir at Birmingham Cathedral or the Oratory?
-#### What music works for a funeral at Birmingham Cathedral or St Martin in the Bull Ring?
-#### Do you sing at Birmingham crematoriums such as Lodge Hill and Perry Barr?
-#### Could carol singers perform at our Birmingham Christmas event?
 
 
 ---
 
 Source: https://londonchoralservice.com/areas/manchester.html
 Summary: Funeral singers and wedding choirs in Manchester, from the cathedral to Agecroft and Blackley crematoriums. Soloists from £250, choirs of four £1,150.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## Funeral choirs and wedding singers across Greater Manchester
 
@@ -3519,18 +2980,13 @@ Manchester has the musical history to match its scale, from the old Free Trade H
 ### Ensembles and pricing
 ### Christmas carol singers in Manchester
 ### Frequently asked questions
-#### How much is a funeral choir in Manchester?
-#### Can you provide a wedding choir for a Manchester church or converted mill?
-#### What funeral music do you sing at Manchester Cathedral?
-#### Do you sing at Manchester, Agecroft and Blackley crematoriums?
-#### Can carol singers move between rooms at a Manchester Christmas party?
 
 
 ---
 
 Source: https://londonchoralservice.com/areas/liverpool.html
 Summary: Funeral singers and wedding choirs in Liverpool and Merseyside, at both cathedrals and at Anfield and Thornton crematoriums. Soloists from £250.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## Liverpool choirs, from St James’s Mount to the Pier Head
 
@@ -3541,18 +2997,13 @@ Liverpool has a cathedral choral tradition on St James’s Mount and hymn-singin
 ### Ensembles and pricing
 ### Christmas carol singers in Liverpool
 ### Frequently asked questions
-#### What does a funeral choir cost in Liverpool?
-#### Can you sing at a Liverpool wedding, from the cathedrals to the Pier Head?
-#### What funeral music can you sing at Liverpool’s two cathedrals?
-#### Do you sing at Anfield and Thornton crematoriums in Liverpool?
-#### Can we book carol singers to move through a Liverpool office party in December?
 
 
 ---
 
 Source: https://londonchoralservice.com/areas/oxford.html
 Summary: Funeral singers and wedding choirs in Oxford, from New College Chapel to Oxford Crematorium on Bayswater Road. Soloists from £250, choirs of four £1,150.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## Singers and choirs for Oxford’s college chapels and churches
 
@@ -3566,18 +3017,13 @@ Oxford is one of the great choral cities of the world. From the candlelit evenso
 ### Ensembles & pricing
 ### Christmas carol singers in Oxford
 ### Frequently asked questions
-#### What does a funeral choir cost in Oxford?
-#### Can you provide a wedding choir for Exeter College Chapel or New College?
-#### Can you draw on the Anglican choral tradition for a funeral at Christ Church Cathedral?
-#### Do you sing at Oxford Crematorium on Bayswater Road?
-#### Do you provide Oxford carol services as well as roaming carol singers?
 
 
 ---
 
 Source: https://londonchoralservice.com/areas/cambridge.html
 Summary: Funeral and wedding choirs in Cambridge, sung by musicians who know the college chapels and Cambridge Crematorium. Soloists from £250, choirs from £1,150.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## Choirs for Cambridge funerals and college chapel weddings
 
@@ -3591,18 +3037,13 @@ Few places on earth are as closely identified with choral music as Cambridge. Ch
 ### Ensembles & pricing
 ### Christmas carol singers in Cambridge
 ### Frequently asked questions
-#### What will a funeral choir cost in Cambridge?
-#### Can we book a wedding choir for Pembroke, Caius or Great St Mary’s?
-#### What can you sing at a Cambridge funeral, from Abide with Me to Pie Jesu?
-#### Can you sing at Cambridge Crematorium as well as in the colleges?
-#### Can we book carol singers in the college chapel tradition for a Cambridge event?
 
 
 ---
 
 Source: https://londonchoralservice.com/areas/reading.html
 Summary: Funeral singers and wedding choirs in Reading and Berkshire, from Reading Minster to the crematorium at Henley Road, Caversham. Soloists from £250.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## Reading Minster to Henley Road: choirs for funerals and weddings
 
@@ -3613,18 +3054,13 @@ Reading sits at the heart of Berkshire, where the Kennet meets the Thames and ce
 ### Ensembles & pricing
 ### Christmas carol singers in Reading
 ### Frequently asked questions
-#### How much does a funeral choir cost in Reading?
-#### Can you provide a wedding choir at Reading Minster or a Thames Valley church?
-#### What funeral music do you perform at Reading Minster or Henley Road?
-#### Do you cover Reading Crematorium at Henley Road?
-#### Can you send carol singers to Reading and Berkshire events at Christmas?
 
 
 ---
 
 Source: https://londonchoralservice.com/areas/slough-maidenhead.html
 Summary: Funeral and wedding choirs in Slough and Maidenhead, from All Saints Maidenhead and Slough Crematorium to the churches at Cookham and Bray. Choirs from £1,150.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## Funeral choirs and wedding singers from Slough to Maidenhead
 
@@ -3635,18 +3071,13 @@ Slough and Maidenhead sit along the Thames in the eastern reaches of Berkshire, 
 ### Ensembles & pricing
 ### Christmas carol singers in Slough and Maidenhead
 ### Frequently asked questions
-#### What does a funeral choir cost in Slough or Maidenhead?
-#### Can you provide a wedding choir in Maidenhead, Cookham or Bray?
-#### What funeral music do families choose at St Mary’s Slough or All Saints Maidenhead?
-#### Do you cover Slough Crematorium and Chilterns Crematorium?
-#### Can we book carol singers in Slough and Maidenhead for a December event?
 
 
 ---
 
 Source: https://londonchoralservice.com/areas/guildford.html
 Summary: Funeral singers and wedding choirs in Guildford and Surrey, from Guildford Cathedral to Holy Trinity and Guildford Crematorium. Soloists from £250.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## Singers and choirs from Guildford Cathedral to the Surrey Hills
 
@@ -3657,18 +3088,13 @@ We bring conservatoire-trained singers, choirs and instrumentalists to funerals,
 ### Ensembles & pricing
 ### Christmas carol singers in Guildford
 ### Frequently asked questions
-#### How much does a funeral choir cost in Guildford?
-#### Do you sing at weddings in Guildford Cathedral and the Surrey Hills?
-#### Which pieces suit a funeral at Guildford Cathedral or Holy Trinity?
-#### Are you familiar with Guildford Crematorium?
-#### Can you bring carol singers to a Guildford or Surrey event in December?
 
 
 ---
 
 Source: https://londonchoralservice.com/areas/brighton.html
 Summary: Wedding and funeral choirs in Brighton and Hove, at the Chapel Royal, Woodvale Crematorium and the flint churches of the South Downs. Soloists from £250.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## Wedding and funeral choirs in Brighton, Hove and the South Downs
 
@@ -3681,18 +3107,13 @@ Our singers, choirs and instrumentalists work at funerals, weddings and memorial
 ### Ensembles & pricing
 ### Christmas carol singers in Brighton
 ### Frequently asked questions
-#### How much is a funeral choir in Brighton and Hove?
-#### Can you bring a wedding choir to St Bartholomew’s in Brighton?
-#### What funeral music suits St Bartholomew’s, St Peter’s or a Brighton crematorium?
-#### Can you sing at Woodvale or The Downs Crematorium in Brighton?
-#### Do you send carol singers to Brighton offices and hotels in December?
 
 
 ---
 
 Source: https://londonchoralservice.com/areas/chester.html
 Summary: Funeral and wedding choirs in Chester and Cheshire, from the red sandstone cathedral nave to Blacon Crematorium. Soloists from £250, choirs from £1,150.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## Choirs in Chester, from the cathedral nave to Blacon Crematorium
 
@@ -3703,18 +3124,13 @@ We bring professional singers, choirs and instrumentalists to funerals, weddings
 ### Ensembles & pricing
 ### Christmas carol singers in Chester
 ### Frequently asked questions
-#### How much is a funeral choir in Chester, including travel?
-#### Can you provide a wedding choir in Chester or the Dee Valley?
-#### Can you sing large choral works at Chester Cathedral and quieter pieces at Blacon?
-#### Do you perform at Blacon Crematorium in Chester?
-#### Can you send carol singers to Chester for Christmas?
 
 
 ---
 
 Source: https://londonchoralservice.com/areas/st-albans.html
 Summary: Choirs for funerals and weddings in St Albans, from the long Norman nave of the cathedral to West Hertfordshire Crematorium. Soloists from £250, choirs £1,150.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## St Albans choirs for funerals and weddings, from the abbey to Harpenden
 
@@ -3725,18 +3141,13 @@ Our singers, choirs and instrumentalists perform at funerals, weddings and memor
 ### Ensembles & pricing
 ### Christmas carol singers in St Albans
 ### Frequently asked questions
-#### How much do funeral choirs cost in St Albans, and is travel extra?
-#### Can a choir sing at our wedding in St Albans Cathedral or St Stephen’s?
-#### What funeral music suits the Norman nave of St Albans Cathedral?
-#### Do you cover West Hertfordshire Crematorium for St Albans families?
-#### Do you offer carol singers in St Albans for Christmas?
 
 
 ---
 
 Source: https://londonchoralservice.com/areas/canterbury.html
 Summary: Choirs for funerals and weddings in Canterbury and Kent, at Canterbury Cathedral, Barham Crematorium and Kent village churches. Soloists from £250.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## Canterbury choirs for funerals at Barham and weddings at St Martin’s
 
@@ -3747,18 +3158,13 @@ There are few places in England where the bond between music and faith runs as d
 ### Ensembles & pricing
 ### Christmas carol singers in Canterbury
 ### Frequently asked questions
-#### How much does a funeral choir cost in Canterbury?
-#### Can we have a choir at our wedding in Canterbury Cathedral or St Martin’s?
-#### Which hymns and solos do Canterbury families choose for a funeral?
-#### Do you cover Barham Crematorium in the Canterbury area?
-#### Can you provide carol singers for a Christmas event in Canterbury?
 
 
 ---
 
 Source: https://londonchoralservice.com/areas/windsor.html
 Summary: Funeral and wedding choirs in Windsor, Eton and the Royal Borough, at Windsor Parish Church, Holy Trinity and Slough Crematorium. Soloists from £250.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## Wedding and funeral choirs in Windsor, Eton and the Royal Borough
 
@@ -3769,18 +3175,13 @@ Windsor has stood at the heart of royal and ceremonial life in England for close
 ### Ensembles & pricing
 ### Christmas carol singers in Windsor
 ### Frequently asked questions
-#### How much will a funeral choir cost in Windsor?
-#### Can you provide a wedding choir in Windsor or Eton?
-#### Do Windsor families choose formal music for funerals at St George’s Chapel?
-#### Do you sing at Slough Crematorium for Windsor funerals?
-#### Do you provide carol singers in Windsor during December?
 
 
 ---
 
 Source: https://londonchoralservice.com/areas/winchester.html
 Summary: Funeral and wedding choirs in Winchester and Hampshire, singing at St Cross Hospital, parish churches and the Southampton and Basingstoke crematoria.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## Winchester Cathedral to St Cross: choirs for funerals and weddings
 
@@ -3791,18 +3192,13 @@ Winchester is one of the most historically significant cities in England. Once t
 ### Ensembles & pricing
 ### Christmas carol singers in Winchester
 ### Frequently asked questions
-#### What does a funeral choir cost in Winchester and Hampshire?
-#### Can you sing at a wedding in Winchester Cathedral or St Cross?
-#### Which funeral hymns are favourites in Winchester?
-#### Do you sing at crematoriums near Winchester, such as Southampton and Basingstoke?
-#### Can I book carol singers in Winchester for Christmas?
 
 
 ---
 
 Source: https://londonchoralservice.com/areas/salisbury.html
 Summary: Choirs and soloists for Salisbury funerals and weddings, from the cathedral nave to Salisbury Crematorium and the village churches of the Wiltshire downland.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## Salisbury choirs for the cathedral, St Thomas’s and Wiltshire churches
 
@@ -3813,18 +3209,13 @@ Salisbury is one of England’s finest medieval cities. Its cathedral close, its
 ### Ensembles & pricing
 ### Christmas carol singers in Salisbury
 ### Frequently asked questions
-#### How much does a funeral choir cost in Salisbury?
-#### Can you provide a wedding choir beneath Salisbury Cathedral’s spire?
-#### What funeral music do Salisbury families ask for?
-#### Can you sing at Salisbury Crematorium for a Wiltshire family?
-#### Do you offer carol singers for Christmas events in Salisbury?
 
 
 ---
 
 Source: https://londonchoralservice.com/areas/bath.html
 Summary: Choirs and soloists for funerals and weddings in Bath, from the fan-vaulted Bath Abbey to Haycombe Crematorium. Soloists from £250, choirs of four £1,150.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## Funeral choirs and wedding singers for Bath Abbey and Haycombe
 
@@ -3835,18 +3226,13 @@ Bath is a UNESCO World Heritage city of golden Georgian stone and hot springs, w
 ### Ensembles & pricing
 ### Christmas carol singers in Bath
 ### Frequently asked questions
-#### How much does a funeral choir cost in Bath?
-#### Can you provide a wedding choir for Bath Abbey or a Somerset church?
-#### What music suits a funeral at Bath Abbey or Haycombe Crematorium?
-#### Do you sing at Haycombe Crematorium in Bath?
-#### Can you provide carol singers in Bath in December?
 
 
 ---
 
 Source: https://londonchoralservice.com/areas/chelmsford.html
 Summary: Chelmsford funeral and wedding choirs for the cathedral, Chelmsford and South Essex crematoriums and village churches. Soloists from £250, choirs from £1,150.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## Chelmsford choirs for the cathedral, crematoriums and Essex villages
 
@@ -3857,18 +3243,13 @@ Chelmsford is the county town of Essex, and its transport links from London mean
 ### Ensembles & pricing
 ### Christmas carol singers in Chelmsford
 ### Frequently asked questions
-#### What do you charge for a funeral choir in Chelmsford?
-#### Would a wedding choir suit Chelmsford Cathedral?
-#### Can you sing Pie Jesu or a favourite song at a Chelmsford funeral?
-#### Do you sing at Chelmsford Crematorium and South Essex Crematorium?
-#### Do you send carol singers to Chelmsford at Christmas?
 
 
 ---
 
 Source: https://londonchoralservice.com/areas/rochester.html
 Summary: Funeral singers and wedding choirs in Rochester and Medway, at Rochester Cathedral, St Nicholas Church and Medway Crematorium. Soloists from £250.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## Choirs for Rochester Cathedral, Medway Crematorium and north Kent
 
@@ -3879,18 +3260,13 @@ Rochester is one of England’s oldest cities, a place of ancient stone and lite
 ### Ensembles & pricing
 ### Christmas carol singers in Rochester
 ### Frequently asked questions
-#### What is the price of a funeral choir in Rochester and Medway?
-#### Do you provide choirs for weddings at Rochester Cathedral?
-#### How do you choose funeral music for Rochester Cathedral’s Norman nave?
-#### Do you sing at Medway Crematorium, which serves Rochester?
-#### Can you book carol singers for an event in Rochester at Christmas?
 
 
 ---
 
 Source: https://londonchoralservice.com/areas/london/westminster.html
 Summary: Funeral and wedding choirs in Westminster, at St Margaret’s, the Guards’ Chapel, St James’s Piccadilly and the Savoy Chapel. Soloists from £250.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## Funeral choirs in Westminster, from the Guards’ Chapel to the Savoy
 
@@ -3903,17 +3279,13 @@ The City of Westminster is home to some of Britain’s most celebrated churches 
 ### Weddings at St Margaret’s Westminster
 ### Choir sizes from the Abbey to the Savoy Chapel
 ### Frequently asked questions
-#### What should we budget for a funeral choir in Westminster?
-#### How do your singers get to a service in Westminster?
-#### Can you provide a choir for a wedding at St Margaret’s Westminster?
-#### Do you sing at crematoriums near Westminster?
 
 
 ---
 
 Source: https://londonchoralservice.com/areas/london/city-of-london.html
 Summary: Funeral and wedding choirs in the City of London: Temple Church, St Bartholomew-the-Great and livery hall carol services. Soloists from £250, choirs from £1,150.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## City of London choirs, from Temple Church to the livery halls
 
@@ -3923,16 +3295,13 @@ The Square Mile is home to some of the finest ecclesiastical architecture in Eng
 ### Livery halls and City carol services
 ### Weddings at Temple Church and St Bartholomew-the-Great
 ### Questions about the Square Mile
-#### What does a funeral choir cost at Temple Church or St Bartholomew-the-Great?
-#### Can the choir sing a carol service in a church and then at a livery hall reception?
-#### Can a City of London funeral have live singers at the Manor Park crematorium?
 
 
 ---
 
 Source: https://londonchoralservice.com/areas/london/kensington-chelsea.html
 Summary: Funeral and wedding choirs in Kensington and Chelsea, from requiems at Brompton Oratory to Holy Trinity Sloane Square and St Mary Abbots. Soloists from £250.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## Kensington and Chelsea choirs, from the Oratory to Cheyne Walk
 
@@ -3945,17 +3314,13 @@ The Royal Borough of Kensington and Chelsea includes Brompton Oratory, whose nav
 ### Carols for hotels, clubs and garden squares
 ### Choir sizes from the Oratory to Chelsea Old Church
 ### Questions about the Oratory and Chelsea churches
-#### What does a funeral choir cost at St Mary Abbots or Chelsea Old Church?
-#### What types of music can you perform at a funeral in Kensington and Chelsea?
-#### Can you sing at the Royal Hospital Chelsea Chapel?
-#### Do you cover crematorium services near Kensington and Chelsea?
 
 
 ---
 
 Source: https://londonchoralservice.com/areas/london/camden.html
 Summary: Funeral singers and wedding choirs in Camden, from St Pancras Old Church to Hampstead Parish Church, with Golders Green Crematorium nearby. Soloists from £250.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## Choirs for Camden funerals, from St Pancras to Hampstead
 
@@ -3967,10 +3332,6 @@ Camden runs from Church Row in Hampstead down to King’s Cross, with St Pancras
 ### Weddings at St John-at-Hampstead
 ### Matching the choir to Camden’s churches
 ### Frequently asked questions
-#### What does a Camden funeral choir cost, and can we book one singer?
-#### Can you sing at Golders Green Crematorium?
-#### Do you sing at non-religious and humanist funerals in Camden?
-#### Do you provide wedding choirs at St John-at-Hampstead?
 ### Carols from King’s Cross to Hampstead
 
 
@@ -3978,7 +3339,7 @@ Camden runs from Church Row in Hampstead down to King’s Cross, with St Pancras
 
 Source: https://londonchoralservice.com/areas/london/islington.html
 Summary: Wedding and funeral choirs in Islington, at Union Chapel on Compton Terrace, St Mary’s Upper Street and St James Clerkenwell. Soloists from £250.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## Islington choirs for Union Chapel and St Mary’s Upper Street
 
@@ -3988,17 +3349,13 @@ Islington runs from the bustle of Angel and Clerkenwell to the quieter reaches o
 ### Funerals at Union Chapel, St Mary’s and St James Clerkenwell
 ### Carols around Angel and Upper Street
 ### Questions from couples and families in Islington
-#### Can we have a choir for a wedding at Union Chapel or St Mary’s Upper Street?
-#### Can you sing at a funeral at Union Chapel?
-#### What does a funeral choir cost at Union Chapel or St Mary’s Islington?
-#### Can you sing at Islington Cemetery or a crematorium near Islington?
 
 
 ---
 
 Source: https://londonchoralservice.com/areas/london/barnet.html
 Summary: Funeral choirs and wedding singers in Barnet, at Hendon and Golders Green crematoria, St John the Baptist in Chipping Barnet and St Mary at Finchley.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## Choirs for Hendon and Golders Green crematoria and Barnet churches
 
@@ -4007,9 +3364,6 @@ Barnet covers the northern reaches of the capital, with communities from Chippin
 ### Funeral singers at Hendon and Golders Green crematoria
 ### Choir sizes from Hendon to Chipping Barnet
 ### Barnet funeral questions
-#### What does a funeral choir cost at Hendon or Golders Green Crematorium?
-#### Do your singers know Hendon and Golders Green crematoria?
-#### How long is a service at Hendon or Golders Green Crematorium?
 ### Weddings in Chipping Barnet and Finchley
 ### December carols around Finchley
 
@@ -4018,7 +3372,7 @@ Barnet covers the northern reaches of the capital, with communities from Chippin
 
 Source: https://londonchoralservice.com/areas/london/enfield.html
 Summary: Funeral singers and wedding choirs in Enfield, from Enfield Crematorium on Great Cambridge Road to St Andrew’s Enfield and Christ Church Southgate.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## Enfield funeral choirs, from Great Cambridge Road to Edmonton
 
@@ -4027,9 +3381,6 @@ Enfield sits at the top of London, where the city gives way to the green spaces 
 ### Funerals at Enfield Crematorium and Edmonton Cemetery
 ### Choir sizes from Great Cambridge Road to Southgate
 ### What Enfield families ask
-#### What does a choir cost at Enfield Crematorium or St Andrew’s Enfield?
-#### Can a singer perform at a graveside at Edmonton Cemetery?
-#### Do you know the chapel at Enfield Crematorium on Great Cambridge Road?
 ### Weddings at St Andrew’s Enfield and Christ Church Southgate
 ### Carol evenings in Enfield and Southgate
 
@@ -4038,7 +3389,7 @@ Enfield sits at the top of London, where the city gives way to the green spaces 
 
 Source: https://londonchoralservice.com/areas/london/haringey.html
 Summary: Funeral singers and wedding choirs in Haringey, from St Augustine’s Highgate to Tottenham Cemetery and the parish churches of Muswell Hill and Crouch End.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## Haringey choirs for funerals in Highgate, Tottenham and Muswell Hill
 
@@ -4048,10 +3399,6 @@ Haringey stretches from the hills of Highgate and Muswell Hill across to Tottenh
 ### Weddings from Highgate to Crouch End
 ### Choir sizes for Highgate, Muswell Hill and the cemetery chapels
 ### Frequently asked questions
-#### What will we pay for funeral singers in Haringey, from a soloist to eight voices?
-#### Which pieces suit St Augustine’s Highgate, and which suit a cemetery chapel?
-#### Do you sing at Tottenham Cemetery?
-#### Which crematoria near Haringey do you sing at?
 ### Carols around Muswell Hill
 
 
@@ -4059,7 +3406,7 @@ Haringey stretches from the hills of Highgate and Muswell Hill across to Tottenh
 
 Source: https://londonchoralservice.com/areas/london/hackney.html
 Summary: Wedding and funeral choirs in Hackney for St John at Hackney on Mare Street, Abney Park Cemetery, St Mary of Eton and the borough’s warehouse venues.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## Choirs for Hackney weddings, from Mare Street to the warehouses
 
@@ -4070,17 +3417,13 @@ Hackney takes in Stoke Newington, Dalston, Clapton, and Shoreditch, and its venu
 ### Funerals at St John at Hackney and Abney Park Cemetery
 ### Carol programmes for Hackney offices and residents
 ### Before you book in Hackney
-#### Do you sing at warehouse weddings as well as St John at Hackney?
-#### Is a quartet enough for a wedding at St John at Hackney?
-#### Does the music change between St John at Hackney and Abney Park Cemetery?
-#### Can you sing at a cremation for a Hackney family, given the borough has no crematorium?
 
 
 ---
 
 Source: https://londonchoralservice.com/areas/london/tower-hamlets.html
 Summary: Funeral and wedding choirs in Tower Hamlets, from St Dunstan’s Stepney to Hawksmoor’s Christ Church Spitalfields and St Anne’s Limehouse. Soloists from £250.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## Tower Hamlets choirs for Stepney, Spitalfields and Limehouse
 
@@ -4090,10 +3433,6 @@ Tower Hamlets covers the historic heart of London’s East End: Stepney, Bow, Wh
 ### Weddings in Hawksmoor churches and East End warehouses
 ### Choir sizes for Spitalfields, Limehouse and Stepney
 ### Questions about the East End churches
-#### Do you sing at warehouse weddings near Spitalfields as well as in churches?
-#### How many singers does Christ Church Spitalfields need?
-#### What do you charge for a funeral choir at St Dunstan’s or Christ Church Spitalfields?
-#### Which crematorium do Tower Hamlets families use, and do you sing there?
 ### Carols from Spitalfields to the Isle of Dogs
 
 
@@ -4101,7 +3440,7 @@ Tower Hamlets covers the historic heart of London’s East End: Stepney, Bow, Wh
 
 Source: https://londonchoralservice.com/areas/london/waltham-forest.html
 Summary: Funeral and wedding choirs in Waltham Forest, from Chingford Mount and Queens Road cemeteries to St Mary’s Walthamstow and the William Morris Gallery.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## Waltham Forest funeral choirs, from Chingford Mount to Walthamstow
 
@@ -4110,10 +3449,6 @@ Waltham Forest stretches from Walthamstow and Leyton in the south to Chingford i
 ### Funerals at Chingford Mount, Queens Road and St Mary’s Walthamstow
 ### Choir sizes for cemetery chapels and Walthamstow Village
 ### Waltham Forest funeral questions
-#### What size of choir suits the chapels at Chingford Mount and Queens Road?
-#### Is the funeral choir price the same in Walthamstow and Chingford?
-#### Can you sing popular songs as well as hymns at a Waltham Forest funeral?
-#### Can you sing at the City of London Crematorium for a Waltham Forest funeral?
 ### Weddings at St Mary’s Walthamstow and the William Morris Gallery
 ### Carols from Walthamstow Village to Chingford
 
@@ -4122,7 +3457,7 @@ Waltham Forest stretches from Walthamstow and Leyton in the south to Chingford i
 
 Source: https://londonchoralservice.com/areas/london/brent.html
 Summary: Funeral and wedding choirs in Brent, singing at Willesden New Cemetery, Alperton Cemetery and the medieval church of St Mary in Willesden. Soloists from £250.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## Choirs for Brent funerals and weddings, from Willesden to Wembley
 
@@ -4132,9 +3467,6 @@ Brent is one of north-west London’s most diverse boroughs, home to communities
 ### Weddings from Willesden to Wembley
 ### How many singers for Brent’s churches and cemetery chapels
 ### Common questions in Brent
-#### What does a funeral choir cost at St Mary’s Willesden or Willesden New Cemetery?
-#### Which size of choir suits a cemetery chapel in Brent?
-#### Can you sing music from different faith traditions at a Brent funeral?
 ### Carol singers in Wembley, Willesden and Kilburn
 
 
@@ -4142,7 +3474,7 @@ Brent is one of north-west London’s most diverse boroughs, home to communities
 
 Source: https://londonchoralservice.com/areas/london/harrow.html
 Summary: Wedding and funeral choirs in Harrow, from St Mary’s Harrow-on-the-Hill to Breakspear Crematorium, with singers for churches in Pinner and Stanmore.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## Choirs for Harrow-on-the-Hill, Pinner and Stanmore
 
@@ -4153,16 +3485,13 @@ Harrow sits on the north-western edge of the capital, under the spire of St Mary
 ### Funerals in Harrow, Pinner and Stanmore
 ### Carol evenings near Harrow-on-the-Hill
 ### Questions about Harrow-on-the-Hill and Breakspear
-#### How many singers suit a wedding at St Mary’s Harrow-on-the-Hill?
-#### Can we have live singing at Breakspear Crematorium?
-#### What would you sing at St Mary’s Harrow-on-the-Hill, and what at Breakspear?
 
 
 ---
 
 Source: https://londonchoralservice.com/areas/london/newham.html
 Summary: Funeral and wedding choirs in Newham: East London Cemetery in Plaistow, City of London Cemetery in Manor Park, St Mary Magdalene East Ham. Soloists from £250.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## Choirs for Newham funerals, from Plaistow to Manor Park
 
@@ -4172,10 +3501,6 @@ Newham lies at the heart of East London, stretching from the regenerated landsca
 ### Cemeteries, churches and the register office in Newham
 ### Choir sizes from East Ham to Stratford
 ### Questions from Newham families and couples
-#### Do you cover crematorium services in Newham?
-#### What would a choir cost for a funeral at East London Crematorium?
-#### What music suits a Newham funeral when the family come from different Christian traditions?
-#### Can you provide a small group for a civil ceremony in Stratford?
 ### Weddings at St Mary Magdalene and in Stratford
 ### Carols near the Olympic Park and in West Ham
 
@@ -4184,7 +3509,7 @@ Newham lies at the heart of East London, stretching from the regenerated landsca
 
 Source: https://londonchoralservice.com/areas/london/redbridge.html
 Summary: Wedding and funeral choirs in Redbridge, from St Mary the Virgin in Wanstead to Forest Park Crematorium in Hainault and St Mary’s Ilford. Soloists from £250.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## Redbridge choirs for Wanstead weddings and Ilford funerals
 
@@ -4195,16 +3520,13 @@ Redbridge runs from the leafy suburbs of Wanstead and South Woodford to the busy
 ### Funerals at Forest Park Crematorium and St Mary’s Ilford
 ### Carols from Wanstead green to Ilford
 ### Questions about Wanstead and Forest Park
-#### How many singers suit a wedding at St Mary the Virgin, Wanstead?
-#### Does Forest Park Crematorium in Hainault fall within your area?
-#### Which pieces do families choose at St Mary’s Ilford and Forest Park Crematorium?
 
 
 ---
 
 Source: https://londonchoralservice.com/areas/london/havering.html
 Summary: Funeral and wedding choirs in Havering, at South Essex Crematorium in Corbets Tey and St Andrew’s Hornchurch. Soloists from £250, choirs of four from £1,150.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## Havering choirs for South Essex Crematorium and St Andrew’s
 
@@ -4213,10 +3535,6 @@ Havering sits on London’s eastern edge, where the city gives way to the green 
 ### Funerals at South Essex Crematorium and St Andrew’s Hornchurch
 ### Choir sizes for Hornchurch, Upminster and Romford
 ### Havering funeral questions
-#### Do you cover crematorium services in Havering?
-#### How much is a funeral choir at South Essex Crematorium or St Andrew’s Hornchurch?
-#### What size of choir suits a family-only funeral in Havering?
-#### Can you sing popular songs at South Essex Crematorium as well as hymns at St Andrew’s Hornchurch?
 ### Weddings at St Andrew’s Hornchurch
 ### Carols in Romford and Upminster
 
@@ -4225,7 +3543,7 @@ Havering sits on London’s eastern edge, where the city gives way to the green 
 
 Source: https://londonchoralservice.com/areas/london/barking-dagenham.html
 Summary: Choirs and soloists for funerals and weddings in Barking and Dagenham, from the old Barking Abbey grounds to the Eastbrookend and Rippleside cemetery chapels.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## Funeral choirs for St Margaret’s Barking, Eastbrookend and Rippleside
 
@@ -4235,9 +3553,6 @@ Barking and Dagenham runs along the north bank of the Thames in East London, tak
 ### Weddings at St Margaret’s Church
 ### How many singers for Barking and Dagenham venues
 ### Questions about Barking and Dagenham services
-#### What does a funeral choir cost in Barking, from St Margaret’s to Eastbrookend?
-#### Can the same singers cover the chapel and the graveside at Eastbrookend or Rippleside?
-#### What music can you sing at a funeral in Barking, from St Margaret’s to the cemetery chapels?
 ### Carols in Barking, Dagenham and Chadwell Heath
 
 
@@ -4245,7 +3560,7 @@ Barking and Dagenham runs along the north bank of the Thames in East London, tak
 
 Source: https://londonchoralservice.com/areas/london/southwark.html
 Summary: Funeral and wedding choirs in Southwark, from Honor Oak Crematorium to St George the Martyr and St Giles Camberwell. Soloists from £250, choirs from £1,150.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## Funeral choirs in Southwark, from Borough High Street to Honor Oak
 
@@ -4256,10 +3571,6 @@ Southwark stretches from the Thames at London Bridge deep into the leafy streets
 ### Weddings at Southwark Cathedral, Dulwich and Camberwell
 ### Choir sizes from the Cathedral nave to Honor Oak’s chapels
 ### Questions about the Cathedral and Honor Oak
-#### What does a funeral choir cost at Honor Oak or a Camberwell church?
-#### Can you sing at a funeral or memorial service at Southwark Cathedral?
-#### Can you fit the music to Honor Oak Crematorium’s time slots?
-#### How many voices does a wedding at Southwark Cathedral or in Dulwich need?
 ### Carols from Borough to Dulwich
 ### Honor Oak and the boroughs around Southwark
 
@@ -4268,7 +3579,7 @@ Southwark stretches from the Thames at London Bridge deep into the leafy streets
 
 Source: https://londonchoralservice.com/areas/london/lambeth.html
 Summary: Funeral and wedding choirs in Lambeth, from St John’s Waterloo to graveside committals at West Norwood Cemetery. Soloists from £250, choirs of four from £1,150.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## From St John’s Waterloo to West Norwood, choirs for Lambeth
 
@@ -4280,10 +3591,6 @@ Lambeth runs from the grounds of Lambeth Palace by the river to Brixton, Streath
 ### Weddings at St John’s Waterloo, Brixton and Streatham
 ### Choir sizes for Waterloo, Norwood and Streatham
 ### Questions about Waterloo and West Norwood
-#### What does a funeral choir cost at St John’s Waterloo or West Norwood?
-#### Can you sing at West Norwood Cemetery?
-#### Can St John’s Waterloo take a large memorial service?
-#### Can you provide a choir for a wedding at St John’s Waterloo?
 ### Unaccompanied carols in Waterloo and Clapham
 ### Across the Lambeth boundary
 
@@ -4292,7 +3599,7 @@ Lambeth runs from the grounds of Lambeth Palace by the river to Brixton, Streath
 
 Source: https://londonchoralservice.com/areas/london/lewisham.html
 Summary: Funeral and wedding choirs in Lewisham, at Hither Green Crematorium, St Mary’s Lewisham and the churches of Blackheath and Lee. Soloists from £250.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## Lewisham choirs, from Hither Green Crematorium to Blackheath
 
@@ -4301,9 +3608,6 @@ Lewisham takes in Lewisham itself, Catford, Blackheath and Grove Park. We provid
 ### Funerals at Hither Green and St Mary’s Lewisham
 ### Choir sizes from Grove Park to Blackheath
 ### Questions from Lewisham families
-#### What does a funeral choir cost at Hither Green or St Mary’s Lewisham?
-#### Is Lewisham Crematorium in Hither Green one of your venues?
-#### What size of choir suits a wedding in Blackheath or Lee?
 ### Weddings in Blackheath and Lee
 ### Carols in Catford and Grove Park
 
@@ -4312,7 +3616,7 @@ Lewisham takes in Lewisham itself, Catford, Blackheath and Grove Park. We provid
 
 Source: https://londonchoralservice.com/areas/london/greenwich.html
 Summary: Wedding choirs and funeral singers in Greenwich, from St Alfege and the Old Royal Naval College chapels to Eltham Crematorium. Choirs of four from £1,150.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## Wedding choirs at St Alfege and the Naval College, Greenwich
 
@@ -4323,16 +3627,13 @@ The Royal Borough of Greenwich is steeped in maritime history and architectural 
 ### Funerals in Greenwich, Eltham and Woolwich
 ### Carols near the Old Royal Naval College
 ### Questions about Greenwich weddings and funerals
-#### Will a wedding choir work at St Alfege Greenwich?
-#### How big a choir does a wedding at the Old Royal Naval College need?
-#### Is Eltham Crematorium the one Greenwich families use, and do you sing there?
 
 
 ---
 
 Source: https://londonchoralservice.com/areas/london/bromley.html
 Summary: Funeral and wedding choirs in Bromley, from Beckenham Crematorium to Bromley Parish Church, All Saints Orpington and Chislehurst. Soloists from £250.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## Choirs across Bromley, from Beckenham Crematorium to Biggin Hill
 
@@ -4341,9 +3642,6 @@ Bromley is the largest borough in London by area, stretching from the suburban s
 ### Funeral music at Beckenham Crematorium and Bromley’s churches
 ### Choir sizes from Bromley Parish Church to Biggin Hill
 ### Funeral questions in Bromley
-#### What does a funeral choir cost at Beckenham Crematorium or Bromley Parish Church?
-#### Is Beckenham Crematorium one of your regular venues?
-#### Do you cover the whole of Bromley, including Biggin Hill?
 ### Weddings at St Peter & St Paul and in Chislehurst
 ### Carols in Beckenham, Chislehurst and Orpington
 
@@ -4352,7 +3650,7 @@ Bromley is the largest borough in London by area, stretching from the suburban s
 
 Source: https://londonchoralservice.com/areas/london/croydon.html
 Summary: Funeral singers and wedding choirs in Croydon, from Croydon Minster to Croydon Crematorium on Mitcham Road and the parish churches of Purley and Sanderstead.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## Croydon Minster to Mitcham Road: choirs for funerals and weddings
 
@@ -4362,10 +3660,6 @@ Croydon is one of South London’s largest and most populous boroughs, and its p
 ### Weddings from the Minster to Sanderstead and Purley
 ### How many voices for the Minster, Old Town and Mitcham Road
 ### Questions about Croydon Minster and Mitcham Road
-#### What size of choir suits Croydon Minster?
-#### How much would a choir for a Croydon Minster funeral cost?
-#### Will your singers work at Croydon Crematorium on Mitcham Road?
-#### What music suits a funeral at Croydon Minster compared with the crematorium?
 ### Carols in Croydon town centre, Purley and Sanderstead
 
 
@@ -4373,7 +3667,7 @@ Croydon is one of South London’s largest and most populous boroughs, and its p
 
 Source: https://londonchoralservice.com/areas/london/bexley.html
 Summary: Funeral and wedding choirs in Bexley, Bexleyheath and Sidcup, from St Mary the Virgin beside the River Cray to Eltham Crematorium. A quartet is £1,150.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## Bexley choirs for St Mary the Virgin, Sidcup and Bexleyheath
 
@@ -4383,9 +3677,6 @@ On London’s south-eastern edge, where the city meets the green landscapes of K
 ### Weddings in Bexley village, Bexleyheath and Sidcup
 ### Choosing a choir size for Bexley’s parish churches
 ### Questions from Bexley families
-#### What size of choir suits St Mary the Virgin, Bexley?
-#### What does a funeral choir cost in Bexley or at Eltham Crematorium?
-#### Do you sing at Eltham Crematorium, over the Bexley boundary at Falconwood?
 ### Carol singers in Bexleyheath, Sidcup and Crayford
 
 
@@ -4393,7 +3684,7 @@ On London’s south-eastern edge, where the city meets the green landscapes of K
 
 Source: https://londonchoralservice.com/areas/london/hammersmith-fulham.html
 Summary: Wedding and funeral choirs in Hammersmith and Fulham, from St Paul’s Hammersmith to Fulham Palace Chapel and Margravine Cemetery. Soloists from £250.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## Singers and choirs for St Paul’s Hammersmith and Fulham Palace
 
@@ -4404,15 +3695,13 @@ Hammersmith and Fulham runs along the north bank of the Thames, from St Paul’s
 ### Funerals at All Saints Fulham, St Paul’s and Margravine Cemetery
 ### Riverside carol evenings
 ### Questions about Hammersmith and Fulham
-#### Is Fulham Palace Chapel big enough for a choir?
-#### Do you cover crematorium services in Hammersmith and Fulham?
 
 
 ---
 
 Source: https://londonchoralservice.com/areas/london/ealing.html
 Summary: Wedding choirs and funeral singers in Ealing for St Mary’s Ealing, Pitzhanger Manor and South West Middlesex Crematorium. Quartets from £1,150.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## Wedding choirs for St Mary’s Ealing and Pitzhanger Manor
 
@@ -4423,16 +3712,13 @@ Ealing, the “Queen of the Suburbs,” takes in Greenford, Hanwell, Northolt, a
 ### Funeral music in Ealing and at South West Middlesex Crematorium
 ### Carol evenings across Ealing
 ### Ealing questions
-#### What size of choir suits a wedding at Pitzhanger Manor?
-#### Can we have a wedding choir at St Mary’s Ealing or a licensed venue?
-#### Can you sing at South West Middlesex Crematorium for an Ealing funeral?
 
 
 ---
 
 Source: https://londonchoralservice.com/areas/london/hounslow.html
 Summary: Funeral and wedding choirs in Hounslow, from South West Middlesex Crematorium in Hanworth to St Mary’s Hounslow and the riverside churches at Isleworth.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## Hanworth to Chiswick: choirs for Hounslow funerals and weddings
 
@@ -4441,10 +3727,6 @@ Hounslow covers a broad sweep of west London, from Georgian Chiswick to the open
 ### Funerals at South West Middlesex Crematorium and St Mary’s Hounslow
 ### Choir sizes from Hanworth to Chiswick and Isleworth
 ### Planning a funeral in Hounslow
-#### What does a funeral choir cost at St Mary’s Hounslow or in Feltham?
-#### Can your singers perform at South West Middlesex Crematorium in Hanworth?
-#### Which music suits a funeral at St Mary’s Hounslow or South West Middlesex Crematorium?
-#### Would a single singer suit a quiet funeral in Hounslow?
 ### Weddings in Chiswick and Isleworth
 ### Carols near Hounslow high street
 
@@ -4453,7 +3735,7 @@ Hounslow covers a broad sweep of west London, from Georgian Chiswick to the open
 
 Source: https://londonchoralservice.com/areas/london/hillingdon.html
 Summary: Choirs for funerals and weddings in Hillingdon: a quartet suits the chapel at Breakspear Crematorium, and St John’s Hillingdon takes a sextet for a wedding.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## Choirs for Breakspear Crematorium and St John’s Hillingdon
 
@@ -4462,9 +3744,6 @@ Hillingdon, London’s westernmost borough, takes in the market town of Uxbridge
 ### Funerals at Breakspear Crematorium and St John’s Hillingdon
 ### Choir sizes from Breakspear to Ruislip
 ### Questions about funerals in Hillingdon
-#### Is a quartet the right size for Breakspear Crematorium?
-#### What should I budget for funeral singers at Breakspear or St John’s Hillingdon?
-#### Does live music suit the chapel at Breakspear Crematorium?
 ### Weddings at St John’s Hillingdon and in Uxbridge
 ### A cappella carols in Uxbridge
 
@@ -4473,7 +3752,7 @@ Hillingdon, London’s westernmost borough, takes in the market town of Uxbridge
 
 Source: https://londonchoralservice.com/areas/london/richmond.html
 Summary: Wedding and funeral choirs in Richmond upon Thames, from St Mary Magdalene by the river to St Anne’s Kew and Mortlake Crematorium. Choirs of four from £1,150.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## Choirs for riverside weddings in Richmond, Kew and Twickenham
 
@@ -4486,15 +3765,13 @@ Richmond is one of over thirty London boroughs we cover ; the full list, with na
 ### Funerals at Mortlake Crematorium and St Mary Magdalene
 ### Carols from Richmond’s riverside to Twickenham
 ### Questions about Kew, Richmond and Mortlake
-#### What size of choir suits St Anne’s Kew?
-#### Do you sing at Mortlake Crematorium in Richmond?
 
 
 ---
 
 Source: https://londonchoralservice.com/areas/london/kingston.html
 Summary: Funeral and wedding choirs in Kingston upon Thames, at All Saints Kingston, Kingston Crematorium and St Raphael’s Surbiton. Soloists from £250, quartets £1,150.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## A choir at All Saints, a soloist at Kingston Crematorium
 
@@ -4504,9 +3781,6 @@ The Royal Borough of Kingston upon Thames sits on the south-western edge of Lond
 ### Weddings at All Saints and St Raphael’s Surbiton
 ### Choir sizes for the Royal Borough’s churches
 ### Frequently asked questions
-#### How much is a funeral choir at All Saints Kingston or the crematorium?
-#### Do you sing at Kingston Crematorium, and what size of group suits it?
-#### Which suits a smaller wedding, All Saints or St Raphael’s Surbiton?
 ### Carols by Kingston market
 
 
@@ -4514,7 +3788,7 @@ The Royal Borough of Kingston upon Thames sits on the south-western edge of Lond
 
 Source: https://londonchoralservice.com/areas/london/wandsworth.html
 Summary: Wedding and funeral choirs in Wandsworth, from St Mary’s Battersea, where William Blake married, to All Saints and Putney Vale Crematorium. Soloists from £250.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## Battersea to Putney Vale: wedding and funeral choirs in Wandsworth
 
@@ -4525,16 +3799,13 @@ Wandsworth encompasses some of South West London’s most desirable neighbourhoo
 ### Funerals at Putney Vale Crematorium and All Saints Wandsworth
 ### Carols from Putney to Wandsworth Common
 ### Questions about Battersea and Putney Vale
-#### Will you sing at a wedding in Putney or at All Saints Wandsworth?
-#### Does St Mary’s Battersea need a large choir?
-#### Do you know Putney Vale Crematorium’s chapels?
 
 
 ---
 
 Source: https://londonchoralservice.com/areas/london/merton.html
 Summary: Funeral and wedding choirs in Merton, from South London Crematorium in Mitcham to St Mary’s Wimbledon on its hilltop. Soloists from £250, choirs from £1,150.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## Merton funeral choirs, from Morden Cemetery to St Mary’s Wimbledon
 
@@ -4543,9 +3814,6 @@ Most people know Merton for Wimbledon and its common, but the borough also takes
 ### Funerals at South London Crematorium and Morden Cemetery
 ### Choir sizes from Mitcham to St Mary’s Wimbledon
 ### Merton funeral questions
-#### What does a funeral choir cost at Morden Cemetery or South London Crematorium?
-#### Can you sing at a funeral at St Mary’s, Wimbledon Parish Church?
-#### Will you sing at South London Crematorium in Mitcham?
 ### Weddings at St Mary’s Wimbledon
 ### Carols in Wimbledon, Colliers Wood and Morden
 
@@ -4554,7 +3822,7 @@ Most people know Merton for Wimbledon and its common, but the borough also takes
 
 Source: https://londonchoralservice.com/areas/london/sutton.html
 Summary: Funeral and wedding choirs in Sutton, from North East Surrey Crematorium to All Saints Carshalton beside the ponds. Soloists from £250, choirs from £1,150.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## Funeral choirs for Sutton, Carshalton and Cheam
 
@@ -4563,10 +3831,6 @@ Sutton sits on London’s southern edge, where the suburbs meet the chalk downla
 ### Funerals at North East Surrey Crematorium and All Saints Carshalton
 ### Choir sizes for Carshalton, Cheam and the crematorium chapel
 ### Frequently asked questions
-#### What are your funeral fees in Sutton, from a soloist to a choir of eight?
-#### Do you cover North East Surrey Crematorium for Sutton funerals?
-#### Can you sing at a funeral at All Saints Carshalton?
-#### What can you sing at a Sutton funeral, in church or at the crematorium?
 ### Weddings at All Saints Carshalton
 ### Carols in Sutton, Carshalton and Cheam
 
@@ -4575,7 +3839,7 @@ Sutton sits on London’s southern edge, where the suburbs meet the chalk downla
 
 Source: https://londonchoralservice.com/music-guides/memorial-service-planning.html
 Summary: A practical guide to planning a memorial service, covering format, venue, music, and readings. Written by The London Choral Service. Singers from £250.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## How to plan a memorial service
 
@@ -4591,12 +3855,6 @@ How do you plan a memorial service? Set a date, usually some weeks or months aft
 ### Inviting speakers and choosing readings
 ### Practical details
 ### Frequently asked questions
-#### What is the difference between a funeral and a memorial service?
-#### How long after a death can you hold a memorial service?
-#### What is the order of service for a memorial service?
-#### Who leads a memorial service?
-#### What music is appropriate for a memorial service?
-#### How much does music for a memorial service cost?
 ### We can help
 ### Related
 
@@ -4605,7 +3863,7 @@ How do you plan a memorial service? Set a date, usually some weeks or months aft
 
 Source: https://londonchoralservice.com/music-guides/be-thou-my-vision-wedding-hymn.html
 Summary: Be Thou My Vision: the full words (Eleanor Hull, 1912), the Slane tune and where it fits at a wedding. Hear our recording, then book a choir from £1,150.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## Why Be Thou My Vision is the best wedding hymn
 
@@ -4619,12 +3877,6 @@ Is it a good wedding hymn? Yes. On a wedding day a prayer to put one love above 
 ### Where it goes in the service
 ### How a choir sings it
 ### Frequently asked questions
-#### Who wrote Be Thou My Vision?
-#### What tune is Be Thou My Vision sung to?
-#### Where does Be Thou My Vision go in a wedding service?
-#### Can Be Thou My Vision be the processional?
-#### Does Be Thou My Vision suit a Catholic or non-denominational wedding?
-#### Is Be Thou My Vision a wedding hymn or a funeral hymn?
 ### Related
 
 
@@ -4632,7 +3884,7 @@ Is it a good wedding hymn? Yes. On a wedding day a prayer to put one love above 
 
 Source: https://londonchoralservice.com/music-guides/be-thou-my-vision-funeral-hymn.html
 Summary: Be Thou My Vision at a funeral: who wrote it, the Slane tune, where it goes in the service and how our singers lead it, with a recording by our choir.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## Why Be Thou My Vision is the best funeral hymn
 
@@ -4647,13 +3899,6 @@ Is Be Thou My Vision suitable for a funeral? Yes. It is a prayer of trust that m
 ### Where it goes in the service
 ### It sits well alongside other funeral music
 ### Frequently asked questions
-#### Is Be Thou My Vision suitable for a funeral?
-#### Where does Be Thou My Vision go in a funeral service?
-#### Can a soloist lead Be Thou My Vision at a funeral?
-#### Who wrote Be Thou My Vision?
-#### What tune is Be Thou My Vision sung to?
-#### Is Be Thou My Vision suitable for a non-religious funeral?
-#### Is Be Thou My Vision a wedding hymn or a funeral hymn?
 ### We’re here if you’d like a hand
 ### Related
 
@@ -4662,7 +3907,7 @@ Is Be Thou My Vision suitable for a funeral? Yes. It is a prayer of trust that m
 
 Source: https://londonchoralservice.com/music-guides/wedding-organ-pop-songs.html
 Summary: Pop, film and musical-theatre songs a church organist can play at your wedding, where each fits in the service, and how to brief your organist on an arrangement.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## Pop songs on the organ at your wedding
 
@@ -4671,40 +3916,14 @@ A good church organist can play most of the pop songs couples ask for, but some 
 Can an organist play pop songs at a wedding? Yes. Most professional organists can arrange a pop song for the organ if you give them a few weeks. Songs with a strong tune and moving harmony work best: Can’t Help Falling in Love (Elvis Presley, 1961), Perfect (Ed Sheeran, 2017), A Thousand Years (Christina Perri, 2011) and Fix You (Coldplay, 2005), which already opens on an organ. Drum-led dance tracks rarely work.
 
 ### Upbeat songs for the recessional
-#### All You Need Is Love (The Beatles, 1967)
-#### Ain’t No Mountain High Enough (Marvin Gaye & Tammi Terrell, 1967 / Diana Ross, 1970)
-#### Lovely Day (Bill Withers, 1977)
 ### Modern ballads
-#### Perfect (Ed Sheeran, 2017)
-#### A Thousand Years (Christina Perri, 2011)
-#### All of Me (John Legend, 2013)
-#### Make You Feel My Love (Bob Dylan, 1997 / Adele, 2008)
-#### Fix You (Coldplay, 2005)
-#### Marry Me (Train, 2010)
 ### Classic love songs
-#### Can’t Help Falling in Love (Elvis Presley, 1961)
-#### At Last (Etta James, 1960)
-#### La Vie en Rose (Édith Piaf, 1947)
 ### Film and TV themes
-#### Main Title from Game of Thrones (Ramin Djawadi, 2011)
-#### Hedwig’s Theme from Harry Potter (John Williams, 2001)
-#### Over the Rainbow from The Wizard of Oz (Harold Arlen, 1939)
-#### Cinema Paradiso love theme (Andrea Morricone, 1988)
-#### The Princess Bride : Storybook Love (Mark Knopfler, 1987)
 ### Musical theatre
-#### All I Ask of You from The Phantom of the Opera (Andrew Lloyd Webber, 1986)
-#### Seasons of Love from Rent (Jonathan Larson, 1996)
-#### Can You Feel the Love Tonight from The Lion King (Elton John & Tim Rice, 1994)
-#### Memory from Cats (Andrew Lloyd Webber, 1981)
 ### What works, and what doesn’t
 ### Where in the ceremony to place a pop song
 ### Working with your organist on an arrangement
 ### Frequently asked questions
-#### Can an organist play modern songs at a wedding?
-#### Is it appropriate to play pop songs on the organ at a church wedding?
-#### How far ahead should I ask my organist for a pop song arrangement?
-#### Do we have to use the church’s own organist?
-#### Can a singer perform a pop song with the organ?
 ### Send us the song
 ### Related
 
@@ -4713,7 +3932,7 @@ Can an organist play pop songs at a wedding? Yes. Most professional organists ca
 
 Source: https://londonchoralservice.com/music-guides/wedding-pop-songs-choir.html
 Summary: Pop songs arranged for four-part voices for a church wedding. Modern love ballads, classic standards, and practical advice on bespoke choral arrangements.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## Pop songs for a wedding choir to sing
 
@@ -4722,32 +3941,12 @@ Take away a pop song’s drums, synths and studio production and a good one keep
 What pop songs can a choir sing at a wedding? The pop songs couples ask our choirs for most are A Thousand Years (Christina Perri, 2011), All of Me (John Legend, 2013), Perfect (Ed Sheeran, 2017), Can’t Help Falling in Love (Elvis Presley, 1961) and Stand By Me (Ben E. King, 1961). Almost any song with a strong tune can be arranged for four voices, sung unaccompanied or with an organ.
 
 ### Modern love ballads
-#### A Thousand Years (Christina Perri, 2011)
-#### All of Me (John Legend, 2013)
-#### Perfect (Ed Sheeran, 2017)
-#### Make You Feel My Love (Bob Dylan, 1997 / Adele, 2008)
-#### Thinking Out Loud (Ed Sheeran, 2014)
-#### Marry You (Bruno Mars, 2010)
 ### Classic ballads
-#### Songbird (Fleetwood Mac, 1977)
-#### Stand By Me (Ben E. King, 1961)
-#### Can’t Help Falling in Love (Elvis Presley, 1961)
-#### Unchained Melody (Alex North and Hy Zaret, 1955)
-#### Fields of Gold (Sting, 1993)
 ### Upbeat pop for the recessional
-#### Signed, Sealed, Delivered, I’m Yours (Stevie Wonder, 1970)
-#### Home (Edward Sharpe & The Magnetic Zeros, 2009)
-#### You Are the Best Thing (Ray LaMontagne, 2008)
-#### Here Comes the Sun (The Beatles, 1969)
 ### What makes a pop song work for a choir
 ### Bespoke choral arrangements
 ### Where to place pop songs in a ceremony
 ### Frequently asked questions
-#### Can a choir sing any pop song at a wedding?
-#### Can a church refuse a pop song at a wedding?
-#### Do pop songs need copyright clearance for a wedding?
-#### How many singers do we need for a pop song arrangement?
-#### How long does it take to prepare a choral arrangement of a pop song?
 ### Send us the song
 ### Related
 
@@ -4756,7 +3955,7 @@ What pop songs can a choir sing at a wedding? The pop songs couples ask our choi
 
 Source: https://londonchoralservice.com/music-guides/lesser-known-wedding-choral-pieces.html
 Summary: Beyond Ave Maria. Renaissance motets, English cathedral anthems, and modern choral works that make a wedding ceremony feel distinctive without feeling obscure.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## Lesser-known choral pieces for a wedding
 
@@ -4765,32 +3964,12 @@ If you have heard Schubert’s Ave Maria at the last four weddings you went to, 
 What are some lesser-known choral pieces for a wedding? Try Palestrina’s Sicut Cervus , Tallis’s If Ye Love Me (1565), Byrd’s Ave Verum Corpus (1605), Brahms’s Geistliches Lied (1856), Stanford’s Beati Quorum Via (published 1905), William Harris’s Faire Is the Heaven (1925), Howells’s Like as the Hart (1941) and Tavener’s The Lamb (1982). Cathedral choirs sing them often; few wedding guests know them.
 
 ### Renaissance motets
-#### Sicut Cervus (Palestrina, late 16th century)
-#### O Quam Gloriosum (Victoria, 1572)
-#### Ave Verum Corpus (Byrd, 1605)
-#### If Ye Love Me (Tallis, 1565)
 ### English cathedral repertoire
-#### Faire Is the Heaven (William Harris, 1925)
-#### I Was Glad (Parry, 1902)
-#### Beati Quorum Via (Stanford, published 1905)
-#### Like as the Hart (Howells, 1941)
 ### Romantic and late-Romantic
-#### Geistliches Lied (Brahms, Op. 30, 1856)
-#### Ave Verum Corpus (Elgar, 1902)
-#### Justorum Animae (Stanford, published 1905)
 ### Modern choral works
-#### O Magnum Mysterium (Lauridsen, 1994)
-#### Sleep (Eric Whitacre, 2000)
-#### The Lamb (Tavener, 1982)
-#### A New Song (James MacMillan, 1997)
 ### Where each piece sits in the ceremony
 ### What to consider when choosing
 ### Frequently asked questions
-#### Are lesser-known choral pieces too obscure for wedding guests?
-#### How many singers do you need for Renaissance or cathedral-style choral pieces?
-#### Can less-common choral pieces be included alongside traditional wedding hymns?
-#### Can any of these be sung at a civil ceremony?
-#### Which of these suit a winter wedding?
 ### Plan a distinctive ceremony
 ### Related
 
@@ -4799,7 +3978,7 @@ What are some lesser-known choral pieces for a wedding? Try Palestrina’s Sicut
 
 Source: https://londonchoralservice.com/music-guides/popular-wedding-organ-music.html
 Summary: Popular wedding organ music: the processionals, register-signing pieces and recessionals couples book most, plus rarer pieces such as Bach's Toccata in F.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## Popular wedding organ music
 
@@ -4808,37 +3987,13 @@ The organ pieces couples book most often at British weddings, in service order: 
 What is the most popular wedding organ music? For the walk in, Jeremiah Clarke’s Trumpet Voluntary (c.1700), Pachelbel’s Canon in D and Wagner’s Bridal Chorus (1850). For the signing of the register, Bach’s Jesu, Joy of Man’s Desiring . For the way out, Mendelssohn’s Wedding March (1842) and the Toccata from Widor’s Organ Symphony No. 5 (1879). Couples ask us for these six more than any others.
 
 ### The five processionals couples book most
-#### Trumpet Voluntary (Jeremiah Clarke, c.1700)
-#### Bridal Chorus (Wagner, 1850)
-#### Canon in D (Pachelbel, late 17th century)
-#### Arrival of the Queen of Sheba (Handel, 1748)
-#### Prelude in C from The Well-Tempered Clavier (Bach, BWV 846, 1722)
 ### Four pieces that suit the register signing
-#### Jesu, Joy of Man’s Desiring (Bach, 1723)
-#### Air on the G String (Bach, c.1730)
-#### Gymnopédie No. 1 (Satie, 1888)
-#### Clair de Lune (Debussy, 1905)
 ### Six recessionals that lift the room
-#### Imperial March (Elgar, 1897)
-#### Wedding March (Mendelssohn, 1842)
-#### Toccata from Symphony No. 5 (Widor, 1879)
-#### Hornpipe from Water Music (Handel, 1717)
-#### Crown Imperial (Walton, 1937)
-#### Toccata in F (Bach, BWV 540)
 ### Rarer pieces to ask for
 ### Pop songs and film themes that work on the organ
 ### Which of these is right for your wedding
-#### How long is the walk down the aisle?
-#### How big is the organ?
-#### How does the building sound?
-#### Have either of you sung in a choir or studied music?
 ### Building a four-piece programme
 ### Frequently asked questions
-#### What organ music is played when the bride walks in?
-#### What organ music is played as the couple leaves?
-#### How many pieces of organ music do I need for a wedding?
-#### Is the Bridal Chorus still considered acceptable?
-#### Can my organist play a piece that isn’t on this list?
 ### Talk to us
 ### Related
 
@@ -4847,7 +4002,7 @@ What is the most popular wedding organ music? For the walk in, Jeremiah Clarke�
 
 Source: https://londonchoralservice.com/for-event-managers.html
 Summary: Choirs and singers for corporate event managers: awards dinners, product launches, charity galas, conferences, summer parties. PO invoicing on 14-day terms.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## For event managers Choirs for awards dinners, galas, and office carols, invoiced against your PO
 
@@ -4859,10 +4014,6 @@ Summary: Choirs and singers for corporate event managers: awards dinners, produc
 ### Booking and invoicing
 ### Useful resources for event managers
 ### Frequently asked questions
-#### Can you provide a quote on a PO basis?
-#### How far in advance do we need to book?
-#### Can you perform without amplification in large venues?
-#### What ensemble size is right for a 200-person awards dinner?
 ### Related
 ### Send us a brief
 
@@ -4871,7 +4022,7 @@ Summary: Choirs and singers for corporate event managers: awards dinners, produc
 
 Source: https://londonchoralservice.com/music-guides/best-christmas-carol-singers.html
 Summary: How to choose the best Christmas carol singers: the training to look for, how many voices suit the room, what the fee should include and the questions to ask.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## Best Christmas carol singers — what to look for when hiring
 
@@ -4881,20 +4032,10 @@ How do you choose the best carol singers? Check that the singers are trained, ha
 
 ### What to look for
 ### Ensemble size guidance
-#### Solo or duo
-#### Small Choir (4)
-#### Sextet
-#### Full carollers (eight or more)
 ### What carol singers cost
 ### Six questions to ask any provider
 ### How LCS approaches this
 ### Frequently asked questions
-#### How many singers do I need for a corporate Christmas party of 200 guests?
-#### What is the typical set length for in-store or lobby carol singing?
-#### Can carol singers perform alongside a string quartet or DJ?
-#### Do you sing only traditional carols, or modern festive songs too?
-#### What is the booking lead time for December events?
-#### How much do professional carol singers cost?
 ### Related
 
 
@@ -4902,7 +4043,7 @@ How do you choose the best carol singers? Check that the singers are trained, ha
 
 Source: https://londonchoralservice.com/music-guides/nine-lessons-and-carols.html
 Summary: Nine Lessons and Carols order of service: the nine readings with Bible references, a worked running order, a service sheet template and a 45-minute outline.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## Nine Lessons and Carols: order of service and readings
 
@@ -4921,13 +4062,6 @@ The order of service: a processional hymn, usually Once in Royal David’s City 
 ### Adapting the format for a secular audience
 ### Hiring a choir and an organist into a church you have booked
 ### Frequently asked questions
-#### What is the order of service for Nine Lessons and Carols?
-#### What are the readings for Nine Lessons and Carols?
-#### What goes on a Nine Lessons and Carols service sheet?
-#### How long does a Nine Lessons and Carols service last?
-#### Who reads the nine lessons?
-#### Can you hold a Nine Lessons and Carols service outside a church?
-#### Do you need a choir for a Nine Lessons and Carols service?
 ### Related
 
 
@@ -4935,7 +4069,7 @@ The order of service: a processional hymn, usually Once in Royal David’s City 
 
 Source: https://londonchoralservice.com/music-guides/carol-singers-cost.html
 Summary: Carol singers cost £1,150 for four voices and £3,000 for twelve, for up to two hours in Greater London. No VAT is added; only Christmas Eve and Day cost more.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## How much does it cost to hire carol singers?
 
@@ -4947,18 +4081,8 @@ How much does it cost to hire carol singers? With The London Choral Service, fou
 ### What the price includes
 ### What moves the price
 ### Which size suits which room
-#### An office lobby or reception
-#### A drinks party in full flow
-#### A church carol service
-#### A large hall or cathedral
 ### How to get a quote
 ### Frequently asked questions
-#### How much does it cost to hire carol singers for an office party?
-#### Do carol singers cost more at Christmas?
-#### How many carol singers do you need?
-#### What is included in the price of hiring carol singers?
-#### Can I book a single carol singer?
-#### Is anything added to the quoted price?
 ### Related
 
 
@@ -4966,7 +4090,7 @@ How much does it cost to hire carol singers? With The London Choral Service, fou
 
 Source: https://londonchoralservice.com/music-guides/charity-carol-concert.html
 Summary: How to plan a ticketed charity carol concert: booking a church for December, building the running order, briefing VIP readers, hiring a choir, and budgeting.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## Planning a charity carol concert
 
@@ -4975,16 +4099,7 @@ People will pay to sing carols in a church in December, which makes a ticketed c
 How do you plan a charity carol concert? Book a church for a weekday evening in mid-December, in spring if you can. Plan an hour: six congregational carols, five choir pieces, four short readings and a three-minute appeal two-thirds of the way through. Check that the church’s PRS for Music licence covers your event, give the council a Temporary Event Notice if you sell drinks in an unlicensed building, and price tickets to fill the pews.
 
 ### Finding and booking the church
-#### Capacity
-#### Acoustics
-#### What venue hire usually includes
-#### Booking the date early
 ### Building the running order
-#### Carols the whole room sings
-#### Choir-only pieces
-#### Where the readings sit
-#### Where the appeal lands
-#### Keeping it to a manageable length
 ### Readers, patrons and VIP supporters
 ### The music: choir, organ, or a cappella
 ### Service sheets, song sheets and licensing
@@ -4992,12 +4107,6 @@ How do you plan a charity carol concert? Book a church for a weekday evening in 
 ### Budgeting the concert
 ### How we work with charities
 ### Frequently asked questions
-#### How long should a charity carol concert be?
-#### Do you need a professional choir for a charity carol concert?
-#### How much does the music cost for a charity carol concert?
-#### Do you need a licence for a charity carol concert in a church?
-#### Can a charity claim Gift Aid on carol concert tickets?
-#### When should a charity book its December church venue and choir?
 ### Related
 
 
@@ -5005,7 +4114,7 @@ How do you plan a charity carol concert? Book a church for a weekday evening in 
 
 Source: https://londonchoralservice.com/music-guides/hotel-christmas-entertainment.html
 Summary: How live carol singers work in a hotel: lobby sets, festive afternoon tea, ballroom singalongs, what they cost, and why December starts to fill by mid-September.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## Christmas entertainment for hotels
 
@@ -5015,20 +4124,11 @@ What Christmas entertainment works in a hotel? Live carol singers, unamplified, 
 
 ### Why live carol singers work in a hotel
 ### Formats by space
-#### The lobby
-#### Festive afternoon tea
-#### Restaurant and ballroom
-#### Frontage, terraces, and light switch-ons
 ### Scheduling across the season
 ### What the singers wear
 ### Repertoire for a mixed guest list
 ### Practical booking notes
 ### Frequently asked questions
-#### What Christmas entertainment works in a hotel lobby?
-#### Do carol singers need a stage or sound system?
-#### How much does hotel Christmas entertainment cost?
-#### Can the same choir return across several December dates?
-#### Can you invoice the hotel against a purchase order?
 ### Related
 
 
@@ -5036,7 +4136,7 @@ What Christmas entertainment works in a hotel? Live carol singers, unamplified, 
 
 Source: https://londonchoralservice.com/music-guides/residents-christmas-carol-event.html
 Summary: Planning a residents' carol evening in a lobby or courtyard — the running order, song sheets, mulled wine, timings, and what a professional choir costs to hire.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## Hosting a residents’ carol event
 
@@ -5054,12 +4154,6 @@ How do you host a Christmas carol event for residents? Choose a space everyone c
 ### Budget, and how it looks per household
 ### Book early
 ### Frequently asked questions
-#### What happens at a residents’ carol evening?
-#### Can carol singers perform in an apartment lobby or courtyard?
-#### How much does a residents’ carol event cost?
-#### Do residents sing along, or just listen?
-#### Do we need a licence for a residents’ carol evening?
-#### Can you sing carols at a care home?
 ### Related
 
 
@@ -5067,7 +4161,7 @@ How do you host a Christmas carol event for residents? Choose a space everyone c
 
 Source: https://londonchoralservice.com/music-guides/when-to-book-christmas-entertainment.html
 Summary: When to book Christmas entertainment: how December fills for live performers, which dates go first, and why peak dates usually start to fill by mid-September.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## When to book Christmas entertainment
 
@@ -5078,21 +4172,11 @@ When should you book Christmas entertainment? For a December date, book as early
 ### How December works for live performers
 ### The date that matters: mid-September
 ### Month by month
-#### Summer to early September
-#### Late September to October
-#### November
-#### December itself
 ### Christmas Eve and Christmas Day
 ### What booking early gets you
 ### What we need to confirm a date
 ### Prices do not rise at Christmas
 ### Frequently asked questions
-#### When should you book Christmas party entertainment?
-#### Is it too late to book carol singers in November or December?
-#### Is it cheaper to book Christmas entertainment early?
-#### Which December dates get booked first?
-#### How do we hold a December date?
-#### Do you sing on Christmas Eve and Christmas Day?
 ### Related
 
 
@@ -5100,7 +4184,7 @@ When should you book Christmas entertainment? For a December date, book as early
 
 Source: https://londonchoralservice.com/music-guides/booking-carol-singers-agency-vs-direct.html
 Summary: Booking carol singers through an agency or direct with a choir: how each route works, what a listing cannot tell you, and the questions to ask either way.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## Booking carol singers: agency or direct?
 
@@ -5115,12 +4199,6 @@ Should you book carol singers through an agency or direct? Use an agency or mark
 ### Questions to ask, whichever route you take
 ### Price transparency
 ### Frequently asked questions
-#### Is it cheaper to book carol singers directly or through an agency?
-#### How do you know if carol singers are professional?
-#### Can I book The London Choral Service directly?
-#### What should you check before booking carol singers?
-#### Do you charge a booking fee?
-#### How far ahead should you book carol singers?
 ### Related
 
 
@@ -5128,7 +4206,7 @@ Should you book carol singers through an agency or direct? Use an agency or mark
 
 Source: https://londonchoralservice.com/music-guides/how-many-carol-singers.html
 Summary: How many carol singers to book for a lobby, a hall, or a church: what four, six, eight and twelve voices each cover, and why four is the smallest group.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## How many carol singers do you need?
 
@@ -5146,21 +4224,9 @@ How many carol singers do you need? Four for most rooms: an office reception, a 
 ### When two or three voices work
 ### What else changes the answer
 ### Sizing by venue type
-#### Office reception or atrium
-#### Hotel lobby or festive afternoon tea
-#### Church carol service
-#### Livery hall or gala dinner
-#### Apartment lobby or residents’ evening
-#### Christmas market or light switch-on
 ### Three sizing mistakes worth avoiding
 ### If you are not sure
 ### Frequently asked questions
-#### Is four carol singers enough for a carol service?
-#### Can you book just two carol singers?
-#### Do more carol singers mean a wider repertoire?
-#### How many carol singers fit in a hotel lobby?
-#### Can you book five or six carol singers?
-#### How many carol singers for an office Christmas party?
 ### Related
 
 
@@ -5168,7 +4234,7 @@ How many carol singers do you need? Four for most rooms: an office reception, a 
 
 Source: https://londonchoralservice.com/music-guides/best-carols-for-four-voices.html
 Summary: Carols that work with one voice per part: which arrangements suit a quartet, which need more singers, and how to build an hour for four voices.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## The best carols for four voices
 
@@ -5178,18 +4244,7 @@ What are the best carols for four voices (SATB)? Carols written or harmonised in
 
 ### What one voice per part changes
 ### Carols that suit four voices
-#### Ding Dong! Merrily on High
-#### The Sussex Carol
-#### Adam Lay Ybounden
-#### In the Bleak Midwinter (Holst)
-#### Bethlehem Down
-#### Coventry Carol
-#### Gaudete
 ### Four more that reward a quartet
-#### Es ist ein Ros entsprungen (Praetorius)
-#### Personent Hodie
-#### The Holly and the Ivy
-#### Tomorrow Shall Be My Dancing Day
 ### Carols that want more than four
 ### Carols the room can sing over four voices
 ### Christmas songs, as opposed to carols
@@ -5197,12 +4252,6 @@ What are the best carols for four voices (SATB)? Carols written or harmonised in
 ### Building an hour for four voices
 ### Arrangements and requests
 ### Frequently asked questions
-#### Can four singers cover a full carol service?
-#### Which Christmas carols work best with one voice per part?
-#### Do you need a soloist as well as four singers?
-#### What does SATB mean?
-#### Can four singers sing Darke’s In the Bleak Midwinter?
-#### How much does a quartet cost for a carol service?
 ### Related
 
 
@@ -5210,7 +4259,7 @@ What are the best carols for four voices (SATB)? Carols written or harmonised in
 
 Source: https://londonchoralservice.com/music-guides/carols-by-candlelight.html
 Summary: How to plan a carols by candlelight service: the running order, which carols suit low light, fire and safety rules, and booking a choir for December.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## Carols by candlelight
 
@@ -5229,12 +4278,6 @@ What is a carols by candlelight service? A carol service sung with the electric 
 ### Heating, and other things about a dark church in December
 ### What we provide
 ### Frequently asked questions
-#### When did carols by candlelight start?
-#### How long is a carols by candlelight service?
-#### How do the singers read music by candlelight?
-#### Which carols suit a candlelit service?
-#### Are real candles allowed in most venues?
-#### Do you sing carols by candlelight on Christmas Eve?
 ### Related
 
 
@@ -5242,7 +4285,7 @@ What is a carols by candlelight service? A carol service sung with the electric 
 
 Source: https://londonchoralservice.com/music-guides/outdoor-carol-singing.html
 Summary: Booking carol singers outdoors: how many voices a market or switch-on needs, what weather and cold do to singing, and what to provide on the day.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## Outdoor carol singing
 
@@ -5262,11 +4305,6 @@ Can carol singers perform outdoors? Yes, with cover from rain and enough voices.
 ### Power, staging and licences
 ### Dress
 ### Frequently asked questions
-#### How many carol singers do you need outdoors?
-#### Can carol singers perform in the rain?
-#### Do outdoor carol singers need amplification?
-#### How long can carol singers sing outdoors?
-#### Do carol singers need a licence to sing outdoors?
 ### Related
 
 
@@ -5274,7 +4312,7 @@ Can carol singers perform outdoors? Yes, with cover from rain and enough voices.
 
 Source: https://londonchoralservice.com/music-guides/a-cappella-christmas-songs.html
 Summary: The Christmas songs that work unaccompanied: close-harmony standards, what suits four voices, and how to mix songs with carols at a party or reception.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## A cappella Christmas songs for a choir
 
@@ -5284,12 +4322,6 @@ Which Christmas songs work a cappella? The close-harmony standards of the 1930s 
 
 ### Songs and carols are different jobs
 ### The close-harmony standards
-#### Have Yourself a Merry Little Christmas
-#### The Christmas Song (Chestnuts Roasting)
-#### White Christmas
-#### Winter Wonderland
-#### Let It Snow
-#### Santa Claus Is Comin’ to Town
 ### Songs that need more than four voices
 ### Mixing songs and carols in one set
 ### What four unaccompanied voices can and cannot do
@@ -5299,11 +4331,6 @@ Which Christmas songs work a cappella? The close-harmony standards of the 1930s 
 ### Sets, breaks and how long a group can sing
 ### Licensing
 ### Frequently asked questions
-#### Which Christmas songs work a cappella?
-#### Can four singers perform Christmas songs without a piano?
-#### Will you sing a specific Christmas song on request?
-#### How much does it cost to hire Christmas singers?
-#### Should a Christmas programme be songs or carols?
 ### Related
 
 
@@ -5311,7 +4338,7 @@ Which Christmas songs work a cappella? The close-harmony standards of the 1930s 
 
 Source: https://londonchoralservice.com/music-guides/church-carol-service-choir-hire.html
 Summary: For parishes and schools without a choir of their own: what hiring singers for a carol service involves, what it costs, and how it works with your organist.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## Hiring a choir for a church carol service
 
@@ -5329,13 +4356,6 @@ How do you hire a choir for a church carol service? Agree the date and running o
 ### What it costs, and what is included
 ### When to ask
 ### Frequently asked questions
-#### Can a church hire a choir for one carol service?
-#### Will a hired choir sing with our existing parish choir?
-#### Do we need to provide an organist?
-#### How much does it cost for a church to hire a carol service choir?
-#### Can you sing a carol service in a cathedral?
-#### How far ahead should a church book a carol service choir?
-#### When do the singers arrive at the church?
 ### Related
 
 
@@ -5343,7 +4363,7 @@ How do you hire a choir for a church carol service? Agree the date and running o
 
 Source: https://londonchoralservice.com/music-guides/christmas-drinks-reception-music.html
 Summary: How live music works at a Christmas drinks reception: when the singing should start, roaming or stationary sets, how loud is right, and what it costs.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## Music for a Christmas drinks reception
 
@@ -5362,12 +4382,6 @@ What music works at a Christmas drinks reception? Unaccompanied singers who star
 ### Timings and cost
 ### Dress
 ### Frequently asked questions
-#### When should singers start at a drinks reception?
-#### Should carol singers roam or stay in one place at a reception?
-#### Will live singing be too loud for guests to talk?
-#### How many singers for a Christmas drinks reception?
-#### How long do carol singers perform at a drinks reception?
-#### How much does music for a Christmas drinks reception cost?
 ### Related
 
 
@@ -5375,7 +4389,7 @@ What music works at a Christmas drinks reception? Unaccompanied singers who star
 
 Source: https://londonchoralservice.com/music-guides/christmas-gala-dinner-music.html
 Summary: Live music at a seated Christmas dinner: a sung grace, set pieces between courses, working around speeches and awards, and what each option costs.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## Music for a Christmas gala or awards dinner
 
@@ -5393,12 +4407,6 @@ What music works at a Christmas gala or awards dinner? A sung grace before the m
 ### Dress and register
 ### Booking
 ### Frequently asked questions
-#### What is a sung grace and how long does it take?
-#### How long should music between dinner courses last?
-#### Where should music go in an awards dinner running order?
-#### How many singers for a Christmas gala dinner?
-#### Can a soloist sing carols at a Christmas dinner?
-#### What does music for a Christmas gala dinner cost?
 ### Related
 
 
@@ -5406,7 +4414,7 @@ What music works at a Christmas gala or awards dinner? A sung grace before the m
 
 Source: https://londonchoralservice.com/music-guides/carol-singers-law-firms.html
 Summary: Christmas music for law firms, accountants and consultancies: client entertaining, partner drinks, office atriums, and booking around a December diary.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## Carol singers for law firms and professional services
 
@@ -5424,12 +4432,6 @@ What carol singers suit a law firm’s Christmas event? For client drinks, four 
 ### The December diary problem
 ### What we need from you
 ### Frequently asked questions
-#### Where do carol singers perform in a City office?
-#### Do we need permission from the building to have carol singers?
-#### Is live music worth it for a client Christmas party?
-#### Should a firm run one Christmas event for clients and staff together?
-#### Can you invoice the firm against a purchase order?
-#### Do carol singers in the office need a licence?
 ### Related
 
 
@@ -5437,7 +4439,7 @@ What carol singers suit a law firm’s Christmas event? For client drinks, four 
 
 Source: https://londonchoralservice.com/music-guides/christmas-carol-lyrics-meanings.html
 Summary: The words of well-known Christmas carols explained: God rest ye merry, welkin, yon, figgy pudding and Good King Wenceslas, with who wrote each carol and when.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## Christmas carol lyrics: the words and what they mean
 
@@ -5458,12 +4460,6 @@ What do the words of Christmas carols mean? Most carol texts use older senses of
 ### “We Wish You a Merry Christmas”
 ### Getting the words right on the night
 ### Frequently asked questions
-#### What does “God rest ye merry, gentlemen” mean?
-#### What does “veiled in flesh the Godhead see” mean?
-#### When are the twelve days of Christmas?
-#### Why is Good King Wenceslas sung at Christmas?
-#### What is figgy pudding?
-#### Where can I find the full words to Christmas carols?
 ### Related
 
 
@@ -5471,7 +4467,7 @@ What do the words of Christmas carols mean? Most carol texts use older senses of
 
 Source: https://londonchoralservice.com/music-guides/advent-carols-vs-christmas-carols.html
 Summary: The difference between Advent and Christmas carols, which belongs before 25 December, and how to programme a service that sits in the weeks between.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## Advent carols vs Christmas carols
 
@@ -5481,11 +4477,6 @@ What is the difference between Advent carols and Christmas carols? Advent carols
 
 ### Two seasons, not one
 ### The Advent repertoire
-#### O Come, O Come, Emmanuel
-#### Come, Thou Long Expected Jesus
-#### Lo, He Comes with Clouds Descending
-#### On Jordan’s Bank and Hills of the North, Rejoice
-#### Adam Lay Ybounden
 ### The Christmas repertoire
 ### Does it matter?
 ### Building a service that sits in Advent
@@ -5495,12 +4486,6 @@ What is the difference between Advent carols and Christmas carols? Advent carols
 ### Telling the audience which is which
 ### Common mistakes
 ### Frequently asked questions
-#### What is the difference between an Advent carol and a Christmas carol?
-#### Can you sing Christmas carols during Advent?
-#### When should We Three Kings be sung?
-#### What are the O Antiphons?
-#### What is the difference between a carol and a hymn?
-#### When is Advent?
 ### Related
 
 
@@ -5508,7 +4493,7 @@ What is the difference between Advent carols and Christmas carols? Advent carols
 
 Source: https://londonchoralservice.com/music-guides/best-funeral-singers-london.html
 Summary: How to choose funeral singers in London: the training to look for, how many voices suit a crematorium or parish church, what the fee covers, and what to ask.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## Choosing funeral singers in London: what to look for
 
@@ -5518,20 +4503,10 @@ How do you choose a funeral singer in London? Choose trained singers who read mu
 
 ### What to look for
 ### Ensemble size guidance
-#### Solo singer
-#### Small Choir (4)
-#### Sextet
-#### Full choir
 ### What funeral singers cost in London
 ### Six questions to ask any provider
 ### How LCS approaches this
 ### Frequently asked questions
-#### How much do funeral singers cost in London?
-#### How many singers do I need for a funeral?
-#### Can singers learn an unfamiliar hymn at short notice?
-#### Should I have hymns or a soloist or both?
-#### Do funeral singers travel outside London?
-#### What is the difference between hiring a choir and asking the church choir to sing?
 ### Related
 
 
@@ -5539,7 +4514,7 @@ How do you choose a funeral singer in London? Choose trained singers who read mu
 
 Source: https://londonchoralservice.com/music-guides/best-wedding-choirs-london.html
 Summary: How to choose a wedding choir in London: the training to look for, matching the choir to the church, what the fee should cover, and seven questions to ask.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## Comparing wedding choirs in London: what to look for
 
@@ -5553,12 +4528,6 @@ How do you choose a wedding choir in London? Check the singers’ training first
 ### Seven questions to ask any provider
 ### How LCS approaches this
 ### Frequently asked questions
-#### Should I hire a choir or just a soloist for our wedding?
-#### How early should I book a wedding choir for a London wedding?
-#### Can a choir sing pop songs as well as classical?
-#### Is amplification needed in a large church?
-#### Do London wedding choirs travel outside London?
-#### How much does a wedding choir cost in London?
 ### Related
 
 
@@ -5566,7 +4535,7 @@ How do you choose a wedding choir in London? Check the singers’ training first
 
 Source: https://londonchoralservice.com/music-guides/ubi-caritas-wedding.html
 Summary: Ubi Caritas is one of the few sacred texts whose subject is love. Why Ola Gjeilo's setting suits a wedding, where to place it, and how many singers it needs.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## Ubi Caritas at a wedding — Ola Gjeilo’s setting
 
@@ -5582,12 +4551,6 @@ What does Ubi Caritas mean? Ubi caritas et amor, Deus ibi est is Latin for “Wh
 ### If your ceremony is not in a church
 ### It is just as popular at funerals
 ### Frequently asked questions
-#### What does Ubi Caritas mean?
-#### How long is Ola Gjeilo’s Ubi Caritas?
-#### How many singers does Ubi Caritas need?
-#### Who wrote Ubi Caritas?
-#### Can we have Ubi Caritas at a Church of England wedding?
-#### Can we have Ubi Caritas at a civil ceremony?
 ### Talk to us about it
 ### Related
 
@@ -5596,7 +4559,7 @@ What does Ubi Caritas mean? Ubi caritas et amor, Deus ibi est is Latin for “Wh
 
 Source: https://londonchoralservice.com/music-guides/humanist-wedding-music.html
 Summary: A humanist wedding is wholly non-religious. The secular choral repertoire a choir can sing at one, where to place it, and the pieces that catch couples out.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## Choral music for a humanist wedding
 
@@ -5608,44 +4571,17 @@ What music can you have at a humanist wedding? Any music without religious words
 ### Nobody is going to vet your music
 ### The five minutes you have to build yourself
 ### English part-songs
-#### The Blue Bird (Stanford, 1910)
-#### There Is Sweet Music (Elgar, 1907)
-#### My Love Dwelt in a Northern Land (Elgar, 1889)
-#### The Turtle Dove (Vaughan Williams, 1919)
-#### My Spirit Sang All Day (Finzi, Op. 17 No. 3)
 ### Folk arrangements
 ### Modern secular choral music
-#### Dirait-on (Lauridsen, 1993)
-#### The Seal Lullaby (Whitacre, 2004)
-#### Sleep (Whitacre, 2000)
-#### Tundra (Ola Gjeilo)
-#### Sure on This Shining Night (Barber, or Lauridsen)
-#### This Marriage (Whitacre, 2004)
 ### Madrigals, for guests arriving
 ### The King’s Singers repertoire
-#### And So It Goes (Billy Joel, arr. Bob Chilcott)
-#### You Are the New Day (John David, arr. Peter Knight)
-#### Loch Lomond (arr. David Overton)
-#### Blackbird (Lennon and McCartney, arr. Daryl Runswick)
 ### Recent pop songs with published arrangements
-#### Underneath the Stars (Kate Rusby, arr. Jim Clements)
-#### The Luckiest (Ben Folds, arr. Jim Clements)
 ### If the song you want has no arrangement
 ### The pieces that catch couples out
 ### No organ, and often no roof
 ### Adding a pianist or organist
 ### A worked programme
 ### Frequently asked questions
-#### What music can you have at a humanist wedding?
-#### Can you have hymns at a humanist wedding?
-#### Do you need a choir for a humanist wedding?
-#### Is a humanist wedding legally binding in England and Wales?
-#### Can you have Ave Maria at a humanist wedding?
-#### Can you have the Wedding March at a humanist wedding?
-#### How many singers do you need for a pop song?
-#### Can you provide music if the venue has no piano or organ?
-#### Can you arrange a song that has no choral version?
-#### Can a choir sing outdoors at a humanist ceremony?
 ### Talk to us about your ceremony
 ### Related
 
@@ -5654,7 +4590,7 @@ What music can you have at a humanist wedding? Any music without religious words
 
 Source: https://londonchoralservice.com/accessibility.html
 Summary: How the London Choral Service website is built to be usable by everyone, what we know still falls short, and how to ask for another format or report a problem.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## Accessibility statement
 
@@ -5672,7 +4608,7 @@ The London Choral Service wants every visitor to be able to read this site, hear
 
 Source: https://londonchoralservice.com/terms.html
 Summary: Terms on which The London Choral Service accepts a booking: confirmation, deposit and balance, cancellation, postponement, substitution of musicians, liability.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## Terms of booking
 
@@ -5700,7 +4636,7 @@ These terms apply to every booking made with The London Choral Service, and are 
 
 Source: https://londonchoralservice.com/professionals.html
 Summary: How we work with funeral directors, wedding planners, event managers, hotels, property managers, livery companies and charities who book singers for clients.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## Choirs and singers for professional bookers
 
@@ -5717,7 +4653,7 @@ Talk to us about a booking
 
 Source: https://londonchoralservice.com/christmas-listen.html
 Summary: Watch our carol singers in Once in Royal David’s City, Ding Dong! Merrily on High and Winter Wonderland, then book four voices from £1,150 in London.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## Hear our carol singers Carols and Christmas songs from our winter sets
 
@@ -5729,8 +4665,6 @@ Check your date WhatsApp us
 ### Christmas songs
 ### Book the singers you have heard
 ### Carols and songs we have not filmed
-#### More carols
-#### More Christmas songs
 ### Further reading
 ### Related guides
 
@@ -5739,7 +4673,7 @@ Check your date WhatsApp us
 
 Source: https://londonchoralservice.com/music-guides/christmas.html
 Summary: Guides to Christmas carol services and events: the best carols, nine lessons, venues and carol singer costs, with recordings by our singers and prices.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## Christmas music guides
 
@@ -5752,7 +4686,7 @@ These guides cover carols and Christmas events, from the best carols for a churc
 
 Source: https://londonchoralservice.com/music-guides/funerals.html
 Summary: Guides to funeral and memorial music: hymns, choral pieces, songs and the order of service, with recordings by our singers and the prices to book a choir.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## Funeral music guides
 
@@ -5765,7 +4699,7 @@ These guides cover the music for a funeral or memorial service, from the funeral
 
 Source: https://londonchoralservice.com/music-guides/weddings.html
 Summary: Guides to wedding ceremony music: hymns, organ pieces, choral anthems and pop songs for choir, with recordings by our singers and the prices to book.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## Wedding music guides
 
@@ -5778,7 +4712,7 @@ These guides cover the music for a wedding ceremony, from hymns and organ pieces
 
 Source: https://londonchoralservice.com/music-guides/it-is-well-with-my-soul.html
 Summary: It Is Well With My Soul: Spafford's words after his daughters died at sea in 1873, Bliss's tune and its place at a funeral. Book singers from £250.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## It Is Well With My Soul: the words, the story and its place at a funeral
 
@@ -5791,11 +4725,6 @@ Why is It Is Well With My Soul sung at funerals? Its words hold grief and trust 
 ### Philip Bliss wrote the tune
 ### Where it sits in a funeral
 ### Frequently asked questions
-#### Who wrote It Is Well With My Soul?
-#### Is It Is Well With My Soul suitable for a funeral?
-#### Are the words of It Is Well With My Soul out of copyright?
-#### How many verses of It Is Well should we sing?
-#### How much does it cost to have It Is Well With My Soul sung at a funeral?
 ### Ask us about the hymns
 ### Related
 
@@ -5804,7 +4733,7 @@ Why is It Is Well With My Soul sung at funerals? Its words hold grief and trust 
 
 Source: https://londonchoralservice.com/music-guides/love-divine-all-loves-excelling.html
 Summary: Love Divine, All Loves Excelling: Wesley's words of 1747, the tunes Blaenwern and Hyfrydol, and its place at funerals and weddings. Singers from £250.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## Love Divine, All Loves Excelling: words, tunes and where to sing it
 
@@ -5818,11 +4747,6 @@ What tune is Love Divine sung to? In Britain, usually Blaenwern, a Welsh tune by
 ### Love Divine at a funeral or memorial
 ### What a choir adds
 ### Frequently asked questions
-#### Who wrote Love Divine, All Loves Excelling?
-#### Is Love Divine a funeral hymn or a wedding hymn?
-#### What is the difference between Blaenwern and Hyfrydol?
-#### Are the words of Love Divine out of copyright?
-#### How much does it cost to have Love Divine sung at a funeral?
 ### Ask us about the hymns
 ### Related
 
@@ -5831,7 +4755,7 @@ What tune is Love Divine sung to? In Britain, usually Blaenwern, a Welsh tune by
 
 Source: https://londonchoralservice.com/music-guides/memorial-service-songs.html
 Summary: Memorial service songs and hymns: uplifting choices, music for a mum or dad, and the pieces that suit a choir. Hear our singers, then book from £250.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## Memorial service songs and hymns
 
@@ -5846,11 +4770,6 @@ What are good songs and hymns for a memorial service? In church, families choose
 ### Choral pieces for a memorial
 ### Singing live or playing a recording
 ### Frequently asked questions
-#### What songs are played at a memorial service?
-#### What is a good uplifting hymn for a memorial service?
-#### How many hymns should a memorial service have?
-#### Can we have pop songs at a memorial service in church?
-#### How much does it cost to have singers at a memorial service?
 ### Ask us about the music
 ### Related
 
@@ -5859,7 +4778,7 @@ What are good songs and hymns for a memorial service? In church, families choose
 
 Source: https://londonchoralservice.com/music-guides/the-lords-my-shepherd.html
 Summary: The Lord's My Shepherd: the 1650 words of Psalm 23, the tune Crimond, and where the hymn sits in a funeral. Hear our singers, then book from £250.
-(Shortened to its answer and headings; the page has the full text.)
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
 
 ## The Lord’s My Shepherd: the words, the tune Crimond and its place at a funeral
 
@@ -5872,10 +4791,139 @@ What tune is The Lord’s My Shepherd sung to? Crimond, a Scottish tune first pu
 ### Crimond and the other tunes
 ### Where it sits in a funeral
 ### Frequently asked questions
-#### Who wrote The Lord’s My Shepherd?
-#### Is The Lord’s My Shepherd a good funeral hymn?
-#### Was The Lord’s My Shepherd sung at the Queen’s funeral?
-#### Is the Vicar of Dibley theme the same as the hymn?
-#### How much does it cost to have The Lord’s My Shepherd sung at a funeral?
 ### Ask us about the hymns
+### Related
+
+
+---
+
+Source: https://londonchoralservice.com/music-guides/hark-the-herald-angels-sing.html
+Summary: Hark! The Herald Angels Sing lyrics, from Charles Wesley’s 1739 text to Mendelssohn’s tune, and how a choir adds the descant to close a carol service.
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
+
+## Hark! The Herald Angels Sing: the words, the tune and the descant
+
+Hark! The Herald Angels Sing closes the service at King’s College, Cambridge, and at most British carol services. Its words are by Charles Wesley, rewritten by George Whitefield, and its tune is by Felix Mendelssohn, who said it would never suit sacred words. This guide prints the words as churches sing them, says where they came from, and explains how a choir handles the last verse.
+
+Who wrote Hark! The Herald Angels Sing? Charles Wesley wrote the words in 1739, beginning “Hark, how all the welkin rings”. George Whitefield changed the opening to “Hark! the herald angels sing” in 1753. The tune comes from a cantata Mendelssohn wrote in 1840, and William Hayman Cummings fitted it to Wesley’s words in 1855.
+
+### The words of Hark! The Herald Angels Sing
+### Wesley wrote it, and Whitefield changed the first line
+### Mendelssohn wrote the tune for a printing festival
+### How a choir sings it, and what the descant does
+### Where to put it in a carol service
+### Frequently asked questions
+### Book a choir for your carol service
+### Related
+
+
+---
+
+Source: https://londonchoralservice.com/music-guides/o-come-all-ye-faithful.html
+Summary: O Come, All Ye Faithful lyrics in Frederick Oakeley’s translation of Adeste Fideles, with the Latin carol’s history and how a choir sings it in a service.
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
+
+## O Come, All Ye Faithful: the words, the Latin and the tune
+
+O Come, All Ye Faithful is a Latin hymn, Adeste Fideles , that an English Catholic copied out in the 1740s and an Anglican priest translated in London a century later. Most British carol services sing it, and many end with it. This guide prints the English words, explains where the Latin came from, and covers the descant and the verse kept for Christmas morning.
+
+Who wrote O Come, All Ye Faithful? The Latin original, Adeste Fideles , survives in manuscripts copied by John Francis Wade, an English Catholic musician, from about 1743; he may have written it, though that is disputed. Frederick Oakeley translated it in 1841 for Margaret Chapel, Marylebone, and his version, revised in 1852, is the one British churches sing.
+
+### The words of O Come, All Ye Faithful
+### A Latin hymn in an English Catholic’s hand
+### Oakeley’s translation began “Ye faithful, approach ye”
+### The last verse is for Christmas Day
+### How a choir sings O Come, All Ye Faithful
+### Where to put it in a carol service
+### Frequently asked questions
+### Book a choir for your carol service
+### Related
+
+
+---
+
+Source: https://londonchoralservice.com/music-guides/o-little-town-of-bethlehem.html
+Summary: O Little Town of Bethlehem lyrics by Phillips Brooks, why British churches sing it to Forest Green, and our full choir’s recording, with carol service notes.
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
+
+## O Little Town of Bethlehem: the words, the two tunes and how a choir sings it
+
+O Little Town of Bethlehem is an American carol that the British sing to an English folk tune. Phillips Brooks wrote the words for his Sunday school in Philadelphia in 1868, three years after he rode out from Bethlehem on Christmas Eve; Ralph Vaughan Williams gave it a Surrey folk melody in 1906. This guide prints the words, describes both tunes and has our choir singing it.
+
+Who wrote O Little Town of Bethlehem? Phillips Brooks, rector of Holy Trinity Church, Philadelphia, wrote the words in 1868. In the United States it is sung to St Louis , by his organist Lewis Redner. In Britain it is sung to Forest Green , which Vaughan Williams arranged from an English folk song for The English Hymnal of 1906.
+
+### The words of O Little Town of Bethlehem
+### Brooks wrote it after a ride to the shepherds’ fields
+### Two tunes, one either side of the Atlantic
+### How a choir sings it
+### Where to put it in a carol service
+### Frequently asked questions
+### Book a choir for your carol service
+### Related
+
+
+---
+
+Source: https://londonchoralservice.com/music-guides/once-in-royal-davids-city.html
+Summary: Once in Royal David’s City lyrics, all six of Cecil Frances Alexander’s verses, the King’s College solo, and our full choir’s recording of the carol.
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
+
+## Once in Royal David’s City: the words, the solo and how a choir sings it
+
+Once in Royal David’s City opens the Festival of Nine Lessons and Carols at King’s College, Cambridge, every Christmas Eve, with a single treble singing the first verse. Cecil Frances Alexander wrote it for children in 1848. This guide prints all six of her verses, explains why some churches cut two of them, and shows how a choir sings the carol, with our own recording.
+
+Who wrote Once in Royal David’s City? Cecil Frances Alexander, an Irish poet who also wrote All Things Bright and Beautiful, published the words in 1848 in Hymns for Little Children . Henry John Gauntlett, a London organist, wrote the tune, Irby , the following year.
+
+### The words of Once in Royal David’s City
+### Alexander wrote it to explain the Creed to children
+### Gauntlett’s tune and the King’s College solo
+### How a choir sings it
+### Where to put it in a carol service
+### Frequently asked questions
+### Book a choir for your carol service
+### Related
+
+
+---
+
+Source: https://londonchoralservice.com/music-guides/silent-night.html
+Summary: Silent Night lyrics in John Freeman Young’s 1859 translation, with Mohr and Gruber’s 1818 story and how a choir sings it at a candlelit carol service.
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
+
+## Silent Night: the words, the story and how a choir sings it
+
+Silent Night is the quietest carol most congregations know by heart. Joseph Mohr wrote the words in Austria in 1816, Franz Xaver Gruber set them two years later, and the English version sung in British churches is a New York priest’s translation of 1859. This guide prints those words, tells the story behind them, and explains how a choir sings the carol at a carol service.
+
+Who wrote Silent Night? Joseph Mohr, a young assistant priest, wrote the German poem Stille Nacht in 1816. Franz Xaver Gruber, a schoolteacher and organist, wrote the tune, and the two of them first sang it at Midnight Mass in St Nicholas, Oberndorf, near Salzburg, on Christmas Eve 1818. John Freeman Young made the English translation in 1859.
+
+### The words of Silent Night
+### Two men in an Alpine village wrote it
+### The English words are a translation of half the poem
+### The tune was faster in 1818
+### How a choir sings Silent Night
+### Where to put it in a carol service
+### Frequently asked questions
+### Book a choir for your carol service
+### Related
+
+
+---
+
+Source: https://londonchoralservice.com/music-guides/the-holly-and-the-ivy.html
+Summary: The Holly and the Ivy lyrics as Cecil Sharp took them down at Chipping Campden, what the holly and ivy mean, and how a choir sings this folk carol at Christmas.
+(Shortened to its answer and section headings; the page has the full text and its FAQs.)
+
+## The Holly and the Ivy: the words, the meaning and how a choir sings it
+
+The Holly and the Ivy is an English folk carol. Nobody knows who wrote it; printers in Birmingham sold it on broadsheets in the early 1800s, and the tune everyone sings was taken down from a woman in a Cotswold town in the 1900s. This guide prints the words, explains what the holly and the ivy stand for, and covers how a choir sings it.
+
+Where does The Holly and the Ivy come from? The words are traditional and survive in Birmingham broadside printings from the early nineteenth century. The folk song collector Cecil Sharp took down the tune and words from Mary Clayton at Chipping Campden, Gloucestershire, and published them in English Folk-Carols in 1911. That is the version sung today.
+
+### The words of The Holly and the Ivy
+### A folk carol from the broadsheets
+### What the holly and the ivy mean
+### How a choir sings it
+### Where to put it in a carol service
+### Frequently asked questions
+### Book carol singers or a choir
 ### Related
