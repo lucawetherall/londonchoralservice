@@ -74,7 +74,7 @@ https://londonchoralservice.com/music-guides/o-little-town-of-bethlehem.html
 https://londonchoralservice.com/music-guides/the-holly-and-the-ivy.html
 ```
 
-**29 Oct, these seven.** PR #379 changed their visible text (prices, the funerals and weddings figures, and the facts page). The ten other pages #379 changed (the six carol guides, the two 27 Oct guides, wedding ceremony music, and carol services) are already above and changed again, so request them on their listed days, not twice.
+**29 Oct, these seven.** PR #379 changed their visible text (contact order, the Birmingham cathedral line, a competitor-price date, and Oxford commas in guide titles). The ten other pages #379 changed (the six carol guides, the two 27 Oct guides, wedding ceremony music, and carol services) are already above and changed again, so request them on their listed days, not twice.
 
 ```
 https://londonchoralservice.com/funerals.html
