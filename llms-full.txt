@@ -1544,7 +1544,7 @@ The fee is inclusive of travel within Greater London. Engagements outside Greate
 
 ### 11. Liability
 
-The Provider holds appropriate public liability insurance. The Provider’s total liability under this agreement is limited to the total fee. Nothing in this clause limits liability for death or personal injury caused by negligence, or for any other liability that cannot lawfully be limited.
+The Provider’s total liability under this agreement is limited to the total fee. Nothing in this clause limits liability for death or personal injury caused by negligence, or for any other liability that cannot lawfully be limited.
 
 
 ### 12. Data protection
@@ -2444,7 +2444,7 @@ Alma Consort travels from London to sing at wine estate, cathedral and safari-lo
 ---
 
 Source: https://londonchoralservice.com/planners-and-venues.html
-Summary: How Alma Consort works with wedding planners, venues and private offices: lead times, insurance and confidentiality, standing arrangements, and invoicing.
+Summary: How Alma Consort works with wedding planners, venues and private offices: lead times, paperwork and confidentiality, standing arrangements, and invoicing.
 (Shortened to its answer and headings; the page has the full text.)
 Alma Consort · London
 
@@ -2460,7 +2460,7 @@ How we work with wedding and event planners, venue and hotel event teams, and pr
 ### Engagements abroad
 ### Trade questions
 #### What do you need from us, and by when?
-#### Do you carry insurance and provide method statements?
+#### Do you provide risk assessments and method statements?
 #### Will the consort sign a confidentiality agreement?
 #### What does the consort need from the venue?
 #### Who do you invoice — the couple, the agency, or the venue?
@@ -2488,7 +2488,7 @@ Send your December dates
 #### Can the choir perform several short sets across one evening?
 #### Do carol singers need a stage or a PA system in a hotel lobby?
 #### How does pricing work for one date compared with several dates in December?
-#### What insurance and compliance documents can you send our venue team?
+#### What compliance documents can you send our venue team?
 #### When should hotels book carol singers for the party season?
 ### Related
 ### Send us your December dates
@@ -2600,7 +2600,7 @@ Tell us about your event
 #### Can you provide just a pianist?
 #### Can you arrange custom repertoire for our event?
 #### How far ahead should we book?
-#### Do you have public liability insurance and PAT certificates?
+#### Can you provide PAT certificates?
 ### Tell us about your event
 
 
@@ -4967,7 +4967,6 @@ Summary: Choirs and singers for corporate event managers: awards dinners, produc
 ### Frequently asked questions
 #### Can you provide a quote on a PO basis?
 #### How far in advance do we need to book?
-#### Do you carry public liability insurance?
 #### Can you perform without amplification in large venues?
 #### What ensemble size is right for a 200-person awards dinner?
 ### Related
@@ -5001,7 +5000,6 @@ How do you choose the best carol singers? Check that the singers are trained, ha
 #### Can carol singers perform alongside a string quartet or DJ?
 #### Do you sing only traditional carols, or modern festive songs too?
 #### What is the booking lead time for December events?
-#### Do carol singers need public liability insurance?
 #### How much do professional carol singers cost?
 ### Related
 
@@ -5135,7 +5133,6 @@ What Christmas entertainment works in a hotel? Live carol singers, unamplified, 
 #### How much does hotel Christmas entertainment cost?
 #### Can the same choir return across several December dates?
 #### Can you invoice the hotel against a purchase order?
-#### Do you hold public liability insurance?
 ### Related
 
 
@@ -5652,7 +5649,7 @@ Summary: How to choose a wedding choir in London: the training to look for, matc
 
 London gives couples more choice of wedding choir than most cities: graduates of the Royal Academy of Music, the Royal College of Music, the Guildhall School and Trinity Laban, parish choirs, and agency listings on Encore, Alive Network and PopTop, where very different singers appear side by side at similar prices. This guide covers the training to look for, how to match the choir to the church, what the fee should include, and seven questions to ask any provider before you book.
 
-How do you choose a wedding choir in London? Check the singers’ training first, then match the number of voices to the building: four suit most parish churches, six to eight a large one. Ask to hear a recording from a real service, get what the fee includes in writing, and check the provider holds public liability insurance, because many churches and venues ask for the certificate before the day.
+How do you choose a wedding choir in London? Check the singers’ training first, then match the number of voices to the building: four suit most parish churches, six to eight a large one. Ask to hear a recording from a real service and get what the fee includes in writing.
 
 ### What to look for in a wedding choir
 ### Ensemble size guidance
@@ -5665,7 +5662,6 @@ How do you choose a wedding choir in London? Check the singers’ training first
 #### Can a choir sing pop songs as well as classical?
 #### Is amplification needed in a large church?
 #### Do London wedding choirs travel outside London?
-#### Does a wedding choir need public liability insurance?
 #### How much does a wedding choir cost in London?
 ### Related
 

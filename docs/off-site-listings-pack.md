@@ -96,7 +96,7 @@ December dates cost the same, except Christmas Eve and Christmas Day (around 25%
 
 ## Bark / Add to Event (short bio; skipped for now, kept for reference)
 
-> The London Choral Service provides professional choirs for weddings, funerals and Christmas events in London and the home counties. Our singers trained at the Royal Academy and Royal College of Music, and we carry public liability insurance. Choirs start at £1,150 for four voices, and you get a written quote before you book.
+> The London Choral Service provides professional choirs for weddings, funerals and Christmas events in London and the home counties. Our singers trained at the Royal Academy and Royal College of Music. Choirs start at £1,150 for four voices, and you get a written quote before you book.
 
 ## Hitched profile
 
