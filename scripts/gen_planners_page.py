@@ -12,10 +12,8 @@ FAQS = [
     ('What do you need from us, and by when?',
      'The date, the venue and the running order as soon as they exist, even in draft. Everything else can '
      'follow. Six to twelve months is the usual lead time for Europe; the United States needs far longer because paid performance there runs through a visa petition. If a date is closer than that, ask anyway. A free Saturday is a free Saturday.'),
-    ('Do you provide risk assessments and method statements?',
-     'Yes, on request. '
-     'Venues that need a supplier pack before they will confirm can have one; tell us what your compliance '
-     'team asks for and we will send it in their format rather than ours.'),
+    ('Can you provide venue paperwork?',
+     'Yes. We can provide PAT certificates, risk assessments and method statements on request.'),
     ('Will the consort sign a confidentiality agreement?',
      'Yes. We do not name clients, publish photographs, or release recordings from a private engagement without permission, and every singer on the engagement signs the same agreement, including a deputy brought in at short notice.'),
     ('What does the consort need from the venue?',
@@ -28,7 +26,7 @@ FAQS = [
      'confirmed. Alma Consort Ltd is not registered for VAT, so no VAT is added to our invoices.'),
     ('Can we set up a standing arrangement?',
      'Yes, and it is worth doing if you expect to bring us more than one engagement. A standing arrangement '
-     'means we hold your compliance paperwork on file, quote from a known baseline, and give your dates '
+     'means we quote from a known baseline and give your dates '
      'first refusal against general enquiries. Tell us about your events and we will set it up.'),
 ]
 
@@ -39,7 +37,7 @@ def jsonld():
          'name': 'Choral engagements for wedding planners, venues and estates',
          'serviceType': 'Choral engagements booked through planners, venues and private offices',
          'description': ('How Alma Consort works with wedding and event planners, venue and hotel event '
-                         'teams, and private offices: lead times, risk assessments and method statements, '
+                         'teams, and private offices: lead times, '
                          'confidentiality, standing arrangements, and invoicing in pounds sterling, '
                          'euros or US dollars.'),
          'url': f'{B.SITE}/planners-and-venues.html',
@@ -126,8 +124,7 @@ BODY = f'''
               <span class="n" aria-hidden="true">2</span>
               <h3>Quote and paperwork</h3>
               <p>A single quote covering fees, travel and accommodation, with the booking agreement
-                alongside it. Risk assessments and method statements come with it
-                rather than after three requests.</p>
+                alongside it.</p>
             </li>
             <li>
               <span class="n" aria-hidden="true">3</span>
@@ -186,9 +183,7 @@ BODY = f'''
             (PDF, A4) with the moments a choir sings, the pieces couples choose, our prices and how to
             book. It has a space to write your name, and you can print as many copies as you like.</p>
           <p>Couples deal with one contact. They ring or message Luca, who replies within one working day,
-            and you or your coordinator receive the running order a week before the wedding. Our risk
-            assessment goes on your file before the first booking, in whatever format
-            your events team uses.</p>
+            and you or your coordinator receive the running order a week before the wedding.</p>
           <p>Once you have agreed to it in writing, we list your venue or firm on this page with a link to
             your website.</p>
           <p>Couples pay the same published prices whichever way they reach us. To set it up, use the form
