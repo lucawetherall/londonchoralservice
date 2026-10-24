@@ -56,7 +56,9 @@ PUBLIC = [
     'favicon.ico',
     'robots.txt',
     'sitemap.xml',
-    'sitemap-video.xml',       # films and hero stills, scripts/generate_video_sitemap.py
+    'sitemap-video.xml',       # films, scripts/generate_video_sitemap.py
+    'sitemap-images.xml',      # film and hero stills, same script
+    'sitemap_index.xml',       # lists the three sitemaps; robots.txt points here
     'site.webmanifest',
     'llms.txt',
     'llms-full.txt',

@@ -4,8 +4,7 @@ Disallow: /*?utm_
 Disallow: /*?gclid=
 Disallow: /*?fbclid=
 Disallow: /*?msclkid=
-Sitemap: https://londonchoralservice.com/sitemap.xml
-Sitemap: https://londonchoralservice.com/sitemap-video.xml
+Sitemap: https://londonchoralservice.com/sitemap_index.xml
 
 # AI and LLM crawlers
 User-agent: GPTBot
