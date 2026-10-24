@@ -58,6 +58,8 @@
     return m ? m[1] : 'general';
   }
 
+  var guideSource = '';
+
   function trackError(type) {
     try {
       if (typeof window.gtag === 'function') {
@@ -81,6 +83,13 @@
         if (match) select.value = occasionParam;
       }
     }
+    // ?msg= starts the message (plain text, only into an empty box); ?from=guide-<slug>
+    // records the music guide the visitor came from as the lead source.
+    var msgParam = params.get('msg');
+    var msgBox = form.querySelector('#message');
+    if (msgParam && msgBox && !msgBox.value) msgBox.value = msgParam.slice(0, 300);
+    var fromParam = params.get('from');
+    if (fromParam && /^guide-[a-z0-9-]{1,80}$/.test(fromParam)) guideSource = fromParam;
   } catch (_) { /* URLSearchParams unsupported — non-fatal */ }
 
   // Show or clear a field's own message (the <p class="form-error"> named by
@@ -173,6 +182,7 @@
     fd.forEach(function (value, key) {
       data[key] = value;
     });
+    if (guideSource) data.lead_from = guideSource;
     // Ad click ID and UTM tags ride along in the enquiry email, so a booking
     // can later be reported back to Google Ads against the click that won it.
     // Only for visitors who allowed cookies, as the privacy policy says.
@@ -222,7 +232,7 @@
         if (payload.ok && payload.result.success) {
           var go = function () { window.location.href = redirectUrl; };
           if (typeof window.lcsLead === 'function') {
-            try { window.lcsLead({ source: window.location.pathname, occasion: leadOccasion(), email: data.email, phone: data.phone }, go); }
+            try { window.lcsLead({ source: guideSource || window.location.pathname, occasion: leadOccasion(), email: data.email, phone: data.phone }, go); }
             catch (_) { go(); }
           } else {
             go();

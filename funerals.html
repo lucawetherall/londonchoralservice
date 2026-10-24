@@ -409,7 +409,6 @@
     h1, h2, h3, h4, h5, h6{font-family:var(--font-heading);line-height:var(--leading-tight);text-wrap:balance;}
     h1{font-size:var(--text-display);font-weight:300;letter-spacing:-0.02em;margin-bottom:var(--space-lg);}
     h2{font-size:var(--text-2xl);font-weight:400;margin-bottom:var(--space-lg);}
-    h3{font-size:var(--text-xl);font-weight:400;margin-bottom:var(--space-md);}
     p{margin-bottom:var(--space-lg);}
     p:last-child{margin-bottom:0;}
     a{color:var(--color-accent);text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:0.15em;transition:color var(--transition-fast);}
@@ -419,6 +418,7 @@
     ::selection{background-color:#8B3A3A30;color:var(--color-text);}
     ul, ol{padding-left:var(--space-xl);margin-bottom:var(--space-lg);}
     li{margin-bottom:var(--space-sm);}
+    blockquote{margin:0;padding:0;border:none;}
     img{max-width:100%;height:auto;display:block;}
     .text-sm{font-size:var(--text-sm);}
     .text-mid{color:var(--color-text-mid);}
@@ -459,6 +459,11 @@
     .site-nav{position:relative;align-items:center;}}
     @media (max-width: 420px){.site-name{font-size:clamp(1.125rem,6vw,var(--text-lg));}
     .site-nav{gap:var(--space-md);}}
+    .pull-quote{margin-block:var(--space-3xl);padding:0;position:relative;}
+    .pull-quote::before{content:'\201C';font-family:var(--font-heading);font-size:6rem;font-weight:300;color:var(--color-accent);line-height:1;position:absolute;top:-0.35em;left:-0.05em;opacity:0.25;pointer-events:none;}
+    .pull-quote p{font-family:var(--font-heading);font-size:var(--text-xl);font-weight:300;font-style:italic;line-height:var(--leading-tight);color:var(--color-text);margin-bottom:0;}
+    .pull-quote figcaption{margin-top:var(--space-md);font-family:var(--font-body);font-size:var(--text-sm);font-style:normal;color:var(--color-text-mid);letter-spacing:0.02em;}
+    .pull-quote + .pull-quote{border-top:1px solid var(--color-rule);padding-top:var(--space-3xl);}
     .guide-meta{font-family:var(--font-body);font-size:var(--text-sm);color:var(--color-text-mid);letter-spacing:0.02em;}
     .btn-link{display:inline-block;font-family:var(--font-heading);font-weight:500;font-size:var(--text-base);letter-spacing:0.02em;padding:var(--space-md) var(--space-2xl);background-color:var(--color-accent);color:var(--color-bg);text-decoration:none;border:none;cursor:pointer;transition:background-color var(--transition-fast);}
     .btn-link:hover{background-color:var(--color-accent-hover);color:var(--color-bg);}
@@ -525,16 +530,6 @@
     .dropdown-menu a{padding-left:var(--space-2xl);text-transform:none;font-size:var(--text-base);border-bottom:1px solid var(--color-rule);}
     .dropdown-menu li:last-child a{border-bottom:none;}
     .dropdown-separator{display:none;}}
-    .included-list{list-style:none;padding:0;margin:0;}
-    .included-list li{display:flex;gap:var(--space-sm);align-items:flex-start;padding-block:var(--space-sm);border-block-end:1px solid var(--color-rule);}
-    .included-list li:last-child{border-block-end:0;}
-    .included-list .tick{flex:none;width:1.4rem;height:1.4rem;border-radius:50%;background:var(--color-bg-alt);color:var(--color-accent);display:grid;place-items:center;font-size:0.8rem;margin-block-start:0.15rem;}
-    .included-price{margin-block-start:var(--space-lg);color:var(--color-text-mid);}
-    .included-price strong{font-family:var(--font-heading);font-weight:600;font-size:1.2rem;color:var(--color-accent);}
-    .steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(12rem,1fr));gap:var(--space-lg);margin-block:var(--space-lg);}
-    .step-num{display:block;font-family:var(--font-heading);font-weight:600;font-size:2rem;font-variant-numeric:lining-nums;line-height:1;color:var(--color-accent);}
-    .step h3{font-size:var(--text-md);font-weight:600;margin-block:var(--space-xs);}
-    .step p{margin:0;color:var(--color-text-mid);}
     .consent{position:fixed;left:0;right:0;bottom:0;z-index:1000;max-height:100vh;max-height:100dvh;overflow-y:auto;background-color:var(--color-bg-alt,var(--parchmentLight,#EDE8E1));color:var(--color-text,var(--choirStall,#2C2420));border-top:1px solid var(--color-rule,var(--limestone,#D6CEC6));box-shadow:0 -6px 24px rgba(44,36,32,0.1);font-family:var(--font-body,'Source Serif 4',Georgia,serif);font-size:1rem;line-height:1.45;animation:consent-in 0.25s ease-out;}
     @keyframes consent-in{from { transform:translateY(100%);} to { transform:none;}}
     @media (prefers-reduced-motion: reduce){.consent{animation:none;}}
@@ -564,6 +559,8 @@
     a{color:#000;text-decoration:underline;}
     a[href^="http"]::after{content:" (" attr(href) ")";font-size:0.85em;color:#555;}
     a[href^="mailto"]::after, a[href^="tel"]::after{content:none;}
+    .pull-quote{border-left:3px solid #000;padding-left:1em;margin-left:0;}
+    .pull-quote::before{display:none;}
     h1, h2, h3{break-after:avoid;}
     img{max-width:100% !important;}}
   </style>
@@ -783,6 +780,7 @@
             <li>A choir of four from <strong>&pound;1,150</strong>, London travel included and no VAT added</li>
             <li>Four to twelve voices to lead the hymns and sing the choral pieces</li>
             <li>We can often arrange singers within 48 hours</li>
+            <li>If a musician falls ill, we cover the part from within the team</li>
           </ul>
           <p class="hero-ctas">
             <a href="#enquiry" class="btn-link">Talk to us about funeral music</a>
@@ -801,62 +799,27 @@
         <div class="hero-text">
           <p class="guide-meta">Last updated: October 2026</p>
           <p class="lede">Hire a professional choir for a funeral in London or anywhere in the UK. Our singers lead the congregational hymns so the room can sing, and perform choral works in churches, crematoriums, chapels, and outdoor spaces.</p>
-          <p class="text-sm text-mid">Musicians from the Royal Academy, Royal College, and Britain&rsquo;s leading conservatoires. Their credits include the coronation of King Charles&nbsp;III and the BBC Proms.</p>
           <p class="text-sm text-mid">Most families contact us one or two weeks before the service, and short notice is fine.</p>
         </div>
       </div>
     </section>
 
-        <section class="section">
-          <div class="prose">
-            <h2>Included with every booking</h2>
-            <p class="lede">One flat price, and a team chosen for your occasion.</p>
-            <ul class="included-list">
-              <li><span class="tick" aria-hidden="true">&#10003;</span><span>A one-to-one music consultation with our Artistic Director, Luca Wetherall (Tutor in Music, University of Oxford), who plans your repertoire with you.</span></li>
-              <li><span class="tick" aria-hidden="true">&#10003;</span><span>A handpicked ensemble, matched to the service. We pick each singer for the family and the music.</span></li>
-              <li><span class="tick" aria-hidden="true">&#10003;</span><span>All rehearsals, preparation, and sheet music.</span></li>
-              <li><span class="tick" aria-hidden="true">&#10003;</span><span>We coordinate with your venue and funeral director.</span></li>
-              <li><span class="tick" aria-hidden="true">&#10003;</span><span>A written quote, confirmed before you commit. No hidden fees.</span></li>
-            </ul>
-            <p class="included-price"><strong>From &pound;1,150 for a small choir of four</strong>, all in. Travel within Greater London included.</p>
-          </div>
-        </section>
-
-    <!-- Section 2: How It Works -->
+    <!-- Short notice -->
     <section class="section">
       <div class="prose">
-        <h2>How it works</h2>
-        <div class="steps">
-          <div class="step">
-            <span class="step-num">1</span>
-            <h3>Tell us about the service</h3>
-            <p>Call, email, or use the form below. Luca calls you back within one working day, usually the same day, to discuss the service.</p>
-          </div>
-          <div class="step">
-            <span class="step-num">2</span>
-            <h3>We plan the music</h3>
-            <p>Luca suggests repertoire, sends a clear quote, and coordinates with your funeral director.</p>
-          </div>
-          <div class="step">
-            <span class="step-num">3</span>
-            <h3>We perform</h3>
-            <p>Singers arrive early, rehearse in the venue, and lead the hymns and choral pieces.</p>
-          </div>
-        </div>
+        <h2>Short notice</h2>
+        <p>We can often arrange singers within 48 hours, and we have arranged them at a few hours&rsquo; notice. Message us the date and venue on WhatsApp or by email, and Luca replies within one working day, usually the same day.</p>
+        <p class="hero-ctas">
+          <a href="https://wa.me/447356042468" target="_blank" rel="noopener" class="btn-link" data-whatsapp>Message us on WhatsApp</a>
+          <a href="mailto:office@londonchoralservice.com" class="btn-link btn-link--secondary">Email us</a>
+        </p>
       </div>
     </section>
 
-    <!-- Section 3: What We Provide -->
+    <!-- Proof -->
     <section class="section">
       <div class="prose">
-        <h2>What we provide</h2>
-        <p>Every funeral booking includes a personal consultation with Luca Wetherall, our Artistic Director. He will talk through your music choices, suggest repertoire that suits the tone you want, and handle coordination with your funeral director and officiant. You receive a confirmed running order at least 48 hours before the service.</p>
-        <p>On the day, our singers rehearse in the venue, check acoustics, and confirm positions with the officiant. During the service, they lead all of the congregational hymns and perform up to three choral or solo pieces. After the service, they can provide reflective music as mourners leave.</p>
-        <p>We perform in churches, crematoriums, chapels, synagogues, and outdoor spaces across the UK. Most families complete the whole process in two or three short conversations. If time is short, do not wait: most families contact us one or two weeks before the service, but short notice is fine, and we have arranged singers at a few hours&rsquo; notice before.</p>
-        <p>We sing at churches, crematoriums, and chapels across the UK &mdash; most often in <a href="areas/london.html">London</a>, <a href="areas/oxford.html">Oxford</a>, and <a href="areas/manchester.html">Manchester</a>, but we travel further when families need us.</p>
-        <p>Many of our bookings are for non-religious or humanist services &mdash; celebrations of life held at crematoriums, woodland venues, or community halls. We adapt the music accordingly: secular songs and instrumental pieces work as well as hymns, and a soloist or small ensemble suits the more intimate format. See our guide to <a href="music-guides/non-religious-funeral-music.html">non-religious funeral music</a> and <a href="music-guides/celebration-of-life-music.html">celebration of life music</a> for fuller suggestions.</p>
-        <p>If a musician falls ill we cover the part from within the team. We cancel only in the most exceptional circumstances, and refund everything you have paid if we do.</p>
-
+        <h2>What families say</h2>
         <figure class="pull-quote">
           <blockquote><p>&ldquo;I still can&rsquo;t talk about it without welling up. The moment they started singing, the whole room just fell silent. Dad would have been so chuffed.&rdquo;</p></blockquote>
           <figcaption>&mdash;&ensp;Margaret, Dulwich</figcaption>
@@ -866,27 +829,12 @@
           <blockquote><p>&ldquo;Luca rang us back within an hour and talked us through everything with such kindness. The singers were wonderful &mdash; they gave Mum the send-off she deserved.&rdquo;</p></blockquote>
           <figcaption>&mdash;&ensp;Sarah, Bromley</figcaption>
         </figure>
-      </div>
-    </section>
-
-    <!-- Section 4: The Ensemble -->
-    <section class="section">
-      <div class="prose">
-        <h2>How we build the ensemble</h2>
-        <p>Singers who rehearse together tune to one another and breathe in the same places. Four singers meeting for the first time on the morning of the funeral are still working that out during the first hymn. We keep the team small, so the same voices sing together from one booking to the next, and Luca Wetherall auditions every singer before they work for a family.</p>
-      </div>
-    </section>
-
-    <!-- Section 5: On the Day -->
-    <section class="section">
-      <div class="prose">
-        <h2>Our singers on the day</h2>
-        <p>Our singers are in the building 45 to 60 minutes before the service and check in with the funeral director on arrival. They wear plain dark dress unless you ask for something else, stand at the back rather than the front, and post nothing about the service.</p>
+        <p>Musicians from the Royal Academy, Royal College, and Britain&rsquo;s leading conservatoires. Their credits include the coronation of King Charles&nbsp;III and the BBC Proms.</p>
       </div>
     </section>
 
     <!-- Section 6: Listen -->
-    <section class="section">
+    <section class="section" id="listen">
       <div class="prose">
         <h2>Hear our musicians</h2>
         <p>A selection of the pieces families request most often, performed by our singers and instrumentalists.</p>
@@ -960,25 +908,178 @@
       </div>
     </section>
 
+        <section class="section" id="prices">
+          <div class="prose">
+            <h2>Included with every booking</h2>
+            <p class="lede">One flat price, and a team chosen for your occasion.</p>
+            <ul class="included-list">
+              <li><span class="tick" aria-hidden="true">&#10003;</span><span>A one-to-one music consultation with our Artistic Director, Luca Wetherall (Tutor in Music, University of Oxford), who plans your repertoire with you.</span></li>
+              <li><span class="tick" aria-hidden="true">&#10003;</span><span>A handpicked ensemble, matched to the service. We pick each singer for the family and the music.</span></li>
+              <li><span class="tick" aria-hidden="true">&#10003;</span><span>All rehearsals, preparation, and sheet music.</span></li>
+              <li><span class="tick" aria-hidden="true">&#10003;</span><span>We coordinate with your venue and funeral director.</span></li>
+              <li><span class="tick" aria-hidden="true">&#10003;</span><span>A written quote, confirmed before you commit. No hidden fees.</span></li>
+            </ul>
+            <p class="included-price"><strong>From &pound;1,150 for a small choir of four</strong>, all in. Travel within Greater London included.</p>
+            <table class="pricing-table" role="table">
+              <thead class="sr-only">
+                <tr>
+                  <th scope="col">Ensemble</th>
+                  <th scope="col">Details</th>
+                  <th scope="col">Price</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="pricing-name">
+                    <strong>Soloist</strong>
+                    <span class="pricing-sub">1 singer</span>
+                  </td>
+                  <td class="pricing-detail">
+                    A short crematorium slot or a small chapel. One voice leads the hymns and sings up to three pieces.
+                  </td>
+                  <td class="pricing-price">
+                    &pound;250
+                  </td>
+                </tr>
+                <tr>
+                  <td class="pricing-name">
+                    <strong>Small choir</strong>
+                    <span class="pricing-sub">4 singers</span>
+                  </td>
+                  <td class="pricing-detail">
+                    A crematorium chapel or a church seating 50 to 200. Four-part harmony in the hymns, and up to three pieces.
+                  </td>
+                  <td class="pricing-price">
+                    &pound;1,150
+                  </td>
+                </tr>
+                <tr>
+                  <td class="pricing-name">
+                    <strong>Quintet</strong>
+                    <span class="pricing-sub">5 singers</span>
+                  </td>
+                  <td class="pricing-detail">
+                    The same rooms, with a second soprano on the melody so the congregation sings with more confidence.
+                  </td>
+                  <td class="pricing-price">
+                    &pound;1,400
+                  </td>
+                </tr>
+                <tr>
+                  <td class="pricing-name">
+                    <strong>Sextet</strong>
+                    <span class="pricing-sub">6 singers</span>
+                  </td>
+                  <td class="pricing-detail">
+                    A large crematorium chapel or a mid-sized church.
+                  </td>
+                  <td class="pricing-price">
+                    &pound;1,600
+                  </td>
+                </tr>
+                <tr>
+                  <td class="pricing-name">
+                    <strong>Choir of eight</strong>
+                    <span class="pricing-sub">8 singers</span>
+                  </td>
+                  <td class="pricing-detail">
+                    A large church, where the sound has to reach the back pews.
+                  </td>
+                  <td class="pricing-price">
+                    &pound;2,000
+                  </td>
+                </tr>
+                <tr>
+                  <td class="pricing-name">
+                    <strong>Chorus of twelve</strong>
+                    <span class="pricing-sub">12 singers</span>
+                  </td>
+                  <td class="pricing-detail">
+                    A memorial service in a very large church. Up to four pieces.
+                  </td>
+                  <td class="pricing-price">
+                    &pound;3,000
+                  </td>
+                </tr>
+                <tr>
+                  <td class="pricing-name">
+                    <strong>Organist</strong>
+                    <span class="pricing-sub">Any venue with an organ or piano</span>
+                  </td>
+                  <td class="pricing-detail">
+                    Any venue with an organ or piano. The same &pound;250 whether you book a soloist, a choir, or the organist alone.
+                  </td>
+                  <td class="pricing-price">
+                    &pound;250
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <p><a href="/terms.html">Booking terms in plain English</a></p>
+          </div>
+        </section>
+
+    <!-- Section 2: How It Works -->
+    <section class="section">
+      <div class="prose">
+        <h2>How it works</h2>
+        <div class="steps">
+          <div class="step">
+            <span class="step-num">1</span>
+            <h3>Tell us about the service</h3>
+            <p>Call, email, or use the form below. Luca calls you back within one working day, usually the same day, to discuss the service.</p>
+          </div>
+          <div class="step">
+            <span class="step-num">2</span>
+            <h3>We plan the music</h3>
+            <p>Luca suggests repertoire, sends a clear quote, and coordinates with your funeral director.</p>
+          </div>
+          <div class="step">
+            <span class="step-num">3</span>
+            <h3>We perform</h3>
+            <p>Singers arrive early, rehearse in the venue, and lead the hymns and choral pieces.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 3: What We Provide -->
+    <section class="section">
+      <div class="prose">
+        <h2>What we provide</h2>
+        <p>Every funeral booking includes a personal consultation with Luca Wetherall, our Artistic Director. He will talk through your music choices, suggest repertoire that suits the tone you want, and handle coordination with your funeral director and officiant. You receive a confirmed running order at least 48 hours before the service.</p>
+        <p>On the day, our singers rehearse in the venue, check acoustics, and confirm positions with the officiant. During the service, they lead all of the congregational hymns and perform up to three choral or solo pieces. After the service, they can provide reflective music as mourners leave.</p>
+        <p>We perform in churches, crematoriums, chapels, synagogues, and outdoor spaces across the UK. Most families complete the whole process in two or three short conversations. Most families contact us one or two weeks before the service, but short notice is fine, and we have arranged singers at a few hours&rsquo; notice.</p>
+        <p>We sing at churches, crematoriums, and chapels across the UK &mdash; most often in <a href="areas/london.html">London</a>, <a href="areas/oxford.html">Oxford</a>, and <a href="areas/manchester.html">Manchester</a>, but we travel further when families need us.</p>
+        <p>Many of our bookings are for non-religious or humanist services &mdash; celebrations of life held at crematoriums, woodland venues, or community halls. We adapt the music accordingly: secular songs and instrumental pieces work as well as hymns, and a soloist or small ensemble suits the more intimate format. See our guide to <a href="music-guides/non-religious-funeral-music.html">non-religious funeral music</a> and <a href="music-guides/celebration-of-life-music.html">celebration of life music</a> for fuller suggestions.</p>
+        <p>We cancel only in the most exceptional circumstances, and refund everything you have paid if we do.</p>
+
+      </div>
+    </section>
+
+    <!-- Section 4: The Ensemble -->
+    <section class="section">
+      <div class="prose">
+        <h2>How we build the ensemble</h2>
+        <p>Singers who rehearse together tune to one another and breathe in the same places. Four singers meeting for the first time on the morning of the funeral are still working that out during the first hymn. We keep the team small, so the same voices sing together from one booking to the next, and Luca Wetherall auditions every singer before they work for a family.</p>
+      </div>
+    </section>
+
+    <!-- Section 5: On the Day -->
+    <section class="section">
+      <div class="prose">
+        <h2>Our singers on the day</h2>
+        <p>Our singers are in the building 45 to 60 minutes before the service and check in with the funeral director on arrival. They wear plain dark dress unless you ask for something else, stand at the back rather than the front, and post nothing about the service.</p>
+      </div>
+    </section>
+
+
     <!-- Section 7: Pricing Summary -->
     <section class="section">
       <div class="prose">
         <h2>Pricing</h2>
         <p>Flat prices. The quote we send is the price you pay, and we add no VAT. Each booking includes a personal consultation, repertoire planning, and coordination with your venue and funeral director.</p>
-        <table class="compare-table">
-          <thead>
-            <tr><th scope="col">Ensemble</th><th scope="col">Suits</th><th scope="col">Price</th></tr>
-          </thead>
-          <tbody>
-            <tr><td class="compare-ensemble"><strong>Soloist</strong></td><td data-label="Suits">A short crematorium slot or a small chapel. One voice leads the hymns and sings up to three pieces.</td><td data-label="Price"><span class="compare-figure">&pound;250</span></td></tr>
-            <tr><td class="compare-ensemble"><strong>Small choir of four</strong></td><td data-label="Suits">A crematorium chapel or a church seating 50 to 200. Four-part harmony in the hymns, and up to three pieces.</td><td data-label="Price"><span class="compare-figure">&pound;1,150</span></td></tr>
-            <tr><td class="compare-ensemble"><strong>Quintet</strong></td><td data-label="Suits">The same rooms, with a second soprano on the melody so the congregation sings with more confidence.</td><td data-label="Price"><span class="compare-figure">&pound;1,400</span></td></tr>
-            <tr><td class="compare-ensemble"><strong>Sextet</strong></td><td data-label="Suits">A large crematorium chapel or a mid-sized church.</td><td data-label="Price"><span class="compare-figure">&pound;1,600</span></td></tr>
-            <tr><td class="compare-ensemble"><strong>Choir of eight</strong></td><td data-label="Suits">A large church, where the sound has to reach the back pews.</td><td data-label="Price"><span class="compare-figure">&pound;2,000</span></td></tr>
-            <tr><td class="compare-ensemble"><strong>Chorus of twelve</strong></td><td data-label="Suits">A memorial service in a very large church. Up to four pieces.</td><td data-label="Price"><span class="compare-figure">&pound;3,000</span></td></tr>
-            <tr><td class="compare-ensemble"><strong>Organist</strong></td><td data-label="Suits">Any venue with an organ or piano. The same &pound;250 whether you book a soloist, a choir, or the organist alone.</td><td data-label="Price"><span class="compare-figure">&pound;250</span></td></tr>
-          </tbody>
-        </table>
+        <p>The full list of ensemble sizes and prices is in the <a href="#prices">size and price table</a> above.</p>
         <p>Each price covers up to two hours, including a rehearsal in the venue, and travel within Greater London. For a service further out, we add travel to your written quote before you book. We hold diary space for short-notice bookings.</p>
         <p><a href="pricing.html">View full pricing with all ensemble options &rarr;</a></p>
         <p>If you&rsquo;re weighing up quotes, see <a href="compare/london-funeral-singers.html">how our prices compare with The London Funeral Singers</a>.</p>
