@@ -29,13 +29,20 @@ report and the dashboard import summary_dict().
     .venv/bin/python scripts/bookings/pipeline.py followed <enquiry_id> <1|2|3> <YYYY-MM-DD>
         a follow-up draft was saved (3 only for a corporate or Christmas enquiry)
     .venv/bin/python scripts/bookings/pipeline.py reviews-due [--today YYYY-MM-DD]
-        JSON [{booking_ref, event_date}] from the bookings ledger
+        JSON [{booking_ref, event_date, kind}] from the bookings ledger, kind request | reminder
     .venv/bin/python scripts/bookings/pipeline.py reviewed <booking_ref> <YYYY-MM-DD>
         appends "review request drafted <date>" to that ledger row's notes and records review-drafted
         in the state log (lcs_events), under the ledger lock; the date is never after today
     .venv/bin/python scripts/bookings/pipeline.py review-skipped <booking_ref> <planner|unresolved>
         appends "review request skipped <today> (<reason>)" to that ledger row's notes and records
-        review-skipped {reason}, so reviews-due stops listing it (a planner, an unresolved problem)
+        review-skipped {reason}, so reviews-due stops listing it (unresolved: no thread or address to reply to,
+        or the client asked not to be emailed; planner is an older reason, kept for the old notes)
+    .venv/bin/python scripts/bookings/pipeline.py review-reminded <booking_ref> <YYYY-MM-DD>
+        appends "review reminder drafted <date>" and records review-reminded {outcome: drafted}: the one
+        reminder after a drafted request; refuses a booking with no request drafted, or one already reminded
+    .venv/bin/python scripts/bookings/pipeline.py review-reminder-skipped <booking_ref> <planner|replied>
+        appends "review reminder skipped <today> (<reason>)" and records review-reminded {outcome: <reason>},
+        so reviews-due stops listing the reminder (a planner or venue, or the client wrote after the request)
     .venv/bin/python scripts/bookings/pipeline.py thread <booking_ref>
         prints the enquiry_id (the Zoho thread id) booked under that ref, or "no thread"
     .venv/bin/python scripts/bookings/pipeline.py done-due [--today YYYY-MM-DD]
@@ -53,7 +60,10 @@ after the third. An event date that
 is today or past gives mark_lost at once and never a follow-up. A funeral (or an
 enquiry with no occasion) is never chased: it gets mark_lost once the event has
 passed, or nothing if there is no event date. reviews-due never lists a funeral
-booking, or one whose ledger occasion is blank. `quoted` also notes
+booking, or one whose ledger occasion is blank. It lists a request 2 to 14 days after a
+paid-in-full event, and one reminder 7 to 14 days after a drafted request (review
+programme, 24 Oct 2026: the same rule for every client, with no reminder after a skip).
+`quoted` also notes
 "quoted YYYY-MM-DD", which gives the days-to-quote figure.
 
 Output shows enquiry ids, booking refs, dates and counts only: never names,
@@ -89,9 +99,12 @@ BOOKED = {"confirmed", "deposit_paid", "done"}
 FIRST_AFTER, SECOND_AFTER, LOST_AFTER = 5, 10, 10  # days since last_contact (the quote, then each chase)
 THIRD_AFTER, LONG_LOST_AFTER = 14, 14  # corporate and Christmas only: a third chase, then lost
 LONG_RUNWAY = {"corporate", "christmas"}
-REVIEW_FROM, REVIEW_UNTIL = 3, 14  # days after the event
+REVIEW_FROM, REVIEW_UNTIL = 2, 14  # days after the event
+REMIND_FROM, REMIND_UNTIL = 7, 14  # days after the review request: one reminder
 QUOTED_NOTE = re.compile(r"\bquoted (\d{4}-\d{2}-\d{2})\b")
 REVIEW_NOTE = cp.REVIEW_NOTE  # "review request drafted|skipped": one pattern, which check_payments --note refuses
+REVIEW_ASKED_NOTE = re.compile(r"\breview request drafted (\d{4}-\d{2}-\d{2})\b", re.I)
+REMINDER_NOTE = cp.REVIEW_REMINDER_NOTE  # "review reminder drafted|skipped"
 REASON_RE = re.compile(r"^[a-z][a-z-]{0,19}$")
 ID_RE = re.compile(r"^[A-Za-z0-9._:-]{1,64}$")
 FUNERAL = re.compile(r"\b(funeral|memorial|requiem|burial|interment|committal|cremation|thanksgiving"
@@ -228,28 +241,44 @@ def followups_due(rows, today):
     return out
 
 
+def review_asked_on(notes, f):
+    """The day the review request was drafted (the earliest, from the notes or the recorded facts), or None.
+    `notes` are the live notes (set_aside already applied)."""
+    days = [d for d in (to_date(m.group(1)) for m in REVIEW_ASKED_NOTE.finditer(notes)) if d]
+    if f.review_asked:
+        days.append(f.review_asked)
+    return min(days, default=None)
+
+
 def reviews_due(ledger_rows, today, facts=None):
-    """[{booking_ref, event_date}] for closed (check_payments.closed_on: paid in full, or a counting accepted fee),
-    uncancelled bookings 3 to 14 days after the event, with no review request drafted or skipped yet (in the notes
-    or the recorded facts). Never a funeral, a booking whose occasion is blank, or a held booking (its notes and
-    recorded facts disagree). `facts`: None (the state log), or a mapping ref -> lcs_events.Facts."""
+    """[{booking_ref, event_date, kind}] for closed (check_payments.closed_on: paid in full, or a counting accepted
+    fee), uncancelled bookings: kind "request" 2 to 14 days after the event, with no review request drafted or
+    skipped yet (in the notes or the recorded facts), and kind "reminder" 7 to 14 days after a drafted request, with
+    no reminder drafted or skipped yet. Never a funeral, a booking whose occasion is blank, or a held booking (its
+    notes and recorded facts disagree). `facts`: None (the state log), or a mapping ref -> lcs_events.Facts."""
     today = to_date(today)
     out = []
     for r in ledger_rows:
         event = to_date(r.get("event_date"))
-        notes = r.get("notes") or ""
         if not r.get("booking_ref") or event is None or is_funeral_or_unknown(r.get("occasion")):
             continue
-        if not REVIEW_FROM <= (today - event).days <= REVIEW_UNTIL:
+        if not REVIEW_FROM <= (today - event).days <= REVIEW_UNTIL + REMIND_UNTIL:
             continue
         f = cp.facts_for(r, today, facts)
+        if not cp.closed_on(r, today, f) or cp.is_cancelled(r, f) or cp.held(r, today, f):
+            continue
         # (a review marker the owner undid is set aside: the booking is due again)
-        if (not cp.closed_on(r, today, f) or cp.is_cancelled(r, f) or f.review
-                or REVIEW_NOTE.search(cp.lcs_events.set_aside(notes, f))):
+        notes = cp.lcs_events.set_aside(r.get("notes"), f)
+        asked = review_asked_on(notes, f)
+        if asked:
+            if f.review_reminded or REMINDER_NOTE.search(notes):
+                continue
+            if REMIND_FROM <= (today - asked).days <= REMIND_UNTIL:
+                out.append({"booking_ref": r["booking_ref"], "event_date": event.isoformat(), "kind": "reminder"})
             continue
-        if cp.held(r, today, f):
+        if f.review or REVIEW_NOTE.search(notes) or (today - event).days > REVIEW_UNTIL:
             continue
-        out.append({"booking_ref": r["booking_ref"], "event_date": event.isoformat()})
+        out.append({"booking_ref": r["booking_ref"], "event_date": event.isoformat(), "kind": "request"})
     return out
 
 
@@ -584,15 +613,36 @@ def cmd_review_skipped(args):
     note_review(args.booking_ref, f"review request skipped {today} ({reason})", ("review-skipped", {"reason": reason}, today))
 
 
+REMINDER_SKIP_REASONS = ("planner", "replied")  # review-reminded's outcomes other than drafted
+
+
+def cmd_review_reminded(args):
+    when = iso(args.date, "date")
+    if when > lm.today().isoformat():
+        raise SystemExit(f"{args.booking_ref}: {when} is after today; nothing written")
+    note_review(args.booking_ref, f"review reminder drafted {when}", ("review-reminded", {"outcome": "drafted"}, when),
+                reminder=True)
+
+
+def cmd_review_reminder_skipped(args):
+    reason = args.reason.strip()
+    if reason not in REMINDER_SKIP_REASONS:
+        raise SystemExit("the reason must be planner or replied; nothing written")
+    today = lm.today().isoformat()
+    note_review(args.booking_ref, f"review reminder skipped {today} ({reason})",
+                ("review-reminded", {"outcome": reason}, today), reminder=True)
+
+
 def cmd_thread(args):
     ref = args.booking_ref.strip()
     ids = [r["enquiry_id"] for r in lm.read_csv(ENQUIRIES) if (r.get("booking_ref") or "").strip() == ref]
     print("\n".join(ids) if ids else "no thread")
 
 
-def note_review(booking_ref, text, fact):
+def note_review(booking_ref, text, fact, reminder=False):
     """Append a review note to one ledger row and record its marker in the state log (fact = (kind, fields, on)),
-    both under the ledger lock (lcs_events.recording); refuses a second one, in the notes or the recorded facts."""
+    both under the ledger lock (lcs_events.recording); refuses a second one, in the notes or the recorded facts.
+    With reminder, the marker is the reminder's: it needs a drafted request first, and refuses a second reminder."""
     ledger = lm.LEDGER
     if not ledger.exists():
         raise SystemExit("no bookings ledger")
@@ -602,7 +652,13 @@ def note_review(booking_ref, text, fact):
         for r in t.rows:
             if r.get("booking_ref") == booking_ref:
                 f = cp.facts_for(r, lm.today())
-                if REVIEW_NOTE.search(cp.lcs_events.set_aside(r.get("notes"), f)) or f.review:
+                live = cp.lcs_events.set_aside(r.get("notes"), f)
+                if reminder:
+                    if not review_asked_on(live, f):
+                        raise SystemExit(f"{booking_ref}: no review request drafted; nothing written")
+                    if REMINDER_NOTE.search(live) or f.review_reminded:
+                        raise SystemExit(f"{booking_ref}: review reminder already drafted or skipped; nothing written")
+                elif REVIEW_NOTE.search(live) or f.review:
                     raise SystemExit(f"{booking_ref}: review request already drafted or skipped; nothing written")
                 r["notes"] = add_note(r.get("notes"), text)
                 kind, fields, on = fact
@@ -651,6 +707,12 @@ def main(argv=None):
     p = sub.add_parser("review-skipped")
     p.add_argument("booking_ref")
     p.add_argument("reason")
+    p = sub.add_parser("review-reminded")
+    p.add_argument("booking_ref")
+    p.add_argument("date")
+    p = sub.add_parser("review-reminder-skipped")
+    p.add_argument("booking_ref")
+    p.add_argument("reason")
     p = sub.add_parser("thread")
     p.add_argument("booking_ref")
     p = sub.add_parser("summary")
@@ -681,6 +743,10 @@ def main(argv=None):
         cmd_reviewed(args)
     elif args.cmd == "review-skipped":
         cmd_review_skipped(args)
+    elif args.cmd == "review-reminded":
+        cmd_review_reminded(args)
+    elif args.cmd == "review-reminder-skipped":
+        cmd_review_reminder_skipped(args)
     elif args.cmd == "thread":
         cmd_thread(args)
     elif args.cmd == "summary":

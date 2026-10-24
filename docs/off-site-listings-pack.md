@@ -35,6 +35,7 @@ Skipped: FuneralGuide (lists funeral directors only), Bark and Add to Event (sha
 | Hours | Monday to Friday 9am–6pm, weekends closed (as on `contact.html` and the Google profile) |
 | Legal entity | The London Choral Service is a trading name of Alma Consort Ltd (Companies House 16785727) |
 | Service area | London, Surrey, Kent, Essex, Hertfordshire, Berkshire and Buckinghamshire (as on the Google profile); further afield on request |
+| Fact sheet | https://londonchoralservice.com/facts.html: company number, incorporation date, director, prices, logo and contact on one page, each with its source. Give it to any site, journalist or venue that asks for company details or a press page. |
 
 | Site | `utm_source` | Website link to paste |
 | --- | --- | --- |
@@ -210,44 +211,21 @@ Christmas 2026, drafted 23 Oct. Post type **Update**, button **Learn more**. Pri
 
 > December carol bookings cost the same as bookings in any other month. A Small Choir of four costs £1,150 for up to two hours, and only Christmas Eve and Christmas Day carry a premium. Send us the date, the venue and a rough idea of numbers, however close the date is. We confirm whether we can take it and send a written quote within one working day.
 
-## Review-request emails (§3 cadence)
+## Review-request emails (MANUAL §3)
 
-The enquiry assistant drafts one review request 3–14 days after a paid-in-full event (never to a funeral client). These templates are for a hand-sent follow-up.
+The enquiry assistant drafts these itself. Step c of `.claude/agents/lcs-daily-pass.md` holds the wording: a request 2–14 days after a paid-in-full event, with a couple, a business, and a planner and venue version, then one reminder 7–14 days later. Funeral clients are never asked. For a hand-sent request (a booking from before the pipeline), use the couple version:
 
-**Day 30, to the booker:**
-
-> Subject: A small favour after [date]
+> Dear [first name],
 >
-> Dear [name],
+> Thank you for having us at your wedding on [date]. [One sentence about the day, if there is one to say.]
 >
-> Thank you again for having us sing at [service/event]. It was a privilege.
+> If you have a minute, would you write a Google review? Couples planning their own weddings read them, and a sentence or two is plenty: https://g.page/r/CU3erYZl05uuEBM/review
 >
-> If you have two minutes, a short Google review helps other families and organisers find us: [GBP review link]. One or two sentences is plenty.
->
-> With best wishes,
-> Luca Wetherall
-> The London Choral Service
-
-**Day 60, if no review:**
-
-> Subject: How was the music, honestly?
->
-> Dear [name],
->
-> A month on from [event], I wanted to ask how you felt the music went, including anything we could have done better. If you were happy with it, a sentence or two on Google would mean a great deal: [GBP review link]. If something fell short, reply to this email and tell me directly.
+> Best wishes,
 >
 > Luca
 
-**Day 90, final touch:**
-
-> Subject: One last note from us
->
-> Dear [name],
->
-> No reply needed to this one. If you ever have a spare moment, we are also on Trustpilot: https://uk.trustpilot.com/evaluate/londonchoralservice.com. Reviews are how a small ensemble like ours gets found.
->
-> Thank you again for booking us.
-> Luca
+Ask everyone who booked in the same words, whatever you think they made of the day. Never ask only the clients you expect to be happy.
 
 ## Rules that apply off-site (from the house claim gates)
 

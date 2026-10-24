@@ -9,7 +9,7 @@
 //              for the destinations/ pages of the private register and
 //              planners-and-venues.html.
 //
-// Card text comes from each page's own <h1> (and .h1-sub), from the <title> on
+// Card text comes from each page's own <h1> (and .h1-sub), from the og:title on
 // area and borough pages (whose h1s vary in wording), or from the MANUAL table
 // below, so a card never says anything the page does not.
 //
@@ -54,7 +54,10 @@ function h1Parts(html) {
   const main = m[1].replace(/<span class="h1-sub">[\s\S]*?<\/span>/, '');
   return [decode(main), sub ? decode(sub[1]) : null];
 }
-const titleOf = html => decode((html.match(/<title>([^<]*)/) || [, ''])[1]).replace(/\s*\|\s*(LCS|Alma Consort)$/, '');
+const SUFFIX = /\s*\|\s*(LCS|London Choral Service|Alma Consort)$/;
+const titleOf = html => decode((html.match(/<title>([^<]*)/) || [, ''])[1]).replace(SUFFIX, '');
+// Area pages keep the full "X choirs in Place" wording in og:title; their <title> may be shortened to fit 60 characters.
+const ogTitleOf = html => decode((html.match(/property="og:title" content="([^"]*)"/) || [, ''])[1]).replace(SUFFIX, '');
 
 // Hand-written card text for pages whose h1 is not a good card on its own.
 const MANUAL = {
@@ -70,6 +73,7 @@ const MANUAL = {
   'accessibility.html': ['Accessibility', 'How this website works for every visitor'],
   'privacy.html': ['Privacy Policy', 'What we collect, and why'],
   'terms.html': ['Terms of Booking', 'The terms that govern every booking'],
+  'facts.html': ['Fact Sheet', 'Company, prices and contact'],
   'compare/london-funeral-singers.html': ['Funeral Singers in London', 'Two providers compared, with sourced prices'],
   'music-guides/index.html': ['Music Guides', 'For weddings, funerals and Christmas'],
   'areas/index.html': ['Areas We Serve', 'Singers and choirs across the United Kingdom'],
@@ -86,7 +90,7 @@ function cards() {
     ...fs.readdirSync('areas').filter(n => n.endsWith('.html') && n !== 'index.html' && n !== 'london.html').map(n => 'areas/' + n),
     ...fs.readdirSync('areas/london').filter(n => n.endsWith('.html')).map(n => 'areas/london/' + n)].sort();
   for (const f of areas) {
-    const main = titleOf(read(f));  // the title, not the h1: area h1s vary, titles keep "X choirs in Place"
+    const main = ogTitleOf(read(f));  // og:title, not the h1: area h1s vary, og:titles keep "X choirs in Place"
     const [what, ...rest] = main.split(' in ');
     const place = rest.join(' in ');  // "Funeral and wedding choirs" or, on wedding-led pages, "Wedding and funeral choirs"
     out.push({ f, style: 'lcs', title: titleCase(what.replace(' and ', ' & ')), title2: 'in ' + place,
