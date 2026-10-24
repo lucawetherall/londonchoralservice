@@ -431,11 +431,13 @@
       position: absolute;
       top: 50%;
       left: 50%;
-      width: 68px;
-      height: 48px;
+      width: 56px;
+      height: 56px;
       transform: translate(-50%, -50%);
       transition: opacity .2s;
     }
+    .play-btn circle { fill: rgba(42, 23, 8, .72); stroke: #FAF6EE; stroke-width: 1.5; }
+    .play-btn path { fill: #FAF6EE; }
     .video-thumb:hover .play-btn,
     .video-thumb:focus-visible .play-btn { opacity: .85; }
     /* The media frame clips overflow, so the global offset outline would be
@@ -501,7 +503,7 @@
     .pe-media:fullscreen .video-fs,
     .pe-media:-webkit-full-screen .video-fs { display: none; }
     #voicing-media:empty + .pe-media-caption { display: none; }
-    .pe-media-caption { margin-top: .75rem; }
+    .pe-media-caption { margin-top: .75rem; font-size: .9375rem; font-style: italic; }
 
     /* ── Venues list ── */
     .pe-venues {

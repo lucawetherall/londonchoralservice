@@ -16,6 +16,11 @@
       'sixteen': null,
       'twenty-four': null
     },
+    // One visible line under each voicing film (same facts as the film's page copy).
+    VOICING_CAPTIONS: {
+      'SbvqWglsbMo': 'Once in Royal David’s City (words Cecil Frances Alexander), sung by eight voices.',
+      '39MyhPogl6A': 'There’s a Wideness in God’s Mercy (words Frederick William Faber, tune Coverdale), sung by a chorus of twelve.'
+    },
     // Film IDs with a still in assets/films/ (film-<id>-640.webp and -1280.webp).
     LOCAL_POSTERS: ['SbvqWglsbMo', '39MyhPogl6A'],
     MIN_SECONDS: 5
@@ -92,10 +97,8 @@
       (PE.LOCAL_POSTERS.indexOf(videoId) !== -1
         ? '<img src="/assets/films/film-' + videoId + '-640.webp" srcset="/assets/films/film-' + videoId + '-640.webp 640w, /assets/films/film-' + videoId + '-1280.webp 1280w" sizes="(max-width: 805px) 100vw, 624px" alt="" loading="lazy" width="1280" height="720">'
         : '<img src="https://i.ytimg.com/vi/' + videoId + '/hqdefault.jpg" alt="" loading="lazy" width="480" height="360">') +
-      '<svg class="play-btn" viewBox="0 0 68 48" aria-hidden="true">' +
-      '<path d="M66.52 7.74c-.78-2.93-2.49-5.41-5.42-6.19C55.79.13 34 0 34 0S12.21.13 6.9 1.55c-2.93.78-4.63 3.26-5.42 6.19C.06 13.05 0 24 0 24s.06 10.95 1.48 16.26c.78 2.93 2.49 5.41 5.42 6.19C12.21 47.87 34 48 34 48s21.79-.13 27.1-1.55c2.93-.78 4.63-3.26 5.42-6.19C67.94 34.95 68 24 68 24s-.06-10.95-1.48-16.26z" fill="rgba(42, 23, 8, .72)"/>' +
-      '<path d="M45 24 27 14v20z" fill="#FAF6EE"/>' +
-      '</svg>';
+      '<svg class="play-btn" viewBox="0 0 56 56" aria-hidden="true">' +
+      '<circle cx="28" cy="28" r="27"/><path d="M23 19v18l15-9z"/></svg>';
 
     // Third-party embed loads only on click (site-wide pattern), through the
     // shared player in js/video.js, which keeps YouTube's overlay hidden.
@@ -117,6 +120,8 @@
     });
 
     voicingMedia.appendChild(btn);
+    var caption = document.getElementById('voicing-caption');
+    if (caption) caption.textContent = PE.VOICING_CAPTIONS[videoId] || '';
   }
 
   // syncForm is false on page load: the enquiry form must keep its

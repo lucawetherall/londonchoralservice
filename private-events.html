@@ -827,11 +827,13 @@
       position: absolute;
       top: 50%;
       left: 50%;
-      width: 68px;
-      height: 48px;
+      width: 56px;
+      height: 56px;
       transform: translate(-50%, -50%);
       transition: opacity .2s;
     }
+    .play-btn circle { fill: rgba(42, 23, 8, .72); stroke: #FAF6EE; stroke-width: 1.5; }
+    .play-btn path { fill: #FAF6EE; }
     .video-thumb:hover .play-btn,
     .video-thumb:focus-visible .play-btn { opacity: .85; }
     /* The media frame clips overflow, so the global offset outline would be
@@ -897,7 +899,7 @@
     .pe-media:fullscreen .video-fs,
     .pe-media:-webkit-full-screen .video-fs { display: none; }
     #voicing-media:empty + .pe-media-caption { display: none; }
-    .pe-media-caption { margin-top: .75rem; }
+    .pe-media-caption { margin-top: .75rem; font-size: .9375rem; font-style: italic; }
 
     /* ── Venues list ── */
     .pe-venues {
@@ -1494,7 +1496,7 @@
           <h2>The ensemble</h2>
           <p>The London Choral Service is the booking office of Alma Consort, a professional ensemble of consort singers based in London. The same singers perform every engagement.</p>
           <figure class="press-figure">
-            <img src="assets/press/quartet-stained-glass-640.jpg" srcset="assets/press/quartet-stained-glass-640.jpg 640w, assets/press/quartet-stained-glass-1920.jpg 1920w" sizes="(max-width: 700px) 100vw, 640px" alt="Four singers in dark jumpers singing beside stained-glass windows in a stone church" width="640" height="360" loading="lazy">
+            <img src="assets/press/quartet-stained-glass-640.jpg" srcset="assets/press/quartet-stained-glass-640.jpg 640w, assets/press/quartet-stained-glass-1280.jpg 1280w, assets/press/quartet-stained-glass-1920.jpg 1920w" sizes="(max-width: 700px) 100vw, 640px" alt="Four singers in dark jumpers singing beside stained-glass windows in a stone church" width="640" height="360" loading="lazy">
           </figure>
           <p>The singers are prize-winning graduates of the Royal Academy of Music, the Royal College of Music, the Guildhall School of Music &amp; Drama, and the Universities of Oxford and Cambridge. Their credits include the coronation of King Charles&nbsp;III, the BBC Proms, Westminster Abbey, St&nbsp;Paul&rsquo;s Cathedral, the Royal Opera House, and the English National Opera. Luca Wetherall, Tutor in Music at the University of Oxford, directs the consort and auditions every singer himself.</p>
           <p>The ensemble&rsquo;s own site is <a href="https://www.almaconsort.com">almaconsort.com</a>.</p>
@@ -1537,6 +1539,7 @@
           </fieldset>
           <p id="voicing-note" aria-live="polite">Twelve voices give two singers to each part, with four soloists besides. This is our recommendation for most churches: enough sound for the nave, and a solo voice free to step forward for an Ave Maria or a solo verse.</p>
           <div id="voicing-media"></div>
+          <p class="pe-media-caption" id="voicing-caption"></p>
         </div>
       </div>
     </section>

@@ -184,7 +184,7 @@ def test_booking_on_the_lcs_calendar_is_allowed():
 
 
 def test_create_event_elsewhere_or_with_extras_is_denied():
-    for changes in ({"calendarId": "primary"}, {"calendarId": "lucwetho@gmail.com"}, {"calendarId": None},
+    for changes in ({"calendarId": "primary"}, {"calendarId": "personal.calendar@example.com"}, {"calendarId": None},
                     {"calendarId": LCS_CAL + " "}, {"attendees": [{"email": "a@b.com"}]},
                     {"attendeeEmails": ["a@b.com"]}, {"addGoogleMeetUrl": True}, {"recurrenceData": ["RRULE:FREQ=DAILY"]},
                     {"attachments": [{"fileUrl": "https://x"}]}, {"notificationLevel": "ALL"},

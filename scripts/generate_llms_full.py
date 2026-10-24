@@ -31,10 +31,11 @@ MONEY_PAGES = [
     'christmas.html', 'christmas-carol-services.html', 'contact.html', 'services.html', 'faq.html',
 ]
 # Pages under these prefixes are trimmed (the trade landing pages, the private register, the film and
-# policy pages too); every other page stays in full.
+# policy pages, the long terms and the about page too; facts.html carries the company and booking facts in
+# full); every other page stays in full.
 TRIMMED = ('music-guides/', 'areas/', 'destinations/', 'compare/', 'for-', 'private-events.html',
            'planners-and-venues.html', 'professionals.html', 'listen.html', 'christmas-listen.html',
-           'privacy.html', 'accessibility.html', 'corporate.html')
+           'privacy.html', 'accessibility.html', 'corporate.html', 'luca-wetherall.html', 'terms.html', 'about.html')
 BLOCK = re.compile(r'<(h1|h2|h3|p|li)\b([^>]*)>(.*?)</\1>', re.S)
 
 

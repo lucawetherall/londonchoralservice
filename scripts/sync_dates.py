@@ -11,6 +11,9 @@ data/page-dates.json becomes the single source for:
   · Updated <time>…</time></p> (the Updated half is omitted while the
   page has never changed since publication)
 
+Service and landing pages with a plain "Last updated: <Month> <YYYY>" line
+get that month from the same date.
+
 datePublished is never touched. generate_sitemap.py strips all three
 signals before hashing, so this script never changes a page's lastmod.
 """
@@ -40,6 +43,7 @@ def date_line(pub, mod):
 
 
 DATE_LINE_RX = re.compile(r'<p class="guide-meta">(?:Published|Last updated:)[^<]*(?:<time[^>]*>[^<]*</time>[^<]*)*</p>')
+MONTH_LINE_RX = re.compile(r'<p class="guide-meta">Last updated: [A-Z][a-z]+ \d{4}</p>')
 BYLINE_PUB_RX = re.compile(r'(<p class="guide-meta">By Luca Wetherall[^<]*?) &middot; Published [^<]*</p>')
 
 
@@ -76,6 +80,23 @@ def main():
             open(f, 'w', encoding='utf-8').write(t)
             n += 1
     print(f'Synchronised dates on {n} article pages')
+
+    # Service and landing pages carry a plain "Last updated: <Month> <YYYY>" line; keep its month
+    # in step with the same content-change date (generate_sitemap.py strips it before hashing too).
+    m = 0
+    for f in sorted(glob.glob('*.html') + glob.glob('areas/**/*.html', recursive=True)):
+        s = open(f, encoding='utf-8').read()
+        if not MONTH_LINE_RX.search(s):
+            continue
+        entry = DATES.get('/' + f)
+        if not entry:
+            continue
+        y, mo, _ = entry['lastmod'].split('-')
+        t = MONTH_LINE_RX.sub(f'<p class="guide-meta">Last updated: {MONTHS[int(mo) - 1]} {y}</p>', s, count=1)
+        if t != s:
+            open(f, 'w', encoding='utf-8').write(t)
+            m += 1
+    print(f'Synchronised "Last updated" on {m} other pages')
     return 0
 
 
