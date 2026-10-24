@@ -2543,21 +2543,37 @@ td.compare-us .compare-saving {
    with an overlay or locks scrolling. Accept and Reject share one style.
    The same rules sit in partials/private-register.css.html for the
    private-register pages, so the variables fall back to that palette.
-   --consent-offset (set by js/consent.js) lifts it above the mobile CTA bar.
+   While open it covers the mobile CTA bar (z-index 1000 against 200), so
+   the two never stack; js/consent.js pads the page by its height.
    ═══════════════════════════════════ */
 .consent {
   position: fixed;
   left: 0;
   right: 0;
-  bottom: var(--consent-offset, 0px);
+  bottom: 0;
   z-index: 1000;
+  max-height: 100vh;
+  max-height: 100dvh;
+  overflow-y: auto;
   background-color: var(--color-bg-alt, var(--parchmentLight, #EDE8E1));
   color: var(--color-text, var(--choirStall, #2C2420));
   border-top: 1px solid var(--color-rule, var(--limestone, #D6CEC6));
-  box-shadow: 0 -4px 18px rgba(44, 36, 32, 0.12);
+  box-shadow: 0 -6px 24px rgba(44, 36, 32, 0.1);
   font-family: var(--font-body, 'Source Serif 4', Georgia, serif);
-  font-size: 1.125rem;
-  line-height: 1.5;
+  font-size: 1rem;
+  line-height: 1.45;
+  animation: consent-in 0.25s ease-out;
+}
+
+@keyframes consent-in {
+  from { transform: translateY(100%); }
+  to { transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .consent {
+    animation: none;
+  }
 }
 
 .consent[hidden] {
@@ -2576,15 +2592,16 @@ td.compare-us .compare-saving {
 .consent__inner {
   max-width: 72rem;
   margin: 0 auto;
-  padding: 1.25rem 1.5rem;
-  padding-bottom: calc(1.25rem + env(safe-area-inset-bottom, 0px));
+  padding: 1rem 1.5rem;
+  padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
   display: flex;
   align-items: center;
-  gap: 1rem 2rem;
+  gap: 0.75rem 2.5rem;
 }
 
 .consent__text {
   flex: 1 1 auto;
+  max-width: 44rem;
   margin: 0;
 }
 
@@ -2592,20 +2609,22 @@ td.compare-us .compare-saving {
   color: inherit;
   text-decoration: underline;
   text-underline-offset: 0.15em;
+  white-space: nowrap;
 }
 
 .consent__actions {
   flex: 0 0 auto;
+  margin-left: auto;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 0.75rem;
+  gap: 0.625rem;
 }
 
 .consent__btn {
-  min-width: 9rem;
+  min-width: 8rem;
   min-height: 2.75rem;
   margin: 0;
-  padding: 0.75rem 1.5rem;
+  padding: 0.5rem 1.25rem;
   font-family: var(--font-heading, var(--font-display, 'Cormorant Garamond', Georgia, serif));
   font-size: 1.125rem;
   font-weight: 500;
@@ -2616,6 +2635,7 @@ td.compare-us .compare-saving {
   border: 1px solid var(--color-text, var(--choirStall, #2C2420));
   border-radius: 0;
   cursor: pointer;
+  touch-action: manipulation;
 }
 
 .consent__btn:hover {
@@ -2636,21 +2656,31 @@ td.compare-us .compare-saving {
 }
 
 @media (max-width: 760px) {
+  .consent {
+    font-size: 0.9375rem;
+  }
   .consent__inner {
     flex-direction: column;
     align-items: stretch;
-    padding: 1rem;
-    padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+    gap: 0.625rem;
+    padding: 0.75rem 1rem;
+    padding-bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px));
+  }
+  .consent__text {
+    max-width: none;
+  }
+  .consent__actions {
+    margin-left: 0;
   }
   .consent__btn {
     min-width: 0;
   }
 }
 
-@media (max-width: 340px) {
-  .consent__actions {
-    grid-template-columns: 1fr;
-  }
+/* The open mobile menu reaches the foot of the screen; the sheet steps aside
+   until it closes. */
+body:has(#nav-menu.is-open) .consent {
+  display: none;
 }
 
 @media print {

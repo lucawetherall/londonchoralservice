@@ -6,14 +6,14 @@ import build_register_page as B
 
 TITLE = 'For Wedding Planners, Venues and Estates | Alma Consort'
 DESC = ('How Alma Consort works with wedding planners, venues and private offices: lead times, '
-        'insurance and confidentiality, standing arrangements, and invoicing.')
+        'paperwork and confidentiality, standing arrangements, and invoicing.')
 
 FAQS = [
     ('What do you need from us, and by when?',
      'The date, the venue and the running order as soon as they exist, even in draft. Everything else can '
      'follow. Six to twelve months is the usual lead time for Europe; the United States needs far longer because paid performance there runs through a visa petition. If a date is closer than that, ask anyway. A free Saturday is a free Saturday.'),
-    ('Do you carry insurance and provide method statements?',
-     'We hold public liability insurance, and we provide risk assessments and method statements on request. '
+    ('Do you provide risk assessments and method statements?',
+     'Yes, on request. '
      'Venues that need a supplier pack before they will confirm can have one; tell us what your compliance '
      'team asks for and we will send it in their format rather than ours.'),
     ('Will the consort sign a confidentiality agreement?',
@@ -39,7 +39,7 @@ def jsonld():
          'name': 'Choral engagements for wedding planners, venues and estates',
          'serviceType': 'Choral engagements booked through planners, venues and private offices',
          'description': ('How Alma Consort works with wedding and event planners, venue and hotel event '
-                         'teams, and private offices: lead times, insurance and method statements, '
+                         'teams, and private offices: lead times, risk assessments and method statements, '
                          'confidentiality, standing arrangements, and invoicing in pounds sterling, '
                          'euros or US dollars.'),
          'url': f'{B.SITE}/planners-and-venues.html',
@@ -126,7 +126,7 @@ BODY = f'''
               <span class="n" aria-hidden="true">2</span>
               <h3>Quote and paperwork</h3>
               <p>A single quote covering fees, travel and accommodation, with the booking agreement
-                alongside it. Insurance certificates, risk assessments and method statements come with it
+                alongside it. Risk assessments and method statements come with it
                 rather than after three requests.</p>
             </li>
             <li>
@@ -186,8 +186,8 @@ BODY = f'''
             (PDF, A4) with the moments a choir sings, the pieces couples choose, our prices and how to
             book. It has a space to write your name, and you can print as many copies as you like.</p>
           <p>Couples deal with one contact. They ring or message Luca, who replies within one working day,
-            and you or your coordinator receive the running order a week before the wedding. Our insurance
-            certificate and risk assessment go on your file before the first booking, in whatever format
+            and you or your coordinator receive the running order a week before the wedding. Our risk
+            assessment goes on your file before the first booking, in whatever format
             your events team uses.</p>
           <p>Once you have agreed to it in writing, we list your venue or firm on this page with a link to
             your website.</p>

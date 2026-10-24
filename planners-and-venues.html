@@ -25,6 +25,14 @@
     });
     gtag('set', 'ads_data_redaction', true);
     try {
+      // A choice lasts 12 months (lcs-consent-at, ms, written by js/consent.js);
+      // after that it is forgotten here, before anything reads it, and the
+      // sheet asks again. A choice with no date yet is dated by consent.js.
+      var consentAt = +localStorage.getItem('lcs-consent-at');
+      if (consentAt && Date.now() - consentAt > 365 * 864e5) {
+        localStorage.removeItem('lcs-consent');
+        localStorage.removeItem('lcs-consent-at');
+      }
       if (localStorage.getItem('lcs-consent') === 'granted') {
         gtag('consent', 'update', {
           'ad_storage': 'granted',
@@ -358,7 +366,7 @@
   <!-- @include-end partials/analytics.html -->
 
   <title>For Wedding Planners, Venues and Estates | Alma Consort</title>
-  <meta name="description" content="How Alma Consort works with wedding planners, venues and private offices: lead times, insurance and confidentiality, standing arrangements, and invoicing.">
+  <meta name="description" content="How Alma Consort works with wedding planners, venues and private offices: lead times, paperwork and confidentiality, standing arrangements, and invoicing.">
   <meta name="theme-color" content="#FAF6EE">
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://londonchoralservice.com/planners-and-venues.html">
@@ -366,7 +374,7 @@
   <link rel="alternate" hreflang="x-default" href="https://londonchoralservice.com/planners-and-venues.html">
 
   <meta property="og:title" content="For Wedding Planners, Venues and Estates | Alma Consort">
-  <meta property="og:description" content="How Alma Consort works with wedding planners, venues and private offices: lead times, insurance and confidentiality, standing arrangements, and invoicing.">
+  <meta property="og:description" content="How Alma Consort works with wedding planners, venues and private offices: lead times, paperwork and confidentiality, standing arrangements, and invoicing.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://londonchoralservice.com/planners-and-venues.html">
   <meta property="og:locale" content="en_GB">
@@ -378,7 +386,7 @@
 
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="For Wedding Planners, Venues and Estates | Alma Consort">
-  <meta name="twitter:description" content="How Alma Consort works with wedding planners, venues and private offices: lead times, insurance and confidentiality, standing arrangements, and invoicing.">
+  <meta name="twitter:description" content="How Alma Consort works with wedding planners, venues and private offices: lead times, paperwork and confidentiality, standing arrangements, and invoicing.">
   <meta name="twitter:image" content="https://londonchoralservice.com/assets/og/planners-and-venues.png">
   <meta name="twitter:image:alt" content="Alma Consort, London: A supplier your compliance team will not have to chase.">
   <link rel="dns-prefetch" href="https://www.googletagmanager.com">
@@ -1151,15 +1159,26 @@
       position: fixed;
       left: 0;
       right: 0;
-      bottom: var(--consent-offset, 0px);
+      bottom: 0;
       z-index: 1000;
+      max-height: 100vh;
+      max-height: 100dvh;
+      overflow-y: auto;
       background-color: var(--color-bg-alt, var(--parchmentLight, #EDE8E1));
       color: var(--color-text, var(--choirStall, #2C2420));
       border-top: 1px solid var(--color-rule, var(--limestone, #D6CEC6));
-      box-shadow: 0 -4px 18px rgba(44, 36, 32, 0.12);
+      box-shadow: 0 -6px 24px rgba(44, 36, 32, 0.1);
       font-family: var(--font-body, 'Source Serif 4', Georgia, serif);
-      font-size: 1.125rem;
-      line-height: 1.5;
+      font-size: 1rem;
+      line-height: 1.45;
+      animation: consent-in 0.25s ease-out;
+    }
+    @keyframes consent-in {
+      from { transform: translateY(100%); }
+      to { transform: none; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .consent { animation: none; }
     }
     .consent[hidden] { display: none; }
     .consent:focus { outline: none; }
@@ -1170,29 +1189,31 @@
     .consent__inner {
       max-width: 72rem;
       margin: 0 auto;
-      padding: 1.25rem 1.5rem;
-      padding-bottom: calc(1.25rem + env(safe-area-inset-bottom, 0px));
+      padding: 1rem 1.5rem;
+      padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
       display: flex;
       align-items: center;
-      gap: 1rem 2rem;
+      gap: 0.75rem 2.5rem;
     }
-    .consent__text { flex: 1 1 auto; margin: 0; }
+    .consent__text { flex: 1 1 auto; max-width: 44rem; margin: 0; }
     .consent__text a {
       color: inherit;
       text-decoration: underline;
       text-underline-offset: 0.15em;
+      white-space: nowrap;
     }
     .consent__actions {
       flex: 0 0 auto;
+      margin-left: auto;
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 0.75rem;
+      gap: 0.625rem;
     }
     .consent__btn {
-      min-width: 9rem;
+      min-width: 8rem;
       min-height: 2.75rem;
       margin: 0;
-      padding: 0.75rem 1.5rem;
+      padding: 0.5rem 1.25rem;
       font-family: var(--font-heading, var(--font-display, 'Cormorant Garamond', Georgia, serif));
       font-size: 1.125rem;
       font-weight: 500;
@@ -1203,6 +1224,7 @@
       border: 1px solid var(--color-text, var(--choirStall, #2C2420));
       border-radius: 0;
       cursor: pointer;
+      touch-action: manipulation;
     }
     .consent__btn:hover,
     .consent__btn[aria-pressed="true"] {
@@ -1214,16 +1236,17 @@
       outline-offset: 3px;
     }
     @media (max-width: 760px) {
+      .consent { font-size: 0.9375rem; }
       .consent__inner {
         flex-direction: column;
         align-items: stretch;
-        padding: 1rem;
-        padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+        gap: 0.625rem;
+        padding: 0.75rem 1rem;
+        padding-bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px));
       }
+      .consent__text { max-width: none; }
+      .consent__actions { margin-left: 0; }
       .consent__btn { min-width: 0; }
-    }
-    @media (max-width: 340px) {
-      .consent__actions { grid-template-columns: 1fr; }
     }
     @media print {
       .consent { display: none !important; }
@@ -1240,7 +1263,7 @@
         "@id": "https://londonchoralservice.com/planners-and-venues.html#service",
         "name": "Choral engagements for wedding planners, venues and estates",
         "serviceType": "Choral engagements booked through planners, venues and private offices",
-        "description": "How Alma Consort works with wedding and event planners, venue and hotel event teams, and private offices: lead times, insurance and method statements, confidentiality, standing arrangements, and invoicing in pounds sterling, euros or US dollars.",
+        "description": "How Alma Consort works with wedding and event planners, venue and hotel event teams, and private offices: lead times, risk assessments and method statements, confidentiality, standing arrangements, and invoicing in pounds sterling, euros or US dollars.",
         "url": "https://londonchoralservice.com/planners-and-venues.html",
         "provider": {
           "@type": "LocalBusiness",
@@ -1284,10 +1307,10 @@
           },
           {
             "@type": "Question",
-            "name": "Do you carry insurance and provide method statements?",
+            "name": "Do you provide risk assessments and method statements?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "We hold public liability insurance, and we provide risk assessments and method statements on request. Venues that need a supplier pack before they will confirm can have one; tell us what your compliance team asks for and we will send it in their format rather than ours."
+              "text": "Yes, on request. Venues that need a supplier pack before they will confirm can have one; tell us what your compliance team asks for and we will send it in their format rather than ours."
             }
           },
           {
@@ -1398,7 +1421,7 @@
               <span class="n" aria-hidden="true">2</span>
               <h3>Quote and paperwork</h3>
               <p>A single quote covering fees, travel and accommodation, with the booking agreement
-                alongside it. Insurance certificates, risk assessments and method statements come with it
+                alongside it. Risk assessments and method statements come with it
                 rather than after three requests.</p>
             </li>
             <li>
@@ -1458,8 +1481,8 @@
             (PDF, A4) with the moments a choir sings, the pieces couples choose, our prices and how to
             book. It has a space to write your name, and you can print as many copies as you like.</p>
           <p>Couples deal with one contact. They ring or message Luca, who replies within one working day,
-            and you or your coordinator receive the running order a week before the wedding. Our insurance
-            certificate and risk assessment go on your file before the first booking, in whatever format
+            and you or your coordinator receive the running order a week before the wedding. Our risk
+            assessment goes on your file before the first booking, in whatever format
             your events team uses.</p>
           <p>Once you have agreed to it in writing, we list your venue or firm on this page with a link to
             your website.</p>
@@ -1497,8 +1520,8 @@
           <h3>What do you need from us, and by when?</h3>
           <p>The date, the venue and the running order as soon as they exist, even in draft. Everything else can follow. Six to twelve months is the usual lead time for Europe; the United States needs far longer because paid performance there runs through a visa petition. If a date is closer than that, ask anyway. A free Saturday is a free Saturday.</p>
 
-          <h3>Do you carry insurance and provide method statements?</h3>
-          <p>We hold public liability insurance, and we provide risk assessments and method statements on request. Venues that need a supplier pack before they will confirm can have one; tell us what your compliance team asks for and we will send it in their format rather than ours.</p>
+          <h3>Do you provide risk assessments and method statements?</h3>
+          <p>Yes, on request. Venues that need a supplier pack before they will confirm can have one; tell us what your compliance team asks for and we will send it in their format rather than ours.</p>
 
           <h3>Will the consort sign a confidentiality agreement?</h3>
           <p>Yes. We do not name clients, publish photographs, or release recordings from a private engagement without permission, and every singer on the engagement signs the same agreement, including a deputy brought in at short notice.</p>
