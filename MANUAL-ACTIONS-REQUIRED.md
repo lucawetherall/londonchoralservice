@@ -2,6 +2,46 @@
 
 These items came out of the 2026-05-08 SEO audit but cannot be implemented in code from this repo. Each one needs a human in front of the relevant dashboard, account, or hosting console. Work through them in the order given; later phases of the programme assume some of these are done.
 
+## Your open list (updated 24 Oct 2026)
+
+Only the things that need you: your identity, an account in your name, accepting terms, or a decision or material only you have. Everything else in this file is done, closed or waiting on someone else. The section number holds the full steps.
+
+**Do first**
+
+1. **Google Ads identity check, due 4 Nov (§30).** Without it Google can stop the ads, the Christmas campaign included. Use the "Get started" button on the yellow banner in Google Ads, or Billing → Advertiser verification. Have ready: your passport or driving licence, and the certificate of incorporation (free from Companies House, company 16785727, Filing history).
+2. **Ask Google to recrawl 12 pages (§32).** Search Console → paste each URL → Request indexing. Do eight today and four tomorrow (Google allows about ten a day).
+3. **Bing Webmaster Tools (§31), five minutes.** Import the site from Search Console. Bing's index feeds ChatGPT search and Copilot, and Bing has no page of ours yet.
+
+**This week**
+
+4. **Directory sign-ups (§2; steps in `docs/off-site-listings-pack.md` §"Per-site setup").** None is live yet. Do Bing Places first (it imports the Google profile and verifies itself), then Apple Business, Hitched, Bridebook, Yell and Guides for Brides. You make each account and accept the terms. Claude can fill the fields once you're signed in, stops before Publish, and records each live link.
+5. **www certificate (§15).** GitHub still hasn't issued it, 24 Oct. The remove-and-re-add is done, so don't repeat it. Send GitHub Support the ticket text drafted on 24 Oct (it's in the chat; ask an agent for it again if needed).
+6. **Google Business Profile (§1).** From about 30 Oct, open the profile and check every pending edit from 23 Oct was accepted: categories, description, website, service area, hours, services, photos.
+
+**When you have a moment (optional)**
+
+7. **Trustpilot business account (§3)**, if you want reviews there as well as on Google.
+8. **LinkedIn company page (§1, "Other discovery items").** Make it, then send an agent the address for the site's schema.
+9. **Backup key (§21).** Check the "AGE-SECRET-KEY-1…" key from the nightly backup is in your password manager. Without it the iCloud backups can't be opened.
+10. **Zoho Books VAT setting (§18 point 4).** Settings → Taxes should say not VAT-registered. The API can't read it.
+11. **Pinned git origin (§25)**, in the Claude app's Help menu.
+
+**Material only you have**
+
+12. **Carol recordings (§9.3):** one or two real carols on YouTube.
+13. **Private-events page (§13.2–3):** photos from real engagements, the fuller list of venues the singers have sung in, and one video per voicing (8, 12, 16, 24).
+14. **Footage from a wedding abroad (§14.5).**
+15. **almaconsort.com (§13.5):** a link from that site to `https://londonchoralservice.com/private-events.html`. It still links only to the homepage (24 Oct).
+
+**Decisions only you can make**
+
+16. **Lambeth testimonial (§10.4):** it describes a trio, which you no longer offer. Keep it or remove it?
+17. **Ireland and Scotland regions (§14.1):** confirm or change the provisional ones.
+18. **US lead time (§14.3)**, given performance visas.
+19. **Read and sign off (§16.2, 16.3, 16.5):** `terms.html` against your booking confirmation, `accessibility.html`, and the reply-time promises (one working day; the same working day on the funeral pages). Optionally check the menu on an iPad (§16.6).
+
+**Closed since 23 Oct:** §1 Business Profile edits (made, pending Google), ORCID; §9.9 church costs (your 24 Oct rule: copy points only to our organist at £250, no church fees, and the carol services page already does); §11 competitor prices (checked 23 Oct); §13.1 test enquiry (arrived); §16.1 consent mode (Excellent); §21 the key is in the nightly backup; §23 review link.
+
 ---
 
 ## 1. Google Business Profile claim and category audit
@@ -12,7 +52,7 @@ The site already references a Google Maps presence — `index.html` carries `sam
 
 **Update 2026-08-19:** the owner reports the listing has been claimed.
 
-**Checked 2026-10-23, signed in (read-only):** the profile is verified, business ID `07940104319114173142`, service area "London, UK and Greater London, UK". The dashboard still shows the old description (it offers soloists and says Luca directs the service) and only the Choir category. Claude's attempt to make the click-by-click edits below was stopped by Claude Code's permission check, because they publish to a live profile. Either do steps 2–7 yourself, or tell Claude in a live chat "edit the Google Business Profile as in MANUAL §1" and allow the edits when asked.
+**Superseded by the "Done 2026-10-23" line below.** **Checked 2026-10-23, signed in (read-only):** the profile is verified, business ID `07940104319114173142`, service area "London, UK and Greater London, UK". The dashboard still shows the old description (it offers soloists and says Luca directs the service) and only the Choir category. Claude's attempt to make the click-by-click edits below was stopped by Claude Code's permission check, because they publish to a live profile. Either do steps 2–7 yourself, or tell Claude in a live chat "edit the Google Business Profile as in MANUAL §1" and allow the edits when asked.
 
 **Done 2026-10-23 (Claude in Chrome, owner-approved change list):** steps 2–8 are made; Google shows each as pending review (10 minutes to a day). Categories: Choir (primary) plus Wedding service. Google offers no "Funeral service" category, only "Pet funeral service" and "Funeral celebrant service", which would misdescribe a choir, so funerals are carried by the Funeral choir service and the description instead. Description: the pack's 680-character text. Website: the `gbp`-tagged URL. Service area: London, Greater London, Surrey, Kent, Essex, Hertfordshire, Berkshire, Buckinghamshire (address stays hidden). Hours: Mon–Fri 09:00–18:00, weekends closed (live by the evening: "Opens 9am Mon"). Services: the seven in step 7, six "From £1,150" and Organist and pianist hire £250, each with a one-line description. Photos: the four film stills (it's the Most Wonderful Time, Once in Royal David's City, Ding Dong, Carol of the Bells), 5 → 9. Post 1 of §9 is live. **Left in §1:** look again in a week that every pending edit was accepted, and recheck the categories each quarter in case Google adds a funeral category.
 
@@ -215,7 +255,7 @@ The July 2026 Christmas expansion (`docs/superpowers/plans/2026-07-29-christmas-
 6. **Citations.** Add "carol singers" as a category/service on Bark, Poptop, Encore, and Add to Event profiles (§2) — those marketplaces dominate the "carol singers for hire" SERP and a presence there captures buyers who never leave the platform.
 7. **Brand watch.** londoncarolsingers.com trades as "LCS — London's premier carol singers". Site copy now consistently uses the full "London Choral Service" name on Christmas pages; keep an eye on branded-search confusion.
 8. **Repoint off-site links to christmas.html (added 2026-10-19).** `carol-singers.html` is now a redirect to `christmas.html` (spec `docs/superpowers/specs/2026-10-19-christmas-landing-pages-design.md`). Old links keep working, but change any you control: the Google Business Profile website/service links and posts, Bark, Poptop, Encore, Add to Event and any directory listing. The Google Ads final URL and sitelinks are a separate, approved Ads change. The church carol services page is `https://londonchoralservice.com/christmas-carol-services.html` if a listing has room for a second link.
-9. **Open question: church costs on the carol services page (added 2026-10-19).** What does a client pay the church (hire, verger, the church's own organist), and does our £250 organist replace theirs? Until you answer, `christmas-carol-services.html` says nothing about it. Tell an agent the policy and it will add one FAQ.
+9. **Closed 2026-10-24 (owner decision):** copy on organist costs points only to hiring our organist at £250, alone or with a choir, and never quotes church, parish or resident-organist fees. `christmas-carol-services.html` already does this ("Can you bring an organist for the carol service?"). (Original: **Open question: church costs on the carol services page (added 2026-10-19).** What does a client pay the church (hire, verger, the church's own organist), and does our £250 organist replace theirs? Until you answer, `christmas-carol-services.html` says nothing about it. Tell an agent the policy and it will add one FAQ.)
 
 ---
 
@@ -363,6 +403,8 @@ Spec: `docs/superpowers/specs/2026-08-29-international-luxury-weddings-design.md
 ---
 
 ## 15. www subdomain serves a broken TLS certificate, 2026-08-30
+
+**Still failing, 24 Oct 2026:** the certificate still lists only `londonchoralservice.com`, and `https://www.londonchoralservice.com` still serves the `*.github.io` certificate. There are no CAA records. The remove-and-re-add below has been done, so doing it again in the Settings page won't help. Next step: a GitHub Support ticket (support.github.com → Contact support → GitHub Pages) asking them to issue a certificate covering `www.londonchoralservice.com`; Claude drafted the text on 24 Oct. If GitHub can't fix it, the fallback is to delete the `www` CNAME at Porkbun, so the host stops resolving instead of showing a warning.
 
 **In progress, 2026-10-23 (evening):** with Luca's go-ahead, Claude removed and re-added the custom domain through the GitHub API (`PUT /repos/…/pages`, `cname` null then `londonchoralservice.com`) and switched Enforce HTTPS off and on again. GitHub's health check now lists `www.londonchoralservice.com` as valid and HTTPS-eligible; the certificate itself was still the apex-only one an hour later. If `curl -I https://www.londonchoralservice.com/` still fails tomorrow, do the Remove/Save below in the Settings page (Chrome wasn't signed in to GitHub, and Claude doesn't sign in).
 
