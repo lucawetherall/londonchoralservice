@@ -2605,8 +2605,9 @@ td.compare-us .compare-saving {
   .consent__inner {
     flex-direction: column;
     align-items: stretch;
-    padding: 0.875rem 1rem;
-    padding-bottom: calc(0.875rem + env(safe-area-inset-bottom, 0px));
+    gap: 0.625rem;
+    padding: 0.75rem 1rem;
+    padding-bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px));
   }
   .consent__text {
     max-width: none;
@@ -2617,6 +2618,12 @@ td.compare-us .compare-saving {
   .consent__btn {
     min-width: 0;
   }
+}
+
+/* The open mobile menu reaches the foot of the screen; the sheet steps aside
+   until it closes. */
+body:has(#nav-menu.is-open) .consent {
+  display: none;
 }
 
 @media print {

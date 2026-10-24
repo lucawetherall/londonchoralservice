@@ -24,6 +24,14 @@
     });
     gtag('set', 'ads_data_redaction', true);
     try {
+      // A choice lasts 12 months (lcs-consent-at, ms, written by js/consent.js);
+      // after that it is forgotten here, before anything reads it, and the
+      // sheet asks again. A choice with no date yet is dated by consent.js.
+      var consentAt = +localStorage.getItem('lcs-consent-at');
+      if (consentAt && Date.now() - consentAt > 365 * 864e5) {
+        localStorage.removeItem('lcs-consent');
+        localStorage.removeItem('lcs-consent-at');
+      }
       if (localStorage.getItem('lcs-consent') === 'granted') {
         gtag('consent', 'update', {
           'ad_storage': 'granted',
@@ -1184,8 +1192,9 @@
       .consent__inner {
         flex-direction: column;
         align-items: stretch;
-        padding: 0.875rem 1rem;
-        padding-bottom: calc(0.875rem + env(safe-area-inset-bottom, 0px));
+        gap: 0.625rem;
+        padding: 0.75rem 1rem;
+        padding-bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px));
       }
       .consent__text { max-width: none; }
       .consent__actions { margin-left: 0; }

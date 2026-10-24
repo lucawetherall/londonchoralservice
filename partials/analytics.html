@@ -12,6 +12,14 @@
     });
     gtag('set', 'ads_data_redaction', true);
     try {
+      // A choice lasts 12 months (lcs-consent-at, ms, written by js/consent.js);
+      // after that it is forgotten here, before anything reads it, and the
+      // sheet asks again. A choice with no date yet is dated by consent.js.
+      var consentAt = +localStorage.getItem('lcs-consent-at');
+      if (consentAt && Date.now() - consentAt > 365 * 864e5) {
+        localStorage.removeItem('lcs-consent');
+        localStorage.removeItem('lcs-consent-at');
+      }
       if (localStorage.getItem('lcs-consent') === 'granted') {
         gtag('consent', 'update', {
           'ad_storage': 'granted',

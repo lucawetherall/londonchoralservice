@@ -32,8 +32,17 @@
     'analytics_storage': 'denied'
   };
 
+  // KEY_AT dates the choice; partials/analytics.html forgets it after 12
+  // months, so the sheet asks again.
+  var KEY_AT = 'lcs-consent-at';
   function read() { try { return localStorage.getItem(KEY); } catch (e) { return null; } }
-  function write(v) { try { localStorage.setItem(KEY, v); } catch (e) {} }
+  function write(v) {
+    try { localStorage.setItem(KEY, v); localStorage.setItem(KEY_AT, String(Date.now())); } catch (e) {}
+  }
+  // Choices stored before dates were kept start their 12 months today.
+  function dateOld() {
+    try { if (!localStorage.getItem(KEY_AT)) localStorage.setItem(KEY_AT, String(Date.now())); } catch (e) {}
+  }
 
   function apply(choice) {
     if (typeof window.gtag === 'function') {
@@ -89,9 +98,8 @@
     var ads = document.querySelector('.pe-header') ? 'which Google ads' : 'which of our Google ads';
     banner.innerHTML =
       '<div class="consent__inner">' +
-        '<p class="consent__text">We&rsquo;d like to use cookies to count visits and see ' + ads + ' ' +
-        'lead to enquiries, and we set none unless you accept. ' +
-        '<a href="/privacy.html#cookies">How we use cookies</a></p>' +
+        '<p class="consent__text">May we use cookies to count visits and see ' + ads + ' ' +
+        'lead to enquiries? <a href="/privacy.html#cookies">How we use cookies</a></p>' +
         '<div class="consent__actions">' +
           '<button type="button" class="consent__btn" data-consent="granted">Accept</button>' +
           '<button type="button" class="consent__btn" data-consent="denied">Reject</button>' +
@@ -148,7 +156,9 @@
 
   function init() {
     var stored = read();
-    if (stored !== 'granted' && stored !== 'denied') {
+    if (stored === 'granted' || stored === 'denied') {
+      dateOld();
+    } else {
       show();
       // First view: move keyboard focus to the sheet, without scrolling, but
       // only if the visitor has not already started using the page.

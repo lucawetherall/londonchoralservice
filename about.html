@@ -24,6 +24,14 @@
     });
     gtag('set', 'ads_data_redaction', true);
     try {
+      // A choice lasts 12 months (lcs-consent-at, ms, written by js/consent.js);
+      // after that it is forgotten here, before anything reads it, and the
+      // sheet asks again. A choice with no date yet is dated by consent.js.
+      var consentAt = +localStorage.getItem('lcs-consent-at');
+      if (consentAt && Date.now() - consentAt > 365 * 864e5) {
+        localStorage.removeItem('lcs-consent');
+        localStorage.removeItem('lcs-consent-at');
+      }
       if (localStorage.getItem('lcs-consent') === 'granted') {
         gtag('consent', 'update', {
           'ad_storage': 'granted',
@@ -477,10 +485,11 @@
     .consent__btn:focus-visible{outline:2px solid var(--color-text,var(--choirStall,#2C2420));outline-offset:3px;}
     .consent__btn[aria-pressed="true"]{text-decoration:underline;text-underline-offset:0.2em;}
     @media (max-width: 760px){.consent{font-size:0.9375rem;}
-    .consent__inner{flex-direction:column;align-items:stretch;padding:0.875rem 1rem;padding-bottom:calc(0.875rem + env(safe-area-inset-bottom,0px));}
+    .consent__inner{flex-direction:column;align-items:stretch;gap:0.625rem;padding:0.75rem 1rem;padding-bottom:calc(0.75rem + env(safe-area-inset-bottom,0px));}
     .consent__text{max-width:none;}
     .consent__actions{margin-left:0;}
     .consent__btn{min-width:0;}}
+    body:has(#nav-menu.is-open) .consent{display:none;}
     @media print{.consent{display:none !important;}}
     @media print{:root{--color-bg:#fff;--color-text:#000;--color-text-mid:#333;--color-accent:#000;--color-rule:#ccc;}
     body{font-size:11pt;line-height:1.5;background:#fff;color:#000;}
@@ -494,8 +503,8 @@
     .pull-quote::before{display:none;}
     h1, h2, h3{break-after:avoid;}}
   </style>
-  <link rel="preload" href="/css/style.css?v=385c5f7b14" as="style" onload="this.onload=null;this.rel='stylesheet'">
-  <noscript><link rel="stylesheet" href="/css/style.css?v=385c5f7b14"></noscript>
+  <link rel="preload" href="/css/style.css?v=76ead049b8" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <noscript><link rel="stylesheet" href="/css/style.css?v=76ead049b8"></noscript>
   <!-- @css-end -->
 
   <link rel="icon" href="assets/favicon.ico" sizes="any">

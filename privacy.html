@@ -24,6 +24,14 @@
     });
     gtag('set', 'ads_data_redaction', true);
     try {
+      // A choice lasts 12 months (lcs-consent-at, ms, written by js/consent.js);
+      // after that it is forgotten here, before anything reads it, and the
+      // sheet asks again. A choice with no date yet is dated by consent.js.
+      var consentAt = +localStorage.getItem('lcs-consent-at');
+      if (consentAt && Date.now() - consentAt > 365 * 864e5) {
+        localStorage.removeItem('lcs-consent');
+        localStorage.removeItem('lcs-consent-at');
+      }
       if (localStorage.getItem('lcs-consent') === 'granted') {
         gtag('consent', 'update', {
           'ad_storage': 'granted',
@@ -456,10 +464,11 @@
     .consent__btn:focus-visible{outline:2px solid var(--color-text,var(--choirStall,#2C2420));outline-offset:3px;}
     .consent__btn[aria-pressed="true"]{text-decoration:underline;text-underline-offset:0.2em;}
     @media (max-width: 760px){.consent{font-size:0.9375rem;}
-    .consent__inner{flex-direction:column;align-items:stretch;padding:0.875rem 1rem;padding-bottom:calc(0.875rem + env(safe-area-inset-bottom,0px));}
+    .consent__inner{flex-direction:column;align-items:stretch;gap:0.625rem;padding:0.75rem 1rem;padding-bottom:calc(0.75rem + env(safe-area-inset-bottom,0px));}
     .consent__text{max-width:none;}
     .consent__actions{margin-left:0;}
     .consent__btn{min-width:0;}}
+    body:has(#nav-menu.is-open) .consent{display:none;}
     @media print{.consent{display:none !important;}}
     @media print{:root{--color-bg:#fff;--color-text:#000;--color-text-mid:#333;--color-accent:#000;--color-rule:#ccc;}
     body{font-size:11pt;line-height:1.5;background:#fff;color:#000;}
@@ -471,8 +480,8 @@
     a[href^="mailto"]::after, a[href^="tel"]::after{content:none;}
     h1, h2, h3{break-after:avoid;}}
   </style>
-  <link rel="preload" href="/css/style.css?v=385c5f7b14" as="style" onload="this.onload=null;this.rel='stylesheet'">
-  <noscript><link rel="stylesheet" href="/css/style.css?v=385c5f7b14"></noscript>
+  <link rel="preload" href="/css/style.css?v=76ead049b8" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <noscript><link rel="stylesheet" href="/css/style.css?v=76ead049b8"></noscript>
   <!-- @css-end -->
 
   <link rel="icon" href="assets/favicon.ico" sizes="any">
@@ -588,7 +597,7 @@
       <div class="prose">
         <h2 id="cookies">Cookies and tracking</h2>
         <p>We use Google Analytics to see which pages are visited and how people find the site. Google Analytics uses Google signals: for visitors signed in to a Google account with ad personalisation turned on, Google adds broad details such as age range, interests and the devices they use, and we see these only as totals. Like the rest of our analytics, it runs only if you allow cookies, and you can turn it off for your account in <a href="https://myadcenter.google.com/" target="_blank" rel="noopener">Google&rsquo;s ad settings</a>. A Google Ads conversion tag records when someone sends an enquiry after clicking one of our advertisements, and when someone taps our phone, email or WhatsApp links. We do not use remarketing.</p>
-        <p>Both tools set cookies only if you allow them. When you first visit, a notice at the foot of the page asks you to choose. If you decline, or make no choice, Google&rsquo;s consent settings stay at &ldquo;denied&rdquo;: no analytics or advertising cookie is written. Google still receives a cookieless signal from each page you open: the page&rsquo;s address, the time and your browser type, with no cookie identifier. If you arrived from one of our ads, that address includes the advert&rsquo;s click reference; the Google Ads tag leaves it out of what it sends, but Google Analytics receives the address as it is. If you allow them, the cookies set are Google Analytics&rsquo; <code>_ga</code> and <code>_ga_*</code> (up to two years) and Google Ads&rsquo; <code>_gcl_au</code> (three months). Your choice is stored in your browser under the name <code>lcs-consent</code> and applies to this site only. You can change it at any time from the &ldquo;Cookie choices&rdquo; link in the footer of every page.</p>
+        <p>Both tools set cookies only if you allow them. When you first visit, a notice at the foot of the page asks you to choose. If you decline, or make no choice, Google&rsquo;s consent settings stay at &ldquo;denied&rdquo;: no analytics or advertising cookie is written. Google still receives a cookieless signal from each page you open: the page&rsquo;s address, the time and your browser type, with no cookie identifier. If you arrived from one of our ads, that address includes the advert&rsquo;s click reference; the Google Ads tag leaves it out of what it sends, but Google Analytics receives the address as it is. If you allow them, the cookies set are Google Analytics&rsquo; <code>_ga</code> and <code>_ga_*</code> (up to two years) and Google Ads&rsquo; <code>_gcl_au</code> (three months). Your choice is stored in your browser under the name <code>lcs-consent</code>, with the date you made it under <code>lcs-consent-at</code>, and applies to this site only. After 12 months the notice asks you again. You can change it at any time from the &ldquo;Cookie choices&rdquo; link in the footer of every page.</p>
         <p>If you allow these cookies and then send an enquiry, the tag also gives Google your email address and phone number in hashed form: your browser turns each one into a scrambled code before it leaves your device. Google matches that code against its own accounts to tell us whether you clicked one of our advertisements first, perhaps on another device, and uses it for that measurement alone. So that the tag can send these after the form has gone, your browser keeps them, with the name of the page you sent the form from, in session storage under the name <code>lcs-lead</code> until our thank-you page opens. That page sends them and deletes the entry at once. If you decline, the tag sends none of this and your browser keeps nothing.</p>
         <p>If you arrived from one of our advertisements and allowed cookies, we also keep the advert&rsquo;s click reference and campaign tags for the rest of your visit and send them with your enquiry. They sit in your browser&rsquo;s session storage under the name <code>lcs-attr</code>, which your browser clears when you close the tab. We add a four-character code made from the click reference to the end of any WhatsApp message or email you start from our contact links, where you can read it or delete it before you send. When an enquiry becomes a booking, we match that code to the click in our Google Ads account and may report the booking to Google Ads with its click reference, so we can spend our advertising budget on the searches that lead to bookings.</p>
         <p>If you arrived from one of our advertisements and did not allow cookies, we keep nothing in your browser. A WhatsApp message, email or enquiry form you start carries a short tag with the name of the page you landed on and of the advertising campaign, such as &ldquo;Ad visit: pricing (wedding-leads)&rdquo;. In a message you can read or delete it before you send; the form adds it as a hidden line. The tag contains nothing from the advert&rsquo;s click reference. When you follow a link to another of our pages, the link carries the tag in the page address (as <code>lcs_av=</code>), so that page adds it too. Links to other websites never carry it. If you allow cookies only after leaving the page you landed on, the click reference is already gone, so your messages and the form carry this tag instead. We use it to count which advertisements bring enquiries.</p>
