@@ -70,6 +70,17 @@ def test_the_automations_plain_forms_are_left_to_the_other_rules():
         assert bash(cmd) is None, cmd
 
 
+def test_singer_confirm_runs_in_lucas_chat_but_never_from_a_subagent():
+    """Owner decision, 24 Oct 2026: confirm needs no --owner (Luca says so in writing), so the hook leaves it to the
+    other rules in his own conversation and denies it from a subagent, however it is quoted."""
+    cmd = f"{PY} scripts/bookings/singer_invoices.py confirm 1789828736363141700"
+    assert bash(cmd) is None
+    for c in (cmd, f"{PY} scripts/bookings/singer_invoices.py 'confirm' 1789828736363141700",
+              f"cd x && {PY} scripts/bookings/singer_invoices.py  confirm 1"):
+        assert bash(c, agent_id="a1") == "deny", c
+    assert bash(f"{PY} scripts/bookings/singer_invoices.py status", agent_id="a1") is None
+
+
 def test_replace_chained_or_disguised_still_asks():
     for cmd in (".venv/bin/python scripts/bookings/imap_draft.py replace '<a@b.com>' '<c@d.com>'; rm x",
                 ".venv/bin/python scripts/bookings/imap_draft.py replace $(cat ids)"):
