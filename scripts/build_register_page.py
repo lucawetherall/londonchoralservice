@@ -199,6 +199,8 @@ def enquiry_form(source_page, subject, enquiring_as_default=None, intro=None):
             <input type="hidden" name="utm_term" value="">
             <input type="hidden" name="utm_content" value="">
             <input type="hidden" name="gclid" value="">
+            <input type="hidden" name="gbraid" value="">
+            <input type="hidden" name="wbraid" value="">
             <input type="hidden" name="time_on_page" value="">
             <input type="checkbox" name="botcheck" class="sr-only" tabindex="-1" aria-hidden="true" autocomplete="off">
 
@@ -309,6 +311,7 @@ def enquiry_form(source_page, subject, enquiring_as_default=None, intro=None):
               <p data-error-msg="network">We could not send your enquiry. Email <a href="mailto:office@londonchoralservice.com">office@londonchoralservice.com</a> or call <a href="tel:+447356042468">+44 7356 042468</a> and we will take it from there.</p>
             </div>
 
+            <p class="pe-check-note">We use your details only to reply and arrange the music. See our <a href="/privacy.html">privacy notice</a>.</p>
             <button type="submit" class="pe-btn">Send enquiry</button>
           </form>
 
@@ -325,6 +328,7 @@ FOOT = '''
   <!-- @include-start partials/private-footer.html -->
   <!-- @include-end partials/private-footer.html -->
 
+  <script src="/js/video.js" defer></script>
   <script src="/js/private-events.js" defer></script>
 </body>
 </html>

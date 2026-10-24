@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <!-- @include-start partials/head-extras.html -->
+<meta name="referrer" content="strict-origin-when-cross-origin">
 <link rel="preload" href="/fonts/cormorant-garamond.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/fonts/source-serif-4.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="manifest" href="/site.webmanifest">
@@ -194,19 +195,43 @@
         }
       } catch (e) {}
     }
-    document.addEventListener('click', function(e) {
-      var a = e.target.closest && e.target.closest('a[href^="tel:"], a[href^="mailto:"], a[href*="wa.me/"]');
-      if (!a) return;
-      var href = a.getAttribute('href');
-      var method = href.indexOf('tel:') === 0 ? 'call' : href.indexOf('mailto:') === 0 ? 'email' : 'whatsapp';
-      var where = a.closest('.mobile-cta') ? 'mobile_bar' : a.closest('.site-footer') ? 'footer' :
+    function lcsWhere(a) {
+      return a.closest('.mobile-cta') ? 'mobile_bar' : a.closest('.site-footer') ? 'footer' :
         a.closest('.site-header') ? 'header' : 'body';
-      if (method !== 'call') lcsLabelMessage(a, method);
-      loadGA();
-      gtag('event', 'contact_click', { 'method': method, 'link_location': where });
-      var label = method === 'call' ? LCS_ADS.call : LCS_ADS.message;
-      if (label) gtag('event', 'conversion', { 'send_to': label, 'value': 1, 'currency': 'GBP' });
-    });
+    }
+    // Enquiry buttons that lead to a form: the on-page #enquiry / #enquire
+    // anchors and the contact page. link_location is the header, footer or
+    // mobile bar, then the hero, then the nearest section's id.
+    function lcsCtaWhere(a) {
+      var where = lcsWhere(a);
+      if (where !== 'body') return where;
+      if (a.closest('.hero, [class*="hero"]')) return 'hero';
+      var sec = a.closest('section[id], [id]');
+      return (sec && sec.id) || 'body';
+    }
+    function lcsClickHandler(e) {
+      // auxclick also reports right-clicks; only a middle-click opens the link.
+      if (e.type === 'auxclick' && e.button !== 1) return;
+      var t = e.target;
+      var a = t && t.closest && t.closest('a[href^="tel:"], a[href^="mailto:"], a[href*="wa.me/"]');
+      if (a) {
+        var href = a.getAttribute('href');
+        var method = href.indexOf('tel:') === 0 ? 'call' : href.indexOf('mailto:') === 0 ? 'email' : 'whatsapp';
+        if (method !== 'call') lcsLabelMessage(a, method);
+        loadGA();
+        gtag('event', 'contact_click', { 'method': method, 'link_location': lcsWhere(a) });
+        var label = method === 'call' ? LCS_ADS.call : LCS_ADS.message;
+        if (label) gtag('event', 'conversion', { 'send_to': label, 'value': 1, 'currency': 'GBP' });
+        return;
+      }
+      var cta = t && t.closest && t.closest('a[href*="#enquiry"], a[href*="#enquire"], a[href*="contact.html"]');
+      if (cta) {
+        loadGA();
+        gtag('event', 'cta_click', { 'link_location': lcsCtaWhere(cta), 'link_url': cta.getAttribute('href') });
+      }
+    }
+    document.addEventListener('click', lcsClickHandler);
+    document.addEventListener('auxclick', lcsClickHandler);
 
     // Ad click ID and UTM tags from the landing URL, kept for this tab (only once
     // the visitor has allowed cookies) so an enquiry sent from a later page still
@@ -370,6 +395,7 @@
     @font-face{font-family:'Source Serif 4';font-style:italic;font-weight:400;font-display:swap;src:url('/fonts/source-serif-4-italic.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;}
     *, *::before, *::after{box-sizing:border-box;margin:0;padding:0;}
     html{-webkit-text-size-adjust:100%;scroll-behavior:smooth;}
+    @media (max-width: 1080px){html{scroll-padding-bottom:5.5rem;}}
     @media (prefers-reduced-motion: reduce){html{scroll-behavior:auto;}}
     body{font-family:var(--font-body);font-size:var(--text-base);line-height:var(--leading-normal);color:var(--color-text);background-color:var(--color-bg);-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;}
     h1, h2, h3, h4, h5, h6{font-family:var(--font-heading);line-height:var(--leading-tight);text-wrap:balance;}
@@ -407,7 +433,7 @@
     .nav-links a{font-family:var(--font-heading);font-size:var(--text-sm);font-weight:500;letter-spacing:0.05em;text-transform:uppercase;color:var(--color-text);text-decoration:none;transition:color var(--transition-fast);white-space:nowrap;}
     .nav-links a:hover{color:var(--color-accent);}
     .nav-links a[aria-current="page"]{text-decoration-line:underline;text-decoration-thickness:1px;text-decoration-color:var(--color-accent);text-underline-offset:0.45em;}
-    .nav-toggle{display:none;background:none;border:none;cursor:pointer;padding:var(--space-sm);width:2.5rem;height:2.5rem;position:relative;}
+    .nav-toggle{display:none;background:none;border:none;cursor:pointer;padding:var(--space-sm);width:2.75rem;height:2.75rem;flex-shrink:0;position:relative;}
     .nav-toggle:hover, .nav-toggle:focus-visible{background-color:var(--color-bg-alt);border-radius:4px;}
     .nav-toggle-bar, .nav-toggle-bar::before, .nav-toggle-bar::after{display:block;width:1.5rem;height:2px;background-color:var(--color-text);position:absolute;left:50%;transform:translateX(-50%);transition:all var(--transition-base);}
     .nav-toggle-bar{top:50%;transform:translate(-50%,-50%);}
@@ -417,6 +443,7 @@
     .nav-toggle[aria-expanded="true"] .nav-toggle-bar::before{top:0;transform:translateX(-50%) rotate(45deg);}
     .nav-toggle[aria-expanded="true"] .nav-toggle-bar::after{top:0;transform:translateX(-50%) rotate(-45deg);}
     @media (max-width: 1080px){.nav-toggle{display:block;flex-shrink:0;}
+    .site-name{white-space:normal;}
     .nav-links{display:none;position:absolute;top:100%;left:0;right:0;flex-direction:column;background-color:var(--color-bg);border-bottom:1px solid var(--color-rule);padding:var(--space-lg);gap:0;z-index:100;}
     .nav-links.is-open{display:flex;}
     .nav-links a{display:block;padding:var(--space-md) 0;font-size:var(--text-base);border-bottom:1px solid var(--color-rule);}
@@ -438,7 +465,7 @@
     .breadcrumb ol{list-style:none;padding:0;margin:0;display:flex;flex-wrap:wrap;gap:0;font-family:var(--font-body);font-size:var(--text-sm);color:var(--color-text-mid);}
     .breadcrumb li::after{content:'\203A';margin-inline:0.5em;color:var(--color-rule);}
     .breadcrumb li:last-child::after{display:none;}
-    .breadcrumb a{color:var(--color-text-mid);text-decoration:none;}
+    .breadcrumb a{color:var(--color-text-mid);text-decoration:none;display:inline-block;padding-block:0.3em;margin-block:-0.3em;}
     .breadcrumb a:hover{color:var(--color-accent);}
     .mobile-cta{display:none;}
     @media (max-width: 1080px){.mobile-cta{display:flex;position:fixed;bottom:0;left:0;right:0;z-index:200;background-color:var(--color-bg);border-top:1px solid var(--color-rule);padding:var(--space-sm) var(--space-lg);padding-bottom:calc(var(--space-sm) + env(safe-area-inset-bottom,0px));gap:var(--space-sm);align-items:center;justify-content:center;transition:transform 0.3s ease;}
@@ -527,8 +554,8 @@
     h1, h2, h3{break-after:avoid;}
     img{max-width:100% !important;}}
   </style>
-  <link rel="preload" href="/css/style.css?v=e8f3925abf" as="style" onload="this.onload=null;this.rel='stylesheet'">
-  <noscript><link rel="stylesheet" href="/css/style.css?v=e8f3925abf"></noscript>
+  <link rel="preload" href="/css/style.css?v=ca6f97768e" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <noscript><link rel="stylesheet" href="/css/style.css?v=ca6f97768e"></noscript>
   <!-- @css-end -->
 
   <link rel="icon" href="assets/favicon.ico" sizes="any">
@@ -547,8 +574,9 @@
         "description": "Professional choirs and singers for funeral services across the United Kingdom.",
         "url": "https://londonchoralservice.com/funerals.html",
         "provider": {
-          "@type": "LocalBusiness",
-          "@id": "https://londonchoralservice.com/#organization"
+          "@type": ["LocalBusiness", "PerformingGroup", "MusicGroup"],
+          "@id": "https://londonchoralservice.com/#organization",
+          "name": "The London Choral Service"
         },
         "areaServed": {
           "@type": "Country",
@@ -610,7 +638,7 @@
             "name": "How much notice do you need for a funeral?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "We take bookings at short notice and confirm availability the same day. Most funerals come to us with one or two weeks' notice, and we have covered services booked within forty-eight hours. Tell us the date and we will tell you straight away whether we can be there."
+              "text": "We take bookings at short notice. Most funerals come to us with one or two weeks' notice, and we have covered services booked within forty-eight hours. Tell us the date and we confirm availability within one working day, usually the same day. If the service is in the next 48 hours, call us on 07356 042468."
             }
           },
           {
@@ -635,6 +663,14 @@
             "acceptedAnswer": {
               "@type": "Answer",
               "text": "That is one of the main reasons families book us. Trained voices carry the melody, so a congregation that half-remembers a hymn will still join in. It is the difference between a silent room and one that sings."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "How does payment work?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Half the fee is a non-refundable deposit that secures your date. You can pay the fee in one payment or in two equal instalments, with the second due 48 hours before the start; the first payment is due within seven days of confirmation. If the event is ten days away or fewer, the fee is a single payment. If you cancel more than seven days before the date, we refund anything you have paid beyond the deposit. If you cancel fewer than seven days before, the full fee is due. The full conditions are in our terms of booking."
             }
           },
           {
@@ -670,8 +706,6 @@
             <li><a href="/weddings.html">Weddings</a></li>
             <li><a href="/funerals.html">Funerals</a></li>
             <li><a href="/corporate.html">Corporate</a></li>
-            <li><a href="/christmas.html">Christmas carol singers</a></li>
-            <li><a href="/christmas-carol-services.html">Church carol services</a></li>
             <li><a href="/private-events.html">Private Events</a></li>
             <li><a href="/destinations/">Weddings Abroad</a></li>
             <li class="dropdown-separator" aria-hidden="true"></li>
@@ -704,7 +738,15 @@
             <li><a href="/music-guides/">Browse all</a></li>
           </ul>
         </li>
-        <li><a href="/christmas.html">Christmas</a></li>
+        <li class="has-dropdown">
+          <a href="/christmas.html" aria-expanded="false" class="dropdown-trigger">Christmas<span class="dropdown-caret" aria-hidden="true"></span></a>
+          <ul class="dropdown-menu">
+            <li><a href="/christmas.html">Christmas carol singers</a></li>
+            <li><a href="/christmas-carol-services.html">Church carol services</a></li>
+            <li><a href="/christmas-pricing.html">Christmas prices</a></li>
+            <li><a href="/christmas-listen.html">Hear the carols</a></li>
+          </ul>
+        </li>
         <li><a href="/pricing.html">Pricing</a></li>
         <li><a href="/contact.html">Contact</a></li>
       </ul>
@@ -732,6 +774,7 @@
           <p class="hero-ctas">
             <a href="#enquiry" class="btn-link">Talk to us about funeral music</a>
             <a href="https://wa.me/447356042468" target="_blank" rel="noopener" class="btn-link btn-link--secondary btn-link--icon" data-whatsapp><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" aria-hidden="true" focusable="false"><path fill="currentColor" d="M16 .395a15.6 15.6 0 0 0-13.534 23.36L0 32l8.43-2.42A15.6 15.6 0 0 0 31.6 16.005 15.6 15.6 0 0 0 16 .395Zm0 28.41a12.78 12.78 0 0 1-6.523-1.79l-.467-.28-4.846 1.39 1.42-4.738-.305-.486A12.78 12.78 0 0 1 16 3.214a12.81 12.81 0 0 1 12.81 12.81A12.81 12.81 0 0 1 16 28.805Zm7.025-9.575c-.385-.193-2.275-1.122-2.628-1.25-.353-.13-.609-.193-.866.193s-.994 1.25-1.218 1.508c-.225.257-.45.29-.834.097-.385-.193-1.626-.6-3.097-1.911-1.144-1.02-1.916-2.28-2.14-2.665-.225-.385-.024-.594.169-.787.174-.173.385-.45.578-.674.193-.225.257-.385.385-.642.13-.257.064-.482-.032-.674-.097-.193-.866-2.087-1.187-2.857-.312-.75-.628-.65-.866-.66l-.738-.013a1.42 1.42 0 0 0-1.027.482c-.353.385-1.347 1.315-1.347 3.207s1.379 3.72 1.572 3.977c.193.257 2.715 4.146 6.578 5.815.92.397 1.637.633 2.196.81.923.293 1.762.252 2.426.153.74-.11 2.275-.93 2.595-1.829.32-.898.32-1.668.225-1.829-.097-.16-.353-.257-.738-.45Z"/></svg>WhatsApp us</a>
+            <a href="tel:+447356042468" class="btn-link btn-link--secondary">Call 07356 042468</a>
           </p>
         </div>
         <div class="hero-video">
@@ -757,7 +800,7 @@
             <p class="lede">One flat price, and a team chosen for your occasion.</p>
             <ul class="included-list">
               <li><span class="tick" aria-hidden="true">&#10003;</span><span>A one-to-one music consultation with our Artistic Director, Luca Wetherall (Tutor in Music, University of Oxford), who plans your repertoire with you.</span></li>
-              <li><span class="tick" aria-hidden="true">&#10003;</span><span>A handpicked ensemble, matched to your occasion. We choose every singer for you, never send whoever is free from a rota.</span></li>
+              <li><span class="tick" aria-hidden="true">&#10003;</span><span>A handpicked ensemble, matched to the service. We pick each singer for the family and the music.</span></li>
               <li><span class="tick" aria-hidden="true">&#10003;</span><span>All rehearsals, preparation, and sheet music.</span></li>
               <li><span class="tick" aria-hidden="true">&#10003;</span><span>We coordinate with your venue and funeral director.</span></li>
               <li><span class="tick" aria-hidden="true">&#10003;</span><span>A written quote, confirmed before you commit. No hidden fees.</span></li>
@@ -774,7 +817,7 @@
           <div class="step">
             <span class="step-num">1</span>
             <h3>Tell us about the service</h3>
-            <p>Call, email, or use the form below. Luca calls you back within a few hours to discuss the service.</p>
+            <p>Call, email, or use the form below. Luca calls you back within one working day, usually the same day, to discuss the service.</p>
           </div>
           <div class="step">
             <span class="step-num">2</span>
@@ -799,7 +842,7 @@
         <p>We perform in churches, crematoriums, chapels, synagogues, and outdoor spaces across the UK. Most families complete the whole process in two or three short conversations. If time is short, do not wait: most families contact us one or two weeks before the service, but short notice is fine, and we have arranged singers at a few hours&rsquo; notice before.</p>
         <p>We sing at churches, crematoriums, and chapels across the UK &mdash; most often in <a href="areas/london.html">London</a>, <a href="areas/oxford.html">Oxford</a>, and <a href="areas/manchester.html">Manchester</a>, but we travel further when families need us.</p>
         <p>Many of our bookings are for non-religious or humanist services &mdash; celebrations of life held at crematoriums, woodland venues, or community halls. We adapt the music accordingly: secular songs and instrumental pieces work as well as hymns, and a soloist or small ensemble suits the more intimate format. See our guide to <a href="music-guides/non-religious-funeral-music.html">non-religious funeral music</a> and <a href="music-guides/celebration-of-life-music.html">celebration of life music</a> for fuller suggestions.</p>
-        <p>If a musician falls ill we cover the part from within the team. We never cancel a booking for reasons on our side.</p>
+        <p>If a musician falls ill we cover the part from within the team. We cancel only in the most exceptional circumstances, and refund everything you have paid if we do.</p>
 
         <figure class="pull-quote">
           <blockquote><p>&ldquo;I still can&rsquo;t talk about it without welling up. The moment they started singing, the whole room just fell silent. Dad would have been so chuffed.&rdquo;</p></blockquote>
@@ -964,7 +1007,7 @@
             <p>Yes. A family can book us directly, or the funeral director can book us for you. Before the day we speak to the minister or celebrant and the funeral director, agree where the singers stand, and confirm the order of service. If the church has its own organist, we work with them.</p>
 
             <h3>How much notice do you need for a funeral?</h3>
-            <p>We take bookings at short notice and confirm availability the same day. Most funerals come to us with one or two weeks' notice, and we have covered services booked within forty-eight hours. Tell us the date and we will tell you straight away whether we can be there.</p>
+            <p>We take bookings at short notice. Most funerals come to us with one or two weeks' notice, and we have covered services booked within forty-eight hours. Tell us the date and we confirm availability within one working day, usually the same day. If the service is in the next 48 hours, call us on 07356 042468.</p>
 
             <h3>Can you sing at a crematorium as well as a church?</h3>
             <p>Yes. We sing at crematoria, churches, cemetery chapels, and woodland burial sites across the UK. A soloist or small group suits the shorter crematorium slot; a larger choir suits a church service with hymns. We match the ensemble to the venue and the time you have.</p>
@@ -974,6 +1017,9 @@
 
             <h3>Will the singers lead the hymns so guests feel confident?</h3>
             <p>That is one of the main reasons families book us. Trained voices carry the melody, so a congregation that half-remembers a hymn will still join in. It is the difference between a silent room and one that sings.</p>
+
+            <h3>How does payment work?</h3>
+            <p>Half the fee is a non-refundable deposit that secures your date. You can pay the fee in one payment or in two equal instalments, with the second due 48 hours before the start; the first payment is due within seven days of confirmation. If the event is ten days away or fewer, the fee is a single payment. If you cancel more than seven days before the date, we refund anything you have paid beyond the deposit. If you cancel fewer than seven days before, the full fee is due. The full conditions are in our <a href="/terms.html">terms of booking</a>.</p>
 
             <h3>Who will I be booking with?</h3>
             <p>The London Choral Service is the trading name of Alma Consort Ltd, and that is the company name you will see on your booking confirmation and invoice.</p>
@@ -985,7 +1031,7 @@
     <section class="section" id="enquiry">
       <div class="prose">
         <h2>Speak to us about funeral music</h2>
-        <p>Tell us about the service and we&rsquo;ll come back with music suggestions. Luca reads every enquiry and replies the same day.</p>
+        <p>Tell us about the service and we&rsquo;ll come back with music suggestions. Luca reads every enquiry and replies within one working day, usually the same day.</p>
 
         <div class="form-status form-status--success" data-visible="false" role="alert">
           <p>Thank you &mdash; we&rsquo;ll be in touch shortly.</p>
@@ -1055,6 +1101,7 @@
             <p class="form-check-note"><a href="/privacy.html#ad-measurement">How we use this</a></p>
             <div class="h-captcha" data-captcha="true"></div>
             <p class="form-error" id="captcha-error" role="alert">Please tick the box above to confirm you&rsquo;re not a robot, then try again.</p>
+            <p class="text-sm text-mid" style="margin-bottom: var(--space-sm)">We use your details only to reply and arrange the music. See our <a href="/privacy.html">privacy notice</a>.</p>
             <button type="submit" class="btn">Send enquiry</button>
           </div>
         </form>
@@ -1065,7 +1112,7 @@
         </figure>
 
         <p>Text us on WhatsApp for the fastest reply, or call us on <a href="tel:+447356042468"><strong>07356 042468</strong></a></p>
-        <p class="text-sm text-mid">Luca reads every enquiry and replies the same working day, usually within a few hours.</p>
+        <p class="text-sm text-mid">Luca reads every enquiry and replies within one working day, usually the same day.</p>
         <p class="text-sm text-mid">Are you a funeral director? <a href="for-funeral-directors.html">How we work with funeral directors</a>.</p>
       </div>
     </section>
@@ -1145,7 +1192,7 @@
       <p class="text-xs text-mid">
         Areas we serve: <a href="/areas/london.html">London</a> &middot; <a href="/areas/birmingham.html">Birmingham</a> &middot; <a href="/areas/manchester.html">Manchester</a> &middot; <a href="/areas/liverpool.html">Liverpool</a> &middot; <a href="/areas/oxford.html">Oxford</a> &middot; <a href="/areas/cambridge.html">Cambridge</a> &middot; <a href="/areas/reading.html">Reading</a> &middot; <a href="/areas/slough-maidenhead.html">Slough &amp; Maidenhead</a> &middot; <a href="/areas/guildford.html">Guildford</a> &middot; <a href="/areas/brighton.html">Brighton</a> &middot; <a href="/areas/chester.html">Chester</a> &middot; <a href="/areas/st-albans.html">St Albans</a> &middot; <a href="/areas/canterbury.html">Canterbury</a> &middot; <a href="/areas/windsor.html">Windsor</a> &middot; <a href="/areas/winchester.html">Winchester</a> &middot; <a href="/areas/salisbury.html">Salisbury</a> &middot; <a href="/areas/bath.html">Bath</a> &middot; <a href="/areas/chelmsford.html">Chelmsford</a> &middot; <a href="/areas/rochester.html">Rochester</a> &middot; <a href="/areas/">All areas</a>
       </p>
-      <p class="text-xs text-mid">The London Choral Service is the operating name of Alma Consort Ltd, registered in England and Wales, company no. 16785727. Based in London, serving the whole of the United Kingdom. Public liability insurance held.</p>
+      <p class="text-xs text-mid">The London Choral Service is the operating name of Alma Consort Ltd, registered in England and Wales, company no. 16785727, registered office 20 Wenlock Road, London N1 7GU. Based in London, serving the whole of the United Kingdom. Public liability insurance held.</p>
       <p class="text-xs text-mid">&copy; <span data-year>2026</span> The London Choral Service. All rights reserved.</p>
     </div>
   </footer>

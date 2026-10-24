@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <!-- @include-start partials/head-extras.html -->
+<meta name="referrer" content="strict-origin-when-cross-origin">
 <link rel="preload" href="/fonts/cormorant-garamond.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/fonts/source-serif-4.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="manifest" href="/site.webmanifest">
@@ -194,19 +195,43 @@
         }
       } catch (e) {}
     }
-    document.addEventListener('click', function(e) {
-      var a = e.target.closest && e.target.closest('a[href^="tel:"], a[href^="mailto:"], a[href*="wa.me/"]');
-      if (!a) return;
-      var href = a.getAttribute('href');
-      var method = href.indexOf('tel:') === 0 ? 'call' : href.indexOf('mailto:') === 0 ? 'email' : 'whatsapp';
-      var where = a.closest('.mobile-cta') ? 'mobile_bar' : a.closest('.site-footer') ? 'footer' :
+    function lcsWhere(a) {
+      return a.closest('.mobile-cta') ? 'mobile_bar' : a.closest('.site-footer') ? 'footer' :
         a.closest('.site-header') ? 'header' : 'body';
-      if (method !== 'call') lcsLabelMessage(a, method);
-      loadGA();
-      gtag('event', 'contact_click', { 'method': method, 'link_location': where });
-      var label = method === 'call' ? LCS_ADS.call : LCS_ADS.message;
-      if (label) gtag('event', 'conversion', { 'send_to': label, 'value': 1, 'currency': 'GBP' });
-    });
+    }
+    // Enquiry buttons that lead to a form: the on-page #enquiry / #enquire
+    // anchors and the contact page. link_location is the header, footer or
+    // mobile bar, then the hero, then the nearest section's id.
+    function lcsCtaWhere(a) {
+      var where = lcsWhere(a);
+      if (where !== 'body') return where;
+      if (a.closest('.hero, [class*="hero"]')) return 'hero';
+      var sec = a.closest('section[id], [id]');
+      return (sec && sec.id) || 'body';
+    }
+    function lcsClickHandler(e) {
+      // auxclick also reports right-clicks; only a middle-click opens the link.
+      if (e.type === 'auxclick' && e.button !== 1) return;
+      var t = e.target;
+      var a = t && t.closest && t.closest('a[href^="tel:"], a[href^="mailto:"], a[href*="wa.me/"]');
+      if (a) {
+        var href = a.getAttribute('href');
+        var method = href.indexOf('tel:') === 0 ? 'call' : href.indexOf('mailto:') === 0 ? 'email' : 'whatsapp';
+        if (method !== 'call') lcsLabelMessage(a, method);
+        loadGA();
+        gtag('event', 'contact_click', { 'method': method, 'link_location': lcsWhere(a) });
+        var label = method === 'call' ? LCS_ADS.call : LCS_ADS.message;
+        if (label) gtag('event', 'conversion', { 'send_to': label, 'value': 1, 'currency': 'GBP' });
+        return;
+      }
+      var cta = t && t.closest && t.closest('a[href*="#enquiry"], a[href*="#enquire"], a[href*="contact.html"]');
+      if (cta) {
+        loadGA();
+        gtag('event', 'cta_click', { 'link_location': lcsCtaWhere(cta), 'link_url': cta.getAttribute('href') });
+      }
+    }
+    document.addEventListener('click', lcsClickHandler);
+    document.addEventListener('auxclick', lcsClickHandler);
 
     // Ad click ID and UTM tags from the landing URL, kept for this tab (only once
     // the visitor has allowed cookies) so an enquiry sent from a later page still
@@ -370,6 +395,7 @@
     @font-face{font-family:'Source Serif 4';font-style:italic;font-weight:400;font-display:swap;src:url('/fonts/source-serif-4-italic.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;}
     *, *::before, *::after{box-sizing:border-box;margin:0;padding:0;}
     html{-webkit-text-size-adjust:100%;scroll-behavior:smooth;}
+    @media (max-width: 1080px){html{scroll-padding-bottom:5.5rem;}}
     @media (prefers-reduced-motion: reduce){html{scroll-behavior:auto;}}
     body{font-family:var(--font-body);font-size:var(--text-base);line-height:var(--leading-normal);color:var(--color-text);background-color:var(--color-bg);-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;}
     h1, h2, h3, h4, h5, h6{font-family:var(--font-heading);line-height:var(--leading-tight);text-wrap:balance;}
@@ -409,7 +435,7 @@
     .nav-links a{font-family:var(--font-heading);font-size:var(--text-sm);font-weight:500;letter-spacing:0.05em;text-transform:uppercase;color:var(--color-text);text-decoration:none;transition:color var(--transition-fast);white-space:nowrap;}
     .nav-links a:hover{color:var(--color-accent);}
     .nav-links a[aria-current="page"]{text-decoration-line:underline;text-decoration-thickness:1px;text-decoration-color:var(--color-accent);text-underline-offset:0.45em;}
-    .nav-toggle{display:none;background:none;border:none;cursor:pointer;padding:var(--space-sm);width:2.5rem;height:2.5rem;position:relative;}
+    .nav-toggle{display:none;background:none;border:none;cursor:pointer;padding:var(--space-sm);width:2.75rem;height:2.75rem;flex-shrink:0;position:relative;}
     .nav-toggle:hover, .nav-toggle:focus-visible{background-color:var(--color-bg-alt);border-radius:4px;}
     .nav-toggle-bar, .nav-toggle-bar::before, .nav-toggle-bar::after{display:block;width:1.5rem;height:2px;background-color:var(--color-text);position:absolute;left:50%;transform:translateX(-50%);transition:all var(--transition-base);}
     .nav-toggle-bar{top:50%;transform:translate(-50%,-50%);}
@@ -419,6 +445,7 @@
     .nav-toggle[aria-expanded="true"] .nav-toggle-bar::before{top:0;transform:translateX(-50%) rotate(45deg);}
     .nav-toggle[aria-expanded="true"] .nav-toggle-bar::after{top:0;transform:translateX(-50%) rotate(-45deg);}
     @media (max-width: 1080px){.nav-toggle{display:block;flex-shrink:0;}
+    .site-name{white-space:normal;}
     .nav-links{display:none;position:absolute;top:100%;left:0;right:0;flex-direction:column;background-color:var(--color-bg);border-bottom:1px solid var(--color-rule);padding:var(--space-lg);gap:0;z-index:100;}
     .nav-links.is-open{display:flex;}
     .nav-links a{display:block;padding:var(--space-md) 0;font-size:var(--text-base);border-bottom:1px solid var(--color-rule);}
@@ -441,11 +468,20 @@
     .pricing-price{text-align:left;margin-top:0;}}
     @media (max-width: 599px){td[data-label]::before{content:attr(data-label);display:block;font-size:var(--text-xs);font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--color-text-mid);margin-bottom:var(--space-xs);}}
     .guide-meta{font-family:var(--font-body);font-size:var(--text-sm);color:var(--color-text-mid);letter-spacing:0.02em;}
+    .btn-link{display:inline-block;font-family:var(--font-heading);font-weight:500;font-size:var(--text-base);letter-spacing:0.02em;padding:var(--space-md) var(--space-2xl);background-color:var(--color-accent);color:var(--color-bg);text-decoration:none;border:none;cursor:pointer;transition:background-color var(--transition-fast);}
+    .btn-link:hover{background-color:var(--color-accent-hover);color:var(--color-bg);}
+    .btn-link:visited, .btn-link:active{color:var(--color-bg);}
+    .btn-link:focus-visible{outline:2px solid var(--color-text);outline-offset:2px;}
+    @media (max-width: 480px){.btn, .btn-link{padding-inline:var(--space-lg);}}
+    .btn-link--secondary, .btn-link--secondary:visited, .btn-link--secondary:active{background-color:transparent;color:var(--color-accent);box-shadow:inset 0 0 0 1px var(--color-accent);}
+    .btn-link--secondary:hover{background-color:var(--color-accent);color:var(--color-bg);}
+    .btn-link--icon{display:inline-flex;align-items:center;gap:0.55em;}
+    .btn-link--icon svg{width:0.85em;height:0.85em;flex-shrink:0;opacity:0.92;}
     .breadcrumb{margin-bottom:var(--space-lg);}
     .breadcrumb ol{list-style:none;padding:0;margin:0;display:flex;flex-wrap:wrap;gap:0;font-family:var(--font-body);font-size:var(--text-sm);color:var(--color-text-mid);}
     .breadcrumb li::after{content:'\203A';margin-inline:0.5em;color:var(--color-rule);}
     .breadcrumb li:last-child::after{display:none;}
-    .breadcrumb a{color:var(--color-text-mid);text-decoration:none;}
+    .breadcrumb a{color:var(--color-text-mid);text-decoration:none;display:inline-block;padding-block:0.3em;margin-block:-0.3em;}
     .breadcrumb a:hover{color:var(--color-accent);}
     .mobile-cta{display:none;}
     @media (max-width: 1080px){.mobile-cta{display:flex;position:fixed;bottom:0;left:0;right:0;z-index:200;background-color:var(--color-bg);border-top:1px solid var(--color-rule);padding:var(--space-sm) var(--space-lg);padding-bottom:calc(var(--space-sm) + env(safe-area-inset-bottom,0px));gap:var(--space-sm);align-items:center;justify-content:center;transition:transform 0.3s ease;}
@@ -460,6 +496,7 @@
     .hero > .breadcrumb{grid-area:crumb;}
     .hero > h1{grid-area:head;}
     .hero-text{grid-area:body;}
+    .hero-ctas{display:flex;flex-wrap:wrap;align-items:center;gap:var(--space-sm) var(--space-md);margin-bottom:var(--space-md);}
     .hero-video{grid-area:video;position:sticky;top:var(--space-2xl);margin-top:calc(var(--text-display) * 0.28);}
     .video-embed{position:relative;aspect-ratio:16 / 9;overflow:hidden;}
     .video-thumb{position:absolute;inset:0;width:100%;height:100%;padding:0;border:0;cursor:pointer;background:#000;}
@@ -522,8 +559,8 @@
     h1, h2, h3{break-after:avoid;}
     img{max-width:100% !important;}}
   </style>
-  <link rel="preload" href="/css/style.css?v=e8f3925abf" as="style" onload="this.onload=null;this.rel='stylesheet'">
-  <noscript><link rel="stylesheet" href="/css/style.css?v=e8f3925abf"></noscript>
+  <link rel="preload" href="/css/style.css?v=ca6f97768e" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <noscript><link rel="stylesheet" href="/css/style.css?v=ca6f97768e"></noscript>
   <!-- @css-end -->
 
   <link rel="icon" href="assets/favicon.ico" sizes="any">
@@ -618,7 +655,7 @@
             {
               "@type": "Offer",
               "name": "Chorus (12 singers)",
-              "description": "The full choral experience: powerful, moving, and capable of filling a cathedral. One to four performance pieces plus leading the congregation in all of the hymns.",
+              "description": "The full choral experience: powerful, moving, and capable of filling a large church. One to four performance pieces plus leading the congregation in all of the hymns.",
               "priceSpecification": {
                 "@type": "PriceSpecification",
                 "price": "3000",
@@ -646,7 +683,7 @@
             {
               "@type": "Offer",
               "name": "Instrumentalists",
-              "description": "A soloist, or an ensemble of four and above: pianists, harpists, strings. Every instrument and piece chosen to match your occasion.",
+              "description": "A soloist from £250, or an ensemble of four or more quoted for the venue and programme: pianists, harpists, strings. Every instrument and piece chosen to match your occasion.",
               "priceSpecification": {
                 "@type": "PriceSpecification",
                 "price": "250",
@@ -662,7 +699,7 @@
         }
       },
       {
-        "@type": "LocalBusiness",
+        "@type": ["LocalBusiness", "PerformingGroup", "MusicGroup"],
         "@id": "https://londonchoralservice.com/#organization",
         "name": "The London Choral Service"
       },
@@ -706,7 +743,7 @@
             "name": "Can you provide music at short notice?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Yes. We regularly arrange funeral music at short notice, sometimes within 48 hours. Contact us with your date and we will confirm availability the same day."
+              "text": "Yes. We regularly arrange funeral music at short notice, sometimes within 48 hours. Contact us with your date and we confirm availability within one working day, usually the same day. For weddings and other planned events, around six months ahead is ideal. We take last-minute bookings when the diary allows. Inside ten days we ask for a single payment."
             }
           },
           {
@@ -723,6 +760,14 @@
             "acceptedAnswer": {
               "@type": "Answer",
               "text": "A standard Christmas booking covers up to two hours including breaks, or the length of a church carol service. Longer programmes are possible for a premium fee, quoted upfront. Between sets we can provide background piano if your venue has an instrument."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "How does payment work?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Half the fee is a non-refundable deposit that secures your date. You can pay the fee in one payment or in two equal instalments, with the second due 48 hours before the service; the first payment is due within seven days of confirmation. If the event is ten days away or fewer, the fee is a single payment. If you cancel more than seven days before the date, we refund anything you have paid beyond the deposit. If you cancel fewer than seven days before, the full fee is due. The full conditions are in our terms of booking."
             }
           },
           {
@@ -787,8 +832,6 @@
             <li><a href="/weddings.html">Weddings</a></li>
             <li><a href="/funerals.html">Funerals</a></li>
             <li><a href="/corporate.html">Corporate</a></li>
-            <li><a href="/christmas.html">Christmas carol singers</a></li>
-            <li><a href="/christmas-carol-services.html">Church carol services</a></li>
             <li><a href="/private-events.html">Private Events</a></li>
             <li><a href="/destinations/">Weddings Abroad</a></li>
             <li class="dropdown-separator" aria-hidden="true"></li>
@@ -821,7 +864,15 @@
             <li><a href="/music-guides/">Browse all</a></li>
           </ul>
         </li>
-        <li><a href="/christmas.html">Christmas</a></li>
+        <li class="has-dropdown">
+          <a href="/christmas.html" aria-expanded="false" class="dropdown-trigger">Christmas<span class="dropdown-caret" aria-hidden="true"></span></a>
+          <ul class="dropdown-menu">
+            <li><a href="/christmas.html">Christmas carol singers</a></li>
+            <li><a href="/christmas-carol-services.html">Church carol services</a></li>
+            <li><a href="/christmas-pricing.html">Christmas prices</a></li>
+            <li><a href="/christmas-listen.html">Hear the carols</a></li>
+          </ul>
+        </li>
         <li><a href="/pricing.html">Pricing</a></li>
         <li><a href="/contact.html">Contact</a></li>
       </ul>
@@ -852,6 +903,11 @@
         <div class="hero-text">
           <p class="guide-meta">Last updated: August 2026</p>
           <p class="lede">Flat prices, all in. What you see is what you pay&thinsp;&mdash;&thinsp;no hidden fees, no surprises. No VAT is added. Travel costs may apply for venues beyond Greater London.</p>
+                    <p class="hero-ctas">
+            <a href="/contact.html" class="btn-link">Get a quote for your date</a>
+            <a href="https://wa.me/447356042468" target="_blank" rel="noopener" class="btn-link btn-link--secondary btn-link--icon" data-whatsapp><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" aria-hidden="true" focusable="false"><path fill="currentColor" d="M16 .395a15.6 15.6 0 0 0-13.534 23.36L0 32l8.43-2.42A15.6 15.6 0 0 0 31.6 16.005 15.6 15.6 0 0 0 16 .395Zm0 28.41a12.78 12.78 0 0 1-6.523-1.79l-.467-.28-4.846 1.39 1.42-4.738-.305-.486A12.78 12.78 0 0 1 16 3.214a12.81 12.81 0 0 1 12.81 12.81A12.81 12.81 0 0 1 16 28.805Zm7.025-9.575c-.385-.193-2.275-1.122-2.628-1.25-.353-.13-.609-.193-.866.193s-.994 1.25-1.218 1.508c-.225.257-.45.29-.834.097-.385-.193-1.626-.6-3.097-1.911-1.144-1.02-1.916-2.28-2.14-2.665-.225-.385-.024-.594.169-.787.174-.173.385-.45.578-.674.193-.225.257-.385.385-.642.13-.257.064-.482-.032-.674-.097-.193-.866-2.087-1.187-2.857-.312-.75-.628-.65-.866-.66l-.738-.013a1.42 1.42 0 0 0-1.027.482c-.353.385-1.347 1.315-1.347 3.207s1.379 3.72 1.572 3.977c.193.257 2.715 4.146 6.578 5.815.92.397 1.637.633 2.196.81.923.293 1.762.252 2.426.153.74-.11 2.275-.93 2.595-1.829.32-.898.32-1.668.225-1.829-.097-.16-.353-.257-.738-.45Z"/></svg>WhatsApp us</a>
+            <a href="tel:+447356042468" class="btn-link btn-link--secondary">Call 07356 042468</a>
+          </p>
           <hr class="rule">
         </div>
       </div>
@@ -878,7 +934,7 @@
                 <strong>Soloist</strong>
               </td>
               <td class="pricing-detail">
-                One trained singer performs up to three pieces and leads the congregation through all the hymns. In smaller chapels and crematoriums, a soloist sits close to the guests, and people often remark on how personal it feels. We match the singer&rsquo;s voice type to your chosen repertoire. Most families spend more on flowers than on a singer who carries the entire service. See our <a href="music-guides/funeral-music-guide.html">funeral music guide</a> or <a href="music-guides/wedding-ceremony-music.html">wedding music guide</a> for help choosing pieces.
+                One trained singer performs up to three pieces and leads the congregation through all the hymns. In a small chapel or crematorium a soloist stands close to the guests. We match the singer&rsquo;s voice type to your chosen repertoire. See our <a href="music-guides/funeral-music-guide.html">funeral music guide</a> or <a href="music-guides/wedding-ceremony-music.html">wedding music guide</a> for help choosing pieces.
               </td>
               <td class="pricing-price">
                 From &pound;250              </td>
@@ -922,7 +978,7 @@
                 <span class="pricing-sub">8 singers</span>
               </td>
               <td class="pricing-detail">
-                Eight singers suit large churches and cathedrals where sound needs to reach the back rows. The choir can split into eight-part harmony for pieces like Stanford or Parry. Up to three performance pieces plus all hymns. Eight voices in a cathedral acoustic produce a sound people describe years later.
+                Eight singers suit large churches, and cathedrals with the church&rsquo;s permission, where sound needs to reach the back rows. The choir can split into eight-part harmony for pieces like Stanford or Parry. Up to three performance pieces plus all hymns.
               </td>
               <td class="pricing-price">
                 From &pound;2,000              </td>
@@ -933,7 +989,7 @@
                 <span class="pricing-sub">12 singers</span>
               </td>
               <td class="pricing-detail">
-                Twelve singers fill even the largest cathedrals and concert halls. They handle complex works that smaller groups cannot attempt, from Fauré&rsquo;s <i>Requiem</i> excerpts to large-scale anthem arrangements. Up to four performance pieces plus all hymns.
+                Twelve singers fill even the largest churches and concert halls, and a cathedral with the church&rsquo;s permission. They handle complex works that smaller groups cannot attempt, from Fauré&rsquo;s <i>Requiem</i> excerpts to large-scale anthem arrangements. Up to four performance pieces plus all hymns.
               </td>
               <td class="pricing-price">
                 From &pound;3,000              </td>
@@ -962,7 +1018,7 @@
                 Your organist or pianist plays hymn accompaniment and up to three performance pieces. If the venue has a pipe organ, we send an organist experienced with that instrument. For venues without one, we can bring a portable keyboard (additional costs may apply). Priced at &pound;250, whether booked alone or added to a choir booking.
               </td>
               <td class="pricing-price">
-                From &pound;250              </td>
+                &pound;250              </td>
             </tr>
             <tr>
               <td class="pricing-name">
@@ -970,7 +1026,7 @@
                 <span class="pricing-sub">Pianists, harpists, strings</span>
               </td>
               <td class="pricing-detail">
-                A soloist, or an ensemble of four and above, chosen to suit your venue and programme. A harpist works well for arrivals music at weddings; a string quartet suits a memorial or celebration of life. We handle all the booking and coordination. Instrument hire and transport are included in the quoted price.
+                A soloist from &pound;250. Ensembles of four or more are quoted for the venue and programme. A harpist works well for arrivals music at weddings; a string quartet suits a memorial or celebration of life. We handle all the booking and coordination. Instrument hire and transport are included in the quoted price.
               </td>
               <td class="pricing-price">
                 From &pound;250              </td>
@@ -986,7 +1042,7 @@
             <p class="lede">One flat price, and a team chosen for your occasion.</p>
             <ul class="included-list">
               <li><span class="tick" aria-hidden="true">&#10003;</span><span>A one-to-one music consultation with our Artistic Director, Luca Wetherall (Tutor in Music, University of Oxford), who plans your repertoire with you.</span></li>
-              <li><span class="tick" aria-hidden="true">&#10003;</span><span>A handpicked ensemble, matched to your occasion. We choose every singer for you, never send whoever is free from a rota.</span></li>
+              <li><span class="tick" aria-hidden="true">&#10003;</span><span>A handpicked ensemble, matched to your occasion. We pick each singer for your booking.</span></li>
               <li><span class="tick" aria-hidden="true">&#10003;</span><span>All rehearsals, preparation, and sheet music.</span></li>
               <li><span class="tick" aria-hidden="true">&#10003;</span><span>We coordinate with your venue, funeral director, or wedding planner.</span></li>
               <li><span class="tick" aria-hidden="true">&#10003;</span><span>A written quote, confirmed before you commit. No hidden fees.</span></li>
@@ -1044,7 +1100,7 @@
         <!-- @include-end partials/care-strip.html -->
         <section class="section">
           <div class="prose">
-            <p>Most funeral bookings come at short notice; contact us and we will confirm availability the same day. For funerals and weddings in <a href="areas/london.html">London</a>, there are no travel costs. If you are still deciding on repertoire, our <a href="music-guides/celebration-of-life-music.html">celebration of life music</a> and <a href="music-guides/funeral-songs.html">funeral songs</a> guides are good starting points.</p>
+            <p>Most funeral bookings come at short notice; contact us and we confirm availability within one working day, usually the same day. For funerals and weddings in <a href="areas/london.html">London</a>, there are no travel costs. If you are still deciding on repertoire, our <a href="music-guides/celebration-of-life-music.html">celebration of life music</a> and <a href="music-guides/funeral-songs.html">funeral songs</a> guides are good starting points.</p>
           </div>
         </section>
 
@@ -1082,13 +1138,16 @@
         <p>Yes. <a href="contact.html">Get in touch</a> with the date, venue, and any details about the occasion. We will send a written quote within one working day. There is no obligation and no charge for the quote itself.</p>
 
         <h3>Can you provide music at short notice?</h3>
-        <p>Yes. We regularly arrange funeral music at short notice, sometimes within 48 hours. Contact us with your date and we will confirm availability the same day. For weddings and other planned events, around six months ahead is ideal, and last-minute bookings are absolutely fine.</p>
+        <p>Yes. We regularly arrange funeral music at short notice, sometimes within 48 hours. Contact us with your date and we confirm availability within one working day, usually the same day. For weddings and other planned events, around six months ahead is ideal. We take last-minute bookings when the diary allows. Inside ten days we ask for a single payment.</p>
 
         <h3>Do your prices go up at Christmas?</h3>
         <p>No. December bookings are charged at the same rates as the rest of the year, inclusive of fees and travel within Greater London, with no VAT added. The exceptions are Christmas Eve and Christmas Day, which carry a premium of around 25%, confirmed in your written quote before you book.</p>
 
         <h3>How long does a Christmas carol booking last?</h3>
         <p>A standard Christmas booking covers up to two hours including breaks, or the length of a church carol service. Longer programmes are possible for a premium fee, quoted upfront. Between sets we can provide background piano if your venue has an instrument.</p>
+
+        <h3>How does payment work?</h3>
+        <p>Half the fee is a non-refundable deposit that secures your date. You can pay the fee in one payment or in two equal instalments, with the second due 48 hours before the service; the first payment is due within seven days of confirmation. If the event is ten days away or fewer, the fee is a single payment. If you cancel more than seven days before the date, we refund anything you have paid beyond the deposit. If you cancel fewer than seven days before, the full fee is due. The full conditions are in our <a href="/terms.html">terms of booking</a>.</p>
 
         <h3>Who will I be booking with?</h3>
         <p>The London Choral Service is the trading name of Alma Consort Ltd, and that is the company name you will see on your booking confirmation and invoice.</p>
@@ -1171,7 +1230,7 @@
       <p class="text-xs text-mid">
         Areas we serve: <a href="/areas/london.html">London</a> &middot; <a href="/areas/birmingham.html">Birmingham</a> &middot; <a href="/areas/manchester.html">Manchester</a> &middot; <a href="/areas/liverpool.html">Liverpool</a> &middot; <a href="/areas/oxford.html">Oxford</a> &middot; <a href="/areas/cambridge.html">Cambridge</a> &middot; <a href="/areas/reading.html">Reading</a> &middot; <a href="/areas/slough-maidenhead.html">Slough &amp; Maidenhead</a> &middot; <a href="/areas/guildford.html">Guildford</a> &middot; <a href="/areas/brighton.html">Brighton</a> &middot; <a href="/areas/chester.html">Chester</a> &middot; <a href="/areas/st-albans.html">St Albans</a> &middot; <a href="/areas/canterbury.html">Canterbury</a> &middot; <a href="/areas/windsor.html">Windsor</a> &middot; <a href="/areas/winchester.html">Winchester</a> &middot; <a href="/areas/salisbury.html">Salisbury</a> &middot; <a href="/areas/bath.html">Bath</a> &middot; <a href="/areas/chelmsford.html">Chelmsford</a> &middot; <a href="/areas/rochester.html">Rochester</a> &middot; <a href="/areas/">All areas</a>
       </p>
-      <p class="text-xs text-mid">The London Choral Service is the operating name of Alma Consort Ltd, registered in England and Wales, company no. 16785727. Based in London, serving the whole of the United Kingdom. Public liability insurance held.</p>
+      <p class="text-xs text-mid">The London Choral Service is the operating name of Alma Consort Ltd, registered in England and Wales, company no. 16785727, registered office 20 Wenlock Road, London N1 7GU. Based in London, serving the whole of the United Kingdom. Public liability insurance held.</p>
       <p class="text-xs text-mid">&copy; <span data-year>2026</span> The London Choral Service. All rights reserved.</p>
     </div>
   </footer>

@@ -10,7 +10,23 @@
     return 'all';
   }
 
-  function applyFilter(category) {
+  var status = null;
+  var LABELS = { all: 'all guides', weddings: 'wedding guides', funerals: 'funeral guides', christmas: 'Christmas guides', booking: 'booking guides' };
+
+  // Screen readers get no cue that the list changed when a chip filters it.
+  function announce(category) {
+    if (!status) {
+      status = document.createElement('p');
+      status.className = 'sr-only';
+      status.setAttribute('role', 'status');
+      status.setAttribute('aria-live', 'polite');
+      document.body.appendChild(status);
+    }
+    status.textContent = 'Showing ' + (LABELS[category] || 'all guides');
+  }
+
+  function applyFilter(category, announceIt) {
+    if (announceIt) announce(category);
     var sections = document.querySelectorAll('.guide-category-section[data-category]');
     sections.forEach(function (section) {
       var sectionCat = section.getAttribute('data-category');
@@ -45,11 +61,11 @@
       newURL = window.location.pathname + '?category=' + category;
     }
     history.pushState({ category: category }, '', newURL);
-    applyFilter(category);
+    applyFilter(category, true);
   }
 
   function onPopState() {
-    applyFilter(getCategoryFromURL());
+    applyFilter(getCategoryFromURL(), true);
   }
 
   function init() {

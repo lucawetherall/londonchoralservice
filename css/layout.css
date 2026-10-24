@@ -134,8 +134,9 @@
   border: none;
   cursor: pointer;
   padding: var(--space-sm);
-  width: 2.5rem;
-  height: 2.5rem;
+  width: 2.75rem;
+  height: 2.75rem;
+  flex-shrink: 0;
   position: relative;
 }
 
@@ -195,6 +196,12 @@
   .nav-toggle {
     display: block;
     flex-shrink: 0;
+  }
+
+  /* Lets the name wrap under the WCAG 1.4.12 text-spacing override instead of
+     pushing the toggle off-screen; at default spacing it still fits one line. */
+  .site-name {
+    white-space: normal;
   }
 
   .nav-links {

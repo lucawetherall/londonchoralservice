@@ -42,7 +42,26 @@
     post(iframe, { event: 'command', func: func, args: [] });
   }
 
+  // Drop players whose iframe has left the page (private-events.js swaps the
+  // voicing media), so their timers stop polling a dead window.
+  function prune() {
+    for (var i = players.length - 1; i >= 0; i--) {
+      var p = players[i];
+      if (!p.iframe.isConnected) {
+        clearTimeout(p.autoplayTimer);
+        clearInterval(p.listenTimer);
+        clearInterval(p.kickTimer);
+        players.splice(i, 1);
+      }
+    }
+  }
+
+  function fullscreenTarget(wrap) {
+    return wrap.requestFullscreen || wrap.webkitRequestFullscreen ? wrap : null;
+  }
+
   function playFilm(btn, id, label, titleSuffix) {
+    prune();
     var wrap = btn.parentNode;
     var name = label ? label.charAt(0).toUpperCase() + label.slice(1) : '';
     var thumb = btn.querySelector('img');
@@ -50,7 +69,7 @@
     var iframe = document.createElement('iframe');
     iframe.className = 'video-frame';
     iframe.src = 'https://www.youtube-nocookie.com/embed/' + encodeURIComponent(id) +
-      '?autoplay=1&rel=0&controls=0&playsinline=1&iv_load_policy=3&disablekb=1&enablejsapi=1' +
+      '?autoplay=1&rel=0&controls=0&playsinline=1&iv_load_policy=3&disablekb=1&cc_load_policy=1&enablejsapi=1' +
       (IOS ? '' : '&mute=1') +
       '&origin=' + encodeURIComponent(location.origin);
     iframe.title = name ? name + ' — ' + titleSuffix : titleSuffix;
@@ -137,9 +156,27 @@
       setLabel();
     });
     shield.addEventListener('dblclick', function () {
-      var fs = wrap.requestFullscreen || wrap.webkitRequestFullscreen;
-      if (fs) fs.call(wrap);
+      goFullscreen();
     });
+
+    function goFullscreen() {
+      var fs = wrap.requestFullscreen || wrap.webkitRequestFullscreen;
+      if (fs) {
+        try { var r = fs.call(wrap); if (r && r.catch) r.catch(function () {}); } catch (err) { /* refused */ }
+      }
+    }
+
+    // Keyboard-reachable full screen (the player runs without its own
+    // controls). Hidden where the browser has no fullscreen API (iPhone).
+    var fsBtn = null;
+    if (fullscreenTarget(wrap)) {
+      fsBtn = document.createElement('button');
+      fsBtn.type = 'button';
+      fsBtn.className = 'video-fs';
+      fsBtn.textContent = 'Full screen';
+      fsBtn.setAttribute('aria-label', 'Full screen' + (name ? ': ' + name : ''));
+      fsBtn.addEventListener('click', goFullscreen);
+    }
 
     // Ask the player for state events, repeating until it answers: it only
     // hears the request once its own script has started.
@@ -171,6 +208,7 @@
     wrap.innerHTML = '';
     wrap.appendChild(iframe);
     wrap.appendChild(shield);
+    if (fsBtn) wrap.appendChild(fsBtn);
     setLabel();
     // The focused button is gone: keep keyboard users on the film rather than
     // dropping them back to the top of the page.
@@ -183,6 +221,7 @@
     try { data = JSON.parse(e.data); } catch (err) { return; }
     var state = data.event === 'onStateChange' ? data.info
       : (data.event === 'infoDelivery' && data.info ? data.info.playerState : undefined);
+    prune();
     for (var i = 0; i < players.length; i++) {
       if (players[i].iframe.contentWindow === e.source) {
         players[i].heard = true;
@@ -196,6 +235,11 @@
   window.lcsPlayFilm = playFilm;
 
   document.querySelectorAll('.video-thumb[data-video]').forEach(function (btn) {
+    // js/private-events.js binds the films inside .pe-media itself (its own
+    // credit line); binding them here too would run the second handler on a
+    // button that has already left the page.
+    if (btn.closest('.pe-media') || btn.hasAttribute('data-lcs-bound')) return;
+    btn.setAttribute('data-lcs-bound', '');
     btn.addEventListener('click', function () {
       var label = (btn.getAttribute('aria-label') || '').replace(/^Play /, '');
       playFilm(btn, btn.getAttribute('data-video'), label, 'The London Choral Service');

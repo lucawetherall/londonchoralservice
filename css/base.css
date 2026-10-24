@@ -45,6 +45,13 @@ html {
   scroll-behavior: smooth;
 }
 
+/* Keep a focused link clear of the fixed .mobile-cta bar. */
+@media (max-width: 1080px) {
+  html {
+    scroll-padding-bottom: 5.5rem;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;

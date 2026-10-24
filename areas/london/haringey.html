@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <!-- @include-start partials/head-extras.html -->
+<meta name="referrer" content="strict-origin-when-cross-origin">
 <link rel="preload" href="/fonts/cormorant-garamond.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/fonts/source-serif-4.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="manifest" href="/site.webmanifest">
@@ -194,19 +195,43 @@
         }
       } catch (e) {}
     }
-    document.addEventListener('click', function(e) {
-      var a = e.target.closest && e.target.closest('a[href^="tel:"], a[href^="mailto:"], a[href*="wa.me/"]');
-      if (!a) return;
-      var href = a.getAttribute('href');
-      var method = href.indexOf('tel:') === 0 ? 'call' : href.indexOf('mailto:') === 0 ? 'email' : 'whatsapp';
-      var where = a.closest('.mobile-cta') ? 'mobile_bar' : a.closest('.site-footer') ? 'footer' :
+    function lcsWhere(a) {
+      return a.closest('.mobile-cta') ? 'mobile_bar' : a.closest('.site-footer') ? 'footer' :
         a.closest('.site-header') ? 'header' : 'body';
-      if (method !== 'call') lcsLabelMessage(a, method);
-      loadGA();
-      gtag('event', 'contact_click', { 'method': method, 'link_location': where });
-      var label = method === 'call' ? LCS_ADS.call : LCS_ADS.message;
-      if (label) gtag('event', 'conversion', { 'send_to': label, 'value': 1, 'currency': 'GBP' });
-    });
+    }
+    // Enquiry buttons that lead to a form: the on-page #enquiry / #enquire
+    // anchors and the contact page. link_location is the header, footer or
+    // mobile bar, then the hero, then the nearest section's id.
+    function lcsCtaWhere(a) {
+      var where = lcsWhere(a);
+      if (where !== 'body') return where;
+      if (a.closest('.hero, [class*="hero"]')) return 'hero';
+      var sec = a.closest('section[id], [id]');
+      return (sec && sec.id) || 'body';
+    }
+    function lcsClickHandler(e) {
+      // auxclick also reports right-clicks; only a middle-click opens the link.
+      if (e.type === 'auxclick' && e.button !== 1) return;
+      var t = e.target;
+      var a = t && t.closest && t.closest('a[href^="tel:"], a[href^="mailto:"], a[href*="wa.me/"]');
+      if (a) {
+        var href = a.getAttribute('href');
+        var method = href.indexOf('tel:') === 0 ? 'call' : href.indexOf('mailto:') === 0 ? 'email' : 'whatsapp';
+        if (method !== 'call') lcsLabelMessage(a, method);
+        loadGA();
+        gtag('event', 'contact_click', { 'method': method, 'link_location': lcsWhere(a) });
+        var label = method === 'call' ? LCS_ADS.call : LCS_ADS.message;
+        if (label) gtag('event', 'conversion', { 'send_to': label, 'value': 1, 'currency': 'GBP' });
+        return;
+      }
+      var cta = t && t.closest && t.closest('a[href*="#enquiry"], a[href*="#enquire"], a[href*="contact.html"]');
+      if (cta) {
+        loadGA();
+        gtag('event', 'cta_click', { 'link_location': lcsCtaWhere(cta), 'link_url': cta.getAttribute('href') });
+      }
+    }
+    document.addEventListener('click', lcsClickHandler);
+    document.addEventListener('auxclick', lcsClickHandler);
 
     // Ad click ID and UTM tags from the landing URL, kept for this tab (only once
     // the visitor has allowed cookies) so an enquiry sent from a later page still
@@ -370,6 +395,7 @@
     @font-face{font-family:'Source Serif 4';font-style:italic;font-weight:400;font-display:swap;src:url('/fonts/source-serif-4-italic.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;}
     *, *::before, *::after{box-sizing:border-box;margin:0;padding:0;}
     html{-webkit-text-size-adjust:100%;scroll-behavior:smooth;}
+    @media (max-width: 1080px){html{scroll-padding-bottom:5.5rem;}}
     @media (prefers-reduced-motion: reduce){html{scroll-behavior:auto;}}
     body{font-family:var(--font-body);font-size:var(--text-base);line-height:var(--leading-normal);color:var(--color-text);background-color:var(--color-bg);-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;}
     h1, h2, h3, h4, h5, h6{font-family:var(--font-heading);line-height:var(--leading-tight);text-wrap:balance;}
@@ -409,7 +435,7 @@
     .nav-links a{font-family:var(--font-heading);font-size:var(--text-sm);font-weight:500;letter-spacing:0.05em;text-transform:uppercase;color:var(--color-text);text-decoration:none;transition:color var(--transition-fast);white-space:nowrap;}
     .nav-links a:hover{color:var(--color-accent);}
     .nav-links a[aria-current="page"]{text-decoration-line:underline;text-decoration-thickness:1px;text-decoration-color:var(--color-accent);text-underline-offset:0.45em;}
-    .nav-toggle{display:none;background:none;border:none;cursor:pointer;padding:var(--space-sm);width:2.5rem;height:2.5rem;position:relative;}
+    .nav-toggle{display:none;background:none;border:none;cursor:pointer;padding:var(--space-sm);width:2.75rem;height:2.75rem;flex-shrink:0;position:relative;}
     .nav-toggle:hover, .nav-toggle:focus-visible{background-color:var(--color-bg-alt);border-radius:4px;}
     .nav-toggle-bar, .nav-toggle-bar::before, .nav-toggle-bar::after{display:block;width:1.5rem;height:2px;background-color:var(--color-text);position:absolute;left:50%;transform:translateX(-50%);transition:all var(--transition-base);}
     .nav-toggle-bar{top:50%;transform:translate(-50%,-50%);}
@@ -419,6 +445,7 @@
     .nav-toggle[aria-expanded="true"] .nav-toggle-bar::before{top:0;transform:translateX(-50%) rotate(45deg);}
     .nav-toggle[aria-expanded="true"] .nav-toggle-bar::after{top:0;transform:translateX(-50%) rotate(-45deg);}
     @media (max-width: 1080px){.nav-toggle{display:block;flex-shrink:0;}
+    .site-name{white-space:normal;}
     .nav-links{display:none;position:absolute;top:100%;left:0;right:0;flex-direction:column;background-color:var(--color-bg);border-bottom:1px solid var(--color-rule);padding:var(--space-lg);gap:0;z-index:100;}
     .nav-links.is-open{display:flex;}
     .nav-links a{display:block;padding:var(--space-md) 0;font-size:var(--text-base);border-bottom:1px solid var(--color-rule);}
@@ -441,7 +468,7 @@
     .breadcrumb ol{list-style:none;padding:0;margin:0;display:flex;flex-wrap:wrap;gap:0;font-family:var(--font-body);font-size:var(--text-sm);color:var(--color-text-mid);}
     .breadcrumb li::after{content:'\203A';margin-inline:0.5em;color:var(--color-rule);}
     .breadcrumb li:last-child::after{display:none;}
-    .breadcrumb a{color:var(--color-text-mid);text-decoration:none;}
+    .breadcrumb a{color:var(--color-text-mid);text-decoration:none;display:inline-block;padding-block:0.3em;margin-block:-0.3em;}
     .breadcrumb a:hover{color:var(--color-accent);}
     .mobile-cta{display:none;}
     @media (max-width: 1080px){.mobile-cta{display:flex;position:fixed;bottom:0;left:0;right:0;z-index:200;background-color:var(--color-bg);border-top:1px solid var(--color-rule);padding:var(--space-sm) var(--space-lg);padding-bottom:calc(var(--space-sm) + env(safe-area-inset-bottom,0px));gap:var(--space-sm);align-items:center;justify-content:center;transition:transform 0.3s ease;}
@@ -499,8 +526,8 @@
     .pull-quote::before{display:none;}
     h1, h2, h3{break-after:avoid;}}
   </style>
-  <link rel="preload" href="/css/style.css?v=e8f3925abf" as="style" onload="this.onload=null;this.rel='stylesheet'">
-  <noscript><link rel="stylesheet" href="/css/style.css?v=e8f3925abf"></noscript>
+  <link rel="preload" href="/css/style.css?v=ca6f97768e" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <noscript><link rel="stylesheet" href="/css/style.css?v=ca6f97768e"></noscript>
   <!-- @css-end -->
 
   <link rel="icon" href="../../assets/favicon.ico" sizes="any">
@@ -517,12 +544,13 @@
         "url": "https://londonchoralservice.com/areas/london/haringey.html",
         "description": "Professional funeral singers and wedding choirs in Haringey, London.",
         "provider": {
-          "@type": "LocalBusiness",
-          "@id": "https://londonchoralservice.com/#organization"
+          "@type": ["LocalBusiness", "PerformingGroup", "MusicGroup"],
+          "@id": "https://londonchoralservice.com/#organization",
+          "name": "The London Choral Service"
         },
         "areaServed": {
           "@type": "AdministrativeArea",
-          "name": "Haringey",
+          "name": "London Borough of Haringey",
           "containedInPlace": {
             "@type": "City",
             "name": "London",
@@ -543,7 +571,7 @@
         }
       },
       {
-        "@type": "LocalBusiness",
+        "@type": ["LocalBusiness", "PerformingGroup", "MusicGroup"],
         "@id": "https://londonchoralservice.com/#organization",
         "name": "The London Choral Service"
       },
@@ -591,7 +619,7 @@
             "name": "Which pieces suit St Augustine’s Highgate, and which suit a cemetery chapel?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "The generous acoustic at St Augustine's Highgate lends itself to traditional hymns, psalms, and choral anthems. At Tottenham Cemetery chapel or New Southgate Cemetery, we often perform more reflective solos and contemporary songs. We can also create bespoke arrangements of any piece that held meaning for your loved one."
+              "text": "The generous acoustic at St Augustine's Highgate lends itself to traditional hymns, psalms, and choral anthems. At Tottenham Cemetery chapel or New Southgate Cemetery, we often perform more reflective solos and contemporary songs. We can also create bespoke arrangements of a piece that held meaning for your loved one, which may carry an extra charge."
             }
           },
           {
@@ -599,7 +627,7 @@
             "name": "Do you sing at Tottenham Cemetery?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Yes. We have sung at Tottenham Cemetery on Church Lane many times, often with a soloist at the graveside or a quartet in the cemetery chapel."
+              "text": "Yes. We sing at Tottenham Cemetery on Church Lane, often with a soloist at the graveside or a quartet in the cemetery chapel."
             }
           },
           {
@@ -635,8 +663,6 @@
             <li><a href="/weddings.html">Weddings</a></li>
             <li><a href="/funerals.html">Funerals</a></li>
             <li><a href="/corporate.html">Corporate</a></li>
-            <li><a href="/christmas.html">Christmas carol singers</a></li>
-            <li><a href="/christmas-carol-services.html">Church carol services</a></li>
             <li><a href="/private-events.html">Private Events</a></li>
             <li><a href="/destinations/">Weddings Abroad</a></li>
             <li class="dropdown-separator" aria-hidden="true"></li>
@@ -669,7 +695,15 @@
             <li><a href="/music-guides/">Browse all</a></li>
           </ul>
         </li>
-        <li><a href="/christmas.html">Christmas</a></li>
+        <li class="has-dropdown">
+          <a href="/christmas.html" aria-expanded="false" class="dropdown-trigger">Christmas<span class="dropdown-caret" aria-hidden="true"></span></a>
+          <ul class="dropdown-menu">
+            <li><a href="/christmas.html">Christmas carol singers</a></li>
+            <li><a href="/christmas-carol-services.html">Church carol services</a></li>
+            <li><a href="/christmas-pricing.html">Christmas prices</a></li>
+            <li><a href="/christmas-listen.html">Hear the carols</a></li>
+          </ul>
+        </li>
         <li><a href="/pricing.html">Pricing</a></li>
         <li><a href="/contact.html">Contact</a></li>
       </ul>
@@ -698,11 +732,11 @@
     <section class="section">
       <div class="prose">
         <h2>Funerals at St&nbsp;Augustine&rsquo;s Highgate and Tottenham Cemetery</h2>
-        <p>Haringey&rsquo;s funeral venues range from grand Victorian churches to quiet cemetery chapels, and our singers are at home in all of them. St&nbsp;Augustine&rsquo;s Highgate, perched near the top of Highgate Hill, is a substantial Victorian church whose generous acoustic carries a choir to the back pews. Tottenham Cemetery on Church Lane serves the eastern half of the borough and is a venue where we have sung many times, often providing a soloist at the graveside, or a quartet in the cemetery chapel. New Southgate Cemetery, which borders the borough to the north, is another venue we know well. In Muswell Hill, the local churches are spaces where a live choir can carry a hymn for a congregation unsure of the words.</p>
+        <p>Haringey&rsquo;s funeral venues range from grand Victorian churches to quiet cemetery chapels, and our singers are at home in all of them. St&nbsp;Augustine&rsquo;s Highgate, perched near the top of Highgate Hill, is a substantial Victorian church whose generous acoustic carries a choir to the back pews. Tottenham Cemetery on Church Lane serves the eastern half of the borough and is a venue we know, often providing a soloist at the graveside, or a quartet in the cemetery chapel. New Southgate Cemetery, which borders the borough to the north, is another venue we know well. In Muswell Hill, the local churches are spaces where a live choir can carry a hymn for a congregation unsure of the words.</p>
         <p>We can provide music for services of any tradition or none, from traditional Anglican funerals with well-loved hymns to secular celebrations of life with contemporary songs and classical pieces. Our <a href="../../music-guides/funeral-music-guide.html">funeral music guide</a> can help you begin choosing repertoire, and our <a href="../../services.html">services page</a> explains what we offer in more detail. Please <a href="../../contact.html">get in touch</a> whenever you are ready to discuss your plans.</p>
 
         <h2>Weddings from Highgate to Crouch End</h2>
-        <p>From the dramatic setting of St&nbsp;Augustine&rsquo;s Highgate to the quieter charms of parish churches in Muswell Hill and Crouch End, Haringey has much to offer couples planning a wedding with live music. Our singers can lead congregational hymns with confidence, perform motets and anthems during the signing of the register, and provide a joyful recessional as the newly married couple leaves the church. For civil ceremonies at licensed venues across the borough, we adapt our repertoire to suit the setting and the couple&rsquo;s wishes. Our <a href="../../music-guides/choosing-wedding-hymns.html">guide to choosing wedding hymns</a> is worth reading before you settle the order of service at St&nbsp;Augustine&rsquo;s.</p>
+        <p>From the dramatic setting of St&nbsp;Augustine&rsquo;s Highgate to the quieter charms of parish churches in Muswell Hill and Crouch End, Haringey has much to offer couples planning <a href="../../weddings.html">a wedding</a> with live music. Our singers can lead congregational hymns with confidence, perform motets and anthems during the signing of the register, and provide a joyful recessional as the newly married couple leaves the church. For civil ceremonies at licensed venues across the borough, we adapt our repertoire to suit the setting and the couple&rsquo;s wishes. Our <a href="../../music-guides/choosing-wedding-hymns.html">guide to choosing wedding hymns</a> is worth reading before you settle the order of service at St&nbsp;Augustine&rsquo;s.</p>
 
         <h2>Choir sizes for Highgate, Muswell Hill and the cemetery chapels</h2>
         <p>St&nbsp;Augustine&rsquo;s Highgate is a substantial Victorian church with a generous acoustic, and a sextet or full eight-voice choir usually suits the building. The resonance rewards more voices, and processional hymns sit better with a fuller sound. For chapel services at Tottenham Cemetery or New Southgate Cemetery, the timing is tighter and the room smaller, so a quartet is generally the right call. The parish churches of Muswell Hill and Crouch End vary in size; for a smaller wedding or funeral a quartet works well, and a sextet adds weight when the congregation is larger. For a graveside service at Tottenham Cemetery, a soloist carries outdoors better than a full ensemble, and the simplicity tends to suit the moment. For the cost of a soloist at Tottenham Cemetery or a choir of eight at St&nbsp;Augustine&rsquo;s, see our <a href="../../pricing.html">pricing page</a>.</p>
@@ -720,10 +754,10 @@
         <p>For services at St&nbsp;Augustine&rsquo;s Highgate, Tottenham Cemetery, New Southgate Cemetery, or parish churches in Muswell Hill, a soloist starts from &pound;250. Ensembles then run &pound;1,150 for a quartet, &pound;1,400 for a quintet, &pound;1,600 for a sextet, and &pound;2,000 for a full choir of eight. There is no travel charge for Highgate, Tottenham or anywhere else in Greater London.</p>
 
         <h3>Which pieces suit St&nbsp;Augustine&rsquo;s Highgate, and which suit a cemetery chapel?</h3>
-        <p>The generous acoustic at St&nbsp;Augustine&rsquo;s Highgate lends itself to traditional hymns, psalms, and choral anthems. At Tottenham Cemetery chapel or New Southgate Cemetery, we often perform more reflective solos and contemporary songs. We can also create bespoke arrangements of any piece that held meaning for your loved one.</p>
+        <p>The generous acoustic at St&nbsp;Augustine&rsquo;s Highgate lends itself to traditional hymns, psalms, and choral anthems. At Tottenham Cemetery chapel or New Southgate Cemetery, we often perform more reflective solos and contemporary songs. We can also create bespoke arrangements of a piece that held meaning for your loved one, which may carry an extra charge.</p>
 
         <h3>Do you sing at Tottenham Cemetery?</h3>
-        <p>Yes. We have sung at Tottenham Cemetery on Church Lane many times, often with a soloist at the graveside or a quartet in the cemetery chapel.</p>
+        <p>Yes. We sing at Tottenham Cemetery on Church Lane, often with a soloist at the graveside or a quartet in the cemetery chapel.</p>
 
         <h3>Which crematoria near Haringey do you sing at?</h3>
         <p>Haringey has no crematorium of its own. We sing at nearby crematoria serving the borough, including those at New Southgate and Islington. Our singers coordinate with funeral directors and crematorium staff so the music is prepared and fits within the service timings.</p>
@@ -818,7 +852,7 @@
       <p class="text-xs text-mid">
         Areas we serve: <a href="/areas/london.html">London</a> &middot; <a href="/areas/birmingham.html">Birmingham</a> &middot; <a href="/areas/manchester.html">Manchester</a> &middot; <a href="/areas/liverpool.html">Liverpool</a> &middot; <a href="/areas/oxford.html">Oxford</a> &middot; <a href="/areas/cambridge.html">Cambridge</a> &middot; <a href="/areas/reading.html">Reading</a> &middot; <a href="/areas/slough-maidenhead.html">Slough &amp; Maidenhead</a> &middot; <a href="/areas/guildford.html">Guildford</a> &middot; <a href="/areas/brighton.html">Brighton</a> &middot; <a href="/areas/chester.html">Chester</a> &middot; <a href="/areas/st-albans.html">St Albans</a> &middot; <a href="/areas/canterbury.html">Canterbury</a> &middot; <a href="/areas/windsor.html">Windsor</a> &middot; <a href="/areas/winchester.html">Winchester</a> &middot; <a href="/areas/salisbury.html">Salisbury</a> &middot; <a href="/areas/bath.html">Bath</a> &middot; <a href="/areas/chelmsford.html">Chelmsford</a> &middot; <a href="/areas/rochester.html">Rochester</a> &middot; <a href="/areas/">All areas</a>
       </p>
-      <p class="text-xs text-mid">The London Choral Service is the operating name of Alma Consort Ltd, registered in England and Wales, company no. 16785727. Based in London, serving the whole of the United Kingdom. Public liability insurance held.</p>
+      <p class="text-xs text-mid">The London Choral Service is the operating name of Alma Consort Ltd, registered in England and Wales, company no. 16785727, registered office 20 Wenlock Road, London N1 7GU. Based in London, serving the whole of the United Kingdom. Public liability insurance held.</p>
       <p class="text-xs text-mid">&copy; <span data-year>2026</span> The London Choral Service. All rights reserved.</p>
     </div>
   </footer>

@@ -109,6 +109,7 @@
   // Crossing the mobile/desktop breakpoint resets every dropdown, so one opened
   // inline on a phone-width window is not left pinned open on desktop.
   function resetDropdowns() {
+    if (toggle && menu) setMenuOpen(false);
     dropdownItems.forEach(function (item) {
       item.setAttribute('data-open', 'false');
       item.removeAttribute('data-dismissed');

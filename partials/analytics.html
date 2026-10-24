@@ -182,19 +182,43 @@
         }
       } catch (e) {}
     }
-    document.addEventListener('click', function(e) {
-      var a = e.target.closest && e.target.closest('a[href^="tel:"], a[href^="mailto:"], a[href*="wa.me/"]');
-      if (!a) return;
-      var href = a.getAttribute('href');
-      var method = href.indexOf('tel:') === 0 ? 'call' : href.indexOf('mailto:') === 0 ? 'email' : 'whatsapp';
-      var where = a.closest('.mobile-cta') ? 'mobile_bar' : a.closest('.site-footer') ? 'footer' :
+    function lcsWhere(a) {
+      return a.closest('.mobile-cta') ? 'mobile_bar' : a.closest('.site-footer') ? 'footer' :
         a.closest('.site-header') ? 'header' : 'body';
-      if (method !== 'call') lcsLabelMessage(a, method);
-      loadGA();
-      gtag('event', 'contact_click', { 'method': method, 'link_location': where });
-      var label = method === 'call' ? LCS_ADS.call : LCS_ADS.message;
-      if (label) gtag('event', 'conversion', { 'send_to': label, 'value': 1, 'currency': 'GBP' });
-    });
+    }
+    // Enquiry buttons that lead to a form: the on-page #enquiry / #enquire
+    // anchors and the contact page. link_location is the header, footer or
+    // mobile bar, then the hero, then the nearest section's id.
+    function lcsCtaWhere(a) {
+      var where = lcsWhere(a);
+      if (where !== 'body') return where;
+      if (a.closest('.hero, [class*="hero"]')) return 'hero';
+      var sec = a.closest('section[id], [id]');
+      return (sec && sec.id) || 'body';
+    }
+    function lcsClickHandler(e) {
+      // auxclick also reports right-clicks; only a middle-click opens the link.
+      if (e.type === 'auxclick' && e.button !== 1) return;
+      var t = e.target;
+      var a = t && t.closest && t.closest('a[href^="tel:"], a[href^="mailto:"], a[href*="wa.me/"]');
+      if (a) {
+        var href = a.getAttribute('href');
+        var method = href.indexOf('tel:') === 0 ? 'call' : href.indexOf('mailto:') === 0 ? 'email' : 'whatsapp';
+        if (method !== 'call') lcsLabelMessage(a, method);
+        loadGA();
+        gtag('event', 'contact_click', { 'method': method, 'link_location': lcsWhere(a) });
+        var label = method === 'call' ? LCS_ADS.call : LCS_ADS.message;
+        if (label) gtag('event', 'conversion', { 'send_to': label, 'value': 1, 'currency': 'GBP' });
+        return;
+      }
+      var cta = t && t.closest && t.closest('a[href*="#enquiry"], a[href*="#enquire"], a[href*="contact.html"]');
+      if (cta) {
+        loadGA();
+        gtag('event', 'cta_click', { 'link_location': lcsCtaWhere(cta), 'link_url': cta.getAttribute('href') });
+      }
+    }
+    document.addEventListener('click', lcsClickHandler);
+    document.addEventListener('auxclick', lcsClickHandler);
 
     // Ad click ID and UTM tags from the landing URL, kept for this tab (only once
     // the visitor has allowed cookies) so an enquiry sent from a later page still
