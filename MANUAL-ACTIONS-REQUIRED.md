@@ -107,7 +107,9 @@ Do not offer incentives for reviews. Both Google and Trustpilot have policies ag
 
 ## 4. GSC, GA4, and CrUX credentials
 
-**Done 2026-10-14:** no service account is needed. Application Default Credentials carry the Search Console and GA4 scopes (see "Sign-in scopes" in the repo's agent instructions), and the Monday review reads both with them. The CrUX API key below is optional and still unset; nothing depends on it.
+**Done 2026-10-14:** no service account is needed. Application Default Credentials carry the Search Console and GA4 scopes (see "Sign-in scopes" in the repo's agent instructions), and the Monday review reads both with them.
+
+**CrUX done 2026-10-24:** the PageSpeed Insights and Chrome UX Report APIs are enabled on `lcs-marketing`, and a key restricted to those two APIs is in the Keychain as `lcs-pagespeed` (the CrUX API refuses OAuth tokens, so it needs a key). Section 5d of the Monday report reads it through `scripts/reports/cwv.py`. Nothing to do; the steps below are kept for reference.
 
 The audit's §9 and several Phase-3+ items depend on having read access to real Google performance data. None of these can be set up from inside this repo.
 
@@ -195,7 +197,7 @@ Step 3 is code and goes into a later phase. Steps 1 and 2 are manual prerequisit
 
 ## 8. CSS extraction refactor
 
-**Closed 2026-10-14 (won't do):** the decision below stands; reopen only if CrUX field data shows render-blocking CSS costing LCP.
+**Done 2026-10-24 (PR #344, owner's request):** each page now inlines only its first-screen CSS (13–20 KB, written by `scripts/inline_css.py` in the build) and loads `css/style.css` without blocking, cached after the first page. Nothing to do. (Earlier: closed 2026-10-14 as won't do; the original note follows.)
 
 The audit notes that all CSS currently lives inline in each HTML file rather than in external stylesheets. In theory this hurts caching across pageviews; in practice, with the site already at decent CWV and pages averaging ~60–70 KB pre-gzip, the saving from extraction is small.
 
@@ -577,7 +579,7 @@ Added 2026-10-24. Bing's index feeds ChatGPT search and Copilot, and a check on 
 2. On **Add a site**, choose **Import your sites from GSC** (the left-hand card), not "Add your site manually".
 3. Click **Continue**, pick the same Google account, and allow Bing to view your Search Console data (read-only).
 4. Tick **londonchoralservice.com** and click **Import**. The import verifies the site and brings the sitemap with it, so you don't need a meta tag or a DNS record.
-5. Open **Sitemaps** in the left menu. If `https://londonchoralservice.com/sitemap.xml` isn't listed, click **Submit sitemap**, paste that URL and click **Submit**.
+5. Open **Sitemaps** in the left menu. If `https://londonchoralservice.com/sitemap_index.xml` isn't listed, click **Submit sitemap**, paste that URL and click **Submit**. The index (live since 24 Oct, and the one robots.txt names) lists the page sitemap plus the film and image sitemaps, so this one submission covers all three. If the import brought `sitemap.xml` over on its own, leave it there.
 6. Open **URL Inspection**, inspect `https://londonchoralservice.com/` and click **Request indexing** if it isn't indexed. Do the same for `/weddings.html`, `/funerals.html`, `/christmas.html` and `/pricing.html`. The IndexNow ping covers the other pages.
 7. Tell an agent when it's done. Bing usually shows first results within a week; **Site Explorer** in Bing Webmaster Tools then shows which pages are indexed, and this section can be closed.
 
@@ -607,4 +609,14 @@ https://londonchoralservice.com/christmas-listen.html
 https://londonchoralservice.com/music-guides/popular-funeral-hymns.html
 ```
 
-The sitemap doesn't need resubmitting: Google last read it on 23 Oct. Rerun `.venv/bin/python scripts/reports/index_coverage.py` two weeks later. Any page still "Crawled - currently not indexed" after a fresh crawl needs a content fix, not another request.
+The sitemap doesn't need resubmitting: Google last read it on 23 Oct, and the new sitemap index (pages, films and film stills) was submitted through the API on 24 Oct (`logs/gsc-changes.md`). Rerun `.venv/bin/python scripts/reports/index_coverage.py` two weeks later. Any page still "Crawled - currently not indexed" after a fresh crawl needs a content fix, not another request.
+
+---
+
+## 33. Press photographs for the fact sheet
+
+Added 2026-10-24. `facts.html` (the public fact sheet, linked from the footer, `about.html`, `llms.txt` and the listings pack) says we have no press photographs yet and offers two film stills instead. Directories, journalists and venues ask for real photographs, and Google Business Profile wants 10 or more (§1). Claude can't take or choose photographs, so this one is yours:
+
+1. Pick three to six photographs you own the rights to: the singers in a church, a choir at a wedding or carol service, and one portrait of you. Real photographs only, never stock or AI images. Get the photographer's permission to publish, and the client's if a client or guest can be recognised (never use a funeral).
+2. Put them in `~/Pictures/LCS-listings/` as JPGs, at least 1600 pixels on the long side, and send each photographer's name for the credit.
+3. Tell an agent. It will make web-sized copies, put them on the fact sheet with credits and alt text, and replace the "no press photographs yet" line. It will also list them for upload to the Google profile and the directories in §2.
