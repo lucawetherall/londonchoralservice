@@ -2,7 +2,7 @@
 
 **Date**: 2026-05-08
 **Author**: Luca Wetherall (with Claude)
-**Source audit**: [SEO-AUDIT-2026-05-08.md](../../../SEO-AUDIT-2026-05-08.md)
+**Source audit**: [SEO-AUDIT-2026-05-08.md](../../SEO-AUDIT-2026-05-08.md)
 **Branch**: `claude/recursing-johnson-cfffdc` (worktree)
 
 ## Goal

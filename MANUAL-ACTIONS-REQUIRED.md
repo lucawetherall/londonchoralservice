@@ -169,7 +169,7 @@ The audit's §9 and several Phase-3+ items depend on having read access to real 
 2. Create credentials → API key. Restrict it to the Chrome UX Report API only.
 3. Set it on your shell as `CRUX_API_KEY=<key>`. Add the same to whatever CI/secrets store the build pipeline uses if/when you wire CrUX queries into the build.
 
-Once all three are provisioned, the queries to run live in the audit document at `SEO-AUDIT-2026-05-08.md` §9. Phase 3 of this programme picks them up.
+Once all three are provisioned, the queries to run live in the audit document at `docs/SEO-AUDIT-2026-05-08.md` §9. Phase 3 of this programme picks them up.
 
 ---
 
