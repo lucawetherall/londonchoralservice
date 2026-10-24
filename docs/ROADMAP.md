@@ -171,6 +171,8 @@ Remember any `css/tokens.css` edit requires `./build.sh` (see build-and-verify).
 
 **Update 2026-07-31:** the Christmas content overhaul added 11 guides (24 Christmas guides in total). The January pass should also refresh the "Last updated" byline and `dateModified` on the Christmas guide set, and re-check the four-group guide block on `christmas.html` still reads well if any guides are added or retired.
 
+**Update 2026-10-24:** the home page's "Christmas 2026" block was moved up to sit straight after the hero, for the season (marked with a `Seasonal:` comment in `index.html`). In the January pass, move it back below "The right music for the moment" with a 2027 heading, or cut it to one line linking `christmas.html`; drop "December is filling now". The nav's Christmas item is now a dropdown (Christmas carol singers, Church carol services, Christmas prices, Hear the carols): in January fold it back into the Services dropdown as a single "Christmas carol singers" entry.
+
 **Verify:** `./build.sh` exits 0; nav renders correctly at 375px; sitemap untouched.
 
 **Skills:** build-and-verify
