@@ -1428,12 +1428,12 @@ Artistic Director of The London Choral Service. He chooses every musician on the
 ---
 
 Source: https://londonchoralservice.com/listen.html
-Summary: Films of our choir singing hymns for funerals, Abide With Me and Be Thou My Vision among them, with wedding anthems and solos by the singers you would book.
+Summary: Watch our choir sing funeral hymns such as Abide With Me and Be Thou My Vision, plus wedding anthems and solos from the singers you would book.
 (Shortened to its answer and headings; the page has the full text.)
 
 ## Hear our singers Hymns, anthems and solos for weddings and funerals
 
-Films of our own singers in the pieces couples and families ask us for most. The voices you hear belong to the musicians you would book.
+Films of our own singers in the pieces couples and families ask us for most. If you are comparing choirs for weddings , the voices you hear belong to the musicians you would book.
 
 Gjeilo set the Latin antiphon “where charity and love are, God is there” for unaccompanied voices. It is one of the pieces we are asked for most at weddings and funerals alike. Read why it suits a wedding .
 
@@ -2470,7 +2470,7 @@ Tell us about your event
 ---
 
 Source: https://londonchoralservice.com/music-guides/abide-with-me.html
-Summary: Abide With Me at a funeral: Lyte's words of 1847, Monk's tune Eventide and the FA Cup link. Watch our choir sing it, and book singers for the service.
+Summary: Abide With Me: the words of Lyte's 1847 hymn as sung at funerals, the tune Eventide and where it fits. Hear our choir, then book singers from £250.
 (Shortened to its answer and headings; the page has the full text.)
 
 ## Abide With Me — one of the most-requested funeral hymns
@@ -2479,6 +2479,7 @@ Abide With Me and The Lord’s My Shepherd are the two hymns families ask us for
 
 Who wrote Abide With Me, and why is it sung at funerals? Henry Francis Lyte, the minister at Lower Brixham in Devon, wrote the words in 1847 while dying of tuberculosis; he died in Nice that November. Families choose it for a funeral because it asks God to stay close at the end of a life, and its tune, Eventide , sits low enough for a congregation that rarely sings.
 
+### The words of Abide With Me
 ### The words were written by a dying man
 ### The melody is built for grief
 ### It works in any setting
@@ -2628,10 +2629,10 @@ How do you choose music for a funeral? Start with what the person loved or sang,
 ---
 
 Source: https://londonchoralservice.com/music-guides/popular-funeral-hymns.html
-Summary: The funeral hymns families in the UK choose most often, from Abide with Me to The Lord's My Shepherd. Listen to recordings and book singers from £250.
+Summary: Funeral hymns UK families choose most, with the tune, the words and where each sits in the service. Hear our choir sing them and book singers from £250.
 (Shortened to its answer and headings; the page has the full text.)
 
-## The most popular funeral hymns
+## Funeral hymns: the most popular choices in the UK
 
 Most funerals have two or three hymns, and they are the moments when everyone in the room does the same thing: stands, opens the order of service and sings a tune they already know. This guide covers the hymns UK families choose most, where each one sits in a service, and how to settle on two or three that suit the person.
 
@@ -4573,7 +4574,7 @@ How do you plan a memorial service? Set a date, usually some weeks or months aft
 ---
 
 Source: https://londonchoralservice.com/music-guides/be-thou-my-vision-wedding-hymn.html
-Summary: Be Thou My Vision at a wedding: the Slane tune, where it goes in the service and how a choir sings it. Hear our recording, then book a choir from £1,150.
+Summary: Be Thou My Vision: the full words (Eleanor Hull, 1912), the Slane tune and where it fits at a wedding. Hear our recording, then book a choir from £1,150.
 (Shortened to its answer and headings; the page has the full text.)
 
 ## Why Be Thou My Vision is the best wedding hymn
@@ -4870,20 +4871,22 @@ How do you choose the best carol singers? Check that the singers are trained, ha
 ---
 
 Source: https://londonchoralservice.com/music-guides/nine-lessons-and-carols.html
-Summary: Planning a service of Nine Lessons and Carols: the history, the nine readings, who reads them, where the carols sit, and how to hire a choir and organist.
+Summary: Nine Lessons and Carols order of service: the nine readings with Bible references, a worked running order, a service sheet template and a 45-minute outline.
 (Shortened to its answer and headings; the page has the full text.)
 
-## Nine Lessons and Carols: how to plan the service
+## Nine Lessons and Carols: order of service and readings
 
 A service of Nine Lessons and Carols is nine readings tracing the Christmas story from Genesis to the first chapter of St John, with a carol after each one. The order was written for a Cambridge chapel in 1918, and it now turns up in parish churches, school chapels, livery halls, and company carol services with no liturgy in them at all. This guide covers where the service came from, what the nine readings are, who reads them, how congregational carols and choir-only pieces are balanced between the lessons, and what you need to organise if you are hiring a choir and an organist into a church you have booked yourself.
 
 The order of service: a processional hymn, usually Once in Royal David’s City ; the Bidding Prayer and the Lord’s Prayer; nine readings running from Genesis 3 to John 1, each followed by a carol or hymn; a collect and the blessing; and a last hymn, at King’s Hark! The Herald Angels Sing , before the organ voluntary. Most services last 55 to 70 minutes.
 
+### Nine Lessons and Carols: the readings
+### Order of service
+### Service sheet template
+### A shorter service
 ### Where the service comes from
-### The nine lessons
 ### Who reads the lessons
 ### Where the carols and hymns sit
-### A worked order of service
 ### How long the service runs
 ### Adapting the format for a secular audience
 ### Hiring a choir and an organist into a church you have booked
@@ -5723,7 +5726,7 @@ Summary: Guides to funeral and memorial music: hymns, choral pieces, songs and t
 
 ## Funeral music guides
 
-These guides cover the music for a funeral or memorial service, from the hymns families choose most to choral pieces and the order of service. To book singers, see our funeral singers and pricing .
+These guides cover the music for a funeral or memorial service, from the funeral hymns families choose most to choral pieces and the order of service. To book singers, see our funeral singers and pricing .
 
 ### Funeral & memorial music
 
