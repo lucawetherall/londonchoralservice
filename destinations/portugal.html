@@ -754,14 +754,18 @@
     }
 
     /* ── Voicing media: click-to-load video (site pattern, restyled) ── */
-    #voicing-media:not(:empty) {
+    /* .pe-media is the same frame for a fixed film (destination pages). */
+    #voicing-media:not(:empty),
+    .pe-media {
       position: relative;
       aspect-ratio: 16 / 9;
       margin-top: 2rem;
       overflow: hidden;
       background: var(--choirStall);
     }
-    #voicing-media iframe {
+    .press-figure { margin: 2rem 0; }
+    #voicing-media iframe,
+    .pe-media iframe {
       position: absolute;
       inset: 0;
       width: 100%;
@@ -1301,7 +1305,25 @@
       </div>
     </section>
 
+    <!-- Film -->
     <section class="pe-section pe-section--mid">
+      <div class="pe-rail">
+        <p class="pe-rail-label" aria-hidden="true">Listen</p>
+        <div class="pe-body" data-fade>
+          <h2>Hear the consort</h2>
+          <p>Ola Gjeilo&rsquo;s Ubi Caritas, sung unaccompanied in a London church. It needs no organ, so it
+            works in a garden, on a terrace or in a chapel with no instrument.</p>
+          <div class="pe-media">
+            <button type="button" class="video-thumb" data-video="-GQaQEGhYEs" aria-label="Play Ubi Caritas">
+              <img src="https://i.ytimg.com/vi/-GQaQEGhYEs/hqdefault.jpg" alt="" loading="lazy" width="480" height="360">
+              <svg class="play-btn" viewBox="0 0 68 48" aria-hidden="true"><path d="M66.52 7.74c-.78-2.93-2.49-5.41-5.42-6.19C55.79.13 34 0 34 0S12.21.13 6.9 1.55c-2.93.78-4.63 3.26-5.42 6.19C.06 13.05 0 24 0 24s.06 10.95 1.48 16.26c.78 2.93 2.49 5.41 5.42 6.19C12.21 47.87 34 48 34 48s21.79-.13 27.1-1.55c2.93-.78 4.63-3.26 5.42-6.19C67.94 34.95 68 24 68 24s-.06-10.95-1.48-16.26z" fill="rgba(42, 23, 8, .72)"/><path d="M45 24 27 14v20z" fill="#FAF6EE"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="pe-section pe-section--light">
       <div class="pe-rail">
         <p class="pe-rail-label" aria-hidden="true">Your ceremony</p>
         <div class="pe-body" data-fade>
@@ -1313,7 +1335,7 @@
       </div>
     </section>
 
-    <section class="pe-section pe-section--light">
+    <section class="pe-section pe-section--mid">
       <div class="pe-rail">
         <p class="pe-rail-label" aria-hidden="true">The weekend</p>
         <div class="pe-body" data-fade>
@@ -1325,7 +1347,7 @@
       </div>
     </section>
 
-    <section class="pe-section pe-section--mid">
+    <section class="pe-section pe-section--light">
       <div class="pe-rail">
         <p class="pe-rail-label" aria-hidden="true">The rite</p>
         <div class="pe-body" data-fade>
@@ -1336,7 +1358,7 @@
       </div>
     </section>
 
-    <section class="pe-section pe-section--light">
+    <section class="pe-section pe-section--mid">
       <div class="pe-rail">
         <p class="pe-rail-label" aria-hidden="true">Language</p>
         <div class="pe-body" data-fade>
@@ -1347,7 +1369,7 @@
       </div>
     </section>
 
-    <section class="pe-section pe-section--mid">
+    <section class="pe-section pe-section--light">
       <div class="pe-rail">
         <p class="pe-rail-label" aria-hidden="true">Buildings</p>
         <div class="pe-body" data-fade>
@@ -1358,7 +1380,7 @@
       </div>
     </section>
 
-    <section class="pe-section pe-section--light">
+    <section class="pe-section pe-section--mid">
       <div class="pe-rail">
         <p class="pe-rail-label" aria-hidden="true">Travel</p>
         <div class="pe-body" data-fade>
@@ -1369,7 +1391,7 @@
       </div>
     </section>
 
-    <section class="pe-section pe-section--mid">
+    <section class="pe-section pe-section--light">
       <div class="pe-rail">
         <p class="pe-rail-label" aria-hidden="true">Where</p>
         <div class="pe-body" data-fade>
@@ -1399,7 +1421,7 @@
       </div>
     </section>
 
-    <section class="pe-section pe-section--light">
+    <section class="pe-section pe-section--mid">
       <div class="pe-rail">
         <p class="pe-rail-label" aria-hidden="true">Questions</p>
         <div class="pe-body" data-fade>
@@ -1424,7 +1446,7 @@
     </section>
 
     <!-- Nearby -->
-    <section class="pe-section pe-section--mid">
+    <section class="pe-section pe-section--light">
       <div class="pe-rail">
         <p class="pe-rail-label" aria-hidden="true">Nearby</p>
         <div class="pe-body" data-fade>

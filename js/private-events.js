@@ -11,8 +11,8 @@
     // video, add it to that file first (with a verified upload date), then
     // paste its ID here. null = no player rendered for that voicing.
     VOICING_VIDEOS: {
-      'eight': null,
-      'twelve': null,
+      'eight': 'SbvqWglsbMo',   // Once in Royal David's City, sung by eight
+      'twelve': '39MyhPogl6A',  // There's a Wideness in God's Mercy, a chorus of twelve
       'sixteen': null,
       'twenty-four': null
     },
@@ -44,6 +44,25 @@
       fadeEls.forEach(function (el) { el.classList.add('pe-in'); });
     }
   }
+
+  // ── Fixed films (destination pages) ──
+  // A .pe-media .video-thumb[data-video] loads its YouTube player only on click.
+  document.querySelectorAll('.pe-media .video-thumb[data-video]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var id = btn.getAttribute('data-video');
+      var label = (btn.getAttribute('aria-label') || 'Play recording').replace(/^Play /, '');
+      if (window.lcsPlayFilm) {
+        window.lcsPlayFilm(btn, id, label, 'Alma Consort');
+        return;
+      }
+      var iframe = document.createElement('iframe');
+      iframe.src = 'https://www.youtube-nocookie.com/embed/' + id + '?autoplay=1';
+      iframe.title = label + ' — Alma Consort';
+      iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
+      iframe.allowFullscreen = true;
+      btn.parentNode.replaceChild(iframe, btn);
+    });
+  });
 
   // ── Voicing selector ──
   var form = document.getElementById('pe-enquiry');

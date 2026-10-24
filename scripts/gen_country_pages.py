@@ -58,6 +58,29 @@ READING = ('<p>Reading: <a href="/music-guides/destination-wedding-choir.html">h
            'own</a>.</p>')
 
 
+# One film for every country page until footage from an engagement abroad exists
+# (owner, 24 Oct 2026). The id is in data/seo-fix-discovered-urls.yml.
+FILM = '''
+    <!-- Film -->
+    <section class="pe-section pe-section--mid">
+      <div class="pe-rail">
+        <p class="pe-rail-label" aria-hidden="true">Listen</p>
+        <div class="pe-body" data-fade>
+          <h2>Hear the consort</h2>
+          <p>Ola Gjeilo&rsquo;s Ubi Caritas, sung unaccompanied in a London church. It needs no organ, so it
+            works in a garden, on a terrace or in a chapel with no instrument.</p>
+          <div class="pe-media">
+            <button type="button" class="video-thumb" data-video="-GQaQEGhYEs" aria-label="Play Ubi Caritas">
+              <img src="https://i.ytimg.com/vi/-GQaQEGhYEs/hqdefault.jpg" alt="" loading="lazy" width="480" height="360">
+              <svg class="play-btn" viewBox="0 0 68 48" aria-hidden="true"><path d="M66.52 7.74c-.78-2.93-2.49-5.41-5.42-6.19C55.79.13 34 0 34 0S12.21.13 6.9 1.55c-2.93.78-4.63 3.26-5.42 6.19C.06 13.05 0 24 0 24s.06 10.95 1.48 16.26c.78 2.93 2.49 5.41 5.42 6.19C12.21 47.87 34 48 34 48s21.79-.13 27.1-1.55c2.93-.78 4.63-3.26 5.42-6.19C67.94 34.95 68 24 68 24s-.06-10.95-1.48-16.26z" fill="rgba(42, 23, 8, .72)"/><path d="M45 24 27 14v20z" fill="#FAF6EE"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+'''
+
+
 def nearby(slug, shade):
     """The sibling countries in the page's own group, so no country page is a dead end."""
     group, countries = next((g, cs) for g, cs in D.GROUPS if any(c[0] == slug for c in cs))
@@ -105,9 +128,9 @@ def build(slug, name, title, desc, hero_h1, hero_sub, sections, regions, faqs,
         <p class="pe-hero__cta"><a class="pe-btn" href="#enquire">Enquire about your wedding</a></p>
       </div>
     </section>
-'''
+''' + FILM
     shade = ['mid', 'light']
-    i = 0
+    i = 1  # the film section above is 'mid'
     for label, heading, paras in sections:
         para_html = '\n          '.join(f'<p>{p}</p>' for p in paras)
         body += f'''

@@ -19,9 +19,9 @@ n = build('united-states', 'United States',
      'advance, for the musicians travelling. That process takes months rather than weeks, it costs real '
      'money per engagement, and it cannot be compressed because a wedding date is approaching.',
      'The practical consequence is simple: the visa calendar, not the flight schedule, decides when we '
-     'can come. A couple planning a New York wedding eighteen months out has no difficulty at all; one '
-     'asking about a date six months away needs us to look at the specific timings before anyone '
-     'promises anything. So raise it early. The earlier this conversation starts, the more of the calendar is open to you.',
+     'can come. The visa work alone takes four to six months, so a couple planning a New York wedding a '
+     'year out has no difficulty, and one asking about a date less than six months away is usually too '
+     'late. So raise it early. The earlier this conversation starts, the more of the calendar is open to you.',
      'Where the timeline does work, everything else about the States is straightforward: excellent '
      'flights, no language barrier, and venues used to handling suppliers professionally.']),
    ('The rite', 'What a US wedding asks of a choir',
@@ -69,9 +69,11 @@ n = build('united-states', 'United States',
     'engagement. This is the single most important thing to know about booking a British choir for an '
     'American wedding, and it is why the answer depends on your timeline before it depends on our diary.'),
    ('How far ahead do we need to book?',
-    'Far further than anywhere else we sing. Where Europe works at six to twelve months, the '
-    'States needs the visa timeline built in on top, so the advice is to raise it before you fix the '
-    'date rather than after. If your wedding is sooner than that, ask us anyway. The position depends on the visa route and on how the calendar is running, and we would rather look at your specific dates than turn you away on a general rule.'),
+    'Far further than anywhere else we sing. Where Europe works at six to twelve months, for the States '
+    'we ask for at least nine months and prefer twelve. The visa work takes four to six months: a '
+    'consultation letter from the American musicians&rsquo; union, the petition to US immigration (faster '
+    'with premium processing, at extra cost), and an interview at the US Embassy in London for each singer. '
+    'A date less than six months away is unlikely to work. If your wedding is sooner than that, ask us anyway. The position depends on the visa route and on how the calendar is running, and we would rather look at your specific dates than turn you away on a general rule.'),
    ('Why is a US booking more expensive?',
     'Three things stack: transatlantic flights for the whole consort, two nights rather than one because '
     'we will not sing well the morning after an overnight flight and a large time change, and the visa '
