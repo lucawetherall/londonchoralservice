@@ -135,8 +135,10 @@ def check_heroes():
         if CAPTIONS[film] is None:
             check('class="video-caption"' not in video, f'{page}: the {film} film takes no caption')
         else:
-            caption = f'<p class="video-caption">{CAPTIONS[film]}</p>'
-            check(video.count(caption) == 1, f'{page}: needs exactly one caption "{CAPTIONS[film]}"')
+            # The caption may end with a link to more recordings ("…choir. <a …>…</a>").
+            caption = re.compile(r'<p class="video-caption">' + re.escape(CAPTIONS[film])
+                                 + r'(?:\. <a [^>]*>[^<]*</a>)?</p>')
+            check(len(caption.findall(video)) == 1, f'{page}: needs exactly one caption "{CAPTIONS[film]}"')
 
 
 def main():
