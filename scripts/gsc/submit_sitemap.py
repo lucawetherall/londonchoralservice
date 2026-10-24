@@ -8,7 +8,7 @@ logs the change in logs/gsc-changes.md.
 
     .venv/bin/python scripts/gsc/submit_sitemap.py            # status only
     .venv/bin/python scripts/gsc/submit_sitemap.py --apply    # after approval
-    .venv/bin/python scripts/gsc/submit_sitemap.py --sitemap sitemap-video.xml [--apply]
+    .venv/bin/python scripts/gsc/submit_sitemap.py --sitemap sitemap_index.xml [--apply]
 """
 
 import argparse
@@ -22,11 +22,13 @@ from google.auth.transport.requests import AuthorizedSession
 
 SITE = "sc-domain:londonchoralservice.com"
 ROOT_URL = "https://londonchoralservice.com/"
-SITEMAPS = ("sitemap.xml", "sitemap-video.xml")  # the sitemaps robots.txt lists
+SITEMAPS = ("sitemap.xml", "sitemap_index.xml", "sitemap-video.xml", "sitemap-images.xml")
 LOG = Path(__file__).resolve().parents[2] / "logs" / "gsc-changes.md"
 REASONS = {
     "sitemap.xml": "Google had stopped re-reading the sitemap; new and changed pages were not being discovered",
-    "sitemap-video.xml": "New sitemap of the films (VideoObject) and film stills, for video and image search",
+    "sitemap-video.xml": "New sitemap of the films (VideoObject), for video search",
+    "sitemap-images.xml": "New sitemap of the film stills, for image search",
+    "sitemap_index.xml": "New sitemap index (pages, films, film stills), the one robots.txt lists",
 }
 
 

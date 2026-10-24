@@ -114,7 +114,7 @@ BODY = '''  <main id="main">
         <div class="prose">
           <nav class="breadcrumb" aria-label="Breadcrumb">
             <ol>
-              <li><a href="../index.html">Home</a></li>
+              <li><a href="/">Home</a></li>
               <li><a href="./">Music Guides</a></li>
               <li>Hiring a UK Choir for a Destination Wedding</li>
             </ol>
