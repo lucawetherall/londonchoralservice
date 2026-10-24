@@ -98,7 +98,7 @@ def jsonld():
             'itemListElement': [
                 {'@type': 'ListItem', 'position': 1, 'name': 'Private Events',
                  'item': f'{B.SITE}/private-events.html'},
-                {'@type': 'ListItem', 'position': 2, 'name': 'Destinations',
+                {'@type': 'ListItem', 'position': 2, 'name': 'Weddings Abroad',
                  'item': f'{B.SITE}/destinations/'},
             ],
         },
@@ -245,7 +245,7 @@ BODY = f'''
 
 html = B.page(
     title=TITLE, description=DESC, path='destinations/', jsonld=jsonld(),
-    crumbs=[('Private Events', '/private-events.html'), ('Destinations', None)],
+    crumbs=[('Private Events', '/private-events.html'), ('Weddings Abroad', None)],
     body=BODY, source_page='destinations/',
     subject='Destination wedding enquiry — Alma Consort / LCS',
     form_intro='Tell us where you are marrying and when. If we have the date free, Luca Wetherall '

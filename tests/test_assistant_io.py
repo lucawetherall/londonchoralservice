@@ -75,7 +75,7 @@ def test_next_ref_takes_the_first_free_suffix_and_the_checker_due_dates():
     assert got["ref"] == "211126C", got
     today = aio.london_today()
     assert got["instalment_1_due"] == cp.deposit_due_date(today, datetime.date(2026, 11, 21)).isoformat()
-    assert got["instalment_2_due"] == "2026-11-20"
+    assert got["instalment_2_due"] == "2026-11-19"
 
 
 def test_next_ref_counts_the_icloud_invoice_folders_too():
@@ -105,7 +105,7 @@ def test_next_ref_pure_function_and_short_notice():
     got = aio.next_ref(datetime.date(2026, 11, 14), {"141126", "141126A", "1411"}, today)
     assert got["ref"] == "141126B"
     assert got["instalment_1_due"] == "2026-11-11"  # 3 days before the event, never the invoice day
-    assert got["instalment_2_due"] == "2026-11-13"
+    assert got["instalment_2_due"] == "2026-11-12"
     assert got["short_notice"] is True
     far = aio.next_ref(datetime.date(2027, 6, 5), set(), today)
     assert far["ref"] == "050627"

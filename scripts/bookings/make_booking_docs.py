@@ -134,7 +134,7 @@ def make_docs(spec, root=OUT_ROOT):
         "INSTALMENT_1_AMOUNT": money(i1),
         "INSTALMENT_1_DATE": f"Due by {long_date(spec['instalment_1_due'])} to confirm the booking",
         "INSTALMENT_2_AMOUNT": money(i2),
-        "INSTALMENT_2_DATE": f"Due by {long_date(spec['instalment_2_due'])} (at least 24 hours before the service)",
+        "INSTALMENT_2_DATE": f"Due by {long_date(spec['instalment_2_due'])} (at least 48 hours before the service)",
         "PAYMENT_REF": f"INV {ref}",
     }
     agr_spec = {
