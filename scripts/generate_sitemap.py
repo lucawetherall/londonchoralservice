@@ -6,7 +6,7 @@ Run by build.sh after partial expansion and CSS inlining. Rules:
 - Every *.html outside partials/, graphify-out/ and command_centre/ is a candidate; pages
   carrying <meta name="robots" content="noindex…"> are excluded.
 - lastmod comes from data/page-dates.json, keyed by URL path. Each entry
-  stores a hash of the page's *content* (body with the inlined <style>,
+  stores a hash of the page's *content* (body with any <style>,
   the @include regions, the date markers and the click-to-play film script
   stripped) and the date that content last changed. When the hash changes
   the date becomes today. A page not yet in the file is seeded from git:

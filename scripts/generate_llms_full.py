@@ -59,7 +59,9 @@ def page_markdown(url, path, trim=False):
     for tag, attrs, inner in BLOCK.findall(body):
         if tag == 'h2':
             past_first_h2 = True
-        if trim and (past_first_h2 and tag in ('p', 'li') or 'guide-meta' in attrs):
+        # A trimmed page keeps its answer, not the small print around it (date lines, hiring lines, captions).
+        small = re.search(r'class="[^"]*\b(guide-meta|text-sm|video-caption)\b', attrs)
+        if trim and (past_first_h2 and tag in ('p', 'li') or small):
             continue
         text = re.sub(r'<[^>]+>', ' ', inner)
         text = html.unescape(text)
