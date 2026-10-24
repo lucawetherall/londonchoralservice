@@ -1533,10 +1533,7 @@ td.compare-us .compare-saving {
 
   .mobile-cta .mobile-cta-whatsapp,
   .mobile-cta .mobile-cta-whatsapp:visited,
-  .mobile-cta .mobile-cta-whatsapp:active,
-  .mobile-cta .mobile-cta-email,
-  .mobile-cta .mobile-cta-email:visited,
-  .mobile-cta .mobile-cta-email:active {
+  .mobile-cta .mobile-cta-whatsapp:active {
     border: 1px solid var(--color-rule);
     color: var(--color-text);
     display: flex;
@@ -1545,8 +1542,7 @@ td.compare-us .compare-saving {
     gap: var(--space-xs);
   }
 
-  .mobile-cta .mobile-cta-whatsapp:hover,
-  .mobile-cta .mobile-cta-email:hover {
+  .mobile-cta .mobile-cta-whatsapp:hover {
     border-color: var(--color-accent);
   }
 
