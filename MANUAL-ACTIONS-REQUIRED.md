@@ -10,7 +10,7 @@ Finished work, old notes and reference material are in `docs/MANUAL-ACTIONS-ARCH
 
 | # | Action | Time | When |
 |---|---|---|---|
-| 1 | Ask Google to recrawl twelve pages (Search Console) | 15 min over three days | 25, 26 and 27 Oct |
+| 1 | Ask Google to recrawl eighteen pages (Search Console) | 20 min over four days | 25, 26, 27 and 28 Oct |
 | 2 | Directory sign-ups (seven sites) | 15–20 min each | this week |
 | 3 | Fix the `www` address at Porkbun | 10 min | this week |
 | 4 | Check the Google Business Profile edits | 5 min | from 30 Oct |
@@ -23,7 +23,7 @@ Finished work, old notes and reference material are in `docs/MANUAL-ACTIONS-ARCH
 
 ---
 
-## 1. Ask Google to recrawl twelve pages (Search Console)
+## 1. Ask Google to recrawl eighteen pages (Search Console)
 
 On 24 Oct you requested eleven of twelve pages; Google refused the twelfth (the funeral-hymns guide) because the day's quota was used up. Later that day PR #370 rewrote seven more pages to match what people search for, so Google needs to fetch the new versions. That includes three you had already requested (Newham, wedding ceremony music, carol services): their earlier requests are for versions that no longer exist.
 
@@ -63,9 +63,20 @@ https://londonchoralservice.com/music-guides/love-divine-all-loves-excelling.htm
 https://londonchoralservice.com/music-guides/the-lords-my-shepherd.html
 ```
 
+**28 Oct, these six.** They are new Christmas carol guides from PR #375 (the words, history and choir notes for each carol). Carol-lyric searches peak in December, so they need to be in Google's index before then.
+
+```
+https://londonchoralservice.com/music-guides/silent-night.html
+https://londonchoralservice.com/music-guides/hark-the-herald-angels-sing.html
+https://londonchoralservice.com/music-guides/o-come-all-ye-faithful.html
+https://londonchoralservice.com/music-guides/once-in-royal-davids-city.html
+https://londonchoralservice.com/music-guides/o-little-town-of-bethlehem.html
+https://londonchoralservice.com/music-guides/the-holly-and-the-ivy.html
+```
+
 The sitemap doesn't need resubmitting: the build updated each page's date in it, and Google reads it every few days.
 
-**Done when:** all twelve requests are accepted. About 7 Nov an agent reruns the index-coverage report on these pages and the eleven from 24 Oct. Any page still "Crawled - currently not indexed" then needs a content fix, not another request.
+**Done when:** all eighteen requests are accepted. About 7 Nov an agent reruns the index-coverage report on these pages and the eleven from 24 Oct. Any page still "Crawled - currently not indexed" then needs a content fix, not another request.
 
 ---
 
@@ -234,7 +245,7 @@ The page `linkedin.com/company/london-choral-service` doesn't exist. A company p
 | About 28 Oct | Google Ads: check the identity-verification banner has gone (submitted 24 Oct). If Google asks for more, it emails you | you |
 | About 31 Oct | Bing Webmaster Tools → **Site Explorer**: check pages are appearing (sitemap index submitted 24 Oct) | you, or tell an agent what you see |
 | 30 Oct onwards | Check the Business Profile edits (action 4) | you |
-| About 7 Nov | Rerun the index-coverage report on the twelve recrawled pages | agent, on your word |
+| About 7 Nov | Rerun the index-coverage report on the eighteen recrawled pages | agent, on your word |
 | 10 Nov, 24 Nov, 8 Dec | Scheduled Business Profile posts publish at 09:00 | automatic |
 | November | Look again at whether `christmas.html` and the Christmas guides compete for the same Search Console queries (too little data on 14 Oct) | agent |
 | **Late January 2027** | **Re-check competitor prices.** Open https://www.londonfuneralsingers.co.uk/pricing and compare each `source_quote` in `data/competitor-pricing.yml` with what is published. Update the figures, the `checked_date` and `compare/london-funeral-singers.html` in the same commit (a figure and its date must never disagree). `build.sh` prints a STALE warning past 120 days. Last checked 23 Oct 2026: every figure unchanged. The file also holds Dream Gospel Choir, Music for London, Julia Charles and Alive Network figures checked 24 Oct, used by no page yet; re-check them too | agent, on your word |
