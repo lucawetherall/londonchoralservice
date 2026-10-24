@@ -11,7 +11,8 @@
  * The sheet is full width at the foot of the window, with Accept and Reject
  * the same size and style (PECR/ICO: rejecting is as easy as accepting). It
  * has no overlay and no scroll lock. On first view it takes keyboard focus
- * without scrolling the page. On phones it sits above the mobile CTA bar.
+ * without scrolling the page. On phones it covers the mobile CTA bar while
+ * open (the bar comes back once a choice is made), so the two never stack.
  * Styles: the "Cookie consent sheet" block in css/components.css and its twin
  * in partials/private-register.css.html.
  */
@@ -63,18 +64,17 @@
   var returnFocus = null;
   var bodyPadding = '';
 
-  // Keep the sheet above the mobile CTA bar while that bar is on screen
-  // (nav.js slides it away when the footer comes into view), and pad the
-  // page by the sheet's height so the last of the content can still be
-  // scrolled into view while the sheet is open.
+  // Pad the page by the sheet's height so the last of the content can still
+  // be scrolled into view while the sheet is open.
   function place() {
     if (!banner || banner.hidden) return;
-    var lift = 0;
-    if (cta && !cta.classList.contains('is-hidden') && getComputedStyle(cta).display !== 'none') {
-      lift = cta.offsetHeight;
-    }
-    banner.style.setProperty('--consent-offset', lift + 'px');
-    document.body.style.paddingBottom = (banner.offsetHeight + lift) + 'px';
+    document.body.style.paddingBottom = banner.offsetHeight + 'px';
+  }
+
+  // The sheet covers the mobile CTA bar while open; take the bar's links out
+  // of the tab order and the accessibility tree until it is visible again.
+  function coverCta(covered) {
+    if (cta) cta.inert = covered;
   }
 
   function build() {
@@ -108,9 +108,12 @@
     document.body.appendChild(banner);
 
     cta = document.querySelector('.mobile-cta');
-    window.addEventListener('resize', place);
-    if (cta && 'MutationObserver' in window) {
-      new MutationObserver(place).observe(cta, { attributes: true, attributeFilter: ['class'] });
+    // The sheet's height changes with the window and when the web fonts
+    // arrive and rewrap the text.
+    if ('ResizeObserver' in window) {
+      new ResizeObserver(place).observe(banner);
+    } else {
+      window.addEventListener('resize', place);
     }
     return banner;
   }
@@ -119,6 +122,7 @@
     var b = build();
     if (b.hidden) bodyPadding = document.body.style.paddingBottom;
     b.hidden = false;
+    coverCta(true);
     place();
   }
 
@@ -128,6 +132,7 @@
   // dropped at the end of the document.
   function hide(byKeyboard) {
     banner.hidden = true;
+    coverCta(false);
     document.body.style.paddingBottom = bodyPadding;
     if (returnFocus && document.contains(returnFocus)) {
       returnFocus.focus();
