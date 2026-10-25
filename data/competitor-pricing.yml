@@ -120,9 +120,9 @@ providers:
 # pricing.html remains the source of truth for LCS prices; these must match it.
 lcs_prices:
   soloist: 275
-  organist_standalone: 250
+  organist_standalone: 275
   organist_added_to_choir: 250
-  soloist_with_organist: 525
+  soloist_with_organist: 550
   small_choir: 1150
   quintet: 1400
   sextet: 1600
@@ -140,9 +140,8 @@ derived_figures:
   1675: "LFS small choir + organist, ex VAT (1400 + 275)"
   2010: "LFS small choir + organist, inc VAT (1680 + 330)"
   1400: "LCS small choir + organist (1150 + 250)"
-  55:   "Saving on a soloist (330 - 275)"
-  80:   "Saving on an organist (330 - 250)"
-  135:  "Saving on soloist with organist (660 - 525)"
+  55:   "Saving on a soloist, or on an organist booked without a choir (330 - 275)"
+  110:  "Saving on soloist with organist (660 - 550)"
   530:  "Saving on a small choir (1680 - 1150)"
   610:  "Saving on small choir with organist (2010 - 1400)"
   880:  "Saving on a full choir (2880 - 2000)"

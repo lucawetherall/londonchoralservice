@@ -186,7 +186,7 @@ On 23 Oct Claude made a batch of edits to the profile; Google shows each as "pen
 - **Website:** `https://londonchoralservice.com/?utm_source=google&utm_medium=organic&utm_campaign=gbp`.
 - **Service area:** London, Greater London, Surrey, Kent, Essex, Hertfordshire, Berkshire, Buckinghamshire; address hidden.
 - **Hours:** Monday to Friday 09:00–18:00, weekends closed.
-- **Services:** seven, six at "From £1,150" and Organist and pianist hire at £250.
+- **Services:** seven, six at "From £1,150" and Organist and pianist hire at £275 (£250 added to a choir).
 - **Photos:** nine. While you're there, add the five press stills from `~/Pictures/LCS-listings/press/` (**Photos → Add photos**), which takes it past the ten Google likes to see.
 
 If an edit was rejected or reverted, tell an agent which and it will redo it in a live chat. Three Christmas posts are already scheduled for 09:00 on 10 Nov, 24 Nov and 8 Dec; you can edit or cancel one under **Posts** before its date.
