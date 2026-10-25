@@ -214,6 +214,10 @@ def test_extract_bank_layouts():
     assert bank("Accounts: 07700 900123\nSort code 12-34-56\nAccount number 87654321") == ("123456", "87654321")
     assert bank("Sort code 12.34.56\nAccount number 87654321") == ("123456", "87654321")
     assert bank("Sort code\n12-34-56\nAccount number\n87654321") == ("123456", "87654321")
+    zoho = "Total £110.00\nBank details:\n\nAnna Smith\nRevolut Bank\n12-34-56\n87654321\n"
+    assert bank(zoho) == ("123456", "87654321")
+    assert bank("Bank details:\nAnna Smith\n12-34-56\n87654321") == ("123456", "87654321")
+    assert bank("Invoice date\n21-10-26\n87654321\nTotal £100") == ("", "")  # no heading: not bank details
 
 
 def test_extract_bank_rejects_customer_account_and_ambiguity():
