@@ -601,7 +601,7 @@ def test_quote_figures_come_from_the_pages():
     std, xmas = lists["standard"], lists["christmas"]
     by = {p["key"]: p for p in std["packages"]}
     assert by["small-choir"]["price"] == 1150 and by["small-choir"]["singers"] == 4
-    assert by["soloist"]["price"] == 250 and by["soloist"]["singers"] == 1
+    assert by["soloist"]["price"] == 275 and by["soloist"]["singers"] == 1
     assert std["organist"] == 250 and std["soloist_organist"] is None
     assert {p["key"] for p in xmas["packages"]} == {"small-choir", "quintet", "sextet", "full-choir", "chorus"}
     assert xmas["organist"] == 250
@@ -617,8 +617,8 @@ def test_quote_totals():
     q = quote.calculate(lists, "standard", "small-choir", organist=True)
     assert q["total"] == 1400, q
     assert quote.calculate(lists, "standard", "small-choir")["total"] == 1150
-    assert quote.calculate(lists, "standard", "soloist", organist=True)["total"] == 500
-    assert quote.calculate(lists, "standard", "soloist")["total"] == 250
+    assert quote.calculate(lists, "standard", "soloist", organist=True)["total"] == 525
+    assert quote.calculate(lists, "standard", "soloist")["total"] == 275
     # the Christmas page's own worked examples
     assert quote.calculate(lists, "christmas", "full-choir", organist=True)["total"] == 2250
     assert quote.calculate(lists, "christmas", "chorus", organist=True)["total"] == 3250
