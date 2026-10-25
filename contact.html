@@ -499,6 +499,8 @@
     .btn-link:visited, .btn-link:active{color:var(--color-bg);}
     .btn-link:focus-visible{outline:2px solid var(--color-text);outline-offset:2px;}
     @media (max-width: 480px){.btn, .btn-link{padding-inline:var(--space-lg);}}
+    .btn-link--secondary, .btn-link--secondary:visited, .btn-link--secondary:active{background-color:transparent;color:var(--color-accent);box-shadow:inset 0 0 0 1px var(--color-accent);}
+    .btn-link--secondary:hover{background-color:var(--color-accent);color:var(--color-bg);}
     .btn-link--icon{display:inline-flex;align-items:center;gap:0.55em;}
     .btn-link--icon svg{width:0.85em;height:0.85em;flex-shrink:0;opacity:0.92;}
     .breadcrumb{margin-bottom:var(--space-lg);}
@@ -731,6 +733,7 @@
         </nav>
         <h1>Contact us</h1>
         <p class="lede">Reach out even if the details are still rough. WhatsApp gets the fastest reply.</p>
+        <p><a href="#enquiry" class="btn-link btn-link--secondary">Send a message &darr;</a></p>
         <p>Contact The London Choral Service to enquire about singers, choirs, or instrumentalists for a funeral, wedding, memorial, or corporate event. Please include the date, venue, and approximate <a href="pricing.html">ensemble size</a> if you know it; we&rsquo;ll come back with options and a quote.</p>
       </div>
     </section>
@@ -746,13 +749,13 @@
           </a>
         </p>
 
-        <h2>By telephone</h2>
-        <p><a href="tel:+447356042468">07356 042468</a></p>
-        <p class="text-sm text-mid">Monday to Friday, 9am&ndash;6pm. We aim to answer every call personally. If we're unavailable, we'll return your call within one working day &mdash; text us on WhatsApp instead for a quicker reply.</p>
-
         <h2>By email</h2>
         <p><a href="mailto:office@londonchoralservice.com">office@londonchoralservice.com</a></p>
         <p class="text-sm text-mid">We reply within one working day. For a faster answer, message us on WhatsApp instead.</p>
+
+        <h2>By telephone</h2>
+        <p><a href="tel:+447356042468">07356 042468</a></p>
+        <p class="text-sm text-mid">Monday to Friday, 9am&ndash;6pm. We aim to answer every call personally. If we're unavailable, we'll return your call within one working day &mdash; text us on WhatsApp instead for a quicker reply.</p>
 
         <figure class="pull-quote">
           <blockquote>
@@ -803,6 +806,8 @@
                 <option value="memorial">Memorial service</option>
                 <option value="celebration">Celebration of life</option>
                 <option value="corporate">Corporate event</option>
+                <option value="christmas">Christmas / carol singers</option>
+                <option value="carol-service">Church carol service</option>
                 <option value="quote-check">Checking a quote from another provider</option>
                 <option value="other">Other</option>
               </select>
