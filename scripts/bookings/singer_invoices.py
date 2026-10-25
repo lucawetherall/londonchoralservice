@@ -164,6 +164,10 @@ SORT = re.compile(r"(?<![a-z])(?:sort[\s\-]*code|s/c)\W{0,5}(\d{2})\W?(\d{2})\W?
 ACCOUNT = re.compile(r"(?<![a-z])(?:account|acct|acc|a/c)(?![a-z])\.?(?:\s*(?:no|number|num|#)\.?)?\W{0,5}"
                      r"(\d{7,8}|\d{4} \d{3,4})(?![ ]?\d)", re.I)
 TABLE = re.compile(r"(?<![a-z])sort[\s\-]*code\b[^\n]*\n[ \t]*(\d{2})[-. ]?(\d{2})[-. ]?(\d{2})[ \t]+(\d{7,8})(?!\d)", re.I)
+# an unlabelled block (Zoho Invoice's layout): "Bank details:", the payee and bank name, then the sort code and the
+# account number on lines of their own
+BLOCK = re.compile(r"(?<![a-z])(?:bank|payment)[ \t]+details\W{0,3}\n(?:[ \t]*[^\d\n]*\n){0,4}"
+                   r"[ \t]*(\d{2})[-.](\d{2})[-.](\d{2})[ \t]*\n[ \t]*(\d{7,8})[ \t]*(?:\n|$)", re.I)
 IBAN = re.compile(r"\bGB\d{2} ?[A-Z]{4}(?: ?\d){14}(?!\d)")
 NOT_OURS = re.compile(r"\b(?:customer|client|your|reference)\b", re.I)  # a label like "Customer account no."
 NICKNAMES = {"ben": {"benjamin", "benedict"}, "jess": {"jessica", "jessie"}, "tom": {"thomas"}, "will": {"william"},
@@ -196,7 +200,7 @@ def bank_candidates(text):
     sorts = [("".join(m.groups()), line(m.start())) for m in SORT.finditer(text)]
     accs = [(re.sub(r"\s", "", m.group(1)), line(m.start())) for m in ACCOUNT.finditer(text)
             if not NOT_OURS.search(text[max(0, m.start() - 12):m.start()])]
-    for m in TABLE.finditer(text):
+    for m in (*TABLE.finditer(text), *BLOCK.finditer(text)):
         sorts.append(("".join(m.groups()[:3]), line(m.start(4))))
         accs.append((m.group(4), line(m.start(4))))
     for m in IBAN.finditer(text):
