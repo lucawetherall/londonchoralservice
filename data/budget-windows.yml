@@ -25,11 +25,14 @@ season_start: 2026-09-01
 # for the Christmas campaign from 28 Sep to 13 Dec 2026 only, so from 2027 this window
 # is flagged and capped at £5 until the owner decides again. Stop rule: see budget_cap.py.
 windows:
+  # Back to £5 on 26 Oct 2026 (owner-approved, logs/ads-changes.md): at £8 the campaign spent
+  # £4.36 a day and lost 5% of impressions to budget, so the extra bought nothing. The £8
+  # exception in budget_cap.py stays until 13 Dec in case the owner wants it back.
   - name: carols
     campaigns: ["christmas", "carol"]
     start: "09-15"
     end: "12-13"
-    daily_gbp: 8
+    daily_gbp: 5
 
   - name: carols-late
     campaigns: ["christmas", "carol"]
