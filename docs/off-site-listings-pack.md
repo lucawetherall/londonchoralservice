@@ -62,7 +62,7 @@ If a site rejects a link with a query string, paste the plain page address inste
 | Sextet (6 singers) | from £1,600 |
 | Full Choir (8 singers) | from £2,000 |
 | Chorus (12 singers) | from £3,000 |
-| Organist or pianist | £250, alone or added to a choir |
+| Organist or pianist | £275 on their own, £250 added to a choir |
 
 December dates cost the same, except Christmas Eve and Christmas Day (around 25% more). No VAT is added. Travel beyond Greater London is quoted with the booking. When a site asks for one "starting price", enter £1,150.
 
@@ -86,7 +86,7 @@ December dates cost the same, except Christmas Eve and Christmas Day (around 25%
 >
 > We sing at weddings, funerals, memorials, Christmas carol services and corporate events, as a choir of four voices or a chorus of up to twelve. We plan the repertoire with you, rehearse it, and agree timings with your venue, clergy or funeral director. We sing sacred and classical music, hymns, and pop arranged for voices. If you want a piece we don't yet sing, we can arrange it for your choir, sometimes for an extra charge.
 
-**Pricing:** choirs from £1,150 (four voices) to £3,000 (twelve). Organist or pianist £250. No VAT is added. Travel beyond Greater London is quoted with the booking.
+**Pricing:** choirs from £1,150 (four voices) to £3,000 (twelve). Organist or pianist £250 added to a choir, £275 on their own. No VAT is added. Travel beyond Greater London is quoted with the booking.
 
 ## Poptop profile
 

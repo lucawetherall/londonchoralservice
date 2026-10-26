@@ -35,17 +35,20 @@ def slug(name):
 
 def price_list(page, root=REPO):
     """{"page", "heading", "packages": [{key, name, singers, price, label}], "organist", "organist_name",
-    "soloist_organist", "premium_pct"} from one pricing page. The packages are the first pricing table's rows
-    with a £ figure; the organist is the first row anywhere naming an organist."""
+    "organist_alone", "soloist_organist", "premium_pct"} from one pricing page. The packages are the first pricing
+    table's rows with a £ figure; the organist (added to a choir) is the first row naming an organist, and
+    organist_alone the row whose sub says "on their own", which also prices a soloist with an organist."""
     p = assistant_io.PriceParser()
     p.feed((Path(root) / page).read_text(encoding="utf-8"))
-    packages, organist, organist_name = [], None, ""
+    packages, organist, organist_name, organist_alone = [], None, "", None
     for r in p.rows:
         price = pounds(r["price"])
         if price is None:
             continue
         if re.search(r"organist", r["name"], re.I):
-            if organist is None:
+            if re.search(r"on their own", r["sub"] or "", re.I):
+                organist_alone = organist_alone or price
+            elif organist is None:
                 organist, organist_name = price, r["name"]
             continue
         if r["table"] != 0:
@@ -58,9 +61,13 @@ def price_list(page, root=REPO):
         packages.append({"key": slug(r["name"]), "name": r["name"], "singers": singers, "price": price,
                          "label": label})
     combo = next((int(m.group(1).replace(",", "")) for x in p.extras for m in [COMBO.match(x)] if m), None)
+    solo = next((x["price"] for x in packages if x["singers"] == 1), None)
+    if combo is None and organist_alone and solo:
+        combo = solo + organist_alone  # an organist without a choir is the "on their own" row's price
     pct = next((int(m.group(1)) for x in p.notes if "Christmas Eve" in x for m in [PERCENT.search(x)] if m), None)
     return {"page": page, "heading": p.blocks[0][0] if p.blocks else "", "packages": packages,
-            "organist": organist, "organist_name": organist_name, "soloist_organist": combo, "premium_pct": pct}
+            "organist": organist, "organist_name": organist_name, "organist_alone": organist_alone,
+            "soloist_organist": combo, "premium_pct": pct}
 
 
 def load_lists(root=REPO):

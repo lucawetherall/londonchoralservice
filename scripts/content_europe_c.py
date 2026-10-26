@@ -204,7 +204,7 @@ n = build('scotland', 'Scotland',
      'directly in what you pay. There are no flights for the whole consort to price, no international '
      'accommodation, no permits and no currency question. Our standard rates apply, and they are '
      'published in full on the <a href="/pricing.html">pricing page</a> &mdash; a soloist from '
-     '&pound;250, a choir of eight at &pound;2,000, twelve voices at &pound;3,000, with no VAT '
+     '&pound;275, a choir of eight at &pound;2,000, twelve voices at &pound;3,000, with no VAT '
      'added.',
      'What a Scottish booking may add is travel and, for the Highlands and islands, a night&rsquo;s '
      'accommodation, because a group cannot reasonably drive from London and sing the same afternoon. '
@@ -233,7 +233,7 @@ n = build('scotland', 'Scotland',
     'celebrant rather than the building, so a religious or belief celebrant can marry you in a castle '
     'courtyard, a glen or beside a loch. Your celebrant will confirm the detail; from our side it means planning for an outdoor acoustic.'),
    ('Do you charge extra because Scotland is far from London?',
-    'Our published UK rates apply &mdash; a soloist from &pound;250, eight voices at &pound;2,000, '
+    'Our published UK rates apply &mdash; a soloist from &pound;275, eight voices at &pound;2,000, '
     'twelve at &pound;3,000, on the <a href="/pricing.html">pricing page</a>. What a Scottish booking may '
     'add is travel and, for the Highlands and islands, one night&rsquo;s accommodation, because a group '
     'cannot drive from London and sing well the same afternoon. Edinburgh and Glasgow often need neither.'),

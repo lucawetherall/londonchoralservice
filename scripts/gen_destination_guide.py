@@ -43,7 +43,7 @@ FAQS = [
      "be paid to perform, and how far ahead that has to be arranged."),
     ("How much does it cost to fly a choir to your wedding?",
      "Three things move the number: how many singers, how far they travel, and how many nights they stay. "
-     "Published UK rates run from £250 for a soloist to £2,000 for a choir of eight and £3,000 for twelve "
+     "Published UK rates run from £275 for a soloist to £2,000 for a choir of eight and £3,000 for twelve "
      "voices. An engagement abroad adds return flights and rooms for every singer, plus the night before "
      "for rehearsal, so the travel component often exceeds the music fee on long-haul dates."),
     ("How far in advance should we book?",
@@ -144,7 +144,7 @@ BODY = '''  <main id="main">
           <p>Three things move the figure, and only one of them is the music: the number of singers, the
             distance they travel, and the nights they stay.</p>
           <p>The fee for the singing is the part you can look up. Our rates are published on the
-            <a href="../pricing.html">pricing page</a> and start at &pound;250 for a soloist, &pound;1,150
+            <a href="../pricing.html">pricing page</a> and start at &pound;275 for a soloist, &pound;1,150
             for a small choir of four, and &pound;2,000 for a choir of eight. What a wedding abroad adds
             is return flights and accommodation for every singer who travels, and a night before the
             wedding, because a consort that has not sung in the building is guessing at it.</p>
