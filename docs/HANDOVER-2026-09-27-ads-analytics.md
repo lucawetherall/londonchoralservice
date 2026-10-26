@@ -288,7 +288,7 @@ SHELL COMMANDS (only these, from the repo folder)
 EACH RUN
 1. Run the report. It saves everything to ~/lcs-private/reports/<today>.txt and prints only "report saved: <path>", "sections: <ids>" and "problem: <line>" lines (or "problems: none"). --write-proposals also puts each seasonal budget proposal in the Command Centre; it changes nothing in Google Ads.
    - If the command fails, or a problem line mentions an auth, credential, permission, invalid_grant or unauthenticated error: stop. Reply only "The Monday report couldn't sign in to Google: <the problem line>. Redo the sign-in in CLAUDE.md ("Sign-in scopes"), then run the review again." Don't work around it.
-   - If "sections:" lacks any of 1 to 12 or 9b, or a problem line says "SECTION <id> FAILED", carry on and say which sections are missing or failed.
+   - If "sections:" lacks any of 1, 1b, 2, 3, 4, 4b, 5, 5c, 5d, 6, 7, 8, 9, 9b, 10, 11 or 12, or a problem line says "SECTION <id> FAILED", carry on and say which sections are missing or failed.
 2. Start all three sub-agents in ONE message so they run in parallel. When the report's "sections:" line includes 13 (the first Monday of the month), also start lcs-review-growth in that same message, so four run together. Tell each only: "Monday review for <today, YYYY-MM-DD>. The report is saved; read your sections with report_sections.py. Reply with your RESULT block." Add any problem lines that concern that agent.
    - lcs-review-ads: Google Ads, ad quality, search terms, negatives, tracking, the Christmas value check, the spend guard.
    - lcs-review-web: GoatCounter visits, Search Console, coverage, page speed, page fixes, the MANUAL-ACTIONS §12 line.

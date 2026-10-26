@@ -159,11 +159,12 @@ def run_section(write, git):
 def test_section_12_writes_only_with_the_flag():
     clear()
     out = run_section(False, FakeGit())
-    assert "PROPOSE: Christmas carol singers – events 2026 £4.00 → £8.00/day (window carols)" in out, out
+    # the carols window is £5 a day since 26 Oct 2026 (data/budget-windows.yml); the fake campaign sits at £4
+    assert "PROPOSE: Christmas carol singers – events 2026 £4.00 → £5.00/day (window carols)" in out, out
     assert "proposal" not in out.split("(window carols)")[1] and not written()
     out = run_section(True, FakeGit())
-    assert "   proposal written: budget-24295921372-800-20261005" in out.splitlines(), out
-    assert list(written()) == ["budget-24295921372-800-20261005"]
+    assert "   proposal written: budget-24295921372-500-20261005" in out.splitlines(), out
+    assert list(written()) == ["budget-24295921372-500-20261005"]
     out = run_section(True, FakeGit(code=1))
     assert "   Command Centre proposals not written: RuntimeError" in out.splitlines(), out
 
@@ -264,7 +265,29 @@ def guard_rows(query):
             N(campaign=N(id=23735776277, name="funeral expert campaign"), metrics=N(cost_micros=120_000_000, clicks=25, conversions=2.0)),
             N(campaign=N(id=3, name="quiet"), metrics=N(cost_micros=85_000_000, clicks=9, conversions=0.0)),
             N(campaign=N(id=4, name="small"), metrics=N(cost_micros=30_000_000, clicks=6, conversions=0.0)),
-            N(campaign=N(id=24295921372, name=XMAS), metrics=N(cost_micros=150_000_000, clicks=60, conversions=0.0))]
+            N(campaign=N(id=24295921372, name=XMAS), campaign_budget=N(amount_micros=8_000_000),
+              metrics=N(cost_micros=150_000_000, clicks=60, conversions=0.0))]
+
+
+def test_spend_guard_judges_christmas_like_the_others_once_its_budget_is_back_at_five_pounds():
+    # 26 Oct 2026: the owner took the Christmas budget from £8 to £5; the dated exception in budget_cap.py stays
+    # until 13 Dec, but a campaign not spending above £5/day is not "inside" it, so the guard applies
+    def rows(query):
+        return [N(campaign=N(id=24295921372, name=XMAS), campaign_budget=N(amount_micros=5_000_000),
+                  metrics=N(cost_micros=136_000_000, clicks=41, conversions=0.0))]
+    lines = wr.spend_guard_lines(rows, datetime.date(2026, 11, 2), graded())
+    assert lines[0].endswith("— STOP GUARD: propose pausing (never deleting) until the owner decides"), lines
+    assert "deferred" not in lines[0], lines
+
+
+def test_christmas_value_check_is_retired_once_the_budget_is_five_pounds():
+    lines = wr.value_check_lines(xmas_rows([8] * 21), datetime.date(2026, 11, 2), graded(), budget_gbp=5.0)
+    assert lines[0].endswith("— budget already £5/day (owner, 26 Oct 2026): the £8 rule is retired, nothing to propose"), \
+        lines
+    assert "back to £5" not in lines[0] and lines[1].startswith("stop rule: retired"), lines
+    # at £8 the rule still runs
+    lines = wr.value_check_lines(xmas_rows([8] * 21), datetime.date(2026, 11, 2), graded(), budget_gbp=8.0)
+    assert lines[0].endswith("back to £5"), lines
 
 
 def test_spend_guard_fires_with_no_a_or_b_enquiry_even_with_ads_conversions():

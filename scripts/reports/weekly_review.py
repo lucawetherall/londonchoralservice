@@ -1128,6 +1128,7 @@ def cost_section(q, today, clicks=None, graded=None):
 def budget_section(q, today, write=False, git_runner=None, now=None, graded=None):
     """Section 12. graded: section 9b's enquiries (None: not graded, and the value check and spend guard say so)."""
     print("\n== 12. Seasonal budget rules (data/budget-windows.yml; proposals only, nothing changed)")
+    xmas_budget = None
     try:
         import economics as ec
         cfg = ec.load_windows(BUDGET_WINDOWS)
@@ -1135,6 +1136,7 @@ def budget_section(q, today, write=False, git_runner=None, now=None, graded=None
                       "budget_gbp": r.campaign_budget.amount_micros / 1e6}
                      for r in q("""SELECT campaign.id, campaign.name, campaign.status, campaign_budget.amount_micros
                             FROM campaign WHERE campaign.status != 'REMOVED'""")]
+        xmas_budget = next((c["budget_gbp"] for c in campaigns if c["id"] == str(XMAS_ID)), None)
         items = ec.proposals(campaigns, cfg["windows"], today)
         for line in ec.proposal_lines(items):
             print("   " + line)
@@ -1142,7 +1144,7 @@ def budget_section(q, today, write=False, git_runner=None, now=None, graded=None
         print(f"   seasonal budget rules failed: {failure_note(e)}")
         return
     try:
-        for line in value_check_lines(q, today, graded):
+        for line in value_check_lines(q, today, graded, budget_gbp=xmas_budget):
             print("   " + line)
     except Exception as e:  # type name only
         print(f"   Christmas value check failed: {failure_note(e)}")
@@ -1163,11 +1165,14 @@ XMAS_ID, XMAS_FROM, XMAS_CHECK_BY, XMAS_EXTRA_LIMIT = 24295921372, datetime.date
     datetime.date(2026, 11, 2), 60.0
 
 
-def value_check_lines(q, today, graded=None):
+def value_check_lines(q, today, graded=None, budget_gbp=None):
     """The stop rule for the Christmas £8 cap (scripts/ads/budget_cap.py): spend above the £5/day level since
     28 Sep 2026, whether it has passed £60, and the evidence the campaign earns it: its Ads conversions (form,
     WhatsApp or email) and its A or B enquiries since 28 Sep (section 9b's grades; C is shown and never counts).
-    graded None: the enquiries weren't graded, and the line says so. The hiring share is judged by the review."""
+    graded None: the enquiries weren't graded, and the line says so. The hiring share is judged by the review.
+    budget_gbp: the campaign's current daily budget. At £5 or under (the owner took it back to £5 on 26 Oct 2026)
+    the £8 rule has nothing left to decide: the figures are printed and the rule is marked retired, so the review
+    never proposes a cut that has already happened; the spend guard then judges the campaign like any other."""
     if today < XMAS_FROM:
         return []
     extra = spent = conv = 0.0
@@ -1183,6 +1188,11 @@ def value_check_lines(q, today, graded=None):
     line += (f" · enquiries from Christmas ads: A {n['A']} · B {n['B']} (C {n['C']}, never counts)" if n is not None
              else " · enquiries not graded this week (section 9b)")
     when = f" (checked from {XMAS_CHECK_BY:%d %b})" if today < XMAS_CHECK_BY else ""
+    if budget_gbp is not None and budget_gbp <= 5.0:
+        return [line + f" — budget already £{budget_gbp:g}/day (owner, 26 Oct 2026): the £8 rule is retired, "
+                       "nothing to propose",
+                "stop rule: retired while the budget is £5 or under; the spend guard below judges this campaign "
+                "like the others"]
     if extra > XMAS_EXTRA_LIMIT:
         if n is None:
             line += (f" — PAST £{XMAS_EXTRA_LIMIT:.0f}: back to £5 unless the pipeline shows an A or B enquiry from "
@@ -1216,10 +1226,15 @@ def spend_guard_lines(q, today, graded=None):
     since = guard_since(today)
     c = es.counts(graded, since, today) if graded is not None else None
     lines = []
-    for r in q(f"""SELECT campaign.id, campaign.name, metrics.cost_micros, metrics.clicks, metrics.conversions
+    for r in q(f"""SELECT campaign.id, campaign.name, campaign_budget.amount_micros, metrics.cost_micros,
+                   metrics.clicks, metrics.conversions
                    FROM campaign WHERE campaign.status = 'ENABLED'
                    AND segments.date BETWEEN '{since}' AND '{today}'"""):
         cost, clicks, conv = r.metrics.cost_micros / 1e6, r.metrics.clicks, r.metrics.conversions
+        # a campaign is "inside" its dated exception only while its budget actually uses it (above £5/day);
+        # back at £5 (Christmas since 26 Oct 2026) it is judged like the others
+        budget_micros = getattr(getattr(r, "campaign_budget", None), "amount_micros", None)
+        uses_exception = budget_micros is not None and budget_micros / 1e6 > PROPOSAL_CAP_GBP
         key = es.campaign_key(r.campaign.name, r.campaign.id)
         n = None if c is None else c[key] if key else dict.fromkeys(es.GRADES, 0)
         line = (f"spend guard {r.campaign.name}: £{cost:,.2f}, {clicks} clicks, {conv:g} Ads conversions in "
@@ -1229,9 +1244,10 @@ def spend_guard_lines(q, today, graded=None):
                 line += " — held: an A or B enquiry came from this campaign, so no pause"
             elif clicks < GUARD_MIN_CLICKS:
                 line += f" — under {GUARD_MIN_CLICKS} clicks, too few to judge; watch next week"
-            elif budget_cap_gbp(r.campaign.id, today) > PROPOSAL_CAP_GBP:
-                # Owner decision 23 Oct 2026: a campaign inside a dated budget exception (budget_cap.py) is judged
-                # by that exception's own stop rule (section 12's value check), not paused by this guard.
+            elif uses_exception and budget_cap_gbp(r.campaign.id, today) > PROPOSAL_CAP_GBP:
+                # Owner decision 23 Oct 2026: a campaign inside a dated budget exception (budget_cap.py), and
+                # spending above £5/day on it, is judged by that exception's own stop rule (section 12's value
+                # check), not paused by this guard.
                 line += (" — deferred: inside its dated budget exception, judged by its own stop rule "
                          "(the value check in section 12), not paused here")
             else:
