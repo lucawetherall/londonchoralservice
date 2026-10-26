@@ -23,15 +23,15 @@ def lab(score, lcp_ms):
 
 
 class Fake:
-    def __init__(self, field):
-        self.field, self.labs = field, []
+    def __init__(self, field, labs=None):
+        self.field, self.labs, self.lab_results = field, [], labs or {}
 
     def crux(self, url=None, origin=None, form_factor="PHONE"):
         return self.field.get(url or origin)
 
     def lab(self, url, strategy="mobile"):
         self.labs.append(url)
-        return lab(0.9, 2400)
+        return self.lab_results.get(url, lab(0.9, 2400))
 
 
 def test_field_data_per_page_and_lab_for_every_page():
@@ -49,6 +49,37 @@ def test_field_data_per_page_and_lab_for_every_page():
 def test_no_field_data_says_so():
     text = "\n".join(cwv.section(client=Fake({})))
     assert "whole site: no field data yet (too few Chrome visitors)" in text, text
+
+
+def test_a_lab_run_in_good_shape_adds_no_check_line():
+    lines = cwv.section(client=Fake({}))
+    assert not any("check:" in ln for ln in lines), lines
+    assert not any("Two lab runs" in ln for ln in lines), lines
+    assert "a lab score alone is not a reason to change a page." in lines[-1], lines[-1]
+
+
+def test_slow_lab_lcp_or_low_score_gets_a_check_line_naming_the_page_kind():
+    labs = {cwv.ORIGIN + "/": lab(0.62, 6100), cwv.ORIGIN + "/funerals.html": lab(0.60, 6200),
+            cwv.ORIGIN + "/weddings.html": lab(0.45, 3000), cwv.ORIGIN + "/christmas.html": lab(0.8, 4000)}
+    lines = cwv.section(client=Fake({}, labs))
+    checks = [ln for ln in lines if "check:" in ln]
+    assert checks == ["   check: / lab LCP 6.1s (money page)",
+                      "   check: /funerals.html lab LCP 6.2s (ad landing page)",
+                      "   check: /weddings.html lab LCP 3.0s · score 45 (ad landing page)"], checks
+    i = lines.index(checks[-1])
+    assert lines[i + 1].startswith("   Two lab runs a week apart above 4 s on an ad landing page"), lines[i + 1]
+    assert "`cwv.py --lab`, before and after a change." in lines[i + 1], lines[i + 1]
+    first = lines.index(checks[0])
+    assert lines[first - 1].startswith("   /christmas-pricing.html: score 90"), lines[first - 1]  # under the lab
+    assert "a lab score alone is not a reason to change a page." in lines[-1], lines[-1]
+
+
+def test_ad_landing_pages_come_from_the_final_urls_when_given():
+    labs = {cwv.ORIGIN + "/": lab(0.62, 6100), cwv.ORIGIN + "/funerals.html": lab(0.60, 6200)}
+    lines = cwv.section(client=Fake({}, labs), ad_landing=["https://londonchoralservice.com/?utm_source=x"])
+    checks = [ln for ln in lines if "check:" in ln]
+    assert checks == ["   check: / lab LCP 6.1s (ad landing page)",
+                      "   check: /funerals.html lab LCP 6.2s (money page)"], checks
 
 
 def test_missing_key_never_raises():

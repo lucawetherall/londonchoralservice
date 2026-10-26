@@ -49,9 +49,80 @@ def test_counting_starts_on_23_oct():
     assert "counting started" in "\n".join(g.section(today=D(2026, 10, 23), client=Fake({})))
 
 
-def test_missing_key_says_so_and_never_calls_out():
-    lines = g.section(today=D(2026, 11, 9), token_reader=lambda: None)
-    assert "no read key" in lines[-1] and g.KEYCHAIN_SERVICE in lines[-1], lines
+def test_missing_key_raises_without_a_code_and_never_calls_out():
+    try:
+        g.section(today=D(2026, 11, 9), token_reader=lambda: None)
+        raise AssertionError("should have raised")
+    except g.GoatCounterError as e:
+        assert e.http_status is None
+        assert str(e) == "no read key in the Keychain (service lcs-goatcounter-read)", str(e)
+
+
+class _Run:
+    def __init__(self, returncode=0, stdout="", hang=False):
+        self.returncode, self.stdout, self.hang, self.kwargs = returncode, stdout, hang, None
+
+    def __call__(self, cmd, **kwargs):
+        import subprocess
+        self.kwargs = kwargs
+        if self.hang:
+            raise subprocess.TimeoutExpired(cmd, kwargs.get("timeout"))
+        return self
+
+
+def test_keychain_reader_found_missing_and_hung():
+    run = _Run(0, "tok\n")
+    assert g.keychain_token(run=run) == "tok" and run.kwargs["timeout"] == g.KEYCHAIN_TIMEOUT
+    assert g.keychain_token(run=_Run(44, "")) is None  # security: item not found
+    assert g.keychain_token(run=_Run(0, "  \n")) is None
+    try:
+        g.keychain_token(run=_Run(hang=True))
+        raise AssertionError("should have raised")
+    except g.GoatCounterError as e:
+        assert e.http_status is None and "did not answer" in str(e) and g.KEYCHAIN_SERVICE in str(e), str(e)
+
+
+def test_network_failure_has_no_code_and_no_retry():
+    import urllib.error
+    calls = []
+
+    def opener(req, timeout):
+        calls.append(req)
+        raise urllib.error.URLError(OSError("down"))
+    try:
+        g.GoatCounterReadOnly("t", opener=opener).get("/stats/hits")
+        raise AssertionError("should have raised")
+    except g.GoatCounterError as e:
+        assert e.http_status is None and "not reached" in str(e) and len(calls) == 1, str(e)
+
+
+def test_check_mode_never_prints_the_key():
+    class Ok:
+        def __init__(self, token):
+            self.token = token
+
+        def get(self, path, **params):
+            assert path == "/stats/hits" and params["limit"] == 1
+            return {"hits": []}
+
+    class Bad(Ok):
+        def get(self, path, **params):
+            raise g.GoatCounterError("GoatCounter API answered 401", http_status=401)
+
+    lines, ok = g.check(token_reader=lambda: "secret-test-token", client_factory=Ok, today=D(2026, 10, 26))
+    assert ok and lines == ["key: found", "api: ok (one read of /stats/hits answered)"], lines
+    lines, ok = g.check(token_reader=lambda: "secret-test-token", client_factory=Bad)
+    assert not ok and "401" in lines[1], lines
+    lines, ok = g.check(token_reader=lambda: None)
+    assert not ok and "no read key" in lines[0] and lines[1] == "api: not tried", lines
+
+    def hung():
+        raise g.GoatCounterError("the Keychain did not answer within 15 s")
+    lines, ok = g.check(token_reader=hung)
+    assert not ok and lines[0].startswith("key: unreadable"), lines
+    for result in (g.check(token_reader=lambda: "secret-test-token", client_factory=Ok),
+                   g.check(token_reader=lambda: "secret-test-token", client_factory=Bad)):
+        assert "secret-test-token" not in "\n".join(result[0])
 
 
 def test_client_is_get_only_and_sends_the_key_only_to_our_host():

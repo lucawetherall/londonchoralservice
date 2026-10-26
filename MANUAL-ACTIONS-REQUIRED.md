@@ -20,6 +20,7 @@ Finished work, old notes and reference material are in `docs/MANUAL-ACTIONS-ARCH
 | 8–9 | Optional: Trustpilot, LinkedIn | 10 min each | none |
 | 10 | Dates to remember | | |
 | 11 | Web3Forms: restrict the form key to the site and enforce hCaptcha | 5 min | this week |
+| 12 | Google Ads: hide two old conversion actions | 5 min | this week |
 
 ---
 
@@ -274,3 +275,13 @@ The site's Web3Forms access key is public by design (it is in every form's HTML)
 2. Turn on hCaptcha verification (server-side), if it isn't already on.
 
 **Done when:** both settings show as saved. Send a test enquiry from the contact page afterwards to check it still arrives.
+
+---
+
+## 12. Google Ads: hide two old conversion actions
+
+Two legacy conversion actions, "Contact" and "Contact (1)", are still in the account as secondary actions; neither has fired since 19 Sep 2026. Claude tried to set them to Hidden through the API on 26 Oct and Google refused, so it has to be done in the Google Ads screens. Until then the Monday report lists them every week as legacy; they are not a finding.
+
+**How:** sign in at https://ads.google.com/, open **Goals → Conversions → Summary**, and for each of "Contact" and "Contact (1)": open it, set its status to **Hidden**, and save. Hide them; don't remove them, so their history stays.
+
+**Done when:** neither shows in the Summary list with the default filter. Tell an agent, so the report stops listing them.

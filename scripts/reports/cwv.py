@@ -26,6 +26,12 @@ import urllib.request
 
 ORIGIN = "https://londonchoralservice.com"
 PAGES = ["/", "/funerals.html", "/weddings.html", "/christmas.html", "/christmas-pricing.html"]
+# The enabled ads' final URLs as of 26 Oct 2026. Section 4 of the Monday report reads the live ones; until
+# weekly_review.py passes them in (section(ad_landing=...)), this list stands in for them.
+AD_LANDING = ["/funerals.html", "/weddings.html", "/christmas.html", "/christmas-pricing.html"]
+# A lab run worth a second look: LCP above 4 s (Google's "poor" line) or a performance score under 50.
+LAB_LCP_CHECK_MS = 4000
+LAB_SCORE_CHECK = 50
 KEYCHAIN_SERVICE = "lcs-pagespeed"
 CRUX = "https://chromeuxreport.googleapis.com/v1/records:queryRecord"
 PSI = "https://pagespeedonline.googleapis.com/pagespeedonline/v5/runPagespeed"
@@ -124,13 +130,36 @@ def lab_summary(result):
 
 
 def lab_line(client, url):
-    score, parts, weight = lab_summary(client.lab(url))
+    """(the lab line, score, LCP in ms or None) for one URL."""
+    result = client.lab(url)
+    score, parts, weight = lab_summary(result)
+    lcp = result.get("lighthouseResult", {}).get("audits", {}).get("largest-contentful-paint", {}).get("numericValue")
     kb = f" · {int(weight / 1024)} KB" if weight else ""
-    return f"score {score if score is not None else '?'} · {parts}{kb}"
+    return f"score {score if score is not None else '?'} · {parts}{kb}", score, lcp
 
 
-def section(client=None, key_reader=None, pages=PAGES):
-    """The report section's lines (a list of strings). Never raises for a missing key: says so instead."""
+def site_path(url):
+    """'/funerals.html' from a final URL or a path; '/' for the home page."""
+    return urllib.parse.urlparse(url).path or "/"
+
+
+def lab_check(path, score, lcp, ad_paths):
+    """The 'check:' line for a slow lab run, or None."""
+    slow = lcp is not None and lcp > LAB_LCP_CHECK_MS
+    low = score is not None and score < LAB_SCORE_CHECK
+    if not (slow or low):
+        return None
+    lcp_text = f"{lcp / 1000:.1f}s" if lcp is not None else "?"
+    score_text = f" · score {score}" if low else ""
+    kind = "ad landing page" if path in ad_paths else "money page"
+    return f"   check: {path} lab LCP {lcp_text}{score_text} ({kind})"
+
+
+def section(client=None, key_reader=None, pages=PAGES, ad_landing=None):
+    """The report section's lines (a list of strings). Never raises for a missing key: says so instead.
+
+    ad_landing: the enabled ads' final URLs (section 4 knows them); AD_LANDING when not given."""
+    ad_paths = {site_path(u) for u in (AD_LANDING if ad_landing is None else ad_landing)}
     lines = ["\n== 5d. Core Web Vitals (phones; CrUX field data, 28 days, p75; lab fallback)"]
     if client is None:
         key = (key_reader or keychain_key)()
@@ -152,11 +181,21 @@ def section(client=None, key_reader=None, pages=PAGES):
                      + " (the whole-site line above stands in for them)")
     lines.append("   lab (PageSpeed Insights, one simulated mid-range phone load each; a guide, not a ranking "
                  "figure):")
+    checks = []
     for path in pages:
         try:
-            lines.append(f"   {path}: {lab_line(client, ORIGIN + path)}")
+            line, score, lcp = lab_line(client, ORIGIN + path)
         except CwvError as e:
             lines.append(f"   {path}: lab run failed ({e})")
+            continue
+        lines.append(f"   {path}: {line}")
+        check = lab_check(path, score, lcp, ad_paths)
+        if check:
+            checks.append(check)
+    if checks:
+        lines += checks
+        lines.append("   Two lab runs a week apart above 4 s on an ad landing page is worth a look with "
+                     "`cwv.py --lab`, before and after a change.")
     lines.append("   Thresholds at p75: LCP good ≤2.5s, INP ≤200ms, CLS ≤0.1. Act on a field figure rated poor; "
                  "a lab score alone is not a reason to change a page.")
     return lines
