@@ -82,6 +82,62 @@ def test_client_is_get_only_and_sends_the_key_only_to_our_host():
     assert public == ["get"], public
 
 
+class _Resp:
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *a):
+        return False
+
+    def read(self):
+        return b'{"hits": []}'
+
+
+def _opener(codes, waits_seen):
+    """Answers each request with the next code in `codes` (an int raises HTTPError; None succeeds)."""
+    import urllib.error
+    calls = []
+
+    def opener(req, timeout):
+        code = codes[len(calls)]
+        calls.append(req)
+        if code is None:
+            return _Resp()
+        headers = {"Retry-After": "2"} if code == 429 else {}
+        raise urllib.error.HTTPError(req.full_url, code, "err", headers, None)
+    return opener, calls
+
+
+def test_retries_once_on_429_and_5xx_then_succeeds():
+    for first in (429, 500, 503):
+        waits = []
+        g.time.sleep = waits.append
+        opener, calls = _opener([first, None], waits)
+        assert g.GoatCounterReadOnly("t", opener=opener).get("/stats/hits") == {"hits": []}
+        assert len(calls) == 2, first
+        assert waits == ([2] if first == 429 else [g.RETRY_WAIT]), (first, waits)  # Retry-After honoured
+    g.time.sleep = lambda s: None
+
+
+def test_gives_up_after_one_retry_with_the_code():
+    opener, calls = _opener([429, 429, None], [])
+    try:
+        g.GoatCounterReadOnly("t", opener=opener).get("/stats/hits")
+        raise AssertionError("should have raised")
+    except g.GoatCounterError as e:
+        assert e.http_status == 429 and len(calls) == 2
+
+
+def test_never_retries_a_key_or_request_error():
+    for code in (401, 403, 404):
+        opener, calls = _opener([code, None], [])
+        try:
+            g.GoatCounterReadOnly("t", opener=opener).get("/stats/hits")
+            raise AssertionError("should have raised")
+        except g.GoatCounterError as e:
+            assert e.http_status == code and len(calls) == 1, code
+
+
 if __name__ == "__main__":
     failures = 0
     for name, fn in sorted((n, f) for n, f in globals().items() if n.startswith("test_") and callable(f)):

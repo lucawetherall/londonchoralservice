@@ -212,6 +212,16 @@ def test_failure_note_names_the_type_and_spots_google_sign_in_errors():
     assert "Example" not in wr.failure_note(RuntimeError("credentials for Some Client at Example Road"))
 
 
+def test_failure_note_adds_goatcounters_http_code_and_nothing_else():
+    import goatcounter
+    assert wr.failure_note(goatcounter.GoatCounterError("GoatCounter API answered 429", http_status=429)) \
+        == "GoatCounterError (HTTP 429)"
+    assert wr.failure_note(goatcounter.GoatCounterError("no code")) == "GoatCounterError"
+    e = ValueError("Some Client")
+    e.http_status = True  # not a code
+    assert wr.failure_note(e) == "ValueError"
+
+
 def test_run_section_keeps_going_and_adds_the_heading_when_missing():
     def boom_before_heading():
         raise KeyError("x")

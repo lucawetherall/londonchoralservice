@@ -35,7 +35,30 @@ EVENTS = {
 
 
 class GoatCounterError(Exception):
-    pass
+    """An HTTP error from the API. `http_status` is the code alone, which the Monday report prints (it carries
+    no visitor or account data)."""
+
+    def __init__(self, message, http_status=None):
+        super().__init__(message)
+        self.http_status = http_status
+
+
+# A rate limit (429) or a server error (5xx) is usually gone a few seconds later: the 26 Oct 2026 report lost
+# section 5c to one, and a manual run minutes later worked. Retry once, after Retry-After (capped) or RETRY_WAIT.
+RETRY_WAIT = 5
+RETRY_WAIT_MAX = 30
+
+
+def _retryable(code):
+    return code == 429 or 500 <= code <= 599
+
+
+def _wait_for(err):
+    try:
+        wait = int((err.headers or {}).get("Retry-After", ""))
+    except (TypeError, ValueError):
+        wait = RETRY_WAIT
+    return max(0, min(wait, RETRY_WAIT_MAX))
 
 
 def keychain_token(service=KEYCHAIN_SERVICE, run=subprocess.run):
@@ -55,11 +78,15 @@ class GoatCounterReadOnly:
         req = urllib.request.Request(url, method="GET", headers={"Accept": "application/json",
                                                                   "Content-Type": "application/json"})
         req.add_unredirected_header("Authorization", f"Bearer {self._token}")  # never follows a redirect
-        try:
-            with self._open(req, timeout=30) as resp:
-                return json.loads(resp.read().decode("utf-8") or "{}")
-        except urllib.error.HTTPError as e:
-            raise GoatCounterError(f"GoatCounter API answered {e.code}") from None
+        for attempt in (1, 2):
+            try:
+                with self._open(req, timeout=30) as resp:
+                    return json.loads(resp.read().decode("utf-8") or "{}")
+            except urllib.error.HTTPError as e:
+                if attempt == 1 and _retryable(e.code):
+                    time.sleep(_wait_for(e))
+                    continue
+                raise GoatCounterError(f"GoatCounter API answered {e.code}", http_status=e.code) from None
 
 
 def hits(client, start, end, limit=100):
