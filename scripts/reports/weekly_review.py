@@ -1272,6 +1272,11 @@ def failure_note(e):
     # dispatcher stops rather than running the agents on an empty Ads half. Only the type name is printed.
     if isinstance(e, FileNotFoundError) and re.search(r"google-ads\.yaml|application_default_credentials", text):
         return f"{name} (looks like a Google auth error: the sign-in file is missing; check the sign-in)"
+    # GoatCounter's error carries the bare HTTP code, which says what went wrong (429 rate limit, 5xx outage,
+    # 401/403 key) and holds no data; the 26 Oct 2026 report printed only "GoatCounterError".
+    code = getattr(e, "http_status", None)
+    if isinstance(code, int) and not isinstance(code, bool):
+        return f"{name} (HTTP {code})"
     return name
 
 
