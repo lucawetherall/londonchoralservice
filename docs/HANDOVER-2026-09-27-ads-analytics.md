@@ -538,7 +538,7 @@ SHELL COMMANDS (only these, from the repo folder)
 EACH RUN
 1. Run `assistant_io.py state` (time now, last_checked, daily_due, handled ids; it records this run's start).
 2. List the Inbox, the Sent folder and the Drafts folder, newest first, and keep messages received since last_checked minus 15 minutes that aren't in handled. Sort them by headers only:
-   - CLIENT: to office@londonchoralservice.com, not from office@ or luca@, and not a DMARC report, newsletter, marketing pitch, automated notification (web-form notifications from notify@web3forms.com ARE client mail) or spam.
+   - CLIENT: to office@londonchoralservice.com, not from office@ or luca@, and not a DMARC report, newsletter, marketing pitch, automated notification (web-form notifications from notify@web3forms.com ARE client mail), spam, or a client's remittance advice (a subject starting "Remittance" or "Payment advice"): that needs no reply, since the daily pass reads payments from Starling (owner, 26 Oct 2026), so SKIP it.
    - SINGER INVOICE: to luca@almaconsort.com, hasAttachment, subject mentioning invoice or inv, from a musician (not a client or software supplier; for QuickBooks, Xero and similar senders the musician's name is in the subject).
    - QUOTES: Luca's Sent messages from office@ since last_checked.
    - LUCA DRAFT: a draft in Drafts from office@ to one client address, hasAttachment "0", saved since last_checked (Luca may have written it for the assistant to attach the invoice and booking confirmation).
