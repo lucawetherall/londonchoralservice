@@ -395,6 +395,9 @@ def test_section_4_prints_rsa_counts_and_sitelinks_per_campaign():
                                                                    descriptions=[0] * n_desc))))
 
     def q(query):
+        if "FROM ad_group_ad" in query and "metrics.clicks" in query:
+            assert "segments.date" in query, query
+            return [_ns(ad_group_ad=_ns(ad=_ns(id=1)), metrics=_ns(clicks=c)) for c in (3, 4)]
         if "FROM ad_group_ad" in query:
             assert "responsive_search_ad.headlines" in query and "responsive_search_ad.descriptions" in query
             return [ad("funeral expert campaign", 15, 4), ad("wedding-leads", 9, 3)]
@@ -407,6 +410,7 @@ def test_section_4_prints_rsa_counts_and_sitelinks_per_campaign():
         landing = wr.ads_section(q)
     text = out.getvalue()
     assert "headlines=15 descriptions=4" in text and "headlines=9 descriptions=3" in text, text
+    assert "clicks30=7" in text, text  # summed over the ad's daily rows
     assert "funeral expert campaign" in text and "sitelinks=6" in text, text
     assert [l for l in text.splitlines() if "wedding-leads" in l and "sitelinks=0" in l], text
     assert landing == ["https://londonchoralservice.com/funerals.html"]

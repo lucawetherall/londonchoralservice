@@ -275,8 +275,14 @@ def conversions_section(q):
 
 def ads_section(q):
     """Section 4; returns the enabled ads' final URLs (section 7 inspects them)."""
-    print("\n== 4. Ads (enabled campaigns)")
+    print("\n== 4. Ads (enabled campaigns; clicks30 = clicks in the last 30 days)")
     landing, campaigns = set(), set()
+    # Clicks per ad, in a query of their own so an ad with none still lists. The 26 Oct 2026 growth review chose
+    # its landing page by how many ads pointed at it; every Christmas click had gone through one ad elsewhere.
+    clicks = defaultdict(int)
+    for r in q("""SELECT ad_group_ad.ad.id, metrics.clicks FROM ad_group_ad
+            WHERE campaign.status = 'ENABLED' AND ad_group_ad.status != 'REMOVED' AND segments.date DURING LAST_30_DAYS"""):
+        clicks[r.ad_group_ad.ad.id] += r.metrics.clicks
     for r in q("""SELECT campaign.name, ad_group.name, ad_group.status, ad_group_ad.ad.id, ad_group_ad.status,
             ad_group_ad.policy_summary.approval_status, ad_group_ad.policy_summary.review_status,
             ad_group_ad.ad_strength, ad_group_ad.action_items, ad_group_ad.ad.final_urls,
@@ -296,7 +302,7 @@ def ads_section(q):
             flags.append("HTTP URL")
         print(f"{r.campaign.name[:22]:22} {r.ad_group.name[:22]:22} {a.ad.id} {a.status.name}"
               f" {a.policy_summary.approval_status.name}/{a.policy_summary.review_status.name}"
-              f" strength={a.ad_strength.name}{counts} → {', '.join(urls)} {' '.join('!' + f for f in flags)}")
+              f" strength={a.ad_strength.name}{counts} clicks30={clicks[a.ad.id]} → {', '.join(urls)} {' '.join('!' + f for f in flags)}")
         if a.status.name == "ENABLED" and a.ad_strength.name in ("POOR", "AVERAGE"):
             for item in a.action_items:
                 print(f"      to improve: {item}")
