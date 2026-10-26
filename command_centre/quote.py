@@ -19,7 +19,7 @@ LISTS = {"standard": "pricing.html", "christmas": "christmas-pricing.html"}
 LIST_LABELS = {"standard": "Weddings, funerals, events", "christmas": "Christmas carol singers"}
 POUNDS = re.compile(r"£\s?([\d,]+)")
 NUMBER_WORDS = {1: "one", 2: "two", 3: "three", 4: "four", 5: "five", 6: "six", 7: "seven", 8: "eight", 9: "nine",
-                10: "ten", 11: "eleven", 12: "twelve", 16: "sixteen", 20: "twenty"}
+                10: "ten", 11: "eleven", 12: "twelve", 16: "sixteen", 20: "twenty", 24: "twenty-four"}
 COMBO = re.compile(r"^soloist with an organist or pianist:\s*£\s?([\d,]+)", re.I)
 PERCENT = re.compile(r"around (\d{1,2})%", re.I)
 

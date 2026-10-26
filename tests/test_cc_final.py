@@ -603,7 +603,8 @@ def test_quote_figures_come_from_the_pages():
     assert by["small-choir"]["price"] == 1150 and by["small-choir"]["singers"] == 4
     assert by["soloist"]["price"] == 275 and by["soloist"]["singers"] == 1
     assert std["organist"] == 250 and std["organist_alone"] == 275 and std["soloist_organist"] == 550
-    assert {p["key"] for p in xmas["packages"]} == {"small-choir", "quintet", "sextet", "full-choir", "chorus"}
+    assert {p["key"] for p in xmas["packages"]} == {"small-choir", "quintet", "sextet", "full-choir", "chorus",
+                                                    "large-chorus", "double-chorus"}
     assert xmas["organist"] == 250
     for lst, name in ((std, "pricing.html"), (xmas, "christmas-pricing.html")):
         figures = page_figures(name)
