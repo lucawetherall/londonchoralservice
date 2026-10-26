@@ -35,10 +35,16 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
-      - name: Test the staging script
-        run: python3 tests/test_stage_site.py
-      - name: Test the short ad ref (site code and lookup script agree)
-        run: python3 tests/test_lookup_ref.py
+      # The tests that need only the checkout (no credentials, network, Keychain or
+      # private files), listed in tests/run_ci_tests.py: the staging script, the
+      # short ad ref, the page and copy checks, the report and pipeline logic.
+      # A clean venv, because the runner's system Python refuses pip installs.
+      - name: Install PyYAML for the tests
+        run: |
+          python3 -m venv "$RUNNER_TEMP/venv"
+          "$RUNNER_TEMP/venv/bin/pip" install --quiet pyyaml
+      - name: Run the checkout-only tests
+        run: '"$RUNNER_TEMP/venv/bin/python" tests/run_ci_tests.py'
       - name: Check the allowlist and stage the site
         run: python3 scripts/stage_site.py --out "$RUNNER_TEMP/site"
       - name: Upload the Pages artifact

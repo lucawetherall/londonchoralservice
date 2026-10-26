@@ -75,8 +75,12 @@ var ls = { getItem: function (k) { return k in store ? store[k] : null; },
   SOURCE
 })(win, loc, doc, nav, ls, undefined);
 (sc.events || []).forEach(function (e) { if (win.lcsCount) win.lcsCount(e); });
+function link(href) { return { closest: function () { return { getAttribute: function () { return href; } }; } }; }
 (sc.taps || []).forEach(function (href) {
-  if (handlers.click) handlers.click({ target: { closest: function () { return { getAttribute: function () { return href; } }; } } });
+  if (handlers.click) handlers.click({ type: 'click', target: link(href) });
+});
+(sc.auxtaps || []).forEach(function (t) {
+  if (handlers.auxclick) handlers.auxclick({ type: 'auxclick', button: t[1], target: link(t[0]) });
 });
 console.log(JSON.stringify({ sent: sent, store: store, cookie: cookieTouched }));
 """
@@ -132,6 +136,13 @@ def test_only_the_four_enquiry_events_are_sent():
     for h in hits[1:]:
         assert h["e"] == "true" and h["r"] == "https://londonchoralservice.com/contact.html", h
     assert not any("SECRETCLICK" in u or "example.com" in u or "7356042468" in u for u in r["sent"]), r["sent"]
+
+
+def test_middle_click_counts_and_right_click_does_not():
+    if not have_node():
+        return
+    r = run(auxtaps=[["https://wa.me/447356042468", 2], ["mailto:office@londonchoralservice.com", 1]])
+    assert [params(u)["p"] for u in r["sent"]] == ["/contact.html", "enquiry-sent-email"], r["sent"]
 
 
 def test_nothing_is_counted_off_the_live_site_or_without_a_code():

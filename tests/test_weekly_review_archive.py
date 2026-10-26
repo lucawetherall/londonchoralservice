@@ -216,7 +216,14 @@ def test_failure_note_adds_goatcounters_http_code_and_nothing_else():
     import goatcounter
     assert wr.failure_note(goatcounter.GoatCounterError("GoatCounter API answered 429", http_status=429)) \
         == "GoatCounterError (HTTP 429)"
-    assert wr.failure_note(goatcounter.GoatCounterError("no code")) == "GoatCounterError"
+    assert wr.failure_note(goatcounter.GoatCounterError(goatcounter.NO_KEY)) == f"GoatCounterError: {goatcounter.NO_KEY}"
+    assert wr.failure_note(goatcounter.GoatCounterError("GoatCounter API not reached (TimeoutError)")) \
+        == "GoatCounterError: GoatCounter API not reached (TimeoutError)"
+    out = io.StringIO()
+    with contextlib.redirect_stdout(out):
+        wr.run_section("5c", "Visits from every visitor (GoatCounter)",
+                       lambda: (_ for _ in ()).throw(goatcounter.GoatCounterError(goatcounter.NO_KEY)))
+    assert f"   SECTION 5c FAILED: GoatCounterError: {goatcounter.NO_KEY}" in out.getvalue().splitlines(), out.getvalue()
     e = ValueError("Some Client")
     e.http_status = True  # not a code
     assert wr.failure_note(e) == "ValueError"
@@ -300,9 +307,10 @@ def test_with_google_signed_out_every_section_still_reports(monkeypatch):
         wr.run_sections(args, q=q, s=s)
     text = out.getvalue()
     heads = __import__("re").findall(r"^== (\w+)\.", text, __import__("re").M)
-    assert heads == ["1", "2", "3", "4", "4b", "5", "5c", "5d", "6", "7", "8", "9", "9b", "10", "11", "12", "13"], heads
+    assert heads == ["1", "1b", "2", "3", "4", "4b", "5", "5c", "5d", "6", "7", "8", "9", "9b", "10", "11", "12",
+                     "13"], heads
     hint = "RefreshError (looks like a Google auth error: check the sign-in)"
-    for sid in ("1", "2", "3", "4", "4b", "5", "6", "7", "8"):
+    for sid in ("1", "1b", "2", "3", "4", "4b", "5", "6", "7", "8"):
         assert f"   SECTION {sid} FAILED: {hint}" in text.splitlines(), (sid, text)
     assert "   SECTION 10 FAILED: ValueError" in text.splitlines() and "must never print" not in text, text
     assert "2026-10-22 · christmas · web form · B Christmas carol singers – events 2026 (ad visit: christmas)" in text, text
@@ -313,7 +321,7 @@ def test_with_google_signed_out_every_section_still_reports(monkeypatch):
     with open(path, "w", encoding="utf-8") as f:
         f.write(text)
     summary = wr.quiet_summary(path)
-    assert "sections: 1 2 3 4 4b 5 5c 5d 6 7 8 9 9b 10 11 12 13" in summary, summary
+    assert "sections: 1 1b 2 3 4 4b 5 5c 5d 6 7 8 9 9b 10 11 12 13" in summary, summary
     assert f"problem: SECTION 1 FAILED: {hint}" in summary.splitlines(), summary
 
 
@@ -324,6 +332,12 @@ def test_quiet_lists_failed_sections_but_not_log_rows_held_guards_or_c_grades():
     with open(path, "w", encoding="utf-8") as f:
         f.write("== 1. Campaigns\n"
                 "   log 2026-10-19 23:16 · campaign X · final URL · error page → christmas.html\n"
+                "\n== 1b. Account settings (live) and changes since the last report\n"
+                "-- snapshot (read-only)\n"
+                "   set \"X\" sitelink \"Error-free booking\" ENABLED · → https://example.org/failed.html\n"
+                "-- changed since 2026-10-19 (that report's 1b; + now, - then)\n"
+                "   - set \"X\" keyword \"denied\" EXACT in \"Ad group 1\" · bid £3.50\n"
+                "   + set \"X\" keyword \"denied\" EXACT in \"Ad group 1\" · bid £4.00\n"
                 "\n== 9b. Enquiries by ad source\n"
                 "   2026-10-22 · christmas · web form · C Christmas (only a Christmas ad click that day or the day "
                 "before, cookies declined?; never counts)\n"
@@ -332,7 +346,7 @@ def test_quiet_lists_failed_sections_but_not_log_rows_held_guards_or_c_grades():
                 "an A or B enquiry came from this campaign, so no pause\n"
                 "   spend guard Y: £90.00, 20 clicks, 0 Ads conversions in 28 days · enquiries A 0 · B 0 · C 0 — STOP "
                 "GUARD: propose pausing (never deleting) until the owner decides\n"
-                "   stop rule: £80+ in 28 days with no Ads conversion and no A or B enquiry → propose pausing\n"
+                "   stop rule: £80+ in 28 days with no A or B enquiry → propose pausing\n"
                 "\n== 13. Search Console shortlist\n   SECTION 13 FAILED: KeyError\n")
     lines = wr.quiet_summary(path).splitlines()
     problems = [l for l in lines if l.startswith("problem:")]
@@ -414,6 +428,172 @@ def test_section_4_prints_rsa_counts_and_sitelinks_per_campaign():
     assert "funeral expert campaign" in text and "sitelinks=6" in text, text
     assert [l for l in text.splitlines() if "wedding-leads" in l and "sitelinks=0" in l], text
     assert landing == ["https://londonchoralservice.com/funerals.html"]
+
+
+# ---------- 1b. live settings and the diff with the previous report ----------
+
+def _e(name):
+    from types import SimpleNamespace as N
+    return N(name=name)
+
+
+def fake_settings_ads(budget=5_000_000, bid=3_500_000, sitelink_status="ENABLED"):
+    """A GAQL runner for section 1b: one campaign, schedule, two locations, one ad group, keyword, ad, sitelink,
+    call asset, account logo and two conversion actions."""
+    from types import SimpleNamespace as N
+
+    def q(query):
+        if "FROM campaign_criterion" in query:
+            sched = lambda d: N(campaign=N(id=1), campaign_criterion=N(
+                type_=_e("AD_SCHEDULE"), negative=False, location=N(geo_target_constant=""),
+                ad_schedule=N(day_of_week=_e(d), start_hour=7, start_minute=_e("ZERO"), end_hour=22,
+                              end_minute=_e("THIRTY"))))
+            loc = lambda g, neg=False: N(campaign=N(id=1), campaign_criterion=N(
+                type_=_e("LOCATION"), negative=neg, location=N(geo_target_constant=g), ad_schedule=None))
+            return [sched(d) for d in ("MONDAY", "TUESDAY", "WEDNESDAY", "FRIDAY")] + \
+                [loc("geoTargetConstants/1006886"), loc("geoTargetConstants/20339", True)]
+        if "FROM geo_target_constant" in query:
+            return [N(geo_target_constant=N(resource_name="geoTargetConstants/1006886", name="London")),
+                    N(geo_target_constant=N(resource_name="geoTargetConstants/20339", name="Kent"))]
+        if "FROM campaign_asset" in query:
+            return [N(campaign=N(id=1), campaign_asset=N(field_type=_e("SITELINK"), status=_e(sitelink_status)),
+                      asset=N(id=424863742104, sitelink_asset=N(link_text="Funeral Choir Prices"),
+                              final_urls=["https://londonchoralservice.com/pricing.html"])),
+                    N(campaign=N(id=1), campaign_asset=N(field_type=_e("CALL"), status=_e("ENABLED")),
+                      asset=N(id=348067579141, sitelink_asset=N(link_text=""), final_urls=[]))]
+        if "FROM customer_asset" in query:
+            return [N(customer_asset=N(field_type=_e("BUSINESS_LOGO"), status=_e("ENABLED")))]
+        if "FROM conversion_action" in query:
+            return [N(conversion_action=N(name="Submit lead form", status=_e("ENABLED"), primary_for_goal=True)),
+                    N(conversion_action=N(name="Contact", status=_e("ENABLED"), primary_for_goal=False))]
+        if "FROM ad_group_criterion" in query:
+            return [N(campaign=N(id=1), ad_group=N(name="Ad group 1"), ad_group_criterion=N(
+                keyword=N(text="funeral choir", match_type=_e("EXACT")), effective_cpc_bid_micros=bid))]
+        if "FROM ad_group_ad" in query:
+            t = lambda text, pin="UNSPECIFIED": N(text=text, pinned_field=_e(pin))
+            return [N(campaign=N(id=1), ad_group=N(name="Ad group 1"), ad_group_ad=N(
+                ad_strength=_e("GOOD"), ad=N(id=826000407483, final_urls=["https://londonchoralservice.com/funerals.html"],
+                                             responsive_search_ad=N(headlines=[t("Funeral Choir from £1,150", "HEADLINE_2"),
+                                                                               t("Funeral Choirs")],
+                                                                    descriptions=[t("A choir of four.")]))))]
+        if "FROM ad_group" in query:
+            return [N(campaign=N(id=1), ad_group=N(name="Ad group 1", status=_e("ENABLED"), cpc_bid_micros=3_000_000))]
+        if "FROM campaign" in query:
+            return [N(campaign=N(id=1, name="funeral expert campaign", status=_e("ENABLED"),
+                                 bidding_strategy_type=_e("MANUAL_CPC"), end_date_time="",
+                                 network_settings=N(target_google_search=True, target_search_network=False,
+                                                    target_content_network=False),
+                                 geo_target_type_setting=N(positive_geo_target_type=_e("PRESENCE"))),
+                      campaign_budget=N(amount_micros=budget))]
+        raise AssertionError(query)
+    return q
+
+
+def test_section_1b_prints_one_sorted_line_per_item_and_no_metrics():
+    lines = wr.account_snapshot_lines(fake_settings_ads())
+    assert lines == sorted(lines) and all(l.startswith("set ") for l in lines), lines
+    camp = [l for l in lines if " campaign ENABLED" in l]
+    assert camp == ['set "funeral expert campaign" [1] campaign ENABLED · budget £5.00/day · MANUAL_CPC · search on, '
+                    'partners off, display off · ends never · locations by PRESENCE · schedule Mon–Wed,Fri 07:00–22:30'
+                    ' · locations 2: London, excluded Kent'], lines
+    assert 'set "funeral expert campaign" keyword "funeral choir" EXACT in "Ad group 1" · bid £3.50' in lines
+    assert 'set "funeral expert campaign" ad group "Ad group 1" ENABLED · default CPC £3.00' in lines
+    assert ('set "funeral expert campaign" ad 826000407483 in "Ad group 1" · strength GOOD · → '
+            'https://londonchoralservice.com/funerals.html · pins: HEADLINE_2 "Funeral Choir from £1,150"') in lines
+    assert ('set "funeral expert campaign" sitelink "Funeral Choir Prices" (424863742104) ENABLED · → '
+            'https://londonchoralservice.com/pricing.html') in lines
+    assert 'set "funeral expert campaign" assets (enabled, not sitelinks) · CALL 1' in lines
+    assert "set account assets (enabled, not sitelinks) · BUSINESS_LOGO 1" in lines
+    assert 'set account conversion action "Submit lead form" · primary · ENABLED' in lines
+    assert 'set account conversion action "Contact" · secondary · ENABLED' in lines
+    assert not any("clicks" in l or "impr" in l for l in lines)
+    assert wr.schedule_text([]) == "all day"
+    assert wr.schedule_text([(d, "07:00", "24:00") for d in wr.WEEKDAYS]) == "Mon–Sun 07:00–24:00"
+
+
+def _report_with_snapshot(lines, sid_tail="\n== 2. Search terms\nterm\n"):
+    return ("== 1. Campaigns\nx\n\n== 1b. Account settings (live) and changes since the last report\n"
+            "-- snapshot (read-only; enabled items, one line per item, sorted; no metrics)\n"
+            + "".join(f"   {l}\n" for l in lines)
+            + "-- changed since 2026-10-12 (that report's 1b; + now, - then)\n   + set old diff line\n" + sid_tail)
+
+
+def test_section_1b_diffs_against_the_newest_earlier_snapshot():
+    import datetime
+    reset()
+    rdir = os.path.join(TMP, "reports")
+    os.makedirs(rdir)
+    old = wr.account_snapshot_lines(fake_settings_ads())
+    new = wr.account_snapshot_lines(fake_settings_ads(budget=8_000_000, bid=4_000_000, sitelink_status="PAUSED"))
+    with open(os.path.join(rdir, "2026-10-12.txt"), "w", encoding="utf-8") as f:
+        f.write(_report_with_snapshot(["set very old line"]))
+    with open(os.path.join(rdir, "2026-10-19.txt"), "w", encoding="utf-8") as f:
+        f.write(_report_with_snapshot(old))
+    with open(os.path.join(rdir, "2026-10-22.txt"), "w", encoding="utf-8") as f:  # a rerun whose 1b failed
+        f.write("== 1b. Account settings\n   SECTION 1b FAILED: RefreshError\n\n== 2. Search terms\n")
+    with open(os.path.join(rdir, "2026-10-26.txt"), "w", encoding="utf-8") as f:  # today's own: never compared
+        f.write(_report_with_snapshot(["set today line"]))
+    day, prev = wr.previous_snapshot(datetime.date(2026, 10, 26))
+    assert day == datetime.date(2026, 10, 19) and prev == old, (day, prev)  # the diff lines were not taken
+    out = io.StringIO()
+    with contextlib.redirect_stdout(out):
+        wr.account_settings_section(fake_settings_ads(budget=8_000_000, bid=4_000_000, sitelink_status="PAUSED"),
+                                    datetime.date(2026, 10, 26))
+    text = out.getvalue()
+    tail = text.split("-- changed since ")[1].splitlines()
+    assert tail[0].startswith("2026-10-19"), tail
+    changes = tail[1:]
+    assert len(changes) == 6, changes  # campaign, keyword and sitelink: each - then +
+    assert changes[0].startswith('   - set "funeral expert campaign" [1] campaign ENABLED · budget £5.00/day'), changes
+    assert changes[1].startswith('   + set "funeral expert campaign" [1] campaign ENABLED · budget £8.00/day'), changes
+    assert '   - set "funeral expert campaign" keyword "funeral choir" EXACT in "Ad group 1" · bid £3.50' in changes
+    assert '   + set "funeral expert campaign" keyword "funeral choir" EXACT in "Ad group 1" · bid £4.00' in changes
+    assert any(l.startswith('   + set "funeral expert campaign" sitelink "Funeral Choir Prices" (424863742104) PAUSED')
+               for l in changes)
+    # the section's own output round-trips: next week this report is the previous snapshot
+    assert wr.snapshot_block(text) == new
+    assert wr.snapshot_diff_lines(new, datetime.date(2026, 10, 26), new) == [
+        "-- changed since 2026-10-26 (that report's 1b; + now, - then)", "   no change since 2026-10-26"]
+    assert wr.snapshot_diff_lines(new, None, None) == ["-- changed since the last report",
+                                                       "   no earlier snapshot (first run)"]
+    reset()
+    assert wr.previous_snapshot(datetime.date(2026, 10, 26)) == (None, None)  # no reports directory at all
+
+
+def test_report_sections_serves_1b(monkeypatch):
+    import datetime
+    import report_sections as rs
+    reset()
+    monkeypatch.setattr(rs.lm, "today", lambda *a, **k: datetime.date(2026, 10, 26))
+    os.makedirs(os.path.join(TMP, "reports"))
+    with open(os.path.join(TMP, "reports", "2026-10-26.txt"), "w", encoding="utf-8") as f:
+        f.write(_report_with_snapshot(["set a", "set b"]))
+    out = io.StringIO()
+    with contextlib.redirect_stdout(out):
+        assert rs.main(["1b"]) == 0
+    text = out.getvalue()
+    assert text.startswith("== 1b. Account settings") and "   set a\n   set b\n" in text and "== 2." not in text, text
+    assert "== 1." not in text.replace("== 1b.", "")
+
+
+def test_a_failing_1b_says_so_with_the_http_code_and_the_rest_runs():
+    class ApiError(Exception):
+        def __init__(self):
+            super().__init__("customer data that must never print")
+            self.http_status = 503
+
+    def broken(query):
+        raise ApiError()
+    import datetime
+    out = io.StringIO()
+    with contextlib.redirect_stdout(out):
+        assert wr.run_section("1b", "Account settings (live) and changes since the last report",
+                              wr.account_settings_section, broken, datetime.date(2026, 10, 26)) is None
+        wr.run_section("2", "Search terms", lambda: print("\n== 2. Search terms"))
+    text = out.getvalue()
+    assert "   SECTION 1b FAILED: ApiError (HTTP 503)" in text.splitlines(), text
+    assert "must never print" not in text and "== 2. Search terms" in text, text
+    assert wr.snapshot_block(text) is None
 
 
 if __name__ == "__main__":

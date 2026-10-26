@@ -3,7 +3,11 @@
 Console in one report. Changes nothing and prints no personal data.
 
 Sections:
-  1. Campaigns: last 7 days and since --since (impression share, budget use)
+  1. Campaigns: last 7 days and since --since (impression share, budget use), then the Ads changes logged since the
+     previous report
+  1b. Account settings (live, read-only, no metrics): one sorted line per enabled campaign, ad group, keyword, ad,
+      sitelink, asset count and conversion action, then the lines added and removed since the previous saved
+      report's 1b
   2. Search terms, last 7 days, with the keyword that matched each one
   3. Conversions per action (7 and 28 days), primary or secondary, status, and the last day each was seen;
      "!CHECK" when an action other than the owner's two is primary or either of those isn't primary and ENABLED
@@ -23,7 +27,8 @@ Sections:
       by click reference or, failing that, by the enquiry's A or B grade
       (also writes ~/lcs-private/ads-summary.json for the dashboard)
   12. Seasonal budget rules: proposals from data/budget-windows.yml (never above £5/day), the Christmas value
-      check and the spend guard, both judged on Ads conversions and A or B enquiries (C never counts)
+      check (judged on Ads conversions and A or B enquiries) and the spend guard (A or B enquiries only; Ads
+      conversions shown, owner 26 Oct 2026); C never counts
   13. Search Console shortlist: first Monday of the month, or with --gsc-shortlist
 
 Each section runs on its own: one that fails prints its heading and "SECTION <id> FAILED: <exception type>"
@@ -347,8 +352,9 @@ def ads_settings(q):
 
 CHANGE_LOG = "logs/ads-changes.md"
 LOG_DAYS, LOG_MAX = 21, 60
-# The date of "THE ACCOUNT AS THE OWNER SET IT" in .claude/agents/lcs-review-ads.md: every change logged since then
-# is printed (and the last LOG_DAYS days' anyway). Move both together (tests/test_enquiry_sources.py checks).
+# Every change logged since the previous report's 1b snapshot is printed (and the last LOG_DAYS days' anyway), so
+# the ads agent can explain each line of 1b's diff. ADS_BASELINE is the fallback when no earlier snapshot exists
+# (the date of the hand-written baseline the agent carried until 26 Oct 2026).
 ADS_BASELINE = datetime.date(2026, 10, 23)
 LOG_ROW = re.compile(r"^\| (\d{4}-\d{2}-\d{2})(?: \d{2}:\d{2})? \|")
 
@@ -394,23 +400,235 @@ def logged_changes(text, today, days=LOG_DAYS, baseline=None):
     return [(w, r + (f" (+{n} more alike)" if n else ""), f, c) for w, r, f, c, n in merged]
 
 
-def logged_changes_lines(today, runner=None):
-    """Section 1's tail: the Ads changes logged in the last four weeks, newest first, so a setting that differs from
-    the agent's baseline but was changed on purpose is not reported as a finding. Whichever copy of the log is newer
-    (this checkout's or origin/main's) is used."""
+def logged_changes_lines(today, runner=None, baseline=None):
+    """Section 1's tail: the Ads changes logged since the previous report's 1b snapshot (and the last three weeks'
+    anyway), newest first, so a line in 1b's diff that was changed on purpose is not reported as a finding.
+    Whichever copy of the log is newer (this checkout's or origin/main's) is used."""
+    if baseline is None:
+        baseline = previous_snapshot(today)[0] or ADS_BASELINE
     try:
         local = (REPO / CHANGE_LOG).read_text(encoding="utf-8")
     except OSError:
         local = ""
-    copies = [logged_changes(t, today) for t in (local, _log_text_at_origin(runner)) if t]
+    copies = [logged_changes(t, today, baseline=baseline) for t in (local, _log_text_at_origin(runner)) if t]
     rows = max(copies, key=lambda rows: (rows[0][0] if rows else "", len(rows)), default=[])
-    since = min(today - datetime.timedelta(days=LOG_DAYS), ADS_BASELINE)
+    since = min(today - datetime.timedelta(days=LOG_DAYS), baseline)
     print(f"-- changes logged in {CHANGE_LOG} since {since}, newest first (the owner's own changes"
           + (f"; the newest {LOG_MAX} of {len(rows)})" if len(rows) > LOG_MAX else ")"))
     for when, resource, field, change in rows[:LOG_MAX]:  # "log " keeps them out of --quiet's problem lines
         print(f"   log {when} · {resource[:180]} · {field[:40]} · {change[:160]}")
     if not rows:
         print("   (none)")
+
+
+# ---------- 1b. the account's live settings, and what changed since the last report ----------
+# A generated snapshot replaces the hand-written baseline the ads agent carried until 26 Oct 2026, which went stale
+# within days. One stable line per item ("set …"), sorted, no metrics, so a week's block diffs cleanly against the
+# last saved report's; the ads agent compares the diff with section 1's logged changes.
+
+SNAP_HEAD, SNAP_PREFIX = "-- snapshot", "set "
+WEEKDAYS = ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"]
+
+
+def _q(s):
+    """Quote a name or text on one line (a newline would break the line-per-item diff)."""
+    return '"' + " ".join(str(s).split()) + '"'
+
+
+def _hm(hour, minute_enum):
+    minutes = {"ZERO": 0, "FIFTEEN": 15, "THIRTY": 30, "FORTY_FIVE": 45}.get(getattr(minute_enum, "name", ""), 0)
+    return f"{hour:02d}:{minutes:02d}"
+
+
+def schedule_text(entries):
+    """[("MONDAY", "07:00", "22:00"), …] → "Mon–Sun 07:00–22:00": consecutive days with the same hours run
+    together. No entries → "all day"."""
+    if not entries:
+        return "all day"
+    by_hours = defaultdict(set)
+    for day, start, end in entries:
+        by_hours[(start, end)].add(WEEKDAYS.index(day) if day in WEEKDAYS else -1)
+
+    def name(d):
+        return WEEKDAYS[d][:3].title() if d >= 0 else "?"
+    parts = []
+    for (start, end), days in sorted(by_hours.items(), key=lambda kv: (min(kv[1]), kv[0])):
+        runs = []
+        for d in sorted(days):
+            if runs and d == runs[-1][-1] + 1:
+                runs[-1].append(d)
+            else:
+                runs.append([d])
+        parts.append(",".join(name(r[0]) if len(r) == 1 else f"{name(r[0])}–{name(r[-1])}" for r in runs)
+                     + f" {start}–{end}")
+    return "; ".join(parts)
+
+
+def account_snapshot_lines(q):
+    """Section 1b's snapshot (read-only GAQL): every ENABLED campaign with its budget, bidding, networks, end date,
+    schedule and locations; its ENABLED ad groups (default bid), keywords (match type, effective bid) and ads
+    (strength, final URL, pinned text and position); its sitelinks (any status but removed) and other enabled asset
+    counts; the account-level assets; every conversion action not removed. One sorted "set …" line per item."""
+    camps = {}
+    for r in q("""SELECT campaign.id, campaign.name, campaign.status, campaign_budget.amount_micros,
+            campaign.bidding_strategy_type, campaign.network_settings.target_google_search,
+            campaign.network_settings.target_search_network, campaign.network_settings.target_content_network,
+            campaign.end_date_time, campaign.geo_target_type_setting.positive_geo_target_type
+            FROM campaign WHERE campaign.status = 'ENABLED'"""):
+        c, n = r.campaign, r.campaign.network_settings
+        camps[c.id] = {"label": _q(c.name), "status": c.status.name, "sched": [], "geo": [], "head": (
+            f"budget {gbp(r.campaign_budget.amount_micros)}/day · {c.bidding_strategy_type.name}"
+            f" · search {'on' if n.target_google_search else 'off'}, partners {'on' if n.target_search_network else 'off'}"
+            f", display {'on' if n.target_content_network else 'off'}"
+            f" · ends {(c.end_date_time or 'never')[:10]}"
+            f" · locations by {c.geo_target_type_setting.positive_geo_target_type.name}")}
+    out = []
+    for r in q("""SELECT campaign.id, campaign.status, campaign_criterion.status, campaign_criterion.type,
+            campaign_criterion.negative,
+            campaign_criterion.location.geo_target_constant, campaign_criterion.ad_schedule.day_of_week,
+            campaign_criterion.ad_schedule.start_hour, campaign_criterion.ad_schedule.start_minute,
+            campaign_criterion.ad_schedule.end_hour, campaign_criterion.ad_schedule.end_minute
+            FROM campaign_criterion WHERE campaign.status = 'ENABLED' AND campaign_criterion.status != 'REMOVED'
+            AND campaign_criterion.type IN ('LOCATION', 'AD_SCHEDULE')""") if camps else []:
+        cc, c = r.campaign_criterion, camps.get(r.campaign.id)
+        if c is None:
+            continue
+        if cc.type_.name == "AD_SCHEDULE":
+            s = cc.ad_schedule
+            c["sched"].append((s.day_of_week.name, _hm(s.start_hour, s.start_minute), _hm(s.end_hour, s.end_minute)))
+        elif cc.location.geo_target_constant:
+            c["geo"].append((bool(cc.negative), cc.location.geo_target_constant))
+    consts = sorted({g for c in camps.values() for _, g in c["geo"]})
+    names = {}
+    if consts:
+        for r in q("SELECT geo_target_constant.resource_name, geo_target_constant.name FROM geo_target_constant "
+                   "WHERE geo_target_constant.resource_name IN (" + ", ".join(f"'{g}'" for g in consts) + ")"):
+            names[r.geo_target_constant.resource_name] = r.geo_target_constant.name
+    for cid, c in camps.items():
+        geo = sorted(("excluded " if neg else "") + names.get(g, g) for neg, g in c["geo"])
+        out.append(f"set {c['label']} [{cid}] campaign {c['status']} · {c['head']} · schedule "
+                   f"{schedule_text(c['sched'])} · locations {len(geo)}: {', '.join(geo) or 'none (everywhere)'}")
+    if not camps:
+        out.append("set (no enabled campaign)")
+    label = {cid: c["label"] for cid, c in camps.items()}
+    for r in q("""SELECT campaign.id, campaign.status, ad_group.name, ad_group.status, ad_group.cpc_bid_micros
+            FROM ad_group
+            WHERE campaign.status = 'ENABLED' AND ad_group.status = 'ENABLED'""") if camps else []:
+        if r.campaign.id in label:
+            out.append(f"set {label[r.campaign.id]} ad group {_q(r.ad_group.name)} {r.ad_group.status.name}"
+                       f" · default CPC {gbp(r.ad_group.cpc_bid_micros)}")
+    for r in q("""SELECT campaign.id, campaign.status, ad_group.name, ad_group.status, ad_group_criterion.status,
+            ad_group_criterion.type, ad_group_criterion.negative, ad_group_criterion.keyword.text,
+            ad_group_criterion.keyword.match_type, ad_group_criterion.effective_cpc_bid_micros
+            FROM ad_group_criterion WHERE campaign.status = 'ENABLED' AND ad_group.status = 'ENABLED'
+            AND ad_group_criterion.status = 'ENABLED' AND ad_group_criterion.type = 'KEYWORD'
+            AND ad_group_criterion.negative = FALSE""") if camps else []:
+        k = r.ad_group_criterion
+        if r.campaign.id in label:
+            out.append(f"set {label[r.campaign.id]} keyword {_q(k.keyword.text)} {k.keyword.match_type.name}"
+                       f" in {_q(r.ad_group.name)} · bid {gbp(k.effective_cpc_bid_micros)}")
+    for r in q("""SELECT campaign.id, campaign.status, ad_group.name, ad_group.status, ad_group_ad.status,
+            ad_group_ad.ad.id, ad_group_ad.ad_strength,
+            ad_group_ad.ad.final_urls, ad_group_ad.ad.responsive_search_ad.headlines,
+            ad_group_ad.ad.responsive_search_ad.descriptions FROM ad_group_ad
+            WHERE campaign.status = 'ENABLED' AND ad_group.status = 'ENABLED'
+            AND ad_group_ad.status = 'ENABLED'""") if camps else []:
+        a, rsa = r.ad_group_ad, r.ad_group_ad.ad.responsive_search_ad
+        pins = sorted(f"{t.pinned_field.name} {_q(t.text)}" for t in list(rsa.headlines) + list(rsa.descriptions)
+                      if t.pinned_field.name not in ("UNSPECIFIED", "UNKNOWN"))
+        if r.campaign.id in label:
+            out.append(f"set {label[r.campaign.id]} ad {a.ad.id} in {_q(r.ad_group.name)} · strength "
+                       f"{a.ad_strength.name} · → {', '.join(a.ad.final_urls) or 'no URL'} · pins: "
+                       f"{'; '.join(pins) or 'none'}")
+    counts = defaultdict(lambda: defaultdict(int))
+    for r in q("""SELECT campaign.id, campaign.status, campaign_asset.field_type, campaign_asset.status,
+            asset.id, asset.sitelink_asset.link_text,
+            asset.final_urls FROM campaign_asset WHERE campaign.status = 'ENABLED'
+            AND campaign_asset.status != 'REMOVED'""") if camps else []:
+        ca, cid = r.campaign_asset, r.campaign.id
+        if cid not in label:
+            continue
+        if ca.field_type.name == "SITELINK":
+            # the asset id keeps two sitelinks with the same text apart (the diff works on unique lines)
+            out.append(f"set {label[cid]} sitelink {_q(r.asset.sitelink_asset.link_text)} ({r.asset.id}) {ca.status.name}"
+                       f" · → {', '.join(r.asset.final_urls) or 'no URL'}")
+        elif ca.status.name == "ENABLED":
+            counts[label[cid]][ca.field_type.name] += 1
+    for r in q("SELECT customer_asset.field_type, customer_asset.status FROM customer_asset "
+               "WHERE customer_asset.status = 'ENABLED'"):
+        counts["account"][r.customer_asset.field_type.name] += 1
+    for who, kinds in counts.items():
+        out.append(f"set {who} assets (enabled, not sitelinks) · "
+                   + " · ".join(f"{k} {n}" for k, n in sorted(kinds.items())))
+    for r in q("""SELECT conversion_action.name, conversion_action.status, conversion_action.primary_for_goal
+            FROM conversion_action WHERE conversion_action.status != 'REMOVED'"""):
+        ca = r.conversion_action
+        out.append(f"set account conversion action {_q(ca.name)} · "
+                   f"{'primary' if ca.primary_for_goal else 'secondary'} · {ca.status.name}")
+    return sorted(out)
+
+
+def snapshot_block(text):
+    """The "set …" lines of a saved report's 1b snapshot, or None when it has none (no 1b, or 1b failed)."""
+    lines, inside = [], False
+    for ln in (text or "").splitlines():
+        if inside and (ln.startswith("== ") or ln.startswith("-- ")):
+            break
+        if ln.startswith(SNAP_HEAD):
+            inside = True
+        elif inside and ln.strip().startswith(SNAP_PREFIX):
+            lines.append(ln.strip())
+    return lines or None
+
+
+def previous_snapshot(today, reports_dir=None):
+    """(date, lines) from the newest saved report older than `today` that holds a 1b snapshot (a report whose 1b
+    failed is skipped), or (None, None)."""
+    d = Path(reports_dir) if reports_dir else report_path(today).parent
+    try:
+        files = sorted(d.glob("????-??-??.txt"), reverse=True)
+    except OSError:
+        return None, None
+    for f in files:
+        try:
+            day = datetime.date.fromisoformat(f.stem)
+            if day >= today:
+                continue
+            lines = snapshot_block(f.read_text(encoding="utf-8"))
+        except (ValueError, OSError):
+            continue
+        if lines:
+            return day, lines
+    return None, None
+
+
+def snapshot_diff_lines(current, prev_day, prev_lines):
+    """Section 1b's tail: "+ set …" for each line new since the previous snapshot, "- set …" for each line gone
+    (a changed item shows both, the old line first), or "no change since <date>", or "no earlier snapshot"."""
+    if not prev_lines:
+        return ["-- changed since the last report", "   no earlier snapshot (first run)"]
+    now, before = set(current), set(prev_lines)
+    added, removed = now - before, before - now
+    out = [f"-- changed since {prev_day} (that report's 1b; + now, - then)"]
+    if not added and not removed:
+        return out + [f"   no change since {prev_day}"]
+
+    def item(ln):  # the line up to its first " · ": the item itself, so a changed bid reads - old then + new
+        return ln.split(" · ")[0]
+    rows = sorted([(item(ln), 0, "- " + ln) for ln in removed] + [(item(ln), 1, "+ " + ln) for ln in added])
+    return out + ["   " + ln for _, _, ln in rows]
+
+
+def account_settings_section(q, today, reports_dir=None):
+    """Section 1b: the live settings (account_snapshot_lines) and the diff with the last saved report's 1b."""
+    print("\n== 1b. Account settings (live) and changes since the last report")
+    current = account_snapshot_lines(q)
+    print(f"{SNAP_HEAD} (read-only; enabled items, one line per item, sorted; no metrics)")
+    for ln in current:
+        print("   " + ln)
+    for ln in snapshot_diff_lines(current, *previous_snapshot(today, reports_dir)):
+        print(ln)
+    return current
 
 
 GA4_API = f"https://analyticsdata.googleapis.com/v1beta/{GA4_PROPERTY}:runReport"
@@ -526,10 +744,12 @@ def goatcounter_section(today):
     print("\n".join(goatcounter.section(today)))
 
 
-def cwv_section():
-    """Section 5d: Core Web Vitals, CrUX field data with a lab fallback (scripts/reports/cwv.py)."""
+def cwv_section(landing=None):
+    """Section 5d: Core Web Vitals, CrUX field data with a lab fallback (scripts/reports/cwv.py).
+    landing: the enabled ads' final URLs from section 4, so the "check:" lines know which pages are ad landing
+    pages; None (section 4 failed) falls back to cwv.AD_LANDING."""
     import cwv  # read-only; its API key is in the Keychain as lcs-pagespeed, the owner approved it 24 Oct 2026
-    print("\n".join(cwv.section()))
+    print("\n".join(cwv.section(ad_landing=landing or None)))
 
 
 def gsc_section(s):
@@ -985,10 +1205,14 @@ GUARD_DAYS, GUARD_SPEND_GBP, GUARD_MIN_CLICKS = 28, 80.0, 15
 
 def spend_guard_lines(q, today, graded=None):
     """The stop rule for every enabled campaign (owner, 28 Sep 2026; enquiry-aware since 23 Oct 2026): £80 or more
-    in the last 28 days with no Ads conversion (form, WhatsApp or email click) AND no A or B enquiry for that
-    campaign in those days (section 9b's grades) means the campaign is proposed for pausing, never deletion, until
-    the owner decides. C enquiries are shown and never count. Under 15 clicks is too little to judge and is said
-    so. graded None: the enquiries weren't graded, so a STOP GUARD says to check the pipeline first."""
+    in the last 28 days with no A or B enquiry for that campaign in those days (section 9b's grades) means the
+    campaign is proposed for pausing, never deletion, until the owner decides. C enquiries are shown and never
+    count. Under 15 clicks is too little to judge and is said so. graded None: the enquiries weren't graded, so a
+    STOP GUARD says to check the pipeline first.
+
+    Ads conversions (form, WhatsApp or email click) are printed for information but no longer hold a campaign
+    (owner decision 26 Oct 2026): 134 ad clicks this season produced no enquiry, while two click-conversions (a tap
+    on WhatsApp or email that never became a message) kept the funeral campaign open under the old rule."""
     since = guard_since(today)
     c = es.counts(graded, since, today) if graded is not None else None
     lines = []
@@ -1000,7 +1224,7 @@ def spend_guard_lines(q, today, graded=None):
         n = None if c is None else c[key] if key else dict.fromkeys(es.GRADES, 0)
         line = (f"spend guard {r.campaign.name}: £{cost:,.2f}, {clicks} clicks, {conv:g} Ads conversions in "
                 f"{GUARD_DAYS} days · enquiries " + (es.abc(n) if n is not None else "not graded"))
-        if cost >= GUARD_SPEND_GBP and conv == 0:
+        if cost >= GUARD_SPEND_GBP:
             if n is not None and es.ab(n):
                 line += " — held: an A or B enquiry came from this campaign, so no pause"
             elif clicks < GUARD_MIN_CLICKS:
@@ -1017,8 +1241,8 @@ def spend_guard_lines(q, today, graded=None):
                 elif es.ab(c[None]):
                     line += f" ({es.ab(c[None])} ad enquiries in these {GUARD_DAYS} days name no campaign: check them first)"
         lines.append(line)
-    return lines + [f"stop rule: £{GUARD_SPEND_GBP:.0f}+ in {GUARD_DAYS} days with no Ads conversion and no A or B "
-                    f"enquiry → propose pausing (C never counts)"]
+    return lines + [f"stop rule: £{GUARD_SPEND_GBP:.0f}+ in {GUARD_DAYS} days with no A or B enquiry → propose "
+                    f"pausing (C never counts; Ads conversions are shown but don't hold a campaign, owner 26 Oct 2026)"]
 
 
 # ---------- 12b. Command Centre proposals (--write-proposals) ----------
@@ -1265,8 +1489,10 @@ AUTH_TEXT = re.compile(r"invalid_grant|unauthenticated|authentication_error|auth
 def failure_note(e):
     """The exception's type name, plus "(looks like a Google auth error: check the sign-in)" when its type or
     Google's error text says so, so the dispatcher's stop rule still sees it (a GoogleAdsException carries it in
-    .failure and .error, not its message). Nothing but the type name is ever printed: the text could carry ledger,
-    bank or account data. A local file error (OSError) is never called an auth error."""
+    .failure and .error, not its message). Nothing but the type name is ever printed (the text could carry ledger,
+    bank or account data), except an exception with an `http_status` attribute (GoatCounterError): its code as
+    "(HTTP 429)", or, when the code is None, its own short message (no key, Keychain timeout, API not reached).
+    A local file error (OSError) is never called an auth error."""
     name = type(e).__name__
     try:
         text = " ".join(str(x)[:4000] for x in (e, getattr(e, "failure", ""), getattr(e, "error", "")))
@@ -1280,9 +1506,14 @@ def failure_note(e):
         return f"{name} (looks like a Google auth error: the sign-in file is missing; check the sign-in)"
     # GoatCounter's error carries the bare HTTP code, which says what went wrong (429 rate limit, 5xx outage,
     # 401/403 key) and holds no data; the 26 Oct 2026 report printed only "GoatCounterError".
-    code = getattr(e, "http_status", None)
+    code = getattr(e, "http_status", False)
     if isinstance(code, int) and not isinstance(code, bool):
         return f"{name} (HTTP {code})"
+    # http_status present but None: GoatCounterError's own short message (no read key, the Keychain didn't answer,
+    # the API not reached), which holds no key or visitor data. Only that case prints a message.
+    if code is None:
+        msg = " ".join(str(e).split())[:200]
+        return f"{name}: {msg}" if msg else name
     return name
 
 
@@ -1334,13 +1565,14 @@ def run_sections(args, q=None, s=None):
     s = s or _Lazy(google_session)
     clicks = AdClicks(q, today)
     run_section("1", "Campaigns", campaigns_section, q, args.since)
+    run_section("1b", "Account settings (live) and changes since the last report", account_settings_section, q, today)
     run_section("2", "Search terms, last 7 days", search_terms_section, q)
     run_section("3", "Conversions per action", conversions_section, q)
     landing = run_section("4", "Ads (enabled campaigns)", ads_section, q)
     run_section("4b", "Google's recommendations (open, not dismissed)", recommendations_section, q)
     run_section("5", "GA4, last 7 days", ga4_section, s)
     run_section("5c", "Visits from every visitor (GoatCounter)", goatcounter_section, today)
-    run_section("5d", "Core Web Vitals", cwv_section)
+    run_section("5d", "Core Web Vitals", cwv_section, landing)
     run_section("6", "Search Console", gsc_section, s)
     run_section("7", "Search Console coverage", coverage_section, s, landing)
     run_section("8", "Tracking wiring", wiring_section, s, q)
@@ -1388,11 +1620,12 @@ PROBLEM_RE = re.compile(r"\b(error|failed|refused|denied|permission|invalid_gran
 def quiet_summary(path):
     """What --quiet prints instead of the report: where it is, which sections it holds and every line that
     looks like a failure or an alarm (a "SECTION <id> FAILED" line included), so the Monday dispatcher can stop on
-    an auth error without reading it. The stop-rule reminders and section 1's change-log rows are never problems."""
+    an auth error without reading it. The stop-rule reminders, section 1's change-log rows and section 1b's settings
+    lines (account text such as a headline could hold any word) are never problems."""
     text = Path(path).read_text(encoding="utf-8")
     heads = re.findall(r"^== (\w+)\.", text, re.M)
     problems = [l.strip() for l in text.splitlines()
-                if PROBLEM_RE.search(l) and not l.strip().startswith(("stop rule:", "log "))]
+                if PROBLEM_RE.search(l) and not l.strip().startswith(("stop rule:", "log ", "set ", "+ set ", "- set "))]
     out = [f"report saved: {path}", f"sections: {' '.join(heads) or 'none'}"]
     out += [f"problem: {l}" for l in problems[:20]] or ["problems: none"]
     return "\n".join(out)

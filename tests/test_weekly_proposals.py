@@ -267,14 +267,16 @@ def guard_rows(query):
             N(campaign=N(id=24295921372, name=XMAS), metrics=N(cost_micros=150_000_000, clicks=60, conversions=0.0))]
 
 
-def test_spend_guard_fires_with_no_conversion_and_no_a_or_b_enquiry():
+def test_spend_guard_fires_with_no_a_or_b_enquiry_even_with_ads_conversions():
     mon = datetime.date(2026, 10, 26)
     day = datetime.date(2026, 10, 22)
     lines = wr.spend_guard_lines(guard_rows, mon, graded(enq("christmas", day), clicks={(day, "christmas")}))
     assert lines[0] == ("spend guard wedding-leads: £95.00, 20 clicks, 0 Ads conversions in 28 days · enquiries A 0 · "
                         "B 0 · C 0 — STOP GUARD: propose pausing (never deleting) until the owner decides"), lines
+    # owner decision 26 Oct 2026: two click-conversions (WhatsApp or email taps) no longer hold a campaign open
     assert lines[1] == ("spend guard funeral expert campaign: £120.00, 25 clicks, 2 Ads conversions in 28 days · "
-                        "enquiries A 0 · B 0 · C 0"), lines
+                        "enquiries A 0 · B 0 · C 0 — STOP GUARD: propose pausing (never deleting) until the owner "
+                        "decides"), lines
     assert lines[2].endswith("under 15 clicks, too few to judge; watch next week"), lines
     assert lines[3] == "spend guard small: £30.00, 6 clicks, 0 Ads conversions in 28 days · enquiries A 0 · B 0 · C 0"
     # a C enquiry never holds the guard; inside its dated £8 exception the Christmas campaign is left to its own
@@ -282,7 +284,15 @@ def test_spend_guard_fires_with_no_conversion_and_no_a_or_b_enquiry():
     assert lines[4] == (f"spend guard {XMAS}: £150.00, 60 clicks, 0 Ads conversions in 28 days · enquiries "
                         "A 0 · B 0 · C 1 — deferred: inside its dated budget exception, judged by its own stop rule "
                         "(the value check in section 12), not paused here"), lines
-    assert lines[5].startswith("stop rule: £80+ in 28 days with no Ads conversion and no A or B enquiry"), lines
+    assert lines[5].startswith("stop rule: £80+ in 28 days with no A or B enquiry → propose pausing"), lines
+    assert "no Ads conversion and" not in lines[5], lines
+
+
+def test_spend_guard_an_a_or_b_enquiry_holds_a_campaign_with_ads_conversions():
+    mon = datetime.date(2026, 10, 26)
+    lines = wr.spend_guard_lines(guard_rows, mon, graded(enq("funeral", datetime.date(2026, 10, 22),
+                                                             "ad visit: funerals")))
+    assert lines[1].endswith("— held: an A or B enquiry came from this campaign, so no pause"), lines
 
 
 def test_spend_guard_is_held_by_an_a_or_b_enquiry_for_that_campaign_only():

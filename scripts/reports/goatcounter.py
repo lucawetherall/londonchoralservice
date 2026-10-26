@@ -8,7 +8,7 @@ it with `security`, sends it only to the site's own GoatCounter host, never prin
 GET requests only. Add no other public methods.
 
     .venv/bin/python scripts/reports/goatcounter.py            # the section, last 7 days
-    .venv/bin/python scripts/reports/goatcounter.py --check    # "key: found" or "key: missing" only
+    .venv/bin/python scripts/reports/goatcounter.py --check    # is the key readable, does one API call work
 """
 
 import argparse
@@ -35,8 +35,9 @@ EVENTS = {
 
 
 class GoatCounterError(Exception):
-    """An HTTP error from the API. `http_status` is the code alone, which the Monday report prints (it carries
-    no visitor or account data)."""
+    """Section 5c could not be read. `http_status` is the API's HTTP code alone, which the Monday report prints
+    (it carries no visitor or account data); it is None when the API never answered: no read key in the
+    Keychain, the Keychain not answering, or the network down. The message says which, and never holds the key."""
 
     def __init__(self, message, http_status=None):
         super().__init__(message)
@@ -61,8 +62,18 @@ def _wait_for(err):
     return max(0, min(wait, RETRY_WAIT_MAX))
 
 
+NO_KEY = f"no read key in the Keychain (service {KEYCHAIN_SERVICE})"
+KEYCHAIN_TIMEOUT = 15  # a locked Keychain or an access prompt nobody answers must not hang the Monday run
+
+
 def keychain_token(service=KEYCHAIN_SERVICE, run=subprocess.run):
-    r = run(["security", "find-generic-password", "-s", service, "-w"], capture_output=True, text=True)
+    """The key, or None when the Keychain has none (or refuses it). Raises GoatCounterError if it hangs."""
+    try:
+        r = run(["security", "find-generic-password", "-s", service, "-w"], capture_output=True, text=True,
+                timeout=KEYCHAIN_TIMEOUT)
+    except subprocess.TimeoutExpired:
+        raise GoatCounterError(f"the Keychain did not answer within {KEYCHAIN_TIMEOUT} s (service {service}: "
+                               "locked, or waiting on an access prompt)") from None
     return r.stdout.strip() if r.returncode == 0 and r.stdout.strip() else None
 
 
@@ -87,6 +98,8 @@ class GoatCounterReadOnly:
                     time.sleep(_wait_for(e))
                     continue
                 raise GoatCounterError(f"GoatCounter API answered {e.code}", http_status=e.code) from None
+            except urllib.error.URLError as e:  # no answer at all: DNS, network or TLS
+                raise GoatCounterError(f"GoatCounter API not reached ({type(e.reason).__name__})") from None
 
 
 def hits(client, start, end, limit=100):
@@ -108,7 +121,8 @@ def summary(rows):
 
 
 def section(today=None, client=None, token_reader=None):
-    """The report section's lines (a list of strings). Never raises for a missing key: says so instead."""
+    """The report section's lines (a list of strings). Raises GoatCounterError when it cannot read the figures,
+    a missing key included (http_status None, message NO_KEY), so the report marks 5c as failed and says why."""
     today = today or datetime.date.today()
     end = today - datetime.timedelta(days=1)
     start = end - datetime.timedelta(days=6)
@@ -117,8 +131,7 @@ def section(today=None, client=None, token_reader=None):
     if client is None:
         token = (token_reader or keychain_token)()
         if not token:
-            return lines + [f"   (no read key: the owner stores it in the Keychain as {KEYCHAIN_SERVICE}; see "
-                            "MANUAL-ACTIONS §29)"]
+            raise GoatCounterError(NO_KEY)
         client = GoatCounterReadOnly(token)
     start = max(start, LIVE_SINCE)
     if start > end:
@@ -142,17 +155,37 @@ def section(today=None, client=None, token_reader=None):
     return lines
 
 
+def check(token_reader=None, client_factory=GoatCounterReadOnly, today=None):
+    """Read-only self-check: (lines, ok). Says whether the key is readable and whether one API call works; never
+    prints the key or any figure."""
+    try:
+        token = (token_reader or keychain_token)()
+    except GoatCounterError as e:
+        return [f"key: unreadable ({e})", "api: not tried"], False
+    if not token:
+        return [f"key: missing ({NO_KEY})", "api: not tried"], False
+    day = (today or datetime.date.today()) - datetime.timedelta(days=1)
+    try:
+        client_factory(token).get("/stats/hits", start=f"{day.isoformat()}T00:00:00Z",
+                                  end=f"{day.isoformat()}T23:59:59Z", limit=1)
+    except GoatCounterError as e:
+        return ["key: found", f"api: failed ({e})"], False
+    return ["key: found", "api: ok (one read of /stats/hits answered)"], True
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser()
-    ap.add_argument("--check", action="store_true", help='print only "key: found" or "key: missing"')
+    ap.add_argument("--check", action="store_true",
+                    help="say whether the key is readable and one API call works (never prints the key)")
     args = ap.parse_args(argv)
     if args.check:
-        print("key: found" if keychain_token() else "key: missing")
-        return 0
+        lines, ok = check()
+        print("\n".join(lines))
+        return 0 if ok else 1
     try:
         print("\n".join(section()))
     except GoatCounterError as e:
-        print(str(e))
+        print(str(e) + (f" (HTTP {e.http_status})" if e.http_status else ""))
         return 1
     return 0
 

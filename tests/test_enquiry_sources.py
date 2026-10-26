@@ -242,14 +242,14 @@ def test_the_command_prints_the_weeks_lines():
         assert es.main(["--today", "2026-10-26"]) == 1
 
 
-def test_the_ads_agent_baseline_date_matches_the_report():
-    """weekly_review.ADS_BASELINE is the date of the agent's "THE ACCOUNT AS THE OWNER SET IT": the report prints
-    every change logged since then."""
-    import weekly_review as wr
+def test_the_ads_agent_reads_the_generated_settings_not_a_hand_written_baseline():
+    """Since 26 Oct 2026 the agent takes the account's settings from section 1b (generated, with a diff) and no
+    longer carries a hand-written baseline that goes stale."""
     body = open(os.path.join(ROOT, ".claude", "agents", "lcs-review-ads.md"), encoding="utf-8").read()
-    m = re.search(r"THE ACCOUNT AS THE OWNER SET IT \((\d{1,2}) (\w{3}) (\d{4})", body)
-    assert m, "the agent's baseline heading lost its date"
-    assert datetime.datetime.strptime(" ".join(m.groups()), "%d %b %Y").date() == wr.ADS_BASELINE, m.groups()
+    assert "THE ACCOUNT AS THE OWNER SET IT" not in body
+    assert re.search(r"report_sections\.py 1 1b ", body), "the agent's command must read section 1b"
+    assert "£80+ in 28 days with no A or B enquiry" in body
+    assert "no Ads conversion and no A or B enquiry" not in body
 
 
 if __name__ == "__main__":

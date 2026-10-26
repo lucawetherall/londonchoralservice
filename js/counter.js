@@ -79,13 +79,19 @@
     }
   };
 
-  document.addEventListener('click', function (e) {
-    var a = e.target.closest && e.target.closest('a[href^="tel:"], a[href^="mailto:"], a[href*="wa.me/"]');
+  // A tap or click, or a middle-click that opens the link in a new tab
+  // (auxclick also reports right-clicks, which open nothing). A beacon
+  // outlives the page, so a same-tab tel: or mailto: link loses nothing.
+  function tap(e) {
+    if (e.type === 'auxclick' && e.button !== 1) return;
+    var a = e.target && e.target.closest && e.target.closest('a[href^="tel:"], a[href^="mailto:"], a[href*="wa.me/"]');
     if (!a) return;
     var href = a.getAttribute('href');
     window.lcsCount(href.indexOf('tel:') === 0 ? 'enquiry-sent-call' :
       href.indexOf('mailto:') === 0 ? 'enquiry-sent-email' : 'enquiry-sent-whatsapp');
-  });
+  }
+  document.addEventListener('click', tap);
+  document.addEventListener('auxclick', tap);
 
   // The page view, once the title is parsed and the page is on screen (not a
   // prerender or a tab opened in the background that is never looked at).
