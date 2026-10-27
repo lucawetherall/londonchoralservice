@@ -242,6 +242,34 @@ def test_state_file_is_private_and_done_moves_last_checked_to_the_run_start():
     assert json.loads(run("state")[1])["handled"] == ["m1", "m2"]
 
 
+def test_zoho_down_books_one_retry_until_a_done_clears_it():
+    fresh()
+    before = json.loads(run("state")[1])
+    code, out, _ = run("zoho-down")
+    assert code == 0 and out.startswith("retry: yes "), out
+    at = datetime.datetime.fromisoformat(out.split()[2])
+    assert at.utcoffset() is not None
+    lead = at - datetime.datetime.now(datetime.timezone.utc)
+    assert datetime.timedelta(minutes=9) < lead <= datetime.timedelta(minutes=10), lead
+    # the failed run moved nothing: the retry looks back as far as this run would have
+    assert json.loads(run("state")[1])["last_checked"] == before["last_checked"]
+    # the retry run fails too: no second retry, no loop
+    code, out, _ = run("zoho-down")
+    assert code == 0 and out.startswith("retry: no"), out
+    # a run that reaches `done` clears it, so the next outage gets its own retry
+    run("done")
+    assert run("zoho-down")[1].startswith("retry: yes ")
+
+
+def test_zoho_retry_window_lapses_after_three_hours():
+    now = datetime.datetime(2026, 10, 22, 13, 15, tzinfo=datetime.timezone.utc)
+    booked = {"retry_booked_at": (now - datetime.timedelta(hours=2)).isoformat()}
+    assert aio.zoho_retry(booked, now) == (False, None)
+    booked = {"retry_booked_at": (now - datetime.timedelta(hours=3, minutes=1)).isoformat()}
+    retry, at = aio.zoho_retry(booked, now)
+    assert retry and at == "2026-10-22T14:25:00+01:00", at  # BST
+
+
 # --- books-queue ---------------------------------------------------------------------------------
 
 def queued(ref="2111", **over):

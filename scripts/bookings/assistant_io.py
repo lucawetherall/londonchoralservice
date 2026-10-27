@@ -11,6 +11,10 @@ prompts). Private data stays in ~/lcs-private/; this file holds none.
         record today's (Europe/London) daily pass as done
     .venv/bin/python scripts/bookings/assistant_io.py done [messageId ...]
         mark messages handled and move last_checked to when this run started
+    .venv/bin/python scripts/bookings/assistant_io.py zoho-down
+        Zoho failed to connect at the start of this run: print "retry: yes <fireAt>" (Europe/London,
+        ten minutes from now) the first time, so the run books one retry run in a fresh session, and
+        "retry: no" while a retry booked in the last 3 hours hasn't been followed by a `done`
     .venv/bin/python scripts/bookings/assistant_io.py style
         print the private email style guide (~/lcs-private/email-style.md)
     .venv/bin/python scripts/bookings/assistant_io.py prices
@@ -96,6 +100,20 @@ london_today = lm.today  # today's Europe/London date (`now`: an aware datetime,
 def daily_due(state, now=None):
     """True until the daily pass is recorded for this Europe/London date."""
     return state.get("daily_done") != london_today(now).isoformat()
+
+
+RETRY_AFTER = datetime.timedelta(minutes=10)
+RETRY_WINDOW = datetime.timedelta(hours=3)
+
+
+def zoho_retry(state, now):
+    """(book a retry?, its fireAt). Zoho outages seen so far (22 Oct 2026: all three servers refused
+    for a moment) clear within minutes, and a fresh session reconnects; one retry per outage, so a
+    lasting failure falls back to the regular runs and the 4-hour alert instead of looping."""
+    booked = state.get("retry_booked_at")
+    if booked and now - datetime.datetime.fromisoformat(booked) < RETRY_WINDOW:
+        return False, None
+    return True, (now + RETRY_AFTER).astimezone(lm.LONDON).isoformat(timespec="seconds")
 
 
 # --- invoice refs --------------------------------------------------------------------------------
@@ -375,8 +393,19 @@ def main():
         started = s.pop("run_started", None) or datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds")
         s["handled"] = (s["handled"] + [m for m in args if m not in s["handled"]])[-500:]
         s["last_checked"] = started
+        s.pop("retry_booked_at", None)
         private_write(STATE, json.dumps(s, indent=1))
         print(f"state saved: last_checked {started}, {len(args)} message(s) marked")
+    elif cmd == "zoho-down":
+        s = load_state()
+        now = datetime.datetime.now(datetime.timezone.utc)
+        retry, at = zoho_retry(s, now)
+        if retry:
+            s["retry_booked_at"] = now.isoformat(timespec="seconds")
+            private_write(STATE, json.dumps(s, indent=1))
+            print(f"retry: yes {at}")
+        else:
+            print(f"retry: no (a retry was booked at {s['retry_booked_at']})")
     elif cmd == "style":
         print(STYLE.read_text() if STYLE.exists() else "(no style guide at ~/lcs-private/email-style.md)")
     elif cmd == "prices":
