@@ -76,7 +76,7 @@ The website of The London Choral Service (Alma Consort Ltd) — a choir-for-hire
 - Larger features: write a spec in `docs/superpowers/specs/` and a plan in `docs/superpowers/plans/`, named `YYYY-MM-DD-<name>.md`, matching the existing documents' style.
 - The owner gives broad mandates ("make the best decisions", "fix everything"): carry the work through end to end (build, test, PR, merge, verify live) and batch anything needing approval (Google Ads changes, business-policy calls) into one question.
 - Before committing: run the `build-and-verify` checklist. Commit messages follow the existing history style (`fix(scope): …`, `copy: …`, `chore: …`).
-- Keep `graphify-out/` out of content and feature PRs: `graph.json` is rewritten wholesale, so two sessions' PRs would conflict on it. When the build's last line says the graph is behind, refresh it in its own PR (`chore(graph): refresh the knowledge graph`): `python3 scripts/refresh_graph.py` for code and links, plus `/graphify --update` when the concept extraction is due or after a large content sweep.
+- Keep `graphify-out/` out of content and feature PRs: `graph.json` is rewritten wholesale, so two sessions' PRs would conflict on it. When the build's last line says the graph is behind, refresh it in its own PR (`chore(graph): refresh the knowledge graph`): `python3 scripts/refresh_graph.py` for code and links, plus `python3 scripts/graph_concepts.py prep` and `finish` (see Commands) when the concept extraction is due or after a large content sweep.
 
 ## Project skills
 
