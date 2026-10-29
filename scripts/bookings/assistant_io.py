@@ -15,6 +15,10 @@ prompts). Private data stays in ~/lcs-private/; this file holds none.
         Zoho failed to connect at the start of this run: print "retry: yes <fireAt>" (Europe/London,
         ten minutes from now) the first time, so the run books one retry run in a fresh session, and
         "retry: no" while a retry booked in the last 3 hours hasn't been followed by a `done`
+    .venv/bin/python scripts/bookings/assistant_io.py stale
+        read-only, for the watchdog task: "stale: yes <last_checked>" when no run has reached `done`
+        for 5 hours, from 09:00 to midnight Europe/London (the runs go every two hours from 06:00 to
+        22:00, so the overnight gap never counts); otherwise "stale: no <last_checked>"
     .venv/bin/python scripts/bookings/assistant_io.py style
         print the private email style guide (~/lcs-private/email-style.md)
     .venv/bin/python scripts/bookings/assistant_io.py prices
@@ -104,6 +108,16 @@ def daily_due(state, now=None):
 
 RETRY_AFTER = datetime.timedelta(minutes=10)
 RETRY_WINDOW = datetime.timedelta(hours=3)
+STALE_AFTER = datetime.timedelta(hours=5)
+
+
+def stale(state, now):
+    """True when the two-hourly runs have stopped reaching `done` (27-29 Oct 2026: a run session that
+    stayed open blocked every later run for 37 hours and nothing noticed). Only from 09:00 London,
+    since the last run of the night is about 22:15 and the first of the morning about 06:15."""
+    if now.astimezone(lm.LONDON).hour < 9:
+        return False
+    return now - datetime.datetime.fromisoformat(state["last_checked"]) > STALE_AFTER
 
 
 def zoho_retry(state, now):
@@ -406,6 +420,10 @@ def main():
             print(f"retry: yes {at}")
         else:
             print(f"retry: no (a retry was booked at {s['retry_booked_at']})")
+    elif cmd == "stale":
+        s = load_state()
+        now = datetime.datetime.now(datetime.timezone.utc)
+        print(f"stale: {'yes' if stale(s, now) else 'no'} {s['last_checked']}")
     elif cmd == "style":
         print(STYLE.read_text() if STYLE.exists() else "(no style guide at ~/lcs-private/email-style.md)")
     elif cmd == "prices":

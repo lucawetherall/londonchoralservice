@@ -270,6 +270,29 @@ def test_zoho_retry_window_lapses_after_three_hours():
     assert retry and at == "2026-10-22T14:25:00+01:00", at  # BST
 
 
+def test_stale_after_five_hours_only_from_nine_london():
+    utc = datetime.timezone.utc
+    state = {"last_checked": "2026-10-28T10:15:00+00:00"}
+    assert not aio.stale(state, datetime.datetime(2026, 10, 28, 15, 15, tzinfo=utc))
+    assert aio.stale(state, datetime.datetime(2026, 10, 28, 15, 16, tzinfo=utc))
+    night = {"last_checked": "2026-10-28T22:15:00+00:00"}
+    assert not aio.stale(night, datetime.datetime(2026, 10, 29, 8, 59, tzinfo=utc))
+    assert aio.stale(night, datetime.datetime(2026, 10, 29, 9, 0, tzinfo=utc))
+    # BST: 07:30 UTC is 08:30 London, still the overnight gap
+    summer = {"last_checked": "2026-07-01T21:15:00+00:00"}
+    assert not aio.stale(summer, datetime.datetime(2026, 7, 2, 7, 30, tzinfo=utc))
+
+
+def test_stale_command_reads_without_touching_the_state():
+    fresh()
+    run("state")
+    path = os.path.join(_HOME, "assistant-state.json")
+    before = open(path).read()
+    code, out, _ = run("stale")
+    assert code == 0 and out.split()[:2] in (["stale:", "no"], ["stale:", "yes"]), out
+    assert open(path).read() == before
+
+
 # --- books-queue ---------------------------------------------------------------------------------
 
 def queued(ref="2111", **over):
