@@ -1,6 +1,6 @@
 # Manual actions required
 
-Things only you can do: your identity, an account in your name, accepting terms, or a decision or material only you have. Claude never does these. Updated 24 Oct 2026.
+Things only you can do: your identity, an account in your name, accepting terms, or a decision or material only you have. Claude never does these. Updated 29 Oct 2026.
 
 Every item below is complete in itself: what it is, why it matters, exactly what to do, and how you'll know it's done. Nothing sends you to another section. When you finish one, tell an agent so it can be removed from this file.
 
@@ -10,7 +10,7 @@ Finished work, old notes and reference material are in `docs/MANUAL-ACTIONS-ARCH
 
 | # | Action | Time | When |
 |---|---|---|---|
-| 1 | Ask Google to recrawl twenty-five pages (Search Console) | 25 min over five days | 25, 26, 27, 28 and 29 Oct |
+| 1 | Ask Google to recrawl forty-one pages (Search Console) | 40 min over seven days | 25 to 31 Oct |
 | 2 | Directory sign-ups (seven sites) | 15–20 min each | this week |
 | 3 | Fix the `www` address at Porkbun | 10 min | this week |
 | 4 | Check the Google Business Profile edits | 5 min | from 30 Oct |
@@ -24,7 +24,7 @@ Finished work, old notes and reference material are in `docs/MANUAL-ACTIONS-ARCH
 
 ---
 
-## 1. Ask Google to recrawl twenty-five pages (Search Console)
+## 1. Ask Google to recrawl forty-one pages (Search Console)
 
 On 24 Oct you requested eleven of twelve pages; Google refused the twelfth (the funeral-hymns guide) because the day's quota was used up. Later that day PR #370 rewrote seven more pages to match what people search for, so Google needs to fetch the new versions. That includes three you had already requested (Newham, wedding ceremony music, carol services): their earlier requests are for versions that no longer exist.
 
@@ -87,9 +87,35 @@ https://londonchoralservice.com/music-guides/index.html
 https://londonchoralservice.com/music-guides/christmas.html
 ```
 
+**30 Oct, these ten.** A 29 Oct pass rewrote them for the searches that bring bookings: the corporate page now leads with choirs, the weddings page gained what a choir sings at each moment and the civil-ceremony rules, and the city pages gained their churches, crematoria and travel. Request the weddings page again even if you did it on 29 Oct: that request was for the old version.
+
+```
+https://londonchoralservice.com/corporate.html
+https://londonchoralservice.com/weddings.html
+https://londonchoralservice.com/areas/guildford.html
+https://londonchoralservice.com/areas/liverpool.html
+https://londonchoralservice.com/areas/chelmsford.html
+https://londonchoralservice.com/areas/bath.html
+https://londonchoralservice.com/areas/reading.html
+https://londonchoralservice.com/areas/slough-maidenhead.html
+https://londonchoralservice.com/areas/rochester.html
+https://londonchoralservice.com/areas/winchester.html
+```
+
+**31 Oct, these six,** from the same pass:
+
+```
+https://londonchoralservice.com/areas/st-albans.html
+https://londonchoralservice.com/areas/chester.html
+https://londonchoralservice.com/areas/canterbury.html
+https://londonchoralservice.com/areas/salisbury.html
+https://londonchoralservice.com/areas/windsor.html
+https://londonchoralservice.com/music-guides/weddings.html
+```
+
 The sitemap doesn't need resubmitting: the build updated each page's date in it, and Google reads it every few days.
 
-**Done when:** all twenty-five requests are accepted. About 7 Nov an agent reruns the index-coverage report on these pages and the eleven from 24 Oct. Any page still "Crawled - currently not indexed" then needs a content fix, not another request.
+**Done when:** all forty-one requests are accepted. About 7 Nov an agent reruns the index-coverage report on these pages and the eleven from 24 Oct. Any page still "Crawled - currently not indexed" then needs a content fix, not another request.
 
 ---
 
