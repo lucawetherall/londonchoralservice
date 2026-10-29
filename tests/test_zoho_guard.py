@@ -90,10 +90,40 @@ def office(**kw):
     return dict(draft("office@londonchoralservice.com"), **kw)
 
 
-def test_cc_is_denied():
-    assert decide("sendReplyEmail", office(ccAddress="other@example.com")) == "deny"
+def from_subagent(tool, body):
+    return raw(json.dumps({"tool_name": f"mcp__zoho-mail__ZohoMail_{tool}", "tool_input": {"body": body},
+                           "agent_id": "a1b2c3"}))
+
+
+def test_cc_is_allowed_in_lucas_own_conversation():
+    assert decide("sendReplyEmail", office(ccAddress="other@example.com")) == "allow"
+    assert decide("sendReplyEmail", office(ccAddress="Polina K <p.k@example.com>, b@example.co.uk; c@example.com")) == "allow"
+    assert decide("sendEmail", office(ccAddress="<other@example.com>")) == "allow"
     assert decide("sendReplyEmail", office(ccAddress="")) == "allow"
+
+
+def test_cc_limits():
+    five = ",".join(f"p{i}@example.com" for i in range(5))
+    assert decide("sendReplyEmail", office(ccAddress=five)) == "allow"
+    assert decide("sendReplyEmail", office(ccAddress=five + ",p5@example.com")) == "deny"
     assert decide("sendReplyEmail", office(ccAddress=["x@example.com"])) == "deny"
+    assert decide("sendReplyEmail", office(ccAddress="not an address")) == "deny"
+    assert decide("sendReplyEmail", office(ccAddress="a@example.com b@example.com")) == "deny"
+    assert decide("sendReplyEmail", office(ccAddress="Someone@Example.com")) == "deny"  # repeats toAddress
+    assert decide("sendReplyEmail", office(ccAddress="x@example.com", bccAddress="y@example.com")) == "deny"
+
+
+def test_cc_is_denied_from_a_subagent():
+    assert from_subagent("sendReplyEmail", office(ccAddress="other@example.com")) == "deny"
+    assert from_subagent("sendReplyEmail", office()) == "allow"
+
+
+def test_the_published_number_is_not_an_iban():
+    for text in ("I'm happy to talk it through on 07356 042468 if that's quicker.",
+                 "Call 07356042468 any time", "on +44 7356 042468 or", "on +44 (0)7356 042468 if"):
+        assert decide("sendReplyEmail", office(content=f"<div>{text}</div>")) == "allow", text
+    # another number in the same shape still reads as bank details
+    assert decide("sendReplyEmail", office(content="<div>on 07356 042469 if that's quicker</div>")) == "deny"
 
 
 def test_one_recipient_only():
