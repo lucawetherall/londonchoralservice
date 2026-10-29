@@ -10,7 +10,7 @@ Finished work, old notes and reference material are in `docs/MANUAL-ACTIONS-ARCH
 
 | # | Action | Time | When |
 |---|---|---|---|
-| 1 | Ask Google to recrawl forty-one pages (Search Console) | 40 min over seven days | 25 to 31 Oct |
+| 1 | Ask Google to recrawl nine pages (Search Console) | 10 min | 30 Oct |
 | 2 | Directory sign-ups (seven sites) | 15–20 min each | this week |
 | 3 | Fix the `www` address at Porkbun | 10 min | this week |
 | 4 | Check the Google Business Profile edits | 5 min | from 30 Oct |
@@ -24,7 +24,7 @@ Finished work, old notes and reference material are in `docs/MANUAL-ACTIONS-ARCH
 
 ---
 
-## 1. Ask Google to recrawl forty-one pages (Search Console)
+## 1. Ask Google to recrawl nine pages (Search Console)
 
 On 24 Oct you requested eleven of twelve pages; Google refused the twelfth (the funeral-hymns guide) because the day's quota was used up. Later that day PR #370 rewrote seven more pages to match what people search for, so Google needs to fetch the new versions. That includes three you had already requested (Newham, wedding ceremony music, carol services): their earlier requests are for versions that no longer exist.
 
@@ -87,24 +87,14 @@ https://londonchoralservice.com/music-guides/index.html
 https://londonchoralservice.com/music-guides/christmas.html
 ```
 
-**30 Oct, these ten.** A 29 Oct pass rewrote them for the searches that bring bookings: the corporate page now leads with choirs, the weddings page gained what a choir sings at each moment and the civil-ceremony rules, and the city pages gained their churches, crematoria and travel. Request the weddings page again even if you did it on 29 Oct: that request was for the old version.
+**Done on 29 Oct (by Claude in Chrome, until Google's daily quota ran out):** the carol services page, the funeral hymns guide, weddings, corporate, Guildford, Liverpool, Reading, Slough & Maidenhead and Rochester were accepted into the priority crawl queue. Chelmsford and Bath were sent in a batch that timed out before the confirmation was seen, so request those two again to be sure. The new versions were live before any request went in.
+
+**30 Oct, these nine.** A 29 Oct pass rewrote the city pages (churches, crematoria and travel), so Google needs the new versions. Winchester and St Albans were refused for quota on 29 Oct.
 
 ```
-https://londonchoralservice.com/corporate.html
-https://londonchoralservice.com/weddings.html
-https://londonchoralservice.com/areas/guildford.html
-https://londonchoralservice.com/areas/liverpool.html
 https://londonchoralservice.com/areas/chelmsford.html
 https://londonchoralservice.com/areas/bath.html
-https://londonchoralservice.com/areas/reading.html
-https://londonchoralservice.com/areas/slough-maidenhead.html
-https://londonchoralservice.com/areas/rochester.html
 https://londonchoralservice.com/areas/winchester.html
-```
-
-**31 Oct, these six,** from the same pass:
-
-```
 https://londonchoralservice.com/areas/st-albans.html
 https://londonchoralservice.com/areas/chester.html
 https://londonchoralservice.com/areas/canterbury.html
@@ -115,7 +105,7 @@ https://londonchoralservice.com/music-guides/weddings.html
 
 The sitemap doesn't need resubmitting: the build updated each page's date in it, and Google reads it every few days.
 
-**Done when:** all forty-one requests are accepted. About 7 Nov an agent reruns the index-coverage report on these pages and the eleven from 24 Oct. Any page still "Crawled - currently not indexed" then needs a content fix, not another request.
+**Done when:** the nine pages above are accepted. About 7 Nov an agent reruns the index-coverage report on these pages and the eleven from 24 Oct. Any page still "Crawled - currently not indexed" then needs a content fix, not another request.
 
 ---
 
@@ -202,23 +192,15 @@ Skipped on purpose, don't sign up: Bark and Add to Event (pay-per-lead credits t
 
 ---
 
-## 4. Check the Google Business Profile edits (from 30 Oct)
+## 4. Add the press photos to the Google Business Profile
 
-On 23 Oct Claude made a batch of edits to the profile; Google shows each as "pending review" until it approves it, which can take days. Check they all went through.
+On 29 Oct Claude checked the profile in Chrome: the categories (Choir primary, Wedding service), description, website, service area, hours and all seven services are live. The Organist and pianist hire service showed a fixed £250, which didn't match pricing.html (£275 on their own, £250 added to a choir), so Claude changed it to "From £250" with both prices in its description; Google shows that edit as pending review for up to a day. Google has also switched the Chat button to WhatsApp (`wa.me/447356042468`) by itself.
 
-**How:** from about 30 Oct, sign in at https://business.google.com/, choose **The London Choral Service**, and check each of these is live:
+**What is left:** the profile has about nine photos. Add the five press stills from `~/Pictures/LCS-listings/press/` (that folder wasn't on the machine Claude ran from, so it couldn't upload them): sign in at https://business.google.com/, **Photos → Add photos**. That takes it past the ten Google likes to see.
 
-- **Categories:** Choir (primary) and Wedding service. Google offers no "Funeral service" category (only "Pet funeral service" and "Funeral celebrant service", which would misdescribe a choir), so funerals are carried by the Funeral choir service and the description instead.
-- **Description:** the 680-character text from the listings pack.
-- **Website:** `https://londonchoralservice.com/?utm_source=google&utm_medium=organic&utm_campaign=gbp`.
-- **Service area:** London, Greater London, Surrey, Kent, Essex, Hertfordshire, Berkshire, Buckinghamshire; address hidden.
-- **Hours:** Monday to Friday 09:00–18:00, weekends closed.
-- **Services:** seven, six at "From £1,150" and Organist and pianist hire at £275 (£250 added to a choir).
-- **Photos:** nine. While you're there, add the five press stills from `~/Pictures/LCS-listings/press/` (**Photos → Add photos**), which takes it past the ten Google likes to see.
+Three Christmas posts are scheduled for 09:00 on 10 Nov, 24 Nov and 8 Dec; you can edit or cancel one under **Posts** before its date.
 
-If an edit was rejected or reverted, tell an agent which and it will redo it in a live chat. Three Christmas posts are already scheduled for 09:00 on 10 Nov, 24 Nov and 8 Dec; you can edit or cancel one under **Posts** before its date.
-
-**Done when:** every item above shows on the public listing. Recheck the categories each quarter in case Google adds a funeral category.
+**Done when:** the photos show on the public listing. Recheck the categories each quarter in case Google adds a funeral category.
 
 ---
 
@@ -281,9 +263,8 @@ The page `linkedin.com/company/london-choral-service` doesn't exist. A company p
 | When | What | Who |
 |---|---|---|
 | 25 Oct | Request indexing for the last page (action 1) | you |
-| About 28 Oct | Google Ads: check the identity-verification banner has gone (submitted 24 Oct). If Google asks for more, it emails you | you |
+| 29 Oct | Google Ads identity-verification banner: gone (Claude checked the account overview). If Google asks for more, it emails you | done |
 | About 31 Oct | Bing Webmaster Tools → **Site Explorer**: check pages are appearing (sitemap index submitted 24 Oct) | you, or tell an agent what you see |
-| 30 Oct onwards | Check the Business Profile edits (action 4) | you |
 | About 7 Nov | Rerun the index-coverage report on the twenty-five recrawled pages | agent, on your word |
 | 10 Nov, 24 Nov, 8 Dec | Scheduled Business Profile posts publish at 09:00 | automatic |
 | November | Look again at whether `christmas.html` and the Christmas guides compete for the same Search Console queries (too little data on 14 Oct) | agent |
@@ -305,6 +286,8 @@ The site's Web3Forms access key is public by design (it is in every form's HTML)
 ---
 
 ## 12. Google Ads: hide two old conversion actions
+
+**Check before hiding (29 Oct):** in the Ads screens "Contact" (fires on the thank-you page) shows a last recorded conversion on **26 Oct 2026**, so the "neither has fired since 19 Sep" below is wrong for it. It is a secondary action that feeds no goal, but it may be counting real enquiries. "Contact (1)" reads Misconfigured. Decide whether to hide either. Claude left both alone, and the Ads rules forbid removing one. The same screen shows an "Enhanced conversions not recording" alert, which Claude didn't investigate.
 
 Two legacy conversion actions, "Contact" and "Contact (1)", are still in the account as secondary actions; neither has fired since 19 Sep 2026. Claude tried to set them to Hidden through the API on 26 Oct and Google refused, so it has to be done in the Google Ads screens. Until then the Monday report lists them every week as legacy; they are not a finding.
 
