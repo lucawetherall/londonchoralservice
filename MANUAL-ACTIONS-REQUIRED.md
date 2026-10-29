@@ -10,7 +10,7 @@ Finished work, old notes and reference material are in `docs/MANUAL-ACTIONS-ARCH
 
 | # | Action | Time | When |
 |---|---|---|---|
-| 1 | Ask Google to recrawl forty-one pages (Search Console) | 40 min over seven days | 25 to 31 Oct |
+| 1 | Ask Google to recrawl nine pages (Search Console) | 10 min | 30 Oct |
 | 2 | Directory sign-ups (seven sites) | 15–20 min each | this week |
 | 3 | Fix the `www` address at Porkbun | 10 min | this week |
 | 4 | Check the Google Business Profile edits | 5 min | from 30 Oct |
@@ -24,7 +24,7 @@ Finished work, old notes and reference material are in `docs/MANUAL-ACTIONS-ARCH
 
 ---
 
-## 1. Ask Google to recrawl forty-one pages (Search Console)
+## 1. Ask Google to recrawl nine pages (Search Console)
 
 On 24 Oct you requested eleven of twelve pages; Google refused the twelfth (the funeral-hymns guide) because the day's quota was used up. Later that day PR #370 rewrote seven more pages to match what people search for, so Google needs to fetch the new versions. That includes three you had already requested (Newham, wedding ceremony music, carol services): their earlier requests are for versions that no longer exist.
 
@@ -87,24 +87,14 @@ https://londonchoralservice.com/music-guides/index.html
 https://londonchoralservice.com/music-guides/christmas.html
 ```
 
-**30 Oct, these ten.** A 29 Oct pass rewrote them for the searches that bring bookings: the corporate page now leads with choirs, the weddings page gained what a choir sings at each moment and the civil-ceremony rules, and the city pages gained their churches, crematoria and travel. Request the weddings page again even if you did it on 29 Oct: that request was for the old version.
+**Done on 29 Oct (by Claude in Chrome, until Google's daily quota ran out):** the carol services page, the funeral hymns guide, weddings, corporate, Guildford, Liverpool, Reading, Slough & Maidenhead and Rochester were accepted into the priority crawl queue. Chelmsford and Bath were sent in a batch that timed out before the confirmation was seen, so request those two again to be sure. The new versions were live before any request went in.
+
+**30 Oct, these nine.** A 29 Oct pass rewrote the city pages (churches, crematoria and travel), so Google needs the new versions. Winchester and St Albans were refused for quota on 29 Oct.
 
 ```
-https://londonchoralservice.com/corporate.html
-https://londonchoralservice.com/weddings.html
-https://londonchoralservice.com/areas/guildford.html
-https://londonchoralservice.com/areas/liverpool.html
 https://londonchoralservice.com/areas/chelmsford.html
 https://londonchoralservice.com/areas/bath.html
-https://londonchoralservice.com/areas/reading.html
-https://londonchoralservice.com/areas/slough-maidenhead.html
-https://londonchoralservice.com/areas/rochester.html
 https://londonchoralservice.com/areas/winchester.html
-```
-
-**31 Oct, these six,** from the same pass:
-
-```
 https://londonchoralservice.com/areas/st-albans.html
 https://londonchoralservice.com/areas/chester.html
 https://londonchoralservice.com/areas/canterbury.html
@@ -115,7 +105,7 @@ https://londonchoralservice.com/music-guides/weddings.html
 
 The sitemap doesn't need resubmitting: the build updated each page's date in it, and Google reads it every few days.
 
-**Done when:** all forty-one requests are accepted. About 7 Nov an agent reruns the index-coverage report on these pages and the eleven from 24 Oct. Any page still "Crawled - currently not indexed" then needs a content fix, not another request.
+**Done when:** the nine pages above are accepted. About 7 Nov an agent reruns the index-coverage report on these pages and the eleven from 24 Oct. Any page still "Crawled - currently not indexed" then needs a content fix, not another request.
 
 ---
 
