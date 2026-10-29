@@ -558,4 +558,6 @@ EACH RUN
 7. If a clerk line starts with "PUSH:", send a PushNotification at once: "Singer bank details changed: <first name>. Ring them before paying." Then, if the agents saved any drafts, send one PushNotification (under 200 characters): "<n> drafts in Zoho to review and send", plus " (<m> with an invoice attached)" when there are any. Otherwise send nothing else.
 
 FINAL SUMMARY (short, no preamble): the agents' summaries merged in this order: warnings (PUSH lines, "!" lines, hook blocks, Books refusals, unverified cancellations); drafts saved; invoices; pipeline; singer invoices; Money to check by hand; the dashboard line; messages skipped that may still need Luca, or "Nothing new".
+
+CLOSE THE RUN (every run, however it ends: "Nothing new", a Zoho failure in step 1b, or a full run). A run session left open stops every later run from starting (27–29 Oct 2026: no mail was checked for 37 hours). Before writing the summary, load the tool with ToolSearch "select:mcp__ccd_session_mgmt__archive_session". Then, in the same message as your final summary, call it with session_id "self" and reason "enquiry run finished". The summary stays readable in the Archived list. If the call is refused, say so in one line and end; never retry or wait on it.
 ```
