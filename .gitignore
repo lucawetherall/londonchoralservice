@@ -15,6 +15,14 @@ graphify-out/cache/ast/
 graphify-out/cache/stat-index.json
 graphify-out/cache/last_query_stamp
 graphify-out/[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]/
+# scripts/graph_concepts.py's stripped pages and agent prompts.
+graphify-out/.graphify_text/
+graphify-out/.graphify_prompt_*.md
+# Query notes from graphify's save-result/reflect loop: not used here (they would land in content PRs).
+graphify-out/memory/
+graphify-out/reflections/
+graphify-out/.vocab.txt
+graphify-out/.needs_update
 
 # Google Ads / GA4 workspace — never commit credentials
 .venv/

@@ -32,8 +32,15 @@
       "output_tokens": 0,
       "files": 403,
       "note": "subagent totals (input+output combined); images skipped"
+    },
+    {
+      "date": "2026-10-29T17:03:42+00:00",
+      "input_tokens": 2314011,
+      "output_tokens": 0,
+      "files": 147,
+      "note": "scripts/graph_concepts.py: agent total tokens (input+output); 7 agents, pages read without generated blocks"
     }
   ],
-  "total_input_tokens": 2007942,
+  "total_input_tokens": 4321953,
   "total_output_tokens": 148000
 }
