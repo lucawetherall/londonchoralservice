@@ -4,15 +4,19 @@
 Claude may READ mail and may SAVE DRAFTS from office@londonchoralservice.com or luca@almaconsort.com.
 It may never send, schedule, delete, move, label, mark or change settings: the
 owner reviews every draft in Zoho and presses Send. A draft has one recipient
-(no Bcc, no "," or ";" in toAddress) and never carries bank details in its
-subject or content: the scanner is zoho_books_guard.bank_details_in, run on the
-text with HTML tags and entities removed. This holds whatever tools the Zoho MCP
-console exposes, and it fails closed: any error denies the call.
+(toAddress is one plain address; no Bcc), its header fields carry no control
+characters (so no line break can add a header or a recipient), and it never
+carries bank details in its subject or content: the scanner is
+zoho_books_guard.bank_details_in, run on the text with HTML tags and entities
+removed. This holds whatever tools the Zoho MCP console exposes, and it fails
+closed: any error denies the call.
 
 Cc (owner decision, 29 Oct 2026: "change guard to allow CC", "allow multiple Ccs
-if needed"): a draft made in Luca's own conversation may copy up to MAX_CC people,
-each a plain address, none the toAddress. A subagent (the event carries an
-agent_id: the enquiry assistant's drafters) still may not Cc anyone.
+if needed"): a draft may copy up to MAX_CC people, each a plain address, none the
+toAddress, unless the call comes from a subagent (the event carries an agent_id:
+the enquiry assistant's drafters and clerks), which may not Cc anyone. The hook
+can't tell Luca's live chat from any other top-level session, so the dispatcher
+prompts say "no Cc" as well.
 """
 import html
 import json
@@ -33,18 +37,22 @@ DRAFT_TOOLS = {"ZohoMail_sendEmail", "ZohoMail_sendReplyEmail"}
 DRAFT_FROM = {"office@londonchoralservice.com", "luca@almaconsort.com"}
 SCANNED = ("subject", "content")
 TAG = re.compile(r"<[^>]*>")
-# our own WhatsApp link, phone links and published number are not bank numbers ("on 07356 042468 if"
-# otherwise reads as an IBAN); the "(0)" in "+44 (0)7356 042468" is turned into a 0 below
-OWN_LINKS = re.compile(r"wa\.me/\+?[0-9]+|tel:\+?[0-9]+|(?<![0-9])(?:\+44\s?(?:\(0\)\s?)?|0)7356\s?042468(?![0-9])", re.I)
+# our own published number, and our WhatsApp and phone links to it, are not bank numbers ("on 07356
+# 042468 if" otherwise reads as an IBAN). Matched after normalising, so fullwidth digits next to it
+# still count as digits; "+44 (0)7356 042468" has its "(0)" turned into a 0 first.
+OWN_LINKS = re.compile(r"(?<![0-9])(?:wa\.me/|tel:)?(?:\+?44\s?0?|0)7356\s?042468(?![0-9])", re.I)
 MAX_CC = 5
 ADDRESS = re.compile(r"[^\s@<>\"',;]+@[^\s@<>\"',;]+\.[A-Za-z]{2,}")
+# header fields: a line break (or any other control character) in one could add a header or a recipient
+HEADER_FIELDS = ("fromAddress", "toAddress", "ccAddress", "subject", "inReplyTo", "refHeader")
+CONTROL = re.compile(r"[\x00-\x1f\x7f-\x9f\u2028\u2029]")
 
 
 def plain_text(value):
     if not isinstance(value, str):
         raise TypeError("draft text must be a string")
-    text = TAG.sub(" ", OWN_LINKS.sub(" ", value))
-    text = html.unescape(text).replace("(0)", "0")
+    from zoho_books_guard import _plain  # the scanner's own normalisation (NFKC, no invisible characters)
+    text = _plain(html.unescape(TAG.sub(" ", value))).replace("(0)", "0")
     return OWN_LINKS.sub(" ", text)
 
 
@@ -93,11 +101,16 @@ def decide(tool, tool_input, subagent=False):
             return "Zoho guard: no Bcc on drafts."
         if body.get("attachments"):
             return "Zoho guard: attachments are added by the owner in Zoho."
+        for field in HEADER_FIELDS:
+            if isinstance(body.get(field), str) and CONTROL.search(body[field]):
+                return f"Zoho guard: {field} contains a line break or control character."
         to = body.get("toAddress") or ""
         if not isinstance(to, str) or not to.strip():
             return "Zoho guard: a draft needs the client's address in toAddress."
         if "," in to or ";" in to:
             return "Zoho guard: one recipient only; address the draft only to the person who wrote."
+        if bare_address(to) is None:
+            return "Zoho guard: toAddress must be one plain email address."
         if body.get("ccAddress"):
             problem = cc_problem(body["ccAddress"], to, subagent)
             if problem:

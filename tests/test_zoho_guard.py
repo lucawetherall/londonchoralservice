@@ -122,8 +122,40 @@ def test_the_published_number_is_not_an_iban():
     for text in ("I'm happy to talk it through on 07356 042468 if that's quicker.",
                  "Call 07356042468 any time", "on +44 7356 042468 or", "on +44 (0)7356 042468 if"):
         assert decide("sendReplyEmail", office(content=f"<div>{text}</div>")) == "allow", text
-    # another number in the same shape still reads as bank details
-    assert decide("sendReplyEmail", office(content="<div>on 07356 042469 if that's quicker</div>")) == "deny"
+    for text in ('<a href="https://wa.me/447356042468">WhatsApp</a> wa.me/447356042468',
+                 '<a href="tel:+447356042468">07356 042468</a>', "on +44 0 7356 042468 or"):
+        assert decide("sendReplyEmail", office(content=text)) == "allow", text
+    # another number in the same shape still reads as bank details, as does any other number in a link
+    for text in ("on 07356 042469 if that's quicker", "tel:60837112345678", "wa.me/60837112345678",
+                 "Use tel:608371 and tel:12345678",
+                 "pay １２３07356042468 thanks", "pay 12307356042468 thanks", "pay 07356042468123 thanks"):
+        assert decide("sendReplyEmail", office(content=f"<div>{text}</div>")) == "deny", text
+
+
+def test_line_breaks_in_header_fields_are_denied():
+    for field, value in (("toAddress", "someone@example.com\r\nCc: evil@example.com"),
+                         ("toAddress", "someone@example.com\nBcc: evil@example.com"),
+                         ("subject", "Re: quote\r\nBcc: evil@example.com"),
+                         ("ccAddress", "Ann\r\nBcc: undisclosed <a@example.com>"),
+                         ("ccAddress", "Ann X-Evil: 1 <a@example.com>"),
+                         ("inReplyTo", "<id@example.com>\r\nBcc: evil@example.com"),
+                         ("refHeader", "<id@example.com>\nBcc: evil@example.com"),
+                         ("subject", "Re: quote\x00")):
+        assert decide("sendReplyEmail", office(**{field: value})) == "deny", (field, value)
+        assert from_subagent("sendEmail", office(**{field: value})) == "deny", (field, value)
+    assert decide("sendReplyEmail", office(subject="Re: quote", content="<p>one</p>\n<p>two</p>")) == "allow"
+
+
+def test_to_address_must_be_one_plain_address():
+    for to in ("someone@example.com evil@example.com", "not an address", "a@b", "<a@example.com> b@example.com"):
+        assert decide("sendReplyEmail", office(toAddress=to)) == "deny", to
+        assert from_subagent("sendReplyEmail", office(toAddress=to)) == "deny", to
+
+
+def test_cc_edge_cases():
+    assert decide("sendReplyEmail", office(ccAddress='"Smith, Ann" <a@example.com>')) == "deny"
+    assert decide("sendReplyEmail", office(ccAddress="Someone Else <SOMEONE@example.com>")) == "deny"  # repeats To
+    assert decide("sendReplyEmail", office(toAddress="Ann <ann@example.com>", ccAddress="ann@example.com")) == "deny"
 
 
 def test_one_recipient_only():
