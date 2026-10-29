@@ -11,13 +11,14 @@ The graph has three layers:
 2. Page-to-page links and redirects: scripts/graph_site_links.py, free and
    deterministic. Refreshed here.
 3. Concepts from pages and docs (repertoire, policies, specs, plans): LLM
-   extraction by `/graphify --update` in Claude Code, one agent per ~21 changed
-   files. Not refreshed here; --check says when it is due.
+   extraction by extraction agents, driven by scripts/graph_concepts.py. Not
+   refreshed here; --check says when it is due.
 
-Run the refresh in the same PR as a change that adds, removes or renames pages or
-scripts, and commit graphify-out/ with it. Files graphify skips are in
-.graphifyignore. Needs graphify (`uv tool install graphifyy`); without it the
-script says so and exits 0, so it never blocks other work.
+Commit graphify-out/ in its own PR (`chore(graph): refresh the knowledge graph`),
+never in a content PR: graph.json is rewritten wholesale, so two PRs would
+conflict on it. Files graphify skips are in .graphifyignore. Needs graphify
+(`pip install graphifyy`, then `graphify install --platform claude` so the skill
+matches); without it the script says so and exits 0, so it never blocks other work.
 """
 import json
 import os
@@ -48,7 +49,7 @@ from pathlib import Path
 from graphify.detect import detect_incremental
 root = Path(sys.argv[1])
 # Code is current when its AST is (refresh_graph.py); pages and docs only once the
-# LLM concept extraction has seen them (/graphify --update).
+# LLM concept extraction has seen them (scripts/graph_concepts.py).
 code = detect_incremental(root, kind="ast")
 docs = detect_incremental(root, kind="semantic")
 new_docs = docs.get("new_files", {})
@@ -77,7 +78,7 @@ def check(py):
     if s['docs']:
         due = ' (due)' if s['docs'] >= DOCS_DUE else ''
         parts.append(f"{s['docs']} page/doc file(s) changed since concept extraction{due}: "
-                     'run /graphify --update in Claude Code')
+                     'run python3 scripts/graph_concepts.py prep')
     print('graph: ' + '; '.join(parts))
 
 
@@ -109,7 +110,7 @@ def refresh(py):
 def main():
     py = graphify_python()
     if py is None:
-        print('graph: graphify is not installed (uv tool install graphifyy); skipped')
+        print('graph: graphify is not installed (pip install graphifyy); skipped')
         return
     if '--check' in sys.argv[1:]:
         check(py)

@@ -191,7 +191,7 @@ For Zoho Mail, follow section 5, item 1. Zoho's MCP URL works like a password: r
   for p in superpowers code-review frontend-design github playwright; do claude plugin install "$p@claude-plugins-official"; done; claude plugin install claude-seo@agricidaniel-claude-seo; claude plugin install interface-design@interface-design; claude plugin install ui-ux-pro-max@ui-ux-pro-max-skill
   ```
 - Personal skills: copy `~/.claude/skills/` from the old Mac (the marketing skills, the GSD skills and `graphify`) and `~/.claude/CLAUDE.md` (the graphify pointer).
-- graphify: `uv tool install graphifyy` (the graph itself is committed in `graphify-out/`).
+- graphify: `pip install graphifyy`, then `graphify install --platform claude` (the graph itself is committed in `graphify-out/`; CLAUDE.md says how to query and refresh it).
 - Skills that come with your Claude account (the `anthropic-skills` ones, such as `stop-slop` and the LCS invoice and booking-agreement generators) appear when you sign in to the desktop app.
 - The project's own skills (`build-and-verify`, `new-page`, `writing-site-copy`) are in the repo.
 
