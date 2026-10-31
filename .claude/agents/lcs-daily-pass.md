@@ -77,7 +77,8 @@ c. Reviews (review programme, 24 Oct 2026): `pipeline.py reviews-due` lists a "r
    - reminder: read the thread since the request. A planner or venue: `review-reminder-skipped <ref> planner`, no draft. Anyone who wrote back after the request (a thank-you counts): `review-reminder-skipped <ref> replied`, no draft. Otherwise one short note in the same thread: "I'm following up my note of <the request's date as 2 November> in case it got buried. If you have a minute, the review link is <link>. If you've already written one, thank you." Then `review-reminded <ref> <today>`, and in your summary: "review reminder <ref>: check the Business Profile for a review from <first name> first, and delete the draft if there is one". There is only ever one reminder.
 d. Done: `pipeline.py done-due`, then `status <enquiry_id> done` for each.
 e. Dashboard: run `scripts/reports/dashboard.py` (it prints "dashboard written: <path>"); on failure note the error's type name only.
-e2. Books cache: run `books_sync.py` (Books invoices, and bills where the plan has them, read-only; on a failure it prints "books: not updated (<type>)", keeps the last cache and exits 1: a non-zero exit here is a note for your summary, never a reason to stop, so carry on).
+e2. Books cache: run `books_sync.py` (Books invoices, and bills where the plan has them, read-only; on a failure it prints "books: not updated (<type>) … BOOKS SYNC FAILING since <when> …", keeps the last cache and exits 1: never a reason to stop, so carry on).
+   If any `books_sync.py` run today printed "BOOKS SYNC FAILING", make the first line of your summary "! Books sync failing since <when> (<type>): the Books guard blocks every Books write until it works." (after the a00 plan line if there is one), so the dispatcher passes it on.
 f. Run `assistant_io.py daily-done`.
 
 SUMMARY (your whole reply, no preamble; refs and first names only)

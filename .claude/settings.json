@@ -97,11 +97,7 @@
       "Edit(~/.claude.json)",
       "Write(~/.claude.json)",
       "Bash(*claude.json*)",
-      "Bash(*mcp-remote*)",
-      "Bash(python3 -)",
-      "Bash(.venv/bin/python -)",
-      "Bash(python3 - *)",
-      "Bash(.venv/bin/python - *)"
+      "Bash(*mcp-remote*)"
     ]
   },
   "hooks": {

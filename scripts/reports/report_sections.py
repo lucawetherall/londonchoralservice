@@ -7,6 +7,7 @@ Read-only; prints nothing but the report's own text, which carries no names or e
 
     .venv/bin/python scripts/reports/report_sections.py 1 2 4 4b      # today's report
     .venv/bin/python scripts/reports/report_sections.py --date 2026-10-05 6 7 13
+    .venv/bin/python scripts/reports/report_sections.py --file <dry-run file> 0 0b 11   # weekly_review.py --out
 """
 
 import argparse
@@ -31,9 +32,11 @@ def split(text):
 def main(argv=None):
     p = argparse.ArgumentParser(description="Print sections of a saved Monday report.")
     p.add_argument("sections", nargs="+", help="section ids as the report heads them: 1 2 4b 12 …")
-    p.add_argument("--date", type=datetime.date.fromisoformat, help="the report's date (default: today)")
+    which = p.add_mutually_exclusive_group()
+    which.add_argument("--date", type=datetime.date.fromisoformat, help="the report's date (default: today)")
+    which.add_argument("--file", type=Path, help="read this report file instead (a weekly_review.py --out dry run)")
     args = p.parse_args(argv)
-    path = lm.PRIVATE / "reports" / f"{args.date or lm.today()}.txt"
+    path = args.file or lm.PRIVATE / "reports" / f"{args.date or lm.today()}.txt"
     if not path.is_file():
         print(f"no saved report at {path}: run weekly_review.py --save-report first", file=sys.stderr)
         return 2

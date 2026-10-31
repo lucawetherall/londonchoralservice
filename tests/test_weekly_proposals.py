@@ -249,14 +249,14 @@ def test_section_9b_grades_the_week_from_the_sheet_and_the_days_clicks():
     text = buf.getvalue()
     assert len(got) == 5, got
     assert "   2026-10-22 · christmas · web form · C Christmas carol singers – events 2026 (only a Christmas carol " \
-           "singers – events 2026 ad click that day or the day before, cookies declined?; never counts) · heard: " \
-           "Searching on Google" in text.splitlines(), text
+           "singers – events 2026 ad click that day or the day before, cookies declined?; never counts; that campaign " \
+           "clicked on 2 of 28 days: worth a look) · heard: Searching on Google" in text.splitlines(), text
     assert "   2026-10-21 · funeral · web form · A funeral expert campaign (click reference (gclid, its click's " \
            "campaign))" in text.splitlines(), text
     assert "   2026-10-20 · wedding · web form · B wedding-leads (ad visit: weddings (wedding-leads))" in text, text
     assert "2026-10-02" not in text.split("-- by campaign")[0], "the week starts 7 days back"
-    assert "   Christmas carol singers – events 2026: A 0 · B 1 · C 2" in text.splitlines(), text
-    assert "   funeral expert campaign: A 1 · B 0 · C 0" in text.splitlines(), text
+    assert "   Christmas carol singers – events 2026: A 0 · B 1 · C 2 (clicked 2/28 days)" in text.splitlines(), text
+    assert "   funeral expert campaign: A 1 · B 0 · C 0 (clicked 0/28 days)" in text.splitlines(), text
     for word in ("Venue", "Town", "singers,"):
         assert word not in text, word
 

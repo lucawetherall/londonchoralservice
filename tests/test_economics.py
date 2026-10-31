@@ -285,6 +285,45 @@ def test_ads_summary_shape_and_file_mode():
     assert json.load(open(path))["weeks"][0]["week_start"] == "2026-08-03"
 
 
+def test_section_11_names_campaigns_with_nothing_this_season_once_instead_of_a_line_each():
+    t = ec.cost_table({"wedding-leads": (30_000_000, 12), "old removed campaign": (0, 0), "Another idle": (0, 0),
+                       "clicked, no spend": (0, 3)}, [("wedding-leads", 1150.0)], ["wedding-leads"])
+    lines = ec.cost_lines(t)
+    assert [l.split(":")[0] for l in lines] == ["wedding-leads", "clicked, no spend",
+                                                 "campaigns with nothing this season", "unattributed", "total"], lines
+    assert lines[2] == "campaigns with nothing this season: Another idle, old removed campaign", lines
+    assert "old removed campaign: spend" not in "\n".join(lines)
+    # a campaign with no spend but an enquiry or a booking credited to it still gets its line
+    t = ec.cost_table({"old removed campaign": (0, 0)}, [("old removed campaign", 650.0)], [])
+    assert ec.cost_lines(t)[0].startswith("old removed campaign: spend £0.00"), ec.cost_lines(t)
+    t = ec.cost_table({"wedding-leads": (1_000_000, 1)}, [], [])
+    assert not any(l.startswith("campaigns with nothing") for l in ec.cost_lines(t))
+
+
+def test_week_activity_counts_enquiries_and_bookings_by_week_leaving_cancelled_out():
+    weeks = ec.full_weeks(MON, 8)
+    enq = [{"first_seen": "2026-09-22"}, {"first_seen": "2026-09-27"}, {"first_seen": "2026-09-28"},
+           {"first_seen": "2026-08-01"}, {"first_seen": ""}]
+    led = [{"invoice_date": "2026-09-23", "value_gbp": "1,150.00", "notes": ""},
+           {"invoice_date": "2026-09-24", "value_gbp": "900", "notes": "cancelled 2026-09-25"},
+           {"invoice_date": "2026-09-15", "value_gbp": "650", "notes": ""}]
+    act = ec.week_activity(enq, led, weeks)
+    assert sorted(act) == [w.isoformat() for w in weeks]
+    assert act["2026-09-21"] == {"enquiries": 2, "bookings": 1, "booked_gbp": 1150.0}, act["2026-09-21"]
+    assert act["2026-09-14"] == {"enquiries": 0, "bookings": 1, "booked_gbp": 650.0}, act["2026-09-14"]
+    assert act["2026-08-03"] == {"enquiries": 0, "bookings": 0, "booked_gbp": 0.0}
+
+
+def test_ads_summary_weeks_carry_enquiries_and_bookings_when_given():
+    t = ec.cost_table({}, [], None)
+    weeks = ec.week_buckets([], MON, 8)
+    act = ec.week_activity([{"first_seen": "2026-09-22"}], [], ec.full_weeks(MON, 8))
+    s = ec.ads_summary(weeks, t, D(2026, 9, 1), datetime.datetime(2026, 9, 28, 9, 0), act)
+    assert s["weeks"][-1] == {"week_start": "2026-09-21", "spend_gbp": 0.0, "clicks": 0, "conversions": 0.0,
+                              "enquiries": 1, "bookings": 0, "booked_gbp": 0.0}, s["weeks"][-1]
+    assert "enquiries" not in ec.ads_summary(weeks, t, D(2026, 9, 1), datetime.datetime(2026, 9, 28))["weeks"][0]
+
+
 # ---------- seasonal budget windows ----------
 
 WINDOWS = [

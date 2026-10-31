@@ -221,8 +221,18 @@ def _cost_line(label, r):
             f" · per enquiry {gbp_or_dash(r['cost_per_enquiry'])} · per booking {gbp_or_dash(r['cost_per_booking'])}")
 
 
+def idle(r):
+    """A campaign row with no spend, clicks, enquiries or bookings this season (a removed or never-run campaign)."""
+    return not (r["spend_gbp"] or r["clicks"] or r["enquiries"] or r["bookings"])
+
+
 def cost_lines(table):
-    lines = [_cost_line(r["campaign"], r) for r in table["campaigns"]]
+    """One line per campaign with anything this season, then one line naming the ones with nothing, the
+    unattributed line and the total."""
+    lines = [_cost_line(r["campaign"], r) for r in table["campaigns"] if not idle(r)]
+    quiet = sorted((r["campaign"] for r in table["campaigns"] if idle(r)), key=str.lower)
+    if quiet:
+        lines.append("campaigns with nothing this season: " + ", ".join(quiet))
     u = table["unattributed"]
     lines.append(f"unattributed: enquiries {_n(u['enquiries'])} · bookings {u['bookings']} · booked £{u['booked_gbp']:,.2f}")
     lines.append(_cost_line("total", table["total"]))
@@ -253,8 +263,33 @@ def week_buckets(daily, today, n=8):
              "conversions": round(acc[w][2], 2)} for w in weeks]
 
 
-def ads_summary(weeks, table, season_start, generated):
-    """The shape of ~/lcs-private/ads-summary.json, read by the owner's dashboard."""
+def week_activity(enquiry_rows, ledger_rows, weeks):
+    """{Monday ISO date: {"enquiries", "bookings", "booked_gbp"}} for each Monday in `weeks`: enquiries by the
+    pipeline's first_seen, bookings by the ledger's invoice_date with cancelled ones left out
+    (check_payments.is_cancelled). Counts and totals only."""
+    out = {w.isoformat(): {"enquiries": 0, "bookings": 0, "booked_gbp": 0.0} for w in weeks}
+
+    def week_of(value):
+        d = _date(value)
+        return (d - datetime.timedelta(days=d.weekday())).isoformat() if d else None
+    for r in enquiry_rows or []:
+        w = week_of(r.get("first_seen"))
+        if w in out:
+            out[w]["enquiries"] += 1
+    for r in ledger_rows or []:
+        w = week_of(r.get("invoice_date"))
+        if w in out and not check_payments.is_cancelled(r):
+            out[w]["bookings"] += 1
+            out[w]["booked_gbp"] = round(out[w]["booked_gbp"] + lcs_money.money(r.get("value_gbp")), 2)
+    return out
+
+
+def ads_summary(weeks, table, season_start, generated, activity=None):
+    """The shape of ~/lcs-private/ads-summary.json, read by the owner's dashboard. activity (week_activity) adds
+    each week's enquiries, bookings and £ booked to its Ads figures."""
+    if activity is not None:
+        zero = {"enquiries": 0, "bookings": 0, "booked_gbp": 0.0}
+        weeks = [{**w, **activity.get(w["week_start"], zero)} for w in weeks]
     return {"generated": generated.isoformat(timespec="seconds"), "weeks": weeks,
             "season": {"start": season_start.isoformat(), **table}}
 
