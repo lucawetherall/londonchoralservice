@@ -6,6 +6,7 @@ The 28 Sep 2026 bypass (a scratchpad script that read the MCP config, started th
 sent a raw tool call) must be denied in every shape; every command the allowlist and the scheduled prompts
 run must still pass. The real ~/.claude.json is never touched: every run uses a temporary HOME.
 """
+import importlib.util
 import json
 import os
 import re
@@ -195,8 +196,17 @@ def test_read_only_commands_may_mention_the_approvals():
     body = write(os.path.join(SCRATCH, "prbody", "pr.md"), "Keeps owner_confirm_guard and owner-approvals.\n")
     listings = ("ls .claude/hooks/*.py", "wc -l .claude/hooks/*.py", "ls ~/lcs-private/owner-approvals",
                 "grep -rn owner-approvals scripts docs | head -5", f"cat {hook} | head -3")
+    def system(name):  # the guard's own rule: the program found on PATH is the system's one it lists
+        spec = importlib.util.spec_from_file_location("bypass_guard", GUARD)
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        found_at = shutil.which(name)
+        return bool(found_at) and os.path.realpath(found_at) in mod.SIMPLE_READ[name]
     for cmd in listings:
-        expect("allow" if sys.platform == "darwin" else "deny", bash(cmd), cmd)
+        heads = [part.split()[0] for part in cmd.split("|")]
+        expect("allow" if all(system(h) for h in heads) else "deny", bash(cmd), cmd)
+    if sys.platform == "darwin":
+        assert all(system(h) for h in ("ls", "cat", "grep", "head", "tail", "wc")), "macOS's own programs"
     expect("allow", bash(f"gh pr create --draft --title t --body-file {body}"), "a PR body file")
     # The second review (31 Oct 2026): an editor, a template or a commit hook can run what git commit is given; pflag
     # bundles gh's short flags; and AppleScript or a terminal tab isn't Bash.
