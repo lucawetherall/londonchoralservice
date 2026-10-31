@@ -44,14 +44,16 @@ class GoatCounterError(Exception):
         self.http_status = http_status
 
 
-# A rate limit (429) or a server error (5xx) is usually gone a few seconds later: the 26 Oct 2026 report lost
+# A rate limit (429), a server error (5xx) or a stray 404 is usually gone a few seconds later: the 26 Oct 2026 report lost
 # section 5c to one, and a manual run minutes later worked. Retry once, after Retry-After (capped) or RETRY_WAIT.
 RETRY_WAIT = 5
 RETRY_WAIT_MAX = 30
 
 
 def _retryable(code):
-    return code == 429 or 500 <= code <= 599
+    # 404 too: the paths are fixed and known to work, and on 31 Oct 2026 a 404 from /stats/hits was gone on the very
+    # next request. A key problem (401, 403) is never retried.
+    return code in (404, 429) or 500 <= code <= 599
 
 
 def _wait_for(err):

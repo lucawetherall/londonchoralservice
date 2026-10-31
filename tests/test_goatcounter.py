@@ -179,8 +179,8 @@ def _opener(codes, waits_seen):
     return opener, calls
 
 
-def test_retries_once_on_429_and_5xx_then_succeeds():
-    for first in (429, 500, 503):
+def test_retries_once_on_404_429_and_5xx_then_succeeds():
+    for first in (404, 429, 500, 503):
         waits = []
         g.time.sleep = waits.append
         opener, calls = _opener([first, None], waits)
@@ -199,8 +199,17 @@ def test_gives_up_after_one_retry_with_the_code():
         assert e.http_status == 429 and len(calls) == 2
 
 
+def test_a_404_twice_still_fails_with_its_code():
+    opener, calls = _opener([404, 404, None], [])
+    try:
+        g.GoatCounterReadOnly("t", opener=opener).get("/stats/hits")
+        raise AssertionError("should have raised")
+    except g.GoatCounterError as e:
+        assert e.http_status == 404 and len(calls) == 2
+
+
 def test_never_retries_a_key_or_request_error():
-    for code in (401, 403, 404):
+    for code in (400, 401, 403):
         opener, calls = _opener([code, None], [])
         try:
             g.GoatCounterReadOnly("t", opener=opener).get("/stats/hits")
