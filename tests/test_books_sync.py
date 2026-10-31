@@ -177,16 +177,43 @@ def test_books_failure_keeps_the_old_cache_and_prints_the_type_only():
     clear()
     run(books_sync.sync, FakeBooks(), NOW)
     before, guard_before = CACHE.read_text(), GUARD.read_text()
+    tail = "; the last cache is kept; BOOKS SYNC FAILING since 2026-09-28 09:30 (last good sync 2026-09-28 09:30)"
     for fail in (McpError("zoho-books: https://secret.example/abc failed"), TimeoutError("h@example.com")):
         code, out = run(books_sync.sync, FakeBooks(fail=fail), NOW)
         assert code == 1, code  # non-zero, so a scheduled run sees the failure
-        assert out.strip() == f"books: not updated ({type(fail).__name__}); the last cache is kept", out
+        assert out.strip() == f"books: not updated ({type(fail).__name__}){tail}", out
     code, out = run(books_sync.sync, lambda *a: "not json", NOW)
-    assert code == 1 and out.strip() == "books: not updated (JSONDecodeError); the last cache is kept", out
+    assert code == 1 and out.strip() == f"books: not updated (JSONDecodeError){tail}", out
     code, out = run(books_sync.sync, lambda *a: json.dumps({"code": 0}), NOW)
     assert "(ValueError)" in out and code == 1
     assert CACHE.read_text() == before and GUARD.read_text() == guard_before
-    assert sorted(p.name for p in PRIVATE.iterdir()) == ["books-cache.json", "books-guard.json"]  # no temp file left
+    assert sorted(p.name for p in PRIVATE.iterdir()) == ["books-cache.json", "books-guard.json",
+                                                          "books-sync-state.json"]  # no temp file left
+    state = json.loads((PRIVATE / "books-sync-state.json").read_text())
+    assert state == {"last_ok": "2026-09-28T09:30:00+01:00", "failing_since": "2026-09-28T09:30:00+01:00",
+                     "last_error": "ValueError"}, state
+    later = NOW + datetime.timedelta(days=2)
+    code, out = run(books_sync.sync, FakeBooks(fail=TimeoutError()), later)
+    assert "FAILING since 2026-09-28 09:30" in out, "failing_since keeps the first failure"
+    assert run(books_sync.sync, FakeBooks(), later)[0] == 0
+    state = json.loads((PRIVATE / "books-sync-state.json").read_text())
+    assert state == {"last_ok": "2026-09-30T09:30:00+01:00", "failing_since": None, "last_error": None}, state
+
+
+def test_the_monday_report_flags_a_failing_or_old_sync():
+    """weekly_review section 8 prints a STALE line (a Monday problem line) when the sync fails or the cache ages."""
+    sys.path.insert(0, os.path.join(ROOT, "scripts", "reports"))
+    import weekly_review as wr
+    clear()
+    assert "no cache yet" in wr.books_sync_line() and "STALE" in wr.books_sync_line()
+    run(books_sync.sync, FakeBooks(), NOW)
+    line = wr.books_sync_line(NOW + datetime.timedelta(days=1))
+    assert line.strip() == "Books sync: cache 1.0 days old", line
+    assert "STALE" in wr.books_sync_line(NOW + datetime.timedelta(days=3))
+    run(books_sync.sync, FakeBooks(fail=TimeoutError()), NOW)
+    line = wr.books_sync_line(NOW)
+    assert "FAILING since 2026-09-28 09:30 (TimeoutError)" in line and "STALE" in line, line
+    assert wr.PROBLEM_RE.search(line)
 
 
 def test_as_a_subprocess_exits_1_on_failure_without_starting_a_server():
@@ -196,7 +223,7 @@ def test_as_a_subprocess_exits_1_on_failure_without_starting_a_server():
     proc = subprocess.run([sys.executable, str(SCRIPT)], capture_output=True, text=True, env=env,
                           stdin=subprocess.DEVNULL, timeout=60)
     assert proc.returncode == 1, (proc.returncode, proc.stdout, proc.stderr)
-    assert proc.stdout.strip() == "books: not updated (McpError); the last cache is kept", proc.stdout
+    assert proc.stdout.startswith("books: not updated (McpError); the last cache is kept; BOOKS SYNC FAILING since "), proc.stdout
     assert not CACHE.exists() and not GUARD.exists()
 
 

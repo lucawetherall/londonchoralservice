@@ -38,6 +38,12 @@ Allow on Claude Code's prompt, and running the hook by hand would mint an approv
 that runs the hook through a glob or another path to it is refused too (OWNER_HOOK; settings also deny the Write
 and Edit tools in the owner-approvals folder).
 
+Owner decision, 31 Oct 2026 (the guard kept blocking work Luca had asked for), for Bash tool commands only: a
+plain listing or search (SIMPLE_READ, the system's own programs, joined by pipes, none of the UNSAFE characters)
+may mention the owner approvals and list the hook; a Markdown file that one plain `gh pr|issue create|edit|comment`
+sends (simple_send) may mention them too; and a compiled system program run by its full path (/usr/bin/sed, see system_program) is not vetted as an
+untracked script.
+
 It fails closed: malformed input or any internal error denies the call. It can't see through deliberate
 obfuscation (strings assembled at run time, encoded payloads); the rule in CLAUDE.md covers intent.
 """
@@ -47,6 +53,7 @@ import json
 import os
 import re
 import shlex
+import shutil
 import stat
 import subprocess
 import sys
@@ -119,6 +126,8 @@ SEARCHERS = {"grep", "egrep", "fgrep", "rg", "ag", "ack", "find", "fd", "tar", "
 CODE_EXT = {".py", ".pyw", ".pth", ".js", ".mjs", ".cjs", ".ts", ".mts", ".cts", ".sh", ".bash", ".zsh", ".rb",
             ".pl", ".php", ".json", ".applescript", ".command", ".lua", ".r", ".swift", ".toml", ".cfg", ".ini",
             ".txt", ".md", ""}
+# The macOS system's own program folders (on the sealed system volume; not /System/Volumes/Data).
+SYSTEM_DIRS = ("/usr/bin/", "/usr/sbin/", "/bin/", "/sbin/")
 # Folders of installed packages and build output, skipped when the folder a script runs from is vetted.
 VENDORED = {"node_modules", ".venv", "venv", ".git", "__pycache__", ".pytest_cache", "site-packages", ".tox",
             "dist", "build", ".next", "target"}
@@ -136,13 +145,15 @@ class Deny(Exception):
     pass
 
 
-def found(text, client=None):
+def found(text, client=None, owner=True):
     """The label of the first marker in `text` (also with quotes and backslashes dropped), else None.
-    `client` ("cmd" or "file") adds the lcs_mcp check and OWNER_PROOF for command text or for an untracked file."""
+    `client` ("cmd" or "file") adds the lcs_mcp check and, unless `owner` is False, OWNER_PROOF for command text or
+    for an untracked file."""
     if not text:
         return None
+    extra = ([CLIENT[client]] + ([OWNER_PROOF] if owner else [])) if client else []
     for t in (text, re.sub(r"[\"'\\`]", "", text)):
-        for rx, label in MARKERS + ([CLIENT[client], OWNER_PROOF] if client else []):
+        for rx, label in MARKERS + extra:
             if rx.search(t):
                 return label
     return None
@@ -304,15 +315,68 @@ def words(text):
     return list(dict.fromkeys(out))
 
 
+# A plain listing or search (owner decision, 31 Oct 2026: the guard kept blocking work Luca had asked for, such as
+# `ls .claude/hooks/*.py` or a grep for the approvals folder). It may mention the owner approvals and list the hook:
+# only SIMPLE_READ programs, joined by pipes, with none of the characters that redirect, substitute, chain, group,
+# expand variables, comment or escape (UNSAFE), so it can't write a file or run anything else. Deliberately narrow:
+# an adversarial review found ways for git, gh and a parsed "read-only" shell grammar to write files or run code.
+# Each must resolve on PATH to the system's own program (a planted ~/bin/cat is not one).
+SIMPLE_READ = {"ls": ("/bin/ls",), "cat": ("/bin/cat",), "wc": ("/usr/bin/wc",), "head": ("/usr/bin/head",),
+               "tail": ("/usr/bin/tail",), "grep": ("/usr/bin/grep",), "egrep": ("/usr/bin/egrep", "/usr/bin/grep"),
+               "fgrep": ("/usr/bin/fgrep", "/usr/bin/grep")}
+UNSAFE = re.compile(r"[<>$`#;&(){}\\\n\r!]")
+
+
+def simple_read(text):
+    """True for a listing or search as above; anything else is judged as before. Bash only (decide)."""
+    if not isinstance(text, str) or not text.strip() or UNSAFE.search(text):
+        return False
+    for part in text.split("|"):
+        try:
+            argv = shlex.split(part, posix=True)
+        except ValueError:
+            return False
+        if not argv or argv[0] not in SIMPLE_READ:
+            return False
+        found_at = shutil.which(argv[0])
+        if not found_at or os.path.realpath(found_at) not in SIMPLE_READ[argv[0]]:
+            return False
+    return True
+
+
+SEND_FORMS = {("pr", "create"), ("pr", "edit"), ("pr", "comment"), ("issue", "create"), ("issue", "edit"),
+              ("issue", "comment")}
+
+
+def simple_send(text):
+    """True for one plain `gh pr|issue create|edit|comment` with long options only (pflag bundles short ones) and no
+    --web or --editor, and none of the UNSAFE characters or a pipe: the Markdown file it names (--body-file) is sent
+    to GitHub, never run, so it may name the owner approvals. Bash only (decide). Not git commit: an editor, a
+    template or a commit hook can run what it is given."""
+    if not isinstance(text, str) or "|" in text or UNSAFE.search(text):
+        return False
+    try:
+        argv = shlex.split(text, posix=True)
+    except ValueError:
+        return False
+    if len(argv) < 3 or argv[0] != "gh" or tuple(argv[1:3]) not in SEND_FORMS:
+        return False
+    for a in argv[3:]:
+        if a.startswith("-") and not a.startswith("--") or a.split("=")[0] in ("--web", "--editor"):
+            return False
+    return True
+
+
 class Command:
-    def __init__(self, repo, cwd):
+    def __init__(self, repo, cwd, owner_ok=False):
         self.repo, self.cwds = repo, [cwd]
         self.scripts, self.inline_cwds = [], []
         self.stdin_interp = False
-        self.dirs_vetted, self.heads = set(), set()
+        self.dirs_vetted, self.heads, self.direct = set(), set(), set()
+        self.owner_ok = owner_ok  # a plain listing or search may mention the owner approvals
 
     def analyse(self, cmd, depth=0):
-        label = found(cmd, client="cmd")
+        label = found(cmd, client="cmd", owner=not self.owner_ok)
         if label:
             raise Deny(f"{P}the command mentions {label}.")
         if depth > 3:
@@ -379,7 +443,21 @@ class Command:
                 self.scripts += [p for w in stdin_files for p in resolve(w, self.cwds) if regular(p)]
             return
         if "/" in head:
-            self.scripts += [p for p in resolve(head, self.cwds) if regular(p)]
+            hits = [p for p in resolve(head, self.cwds) if regular(p)]
+            self.scripts += hits
+            self.direct.update(hits)  # run as the command itself, not handed to an interpreter
+
+
+def system_program(path, data):
+    """A compiled program of the system's own (/usr/bin/sed): in SYSTEM_DIRS, binary, owned by root and not writable
+    by this account. Only a program run directly by its path gets through this way, never a file handed to an
+    interpreter."""
+    try:
+        st = os.stat(path)
+    except OSError:
+        return False
+    return (path.startswith(SYSTEM_DIRS) and binary(data[:8192]) and st.st_uid == 0
+            and not os.access(path, os.W_OK))
 
 
 def vet_script(path, repo, cmd):
@@ -395,6 +473,8 @@ def vet_script(path, repo, cmd):
         return
     shown = loc[1] if loc else path
     data = read_head(path, CAP + 1)
+    if not loc and path in cmd.direct and system_program(path, data):
+        return  # /usr/bin/sed run by its full path: the system's own program, not Claude's scratch code
     if len(data) > CAP:
         raise Deny(f"{P}{shown} is untracked and too large to vet.")
     if binary(data):
@@ -452,8 +532,11 @@ def vet_dir(d, repo, cmd):
                     raise Deny(f"{P}{path}, in the folder the code runs from, mentions {label}.")
 
 
-def check_command(text, repo, cwd):
-    cmd = Command(repo, cwd)
+def check_command(text, repo, cwd, bash=False):
+    """`bash`: the text is a Bash tool command. The read and send exemptions apply only then: AppleScript, a
+    terminal tab or Playwright code isn't shell as simple_read and simple_send read it."""
+    ro, send = (simple_read(text), simple_send(text)) if bash else (False, False)
+    cmd = Command(repo, cwd, owner_ok=ro)
     cmd.analyse(text)
     scripts = list(cmd.scripts)
     seen, roots = set(), config_roots()
@@ -472,7 +555,8 @@ def check_command(text, repo, cwd):
             continue
         for p in resolve(w, cmd.cwds):
             protected(p)
-            owner_hook(p)
+            if not ro:  # listing or reading the hook runs nothing
+                owner_hook(p)
             if searching and p in roots and w in outside:
                 raise Deny(f"{P}searching or copying {p} would take in MCP configuration; name a project "
                            "folder instead.")
@@ -487,7 +571,9 @@ def check_command(text, repo, cwd):
                 continue
             data = read_head(p)
             if not binary(data):
-                label = found(data.decode("utf-8", "replace"), client="file")
+                # What a listing reads, or the Markdown a plain gh/git command sends (a PR body, a commit message
+                # file), may name the owner approvals. MCP markers still count.
+                label = found(data.decode("utf-8", "replace"), client="file", owner=not (ro or (send and prose(p))))
                 if label:
                     raise Deny(f"{P}{loc[1] if loc else p} mentions {label}.")
     for p in dict.fromkeys(scripts):
@@ -595,7 +681,7 @@ def decide(event):
     repo = Repo(project)
     try:
         if tool == "Bash":
-            check_command(_str(ti, "command"), repo, cwd)
+            check_command(_str(ti, "command"), repo, cwd, bash=True)
         elif tool in SHELL_TOOLS:
             stack = [ti]
             while stack:
