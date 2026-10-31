@@ -1544,14 +1544,16 @@ def test_the_owners_note_is_not_refused_and_records_what_it_states():
     assert [(e["kind"], e["by"]) for e in log] == [("cancelled", "owner")], log
 
 
-# ---------------------------------------------------------------- --owner (the Command Centre's hand-check resolutions)
-# check_payments.py --note REF TEXT --owner writes an owner-only phrase only with the app's one-time nonce: sha256(nonce)
-# in <private>/command-centre/owner-nonce (a regular file, this user's, mode 600, under 60 seconds old) and the nonce
-# itself on stdin, which must be a pipe. See docs/superpowers/plans/2026-09-28-command-centre.md, Task 3.1.
+# ---------------------------------------------------------------- --owner (Luca's hand-check resolutions)
+# check_payments.py --note REF TEXT --owner writes an owner-only phrase only with Luca's one-time approval, as
+# owner_confirm_guard writes it once he clicks Allow: <private>/owner-approvals/owner-nonce.chat-<sha256(nonce)> (a
+# regular file, this user's, mode 600, under lcs_owner.OWNER_CHAT_TTL seconds old) holding the command's argv, and
+# the nonce itself on stdin, which must be a pipe.
 
 import hashlib, time  # noqa: E402
 
 NONCE = "ab" * 32
+PENDING = {}  # an approval's real path -> (mode, age), its argv still to be bound by the next run_owner
 
 
 def owner_ledger(notes="PENDING: invoiced"):
@@ -1566,21 +1568,39 @@ def owner_ledger(notes="PENDING: invoiced"):
     return d, path
 
 
-def nonce_file(d, content=None, mode=0o600, age=0):
-    cc = os.path.join(d, "command-centre")
-    os.makedirs(cc, mode=0o700, exist_ok=True)
-    path = os.path.join(cc, "owner-nonce")
+def approval_path(d):
+    return os.path.join(d, "owner-approvals", "owner-nonce.chat-" + hashlib.sha256(NONCE.encode()).hexdigest())
+
+
+def write_approval(path, argv, mode, age):
     fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
     with os.fdopen(fd, "w") as f:
-        f.write(hashlib.sha256(NONCE.encode()).hexdigest() if content is None else content)
+        json.dump({"argv": argv, "created": "2026-09-28T09:00:00+00:00", "session": "s"}, f)
     os.chmod(path, mode)
-    if age:
-        t = time.time() - age
-        os.utime(path, (t, t))
+    t = time.time() - age
+    os.utime(path, (t, t))
+
+
+def nonce_file(d, mode=0o600, age=0):
+    """Luca's approval for the next run_owner in folder `d` (its argv is bound then, as the hook records the exact
+    command he allowed)."""
+    os.makedirs(os.path.join(d, "owner-approvals"), mode=0o700, exist_ok=True)
+    path = approval_path(d)
+    write_approval(path, None, mode, age)
+    PENDING[os.path.realpath(path)] = (mode, age)
     return path
 
 
+def bind_approval(d, args):
+    """The pending approval in `d` (followed through a link, so a linked one is refused for the link alone) now
+    holds this run's argv."""
+    real = os.path.realpath(approval_path(d))
+    if real in PENDING and os.path.isfile(real):
+        write_approval(real, [SCRIPT, *args], *PENDING.pop(real))
+
+
 def run_owner(d, path, args, stdin_text=None, stdin=None, env_extra=None):
+    bind_approval(d, args)
     env = {k: v for k, v in os.environ.items() if k != "LCS_BOOKINGS_CSV"}  # the ledger is <d>/bookings.csv
     env["LCS_PRIVATE_DIR"] = d
     env.update(env_extra or {})
@@ -1611,7 +1631,7 @@ def test_owner_note_with_lucas_allow_on_claude_codes_prompt():
     note once; the code fits no other command, and a replay is refused."""
     import shlex
     d, path = owner_ledger()
-    os.makedirs(os.path.join(d, "command-centre"), mode=0o700, exist_ok=True)
+    os.makedirs(os.path.join(d, "owner-approvals"), mode=0o700, exist_ok=True)
     env = {k: v for k, v in os.environ.items() if k != "LCS_BOOKINGS_CSV"}
     env["LCS_PRIVATE_DIR"] = d
     cmd = '.venv/bin/python scripts/bookings/check_payments.py --note 2111 "paid in full 2026-09-28" --owner'
@@ -1635,7 +1655,7 @@ def test_owner_note_with_lucas_allow_on_claude_codes_prompt():
     p, notes = run(rewritten)
     assert p.returncode == 0, p.stderr
     assert notes == "PENDING: invoiced; paid in full 2026-09-28 (owner)", notes
-    assert not [n for n in os.listdir(os.path.join(d, "command-centre")) if n.startswith("owner-nonce.chat-")]
+    assert not [n for n in os.listdir(os.path.join(d, "owner-approvals")) if n.startswith("owner-nonce.chat-")]
     p, notes2 = run(rewritten)
     assert p.returncode != 0 and notes2 == notes, "a replay is refused"
 
@@ -1659,7 +1679,7 @@ def test_owner_note_is_refused_without_the_nonce():
     cases.append(("the hash itself over the pipe", d, path,
                   {"stdin_text": hashlib.sha256(NONCE.encode()).hexdigest() + "\n"}))
     d, path = owner_ledger()
-    nonce_file(d, age=120)
+    nonce_file(d, age=cp.lcs_owner.OWNER_CHAT_TTL + 60)
     cases.append(("stale file", d, path, {"stdin_text": NONCE + "\n"}))
     d, path = owner_ledger()
     nonce_file(d, mode=0o644)
@@ -1686,9 +1706,8 @@ def test_owner_note_refuses_a_redirected_file_even_the_nonce_file():
 def test_owner_note_refuses_a_symlinked_nonce_file():
     d, path = owner_ledger()
     real = nonce_file(tempfile.mkdtemp())
-    cc = os.path.join(d, "command-centre")
-    os.makedirs(cc, mode=0o700, exist_ok=True)
-    os.symlink(real, os.path.join(cc, "owner-nonce"))
+    os.makedirs(os.path.join(d, "owner-approvals"), mode=0o700, exist_ok=True)
+    os.symlink(real, approval_path(d))
     p, notes = run_owner(d, path, OWNER_ARGS, stdin_text=NONCE + "\n")
     assert p.returncode != 0 and notes == "PENDING: invoiced", p.stderr
     assert os.path.exists(real)
@@ -1721,7 +1740,7 @@ def test_without_owner_the_owner_phrases_are_still_refused():
 
 
 def test_owner_note_refuses_a_ledger_outside_the_nonce_folder():
-    """The nonce proves the app asked; the ledger must be the one beside it. LCS_BOOKINGS_CSV is refused outright,
+    """The nonce proves Luca allowed it; the ledger must be the one beside it. LCS_BOOKINGS_CSV is refused outright,
     even pointing at the same file, and the nonce is left unburnt."""
     d, path = owner_ledger()
     nf = nonce_file(d)

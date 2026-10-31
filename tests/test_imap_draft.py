@@ -507,18 +507,23 @@ def test_sent_matches_the_exact_invoice_to_the_client():
         assert rc == 1 and out.startswith("STOP:"), (args, out)
 
 
-NONCE_FILE = TMP / "private" / "command-centre" / "owner-nonce"
+APPROVALS = TMP / "private" / "owner-approvals"
+NONCE_FILE = APPROVALS / "unset"
 
 
 def owner_run(argv, imap, nonce_ok=True, piped=True):
-    """run_main with the Command Centre's one-time nonce: its sha256 in <private>/command-centre/owner-nonce (mode
-    600), the nonce itself on a pipe (nonce_ok=False pipes a different one; piped=False gives /dev/null instead)."""
-    import hashlib, secrets
+    """run_main with Luca's one-time approval as owner_confirm_guard writes it once he clicks Allow:
+    <private>/owner-approvals/owner-nonce.chat-<the nonce's sha256> (mode 600) holding this process's argv (the
+    script reads sys.argv), the nonce itself on a pipe (nonce_ok=False pipes a different one; piped=False gives
+    /dev/null instead)."""
+    import hashlib, json, secrets
+    global NONCE_FILE
     d.lcs_owner._PROVEN = False
     nonce = secrets.token_hex(32)
-    NONCE_FILE.parent.mkdir(mode=0o700, exist_ok=True)
+    APPROVALS.mkdir(mode=0o700, exist_ok=True)
+    NONCE_FILE = APPROVALS / ("owner-nonce.chat-" + hashlib.sha256(nonce.encode()).hexdigest())
     fd = os.open(NONCE_FILE, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
-    os.write(fd, hashlib.sha256(nonce.encode()).hexdigest().encode())
+    os.write(fd, json.dumps({"argv": list(sys.argv)}).encode())
     os.close(fd)
     r, w = os.pipe()
     os.write(w, ((nonce if nonce_ok else secrets.token_hex(32)) + "\n").encode())
@@ -586,17 +591,18 @@ def test_the_nonce_is_burnt_by_a_discard():
     assert rc == 0 and burnt == [True], (burnt, out)
 
 
-def test_discard_needs_the_owner_flag_and_the_command_centres_nonce():
+def test_discard_needs_the_owner_flag_and_lucas_approval():
     for argv, kw in ((["discard", LUCA_ID], {}), (["discard", LUCA_ID, "--force"], {}),
                      (["discard", LUCA_ID, "--owner", "x"], {}),
                      (["discard", LUCA_ID, "--owner"], {"nonce_ok": False}),
                      (["discard", LUCA_ID, "--owner"], {"piped": False})):
         imap = FakeIMAP(drafts=[luca_draft()])
         rc, out = owner_run(argv, imap, **kw)
-        assert rc == 1 and out.startswith("STOP:") and "passkey" in out and out.count("\n") == 1, (argv, kw, out)
+        assert rc == 1 and out.startswith("STOP:") and "Allow" in out and out.count("\n") == 1, (argv, kw, out)
+        assert "passkey" not in out and "Command Centre" not in out, out
         assert imap.boxes["Trash"] == [] and not [c for c in imap.calls if c[0] == "login"], (argv, kw)
-    rc, out = run_main(["discard", LUCA_ID, "--owner"], FakeIMAP(drafts=[luca_draft()]))  # no nonce file at all
-    assert rc == 1 and "passkey" in out, out
+    rc, out = run_main(["discard", LUCA_ID, "--owner"], FakeIMAP(drafts=[luca_draft()]))  # no approval at all
+    assert rc == 1 and "Allow" in out, out
 
 
 def test_the_trash_helper_refuses_other_callers_but_attachs_retire_still_runs():
@@ -606,7 +612,7 @@ def test_the_trash_helper_refuses_other_callers_but_attachs_retire_still_runs():
         d.trash_draft(imap, LUCA_ID, own_only=False)
         raise AssertionError("trash_draft(own_only=False) ran without the owner's nonce")
     except d.Refused as e:
-        assert "passkey" in str(e)
+        assert "Allow" in str(e)
     assert imap.boxes["Trash"] == [] and not [c for c in imap.calls if c[0] == "uid"]
     plain = luca_draft()
     imap = FakeIMAP(drafts=[plain])
@@ -614,7 +620,7 @@ def test_the_trash_helper_refuses_other_callers_but_attachs_retire_still_runs():
 
 
 def test_the_trash_helper_takes_replace_only_for_a_pair_that_passes_the_replace_rules():
-    """replace runs without the passkey (owner decision, 14 Oct 2026), but replaced_by isn't a general way round it:
+    """replace runs without Luca's Allow (owner decision, 14 Oct 2026), but replaced_by isn't a general way round it:
     trash_draft checks the replace rules for that exact pair itself."""
     d.lcs_owner._PROVEN = False
     other_thread = luca_draft(msg_id=NEW_ID).replace(b"In-Reply-To: <abc123@mail.example.com>",

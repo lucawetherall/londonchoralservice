@@ -8,7 +8,7 @@ SETTINGS = os.path.join(ROOT, ".claude", "settings.json")
 
 SERVERS = ("zoho-books", "zoho-books-invoices")
 
-# The guard's view of Books (books-guard.json, which cc_sync.py books writes) and the ledger: a temp tree, never
+# The guard's view of Books (books-guard.json, which books_sync.py writes) and the ledger: a temp tree, never
 # the real ~/lcs-private. Every subprocess the tests start inherits these.
 PRIVATE = tempfile.mkdtemp()
 os.environ["LCS_PRIVATE_DIR"] = PRIVATE

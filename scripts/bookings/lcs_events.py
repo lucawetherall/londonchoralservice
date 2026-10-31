@@ -3,9 +3,6 @@
 ~/lcs-private/events.jsonl (LCS_PRIVATE_DIR moves it), mode 600. Design and rules:
 docs/superpowers/specs/2026-09-29-structured-state-design.md.
 
-Not to be confused with ~/lcs-private/command-centre/events.jsonl, the Command Centre's push feed (cc_event.py):
-the code calls this one the state log and that one the push feed, and neither reads the other.
-
 One JSON object per line, keys sorted, no spaces, ending "\\n", at most LINE_MAX bytes:
     v 1 · eid 16 hex · prev (the first 16 hex of the sha256 of the previous line's bytes, "" on the first line)
     at (UTC, YYYY-MM-DDTHH:MM:SSZ) · on (the business day, YYYY-MM-DD, never after the London date of at)
@@ -121,7 +118,7 @@ KINDS = {
 RESERVED = {"payment-confirmed", "discount-agreed", "goodwill-reduction", "overpayment-refunded"}
 # Who may write which kind (spec, "Who may write which kind"). paid-in-full is the script's only as basis bank
 # (from --apply), the owner's only as basis owner; retract {why: mistake} is the owner's. bank-confirmed may be
-# either: the owner's from the Command Centre, the script's when Luca confirms in writing in a live chat (owner
+# either: the owner's (his Allow on Claude Code's prompt), the script's when Luca confirms in writing in a live chat (owner
 # decision, 24 Oct 2026: he pays every singer by hand, so it needs no proof).
 OWNER_ONLY = {"fees-accepted", "reinstated", "deposit-kept", "refunded", "payment-checked", "notes-checked",
               "settled"} | RESERVED
@@ -264,8 +261,8 @@ def _last_line(fd, size):
 def append(subject, id, kind, fields, by, on=None, note=None, src="live", eid=None):
     """Validate one fact and append it to the log; returns its eid. `on` (a date or YYYY-MM-DD) defaults to today
     in London. Refuses (ValueError) a bad line or a reserved kind; (OwnerRefused) by: owner unless this process
-    passed lcs_owner.owner_confirmed() (the Command Centre's one-time nonce) and the log sits in the nonce's private
-    folder with no LCS_BOOKINGS_CSV (lcs_owner.owner_folder_problem); and (LogRefused, OSError) a log that is a
+    passed lcs_owner.owner_confirmed() (the one-time nonce from Luca's Allow) and the log sits in the private folder
+    with no LCS_BOOKINGS_CSV (lcs_owner.owner_folder_problem); and (LogRefused, OSError) a log that is a
     symlink, another user's or has any group or other bit. In each case nothing is written.
 
     The log's own lock (lm.ledger_lock on events.jsonl.lock) is taken here and only here, and nothing else is
@@ -282,7 +279,7 @@ def append(subject, id, kind, fields, by, on=None, note=None, src="live", eid=No
     dumps(validate(obj, write=True))
     path = log_path()
     if by == "owner" and (not lcs_owner.owner_proven() or lcs_owner.owner_folder_problem([path])):
-        raise OwnerRefused("an owner fact needs the Command Centre's owner nonce in this run")
+        raise OwnerRefused("an owner fact needs Luca's one-time approval (his Allow) in this run")
     with lm.ledger_lock(path):
         fd = os.open(path, os.O_WRONLY | os.O_APPEND | os.O_CREAT | os.O_NOFOLLOW, 0o600)
         try:

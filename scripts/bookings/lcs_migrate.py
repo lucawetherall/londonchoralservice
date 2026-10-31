@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """The one-off migration of the ledger's and the singer store's notes into the state log, and the compare that
-checks it (structured-state design, "Migration"; plan, Task 9). events.py runs both; the Command Centre's "Apply
-the events migration" action builds its summary from plan() and compare() here.
+checks it (structured-state design, "Migration"; plan, Task 9). events.py runs both.
 
 - booking_proposals / invoice_proposals: for one row, the facts its notes (and, for a singer invoice, its columns)
   imply, read clause by clause with the same pattern readers check_payments and singer_invoices use, and the

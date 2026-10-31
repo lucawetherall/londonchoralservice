@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Tests for scripts/bookings/lcs_owner.py: the owner barrier shared by the money scripts (the Command Centre's
-one-time nonce, the chat approval owner_confirm_guard writes once Luca clicks Allow, and the folder check that ties an
---owner write to the files beside the nonce).
+"""Tests for scripts/bookings/lcs_owner.py: the owner barrier shared by the money scripts (the chat approval
+owner_confirm_guard writes once Luca clicks Allow, and the folder check that ties an --owner write to the files in
+the private folder).
 Stdlib only: .venv/bin/python tests/test_lcs_owner.py"""
 import hashlib, json, os, secrets, sys, tempfile, time
 
@@ -18,14 +18,28 @@ def private(*parts):
     return os.path.join(_HOME, *parts)
 
 
-def test_nonce_path_follows_the_private_dir_at_call_time():
-    assert str(lcs_owner.owner_nonce_path()) == private("command-centre", "owner-nonce")
+def test_approvals_folder_follows_the_private_dir_at_call_time():
+    assert str(lcs_owner.owner_approvals_dir()) == private("owner-approvals")
+    assert str(lcs_owner.owner_chat_path("a" * 64)) == private(
+        "owner-approvals", "owner-nonce.chat-" + hashlib.sha256(b"a" * 64).hexdigest())
     other = tempfile.mkdtemp()
     os.environ["LCS_PRIVATE_DIR"] = other
     try:
-        assert str(lcs_owner.owner_nonce_path()) == os.path.join(other, "command-centre", "owner-nonce")
+        assert str(lcs_owner.owner_approvals_dir()) == os.path.join(other, "owner-approvals")
     finally:
         os.environ["LCS_PRIVATE_DIR"] = _HOME
+
+
+def test_the_command_centre_route_is_gone():
+    assert not hasattr(lcs_owner, "owner_nonce_path") and not hasattr(lcs_owner, "OWNER_NONCE_TTL")
+    nonce = secrets.token_hex(32)  # a hash file where the Command Centre wrote one no longer counts
+    nf = private("command-centre", "owner-nonce")
+    os.makedirs(os.path.dirname(nf), mode=0o700, exist_ok=True)
+    fd = os.open(nf, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+    os.write(fd, hashlib.sha256(nonce.encode()).hexdigest().encode())
+    os.close(fd)
+    assert confirm(nonce, ["anything"]) == (False, False)
+    os.unlink(nf)
 
 
 def test_files_directly_in_the_private_folder_pass():
@@ -79,10 +93,10 @@ ARGV = ["scripts/bookings/check_payments.py", "--fact", "2108A", "paid-in-full",
 
 
 def chat_approval(argv, mode=0o600, age=0, body=None, home=None):
-    """An approval as owner_confirm_guard writes it: owner-nonce.chat-<sha256 of the secret> in the command-centre
+    """An approval as owner_confirm_guard writes it: owner-nonce.chat-<sha256 of the secret> in the owner-approvals
     folder, holding the argv. Returns (secret, path)."""
     secret = secrets.token_hex(32)
-    cc = os.path.join(home or _HOME, "command-centre")
+    cc = os.path.join(home or _HOME, "owner-approvals")
     os.makedirs(cc, mode=0o700, exist_ok=True)
     path = os.path.join(cc, "owner-nonce.chat-" + hashlib.sha256(secret.encode()).hexdigest())
     fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
@@ -143,7 +157,7 @@ def test_a_chat_approval_is_refused_when_anything_is_off():
         assert confirm(secret, argv) == (False, False), why
         os.unlink(path)
     secret = secrets.token_hex(32)  # a symlink in the approval's place
-    link = os.path.join(_HOME, "command-centre", "owner-nonce.chat-" + hashlib.sha256(secret.encode()).hexdigest())
+    link = os.path.join(_HOME, "owner-approvals", "owner-nonce.chat-" + hashlib.sha256(secret.encode()).hexdigest())
     os.symlink(other.name, link)
     assert confirm(secret, ARGV) == (False, False), "a symlink"
     os.unlink(link)
@@ -168,10 +182,10 @@ def test_a_chat_approval_counts_until_its_ttl():
 
 
 def test_a_chat_approval_in_a_linked_folder_is_refused():
-    """The approval must sit in a real command-centre folder, as the hook only writes one there."""
+    """The approval must sit in a real owner-approvals folder, as the hook only writes one there."""
     real = tempfile.mkdtemp()
     linked = tempfile.mkdtemp()
-    os.symlink(os.path.join(real, "command-centre"), os.path.join(linked, "command-centre"))
+    os.symlink(os.path.join(real, "owner-approvals"), os.path.join(linked, "owner-approvals"))
     secret, path = chat_approval(ARGV, home=real)
     os.environ["LCS_PRIVATE_DIR"] = linked
     try:
@@ -181,30 +195,20 @@ def test_a_chat_approval_in_a_linked_folder_is_refused():
     assert os.path.exists(path)
 
 
-def test_the_command_centres_nonce_still_passes():
-    nonce = secrets.token_hex(32)
-    nf = private("command-centre", "owner-nonce")
-    os.makedirs(os.path.dirname(nf), mode=0o700, exist_ok=True)
-    fd = os.open(nf, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
-    os.write(fd, hashlib.sha256(nonce.encode()).hexdigest().encode())
+def test_a_chat_approval_in_the_old_command_centre_folder_is_refused():
+    secret = secrets.token_hex(32)
+    old = private("command-centre")
+    os.makedirs(old, mode=0o700, exist_ok=True)
+    path = os.path.join(old, "owner-nonce.chat-" + hashlib.sha256(secret.encode()).hexdigest())
+    fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+    os.write(fd, json.dumps({"argv": ARGV}).encode())
     os.close(fd)
-    chat, chat_path = chat_approval(ARGV)  # a chat approval beside it is left alone
-    assert confirm(nonce, ["anything"]) == (True, True) and not os.path.exists(nf)
-    assert confirm(nonce, ["anything"]) == (False, False), "burnt"
-    assert os.path.exists(chat_path)
-    os.unlink(chat_path)
-    fd = os.open(nf, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
-    os.write(fd, hashlib.sha256(nonce.encode()).hexdigest().encode())
-    os.close(fd)
-    os.utime(nf, (time.time() - lcs_owner.OWNER_NONCE_TTL - 5,) * 2)
-    assert confirm(nonce, ["anything"]) == (False, False), "the Command Centre's nonce keeps its 60 seconds"
-    os.unlink(nf)
+    assert confirm(secret, ARGV) == (False, False) and os.path.exists(path)
+    os.unlink(path)
 
 
 def test_check_payments_keeps_the_old_names():
     import check_payments as cp
-    assert cp.OWNER_NONCE_TTL == lcs_owner.OWNER_NONCE_TTL
-    assert cp.owner_nonce_path() == lcs_owner.owner_nonce_path()
     assert callable(cp.owner_confirmed) and callable(cp.owner_ledger_problem)
 
 

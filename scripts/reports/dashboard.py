@@ -14,10 +14,10 @@ render(data) turns that dict into HTML and nothing else, so tests drive it with 
 built and rendered on its own: one that fails shows "couldn't load (<TypeName>)" and the rest still render.
 Only client and singer first names appear, and never more of a bank account than ••••last4.
 
-The Books section (R21) reuses command_centre/books_cache.py, read-only, for the cache the daily pass writes
-(cc_sync.py books): totals, draft and overdue invoice numbers, the season margin (books_cache.margins(), the
-same figures the Command Centre's Money page shows) and unlinked singer invoices (singer_invoices.unlinked_
-invoices). "Books not synced yet." when the cache doesn't exist.
+The Books section (R21) reads scripts/bookings/books_cache.py, read-only, for the cache the daily pass writes
+(books_sync.py): totals, draft and overdue invoice numbers, the season margin (books_cache.margins()) and
+unlinked singer invoices (singer_invoices.unlinked_invoices). "Books not synced yet." when the cache doesn't
+exist.
 """
 
 import argparse
@@ -38,12 +38,11 @@ import lcs_money as lm  # noqa: E402
 import money_report as mr  # noqa: E402
 import pipeline as pl  # noqa: E402  summary_dict: the Monday report's pipeline figures
 import singer_invoices as si  # noqa: E402
+import books_cache as bc  # noqa: E402  R21: the Books panel and season margin
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import economics as ec  # noqa: E402  load_windows: the season start
 
 REPO = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(REPO))
-from command_centre import books_cache as bc  # noqa: E402  R21: the Books panel and season margin reuse this reader
 BUDGET_WINDOWS = REPO / "data" / "budget-windows.yml"  # season_start, as the Monday report's section 11 reads it
 
 LONDON = ZoneInfo("Europe/London")
@@ -200,8 +199,7 @@ def ads(enq):
 
 def season_totals(margins, start):
     """The season's margin totals from `start` (a date), cancelled bookings left out: {fee, costs, margin,
-    margin_pct, count, start}. A small local copy of command_centre.models.season_margin: importing that module
-    here would import dashboard right back (it does `import dashboard as dash`), so this stays self-contained."""
+    margin_pct, count, start}."""
     rows = [m for m in margins if not m["cancelled"] and cp.date_or_none(m.get("event_date")) and
             cp.date_or_none(m["event_date"]) >= start]
     fee = round(sum(m["fee"] for m in rows), 2)
@@ -212,9 +210,9 @@ def season_totals(margins, start):
 
 
 def books_section():
-    """The Books panel: totals, draft and overdue invoice numbers (command_centre.books_cache.books_cache(),
-    written by the daily pass's `cc_sync.py books`), the season margin (books_cache.margins(), the same reader
-    the Command Centre's Money page uses) and unlinked singer invoices. None when Books isn't synced yet."""
+    """The Books panel: totals, draft and overdue invoice numbers (books_cache.books_cache(), written by the
+    daily pass's books_sync.py), the season margin (books_cache.margins()) and unlinked singer invoices. None when
+    Books isn't synced yet."""
     cache = bc.books_cache()
     if cache is None:
         return None

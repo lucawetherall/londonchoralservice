@@ -5,13 +5,12 @@ The Zoho Mail MCP can't attach files to a draft, so this script builds the whole
 puts it in the Drafts folder of office@londonchoralservice.com over IMAP (APPEND). It never sends:
 there is no SMTP code here. The IMAP writes are APPEND to Drafts and, for `attach` only, one MOVE of Luca's
 original draft to Trash once its copy with the attachments has been read back and checked (owner decision,
-29 Sep 2026); `discard`, a MOVE of any one office@ draft to Trash that Luca approves each time, with his passkey in
-the Command Centre (owner decision, 14 Oct 2026) or his Allow on Claude Code's prompt in a live chat (19 Oct 2026):
-it runs only as `discard <Message-ID> --owner` with that approval's one-time nonce piped on stdin
-(lcs_owner.owner_confirmed); and `replace`, the same MOVE of an old office@ draft once
-Luca has asked for a new or changed one and that replacement is already in Drafts, from office@, to the same one
-address and in the same conversation (owner decision, later on 14 Oct 2026; no approval, so it runs unattended). The
-Trash helper itself refuses any draft but Luca's own original unless this process passed the passkey check or the
+29 Sep 2026); `discard`, a MOVE of any one office@ draft to Trash that Luca approves each time (owner decision,
+14 Oct 2026) with his Allow on Claude Code's prompt in a live chat (19 Oct 2026): it runs only as
+`discard <Message-ID> --owner` with that approval's one-time nonce piped on stdin (lcs_owner.owner_confirmed);
+and `replace`, the same MOVE of an old office@ draft once Luca has asked for a new or changed one and that
+replacement is already in Drafts, from office@, to the same one address and in the same conversation (owner decision, later on 14 Oct 2026; no approval, so it runs unattended). The
+Trash helper itself refuses any draft but Luca's own original unless this process passed the owner check or the
 replace rules hold for that exact pair (check_replacement), so importing it can't step round either gate. Nothing is
 ever deleted. Luca opens the draft in Zoho, checks it and presses Send.
 
@@ -19,7 +18,7 @@ ever deleted. Luca opens the draft in Zoho, checks it and presses Send.
     .venv/bin/python scripts/bookings/imap_draft.py attach <Message-ID of Luca's draft> '<one-line JSON spec>'
     .venv/bin/python scripts/bookings/imap_draft.py sent <invoice ref> <client email> <YYYY-MM-DD>
     .venv/bin/python scripts/bookings/imap_draft.py discard <Message-ID> --owner
-                     (Luca's approval only, his passkey or his Allow on Claude Code's prompt: a draft to Trash)
+                     (Luca's approval only, his Allow on Claude Code's prompt: a draft to Trash)
     .venv/bin/python scripts/bookings/imap_draft.py replace <old Message-ID> <new Message-ID>
                                     (the old draft to Trash, once Luca asked for a new or changed one and it is saved)
     .venv/bin/python scripts/bookings/imap_draft.py check     (owner: sign in, count the folders; writes nothing)
@@ -523,14 +522,13 @@ def trash_draft(conn, message_id, own_only, replaced_by=None):
     would purge). own_only: only a draft with no draft key (one Luca wrote). Returns its draft key ("" when it has
     none) once moved, or None when nothing was moved (no MOVE, no single match, not from office@).
     Any draft but Luca's own original (own_only=False) moves only in a process that passed lcs_owner.owner_confirmed()
-    (`discard --owner`, once Luca approved it: his passkey in the Command Centre, or his Allow on Claude Code's
-    prompt), or, for `replace`, when replaced_by names the
-    new draft and check_replacement passes for that exact pair here, so importing this can't step round either gate:
-    the most a caller without the passkey can do is what `replace` itself may do unattended."""
+    (`discard --owner`, once Luca approved it with his Allow on Claude Code's prompt), or, for `replace`, when
+    replaced_by names the new draft and check_replacement passes for that exact pair here, so importing this can't
+    step round either gate: the most a caller without his approval can do is what `replace` itself may do
+    unattended."""
     if not own_only and not lcs_owner.owner_proven():
         if replaced_by is None:
-            fail("moving a draft to Trash needs Luca's approval (his Allow on Claude Code's prompt, or his passkey "
-                 "in the Command Centre)")
+            fail("moving a draft to Trash needs Luca's approval (his Allow on Claude Code's prompt)")
         check_replacement(conn, message_id, replaced_by)
     if "MOVE" not in conn.capabilities:
         return None
@@ -570,8 +568,9 @@ def forget_saved(key):
 
 def discard(conn, message_id):
     """Move one draft from office@ in Drafts to Trash, on Luca's say-so (owner decision, 14 Oct 2026): run() lets it
-    through only with --owner and the Command Centre's one-time nonce, written after his passkey. Recoverable from Trash; never a deletion. If the draft was saved by
-    this script, its key is forgotten so a corrected draft can be saved."""
+    through only with --owner and the one-time nonce piped in once he clicks Allow on Claude Code's prompt.
+    Recoverable from Trash; never a deletion. If the draft was saved by this script, its key is forgotten so a
+    corrected draft can be saved."""
     draft = find_draft(conn, message_id)
     if draft is None:
         fail("that draft isn't in Drafts (sent, deleted or edited since)")
@@ -589,7 +588,7 @@ def discard(conn, message_id):
 
 def replace(conn, old_id, new_id):
     """Move an old draft to Trash because Luca asked for a new or changed one (owner decision, 14 Oct 2026: no
-    approval, so it runs unattended, without the passkey that `discard` needs). Only when check_replacement passes:
+    approval, so it runs unattended, without the Allow that `discard` needs). Only when check_replacement passes:
     the replacement is already in Drafts, both are from office@, both go to the same one address and belong to the
     same conversation (trash_draft checks that pair again before it moves anything). Recoverable from Trash; never a
     deletion."""
@@ -663,8 +662,7 @@ def invoice_sent(conn, ref, to, since):
 
 
 OWNER_ONLY = ("discard needs Luca's approval: his Allow on Claude Code's prompt for `discard <Message-ID> --owner` "
-              "run on its own in a live chat, or his passkey in the Command Centre (Drafts, Move to Trash); either "
-              "pipes in a one-time nonce")
+              "run on its own in a live chat, which pipes in a one-time nonce")
 
 
 def run(argv, factory=None, password=None, stdin_fd=0):

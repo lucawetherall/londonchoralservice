@@ -25,7 +25,7 @@ graphify-out/.vocab.txt
 graphify-out/.needs_update
 
 # Google Ads / GA4 workspace — never commit credentials
-.venv/
+.venv
 client_secret*.json
 google-ads.yaml
 *.local.*

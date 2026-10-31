@@ -39,27 +39,19 @@ analytics.readonly and webmasters.readonly scopes) for GA4 and Search Console.
 Reads the private bookings ledger for counts only; prints no names or emails.
 
     source .venv/bin/activate
-    python scripts/reports/weekly_review.py [--since 2026-09-26] [--gsc-shortlist] [--save-report [--quiet]] [--write-proposals]
+    python scripts/reports/weekly_review.py [--since 2026-09-26] [--gsc-shortlist] [--save-report [--quiet]]
 
 --save-report also archives everything printed to ~/lcs-private/reports/<today, Europe/London>.txt
 (LCS_PRIVATE_DIR respected), mode 600 in a mode-700 directory, written atomically. A same-day rerun
 overwrites the file. It still prints to stdout as normal, unless --quiet: then it prints only the path,
 the sections present and any line that looks like a failure or an alarm (the Monday dispatcher's view;
 its sub-agents read their own sections with scripts/reports/report_sections.py).
-
---write-proposals also writes each section 12 "PROPOSE" line as a Command Centre proposal,
-~/lcs-private/command-centre/proposals/<id>.json (mode 600): kind "ads", scripts/ads/set_budget.py with the
-campaign id and the £/day as its args, pinned to origin/main's commit and the script's blob there (git run with
-command_centre/actions' hardened settings). Never above £5/day; a proposal with the same blob and args that is
-still waiting (no .applied record) isn't written twice. The owner approves it in the app; nothing here changes
-the account.
 """
 
 import argparse
 import contextlib
 import datetime
 import io
-import json
 import os
 import re
 import sys
@@ -158,8 +150,7 @@ def ads_query():
 
 
 def search_term_rows(q, where="segments.date DURING LAST_7_DAYS"):
-    """Section 2's search-term query (read-only): one row per campaign, term and matched keyword, costliest first.
-    The Command Centre's cache (cc_sync.py marketing) runs the same query for 7 and 28 days."""
+    """Section 2's search-term query (read-only): one row per campaign, term and matched keyword, costliest first."""
     return q(f"""SELECT campaign.name, search_term_view.search_term, segments.keyword.info.text,
             segments.keyword.info.match_type, metrics.impressions, metrics.clicks, metrics.cost_micros,
             metrics.conversions
@@ -357,6 +348,18 @@ LOG_DAYS, LOG_MAX = 21, 60
 # (the date of the hand-written baseline the agent carried until 26 Oct 2026).
 ADS_BASELINE = datetime.date(2026, 10, 23)
 LOG_ROW = re.compile(r"^\| (\d{4}-\d{2}-\d{2})(?: \d{2}:\d{2})? \|")
+
+
+def hardened_git():
+    """(git binary, global options, environment) for read-only git: no global or system config, none of the
+    caller's GIT_* variables, no replace refs, fsmonitor and hooks off."""
+    keep = ("HOME", "PATH", "LANG", "TZ", "https_proxy", "HTTPS_PROXY", "no_proxy", "NO_PROXY")
+    env = {k: os.environ[k] for k in keep if k in os.environ}
+    env.update(GIT_CONFIG_GLOBAL="/dev/null", GIT_CONFIG_NOSYSTEM="1", GIT_TERMINAL_PROMPT="0",
+               GIT_NO_REPLACE_OBJECTS="1")
+    safe = ["-c", "core.fsmonitor=false", "-c", "core.hooksPath=/dev/null", "-c", "core.attributesFile=/dev/null",
+            "--no-replace-objects"]
+    return ("/usr/bin/git" if os.path.exists("/usr/bin/git") else "git"), safe, env
 
 
 def _log_text_at_origin(runner=None):
@@ -1125,7 +1128,7 @@ def cost_section(q, today, clicks=None, graded=None):
         print(f"   true cost per booking failed: {failure_note(e)}")
 
 
-def budget_section(q, today, write=False, git_runner=None, now=None, graded=None):
+def budget_section(q, today, graded=None):
     """Section 12. graded: section 9b's enquiries (None: not graded, and the value check and spend guard say so)."""
     print("\n== 12. Seasonal budget rules (data/budget-windows.yml; proposals only, nothing changed)")
     xmas_budget = None
@@ -1153,12 +1156,6 @@ def budget_section(q, today, write=False, git_runner=None, now=None, graded=None
             print("   " + line)
     except Exception as e:  # type name only
         print(f"   spend guard failed: {failure_note(e)}")
-    if write:
-        try:
-            for line in write_proposals(items, today, git_runner=git_runner, now=now):
-                print("   " + line)
-        except Exception as e:  # type name only
-            print(f"   Command Centre proposals not written: {type(e).__name__}")
 
 
 XMAS_ID, XMAS_FROM, XMAS_CHECK_BY, XMAS_EXTRA_LIMIT = 24295921372, datetime.date(2026, 9, 28), \
@@ -1234,7 +1231,7 @@ def spend_guard_lines(q, today, graded=None):
         # a campaign is "inside" its dated exception only while its budget actually uses it (above £5/day);
         # back at £5 (Christmas since 26 Oct 2026) it is judged like the others
         budget_micros = getattr(getattr(r, "campaign_budget", None), "amount_micros", None)
-        uses_exception = budget_micros is not None and budget_micros / 1e6 > PROPOSAL_CAP_GBP
+        uses_exception = budget_micros is not None and budget_micros / 1e6 > BASE_CAP_GBP
         key = es.campaign_key(r.campaign.name, r.campaign.id)
         n = None if c is None else c[key] if key else dict.fromkeys(es.GRADES, 0)
         line = (f"spend guard {r.campaign.name}: £{cost:,.2f}, {clicks} clicks, {conv:g} Ads conversions in "
@@ -1244,7 +1241,7 @@ def spend_guard_lines(q, today, graded=None):
                 line += " — held: an A or B enquiry came from this campaign, so no pause"
             elif clicks < GUARD_MIN_CLICKS:
                 line += f" — under {GUARD_MIN_CLICKS} clicks, too few to judge; watch next week"
-            elif uses_exception and budget_cap_gbp(r.campaign.id, today) > PROPOSAL_CAP_GBP:
+            elif uses_exception and budget_cap_gbp(r.campaign.id, today) > BASE_CAP_GBP:
                 # Owner decision 23 Oct 2026: a campaign inside a dated budget exception (budget_cap.py), and
                 # spending above £5/day on it, is judged by that exception's own stop rule (section 12's value
                 # check), not paused by this guard.
@@ -1261,121 +1258,7 @@ def spend_guard_lines(q, today, graded=None):
                     f"pausing (C never counts; Ads conversions are shown but don't hold a campaign, owner 26 Oct 2026)"]
 
 
-# ---------- 12b. Command Centre proposals (--write-proposals) ----------
-# Each PROPOSE line becomes ~/lcs-private/command-centre/proposals/<id>.json (mode 600), the format
-# command_centre/actions.load_proposal checks: the app runs scripts/ads/set_budget.py <campaign id> <£/day> from
-# the pinned commit of GitHub's main, --validate-only and then --apply, after the owner's passkey. Nothing here
-# talks to Google or changes the account.
-
-SET_BUDGET = "scripts/ads/set_budget.py"
-PROPOSAL_CAP_GBP = 5.0  # the base cap; budget_cap.py may raise it for one campaign on set dates (set_budget.py
-#                        checks the same module)
-SHA_RE = re.compile(r"^(?:[0-9a-f]{40}|[0-9a-f]{64})$")
-AMOUNT_RE = re.compile(r"^\d{1,4}\.\d{2}$")
-
-
-def proposals_dir():
-    """Read at call time, so the tests (and a moved private tree) never touch ~/lcs-private."""
-    return Path(os.environ.get("LCS_PRIVATE_DIR", Path.home() / "lcs-private")) / "command-centre" / "proposals"
-
-
-def hardened_git():
-    """(git binary, global options, environment) from command_centre/actions, the app's hardened git: no global or
-    system config, none of the caller's GIT_* variables, no replace refs, fsmonitor and hooks off. If the app's
-    module can't be imported (a machine without its dependencies), the same settings, copied here."""
-    try:
-        if str(REPO) not in sys.path:
-            sys.path.insert(0, str(REPO))
-        from command_centre import actions
-        return actions.git_binary(), list(actions.GIT_SAFE), actions.git_env()
-    except Exception:
-        keep = ("HOME", "PATH", "LANG", "TZ", "https_proxy", "HTTPS_PROXY", "no_proxy", "NO_PROXY")
-        env = {k: os.environ[k] for k in keep if k in os.environ}
-        env.update(GIT_CONFIG_GLOBAL="/dev/null", GIT_CONFIG_NOSYSTEM="1", GIT_TERMINAL_PROMPT="0",
-                   GIT_NO_REPLACE_OBJECTS="1")
-        safe = ["-c", "core.fsmonitor=false", "-c", "core.hooksPath=/dev/null", "-c", "core.attributesFile=/dev/null",
-                "--no-replace-objects"]
-        return ("/usr/bin/git" if os.path.exists("/usr/bin/git") else "git"), safe, env
-
-
-def git_pins(runner=None):
-    """(script blob, commit): `git rev-parse origin/main:scripts/ads/set_budget.py` and `origin/main`, run in this
-    repo with the hardened git settings. Raises if either isn't a full object id."""
-    import subprocess
-    binary, safe, env = hardened_git()
-
-    def rev(spec):
-        p = (runner or subprocess.run)([binary, "-C", str(REPO), *safe, "rev-parse", "--verify", "--quiet", spec],
-                                       capture_output=True, text=True, timeout=15, env=env,
-                                       stdin=subprocess.DEVNULL, shell=False)
-        out = (p.stdout or "").strip()
-        if p.returncode != 0 or not SHA_RE.fullmatch(out):
-            raise RuntimeError("git rev-parse failed")
-        return out
-    return rev(f"origin/main:{SET_BUDGET}"), rev("origin/main^{commit}")
-
-
-def _private_dirs(path):
-    missing, d = [], Path(path)
-    while not d.exists():
-        missing.append(d)
-        d = d.parent
-    for d in reversed(missing):
-        d.mkdir(mode=0o700, exist_ok=True)
-
-
-def _waiting(pdir, blob, args):
-    """The id of a proposal already in `pdir` with this blob and these args and no .applied record, or None."""
-    for p in sorted(pdir.glob("*.json")):
-        try:
-            rec = json.loads(p.read_text(encoding="utf-8"))
-        except (OSError, ValueError):
-            continue
-        if isinstance(rec, dict) and rec.get("script_blob") == blob and rec.get("args") == args \
-                and not (pdir / f"{p.stem}.applied").exists():
-            return p.stem
-    return None
-
-
-def _write_new(pdir, pid, record):
-    """Write <pid>.json at mode 600, all at once and never over an existing file (a temp file, then a hard link)."""
-    tmp = pdir / f".{pid}.{os.getpid()}.{os.urandom(4).hex()}.tmp"
-    fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
-    try:
-        with os.fdopen(fd, "w", encoding="utf-8") as f:
-            json.dump(record, f, ensure_ascii=False, indent=1)
-            f.flush()
-            os.fsync(f.fileno())
-        os.link(tmp, pdir / f"{pid}.json")
-    finally:
-        tmp.unlink(missing_ok=True)
-
-
-def _supersede_older(pdir, cid, new_pid):
-    """Mark every other still-waiting set_budget proposal for the same campaign `cid` as superseded by `new_pid`
-    (a "superseded_by" field the Command Centre hides), so the list doesn't pile up with stale amounts."""
-    for p in sorted(pdir.glob("*.json")):
-        if p.stem == new_pid:
-            continue
-        try:
-            rec = json.loads(p.read_text(encoding="utf-8"))
-        except (OSError, ValueError):
-            continue
-        if not (isinstance(rec, dict) and rec.get("script_path") == SET_BUDGET
-                and list(rec.get("args") or [])[:1] == [cid] and not rec.get("superseded_by")
-                and not (pdir / f"{p.stem}.applied").exists()):
-            continue
-        rec["superseded_by"] = new_pid
-        tmp = pdir / f".{p.stem}.{os.getpid()}.{os.urandom(4).hex()}.tmp"
-        fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
-        try:
-            with os.fdopen(fd, "w", encoding="utf-8") as f:
-                json.dump(rec, f, ensure_ascii=False, indent=1)
-                f.flush()
-                os.fsync(f.fileno())
-            os.replace(tmp, p)
-        finally:
-            tmp.unlink(missing_ok=True)
+BASE_CAP_GBP = 5.0  # the base daily cap; budget_cap.py may raise it for one campaign on set dates
 
 
 def budget_cap_gbp(cid, today):
@@ -1385,64 +1268,7 @@ def budget_cap_gbp(cid, today):
         import budget_cap
         return budget_cap.cap_gbp(cid, today)
     except Exception:
-        return PROPOSAL_CAP_GBP
-
-
-def write_proposals(items, today, git_runner=None, now=None):
-    """Write one Command Centre proposal per "propose" item; returns the lines to print. Never above £5/day, and
-    never a second proposal while one with the same script blob and args is still waiting (no .applied record)."""
-    wanted = [i for i in items if i.get("kind") == "propose"]
-    if not wanted:
-        return ["no budget proposals to write"]
-    blob, commit = git_pins(git_runner)
-    pdir = proposals_dir()
-    _private_dirs(pdir)
-    created = (now or datetime.datetime.now().astimezone()).isoformat(timespec="seconds")
-    lines = []
-    for i in wanted:
-        cid, name = str(i.get("campaign_id") or ""), str(i.get("campaign") or "?")
-        try:
-            new, cur = float(i["proposed"]), float(i["current"])
-        except (KeyError, TypeError, ValueError):
-            lines.append(f"not written ({name}): no usable amount")
-            continue
-        if not cid.isdigit():
-            lines.append(f"not written ({name}): no campaign id")
-            continue
-        cap = budget_cap_gbp(cid, today)
-        if not (0 < new <= cap):
-            lines.append(f"not written ({name}): £{new:,.2f}/day is outside £0–£{cap:g}")
-            continue
-        amount = f"{new:.2f}"
-        if not AMOUNT_RE.fullmatch(amount):
-            lines.append(f"not written ({name}): bad amount")
-            continue
-        args = [cid, amount]
-        waiting = _waiting(pdir, blob, args)
-        if waiting:
-            lines.append(f"proposal already waiting: {waiting}")
-            continue
-        room = 120 - len(f"Budget:  £{cur:.2f} → £{new:.2f}/day")
-        shown = name if len(name) <= room else name[:room - 1] + "…"
-        record = {
-            "id": "", "kind": "ads", "title": f"Budget: {shown} £{cur:.2f} → £{new:.2f}/day",
-            "summary": (f"Seasonal window {i.get('window', '?')} (data/budget-windows.yml): set the daily budget of "
-                        f"{name} (campaign {cid}) from £{cur:.2f} to £{new:.2f}. From the Monday review of {today}. "
-                        f"Runs {SET_BUDGET} {cid} {amount}, validate-only first; never above £{cap:g}/day.")[:1000],
-            "script_path": SET_BUDGET, "created": created, "commit": commit, "script_blob": blob, "args": args}
-        base = f"budget-{cid}-{int(round(new * 100))}-{today:%Y%m%d}"
-        for n in range(1, 10):
-            pid = base if n == 1 else f"{base}-{n}"
-            try:
-                _write_new(pdir, pid, dict(record, id=pid))
-            except FileExistsError:
-                continue
-            _supersede_older(pdir, cid, pid)
-            lines.append(f"proposal written: {pid}")
-            break
-        else:
-            lines.append(f"not written ({name}): too many proposals with that id today")
-    return lines
+        return BASE_CAP_GBP
 
 
 class SearchConsoleError(RuntimeError):
@@ -1453,7 +1279,7 @@ class SearchConsoleError(RuntimeError):
 
 def shortlist_items(s, today, limit=10):
     """(start, end, items) for section 13 (read-only): economics.shortlist over the last 28 final days of Search
-    Console query x page rows. SearchConsoleError when the query fails. The Command Centre caches it daily."""
+    Console query x page rows. SearchConsoleError when the query fails."""
     import economics as ec
     start, end = ec.gsc_window(today)
     api = f"https://searchconsole.googleapis.com/webmasters/v3/sites/{GSC_SITE}/searchAnalytics/query"
@@ -1596,7 +1422,7 @@ def run_sections(args, q=None, s=None):
     graded = run_section("9b", "Enquiries by ad source", enquiries_section, clicks, today)
     run_section("10", "Money (totals and invoice numbers only)", money_section)
     run_section("11", "True cost per booking (season to date, by campaign)", cost_section, q, today, clicks, graded)
-    run_section("12", "Seasonal budget rules", budget_section, q, today, write=args.write_proposals, graded=graded)
+    run_section("12", "Seasonal budget rules", budget_section, q, today, graded=graded)
     run_section("13", "Search Console shortlist (hiring intent, positions 8–20)", shortlist_section, s, today,
                 args.gsc_shortlist)
 
@@ -1614,8 +1440,6 @@ def main():
                    help="also archive everything printed to ~/lcs-private/reports/<today>.txt (mode 600)")
     p.add_argument("--quiet", action="store_true",
                    help="with --save-report: print only where the report is, its sections and any problem lines")
-    p.add_argument("--write-proposals", action="store_true",
-                   help="write each section 12 PROPOSE line as a Command Centre proposal (mode 600)")
     args = p.parse_args()
     if args.quiet and not args.save_report:
         p.error("--quiet needs --save-report (the report has to go somewhere)")

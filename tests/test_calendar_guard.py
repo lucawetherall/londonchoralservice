@@ -34,8 +34,11 @@ def raw(stdin, home=None):
     return json.loads(p.stdout)["hookSpecificOutput"]["permissionDecision"] if p.stdout.strip() else "allow"
 
 
-def decide(tool, tool_input=None, home=None):
-    return raw(json.dumps({"tool_name": tool, "tool_input": tool_input or {}}), home)
+def decide(tool, tool_input=None, home=None, agent_id=None):
+    event = {"tool_name": tool, "tool_input": tool_input or {}}
+    if agent_id:
+        event["agent_id"] = agent_id
+    return raw(json.dumps(event), home)
 
 
 CREATE = f"mcp__{SERVER}__create_event"
@@ -73,108 +76,26 @@ def test_write_tools_are_denied():
 DELETE = f"mcp__{SERVER}__delete_event"
 
 
-def approvals(home):
-    folder = os.path.join(home, "lcs-private", "command-centre", "approvals")
-    os.makedirs(folder, mode=0o700, exist_ok=True)
-    for d in (folder, os.path.dirname(folder)):
-        os.chmod(d, 0o700)
-    return folder
-
-
-def approve(home, event_id="e1abc", cal=LCS_CAL, age=0, ttl=600, mode=0o600, name=None, **changes):
-    """An approval as the Command Centre's calendar-delete action writes it (command_centre/actions.py _cal_run)."""
-    import hashlib, secrets, time
-    nonce_sha = hashlib.sha256(secrets.token_hex(32).encode()).hexdigest()
-    at = int(time.time()) - age
-    rec = {"kind": "calendar-delete", "calendar_id": cal, "event_id": event_id, "nonce_sha256": nonce_sha,
-           "binding": hashlib.sha256(f"lcs-calendar-delete\n{nonce_sha}\n{cal}\n{event_id}".encode()).hexdigest(),
-           "approved_at": at, "expires_at": at + ttl, "approved_by": "luca", "passkey": "pk1"}
-    rec.update(changes)
-    path = os.path.join(approvals(home), name or f"calendar-delete-{nonce_sha[:32]}.json")
-    fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
-    with os.fdopen(fd, "w") as f:
-        json.dump(rec, f)
-    os.chmod(path, mode)
-    return path
-
-
-def test_delete_without_an_approval_is_denied_never_asked():
+def test_a_good_delete_asks_luca_in_his_own_conversation():
     home = home_with({"lcs_calendar_id": LCS_CAL})
-    assert decide(DELETE, {"calendarId": LCS_CAL, "eventId": "e1abc"}, home=home) == "deny"
+    for good in ({"calendarId": LCS_CAL, "eventId": "e1abc"},
+                 {"calendarId": LCS_CAL, "eventId": "e1abc", "notificationLevel": "NONE"}):
+        assert decide(DELETE, good, home=home) == "ask", good
+
+
+def test_a_delete_from_a_subagent_is_denied():
+    home = home_with({"lcs_calendar_id": LCS_CAL})
+    assert decide(DELETE, {"calendarId": LCS_CAL, "eventId": "e1abc"}, home=home, agent_id="a1") == "deny"
+
+
+def test_a_delete_off_the_calendar_or_of_another_shape_is_denied():
+    home = home_with({"lcs_calendar_id": LCS_CAL})
     for bad in ({"eventId": "e1abc"}, {"calendarId": "primary", "eventId": "e1abc"},
                 {"calendarId": LCS_CAL, "eventId": ""}, {"calendarId": LCS_CAL, "eventId": "e1abc", "notificationLevel": "ALL"},
                 {"calendarId": LCS_CAL, "eventId": "e1abc", "sendUpdates": "all"}):
         assert decide(DELETE, bad, home=home) == "deny", bad
     assert decide(DELETE, {"calendarId": LCS_CAL, "eventId": "e1abc"}, home=home_with(None)) == "deny"
 
-
-def test_a_valid_approval_allows_exactly_that_delete_once():
-    home = home_with({"lcs_calendar_id": LCS_CAL})
-    path = approve(home)
-    assert decide(DELETE, {"calendarId": LCS_CAL, "eventId": "e1abc", "notificationLevel": "NONE"}, home=home) == "allow"
-    assert not os.path.exists(path), "the approval is burnt as the call is allowed"
-    assert decide(DELETE, {"calendarId": LCS_CAL, "eventId": "e1abc"}, home=home) == "deny", "reused"
-
-
-def test_an_approval_never_covers_another_event_calendar_or_shape():
-    home = home_with({"lcs_calendar_id": LCS_CAL})
-    path = approve(home)
-    assert decide(DELETE, {"calendarId": LCS_CAL, "eventId": "e2abc"}, home=home) == "deny", "wrong event"
-    assert decide(DELETE, {"calendarId": "primary", "eventId": "e1abc"}, home=home) == "deny", "wrong calendar"
-    assert decide(DELETE, {"calendarId": LCS_CAL, "eventId": "e1abc", "notificationLevel": "ALL"}, home=home) == "deny"
-    assert os.path.exists(path), "a refused call leaves the approval for the right one"
-    other = home_with({"lcs_calendar_id": LCS_CAL})
-    approve(other, cal="primary")  # approved for another calendar: never matches the LCS one
-    assert decide(DELETE, {"calendarId": LCS_CAL, "eventId": "e1abc"}, home=other) == "deny"
-
-
-def test_expired_future_long_or_tampered_approvals_are_denied():
-    for kw in ({"age": 601}, {"age": 700, "ttl": 600}, {"age": -60}, {"ttl": 3600},
-               {"binding": "0" * 64}, {"kind": "books-import"}, {"name": "calendar-delete-" + "a" * 32 + ".json"},
-               {"approved_at": "now"}, {"event_id": "E1ABC"}):
-        home = home_with({"lcs_calendar_id": LCS_CAL})
-        approve(home, **kw)
-        assert decide(DELETE, {"calendarId": LCS_CAL, "eventId": "e1abc"}, home=home) == "deny", kw
-
-
-def test_symlinked_wrong_mode_or_linked_approvals_are_denied():
-    home = home_with({"lcs_calendar_id": LCS_CAL})
-    approve(home, mode=0o644)
-    assert decide(DELETE, {"calendarId": LCS_CAL, "eventId": "e1abc"}, home=home) == "deny", "mode 644"
-    home = home_with({"lcs_calendar_id": LCS_CAL})  # a symlink to a good approval elsewhere
-    real = approve(home_with({"lcs_calendar_id": LCS_CAL}))
-    os.symlink(real, os.path.join(approvals(home), os.path.basename(real)))
-    assert decide(DELETE, {"calendarId": LCS_CAL, "eventId": "e1abc"}, home=home) == "deny", "symlinked file"
-    assert os.path.exists(real)
-    home = home_with({"lcs_calendar_id": LCS_CAL})  # a hard link: two names for one approval
-    path = approve(home)
-    os.link(path, os.path.join(tempfile.mkdtemp(), "copy.json"))
-    assert decide(DELETE, {"calendarId": LCS_CAL, "eventId": "e1abc"}, home=home) == "deny", "hard link"
-    home = home_with({"lcs_calendar_id": LCS_CAL})  # the approvals folder is a symlink to a folder of good ones
-    elsewhere = home_with({"lcs_calendar_id": LCS_CAL})
-    approve(elsewhere)
-    os.makedirs(os.path.join(home, "lcs-private", "command-centre"), mode=0o700)
-    os.symlink(approvals(elsewhere), os.path.join(home, "lcs-private", "command-centre", "approvals"))
-    assert decide(DELETE, {"calendarId": LCS_CAL, "eventId": "e1abc"}, home=home) == "deny", "symlinked folder"
-    home = home_with({"lcs_calendar_id": LCS_CAL})  # a folder others can write to
-    approve(home)
-    os.chmod(approvals(home), 0o777)
-    os.chmod(os.path.join(home, "lcs-private", "command-centre", "approvals"), 0o777)
-    assert decide(DELETE, {"calendarId": LCS_CAL, "eventId": "e1abc"}, home=home) == "deny", "folder mode 777"
-
-
-def test_the_command_centre_writes_approvals_the_guard_accepts():
-    """The app's own writer (command_centre/actions.py calendar-delete) and this guard agree on the format."""
-    home = home_with({"lcs_calendar_id": LCS_CAL})
-    code = ("import sys; sys.path.insert(0, sys.argv[1]); from command_centre import actions; "
-            "c = actions._cal_validate({'event_id': 'e1abc'}); "
-            "print(actions._cal_run(c, {'login': 'luca', 'passkey': 'pk1'}))")
-    p = subprocess.run([sys.executable, "-c", code, ROOT], capture_output=True, text=True,
-                       env=dict(os.environ, LCS_PRIVATE_DIR=os.path.join(home, "lcs-private"), HOME=home))
-    assert p.returncode == 0 and "approved" in p.stdout, (p.stdout, p.stderr)
-    assert decide(DELETE, {"calendarId": LCS_CAL, "eventId": "e2abc"}, home=home) == "deny"
-    assert decide(DELETE, {"calendarId": LCS_CAL, "eventId": "e1abc"}, home=home) == "allow"
-    assert decide(DELETE, {"calendarId": LCS_CAL, "eventId": "e1abc"}, home=home) == "deny"
 
 
 def test_booking_on_the_lcs_calendar_is_allowed():

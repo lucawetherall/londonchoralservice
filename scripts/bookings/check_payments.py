@@ -22,8 +22,8 @@ Alma Consort Starling account, READ-ONLY (see lcs_money.StarlingReadOnly).
         notes (fact_phrase: "cancelled D by client email", "paid per client email D", "balance paid per client
         email D", "balance payable in cash on the day (arranged D)" …), both under the ledger lock. --on defaults
         to today (never after it, at most 730 days back). The owner's kinds (paid-in-full, fees-accepted --amount
-        X, reinstated, deposit-kept, refunded, payment-checked) need --owner and Luca's approval (the Command
-        Centre's nonce, or his Allow on Claude Code's prompt: lcs_owner), and write "… (owner)"
+        X, reinstated, deposit-kept, refunded, payment-checked) need --owner and Luca's approval (his Allow
+        on Claude Code's prompt: lcs_owner), and write "… (owner)"
     .venv/bin/python scripts/bookings/check_payments.py --note 2111 "4 singers, London"
         (free text only: one line, at most 120 characters, no ';'; refuses the scripts' own phrases and the owner's
         hand-written ones: paid in full, short by fees … accepted, deposit seen … (Starling), reminder/receipt drafted, deposit kept, refunded,
@@ -32,9 +32,9 @@ Alma Consort Starling account, READ-ONLY (see lcs_money.StarlingReadOnly).
         decision 29 Sep 2026), naming the --fact form to use instead: "record it with --fact 2111 cancelled;
         nothing written")
     … --note 2111 "paid in full 2026-09-28" --owner
-        (Luca's approval only, his passkey in the Command Centre or his Allow on Claude Code's prompt in a live
-        chat: allows the owner's phrases and records "(owner)"; refused unless stdin is a pipe carrying that
-        approval's one-time nonce, see owner_confirmed)
+        (Luca's approval only, his Allow on Claude Code's prompt in a live chat: allows the owner's phrases and
+        records "(owner)"; refused unless stdin is a pipe carrying that approval's one-time nonce, see
+        owner_confirmed)
     .venv/bin/python scripts/bookings/check_payments.py --selftest       # token, account and permissions
     .venv/bin/python scripts/bookings/check_payments.py --books-closed   # read-only JSON: closed bookings' Starling
         payments that may be missing from Books (books_closed; owner decision, 14 Oct 2026)
@@ -78,7 +78,7 @@ event), AWAITING_DEPOSIT (until the deposit falls due: 7 days after the invoice,
 or 3 days before a short-notice event, never the invoice day), DEPOSIT_OVERDUE
 (future events only), AWAITING_INVOICE_SENT (instead of either of those two while the booking's Zoho Books invoice
 is still a draft, so the client hasn't been sent it: never chased, action none; on the Monday hand check once the
-deposit would have been due. Read from the Command Centre's local Books cache, unsent_invoices; no cache, no
+deposit would have been due. Read from the local Books cache (books-cache.json), unsent_invoices; no cache, no
 change),NOTED_PAID (the owner's notes say paid, or an earlier run's
 "deposit seen … (Starling)" with nothing in the feed now; negated or future
 phrases such as "not yet seen", "no payment received", "to be paid" or "asked if
@@ -519,7 +519,7 @@ def fact_input(args, today):
     by = "owner" if args.owner else "script"
     if kind in OWNER_FACTS and by != "owner":
         raise SystemExit(f"{kind} is the owner's: it is recorded with --owner, once Luca approves it (his Allow on "
-                         "Claude Code's prompt in a live chat, or the Command Centre's passkey); nothing written")
+                         "Claude Code's prompt in a live chat); nothing written")
     given = {k: getattr(args, k) for k in FACT_ARGS if getattr(args, k) is not None}
     want = FACT_FIELDS.get(kind)
     if set(given) != ({want[0]} if want else set()):
@@ -784,8 +784,8 @@ def deposit_due_date(invoice, event):
 
 
 def books_cache():
-    """The Command Centre's Books cache (cc_sync.py books); LCS_PRIVATE_DIR is read at call time."""
-    return Path(os.environ.get("LCS_PRIVATE_DIR", Path.home() / "lcs-private")) / "command-centre" / "cache" / "books.json"
+    """The local Books cache (books_sync.py); LCS_PRIVATE_DIR is read at call time."""
+    return Path(os.environ.get("LCS_PRIVATE_DIR", Path.home() / "lcs-private")) / "books-cache.json"
 
 
 def unsent_invoices(path=None):
@@ -1223,7 +1223,7 @@ def received_since(client, rows, since, today):
 
 
 def books_open_balances(path=None):
-    """{ref: balance} for the Books invoices the local cache (cc_sync.py books) shows still open: not draft, void or
+    """{ref: balance} for the Books invoices the local cache (books_sync.py) shows still open: not draft, void or
     paid, with a balance above £0. None when there is no readable cache."""
     try:
         data = json.loads(Path(path or books_cache()).read_text())
@@ -1296,8 +1296,8 @@ def main():
     ap.add_argument("--scope")
     ap.add_argument("--full-by", dest="full_by", metavar="YYYY-MM-DD")
     ap.add_argument("--owner", action="store_true",
-                    help="Luca's approval only: needs its one-time nonce on stdin (the Command Centre's, or his Allow "
-                         "on Claude Code's prompt)")
+                    help="Luca's approval only: needs its one-time nonce on stdin (from his Allow on "
+                         "Claude Code's prompt)")
     args = ap.parse_args()
     today = lm.today()
 
@@ -1376,10 +1376,7 @@ def main():
         raise SystemExit(str(e))
 
 
-# The owner barrier lives in lcs_owner (shared with the singer store and the state log); kept here under the old
-# names, so the Command Centre and the tests need no change.
-OWNER_NONCE_TTL = lcs_owner.OWNER_NONCE_TTL
-owner_nonce_path = lcs_owner.owner_nonce_path
+# The owner barrier lives in lcs_owner (shared with the singer store and the state log).
 
 
 def owner_ledger_problem(environ=None):
@@ -1389,8 +1386,8 @@ def owner_ledger_problem(environ=None):
 
 
 def owner_confirmed(stdin_fd=0):
-    """True only when Luca approved this --owner write, by his passkey in the Command Centre or his Allow on Claude
-    Code's prompt (lcs_owner.owner_confirmed: the one-time nonce over a pipe, burnt on a match)."""
+    """True only when Luca approved this --owner write by his Allow on Claude Code's prompt (lcs_owner.
+    owner_confirmed: the one-time nonce over a pipe, burnt on a match)."""
     return lcs_owner.owner_confirmed(stdin_fd)
 
 

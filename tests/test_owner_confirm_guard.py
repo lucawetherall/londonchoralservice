@@ -7,7 +7,7 @@ import glob, hashlib, json, os, re, shutil, stat, subprocess, sys, tempfile
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 GUARD = os.path.join(ROOT, ".claude", "hooks", "owner_confirm_guard.py")
 PRIVATE = tempfile.mkdtemp(prefix="lcs-owner-guard-")
-CC = os.path.join(PRIVATE, "command-centre")
+CC = os.path.join(PRIVATE, "owner-approvals")
 os.makedirs(CC, mode=0o700)
 PY = ".venv/bin/python"
 FACT = f"{PY} scripts/bookings/check_payments.py --fact 2108A paid-in-full --on 2026-10-19 --owner"
@@ -178,28 +178,35 @@ def test_a_missing_or_linked_private_folder_is_denied():
     out = hook(event(FACT), private=empty)
     assert out["permissionDecision"] == "deny" and "isn't set up" in out["permissionDecisionReason"], out
     linked = tempfile.mkdtemp(prefix="lcs-owner-guard-link-")
-    os.symlink(CC, os.path.join(linked, "command-centre"))
+    os.symlink(CC, os.path.join(linked, "owner-approvals"))
     out = hook(event(FACT), private=linked)
     assert out["permissionDecision"] == "deny" and "isn't set up" in out["permissionDecisionReason"], out
+    assert "owner-approvals folder" in out["permissionDecisionReason"], out
     assert approvals() == []
+    old = tempfile.mkdtemp(prefix="lcs-owner-guard-old-")  # the old command-centre folder alone isn't enough
+    os.makedirs(os.path.join(old, "command-centre"), mode=0o700)
+    out = hook(event(FACT), private=old)
+    assert out["permissionDecision"] == "deny" and "isn't set up" in out["permissionDecisionReason"], out
+    assert os.listdir(os.path.join(old, "command-centre")) == []
+    shutil.rmtree(old)
     shutil.rmtree(empty)
     shutil.rmtree(linked)
 
 
 def test_a_later_command_in_the_same_session_retires_an_unused_approval():
     """A prompt Luca denied leaves its approval file: the session's next command deletes it before it runs; another
-    session's approval and the Command Centre's own nonce file are left alone."""
+    session's approval and any other file in the folder are left alone."""
     clear()
     hook(event(FACT, session_id="other"))
     theirs = approvals()
-    cc_nonce = os.path.join(CC, "owner-nonce")
-    open(os.open(cc_nonce, os.O_WRONLY | os.O_CREAT, 0o600), "w").close()
+    other_file = os.path.join(CC, "notes")
+    open(os.open(other_file, os.O_WRONLY | os.O_CREAT, 0o600), "w").close()
     assert bash("git status", session_id="s1") is None and approvals() == theirs
     hook(event(FACT, session_id="s1"))  # replaces every outstanding approval, as minting always does
     assert len(approvals()) == 1 and approvals() != theirs
     assert bash("git status", session_id="s1") is None and approvals() == []
-    assert os.path.exists(cc_nonce)
-    os.unlink(cc_nonce)
+    assert os.path.exists(other_file)
+    os.unlink(other_file)
 
 
 def test_a_command_naming_an_outstanding_code_is_denied():

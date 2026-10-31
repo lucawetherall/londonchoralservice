@@ -487,7 +487,7 @@ def test_a_retract_cannot_be_retracted():
 
 
 def test_append_refuses_an_owner_fact_without_the_owner_check():
-    """by: owner only after lcs_owner's nonce check passed in this process, with the log in the nonce's folder."""
+    """by: owner only after lcs_owner's nonce check passed in this process, with the log in the private folder."""
     path = fresh_dir()
     for bad in ({}, {"LCS_BOOKINGS_CSV": os.path.join(os.path.dirname(path), "bookings.csv")}):
         import lcs_owner
@@ -583,20 +583,21 @@ def test_log_problem_names_an_unreadable_broken_or_skipping_log():
 
 
 def test_owner_confirmed_marks_the_process_proven():
-    import hashlib, lcs_owner, time
+    import hashlib, json, lcs_owner
     d = os.path.dirname(fresh_dir())
-    os.makedirs(os.path.join(d, "command-centre"), mode=0o700)
+    os.makedirs(os.path.join(d, "owner-approvals"), mode=0o700)
     nonce = "ab" * 32
-    nf = os.path.join(d, "command-centre", "owner-nonce")
+    argv = ["scripts/bookings/events.py", "retract", "a1b2c3d4e5f60718", "--owner"]
+    nf = os.path.join(d, "owner-approvals", "owner-nonce.chat-" + hashlib.sha256(nonce.encode()).hexdigest())
     fd = os.open(nf, os.O_WRONLY | os.O_CREAT, 0o600)
-    os.write(fd, hashlib.sha256(nonce.encode()).hexdigest().encode())
+    os.write(fd, json.dumps({"argv": argv}).encode())
     os.close(fd)
     r, w = os.pipe()
     os.write(w, (nonce + "\n").encode())
     saved, lcs_owner._PROVEN = lcs_owner._PROVEN, False
     try:
         assert not lcs_owner.owner_proven()
-        assert lcs_owner.owner_confirmed(r) and lcs_owner.owner_proven()
+        assert lcs_owner.owner_confirmed(r, argv) and lcs_owner.owner_proven()
     finally:
         lcs_owner._PROVEN = saved
         os.close(r)
@@ -605,7 +606,7 @@ def test_owner_confirmed_marks_the_process_proven():
 
 @contextlib.contextmanager
 def as_owner():
-    """This process as the Command Centre's owner run: the nonce check passed (lcs_owner), no LCS_BOOKINGS_CSV."""
+    """This process as an approved owner run: the nonce check passed (lcs_owner), no LCS_BOOKINGS_CSV."""
     import lcs_owner
     saved, csv_env = lcs_owner._PROVEN, os.environ.pop("LCS_BOOKINGS_CSV", None)
     lcs_owner._PROVEN = True

@@ -17,8 +17,8 @@
         (mode 600: refs, message ids, kinds, dates, amounts, rule names and flags; never note text) with its totals
         and sha256 printed. Writes nothing else.
     .venv/bin/python scripts/bookings/events.py migrate --apply --expect <sha256> --owner
-        Luca's approval only (its one-time nonce on a pipe, lcs_owner: the Command Centre's passkey, or his Allow
-        on Claude Code's prompt in a live chat): re-runs the dry
+        Luca's approval only (its one-time nonce on a pipe, lcs_owner: his Allow on Claude Code's prompt in a live
+        chat): re-runs the dry
         run under the ledger's and the store's locks, refuses a different hash (something changed since) or any
         difference compare --proposed finds, then appends the events (src migration, derived eids) and prints
         "N new events". A second apply adds nothing: "0 new events".
@@ -27,11 +27,11 @@
         proposed events added), one line per family that reads differently; "no difference" and exit 0, else exit 1.
 
     .venv/bin/python scripts/bookings/events.py retract <eid> --owner
-        the owner's undo (the Command Centre's "Undo a recorded fact", or Luca's Allow in a live chat): retract
+        the owner's undo (Luca's Allow in a live chat): retract
         {target, why: mistake}, claiming
         "earlier entry undone D (owner)" in the row's notes
     .venv/bin/python scripts/bookings/events.py notes-checked <booking|singer_invoice> <id> <hash>... --owner
-        the owner's "The recorded facts are right" (the Command Centre, or Luca's Allow in a live chat):
+        the owner's "The recorded facts are right" (Luca's Allow in a live chat):
         notes-checked {clauses}, claiming
         "notes checked D (owner)"; each hash (lcs_events.note_hash) must be a clause of the row's notes that no
         fact claims now, and once claimed the notes are read without it, so a booking or invoice held on it is
@@ -170,8 +170,8 @@ def apply_migration(args, today):
     """The owner's apply: the nonce, the folder, the same dry run (hash), no compare difference; then the events."""
     import lcs_migrate
     if not args.owner:
-        raise SystemExit("--apply needs --owner (Luca's approval: his Allow on Claude Code's prompt, or the Command "
-                         "Centre's passkey); nothing written")
+        raise SystemExit("--apply needs --owner (Luca's approval: his Allow on Claude Code's prompt); nothing "
+                         "written")
     if not args.expect or not SHA_RE.fullmatch(args.expect):
         raise SystemExit("--apply needs --expect with the dry run's sha256 (64 hex); nothing written")
     _, _, ledger_path, store_path = rows()
@@ -240,9 +240,8 @@ def undo_columns(r, kind):
 
 
 def cmd_retract(args):
-    """The owner's undo (the Command Centre's "Undo a recorded fact" after the passkey, or Luca's Allow on Claude
-    Code's prompt in a live chat): retract {target, why: mistake}, by owner, claiming "earlier entry undone D
-    (owner)" appended to the row's notes, both under the row's CSV lock; a singer invoice's columns go back
+    """The owner's undo (Luca's Allow on Claude Code's prompt in a live chat): retract {target, why: mistake}, by
+    owner, claiming "earlier entry undone D (owner)" appended to the row's notes, both under the row's CSV lock; a singer invoice's columns go back
     (undo_columns). The fact stays in the log as history, its clause set aside, so the subject reads as if it had
     never been recorded."""
     import lcs_migrate
@@ -251,7 +250,7 @@ def cmd_retract(args):
         raise SystemExit("not a recorded fact's id (16 hex); nothing written")
     if not args.owner:
         raise SystemExit("retract is the owner's: it needs --owner and Luca's approval (his Allow on Claude Code's "
-                         "prompt, or the Command Centre's passkey); nothing written")
+                         "prompt); nothing written")
     today = lm.today()
 
     def live_target():
@@ -294,9 +293,8 @@ CHECKED = "notes checked {d} (owner)"  # no kind's words in it, so the notes rea
 
 
 def cmd_notes_checked(args):
-    """The owner's "The recorded facts are right" (the Command Centre after the passkey, or Luca's Allow on Claude
-    Code's prompt in a live chat): notes-checked {clauses}, by owner, claiming "notes checked D (owner)" appended
-    to the row's notes, both under the row's CSV lock. Each hash must be a clause of that row's notes now that no
+    """The owner's "The recorded facts are right" (Luca's Allow on Claude Code's prompt in a live chat):
+    notes-checked {clauses}, by owner, claiming "notes checked D (owner)" appended to the row's notes, both under the row's CSV lock. Each hash must be a clause of that row's notes now that no
     fact claims (the loose clauses a held booking or invoice was held on): once claimed, the notes are read without
     them and the recorded facts decide."""
     import lcs_migrate
@@ -309,7 +307,7 @@ def cmd_notes_checked(args):
         raise SystemExit("1 to 20 different note clause hashes (12 hex each); nothing written")
     if not args.owner:
         raise SystemExit("notes-checked is the owner's: it needs --owner and Luca's approval (his Allow on Claude "
-                         "Code's prompt, or the Command Centre's passkey); nothing written")
+                         "Code's prompt); nothing written")
     path, cols, key = ((cp.LEDGER, None, "booking_ref") if subject == "booking"
                        else (si.STORE, si.COLUMNS, "message_id"))
     where = lcs_owner.owner_folder_problem([path, lcs_events.log_path()])
@@ -361,8 +359,7 @@ def main(argv=None):
     p.add_argument("subject", choices=lcs_events.SUBJECTS)
     p.add_argument("id")
     p.set_defaults(fn=cmd_show)
-    owner_help = ("Luca's approval only: needs its one-time nonce on stdin (the Command Centre's, or his Allow on "
-                  "Claude Code's prompt)")
+    owner_help = "Luca's approval only: needs its one-time nonce on stdin (his Allow on Claude Code's prompt)"
     p = sub.add_parser("migrate")
     p.add_argument("--apply", action="store_true")
     p.add_argument("--expect", metavar="SHA256")

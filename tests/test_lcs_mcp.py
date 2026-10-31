@@ -407,7 +407,7 @@ def test_an_unloadable_guard_allows_no_books_tool():
 
 
 def test_a_bare_command_is_found_in_the_node_folders():
-    """launchd gives the Command Centre a bare PATH: a bare `npx` is looked for in the usual Node folders."""
+    """A scheduled run may start with a bare PATH: a bare `npx` is looked for in the usual Node folders."""
     seen = []
 
     def which(cmd, path=None):

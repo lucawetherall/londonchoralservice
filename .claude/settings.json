@@ -47,7 +47,7 @@
       "Bash(.venv/bin/python scripts/bookings/singer_invoices.py pdf *)",
       "Bash(.venv/bin/python scripts/bookings/singer_invoices.py link *)",
       "Bash(.venv/bin/python scripts/bookings/singer_invoices.py margins)",
-      "Bash(.venv/bin/python scripts/reports/cc_sync.py *)",
+      "Bash(.venv/bin/python scripts/bookings/books_sync.py)",
       "Bash(.venv/bin/python scripts/bookings/check_payments.py --fact *)",
       "Bash(.venv/bin/python scripts/bookings/events.py verify)",
       "Bash(.venv/bin/python scripts/bookings/events.py show *)",
@@ -59,7 +59,6 @@
       "Agent(lcs-daily-pass)",
       "Bash(.venv/bin/python scripts/bookings/pipeline.py *)",
       "Bash(.venv/bin/python scripts/reports/dashboard.py)",
-      "Bash(.venv/bin/python scripts/reports/cc_event.py *)",
       "mcp__caefd5da-81a5-4eb0-993a-dfeaa5b9d7c1__list_calendars",
       "mcp__caefd5da-81a5-4eb0-993a-dfeaa5b9d7c1__list_events",
       "mcp__caefd5da-81a5-4eb0-993a-dfeaa5b9d7c1__search_events",
@@ -67,16 +66,21 @@
       "mcp__caefd5da-81a5-4eb0-993a-dfeaa5b9d7c1__create_event"
     ],
     "ask": [
-      "Bash(*--owner*)"
+      "Bash(*--owner*)",
+      "mcp__caefd5da-81a5-4eb0-993a-dfeaa5b9d7c1__delete_event"
     ],
     "deny": [
       "Bash(security find-generic-password *)",
       "Bash(security dump-keychain)",
       "Bash(security dump-keychain *)",
-      "Write(~/lcs-private/command-centre/**)",
-      "Edit(~/lcs-private/command-centre/**)",
+      "Write(~/lcs-private/owner-approvals/**)",
+      "Edit(~/lcs-private/owner-approvals/**)",
+      "Write(~/lcs-private/books-cache.json)",
+      "Edit(~/lcs-private/books-cache.json)",
+      "Write(~/lcs-private/books-guard.json)",
+      "Edit(~/lcs-private/books-guard.json)",
       "Bash(*owner-nonce*)",
-      "Bash(*command-centre/approvals*)",
+      "Bash(*owner-approvals*)",
       "Write(~/lcs-private/events.jsonl)",
       "Edit(~/lcs-private/events.jsonl)",
       "Write(~/lcs-private/events.jsonl.lock)",
@@ -84,7 +88,7 @@
       "Bash(git update-ref *)",
       "Bash(git remote set-url *)",
       "Bash(git config *)",
-      "Bash(*cc_backup.py init*)",
+      "Bash(*scripts/reports/backup.py init*)",
       "Edit(.git/**)",
       "Read(~/.claude.json)",
       "Read(//Users/luca/.claude.json)",
@@ -99,6 +103,17 @@
     ]
   },
   "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "[ -e \"$CLAUDE_PROJECT_DIR/.venv\" ] || { m=$(git -C \"$CLAUDE_PROJECT_DIR\" rev-parse --path-format=absolute --git-common-dir 2>/dev/null) && [ -d \"${m%/.git}/.venv\" ] && ln -s \"${m%/.git}/.venv\" \"$CLAUDE_PROJECT_DIR/.venv\"; }; exit 0",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
     "PreToolUse": [
       {
         "matcher": "Bash",

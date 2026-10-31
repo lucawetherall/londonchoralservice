@@ -17,7 +17,7 @@ tools/call, returns the text content and kills the process.
   text passed on from the server is scrubbed of URLs and of the args.
 - The server's stderr is discarded (mcp-remote logs the URL there).
 - A bare command (the config's `npx`) not on the child's PATH is looked for in /opt/homebrew/bin, /usr/local/bin
-  and nvm's folders (launchd gives the Command Centre a bare PATH); none found raises CommandNotFound, an
+  and nvm's folders (a scheduled run or a LaunchAgent may start with a bare PATH); none found raises CommandNotFound, an
   McpError that names the server only.
 - The server runs in its own session and process group; close() kills the whole group (npx's children
   too), and never waits on a pipe a stray grandchild might still hold open. A single reply is capped at
@@ -81,8 +81,7 @@ def resolve_command(name, command, env_path, dirs=None, which=shutil.which):
     """(the command to run, the folder to put first on the child's PATH or None). A command with a "/" is used
     as it is; a bare name is looked up on `env_path` (the PATH the child gets), then in `dirs` (fallback_dirs()).
     When found in a fallback folder, that folder goes first on the child's PATH too, so a `#!/usr/bin/env node`
-    script such as npx finds node beside it. Raises CommandNotFound naming the server only (launchd's bare PATH
-    has no Node: command_centre/install.sh adds its folders)."""
+    script such as npx finds node beside it. Raises CommandNotFound naming the server only."""
     if "/" in command:
         return command, None
     if which(command, path=env_path):
@@ -92,7 +91,7 @@ def resolve_command(name, command, env_path, dirs=None, which=shutil.which):
         if found:
             return found, d
     raise CommandNotFound(f"{name}: the MCP server's command isn't on PATH or in the usual Node folders "
-                          f"(re-run command_centre/install.sh, or check the MCP config)")
+                          f"(install Node, or check the MCP config)")
 
 
 def books_read_allow(path=BOOKS_GUARD):

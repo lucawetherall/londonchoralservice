@@ -8,8 +8,8 @@ this file; run it locally the same way before a pull request:
     python3 tests/run_ci_tests.py            # or .venv/bin/python
 
 Left out on purpose (26 Oct 2026):
-  - tests that import starlette, cbor2 or pypdf (the Command Centre, booking documents, singer invoices):
-    test_calendar_guard, test_cancel_contract, test_cc_*, test_dashboard, test_events_cli, test_imap_draft,
+  - tests that need packages beyond PyYAML (pypdf for booking documents and singer invoices) or the repo's
+    .venv: test_calendar_guard, test_cancel_contract, test_dashboard, test_events_cli, test_imap_draft,
     test_lcs_mcp, test_make_booking_docs, test_singer_invoices, test_singer_links, test_state_twins and
     test_weekly_proposals;
   - test_zoho_books_guard (passes, but takes over a minute).

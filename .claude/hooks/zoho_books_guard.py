@@ -23,7 +23,7 @@ correct: it may correct a draft or sent invoice's dates, payment terms, notes an
 text, reference number and lines (never the customer, currency, tax fields, or the number
 except on a draft, to a booking ref, DDMMYY or an older DDMM), and turn an invoice's payment reminders off (never on).
 Invoice updates and client payments are checked against ~/lcs-private/books-guard.json
-(cc_sync.py books; at most an hour old) and payments against the ledger. It records only
+(books_sync.py; at most an hour old) and payments against the ledger. It records only
 client payments backed by a Starling payment (one invoice, its own customer and number, sent
 and open, never above its balance, only for a booking in the ledger, with any shortfall the
 owner accepted as transfer fees, at most £40, as its bank_charges) and a singer payment
@@ -353,9 +353,9 @@ FEE_CAP = 40.00  # check_payments.FEE_CAP
 
 # --- the guard's view of Books and the ledger (owner hands-off, 14 Oct 2026) ------------------------------
 # The guard can't call Books (mcp_bypass_guard.py refuses that, rightly), so it checks invoice updates and client
-# payments against ~/lcs-private/books-guard.json, which `cc_sync.py books` writes from a read-only list_invoices:
+# payments against ~/lcs-private/books-guard.json, which `books_sync.py` writes from a read-only list_invoices:
 # each invoice's invoice_id, customer_id, number, status, total and balance. It must be at most SNAPSHOT_MAX_AGE
-# old; run `cc_sync.py books` first. A payment is also checked against the ledger (~/lcs-private/bookings.csv):
+# old; run `books_sync.py` first. A payment is also checked against the ledger (~/lcs-private/bookings.csv):
 # the invoice's booking must be there (a ref issued twice is check_payments.py's to tell apart by the payer's surname;
 # owner decision, 19 Oct 2026). A missing, unreadable or stale file denies the call (fail closed). LCS_PRIVATE_DIR and
 # LCS_BOOKINGS_CSV move both, as for the scripts.
@@ -372,8 +372,8 @@ def _private_dir():
 def _books_invoice(invoice_id, now=None):
     """The invoice as books-guard.json shows it, or Deny."""
     stale = Deny(P + "the guard checks this against ~/lcs-private/books-guard.json, which is missing, unreadable or "
-                 "more than an hour old, or doesn't list this invoice: run `.venv/bin/python scripts/reports/cc_sync.py "
-                 "books` and try again.")
+                 "more than an hour old, or doesn't list this invoice: run `.venv/bin/python "
+                 "scripts/bookings/books_sync.py` and try again.")
     try:
         with open(os.path.join(_private_dir(), "books-guard.json"), encoding="utf-8") as f:
             data = json.load(f)

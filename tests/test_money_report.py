@@ -201,7 +201,7 @@ def test_singer_line_on_its_own():
         "singer invoices unpaid: 1, £90.00, oldest 1 day · BANK DETAILS CHANGED on 1 invoice: ring before paying")
     assert mr.singer_line({"unpaid": 2, "unpaid_total": 190.0, "oldest_days": 3, "bank_changed": 0, "held": 2}) == (
         "singer invoices unpaid: 2, £190.00, oldest 3 days · HELD on 2 invoices: notes and recorded facts disagree, "
-        "check in the Command Centre before paying")
+        "settle them in a live chat before paying")
 
 
 def test_weekly_review_prints_the_singer_warning_without_a_token():

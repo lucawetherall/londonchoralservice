@@ -48,7 +48,7 @@ def test_loader_adds_nothing_while_the_code_is_empty():
 
 def test_no_built_page_names_the_counter_host():
     pages = [p for p in glob.glob("**/*.html", root_dir=ROOT, recursive=True)
-             if not p.startswith(("partials/", "command_centre/", "graphify-out/", ".")) and "/." not in p]
+             if not p.startswith(("partials/", "graphify-out/", ".")) and "/." not in p]
     assert len(pages) > 150, len(pages)
     for p in pages:
         s = open(os.path.join(ROOT, p), encoding="utf-8").read()

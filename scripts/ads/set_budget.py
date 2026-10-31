@@ -7,8 +7,6 @@ logs/ads-changes.md (LCS_ADS_LOG overrides the path). The campaign is its numeri
 Refuses a shared budget (it would move other campaigns too), a zero or negative amount, more than two decimal
 places, and a campaign that isn't found exactly once. Never removes anything.
 
-This is the first proposal-aware script: the Command Centre runs it with --validate-only, then --apply.
-
     source .venv/bin/activate
     python scripts/ads/set_budget.py 24295921372 4.50                   # validate only
     python scripts/ads/set_budget.py 24295921372 4.50 --validate-only   # the same, said explicitly
@@ -49,7 +47,7 @@ def parse(argv=None):
     p = argparse.ArgumentParser(description="Set one campaign's daily budget (never above its cap).")
     p.add_argument("campaign", help="the campaign id (digits) or its exact name")
     p.add_argument("daily", help="the new daily budget in pounds, at most the cap (5.00 unless budget_cap.py says otherwise)")
-    p.add_argument("--reason", default="approved in the Command Centre")
+    p.add_argument("--reason", default="approved by the owner")
     mode = p.add_mutually_exclusive_group()
     mode.add_argument("--validate-only", action="store_true", help="the default: Google checks it, nothing changes")
     mode.add_argument("--apply", action="store_true")

@@ -21,7 +21,7 @@ def test_page_ids():
 def test_layer_on_the_live_pages():
     pages = g.published_pages()
     assert 'christmas-carol-services.html' in pages
-    assert not any(p.startswith(('partials/', 'command_centre/')) for p in pages)
+    assert not any(p.startswith('partials/') for p in pages)
     nodes, edges = g.layer(pages)
     assert len({n['id'] for n in nodes}) == len(pages)
     pairs = {(e['source'], e['target'], e['relation']) for e in edges}

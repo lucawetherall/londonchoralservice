@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """PreToolUse guard (matcher Bash): Luca's approval for --owner commands, and an extra "ask" around Zoho Drafts.
 
-Owner approval (owner decision, 19 Oct 2026: "i dont want to have to use command centre anymore. change this", and
-"when i tell you something is okay in claude code like i am now, it should be okay to override"). The --owner forms
+Owner approval (owner decisions, 19 Oct 2026: "when i tell you something is okay in claude code like i am now, it
+should be okay to override", and 31 Oct 2026: "i run business only through Claude Code app"). The --owner forms
 of the money scripts (check_payments.py --fact/--note … --owner, singer_invoices.py confirm/settled/withdrawn …
 --owner, events.py migrate --apply/retract/notes-checked … --owner, imap_draft.py discard <Message-ID> --owner)
 write only with a one-time nonce on a pipe (lcs_owner.owner_confirmed). Luca approves one by clicking Allow on Claude
@@ -13,7 +13,7 @@ backslashes are dropped, or as a shell word, so `--own''er` counts), this hook:
   singer_invoices|events|imap_draft>.py` and plain words, single-quoted text or double-quoted text without $,
   backticks or backslashes, so no pipes, ;, &, redirects, globs, variables, env prefixes or newlines, and what Luca
   sees is exactly what runs;
-- mints the approval: deletes every outstanding owner-nonce.chat-* file in <private>/command-centre (LCS_PRIVATE_DIR,
+- mints the approval: deletes every outstanding owner-nonce.chat-* file in <private>/owner-approvals (LCS_PRIVATE_DIR,
   else ~/lcs-private; it must be a real folder, not a symlink), so only one is ever outstanding, makes a 64-hex
   secret and creates owner-nonce.chat-<its sha256> (O_EXCL, O_NOFOLLOW, mode 600) holding the command's argv from
   the script path on, the time and the session;
@@ -31,8 +31,6 @@ An approval file outlives a prompt Luca denied or never answered, so two more ch
 made for: a command naming an outstanding secret is denied, and every other Bash command from the same session
 deletes that session's outstanding approvals before it runs (the rewritten command itself passes no hook again).
 The mcp_bypass_guard refuses any command that names this hook, so it can't be run by hand to mint an approval.
-
-The Command Centre path is unchanged: the app writes its own owner-nonce after Luca's passkey and pipes the nonce in.
 
 Zoho Drafts (unchanged). Moving an arbitrary office@ draft to Trash (owner decision, 14 Oct 2026) happens only
 through `imap_draft.py discard <Message-ID> --owner` with Luca's approval as above (lcs_owner.owner_confirmed), and
@@ -62,8 +60,8 @@ HELPERS = re.compile(r"trash_draft|forget_saved|retire_original")
 PLAIN = re.compile(r"\s*(?:\.venv/bin/python|python3) scripts/bookings/imap_draft\.py (?:save|attach|sent|replace|check|test)\b"
                    r"[^;&|`$<>(){}\n\\]*")
 REASON = ("Touches Zoho Drafts beyond the automation's plain save/attach/sent/replace. Moving a draft to Trash runs "
-          "only as `imap_draft.py discard <Message-ID> --owner`, which Luca approves (his Allow on Claude Code's prompt, "
-          "or the Command Centre's passkey); from here it would refuse anyway.")
+          "only as `imap_draft.py discard <Message-ID> --owner`, which Luca approves (his Allow on Claude Code's prompt); "
+          "from here it would refuse anyway.")
 
 # One plain command: the venv's python, one of the four owner scripts, then words that mean the same to bash and to
 # shlex: plain characters, '…' without ' or control characters, "…" without ", $, `, \ or control characters.
@@ -111,8 +109,8 @@ def owner_command(text):
 
 
 def approvals_folder():
-    """<private dir>/command-centre, as lcs_owner.owner_nonce_path() reads it (LCS_PRIVATE_DIR at call time)."""
-    return Path(os.environ.get("LCS_PRIVATE_DIR", Path.home() / "lcs-private")) / "command-centre"
+    """<private dir>/owner-approvals, as lcs_owner.owner_approvals_dir() reads it (LCS_PRIVATE_DIR at call time)."""
+    return Path(os.environ.get("LCS_PRIVATE_DIR", Path.home() / "lcs-private")) / "owner-approvals"
 
 
 def outstanding(folder):
@@ -178,7 +176,7 @@ def approve(event, tool_input, command):
     try:
         secret = mint(argv, session)
     except NotSetUp:
-        return "deny", (P + "the private folder isn't set up (its command-centre folder is missing or not a real "
+        return "deny", (P + "the private folder isn't set up (its owner-approvals folder is missing or not a real "
                         "folder), so an --owner action can't be approved here. Nothing was run.")
     except ValueError as e:
         return "deny", f"{P}{e}. Nothing was run."

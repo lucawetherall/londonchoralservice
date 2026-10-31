@@ -1,8 +1,7 @@
 """Where the Ads scripts log applied changes, and how they add a row.
 
-The log is logs/ads-changes.md in the repo. The Command Centre runs proposal-aware scripts from a copy of a
-commit on GitHub's main in a temp folder, where a path relative to __file__ would miss the real log, so it sets
-LCS_ADS_LOG to the repo's log. Without it, the path is the usual one relative to this file.
+The log is logs/ads-changes.md in the repo, the path relative to this file. LCS_ADS_LOG overrides it, for a script
+run from a copy of the repo elsewhere, where a path relative to __file__ would miss the real log.
 
 Either way the log must be a repo's own logs/ads-changes.md (a folder holding .git and scripts/ads/ads_log.py),
 a plain file reached through no symlink: anything else is refused before a change is made, so an applied change

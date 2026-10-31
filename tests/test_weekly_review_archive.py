@@ -132,7 +132,7 @@ def test_without_the_flag_nothing_is_written():
 REPORT = ("== 1. Campaigns\ncampaign line\n\n== 2. Search terms, last 7 days\nterm line\n\n"
           "== 4b. Google's recommendations\nrec line\n\n== 12. Seasonal budget rules\n"
           "   Christmas value check: £9.00 spent\n   stop rule: back to £5 if …\n"
-          "   Command Centre proposals not written: RuntimeError\n")
+          "   spend guard failed: RuntimeError\n")
 
 
 def test_quiet_saves_the_report_and_prints_only_path_sections_and_problems(monkeypatch):
@@ -149,7 +149,7 @@ def test_quiet_saves_the_report_and_prints_only_path_sections_and_problems(monke
         assert f.read() == REPORT
     lines = out.getvalue().splitlines()
     assert lines == [f"report saved: {path}", "sections: 1 2 4b 12",
-                     "problem: Command Centre proposals not written: RuntimeError"], lines
+                     "problem: spend guard failed: RuntimeError"], lines
 
 
 def test_quiet_without_save_report_is_refused(monkeypatch):
@@ -301,7 +301,7 @@ def test_with_google_signed_out_every_section_still_reports(monkeypatch):
     def signed_out():
         raise RefreshError("invalid_grant: Token has been expired or revoked.")
     q, s = wr._Lazy(signed_out), wr._Lazy(signed_out)
-    args = types.SimpleNamespace(since=datetime.date(2026, 9, 26), write_proposals=False, gsc_shortlist=False)
+    args = types.SimpleNamespace(since=datetime.date(2026, 9, 26), gsc_shortlist=False)
     out = io.StringIO()
     with contextlib.redirect_stdout(out):
         wr.run_sections(args, q=q, s=s)

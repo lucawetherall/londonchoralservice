@@ -18,7 +18,7 @@ This is the full history of `MANUAL-ACTIONS-REQUIRED.md` as it stood on 24 Oct 2
 - **Ireland and Scotland regions (§14.1):** confirmed as set.
 - **US lead time (§14.3):** owner asked for an estimate. The page now says the visa work takes four to six months (union consultation, petition, embassy interview), asks for at least nine months and prefers twelve, and says under six months is unlikely to work.
 - **Sign-offs (§16.2, 16.3, 16.5, 16.6):** owner delegated. Kept `terms.html`, `accessibility.html` and the reply-time promises as published: the enquiry assistant drafts replies every two hours from 06:00 to 22:00, so one working day (same working day for funerals) is realistic. The booking-confirmation template wasn't on this Mac to compare against the terms page. The iPad menu check was dropped.
-- **Singer bank details (§22):** off the list (owner, 24 Oct: he pays every singer by hand). When a changed-details warning appears, he rings the singer and tells Claude in a chat; Claude runs `singer_invoices.py confirm <id>`, with no Allow click or passkey.
+- **Singer bank details (§22):** off the list (owner, 24 Oct: he pays every singer by hand). When a changed-details warning appears, he rings the singer and tells Claude in a chat; Claude runs `singer_invoices.py confirm <id>`, with no Allow click.
 
 ---
 
@@ -516,7 +516,7 @@ What was asked of you (kept for the record):
 
 ## 21. Back up ~/lcs-private/fingerprint.key
 
-**Covered, checked 2026-10-23:** the Command Centre's nightly job (`scripts/reports/cc_backup.py`, 02:30) writes an age-encrypted copy of the whole `~/lcs-private` folder, `fingerprint.key` included, to iCloud Drive → LCS-backups; the newest is from 02:30 today. Make sure the backup's secret key ("AGE-SECRET-KEY-1…", shown once at `init`) is in your password manager, since without it the backups can't be opened. There is no Time Machine destination on this Mac.
+**Covered, checked 2026-10-23:** the nightly backup job (`scripts/reports/backup.py`, LaunchAgent `com.lcs.backup`, 02:30; it was the Command Centre's until 31 Oct 2026) writes an age-encrypted copy of the whole `~/lcs-private` folder, `fingerprint.key` included, to iCloud Drive → LCS-backups; the newest is from 02:30 today. Make sure the backup's secret key ("AGE-SECRET-KEY-1…", shown once at `init`) is in your password manager, since without it the backups can't be opened. There is no Time Machine destination on this Mac.
 
 This key turns a singer's bank sort code and account number into the fingerprint the singer-invoice tracker uses to spot a changed bank detail. It lives outside the repo at `~/lcs-private/fingerprint.key`.
 
@@ -531,8 +531,7 @@ When the assistant's summary carries a warning like "BANK DETAILS CHANGED" or "D
 What to do:
 
 1. Ring the singer on a number you already hold for them, not a number from the new invoice, and confirm the new bank details by voice.
-2. Once confirmed, open the Command Centre's Singers page, choose "Act on <name>'s invoice", then "Confirm bank details", and approve with Face ID or Touch ID. The terminal command no longer works on its own: `confirm` needs the app's passkey approval. Claude never confirms bank details: this check exists specifically so a changed bank detail always gets a human phone call before the invoice is treated as genuine.
-3. If the Command Centre is down, set `bank_confirmed` to `yes` for that invoice in `~/lcs-private/singer-invoices.csv` by hand. It counts until a rescan changes the details.
+2. Once confirmed, tell Claude in a live chat that you've rung the singer; Claude then runs `singer_invoices.py confirm <id>` (owner decision, 24 Oct 2026). Claude never confirms bank details without your word: this check exists so a changed bank detail always gets a human phone call before the invoice is treated as genuine.
 
 ---
 

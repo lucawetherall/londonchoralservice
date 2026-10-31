@@ -176,7 +176,7 @@ def test_ad_visit_is_held_in_a_variable_and_never_stored():
 def form_pages():
     out = []
     for p in sorted(glob.glob("**/*.html", root_dir=ROOT, recursive=True)):
-        if p.startswith(("partials/", "command_centre/", ".")) or "/." in p:
+        if p.startswith(("partials/", ".")) or "/." in p:
             continue
         s = open(os.path.join(ROOT, p)).read()
         if 'class="contact-form"' in s or 'id="pe-enquiry"' in s:
