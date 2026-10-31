@@ -292,8 +292,12 @@ def test_owner_commands_always_prompt_and_the_proofs_stay_denied():
                  "Edit(~/lcs-private/events.jsonl)", "Write(~/lcs-private/events.jsonl.lock)",
                  "Edit(~/lcs-private/events.jsonl.lock)"):
         assert rule in deny, rule
-    assert ask == ["Bash(*--owner*)"], ask
-    asks = patterns_of(ask)
+    # a calendar delete always prompts too (31 Oct 2026), behind calendar_guard's own "ask"
+    assert ask == ["Bash(*--owner*)", "mcp__caefd5da-81a5-4eb0-993a-dfeaa5b9d7c1__delete_event"], ask
+    for rule in ("Write(~/lcs-private/books-cache.json)", "Edit(~/lcs-private/books-cache.json)",
+                 "Write(~/lcs-private/books-guard.json)", "Edit(~/lcs-private/books-guard.json)"):
+        assert rule in deny, rule
+    asks = patterns_of([a for a in ask if a.startswith("Bash(")])
     owner_forms = [c for c in NEVER + SCRIPT_GUARDED if "--owner" in c]
     assert len(owner_forms) >= 7, owner_forms
     for cmd in owner_forms + [f"printf '%s\\n' {'a' * 64} | {c}" for c in owner_forms]:  # as the hook rewrites it
