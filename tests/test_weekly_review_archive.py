@@ -307,8 +307,14 @@ def test_with_google_signed_out_every_section_still_reports(monkeypatch):
         wr.run_sections(args, q=q, s=s)
     text = out.getvalue()
     heads = __import__("re").findall(r"^== (\w+)\.", text, __import__("re").M)
-    assert heads == ["1", "1b", "2", "3", "4", "4b", "5", "5c", "5d", "6", "7", "8", "9", "9b", "10", "11", "12",
-                     "13"], heads
+    assert heads == ["0b", "1", "1b", "2", "3", "4", "4b", "5", "5c", "5d", "6", "7", "8", "9", "9b", "9c", "10",
+                     "11", "12", "13", "0"], heads
+    # section 0, printed last, still reports the pipeline and lists the failures above as its alarms
+    brief = text.split("== 0. This week in brief")[1]
+    assert "   ad spend: not read (section 11 has no figures)" in brief.splitlines(), brief
+    assert "   alarm: SECTION 1 FAILED: RefreshError (looks like a Google auth error: check the sign-in)" \
+        in brief.splitlines(), brief
+    assert "   no run log yet (assistant_io.py writes it from 2026-10-26)" in text.splitlines(), text
     hint = "RefreshError (looks like a Google auth error: check the sign-in)"
     for sid in ("1", "1b", "2", "3", "4", "4b", "5", "6", "7", "8"):
         assert f"   SECTION {sid} FAILED: {hint}" in text.splitlines(), (sid, text)
@@ -321,8 +327,9 @@ def test_with_google_signed_out_every_section_still_reports(monkeypatch):
     with open(path, "w", encoding="utf-8") as f:
         f.write(text)
     summary = wr.quiet_summary(path)
-    assert "sections: 1 1b 2 3 4 4b 5 5c 5d 6 7 8 9 9b 10 11 12 13" in summary, summary
+    assert "sections: 0b 1 1b 2 3 4 4b 5 5c 5d 6 7 8 9 9b 9c 10 11 12 13 0" in summary, summary
     assert f"problem: SECTION 1 FAILED: {hint}" in summary.splitlines(), summary
+    assert not any(l.startswith("problem: alarm:") for l in summary.splitlines()), summary  # listed once, not twice
 
 
 def test_quiet_lists_failed_sections_but_not_log_rows_held_guards_or_c_grades():

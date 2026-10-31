@@ -24,6 +24,7 @@ import time
 TESTS = [
     "test_ad_attribution.py",
     "test_assistant_io.py",
+    "test_brief.py",
     "test_check_history_names.py",
     "test_check_payments.py",
     "test_christmas_pages.py",
@@ -49,6 +50,7 @@ TESTS = [
     "test_prompt_allowlist.py",
     "test_register_generators.py",
     "test_review_lint.py",
+    "test_review_log.py",
     "test_routine_health.py",
     "test_set_budget.py",
     "test_stage_site.py",
@@ -57,6 +59,7 @@ TESTS = [
     "test_validate_proposal.py",
     "test_visit_counter.py",
     "test_weekly_review_archive.py",
+    "test_weekly_review_snapshot.py",
     "test_zoho_guard.py",
 ]
 

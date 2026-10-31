@@ -213,21 +213,55 @@ def abc(c):
     return f"A {c['A']} · B {c['B']} · C {c['C']}"
 
 
-def line(g):
-    """One enquiry as the report prints it: date, occasion, source, grade and campaign, and why. No free text."""
+COINCIDENCE_SHARE = 0.5  # a C on a campaign that clicked on this share of days or more is likely a coincidence
+
+
+def base_rate(clicks, key, start, end):
+    """(days, of) for grade C: on how many days from start to end (inclusive) the campaign `key` had an ad click
+    that day or the day before, which is what a C needs. clicks: grade()'s set of (date, campaign key)."""
+    n, day, total = 0, start, 0
+    while day <= end:
+        total += 1
+        if (day, key) in clicks or (day - datetime.timedelta(days=1), key) in clicks:
+            n += 1
+        day += datetime.timedelta(days=1)
+    return n, total
+
+
+def rate_note(rate):
+    """'that campaign clicked on n of 28 days: a coincidence is likely' (half the days or more) or '…: worth a
+    look'."""
+    n, of = rate
+    verdict = "a coincidence is likely" if of and n / of >= COINCIDENCE_SHARE else "worth a look"
+    return f"that campaign clicked on {n} of {of} days: {verdict}"
+
+
+def line(g, rates=None):
+    """One enquiry as the report prints it: date, occasion, source, grade and campaign, and why. No free text.
+    rates: {campaign key: base_rate()} adds a C's base rate."""
     if g["grade"] in GRADES:
         verdict = f"{g['grade']} {label(g['campaign'])}"
     else:
         verdict = "not from an ad"
+    how = g["how"]
+    if g["grade"] == "C" and rates and g["campaign"] in rates:
+        how += "; " + rate_note(rates[g["campaign"]])
     extra = (f" · heard: {g['heard']}" if g["heard"] and g["heard"] not in g["how"] else "") \
         + (" · ad measurement: yes" if g["measured"] else "")
-    return f"{g['first_seen']} · {g['occasion']} · {g['source']} · {verdict} ({g['how']}){extra}"
+    return f"{g['first_seen']} · {g['occasion']} · {g['source']} · {verdict} ({how}){extra}"
 
 
-def counts_lines(c, labels=None):
-    """'<campaign>: A n · B n · C n' per campaign, then the ad enquiries that name no campaign."""
+def counts_lines(c, labels=None, rates=None):
+    """'<campaign>: A n · B n · C n' per campaign (with rates, {campaign key: base_rate()}: 'C n (clicked d/28
+    days)'), then the ad enquiries that name no campaign."""
     labels = labels or {}
-    out = [f"{labels.get(k) or label(k)}: {abc(c[k])}" for k in ORDER]
+
+    def grades(k):
+        text = abc(c[k])
+        if rates and k in rates:
+            text += f" (clicked {rates[k][0]}/{rates[k][1]} days)"
+        return text
+    out = [f"{labels.get(k) or label(k)}: {grades(k)}" for k in ORDER]
     out.append(f"no campaign named: A {c[None]['A']} · B {c[None]['B']}")
     return out
 
