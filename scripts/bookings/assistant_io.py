@@ -15,6 +15,9 @@ prompts). Private data stays in ~/lcs-private/; this file holds none.
         Zoho failed to connect at the start of this run: print "retry: yes <fireAt>" (Europe/London,
         ten minutes from now) the first time, so the run books one retry run in a fresh session, and
         "retry: no" while a retry booked in the last 3 hours hasn't been followed by a `done`
+    state, done, zoho-down and daily-done each also append one JSON line to ~/lcs-private/assistant-runs.jsonl
+    ({"start": <run_started>}, {"done": <now>, "marked": n}, {"zoho_down": <now>}, {"daily": "YYYY-MM-DD"}; UTC,
+    to the second, as last_checked), for the Monday review's count of runs; best effort, never changing the output
     .venv/bin/python scripts/bookings/assistant_io.py style
         print the private email style guide (~/lcs-private/email-style.md)
     .venv/bin/python scripts/bookings/assistant_io.py prices
@@ -100,6 +103,59 @@ london_today = lm.today  # today's Europe/London date (`now`: an aware datetime,
 def daily_due(state, now=None):
     """True until the daily pass is recorded for this Europe/London date."""
     return state.get("daily_done") != london_today(now).isoformat()
+
+
+# --- run log -------------------------------------------------------------------------------------
+# One JSON line per state, done, zoho-down and daily-done in RUN_LOG, so the Monday review can count runs started,
+# finished, stopped early and Zoho-down, and find gaps (plan 2026-10-31, task 12). Best effort: a log that can't be
+# written (a directory, a read-only file, a symlink, a full disk) never changes what a command prints or its exit code.
+
+RUN_LOG = PRIVATE / "assistant-runs.jsonl"
+RUN_LOG_DAYS = 60  # lines older than this go when the file is rewritten
+RUN_LOG_MAX_LINES = 2000  # about 19 lines a day: the file is pruned only once it passes this
+
+
+def run_log_time(entry):
+    """An entry's time (aware datetime) from its start, done, zoho_down or daily value, else None."""
+    for key in ("start", "done", "zoho_down", "daily"):
+        value = entry.get(key) if isinstance(entry, dict) else None
+        if isinstance(value, str):
+            try:
+                t = datetime.datetime.fromisoformat(value)
+            except ValueError:
+                return None
+            return t if t.tzinfo else t.replace(tzinfo=lm.LONDON)
+    return None
+
+
+def log_run(entry, now=None):
+    """Append `entry` to RUN_LOG (mode 600 on create, never through a symlink); once the file passes
+    RUN_LOG_MAX_LINES, rewrite it without the lines older than RUN_LOG_DAYS (and any unreadable one)."""
+    try:
+        now = now or datetime.datetime.now(datetime.timezone.utc)
+        line = json.dumps(entry) + "\n"
+        with lm.ledger_lock(RUN_LOG):
+            fd = os.open(RUN_LOG, os.O_WRONLY | os.O_APPEND | os.O_CREAT | os.O_NOFOLLOW, 0o600)
+            with os.fdopen(fd, "a") as f:
+                f.write(line)
+            lines = RUN_LOG.read_text().splitlines()
+            if len(lines) > RUN_LOG_MAX_LINES:
+                cutoff = now - datetime.timedelta(days=RUN_LOG_DAYS)
+                kept = []
+                for text in lines:
+                    try:
+                        t = run_log_time(json.loads(text))
+                    except ValueError:
+                        t = None
+                    if t is not None and t >= cutoff:
+                        kept.append(text + "\n")
+                private_write(RUN_LOG, "".join(kept))
+    except Exception:  # noqa: BLE001 - the log is a nicety; the run's own output and exit code come first
+        pass
+
+
+def utc_now_iso():
+    return datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds")
 
 
 RETRY_AFTER = datetime.timedelta(minutes=10)
@@ -383,11 +439,13 @@ def main():
         private_write(STATE, json.dumps(s, indent=1))
         print(json.dumps({"now": s["run_started"], "last_checked": s["last_checked"],
                           "daily_due": daily_due(s, now), "handled": s["handled"][-500:]}))
+        log_run({"start": s["run_started"]})
     elif cmd == "daily-done":
         s = load_state()
         s["daily_done"] = london_today().isoformat()
         private_write(STATE, json.dumps(s, indent=1))
         print(f"daily pass done for {s['daily_done']}")
+        log_run({"daily": s["daily_done"]})
     elif cmd == "done":
         s = load_state()
         started = s.pop("run_started", None) or datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds")
@@ -396,6 +454,7 @@ def main():
         s.pop("retry_booked_at", None)
         private_write(STATE, json.dumps(s, indent=1))
         print(f"state saved: last_checked {started}, {len(args)} message(s) marked")
+        log_run({"done": utc_now_iso(), "marked": len(args)})
     elif cmd == "zoho-down":
         s = load_state()
         now = datetime.datetime.now(datetime.timezone.utc)
@@ -406,6 +465,7 @@ def main():
             print(f"retry: yes {at}")
         else:
             print(f"retry: no (a retry was booked at {s['retry_booked_at']})")
+        log_run({"zoho_down": now.isoformat(timespec="seconds")}, now)
     elif cmd == "style":
         print(STYLE.read_text() if STYLE.exists() else "(no style guide at ~/lcs-private/email-style.md)")
     elif cmd == "prices":
