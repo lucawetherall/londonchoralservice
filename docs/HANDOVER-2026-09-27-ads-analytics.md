@@ -101,6 +101,7 @@ Every Google Ads and GA4 change is logged, with before → after and reason, in 
 | `~/.claude/skills/`, plugins, `~/.claude/CLAUDE.md` | Personal skills and plugins | Reinstall (step 9) |
 | `~/.claude/scheduled-tasks/christmas-carol-campaign-review/` | Weekly marketing review | Recreate from Appendix A (step 11) |
 | `~/.claude/scheduled-tasks/enquiry-assistant/` | Enquiry assistant (drafts replies, makes invoices) | Recreate from Appendix E (step 11) |
+| `~/.claude/scheduled-tasks/routine-watchdog/` | Routine watchdog (push alert when a routine stops running) | Recreate from Task 13 of `docs/superpowers/plans/2026-10-31-weekly-review-improvements.md` (cron `37 9,13,17,21 * * *`) |
 | `~/.claude/projects/…/memory/` | Claude's memory notes | Not needed: the important rules are now in `CLAUDE.md` |
 
 ## 4. Setting up a new machine
