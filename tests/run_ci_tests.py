@@ -49,6 +49,7 @@ TESTS = [
     "test_prompt_allowlist.py",
     "test_register_generators.py",
     "test_review_lint.py",
+    "test_routine_health.py",
     "test_set_budget.py",
     "test_stage_site.py",
     "test_upload_bookings.py",
