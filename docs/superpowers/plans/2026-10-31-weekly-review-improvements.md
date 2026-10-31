@@ -236,6 +236,24 @@ The assistant records only `last_checked`, so these left no trace in any report.
 - CLAUDE.md's weekly-review bullet mentions section 0, the review file, the proposals record and the lint.
 - `docs/ROADMAP.md` gets an item for linting the reply drafter's text with Task 5's checks before it saves a draft (Task 12).
 
+### Task 13: a routine watchdog, and runs that close themselves (added 31 Oct)
+
+The owner asked whether the scheduled tasks could be improved further, and approved both changes. A run that never starts can't raise its own alarm, and the Monday section 9c only sees a stopped assistant up to a week later. The owner chose "no extra routine" on 29 Oct, when the assistant learned to close its own session. On 31 Oct he approved this watchdog anyway.
+
+- **The script:** `scripts/reports/routine_health.py` (read-only; tests in `tests/test_routine_health.py`) prints an `ALERT:` line in two cases: an enquiry-assistant slot (`7 6-22/2`, London) passed by more than 45 minutes with no "start" in `~/lcs-private/assistant-runs.jsonl`, or no report was saved for the latest Monday by 11:00.
+- **The task:** "Routine watchdog" (`routine-watchdog`, cron `37 9,13,17,21 * * *`, no completion notice). Its prompt, verbatim:
+
+```text
+Routine watchdog for The London Choral Service, run unattended in the repo folder (~/Documents/GitHub/londonchoralservice). Keep this run as small as possible: read no files, email or CLAUDE.md, and call no tool but the ones named here.
+
+1. Run this one shell command from the repo folder: `.venv/bin/python scripts/reports/routine_health.py`. It is read-only and prints lines starting "ok:", "note:" or "ALERT:".
+2. If any line starts with "ALERT:", load the tool with ToolSearch "select:PushNotification" and send ONE push notification (under 200 characters) built from the ALERT lines, for example "Enquiry assistant hasn't run since Tue 09:07: a run may be stuck open." If the command itself fails, send one push notification: "Routine watchdog couldn't run its check: <the error's first line>". Otherwise send nothing.
+3. Close the run: load the tool with ToolSearch "select:mcp__ccd_session_mgmt__archive_session", then, in the same message as your final reply, call it with session_id "self" and reason "watchdog run finished". Your final reply is the command's output, word for word. If the archive call is refused, say so in one line and end; never retry it.
+```
+
+- **The company-mail archive** (`company-mail-archive`) now ends every run by archiving its own session, as the enquiry assistant does. Its old prompt is backed up in `~/lcs-private/backups/`.
+- **The Monday review** keeps its session open on purpose, because the owner answers its question in that session.
+
 ## 4. Order
 
 1. Tasks 0, 1, 2, 3, 4, 9, Task 6's section 11 and 13 changes, and Task 12's section 9c go on one branch. They all touch `weekly_review.py`, so one worker does them in turn.
