@@ -49,7 +49,8 @@ report and the dashboard import summary_dict().
         JSON [{enquiry_id, booking_ref}]: booked enquiries whose ledger row is paid in full
         with the event past, not cancelled and not yet done (funerals included)
     .venv/bin/python scripts/bookings/pipeline.py summary [--since YYYY-MM-DD]
-        JSON counts by status and source, conversion and median days to quote
+        JSON counts by status and source, conversion and median days to quote, and open_whatsapp
+        (WhatsApp enquiries still new or quoted, first seen in the last 28 days, whatever --since)
 
 Follow-ups (status quoted, no booking_ref), each counted from last_contact, which
 `quoted`, `contact` and `followed` move: the first 5 days after the quote, the second
@@ -99,6 +100,7 @@ BOOKED = {"confirmed", "deposit_paid", "done"}
 FIRST_AFTER, SECOND_AFTER, LOST_AFTER = 5, 10, 10  # days since last_contact (the quote, then each chase)
 THIRD_AFTER, LONG_LOST_AFTER = 14, 14  # corporate and Christmas only: a third chase, then lost
 LONG_RUNWAY = {"corporate", "christmas"}
+OPEN_WHATSAPP_DAYS = 28  # summary's open_whatsapp: first seen in the last 28 days, today included
 REVIEW_FROM, REVIEW_UNTIL = 2, 14  # days after the event
 REMIND_FROM, REMIND_UNTIL = 7, 14  # days after the review request: one reminder
 QUOTED_NOTE = re.compile(r"\bquoted (\d{4}-\d{2}-\d{2})\b")
@@ -348,14 +350,24 @@ def heard_kind(answer):
     return "other"
 
 
-def summary_dict(rows, since=None):
+def open_whatsapp(rows, today):
+    """Enquiries by WhatsApp still open (status new or quoted) and first seen in the 28 days to `today`: the Monday
+    review asks its WhatsApp question only while there is one."""
+    cutoff = today - datetime.timedelta(days=OPEN_WHATSAPP_DAYS - 1)
+    return sum(1 for r in rows
+               if (r.get("source") or "").strip().lower() == "whatsapp" and status_of(r) in ("new", "quoted")
+               and (to_date(r.get("first_seen")) or datetime.date.min) >= cutoff)
+
+
+def summary_dict(rows, since=None, today=None):
     """Pipeline figures for enquiries first seen on or after `since` (a date, a YYYY-MM-DD string or None).
 
     quoted: enquiries that got a quote (status quoted, a quoted_gbp or a "quoted" note), whatever happened next.
     confirmed: enquiries that became a booking (confirmed, deposit_paid, done, or cancelled with a booking_ref).
     conversion_rate: confirmed / enquiries, 3 decimal places (None with no enquiries).
     median_days_to_quote: first_seen to the first "quoted YYYY-MM-DD" note (None when there are none); a
-    negative figure (a mistyped date) is left out. Statuses are counted whatever their case."""
+    negative figure (a mistyped date) is left out. Statuses are counted whatever their case.
+    open_whatsapp: open_whatsapp() over every row, whatever `since` (`today`: a date, default the London date)."""
     since = to_date(since) if since else None
     picked = [r for r in rows if since is None or (to_date(r.get("first_seen")) or datetime.date.min) >= since]
     by_status = {s: 0 for s in STATUS_ORDER}
@@ -387,6 +399,7 @@ def summary_dict(rows, since=None):
         "conversion_rate": round(confirmed / n, 3) if n else None,
         "by_source": by_source,
         "median_days_to_quote": median,
+        "open_whatsapp": open_whatsapp(rows, to_date(today) or lm.today()),
     }
 
 
