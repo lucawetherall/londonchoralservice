@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
-"""Is each scheduled routine still running? Read-only; for the routine watchdog task.
+"""Is each scheduled routine still running? Read-only; a check to run by hand.
 
 A run session left open (or stuck on a permission prompt) stops every later run of that task from starting
-(27-29 Oct 2026: no mail was checked for 37 hours). A run that never starts can't raise its own alarm, so a
-separate task runs this a few times a day and sends a push notification on any ALERT line.
+(27-29 Oct 2026: no mail was checked for 37 hours), and a run that never starts can't raise its own alarm. A
+watchdog task ran this four times a day on 31 Oct 2026; the owner removed it the same day as not worth its tokens
+(runs now close themselves, and the Monday report's section 9c counts the assistant's runs), so run it by hand when
+something seems off.
 
 Checks:
 - The enquiry assistant (cron "7 6-22/2 * * *", Europe/London) wrote a "start" line in

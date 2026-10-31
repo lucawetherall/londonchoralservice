@@ -238,6 +238,8 @@ The assistant records only `last_checked`, so these left no trace in any report.
 
 ### Task 13: a routine watchdog, and runs that close themselves (added 31 Oct)
 
+> **Watchdog removed, 31 Oct 2026, later the same evening.** The owner asked whether he really needed it, and decided not: four full sessions a day spent tokens almost only to print "ok". Self-closing runs, section 9c and the required deploy check (branch protection since 31 Oct) cover what it caught. The task is deleted, and `scripts/reports/routine_health.py` stays as a check to run by hand. The prompt below is kept in case the decision is ever revisited. The company-mail change stands.
+
 The owner asked whether the scheduled tasks could be improved further, and approved both changes. A run that never starts can't raise its own alarm, and the Monday section 9c only sees a stopped assistant up to a week later. The owner chose "no extra routine" on 29 Oct, when the assistant learned to close its own session. On 31 Oct he approved this watchdog anyway.
 
 - **The script:** `scripts/reports/routine_health.py` (read-only; tests in `tests/test_routine_health.py`) prints an `ALERT:` line in two cases: an enquiry-assistant slot (`7 6-22/2`, London) passed by more than 45 minutes with no "start" in `~/lcs-private/assistant-runs.jsonl`, or no report was saved for the latest Monday by 11:00.
