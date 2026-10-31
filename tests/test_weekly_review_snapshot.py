@@ -192,7 +192,9 @@ def test_section_0b_lists_due_watch_items_open_proposals_changes_and_merged_prs(
               "\n## Watch\n\n- funeral clicks after the bid change (due 2026-11-02)\n- later thing (due 2026-11-16)\n")
     write(os.path.join(TMP, "2026-10-26.md"), review)
     review_log.record(os.path.join(TMP, "2026-10-26.md"))
-    git = FakeGit("Merge pull request #419 from x/y\x1ffeat(review): section 0\n\nbody\x1e"
+    git = FakeGit("feat(review): reply lint and the run log (#421)\x1fbody\x1e"
+                  "chore: a commit pushed straight to main\x1f\x1e"
+                  "Merge pull request #419 from x/y\x1ffeat(review): section 0\n\nbody\x1e"
                   "Merge pull request #418 from x/z\x1ffix(books): read wrapped replies\x1e"
                   "Merge pull request #417 from lucawetherall/claude/some-branch\x1f\x1e")
     out = io.StringIO()
@@ -207,10 +209,11 @@ def test_section_0b_lists_due_watch_items_open_proposals_changes_and_merged_prs(
     assert lines[i + 2] == "   open 2026-10-26-02 · ads · x → y: 1 → 2"
     assert "   1 watch item not due yet" in lines, lines
     assert any(l.startswith("-- Ads changes logged in logs/ads-changes.md since 2026-10-26: ") for l in lines), lines
-    assert lines[-3:] == ["   merged #419 feat(review): section 0", "   merged #418 fix(books): read wrapped replies",
+    assert lines[-4:] == ["   merged #421 feat(review): reply lint and the run log",
+                          "   merged #419 feat(review): section 0", "   merged #418 fix(books): read wrapped replies",
                           "   merged #417 (branch claude/some-branch)"], lines
     log_cmd = [c for c in git.calls if "log" in c][0]
-    assert "--merges" in log_cmd and "--since=2026-10-26" in log_cmd and "origin/main" in log_cmd, log_cmd
+    assert "--first-parent" in log_cmd and "--since=2026-10-26" in log_cmd and "origin/main" in log_cmd, log_cmd
     path = os.path.join(TMP, "q.txt")
     write(path, out.getvalue())
     assert "problems: none" in wr.quiet_summary(path)  # "error-page" in a proposal is not a problem

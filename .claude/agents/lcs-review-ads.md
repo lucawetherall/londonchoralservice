@@ -49,6 +49,7 @@ RESULT (reply with exactly these headings; short lines; UK spelling; no preamble
 HEADLINES: 3–5 numbers for the owner.
 ADS: one line per campaign, "<campaign>: <strength of its best enabled ad>, headlines=n descriptions=n, sitelinks=n, lost to rank <x>%", plus any lost-to-rank keyword fix (step 2).
 SEARCH TERMS: a markdown table, one row per class: class | clicks | cost | paid terms (with matched keyword for NOT A BUYER).
+HIRING TERMS: every term you classed HIRING this week, paid or not, separated by " ; " (the standing approvals check each proposed negative against them), or "none".
 NEGATIVES: "held" or what slipped through, one line.
 TRACKING: one or two lines (conversions last seen, GA4 events, wiring). Any "ALARM:" line first.
 AD CLICKS BY DAY: the step 6 lines, or "none".
@@ -56,4 +57,4 @@ CHRISTMAS: the value check line and your call in one sentence.
 SPEND GUARD: the lines (£80+ in 28 days with no A or B enquiry → propose pausing; Ads conversions shown, never a hold).
 GOOGLE RECOMMENDATIONS: one line.
 FLAGS: each 1b "changed since" line no logged change explains (quote it), each campaign over its budget cap, and the other flags from the steps above, or "none".
-PROPOSED ADS CHANGES: numbered, "resource → field: current → new — reason". Negatives as "campaign <name>: negative <text> (<match>) — blocks '<term>'". Or "none".
+PROPOSED ADS CHANGES: numbered, "resource → field: current → new — reason". Negatives as "campaign <name> (<campaign id from 1b>) → negative: none → <text> (<match>) — blocks '<term>'" (the review applies these itself under the owner's standing approval, after checking that none blocks a HIRING term; everything else waits for him). A budget change, a rise above all, is only ever a proposal: the owner approves every change in ad spend himself (owner, 31 Oct 2026), and it never goes above the cap in budget_cap.py. Or "none".
