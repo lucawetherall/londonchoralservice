@@ -12,7 +12,7 @@ Sections (in the order printed):
       report's 1b
   2. Search terms, last 7 days, with the keyword that matched each one
   3. Conversions per action (7 and 28 days), primary or secondary, status, and the last day each was seen;
-     "!CHECK" when an action other than the owner's two is primary or either of those isn't primary and ENABLED
+     "!CHECK" when an action other than "Submit lead form" is primary, or it isn't primary and ENABLED
   4. Ads: approval, review status, strength, headline and description counts, final URL; enabled sitelinks
      per campaign
   5. GA4: lead/contact events with their parameters; sessions by channel
@@ -241,7 +241,8 @@ def search_terms_section(q):
         print("   (none)")
 
 
-PRIMARY_ACTIONS = ("Submit lead form", "WhatsApp or email click")  # the owner's two primary conversion actions
+PRIMARY_ACTIONS = ("Submit lead form",)  # the owner's one primary conversion action (WhatsApp or email click secondary
+# since 31 Oct 2026: a tap is not a sent message)
 
 
 def conversions_section(q):
@@ -271,7 +272,7 @@ def conversions_section(q):
         role = "primary" if c.primary_for_goal else "secondary"
         flags = []
         if c.primary_for_goal and name not in PRIMARY_ACTIONS:
-            flags.append("!CHECK: primary, but not one of the owner's two primary actions")
+            flags.append("!CHECK: primary, but only Submit lead form should be")
         if name in PRIMARY_ACTIONS and not c.primary_for_goal:
             flags.append("!CHECK: should be primary")
         if name in PRIMARY_ACTIONS and status != "ENABLED":
@@ -729,7 +730,7 @@ def ga4_section(s):
     for dims in (["eventName"],
                  ["eventName", "customEvent:occasion", "customEvent:lead_source"],
                  ["eventName", "customEvent:method", "customEvent:link_location"],
-                 ["eventName", "customEvent:error_type"]):
+                 ["eventName", "customEvent:error_type", "customEvent:error_detail"]):  # error_detail from 31 Oct 2026
         print("-- " + " × ".join(dims))
         rows = report({"dateRanges": week, "dimensions": [{"name": d} for d in dims],
                        "metrics": [{"name": "eventCount"}], "dimensionFilter": in_events, "limit": 50})
