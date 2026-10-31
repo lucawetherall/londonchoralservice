@@ -99,6 +99,25 @@ def test_books_cache_shape_and_totals():
     assert all(a["query_params"]["organization_id"] == "941014440" for _, _, a in fake.calls)
 
 
+def test_the_wrapped_reply_is_read():
+    """Since 30 Oct 2026 the server wraps its reply as {"data": {…}, "headers": …, "status": "success"}."""
+    class Wrapped(FakeBooks):
+        def __call__(self, server, tool, arguments):
+            inner = json.loads(super().__call__(server, tool, arguments))
+            return json.dumps({"data": inner, "headers": {"content-type": "application/json"}, "status": "success"})
+    clear()
+    code, out = run(books_sync.sync, Wrapped(), NOW)
+    assert code == 0 and out.startswith("books: 4 invoices, 3 bills cached"), out
+    rows, more = books_sync.parse_page(json.dumps({"data": {"invoices": [{"a": 1}]}, "status": "success"}), "invoices")
+    assert rows == [{"a": 1}] and more is False
+    for bad in ({"data": {"invoices": []}, "status": "failure"}, {"data": {"code": 57}, "status": "success"}):
+        try:
+            books_sync.parse_page(json.dumps(bad), "invoices")
+        except ValueError:
+            continue
+        raise AssertionError(bad)
+
+
 def test_books_also_writes_the_guards_id_snapshot():
     """books-guard.json (owner hands-off, 14 Oct 2026): the ids the Books guard checks updates and payments against,
     beside the cache, never in it, and with no names or emails."""

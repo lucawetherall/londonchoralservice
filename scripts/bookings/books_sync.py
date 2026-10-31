@@ -111,8 +111,14 @@ def short(value, most):
 
 
 def parse_page(text, key):
-    """(records, has more pages) from one Books list reply. ValueError when it isn't the expected shape."""
+    """(records, has more pages) from one Books list reply. ValueError when it isn't the expected shape. Since
+    30 Oct 2026 the Books server wraps its reply as {"data": {…}, "headers": …, "status": "success"}; the bare
+    reply is still read."""
     data = json.loads(text)
+    if isinstance(data, dict) and key not in data and isinstance(data.get("data"), dict):
+        if data.get("status") not in (None, "success"):
+            raise ValueError("the reply's status isn't success")
+        data = data["data"]
     if not isinstance(data, dict) or not isinstance(data.get(key), list):
         raise ValueError(f"no {key} list in the reply")
     more = bool((data.get("page_context") or {}).get("has_more_page"))
