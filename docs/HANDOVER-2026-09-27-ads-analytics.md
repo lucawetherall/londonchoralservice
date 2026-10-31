@@ -291,7 +291,8 @@ SHELL COMMANDS (only these, from the repo folder)
   .venv/bin/python scripts/ads/validate_proposal.py status <campaign id> paused --reason "<reason>"
   .venv/bin/python scripts/reports/review_lint.py <review file>
   .venv/bin/python scripts/reports/review_log.py record <review file>
-  .venv/bin/python scripts/reports/review_log.py decide <ids> approved|dropped --note "<note>"
+  .venv/bin/python scripts/reports/review_log.py decide <ids> approved --note "<note>"
+  .venv/bin/python scripts/reports/review_log.py decide <ids> dropped --note "<note>"
   .venv/bin/python scripts/reports/review_log.py done <ids> --note "<note>"
   .venv/bin/python scripts/reports/review_log.py note <id> "<text>"
 
