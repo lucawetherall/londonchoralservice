@@ -399,10 +399,16 @@ def test_section_3_flags_a_wrong_primary_and_a_missing_one():
     lines = out.getvalue().splitlines()
     by = {l.split("  ")[0]: l for l in lines[1:]}
     assert "!CHECK" not in by["Submit lead form"] and "ENABLED" in by["Submit lead form"], lines
-    assert "!CHECK: primary, but not one of the owner's two" in by["Contact"], lines
+    assert "!CHECK: primary, but only Submit lead form should be" in by["Contact"], lines
     assert "!CHECK" not in by["Call click"], lines
     assert "GA4 import" not in out.getvalue(), lines  # hidden and secondary: left out
-    assert "!CHECK: not in the account" in by["WhatsApp or email click"], lines
+    assert "WhatsApp or email click" not in by, lines  # secondary since 31 Oct 2026: not required
+
+    actions[:] = [("Call click", "ENABLED", False)]
+    out = io.StringIO()
+    with contextlib.redirect_stdout(out):
+        wr.conversions_section(q)
+    assert "Submit lead form" in out.getvalue() and "!CHECK: not in the account" in out.getvalue(), out.getvalue()
 
 
 def test_section_4_prints_rsa_counts_and_sitelinks_per_campaign():

@@ -4,6 +4,7 @@ Every change applied to GA4 property 527915578, newest first.
 
 | Date (Europe/London) | Resource | Field | Current → New | Reason | Script |
 |---|---|---|---|---|---|
+| 2026-10-31 23:50 | customDimension error_detail | event-scoped dimension | not registered → registered as "Form error detail" | Shows why enquiry sends fail (three on christmas.html, 28 Oct 2026); owner approved 31 Oct 2026 | `scripts/ga4/error_detail_dimension_2026_10_31.py` |
 | 2026-09-28 11:32 | Data filter "Internal Traffic" | state | testing → active | Excludes the owner's own devices (tagged with ?lcs_internal=1) from GA4 | GA4 UI, by the owner |
 | 2026-09-28 11:32 | Data collection | Google signals | off → on (reporting identity Blended) | Owner's choice: demographics and cross-device data. Privacy policy updated the same day; the Monday report flags GA4 data thresholds | GA4 UI, by the owner |
 | 2026-09-28 01:10 | Search Console link | product link | none → sc-domain:londonchoralservice.com associated with web stream londonchoralservice.com | Organic queries and landing pages in GA4 reports | Search Console UI via Claude in Chrome, owner approved |
