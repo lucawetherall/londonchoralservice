@@ -17,7 +17,9 @@ updates and client payments against (owner hands-off, 14 Oct 2026). The guard re
 hour old, so the daily pass runs this first.
 
 On any failure it prints the error's type name only (a message could carry a client's details or a server's URL),
-keeps the last files and exits 1; a scheduled run notes it and carries on. Both files are written atomically (a
+keeps the last files and exits 1; a scheduled run notes it and carries on. Each run is noted in
+~/lcs-private/books-sync-state.json (last_ok, failing_since, last_error), and a failure prints "BOOKS SYNC FAILING
+since …", which the daily pass puts at the top of its report and the Monday report flags. Both files are written atomically (a
 temp file in the same folder, then os.replace) at mode 600, in folders made mode 700. LCS_PRIVATE_DIR moves the
 private tree (the tests use a temp dir).
 """
@@ -196,15 +198,49 @@ def books_snapshot(call, now=None, guard_out=None):
             "totals": totals(invoices, bills)}
 
 
+def state_path():
+    return private_dir() / "books-sync-state.json"
+
+
+def read_state():
+    """books-sync-state.json: {last_ok, failing_since, last_error} ({} when missing or unreadable)."""
+    try:
+        data = json.loads(state_path().read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+    return data if isinstance(data, dict) else {}
+
+
+def record(ok, when, error=None):
+    """Note this run in books-sync-state.json, so a sync that keeps failing is seen (the Command Centre's refresh
+    job failed silently from 30 Oct 2026 until the Books guard's stale snapshot blocked every Books write).
+    Best effort: a failure to write it never changes the exit code."""
+    state = read_state()
+    if ok:
+        state = {"last_ok": when, "failing_since": None, "last_error": None}
+    else:
+        state = {"last_ok": state.get("last_ok"), "failing_since": state.get("failing_since") or when,
+                 "last_error": error}
+    try:
+        write_private_json(state_path(), state)
+    except OSError:
+        pass
+    return state
+
+
 def sync(call=None, now=None):
+    when = (now or datetime.datetime.now(LONDON)).isoformat(timespec="seconds")
     try:
         guard = {}
         snap = books_snapshot(call or lcs_mcp.call_tool, now, guard)
         write_private_json(cache_path(), snap)
         write_private_json(guard_path(), guard)
     except Exception as e:  # the type name only: a message could carry a client's details or a server's URL
-        print(f"books: not updated ({type(e).__name__}); the last cache is kept")
+        state = record(False, when, type(e).__name__)
+        print(f"books: not updated ({type(e).__name__}); the last cache is kept; BOOKS SYNC FAILING since "
+              f"{state['failing_since'][:16].replace('T', ' ')} (last good sync {(state.get('last_ok') or 'never')[:16].replace('T', ' ')})")
         return 1
+    record(True, when)
     t = snap["totals"]
     bills = (f"{len(snap['bills'])} bills" if snap["bills_read"] else "no bills (not on this Books plan)")
     print(f"books: {len(snap['invoices'])} invoices, {bills} cached; receivables "

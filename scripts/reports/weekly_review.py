@@ -52,6 +52,7 @@ import argparse
 import contextlib
 import datetime
 import io
+import json
 import os
 import re
 import sys
@@ -841,8 +842,33 @@ def coverage_section(s, landing):
               f"{(ir.get('lastCrawlTime') or 'never')[:10]}{flag}")
 
 
+def books_sync_line(now=None):
+    """Section 8's Books sync line, from books_sync.py's own state file and cache (~/lcs-private). STALE when a sync
+    is failing or the cache is over two days old: the Books guard refuses every Books write once its snapshot is an
+    hour old, and from 30 Oct 2026 a failing sync went unseen for a day."""
+    def read(name):
+        try:
+            data = json.loads((lm.PRIVATE / name).read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            return {}
+        return data if isinstance(data, dict) else {}
+    state, cache = read("books-sync-state.json"), read("books-cache.json")
+    now = now or datetime.datetime.now(datetime.timezone.utc)
+    try:
+        age = (now - datetime.datetime.fromisoformat(cache["generated_at"])).total_seconds() / 86400
+    except (KeyError, TypeError, ValueError):
+        age = None
+    if state.get("failing_since"):
+        return (f"   Books sync: FAILING since {str(state['failing_since'])[:16].replace('T', ' ')} "
+                f"({state.get('last_error') or 'error'}); Books writes are blocked  !STALE")
+    if age is None:
+        return "   Books sync: no cache yet (run scripts/bookings/books_sync.py)  !STALE"
+    return f"   Books sync: cache {age:.1f} days old" + ("  !STALE" if age > 2 else "")
+
+
 def wiring_section(s, q):
     print("\n== 8. Tracking wiring")
+    print(books_sync_line())
     partial = (REPO / "partials" / "analytics.html").read_text()
     labels = sorted(set(re.findall(r"AW-17988388404/[\w-]+", partial)))
     checks = {"/": ["G-9FENN7VS0E", "AW-17988388404", "contact_click", "lcsLead", *labels],
