@@ -188,14 +188,16 @@ def test_the_owners_approvals_cannot_be_written_from_a_shell():
 
 
 def test_read_only_commands_may_mention_the_approvals():
-    """Owner decision, 31 Oct 2026: listing, searching, reading, staging and committing never write an approval or run
-    the hook, so they may name them (the guard had blocked `ls .claude/hooks/*.py`, a grep and a PR body)."""
+    """Owner decision, 31 Oct 2026: a plain listing or search, and a PR body file, never write an approval or run the
+    hook, so they may name them (the guard had blocked `ls .claude/hooks/*.py`, a grep and a PR body). The listing
+    exemption needs macOS's own /bin/ls and /usr/bin/grep, so on the Linux CI runner those are refused instead."""
     hook = ".claude/hooks/owner_confirm_guard.py"
     body = write(os.path.join(SCRATCH, "prbody", "pr.md"), "Keeps owner_confirm_guard and owner-approvals.\n")
-    for cmd in ("ls .claude/hooks/*.py", "wc -l .claude/hooks/*.py", "ls ~/lcs-private/owner-approvals",
-                "grep -rn owner-approvals scripts docs | head -5", f"cat {hook} | head -3",
-                f"gh pr create --draft --title t --body-file {body}"):
-        expect("allow", bash(cmd), cmd)
+    listings = ("ls .claude/hooks/*.py", "wc -l .claude/hooks/*.py", "ls ~/lcs-private/owner-approvals",
+                "grep -rn owner-approvals scripts docs | head -5", f"cat {hook} | head -3")
+    for cmd in listings:
+        expect("allow" if sys.platform == "darwin" else "deny", bash(cmd), cmd)
+    expect("allow", bash(f"gh pr create --draft --title t --body-file {body}"), "a PR body file")
     # The second review (31 Oct 2026): an editor, a template or a commit hook can run what git commit is given; pflag
     # bundles gh's short flags; and AppleScript or a terminal tab isn't Bash.
     for cmd in (f"git commit -F {body}", f"gh pr create -dw --body-file {body}", f"gh pr create --web --body-file {body}"):
