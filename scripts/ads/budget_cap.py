@@ -17,6 +17,14 @@ import datetime
 
 BASE_CAP_MICROS = 5_000_000
 
+# The account's campaigns, by id. A script that takes a campaign id from generated input (the Monday review's
+# standing approvals) refuses any other; add a new campaign here when it is created.
+KNOWN_CAMPAIGNS = {
+    "23735776277": "funeral expert campaign",
+    "23739971001": "wedding-leads",
+    "24295921372": "Christmas carol singers – events 2026",
+}
+
 # campaign id -> (cap in micros, first day, last day, why)
 EXCEPTIONS = {
     "24295921372": (8_000_000, datetime.date(2026, 9, 28), datetime.date(2026, 12, 13),
