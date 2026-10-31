@@ -86,12 +86,52 @@ def test_monday_morning_looks_at_the_previous_week():
     assert rh.review_lines(at(2026, 10, 31, 20, 0), d) == ["ok: Monday review: report saved for 2026-10-26"]
 
 
+class Gh:
+    def __init__(self, runs=None, code=0, boom=False):
+        self.runs, self.code, self.boom = runs, code, boom
+
+    def __call__(self, cmd, **kw):
+        if self.boom:
+            raise FileNotFoundError("gh")
+        import types
+        assert cmd[:3] == ["gh", "run", "list"] and "--branch" in cmd, cmd
+        return types.SimpleNamespace(returncode=self.code, stdout=json.dumps(self.runs or []))
+
+
+def run(status, conclusion, title="t"):
+    return {"status": status, "conclusion": conclusion, "displayTitle": title, "createdAt": "2026-10-31T20:00:00Z"}
+
+
+def test_a_failed_deploy_on_main_is_an_alert():
+    lines = rh.deploy_lines(Gh([run("completed", "failure", "Merge pull request #424")]))
+    assert lines[0].startswith("ALERT: site deploy failed on main (Merge pull request #424)"), lines
+
+
+def test_a_newer_run_under_way_after_a_failure_is_a_note():
+    lines = rh.deploy_lines(Gh([run("in_progress", ""), run("completed", "failure")]))
+    assert lines[0].startswith("note: site deploy: the last finished run failed"), lines
+
+
+def test_a_successful_deploy_is_ok():
+    assert rh.deploy_lines(Gh([run("completed", "success", "x")]))[0] == "ok: site deploy: last finished run success (x)"
+
+
+def test_no_gh_is_a_note_never_an_alert():
+    assert rh.deploy_lines(Gh(boom=True))[0].startswith("note:")
+    assert rh.deploy_lines(Gh(code=1))[0].startswith("note:")
+
+
 def test_main_prints_and_exits_zero():
     import contextlib, io
     buf = io.StringIO()
-    with contextlib.redirect_stdout(buf):
-        assert rh.main(at(2026, 11, 3, 12, 0)) == 0
-    assert buf.getvalue().strip(), buf.getvalue()
+    real = rh.deploy_lines
+    rh.deploy_lines = lambda runner=None: ["ok: site deploy: stubbed"]
+    try:
+        with contextlib.redirect_stdout(buf):
+            assert rh.main(at(2026, 11, 3, 12, 0)) == 0
+    finally:
+        rh.deploy_lines = real
+    assert "site deploy: stubbed" in buf.getvalue(), buf.getvalue()
 
 
 if __name__ == "__main__":

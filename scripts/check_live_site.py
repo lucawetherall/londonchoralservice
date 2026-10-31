@@ -73,7 +73,9 @@ def _fetched_at(headers):
 
 def fetch(url, method='HEAD'):
     """(status, Location, fetched-at time, body) without following redirects.
-    The status is a string when the request itself failed three times."""
+    The status is a string when the request itself failed three times. A server error (5xx) is asked again, up to
+    three times in all, because the CDN answers one now and then (31 Oct 2026: one 503 among 1,283 files, a 404 on
+    the next request); a 5xx on every try is reported as it is."""
     request = urllib.request.Request(url, method=method, headers={'User-Agent': 'lcs-deploy-check'})
     for attempt in range(3):
         try:
@@ -81,6 +83,9 @@ def fetch(url, method='HEAD'):
                 body = r.read() if method == 'GET' else b''
                 return r.status, r.headers.get('Location'), _fetched_at(r.headers), body
         except urllib.error.HTTPError as e:
+            if 500 <= e.code <= 599 and attempt < 2:
+                time.sleep(2 * (attempt + 1))
+                continue
             return e.code, e.headers.get('Location'), _fetched_at(e.headers), b''
         except (urllib.error.URLError, OSError) as e:
             if attempt == 2:
