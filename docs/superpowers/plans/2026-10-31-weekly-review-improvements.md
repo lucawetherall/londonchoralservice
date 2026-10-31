@@ -42,7 +42,7 @@ The report itself is in good shape. It has 14 sections, each guarded so that one
 
 | # | Decision | Status |
 |---|----------|--------|
-| D1 | **Standing approvals.** The Monday run would apply these classes without asking. Each is still validated first, logged, and listed under "Done this morning".<br>(a) Negatives for NOT A BUYER terms that block none of the week's HIRING terms.<br>(b) Dismissing recommendation types the owner has already ruled out: campaign budget, search partners, Maximise conversions or clicks, lead form asset, dynamic image extension, broad match and AI Max.<br>(c) The dated MANUAL-ACTIONS archive line.<br>(d) A sitemap resubmission when section 7 says STALE.<br>(e) The `llms.txt` "content last updated" date.<br>Budgets, bids, pauses, keyword status, ad copy and site copy still wait for approval. | **Waits for the owner's explicit yes.** It changes the approval rule in CLAUDE.md, so "execute" is not taken to cover it. Task 7 is built only after that yes. |
+| D1 | **Standing approvals.** The Monday run would apply these classes without asking. Each is still validated first, logged, and listed under "Done this morning".<br>(a) Negatives for NOT A BUYER terms that block none of the week's HIRING terms.<br>(b) Dismissing recommendation types the owner has already ruled out: campaign budget, search partners, Maximise conversions or clicks, lead form asset, dynamic image extension, broad match and AI Max.<br>(c) The dated MANUAL-ACTIONS archive line.<br>(d) A sitemap resubmission when section 7 says STALE.<br>(e) The `llms.txt` "content last updated" date.<br>Budgets, bids, pauses, keyword status, ad copy and site copy still wait for approval. | **Approved 31 Oct** ("all decisions approved"). The owner restated that any rise in ad spend needs his approval, so no budget change, up or down, is a standing approval. Built in Task 7. |
 | D2 | **Validated budget and pause proposals.** The run runs `set_budget.py` and `set_campaign_status.py` in their default validate-only mode, and quotes the output, so the owner approves exactly what Google accepted. Nothing changes in the account. | Done in Task 8. These are read-only calls, already within "change nothing". |
 | D3 | **Grade C** still never counts, but it is printed with its base rate. | Done in Task 3. |
 | D4 | **The reply** has a cap of about 700 words. The full agent results go to a private file. | Done in Task 10. |
@@ -148,7 +148,7 @@ The input is the saved review file. The output is one line per finding, with exi
 - **`pipeline.summary_dict`** gains `open_whatsapp`: enquiries with source whatsapp, status new or quoted, first seen in the last 28 days. `pipeline.py summary` prints it. Tests go in `tests/test_pipeline.py`.
 - **Section 13**, on any Monday but the first of the month, prints its heading and one line: `next: <date>`.
 
-### Task 7: standing approvals (after D1 only)
+### Task 7: standing approvals (D1)
 
 **Files:** `data/standing-approvals.yml` (the five classes, each with its rule and its script), the dispatcher prompt (a step that runs the classes before the reply, using the same worktree, script, validate, apply, log and PR flow as approved changes, with negatives checked by `negative_match` against the week's HIRING terms), the Google Ads bullet in CLAUDE.md, and Appendix A.
 
@@ -193,16 +193,53 @@ Create `tests/test_weekly_review_snapshot.py`, covering:
 
 **Steps in the run:** report → agents → cross-checks → Task 8 validations → write the review file → `review_lint.py` (fix and rewrite, at most twice; then put the findings at the top of the reply) → `review_log.py record` → reply. After the owner answers: `decide`, then the existing worktree flow, then `done` once a PR merges.
 
+### Task 12: the enquiry assistant's week, in the Monday report
+
+The owner asked that the review also cover the other routine.
+
+**Why.** Its run history (`list_task_runs`) shows gaps the Monday review never saw:
+- 22 to 25 Oct, and 27 to 29 Oct (37 hours), when a run session left open blocked every later run;
+- one run on 25 Oct that stopped early because the command safety check kept failing.
+
+The assistant records only `last_checked`, so these left no trace in any report.
+
+**Files:** `scripts/bookings/assistant_io.py`, `tests/test_assistant_io.py`, `weekly_review.py` (new section 9c) and `.claude/agents/lcs-review-bookings.md`.
+
+**What changes**
+- `assistant_io.py` appends one line to `~/lcs-private/assistant-runs.jsonl` (mode 600; lines older than 60 days dropped) for each of these:
+  - `state`: `{"start": <now>}`
+  - `done`: `{"done": <now>, "marked": n}`
+  - `zoho-down`: `{"zoho_down": <now>}`
+  - `daily-done`: `{"daily": <date>}`
+- A failure to append never changes what a command prints or its exit code.
+- Section 9c, "Enquiry assistant, last 7 days", reads that file:
+  - runs started against the 63 expected (9 a day);
+  - runs finished (a `done` after the start, before the next start);
+  - runs that stopped early (a start with no `done` or `zoho_down`);
+  - Zoho-down runs;
+  - the longest gap between starts in London hours 06:00 to 22:00 (`STALE ASSISTANT` when over 4 hours, so `quiet_summary` lists it);
+  - days the daily pass ran, out of 7.
+  - Before the log has a full week it says "log started <date>".
+- The bookings agent copies section 9c into a new ASSISTANT line, and the reply's quiet-area lines include it.
+
+**How the two routines share things** (checked 31 Oct):
+- **Ledger and pipeline:** both write `bookings.csv` and `enquiries.csv`, under the same file locks.
+- **Timing:** the review starts at 09:03, between the assistant's 08:07 and 10:07 runs (cron `7 6-22/2`).
+- **Dashboard:** both regenerate it.
+- **Additive changes only:** this plan adds a key to `pipeline.summary_dict` and two keys to `ads-summary.json`, and the dashboard reads only the keys it knows.
+- **Prompt allow list:** `tests/test_prompt_allowlist.py` covers Appendix E too, so the assistant's prompt must still pass.
+- **Not done here:** the price and name lint (Task 5) could also check the reply drafter's text before it saves a draft. That changes the client-facing routine, so it goes in the roadmap as its own item.
+
 ### Task 11: docs
 
 - Appendix A gets the new prompt verbatim and a dated note.
 - CLAUDE.md's weekly-review bullet mentions section 0, the review file, the proposals record and the lint.
-- `docs/ROADMAP.md` gets an item for Task 7, marked BLOCKED-ON-HUMAN (D1).
+- `docs/ROADMAP.md` gets an item for linting the reply drafter's text with Task 5's checks before it saves a draft (Task 12).
 
 ## 4. Order
 
-1. Tasks 0, 1, 2, 3, 4, 6 and 9, which change the report code, go on one branch. They all touch `weekly_review.py`, so one worker does them in turn.
-2. Task 5 and Task 6's pipeline change go on a second branch, in parallel. They touch other files.
+1. Tasks 0, 1, 2, 3, 4, 9, Task 6's section 11 and 13 changes, and Task 12's section 9c go on one branch. They all touch `weekly_review.py`, so one worker does them in turn.
+2. Task 5, Task 6's pipeline change and Task 12's run log in `assistant_io.py` go on a second branch, in parallel. They touch other files.
 3. After both merge, Tasks 8, 10 and 11 follow: the prompt, the agents and the docs.
 4. Before the prompt goes live, run a dry run:
    - `weekly_review.py --save-report --quiet --out <scratch>`;
