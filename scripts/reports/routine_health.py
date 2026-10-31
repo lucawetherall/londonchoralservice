@@ -112,9 +112,37 @@ def review_lines(now, reports_dir=None):
             " if none ran, choose Run now."]
 
 
+DEPLOY_CMD = ["gh", "run", "list", "--repo", "lucawetherall/londonchoralservice", "--workflow", "deploy-pages.yml",
+              "--branch", "main", "--limit", "3", "--json", "status,conclusion,displayTitle,createdAt"]
+
+
+def deploy_lines(runner=None):
+    """The site deploy: an ALERT when the newest finished run on main failed and no newer run is under way (31 Oct
+    2026: four deploys failed in a week and main stayed broken until a later merge happened to fix it). Read-only."""
+    import subprocess
+    try:
+        p = (runner or subprocess.run)(DEPLOY_CMD, capture_output=True, text=True, timeout=30,
+                                       stdin=subprocess.DEVNULL)
+        runs = json.loads(p.stdout) if p.returncode == 0 else None
+    except Exception:  # noqa: BLE001 - no gh, no network: say so, never alarm
+        runs = None
+    if not isinstance(runs, list) or not runs:
+        return ["note: site deploy: couldn't read the deploy runs (gh)"]
+    finished = next((r for r in runs if r.get("status") == "completed"), None)
+    if finished is None:
+        return ["ok: site deploy: a deploy is under way"]
+    title = (finished.get("displayTitle") or "")[:70]
+    if finished.get("conclusion") in ("success", "cancelled", "skipped"):
+        return [f"ok: site deploy: last finished run {finished.get('conclusion')} ({title})"]
+    if runs[0] is not finished:
+        return [f"note: site deploy: the last finished run failed ({title}); a newer one is under way"]
+    return [f"ALERT: site deploy failed on main ({title}): the live site is behind main. Open the Actions run,"
+            " fix the failing check, and merge the fix."]
+
+
 def main(now=None):
     now = now or datetime.datetime.now(datetime.timezone.utc)
-    for line in assistant_lines(now) + review_lines(now):
+    for line in assistant_lines(now) + review_lines(now) + deploy_lines():
         print(line)
     return 0
 
