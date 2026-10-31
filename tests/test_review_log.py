@@ -123,6 +123,20 @@ def test_the_send_tag_is_a_known_kind():
     assert items()["2026-11-09-01"]["kind"] == "send", items()
 
 
+def test_the_agent_blocks_below_the_rule_are_never_recorded():
+    """2 Nov 2026: the review file keeps each agent's RESULT block below a "---" line, and those lists (under their
+    own ### headings, still inside ## Watch) were recorded as 53 Watch items."""
+    reset()
+    text = ("## Decisions\n\n1. [ads] x → y: 1 → 2 — r\n\n## Watch\n\n- the bid test (due 2026-11-09)\n\n---\n\n"
+            "### lcs-review-ads\n\nPROPOSED ADS CHANGES:\n1. campaign a → b: c → d — e\n- a bullet\n\n"
+            "### lcs-review-web\n\n- another bullet\n2. another number\n\n## Decisions\n\n3. not a decision → x\n")
+    code, out, _ = run("record", write_review(text, "2026-11-02.md"))
+    assert code == 0, out
+    got = items()
+    assert sorted(got) == ["2026-11-02-01", "2026-11-02-02"], got
+    assert got["2026-11-02-02"]["kind"] == "watch" and got["2026-11-02-02"]["text"] == "the bid test", got
+
+
 def test_decide_done_and_note():
     reset()
     run("record", write_review())
