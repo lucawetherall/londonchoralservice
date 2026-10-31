@@ -366,6 +366,8 @@ The competitor everyone outranks us with — The London Funeral Singers — is t
 
 **Weekly review, 2026-10-26 (Search Console, 2026-10-17 to 2026-10-23):** 55 clicks (was 65), 2,267 impressions (was 2,079), CTR 2.4% (was 3.1%), average position 7.9 (was 7.5). Music guides carry the clicks (nine-lessons-and-carols 21, charity-carol-concert 3; carol-singers, the homepage and popular-wedding-organ-music 2 each). Hiring queries still off page one: "how to book a choir" 13.4, "how to choose the right choir" 16.6, "choir to hire" 15.0, "choir wedding" 12.0, "how much does a choir cost" 10.0. Sitemap last read 2026-10-25; all ad landing pages indexed. GoatCounter, first days (2026-10-23 to 2026-10-25): 58 page views, no enquiry sends or taps; christmas.html had 7 views against 9 Christmas ad clicks, every one through the "Hire carol singers" ad, so the clicks arrive and the page is what has to convert.
 
+**Weekly review, 2026-10-31 (Search Console, 2026-10-22 to 2026-10-28):** 66 clicks (was 58), 2,817 impressions (was 2,214), average position 8.3 (was 7.6). Music guides carry the clicks (nine-lessons-and-carols 28, be-thou-my-vision-wedding-hymn 4); pricing has 4, the homepage 2, abide-with-me 2. Hiring queries still off page one: "how to choose the right choir" 17.9, "wedding choir" 25.2, "how to book a choir" 32.7, "choir for hire" 57.4, "corporate events choir" 41.5. Sitemap last read 2026-10-31; all ad landing pages indexed.
+
 ---
 
 ## 13. Private events page launch follow-ups, 2026-08-26
