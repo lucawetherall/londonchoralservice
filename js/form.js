@@ -60,10 +60,13 @@
 
   var guideSource = '';
 
-  function trackError(type) {
+  function trackError(type, detail) {
     try {
       if (typeof window.gtag === 'function') {
-        window.gtag('event', 'form_error', { error_type: type, lead_source: window.location.pathname });
+        var params = { error_type: type, lead_source: window.location.pathname };
+        // Why a send failed (Web3Forms' message, or the network error's name), never the form's contents.
+        if (detail) params.error_detail = String(detail).slice(0, 100);
+        window.gtag('event', 'form_error', params);
       }
     } catch (_) { /* analytics must never block the enquiry */ }
   }
@@ -244,7 +247,7 @@
       .catch(function (err) {
         if (abortTimer) clearTimeout(abortTimer);
         console.error('Form submission error:', err);
-        trackError('submit');
+        trackError('submit', err && (err.name === 'Error' ? err.message : err.name));
         if (errorBox) {
           // A timed-out request may still have reached Web3Forms: say so, to head off a duplicate.
           if (err && err.name === 'AbortError' && !errorBox.querySelector('[data-timeout-note]')) {

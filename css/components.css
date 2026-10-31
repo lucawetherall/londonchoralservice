@@ -491,6 +491,29 @@ td.compare-us .compare-saving {
   font-size: var(--text-sm);
 }
 
+/* Optional fields folded away so the short form comes first */
+.form-more {
+  margin-bottom: var(--space-xl);
+}
+
+.form-more summary {
+  cursor: pointer;
+  font-family: var(--font-heading);
+  font-weight: 500;
+  font-size: var(--text-base);
+  padding: var(--space-xs) 0;
+}
+
+.form-more summary .optional {
+  font-weight: 400;
+  color: var(--color-text-mid);
+  font-size: var(--text-sm);
+}
+
+.form-more[open] summary {
+  margin-bottom: var(--space-lg);
+}
+
 .form-field input::placeholder,
 .form-field textarea::placeholder {
   color: var(--color-text-mid);
