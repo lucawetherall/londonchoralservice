@@ -1,206 +1,217 @@
 # Weekly marketing review improvements, 31 October 2026
 
-> **For agentic workers:** one PR per task, in the order given, each with its tests in `tests/run_ci_tests.py`. The Monday run stays unattended and read-only on Google Ads, GA4, Search Console, Books and the site; every change it makes to the account still goes through `scripts/ads/` with validate-only first and a row in `logs/ads-changes.md`. Tasks 1 to 6 need no owner decision. Tasks 7 to 10 wait for the decisions in section 2. Nothing in this plan lands on main between Sunday evening and the Monday 09:00 run.
+> **For agentic workers:** the Monday run stays unattended and read-only on Google Ads, GA4, Search Console, Books and the site. Every account change still goes through `scripts/ads/` with validate-only first and a row in `logs/ads-changes.md`. New tests join `tests/run_ci_tests.py`. Dry runs never write to `~/lcs-private/reports/`: use `--out` (Task 0), because a stray `<date>.txt` there becomes the "previous report" for the next Monday's settings diff and change log.
 
 **Goal:** make the Monday review answer the owner's question ("is the marketing working, and what should change?") in a form he acts on, and stop proposals from vanishing.
 
-**Architecture:** the report script (`scripts/reports/weekly_review.py`) keeps gathering everything read-only into one saved text file; the four sub-agents keep reading only their sections. The changes add a short computed "this week in brief" section at the top of the report, a private record of what was proposed and decided, a lint pass over the reply before it is sent, and a tighter reply format. Rules move out of agent prose and into code wherever a test can hold them.
+**Architecture:** the report script (`scripts/reports/weekly_review.py`) keeps gathering everything read-only into one saved text file, and the four sub-agents keep reading only their own sections. The changes add a computed brief to the report, a private record of what was proposed and decided, a lint pass over the reply before it goes out, and a shorter reply. Rules move out of agent prose and into code wherever a test can hold them.
 
-**Tech stack:** Python 3 in the repo's `.venv` (google-ads, PyYAML), the existing `tests/` style (plain asserts, run by `tests/run_ci_tests.py`), the scheduled-task prompt in `~/.claude/scheduled-tasks/christmas-carol-campaign-review/SKILL.md` (mirrored in Appendix A of `docs/HANDOVER-2026-09-27-ads-analytics.md`).
+**Tech stack:** Python 3 in the repo's `.venv`, the existing `tests/` style (plain asserts, run by `tests/run_ci_tests.py`), and the scheduled-task prompt in `~/.claude/scheduled-tasks/christmas-carol-campaign-review/SKILL.md`, mirrored in Appendix A of `docs/HANDOVER-2026-09-27-ads-analytics.md`.
 
 No client names, addresses or ledger money figures appear in this file.
+
+**Revised 31 Oct after a review against the code.** The changes from the first draft:
+- Proposals are now recorded by parsing the saved review file, not by passing JSON in a shell argument.
+- Quote speed is measured in days, because the pipeline records only quote dates.
+- The hiring filter reuses `economics.hiring_intent`.
+- The lint matches full client names only.
+- Standing approvals became a prompt and data change.
+- Pre-validation reuses `set_budget.py` and `set_campaign_status.py`, which already validate by default.
+- Dry runs got their own output path.
+- The "nothing before 2 Nov" hold was dropped, because the owner asked for the work now. It is replaced by a dry run before anything merges.
 
 ---
 
 ## 1. What the last five Mondays show
 
-The report itself is in good shape: 14 sections, each guarded so one failure no longer kills the rest, a live settings snapshot (1b) that diffs against the previous week, GoatCounter for cookie-free totals, Core Web Vitals, the enquiry grading in 9b, CI tests on every PR. The GoatCounter failure of 26 Oct is fixed (one retry, HTTP code in the failure line). The problems are in what the review measures and in what happens to its answer.
+The report itself is in good shape. It has 14 sections, each guarded so that one failure no longer kills the rest. It also has a live settings snapshot (1b) that it compares with the previous week, GoatCounter for cookie-free totals, Core Web Vitals, the enquiry grading in 9b, and CI tests on every PR. The GoatCounter failure of 26 Oct is fixed: the reader retries once, and the failure line carries the HTTP code. The problems are in what the review measures and in what happens to its answer.
 
-1. **The reply is a menu, and the owner does not want a menu.** The 26 Oct reply ran to about 2,000 words and 18 numbered proposals. The owner approved three (the negatives), then wrote "do whatever you think is best" and later "do whatever you think will be best for sales / conversions / leads". Items 4 to 18 were done only because he followed up by hand in that session. The format asks him to adjudicate when the house rule since 14 Oct is "decide, don't ask", except for Ads budgets, bids, pauses and copy.
+1. **The reply is a menu, and the owner does not want a menu.** The 26 Oct reply ran to about 2,000 words and held 18 numbered proposals. The owner approved three of them, the negatives. He then wrote "do whatever you think is best", and later "do whatever you think will be best for sales / conversions / leads". Items 4 to 18 were done only because he followed up by hand in that session.
+2. **The business numbers are buried.** The headlines open with spend, clicks and Ads conversions. Enquiries, quotes, bookings and money sit halfway down, with no trend. Ads conversions are a known-bad measure here, because about 70% of visitors decline cookies.
+3. **Attribution says the ads earn nothing, and it cannot know.** Season to 26 Oct: 15 enquiries, all of them unattributed, and every campaign shows A 0 and B 0. Seven enquiries carry grade C, which never counts. But the Christmas campaign clicked on 6 of the 7 days, so a C there is almost certainly a coincidence. A C on the wedding campaign, which clicked on 2 of the 7 days, is a real signal. The report prints the grade without that base rate.
+4. **Proposals vanish.** Nothing records what was proposed, approved, done or dropped. A site or growth proposal that goes unanswered is never seen again.
+5. **The web section argues from noise.** Three page fixes on 26 Oct rested on queries with 2 impressions each. The "money queries" list is a word filter: 23 of its 40 lines were Nine Lessons and Carols service-sheet searches. `economics.hiring_intent` already tells hiring searches apart, but only section 13 uses it, and only once a month.
+6. **Agents misstate facts the repo holds.** On 26 Oct the growth agent quoted the soloist at the old price. Nothing checks a reply's prices, or scans it for names and emails, before the owner sees it.
+7. **Small noise.**
+   - Section 11 lists a removed campaign at £0 every week.
+   - The WhatsApp question comes every week.
+   - Section 13 prints a placeholder on three Mondays out of four.
+8. **Untested.** These have no tests: `snapshot_block`, `previous_snapshot`, `snapshot_diff_lines`, `logged_changes` and `quiet_summary`.
 
-2. **The business numbers are buried.** Headlines open with spend, clicks and Ads conversions. Enquiries this week, quotes sent, bookings confirmed, pounds booked and pounds received sit in the Bookings block halfway down, and only as this week's figures with no trend. Ads conversions are a known-bad measure here (about 70% of visitors decline cookies): the report says so, then leads with them anyway.
+## 2. Owner decisions
 
-3. **Attribution says the ads earn nothing, and it cannot know.** Season to 26 Oct: 15 enquiries and 6 bookings, all "unattributed"; every campaign shows A 0, B 0. Seven enquiries carry grade C (an ad click in the matching campaign that day or the day before), which "never counts". But the Christmas campaign clicked on 6 of the 7 days, so a C there is almost certain by coincidence, while a C on the wedding campaign (clicks on 2 of 7 days) is a real signal. The report prints the grade without the base rate, so the owner cannot weigh it.
-
-4. **Proposals vanish.** Nothing records what was proposed, what the owner approved, what was done, or what was dropped. Each Monday starts from zero. Section 1 lists logged Ads changes, and 1b diffs the account, but a site-copy or growth proposal left unanswered is never seen again.
-
-5. **The web section argues from noise.** The web agent is told to ignore queries under 10 impressions, then proposed three page fixes for queries with 2 impressions each ("choir to hire", "how much does a choir cost", "choir wedding"). Section 6's "money queries" list is a regex on funeral/wedding/carol/choir, so 23 of its 40 lines on 26 Oct were Nine Lessons and Carols service-sheet queries: informational traffic to one guide, not hiring intent. The hiring-intent classifier already exists in `economics.shortlist` and runs only monthly.
-
-6. **Agents misstate facts the repo holds.** On 26 Oct the growth agent assumed three of four Christmas ads carried traffic (all clicks went through one ad; now fixed by `clicks30` in section 4) and quoted the soloist at the old price. Nothing checks a reply's prices against `pricing.html` or scans it for names and emails before it reaches the owner.
-
-7. **Small noise.** Section 11 lists a removed campaign at £0 every week. The reply asks "did any WhatsApp enquiry become a booking?" even in weeks with no open WhatsApp enquiry. Section 13 says "runs on the first Monday" on the other three.
-
-8. **Untested since 26 Oct.** The 1b snapshot diff, the logged-changes block, the spend guard with the retired value check, and the GoatCounter retry have not yet run on a Monday. Tests cover `enquiry_sources`, `goatcounter`, `cwv`, `money_report`, the archive and the proposals flag; not `snapshot_diff_lines`, `previous_snapshot`, `logged_changes` or `quiet_summary`.
-
-## 2. Owner decisions (one reply covers all five)
-
-| # | Decision | Recommendation |
-|---|----------|----------------|
-| D1 | **Standing approvals.** Let the Monday run apply these without asking, each still validate-only first, logged, and listed in the reply under "Done this morning": (a) negatives for NOT A BUYER search terms that block none of the week's HIRING terms; (b) dismissing Google recommendations of a type the owner has already ruled out (campaign budget, search partners, Maximise conversions or clicks, lead form asset, dynamic image extension, broad match, AI Max); (c) the dated MANUAL-ACTIONS archive line; (d) a sitemap resubmission when section 7 says STALE; (e) the `llms.txt` "content last updated" date. Budgets, bids, pauses, keyword status, ad copy and site copy still wait for approval. | Yes to all five. Each is a class the owner has approved every time it came up (negatives on 5, 12, 16, 19, 25 and 26 Oct; the nine dismissals on 26 Oct). |
-| D2 | **Pre-validated change scripts.** Let the unattended run write its proposal scripts under `~/lcs-private/proposals/<date>/` (outside the repo) and run each validate-only, so the reply shows the exact validated current → new lines and approval means running the same script with `--apply`. The run still changes nothing in the account. | Yes. It removes the "write the script after the owner replies" step that stretched the 26 Oct session into the next day, and the owner sees what Google would accept. |
-| D3 | **Grade C stays uncounted** but is printed with its base rate (Task 3), so the owner can read a wedding C as a signal and a Christmas C as noise. | Keep the rule; add the base rate. |
-| D4 | **Reply length.** Cap the reply at about 700 words: a brief, a decisions list, and one line per area where nothing needs attention. The full agent results go to a private file (Task 1). | Yes. |
-| D5 | **The WhatsApp question** is asked only when the pipeline holds an open WhatsApp enquiry from the last 28 days. | Yes. |
+| # | Decision | Status |
+|---|----------|--------|
+| D1 | **Standing approvals.** The Monday run would apply these classes without asking. Each is still validated first, logged, and listed under "Done this morning".<br>(a) Negatives for NOT A BUYER terms that block none of the week's HIRING terms.<br>(b) Dismissing recommendation types the owner has already ruled out: campaign budget, search partners, Maximise conversions or clicks, lead form asset, dynamic image extension, broad match and AI Max.<br>(c) The dated MANUAL-ACTIONS archive line.<br>(d) A sitemap resubmission when section 7 says STALE.<br>(e) The `llms.txt` "content last updated" date.<br>Budgets, bids, pauses, keyword status, ad copy and site copy still wait for approval. | **Waits for the owner's explicit yes.** It changes the approval rule in CLAUDE.md, so "execute" is not taken to cover it. Task 7 is built only after that yes. |
+| D2 | **Validated budget and pause proposals.** The run runs `set_budget.py` and `set_campaign_status.py` in their default validate-only mode, and quotes the output, so the owner approves exactly what Google accepted. Nothing changes in the account. | Done in Task 8. These are read-only calls, already within "change nothing". |
+| D3 | **Grade C** still never counts, but it is printed with its base rate. | Done in Task 3. |
+| D4 | **The reply** has a cap of about 700 words. The full agent results go to a private file. | Done in Task 10. |
+| D5 | **The WhatsApp question** is asked only while the pipeline holds an open WhatsApp enquiry from the last 28 days. | Done in Task 6. |
 
 ## 3. Tasks
 
+### Task 0: a dry-run path
+
+- `weekly_review.py --save-report --out PATH` writes the report to PATH instead of `~/lcs-private/reports/<date>.txt`. Section 1b's `previous_snapshot` still reads the real reports directory.
+- `report_sections.py --file PATH` reads that file.
+- Tests: `--out` writes there and not to the reports directory (with `LCS_PRIVATE_DIR` set to a temp directory), and `--file` serves sections from it.
+
 ### Task 1: a private record of the review and its proposals
 
-The reply is saved beside the report, and every proposal gets an id, so next Monday can say what is still open.
+**Files:** create `scripts/reports/review_log.py` and `tests/test_review_log.py`. Modify `weekly_review.py` to add section 0b.
 
-**Files**
-- Create: `scripts/reports/review_log.py`
-- Modify: `scripts/reports/weekly_review.py` (new section 0b, see below), `scripts/reports/report_sections.py` (no change needed: it splits on `== <id>.` headings)
-- Modify: `.claude/agents/lcs-review-bookings.md` (nothing), the dispatcher prompt (Task 10 carries the prompt edits; this task adds the commands)
-- Test: `tests/test_review_log.py`, added to `tests/run_ci_tests.py`
+**Storage**
+- `~/lcs-private/reports/reviews/<date>.md` (mode 600) holds the dispatcher's full reply and each agent's RESULT block. The dispatcher writes it with the Write tool, which is private and outside the repo. It lives in a subfolder so the reports directory holds only report files.
+- `~/lcs-private/review-proposals.jsonl` (mode 600) holds one object per proposal: `{"id": "2026-10-26-04", "date", "kind", "text", "status": "open|approved|done|dropped|expired", "decided", "note"}`. `kind` is one of ads, site, growth, manual, upload or budget. The dispatcher tags each item `[ads]`, `[site]` and so on, and an untagged item is `other`.
 
-**Design**
-- `~/lcs-private/reports/<date>-review.md` (mode 600): the dispatcher's full reply plus each agent's RESULT block, written by the dispatcher with the Write tool (a private path, not a repo file).
-- `~/lcs-private/review-proposals.jsonl` (mode 600), one JSON object per line: `{"id": "2026-10-26-04", "date": "2026-10-26", "kind": "site|ads|manual|growth|upload|budget", "text": "music-guides/hiring-a-choir.html → …", "status": "open|approved|done|dropped", "decided": "2026-10-26", "note": "PR #392"}`. No names, emails or amounts from the ledger: proposals name pages, campaigns and figures only.
-- Commands, all under the ledger lock from `lcs_money`:
-  - `review_log.py propose <date> '<json list of {kind, text}>'` prints the ids it assigned (`<date>-NN`).
-  - `review_log.py decide <id>[,<id>…] approved|dropped [--note TEXT]`
-  - `review_log.py done <id> --note TEXT`
-  - `review_log.py open [--before <date>]` prints open proposals, oldest first, as `<id> · <kind> · <text>`.
-- Section 0b in the report, "Since last Monday": the open proposals from `review_log.py open --before <today>`; Ads changes logged since the previous saved report (reuse `logged_changes_lines`, which section 1 already prints, so print only a count here and point at section 1); PRs merged since the previous report that touched `*.html` (`git -C <repo> log --merges --since <prev report date> --format=%s`, hardened as `hardened_git()` does). The dispatcher's reply opens with it (Task 10).
+**Commands** (the file lock from `lcs_money`, mode 600 on create)
+- `review_log.py record <review file>`: parses the numbered items under the heading `## Decisions` (lines matching `^\d+\. `), assigns `<date>-NN` in order, and prints `<id> <text>`. Rerunning it on the same date replaces that date's open items. Items already decided keep their ids.
+- `review_log.py decide <id>[,<id>…] approved|dropped [--note TEXT]`
+- `review_log.py done <id>[,<id>…] --note TEXT`
+- `review_log.py open [--before DATE]`: prints open items oldest first, as `<id> · <kind> · <text>`. Any item open for more than 28 days is marked `expired` first, so the list stays short.
 
-**Steps**
-1. Write `tests/test_review_log.py` first: `propose` assigns `<date>-01`, `-02`; `decide` on an unknown id fails with exit 2; `open` lists only status open; a second `propose` on the same date continues numbering; the file is created with mode 600 under a `LCS_PRIVATE_DIR` temp dir (the pattern `tests/test_pipeline.py` uses).
-2. Implement `review_log.py` with `lcs_money.PRIVATE`, `lcs_money.today()` and the ledger lock; refuse any text containing an `@` or a UK phone pattern (`\b0\d{4}\s?\d{6}\b`), so a proposal line can never carry contact details.
-3. Add section 0b to `run_sections` before section 1, guarded like the others: `run_section("0b", "Since last Monday", since_last_monday_section, today)`. Its "open proposals" lines are never problems for `quiet_summary` (prefix them `open `, and add that prefix to the exclusion tuple).
-4. Add both files to `tests/run_ci_tests.py`. Run `.venv/bin/python tests/run_ci_tests.py` and `.venv/bin/python scripts/reports/weekly_review.py` (no `--save-report`; section 0b prints "no open proposals" on a fresh machine).
-5. Add the three `review_log.py` forms to the dispatcher's SHELL COMMANDS and to the `Bash(...)` allow list in `.claude/settings.json`; `tests/test_prompt_allowlist.py` must still pass.
+**Rules:** `record` refuses an item holding an `@`, or a UK phone number (`\b0\d{3,4}\s?\d{3}\s?\d{3,4}\b`, and the same with `+44`). Proposals name pages, campaigns and figures only.
 
-### Task 2: "this week in brief", computed, at the top of the report
+**Section 0b, "Since last Monday"** (guarded like the other sections):
+- the open proposals, each line starting `open `;
+- the number of Ads changes logged since the previous report (section 1 lists them);
+- the titles of PRs merged on origin/main since the previous report, using `hardened_git()` and `git log origin/main --merges --since <date> --format=%s`.
 
-The business figures lead, with trend, so the reply's first five lines come from code rather than from an agent's reading.
+Add `open ` to `quiet_summary`'s exclusion prefixes.
 
-**Files**
-- Create: `scripts/reports/brief.py` (pure functions over rows already loaded elsewhere: the pipeline sheet, the ledger, `ads-summary.json`, GoatCounter's week, section 6's totals)
-- Modify: `scripts/reports/weekly_review.py` (new section 0, printed first; it runs after the sections it draws on, so compute it last and print it with a heading the archive moves to the top, or simplest: gather the week's figures into a dict as each section runs and print section 0 at the end under the heading `== 0. This week in brief` and let `report_sections.py 0` serve it; order in the file does not matter to the agents)
-- Modify: `scripts/reports/economics.py` (`ads-summary.json` already holds 8 full weeks of spend and clicks; add enquiries and bookings per week to the same file from the pipeline sheet and ledger)
-- Test: `tests/test_brief.py`
+**Tests:**
+- `record` parses a fixture review file and numbers its items from 01.
+- A second `record` that day replaces only the open items.
+- `decide` on an unknown id exits 2.
+- `open` expires an item older than 28 days.
+- Contact details are refused.
+- The file is created with mode 600.
 
-**Lines section 0 prints** (one each, "this week · the week before · 8-week average"):
-- enquiries, by occasion and by source (from the pipeline sheet, first_seen in the 7 days)
-- quotes sent (pipeline "quoted" notes dated in the week) and median hours from first_seen to the first quote
-- bookings confirmed and £ booked (ledger rows with invoice_date in the week; count and total only)
-- £ received from clients (section 10 already has it)
-- ad spend and clicks (section 1), with "no campaign over its cap" or the campaign that is
-- page views from every visitor (section 5c) and organic clicks (section 6)
-- one alarm line: any "SECTION FAILED", STOP GUARD, STALE, NOT INDEXED, CONFIG ERROR or a conversion-action !CHECK from the sections above, or "nothing alarming"
+### Task 2: section 0, "This week in brief"
 
-**Steps**
-1. Tests first, with small fixture rows: a week with 3 enquiries (2 web form, 1 email), 2 quotes, 1 booking, expected lines verbatim; an empty week prints zeros, never "–" in the brief.
-2. Implement `brief.py` as pure functions; `weekly_review.py` collects the figures into one dict (`WEEK = {}`) as sections run and calls `brief.lines(WEEK)` at the end.
-3. Extend `economics.ads_summary()` with `enquiries` and `bookings` per week; `tests/test_economics.py` gets a case.
-4. `dashboard.py` reads the two new keys if present (it already reads `ads-summary.json`); no change to its layout.
-5. Dispatcher: SHELL COMMANDS gains `report_sections.py 0`, and the reply's first block is section 0 verbatim (Task 10).
+**Files:** create `scripts/reports/brief.py` (pure functions) and `tests/test_brief.py`. Modify `weekly_review.py` and `economics.py`.
+
+The report prints `== 0. This week in brief` last, after the sections it reads, and `report_sections.py 0` serves it. Each line shows this week, the week before, and the average of the 8 full weeks:
+- **enquiries**, with this week's split by occasion and by source, from the pipeline sheet's `first_seen`;
+- **quotes sent**, from the pipeline's `quoted YYYY-MM-DD` notes, with the median days from first contact to quote;
+- **bookings**, as a count and £ booked, from ledger rows by `invoice_date`, with cancelled bookings left out (`check_payments.is_cancelled`);
+- **ad spend and clicks**, from the per-week figures section 11 already builds;
+- **page views from every visitor**, from GoatCounter's section 5c result, and **organic clicks**, from section 6's totals; "not read" when a section failed;
+- **an alarms line**, the problem lines `quiet_summary` would list (the same `PROBLEM_RE` and exclusions), or "nothing alarming".
+
+The section functions hand their figures back through their return values or a module-level `WEEK` dict. `brief.lines(week)` formats them, and an empty week prints zeros, never "–".
+
+`economics.ads_summary` gains enquiries and bookings for each week, so `~/lcs-private/ads-summary.json` and the dashboard have them too.
+
+**Tests:**
+- A fixture week (3 enquiries, 2 quotes, 1 booking) gives the expected lines exactly.
+- An empty week prints zeros.
+- A failed section prints "not read".
 
 ### Task 3: grade C with its base rate
 
-**Files**
-- Modify: `scripts/reports/enquiry_sources.py` (`grade`, `line`, `counts_lines`), `scripts/reports/weekly_review.py` (`enquiries_section` passes click days)
-- Test: `tests/test_enquiry_sources.py`
+**Files:** `scripts/reports/enquiry_sources.py`, `weekly_review.py` (`enquiry_grades` already has `days`, the set of campaign click days) and `tests/test_enquiry_sources.py`.
 
-**Steps**
-1. Tests: a C enquiry on a campaign that clicked on 24 of 28 days prints `C <campaign> (clicks on 24 of 28 days: a coincidence is likely)`; on 3 of 28 days, `(clicks on 3 of 28 days: worth a look)`; the threshold is 50%. The by-campaign block prints `C 4 (clicked 24/28 days)`.
-2. `ClickDays.clicked_days(start)` already exists in `weekly_review.py`; pass the per-campaign day count into `grade_rows` as `click_days={campaign_key: n}` and into `counts_lines`.
-3. The ads agent's step 7 and the bookings agent's step 9 copy the new wording as printed; no agent rule changes.
+- The base rate is the share of the 28 days in which the C's campaign had an ad click on that day or the day before.
+- A C line reads `C <campaign> (… ; that campaign clicked on n of 28 days: a coincidence is likely)` when the share is 50% or more, and `(…: worth a look)` below 50%.
+- The by-campaign lines read `C 4 (clicked 24/28 days)`.
+- Grade C still never counts.
 
-### Task 4: hiring-intent queries weekly, from code
+### Task 4: hiring searches every week
 
-**Files**
-- Modify: `scripts/reports/weekly_review.py` (`gsc_section`), `scripts/reports/economics.py` (expose the intent classifier `shortlist` uses as `is_hiring_query(q)` if it is not already a function)
-- Modify: `.claude/agents/lcs-review-web.md` (step 4 reads the new block only; step 2's "ignore under 10 impressions" becomes unnecessary because the script applies it)
-- Test: `tests/test_economics.py` (classifier cases: "hire a choir" yes, "choir for funeral" yes, "nine lessons and carols order of service" no, "funeral singers near me" no, since singular singer searches are never targeted)
+**Files:** `weekly_review.py` (`gsc_section`) and `.claude/agents/lcs-review-web.md`.
 
-**Steps**
-1. In `gsc_section`, replace the single "money queries" list with two: `-- hiring-intent queries (10+ impressions this week), by impressions` (the classifier, any position; mark `[page one]` under 10 and `[8–20]` in that band) and `-- informational money queries, top 10` (the old regex minus the hiring ones). Keep the "top 15 queries" and "top 15 pages" blocks.
-2. Web agent step 4: "Each line in the hiring-intent block marked [8–20]: one fix each", and drop its own threshold wording. Step 2 reads the informational block for moves of more than 3 positions.
-3. Section 13 stays monthly (it reads 28 days with the page's h2s); on other Mondays print nothing but its heading and the next date, as now.
+Section 6's "money queries" block becomes two blocks:
+- `-- hiring searches (economics.hiring_intent, 10+ impressions this week), by impressions`, each line ending `[page one]` below position 8, `[8–20]` from 8 to 20, or `[deep]` beyond 20;
+- `-- other money queries, top 10 by impressions`: the old word filter, without the hiring ones.
 
-### Task 5: a lint pass over the reply
+The web agent's step 4 now takes only the `[8–20]` lines, and its own impressions threshold goes. Section 13 still runs monthly.
 
-**Files**
-- Create: `scripts/reports/review_lint.py`
-- Test: `tests/test_review_lint.py`
+### Task 5: lint the reply
 
-**Checks** (input: the saved `<date>-review.md`; output: one line per finding, exit 1 when any):
-- an email address, a UK phone number, or a surname from the ledger's `client_name` column (read under `LCS_PRIVATE_DIR`, compared case-insensitively, never printed: the finding says "a client name on line N")
-- a `£` figure between £250 and £5,000 in a line under the headings Ad copy, GBP posts, Landing page or Proposed changes that is not a price on `pricing.html` or `christmas-pricing.html` (parse both pages' price grids the way `validate_house_claims.py` reads copy), with the combo figures from CLAUDE.md allowed (£275 soloist, £250 organist added, £550, £1,400 Small Choir plus organist)
-- the roster-size and London-cathedral patterns from `validate_house_claims.py` (import its regexes rather than copying them)
-- a numbered proposal line that lacks ` → ` or ` — ` (the "resource → field: current → new — reason" form)
-- the word "singer" in a proposed negative or keyword line when singular and not "carol singers" or "funeral singers" (the targeting rule)
-- more than 900 words between the first line and the final question (D4)
+**Files:** create `scripts/reports/review_lint.py` and `tests/test_review_lint.py`.
 
-**Steps**
-1. Tests with a fixture reply: each check has a positive and a negative case.
-2. Implement; the dispatcher runs `review_lint.py ~/lcs-private/reports/<date>-review.md` after writing the file and before replying, fixes what it names, saves again, and reruns until clean (at most twice; then reply with the findings at the top). Add the command to SHELL COMMANDS and the allow list.
+The input is the saved review file. The output is one line per finding, with exit 1 when there are any. The checks:
+- **contact details:** an email address or a UK phone number, except the business's own number and its office@ and luca@ addresses;
+- **client names:** a ledger `client_name`, matched as the whole name, case-insensitive, and never printed. The finding says "a client name on line N";
+- **prices:** a £ figure from £250 to £10,000 under Decisions, Ad copy, GBP posts or Landing page that appears nowhere in the visible text of `pricing.html` or `christmas-pricing.html`, or in CLAUDE.md's combination figures (£550, and the Small Choir plus organist at £1,400). Spend and money lines elsewhere are not checked;
+- **house rules:** the roster-size and London-cathedral patterns, imported from `validate_house_claims.py`, not copied;
+- **proposal form:** a numbered item under Decisions without ` → `;
+- **targeting:** a proposed keyword in Decisions holding singular "singer", "soloist", "solo" or "vocalist" (negatives are fine);
+- **length:** more than 900 words before the final question.
+
+**Tests:** a positive and a negative fixture for each check.
 
 ### Task 6: small noise
 
-**Files**
-- Modify: `scripts/reports/economics.py` (section 11: omit a campaign with no spend, clicks, enquiries and bookings in the season; print "campaigns with nothing this season: <names>" once instead)
-- Modify: `scripts/bookings/pipeline.py` (`summary_dict` gains `open_whatsapp`: enquiries with source whatsapp, status new or quoted, first_seen in the last 28 days), `.claude/agents/lcs-review-bookings.md` step 8 (prints "open WhatsApp enquiries: n"), the dispatcher's final question (asks the WhatsApp question only when n > 0; D5)
-- Modify: `scripts/reports/weekly_review.py` `shortlist_section` (on a non-first Monday print nothing after the heading but `next: <date>`), and `quiet_summary` (section 13's "runs on the first Monday" line is not a problem already; keep)
-- Tests: `tests/test_economics.py`, `tests/test_pipeline.py`
+- **Section 11** leaves out a campaign with no spend, clicks, enquiries or bookings in the season, and prints `campaigns with nothing this season: <names>` once instead. Tests go in `tests/test_economics.py`.
+- **`pipeline.summary_dict`** gains `open_whatsapp`: enquiries with source whatsapp, status new or quoted, first seen in the last 28 days. `pipeline.py summary` prints it. Tests go in `tests/test_pipeline.py`.
+- **Section 13**, on any Monday but the first of the month, prints its heading and one line: `next: <date>`.
 
-### Task 7: standing approvals (after D1)
+### Task 7: standing approvals (after D1 only)
 
-**Files**
-- Create: `scripts/ads/standing_approvals.py`: reads `data/standing-approvals.yml` (the five classes, each with its rule in words and the script it uses: `add_negatives` modelled on the latest `scripts/ads/add_negatives_*.py`, `dismiss_recommendations_*.py` per type, `scripts/gsc/submit_sitemap.py`, the archive line, the `llms.txt` date) and, given the ads agent's NEGATIVES line and the week's HIRING terms, writes a dated `scripts/ads/add_negatives_<date>.py` in a worktree, validates it (`negative_match.py` proves it blocks no HIRING term), applies it with `--apply`, logs it, commits and opens the PR; the dispatcher merges it once the check passes, as it does for approved changes today.
-- Modify: the dispatcher prompt step 4 (a new step 3b "standing approvals", run before the reply; its results go under "Done this morning" in the reply, each with its log row); CLAUDE.md's Google Ads bullet ("Every change runs first with validate_only … apply it only after my explicit approval" gains "except the standing approvals in `data/standing-approvals.yml`, owner decision <date>"); Appendix A.
-- Test: `tests/test_standing_approvals.py`: a NOT A BUYER term whose proposed negative would also block a HIRING term is refused; a recommendation type not in the list is never dismissed; the file's five classes are exactly those D1 names.
+**Files:** `data/standing-approvals.yml` (the five classes, each with its rule and its script), the dispatcher prompt (a step that runs the classes before the reply, using the same worktree, script, validate, apply, log and PR flow as approved changes, with negatives checked by `negative_match` against the week's HIRING terms), the Google Ads bullet in CLAUDE.md, and Appendix A.
 
-The run keeps "no git commands" for everything else: this task gives it one scripted path (`standing_approvals.py` does the git work itself, in a worktree it removes afterwards), so the prompt's allow list grows by one command.
+**Test:** `tests/test_standing_approvals.py` checks that the YAML names exactly the five classes, and that the recommendation types match the ones the owner ruled out on 26 Oct in `logs/ads-changes.md`.
 
-### Task 8: pre-validated proposal scripts (after D2)
+### Task 8: budget and pause proposals, validated
 
-**Files**
-- Create: `scripts/ads/propose.py`: takes the ads agent's PROPOSED ADS CHANGES items (a JSON list, each `{"kind": "negative|budget|status|bid|headlines", "campaign": …, …}`), writes one script per item under `~/lcs-private/proposals/<date>/NN-<kind>.py` from the existing templates (`set_budget.py`, `set_campaign_status.py`, the latest `*_bid_*.py` and `*headlines_*.py`), runs each validate-only and prints its current → new lines. `set_budget.py`'s cap check stays inside the script, so a proposal above `budget_cap.py` fails validation here, before the owner sees it.
-- Modify: the dispatcher prompt (step 3c: run `propose.py` on the ads items; the reply quotes each validated block; after approval, `propose.py --apply <id>` copies the script into a dated `scripts/ads/` file in a worktree, applies it, logs, commits, PRs); the allow list.
-- Test: `tests/test_propose.py` with the Ads client stubbed (`tests/test_weekly_proposals.py` shows the pattern): a budget above the cap is refused at validation; a headline over 30 characters is refused before any API call.
+The prompt's step 3 gains a new step. For each PROPOSE budget line and each spend-guard pause, the dispatcher runs the matching command:
 
-### Task 9: tests for what landed on 26 Oct
+```
+.venv/bin/python scripts/ads/set_budget.py <id> <£> --reason "<reason>"
+.venv/bin/python scripts/ads/set_campaign_status.py <id> paused --reason "<reason>"
+```
 
-**Files**
-- Create: `tests/test_weekly_review_snapshot.py`: `snapshot_block` splits a report at `-- snapshot`; `previous_snapshot` picks the newest earlier report in a temp reports dir and ignores today's; `snapshot_diff_lines` prints `- set …` then `+ set …` for a changed bid and nothing for an unchanged block; `logged_changes` keeps rows since the baseline and the last `LOG_DAYS` days; `quiet_summary` lists a `SECTION 5c FAILED` line as a problem and never a `set ` line that contains the word "error".
-- Add to `tests/run_ci_tests.py`.
+Both run without `--apply`, which is their validate-only default. The reply quotes the current → new line each one prints. If validation fails, the item stays in the reply with the error, marked "Google refused this as written". Both commands are added to the allow list.
+
+### Task 9: tests for the 26 Oct pieces
+
+Create `tests/test_weekly_review_snapshot.py`, covering:
+- `snapshot_block` stops at the next `-- ` or `== ` line;
+- `previous_snapshot` takes the newest earlier report, skips today's, skips a report whose 1b failed, and ignores `reviews/`;
+- `snapshot_diff_lines` prints `- set …` and then `+ set …` for a changed bid, and "no change" when nothing changed;
+- `logged_changes` keeps the rows since the baseline and the rows from the last `LOG_DAYS` days;
+- `quiet_summary` lists `SECTION 5c FAILED` as a problem, and does not list a `set ` line or an `open ` line that contains "error".
 
 ### Task 10: the reply, rewritten
 
-**Files**
-- Modify: `~/.claude/scheduled-tasks/christmas-carol-campaign-review/SKILL.md` through the scheduled-tasks tool (copy it to `~/lcs-private/backups/` first), Appendix A of `docs/HANDOVER-2026-09-27-ads-analytics.md` (the same text), the weekly-review bullet in `CLAUDE.md`, `.claude/settings.json` (allow list), `tests/test_prompt_allowlist.py` (must pass)
+**Files:**
+- the SKILL.md, updated through the scheduled-tasks tool after a backup copy in `~/lcs-private/backups/`;
+- Appendix A, with the same text;
+- the weekly-review bullet in CLAUDE.md;
+- the allow list in `.claude/settings.json`, so that `tests/test_prompt_allowlist.py` passes;
+- `.claude/agents/lcs-review-bookings.md` (open WhatsApp count) and `.claude/agents/lcs-review-web.md` (Task 4).
 
-**Reply format** (D4; the sub-agents' RESULT formats do not change):
-1. **Brief**: section 0 verbatim (Task 2), then section 0b's open-proposal count and the PRs merged since last Monday (Task 1).
-2. **Done this morning** (Task 7, when it applies): one line per standing approval applied, with its log row.
-3. **Decisions**: the numbered proposals, each "resource → field: current → new — reason", with its validated block where Task 8 applies. Proposal ids from `review_log.py propose` in brackets so the owner can answer by id.
-4. **Where nothing needs attention, one line**: "Tracking: fine (Submit lead form last seen <date>)", "Coverage: fine", "Money: nothing overdue", "Hand checks: none". The full agent blocks go to the saved review file, not the reply.
-5. **Watch**: at most three lines on what next Monday should show (the Christmas bid test to 9 Nov, a page changed this week and its GoatCounter taps, a conversion action not seen for a month).
-6. **One question**: approve by id (all, some, none), plus the WhatsApp question only when Task 6's count is above zero.
+**Reply format** (the sub-agents' RESULT formats are unchanged apart from Tasks 4 and 6):
+1. **Brief:** section 0 verbatim, plus section 0b's open proposals and merged PRs.
+2. **Done this morning:** only once Task 7 exists.
+3. **Decisions** (`## Decisions`): numbered, each tagged and in the form "resource → field: current → new — reason", with Task 8's validated line where one applies. Open items from earlier weeks come first, under their ids.
+4. **One line per quiet area:** Tracking, Web, Coverage, Speed, Money, Books, Hand checks, Pipeline. Any area with a finding gets up to three lines.
+5. **Watch:** at most three lines.
+6. **One question:** approve by number or id (all, some or none). The WhatsApp question is added only when the open WhatsApp count is above zero.
 
-**Steps**
-1. Rewrite the prompt's EACH RUN and REPLY FORMAT sections; keep SAFETY and the stop rule on auth errors as they are; add the new SHELL COMMANDS (`report_sections.py 0`, `review_log.py …`, `review_lint.py …`, and Tasks 7 and 8's commands once decided).
-2. Step 4 (after the owner answers) gains: `review_log.py decide` for each id, and `review_log.py done` when a PR merges.
-3. Dry run: `run_scheduled_task` on a weekday after Task 1 to 6 are merged, against that day's report; read the saved review file; check it against D4's cap and the lint.
+**Steps in the run:** report → agents → cross-checks → Task 8 validations → write the review file → `review_lint.py` (fix and rewrite, at most twice; then put the findings at the top of the reply) → `review_log.py record` → reply. After the owner answers: `decide`, then the existing worktree flow, then `done` once a PR merges.
 
 ### Task 11: docs
 
-Appendix A gets the new prompt verbatim and a dated note; `CLAUDE.md`'s weekly-review bullet mentions section 0, the review file, the proposals record and (after D1) the standing approvals; `docs/ROADMAP.md` gets one item per task not yet done, in its style, so a later session can pick them up.
+- Appendix A gets the new prompt verbatim and a dated note.
+- CLAUDE.md's weekly-review bullet mentions section 0, the review file, the proposals record and the lint.
+- `docs/ROADMAP.md` gets an item for Task 7, marked BLOCKED-ON-HUMAN (D1).
 
-## 4. Order and timing
+## 4. Order
 
-- **Before Monday 2 Nov:** nothing. The 1b snapshot, the GoatCounter retry, the retired value check and the growth agent's first run all get their first Monday as they are, so a failure is attributable.
-- **Week of 2 Nov:** Tasks 3, 4, 6 and 9 (small, no decision needed), then Task 1 and Task 2; merged by Friday 6 Nov so 9 Nov runs with section 0 and the proposals record.
-- **After the owner's reply on D1 to D5:** Tasks 5 and 10 (the lint needs the saved review file that Task 10's prompt writes; land them together), then 7 and 8.
-- **16 Nov:** first Monday on the full set. Compare the reply's length and the number of decisions with 26 Oct's.
+1. Tasks 0, 1, 2, 3, 4, 6 and 9, which change the report code, go on one branch. They all touch `weekly_review.py`, so one worker does them in turn.
+2. Task 5 and Task 6's pipeline change go on a second branch, in parallel. They touch other files.
+3. After both merge, Tasks 8, 10 and 11 follow: the prompt, the agents and the docs.
+4. Before the prompt goes live, run a dry run:
+   - `weekly_review.py --save-report --quiet --out <scratch>`;
+   - `report_sections.py --file <scratch> 0 0b 6 9b 11 13`;
+   - `review_lint.py` on a review file written from the 26 Oct reply, which must flag the 2,000 words and the soloist at £250.
+5. 2 Nov is the first live run. Check the saved review file and `review_log.py open` afterwards.
 
 ## 5. Verification
 
-- `.venv/bin/python tests/run_ci_tests.py` green on every PR (the pull-request check runs it).
-- `.venv/bin/python scripts/reports/weekly_review.py` on a weekday prints sections 0 and 0b and changes nothing (`git status` clean; `logs/ads-changes.md` unchanged).
-- `.venv/bin/python scripts/reports/report_sections.py 0 0b` prints both.
-- A dry run of the scheduled task on a weekday produces `~/lcs-private/reports/<date>-review.md`, `review_lint.py` passes on it, and the reply is under the word cap.
-- On 9 Nov and 16 Nov: `review_log.py open` shows the previous week's undecided items at the top of the reply; the owner answers by id; `decide` and `done` rows appear in the record.
+- `.venv/bin/python tests/run_ci_tests.py` is green on every PR.
+- A dry run changes nothing: `git status` stays clean, `logs/ads-changes.md` is untouched, and there is no new file in `~/lcs-private/reports/`.
+- On 2 Nov and 9 Nov, the reply is under the word cap, opens with section 0, and lists the previous week's open items by id.
