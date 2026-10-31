@@ -239,6 +239,14 @@ def test_the_allowlisted_files_and_prose_may_mention_mcp():
                                      "new_string": "never read ~/.claude.json or start mcp-remote"}), rel)
     memory = os.path.join(HOME, ".claude", "projects", "-x", "memory", "note.md")
     expect("allow", run("Write", {"file_path": memory, "content": "Never read ~/.claude.json."}), "memory note")
+    # Any Markdown is prose, wherever it lives: a plan file, a scratch note, a README in another repo.
+    for path in (os.path.join(HOME, ".claude", "plans", "plan-x.md"), os.path.join(SCRATCH, "notes", "zernio.md"),
+                 os.path.join(ROOT, "scripts", "README.md")):
+        expect("allow", run("Write", {"file_path": path, "content": "Then run `claude mcp add` and mcp-remote."}),
+               path)
+    # The same words in anything that could run are still refused.
+    expect("deny", run("Write", {"file_path": os.path.join(SCRATCH, "notes", "zernio.py"),
+                                 "content": "# run claude mcp add"}), "code next to prose")
 
 
 # --- the legitimate commands --------------------------------------------------------------------------------

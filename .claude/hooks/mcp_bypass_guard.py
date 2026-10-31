@@ -23,9 +23,9 @@ unguarded. This hook closes it. Wired in .claude/settings.json for:
     home folder, ~/Library…).
   Tracked files are reviewed code: `git ls-files` in the project repo (or one of its worktrees) decides.
 - Write, Edit, MultiEdit and NotebookEdit: denied when the file would end up holding a marker, unless it
-  is in CODE_OK or is prose (docs/**.md, CLAUDE.md, MANUAL-ACTIONS-REQUIRED.md, logs/*.md,
-  .claude/agents/*.md, Claude's own memory notes). Outside the repo (scratchpad, /tmp) naming lcs_mcp
-  counts as a marker too. MCP configuration itself is never written.
+  is in CODE_OK or is Markdown (prose is never run: docs, CLAUDE.md, MANUAL-ACTIONS-REQUIRED.md, logs,
+  agent prompts, plan files, memory notes). Outside the repo (scratchpad, /tmp) naming lcs_mcp counts as
+  a marker too. MCP configuration itself is never written.
 - Read, Grep and Glob: denied on MCP configuration (~/.claude.json and its backups, .mcp.json,
   claude_desktop_config.json, ~/.mcp-auth) and on a search rooted at a folder that holds it.
 
@@ -485,17 +485,11 @@ def check_command(text, repo, cwd):
 
 # --- file tools --------------------------------------------------------------------------------------------
 
-def prose(rel):
-    return (rel in ("CLAUDE.md", "MANUAL-ACTIONS-REQUIRED.md")
-            or (rel.startswith("docs/") and rel.endswith(".md"))
-            or re.fullmatch(r"logs/[^/]+\.md", rel) is not None
-            or re.fullmatch(r"\.claude/agents/[^/]+\.md", rel) is not None)
-
-
-def memory_note(path):
-    """Claude's own memory notes (~/.claude/projects/<project>/memory/*.md): prose, never run."""
-    base = os.path.join(os.path.realpath(os.path.expanduser("~")), ".claude", "projects")
-    return re.fullmatch(r"[^/]+/memory/[^/]+\.md", os.path.relpath(path, base)) is not None
+def prose(path):
+    """Markdown is prose: it is never run, so naming an MCP marker in it starts no server. This covers docs,
+    CLAUDE.md, MANUAL-ACTIONS, logs, agent prompts, plan files (~/.claude/plans) and memory notes alike
+    (owner decision, 31 Oct 2026: the guard had refused a plan file for mentioning `claude mcp`)."""
+    return path.lower().endswith((".md", ".markdown"))
 
 
 def _str(ti, key, required=True):
@@ -541,10 +535,10 @@ def check_write(tool, ti, repo, cwd):
         texts.append(current)
     else:
         texts = [_str(ti, "new_source", required=False)]
-    loc = repo.locate(path)
-    if loc and (loc[1] in CODE_OK or prose(loc[1])):
+    if prose(path):
         return
-    if not loc and memory_note(path):
+    loc = repo.locate(path)
+    if loc and loc[1] in CODE_OK:
         return
     for t in texts:
         label = found(t, client=None if loc else "file")
