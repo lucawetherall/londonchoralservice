@@ -574,21 +574,14 @@ def held_assessments():
     return out
 
 
-def test_a_held_booking_is_never_chased_or_offered_as_a_fee_on_today():
-    sys.path.insert(0, ROOT)
-    from command_centre import models
+def test_a_held_booking_is_never_chased_today():
     import money_report as mr
     got = held_assessments()
-    assert models.fee_shortfall(got[0], True) is None and models.fee_shortfall(got[2], True) is not None
-    hand = [{"ref": a["ref"], "state": a["state"], "label": mr.hand_check_label(a)} for a in got if mr.needs_hand_check(a, T)]
-    rows, _ = models.needs_you({"bank": P({"assessments": got, "bank_checked": True}), "hand": P(hand)})
-    kinds = {r["kind"]: r for r in rows}
-    assert [r["item"]["ref"] for r in rows if r["kind"] == "hand"] == ["H1", "H2"], rows
-    assert kinds["deposits"]["refs"] == ["D1"] and "balances" not in kinds, rows  # B1 is asked about as a fee
-    assert [r["item"]["ref"] for r in rows if r["kind"] == "fee"] == ["B1"], rows
-    # the badge (money_report's label) names the family; the reason says what holding it means
+    assert [a["action"] for a in got[:2]] == ["hand_check", "hand_check"], got  # never a reminder
+    assert [a["ref"] for a in got if mr.needs_hand_check(a, T)] == ["H1", "H2"], got
+    assert all(a["action"] != "hand_check" for a in got[2:]), got
+    # the label names the family that disagrees
     assert mr.hand_check_label(got[0]) == "notes and recorded facts disagree: cancellation"
-    assert models.hand_reason(got[0], True) == models.HELD_REASON
 
 
 def test_the_monday_overdue_and_balances_lines_skip_held_bookings():
@@ -631,7 +624,7 @@ def test_collect_reports_a_held_closed_or_cancelled_booking_from_the_log():
                         note=ev.note_hash("balance to be paid in cash"))
         import lcs_owner
         saved = lcs_owner._PROVEN, os.environ.pop("LCS_BOOKINGS_CSV")
-        lcs_owner._PROVEN = True  # as the Command Centre's owner run
+        lcs_owner._PROVEN = True  # as an approved owner run
         try:
             ev.append("booking", "1506", "retract", {"target": eid, "why": "mistake"}, "owner", on="2026-09-21",
                       note=ev.note_hash("earlier entry undone 2026-09-21 (owner)"))

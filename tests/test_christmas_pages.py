@@ -13,7 +13,7 @@ import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Same walk as tests/test_design_markup.py: no site pages live in these.
-SKIP_DIRS = {'command_centre', 'partials', 'node_modules', 'graphify-out', 'docs', 'tests'}
+SKIP_DIRS = {'partials', 'node_modules', 'graphify-out', 'docs', 'tests'}
 
 failures = []
 

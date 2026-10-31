@@ -372,7 +372,7 @@ def hiring_intent(query):
     return bool(INTENT.search(query or "")) and not NOT_INTENT.search(query or "")
 
 
-# Search terms (section 2 and the Command Centre's "Search terms to check"). CLAUDE.md's targeting rule: choir and
+# Search terms (section 2 of the Monday review).CLAUDE.md's targeting rule: choir and
 # "carol singers" (plural) bookings only, never solo-singer searches; every campaign carries the negatives singer,
 # soloist, solo and vocalist. A flag is a reason to look, never a change: negatives are proposed in the Monday
 # review and applied only after the owner approves them.

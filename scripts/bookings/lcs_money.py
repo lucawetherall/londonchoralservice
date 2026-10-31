@@ -45,7 +45,7 @@ ICLOUD_INVOICES = Path.home() / "Library" / "Mobile Documents" / "com~apple~Clou
 _KEYS = {}
 LEDGER = Path(os.environ.get("LCS_BOOKINGS_CSV", PRIVATE / "bookings.csv"))
 # The most a booking may be short by transfer fees and still read paid in full, once the owner accepts it
-# ("short by fees £12.40 accepted 2026-09-28", written only through the Command Centre). Here so that both
+# ("short by fees £12.40 accepted 2026-09-28", written only with his Allow on Claude Code's prompt). Here so that both
 # check_payments.py (FEE_CAP) and the state log's schema (lcs_events) read the one figure.
 FEE_CAP = 40.00  # owner decision, 29 Sep 2026 (was £25; 2408 was £36.15 short)
 

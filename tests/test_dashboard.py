@@ -341,7 +341,7 @@ def test_pipeline_figures_are_the_pipeline_scripts_own():
     assert "4 enquiries, 2 quoted, 2 booked (50%)" in out, out
 
 
-CACHE = os.path.join(TMP, "command-centre", "cache")
+CACHE = TMP
 
 
 def books_invoice(number, status, date, total, balance, first="Ann"):
@@ -356,7 +356,7 @@ def write_books_cache(invoices, bills=None):
               "overdue": round(sum(i["balance"] for i in invoices if i["status"] == "overdue"), 2),
               "overdue_count": sum(1 for i in invoices if i["status"] == "overdue"),
               "unpaid_bills": 0.0, "unpaid_bills_count": 0}
-    with open(os.path.join(CACHE, "books.json"), "w") as f:
+    with open(os.path.join(CACHE, "books-cache.json"), "w") as f:
         json.dump({"generated_at": "2026-09-28T07:00:00+01:00", "invoices": invoices, "bills": bills or [],
                    "totals": totals}, f)
 

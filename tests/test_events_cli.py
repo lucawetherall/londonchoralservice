@@ -74,7 +74,7 @@ def test_verify_reports_an_unreadable_log():
 def test_show_prints_one_line_per_fact_and_never_notes():
     fresh()
     import lcs_owner
-    saved, lcs_owner._PROVEN = lcs_owner._PROVEN, True  # as the Command Centre's owner run
+    saved, lcs_owner._PROVEN = lcs_owner._PROVEN, True  # as an approved owner run
     try:
         a = ev.append("booking", "2111", "fees-accepted", {"amount": "12.40"}, "owner", on="2026-09-20",
                       note=ev.note_hash("short by fees £12.40 accepted 2026-09-20 (owner)"))
@@ -156,24 +156,27 @@ def test_verify_lists_facts_whose_note_is_missing_and_stale_notes_checked_hashes
     assert "2112" not in out, "a withdrawn fact never had a note to lose"
 
 
-# --- retract: the owner's undo (Command Centre only) ----------------------------------------------------------------
+# --- retract: the owner's undo (Luca's Allow only) ------------------------------------------------------------------
 
 NONCE = "ab" * 32
 
 
-def nonce_file(d):
-    import hashlib
-    cc = os.path.join(d, "command-centre")
-    os.makedirs(cc, mode=0o700, exist_ok=True)
-    fd = os.open(os.path.join(cc, "owner-nonce"), os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+def nonce_file(d, argv):
+    """The approval owner_confirm_guard writes once Luca clicks Allow: owner-nonce.chat-<sha256 of NONCE> in
+    <private>/owner-approvals, holding the command's argv."""
+    import hashlib, json
+    folder = os.path.join(d, "owner-approvals")
+    os.makedirs(folder, mode=0o700, exist_ok=True)
+    path = os.path.join(folder, "owner-nonce.chat-" + hashlib.sha256(NONCE.encode()).hexdigest())
+    fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
     with os.fdopen(fd, "w") as f:
-        f.write(hashlib.sha256(NONCE.encode()).hexdigest())
+        f.write(json.dumps({"argv": list(argv)}))
 
 
 def run_owner(*args, nonce=True):
     d = os.environ["LCS_PRIVATE_DIR"]
     if nonce:
-        nonce_file(d)
+        nonce_file(d, [SCRIPT, *args])
     kw = {"input": NONCE + "\n"} if nonce else {"stdin": subprocess.DEVNULL}
     p = subprocess.run([PY, SCRIPT, *args], capture_output=True, text=True, timeout=30, env=dict(os.environ), **kw)
     return p.returncode, p.stdout + p.stderr
@@ -247,10 +250,6 @@ def test_a_bank_warning_is_never_undone_and_an_undone_one_leaves_the_alarm_to_th
                     note=ev.note_hash(CHANGED))
     code, out = run_owner("retract", eid, "--owner")
     assert code != 0 and "confirm" in out and "nothing written" in out, out
-    import sys as _s
-    _s.path.insert(0, os.path.join(ROOT))
-    from command_centre import models
-    assert models.live_facts("singer_invoice", "m2") == []  # never offered
     # an undone warning (by an earlier build, or by hand) leaves the notes and the column to say it: still rung first
     lcs = __import__("lcs_owner")
     saved, lcs._PROVEN = lcs._PROVEN, True
@@ -395,7 +394,7 @@ def test_retract_of_a_singer_fact_puts_its_column_back():
     assert not si.is_withdrawn(rows["m1"]) and not si.confirmed(rows["m2"]) and si.is_open(rows["m3"])
 
 
-# --- notes-checked: "The recorded facts are right" (Command Centre only) --------------------------------------------
+# --- notes-checked: "The recorded facts are right" (Luca's Allow only) ----------------------------------------------
 
 def test_notes_checked_confirms_the_recorded_facts_and_releases_a_held_booking():
     import check_payments as cp

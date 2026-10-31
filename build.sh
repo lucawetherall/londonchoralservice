@@ -28,8 +28,8 @@ echo "Created css/style.css ($(wc -c < "$CSS_DIR/style.css") bytes)"
 echo "Populating HTML partials..."
 
 include_count=0
-# Hidden top-level dirs (.git, .venv, .claude/worktrees, .superpowers), graphify-out/ and command_centre/ (the owner's private app) are never site content.
-for file in $(find "$SCRIPT_DIR" -name '*.html' -not -path "$SCRIPT_DIR/.*" -not -path "$SCRIPT_DIR/graphify-out/*" -not -path "$SCRIPT_DIR/command_centre/*" -not -path '*/partials/*'); do
+# Hidden top-level dirs (.git, .venv, .claude/worktrees, .superpowers) and graphify-out/ are never site content.
+for file in $(find "$SCRIPT_DIR" -name '*.html' -not -path "$SCRIPT_DIR/.*" -not -path "$SCRIPT_DIR/graphify-out/*" -not -path '*/partials/*'); do
   if grep -q '@include-start' "$file"; then
     # Validate that every referenced partial exists; fail loudly if not.
     # Done in shell (not awk) so set -euo pipefail catches the failure cleanly.

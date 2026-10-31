@@ -26,16 +26,16 @@ NEVER = [
     f"{PY} scripts/bookings/singer_invoices.py settled X 2026-09-28",
     f"{PY} scripts/ads/upload_bookings.py --apply",
     f"{PY} scripts/gsc/submit_sitemap.py --apply",
-    # Ads change sets: the Command Centre applies them after two passkey taps (validate, then apply)
+    # Ads change sets: run only in a live chat after the owner approves them (validate, then apply)
     f"{PY} scripts/ads/add_negatives_2026_09_28.py --apply",
     f"{PY} scripts/ads/set_campaign_status.py 24295921372 enabled --reason X --apply",
     f"{PY} scripts/ads/generated_proposal_2026_10_05.py --apply",
-    f"{PY} scripts/ads/generated_proposal_2026_10_05.py",  # even the validate-only run goes through the app
+    f"{PY} scripts/ads/generated_proposal_2026_10_05.py",  # even the validate-only run waits for approval
     f"{PY} scripts/ads/set_budget.py 24295921372 4.50 --apply",
     f"{PY} scripts/ads/set_budget.py 24295921372 4.50 --validate-only",
     f"{PY} scripts/bookings/singer_invoices.py confirm X --expect-fp a1b2c3d4e5f60718",
-    # the state log's owner commands: Luca approves each one (the Command Centre's passkey, or his Allow on Claude
-    # Code's prompt in a live chat; structured-state design, owner_confirm_guard)
+    # the state log's owner commands: Luca approves each one with his Allow on Claude Code's prompt in a live chat
+    # (structured-state design, owner_confirm_guard)
     f"{PY} scripts/bookings/events.py migrate --apply --expect {'a' * 64} --owner",
     f"{PY} scripts/bookings/events.py migrate --apply",
     f"{PY} scripts/bookings/events.py retract a1b2c3d4e5f60718 --owner",
@@ -193,13 +193,13 @@ def test_script_guarded_forms_are_documented_and_guarded():
     assert "def owner_confirmed(" in src and "if not owner_confirmed():" in src
 
 
-def test_claude_file_tools_cant_write_the_command_centre_folder():
-    """The owner nonce, proposals, approvals and audit log live in ~/lcs-private/command-centre/: Claude's Write
-    and Edit tools are denied there (the nonce file is the --owner barrier; a pipe alone is not)."""
+def test_claude_file_tools_cant_write_the_owner_approvals_folder():
+    """The owner confirm hook's one-time nonce files live in ~/lcs-private/owner-approvals/: Claude's Write and
+    Edit tools are denied there (the nonce file is the --owner barrier; a pipe alone is not)."""
     with open(SETTINGS, encoding="utf-8") as f:
         deny = json.load(f)["permissions"]["deny"]
     for tool in ("Write", "Edit"):
-        assert f"{tool}(~/lcs-private/command-centre/**)" in deny, tool
+        assert f"{tool}(~/lcs-private/owner-approvals/**)" in deny, tool
 
 
 GIT_DENY = ["Bash(git update-ref *)", "Bash(git remote set-url *)", "Bash(git config *)", "Edit(.git/**)"]
@@ -263,9 +263,8 @@ def test_helper_commands_the_prompts_rely_on_are_covered():
                 f"{PY} scripts/bookings/singer_invoices.py withdrawn 1789828736363141700 not-ours",
                 f"{PY} scripts/bookings/singer_invoices.py link 1789828736363141700 2111",
                 f"{PY} scripts/bookings/singer_invoices.py margins",
-                f"{PY} scripts/reports/cc_sync.py books",
-                f"{PY} scripts/reports/cc_sync.py calendar-put 'X'",
-                f"{PY} scripts/reports/weekly_review.py --save-report --write-proposals",
+                f"{PY} scripts/bookings/books_sync.py",
+                f"{PY} scripts/reports/weekly_review.py --save-report --quiet",
                 f"{PY} scripts/bookings/check_payments.py --fact 2111 cancelled",
                 f"{PY} scripts/bookings/events.py verify",
                 f"{PY} scripts/bookings/events.py show booking 2111",
@@ -282,14 +281,14 @@ OWNER_DENY_REMOVED = ("Bash(*events.py migrate*--apply*)", "Bash(*events.py retr
 def test_owner_commands_always_prompt_and_the_proofs_stay_denied():
     """Owner decision, 19 Oct 2026: Luca approves an --owner command with his Allow on Claude Code's prompt, so the
     deny rules that stopped those commands being tried at all are gone; the ask rule makes every --owner command
-    prompt (even in bypassPermissions), the scheduled prompts never name one, and the nonce files, the approvals
-    folder, the state log and the command-centre folder stay denied to Claude's tools."""
+    prompt (even in bypassPermissions), the scheduled prompts never name one, and the nonce files, the owner
+    approvals folder and the state log stay denied to Claude's tools."""
     perms = json.load(open(SETTINGS, encoding="utf-8"))["permissions"]
     deny, ask = perms["deny"], perms.get("ask", [])
     for rule in OWNER_DENY_REMOVED:
         assert rule not in deny, rule
-    for rule in ("Bash(*owner-nonce*)", "Bash(*command-centre/approvals*)", "Write(~/lcs-private/command-centre/**)",
-                 "Edit(~/lcs-private/command-centre/**)", "Write(~/lcs-private/events.jsonl)",
+    for rule in ("Bash(*owner-nonce*)", "Bash(*owner-approvals*)", "Write(~/lcs-private/owner-approvals/**)",
+                 "Edit(~/lcs-private/owner-approvals/**)", "Write(~/lcs-private/events.jsonl)",
                  "Edit(~/lcs-private/events.jsonl)", "Write(~/lcs-private/events.jsonl.lock)",
                  "Edit(~/lcs-private/events.jsonl.lock)"):
         assert rule in deny, rule
@@ -305,21 +304,24 @@ def test_owner_commands_always_prompt_and_the_proofs_stay_denied():
             assert not any(p.fullmatch(c) for _, p in asks), f"Appendix {k}: {c} would stop on a prompt"
 
 
-def test_the_command_centre_caches_and_proposals_are_in_the_prompts():
-    """The daily pass writes the Books and diary caches with plain allowlisted commands (never a pipe or heredoc,
-    which the allowlist can't vouch for), and the Monday review writes its budget proposals for the app."""
+def test_the_books_cache_and_the_report_are_in_the_prompts():
+    """The daily pass refreshes the Books cache with one plain allowlisted command (never a pipe or heredoc, which
+    the allowlist can't vouch for), and the Monday review runs its report without the retired --write-proposals.
+    No prompt names the Command Centre's scripts, removed on 31 Oct 2026."""
     blocks, scripts = appendix_blocks(), script_paths()
     a = commands(blocks["A"], scripts)
     agents = {name: commands(blocks[f"agent:{name}"], scripts) for name in ("lcs-daily-pass", "lcs-singer-clerk")}
-    assert f"{PY} scripts/reports/cc_sync.py books" in agents["lcs-daily-pass"], agents
-    assert f"{PY} scripts/reports/cc_sync.py calendar-put 'X'" in agents["lcs-daily-pass"], agents
+    assert f"{PY} scripts/bookings/books_sync.py" in agents["lcs-daily-pass"], agents
     assert f"{PY} scripts/bookings/singer_invoices.py link X X" in agents["lcs-singer-clerk"], agents
-    assert f"{PY} scripts/reports/weekly_review.py --save-report --quiet --write-proposals" in a, a
-    assert "Budget proposals are waiting in the command centre" in blocks["agent:lcs-review-bookings"]
+    assert f"{PY} scripts/reports/weekly_review.py --save-report --quiet" in a, a
+    for k, b in blocks.items():
+        for gone in ("cc_sync.py", "cc_event.py", "--write-proposals", "Command Centre", "command centre"):
+            assert gone not in b, f"{k} still names {gone}"
     for name in MONDAY_AGENTS:  # each Monday sub-agent reads its own slice of the saved report
         assert any(c.startswith(f"{PY} scripts/reports/report_sections.py ") for c in
                    commands(blocks[f"agent:{name}"], scripts)), name
-    assert not allowed(f"{PY} scripts/reports/cc_sync.py calendar-put < /tmp/x | cat", allow_patterns())
+    assert not allowed(f"{PY} scripts/bookings/books_sync.py < /tmp/x | cat", allow_patterns())
+    assert not allowed(f"{PY} scripts/bookings/books_sync.py --anything", allow_patterns())
 
 
 def check_payments_module():

@@ -89,5 +89,5 @@ def singer_line(singer):
         line += f" · BANK DETAILS CHANGED on {plural(singer['bank_changed'], 'invoice')}: ring before paying"
     if singer.get("held"):
         line += (f" · HELD on {plural(singer['held'], 'invoice')}: notes and recorded facts disagree, "
-                 "check in the Command Centre before paying")
+                 "settle them in a live chat before paying")
     return line

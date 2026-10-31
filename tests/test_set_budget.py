@@ -168,7 +168,7 @@ def test_log_path_default_and_override():
     saved = os.environ.pop("LCS_ADS_LOG", None)
     try:
         assert ads_log.log_path() == Path(ROOT) / "logs" / "ads-changes.md"
-        os.environ["LCS_ADS_LOG"] = str(Path(ROOT) / "logs" / "ads-changes.md")  # what the Command Centre sets
+        os.environ["LCS_ADS_LOG"] = str(Path(ROOT) / "logs" / "ads-changes.md")  # a run from a copy of the repo sets this
         assert ads_log.log_path() == Path(ROOT) / "logs" / "ads-changes.md"
     finally:
         os.environ.pop("LCS_ADS_LOG", None)

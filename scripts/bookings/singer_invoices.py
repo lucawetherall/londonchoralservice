@@ -28,19 +28,17 @@ already made.
     singer_invoices.py paid [--apply] [--books-due]  # match OUT payments; prints NEWLY PAID <message id>, and
         for a match on the bank details an indented "books: bill_number … · email … · amount … · date …" line.
         --books-due then adds, read-only, "BOOKS DUE <message id>: …" (with its "books:" line) for an invoice
-        already paid to verified details whose Books bill is still open in the Command Centre's Books cache
-        ("books-due: no Books cache" without one), and "THANKS DUE <message id>: …" for one paid in the last
-        7 days with no "Paid!" reply noted. The Command Centre's refresh job runs `paid --apply` every 30
-        minutes, so a payment is often recorded before the enquiry assistant would see it as NEWLY PAID.
+        already paid to verified details whose Books bill is still open in the local Books cache
+        (~/lcs-private/books-cache.json, books_sync.py; "books-due: no Books cache" without one), and "THANKS DUE
+        <message id>: …" for one paid in the last 7 days with no "Paid!" reply noted.
     singer_invoices.py status              # unpaid invoices and totals
     singer_invoices.py thanked <message id>  # note that the "Paid!" reply was drafted
     singer_invoices.py confirm <message id> [--expect-fp <bank_fp, all 16 hex>] [--owner]  # the owner rang the
         singer: trust these bank details. Claude runs it, without --owner, when Luca says so in writing in a live
-        chat (owner decision, 24 Oct 2026; never from a subagent or a scheduled run); the Command Centre runs it
-        with --owner and its passkey nonce. With --expect-fp it is refused unless the recorded details are still
-        those
+        chat (owner decision, 24 Oct 2026; never from a subagent or a scheduled run); with --owner it needs his
+        Allow on Claude Code's prompt. With --expect-fp it is refused unless the recorded details are still those
     singer_invoices.py settled <message id> YYYY-MM-DD --owner  # the owner paid it outside the feed's reach: mark
-        it paid (Luca's approval only: --owner and the one-time nonce from his Allow or the Command Centre)
+        it paid (Luca's approval only: --owner and the one-time nonce from his Allow on Claude Code's prompt)
     singer_invoices.py pdf <message id> [--fetch | <saved message>]  # save the invoice PDF for the Books bill
         (scan saves it too and ends with "pdf: <path>" or "pdf: none")
     singer_invoices.py withdrawn <message id> <reason word> [--owner]  # sent to us by mistake (another
@@ -115,8 +113,8 @@ REASON_RE = re.compile(r"^[a-z][a-z-]{0,19}$")  # one lower-case word, such as n
 NEW_PAYEE = "NEW: add as a payee in the Starling app"
 NEW_DETAILS = "NEW BANK DETAILS: confirm them by phone on a number you already hold before adding the payee"
 NOT_YET_VERIFIED = "BANK DETAILS NOT YET VERIFIED (seen on an earlier invoice): confirm by phone"
-# Luca confirms by telling Claude in writing in a live chat (owner decision, 24 Oct 2026); the Command Centre's
-# Singers page still works too. Notes written earlier keep the old Command Centre hint, which stays true.
+# Luca confirms by telling Claude in writing in a live chat (owner decision, 24 Oct 2026). Notes written earlier
+# keep their old hint; they are shown with this one (LEGACY_HINT).
 CONFIRM_HINT = ", then tell Claude in a chat that you've rung them"
 # the hint older invoices carry in their notes: shown as CONFIRM_HINT (the notes themselves are never rewritten)
 LEGACY_HINT = re.compile(r", then run singer_invoices\.py confirm \S+$")
@@ -392,7 +390,7 @@ def per_row(facts, r):
 def confirmed(r, facts=None):
     """Confirmed by phone on this invoice: a recorded bank-confirmed for its current details (bank_fp[:8]; a rescan
     to other details voids it), or the bank_confirmed column. The column still counts beside the facts: it is the
-    owner's fallback when the Command Centre is down (a rescan to other details clears it, as it voids the fact),
+    owner's fallback by hand (a rescan to other details clears it, as it voids the fact),
     and undoing a recorded confirmation clears it too (events.py retract)."""
     f = facts_for(r, facts)
     fp = r.get("bank_fp") or ""
@@ -449,7 +447,7 @@ def payees_named(sender_name, payee_names, history):
 def assess_new(inv, sender_email, sender_name, history, payee_fps, payee_names, payee_last4=None, message_id=""):
     """Payee status and warnings for a new invoice. history = all stored rows; payee_fps None = no Starling token;
     payee_last4 = {payee name: last four digits}; with a message_id, the NEW/NOT-YET-VERIFIED warning ends with
-    CONFIRM_HINT (confirm them in the Command Centre once the singer is rung)."""
+    CONFIRM_HINT (tell Claude in a live chat once the singer is rung)."""
     fp = lm.bank_fingerprint(inv["sort_code"], inv["account_number"])
     now = lm.last4(inv["account_number"])
     by_date = lambda rows: sorted(rows, key=lambda r: r.get("received") or "")  # noqa: E731
@@ -1393,7 +1391,7 @@ def bill_number(ref, message_id):
 
 
 def books_bill(r, bills):
-    """The Books bill for a stored invoice, from books.json's bills ({number, vendor, status, balance, …}): the
+    """The Books bill for a stored invoice, from books-cache.json's bills ({number, vendor, status, balance, …}): the
     one whose number is bill_number(...) (case and spaces ignored), void bills left out. When several share the
     number, the one whose vendor first name is the singer's; None when there is none, or no single one."""
     want = bill_number(r.get("invoice_ref"), r.get("message_id")).strip().casefold()
@@ -1406,12 +1404,12 @@ def books_bill(r, bills):
 
 
 def books_cache_path():
-    """The Command Centre's Books cache (cc_sync.py books), under the private folder read at call time."""
-    return Path(os.environ.get("LCS_PRIVATE_DIR", Path.home() / "lcs-private")) / "command-centre" / "cache" / "books.json"
+    """The local Books cache (books_sync.py), under the private folder read at call time."""
+    return Path(os.environ.get("LCS_PRIVATE_DIR", Path.home() / "lcs-private")) / "books-cache.json"
 
 
 def read_books_bills():
-    """books.json's bills list, or None when the cache is missing or not the expected shape."""
+    """books-cache.json's bills list, or None when the cache is missing or not the expected shape."""
     try:
         with open(books_cache_path(), encoding="utf-8") as f:
             cache = json.load(f)
@@ -1423,20 +1421,20 @@ def read_books_bills():
 
 THANKS_DAYS = 7  # a verified payment this recent with no "Paid!" draft yet gets a THANKS DUE line
 # `paid --apply` notes this on each payment it records as verified: THANKS DUE lists only those, so payments
-# recorded before the Command Centre began recording them (thanked by hand, or not at all) are never re-listed.
+# recorded before this mark existed (thanked by hand, or not at all) are never re-listed.
 THANKS_MARK = "thanks due"
 
 
 def print_books_due(rows, skip=(), today=None, facts=None, thanks_skip=None):
     """paid --books-due: after the normal output, for payments already recorded here (paid_verified yes) and so
-    no longer NEWLY PAID (the Command Centre's half-hourly job may have recorded them first):
+    no longer NEWLY PAID (an earlier `paid --apply` may have recorded them first):
     - "BOOKS DUE <message id>: …" plus the usual "books:" line, when the invoice's Books bill is still open with a
       balance (a bill not in the cache, or already paid, gets no line);
     - "THANKS DUE <message id>: …" when `paid --apply` recorded it (THANKS_MARK in its notes) in the last
       THANKS_DAYS days and no "Paid!" reply is noted.
     `skip` holds this run's hits (no BOOKS DUE: their own lines carry the books line), and `thanks_skip` (default
     `skip`) the ones whose NEWLY PAID line already reaches the clerk: a PAID line (one of several invoices in an
-    email) doesn't, so its email can get its THANKS DUE in the same run. Read-only. Without books.json it prints
+    email) doesn't, so its email can get its THANKS DUE in the same run. Read-only. Without the cache it prints
     "books-due: no Books cache" instead of the BOOKS DUE lines. A "Paid!" reply counts when either the notes or
     the recorded facts say so."""
     today = today or lm.today()
@@ -1916,13 +1914,13 @@ def update_invoice(message_id, fn):
 def owner_run(args, what, only=False):
     """The owner barrier for settled (only=True: the owner's alone; owner decision, 29 Sep 2026) and for confirm
     --owner and withdrawn --owner (confirm without it is Luca's word in a chat, 24 Oct 2026): --owner, the store and the state log in the nonce's private folder with no
-    LCS_BOOKINGS_CSV, and Luca's one-time approval nonce over a pipe (lcs_owner: the Command Centre's passkey, or his
-    Allow on Claude Code's prompt in a live chat). SystemExit otherwise, with nothing written. Returns "owner", or
+    LCS_BOOKINGS_CSV, and Luca's one-time approval nonce over a pipe (lcs_owner: his Allow on Claude Code's prompt
+    in a live chat). SystemExit otherwise, with nothing written. Returns "owner", or
     "script" for a withdrawn without --owner."""
     if not getattr(args, "owner", False):
         if only:
             raise SystemExit(f"{args.message_id}: this is the owner's: it needs --owner and Luca's approval (his Allow "
-                             f"on Claude Code's prompt, or the Command Centre's passkey); nothing {what}")
+                             f"on Claude Code's prompt); nothing {what}")
         return "script"
     where = lcs_owner.owner_folder_problem([STORE, lcs_events.log_path()])
     if where:
@@ -1954,10 +1952,9 @@ def cmd_confirm(args, client=None):
     """The owner rang the singer on a number already held: trust this invoice's bank details, and record
     bank-confirmed {fp8} in the state log. Claude runs it without --owner when Luca says so in writing in a live chat
     (owner decision, 24 Oct 2026: he pays every singer by hand; the fact is recorded by "script", and
-    owner_confirm_guard denies it from a subagent); the Command Centre still runs it with --owner and its passkey
-    nonce (recorded by "owner"). The Command Centre passes --expect-fp, the whole 16-character fingerprint its passkey summary
-    showed, and this refuses unless the recorded fingerprint is still exactly that, so a rescan between approval and
-    run confirms nothing; a confirm Luca allows in a live chat may pass it too."""
+    owner_confirm_guard denies it from a subagent); with --owner it needs his Allow on Claude Code's prompt (recorded
+    by "owner"). --expect-fp takes the whole 16-character fingerprint he was shown, and this refuses unless the
+    recorded fingerprint is still exactly that, so a rescan between approval and run confirms nothing."""
     expect = getattr(args, "expect_fp", None)
     if expect is not None and not FP_RE.fullmatch(expect):
         raise SystemExit(f"{args.message_id}: --expect-fp takes all 16 lower-case hex characters; nothing confirmed")
@@ -1980,7 +1977,7 @@ def cmd_confirm(args, client=None):
 def cmd_settled(args, client=None):
     """The owner's: an invoice paid outside the feed's reach. Marks it paid for its own amount, unverified, and
     records settled {amount}; never trusts its bank details (bank_confirmed is left alone). The owner's only (--owner
-    and his approval's nonce, from the Command Centre or his Allow in a live chat; owner decisions, 29 Sep and
+    and his approval's nonce, from his Allow on Claude Code's prompt in a live chat; owner decisions, 29 Sep and
     19 Oct 2026)."""
     day = strict_date(args.date)
     if day > lm.today().isoformat():  # a typo'd year never marks a payment that hasn't happened
@@ -2008,8 +2005,8 @@ WITHDRAWN_REASONS = ("not-ours", "duplicate", "sent-in-error")  # the state log'
 def cmd_withdrawn(args, client=None):
     """An invoice sent to us by mistake (another organisation's booking): mark it withdrawn today, with a
     one-word reason in the notes, and record withdrawn {reason} (not-ours, duplicate, sent-in-error, else other).
-    Refuses a paid or already withdrawn invoice. With --owner (Luca's approval nonce: the Command Centre's, or his
-    Allow in a live chat) the fact is the owner's."""
+    Refuses a paid or already withdrawn invoice. With --owner (Luca's approval nonce, from his Allow on
+    Claude Code's prompt) the fact is the owner's."""
     reason = (args.reason or "").strip()
     if not REASON_RE.fullmatch(reason):
         raise SystemExit("the reason must be one lower-case word, such as not-ours")
@@ -2138,13 +2135,13 @@ def main():
     sub.add_parser("status")
     t = sub.add_parser("thanked")
     t.add_argument("message_id")
-    owner_help = ("Luca's approval only: needs its one-time nonce on stdin (the Command Centre's, or his Allow on "
+    owner_help = ("Luca's approval only: needs its one-time nonce on stdin (from his Allow on "
                   "Claude Code's prompt)")
     c = sub.add_parser("confirm")
     c.add_argument("message_id")
     c.add_argument("--expect-fp", metavar="FINGERPRINT", help="refuse unless bank_fp is exactly this (16 hex)")
     c.add_argument("--owner", action="store_true",
-                   help="the Command Centre's form (its passkey nonce on stdin); without it, Luca's word in a live chat")
+                   help=owner_help + "; without it, Luca's word in a live chat")
     st = sub.add_parser("settled")
     st.add_argument("message_id")
     st.add_argument("date")

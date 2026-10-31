@@ -19,7 +19,7 @@ import re
 import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-SKIP_DIRS = {'command_centre', 'partials', 'node_modules', 'graphify-out', 'docs', 'tests'}
+SKIP_DIRS = {'partials', 'node_modules', 'graphify-out', 'docs', 'tests'}
 CHURCH_GUIDES = {
     'music-guides/nine-lessons-and-carols.html',
     'music-guides/church-carol-service-choir-hire.html',

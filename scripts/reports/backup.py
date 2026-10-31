@@ -1,35 +1,39 @@
 #!/usr/bin/env python3
-"""Nightly encrypted backups of ~/lcs-private (the Command Centre's backup job).
+"""Nightly encrypted backups of ~/lcs-private.
 
-    .venv/bin/python scripts/reports/cc_backup.py init [--replace]   # once: make the key, print it ONCE
-    .venv/bin/python scripts/reports/cc_backup.py run                # the LaunchAgent (02:30) and "Back up now"
-    .venv/bin/python scripts/reports/cc_backup.py verify             # the key on stdin; lists the newest backup
+    .venv/bin/python scripts/reports/backup.py init [--replace]   # once, in Terminal: make the key, print it ONCE
+    .venv/bin/python scripts/reports/backup.py run                # the LaunchAgent (02:30), or by hand
+    .venv/bin/python scripts/reports/backup.py verify             # the key on stdin; lists the newest backup
 
-- **init** makes an age X25519 key pair (pyrage). The recipient (the public key, "age1…") goes in the Command
-  Centre's config (~/lcs-private/command-centre/config.json, `backup.recipient`); the identity (the private key,
+- **init** makes an age X25519 key pair (pyrage). The recipient (the public key, "age1…") goes in
+  ~/lcs-private/backup.json (`recipient`, mode 600, written under a lock); the identity (the private key,
   "AGE-SECRET-KEY-1…") is printed once, for the owner to keep in his password manager, and is never written to
   disk. Refused when a recipient exists already, unless --replace (older backups still need the older key), and
   refused when stdout isn't a terminal, so the key can't land in a pipe, a log or a tool's transcript (Claude's
-  Bash tool is denied `cc_backup.py init` in .claude/settings.json as well).
+  Bash tool is denied `backup.py init` in .claude/settings.json as well).
 - **run** writes a full backup: a tar.gz of the whole private folder, encrypted to the recipient, as
-  lcs-backup-YYYYMMDD-HHMMSS.tar.gz.age (mode 600) in the target folder: the config's `backup.target`, by default
-  ~/Library/Mobile Documents/com~apple~CloudDocs/LCS-backups (iCloud Drive). Left out: the backups themselves,
-  command-centre/runs/ and command-centre/mirror.git (the app's copies of the public GitHub code, re-creatable),
-  and anything that isn't a regular file, folder or symlink (sockets). The tar.gz is streamed through an os.pipe
-  into age by a second thread, so no plaintext copy is ever written to disk; the ciphertext goes to a .part file
-  that is renamed when complete. Retention afterwards (only files with that exact name, never the newest): every
-  backup of the last 14 days, the last of each week for 8 weeks and the last of each month for 7 years (company
-  records are kept for 6 years after the period they cover); .part files left by an interrupted run more than a
-  day ago are removed. command-centre/backup-state.json records the time, name, size and sha256 for the Health
-  page; a failed run adds "error" and "failed_at" to it (the last good backup's fields stay) and posts a macOS
-  notification. One run at a time.
+  lcs-backup-YYYYMMDD-HHMMSS.tar.gz.age (mode 600) in the target folder: backup.json's `target`, by default
+  ~/Library/Mobile Documents/com~apple~CloudDocs/LCS-backups (iCloud Drive). Left out: the backups themselves
+  (a target inside the private folder), the old command-centre folder's re-creatable runs/, mirror.git and
+  backups/ (EXCLUDE; the rest of it is plain data and is kept), and anything that isn't a regular file, folder or
+  symlink (sockets). The tar.gz is streamed through an os.pipe into age by a second thread, so no plaintext copy
+  is ever written to disk; the ciphertext goes to a .part file that is renamed when complete. Retention afterwards
+  (only files with that exact name, never the newest): every backup of the last 14 days, the last of each week
+  for 8 weeks and the last of each month for 7 years (company records are kept for 6 years after the period they
+  cover); .part files left by an interrupted run more than a day ago are removed. ~/lcs-private/backup-state.json
+  records the time, name, size and sha256 of the last backup; a failed run adds "error" and "failed_at" to it
+  (the last good backup's fields stay) and posts a macOS notification. One run at a time.
 - **verify** reads the identity from stdin (hidden when typed), decrypts the newest backup through a pipe (never
   to disk), and prints how many entries it holds and their paths. Nothing is extracted.
+
+The LaunchAgent (com.lcs.backup, 02:30 nightly) is written and loaded by scripts/reports/install_backup.sh.
+LCS_PRIVATE_DIR moves the private folder (read at call time; the tests use a temp dir).
 
 Restore: `brew install age`, then `age -d -i key.txt lcs-backup-….tar.gz.age | tar -xz -C ~/restore-check`, with
 key.txt holding the identity from the password manager (delete it afterwards).
 """
 import argparse
+import contextlib
 import datetime
 import fcntl
 import getpass
@@ -45,10 +49,6 @@ import tarfile
 import threading
 from pathlib import Path
 from zoneinfo import ZoneInfo
-
-REPO = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(REPO))
-from command_centre import auth  # noqa: E402  the config (read, locked write) and the private folder
 
 LONDON = ZoneInfo("Europe/London")
 DEFAULT_TARGET = "~/Library/Mobile Documents/com~apple~CloudDocs/LCS-backups"
@@ -75,51 +75,91 @@ def pyrage():
     return p
 
 
-def settings(cfg=None):
-    """(recipient or None, target Path) from the config."""
-    if cfg is None:
-        try:
-            cfg = auth.load_config()
-        except (OSError, ValueError):
-            cfg = {}
-    block = cfg.get("backup") if isinstance(cfg.get("backup"), dict) else {}
-    target = Path(os.path.expanduser(str(block.get("target") or DEFAULT_TARGET)))
-    return (str(block.get("recipient") or "") or None), target
+# ---------------------------------------------------------------- config and state
+
+
+def private_dir():
+    """Read at call time, so the tests (and a moved private tree) never touch ~/lcs-private."""
+    return Path(os.environ.get("LCS_PRIVATE_DIR", Path.home() / "lcs-private"))
+
+
+def config_path():
+    return private_dir() / "backup.json"
 
 
 def state_path():
-    return auth.config_dir() / "backup-state.json"
+    return private_dir() / "backup-state.json"
+
+
+def load_config():
+    """backup.json as a dict; {} when it doesn't exist yet. Raises ValueError when it isn't a JSON object."""
+    try:
+        with open(config_path(), encoding="utf-8") as f:
+            cfg = json.load(f)
+    except FileNotFoundError:
+        return {}
+    if not isinstance(cfg, dict):
+        raise ValueError("backup.json is not an object")
+    return cfg
+
+
+@contextlib.contextmanager
+def config_lock():
+    """Exclusive lock for a read-modify-write of backup.json (one init at a time)."""
+    d = private_dir()
+    d.mkdir(mode=0o700, parents=True, exist_ok=True)
+    fd = os.open(d / ".backup.json.lock", os.O_RDWR | os.O_CREAT | os.O_NOFOLLOW, 0o600)
+    try:
+        fcntl.flock(fd, fcntl.LOCK_EX)
+        yield
+    finally:
+        os.close(fd)
+
+
+def settings(cfg=None):
+    """(recipient or None, target Path) from backup.json."""
+    if cfg is None:
+        try:
+            cfg = load_config()
+        except (OSError, ValueError):
+            cfg = {}
+    target = Path(os.path.expanduser(str(cfg.get("target") or DEFAULT_TARGET)))
+    return (str(cfg.get("recipient") or "") or None), target
 
 
 def write_private_json(path, value):
+    """`value` as JSON at `path`, mode 600, atomically, in a mode-700 folder."""
     path.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
     tmp = path.with_name(f".{path.name}.{secrets.token_hex(4)}.tmp")
     fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
-    with os.fdopen(fd, "w", encoding="utf-8") as f:
-        json.dump(value, f, indent=2)
-        f.write("\n")
-    os.replace(tmp, path)
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            json.dump(value, f, indent=2)
+            f.write("\n")
+        os.replace(tmp, path)
+    except BaseException:
+        tmp.unlink(missing_ok=True)
+        raise
 
 
 # ---------------------------------------------------------------- init
 
 
-def init(replace=False, out=sys.stdout):
-    """Make the key pair; save the recipient; return the identity (printed once by main, stored nowhere)."""
+def init(replace=False):
+    """Make the key pair; save the recipient; return (identity, recipient). main prints the identity once; it is
+    stored nowhere."""
     p = pyrage()
     identity = p.x25519.Identity.generate()
     recipient = str(identity.to_public())
-    with auth.config_lock():
-        cfg = auth.load_config()
-        block = cfg.get("backup") if isinstance(cfg.get("backup"), dict) else {}
-        if block.get("recipient") and not replace:
+    with config_lock():
+        cfg = load_config()
+        if cfg.get("recipient") and not replace:
             raise BackupError("a backup key exists already (use --replace to make a new one; older backups "
                               "still need the older key)")
-        block = dict(block, recipient=recipient,
-                     key_created=datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds"))
-        block.setdefault("target", DEFAULT_TARGET)
-        cfg["backup"] = block
-        auth.save_config(cfg)
+        cfg = dict(cfg, recipient=recipient,
+                   key_created=datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds"))
+        cfg.setdefault("target", DEFAULT_TARGET)
+        write_private_json(config_path(), cfg)
     return str(identity), recipient
 
 
@@ -251,7 +291,7 @@ def encrypt_stream(p, rcpt, private, target, out):
         except BaseException as e:  # noqa: BLE001  handed to the main thread
             box["error"] = e
 
-    worker = threading.Thread(target=produce, name="cc-backup-tar", daemon=True)
+    worker = threading.Thread(target=produce, name="backup-tar", daemon=True)
     worker.start()
     try:
         with os.fdopen(rfd, "rb") as r:  # closing it (even on an age error) ends the writer with a broken pipe
@@ -266,21 +306,20 @@ def encrypt_stream(p, rcpt, private, target, out):
 def run(now=None, private=None):
     """One backup. Returns a dict for the log line and the state file."""
     now = now or datetime.datetime.now(LONDON)
-    private = Path(private or auth.private_dir())
+    private = Path(private or private_dir())
     recipient, target = settings()
     if not recipient:
-        raise BackupError("no backup key yet: run cc_backup.py init first")
+        raise BackupError("no backup key yet: run backup.py init first")
     p = pyrage()
     try:
         rcpt = p.x25519.Recipient.from_str(recipient)
     except Exception:
-        raise BackupError("the backup key in the config isn't an age recipient") from None
+        raise BackupError("the backup key in backup.json isn't an age recipient") from None
     target.mkdir(mode=0o700, parents=True, exist_ok=True)
     if target.is_symlink() or not target.is_dir():
         raise BackupError("the backup folder isn't a real folder")
-    lock_path = auth.config_dir() / "backup.lock"
-    auth.config_dir().mkdir(mode=0o700, parents=True, exist_ok=True)
-    lock = os.open(lock_path, os.O_RDWR | os.O_CREAT, 0o600)
+    private_dir().mkdir(mode=0o700, parents=True, exist_ok=True)
+    lock = os.open(private_dir() / ".backup.lock", os.O_RDWR | os.O_CREAT | os.O_NOFOLLOW, 0o600)
     try:
         try:
             fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
@@ -384,7 +423,7 @@ def verify(identity_text, target=None):
 
     names, tar_error = [], None
     with open(path, "rb") as enc:
-        worker = threading.Thread(target=produce, args=(enc,), name="cc-backup-verify", daemon=True)
+        worker = threading.Thread(target=produce, args=(enc,), name="backup-verify", daemon=True)
         worker.start()
         try:
             with os.fdopen(rfd, "rb") as r:  # streamed: the plaintext is never on disk
@@ -408,7 +447,7 @@ def verify(identity_text, target=None):
 
 
 def main(argv=None):
-    ap = argparse.ArgumentParser(prog="cc_backup.py", description=__doc__.split("\n")[0])
+    ap = argparse.ArgumentParser(prog="backup.py", description=__doc__.split("\n")[0])
     sub = ap.add_subparsers(dest="cmd", required=True)
     p_init = sub.add_parser("init", help="make the backup key (printed once)")
     p_init.add_argument("--replace", action="store_true", help="replace an existing key")
@@ -421,7 +460,7 @@ def main(argv=None):
                 raise BackupError("init prints the key once, so it runs only in a terminal (not through a pipe, a "
                                   "log or a tool): open Terminal and run it there")
             identity, recipient = init(args.replace)
-            print("Backup key made. The recipient (public) is saved in the Command Centre's config:")
+            print(f"Backup key made. The recipient (public) is saved in {config_path()}:")
             print(f"  {recipient}")
             print()
             print("Store this line in your password manager NOW. It is shown once and kept nowhere else;")
@@ -429,7 +468,7 @@ def main(argv=None):
             print()
             print(f"  {identity}")
             print()
-            print("Then: bash command_centre/install.sh --backup   (the nightly LaunchAgent, 02:30)")
+            print("Then: bash scripts/reports/install_backup.sh   (the nightly LaunchAgent, 02:30)")
             del identity
         elif args.cmd == "run":
             try:
@@ -454,7 +493,7 @@ def main(argv=None):
                 print(f"  … and {len(names) - LIST_MAX} more")
     except (BackupError, OSError, ValueError) as e:
         detail = str(e) if isinstance(e, BackupError) else type(e).__name__
-        print(f"cc_backup: {detail}", file=sys.stderr)
+        print(f"backup: {detail}", file=sys.stderr)
         return 1
     return 0
 

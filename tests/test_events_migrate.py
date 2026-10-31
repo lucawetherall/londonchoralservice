@@ -228,21 +228,28 @@ def fresh(ledger=None, store=None):
     return d
 
 
-def run(d, *args, stdin_text=None, env_extra=None):
+def run(d, *args, approved=False, env_extra=None):
+    """events.py with these args; approved=True first writes Luca's approval for exactly this command (nonce_file)
+    and pipes its nonce in, as owner_confirm_guard does once he clicks Allow."""
     env = {k: v for k, v in os.environ.items() if k != "LCS_BOOKINGS_CSV"}
     env["LCS_PRIVATE_DIR"] = d
     env.update(env_extra or {})
-    kw = {"input": stdin_text} if stdin_text is not None else {"stdin": subprocess.DEVNULL}
+    if approved:
+        nonce_file(d, [SCRIPT, *args])
+    kw = {"input": NONCE + "\n"} if approved else {"stdin": subprocess.DEVNULL}
     p = subprocess.run([PY, SCRIPT, *args], env=env, capture_output=True, text=True, timeout=60, **kw)
     return p.returncode, p.stdout + p.stderr
 
 
-def nonce_file(d):
-    cc = os.path.join(d, "command-centre")
-    os.makedirs(cc, mode=0o700, exist_ok=True)
-    fd = os.open(os.path.join(cc, "owner-nonce"), os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+def nonce_file(d, argv):
+    """owner-nonce.chat-<sha256 of NONCE> in <private>/owner-approvals, holding the approved argv."""
+    import json
+    folder = os.path.join(d, "owner-approvals")
+    os.makedirs(folder, mode=0o700, exist_ok=True)
+    path = os.path.join(folder, "owner-nonce.chat-" + hashlib.sha256(NONCE.encode()).hexdigest())
+    fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
     with os.fdopen(fd, "w") as f:
-        f.write(hashlib.sha256(NONCE.encode()).hexdigest())
+        f.write(json.dumps({"argv": list(argv)}))
 
 
 def sha_of(out):
@@ -297,11 +304,9 @@ def test_apply_needs_the_nonce_and_the_dry_runs_hash():
     assert code != 0 and "nothing written" in out and not os.path.exists(os.path.join(d, "events.jsonl")), out
     code, out = run(d, "migrate", "--apply", "--expect", sha)  # no --owner
     assert code != 0 and not os.path.exists(os.path.join(d, "events.jsonl")), out
-    nonce_file(d)
-    code, out = run(d, "migrate", "--apply", "--expect", "0" * 64, "--owner", stdin_text=NONCE + "\n")
+    code, out = run(d, "migrate", "--apply", "--expect", "0" * 64, "--owner", approved=True)
     assert code != 0 and "changed since" in out and not os.path.exists(os.path.join(d, "events.jsonl")), out
-    nonce_file(d)
-    code, out = run(d, "migrate", "--apply", "--expect", sha, "--owner", stdin_text=NONCE + "\n",
+    code, out = run(d, "migrate", "--apply", "--expect", sha, "--owner", approved=True,
                     env_extra={"LCS_BOOKINGS_CSV": os.path.join(d, "bookings.csv")})
     assert code != 0 and "LCS_BOOKINGS_CSV" in out and not os.path.exists(os.path.join(d, "events.jsonl")), out
 
@@ -311,8 +316,7 @@ def test_apply_writes_the_events_once_and_a_second_apply_adds_nothing():
     d = fresh(ledger, store)
     code, out = run(d, "migrate")
     total = int(re.search(r"(\d+) events proposed", out).group(1))
-    nonce_file(d)
-    code, out = run(d, "migrate", "--apply", "--expect", sha_of(out), "--owner", stdin_text=NONCE + "\n")
+    code, out = run(d, "migrate", "--apply", "--expect", sha_of(out), "--owner", approved=True)
     assert code == 0 and f"{total} new events" in out, out
     log = os.path.join(d, "events.jsonl")
     first = open(log, "rb").read()
@@ -324,8 +328,7 @@ def test_apply_writes_the_events_once_and_a_second_apply_adds_nothing():
     assert code == 0 and "no difference" in out, out
     code, out = run(d, "migrate")
     assert "0 events proposed" in out, out
-    nonce_file(d)
-    code, out = run(d, "migrate", "--apply", "--expect", sha_of(out), "--owner", stdin_text=NONCE + "\n")
+    code, out = run(d, "migrate", "--apply", "--expect", sha_of(out), "--owner", approved=True)
     assert code == 0 and "0 new events" in out, out
     assert open(log, "rb").read() == first
 
@@ -334,8 +337,7 @@ def test_renaming_the_log_gives_the_notes_reading_back():
     ledger, store = sample()
     d = fresh(ledger, store)
     code, out = run(d, "migrate")
-    nonce_file(d)
-    run(d, "migrate", "--apply", "--expect", sha_of(out), "--owner", stdin_text=NONCE + "\n")
+    run(d, "migrate", "--apply", "--expect", sha_of(out), "--owner", approved=True)
     saved = os.environ["LCS_PRIVATE_DIR"]
     os.environ["LCS_PRIVATE_DIR"] = d
     try:
@@ -445,8 +447,7 @@ def test_a_fact_dated_after_today_stops_the_apply_naming_its_row():
     d = fresh(ledger, store)
     code, out = run(d, "migrate")
     assert "dated after today: booking 2114 fees-accepted (2027-01-05)" in out, out
-    nonce_file(d)
-    code, out = run(d, "migrate", "--apply", "--expect", sha_of(out), "--owner", stdin_text=NONCE + "\n")
+    code, out = run(d, "migrate", "--apply", "--expect", sha_of(out), "--owner", approved=True)
     assert code != 0 and "booking 2114 fees-accepted (2027-01-05)" in out and "nothing written" in out, out
     assert not os.path.exists(os.path.join(d, "events.jsonl"))
 

@@ -8,9 +8,9 @@ import re
 import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-# build.sh skips dot-directories, graphify-out, command_centre and partials;
+# build.sh skips dot-directories, graphify-out and partials;
 # docs, tests and node_modules hold no site pages either.
-SKIP_DIRS = {'command_centre', 'partials', 'node_modules', 'graphify-out', 'docs', 'tests'}
+SKIP_DIRS = {'partials', 'node_modules', 'graphify-out', 'docs', 'tests'}
 
 PROMO = 'Lov_NegzVhM'
 ABIDE = 'G9-R6k5n7Io'

@@ -168,22 +168,29 @@ def test_the_shell_capable_mcp_tools_are_checked_too():
     expect("allow", run("mcp__terminal__run_in_terminal", {"command": "git status"}), "terminal git status")
 
 
-def test_the_owners_passkey_proofs_cannot_be_written_from_a_shell():
-    """The Command Centre's owner nonce and approvals folder (14 Oct 2026): only the app writes them."""
-    for cmd in ("echo abc > ~/lcs-private/command-centre/owner-nonce",
-                "cp /tmp/a.json ~/lcs-private/command-centre/approvals/calendar-delete-0123456789abcdef0123456789abcdef.json",
-                "python3 -c \"import os; open(os.path.join(os.path.expanduser('~/lcs-private'), 'command-centre', "
-                "'approvals', 'x.json'), 'w')\"",
-                "printf x | tee \"$HOME/lcs-private/command-centre\"/approvals/calendar-delete-ab.json",
-                "touch ~/lcs-private/command-centre/approvals/calendar-delete-*"):
+def test_the_owners_approvals_cannot_be_written_from_a_shell():
+    """The owner-approvals folder (31 Oct 2026): only the approval hook writes in it, once Luca clicks Allow."""
+    for cmd in ("echo abc > ~/lcs-private/owner-approvals/x",
+                "printf x > ~/lcs-private/owner-approvals/owner-nonce.chat-" + "ab" * 32,
+                "ls ~/lcs-private/owner-approvals",
+                "python3 -c \"import os; os.listdir(os.path.expanduser('~/lcs-private/owner-approvals'))\""):
         expect("deny", bash(cmd), cmd)
-    script = write(os.path.join(SCRATCH, "forge", "f.py"),
-                   "from pathlib import Path\np = Path.home() / 'lcs-private' / 'command-centre' / 'approvals'\n")
-    expect("deny", bash(f"python3 {script}"), "an untracked script naming the approvals folder")
+    script = write(os.path.join(SCRATCH, "forge2", "f.py"),
+                   "from pathlib import Path\np = Path.home() / 'lcs-private' / 'owner-approvals'\n")
+    expect("deny", bash(f"python3 {script}"), "an untracked script naming the owner-approvals folder")
+    expect("deny", run("Write", {"file_path": os.path.join(SCRATCH, "w3", "n.py"),
+                                 "content": "open('owner-approvals/x', 'w')\n"}), "writing a forger in the scratchpad")
+
+
+def test_owner_nonce_files_cannot_be_written_from_a_shell():
+    """No approval file lives anywhere else since the Command Centre went (31 Oct 2026), but an owner nonce stays
+    refused wherever it is named."""
+    for cmd in ("echo abc > ~/lcs-private/owner-approvals/owner-nonce.chat-ab",
+                "touch ~/lcs-private/command-centre/owner-nonce"):
+        expect("deny", bash(cmd), cmd)
     expect("deny", run("Write", {"file_path": os.path.join(SCRATCH, "w2", "n.py"),
                                  "content": "open('owner-nonce', 'w')\n"}), "writing a forger in the scratchpad")
-    for cmd in (f"{PY} tests/test_calendar_guard.py", f"{PY} tests/test_cc_actions.py", "ls ~/lcs-private",
-                f"{PY} -m command_centre"):
+    for cmd in (f"{PY} tests/test_calendar_guard.py", f"{PY} tests/test_lcs_owner.py", "ls ~/lcs-private"):
         expect("allow", bash(cmd), cmd)
 
 
@@ -196,7 +203,7 @@ def test_the_approval_hook_cannot_be_run_by_hand():
                 "python3 .claude/hooks/owner_conf*.py", "python3 .claude/hooks/owner_''confirm_guard.py",
                 "python3 -c \"import sys; sys.path.insert(0, '.claude/hooks'); import owner_confirm_guard\"",
                 "cp .claude/hooks/owner_c?nfirm_guard.py /tmp/x.py",
-                "printf x > ~/lcs-private/command-centre/owner-nonce.chat-" + "ab" * 32):
+                "printf x > ~/lcs-private/owner-approvals/owner-nonce.chat-" + "ab" * 32):
         expect("deny", bash(cmd), cmd)
     script = write(os.path.join(SCRATCH, "mint", "m.py"), "import runpy\nrunpy.run_path('owner_confirm_guard.py')\n")
     expect("deny", bash(f"python3 {script}"), "an untracked script naming the hook")
@@ -279,15 +286,13 @@ def test_every_allowlisted_and_prompt_command_passes():
 
 
 def test_everyday_repo_commands_pass():
-    for cmd in (f"{PY} scripts/reports/cc_sync.py books", f"{PY} tests/test_lcs_mcp.py",
-                f"{PY} tests/test_cc_pages2.py", f"{PY} tests/test_mcp_bypass_guard.py", "./build.sh",
+    for cmd in (f"{PY} scripts/bookings/books_sync.py", f"{PY} tests/test_lcs_mcp.py",
+                f"{PY} tests/test_mcp_bypass_guard.py", "./build.sh",
                 "python3 scripts/stage_site.py --list", f"{PY} validate_competitor_claims.py",
                 "python3 validate_jsonld.py", "python3 -m http.server 8000", "git status",
                 "git add scripts/bookings/lcs_mcp.py tests/test_lcs_mcp.py", "git diff --stat HEAD~1",
                 "git log --oneline -5", f"{PY} scripts/bookings/check_payments.py --json 2>&1 | head -50",
                 f"cd {ROOT} && {PY} scripts/bookings/assistant_io.py state",
-                f"{PY} scripts/reports/cc_sync.py calendar-put '[{{\"start\": \"2026-10-01\", \"summary\": "
-                f"\"Wedding (Barnes); rehearsal\", \"calendar\": \"London Choral Service\"}}]'",
                 "grep -rn 'def main' scripts/bookings | head", "sed -n 1,40p docs/ROADMAP.md"):
         expect("allow", bash(cmd), cmd)
 

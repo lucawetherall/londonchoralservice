@@ -279,7 +279,7 @@ def test_new_bank_details_warning():
     assert any(w.startswith(si.NOT_YET_VERIFIED) for w in a2["warnings"])
 
 
-def test_new_bank_details_warning_points_to_the_command_centre():
+def test_new_bank_details_warning_says_to_tell_claude():
     a = si.assess_new(inv(), "b@x.com", "Ben Fenwick", [], {}, [], message_id="m42")
     assert f"{si.NEW_DETAILS}{si.CONFIRM_HINT}" in a["warnings"]
     history = [hrow("b@x.com", "Ben Fenwick", "123456", "12345678", "2026-08-01")]
@@ -392,7 +392,7 @@ def clear_log(migrated=True):
 
 @contextlib.contextmanager
 def as_owner():
-    """This process as the Command Centre's owner run: the nonce check passes (lcs_owner), no LCS_BOOKINGS_CSV."""
+    """This process as an owner run Luca allowed: the nonce check passes (lcs_owner), no LCS_BOOKINGS_CSV."""
     import lcs_owner
     saved = (lcs_owner._PROVEN, lcs_owner.owner_confirmed, os.environ.pop("LCS_BOOKINGS_CSV", None))
     lcs_owner._PROVEN, lcs_owner.owner_confirmed = True, lambda *a: True
@@ -810,7 +810,7 @@ def test_confirm_expect_fp_is_bound_to_the_fingerprint():
     with contextlib.redirect_stdout(buf):
         confirm("g1", expect_fp=fp)
     assert rows_by_id()["g1"]["bank_confirmed"] == "yes"
-    # the real command line, as the Command Centre runs it: --owner, its one-time nonce over a pipe
+    # the real command line, as it runs once Luca clicks Allow: --owner, its one-time nonce over a pipe
     fresh_store()
     scan(GEN.format(n=1), "g1", "2026-08-01")
     nonce_file()
@@ -826,16 +826,33 @@ def test_confirm_expect_fp_is_bound_to_the_fingerprint():
 NONCE = "ab" * 32
 
 
-def nonce_file():
+def approval_path():
     import hashlib
-    cc = os.path.join(TMP, "command-centre")
-    os.makedirs(cc, mode=0o700, exist_ok=True)
-    fd = os.open(os.path.join(cc, "owner-nonce"), os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+    return os.path.join(TMP, "owner-approvals", "owner-nonce.chat-" + hashlib.sha256(NONCE.encode()).hexdigest())
+
+
+def write_approval(argv):
+    """An approval as owner_confirm_guard writes it once Luca clicks Allow: the exact argv, mode 600."""
+    import json
+    os.makedirs(os.path.dirname(approval_path()), mode=0o700, exist_ok=True)
+    fd = os.open(approval_path(), os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
     with os.fdopen(fd, "w") as f:
-        f.write(hashlib.sha256(NONCE.encode()).hexdigest())
+        json.dump({"argv": argv, "created": "2026-09-28T09:00:00+00:00", "session": "s"}, f)
+
+
+_PENDING = []
+
+
+def nonce_file():
+    """Luca's approval for the next cli_owner run (its argv is bound then, as the hook records the exact command)."""
+    write_approval(None)
+    _PENDING.append(True)
 
 
 def cli_owner(args, nonce=True):
+    if _PENDING and os.path.exists(approval_path()):
+        _PENDING.clear()
+        write_approval([str(Path(si.__file__)), *args])
     env = {k: v for k, v in os.environ.items() if k != "LCS_BOOKINGS_CSV"}
     kw = {"input": NONCE + "\n"} if nonce else {"stdin": subprocess.DEVNULL}
     return subprocess.run([sys.executable, str(Path(si.__file__)), *args], env=env, capture_output=True, text=True,
@@ -896,7 +913,7 @@ def test_settled_is_the_owners_only():
                 fn(args)
             raise AssertionError(f"{fn.__name__} ran without the owner")
         except SystemExit as e:
-            assert "Command Centre" in str(e) and "nothing" in str(e), e
+            assert "Allow on Claude Code's prompt" in str(e) and "nothing" in str(e), e
         assert si.STORE.read_text() == before and log_lines() == events
     nonce_file()
     for args, nonce in ((["settled", "g1", "2026-08-03"], True),  # a nonce waiting, no --owner
@@ -1034,7 +1051,7 @@ def test_a_fact_whose_note_was_deleted_by_hand_holds_the_invoice():
 
 
 def test_a_hand_set_bank_confirmed_counts_after_a_rescan_voided_the_fact():
-    """The app-down fallback: the recorded confirmation was for the old details (a rescan voided it), and the owner
+    """The by-hand fallback: the recorded confirmation was for the old details (a rescan voided it), and the owner
     sets bank_confirmed to yes by hand for the new ones: it counts, as the column always did."""
     fresh_store()
     scan(GEN.format(n=1), "g1", "2026-08-01")
@@ -1049,7 +1066,7 @@ def test_a_hand_set_bank_confirmed_counts_after_a_rescan_voided_the_fact():
 
 
 def test_a_stored_warning_never_tells_the_owner_to_run_confirm_in_a_terminal():
-    """Invoices scanned before confirm moved to the Command Centre keep the old hint in their notes: it is shown
+    """Invoices scanned before confirm moved out of the terminal keep the old hint in their notes: it is shown
     with the new one."""
     r = dict(unpaid("o1", "Ben Fenwick", 100, "2026-09-20"), bank_fp=lm.bank_fingerprint("123456", "11112222"),
              notes=f"{si.NEW_DETAILS}, then run singer_invoices.py confirm 1789828736363141700; "
@@ -1213,10 +1230,10 @@ def test_newly_paid_by_name_says_check_before_thanking():
     assert len(books) == 1 and books[0].startswith("   books: bill_number ") and "amount 100.00 · date 2026-08-04" in books[0], books
 
 
-# --- paid --books-due: payments recorded before the assistant saw them (the Command Centre's half-hourly job) ---
+# --- paid --books-due: payments recorded before the assistant saw them (an earlier `paid --apply`) ---
 
 
-BOOKS_CACHE = Path(TMP) / "command-centre" / "cache" / "books.json"
+BOOKS_CACHE = Path(TMP) / "books-cache.json"
 
 
 def books_cache(bills):

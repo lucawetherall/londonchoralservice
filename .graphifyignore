@@ -22,7 +22,6 @@ data/page-dates.json
 data/r13-borough-plan.json
 
 # Vendored or machine-local files.
-command_centre/static/htmx.min.js
 .claude/settings.local.json
 .claude/launch.json
 4751d098385ed7e02df93e8b2f957673.txt

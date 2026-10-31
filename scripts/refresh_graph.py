@@ -6,7 +6,7 @@
 
 The graph has three layers:
 
-1. Code (scripts/, tests/, command_centre/, js/, .claude/hooks/): graphify's AST
+1. Code (scripts/, tests/, js/, .claude/hooks/): graphify's AST
    extractor, free and deterministic. Refreshed here.
 2. Page-to-page links and redirects: scripts/graph_site_links.py, free and
    deterministic. Refreshed here.

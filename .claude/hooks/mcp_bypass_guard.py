@@ -30,13 +30,13 @@ unguarded. This hook closes it. Wired in .claude/settings.json for:
 - Read, Grep and Glob: denied on MCP configuration (~/.claude.json and its backups, .mcp.json,
   claude_desktop_config.json, ~/.mcp-auth) and on a search rooted at a folder that holds it.
 
-The same command and untracked-file checks also refuse naming the owner nonce files (the Command Centre's
-owner-nonce and owner_confirm_guard's owner-nonce.chat-*), the Command Centre's approvals folder or the approval hook
+The same command and untracked-file checks also refuse naming the owner nonce files (owner_confirm_guard's
+owner-nonce.chat-*), the owner-approvals folder that holds them or the approval hook
 .claude/hooks/owner_confirm_guard.py itself (OWNER_PROOF; its test file, tests/test_owner_confirm_guard.py, may be
-named and run). Those files are Luca's approvals for the --owner scripts and for a calendar delete: only the app
-(after his passkey) and that hook (once he clicks Allow on Claude Code's prompt) write them, and running the hook by
-hand would mint an approval without the prompt, so a command that runs the hook through a glob or another path to
-it is refused too (OWNER_HOOK; settings also deny the Write and Edit tools in the command-centre folder).
+named and run). Those files are Luca's approvals for the --owner scripts: only that hook writes them, once he clicks
+Allow on Claude Code's prompt, and running the hook by hand would mint an approval without the prompt, so a command
+that runs the hook through a glob or another path to it is refused too (OWNER_HOOK; settings also deny the Write
+and Edit tools in the owner-approvals folder).
 
 It fails closed: malformed input or any internal error denies the call. It can't see through deliberate
 obfuscation (strings assembled at run time, encoded payloads); the rule in CLAUDE.md covers intent.
@@ -80,16 +80,14 @@ CLIENT = {
     "cmd": (re.compile(r"\b(import|from)\s+lcs_mcp\b|lcs_mcp['\"]|['\"]lcs_mcp", re.I), "the lcs_mcp client"),
     "file": (re.compile(r"(?<![a-z0-9_])lcs_mcp(?![a-z0-9_])", re.I), "the lcs_mcp client"),
 }
-# The owner's approvals (owner decisions, 14 and 19 Oct 2026): the one-time owner nonce files (the Command Centre's
-# owner-nonce and the chat approvals owner-nonce.chat-*), the app's approvals folder (a calendar delete is allowed
-# only against an approval there) and the hook that writes the chat approvals. Only the app, after Luca's passkey,
-# and that hook, once he clicks Allow, write them. A command, or an untracked file (a scratch script, a file written
-# outside the repo), that names them is refused; reviewed, tracked code (lcs_owner.py, the app, the hooks and their
-# tests) may name them, and the hook's test file may be named (tests/test_owner_confirm_guard.py).
-OWNER_PROOF = (re.compile(r"owner-nonce|command-centre[\s/\\,+()]*approvals|calendar-delete-[0-9a-f*?\[{]|"
-                          r"(?<![a-z0-9_])owner_confirm_guard", re.I),
-               "Luca's owner approvals (the owner nonce files, the Command Centre's approvals or the approval hook "
-               "owner_confirm_guard; written only by the app after his passkey, or by that hook once he clicks Allow)")
+# The owner's approvals (owner decisions, 19 and 31 Oct 2026): the one-time approval files owner-nonce.chat-*, the
+# owner-approvals folder that holds them and the hook that writes them. Only that hook writes them, once Luca clicks
+# Allow. A command, or an untracked file (a scratch script, a file written outside the repo), that names them is
+# refused; reviewed, tracked code (lcs_owner.py, the hooks and their tests) may name them, and the hook's test file
+# may be named (tests/test_owner_confirm_guard.py).
+OWNER_PROOF = (re.compile(r"owner-nonce|owner-approvals|(?<![a-z0-9_])owner_confirm_guard", re.I),
+               "Luca's owner approvals (the owner nonce files, the owner-approvals folder or the approval hook "
+               "owner_confirm_guard; written only by that hook once he clicks Allow on Claude Code's prompt)")
 # A file the command names that is the approval hook once resolved (through a glob, a link or another path to it):
 # running it by hand would mint an approval without the prompt.
 OWNER_HOOK = re.compile(r"(?<![a-z0-9_])owner_confirm_guard(?![a-z0-9_])", re.I)
@@ -100,9 +98,6 @@ CODE_OK = {
     "tests/test_lcs_mcp.py",
     ".claude/hooks/mcp_bypass_guard.py",
     "tests/test_mcp_bypass_guard.py",
-    "command_centre/sources.py",            # reads MCP server *names* for a health check
-    "tests/test_cc_pages2.py",              # its test (a fake config in a temporary HOME)
-    "tests/test_cc_sync.py",                # points lcs_mcp at a missing config
     ".claude/settings.json",                # the deny rules name these files
 }
 PROTECTED = re.compile(r"^(\.claude\.json.*|claude_desktop_config\.json|\.mcp\.json|\.mcp-auth)$", re.I)
