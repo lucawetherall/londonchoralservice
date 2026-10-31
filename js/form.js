@@ -24,6 +24,7 @@
   // out of the page's first paint. Pages still carrying the script tag skip it.
   var CAPTCHA_LOADER = 'https://web3forms.com/client/script.js';
   var captchaRequested = false;
+  var captchaWaited = false;
   function loadCaptcha() {
     if (captchaRequested) return;
     captchaRequested = true;
@@ -173,6 +174,33 @@
       return;
     }
 
+    // A send before the widget has rendered (a short form, a quick visitor)
+    // would go without a token, and Web3Forms rejects it as a failed send.
+    // Once per form: fetch the widget, wait up to 5 s for it, then submit
+    // again. If it rendered, the guard above asks for the tick; if it never
+    // did (blocked, offline), the request goes through as before.
+    if (captchaBox && !captchaWidget && !captchaWaited) {
+      captchaWaited = true;
+      loadCaptcha();
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Sending…';
+      }
+      var waitedFor = 0;
+      var waitTimer = setInterval(function () {
+        waitedFor += 250;
+        if (!form.querySelector('.h-captcha iframe') && waitedFor < 5000) return;
+        clearInterval(waitTimer);
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = btnLabel;
+        }
+        if (typeof form.requestSubmit === 'function') form.requestSubmit();
+        else form.dispatchEvent(new Event('submit', { cancelable: true }));
+      }, 250);
+      return;
+    }
+
     // Loading state
     if (submitBtn) {
       submitBtn.disabled = true;
@@ -212,6 +240,61 @@
       } catch (_) { /* attribution must never block the enquiry */ }
     }
 
+    send(data, 1);
+  });
+
+  // What the visitor typed, as plain lines ("Label: value"), for the email
+  // and WhatsApp fallbacks. Visible fields only: no keys, tokens or click IDs.
+  function typedLines() {
+    var lines = [];
+    Array.prototype.forEach.call(form.elements, function (el) {
+      if (!el.name || el.type === 'hidden' || el.type === 'checkbox' || el.type === 'radio' ||
+          el.type === 'submit' || /captcha/.test(el.name) || !el.value) return;
+      var label = el.id && form.querySelector('label[for="' + el.id + '"]');
+      var name = label ? label.textContent.replace(/\(optional\)/i, '').replace(/\s+/g, ' ').trim() : el.name;
+      lines.push(name + ': ' + String(el.value).slice(0, 1500));
+    });
+    return lines;
+  }
+
+  // The enquiry must reach us even when the form can't: after a failed send,
+  // offer the same details as a ready-made email and WhatsApp message.
+  function showFallback(data) {
+    if (!errorBox) return;
+    var old = errorBox.querySelector('[data-fallback]');
+    if (old) old.parentNode.removeChild(old);
+    var lines = typedLines();
+    if (!lines.length) return;
+    if (data.ad_visit) lines.push('Ad visit: ' + data.ad_visit);
+    var body = lines.join('\n');
+    var subject = (data.subject || 'Enquiry') + ' (form did not send)';
+    var box = document.createElement('div');
+    box.setAttribute('data-fallback', '');
+    var p = document.createElement('p');
+    p.textContent = 'Your details are still in the form. Send them to us in one tap:';
+    box.appendChild(p);
+    var actions = document.createElement('p');
+    actions.className = 'hero-ctas';
+    var mail = document.createElement('a');
+    mail.className = 'btn-link';
+    mail.href = 'mailto:office@londonchoralservice.com?subject=' + encodeURIComponent(subject) +
+      '&body=' + encodeURIComponent(body);
+    mail.textContent = 'Email these details';
+    var wa = document.createElement('a');
+    wa.className = 'btn-link btn-link--secondary';
+    wa.href = 'https://wa.me/447356042468?text=' + encodeURIComponent('Hello, I tried your enquiry form:\n' + body);
+    wa.target = '_blank';
+    wa.rel = 'noopener';
+    wa.setAttribute('data-whatsapp', '');
+    wa.textContent = 'Send on WhatsApp';
+    actions.appendChild(mail);
+    actions.appendChild(document.createTextNode(' '));
+    actions.appendChild(wa);
+    box.appendChild(actions);
+    errorBox.appendChild(box);
+  }
+
+  function send(data, attempt) {
     // A hung request must fall through to the error path, not leave the button on "Sending…".
     var ctrl = typeof AbortController === 'function' ? new AbortController() : null;
     var abortTimer = ctrl ? setTimeout(function () { ctrl.abort(); }, 20000) : null;
@@ -229,6 +312,9 @@
         if (abortTimer) clearTimeout(abortTimer);
         return response.json().then(function (result) {
           return { ok: response.ok, result: result };
+        }, function () {
+          var bad = new Error('HTTP ' + response.status + ', not JSON');
+          throw bad;
         });
       })
       .then(function (payload) {
@@ -246,6 +332,14 @@
       })
       .catch(function (err) {
         if (abortTimer) clearTimeout(abortTimer);
+        // fetch rejects with a TypeError when the request never got an answer
+        // (a dropped connection, a blocked request): the captcha token is
+        // still unspent, so try once more before showing an error.
+        if (attempt === 1 && err && err.name === 'TypeError') {
+          trackError('retry', 'TypeError');
+          setTimeout(function () { send(data, 2); }, 2000);
+          return;
+        }
         console.error('Form submission error:', err);
         trackError('submit', err && (err.name === 'Error' ? err.message : err.name));
         if (errorBox) {
@@ -256,6 +350,7 @@
             note.textContent = 'It may still have reached us. If you have no reply within one working day, send it again.';
             errorBox.appendChild(note);
           }
+          showFallback(data);
           errorBox.setAttribute('data-visible', 'true');
           errorBox.scrollIntoView({ block: 'center' });
         }
@@ -268,5 +363,5 @@
           try { window.hcaptcha.reset(); } catch (_) { /* non-fatal */ }
         }
       });
-  });
+  }
 })();
