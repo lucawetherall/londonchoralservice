@@ -115,6 +115,14 @@ def test_a_carried_item_keeps_its_id_and_is_not_recorded_again():
     assert len(items()) == 7
 
 
+def test_the_send_tag_is_a_known_kind():
+    reset()
+    text = "## Decisions\n\n1. [send] Zoho Drafts → 9 drafts unsent over three days → sent or discarded — not answered\n"
+    code, out, _ = run("record", write_review(text, "2026-11-09.md"))
+    assert code == 0, out
+    assert items()["2026-11-09-01"]["kind"] == "send", items()
+
+
 def test_decide_done_and_note():
     reset()
     run("record", write_review())

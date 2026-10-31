@@ -436,7 +436,7 @@ def main(argv=None, client=None, run=None, gsc=None, now=None, sleep=time.sleep)
     run = run or run_cmd
     stamp = now_london(now)
     rules = load_rules()
-    inp = load_input(args.input, stamp.date())
+    inp = load_input(str(Path(args.input).expanduser()), stamp.date())
     day = inp["date"]
     print(f"STANDING APPROVALS, Monday review {day}: "
           + ("APPLYING" if args.apply else "VALIDATE ONLY (nothing is changed, no files written, no git)"))
@@ -471,7 +471,7 @@ def main(argv=None, client=None, run=None, gsc=None, now=None, sleep=time.sleep)
     else:
         c_line = f"   append to §12: {entry[:160]}{'…' if len(entry) > 160 else ''}"
     show("c: MANUAL-ACTIONS archive line", [c_line])
-    report = Path(args.report) if args.report else lm.PRIVATE / "reports" / f"{day}.txt"
+    report = Path(args.report).expanduser() if args.report else lm.PRIVATE / "reports" / f"{day}.txt"
     stale = stale_sitemaps(report.read_text(encoding="utf-8"), rules) if report.is_file() else None
     show("d: sitemap resubmission", ["   no saved report at " + str(report) + ": nothing resubmitted"] if stale is None
          else [f"   resubmit {s}: section 7 says STALE" for s in stale])

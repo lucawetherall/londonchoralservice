@@ -7,7 +7,7 @@ atomically under lcs_money's file lock):
     {"id": "2026-10-26-04", "date": "2026-10-26", "kind": "site", "text": "…", "status": "open",
      "decided": "", "note": ""}
 
-kind is ads, site, growth, manual, upload or budget (the dispatcher's [tag]; an untagged item is "other"), or
+kind is ads, site, growth, manual, upload, budget or send (the dispatcher's [tag]; an untagged item is "other"), or
 "watch" for a thing to check later, which also carries "due": "YYYY-MM-DD". status is open, approved, done,
 dropped or expired. The review file itself (~/lcs-private/reports/reviews/<date>.md) is written by the dispatcher.
 
@@ -41,7 +41,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "bookings"))
 import lcs_money as lm  # noqa: E402  PRIVATE, ledger_lock, today
 
 STORE = lm.PRIVATE / "review-proposals.jsonl"
-KINDS = ("ads", "site", "growth", "manual", "upload", "budget")
+KINDS = ("ads", "site", "growth", "manual", "upload", "budget", "send")
 STATUSES = ("open", "approved", "done", "dropped", "expired")
 OPEN_DAYS, WATCH_GRACE_DAYS = 28, 14
 ID_RE = re.compile(r"^\d{4}-\d{2}-\d{2}-\d{2}$")
