@@ -270,6 +270,103 @@ def test_zoho_retry_window_lapses_after_three_hours():
     assert retry and at == "2026-10-22T14:25:00+01:00", at  # BST
 
 
+# --- run log (assistant-runs.jsonl) ---------------------------------------------------------------
+
+RUNS = os.path.join(_HOME, "assistant-runs.jsonl")
+
+
+def run_log():
+    with open(RUNS) as f:
+        return [json.loads(line) for line in f if line.strip()]
+
+
+def test_run_log_records_state_done_zoho_down_and_daily_done_at_mode_600():
+    fresh()
+    started = json.loads(run("state")[1])["now"]
+    assert oct(os.stat(RUNS).st_mode & 0o777) == "0o600"
+    run("zoho-down")
+    run("zoho-down")  # the retry is refused, the failure is still logged
+    run("daily-done")
+    code, out, _ = run("done", "m1", "m2")
+    assert code == 0, out
+    log = run_log()
+    assert [sorted(e) for e in log] == [["start"], ["zoho_down"], ["zoho_down"], ["daily"], ["done", "marked"]], log
+    assert log[0]["start"] == started
+    assert log[3]["daily"] == aio.london_today().isoformat()
+    assert log[4]["marked"] == 2
+    for e in (log[1]["zoho_down"], log[4]["done"]):  # the state file's own format: UTC, to the second
+        t = datetime.datetime.fromisoformat(e)
+        assert t.utcoffset() == datetime.timedelta(0) and t.microsecond == 0 and len(e) == len(started), e
+    run("done")
+    assert run_log()[-1]["marked"] == 0
+
+
+def unwritable_logs():
+    """Run-log paths an append must survive: a directory, a read-only file and a symlink (never followed)."""
+    def as_dir():
+        os.mkdir(RUNS)
+
+    def read_only():
+        with open(RUNS, "w") as f:
+            f.write('{"start": "2026-10-30T08:07:00+00:00"}\n')
+        os.chmod(RUNS, 0o400)
+
+    def symlink():
+        target = os.path.join(_HOME, "elsewhere.jsonl")
+        open(target, "w").close()
+        os.symlink(target, RUNS)
+    return as_dir, read_only, symlink
+
+
+def test_a_run_log_that_cannot_be_written_changes_no_output_or_exit_code():
+    fresh()
+    good = {cmd: run(*cmd) for cmd in (("state",), ("zoho-down",), ("daily-done",), ("done", "m1"))}
+    for breaker in unwritable_logs():
+        fresh()
+        breaker()
+        for cmd, (code, out, err) in good.items():
+            got = run(*cmd)
+            assert got[0] == code and got[2] == err == "", (breaker.__name__, cmd, got)
+            if cmd == ("state",):
+                a, b = json.loads(got[1]), json.loads(out)
+                assert set(a) == set(b) and a["daily_due"] == b["daily_due"], (breaker.__name__, got)
+                assert got[1].count("\n") == out.count("\n")
+            else:
+                assert got[1].split()[:2] == out.split()[:2], (breaker.__name__, cmd, got)
+        if breaker.__name__ == "symlink":
+            assert os.path.getsize(os.path.join(_HOME, "elsewhere.jsonl")) == 0  # nothing written through it
+        if breaker.__name__ == "read_only":
+            os.chmod(RUNS, 0o600)
+
+
+def test_run_log_prunes_lines_older_than_60_days_once_it_is_long():
+    fresh()
+    now = datetime.datetime(2026, 10, 31, 9, 7, tzinfo=datetime.timezone.utc)
+    old = (now - datetime.timedelta(days=61)).isoformat(timespec="seconds")
+    recent = (now - datetime.timedelta(days=59)).isoformat(timespec="seconds")
+    with open(RUNS, "w") as f:
+        for _ in range(3):
+            f.write(json.dumps({"start": old}) + "\n")
+        f.write(json.dumps({"daily": "2026-08-30"}) + "\n")  # 62 days: dropped
+        f.write(json.dumps({"daily": "2026-09-02"}) + "\n")  # 59 days: kept
+        f.write("not json\n")  # an unreadable line goes
+        f.write(json.dumps({"done": recent, "marked": 1}) + "\n")
+    saved = aio.RUN_LOG_MAX_LINES
+    aio.RUN_LOG_MAX_LINES = 5
+    try:
+        aio.log_run({"start": now.isoformat(timespec="seconds")}, now)
+    finally:
+        aio.RUN_LOG_MAX_LINES = saved
+    assert run_log() == [{"daily": "2026-09-02"}, {"done": recent, "marked": 1},
+                         {"start": now.isoformat(timespec="seconds")}], run_log()
+    assert oct(os.stat(RUNS).st_mode & 0o777) == "0o600"
+    # below the line limit nothing is rewritten: old lines stay until the file is long
+    with open(RUNS, "a") as f:
+        f.write(json.dumps({"start": old}) + "\n")
+    aio.log_run({"daily": "2026-10-31"}, now)
+    assert len(run_log()) == 5, run_log()
+
+
 # --- books-queue ---------------------------------------------------------------------------------
 
 def queued(ref="2111", **over):

@@ -172,7 +172,12 @@ def test_the_owners_approvals_cannot_be_written_from_a_shell():
     """The owner-approvals folder (31 Oct 2026): only the approval hook writes in it, once Luca clicks Allow."""
     for cmd in ("echo abc > ~/lcs-private/owner-approvals/x",
                 "printf x > ~/lcs-private/owner-approvals/owner-nonce.chat-" + "ab" * 32,
-                "ls ~/lcs-private/owner-approvals",
+                "printf x | tee ~/lcs-private/owner-approvals/x",
+                "sort -o ~/lcs-private/owner-approvals/x /tmp/y",
+                "git log --output=$HOME/lcs-private/owner-approvals/x",
+                "git -c core.pager=sh log owner-approvals",
+                "grep -l x ~/lcs-private/owner-approvals | sh",
+                "ls $(python3 -c 'print(1)') ~/lcs-private/owner-approvals",
                 "python3 -c \"import os; os.listdir(os.path.expanduser('~/lcs-private/owner-approvals'))\""):
         expect("deny", bash(cmd), cmd)
     script = write(os.path.join(SCRATCH, "forge2", "f.py"),
@@ -180,6 +185,44 @@ def test_the_owners_approvals_cannot_be_written_from_a_shell():
     expect("deny", bash(f"python3 {script}"), "an untracked script naming the owner-approvals folder")
     expect("deny", run("Write", {"file_path": os.path.join(SCRATCH, "w3", "n.py"),
                                  "content": "open('owner-approvals/x', 'w')\n"}), "writing a forger in the scratchpad")
+
+
+def test_read_only_commands_may_mention_the_approvals():
+    """Owner decision, 31 Oct 2026: listing, searching, reading, staging and committing never write an approval or run
+    the hook, so they may name them (the guard had blocked `ls .claude/hooks/*.py`, a grep and a PR body)."""
+    hook = ".claude/hooks/owner_confirm_guard.py"
+    body = write(os.path.join(SCRATCH, "prbody", "pr.md"), "Keeps owner_confirm_guard and owner-approvals.\n")
+    for cmd in ("ls .claude/hooks/*.py", "wc -l .claude/hooks/*.py", "ls ~/lcs-private/owner-approvals",
+                "grep -rn owner-approvals scripts docs | head -5", f"cat {hook} | head -3",
+                f"gh pr create --draft --title t --body-file {body}"):
+        expect("allow", bash(cmd), cmd)
+    # The second review (31 Oct 2026): an editor, a template or a commit hook can run what git commit is given; pflag
+    # bundles gh's short flags; and AppleScript or a terminal tab isn't Bash.
+    for cmd in (f"git commit -F {body}", f"gh pr create -dw --body-file {body}", f"gh pr create --web --body-file {body}"):
+        expect("deny", bash(cmd), cmd)
+    for script in ("head of do shell script \"python3 " + hook + "\"", f"ls {hook}"):
+        expect("deny", run("mcp__Control_your_Mac__osascript", {"script": script}), script)
+    # The adversarial review's strings (31 Oct 2026): each writes a file or runs a program, so none is a plain read.
+    for cmd in (f"cat {hook} > /tmp/x.py", f"python3 {hook}", f"git add {hook}",
+                f"git grep -O'python3 {hook}' x", "cat \"<<EOF\"\ntouch ~/lcs-private/owner-approvals/x\nEOF",
+                "cat x # <<EOF\ntouch ~/lcs-private/owner-approvals/x\nEOF",
+                "echo \"$(cat <<<x; touch owner-approvals/f)\"", "echo payload 1<>owner-approvals/f",
+                "echo payload >>| owner-approvals/f", "ls owner-approvals; touch 1", "ls owner-approvals && touch 1",
+                "grep owner-approvals `id`", "file -C -m owner-approvals",
+                f"gh pr create --editor --body-file {body}", f"git -c core.hooksPath=/tmp commit -F {body}",
+                f"python3 /tmp/run.py {body}"):
+        expect("deny", bash(cmd), cmd)
+
+
+def test_system_programs_run_by_path_are_not_vetted():
+    for cmd in ("/usr/bin/sed -n 1p README.md", "/bin/ls docs"):
+        expect("allow", bash(cmd), cmd)
+    pyc = write(os.path.join(SCRATCH, "sys", "x.pyc"), "\0\0compiled")
+    expect("deny", bash(f"python3 {pyc}"), "a binary handed to an interpreter is still vetted")
+    folder = os.path.join(SCRATCH, "withnotes")  # Markdown beside a script is still vetted: a script could run it
+    write(os.path.join(folder, "payload.md"), "owner-nonce\n")
+    script = write(os.path.join(folder, "run.py"), INNOCENT)
+    expect("deny", bash(f"python3 {script}"), "a Markdown neighbour holding a marker")
 
 
 def test_owner_nonce_files_cannot_be_written_from_a_shell():
@@ -367,15 +410,18 @@ def test_the_hook_is_wired_for_every_route():
 
 
 DENY = ["Read(~/.claude.json)", "Read(//Users/luca/.claude.json)", "Bash(*claude.json*)", "Bash(*mcp-remote*)",
-        "Bash(python3 -)", "Bash(.venv/bin/python -)", "Bash(python3 - *)", "Bash(.venv/bin/python - *)"]
+        ]
+# The python3 - (stdin) rules went on 31 Oct 2026: this guard vets what a stdin script holds.
+GONE = ["Bash(python3 -)", "Bash(.venv/bin/python -)", "Bash(python3 - *)", "Bash(.venv/bin/python - *)"]
 
 
 def test_the_deny_rules_exist_and_spare_the_legitimate_commands():
     deny, pats = tpa.deny_patterns()
     for rule in DENY:
         assert rule in deny, rule
-    for cmd in ("cat ~/.claude.json", "npx -y mcp-remote x", "python3 -", f"{PY} -", "python3 - <<'EOF'",
-                f"{PY} - < /tmp/x.py"):
+    for rule in GONE:
+        assert rule not in deny, rule
+    for cmd in ("cat ~/.claude.json", "npx -y mcp-remote x"):
         assert any(p.fullmatch(cmd) for _, p in pats), cmd
     caught = [c for c in allow_rule_commands() + prompt_commands() if any(p.fullmatch(c) for _, p in pats)]
     assert not caught, caught

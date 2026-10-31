@@ -57,6 +57,15 @@ SCRIPT_GUARDED = [
     # `--fact *` matches the owner kinds: check_payments.py refuses them without --owner and the nonce
     f"{PY} scripts/bookings/check_payments.py --fact X refunded --owner",
 ]
+# validate_proposal.py (owner decision D2, 31 Oct 2026) is validate-only and has no --apply flag, so its allowlist
+# glob (`validate_proposal.py *`) also matches these forms, which a glob can't exclude: argparse refuses each one as
+# an unknown argument before anything talks to Google (test_validate_proposal_refuses_apply_itself below, and
+# tests/test_validate_proposal.py).
+SCRIPT_REFUSED = [
+    f"{PY} scripts/ads/validate_proposal.py budget 24295921372 4.50 --reason X --apply",
+    f"{PY} scripts/ads/validate_proposal.py status 24295921372 paused --reason X --apply",
+    f"{PY} scripts/ads/validate_proposal.py budget 24295921372 4.50 --apply --reason X",
+]
 # Script mentions that are references or prohibitions, not commands to run.
 NOT_RUN = re.compile(r"^(singer_invoices\.py (confirm|settled)|scripts/gsc/submit_sitemap\.py --apply)\b")
 
@@ -191,6 +200,18 @@ def test_script_guarded_forms_are_documented_and_guarded():
         assert cmd.rstrip().endswith("--owner")
     src = open(os.path.join(ROOT, "scripts", "bookings", "check_payments.py"), encoding="utf-8").read()
     assert "def owner_confirmed(" in src and "if not owner_confirmed():" in src
+
+
+def test_validate_proposal_refuses_apply_itself():
+    """Each SCRIPT_REFUSED form exits 2 at argparse ("unrecognized arguments: --apply"), whether or not the
+    allowlist matches it, so the glob for validate_proposal.py can never apply a change."""
+    import subprocess
+    for cmd in SCRIPT_REFUSED:
+        args = cmd.split()[1:]
+        assert args[0] == "scripts/ads/validate_proposal.py" and "--apply" in args, cmd
+        r = subprocess.run([sys.executable, os.path.join(ROOT, args[0]), *args[1:]], capture_output=True, text=True,
+                           cwd=ROOT)
+        assert r.returncode == 2 and "unrecognized arguments: --apply" in r.stderr, (cmd, r.stderr)
 
 
 def test_claude_file_tools_cant_write_the_owner_approvals_folder():
