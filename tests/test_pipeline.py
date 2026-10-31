@@ -241,6 +241,49 @@ def test_summary_of_nothing():
     assert json.dumps(s)
 
 
+def whatsapp_rows():
+    return [
+        enq("w1", status="new", source="whatsapp", first_seen=days(0)),
+        enq("w2", status="Quoted", source=" WhatsApp ", first_seen=days(27)),  # the 28th day back still counts
+        enq("w3", status="quoted", source="whatsapp", first_seen=days(28)),  # 29 days: too old
+        enq("w4", status="confirmed", source="whatsapp", first_seen=days(3)),  # booked: not open
+        enq("w5", status="lost", source="whatsapp", first_seen=days(3)),
+        enq("w6", status="new", source="email", first_seen=days(1)),
+        enq("w7", status="new", source="whatsapp", first_seen=""),  # no date: never counted
+    ]
+
+
+def test_summary_open_whatsapp_counts_new_and_quoted_whatsapp_enquiries_of_the_last_28_days():
+    s = pl.summary_dict(whatsapp_rows(), None, today=T)
+    assert s["open_whatsapp"] == 2, s
+    # `since` narrows the other figures, never this one: the question is about WhatsApp threads open now
+    assert pl.summary_dict(whatsapp_rows(), days(1), today=T)["open_whatsapp"] == 2
+    assert pl.summary_dict(whatsapp_rows(), None, today=T + datetime.timedelta(days=1))["open_whatsapp"] == 1
+    assert pl.summary_dict([], None, today=T)["open_whatsapp"] == 0
+
+
+def test_summary_open_whatsapp_is_an_added_key_and_defaults_to_today():
+    s = pl.summary_dict(summary_rows(), None)
+    assert set(s) == {"by_status", "enquiries", "quoted", "confirmed", "conversion_rate", "by_source",
+                      "median_days_to_quote", "open_whatsapp"}, s
+    recent = [enq("x", status="new", source="whatsapp", first_seen=lm.today().isoformat())]
+    assert pl.summary_dict(recent)["open_whatsapp"] == 1
+
+
+def test_summary_cli_prints_open_whatsapp():
+    with tempfile.TemporaryDirectory() as d:
+        rows = [enq("x", status="new", source="whatsapp", first_seen=lm.today().isoformat()),
+                enq("y", status="quoted", source="whatsapp", first_seen="2020-01-01")]
+        with open(os.path.join(d, "enquiries.csv"), "w", newline="") as f:
+            w = csv.DictWriter(f, fieldnames=pl.COLUMNS)
+            w.writeheader()
+            w.writerows(rows)
+        p = cli(d, "summary")
+        assert p.returncode == 0, p.stderr
+        out = json.loads(p.stdout)
+        assert out["open_whatsapp"] == 1 and out["enquiries"] == 2, out
+
+
 # --- pure: helpers -------------------------------------------------------------------------------
 
 def refused(fn, *a):
