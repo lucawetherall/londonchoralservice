@@ -314,6 +314,24 @@ def test_the_default_run_changes_nothing_and_runs_no_git():
     assert "sitemap_index.xml: section 7" not in out
 
 
+def test_a_tilde_in_the_report_and_input_paths_is_expanded():
+    """The Monday prompt passes ~/lcs-private/... paths; a quoted ~ must not silently skip section 7 (31 Oct 2026)."""
+    home = Path(tempfile.mkdtemp())
+    (home / "r").mkdir()
+    (home / "r" / "2026-11-02.txt").write_text(REPORT)
+    inp = Path(write_input())
+    (home / "in.json").write_text(inp.read_text())
+    saved = os.environ.get("HOME")
+    os.environ["HOME"] = str(home)
+    try:
+        code, out = run(["--input", "~/in.json", "--report", "~/r/2026-11-02.txt"], FakeAds(), git=refuse_git)
+    finally:
+        os.environ["HOME"] = saved
+    assert code == 0, out
+    assert "no saved report" not in out, out
+    assert "resubmit sitemap.xml" in out, out
+
+
 def test_a_google_refusal_in_validation_stops_the_run():
     ads = FakeAds()
     ads.mutate = lambda request: (_ for _ in ()).throw(GoogleAdsException("bad keyword"))

@@ -324,14 +324,14 @@ Section 0's lines as printed, then "Open from earlier weeks: <n>" and "Merged si
 ## Done this morning
 One line per standing approval applied, from standing_approvals.py, with its PR. Or "nothing".
 ## Decisions
-One numbered list across all the agents, oldest first: section 0b's open items from earlier weeks (with their ids), then this week's: the ads agent's PROPOSED ADS CHANGES that the standing approvals did not apply, the spend guard's pauses, the web agent's PROPOSED SITE CHANGES, on the first Monday the growth agent's PROPOSED GROWTH CHANGES, a booking upload if UPLOAD says anything would go, and each BUDGET PROPOSALS line. Tag each item [ads], [site], [growth], [upload] or [budget], and write it as "resource → field: current → new — reason", with step 5's validated line where there is one. Or "nothing needs a decision".
+One numbered list across all the agents, oldest first: section 0b's open items from earlier weeks (with their ids), then this week's: the ads agent's PROPOSED ADS CHANGES that the standing approvals did not apply, the spend guard's pauses, the web agent's PROPOSED SITE CHANGES, on the first Monday the growth agent's PROPOSED GROWTH CHANGES, a booking upload if UPLOAD says anything would go, each BUDGET PROPOSALS line, and, when DRAFTS WAITING shows any over three days, "[send] Zoho Drafts → <n> drafts unsent over three days → sent or discarded — each is a client or firm not yet answered". Tag each item [ads], [site], [growth], [upload], [budget] or [send], and write it as "resource → field: current → new — reason", with step 5's validated line where there is one. Or "nothing needs a decision".
 ## This week
 One line each, longer only where there is a finding (then at most three lines):
 - Ads: the ads agent's HEADLINES, then one line per campaign from ADS.
 - Search terms: the class totals from its table, then NEGATIVES.
 - Tracking: TRACKING (any ALARM first), and FLAGS if not "none".
 - Web: VISITS, then WEB in one or two sentences, COVERAGE and SPEED.
-- Bookings: BOOKINGS, MONEY, BOOKS and HAND CHECKS (with "none" where there is nothing).
+- Bookings: BOOKINGS, MONEY, BOOKS, HAND CHECKS (with "none" where there is nothing) and DRAFTS WAITING.
 - Enquiries: ENQUIRIES THIS WEEK, graded, then PIPELINE.
 - Enquiry assistant: the bookings agent's ASSISTANT line.
 - Economics: the total line from ECONOMICS, and the SPEND GUARD lines.
