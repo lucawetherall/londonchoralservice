@@ -54,9 +54,14 @@ def parse(argv=None):
     args = p.parse_args(argv)
     if not (args.campaign.isdigit() or NAME_RE.fullmatch(args.campaign)):
         p.error("the campaign must be its id or its exact name")
-    if "|" in args.reason or "\n" in args.reason or len(args.reason) > 300:
+    if not reason_ok(args.reason):
         p.error("the reason must be one line of at most 300 characters, without '|'")
     return args
+
+
+def reason_ok(text):
+    """One line of at most 300 characters, without '|' (it lands in a table row of logs/ads-changes.md)."""
+    return "|" not in text and "\n" not in text and len(text) <= 300
 
 
 def load_client():
@@ -87,20 +92,26 @@ def is_google_ads_error(e):
 
 def main(argv=None, client=None, now=None):
     args = parse(argv)
+    return change(args.campaign, args.daily, args.reason, apply=args.apply, client=client, now=now)
+
+
+def change(campaign, daily, reason, apply=False, client=None, now=None):
+    """Validate (or, with apply, make) one budget change, printing current → new. The cap is checked first;
+    SystemExit on any refusal. scripts/ads/validate_proposal.py calls this, never with apply."""
     today = (now or datetime.datetime.now().astimezone()).date()
-    cap = budget_cap.cap_micros(args.campaign if args.campaign.isdigit() else None, today)
-    new = budget_micros(args.daily, cap)  # the cap is checked before anything talks to Google
-    if args.apply:
+    cap = budget_cap.cap_micros(campaign if campaign.isdigit() else None, today)
+    new = budget_micros(daily, cap)  # the cap is checked before anything talks to Google
+    if apply:
         ads_log.check_log()
     client = client or load_client()
-    row = find_campaign(client, args.campaign)
+    row = find_campaign(client, campaign)
     camp, budget = row.campaign, row.campaign_budget
     if budget.explicitly_shared:
         raise SystemExit(f'"{camp.name}" uses a shared budget; change it in Google Ads, not here. Nothing changed')
     current = int(budget.amount_micros)
     resource = f'campaign "{camp.name}" ({camp.id}) budget'
-    print(f"{'APPLYING' if args.apply else 'VALIDATE ONLY'}:\n\n{resource}\n"
-          f"   daily budget: £{current / 1e6:.2f} → £{new / 1e6:.2f}\n   reason: {args.reason}\n")
+    print(f"{'APPLYING' if apply else 'VALIDATE ONLY'}:\n\n{resource}\n"
+          f"   daily budget: £{current / 1e6:.2f} → £{new / 1e6:.2f}\n   reason: {reason}\n")
     if current == new:
         print("Already that amount. Nothing to change.")
         return 0
@@ -112,7 +123,7 @@ def main(argv=None, client=None, now=None):
     req = client.get_type("MutateCampaignBudgetsRequest")
     req.customer_id = CUSTOMER_ID
     req.operations.append(op)
-    req.validate_only = not args.apply
+    req.validate_only = not apply
     try:
         svc.mutate_campaign_budgets(request=req)
     except Exception as e:
@@ -121,12 +132,12 @@ def main(argv=None, client=None, now=None):
         for err in e.failure.errors:
             print("REJECTED:", err.error_code, err.message)
         raise SystemExit(1)
-    if not args.apply:
+    if not apply:
         print("Google accepted the operation. Nothing was changed.")
         return 0
     when = (now or datetime.datetime.now().astimezone()).strftime("%Y-%m-%d %H:%M")
     ads_log.append_row(f"| {when} | {resource} | daily budget | £{current / 1e6:.2f} → £{new / 1e6:.2f} | "
-                       f"{args.reason} | `{SCRIPT}` |")
+                       f"{reason} | `{SCRIPT}` |")
     print("Applied and logged to logs/ads-changes.md")
     return 0
 

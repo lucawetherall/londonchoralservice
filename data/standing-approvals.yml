@@ -1,0 +1,90 @@
+# Standing approvals for the unattended Monday marketing review (owner decision D1, approved 31 Oct 2026:
+# "all decisions approved"; plan docs/superpowers/plans/2026-10-31-weekly-review-improvements.md, Task 7).
+#
+# The Monday run may apply these five classes, and only these, without asking first. Each one is still
+# validated first, logged (logs/ads-changes.md or logs/gsc-changes.md), committed through a pull request and
+# listed under "Done this morning" in the reply. scripts/ads/standing_approvals.py reads this file; the rule
+# text is for people, the other fields are what the script reads. tests/test_standing_approvals.py checks
+# that exactly these five classes are named and that none of them is a budget class.
+#
+# Everything else waits for the owner's approval in the reply, exactly as before.
+
+never: >-
+  BUDGETS ARE NEVER A STANDING CLASS. The owner restated on 31 Oct 2026 that any rise in ad spend needs his
+  approval, and no budget, bid, pause, keyword status, ad copy or site copy change may be applied by
+  scripts/ads/standing_approvals.py.
+
+approved: 2026-10-31
+script: scripts/ads/standing_approvals.py
+
+classes:
+  negatives:
+    id: a
+    rule: >-
+      Campaign-level negative keywords for search terms the review classed NOT A BUYER, when the negative
+      blocks its own search term and none of the week's HIRING search terms, none of the protected searches
+      below, and none of the campaign's own keywords. At most 10 a run; a negative already on the campaign is
+      skipped. Google validates the whole set first (validate_only) and the set is applied in one request.
+    max_per_run: 10
+    match_types: [BROAD, PHRASE, EXACT]
+    # Hiring searches every negative is checked against, on top of the week's HIRING terms from the report.
+    protected_terms:
+      - funeral choir
+      - funeral singers
+      - wedding choir
+      - wedding singers
+      - choir for wedding
+      - choir for funeral
+      - hire a choir
+      - choir hire
+      - carol singers
+      - carol singers for hire
+      - christmas carol singers
+      - christmas choir hire
+      - london funeral singers
+
+  dismiss_recommendations:
+    id: b
+    rule: >-
+      Dismiss Google's open recommendations of the types the owner has ruled out (26 Oct 2026 review and
+      31 Oct decision), for the account or one of its known campaigns. A dismissal changes no setting, bid,
+      budget or ad. Google has no validate-only mode for a dismissal, so the default run lists exactly what
+      --apply would dismiss. One request per type, because Google refuses a request that mixes types. Never
+      another type.
+    # Exact names of google-ads RecommendationTypeEnum (checked against google-ads 33.0.0, API v25), and why.
+    types:
+      CAMPAIGN_BUDGET: "a higher budget breaks the owner's caps; any rise in ad spend needs his approval"
+      SEARCH_PARTNERS_OPT_IN: "owner rule: no search partners"
+      MAXIMIZE_CONVERSIONS_OPT_IN: "owner rule: manual CPC; too few conversions for smart bidding"
+      MAXIMIZE_CLICKS_OPT_IN: "owner rule: manual CPC"
+      LEAD_FORM_ASSET: "a Google lead form skips the site form's hCaptcha and consent check"
+      DYNAMIC_IMAGE_EXTENSION_OPT_IN: "would let Google pick images from the site unchecked"
+      USE_BROAD_MATCH_KEYWORD: "owner rule: no broad-match keywords; choir searches only"
+    # AI Max: google-ads 33.0.0 (API v25) has no AI Max recommendation type. A later version's type whose
+    # name starts with this prefix is dismissed with this reason; no other new type ever is.
+    ai_max_prefix: AI_MAX
+    ai_max_reason: "owner rule: no AI Max (it broadens matching beyond choir searches)"
+
+  manual_actions_line:
+    id: c
+    rule: >-
+      Append the review's dated line as a new "**Weekly review, <date> …**" entry at the end of section 12 of
+      docs/MANUAL-ACTIONS-ARCHIVE.md, unless that date's entry is already there. One line, no email addresses.
+    file: docs/MANUAL-ACTIONS-ARCHIVE.md
+    section: "## 12."
+
+  sitemap_resubmit:
+    id: d
+    rule: >-
+      Resubmit a sitemap to Search Console only when section 7 of that Monday's saved report marks it
+      "!STALE: resubmit", with scripts/gsc/submit_sitemap.py's own steps; logged in logs/gsc-changes.md.
+    report_section: "7"
+    marker: "!STALE"
+
+  llms_date:
+    id: e
+    rule: >-
+      Set llms.txt's "Content last updated" date to the newest <lastmod> in sitemap.xml, when it is older.
+    file: llms.txt
+    sitemap: sitemap.xml
+    prefix: "Content last updated: "
