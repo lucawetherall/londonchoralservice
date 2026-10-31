@@ -1417,11 +1417,13 @@ def change_log_count(text, since):
 
 def merged_prs(since, runner=None):
     """["#418 <title>", …] for the pull requests merged on origin/main since `since` (as of the last fetch;
-    read-only, the hardened git), newest first, or None when git can't say (no origin/main in this checkout)."""
+    read-only, the hardened git), newest first, or None when git can't say (no origin/main in this checkout).
+    Reads main's own line of history (--first-parent), so both a merge commit ("Merge pull request #N from …")
+    and a squash merge ("<title> (#N)") count; a commit pushed straight to main, with no PR number, is left out."""
     import subprocess
     try:
         binary, safe, env = hardened_git()
-        p = (runner or subprocess.run)([binary, "-C", str(REPO), *safe, "log", "origin/main", "--merges",
+        p = (runner or subprocess.run)([binary, "-C", str(REPO), *safe, "log", "origin/main", "--first-parent",
                                         f"--since={since.isoformat()}", "--format=%s%x1f%b%x1e"],
                                        capture_output=True, text=True, timeout=15, env=env,
                                        stdin=subprocess.DEVNULL, shell=False)
@@ -1435,10 +1437,15 @@ def merged_prs(since, runner=None):
             continue
         subject, _, body = rec.strip().partition("\x1f")
         m = re.match(r"Merge pull request (#\d+)(?: from \S+?/(\S+))?", subject)
-        title = next((ln.strip() for ln in body.splitlines() if ln.strip()), "")
-        if m and not title and m.group(2):  # a merge with no title in its message: the branch says what it was
-            title = f"(branch {m.group(2)})"
-        out.append(f"{m.group(1)} {title}".strip() if m else subject.strip())
+        if m:
+            title = next((ln.strip() for ln in body.splitlines() if ln.strip()), "")
+            if not title and m.group(2):  # a merge with no title in its message: the branch says what it was
+                title = f"(branch {m.group(2)})"
+            out.append(f"{m.group(1)} {title}".strip())
+            continue
+        squash = re.match(r"(.*\S)\s+\((#\d+)\)$", subject.strip())
+        if squash:
+            out.append(f"{squash.group(2)} {squash.group(1)}")
     return out
 
 

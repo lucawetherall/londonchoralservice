@@ -440,3 +440,13 @@ print('duplicate price-ladder constructions:', len(dupes))  # → 0
 **Not done, deliberately:** borough pages (33 pages, 8 clicks in 90 days; Newham crawled, not indexed): expanding them is unlikely to pay; whether to merge the weakest is an owner call. Homepage and funerals.html left alone (both changed 24–25 Oct).
 
 **Verify:** from 7 Dec, rerun the 90-day page report and `scripts/reports/index_coverage.py --section areas`; weddings.html and corporate.html should move toward page 1 for "wedding choir" and "corporate event choir".
+
+## R25 — Check the reply drafter's text with the review lint before a draft is saved  [P3] [SPEC-FIRST] [S]
+
+**Why:** the Monday review's lint (`scripts/reports/review_lint.py`, plan 2026-10-31, Task 5) catches a price that disagrees with `pricing.html` or `christmas-pricing.html` for the item it sits next to, a client name, contact details, and the roster-size and London-cathedral claims. On 26 Oct it caught a growth proposal quoting the soloist at the old £250. Client replies carry prices too, and a wrong price there reaches a client, so the same check would pay off more in `lcs-reply-drafter`. It is not done yet because it changes the client-facing routine, which runs every two hours unattended.
+
+**Files & anchors:** `scripts/reports/review_lint.py` (`lint(text, names, prices)`, `site_prices()`); `.claude/agents/lcs-reply-drafter.md` (its tools are ToolSearch, Bash, Read and Skill: no Write, so the draft text has to reach the lint as an argument or through `assistant_io.py`); `.claude/hooks/zoho_guard.py` (a PreToolUse hook on the draft tools already scans draft text for bank details, so a price check could sit there instead).
+
+**Do:** first write a short spec choosing between a hook check (every draft, no prompt change) and a drafter step. A price finding blocks the draft with the figure and the page price, and a name or contact finding never applies, because a reply is addressed to the client by design. Quotes outside London add travel on purpose, so the check compares only the base ensemble prices.
+
+**Verify:** a draft quoting "four singers for £1,250" is refused with the pricing-page figure; a draft quoting £1,150 passes; the hook tests still pass.
