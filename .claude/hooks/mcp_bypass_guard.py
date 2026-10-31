@@ -422,6 +422,17 @@ def vet_dir(d, repo, cmd):
         rel = os.path.relpath(root, d)
         # Installed packages are not the owner's scratch code: a licence file in node_modules that names the
         # MCP SDK is not an attempt to reach Zoho (it blocked every command in a sibling repo, 31 Oct 2026).
+        # Their contents are skipped; a package *named* after a marker (an installed MCP proxy) still counts.
+        for v in [x for x in dirs if x in VENDORED]:
+            try:
+                names_in = os.listdir(os.path.join(root, v))
+            except OSError:
+                names_in = []
+            for name in names_in:
+                label = found(name)
+                if label:
+                    raise Deny(f"{P}{os.path.join(root, v, name)}, installed in the folder the code runs from, "
+                               f"is named after {label}.")
         dirs[:] = [x for x in dirs if x not in VENDORED]
         if rel != "." and rel.count(os.sep) >= 1:
             dirs[:] = []
