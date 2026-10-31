@@ -159,6 +159,44 @@ def test_counts_per_campaign_in_the_window():
     assert lines[-1] == "no campaign named: A 0 · B 1", lines
 
 
+# ---------- grade C's base rate ----------
+
+def test_base_rate_counts_days_with_a_click_that_day_or_the_day_before():
+    start, end = D(2026, 9, 29), D(2026, 10, 26)  # the spend guard's 28 days
+    clicks = {(D(2026, 9, 28), "christmas"), (D(2026, 10, 1), "christmas"), (D(2026, 10, 2), "christmas"),
+              (D(2026, 10, 26), "christmas"), (D(2026, 10, 10), "wedding")}
+    # 29 Sep (28 Sep's click), 1 Oct, 2 Oct, 3 Oct (2 Oct's), 26 Oct: 5 days; wedding 10 and 11 Oct
+    assert es.base_rate(clicks, "christmas", start, end) == (5, 28)
+    assert es.base_rate(clicks, "wedding", start, end) == (2, 28)
+    assert es.base_rate(set(), "funeral", start, end) == (0, 28)
+
+
+def test_a_c_line_carries_its_base_rate_and_says_coincidence_from_half_the_days():
+    g = es.grade(row("christmas"), clicks={(DAY, "christmas")})
+    assert g["grade"] == "C"
+    likely = es.line(g, {"christmas": (24, 28)})
+    assert likely.endswith("never counts; that campaign clicked on 24 of 28 days: a coincidence is likely)"), likely
+    assert es.line(g, {"christmas": (14, 28)}).endswith("clicked on 14 of 28 days: a coincidence is likely)")
+    look = es.line(g, {"christmas": (13, 28)})
+    assert look.endswith("never counts; that campaign clicked on 13 of 28 days: worth a look)"), look
+    assert es.line(g) == es.line(g, None) and "clicked on" not in es.line(g)
+    # A and B lines never carry a rate
+    b = es.grade(row("wedding", notes="ad visit: weddings"))
+    assert "clicked on" not in es.line(b, {"wedding": (2, 28)})
+
+
+def test_counts_lines_show_each_campaigns_click_days_and_c_still_never_counts():
+    graded = es.grade_rows([row("christmas"), row("christmas", notes="ad visit: christmas")],
+                           clicks={(DAY, "christmas")})
+    c = es.counts(graded, D(2026, 9, 29), D(2026, 10, 26))
+    lines = es.counts_lines(c, rates={"funeral": (0, 28), "wedding": (2, 28), "christmas": (24, 28)})
+    assert lines == ["funeral expert campaign: A 0 · B 0 · C 0 (clicked 0/28 days)",
+                     "wedding-leads: A 0 · B 0 · C 0 (clicked 2/28 days)",
+                     "Christmas carol singers – events 2026: A 0 · B 1 · C 1 (clicked 24/28 days)",
+                     "no campaign named: A 0 · B 0"], lines
+    assert es.ab(c["christmas"]) == 1  # the C is shown, never counted
+
+
 def test_lines_carry_no_free_text_from_the_notes():
     secret = "6 singers at The Example Hall, Somewhere Lane; mics asked"
     g = es.grade(row("christmas", notes=f"{secret}; heard: Searching on Google; quoted 2026-10-23"),

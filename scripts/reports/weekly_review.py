@@ -2,7 +2,9 @@
 """Read-only data pull for the Monday review: Google Ads, GA4 and Search
 Console in one report. Changes nothing and prints no personal data.
 
-Sections:
+Sections (in the order printed):
+  0b. Since last Monday: the review's watch items now due and its other open proposals (review_log.py, read-only),
+      how many Ads changes were logged and which pull requests merged on origin/main since the previous report
   1. Campaigns: last 7 days and since --since (impression share, budget use), then the Ads changes logged since the
      previous report
   1b. Account settings (live, read-only, no metrics): one sorted line per enabled campaign, ad group, keyword, ad,
@@ -16,20 +18,28 @@ Sections:
   5. GA4: lead/contact events with their parameters; sessions by channel
   5c. GoatCounter: visits and enquiry events from every visitor
   5d. Core Web Vitals: CrUX field data (phones, p75) for the money pages, with a PageSpeed lab fallback
-  6. Search Console: last 7 complete days vs the 7 before, by query and page
+  6. Search Console: last 7 complete days vs the 7 before, by query and page; hiring searches
+     (economics.hiring_intent, 10+ impressions) tagged [page one], [8–20] or [deep], then the other money queries
   7. Search Console coverage: sitemap freshness, index status of every ad landing page
   8. Tracking wiring: live tags and labels, Ads account settings, GA4 key events and links
   9. Bookings ledger: counts and totals only (no personal data)
   9b. Enquiries by ad source: the pipeline's enquiries graded A/B/C per campaign (enquiry_sources.py), this
-      week's one per line and the last 28 days' counts (dates, occasions and grades only)
+      week's one per line and the last 28 days' counts (dates, occasions and grades only); a C carries its base
+      rate (on how many of the 28 days that campaign clicked: half or more, a coincidence is likely)
+  9c. Enquiry assistant, last 7 complete days, from ~/lcs-private/assistant-runs.jsonl (assistant_io.py): runs
+      started against 63 expected, finished, stopped early, Zoho down, the longest gap in 06:00–22:00 London
+      ("STALE ASSISTANT" over 4 hours) and the days the daily pass ran
   10. Money: client receipts, deposits overdue, balances due, singer invoices (totals only)
   11. True cost per booking: season spend, enquiries, bookings and £ booked by campaign, crediting a campaign
       by click reference or, failing that, by the enquiry's A or B grade
-      (also writes ~/lcs-private/ads-summary.json for the dashboard)
+      (also writes ~/lcs-private/ads-summary.json for the dashboard, each week with its enquiries and bookings);
+      campaigns with nothing this season share one line
   12. Seasonal budget rules: proposals from data/budget-windows.yml (never above £5/day), the Christmas value
       check (judged on Ads conversions and A or B enquiries) and the spend guard (A or B enquiries only; Ads
       conversions shown, owner 26 Oct 2026); C never counts
-  13. Search Console shortlist: first Monday of the month, or with --gsc-shortlist
+  13. Search Console shortlist: first Monday of the month, or with --gsc-shortlist (otherwise one "next:" line)
+  0. This week in brief (brief.py), printed last: enquiries, quotes, bookings, ad spend, page views and organic
+     clicks for the last full week, the week before and the 8-week average, then the alarms (quiet_summary's rule)
 
 Each section runs on its own: one that fails prints its heading and "SECTION <id> FAILED: <exception type>"
 (plus "looks like a Google auth error" when it does) and the rest still run.
@@ -39,7 +49,10 @@ analytics.readonly and webmasters.readonly scopes) for GA4 and Search Console.
 Reads the private bookings ledger for counts only; prints no names or emails.
 
     source .venv/bin/activate
-    python scripts/reports/weekly_review.py [--since 2026-09-26] [--gsc-shortlist] [--save-report [--quiet]]
+    python scripts/reports/weekly_review.py [--since 2026-09-26] [--gsc-shortlist] [--save-report [--quiet] [--out PATH]]
+
+--out PATH (a dry run) writes the saved report to PATH instead; section 1b and 0b still read the real reports
+folder, which the dry run leaves untouched.
 
 --save-report also archives everything printed to ~/lcs-private/reports/<today, Europe/London>.txt
 (LCS_PRIVATE_DIR respected), mode 600 in a mode-700 directory, written atomically. A same-day rerun
@@ -743,8 +756,15 @@ def ga4_section(s):
 
 
 def goatcounter_section(today):
-    """Section 5c: GoatCounter's totals (read-only key in the Keychain; scripts/reports/goatcounter.py)."""
-    print("\n".join(goatcounter.section(today)))
+    """Section 5c: GoatCounter's totals (read-only key in the Keychain; scripts/reports/goatcounter.py). Hands
+    section 0 its page views (the last 7 days, the 7 before or None) in WEEK."""
+    lines = goatcounter.section(today)
+    print("\n".join(lines))
+    text = "\n".join(lines)
+    m = re.search(r"\): (\d+) page views", text)
+    if m:
+        before = re.search(r"the 7 days before: (\d+)", text)
+        WEEK["pageviews"] = (int(m.group(1)), int(before.group(1)) if before else None)
 
 
 def cwv_section(landing=None):
@@ -753,6 +773,28 @@ def cwv_section(landing=None):
     pages; None (section 4 failed) falls back to cwv.AD_LANDING."""
     import cwv  # read-only; its API key is in the Keychain as lcs-pagespeed, the owner approved it 24 Oct 2026
     print("\n".join(cwv.section(ad_landing=landing or None)))
+
+
+HIRING_MIN_IMPR, OTHER_MONEY_TOP = 10, 10
+
+
+def rank_band(position):
+    """Where a query sits: "page one" above position 8, "8–20" (the web agent's fixes), or "deep" beyond 20."""
+    return "page one" if position < 8 else "8–20" if position <= 20 else "deep"
+
+
+def money_query_blocks(now, before):
+    """Section 6's two query lists from {query: Search Console row} for this week and the week before:
+    (hiring searches by economics.hiring_intent with HIRING_MIN_IMPR+ impressions this week, most first;
+    the other MONEY_TERMS queries, not hiring ones, top OTHER_MONEY_TOP by this week's impressions)."""
+    import economics as ec
+
+    def impr(q):
+        return now.get(q, {}).get("impressions", 0)
+    hiring = sorted((q for q in now if ec.hiring_intent(q) and impr(q) >= HIRING_MIN_IMPR), key=lambda q: (-impr(q), q))
+    other = sorted((q for q in set(now) | set(before) if MONEY_TERMS.search(q) and not ec.hiring_intent(q)),
+                   key=lambda q: (-impr(q), q))
+    return hiring, other[:OTHER_MONEY_TOP]
 
 
 def gsc_section(s):
@@ -770,10 +812,13 @@ def gsc_section(s):
         return r.json().get("rows", [])
 
     print(f"\n== 6. Search Console, {cur[0]} to {cur[1]} vs {prev[0]} to {prev[1]}")
+    totals = []
     for label, span in (("this week", cur), ("week before", prev)):
         t = (query(span, []) or [{}])[0]
+        totals.append(round(t.get("clicks", 0)))
         print(f"   {label:11} clicks {t.get('clicks', 0):.0f} · impr {t.get('impressions', 0):.0f}"
               f" · CTR {pct(t.get('ctr', 0))} · avg pos {t.get('position', 0):.1f}")
+    WEEK["organic"] = (totals[0], totals[1], cur[0], cur[1])
     now = {r["keys"][0]: r for r in query(cur, ["query"])}
     before = {r["keys"][0]: r for r in query(prev, ["query"])}
     top_page = {}  # query -> the page with the most impressions for it this week (what Google shows)
@@ -788,12 +833,17 @@ def gsc_section(s):
         return (f"   {qry[:48]:48} clicks {r['clicks'] if r else 0:.0f} · impr {r['impressions'] if r else 0:.0f}"
                 f" · {pos} ({was}){page}")
 
-    print("-- money queries (funeral, wedding, carol, choir), by impressions")
-    money = sorted((q for q in set(now) | set(before) if MONEY_TERMS.search(q)),
-                   key=lambda q: -(now.get(q, {}).get("impressions", 0)))
-    for qry in money[:40]:
+    hiring, other = money_query_blocks(now, before)
+    print(f"-- hiring searches (economics.hiring_intent, {HIRING_MIN_IMPR}+ impressions this week), by impressions")
+    for qry in hiring:
+        print(line(qry) + f" [{rank_band(now[qry]['position'])}]")
+    if not hiring:
+        print("   (none)")
+    print(f"-- other money queries (funeral, wedding, carol, choir; not hiring searches), top {OTHER_MONEY_TOP} "
+          f"by impressions")
+    for qry in other:
         print(line(qry))
-    if not money:
+    if not other:
         print("   (none)")
     print("-- top 15 queries overall, by clicks then impressions")
     for qry in sorted(now, key=lambda q: (-now[q]["clicks"], -now[q]["impressions"]))[:15]:
@@ -965,13 +1015,13 @@ class AdClicks:
 
 
 def enquiry_grades(clicks, today, path=None):
-    """(graded enquiries, or None when there is no pipeline sheet; note lines). Read-only. Ads failures don't stop
-    the grading: without the click days there is no C, and an A whose click can't be looked up takes its campaign
-    from its ad visit, if any."""
+    """(graded enquiries, or None when there is no pipeline sheet; note lines; the {(date, campaign key)} click days,
+    or None when not read). Read-only. Ads failures don't stop the grading: without the click days there is no C,
+    and an A whose click can't be looked up takes its campaign from its ad visit, if any."""
     import economics as ec
     rows = es.read_rows(path or ec.ENQUIRIES)
     if rows is None:
-        return None, ["no pipeline sheet yet (enquiries.csv): enquiries not graded"]
+        return None, ["no pipeline sheet yet (enquiries.csv): enquiries not graded"], None
     notes, failed = [], []
     try:
         season = ec.load_windows(BUDGET_WINDOWS)["season_start"]
@@ -995,7 +1045,7 @@ def enquiry_grades(clicks, today, path=None):
     if failed:
         notes.append(f"click_view lookups failed: {failure_note(failed[0])}; those A enquiries take their campaign "
                      f"from their ad visit, if any")
-    return graded, notes
+    return graded, notes, days
 
 
 def guard_since(today):
@@ -1006,21 +1056,24 @@ def enquiries_section(clicks, today, path=None):
     """Section 9b; returns the graded enquiries (None without a pipeline sheet) for sections 11 and 12."""
     print("\n== 9b. Enquiries by ad source (A a click reference · B an ad visit, or the client says 'A Google ad' · "
           "C only an ad click in the matching campaign that day or the day before: shown, never counted)")
-    graded, notes = enquiry_grades(clicks, today, path)
+    graded, notes, days = enquiry_grades(clicks, today, path)
     for n in notes:
         print("   " + n)
     if graded is None:
         return None
+    since = guard_since(today)
+    # grade C's base rate: on how many of the spend guard's 28 days each campaign had a click that day or the day
+    # before (a C on a campaign that clicks most days is likely a coincidence)
+    rates = {k: es.base_rate(days, k, since, today) for k in es.ORDER} if days is not None else None
     week = today - datetime.timedelta(days=WEEK_DAYS)
     print(f"-- this week's enquiries, first seen {week} to {today} (date · occasion · source · grade campaign (why))")
     shown = es.within(graded, week, today)
     for g in shown:
-        print("   " + es.line(g))
+        print("   " + es.line(g, rates))
     if not shown:
         print("   (none)")
-    since = guard_since(today)
     print(f"-- by campaign, {since} to {today} (the spend guard's {GUARD_DAYS} days)")
-    for ln in es.counts_lines(es.counts(graded, since, today)):
+    for ln in es.counts_lines(es.counts(graded, since, today), rates=rates):
         print("   " + ln)
     return graded
 
@@ -1121,7 +1174,11 @@ def cost_section(q, today, clicks=None, graded=None):
         daily = [(r.segments.date, r.metrics.cost_micros, r.metrics.clicks, r.metrics.conversions)
                  for r in q(f"""SELECT segments.date, metrics.cost_micros, metrics.clicks, metrics.conversions
                         FROM customer WHERE segments.date BETWEEN '{start}' AND '{today}'""")]
-        summary = ec.ads_summary(ec.week_buckets(daily, today, 8), table, season, datetime.datetime.now())
+        buckets = ec.week_buckets(daily, today, 8)
+        WEEK["ads_weeks"] = buckets  # section 0's ad spend and clicks
+        activity = ec.week_activity(ec.lcs_money.read_csv(ec.ENQUIRIES), ec.lcs_money.read_csv(ec.lcs_money.LEDGER),
+                                    ec.full_weeks(today, 8))
+        summary = ec.ads_summary(buckets, table, season, datetime.datetime.now(), activity)
         ec.save_json_private(ec.ADS_SUMMARY, summary)
         print(f"   wrote {ec.ADS_SUMMARY.name} (last 8 full weeks and the season)")
     except Exception as e:  # type name only: the message could carry ledger data
@@ -1295,8 +1352,7 @@ def shortlist_section(s, today, force):
     try:
         import economics as ec
         if not force and not ec.is_first_monday(today):
-            print(f"   runs on the first Monday of the month (next {ec.next_first_monday(today)});"
-                  " use --gsc-shortlist to run it now")
+            print(f"   next: {ec.next_first_monday(today)}")  # the first Monday of the month (or --gsc-shortlist)
             return
         try:
             start, end, items = shortlist_items(s, today)
@@ -1308,6 +1364,259 @@ def shortlist_section(s, today, force):
             print("   " + line)
     except Exception as e:
         print(f"   Search Console shortlist failed: {failure_note(e)}")
+
+
+# ---------- 0b. since last Monday: the review's open items, Ads changes logged, PRs merged ----------
+
+def previous_report_date(today, reports_dir=None):
+    """The date of the newest saved report before today (any report, 1b or not), or None."""
+    d = Path(reports_dir) if reports_dir else report_path(today).parent
+    try:
+        days = sorted((datetime.date.fromisoformat(f.stem) for f in d.glob("????-??-??.txt")
+                       if re.fullmatch(r"\d{4}-\d{2}-\d{2}", f.stem)), reverse=True)
+    except (OSError, ValueError):
+        return None
+    return next((x for x in days if x < today), None)
+
+
+def change_log_count(text, since):
+    """How many change-log rows are dated on or after `since`."""
+    n = 0
+    for ln in (text or "").splitlines():
+        m = LOG_ROW.match(ln)
+        if m and m.group(1) >= since.isoformat():
+            n += 1
+    return n
+
+
+def merged_prs(since, runner=None):
+    """["#418 <title>", …] for the pull requests merged on origin/main since `since` (as of the last fetch;
+    read-only, the hardened git), newest first, or None when git can't say (no origin/main in this checkout)."""
+    import subprocess
+    try:
+        binary, safe, env = hardened_git()
+        p = (runner or subprocess.run)([binary, "-C", str(REPO), *safe, "log", "origin/main", "--merges",
+                                        f"--since={since.isoformat()}", "--format=%s%x1f%b%x1e"],
+                                       capture_output=True, text=True, timeout=15, env=env,
+                                       stdin=subprocess.DEVNULL, shell=False)
+    except Exception:
+        return None
+    if p.returncode != 0:
+        return None
+    out = []
+    for rec in p.stdout.split("\x1e"):
+        if not rec.strip():
+            continue
+        subject, _, body = rec.strip().partition("\x1f")
+        m = re.match(r"Merge pull request (#\d+)(?: from \S+?/(\S+))?", subject)
+        title = next((ln.strip() for ln in body.splitlines() if ln.strip()), "")
+        if m and not title and m.group(2):  # a merge with no title in its message: the branch says what it was
+            title = f"(branch {m.group(2)})"
+        out.append(f"{m.group(1)} {title}".strip() if m else subject.strip())
+    return out
+
+
+def since_last_section(today, reports_dir=None, runner=None):
+    """Section 0b: the review's open watch items that are due, its other open proposals (review_log.py, read-only:
+    expiry is applied in memory), the Ads changes logged and the PRs merged since the previous saved report."""
+    import review_log
+    print("== 0b. Since last Monday")
+    prev = previous_report_date(today, reports_dir)
+    since = prev or today - datetime.timedelta(days=7)
+    print(f"   since {since}" + (" (the previous saved report)" if prev else " (no earlier report saved: 7 days)"))
+    try:
+        items = review_log.open_items(review_log.read_items(), today)
+    except SystemExit as e:  # a damaged record: say so, don't stop the report
+        items = None
+        print(f"   review record not read: {e.code}")
+    if items is not None:
+        due = [i for i in items if i.get("kind") == "watch" and (i.get("due") or "") <= today.isoformat()]
+        later = [i for i in items if i.get("kind") == "watch" and i not in due]
+        proposals = [i for i in items if i.get("kind") != "watch"]
+        print("-- due to check this week")
+        for i in due:  # "open " keeps the review's own text out of --quiet's problem lines
+            print("   open " + review_log.item_line(i))
+        if not due:
+            print("   (none)")
+        print("-- open proposals, oldest first")
+        for i in proposals:
+            print("   open " + review_log.item_line(i))
+        if not proposals:
+            print("   (none)" if review_log.STORE.exists() else "   (none: no review recorded yet)")
+        if later:
+            print(f"   {len(later)} watch item{'s' if len(later) != 1 else ''} not due yet")
+    try:
+        local = (REPO / CHANGE_LOG).read_text(encoding="utf-8")
+    except OSError:
+        local = ""
+    n = max(change_log_count(t, since) for t in (local, _log_text_at_origin(runner) or ""))
+    print(f"-- Ads changes logged in {CHANGE_LOG} since {since}: {n} (section 1 lists them)")
+    prs = merged_prs(since, runner)
+    print(f"-- pull requests merged on origin/main since {since}")
+    if prs is None:
+        print("   not read (git has no origin/main here)")
+    for t in prs or []:
+        print(f"   merged {t[:160]}")
+    if prs == []:
+        print("   (none)")
+
+
+# ---------- 9c. the enquiry assistant's last 7 days (assistant_io.py's run log) ----------
+
+ASSISTANT_RUNS_NAME = "assistant-runs.jsonl"
+RUN_HOURS = (6, 22)       # the assistant runs at 06:07, 08:07 … 22:07 (cron 7 6-22/2): 9 a day
+RUN_MINUTE, RUN_EVERY = 7, 2
+GAP_ALARM_HOURS = 4
+
+
+def _when(ts):
+    """An ISO timestamp (with its offset; Z or none is UTC) as a London datetime, or None."""
+    try:
+        t = datetime.datetime.fromisoformat(str(ts).replace("Z", "+00:00"))
+    except (TypeError, ValueError):
+        return None
+    if t.tzinfo is None:
+        t = t.replace(tzinfo=datetime.timezone.utc)
+    return t.astimezone(lm.LONDON)
+
+
+def _at(day, hour, minute=0):
+    return datetime.datetime.combine(day, datetime.time(hour, minute), tzinfo=lm.LONDON)
+
+
+def in_run_hours(a, b):
+    """Hours between datetimes a and b that fall inside 06:00–22:00 London."""
+    total, day = 0.0, a.date()
+    while day <= b.date():
+        lo, hi = max(a, _at(day, RUN_HOURS[0])), min(b, _at(day, RUN_HOURS[1]))
+        if hi > lo:
+            total += (hi - lo).total_seconds() / 3600
+        day += datetime.timedelta(days=1)
+    return total
+
+
+def assistant_week(entries, today, days=7):
+    """The figures section 9c prints, from the run log's entries ({"start"}, {"done", "marked"}, {"zoho_down"},
+    {"daily"}) for the `days` complete London days before today."""
+    first_day = today - datetime.timedelta(days=days)
+    win_start, win_end = _at(first_day, 0), _at(today, 0)
+    events, daily, bad = [], set(), 0
+    for e in entries:
+        if not isinstance(e, dict):
+            bad += 1
+            continue
+        for kind in ("start", "done", "zoho_down"):
+            if kind in e:
+                t = _when(e[kind])
+                if t is None:
+                    bad += 1
+                else:
+                    events.append((t, kind))
+        if "daily" in e:
+            d = es.to_date(e["daily"])
+            if d:
+                daily.add(d)
+            else:
+                bad += 1
+    events.sort()
+    # a daily line is written during a run, so the log starts at its first timed entry (a daily date alone: midnight)
+    log_start = events[0][0] if events else (_at(min(daily), 0) if daily else None)
+    # the log covers the whole window when it started by the window's first run (06:07, give or take 5 minutes)
+    slack = datetime.timedelta(minutes=5)
+    partial = bool(log_start and log_start > _at(first_day, RUN_HOURS[0], RUN_MINUTE) + slack)
+    cover = (log_start - slack if partial else win_start) if log_start else win_end
+    expected = 0
+    day = cover.date()
+    while day < today:
+        for hour in range(RUN_HOURS[0], RUN_HOURS[1] + 1, RUN_EVERY):
+            if cover <= _at(day, hour, RUN_MINUTE) < win_end:
+                expected += 1
+        day += datetime.timedelta(days=1)
+    starts = [t for t, k in events if k == "start"]
+    started = finished = early = zoho = 0
+    for t in starts:
+        if not win_start <= t < win_end:
+            continue
+        started += 1
+        nxt = next((s for s in starts if s > t), None)
+        after = {k for s, k in events if s > t and (nxt is None or s < nxt)}
+        if "done" in after:
+            finished += 1
+        elif "zoho_down" in after:
+            zoho += 1
+        else:
+            early += 1
+    points = [cover] + [t for t in starts if cover <= t < win_end] + [win_end]
+    gap, gap_from, gap_to = 0.0, None, None
+    for a, b in zip(points, points[1:]):
+        h = in_run_hours(a, b)
+        if h > gap:
+            gap, gap_from, gap_to = h, a, b
+    covered_days = sum(1 for i in range(days) if _at(first_day + datetime.timedelta(days=i), 23, 59) >= cover)
+    return {"first_day": first_day, "last_day": today - datetime.timedelta(days=1), "log_start": log_start,
+            "partial": partial, "expected": expected, "started": started,
+            "finished": finished, "early": early, "zoho_down": zoho, "gap_hours": gap, "gap_from": gap_from,
+            "gap_to": gap_to, "daily_days": len({d for d in daily if first_day <= d < today}),
+            "days": covered_days, "unreadable": bad}
+
+
+def assistant_lines(w):
+    out = []
+    if w["log_start"] is None:
+        return ["   the run log is empty"]
+    if w["partial"]:
+        out.append(f"   log started {w['log_start']:%Y-%m-%d %H:%M}: the figures cover from then, not a full week")
+    out.append(f"   runs started {w['started']} of {w['expected']} expected (9 a day, every two hours 06:07–22:07)")
+    out.append(f"   finished {w['finished']} · stopped early (no done and no Zoho-down line) {w['early']}"
+               f" · Zoho down {w['zoho_down']}")
+    line = f"   longest gap between runs, counting 06:00–22:00 London only: {w['gap_hours']:.1f} h"
+    if w["gap_from"] is not None and w["gap_hours"]:
+        line += f" ({w['gap_from']:%a %d %b %H:%M} to {w['gap_to']:%a %d %b %H:%M})"
+    if w["gap_hours"] > GAP_ALARM_HOURS:
+        line += f"  STALE ASSISTANT: no run for over {GAP_ALARM_HOURS} hours of its day"
+    out.append(line)
+    out.append(f"   daily pass ran on {w['daily_days']} of {w['days']} days")
+    if w["unreadable"]:
+        out.append(f"   {w['unreadable']} unreadable line{'s' if w['unreadable'] != 1 else ''} skipped")
+    return out
+
+
+def assistant_section(today, path=None):
+    """Section 9c: the enquiry assistant's last 7 complete days, from ~/lcs-private/assistant-runs.jsonl
+    (assistant_io.py writes it; read-only here)."""
+    import json
+    path = Path(path or lm.PRIVATE / ASSISTANT_RUNS_NAME)
+    w0 = today - datetime.timedelta(days=7)
+    print(f"\n== 9c. Enquiry assistant, last 7 days ({w0} to {today - datetime.timedelta(days=1)})")
+    if not path.exists():
+        print(f"   no run log yet (assistant_io.py writes it from {today})")
+        return None
+    entries = []
+    for ln in path.read_text(encoding="utf-8").splitlines():
+        if ln.strip():
+            try:
+                entries.append(json.loads(ln))
+            except ValueError:
+                entries.append(None)
+    w = assistant_week(entries, today)
+    for ln in assistant_lines(w):
+        print(ln)
+    return w
+
+
+# ---------- 0. this week in brief (brief.py), printed last ----------
+
+def brief_section(today, printed=""):
+    """Section 0: this full week against the week before and the 8-week average, from the pipeline sheet and the
+    ledger (read here, read-only) and the figures sections 5c, 6 and 11 handed back in WEEK; then the alarms."""
+    import brief
+    import economics as ec
+    weeks = ec.full_weeks(today, 8)
+    enquiry_rows = es.read_rows(ec.ENQUIRIES)
+    data = brief.collect(enquiry_rows, lm.read_csv(LEDGER), weeks)
+    data.update(ads=WEEK.get("ads_weeks"), pageviews=WEEK.get("pageviews"), organic=WEEK.get("organic"),
+                alarms=problem_lines(printed))
+    print("\n" + "\n".join(brief.lines(data)))
 
 
 def google_session():
@@ -1369,11 +1678,19 @@ def run_section(sid, title, fn, *args, **kwargs):
         text = buf.getvalue()
         if not re.search(rf"^== {re.escape(sid)}\.", text, re.M):
             text += f"\n== {sid}. {title}\n"
+        text += f"   SECTION {sid} FAILED: {failure_note(e)}\n"
         sys.stdout.write(text)
-        print(f"   SECTION {sid} FAILED: {failure_note(e)}")
+        PRINTED.append(text)
         return None
     sys.stdout.write(buf.getvalue())
+    PRINTED.append(buf.getvalue())
     return result
+
+
+# What the sections printed so far (section 0's alarms read it, with or without --save-report) and the weekly
+# figures they hand back for section 0: "pageviews" (5c), "organic" (6), "ads_weeks" (11). run_sections clears both.
+PRINTED = []
+WEEK = {}
 
 
 class _Lazy:
@@ -1406,6 +1723,9 @@ def run_sections(args, q=None, s=None):
     q = q or _Lazy(ads_query)
     s = s or _Lazy(google_session)
     clicks = AdClicks(q, today)
+    WEEK.clear()
+    PRINTED.clear()
+    run_section("0b", "Since last Monday", since_last_section, today)
     run_section("1", "Campaigns", campaigns_section, q, args.since)
     run_section("1b", "Account settings (live) and changes since the last report", account_settings_section, q, today)
     run_section("2", "Search terms, last 7 days", search_terms_section, q)
@@ -1420,11 +1740,14 @@ def run_sections(args, q=None, s=None):
     run_section("8", "Tracking wiring", wiring_section, s, q)
     run_section("9", "Bookings ledger (counts only)", ledger_section)
     graded = run_section("9b", "Enquiries by ad source", enquiries_section, clicks, today)
+    run_section("9c", "Enquiry assistant, last 7 days", assistant_section, today)
     run_section("10", "Money (totals and invoice numbers only)", money_section)
     run_section("11", "True cost per booking (season to date, by campaign)", cost_section, q, today, clicks, graded)
     run_section("12", "Seasonal budget rules", budget_section, q, today, graded=graded)
     run_section("13", "Search Console shortlist (hiring intent, positions 8–20)", shortlist_section, s, today,
                 args.gsc_shortlist)
+    # last, because it reads the figures the sections above handed back (WEEK) and the alarms they printed
+    run_section("0", "This week in brief", brief_section, today, "".join(PRINTED))
 
 
 def report_path(today=None):
@@ -1432,7 +1755,7 @@ def report_path(today=None):
     return lm.PRIVATE / "reports" / f"{today or lm.today()}.txt"
 
 
-def main():
+def main(argv=None):
     p = argparse.ArgumentParser()
     p.add_argument("--since", type=datetime.date.fromisoformat, default=datetime.date(2026, 9, 26))
     p.add_argument("--gsc-shortlist", action="store_true", help="run section 13 even if it isn't the first Monday")
@@ -1440,11 +1763,16 @@ def main():
                    help="also archive everything printed to ~/lcs-private/reports/<today>.txt (mode 600)")
     p.add_argument("--quiet", action="store_true",
                    help="with --save-report: print only where the report is, its sections and any problem lines")
-    args = p.parse_args()
+    p.add_argument("--out", type=Path, default=None,
+                   help="with --save-report: write the report here instead of ~/lcs-private/reports/<today>.txt "
+                        "(a dry run; section 1b still compares with the real reports folder)")
+    args = p.parse_args(argv)
     if args.quiet and not args.save_report:
         p.error("--quiet needs --save-report (the report has to go somewhere)")
+    if args.out and not args.save_report:
+        p.error("--out needs --save-report")
     if args.save_report:
-        path = report_path()
+        path = args.out or report_path()
         with tee_to(path, echo=not args.quiet):
             run_sections(args)
         if args.quiet:
@@ -1457,15 +1785,26 @@ PROBLEM_RE = re.compile(r"\b(error|failed|refused|denied|permission|invalid_gran
                         r"CONFIG ERROR|STOP GUARD|STALE|NOT INDEXED|SECTION \w+ FAILED)\b|PAST £", re.I)
 
 
+# Lines that are never problems, whatever words they hold: the stop-rule reminders, section 1's change-log rows,
+# section 1b's settings lines (account text such as a headline could hold any word), section 0b's open proposals
+# and merged PR titles (their text is the review's own, or a commit's) and section 0's alarm lines (copies of
+# problems already listed).
+NOT_PROBLEMS = ("stop rule:", "log ", "set ", "+ set ", "- set ", "open ", "merged ", "alarm:")
+
+
+def problem_lines(text):
+    """Every line of `text` that looks like a failure or an alarm: what --quiet and section 0's alarms list."""
+    return [l.strip() for l in (text or "").splitlines()
+            if PROBLEM_RE.search(l) and not l.strip().startswith(NOT_PROBLEMS)]
+
+
 def quiet_summary(path):
     """What --quiet prints instead of the report: where it is, which sections it holds and every line that
     looks like a failure or an alarm (a "SECTION <id> FAILED" line included), so the Monday dispatcher can stop on
-    an auth error without reading it. The stop-rule reminders, section 1's change-log rows and section 1b's settings
-    lines (account text such as a headline could hold any word) are never problems."""
+    an auth error without reading it. NOT_PROBLEMS lines are never problems."""
     text = Path(path).read_text(encoding="utf-8")
     heads = re.findall(r"^== (\w+)\.", text, re.M)
-    problems = [l.strip() for l in text.splitlines()
-                if PROBLEM_RE.search(l) and not l.strip().startswith(("stop rule:", "log ", "set ", "+ set ", "- set "))]
+    problems = problem_lines(text)
     out = [f"report saved: {path}", f"sections: {' '.join(heads) or 'none'}"]
     out += [f"problem: {l}" for l in problems[:20]] or ["problems: none"]
     return "\n".join(out)
