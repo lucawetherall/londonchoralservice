@@ -22,6 +22,7 @@ unguarded. This hook closes it. Wired in .claude/settings.json for:
   - a search or copy (grep, find, cp, tar…) is rooted at a folder that holds MCP configuration (/, the
     home folder, ~/Library…).
   Tracked files are reviewed code: `git ls-files` in the project repo (or one of its worktrees) decides.
+  Installed packages and build output (VENDORED folders) are never vetted.
 - Write, Edit, MultiEdit and NotebookEdit: denied when the file would end up holding a marker, unless it
   is in CODE_OK or is Markdown (prose is never run: docs, CLAUDE.md, MANUAL-ACTIONS-REQUIRED.md, logs,
   agent prompts, plan files, memory notes). Outside the repo (scratchpad, /tmp) naming lcs_mcp counts as
@@ -123,6 +124,9 @@ SEARCHERS = {"grep", "egrep", "fgrep", "rg", "ag", "ack", "find", "fd", "tar", "
 CODE_EXT = {".py", ".pyw", ".pth", ".js", ".mjs", ".cjs", ".ts", ".mts", ".cts", ".sh", ".bash", ".zsh", ".rb",
             ".pl", ".php", ".json", ".applescript", ".command", ".lua", ".r", ".swift", ".toml", ".cfg", ".ini",
             ".txt", ".md", ""}
+# Folders of installed packages and build output, skipped when the folder a script runs from is vetted.
+VENDORED = {"node_modules", ".venv", "venv", ".git", "__pycache__", ".pytest_cache", "site-packages", ".tox",
+            "dist", "build", ".next", "target"}
 SHELL_TOOLS = {"mcp__terminal__run_in_terminal", "mcp__Control_your_Mac__osascript",
                "mcp__plugin_playwright_playwright__browser_run_code_unsafe"}
 WRITE_TOOLS = {"Write", "Edit", "MultiEdit", "NotebookEdit"}
@@ -416,6 +420,20 @@ def vet_dir(d, repo, cmd):
     files, budget = 0, DIR_BYTES
     for root, dirs, names in os.walk(d):
         rel = os.path.relpath(root, d)
+        # Installed packages are not the owner's scratch code: a licence file in node_modules that names the
+        # MCP SDK is not an attempt to reach Zoho (it blocked every command in a sibling repo, 31 Oct 2026).
+        # Their contents are skipped; a package *named* after a marker (an installed MCP proxy) still counts.
+        for v in [x for x in dirs if x in VENDORED]:
+            try:
+                names_in = os.listdir(os.path.join(root, v))
+            except OSError:
+                names_in = []
+            for name in names_in:
+                label = found(name)
+                if label:
+                    raise Deny(f"{P}{os.path.join(root, v, name)}, installed in the folder the code runs from, "
+                               f"is named after {label}.")
+        dirs[:] = [x for x in dirs if x not in VENDORED]
         if rel != "." and rel.count(os.sep) >= 1:
             dirs[:] = []
         for name in dirs + names:
