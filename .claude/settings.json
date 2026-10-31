@@ -1,6 +1,8 @@
 {
   "permissions": {
     "allow": [
+      "Write(~/lcs-private/**)",
+      "Edit(~/lcs-private/**)",
       "mcp__google-ads",
       "mcp__analytics-mcp",
       "mcp__zoho-books",
