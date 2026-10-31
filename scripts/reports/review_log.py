@@ -119,9 +119,13 @@ def write_items(items, path=None):
 # ---------- parsing a review file ----------
 
 def _section(text, name):
-    """The lines under "## <name>" up to the next heading of level 1 or 2."""
+    """The lines under "## <name>" up to the next heading of level 1 or 2. Only the reply counts: parsing stops at
+    the first rule line ("---", "***" or "___"), below which the review file keeps each agent's full RESULT block
+    (2 Nov 2026: those blocks were read as 53 Watch items)."""
     out, inside = [], False
     for ln in (text or "").splitlines():
+        if re.match(r"^\s{0,3}([-*_])(\s*\1){2,}\s*$", ln):
+            break
         if re.match(r"^#{1,2}\s", ln):
             inside = bool(re.match(rf"^##\s+{name}\b", ln, re.I))
             continue
