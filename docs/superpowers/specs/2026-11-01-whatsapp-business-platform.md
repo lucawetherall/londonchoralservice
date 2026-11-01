@@ -1,8 +1,8 @@
 # WhatsApp Business Platform: feasibility and decision
 
 **Date:** 2026-11-01
-**Status:** For the owner's decision. Nothing built. WP3 of `docs/superpowers/plans/2026-10-31-ad-tracking-and-whatsapp-handoff.md`.
-**Recommendation:** don't build the Cloud API intake now. Use the no-API route in section 9 (forward a WhatsApp enquiry to office@, and the assistant logs it). Look again if WhatsApp enquiries from ads become regular.
+**Status:** Decided 1 Nov 2026: no Cloud API; the forward-to-office@ route in section 9 is built. WP3 of `docs/superpowers/plans/2026-10-31-ad-tracking-and-whatsapp-handoff.md`.
+**Decision (owner, 1 Nov 2026):** "i need linked devices". Coexistence unlinks them (section 2), and moving the number fully to the API ends the phone app, so the Cloud API is out while that holds. Everything else as recommended.
 
 Facts were checked against Meta's and Google's documentation on 1 Nov 2026. Meta's developer docs moved to `developers.facebook.com/documentation/business-messaging/whatsapp/…`, and many older `/docs/whatsapp/…` links now fail. Anything marked **unconfirmed** came from a third party, or from no source at all.
 
@@ -101,11 +101,20 @@ Facts were checked against Meta's and Google's documentation on 1 Nov 2026. Meta
 2. The enquiry assistant then treats a message from the owner's own address with that subject as a WhatsApp enquiry. It adds a pipeline row with source `whatsapp`, takes the Ref or Ad visit from the text, and **drafts nothing** (the client is on WhatsApp, and the owner replies there).
 3. The Monday question about WhatsApp bookings stays only as a fallback.
 
-This needs a small change to `lcs-reply-drafter` and the enquiry assistant's sorting (Appendix E). It is a plan of its own once the owner agrees.
+Built 1 Nov 2026:
+- The dispatcher (Appendix E and the live task) sorts a message from office@ or luca@almaconsort.com to office@ with a subject starting "WhatsApp enquiry" as a WHATSAPP COPY, ahead of QUOTES.
+- `lcs-reply-drafter` runs only steps 2 and 4 for it: a pipeline row with its own thread id, source `whatsapp`, the client's message date and notes starting "whatsapp copy". It never drafts.
+- `pipeline.followups_due` never chases a row noted "whatsapp copy": its thread is Luca's own email.
+- A copy that carries a Ref goes to Google as "Enquiry received" like any other enquiry.
+
+**How Luca sends one (iPhone):** in the chat, press and hold the client's message, tap Forward, then the share button, then Mail. Choose office@ (or luca@almaconsort.com) as the sender, send it to office@londonchoralservice.com, and start the subject with "WhatsApp enquiry". Several messages can be ticked before tapping share. Keep the client's own text whole, Ref or Ad visit line included.
 
 **Look again** if WhatsApp enquiries carrying a Ref become regular (say five a month), or if ad spend grows well beyond this season's.
 
-## Owner decisions (one question)
+## Owner decisions (answered 1 Nov 2026)
+
+Answered: (1) moot, since linked devices rule out coexistence; (2) none; (3) no; (4) no go on the Cloud API, go on the forward route; (5) none needed.
+
 
 1. **The number:** is 07356 042468 on the WhatsApp Business app or personal WhatsApp? Only matters if (4) is go.
 2. **Monthly cost ceiling** for a BSP and Meta, if built. Recommended: none; don't build.

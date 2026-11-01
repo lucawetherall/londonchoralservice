@@ -1,7 +1,7 @@
 # "Enquiry received": an offline conversion for every channel
 
 **Date:** 2026-11-01
-**Status:** Built and tested; the conversion action is not created. Creating it in Google Ads, and each upload, waits for the owner's approval. WP2 of `docs/superpowers/plans/2026-10-31-ad-tracking-and-whatsapp-handoff.md`.
+**Status:** Approved 1 Nov 2026 (decisions 1, 3 and 4 as recommended). "Enquiry received" was created that day as a secondary action (`conversionActions/7885302154`, logged in `logs/ads-changes.md`). The privacy sentence in 3b went live with the same PR, and the first upload follows the deploy. WP2 of `docs/superpowers/plans/2026-10-31-ad-tracking-and-whatsapp-handoff.md`.
 
 ## Problem
 
@@ -69,6 +69,9 @@ Once uploads have run for a few weeks, section 3 or 9b sets Google Ads' "Enquiry
 - Live: the action's validate-only create (1 Nov 2026, accepted). After approval, create the action, run `upload_enquiries.py` validate-only, then `--apply` for the one A-graded enquiry the pipeline holds.
 
 ## Owner decisions
+
+Answered 1 Nov 2026: 1 yes, 3 yes (with one more wording fix: the ad-measurement paragraph now says "We send no copy of your email for an enquiry that doesn't become a booking", since a ticked-box enquiry with a click reference now goes up on its cookie consent), 4 no. Decision 2 stays for later.
+
 
 1. Create "Enquiry received" as a secondary action now (Google Ads: does not exist → created, secondary).
 2. Later: make it primary, with "Submit lead form" going secondary at the same time.

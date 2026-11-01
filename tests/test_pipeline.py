@@ -92,6 +92,13 @@ def test_only_quoted_enquiries_get_followups():
     assert kinds(rows) == {}
 
 
+def test_a_whatsapp_copy_is_never_chased():
+    # its thread is Luca's own email to office@: a follow-up would go to him (owner, 1 Nov 2026)
+    assert kinds([enq(last=days(5), notes="whatsapp copy; heard: A Google ad")]) == {}
+    assert kinds([enq(last=days(5), notes="whatsapp copy")]) == {}
+    assert kinds([enq(last=days(5), notes="whatsapp copy pasted by a client")]) == {"1001": "first"}
+
+
 def test_past_event_gives_mark_lost_never_a_followup():
     for n in (0, 1, 2):
         assert kinds([enq(last=days(1), followups=n, event=days(1))]) == {"1001": "mark_lost"}

@@ -4,9 +4,10 @@ Written 31 October 2026 for an agent starting fresh. It holds what that agent ne
 
 **Progress (1 Nov 2026):**
 - WP1: the comment is reworded. The `form_error` read is due after 9 Nov.
-- WP2: built, validate-only (`docs/superpowers/specs/2026-11-01-enquiry-conversion-design.md`). Creating the action and the privacy sentence wait for the owner.
-- WP3: decision document written (`docs/superpowers/specs/2026-11-01-whatsapp-business-platform.md`); it recommends no go on the Cloud API.
-- WP4 and WP5 wait on those decisions.
+- WP2: approved 1 Nov. "Enquiry received" is created (secondary) and the privacy sentence changed; the first upload follows the deploy (`docs/superpowers/specs/2026-11-01-enquiry-conversion-design.md`).
+- WP3: decided 1 Nov: no Cloud API, because the owner needs linked devices (`docs/superpowers/specs/2026-11-01-whatsapp-business-platform.md`).
+- WP4: replaced by the forward-to-office@ route (a WHATSAPP COPY), built 1 Nov.
+- WP5: due once uploads have run for a few weeks.
 
 ## 1. How to use this document
 

@@ -132,6 +132,9 @@ PAGE_CAMPAIGNS = {"weddings": "wedding-leads", "funerals": "funeral-expert",
                   "christmas-carol-services": "christmas-carol-singers-2026"}
 # The client's own answer to "How did you hear about us?" (notes "heard: <answer>"), lower case.
 HEARD_NOTE = re.compile(r"(?:^|; )heard: ([^;]+)")
+# An enquiry Luca copied from WhatsApp to office@ (owner, 1 Nov 2026): its thread is his own email, so it is
+# never chased; he replies on WhatsApp.
+WHATSAPP_COPY_NOTE = re.compile(r"(?:^|; )whatsapp copy(?:;|$)")
 HEARD_AD = {"a google ad", "a google ad (marked sponsored)"}
 HEARD_SEARCH = {"a google search result"}
 # An ad or a search result, or not said: the old form answer "Searching on Google", the register's old
@@ -222,11 +225,13 @@ def next_step(r, n):
 
 def followups_due(rows, today):
     """[{enquiry_id, kind}] for quoted enquiries whose follow-up (or loss) falls due by today.
-    Never a booked one (a booking_ref), and never a chase for a funeral or an unknown occasion."""
+    Never a booked one (a booking_ref), never a WhatsApp copy, and never a chase for a funeral or an unknown occasion."""
     today = to_date(today)
     out = []
     for r in rows:
         if status_of(r) != "quoted" or (r.get("booking_ref") or "").strip():
+            continue
+        if WHATSAPP_COPY_NOTE.search(r.get("notes") or ""):
             continue
         event = to_date(r.get("event_date"))
         if event and event <= today:  # nothing to chase on or after the day: close it
