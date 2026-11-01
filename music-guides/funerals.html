@@ -80,9 +80,10 @@
     // sent from thank-you.html (lcsLead below hands it over); without consent,
     // and on the private register's inline success, it goes from the form's own
     // page at once. Phone, email and WhatsApp taps are contact_click events, never
-    // leads, each with its own Ads action: "WhatsApp or email click" is a
-    // primary goal (owner decision, 26 Sep 2026) and "Call click" a secondary
-    // one. Labels come from Google Ads (conversion action tag snippets).
+    // leads, each with its own Ads action. "WhatsApp or email click" and "Call
+    // click" are both secondary (reported only): a tap is not a sent message
+    // (owner decision, 31 Oct 2026), so "Submit lead form" is the only primary
+    // action. Labels come from Google Ads (conversion action tag snippets).
     var LCS_ADS = {
       lead: 'AW-17988388404/RjhECKGP7akcELSMxIFD',
       call: 'AW-17988388404/HHu8CJq1x4UdELSMxIFD',
