@@ -92,6 +92,13 @@ def test_only_quoted_enquiries_get_followups():
     assert kinds(rows) == {}
 
 
+def test_a_whatsapp_copy_is_never_chased():
+    # its thread is Luca's own email to office@: a follow-up would go to him (owner, 1 Nov 2026)
+    assert kinds([enq(last=days(5), notes="whatsapp copy; heard: A Google ad")]) == {}
+    assert kinds([enq(last=days(5), notes="whatsapp copy")]) == {}
+    assert kinds([enq(last=days(5), notes="whatsapp copy pasted by a client")]) == {"1001": "first"}
+
+
 def test_past_event_gives_mark_lost_never_a_followup():
     for n in (0, 1, 2):
         assert kinds([enq(last=days(1), followups=n, event=days(1))]) == {"1001": "mark_lost"}
@@ -415,6 +422,13 @@ def test_cli_add_writes_ad_visit_and_ad_measurement_into_notes():
     assert add(d, enquiry_id="1003", ad_visit="", ad_measurement="no").returncode == 0
     assert enquiries(d)["1003"]["notes"] == ""
     assert "ad_visit" not in pl.COLUMNS and "ad_measurement" not in pl.COLUMNS
+
+
+def test_cli_add_refuses_ads_uploaded_at():
+    d = home()
+    p = add(d, ads_uploaded_at="2026-11-01 09:00")
+    assert p.returncode != 0 and "upload_enquiries.py" in p.stderr, p.stderr
+    assert add(d).returncode == 0 and enquiries(d)["1001"]["ads_uploaded_at"] == ""
 
 
 def test_cli_add_refuses_a_bad_ad_visit_or_ad_measurement():

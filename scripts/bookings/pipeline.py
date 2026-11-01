@@ -92,7 +92,9 @@ import check_payments as cp  # noqa: E402
 
 ENQUIRIES = lm.PRIVATE / "enquiries.csv"
 COLUMNS = ["enquiry_id", "first_seen", "source", "occasion", "event_date", "package", "quoted_gbp", "status",
-           "last_contact", "booking_ref", "gclid", "followups", "notes"]
+           "last_contact", "booking_ref", "gclid", "followups", "notes", "ads_uploaded_at"]
+# ads_uploaded_at: when scripts/ads/upload_enquiries.py sent the enquiry to Google Ads as "Enquiry received";
+# written only by that script, never by add.
 SOURCES = {"web form", "email", "whatsapp", "phone", "referral"}
 STATUSES = {"new", "quoted", "confirmed", "deposit_paid", "done", "lost", "cancelled"}
 STATUS_ORDER = ["new", "quoted", "confirmed", "deposit_paid", "done", "lost", "cancelled"]
@@ -130,6 +132,9 @@ PAGE_CAMPAIGNS = {"weddings": "wedding-leads", "funerals": "funeral-expert",
                   "christmas-carol-services": "christmas-carol-singers-2026"}
 # The client's own answer to "How did you hear about us?" (notes "heard: <answer>"), lower case.
 HEARD_NOTE = re.compile(r"(?:^|; )heard: ([^;]+)")
+# An enquiry Luca copied from WhatsApp to office@ (owner, 1 Nov 2026): its thread is his own email, so it is
+# never chased; he replies on WhatsApp.
+WHATSAPP_COPY_NOTE = re.compile(r"(?:^|; )whatsapp copy(?:;|$)")
 HEARD_AD = {"a google ad", "a google ad (marked sponsored)"}
 HEARD_SEARCH = {"a google search result"}
 # An ad or a search result, or not said: the old form answer "Searching on Google", the register's old
@@ -220,11 +225,13 @@ def next_step(r, n):
 
 def followups_due(rows, today):
     """[{enquiry_id, kind}] for quoted enquiries whose follow-up (or loss) falls due by today.
-    Never a booked one (a booking_ref), and never a chase for a funeral or an unknown occasion."""
+    Never a booked one (a booking_ref), never a WhatsApp copy, and never a chase for a funeral or an unknown occasion."""
     today = to_date(today)
     out = []
     for r in rows:
         if status_of(r) != "quoted" or (r.get("booking_ref") or "").strip():
+            continue
+        if WHATSAPP_COPY_NOTE.search(r.get("notes") or ""):
             continue
         event = to_date(r.get("event_date"))
         if event and event <= today:  # nothing to chase on or after the day: close it
@@ -441,6 +448,8 @@ def clean_row(data):
     if not isinstance(data, dict):
         raise SystemExit("add needs one JSON object")
     data = dict(data)
+    if "ads_uploaded_at" in data:
+        raise SystemExit("ads_uploaded_at is written only by upload_enquiries.py; nothing written")
     extra = ad_notes(data)
     unknown = sorted(set(data) - set(COLUMNS))
     if unknown:

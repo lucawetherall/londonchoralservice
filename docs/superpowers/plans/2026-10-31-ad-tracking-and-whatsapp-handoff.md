@@ -2,6 +2,13 @@
 
 Written 31 October 2026 for an agent starting fresh; revised 1 November 2026 after every claim in it was checked against the repo, the logs and the public documentation. It holds what that agent needs and `CLAUDE.md` doesn't: what was found and verified on 31 October, what has already changed, the gaps that remain, what was looked at and set aside, and the work in order, with the points where the owner decides. Read it once from top to bottom, then work one package at a time.
 
+**Progress (1 Nov 2026):**
+- WP1: the comment is reworded. The `form_error` read is due after 9 Nov.
+- WP2: approved 1 Nov. "Enquiry received" is created (secondary) and the privacy sentence changed; the first upload follows the deploy (`docs/superpowers/specs/2026-11-01-enquiry-conversion-design.md`).
+- WP3: decided 1 Nov: no Cloud API, because the owner needs linked devices (`docs/superpowers/specs/2026-11-01-whatsapp-business-platform.md`).
+- WP4: replaced by the forward-to-office@ route (a WHATSAPP COPY), built 1 Nov.
+- WP5: due once uploads have run for a few weeks.
+
 ## 1. How to use this document
 
 - It records the state on 31 October 2026 (section 3) and what the public documentation said on 1 November (section 5, WP3). Numbers move, so pull them again before you act on any of them.

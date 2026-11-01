@@ -25,7 +25,8 @@ Sections (in the order printed):
   9. Bookings ledger: counts and totals only (no personal data)
   9b. Enquiries by ad source: the pipeline's enquiries graded A/B/C per campaign (enquiry_sources.py), this
       week's one per line and the last 28 days' counts (dates, occasions and grades only); a C carries its base
-      rate (on how many of the 28 days that campaign clicked: half or more, a coincidence is likely)
+      rate (on how many of the 28 days that campaign clicked: half or more, a coincidence is likely), then what
+      upload_enquiries.py would send as "Enquiry received" (counts and skip reasons only)
   9c. Enquiry assistant, last 7 complete days, from ~/lcs-private/assistant-runs.jsonl (assistant_io.py): runs
       started against 63 expected, finished, stopped early, Zoho down, the longest gap in 06:00–22:00 London
       ("STALE ASSISTANT" over 4 hours) and the days the daily pass ran
@@ -84,6 +85,7 @@ import enquiry_sources as es  # noqa: E402  the A/B/C grades: sections 9b, 11 an
 import goatcounter  # noqa: E402  section 5c: visits from every visitor, no cookies needed
 import lcs_money as lm  # noqa: E402  LEDGER, parse_gbp, today
 import upload_bookings  # noqa: E402  select_ready: section 9 counts what the upload would send
+import upload_enquiries  # noqa: E402  select_ready: section 9b counts what the "Enquiry received" upload would send
 
 # .venv/bin/activate sets this; default it so a bare `.venv/bin/python` run works too.
 os.environ.setdefault("GOOGLE_ADS_CONFIGURATION_FILE_PATH", os.path.expanduser("~/.config/lcs/google-ads.yaml"))
@@ -1102,7 +1104,24 @@ def enquiries_section(clicks, today, path=None):
     print(f"-- by campaign, {since} to {today} (the spend guard's {GUARD_DAYS} days)")
     for ln in es.counts_lines(es.counts(graded, since, today), rates=rates):
         print("   " + ln)
+    try:
+        print("   " + enquiry_upload_line(path, today))
+    except Exception as e:  # type name only: a message could carry pipeline data
+        print(f'   "Enquiry received" upload check failed: {type(e).__name__}')
     return graded
+
+
+def enquiry_upload_line(path, today):
+    """What upload_enquiries.py would send now, and what it has sent: counts and reasons only, no ids."""
+    path = Path(path) if path else upload_enquiries.ENQUIRIES
+    rows = lm.read_csv(path) if path.exists() else []
+    ready, skipped = upload_enquiries.select_ready(rows, today=today)
+    sent = sum(1 for r in rows if (r.get("ads_uploaded_at") or "").strip())
+    why = defaultdict(int)
+    for _, reason in skipped:
+        why[reason] += 1
+    tail = "".join(f" · skipped {n}: {reason}" for reason, n in sorted(why.items()))
+    return f'"Enquiry received" upload: UPLOAD would send {len(ready)} · sent so far {sent}{tail}'
 
 
 def money_section():

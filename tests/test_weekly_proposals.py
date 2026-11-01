@@ -257,6 +257,8 @@ def test_section_9b_grades_the_week_from_the_sheet_and_the_days_clicks():
     assert "2026-10-02" not in text.split("-- by campaign")[0], "the week starts 7 days back"
     assert "   Christmas carol singers – events 2026: A 0 · B 1 · C 2 (clicked 2/28 days)" in text.splitlines(), text
     assert "   funeral expert campaign: A 1 · B 0 · C 0 (clicked 0/28 days)" in text.splitlines(), text
+    # only the A-graded click goes up as "Enquiry received"; ad visits never do
+    assert '   "Enquiry received" upload: UPLOAD would send 1 · sent so far 0' in text.splitlines(), text
     for word in ("Venue", "Town", "singers,"):
         assert word not in text, word
 
