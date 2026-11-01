@@ -92,7 +92,9 @@ import check_payments as cp  # noqa: E402
 
 ENQUIRIES = lm.PRIVATE / "enquiries.csv"
 COLUMNS = ["enquiry_id", "first_seen", "source", "occasion", "event_date", "package", "quoted_gbp", "status",
-           "last_contact", "booking_ref", "gclid", "followups", "notes"]
+           "last_contact", "booking_ref", "gclid", "followups", "notes", "ads_uploaded_at"]
+# ads_uploaded_at: when scripts/ads/upload_enquiries.py sent the enquiry to Google Ads as "Enquiry received";
+# written only by that script, never by add.
 SOURCES = {"web form", "email", "whatsapp", "phone", "referral"}
 STATUSES = {"new", "quoted", "confirmed", "deposit_paid", "done", "lost", "cancelled"}
 STATUS_ORDER = ["new", "quoted", "confirmed", "deposit_paid", "done", "lost", "cancelled"]
@@ -441,6 +443,8 @@ def clean_row(data):
     if not isinstance(data, dict):
         raise SystemExit("add needs one JSON object")
     data = dict(data)
+    if "ads_uploaded_at" in data:
+        raise SystemExit("ads_uploaded_at is written only by upload_enquiries.py; nothing written")
     extra = ad_notes(data)
     unknown = sorted(set(data) - set(COLUMNS))
     if unknown:

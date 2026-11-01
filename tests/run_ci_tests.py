@@ -56,6 +56,7 @@ TESTS = [
     "test_stage_site.py",
     "test_standing_approvals.py",
     "test_upload_bookings.py",
+    "test_upload_enquiries.py",
     "test_validate_proposal.py",
     "test_visit_counter.py",
     "test_weekly_review_archive.py",

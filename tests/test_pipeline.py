@@ -417,6 +417,13 @@ def test_cli_add_writes_ad_visit_and_ad_measurement_into_notes():
     assert "ad_visit" not in pl.COLUMNS and "ad_measurement" not in pl.COLUMNS
 
 
+def test_cli_add_refuses_ads_uploaded_at():
+    d = home()
+    p = add(d, ads_uploaded_at="2026-11-01 09:00")
+    assert p.returncode != 0 and "upload_enquiries.py" in p.stderr, p.stderr
+    assert add(d).returncode == 0 and enquiries(d)["1001"]["ads_uploaded_at"] == ""
+
+
 def test_cli_add_refuses_a_bad_ad_visit_or_ad_measurement():
     d = home()
     for bad in ({"ad_visit": "Ann Smith"}, {"ad_visit": "weddings?gclid=Cj0KCQjw"}, {"ad_visit": "../x"},
