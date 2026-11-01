@@ -102,6 +102,8 @@ Written 31 October 2026 for an agent starting fresh; revised 1 November 2026 aft
 **Proof:** `tests/run_ci_tests.py` passes; `logs/ads-changes.md` has the creation row and the first upload row; Monday section 3 lists the action as secondary ENABLED.
 
 ### WP3. WhatsApp Business Platform: a feasibility and decision document (spec, no build)
+
+**Owner decision, 1 November 2026: not if it costs money.** The owner will not change their WhatsApp set-up if it means paying Meta. The Cloud API needs a payment method on file and bills per message (question 3 below), so WP3 and WP4 are closed unless Meta offers a route with no payment method and no charge; check that one point first, and if it does not exist write nothing more. The free fallback is the way forward: the owner forwards a WhatsApp enquiry to office@ from the share sheet, or tells Claude in a live chat (the reply drafter and `/lcs-book` already take "whatsapp" as a source). The rest of this package is kept for the record and for that one check.
 **Goal:** decide whether the Cloud API should feed WhatsApp enquiries into the pipeline automatically. Write `docs/superpowers/specs/2026-11-xx-whatsapp-business-platform.md` for the owner. Check every fact below against Meta's current documentation on the day you write it, and cite it. What follows is what was found on 1 November 2026, mostly from Meta's developer pages and vendor write-ups: leads, not settled facts.
 
 **What it would buy:**
@@ -140,7 +142,7 @@ Written 31 October 2026 for an agent starting fresh; revised 1 November 2026 aft
 
 **Deliverable:** the spec, plus one batched question to the owner covering the number, the Meta payment method, auto-acknowledgement yes or no, and go or no go.
 
-### WP4. Build the WhatsApp intake (only after the owner approves WP3)
+### WP4. Build the WhatsApp intake (closed by the 1 November decision above unless WP3's no-cost check passes and the owner approves)
 - **Plan first:** `docs/superpowers/plans/2026-11-xx-whatsapp-intake.md`, in the house plan style, tasks with tests.
 - **Webhook receiver:** verifies the signature, answers Meta's GET verification, then appends sender, timestamp, message id and text to a private queue that only the owner's Mac reads. Prefer a pull model, so nothing private sits on a third-party host longer than the pull interval.
 - **`assistant_io.py` `whatsapp-inbox`:** pulls the queue, hands each message to the enquiry assistant's run as a new message with `source` "whatsapp" (already a valid `pipeline.py` source) and `enquiry_id` the WhatsApp conversation id (the sender's number must never be the id: `pipeline.py` output prints ids). "Ref:" / "Ad visit:" are parsed into the existing `gclid` column and `ad visit:` note by the same code the drafter uses for email, so `enquiry_sources.py` grades it with no special case.
@@ -168,11 +170,12 @@ So the next agent doesn't re-open them:
 - **Click-to-WhatsApp ads:** a Meta product; this account advertises on Google only.
 - **Hiding "Contact" and "Contact (1)":** the API refused on 26 Oct; it is a screen task in MANUAL-ACTIONS §12, and §12's 29 Oct note says to check first whether "Contact" is still counting real enquiries.
 - **Making "Booked job" or "Enquiry received" primary now:** no data yet. Secondary first, by the same rule `create_booked_job_action_2026_09.py` states.
+- **Paying Meta for the WhatsApp Business Platform:** owner decision, 1 Nov 2026: WhatsApp stays as it is if connecting it means paying. Enquiries from WhatsApp reach the pipeline through the share-sheet forward or a live chat.
 - **A watchdog or extra routine for any of this:** owner decision, 31 Oct: fold checks into the Monday review and the assistant's existing runs.
 
 ## 7. Owner decisions to batch (one question)
 1. WP2: create "Enquiry received" as a count-only secondary action now, and make it primary later once it has data?
-2. WP3: the number (coexistence, a second number, or migration), a Meta payment method and ceiling, an automatic acknowledgement or none, go or no go.
+2. WP3: decided 1 November 2026 (no change to WhatsApp if it costs money). Ask only if Meta turns out to offer a no-payment-method route, and then: the number, an automatic acknowledgement or none, go or no go.
 3. Privacy notice wording for WhatsApp (draft it; the owner approves it).
 4. WP1, only if the enhanced-conversions alert needs a screen change: what to click, as a MANUAL-ACTIONS item.
 
