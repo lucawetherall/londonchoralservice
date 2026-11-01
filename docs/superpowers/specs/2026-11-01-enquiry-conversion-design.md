@@ -46,7 +46,7 @@ The web form's click reference is already covered: with cookies allowed, the Goo
 ### 4. The Monday review
 
 - Section 9b of `weekly_review.py` ends with `"Enquiry received" upload: UPLOAD would send <n> · sent so far <m>`, plus skip reasons as counts. It shows no ids.
-- `lcs-review-bookings` runs `upload_enquiries.py` (validate only) and reports it under UPLOAD. Before the action exists, that line reads "action not created yet".
+- `lcs-review-bookings` copies that line under UPLOAD. It reads the report rather than running the script, so the scheduled run needs no new allowed command. The line counts rows, so it shows a number before the action exists; the script itself refuses to run until the action is created.
 - The dispatcher lists "[upload] Enquiry received" among the week's decisions (handover Appendix A). Once approved, `upload_enquiries.py --apply` runs once and commits only its log line, through a PR.
 
 ### 5. Later: the reporting check (WP5)

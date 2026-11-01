@@ -2,6 +2,12 @@
 
 Written 31 October 2026 for an agent starting fresh. It holds what that agent needs and `CLAUDE.md` doesn't: what was found and verified on 31 October, what has already changed, the gaps that remain, and the work in order, with the points where the owner decides. Read it once from top to bottom, then work one package at a time.
 
+**Progress (1 Nov 2026):**
+- WP1: the comment is reworded. The `form_error` read is due after 9 Nov.
+- WP2: built, validate-only (`docs/superpowers/specs/2026-11-01-enquiry-conversion-design.md`). Creating the action and the privacy sentence wait for the owner.
+- WP3: decision document written (`docs/superpowers/specs/2026-11-01-whatsapp-business-platform.md`); it recommends no go on the Cloud API.
+- WP4 and WP5 wait on those decisions.
+
 ## 1. How to use this document
 
 - It records the state on 31 October 2026. Numbers move, so pull them again before you act on any of them.

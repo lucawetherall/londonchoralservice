@@ -28,7 +28,6 @@ SHELL COMMANDS (only these, from the repo folder)
   .venv/bin/python scripts/bookings/check_payments.py --fact <ref> noted-paid --scope <part|full> --on <YYYY-MM-DD>
   .venv/bin/python scripts/bookings/check_payments.py --fact <ref> arranged --method <cash|cheque|third-party> --on <YYYY-MM-DD>
   .venv/bin/python scripts/ads/upload_bookings.py
-  .venv/bin/python scripts/ads/upload_enquiries.py
   .venv/bin/python scripts/reports/dashboard.py
   (add `--date <YYYY-MM-DD>` to report_sections.py only if the dispatcher gives you a date)
   Never pipe or use a heredoc into these: ledger-add takes its JSON as the one single-quoted argument, with any apostrophe written as ’.
@@ -49,7 +48,7 @@ STEPS
    - a Books draft more than 2 days old: "<ref>: invoice email not sent yet (check Zoho Drafts)";
    - a Books invoice number not in the ledger: "<ref>: in Books, not in the ledger". If that invoice has been sent (any status but draft), record it: ZohoBooks_get_invoice (date, total, notes, customer_id), ZohoBooks_get_contact (name and email), the event date from the notes (the balance falls due two days before the event) or the line items, and ledger-add as in step 4 with notes "PENDING: recorded from Books by the Monday review"; then say "<ref>: recorded from Books" instead.
    A ledger booking (step 1's list) with no Books invoice in any of those five lists isn't a disagreement: give the count as "not in Books: <n>".
-7. Upload check: if steps 4–6 recorded anything, run `upload_bookings.py` again; either way give what it would upload and what it skips, with the reasons, by booking ref. Then run `upload_enquiries.py` once (validate only: the enquiries from Google ads, on every channel, that would go up as "Enquiry received"; spec 2026-11-01). Give its "VALIDATE ONLY — <n> enquiry(ies)" line, or "Nothing to upload", and its skip reasons as counts only: its skip lines name enquiry ids (Zoho thread ids), so never copy those. "No enabled "Enquiry received" conversion action yet" means the owner hasn't approved the action: say "Enquiry received: action not created yet".
+7. Upload check: if steps 4–6 recorded anything, run `upload_bookings.py` again; either way give what it would upload and what it skips, with the reasons, by booking ref. Then copy section 9b's `"Enquiry received" upload:` line as printed (what scripts/ads/upload_enquiries.py would send: enquiries from Google ads, on every channel, by consented click reference; spec 2026-11-01). It holds counts and skip reasons only.
 8. Pipeline: `pipeline.py summary --since <season start>` as "<n> enquiries, <q> quoted, <c> booked (<rate>%), median <d> days to quote · open WhatsApp enquiries: <open_whatsapp>" plus enquiries by source (conversion_rate is a fraction: 0.25 is 25%; null means none yet: "no enquiries in the pipeline yet"). The dispatcher asks the owner about WhatsApp bookings only when open_whatsapp is above 0, so always give it.
 8a. Drafts waiting to be sent: the assistant saves replies, follow-ups, reminders and review requests in Zoho Drafts and Luca sends them, so a draft left there is a client or firm not answered. Use ZohoMail_SearchEmails with searchKey `in:6133510000000008016::fromDate:<DD-MMM-YYYY, 30 days ago>` (the same form as the Sent search), and keep only results whose folderId is 6133510000000008016 and whose fromAddress is office@londonchoralservice.com. Count them by age: under 1 day, 1 to 3 days, over 3 days, and the age in days of the oldest. Never print a subject, name or address: the count is the finding. Outreach drafts to firms sit in the same folder, so say so once. If the search fails, "drafts: not checked".
 8b. The enquiry assistant's week: copy section 9c's lines as printed (runs started against the expected number, finished, stopped early, Zoho-down, the longest gap, daily passes). A "STALE ASSISTANT" line goes first, verbatim.
@@ -58,7 +57,7 @@ STEPS
 
 RESULT (exactly these headings; short lines; no names; no preamble)
 BOOKINGS: new bookings recorded (count, total £, refs), anything skipped and why.
-UPLOAD: what upload_bookings.py would send and skip, then "Enquiry received: UPLOAD would send <n>" (or "nothing to upload", or "action not created yet") with upload_enquiries.py's skip reasons as counts.
+UPLOAD: what upload_bookings.py would send and skip, then section 9b's "Enquiry received" upload line.
 MONEY: section 10's lines as printed, including "needs a hand check".
 BOOKS: "Books: receivables £<total> (<numbers>); overdue £<total> (<numbers>); part-paid <numbers>; drafts not yet sent <numbers>." then "not in Books: <n>". Put step 6's "!" plan line first when there is one, and add "queued for Books: <refs>" when the queue isn't empty.
 HAND CHECKS: every step 5 and step 6 line, or "none".
