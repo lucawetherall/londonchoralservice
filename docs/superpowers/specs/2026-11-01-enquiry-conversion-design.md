@@ -1,7 +1,7 @@
 # "Enquiry received": an offline conversion for every channel
 
 **Date:** 2026-11-01
-**Status:** Approved 1 Nov 2026 (decisions 1, 3 and 4 as recommended). "Enquiry received" was created that day as a secondary action (`conversionActions/7885302154`, logged in `logs/ads-changes.md`). The privacy sentence in 3b went live with the same PR, and the first upload follows the deploy. WP2 of `docs/superpowers/plans/2026-10-31-ad-tracking-and-whatsapp-handoff.md`.
+**Status:** Approved 1 Nov 2026 (decisions 1, 3 and 4 as recommended). "Enquiry received" was created that day as a secondary action (`conversionActions/7885302154`, logged in `logs/ads-changes.md`). The privacy sentence in 3b went live with the same PR. The first upload (one enquiry) was applied on 1 Nov after the deploy, and Google accepted it. WP2 of `docs/superpowers/plans/2026-10-31-ad-tracking-and-whatsapp-handoff.md`.
 
 ## Problem
 

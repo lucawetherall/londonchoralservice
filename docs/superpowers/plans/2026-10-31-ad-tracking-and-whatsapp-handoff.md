@@ -4,7 +4,7 @@ Written 31 October 2026 for an agent starting fresh; revised 1 November 2026 aft
 
 **Progress (1 Nov 2026):**
 - WP1: the comment is reworded. The `form_error` read is due after 9 Nov.
-- WP2: approved 1 Nov. "Enquiry received" is created (secondary) and the privacy sentence changed; the first upload follows the deploy (`docs/superpowers/specs/2026-11-01-enquiry-conversion-design.md`).
+- WP2: approved 1 Nov. "Enquiry received" is created (secondary) and the privacy sentence is live; the first enquiry went up on 1 Nov and Google accepted it (`docs/superpowers/specs/2026-11-01-enquiry-conversion-design.md`).
 - WP3: decided 1 Nov: no Cloud API, because the owner needs linked devices (`docs/superpowers/specs/2026-11-01-whatsapp-business-platform.md`).
 - WP4: replaced by the forward-to-office@ route (a WHATSAPP COPY), built 1 Nov.
 - WP5: due once uploads have run for a few weeks.
